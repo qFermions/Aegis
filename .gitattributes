@@ -1,0 +1,14 @@
+# Line-ending policy — added 2026-06-10 after working-tree CRLF churn (134 files).
+# Repo stores LF; working tree checks out LF. Windows batch files stay CRLF.
+
+* text=auto eol=lf
+
+# Windows scripts that require CRLF in the working tree
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Never normalize binaries
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary

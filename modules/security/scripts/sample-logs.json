@@ -1,0 +1,162 @@
+[
+  {
+    "timestamp": "2026-04-07T08:15:22Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.1.45",
+    "location": "[CITY, COUNTRY]",
+    "details": "Standard workstation login"
+  },
+  {
+    "timestamp": "2026-04-07T08:32:10Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.1.78",
+    "location": "[CITY, COUNTRY]",
+    "details": "Standard workstation login"
+  },
+  {
+    "timestamp": "2026-04-07T09:01:44Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_failed",
+    "source_ip": "203.0.113.34",
+    "location": "Moscow, RU",
+    "details": "Invalid password"
+  },
+  {
+    "timestamp": "2026-04-07T09:02:01Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_failed",
+    "source_ip": "203.0.113.34",
+    "location": "Moscow, RU",
+    "details": "Invalid password"
+  },
+  {
+    "timestamp": "2026-04-07T09:02:18Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_failed",
+    "source_ip": "203.0.113.34",
+    "location": "Moscow, RU",
+    "details": "Invalid password"
+  },
+  {
+    "timestamp": "2026-04-07T09:02:33Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_failed",
+    "source_ip": "203.0.113.34",
+    "location": "Moscow, RU",
+    "details": "Invalid password"
+  },
+  {
+    "timestamp": "2026-04-07T09:02:50Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_failed",
+    "source_ip": "203.0.113.34",
+    "location": "Moscow, RU",
+    "details": "Invalid password — account locked"
+  },
+  {
+    "timestamp": "2026-04-07T09:03:05Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "account_lockout",
+    "source_ip": "203.0.113.34",
+    "location": "Moscow, RU",
+    "details": "Account locked after 5 failed attempts"
+  },
+  {
+    "timestamp": "2026-04-07T10:15:00Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.2.12",
+    "location": "[CITY, COUNTRY]",
+    "details": "Standard workstation login"
+  },
+  {
+    "timestamp": "2026-04-07T10:22:30Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "198.51.100.200",
+    "location": "London, UK",
+    "details": "VPN login — impossible travel alert"
+  },
+  {
+    "timestamp": "2026-04-07T11:45:12Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "file_access",
+    "source_ip": "10.0.1.45",
+    "location": "[CITY, COUNTRY]",
+    "details": "Accessed shared drive: /finance/reports"
+  },
+  {
+    "timestamp": "2026-04-07T14:30:00Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "privilege_escalation",
+    "source_ip": "10.0.1.90",
+    "location": "[CITY, COUNTRY]",
+    "details": "User added to Global Admins security group"
+  },
+  {
+    "timestamp": "2026-04-07T15:10:33Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.1.78",
+    "location": "[CITY, COUNTRY]",
+    "details": "Re-authentication after session timeout"
+  },
+  {
+    "timestamp": "2026-04-07T16:45:00Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.3.22",
+    "location": "[CITY, COUNTRY]",
+    "details": "Standard workstation login"
+  },
+  {
+    "timestamp": "2026-04-07T17:30:00Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.1.45",
+    "location": "[CITY, COUNTRY]",
+    "details": "Session refresh"
+  },
+  {
+    "timestamp": "2026-04-08T03:14:22Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "198.51.100.44",
+    "location": "[CITY, COUNTRY]",
+    "details": "Remote login — after hours"
+  },
+  {
+    "timestamp": "2026-04-08T03:18:55Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "file_access",
+    "source_ip": "198.51.100.44",
+    "location": "[CITY, COUNTRY]",
+    "details": "Accessed shared drive: /hr/employee-records"
+  },
+  {
+    "timestamp": "2026-04-08T08:00:12Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.1.45",
+    "location": "[CITY, COUNTRY]",
+    "details": "Standard workstation login"
+  },
+  {
+    "timestamp": "2026-04-08T08:05:30Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.3.22",
+    "location": "[CITY, COUNTRY]",
+    "details": "Standard workstation login"
+  },
+  {
+    "timestamp": "2026-04-08T09:00:00Z",
+    "user": "[USER@DOMAIN.COM]",
+    "action": "login_success",
+    "source_ip": "10.0.1.78",
+    "location": "[CITY, COUNTRY]",
+    "details": "Standard workstation login"
+  }
+]

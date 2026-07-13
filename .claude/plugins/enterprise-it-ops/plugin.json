@@ -1,0 +1,7 @@
+{
+  "name": "enterprise-it-ops",
+  "display_name": "Enterprise IT Operations",
+  "description": "Modular IT operations plugin for Microsoft 365 hybrid environments. Covers M365, Intune, Entra ID, Meraki networking, VoIP, Jira, PowerShell automation, vendor communications, SOPs, and board reports.",
+  "version": "2.0.0",
+  "author": "[YOUR_NAME]"
+}

@@ -1,0 +1,43 @@
+node_modules/
+*.env
+
+# Secrets & credentials
+*.env
+*.pem
+*.key
+*.pfx
+*.p12
+*secret*
+*credential*
+*password*
+Keys
+
+# Local Claude settings (may contain machine-specific paths)
+.claude/settings.local.json
+
+# Memory files with potential PII
+memory/*.json
+memory/*.md
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backups that may contain unhardened content
+*.bak
+*.bak2
+*.old
+*.backup
+replacements.txt
+
+# Local-only agent/artifact scratch space
+.agents/
+.aegis-state/
+tasks/checkpoints/
+security-audit-*.md
+hermes-escalation-log.md
+aegis-orientation.txt
+v7-apply-log.txt
+\# Aegis — IT Troubleshoot Lab/
+local-aegis-upgrade-archive/

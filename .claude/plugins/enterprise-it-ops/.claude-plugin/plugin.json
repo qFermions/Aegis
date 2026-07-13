@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "enterprise-it-ops",
+  "displayName": "Enterprise IT Operations",
+  "description": "Modular, placeholder-only IT operations guidance for Microsoft 365 hybrid environments.",
+  "version": "2.0.0",
+  "author": {
+    "name": "[ADMIN_NAME]"
+  },
+  "commands": [
+    "./skills/it-ops.md"
+  ]
+}

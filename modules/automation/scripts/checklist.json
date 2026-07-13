@@ -1,0 +1,44 @@
+{
+  "name": "Pre-Deployment Checklist",
+  "version": "2.0",
+  "description": "Validates public-repository readiness with fail-closed, OS-neutral checks",
+  "checks": [
+    {
+      "id": "git-clean",
+      "description": "Working directory has no uncommitted changes",
+      "type": "git_clean"
+    },
+    {
+      "id": "pre-commit-hook",
+      "description": "Git's active pre-commit hook invokes the safety scanner",
+      "type": "git_hook",
+      "scanner": "scripts/pre-commit-check.js"
+    },
+    {
+      "id": "claude-md",
+      "description": "Agent configuration file exists",
+      "type": "file_exists",
+      "path": "CLAUDE.md"
+    },
+    {
+      "id": "no-todo-markers",
+      "description": "Tracked JavaScript and Markdown contain no unresolved TODO markers",
+      "type": "tracked_text_absent",
+      "needles": ["TODO:"],
+      "extensions": [".js", ".md"]
+    },
+    {
+      "id": "node-runtime",
+      "description": "Node.js runtime is available",
+      "type": "node_runtime"
+    },
+    {
+      "id": "scanner-runs",
+      "description": "Full-tree safety scanner executes without blocking findings",
+      "type": "scanner",
+      "path": "scripts/pre-commit-check.js",
+      "args": ["--all"],
+      "expect": "contains:pre-commit-check: --all mode"
+    }
+  ]
+}

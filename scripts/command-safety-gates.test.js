@@ -1038,7 +1038,7 @@ $records = @(
 $queueManifest = [pscustomobject]@{ Records = $records; SHA256 = ('a' * 64) }
 $queueFileCount = $records.Count
 $queueSetHash = $queueManifest.SHA256
-$queuePath = 'C:\fixture\PRINTERS'
+$queuePath = [IO.Path]::Combine([IO.Path]::GetTempPath(), 'fixture', 'PRINTERS')
 $script:RemoveCalls = 0
 function Read-Host { return [string](Get-Variable -Name requiredConfirmation -Scope 1 -ValueOnly -ErrorAction Stop) }
 function Get-LocalPrintQueueManifest { param([string]$LiteralQueuePath) return $queueManifest }

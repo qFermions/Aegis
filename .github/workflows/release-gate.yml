@@ -35,9 +35,7 @@ jobs:
         run: node --test
 
       - name: Scan full working tree (PII, credentials, secret formats, injection markers)
-        # Tenant-literal gate (SR-8) activates only when the secrets are set;
-        # the scanner redacts any match from its own output by design.
-        env:
-          AEGION_DOMAIN: ${{ secrets.AEGION_DOMAIN }}
-          AEGION_ORG_NAME: ${{ secrets.AEGION_ORG_NAME }}
+        # Pattern-only by design — no secrets reach this job. PR-triggered runs
+        # execute workspace code, so the tenant-literal overlay (SR-8) stays
+        # private-side; the scanner skips it cleanly when unset.
         run: node scripts/pre-commit-check.js --all

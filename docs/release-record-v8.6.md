@@ -35,7 +35,7 @@ README/architecture on the one-product story.
 
 Hermes/trading bridge (7 commands, 3 skills, `hermes-bridge.ps1` + test,
 integration docs) · Metis/Nova coupling (generic independent-review contract
-instead) · codex-modes (separate agent's docs) · legacy `[YOUR_*]` parallel
+instead) · codex-modes (separate agent's docs) · legacy YOUR-prefixed parallel
 token set. The corresponding safety-gate manifest entries were regenerated via
 the suite's own discovery printer; no check logic was weakened — feature
 removal only. History preserves everything removed.

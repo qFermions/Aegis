@@ -92,7 +92,8 @@ function withLock(fn) {
   // R8 guard: a write store inside the repo must stay under the git-ignored
   // memory/ area — a redirected in-tree store could otherwise be committed.
   const rel = path.relative(ROOT, STORE);
-  if (!rel.startsWith('..') && !/^memory[\\/]/.test(rel)) {
+  const outsideRepo = rel.startsWith('..') || path.isAbsolute(rel); // cross-drive => absolute on Windows
+  if (!outsideRepo && !/^memory[\\/]/.test(rel)) {
     fail(4, 'refused: AEGIS_REPLAY_DIR points inside the repo outside memory/ — private cases could be committed');
   }
   fs.mkdirSync(STORE, { recursive: true });

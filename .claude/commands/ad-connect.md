@@ -181,7 +181,7 @@ If you suspect a new OU is missing from sync:
 - **Full sync (Initial) during business hours** will generate significant load on AD and the sync server — schedule during off-hours or low-traffic periods
 - **Do not stop the `Microsoft Azure AD Sync` service** mid-cycle — it can leave the sync connectors in an inconsistent state
 - **Deleting objects in Entra** that should be synced from AD will cause re-creation issues — always fix at the AD source, not in Entra
-- Modifying the AD Connect configuration (connector rules, OU scoping) should go through a change-control plan — route through Nova before making rule changes in production
+- Modifying the AD Connect configuration (connector rules, OU scoping) should go through a change-control plan — route through independent plan review before making rule changes in production
 
 ## ✅ Verification checklist
 - [ ] Entra admin center → Hybrid management shows: Last sync < 40 min ago, no sync errors

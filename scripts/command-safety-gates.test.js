@@ -25,8 +25,6 @@ const MIXED_STATE_COMMANDS = [
 
 const REFERENCE_BOUNDARIES = [
   '.claude/plugins/enterprise-it-ops/skills/it-ops.md',
-  '.claude/skills/agent-handoff/SKILL.md',
-  '.claude/skills/hermes-bridge-powershell/SKILL.md',
   'docs/examples.md',
   'docs/plan-mode-templates.md',
   'docs/ticket-examples.md',
@@ -396,41 +394,6 @@ function portalOwner(candidate) {
 
 const CLIENT_BOUNDARIES = Object.freeze([
   {
-    id: 'hermes-ask-ssh-disclosure', file: 'scripts/hermes-bridge.ps1', testFile: 'scripts/hermes-bridge.test.js',
-    interface: 'ssh', mode: 'gated', evidenceGroup: 'hermes',
-    effect: 'Send one bounded advisory query to one validated private target and disclose its response locally.',
-    authorization: 'Exact query SHA-256 plus target-digest phrase before credentials or SSH.',
-    impactCategories: ['information disclosure', 'remote access'],
-  },
-  {
-    id: 'hermes-dashboard-remote-write', file: 'scripts/hermes-bridge.ps1', testFile: 'scripts/hermes-bridge.test.js',
-    interface: 'ssh', mode: 'gated', evidenceGroup: 'hermes',
-    effect: 'Create one previously absent remote dashboard artifact.',
-    authorization: 'Exact date plus resolved action SHA-256 phrase; structured input and no-clobber remote wrapper.',
-    impactCategories: ['external-system mutation', 'remote write', 'reversible state change'],
-  },
-  {
-    id: 'hermes-war-room-copy-local-write', file: 'scripts/hermes-bridge.ps1', testFile: 'scripts/hermes-bridge.test.js',
-    interface: 'scp', mode: 'gated', evidenceGroup: 'hermes',
-    effect: 'Create one GUID-named local HTML copy from one stable selected remote artifact.',
-    authorization: 'Exact local destination, source digest, full remote content SHA-256, and byte-count phrase.',
-    impactCategories: ['local filesystem write', 'remote access', 'reversible state change'],
-  },
-  {
-    id: 'hermes-war-room-open-file', file: 'scripts/hermes-bridge.ps1', testFile: 'scripts/hermes-bridge.test.js',
-    interface: 'native process', mode: 'gated', evidenceGroup: 'hermes',
-    effect: 'Launch one default browser for a locally verified HTML file.',
-    authorization: 'Exact local destination plus verified download SHA-256 phrase after size/content read-back.',
-    impactCategories: ['local process launch', 'reversible state change'],
-  },
-  {
-    id: 'hermes-war-room-open-url', file: 'scripts/hermes-bridge.ps1', testFile: 'scripts/hermes-bridge.test.js',
-    interface: 'native process', mode: 'gated', evidenceGroup: 'hermes',
-    effect: 'Launch one default browser for one allowlisted HTTPS or loopback HTTP URL.',
-    authorization: 'Exact validated absolute URL phrase.',
-    impactCategories: ['local process launch', 'reversible state change'],
-  },
-  {
     id: 'init-memory-force-replace', file: 'scripts/init-memory.js', testFile: 'scripts/init-memory.test.js',
     interface: 'local filesystem', mode: 'gated', evidenceGroup: 'memory',
     effect: 'Checkpoint and replace the six-file memory target set.',
@@ -482,21 +445,6 @@ const CLIENT_BOUNDARIES = Object.freeze([
 ].map((entry) => Object.freeze({ ...entry, impactCategories: Object.freeze(entry.impactCategories) })));
 
 const CLIENT_EVIDENCE = Object.freeze({
-  hermes: {
-    sourceFile: 'scripts/hermes-bridge.ps1', testFile: 'scripts/hermes-bridge.test.js',
-    sourcePatterns: [
-      /SEND READ-ONLY HERMES QUERY SHA256/, /CREATE WAR ROOM DASHBOARD \{0\} ACTION SHA256/,
-      /request-sha256/, /os\.O_WRONLY \| os\.O_CREAT \| os\.O_EXCL \| os\.O_NOFOLLOW/,
-      /CREATE WAR ROOM COPY \{0\} SOURCE SHA256 \{1\} CONTENT SHA256 \{2\} SIZE \{3\}/,
-      /Downloaded War Room SHA-256 did not match/, /Start-Process -FilePath \$destination/,
-    ],
-    testPatterns: [
-      /query remote command is constant and query bytes are stdin payload data/,
-      /render and selector wrappers use structured stdin, argv execution, and atomic no-clobber checks/,
-      /copy is content-bound, GUID-based, collision checked twice, and open follows exact verification/,
-      /inert copy\/open model never opens after decline, transfer failure, or content mismatch/,
-    ],
-  },
   jira: {
     sourceFile: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
     sourcePatterns: [
@@ -644,10 +592,6 @@ const GATE_FIXTURES = Object.freeze({
   'security-session-revoke': ["$sessionUser = [pscustomobject]@{ UserPrincipalName = 'user@example.com'; Id = 'user-id-fixture' }"],
   'sharepoint-access-revoke': [],
   'install-teams-module': ["$moduleName = 'MicrosoftTeams'", "$moduleVersionText = '6.8.0'", "$repositoryName = 'PSGallery'"],
-  'dashboard-render-artifact': ["$date = '2026-07-13'", "$expectedName = 'war_room_20260713.html'", "$targetLabel = '[HERMES_HOST]'"],
-  'war-room-open-url': ["$validatedUrl = 'https://example.com/'"],
-  'war-room-copy': ["$destination = 'C:\\Temp\\a.html'", "$sourceHash = ('a' * 64)", "$remoteContentHash = ('b' * 64)", '$remoteSize = 123'],
-  'war-room-open-file': ["$destination = 'C:\\Temp\\a.html'", "$downloadHash = ('b' * 64)"],
   'automation-bulk-license-checkpoint-write': ["$checkpointId = 'checkpoint-fixture'", '$expectedCount = 2', "$resolvedUserSetHash = ('c' * 64)"],
   'automation-bulk-license': ["$licenseSkuId = 'sku-id-fixture'", '$expectedCount = 2', "$resolvedUserSetHash = ('c' * 64)", "$checkpointId = 'checkpoint-fixture'", "$checkpointContentHash = ('1' * 64)"],
   'automation-token-revoke': ["$sessionUser = [pscustomobject]@{ UserPrincipalName = 'user@example.com'; Id = 'user-id-fixture' }"],

@@ -33,7 +33,7 @@ nslookup [SITE_B_HOST]                                      # confirm DNS resolv
 </details>
 
 ## ⚠️ Risk warning
-- Toggling subnets or changing topology can drop the tunnel for **both** sites — change one site, verify, keep a rollback. Irreversible/cutover steps → route through Nova and schedule with `[@Aegion_NETPARTNER]`.
+- Toggling subnets or changing topology can drop the tunnel for **both** sites — change one site, verify, keep a rollback. Irreversible/cutover steps → route through independent plan review and schedule with `[@Aegion_NETPARTNER]`.
 - Overlapping subnets will make the tunnel "up" but traffic fails — the most common Auto VPN mistake.
 
 ## ✅ Verification checklist

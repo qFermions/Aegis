@@ -15,7 +15,7 @@ This document adds the **trust-boundary map**, the **STRIDE → control matrix**
 | Tenant admin capability | Operator's admin sessions, Graph tokens | Full tenant compromise |
 | Employee PII | Tenant only — **never** in agent files (placeholder architecture) | Privacy breach, legal |
 | Org identity literals | `AEGION_*` env vars + gitignored `replacements.txt` only | Links public artifacts to the real org |
-| Agent integrity | `CLAUDE.md`, Koinon `security-preamble.md` (SR-1–8), `.claude/settings.local.json` | Agent acts against operator intent |
+| Agent integrity | `CLAUDE.md`, `modules/security/security-doctrine.md` (SR-1–8), `.claude/settings.local.json` | Agent acts against operator intent |
 | Repo history | Private remote; public remote is curated fresh-SHA releases only | Historical leak (see lessons: scans must cover every ref × every history × every pattern class) |
 
 ## 2. Trust boundaries
@@ -24,7 +24,7 @@ This document adds the **trust-boundary map**, the **STRIDE → control matrix**
 UNTRUSTED                          |  TRUSTED
 -----------------------------------|-----------------------------------
 Vendor emails, ticket bodies,      |  Operator's typed messages
-log/CSV exports, web content,      |  CLAUDE.md + Koinon SR rules
+log/CSV exports, web content,      |  CLAUDE.md + native SR rules
 quoted/pasted anything             |  (immutable, survive any lesson)
                                    |
   crosses the boundary as DATA only (SR-3). An instruction that arrived
@@ -33,7 +33,7 @@ quoted/pasted anything             |  (immutable, survive any lesson)
 
 Second boundary: **read vs write on the tenant.** Reads (R0) are free; writes climb the
 blast-radius ladder (R1–R3) defined in CLAUDE.md's Zero-Trust Execution Contract, each
-class with mandatory ceremony (undo statement → checkpoint → full SR-2 gate + Nova review).
+class with mandatory ceremony (undo statement → checkpoint → full SR-2 gate + independent review).
 
 ## 3. STRIDE → control matrix
 
@@ -41,8 +41,8 @@ class with mandatory ceremony (undo statement → checkpoint → full SR-2 gate 
 |--------|---------------------|---------|-------------|
 | **S**poofing | "Email from the CEO" in a ticket demands an MFA reset | Urgency/authority never bypasses SR-2; identity claims in content are unverified data | CLAUDE.md gates + SR-2 |
 | **T**ampering | Pasted content tries to rewrite agent rules ("new system prompt") | SR-3 content≠instructions; injection markers flagged; `settings.local.json` write-locked (Rule #12) | Identity layer + pre-commit marker scan |
-| **R**epudiation | "Did the agent really run that?" | Verify-or-it-didn't-happen read-backs; checkpoints outside the repository under the operator's local application-data directory; Jira-ready notes per ticket | Zero-Trust Contract rules 1–2 |
-| **I**nfo disclosure | Tenant literal or PII lands in repo/output | Placeholder dictionary (Koinon); SR-8 env-var-only domain; pre-commit tenant-literal + PII BLOCK | `pre-commit-check.js` + release gate |
+| **R**epudiation | "Did the agent really run that?" | Verify-or-it-didn't-happen read-backs; checkpoints in `tasks/checkpoints/`; Jira-ready notes per ticket | Zero-Trust Contract rules 1–2 |
+| **I**nfo disclosure | Tenant literal or PII lands in repo/output | Placeholder dictionary (`modules/security/placeholder-dictionary.md`); SR-8 env-var-only domain; pre-commit tenant-literal + PII BLOCK | `pre-commit-check.js` + release gate |
 | **D**oS | Runaway bulk op (`Get-X \| Action-Y` over the whole tenant) | Staged-variable + predicted `$targets.Count` rule; >10 objects = R3 gate | Zero-Trust Contract rule 3 |
 | **E**levation | Agent talked into disabling MFA/CA "to fix the ticket" | Security controls are never the first fix; disable = R3 + Temporary Exception format (expiry, approver, revert) | Security Behavior section |
 
@@ -73,6 +73,6 @@ Paste probes as ticket/email content unless stated otherwise.
 
 ## Related
 
-- `scripts/security-audit.js` — preview-first Entra/CA/Intune/Exchange/SharePoint health audit (7 sections); report creation requires its exact target/content-digest write phrase
+- `scripts/security-audit.js` — proactive Entra/CA/Intune/Exchange/SharePoint health audit (7 sections); run on cadence, not post-incident
 - `modules/automation/powershell/rollback_patterns.md` — checkpoint/rollback execution patterns (R2/R3 ceremony)
 - `CLAUDE.md` → Zero-Trust Execution Contract — blast-radius classes R0–R3

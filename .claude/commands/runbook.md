@@ -39,7 +39,7 @@ description: Produce board-grade IT documentation — runbook, SOP, KB article, 
 - Versioned with a revision-history line so changes are auditable.
 
 ## Where it goes
-- Reusable team docs → propose promoting a repeating pattern to a Koinon T-pattern (`shared/knowledge/troubleshooting/`) so Metis inherits it.
+- Reusable team docs → record the verified pattern as a repo runbook, or as a replayable case (`scripts/replay/README.md`) if it repeats verbatim.
 - One-off ticket docs → paste into Jira / the KB. Lessons from incidents → `tasks/lessons.md` per the Self-Improvement Loop.
 
 > Related: `/write-sop` (SOP-focused), `/incident-report` (incident-focused). This command is the unified generator across all five doc types.

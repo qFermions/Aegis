@@ -9,16 +9,9 @@ const test = require('node:test');
 const ROOT = path.resolve(__dirname, '..');
 const MANUAL_COMMANDS = [
   'aegis-update.md',
-  'alpha-signal.md',
-  'ask-hermes.md',
-  'dashboard-render.md',
-  'hermes-status.md',
   'jira-create.md',
   'jira-update.md',
-  'morning-brief.md',
-  'portfolio-status.md',
-  'ps-script.md',
-  'war-room.md'
+  'ps-script.md'
 ];
 
 function read(relativePath) {
@@ -37,13 +30,6 @@ test('credential-sensitive and direct-write commands are manual and risk classif
     assert.match(content, /^- \*\*Credential-sensitive:\*\*/m, `${file}: missing credential classification`);
     assert.match(content, /^- \*\*Invocation:\*\*/m, `${file}: missing invocation classification`);
   }
-});
-
-test('the dashboard renderer is described as a reversible remote write', () => {
-  const content = read(path.join('.claude', 'commands', 'dashboard-render.md'));
-  assert.match(content, /R1 remote write/);
-  assert.match(content, /\*\*Undo:\*\*/);
-  assert.doesNotMatch(content, /not a state mutation|State-read-only|verified \*\*read-only\*\*/i);
 });
 
 test('public claims distinguish behavioral policy from deterministic controls', () => {

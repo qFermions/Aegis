@@ -164,7 +164,7 @@ Get-MailboxJunkEmailConfiguration -Identity "[UPN]" |
 - **SCL -1 transport rules bypass phishing and malware checks** if scoped too broadly. Scope to the narrowest possible condition (exact address, not a domain wildcard).
 - **Connection filter IP allows are permanent** until manually removed. Document every IP added and review quarterly.
 - **Never add an allow entry because a user "needs it urgently" without checking the message trace first.** Urgency is a social engineering pattern. Verify the sender is legitimate.
-- Any org-wide change (Methods 2, 3, 5) should be reviewed before applying. Route to Nova if the change affects all users.
+- Any org-wide change (Methods 2, 3, 5) should be reviewed before applying. Route to an independent reviewer if the change affects all users.
 
 ## ✅ Verification checklist
 - [ ] Message trace confirms the block reason and the allow method chosen addresses it

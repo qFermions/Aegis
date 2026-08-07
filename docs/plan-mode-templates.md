@@ -1,6 +1,6 @@
 # Plan-Mode Templates — High-Risk Surfaces
 
-When a change crosses 3+ system boundaries or touches a security gate, Aegis writes the plan *first* and keeps execution separate. These are the templates for the four highest-risk surfaces. Every plan ends with a Nova review hand-off because the supervisor pattern catches the gap a single agent doesn't see.
+When a change crosses 3+ system boundaries or touches a security gate, Aegis writes the plan *first* and keeps execution separate. These are the templates for the four highest-risk surfaces. Every plan ends with a independent-review hand-off because the supervisor pattern catches the gap a single agent doesn't see.
 
 ## Execution boundary
 
@@ -49,7 +49,7 @@ Step 6 — Document
 ### Verification gate
 Cannot mark complete until: Report-only ran 24h with no surprise blocks · break-glass tested · post-enforce 30-min window showed no unexpected failures.
 
-### Hand to Nova
+### Hand to independent review
 > "CA policy plan attached. New policy is [purpose], scope is [groups]. Anything missing in the Report-only analysis? Anything risky in the enforcement window I haven't accounted for?"
 
 ---
@@ -66,7 +66,7 @@ Cannot mark complete until: Report-only ran 24h with no surprise blocks · break
 Step 1 — Generate the target list
   - Source: HR offboarding sheet / department-restructure list / etc.
   - Build the identity-bearing CSV outside the repository under the approved local data location: UPN, immutable user ID, current SKU/service-plan state, target action
-  - Two-pass human review of that local file. Never paste UPNs or the identity list into Nova or another model/session; send only a sanitized placeholder sample plus count and cryptographic hash if plan review is needed
+  - Two-pass human review of that local file. Never paste UPNs or the identity list into an independent reviewer or another model/session; send only a sanitized placeholder sample plus count and cryptographic hash if plan review is needed
 
 Step 2 — Spot-check 3 random rows
   - For each, confirm in M365 admin that the user's current state matches the CSV
@@ -94,7 +94,7 @@ Step 6 — Restore plan ready
 ### Verification gate
 Every UPN's post-state matches the CSV target · the result CSV is committed to the ticket · seat count in M365 Billing matches expected delta.
 
-### Hand to Nova
+### Hand to independent review
 > "Mass license op plan attached. Target list is [N] users, all in [group/department]. Pre-conversion state confirmed for mailboxes. Anything missing? Anything I should sequence differently?"
 
 ---
@@ -144,7 +144,7 @@ Step 6 — Rollback plan if any test fails
 ### Verification gate
 Dashboard shows both peers Connected · all cross-site tests pass · on-site contact confirms physical link/equipment is happy.
 
-### Hand to Nova
+### Hand to independent review
 > "S2S VPN cutover plan attached. Window is [date/time], on-site contact is [PERSON] at [SITE]. Rollback path is well-defined. Anything I haven't accounted for? Subnet conflicts, route precedence, anything?"
 
 ---
@@ -190,7 +190,7 @@ Step 6 — Audit log
 ### Verification gate
 Identity verified independently · device recovered and is back to compliant · audit log entry exists and is annotated with the ticket.
 
-### Hand to Nova
+### Hand to independent review
 > "BitLocker key retrieval plan. User identity verified via callback to [phone]. Scenario looks like routine TPM trust loss after [event]. Anything missing in the verification path? Any policy I'm forgetting?"
 
 ---
@@ -202,4 +202,4 @@ Identity verified independently · device recovered and is back to compliant · 
 3. **Verify break-glass / rollback** — confirm the escape hatch *before* you need it.
 4. **Single change window with watch period** — flip, watch for unexpected breakage, decide.
 5. **Document outcome, not just the change** — what was supposed to happen vs what did.
-6. **Nova hand-off** is non-optional for any of these — pure machine review misses human-system gaps.
+6. **independent-review hand-off** is non-optional for any of these — pure machine review misses human-system gaps.

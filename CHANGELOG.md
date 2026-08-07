@@ -2,7 +2,25 @@
 
 All notable changes to the Aegis IT Operations Agent are documented here.
 
-## [Unreleased] - 2026-07-13 — public-release P1 hardening
+## [v8.6-public] - 2026-08-07
+
+### Added — v8.6 (2026-08-07) — Aegis is the harness: native governance, replay cache, decoupling
+- **Product identity locked (CLAUDE.md v8.6, ADR-006):** permanent mission in the always-loaded doctrine — Aegis is the adaptive IT-operations harness; the operator types plain English; the orchestrator picks the smallest sufficient shape (replay → direct → agents → loop → graph → memory → independent review) under R0–R3. Owner architecture decisions 1–6 recorded in `docs/adr/ADR-006-harness-native-governance.md`.
+- **Native governance:** `modules/security/security-doctrine.md` (immutable SR-1…SR-8 + trusted-resource hierarchy) and `modules/security/placeholder-dictionary.md` (canonical token authority incl. post-dict additions) vendored from Koinon; the submodule is now read-only historical — a clone without it loses nothing (no presence gate, per owner decision). All CLAUDE.md/commands/docs authority pointers repointed.
+- **Deterministic replay cache (`scripts/replay/`, suite 8/8):** verified-only replay of exact-duplicate tickets — normalization + sha256 keying (no LLM decides duplicates), dependency-fingerprint invalidation (no time TTL), stale preserved as historical and never served as current, sanitization BLOCK at persist, store git-ignored under `memory/replay/`; engine + synthetic fixtures are public. `/onboard` gains the replay Step 0; Response Format gains "Replay check first"; `docs/harness.md` gains the REPLAY strategy row. The honest token boundary (slash-command platform overhead vs zero-model CLI path) is documented in `scripts/replay/README.md`.
+- **Release/sync boundary:** `.gitignore` boundary block + `scripts/harness/release-boundary-check.js` (B1–B5: forbidden paths untracked+ignored, deletions allowed, private stores ignored, workflows secret-free) wired into `sync.bat` before `git add -A`. Venture/client/personal/Hermes material untracked; GameSwitch/client-snapshot sweep-in structurally blocked.
+
+### Changed — v8.6
+- **Metis decoupled:** removed from lane tables, lesson routing (`tasks/lessons.md` is now the canonical store, upstream promotion optional), and command prose. History preserved.
+- **Nova → generic independent review:** `novaReviewRequired` → `independentReviewRequired` (graph engine/schema/tests/role cards, suite 33/33 green); 13 command footers, plan-mode templates, security model, ADR-001, threat model all genericized to maker ≠ checker / independent out-of-session review.
+- **Hermes/trading left the product surface:** 7 bridge commands, 3 skills, integration docs, escalation log, and the 2026-05-22 handoff bundle (which carried real-name/holdings/remote-path literals) moved to the git-ignored local archive; command surface is now 58, all IT-ops. `security-alert-triage`/`troubleshoot` escalation pointers genericized. F1 (workflow secrets on `pull_request`) fixed in the local release-gate.yml — public CI is pattern-only by design; the stale "add tenant secrets to CI" todo is superseded. Live-public copy still carries the old block until the next curated release.
+- **README rewritten on the product story** (adaptive harness, runnable evidence, public/private boundary); unverifiable claims removed (production framing, operational-metrics table, "T1–T10 Hardened" → probe suite); `docs/architecture.md` multi-agent roster (three agents/"Red") replaced with the harness architecture; `docs/koinon-architecture.md` marked historical.
+
+### Added
+- **Adaptive Harness v1 (CLAUDE.md v8.5, `docs/harness.md`):** execution-strategy doctrine — the lead model picks the smallest sufficient strategy (DIRECT / MEMORY / GRAPH-DELEGATION / LOOP / INDEPENDENT REVIEW) and writes worker briefs itself (objective · inputs · scope/authority · SR-3/SR-8 constants · output contract · dependencies); the operator never carries prompts between agents. Live-capability binding recorded: Superpowers plugin assessed and **left inert** for ITOps (5 CONFLICT / 6 REDUNDANT / 3 narrow REUSE — session-start injection hook rejected); stale global `~/.claude/rules` agent references documented as satisfy-intent-not-name. Fresh-session continuity: `tasks/continuity.md` snapshot (HEAD-bound) + machine gate `scripts/harness/check-continuity.js` (0 PASS / 1 FAIL / 2 STALE; mutation-tested 3/3). Acceptance evidence + repo-grounding audit (4 parallel workers, 204 doc claims verified, F1–F6 register re-confirmed OPEN): `tasks/harness/acceptance-2026-08-07.md`. CLAUDE.md banner → v8.5 with the 40k limit unit pinned (chars, LF-normalized); net size held at limit via mechanical trims, zero rule loss.
+- **Aegis Memory V1 — controlled operational memory (`scripts/memory/` + local-only `memory/`, ADR-005):** durable, decision-relevant knowledge with an explicit promotion boundary — proposal → candidate → verified → stale/superseded, gated by the graph sanitizer (tenant/credential/PII/injection all BLOCK at persist), dedup-with-provenance-merge, an explicit-resolution conflict gate (no silent overwrite), trusted-provenance requirement (external content never self-promotes, SR-3), and canonical-pointer discipline (runbooks referenced, never copied). Bounded lexical retrieval (top-5 cap) over a small index; staleness policy per volatility class; `decline` records deliberate non-retention; `ledger.jsonl` instruments every write-path decision. Evidence durability: graph-run provenance must exist on disk to promote (auditable, not asserted), promotion/verify capture sha256 fingerprints, and `audit <id>` reports intact/drifted/missing-evidence — preserving "once had evidence" after local run traces are cleaned, without copying trace content into memory. Single CLI write path, serialized (8-writer contention acceptance passed); no automation in V1. Behavioral suite `scripts/memory/memory.test.js` (M1–M14, 14/14); graph suite untouched (33/33). CLAUDE.md gains the 🧠 Operational Memory section; `.gitignore` gains the root-anchored `/memory/` store rule.
+
+## [2026-07-13] — public-release P1 hardening (public lineage)
 
 ### Security
 - **Safety scanner fails closed without leaking matched content:** Git calls use argument arrays and NUL-delimited file lists; staged typechanges, misleading suffixes, backups, snapshots, control-character paths, and invalid/binary text are handled without fail-open behavior; findings report only a safe path, category, line, and remediation.
@@ -32,48 +50,27 @@ All notable changes to the Aegis IT Operations Agent are documented here.
 - Added discovery-based safety-gate regressions, source-order/control-flow analysis, target/effect binding checks, and inert confirmation simulations for command, portal, offboarding, incident-response, automation, shell/native, and reference-module boundaries; adversarial fixtures cover overwrite, dead-guard, case-sensitivity, and command-local `-WhatIf` handling. The exact discovered examples and non-Markdown client write boundaries are frozen in `docs/security/STATE_CHANGE_INVENTORY.json` and compared structurally in tests.
 - Updated the release gate to the Node 24 action runtimes (`actions/checkout@v7`, `actions/setup-node@v6`) while preserving the Ubuntu/Windows matrix and read-only permissions.
 
-## [v8.5.1-public] - 2026-07-01 — account rename + evaluator tooling
+## [v8.5.1] - 2026-07-01 — account rename + evaluator tooling
 
 ### Changed
-- **GitHub account renamed `Ronny-Yee` → `qFermions`** (after v8.5-public shipped). Old URLs 301-redirect and were verified; all local working-copy remotes repointed. Historical entries below referencing the old handle are left untouched — they are the true record.
-- **README redesigned:** centered badge hero, Mermaid architecture diagram (R0–R3 Zero-Trust Execution Contract flowing into the ClickOps-to-IaC bridge), operational-results table, collapsible T1–T10 and 65-command panels; clone URL updated to `qFermions/Aegis`. No technical content removed or altered.
-- **`scripts/pre-commit-check.js`: new `--all` mode** — scans every tracked file in the working tree (vs the staged set), built for the CI release gate. Staged-mode behavior unchanged.
+- **GitHub account renamed `Ronny-Yee` → `qFermions`** (after v8.5-public shipped). Old URLs 301-redirect; all local working-copy remotes verified repointed. Historical CHANGELOG entries referencing the old handle are left as-is — they are the true record. Updated in tracked files: README clone URL, `.gitmodules` (Koinon submodule → `qFermions`, `git submodule sync` run), `sync.bat` clone URL.
+- **README redesigned** for the public repo: centered badge hero (v8.5 · Zero-Trust R0–R3 · T1–T10 · MIT · live CI badge), Mermaid architecture diagram (R0–R3 execution contract flowing into the ClickOps-to-IaC bridge), operational-results table, collapsible T1–T10 and 65-command panels. No technical content removed or altered.
+- **`scripts/pre-commit-check.js`: new `--all` mode** — scans every tracked file in the working tree (vs the staged set) for the CI release gate. Staged-mode behavior unchanged.
 
 ### Added
 - **`EVALUATE.md`** — the 10-minute guided red-team: five scripted probes (placeholder enforcement, T2 urgency bypass verbatim, T1 injection by pointer, T10 scanner block with a generated fake token, T8 false-memory re-gate) ending in a pass/fail scorecard that files into the review issue template.
-- **`docs/adr/`** — three Architecture Decision Records: ADR-001 blast-radius classes over per-cmdlet allowlists, ADR-002 repository teardown over history rewrite (revocation, not redaction), ADR-003 the GUI-first/PowerShell-second response contract.
-- **`.github/workflows/release-gate.yml`** — the same scanner that gates local commits, run in `--all` mode on every push/PR; tenant-literal gate (SR-8) activates via repo secrets when present. README carries the live badge.
+- **`docs/adr/`** — three Architecture Decision Records: ADR-001 blast-radius classes over per-cmdlet allowlists (the T4 composition argument), ADR-002 repository teardown over history rewrite (revocation, not redaction), ADR-003 the GUI-first/PowerShell-second response contract (the ClickOps-to-IaC bridge rationale).
+- **`.github/workflows/release-gate.yml`** — runs the scanner in `--all` mode on every push/PR; tenant-literal gate (SR-8) activates via repo secrets when present. README carries the live badge.
 
-## [v8.5-public] - 2026-07-01 — Zero-Trust Execution Contract + adversarial test suite
-
-### Added
-- **Zero-Trust Execution Contract (CLAUDE.md):** every action classified R0–R3 by blast radius before execution — R1 states its undo inline, R2 requires a pre-state checkpoint, R3 adds the full destructive-action gate + written rollback path before step 1. Batch ops require a staged variable + predicted `$targets.Count` before acting; partial failure stops the batch.
-- **`modules/security/threat_model.md`:** trust-boundary map, STRIDE→control matrix, and a 10-probe runnable adversarial test suite (T1–T10) — injection, urgency bypass, PII extraction, gate bypass, false-memory confirmation, malformed lessons — with expected agent behavior per probe. Built to be fired at the agent by evaluators.
-- **`modules/automation/powershell/rollback_patterns.md`:** five checkpoint/rollback patterns — pre-state JSON capture, paired change+rollback with auto-revert on failed verify, count-gated stop-on-first-failure batches, policy-export-before-edit, and the irreversible-ops protocol.
-
-### Changed
-- **`scripts/pre-commit-check.js` hardened:** modern secret formats (GitHub PATs incl. fine-grained, JWTs, private-key blocks, `sk-` keys, Slack tokens, Azure storage/SAS); tenant-literal gate loaded at runtime from env/gitignored file (matches BLOCK, literal redacted from the scanner's own output); prompt-injection marker WARN scan.
-
-## [v8.4.1-public] - 2026-07-01 — scrub personal holdings data from war-room command docs
-
-### Security
-- **War-room command docs sanitized:** example tickers, account types, and watchlist/conviction tiers replaced with `[TICKER]`-style placeholders in `/alpha-signal`, `/portfolio-status`, `/morning-brief`, `/ask-hermes`, the `war-room-ops` skill, and `docs/hermes-integration.md`. The commands' orchestration logic is unchanged — only the personal book examples are gone.
-- **Release gate extended:** ticker/holdings patterns added to the literal/PII scan alongside org literals, names, emails, phones, and credentials.
-
-## [v8.4-public] - 2026-07-01 — command-output standard + Koinon architecture
+## [v8.4] - 2026-07-01 — Zero-Trust Execution Contract + hardened scanner
 
 ### Added
-- **Global command-output standard** (`docs/command-output-standard.md` v1.0): every command renders gate → inputs → fast path → phased GUI steps → single checklist → paste-ready note. Four variants (operational / troubleshooting / docs-comms / learning).
-- **Koinon architecture description** (`docs/koinon-architecture.md`): the shared-library submodule design — security preamble, placeholder dictionary, cross-agent lessons, T-pattern diagnostic trees — and how consumer agents inherit it. Linked from README.
-- **Learning command family (Variant D):** `/cloud-lab`, `/devops-drill`, `/ai-engineer-drill`.
-- **`.gitattributes`:** LF pinned repo-wide.
+- **Zero-Trust Execution Contract (CLAUDE.md):** every action classified R0–R3 by blast radius before execution — R1 states its undo inline, R2 requires a pre-state checkpoint in `tasks/checkpoints/`, R3 adds the full SR-2 gate + written rollback path + Nova review. Batch ops require a staged variable + predicted `$targets.Count` before acting; partial failure stops the batch (Error Recovery Protocol).
+- **`modules/security/threat_model.md`:** trust-boundary map, STRIDE→control matrix, and a 10-probe runnable adversarial test suite (injection, urgency bypass, PII extraction, gate bypass, false-memory confirmation, malformed lessons) with expected agent behavior per probe.
+- **`modules/automation/powershell/rollback_patterns.md`:** five checkpoint/rollback patterns — pre-state JSON capture, paired change+rollback functions with auto-revert on failed verify, count-gated stop-on-first-failure batches, policy-export-before-edit, and the irreversible-ops protocol (evidence capture + reversible-sibling preference).
 
 ### Changed
-- **Onboarding line rebuilt:** `/new-user` (26-step phased flow), `/onboard` now a thin alias, `/password-reset` and `/new-device-setup` aligned to the output standard.
-- **CLAUDE.md v8.3 size diet:** reference material moved to `docs/`; all v8.x rules remain in force.
-
-### Security
-- **Release gate:** unchanged from v8.3 — curated tree, fresh SHA on top of `v8.3-public`, full literal/PII scan printed zero. `tasks/`, `docs/handoff/`, `shared/` (private submodule), `sync.bat`, and local settings remain excluded.
+- **`scripts/pre-commit-check.js` hardened:** modern secret formats (GitHub PATs incl. fine-grained, JWTs, private-key blocks, `sk-` keys, Slack tokens, Azure storage/SAS); **tenant-literal gate** — org values loaded at runtime from `AEGION_*` env vars / gitignored `replacements.txt`, matches BLOCK with the literal redacted from the scanner's own output (no placeholder-line exemption); prompt-injection marker WARN scan (security docs that document the patterns excluded).
 
 ## [v8.3-public] - 2026-06-09 — first public release (curated)
 
@@ -163,7 +160,7 @@ Additive to the v8.0 IT-operations role: make Aegis world-class at the IT-engine
 - **Six read-only War Room slash commands** in `.claude/commands/`, bridging the laptop to Aegis D Hermes's trading war room (each its own commit, production-usable, not stubs):
   - `/war-room` — open the latest dashboard (live URL or latest rendered HTML pulled read-only).
   - `/morning-brief` — print the latest Daily Hunt / market-open brief in the terminal.
-  - `/portfolio-status` — core-holds snapshot: price, day move, one-line read.
+  - `/portfolio-status` — core-holds snapshot (AMPX/ONDS/PLTR): price, day move, one-line read.
   - `/dashboard-render [date]` — trigger a fresh War Room v30 render (additive artifact only; never a state/service change).
   - `/alpha-signal TICKER` — one-line plain-English signal read for a ticker.
   - `/hermes-status` — health check: SSH ping + both war-room cron jobs registered + last render age.
@@ -259,7 +256,7 @@ Additive to the v8.0 IT-operations role: make Aegis world-class at the IT-engine
 - Self-Improvement Loop rewritten as a two-stage flow — tasks/lessons.md is now the local staging buffer (the only place Aegis writes lessons); lessons promote to Koinon shared/memory/ via PR. Lesson format gains a "Promote to:" routing line. Archival moves to Koinon's domain.
 - Parallel Awareness — agent ownership table replaced (was Aegis/Nova/Red) with the corrected four-agent stack; the mobile IT agent is Metis (matches Koinon), not "Red"
 - /ask-hermes escalation re-framed — Hermes is the trading / cyber / macro / War Room broad-domain partner; finance/markets work redirects there
-- Placeholder section consolidated — removed the legacy parallel tenant/org token list; Koinon's placeholder-dict.md is now cited as the single source of truth; canonical domain restated as env-var-only
+- Placeholder section consolidated — removed the parallel YOUR-prefixed token list; Koinon's placeholder-dict.md is now cited as the single source of truth; canonical domain restated as env-var-only
 - Error Recovery Protocol noted as mirroring Koinon SR-5
 - Tone section aligned with the project-instructions spec
 

@@ -45,11 +45,11 @@ Reproduce the original action and confirm it now works. "If the COO asked 'is it
 ### 7. Escalate when warranted
 - Microsoft (tenant issue) — use the Microsoft escalation template.
 - Vendor (`[@Aegion_ISP]` / `[@Aegion_NETPARTNER]` / `[@Aegion_VOIP]`) — use the vendor template.
-- Senior IT for unknowns. Cross-domain/strategy → `/ask-hermes`.
+- Senior IT for unknowns. Non-IT/strategy asks are out of scope — say so and stop.
 
 ## ⚠️ Risk warning
 - Never disable a security control (MFA/CA/AV/firewall) as a first fix.
-- Anything destructive (wipe, license removal, account disable, mass change) hits the confirmation gate — route through Nova if irreversible.
+- Anything destructive (wipe, license removal, account disable, mass change) hits the confirmation gate — route through independent plan review if irreversible.
 
 ## ✅ Verification checklist
 - [ ] Original symptom no longer reproduces

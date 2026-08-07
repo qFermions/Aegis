@@ -1,0 +1,3 @@
+Wi-Fi at [@Aegion_SITE_2] drops every few minutes near the conference room.
+Suspected Meraki MR access point [DEVICE_NAME]. Diagnose and stabilize;
+users on [SSID_NAME] are affected.

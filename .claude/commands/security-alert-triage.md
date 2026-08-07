@@ -159,7 +159,7 @@ Get-Mailbox "[UPN]" | Select ForwardingSmtpAddress,DeliverToMailboxAndForward  #
 ## ⚠️ Risk warning
 - Source-authoritative account blocking prevents new authentication. The separate Entra revocation request invalidates refresh tokens/browser cookies after propagation, while current access tokens/app-issued sessions may persist; confirm the identity/evidence before either gate.
 - Don't delete evidence before capturing it (screenshots/log export) — you'll need it for the incident report.
-- Genuine breach with business/legal impact → escalate to leadership; cross-domain cyber depth → `/ask-hermes`.
+- Genuine breach with business/legal impact → escalate to leadership; deep cyber forensics → external IR/vendor support.
 
 ## ✅ Verification checklist
 - [ ] Account contained at the resolved source of authority; Entra refresh-token/browser-cookie revocation requested and checked after propagation; password/MFA remediated through their separate gates if compromised

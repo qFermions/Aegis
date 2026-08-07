@@ -138,16 +138,6 @@
       ]
     },
     {
-      "id": "alpha-signal-cache-refresh",
-      "file": ".claude/commands/alpha-signal.md",
-      "kind": "portal",
-      "mode": "preview",
-      "sinks": [],
-      "impactCategories": [
-        "external-system mutation"
-      ]
-    },
-    {
       "id": "automation-bulk-license",
       "file": "modules/automation/powershell/examples.md",
       "kind": "powershell",
@@ -539,23 +529,6 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
-      ]
-    },
-    {
-      "id": "dashboard-render-artifact",
-      "file": ".claude/commands/dashboard-render.md",
-      "kind": "powershell",
-      "mode": "gated",
-      "sinks": [
-        {
-          "sink": "hermes-render",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "identity-related",
-        "remote write"
       ]
     },
     {
@@ -1090,151 +1063,6 @@
       ]
     },
     {
-      "id": "handoff-branch-create",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "git-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-bundle-download",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "scp",
-          "count": 2
-        }
-      ],
-      "impactCategories": [
-        "identity-related",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-commit-files",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "git-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-copy-manifest",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "file-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-copy-sanitized",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "file-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-destination-create",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "file-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-manifest-download",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "redirect-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "identity-related",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-remote-fetch",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "git-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "handoff-stage-files",
-      "file": ".claude/skills/agent-handoff/SKILL.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "git-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
       "id": "health-compliance-remediation",
       "file": "modules/systems/health_checks.md",
       "kind": "portal",
@@ -1333,41 +1161,6 @@
       "sinks": [],
       "impactCategories": [
         "external-system mutation"
-      ]
-    },
-    {
-      "id": "hermes-bridge-delta-sync",
-      "file": ".claude/skills/hermes-bridge-powershell/SKILL.md",
-      "kind": "powershell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "Start-ADSyncSyncCycle",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation"
-      ]
-    },
-    {
-      "id": "hermes-bridge-local-copy",
-      "file": ".claude/skills/hermes-bridge-powershell/SKILL.md",
-      "kind": "powershell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "scp",
-          "count": 1
-        },
-        {
-          "sink": "Start-Process",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
       ]
     },
     {
@@ -2427,6 +2220,8 @@
       "mode": "preview",
       "sinks": [],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "identity-related",
         "permission-related",
@@ -3925,10 +3720,6 @@
         {
           "sink": "metadata-write",
           "count": 1
-        },
-        {
-          "sink": "redirect-write",
-          "count": 1
         }
       ],
       "impactCategories": [
@@ -5387,53 +5178,6 @@
       ]
     },
     {
-      "id": "war-room-copy",
-      "file": ".claude/commands/war-room.md",
-      "kind": "powershell",
-      "mode": "gated",
-      "sinks": [
-        {
-          "sink": "scp",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "war-room-open-file",
-      "file": ".claude/commands/war-room.md",
-      "kind": "powershell",
-      "mode": "gated",
-      "sinks": [
-        {
-          "sink": "Start-Process",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "war-room-open-url",
-      "file": ".claude/commands/war-room.md",
-      "kind": "powershell",
-      "mode": "gated",
-      "sinks": [
-        {
-          "sink": "Start-Process",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
       "id": "wifi-client-remediation",
       "file": ".claude/commands/wifi-issue.md",
       "kind": "portal",
@@ -5742,78 +5486,6 @@
     }
   ],
   "clientBoundaries": [
-    {
-      "id": "hermes-ask-ssh-disclosure",
-      "file": "scripts/hermes-bridge.ps1",
-      "testFile": "scripts/hermes-bridge.test.js",
-      "interface": "ssh",
-      "mode": "gated",
-      "evidenceGroup": "hermes",
-      "effect": "Send one bounded advisory query to one validated private target and disclose its response locally.",
-      "authorization": "Exact query SHA-256 plus target-digest phrase before credentials or SSH.",
-      "impactCategories": [
-        "information disclosure",
-        "remote access"
-      ]
-    },
-    {
-      "id": "hermes-dashboard-remote-write",
-      "file": "scripts/hermes-bridge.ps1",
-      "testFile": "scripts/hermes-bridge.test.js",
-      "interface": "ssh",
-      "mode": "gated",
-      "evidenceGroup": "hermes",
-      "effect": "Create one previously absent remote dashboard artifact.",
-      "authorization": "Exact date plus resolved action SHA-256 phrase; structured input and no-clobber remote wrapper.",
-      "impactCategories": [
-        "external-system mutation",
-        "remote write",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "hermes-war-room-copy-local-write",
-      "file": "scripts/hermes-bridge.ps1",
-      "testFile": "scripts/hermes-bridge.test.js",
-      "interface": "scp",
-      "mode": "gated",
-      "evidenceGroup": "hermes",
-      "effect": "Create one GUID-named local HTML copy from one stable selected remote artifact.",
-      "authorization": "Exact local destination, source digest, full remote content SHA-256, and byte-count phrase.",
-      "impactCategories": [
-        "local filesystem write",
-        "remote access",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "hermes-war-room-open-file",
-      "file": "scripts/hermes-bridge.ps1",
-      "testFile": "scripts/hermes-bridge.test.js",
-      "interface": "native process",
-      "mode": "gated",
-      "evidenceGroup": "hermes",
-      "effect": "Launch one default browser for a locally verified HTML file.",
-      "authorization": "Exact local destination plus verified download SHA-256 phrase after size/content read-back.",
-      "impactCategories": [
-        "local process launch",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "hermes-war-room-open-url",
-      "file": "scripts/hermes-bridge.ps1",
-      "testFile": "scripts/hermes-bridge.test.js",
-      "interface": "native process",
-      "mode": "gated",
-      "evidenceGroup": "hermes",
-      "effect": "Launch one default browser for one allowlisted HTTPS or loopback HTTP URL.",
-      "authorization": "Exact validated absolute URL phrase.",
-      "impactCategories": [
-        "local process launch",
-        "reversible state change"
-      ]
-    },
     {
       "id": "init-memory-force-replace",
       "file": "scripts/init-memory.js",

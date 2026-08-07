@@ -13,7 +13,7 @@ disable-model-invocation: true
 > A policy set to "On" that is scoped too broadly (e.g., "All users" with no exclusions) can prevent every person including Global Admins from signing in. Before setting ANY policy to "On":
 > 1. Confirm your break-glass account exists and is excluded (see below).
 > 2. Run Report-only for at least 24–48 hours and review the sign-in logs.
-> 3. Route org-wide CA changes through Nova for a second opinion before enabling.
+> 3. Route org-wide CA changes through independent plan review for a second opinion before enabling.
 > 4. Have a second admin available to revert if needed.
 
 ## What to check first
@@ -245,7 +245,7 @@ Get-MgIdentityConditionalAccessNamedLocation |
 - **Break-glass accounts must be excluded by UPN, not by group.** If you exclude a group and the break-glass account is removed from that group, you lose emergency access.
 - **"Block legacy auth" will break any device or app still using SMTP AUTH, POP3, IMAP, or basic auth.** Run Report-only for 48 hours and check the logs for service accounts, MFPs, line-of-business apps, and any shared mailbox scripts before enabling.
 - **Requiring compliant device before Intune is fully rolled out** will lock out non-enrolled devices immediately. Pilot with a small group first.
-- **Any org-wide CA change should be routed through Nova for plan review before setting to On.**
+- **Any org-wide CA change should be routed through independent plan review for plan review before setting to On.**
 
 ## ✅ Verification checklist
 - [ ] Break-glass account exists, is cloud-only, and is explicitly excluded from ALL CA policies by UPN

@@ -37,7 +37,7 @@ $d | Select DeviceName,ComplianceState,OperatingSystem,OsVersion,LastSyncDateTim
 </details>
 
 ## ⚠️ Risk warning
-- Loosening a compliance policy to "fix" one device weakens it for **every** device in scope — fix the device, not the policy, unless the policy is genuinely wrong. Test policy changes on a pilot group; route broad changes through Nova.
+- Loosening a compliance policy to "fix" one device weakens it for **every** device in scope — fix the device, not the policy, unless the policy is genuinely wrong. Test policy changes on a pilot group; route broad changes through independent plan review.
 - A device blocked by CA "require compliant" can't reach resources until compliant — communicate ETA to the user.
 
 ## ✅ Verification checklist

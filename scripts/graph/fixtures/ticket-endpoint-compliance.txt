@@ -1,0 +1,3 @@
+Laptop [DEVICE_NAME] (naming: LT-First,Last) shows non-compliant in Intune
+since the last policy update. User [UPN] can still sign in. Find which policy
+check fails and remediate.

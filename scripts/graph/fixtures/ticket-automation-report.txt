@@ -1,0 +1,3 @@
+Request: a PowerShell report of last sign-in date for all licensed users,
+exported to CSV for the license review. Read-only reporting, placeholders
+only ([UPN] rows). No changes to any account.

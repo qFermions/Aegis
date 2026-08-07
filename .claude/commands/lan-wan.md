@@ -49,7 +49,7 @@ Security & SD-WAN → Traffic analytics    # top talkers / bandwidth hogs
 </details>
 
 ## ⚠️ Risk warning
-- VLAN/trunk or firewall-rule changes on the MX can cut a whole site — change one thing, verify, and have a rollback. Route risky cutovers through Nova / `[@Aegion_NETPARTNER]`.
+- VLAN/trunk or firewall-rule changes on the MX can cut a whole site — change one thing, verify, and have a rollback. Route risky cutovers through independent plan review / `[@Aegion_NETPARTNER]`.
 - Don't reboot a core switch/MX during hours without warning.
 
 ## ✅ Verification checklist

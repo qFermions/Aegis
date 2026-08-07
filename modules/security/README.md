@@ -7,6 +7,8 @@ mitigations, PII protection, and operational guardrails directly in the agent wo
 
 | File | Purpose |
 |------|---------|
+| [security-doctrine.md](security-doctrine.md) | **Native authority** — immutable SR-1…SR-8 + the trusted-resource hierarchy (ADR-006) |
+| [placeholder-dictionary.md](placeholder-dictionary.md) | **Native authority** — canonical `[@Aegion_*]` + generic token dictionary |
 | [threat_detection.md](threat_detection.md) | Prompt injection recognition and response patterns |
 | [threat_model.md](threat_model.md) | Trust-boundary map, STRIDE→control matrix, runnable adversarial test suite (T1–T10) |
 | [incident_response.md](incident_response.md) | Step-by-step IR playbooks for common M365/Entra scenarios |

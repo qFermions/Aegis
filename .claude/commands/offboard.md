@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders. Never prompt for user information.
 
-**Placeholders:** `[UPN]` `[first.last]` `[MANAGER_UPN]` `[DEVICE_NAME]` `[EXTENSION]` `[SHARED_MAILBOX]` `[PRODUCT_PROFILE]` `[WORK_PHONE_DEVICE_GROUP]` — org values use the Koinon `[@Aegion_*]` dictionary.
+**Placeholders:** `[UPN]` `[first.last]` `[MANAGER_UPN]` `[DEVICE_NAME]` `[EXTENSION]` `[SHARED_MAILBOX]` `[PRODUCT_PROFILE]` `[WORK_PHONE_DEVICE_GROUP]` — org values use the native `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-⚠️ **This is a destructive multi-system plan — route it through Nova before executing.** Every disable/wipe/removal step below hits the destructive-action gate: confirm before running.
+⚠️ **This is a destructive multi-system plan — route it through independent plan review before executing.** Every disable/wipe/removal step below hits the destructive-action gate: confirm before running.
 ⚠️ **Involuntary termination?** Complete Steps 1–4 BEFORE the user is notified. Speed matters.
 
 ---

@@ -48,7 +48,7 @@ Get-MgUser -All -Property DisplayName,UserPrincipalName,AccountEnabled,AssignedL
 
 ## ⚠️ Risk warning
 - Removing a license **deletes that user's service data after the grace period** (e.g., mailbox after 30 days). Confirm before removing — this hits the destructive-action gate. For mailboxes you want to keep, convert to shared first (`/shared-mailbox`).
-- Mass license changes (>10 users) require explicit confirmation; route through Nova.
+- Mass license changes (>10 users) require explicit confirmation; route through independent plan review.
 
 ## ✅ Verification checklist
 - [ ] Per-SKU assigned vs available counts captured

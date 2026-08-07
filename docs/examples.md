@@ -157,7 +157,7 @@ plan mode per the workflow orchestration rules:
 
 > Operator: "Plan reviewed. This review does not authorize state changes; route each action to its canonical command."
 
-*(For plans with irreversible steps, the operator may paste this to Nova for independent
+*(For plans with irreversible steps, the operator may paste this to an independent reviewer for independent
 review before confirming — the lightweight supervision pattern described in the architecture.)*
 
 ### Canonical execution routes

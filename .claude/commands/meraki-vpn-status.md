@@ -107,7 +107,7 @@ Invoke-RestMethod `
 </details>
 
 ## ⚠️ Risk warning
-- **Fixing subnet overlaps requires re-IPing a VLAN** — this is a major change affecting all devices on that VLAN. Run through Nova for plan review before executing
+- **Fixing subnet overlaps requires re-IPing a VLAN** — this is a major change affecting all devices on that VLAN. Get an independent plan review before executing
 - **Do not remove the [@Aegion_WAN] P2P fiber link** until Meraki S2S VPN is confirmed stable and [@Aegion_REMOTE_ACCESS] is migrated — cutting it prematurely will isolate [@Aegion_SITE_2] and [@Aegion_REMOTE_ACCESS]
 - Saving changes to `Site-to-site VPN → Local networks` will momentarily re-negotiate the tunnel (~30-60 sec interruption)
 - Changing the VPN topology (hub-spoke ↔ full mesh) affects ALL tunnels across ALL sites simultaneously

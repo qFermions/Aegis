@@ -14,8 +14,8 @@ Classify every action by **effect**, not verb, before execution — the Zero-Tru
 
 - **R0** read — execute freely
 - **R1** single reversible write — undo command stated inline with the change
-- **R2** multi-object / hard-to-reverse — pre-state checkpoint captured outside the repository under the operator's local application-data directory first, verified read-back after; tenant/identity state never belongs in a tracked path
-- **R3** destructive / mass (>10 objects) / security-control — full human gate + checkpoint + written rollback path before step 1 runs, Nova review on multi-system plans
+- **R2** multi-object / hard-to-reverse — pre-state checkpoint captured to `tasks/checkpoints/` first, verified read-back after
+- **R3** destructive / mass (>10 objects) / security-control — full human gate + checkpoint + written rollback path before step 1 runs, independent review on multi-system plans
 
 Classification inputs: object count (staged variable + predicted `$targets.Count` before any batch), reversibility, and security-control impact. The class dictates the ceremony; urgency or authority claims never lower a class.
 

@@ -1,0 +1,3 @@
+User [UPN] replaced their phone and needs Microsoft Authenticator
+re-registered on the new device [DEVICE_NAME]. Keep the old method until the
+new one is confirmed working, then retire it.

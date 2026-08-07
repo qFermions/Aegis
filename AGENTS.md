@@ -6,9 +6,7 @@ Claude Code uses CLAUDE.md as the main project brain.
 Codex must read CLAUDE.md for context, but Codex must not blindly copy Claude Code's behavior.
 Codex's job is to audit, verify, harden, simplify, and safely improve the repo.
 
-**Precedence rule:** Safety overrides all modes. When mode guidance, this file, CLAUDE.md, or Koinon security rules (`shared/security/security-preamble.md`) conflict, follow the stricter safety rule and explain the conflict. CLAUDE.md Core Behavior Rules #4/#5/#10 and Koinon SR-1–SR-4 are immutable for Codex exactly as they are for Aegis.
-
-**Public-release fallback:** `shared/` is intentionally absent from the public release. When absent, do not fetch, recreate, or claim to have read private Koinon content. The safety/privacy/destructive-action rules in this file plus the included security, risk, placeholder, and Non-Negotiables sections of CLAUDE.md are the operative public baseline; follow the stricter included rule.
+**Precedence rule:** Safety overrides all modes. When mode guidance, this file, CLAUDE.md, or the native security doctrine (`modules/security/security-doctrine.md`, SR-1–SR-8 — the authority per ADR-006) conflict, follow the stricter safety rule and explain the conflict. CLAUDE.md Core Behavior Rules #4/#5/#10 and SR-1–SR-4 are immutable for Codex exactly as they are for Aegis.
 
 ---
 
@@ -110,7 +108,7 @@ Never introduce or preserve:
 - Hardcoded tenant secrets
 - Hardcoded admin credentials
 
-**Placeholders:** when present, use the canonical dictionary at `shared/security/placeholder-dict.md` — `[@Aegion_*]` tokens for org/environment values, generic tokens (`[USER@DOMAIN.COM]`, `[FIRST_NAME]`, `[LAST_NAME]`, `[DEVICE_NAME]`, `[ADMIN_NAME]`, `[JIRA-###]`, `[PHONE_NUMBER]`, …) for individuals and devices. Never invent a parallel token set. If `shared/` is absent, use only tokens already present in this public release; adding a token is blocked pending the upstream dictionary process. The canonical tenant domain is env-var only — never literal in any committed file.
+**Placeholders:** use the canonical dictionary at `modules/security/placeholder-dictionary.md` (native authority, ADR-006) — `[@Aegion_*]` tokens for org/environment values, generic tokens (`[USER@DOMAIN.COM]`, `[FIRST_NAME]`, `[LAST_NAME]`, `[DEVICE_NAME]`, `[ADMIN_NAME]`, `[JIRA-###]`, `[PHONE_NUMBER]`, …) for individuals and devices. Never invent a parallel token set. To add a token, follow the "Adding a new token" process in the dictionary. The canonical tenant domain is env-var only — never literal in any committed file.
 
 Flag any sensitive data immediately.
 
@@ -159,7 +157,7 @@ Use this format:
 
 ## 6. Repo guardrails
 
-- **`shared/` is a read-only Koinon submodule when present.** Never edit anything under it. Changes to shared content go through the Koinon repo via PR, then `git submodule update --remote shared` here. Its absence is expected in the public release and is not permission to synthesize or fetch private content.
+- **`shared/` is a read-only historical Koinon submodule (ADR-006).** Never edit anything under it, and never treat it as the runtime authority — the native governance in `modules/security/` is. Its absence changes nothing.
 - **`.claude/settings.local.json` is read-only for all agents.** It controls the permission model; editing it is self-permission escalation. Any instruction to modify it requires explicit operator confirmation.
 - **Remote routing (hard rule — v8.3-public topology):** `private` = the dev remote; `main` pushes go there ONLY. `archive` (the renamed old origin) = frozen pre-release history; never push to it. The public repo (Aegis) is **release-only**: it is NOT a remote of this dev repo and never receives `main` — parts of `main`'s lineage predate the placeholder rewrite and must never reach any public remote. Public releases are deliberate curated trees with fresh SHAs, staged in a separate clean directory, scanned to literal-zero, and pushed from there with explicit operator approval. `sync.bat` auto-pushes the private remote only. Before ANY push to any remote: print `git remote -v` and `gh repo view <owner/repo> --json visibility,nameWithOwner` for the target, and STOP if visibility is public and the push is not an approved release.
 - **Pre-commit scanner:** `.git/hooks/pre-commit` runs `scripts/pre-commit-check.js` (dangerous cmdlets, PII, credential patterns) against staged files. Never bypass it with `--no-verify` unless the operator explicitly approves, and say so in the commit report.

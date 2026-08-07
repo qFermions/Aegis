@@ -77,7 +77,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 
 ## ⚠️ Risk warning
 - **Never disable MFA org-wide** as a "fix." Per-user temporary exclusion only, time-boxed, documented, reverted.
-- The CA exclusion is a real security gap while open — re-add the user immediately after registration. Route through Nova if it touches a broad policy.
+- The CA exclusion is a real security gap while open — re-add the user immediately after registration. Route through independent plan review if it touches a broad policy.
 
 ## ✅ Verification checklist
 - [ ] User completed registration at aka.ms/mfasetup (new method shows in Authentication methods)

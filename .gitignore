@@ -43,3 +43,7 @@ aegis-orientation.txt
 v7-apply-log.txt
 \# Aegis — IT Troubleshoot Lab/
 local-aegis-upgrade-archive/
+
+# Private stores (harness state — never committed)
+/memory/
+tasks/graph-runs/

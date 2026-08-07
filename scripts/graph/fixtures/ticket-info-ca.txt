@@ -1,0 +1,3 @@
+Operator question, reference only - no change requested.
+What does Conditional Access policy [POLICY_NAME] actually do?
+Explain scope (users, apps), conditions, and grant controls in plain English.

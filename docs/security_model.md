@@ -198,8 +198,8 @@ into production.
    that proves the change took effect (run a verification command, check a portal value,
    confirm the user can sign in).
 
-2. **Nova supervision pattern** — For multi-system plans with irreversible steps, the
-   operator pastes the plan to a separate Claude session (Nova) for independent review
+2. **Independent review pattern** — For multi-system plans with irreversible steps, the
+   operator pastes the plan to a separate Claude session (the independent reviewer) for independent review
    before execution. This provides a second-opinion checkpoint using the same underlying
    model but without the accumulated session context bias.
 
@@ -227,7 +227,7 @@ CLAUDE.md (plain text), which is version-controlled and not a model artifact.
 | LLM06 | Info Disclosure | HIGH | No self-disclosure, PII isolation, scanner | Low-Medium |
 | LLM07 | Insecure Plugins | LOW | Read-only plugins, no API access | Low |
 | LLM08 | Excessive Agency | **CRITICAL** | Destructive gate, scope limits, dual-scan | **Medium** — human confirmation required |
-| LLM09 | Overreliance | MEDIUM | Verification steps, Nova supervision | Medium — operator diligence required |
+| LLM09 | Overreliance | MEDIUM | Verification steps, independent review | Medium — operator diligence required |
 | LLM10 | Model Theft | N/A | — | None |
 
 ---

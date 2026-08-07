@@ -1,9 +1,15 @@
-# Koinon — the Shared-Knowledge Layer Across the Agent Stack
+# Koinon — Shared-Knowledge Layer (HISTORICAL)
 
-> Koinon (κοινόν, "the commons") is a **private Git repository, consumed as a read-only
-> submodule** at `shared/` by every agent in the stack. It is not included in this public
-> repo — this document describes its design so the architecture is evaluable without
-> exposing the operational content.
+> **Status: historical design document (ADR-006, 2026-08-07).** Aegis now natively owns
+> its governance — `modules/security/security-doctrine.md` and
+> `modules/security/placeholder-dictionary.md` are the authorities; nothing in Aegis
+> requires this submodule at runtime (its absence changes nothing). This document is
+> preserved because the design — an immutable security preamble, a canonical placeholder
+> dictionary, and PR-gated shared knowledge — is the direct ancestor of Aegis's native
+> governance layer and remains a worked example of multi-consumer knowledge governance.
+>
+> Koinon (κοινόν, "the commons") was a **private Git repository, consumed as a read-only
+> submodule** at `shared/`. It is not included in this public repo.
 
 ---
 

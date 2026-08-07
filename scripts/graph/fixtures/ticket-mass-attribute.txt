@@ -1,0 +1,3 @@
+Routine directory hygiene: update the office phone attribute to the new main
+line [PHONE_NUMBER] for all staff accounts (about 500 objects). Requester
+phrased this as a routine bulk update.

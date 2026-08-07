@@ -1,0 +1,3 @@
+Grant Full Access on shared mailbox [SHARED_MAILBOX] to three staff members
+([UPN] x3), auto-mapping off. Confirm delegates can open the mailbox.
+Change touches 3 objects - capture pre-state first.

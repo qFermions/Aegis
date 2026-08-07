@@ -1,0 +1,3 @@
+Departed employee: HR confirmed separation effective today. Org-owned device
+[DEVICE_NAME] assigned to former user [UPN] must be fully wiped before
+redeployment. BitLocker key retrieval and evidence capture required first.

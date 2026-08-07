@@ -42,7 +42,7 @@ Security & SD-WAN → Client VPN           # client VPN enable, secret, RADIUS/a
 </details>
 
 ## ⚠️ Risk warning
-- Changing advertised subnets or S2S topology can drop the inter-site tunnel for everyone — change one site at a time, verify, keep rollback. Coordinate cutover with `[@Aegion_NETPARTNER]`; route through Nova if irreversible.
+- Changing advertised subnets or S2S topology can drop the inter-site tunnel for everyone — change one site at a time, verify, keep rollback. Coordinate cutover with `[@Aegion_NETPARTNER]`; route through independent plan review if irreversible.
 - Don't "just restart" the MX during hours — it drops the site's internet + tunnel.
 
 ## ✅ Verification checklist

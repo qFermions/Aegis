@@ -55,52 +55,38 @@ behavioral rules, workflow orchestration, security gates, and the self-improveme
 
 ---
 
-## Multi-Agent Architecture
+## Harness Architecture — one product, internal capabilities
 
-Three specialized agents divide the work by channel and context:
+Aegis is a single adaptive harness (ADR-006). The operator types the IT problem
+in plain English; the lead model orchestrates inside Aegis and selects the
+smallest sufficient execution shape:
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        [@Aegion] IT Operations                      │
-└─────────────────────────────────────────────────────────────────────┘
-
-  Aegis (VS Code / Claude Code)
-  ├── Primary: IT tickets, onboarding, offboarding
-  ├── Primary: Script development and automation
-  ├── Primary: Meraki, VoIP, Intune operations
-  └── Handoff → Nova for project/comms work
-
-  Nova (Claude.ai browser/desktop)
-  ├── Primary: Project tracking, meeting prep
-  ├── Primary: Stakeholder comms, board reports
-  ├── Supervision: Plan review for Aegis multi-system tasks
-  └── Receives handoffs from Aegis via paste
-
-  Red (Telegram / Claude iPhone app)
-  ├── Primary: Mobile quick-reference
-  ├── Primary: Field support, simple lookups
-  └── Portal steps only — no PowerShell on mobile
+  Ticket (plain English)
+    │
+    ├─ REPLAY  — verified exact duplicate → deterministic render, zero reasoning
+    │            (scripts/replay/)
+    ├─ DIRECT  — simple new work, handled inline
+    ├─ AGENTS  — genuinely independent workstreams, lead-written briefs
+    ├─ LOOP    — machine-checkable gate, attempt ceiling 3
+    ├─ GRAPH   — formal tickets with execution risk (scripts/graph/, ATG)
+    └─ MEMORY  — controlled retrieval/promotion (scripts/memory/)
+    │
+    ▼
+  R0–R3 authorization → verification → Jira-ready documentation
 ```
 
-### Handoff Protocol
-
-When redirecting to Nova:
-```
-"This would be better in Nova.
-Hand off context: [1-2 sentences of what Nova needs].
-Your ask: [restate the request for Nova]."
-```
-
-### Nova Supervision Pattern
+### Independent Review (maker ≠ checker)
 
 For multi-system plans with irreversible steps:
 1. Aegis writes the numbered plan with verification steps
-2. Operator pastes plan to Nova: *"Anything missing, risky, or out of order?"*
-3. Nova gives second opinion → operator brings feedback back
-4. Aegis adjusts if needed, then executes
+2. The plan gets an independent review in a fresh context — the reviewer sees
+   the spec, the artifact, and ground truth, never the maker's reasoning
+3. Feedback comes back → Aegis adjusts, then executes under the R-class ceremony
 
-This provides a human-in-the-loop checkpoint before high-risk operations without
-requiring any infrastructure (no orchestration API, no agent-to-agent comms).
+This is a human-in-the-loop checkpoint before high-risk operations with no
+orchestration infrastructure required. The graph engine records the requirement
+as `independentReviewRequired`; nothing in-session can satisfy it.
 
 ---
 
@@ -258,8 +244,8 @@ Operator pastes ticket description
 │
 ├── scripts/
 │   ├── pre-commit-check.js           # Pre-commit safety scanner (Node.js)
-│   ├── security-audit.js             # Preview-first M365 audit report generator
-│   └── init-memory.js                # Preview-first exact-plan memory bootstrap
+│   ├── security-audit.js             # M365 tenant security audit report generator
+│   └── init-memory.js                # Initializes agent memory files for new installs
 │
 └── tasks/
     ├── todo.md                        # Current task tracking
@@ -273,7 +259,7 @@ Operator pastes ticket description
 
 | Agent | Purpose | Scope | Inputs | Outputs | Reliability | Safety |
 |---|---|---|---|---|---|---|
-| Aegis — IT Troubleshoot Lab | Main IT troubleshooting + execution agent for [ADMIN_NAME]'s daily tickets | M365, Entra, Intune, Exchange, Windows, Meraki, VoIP, helpdesk, runbooks | Ticket text, screenshots, logs, sanitized environment details | Step-by-step fix, verification checklist, Jira-ready note, reusable runbook | High for guided troubleshooting; requires operator approval for destructive production changes | Inherits Koinon placeholders + security preamble; warns before risky actions; GUI first, PowerShell secondary; Owner: [ADMIN_NAME]; Status: Active |
+| Aegis — IT Troubleshoot Lab | Main IT troubleshooting + execution agent for [ADMIN_NAME]'s daily tickets | M365, Entra, Intune, Exchange, Windows, Meraki, VoIP, helpdesk, runbooks | Ticket text, screenshots, logs, sanitized environment details | Step-by-step fix, verification checklist, Jira-ready note, reusable runbook | High for guided troubleshooting; requires operator approval for destructive production changes | Native governance: modules/security/security-doctrine.md + placeholder-dictionary.md; warns before risky actions; GUI first, PowerShell secondary; Owner: [ADMIN_NAME]; Status: Active |
 
 ## Platform Notes (moved from CLAUDE.md, v8.3)
 

@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, departments, or any PII. Deliver the FULL checklist IMMEDIATELY using only placeholders. Never prompt for user information.
 
-**Placeholders:** `[FIRST_NAME]` `[LAST_NAME]` `[UPN]` `[DEPARTMENT]` `[MANAGER_NAME]` `[TEMP_PASSWORD]` `[DEVICE_NAME]` `[EXTENSION]` `[DEPT_DL]` `[SHARED_MAILBOX]` `[PRODUCT_PROFILE]` `[LICENSE_TYPE]` `[ENROLLMENT_TOKEN_QR]` `[WORK_PHONE_DEVICE_GROUP]` — org values use the Koinon `[@Aegion_*]` dictionary.
+**Placeholders:** `[FIRST_NAME]` `[LAST_NAME]` `[UPN]` `[DEPARTMENT]` `[MANAGER_NAME]` `[TEMP_PASSWORD]` `[DEVICE_NAME]` `[EXTENSION]` `[DEPT_DL]` `[SHARED_MAILBOX]` `[PRODUCT_PROFILE]` `[LICENSE_TYPE]` `[ENROLLMENT_TOKEN_QR]` `[WORK_PHONE_DEVICE_GROUP]` — org values use the native `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 Steps marked **[if applicable]** depend on role/department — skip with a note when they don't apply, never silently.
 
@@ -200,10 +200,39 @@ SMS fallback: entra.microsoft.com → Users → `[UPN]` → **Authentication met
 
 Every staff member runs MFA from a phone — pick the path, never skip the step:
 
-**Path A — Corporate work phone (Android/MDM) [if role gets one]. Order matters — enroll FIRST, group SECOND:**
+**Path A — Corporate work phone (Android Enterprise fully managed) [if role gets one].**
+Sequence per the established operator flow. The two hard dependencies: the user memberships (steps 2–3) must exist before the enrollment sign-in in step 6, and the device group (step 8) only after the device exists in Intune.
 
-1. Factory-fresh (or factory-reset) device → during setup, scan `[ENROLLMENT_TOKEN_QR]` → device enrolls to Intune as corporate-owned
-2. **THEN** add the device to `[WORK_PHONE_DEVICE_GROUP]` — this membership is what triggers assigned apps to auto-deploy via **managed Google Play**
+1. Get the phone to the **Welcome** screen — two cases:
+   - **New / already factory-fresh** → power on; no reset needed.
+   - **Used / previously configured** → ⚠️ **factory reset is a wipe-class destructive action (R3) and is irreversible — there is no undo.** Before resetting, confirm the device holds nothing anyone needs: not assigned to an active user, no unsynced local data (a phone coming from offboarding was normally already wiped per `/offboard` Step 10). This runbook *instructs* the reset — the destructive-action confirmation still applies before you perform it. Then: `Settings → System → Reset options → Erase all data (factory reset)`.
+   **Done when:** the phone sits at the Welcome screen.
+2. Add the **user** `[UPN]` to the remote-user prerequisite group `[REMOTE_USER_GROUP]` — operator-recalled name "Remote User"; **exact directory name unverified, confirm before relying on it**. Add on the group's source-of-authority side (Step 5 rule: synced group → ADUC, cloud group → Entra). Why: enrollment/remote-access eligibility rides this membership.
+   **Done when:** the membership shows on the user object.
+3. Add the **user** to the corporate Android enrollment group `[WORK_PHONE_ENROLLMENT_GROUP]` — operator-recalled name "Android Work Phone Corporate"; **exact directory name unverified — confirm and fill, don't guess**. Why: gates who may enroll a corporate work phone.
+   **Done when:** membership visible.
+4. Get the enrollment QR on screen: intune.microsoft.com → **Devices → Android → Android enrollment → Corporate-owned, fully managed user devices** → the enrollment profile → **Token** (this is `[ENROLLMENT_TOKEN_QR]`).
+5. On the phone: tap the **same spot on the Welcome screen 6 times** (some Android builds trigger at 5) → the QR setup launches → join Wi-Fi if prompted.
+   *(No gesture available? Fallback: at the Google sign-in screen type `afw#setup` instead of an email — the token-entry path.)*
+6. Scan `[ENROLLMENT_TOKEN_QR]` → follow the prompts: Google/Chrome terms → sign in with `[UPN]` → set screen lock/PIN → let the work apps install.
+   ⚠️ Do **not** restart the phone mid-enrollment — Microsoft documents that it can look enrolled but never register with Intune.
+   **Done when:** the phone reaches the home screen showing it's a managed device.
+
+*WAIT UNTIL the device exists in Intune (a group can't target a device object that isn't there yet):*
+
+7. intune.microsoft.com → **Devices → Android** → refresh until the new device appears with **Ownership = Corporate** and `[UPN]` as primary user (usually a few minutes).
+
+*After the device appears:*
+
+8. Add the **device object** (not the user) to `[WORK_PHONE_DEVICE_GROUP]` — operator-recalled name "Android PH" device group; **exact directory name unverified**. Entra/Intune → Groups → `[WORK_PHONE_DEVICE_GROUP]` → Members → Add → select the device. This membership is what fires the assigned-app pushes via **managed Google Play**.
+   **Done when:** the device is listed in the group's members.
+9. Let policies and apps land (~15 min, or open the device in Intune → **Sync**): Outlook, Teams, Authenticator + the department's assigned set.
+
+*After policies apply — accounts & comms:*
+
+10. Sign the user into the deployed apps on the phone; send the **Slack invite** and complete Slack sign-in; provision any other role-required apps from the Step 13 list.
+
+**Gotcha (org-level, one-time):** if a Conditional Access policy requires compliant devices on All cloud apps / Android / Browsers, the **Microsoft Intune** cloud app must be excluded from it — enrollment authenticates in a Chrome tab during setup and that policy blocks it.
 
 **Path B — BYOD personal phone (everyone else):**
 
@@ -211,8 +240,8 @@ Every staff member runs MFA from a phone — pick the path, never skip the step:
 2. Install **Outlook** (+ Teams if the role needs it) → sign in with `[UPN]` → Intune app-protection (MAM) policies apply to the work account automatically
 3. Full BYOD enrollment via **Company Portal** only if org policy requires it for the role (deep flow: `/enroll-device`)
 
-✅ Verify: Authenticator registered + Outlook loads mail on the phone. Path A additionally: assigned apps present + device **Compliant** in Intune.
-**Why:** A hire with no mobile setup hits the first CA prompt with nowhere to approve it — that's the day-one lockout ticket. Corp phones get full MDM; personal phones get MAM so work data is containerized without managing the whole device. App assignments target the device group; a device added before it exists in Intune gets nothing — group-after-enroll is what fires the pushes.
+✅ Verify — Path A, all of: device visible in Intune (Corporate, `[UPN]` as primary user) · member of `[WORK_PHONE_DEVICE_GROUP]` · **Compliant** · assigned apps installed · user signed into mail/Teams on the phone · Slack working. Path B: Authenticator registered + Outlook loads mail on the phone.
+**Why:** A hire with no mobile setup hits the first CA prompt with nowhere to approve it — that's the day-one lockout ticket. Corp phones get full MDM; personal phones get MAM so work data is containerized without managing the whole device. App assignments target the device group; a device added before it exists in Intune gets nothing — the WAIT-UNTIL boundary is what fires the pushes.
 
 ---
 
@@ -335,7 +364,7 @@ Send to the user's **personal email**: work email `[UPN]`, first sign-in at offi
 - [ ] Security groups · DLs/M365 groups · shared-mailbox delegation [or N/A]
 - [ ] SharePoint/Teams access (mechanism verified, no double-grant)
 - [ ] Signature · [@Aegion_VOIP] `[EXTENSION]` · Zoom · Adobe [or N/A] · per-role apps [or N/A noted]
-- [ ] Windows device enrolled, named, compliant, KFM on · mobile set up (corp: enrolled→grouped / BYOD: Authenticator + Outlook MAM) — never N/A
+- [ ] Windows device enrolled, named, compliant, KFM on · mobile set up (corp: user prereq groups → enroll → WAIT for Intune object → device group → apps + Slack verified / BYOD: Authenticator + Outlook MAM) — never N/A
 - [ ] Drives · printers · Wi-Fi · VPN [role-gated] · alarm code · badge [or N/A]
 - [ ] JSM customer added · asset logged · welcome email + split-channel credentials · manager notified
 - [ ] First sign-in verified end-to-end · Jira ticket logged

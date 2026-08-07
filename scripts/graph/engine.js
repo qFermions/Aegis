@@ -294,7 +294,7 @@ function submit(state, node, artifact) {
       if (state.mode === 'dry-run') {
         // Nothing executes in dry-run; gates are recorded for the work-up.
         state.node = 'VERIFIER';
-        pushHistory(state, node, 'dry-run-skip-executor', `gates recorded: human=${state.risk.gates.humanRequired} checkpoint=${state.risk.gates.checkpointRequired} nova=${state.risk.gates.independentReviewRequired}`);
+        pushHistory(state, node, 'dry-run-skip-executor', `gates recorded: human=${state.risk.gates.humanRequired} checkpoint=${state.risk.gates.checkpointRequired} independentReview=${state.risk.gates.independentReviewRequired}`);
       } else if (state.risk.gates.humanRequired) {
         state.status = 'awaiting_human';
         state.node = 'HUMAN_GATE';

@@ -441,7 +441,6 @@ Agent design and operating context. Read on demand when the topic comes up.
 - `docs/architecture.md` — Aegis system architecture: harness layers, slash commands, memory/replay layer, **platform notes** (per-surface behavior), and the formal registry entry.
 - `docs/examples.md` — Three production scenarios: pre-commit hook PII catch, plan-mode escalation in action, and the self-improvement loop.
 - `docs/security_model.md` — OWASP LLM Top 10 analysis for Aegis: prompt injection controls, sensitive data leakage, supply chain, denial of service.
-- `docs/codex-modes/` — mode router for the separate Codex CLI agent. **Not applicable to Aegis**; operator awareness only — never treat its `/audit`-style modes as Aegis commands.
 
 ---
 

@@ -167,16 +167,10 @@ Use this format:
 
 ## 7. Mode commands
 
-If no mode is given, start in audit mode. `docs/codex-modes/MODE-ROUTER.md` governs mode selection.
-
-- /audit = use `docs/codex-modes/AUDITOR.md`
-- /sec = use `docs/codex-modes/CYBERSECURITY.md`
-- /build = use `docs/codex-modes/BUILDER.md`
-- /plan = use `docs/codex-modes/PLANNER.md`
-- /arch = use `docs/codex-modes/ARCHITECT.md`
-- /cofounder = use `docs/codex-modes/COFOUNDER.md`
-- /superbrain = use `docs/codex-modes/SUPERBRAIN.md`
-- /handoff = use `docs/codex-modes/HANDOFF.md`
+This public release ships no separate mode router. Operate in **audit mode**: read,
+verify, and report; make no change without the operator's explicit instruction and
+the standard gates. (The private deployment routes a separate Codex CLI agent through
+its own mode files; those are not part of this release.)
 
 These modes belong to Codex only — Aegis (Claude Code) does not follow them.
 

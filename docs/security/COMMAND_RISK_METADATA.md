@@ -14,16 +14,12 @@ Direct-integration commands also declare, in their body:
 Direct-integration set (validated by `scripts/command-policy.test.js`):
 
 - `/aegis-update`
-- `/alpha-signal`
-- `/ask-hermes`
-- `/dashboard-render`
-- `/hermes-status`
 - `/jira-create`
 - `/jira-update`
-- `/morning-brief`
-- `/portfolio-status`
 - `/ps-script`
-- `/war-room`
+
+(The former Hermes/war-room direct-integration commands were removed from the
+product surface in v8.6 — ADR-006; history preserves them.)
 
 Mixed-state procedural set (validated by `scripts/command-safety-gates.test.js`):
 

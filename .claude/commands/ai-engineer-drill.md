@@ -12,8 +12,8 @@ Deliver ONE practical AI-engineering drill per invocation, using **Variant D** o
 ```
 
 **Topic selection:**
-- Operator's argument wins; otherwise pick what connects to recent real work (e.g., Aegis's own commands → prompt-engineering lab; Koinon T-patterns → RAG lab; the agent stack → multi-agent orchestration lab).
-- Good pool: prompt engineering, structured outputs, embeddings & vector search, RAG, tool calling, agents & orchestration, evals (the Koinon eval suite is a live example), hallucination control, context windows, model routing, privacy/data safety in AI systems.
+- Operator's argument wins; otherwise pick what connects to recent real work (e.g., Aegis's own commands → prompt-engineering lab; troubleshooting patterns → RAG lab; the agent stack → multi-agent orchestration lab).
+- Good pool: prompt engineering, structured outputs, embeddings & vector search, RAG, tool calling, agents & orchestration, evals (build a small eval suite for a repo command), hallucination control, context windows, model routing, privacy/data safety in AI systems.
 
 **Rules:**
 - "Real IT use case" must map to the operator's actual environment (helpdesk, M365, the Aegis stack) — placeholders only.

@@ -160,7 +160,7 @@ Additive to the v8.0 IT-operations role: make Aegis world-class at the IT-engine
 - **Six read-only War Room slash commands** in `.claude/commands/`, bridging the laptop to Aegis D Hermes's trading war room (each its own commit, production-usable, not stubs):
   - `/war-room` — open the latest dashboard (live URL or latest rendered HTML pulled read-only).
   - `/morning-brief` — print the latest Daily Hunt / market-open brief in the terminal.
-  - `/portfolio-status` — core-holds snapshot (AMPX/ONDS/PLTR): price, day move, one-line read.
+  - `/portfolio-status` — core-holds snapshot ([TICKER_1]/[TICKER_2]/[TICKER_3]): price, day move, one-line read.
   - `/dashboard-render [date]` — trigger a fresh War Room v30 render (additive artifact only; never a state/service change).
   - `/alpha-signal TICKER` — one-line plain-English signal read for a ticker.
   - `/hermes-status` — health check: SSH ping + both war-room cron jobs registered + last render age.

@@ -6,7 +6,7 @@
   },
   "scope": {
     "discoveredMarkdown": "Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native, and portal mutation grammar.",
-    "clientBoundaries": "State-changing or disclosure-capable Jira, memory, security-audit, and Hermes implementations outside Markdown fence discovery.",
+    "clientBoundaries": "State-changing or disclosure-capable Jira, memory, and security-audit implementations outside Markdown fence discovery.",
     "limitation": "Novel syntax and prose still require semantic review and grammar extension."
   },
   "directR1": [],

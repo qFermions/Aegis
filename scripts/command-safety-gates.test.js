@@ -175,9 +175,6 @@ function commandsIn(statement, language) {
   if (/(?:^|[;|{}=:])\s*scp\s+/i.test(statement)) hits.push('scp');
   if (/(?:^|[;|{}=:])\s*repadmin\s+\/syncall\b/i.test(statement)) hits.push('repadmin');
   if (/(?:^|[;|{}=:])\s*gpupdate\s+\/force\b/i.test(statement)) hits.push('gpupdate');
-  if (POWER_SHELL_LANGUAGES.has(language) && /(?:^|[;|{}=:])\s*&\s*\$bridge\s+-Action\s+Render\b/i.test(statement)) {
-    hits.push('hermes-render');
-  }
   if (POWER_SHELL_LANGUAGES.has(language)) {
     const dotNetFilePatterns = [
       [/\[IO\.FileStream\]::new\([^\r\n]*\[IO\.FileMode\]::CreateNew/i, 'dotnet-file-create'],
@@ -244,10 +241,6 @@ function classifyImpact(command, text) {
   const local = dotNetLocalFile || /start-process|new-item|set-content|export-csv|out-file|install-module|scp|rsync|git-write|file-write|metadata-write|package-write|redirect-write|gpupdate/.test(value);
   if (local) categories.add('reversible state change');
   if (dotNetLocalFile) categories.add('local filesystem write');
-  if (/hermes-render/.test(value)) {
-    categories.add('remote write');
-    categories.add('external-system mutation');
-  }
   if (!dotNetLocalFile && (/\b(?:add|assign|block|change|clear|convert|create|deactivate|delete|disable|enable|export|factory-reset|grant|install|invalidate|isolate|move|purge|quarantine|reclaim|release|remove|rename|replace|repadmin|reset|restart|restore|retire|revoke|set|soft-delete|start|stop|submit|update|wipe|write)\b/.test(value) || MUTATING_VERB.test(command))) {
     categories.add('external-system mutation');
   }
@@ -535,7 +528,7 @@ function currentStateChangeInventory() {
     },
     scope: {
       discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native, and portal mutation grammar.',
-      clientBoundaries: 'State-changing or disclosure-capable Jira, memory, security-audit, and Hermes implementations outside Markdown fence discovery.',
+      clientBoundaries: 'State-changing or disclosure-capable Jira, memory, and security-audit implementations outside Markdown fence discovery.',
       limitation: 'Novel syntax and prose still require semantic review and grammar extension.',
     },
     directR1: DIRECT_R1_INVENTORY,
@@ -713,9 +706,6 @@ if ($null -ne $gateIf) {
         } else {
             $matches = @($ast.FindAll({ param($node) $node -is [Management.Automation.Language.CommandAst] }, $true) | Where-Object {
                 if ($_.Extent.StartLineNumber -ne [int]$sink.line) { return $false }
-                if ([string]$sink.command -ceq 'hermes-render') {
-                    return $_.Extent.Text -match '(?i)^\s*&\s*\$bridge\s+-Action\s+Render\b'
-                }
                 return $_.GetCommandName() -ceq [string]$sink.command
             })
         }

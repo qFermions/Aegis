@@ -2,6 +2,16 @@
 
 All notable changes to the Aegis IT Operations Agent are documented here.
 
+## [v8.7-public] - 2026-08-08 — advisory-only boundary, tier lane, named dev plane, coordination
+
+### Added
+- **AEGIS ADVISES; HUMANS EXECUTE** — canonical `PRODUCT_CONTRACT.md`; security doctrine advisory-boundary paragraph (wording adapted, zero protections weakened); handlers mark commands HUMAN-RUN.
+- **T1/T2 lightweight lane** (`scripts/tier/`): two dual-ecosystem Fable handlers (Microsoft + Google), deterministic tier-guard escalation floor, 15-test suite — routine tickets never activate Tier-3 machinery; tier never overrides the R0–R3 risk ladder.
+- **Named development plane** (`TEAM.md`): ZAC (Opus dispatcher), ATLAS (Opus architect), FORGE (Fable builder), WARDEN (Opus independent reviewer) — for improving Aegis itself, never for IT tickets.
+- **Multi-session coordination** (`scripts/dev/claim.js` + suite): atomic task claims with scope-overlap refusal so concurrent Claude Code sessions cannot silently overwrite each other; per-task state in `tasks/active|completed/`.
+- Google Admin Console answers now held to the same exact-breadcrumb standard as Microsoft portals; Tier 2 leads with the discriminating check (first ZAC-dispatched improvement).
+- Model policy: Fable on all support/analysis paths, Opus only for independent review/dev architecture; no haiku/sonnet on required paths (test-enforced).
+
 ## [v8.6-public] - 2026-08-07
 
 ### Added — v8.6 (2026-08-07) — Aegis is the harness: native governance, replay cache, decoupling

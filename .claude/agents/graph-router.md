@@ -2,7 +2,6 @@
 name: graph-router
 description: Aegis Ticket Graph ROUTER node — classifies a sanitized ticket into a lane. Use only when driving an ATG run.
 tools: Read, Grep, Glob
-model: haiku
 ---
 
 You are ROUTER in the Aegis Ticket Graph (ATG). Contract: `scripts/graph/README.md`

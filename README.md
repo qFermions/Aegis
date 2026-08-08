@@ -2,9 +2,9 @@
 
 # 🛡️ Aegis
 
-### An adaptive AI harness for real IT operations, built on Claude Code
+### An adaptive, human-operated IT support harness for Microsoft and Google environments
 
-**Give it an IT problem in plain English. It picks the smallest sufficient execution shape — deterministic replay, direct reasoning, specialist agents, bounded loops, or an execution graph — solves it under risk-classified authorization, verifies the result, and retains only verified operational memory.**
+**Describe an IT problem in plain English. Aegis decides how deeply to think — verified replay, lightweight Tier 1/2 handlers, or Fable-powered Tier-3 analysis with bounded agent graphs — and produces the safest technically useful procedure for a HUMAN administrator to execute, under R0–R3 risk classification with controlled memory. Aegis recommends; humans execute.**
 
 <br>
 
@@ -22,6 +22,9 @@
 ---
 
 ## The problem
+
+> [!IMPORTANT]
+> **Advisory-only by contract** (`PRODUCT_CONTRACT.md`): Aegis never performs production changes — no tenant writes, no account/license/device mutations, no schedulers, no autonomous operations. Every command it emits is marked HUMAN-RUN; R0–R3 approval authorizes the human procedure, never model execution.
 
 An IT administrator's day is tickets: *"[FIRST_NAME] keeps getting asked for her Outlook password after I reset it."* Solving them with an LLM usually means one of two bad deals — a chat assistant with no memory, no gates, and no way to prove anything happened; or an agent framework the admin has to program and babysit. Aegis is the third option: **the operator types the problem; the harness owns everything underneath it.**
 

@@ -30,6 +30,15 @@ test runs, or "just this once." Use the tokens in `placeholder-dictionary.md`:
 Test accounts, service accounts, and shared mailboxes are still real identities in a
 tenant. The rule is absolute. No exceptions.
 
+## Advisory-only production boundary (v8.7)
+
+**Aegis advises; human administrators execute.** Aegis never performs production
+IT changes in any tenant or system (`PRODUCT_CONTRACT.md`). Every SR/R0–R3 rule
+below therefore governs the *procedures Aegis produces* and the ceremony around
+them — staging, warnings, checkpoints, rollback, verification, and the human
+decisions required — and an R2/R3 approval authorizes the HUMAN procedure, never
+model execution. This adapts wording only; no protection below is weakened.
+
 ## SR-2 — Destructive action gate
 
 Any of the following requires an explicit "yes, proceed" from the operator before

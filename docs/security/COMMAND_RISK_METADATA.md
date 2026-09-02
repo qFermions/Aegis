@@ -40,7 +40,7 @@ The repository does not claim that this metadata makes R0–R3 a complete author
 
 ## Why arbitrary frontmatter was not added
 
-The installed Claude Code version does not document custom `risk`, `access`, or `credential-sensitive` command-frontmatter fields as enforcement inputs. Adding unsupported keys to all 65 commands would look machine-enforced without creating a real control. Risk metadata therefore remains explicit Markdown, while `disable-model-invocation` uses a documented field with deterministic behavior.
+The installed Claude Code version does not document custom `risk`, `access`, or `credential-sensitive` command-frontmatter fields as enforcement inputs. Adding unsupported keys to all 58 commands would look machine-enforced without creating a real control. Risk metadata therefore remains explicit Markdown, while `disable-model-invocation` uses a documented field with deterministic behavior.
 
 ## Procedural command safety boundary
 

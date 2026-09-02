@@ -14,11 +14,11 @@ This module is read-only assessment and planning guidance. It does not authorize
 **What:** Every licensed user must have MFA registered. No exceptions.
 
 ### Portal Steps
-1. Entra → Identity → Users → All users
+1. Entra ID → Users → All users
 2. Filter: `Per user MFA status = Disabled`
    (This finds users who have not set up MFA via legacy per-user enforcement)
 3. Also check via Conditional Access report:
-   - Entra → Protection → Conditional Access → Insights and reporting
+   - Entra ID → Conditional Access → Insights and reporting
    - Look for sign-ins where `MFA result = Not required`
 
 ### PowerShell Verification
@@ -63,7 +63,7 @@ Write-Host "Users without MFA: $($noMFA.Count)"
 **What:** Guest accounts accumulate over time. Review quarterly for stale or unauthorized guests.
 
 ### Portal Steps
-1. Entra → Identity → Users → All users
+1. Entra ID → Users → All users
 2. Filter: `User type = Guest`
 3. Review: Last sign-in date, invited by, what groups/apps they belong to
 > **PREVIEW ONLY [compliance-stale-guest-removal]:** Identify and document candidates only. Guest deletion requires a separately reviewed identity-removal runbook and exact target set.
@@ -134,7 +134,7 @@ Write-Host "Blocked accounts with licenses: $($blockedLicensed.Count)"
 **What:** Minimize standing admin privileges. Only required accounts should hold elevated roles.
 
 ### Portal Steps
-1. Entra → Identity → Roles & admins → All roles
+1. Entra ID → Roles & admins → All roles
 2. Review: Global Administrator, Privileged Role Administrator, Exchange Administrator,
    Intune Administrator, Security Administrator
 3. For each: verify each member has a documented business reason
@@ -175,7 +175,7 @@ $roles | Select-Object `
 block legacy auth, require compliant device for sensitive apps.
 
 ### Portal — Policy Review
-1. Entra → Protection → Conditional Access → Policies
+1. Entra ID → Conditional Access → Policies
 2. Verify these policies exist and are **On** (not Report-only):
 
 | Policy | State | Covers |
@@ -222,7 +222,7 @@ block legacy auth, require compliant device for sensitive apps.
 [ ] Conditional Access — all critical policies On (not Report-only)
 [ ] External sharing — no anonymous sharing enabled without approval
 [ ] Secure Score — reviewed in security.microsoft.com → Secure Score
-[ ] Risky users — Entra → Identity Protection → Risky users → 0 unreviewed High-risk users
+[ ] Risky users — entra.microsoft.com → ID Protection → Risky users → 0 unreviewed High-risk users
 ```
 
 Run date: ________ | Completed by: [ADMIN_NAME] | Ticket: [JIRA-###]

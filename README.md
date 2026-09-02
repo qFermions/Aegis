@@ -2,9 +2,11 @@
 
 # 🛡️ Aegis
 
-### An adaptive, human-operated IT support harness for Microsoft and Google environments
+### An adaptive, human-operated IT support harness — Microsoft 365 / Entra / Intune first, Google Workspace through the same handlers
 
 **Describe an IT problem in plain English. Aegis decides how deeply to think — verified replay, lightweight Tier 1/2 handlers, or Fable-powered Tier-3 analysis with bounded agent graphs — and produces the safest technically useful procedure for a HUMAN administrator to execute, under R0–R3 risk classification with controlled memory. Aegis recommends; humans execute.**
+
+*Scope note: the 58 runbooks and the ticket eval are Microsoft (hybrid AD, Entra ID, M365, Exchange Online, Intune, Teams, OneDrive, SharePoint) plus Meraki/VoIP. The two support handlers are written for Google Workspace too, but no Google runbooks ship in this tree yet — treat Google coverage as model knowledge, not tested content.*
 
 <br>
 
@@ -12,7 +14,7 @@
 [![Architecture](https://img.shields.io/badge/Authorization-R0--R3_blast--radius-0078D4?style=flat-square)](#-the-safety-model)
 [![Probes](https://img.shields.io/badge/Security-T1--T10_probe_suite-2EA44F?style=flat-square)](#-the-safety-model)
 [![Commands](https://img.shields.io/badge/Runbooks-58_slash_commands-8A2BE2?style=flat-square)](#-whats-inside)
-[![Tests](https://img.shields.io/badge/Suites-graph_33_·_memory_14_·_replay_8_·_jira_14-informational?style=flat-square)](#-run-the-evidence)
+[![Tests](https://img.shields.io/badge/Suites-graph_33_·_memory_14_·_replay_15_·_ticket_eval_28_·_lint_58-informational?style=flat-square)](#-run-the-evidence)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
 [🧭 How it works](#-how-it-works) · [🚀 Try it](#-try-it--5-minutes) · [🔐 Safety model](#-the-safety-model) · [🧪 Evidence](#-run-the-evidence) · [📦 What's inside](#-whats-inside) · [🧩 Adapt it](#-adapting-it-to-your-environment)
@@ -98,16 +100,21 @@ An LLM with admin-portal knowledge is a loaded tool. Safety is layered and testa
 
 ## 🧪 Run the evidence
 
-Every load-bearing claim above has a runnable check:
+Every load-bearing claim above maps to a runnable check, and [`docs/evidence/claim-ledger.md`](docs/evidence/claim-ledger.md) says which claims are **proven by a script**, which are **model-behavior contracts** evaluated by rubric, and which were weakened because the evidence was thinner than the prose. [EVALUATE.md](EVALUATE.md) is the guided version.
 
 ```bash
-node scripts/graph/graph.test.js        # 33 — graph engine: gates, hash-bound approval, review ceiling
-node scripts/memory/memory.test.js      # 14 — controlled memory: gated promotion, provenance, staleness
-node scripts/replay/replay.test.js      #  8 — replay: verified-only, fingerprint invalidation, zero-model path
-node scripts/jira-client.test.js        # 14 — Jira client: dry-run-first, zero-network tripwire
-node scripts/pre-commit-check.js --all  # full-tree PII/credential/secret scan (the CI release gate)
-node scripts/harness/release-boundary-check.js  # public/private boundary holds
+node --test                                    # the whole battery (graph, memory, replay, tier, lint, eval, scanner, structure …)
+node scripts/eval/ms-ticket-eval.js            # 28 sanitized Microsoft tickets: risk floor, routed-runbook structure, replay MISS, 6 dangerous pairs
+node scripts/lint/command-structure.js         # 58 commands: exact portal breadcrumbs, GUI before PowerShell, one checklist + one Jira note, fresh Entra paths
+node scripts/replay/replay-demo.js             # replay lifecycle in a sandbox: MISS → verify → HIT → class-bound identity-variant HIT → guest/raw-literal/two-user MISS → STALE
+node scripts/replay/replay.test.js             # 15 — verified-only, fingerprint invalidation, PII boundary, object-class binding, zero-model path proven under a runtime tripwire
+node scripts/graph/graph.test.js               # 33 — graph engine: gates, hash-bound approval, review ceiling
+node scripts/memory/memory.test.js             # 14 — controlled memory: gated promotion, provenance, staleness
+node scripts/pre-commit-check.js --all         # full-tree PII/credential/secret scan (the CI release gate)
+node scripts/harness/release-boundary-check.js # public/private boundary holds
 ```
+
+What a script cannot prove — that the model leads with the most useful action, sizes depth to the ticket, and carries a failed attempt forward after "still doesn't work" — is scored by the rubric in [`scripts/eval/README.md`](scripts/eval/README.md); [`docs/evidence/ticket-eval-samples.md`](docs/evidence/ticket-eval-samples.md) holds captured, dated handler answers on a subset of the corpus.
 
 ## 📦 What's inside
 
@@ -118,13 +125,18 @@ modules/security/            # Native governance: security-doctrine (SR-1…SR-8
 .claude/commands/            # 58 runbook slash commands — onboarding/offboarding, MFA, Intune,
                              # Meraki, VoIP, Exchange, Jira, troubleshooting trees
 scripts/
-├── replay/                  # Deterministic replay cache engine + suite + synthetic fixtures
+├── replay/                  # Deterministic replay cache engine + suite + demo + synthetic fixtures
 ├── memory/                  # Controlled operational memory engine + suite
 ├── graph/                   # Ticket-graph execution engine + adversarial suite
+├── tier/                    # T1/T2 lane: deterministic escalation floor (tier guard) + suite
+├── lint/                    # GUI-first structure lint for every command + suite
+├── eval/                    # Microsoft ticket corpus + deterministic eval + judging rubric
 ├── harness/                 # Continuity checker + release-boundary guard
+├── dev/                     # Multi-session task claims (atomic, scope-overlap refusal)
 ├── jira-client.js           # JSM REST client — dry-run-first, env-var auth (+ 14-case suite)
 └── pre-commit-check.js      # The commit/CI safety scanner
-docs/                        # Architecture, ADRs, security model, worked ticket examples
+docs/                        # Architecture, ADRs, security model, worked ticket examples,
+                             # evidence/ (claim ledger, captured handler samples)
 modules/{it_support,systems,automation}/   # Procedure depth: diagnostics, AD Connect, PS safety
 ```
 

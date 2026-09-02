@@ -238,7 +238,7 @@ Sequence per the established operator flow. The two hard dependencies: the user 
 
 1. Install **Microsoft Authenticator** from the public store FIRST (Step 4's MFA registration happens on it)
 2. Install **Outlook** (+ Teams if the role needs it) → sign in with `[UPN]` → Intune app-protection (MAM) policies apply to the work account automatically
-3. Full BYOD enrollment via **Company Portal** only if org policy requires it for the role (deep flow: `/enroll-device`)
+3. Full BYOD enrollment via **Company Portal** only if org policy requires it for the role: Company Portal → sign in with `[UPN]` → **Set up access** → follow the prompts → **WAIT UNTIL** the phone appears at intune.microsoft.com → Devices → All devices (Ownership = Personal)
 
 ✅ Verify — Path A, all of: device visible in Intune (Corporate, `[UPN]` as primary user) · member of `[WORK_PHONE_DEVICE_GROUP]` · **Compliant** · assigned apps installed · user signed into mail/Teams on the phone · Slack working. Path B: Authenticator registered + Outlook loads mail on the phone.
 **Why:** A hire with no mobile setup hits the first CA prompt with nowhere to approve it — that's the day-one lockout ticket. Corp phones get full MDM; personal phones get MAM so work data is containerized without managing the whole device. App assignments target the device group; a device added before it exists in Intune gets nothing — the WAIT-UNTIL boundary is what fires the pushes.

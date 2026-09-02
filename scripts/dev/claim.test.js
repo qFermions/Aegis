@@ -70,6 +70,17 @@ test('L2: duplicate task id is an atomic refusal (O_EXCL), never an overwrite', 
   assert.match(kept, /owner: session-A/, 'first claimant preserved');
 });
 
+test('documentation files in tasks/active are never reported as claims (README regression)', () => {
+  const root = sandboxRepo();
+  fs.mkdirSync(path.join(root, 'tasks', 'active'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'tasks', 'active', 'README.md'), '# active development task claims — see TEAM.md\n');
+  assert.deepEqual(run(root, ['list']).active, [], 'README.md must not appear as a phantom task');
+  run(root, ['claim', '--task', 'real-task', '--owner', 'A', '--scope', 'docs/x.md']);
+  const list = run(root, ['list']).active;
+  assert.equal(list.length, 1); assert.equal(list[0].task, 'real-task');
+  assert.ok(fs.existsSync(path.join(ROOT, 'tasks', 'active', 'README.md')), 'the shipped tree carries the README this guards against');
+});
+
 test('check is report-only and directional overlap works both ways', () => {
   const root = sandboxRepo();
   run(root, ['claim', '--task', 'docs-pass', '--owner', 'A', '--scope', 'docs']);
@@ -89,6 +100,13 @@ test('bootstrap canon exists for fresh sessions (contract, state, team, dev role
     assert.match(src, /DEVELOPMENT plane/i, `${card}: must be dev-plane scoped`);
     assert.match(src, /Never for IT tickets/i, `${card}: must refuse the support lane`);
   }
-  assert.match(fs.readFileSync(path.join(ROOT, '.claude', 'agents', 'zac.md'), 'utf8'), /^model:\s*opus$/m);
+  // model policy (TEAM.md): Fable on every dev-plane role; independence comes from
+  // fresh context, not model switching. Opus stays permitted for a reviewer, never required.
+  for (const card of ['zac.md', 'atlas.md', 'forge.md', 'warden.md']) {
+    const src = fs.readFileSync(path.join(ROOT, '.claude', 'agents', card), 'utf8');
+    assert.match(src, /^model:\s*(fable|opus)$/m, `${card}: model must be fable (or opus for a reviewer)`);
+    assert.match(src, /^effort:\s*(medium|high|xhigh|max)$/m, `${card}: effort must be declared`);
+  }
   assert.match(fs.readFileSync(path.join(ROOT, '.claude', 'agents', 'forge.md'), 'utf8'), /^model:\s*fable$/m);
+  assert.match(fs.readFileSync(path.join(ROOT, '.claude', 'agents', 'warden.md'), 'utf8'), /fresh context/i, 'WARDEN independence is fresh-context based');
 });

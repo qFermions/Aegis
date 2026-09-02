@@ -7,10 +7,13 @@
 
 ## Current shipped state
 
-- **Version:** v8.7-public — advisory-only boundary (`PRODUCT_CONTRACT.md`),
-  named dev plane (`TEAM.md`), multi-session coordination (`scripts/dev/`),
-  tier lane (`scripts/tier/`), on the v8.6 harness (replay/graph/memory/R0-R3).
-- **Suites:** run `node --test` for the full battery.
+- **Version:** v8.8-public — recruiter-grade proof pass on the v8.7 harness:
+  claim→evidence ledger (`docs/evidence/`), GUI-first structure lint
+  (`scripts/lint/`), Microsoft ticket eval (`scripts/eval/`), replay V2
+  identity-variant keys + PII boundary (`scripts/replay/`), current Entra
+  admin-center paths, Fable 5.1 single-model policy (`TEAM.md`).
+- **Suites:** run `node --test` for the full battery; `EVALUATE.md` is the
+  reviewer entry point (deterministic evidence first, then the red-team probes).
 
 ## Current work
 

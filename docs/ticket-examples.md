@@ -62,7 +62,7 @@ Need to clear all registered MFA methods, then have the user re-register Authent
 
 ### What to check first
 1. Entra → Users → [UPN] → Authentication methods — list everything registered.
-2. Protection → Conditional Access → Policies — any policy require *MFA from a trusted device* that would block initial registration?
+2. Entra ID → Conditional Access → Policies — any policy require *MFA from a trusted device* that would block initial registration?
 3. Confirm with the user that you're talking to the actual person (callback to a known good number — social engineering risk on MFA resets is real).
 
 ### Step-by-step fix

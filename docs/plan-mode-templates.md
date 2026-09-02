@@ -18,7 +18,7 @@ These templates are planning/reference only. Plan review, stakeholder approval, 
 
 ```
 Step 1 — Snapshot current state
-  - Entra → Protection → Conditional Access → export current policy JSON
+  - Entra ID → Conditional Access → export current policy JSON
   - Note which break-glass accounts exist and confirm they're excluded
   - Confirm the *current* sign-in volume (Sign-in logs → last 24h baseline)
 

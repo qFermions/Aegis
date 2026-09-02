@@ -16,7 +16,7 @@ what a healthy result looks like, and what to do if the check fails.
 **What:** Confirm that on-prem AD is syncing successfully to Entra ID.
 
 **Portal:**
-1. Entra → Identity → Hybrid management → Microsoft Entra Connect
+1. Entra ID → Entra Connect → Connect sync
 2. Check: `Last sync status` → should show `Succeeded`
 3. Check: `Last sync time` → should be within the last 30–40 minutes
 
@@ -55,7 +55,7 @@ Get-ADSyncScheduler | Select-Object LastSyncCycleResult
 
 **What:** Check for any accounts flagged as high-risk by Entra Identity Protection.
 
-**Portal:** Entra → Protection → Identity Protection → Risky users → filter: Risk level = High
+**Portal:** entra.microsoft.com → ID Protection → Risky users → filter: Risk level = High
 
 **Healthy:** 0 unreviewed high-risk users
 
@@ -183,7 +183,7 @@ Get-MgSubscribedSku | Select-Object SkuPartNumber,
 
 Cross-reference with compliance_checks.md Check 4.
 
-**Quick portal path:** Entra → Identity → Roles & admins → All roles → filter `Global Administrator`
+**Quick portal path:** Entra ID → Roles & admins → All roles → filter `Global Administrator`
 → confirm member list matches expected list on file.
 
 ---
@@ -197,7 +197,7 @@ Cross-reference with compliance_checks.md Check 4.
 > **PREVIEW ONLY [health-connect-maintenance]:** Route any server patch, service restart, or Entra Connect upgrade to `/ad-connect` for a separate maintenance plan. This health check cannot perform maintenance.
 
 1. Windows Update status on AD Connect server — no pending critical updates
-2. Entra Connect version: Entra → Hybrid management → Entra Connect → version number
+2. Entra Connect version: Entra ID → Entra Connect → version number
    - Compare against latest at: learn.microsoft.com/entra/identity/hybrid/connect/reference-connect-version-history
    - If > 6 months behind latest, schedule an upgrade
 3. ADSync service is running: Services.msc → `Microsoft Azure AD Sync` → Status = Running

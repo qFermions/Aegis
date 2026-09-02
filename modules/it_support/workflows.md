@@ -73,7 +73,7 @@ Import-Module ADSync           # Load the AD sync module
 </details>
 
 2. Wait 3–5 minutes
-3. Verify: Entra → Identity → Users → All users — confirm new account appears
+3. Verify: Entra ID → Users → All users — confirm new account appears
 
 ### Step 3 — Assign License
 
@@ -89,7 +89,7 @@ Import-Module ADSync           # Load the AD sync module
 
 > **PREVIEW ONLY [workflow-group-portal]:** Route security-group membership to `/group-membership-audit` and distribution-list membership to `/distribution-list`; each is a separate action.
 
-1. Entra → Identity → Groups → All groups
+1. Entra ID → Groups → All groups
 2. Find the department security group → Members → Add members → search `[FIRST_NAME]`
 3. Add to distribution lists: EAC → Recipients → Groups → [DL name] → Members → Add
 
@@ -139,7 +139,7 @@ Manager and HR authorization is a prerequisite only; it does not authorize any s
 
 > **PREVIEW ONLY [workflow-offboard-block]:** Route the resolved account block to `/offboard`; this step cannot change sign-in state.
 
-1. Entra → Identity → Users → `[UPN]` → Edit properties
+1. Entra ID → Users → `[UPN]` → Edit properties
 2. `Block sign in` = Yes → Save
 3. Verifies: new cloud authentication is blocked; existing access tokens and app-issued sessions require the separate revocation/expiry checks below
 
@@ -232,11 +232,11 @@ Manager and HR authorization is a prerequisite only; it does not authorize any s
 
 > **PREVIEW ONLY [workflow-mfa-reset]:** Route method deletion to `/mfa-issue` and any policy exclusion to `/conditional-access` as separate gated actions. This workflow cannot perform either change.
 
-1. Entra → Identity → Users → `[UPN]` → Authentication methods
+1. Entra ID → Users → `[UPN]` → Authentication methods
 2. Delete all registered methods
 3. Tell user: go to `aka.ms/mfasetup` → register Authenticator on new device
 4. If user can't sign in due to CA policy blocking before MFA setup:
-   - Entra → Protection → Conditional Access → `[MFA policy]` → Exclusions → add user temporarily
+   - Entra ID → Conditional Access → `[MFA policy]` → Exclusions → add user temporarily
    - Remove exclusion after MFA is re-registered (same session — do not leave open)
 
 **Verify:** Entra → Users → `[UPN]` → Authentication methods — new method shows registered

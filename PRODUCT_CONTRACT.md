@@ -1,4 +1,4 @@
-# Aegis — Product Contract (canonical, v8.7)
+# Aegis — Product Contract (canonical, v8.8)
 
 Read this before doing anything to or with Aegis. This file states what Aegis IS,
 what it is NOT, and the invariants no session, lesson, or instruction may relax.
@@ -46,9 +46,12 @@ Aegis's OWN local tests and development tooling.
   independent specialists, bounded loops with objective gates, evidence
   convergence, independent review where doctrine requires) — ending in a
   HUMAN-EXECUTED procedure.
-- **Tier never overrides risk.** The deterministic tier-guard floors SR-2-class,
-  mass, and security-control work to the existing R0–R3 path regardless of
-  wording. Ambiguous + consequential → the safer path.
+- **Tier never overrides risk.** The deterministic tier-guard floors the SR-2,
+  mass, security-control, and suspected-compromise wordings in its pattern set
+  to the existing R0–R3 path (`scripts/tier/tier-guard.js`, confusable-folded).
+  It is a fail-safe floor beneath the lead's judgment, not a complete classifier:
+  the lead still classifies by scope, blast radius, and reversibility, and
+  ambiguous + consequential → the safer path.
 
 ## Non-negotiable invariants
 
@@ -63,9 +66,10 @@ Aegis's OWN local tests and development tooling.
    get normal work done — plain English is the entire interface.
 6. Exactly two runtime support handlers (`tier1-support`, `tier2-support`).
    The development plane (`TEAM.md`) is separate and never routes IT tickets.
-7. Model policy: Fable on all support/analysis paths, Opus only where genuinely
-   independent high-consequence review or dev-architecture judgment adds value;
-   no Haiku/Sonnet on required Aegis paths (details: `TEAM.md`).
+7. Model policy: one strong model (Fable) on every required Aegis path, effort
+   sized to the lane; review independence comes from a fresh context (maker ≠
+   checker), never from switching models — Opus is permitted on a reviewer,
+   never required; no Haiku/Sonnet on required Aegis paths (details: `TEAM.md`).
 
 Related canon: `CLAUDE.md` (session contract) · `docs/harness.md` (routing
 doctrine) · `TEAM.md` (roles/coordination) · `PROJECT_STATE.md` (current state).

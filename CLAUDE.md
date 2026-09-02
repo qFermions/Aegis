@@ -9,9 +9,10 @@
 > EXECUTE — Aegis never performs production changes; R0–R3 governs the human-executed
 > procedure and its ceremony (`PRODUCT_CONTRACT.md`, canonical).** Decision record: `docs/adr/ADR-006`.
 >
-> v8.7 (2026-08-08) — advisory-only boundary canonical (`PRODUCT_CONTRACT.md`), named dev
-> plane ZAC/ATLAS/FORGE/WARDEN (`TEAM.md`), multi-session claims (`scripts/dev/claim.js`),
-> Fable/Opus model policy (no haiku/sonnet). v8.6 (2026-08-07) — native governance (`modules/security/security-doctrine.md` +
+> v8.8 (2026-09-01) — Fable 5.1 single-model policy (`TEAM.md`), GUI-first structure lint
+> (`scripts/lint/`), Microsoft ticket eval (`scripts/eval/`), replay V2 identity-variant keys.
+> v8.7 — advisory-only boundary (`PRODUCT_CONTRACT.md`), dev plane ZAC/ATLAS/FORGE/WARDEN,
+> multi-session claims (`scripts/dev/claim.js`). v8.6 (2026-08-07) — native governance (`modules/security/security-doctrine.md` +
 > `placeholder-dictionary.md`), deterministic replay cache (`scripts/replay/`), release
 > boundary guard, Metis/Nova/Hermes decoupled. v8.5 — harness selector (`docs/harness.md`)
 > + continuity. v8.4 — Zero-Trust R0–R3. 40k-char limit stands (chars, LF-normalized).

@@ -21,7 +21,7 @@ Correctly choosing NOT to use machinery is harness intelligence, not laziness.
 
 | Strategy | Use when | Never because |
 |---|---|---|
-| **REPLAY** | First check on any ticket-shaped request: `node scripts/replay/replay-cli.js lookup --ticket "…"`. A verified exact duplicate with unchanged authority basis → render the stored solution verbatim; zero new ticket reasoning, no agents/loops/graph. STALE → announce the changed authority and work it fresh | Never replay unverified/stale content as current; never add a semantic-similarity model call to "save" model calls (deterministic keys + aliases only, V1) |
+| **REPLAY** | First check on any ticket-shaped request: `node scripts/replay/replay-cli.js lookup --ticket "…"`. A verified exact duplicate with unchanged authority basis → render the stored solution verbatim; zero new ticket reasoning, no agents/loops/graph. STALE → announce the changed authority and work it fresh. Identity-variant (shape) hits need the slot's object class on both sides: pass `--object-class <class>` **only when the operator's own words state it** ("our guest contractor", "the shared mailbox") — reading is allowed, inferring is not; a MISS with "no deterministic object class" routes adaptive | Never replay unverified/stale content as current; never add a semantic-similarity model call to "save" model calls (deterministic keys, aliases, and class-bound shapes only); never assert an object class the operator did not state |
 | **DIRECT** | The lead can finish coherently in a handful of tool calls — single-file edits, lookups, one-system fixes, drafts | — (this is the default for new work) |
 | **MEMORY** | Any non-trivial ticket/objective: run the bounded read-only retrieve before the verdict (CLAUDE.md §Operational Memory); fold in verified hits by `mem-id` | Never inject wholesale; never promote agent claims/raw logs to verified memory; write path stays the gated CLI |
 | **GRAPH / DELEGATION** | Substantial genuinely independent workstreams, OR reads too bulky to keep in lead context, OR clean context isolation matters (review, sweep). Formal IT tickets with execution risk → the ATG engine (`scripts/graph/`); ad-hoc decomposition → native parallel subagents | "It would look agentic"; trivial searches; work the lead finishes cheaper itself |
@@ -61,12 +61,14 @@ keep the operator style but drop manufactured ceremony (two steps may be the who
 answer). Verification and memory/replay eligibility rules are the existing ones.
 Suite: `scripts/tier/tier-routing.test.js`.
 
-**Model policy (v8.7, TEAM.md):** Fable (`model: fable`, effort high) on lead,
-T1, T2, and fortress-analysis paths (fortress work runs xhigh where justified);
-Opus (`model: opus`, effort max) only for genuinely independent high-consequence
-review and the development-plane architecture roles. No haiku/sonnet remains on
-any required Aegis path (enforced by the tier suite). Replay CACHE_HIT stays
-zero-model.
+**Model policy (v8.8, TEAM.md):** one model, effort sized to the lane. Fable
+(`model: fable`) everywhere: T1 at effort medium (routine, bounded), lead/T2 at
+high, fortress analysis and FORGE at xhigh where justified. Independence for
+review comes from a **fresh context** (maker ≠ checker), not from switching
+models — WARDEN/ATLAS/ZAC run on Fable too; `model: opus` remains permitted for
+a reviewer when the operator wants a second model family, never required. No
+haiku/sonnet on any required Aegis path (enforced by the tier suite). Replay
+CACHE_HIT stays zero-model.
 
 **Development plane (never routes IT tickets):** named roles ZAC (dispatcher),
 ATLAS (architect), FORGE (builder), WARDEN (independent reviewer) — roster,
@@ -101,12 +103,10 @@ hypothesis until it agrees with the live environment. Known bindings as of 2026-
 - **ATG node brains** `graph-router/-specialist/-builder/-reviewer/-risk-finalizer/-verifier/-scribe` (`.claude/agents/`) — used only under the graph engine's state machine (`scripts/graph/README.md`)
 - **Memory V1** — `node scripts/memory/memory-cli.js` (contract: `scripts/memory/README.md`, ADR-005); retrieval is the auto path, writes stay operator-gated
 - **Replay cache** — `node scripts/replay/replay-cli.js` (contract: `scripts/replay/README.md`, ADR-006); the deterministic verified-duplicate fast path; suite `scripts/replay/replay.test.js`
-- **Release boundary** — `node scripts/harness/release-boundary-check.js` (wired into `sync.bat` before `git add`); non-Aegis material and workflow secret-injection are structurally blocked
+- **Release boundary** — `node scripts/harness/release-boundary-check.js` (the private release tooling runs it before staging a public sync); non-Aegis material and workflow secret-injection are structurally blocked
 - **Native governance** — `modules/security/security-doctrine.md` (SR-1…SR-8 + trusted-resource hierarchy) + `modules/security/placeholder-dictionary.md`; Koinon `shared/` is read-only historical (ADR-006)
-- **~60 repo slash commands** (`.claude/commands/`) + deployed IT skills — procedure content, not orchestration
-- **Hooks live in this env:** `~/.claude/hooks/guard-destructive.ps1` (PreToolUse on Bash/PowerShell) + pixel-agents event hook — deterministic guard layer outside the model
-- **Superpowers plugin: INSTALLED but INERT for ITOps** — v6.2.0 in the user plugin cache; the 2026-08-07 install registered to project `D:\Obsidian\superpowers` (empty dir), not ITOps; zero of its 14 skills/hooks load in ITOps sessions. Treat as unavailable. Assessed 2026-08-07 (full table: `tasks/harness/acceptance-2026-08-07.md`): **5 CONFLICT** (its session-start injection + hard gates fight plan-mode, Core Rule #8, and the R-classes), **6 REDUNDANT** (covered by CLAUDE.md verification/error-recovery/parallel rules), **3 narrow REUSE** (code-review dispatch template, receiving-review anti-sycophancy discipline, pressure-testing skills before deploying). If ever enabled for ITOps: selectively, never wholesale, and not the SessionStart hook.
-- **Global `~/.claude/rules/*.md` caveat:** agents.md / code-review.md / performance.md / development-workflow.md reference agents (`planner`, `architect`, `tdd-guide`, reviewers…) that do not exist — `~/.claude/agents/` is absent; the names trace to the stale `everything-claude-code` plugin (registered to a deleted OneDrive path). Where those rules name a missing agent, satisfy the *intent* (planning, review) with live capabilities; don't hunt for the named agent. git-workflow.md is the only accurate one.
+- **58 repo slash commands** (`.claude/commands/`) — procedure content, not orchestration; the GUI-first structure of every operational/troubleshooting command is machine-checked by `node scripts/lint/command-structure.js` (`scripts/lint/`), and the Microsoft ticket surface is exercised by `node scripts/eval/ms-ticket-eval.js` (`scripts/eval/README.md` separates what is proven deterministically from what needs a judge)
+- **Operator-side hooks and plugins are environment-specific, not part of this tree.** A private deployment may add PreToolUse guard hooks or global `~/.claude/rules`; nothing in this repository depends on them, and this document does not describe them. Where a global rule names an agent that does not exist in `.claude/agents/`, satisfy the *intent* (planning, review) with the live roster.
 
 ## Bounded-loop contract
 
@@ -115,10 +115,12 @@ attempt: what ran, exact failure evidence, diagnosis, what changed next attempt.
 A ceiling stop is an honest result — report it as blocked, never as done
 (Error Recovery Protocol governs; one unchanged retry is already its maximum).
 Current standing gates: `scripts/memory/memory.test.js` (14) ·
-`scripts/graph/graph.test.js` (33) · `scripts/replay/replay.test.js` (8) ·
-`scripts/tier/tier-routing.test.js` (tier lane) · `scripts/pre-commit-check.js [--all]` ·
+`scripts/graph/graph.test.js` (33) · `scripts/replay/replay.test.js` (15) ·
+`scripts/tier/tier-routing.test.js` (tier lane) · `scripts/lint/command-structure.js`
+(GUI-first structure of every command) · `scripts/eval/ms-ticket-eval.js` (Microsoft
+ticket surface) · `scripts/pre-commit-check.js [--all]` ·
 `scripts/harness/check-continuity.js` (0 PASS / 1 FAIL / 2 STALE) ·
-`scripts/harness/release-boundary-check.js`.
+`scripts/harness/release-boundary-check.js`. `node --test` runs the whole battery.
 
 ## Continuity protocol — fresh sessions rebuild from disk
 

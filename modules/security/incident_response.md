@@ -267,7 +267,7 @@ Ticket: [JIRA-###]
 
 ### Contain
 1. **Review all admin role assignments** immediately
-   - Entra → Identity → Roles & admins → All roles → sort by recent assignment
+   - Entra ID → Roles & admins → All roles → sort by recent assignment
 <!-- SAFETY GATE [ir-admin-role-remove] -->
 - **Target:** [UPN], the exact staged role-assignment IDs represented by `$roleSetHash`, and verified rollback checkpoint `$roleCheckpointId`
 - **Effect:** remove only the reviewed unauthorized role assignments
@@ -282,8 +282,8 @@ Ticket: [JIRA-###]
 4. **Request Entra session revocation** only through `REVOKE ENTRA SESSIONS FOR [UPN]` in IR-01; verify after propagation.
 
 ### Eradicate
-5. **Audit Conditional Access changes** — Entra → Monitoring → Audit logs → filter by CA
-6. **Audit MFA policy changes** — Entra → Monitoring → Audit logs → filter by Authentication methods
+5. **Audit Conditional Access changes** — Entra ID → Monitoring & health → Audit logs → filter by CA
+6. **Audit MFA policy changes** — Entra ID → Monitoring & health → Audit logs → filter by Authentication methods
 7. **Check if any backdoor app** was registered → Entra → App registrations → filter recent
 8. **Review Exchange mail flow rules** for any added forwarding → EAC → Mail flow → Rules
 

@@ -10,7 +10,7 @@ disable-model-invocation: true
 **Verdict:** Work it as an incident: **assess severity → contain the account/device → investigate scope → remediate → document.** For a likely account compromise, containment (block sign-in + revoke sessions + reset) comes before deep investigation — stop the bleeding first.
 
 ## What to check first
-- **Source:** Defender (defender.microsoft.com → Incidents & alerts), Entra → Protection → **Risky users / Risky sign-ins**, or a quarantine/phish report.
+- **Source:** Defender (defender.microsoft.com → Incidents & alerts), entra.microsoft.com → ID Protection → **Risky users / Risky sign-ins**, or a quarantine/phish report.
 - **Severity + scope:** one user or many? Any successful risky sign-in / inbox rule / mass send?
 
 ## Step-by-step (portal first)

@@ -72,6 +72,48 @@ test('ESCALATION: wipe, MFA-off, license removal, offboarding, org-wide, extende
   }
 });
 
+test('ESCALATION: a suspected compromise floors even when the wording looks like a routine MFA reset', () => {
+  const routine = assess('[FIRST_NAME] got a new phone and MFA still points at the old Authenticator app.');
+  const incident = assess('[FIRST_NAME] got a new phone, but we also suspect the account was compromised last week — reset MFA and lock it down.');
+  assert.equal(routine.floor, 'none');
+  assert.equal(incident.floor, 'T3');
+  assert.ok(incident.triggers.some((t) => t.includes('compromise')), incident.triggers.join('|'));
+  for (const t of ['user reports a phishing click and an unauthorized sign-in from abroad', 'mailbox was hacked, forwarding rules appeared']) {
+    assert.equal(assess(t).floor, 'T3', `must floor: ${t}`);
+  }
+});
+
+test('ESCALATION: SR-2 retire/delete-device/disable-mailbox wordings floor; confusable homoglyphs cannot hide a risk word', () => {
+  for (const [t, want] of [
+    ['Retire [DEVICE_NAME] in Intune for the departing staff member', 'retire'],
+    ['Delete the [DEVICE_NAME] device record from Intune', 'deletion'],
+    ['Disable the mailbox for [UPN] while legal reviews it', 'disable'],
+    ['Please wıpe the lost phone for [UPN] today', 'wipe'], // dotless ı (U+0131)
+    ['Dеlete the account for [UPN]', 'deletion'], // Cyrillic е (U+0435)
+  ]) {
+    const r = assess(t);
+    assert.equal(r.floor, 'T3', `must floor: ${t}`);
+    assert.ok(r.triggers.some((x) => x.toLowerCase().includes(want)), `${t} → ${r.triggers.join('|')}`);
+  }
+  const { foldConfusables } = require('./tier-guard.js');
+  assert.equal(foldConfusables('wıpe dеlete'), 'wipe delete');
+  assert.equal(assess('Add [UPN] to the café distribution list').floor, 'none', 'benign accented text is not floored');
+  // invisible format characters and small capitals (second review)
+  for (const cp of [0x200b, 0x200c, 0x200d, 0x00ad, 0x2060]) {
+    const t = 'Please wi' + String.fromCharCode(cp) + 'pe the lost phone for [UPN] today';
+    assert.equal(assess(t).floor, 'T3', `format character U+${cp.toString(16)} must not hide "wipe"`);
+  }
+  assert.equal(assess('ᴡipe [DEVICE_NAME]').floor, 'T3', 'small-capital w folds');
+  assert.equal(assess('ｗｉｐｅ [DEVICE_NAME]').floor, 'T3', 'full-width letters fold via NFKD');
+  // the graph engine's SR-2 scan folds the same way (kept in sync without importing the lane)
+  const engine = require('../graph/engine.js');
+  if (typeof engine.scanSr2Triggers === 'function') {
+    const plan = { steps: [{ action: 'Please wı' + String.fromCharCode(0x200b) + 'pe [DEVICE_NAME]' }, { action: 'Disable the mailbox for [UPN]' }] };
+    const hits = engine.scanSr2Triggers(plan);
+    assert.ok(hits.some((h) => /wipe/.test(h)) && hits.some((h) => /mailbox disable/.test(h)), hits.join('|'));
+  }
+});
+
 test('guard is report-only: exit 0 for both outcomes via CLI', () => {
   for (const t of ['set an out-of-office reply', 'wipe [DEVICE_NAME]']) {
     const out = execFileSync('node', [path.join(__dirname, 'tier-guard.js'), '--ticket', t], { encoding: 'utf8' });

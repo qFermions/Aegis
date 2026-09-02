@@ -12,7 +12,7 @@ disable-model-invocation: true
 ## What to check first
 - Entra → Users → `[UPN]` → **Authentication methods** → what's registered?
 - Entra → Sign-in logs → filter `[UPN]` → is MFA being prompted/failing, or never triggered?
-- Entra → Protection → Conditional Access → which policy applies to this user?
+- Entra ID → Conditional Access → which policy applies to this user?
 
 ## Step-by-step fix (portal first)
 
@@ -40,12 +40,12 @@ disable-model-invocation: true
 
 **Not getting prompts:**
 1. Confirm a method is registered (above). If none → have them register at aka.ms/mfasetup.
-2. Entra → Protection → **Conditional Access** → confirm an MFA policy targets the user and isn't excluded.
-3. Check **Authentication methods policy** (Entra → Protection → Authentication methods) — is the method (Authenticator/SMS) enabled?
+2. Entra ID → **Conditional Access** → confirm an MFA policy targets the user and isn't excluded.
+3. Check **Authentication methods policy** (Entra ID → Authentication methods → Policies) — is the method (Authenticator/SMS) enabled?
 
 **⚠️ CA-blocks-re-registration gotcha (Temporary Exception):**
 > **PREVIEW ONLY [mfa-ca-exclusion]:** A Conditional Access exclusion is a separate R3 policy change. Export the policy, set a time-bounded rollback, and use a separate reviewed `/conditional-access` runbook; do not change it here.
-1. Proposed recovery path: Entra → Protection → Conditional Access → the blocking policy → **Assignments → Users → Exclude** → add `[UPN]`.
+1. Proposed recovery path: Entra ID → Conditional Access → the blocking policy → **Assignments → Users → Exclude** → add `[UPN]`.
 2. User registers at aka.ms/mfasetup.
 3. **Re-add the user** to the policy (remove the exclusion). Document as a Temporary Exception (who approved, when reverted).
 

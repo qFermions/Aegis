@@ -38,7 +38,7 @@ User reports: "Can't sign in" or "account locked"
 ```
 
 ### Key Portal Path
-Entra → Identity → Users → `[UPN]` → Sign-in logs — this is always the first stop.
+Entra ID → Users → `[UPN]` → Sign-in logs — this is always the first stop.
 The `Conditional Access` tab in each sign-in event shows exactly which policy blocked and why.
 
 ---
@@ -51,7 +51,7 @@ The `Conditional Access` tab in each sign-in event shows exactly which policy bl
 Account created in on-prem AD but not visible in Entra/M365
 │
 ├─ Has Entra Connect synced?
-│  Entra → Hybrid management → Microsoft Entra Connect → Last sync time
+│  Entra ID → Entra Connect → Last sync time
 │  If > 30 min ago → route the reviewed sync request to /ad-connect
 │
 ├─ Is the account in the right OU?
@@ -63,7 +63,7 @@ Account created in on-prem AD but not visible in Entra/M365
 │  ADUC → [user] → Account tab → UPN suffix dropdown → must be [@Aegion_DOMAIN]
 │
 └─ Any sync errors?
-   Entra → Hybrid management → Entra Connect → Sync errors
+   Entra ID → Entra Connect → Sync errors
    Common: duplicate UPN, duplicate proxy address
 ```
 
@@ -240,11 +240,11 @@ User granted access to shared mailbox but it doesn't show in Outlook
 User signs in without being prompted for MFA
 │
 ├─ Check CA policy scope
-│  Entra → Protection → CA → [MFA policy] → Users → is the user included?
+│  Entra ID → Conditional Access → [MFA policy] → Users → is the user included?
 │  Check for exclusions — is the user in an exclusion group?
 │
 ├─ Check named locations / trusted IPs
-│  Entra → Protection → CA → Named locations
+│  Entra ID → Conditional Access → Named locations
 │  Is the user's office IP listed as trusted? Trusted IPs often bypass MFA.
 │
 ├─ Check sign-in log MFA result

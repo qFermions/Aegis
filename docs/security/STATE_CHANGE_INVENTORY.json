@@ -3275,6 +3275,7 @@
       "sinks": [],
       "impactCategories": [
         "credential-related",
+        "external-system mutation",
         "identity-related",
         "permission-related",
         "security-sensitive"
@@ -4217,6 +4218,57 @@
       "impactCategories": [
         "external-system mutation",
         "identity-related"
+      ]
+    },
+    {
+      "id": "sample-t06-delta-sync",
+      "file": "docs/evidence/ticket-eval-samples.md",
+      "kind": "powershell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "Start-ADSyncSyncCycle",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "sample-t09-mailbox-grant",
+      "file": "docs/evidence/ticket-eval-samples.md",
+      "kind": "powershell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "Add-MailboxPermission",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "sample-t09-mailbox-undo",
+      "file": "docs/evidence/ticket-eval-samples.md",
+      "kind": "powershell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "Remove-MailboxPermission",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
       ]
     },
     {

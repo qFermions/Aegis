@@ -35,11 +35,14 @@ function parseScope(s) {
 }
 function activeTasks() {
   if (!fs.existsSync(ACTIVE)) return [];
+  // a claim file always carries `owner:` and `status: active`; README/notes in the
+  // directory are documentation, never a task
   return fs.readdirSync(ACTIVE).filter((f) => f.endsWith('.md')).map((f) => {
     const src = fs.readFileSync(path.join(ACTIVE, f), 'utf8');
     const g = (k) => (src.match(new RegExp(`^${k}:\\s*(.+)$`, 'm')) || [])[1] || '';
+    if (!g('owner') || g('status') !== 'active') return null;
     return { file: f, task: f.replace(/\.md$/, ''), owner: g('owner'), scope: g('scope').split(',').map(norm).filter(Boolean), started: g('started') };
-  });
+  }).filter(Boolean);
 }
 function collisions(scope, excludeTask) {
   const hits = [];

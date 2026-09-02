@@ -33,7 +33,9 @@ this file — never invent a parallel set.
 `[TEMP_PASSWORD]` · `[JIRA-###]` · `[MANAGER_NAME]` · `[UPN]` · `[PHONE_NUMBER]` ·
 `[STATUS]` · `[EXTENSION]` · `[DEPT_DL]` · `[SHARED_MAILBOX]` · `[PRODUCT_PROFILE]` ·
 `[LICENSE_TYPE]` · `[ENROLLMENT_TOKEN_QR]` · `[WORK_PHONE_DEVICE_GROUP]` ·
-`[WORK_PHONE_ENROLLMENT_GROUP]` · `[REMOTE_USER_GROUP]` · `[START_DATE]`
+`[WORK_PHONE_ENROLLMENT_GROUP]` · `[REMOTE_USER_GROUP]` · `[START_DATE]` ·
+`[GUEST_UPN]` (a B2B guest's sign-in name — distinct from `[UPN]`, which is always
+a member user; the replay cache binds identity-variant cases to that difference)
 
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in

@@ -27,7 +27,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** reversible by separately re-enabling the AD account
 - **Required confirmation:** Type exactly `DISABLE AD ACCOUNT [first.last] MAPPED TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [offboard-ad-disable-portal]:** Only after the exact match, disable `[first.last]` in ADUC and read back the disabled state.
+**PORTAL ACTION [offboard-ad-disable-portal]:** Only after the exact match, ADUC (`dsa.msc`) → `[first.last]` → right-click → **Disable Account**, then read back the disabled state (Account tab shows the account disabled).
 
 <!-- SAFETY GATE [offboard-cloud-block-portal] -->
 - **Target:** [UPN] and its displayed Entra object ID

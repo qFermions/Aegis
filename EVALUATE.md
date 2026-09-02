@@ -1,8 +1,8 @@
-# EVALUATE.md — the 10-minute guided red-team
+# EVALUATE.md — the reviewer's entry point
 
-Don't take the README's word for any of this. This page walks you through firing Aegis's own adversarial probes at it and watching the gates hold (or catching them failing — which is exactly what the [review template](.github/ISSUE_TEMPLATE/review.md) is for).
+Don't take the README's word for any of this. Part A runs the evidence a script can prove with no model and no account. Part B is the 10-minute guided red-team inside Claude Code. Part C is how to judge the part only a reader can judge. File what you find — pass **or** fail — with the [review template](.github/ISSUE_TEMPLATE/review.md).
 
-**You need:** [Claude Code](https://claude.ai/code) with your own Anthropic account · Git · Node.js. Total time: ~10 minutes.
+**You need:** Git · Node.js 24 for Part A; add [Claude Code](https://claude.ai/code) with your own Anthropic account for Parts B and C.
 
 ```bash
 # PREVIEW ONLY [evaluate-repo-clone]: git clone https://github.com/qFermions/Aegis
@@ -11,6 +11,20 @@ claude
 ```
 
 The clone line is intentionally inert because it writes a new local tree. Choose and inspect the destination first, then run that one command as a separately authorized local action.
+
+## Part A — run the evidence (no model, ~3 minutes)
+
+| Command | What passing proves | What it does not prove |
+|---|---|---|
+| `node --test` | the whole battery: graph (33), memory (14), replay (15), tier lane, structure lint, ticket eval, scanner, structure, links, claims — every deterministic claim in the README | anything about answer quality |
+| `node scripts/eval/ms-ticket-eval.js` | on 28 sanitized Microsoft tickets: consequential ones floor to the gated path, every routed runbook has exact current portal steps before PowerShell + one checklist + one Jira note, first occurrences are replay misses, six "dangerous pairs" can never share a replay key | that the model picks the right first action (Part C) |
+| `node scripts/lint/command-structure.js` | all 58 commands: GUI first, PowerShell collapsed and commented, no dangling `/command`, no admin-center path Microsoft has renamed | that the rendered answer keeps that shape (Part C) |
+| `node scripts/replay/replay-demo.js` | the replay lifecycle end to end, in a temp store: MISS → candidate → verified → HIT → class-bound identity-variant HIT → raw-literal MISS (unknown class) → asserted-class HIT → guest (`#EXT#`) MISS → two-user MISS → destructive-verb MISS → secrets/PII refused → authority change → STALE | the Claude Code turn that runs the lookup (platform overhead, documented in `scripts/replay/README.md`) |
+| `node scripts/pre-commit-check.js --all` | the CI release gate: no PII, credentials, or secret formats anywhere in the tree | — |
+
+The claim-by-claim map is [`docs/evidence/claim-ledger.md`](docs/evidence/claim-ledger.md).
+
+## Part B — the 10-minute guided red-team
 
 The full probe suite (T1–T10, each with expected behavior specified) lives in [`modules/security/threat_model.md`](modules/security/threat_model.md) §4. This session runs five of them.
 
@@ -81,3 +95,7 @@ File your scorecard — pass **or** fail — as a [Review issue](../../issues/ne
 ---
 
 *Why these five: they cover the three trust boundaries (content≠instructions, human gate on destructive writes, deterministic scanning outside the model) plus the two failure modes agents are most often talked into — urgency and false memory. The other five probes (T4–T7, T9) are specified in the threat model and take a few minutes more each.*
+
+## Part C — judge the answers (≈20 minutes)
+
+Paste tickets from [`scripts/eval/ms-tickets.json`](scripts/eval/ms-tickets.json) one per turn and score each answer with the rubric in [`scripts/eval/README.md`](scripts/eval/README.md): classification depth, first action, GUI path, PowerShell discipline, risk + human-executes framing, verification, Jira note, privacy — and reply **"still doesn't work"** to at least two diagnostic tickets to score continuity. [`docs/evidence/ticket-eval-samples.md`](docs/evidence/ticket-eval-samples.md) shows what the support handlers produced on a subset, dated and scored, so you can calibrate before you score your own run.

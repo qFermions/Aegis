@@ -10,7 +10,7 @@ disable-model-invocation: true
 **Verdict:** AD Connect is the source of authority for synced users — if a user isn't appearing in M365 or attributes are wrong, check the Entra admin center sync status first, then look at the Synchronization Service Manager on the AD Connect server for the specific error before touching anything.
 
 ## What to check first
-- When did the last sync run? `Entra admin center → Identity → Hybrid management → Microsoft Entra Connect → Sync status` — check "Last sync" timestamp. If it's more than 40 minutes ago, sync may be stuck
+- When did the last sync run? `Entra admin center → Entra ID → Entra Connect → Connect sync` — check "Last sync" timestamp. If it's more than 40 minutes ago, sync may be stuck
 - Is this a new user who never appeared, or an existing user who disappeared / has wrong attributes? New = check OU scoping. Disappeared = check for errors or accidental move in AD
 - Is the AD Connect server online? It needs network access to both on-prem AD and the Microsoft 365 endpoints
 
@@ -20,12 +20,12 @@ disable-model-invocation: true
 
 **1. Check sync status in the Entra admin center (portal first)**
 
-`entra.microsoft.com → Identity → Hybrid management → Microsoft Entra Connect`
+`entra.microsoft.com → Entra ID → Entra Connect`
 - **Sync status panel:** shows last successful sync time and whether sync is enabled
 - **Sync errors:** any objects with errors appear as a count — click through to see which users/groups have attribute conflicts
 - **Password hash sync:** confirm it shows "Enabled" if password writeback or hash sync is in use
 
-`entra.microsoft.com → Identity → Hybrid management → Microsoft Entra Connect → Connect sync`
+`entra.microsoft.com → Entra ID → Entra Connect → Connect sync`
 - Check the health of the connector — green = healthy, amber/red = error state
 
 ---
@@ -130,7 +130,7 @@ Import-Module ADSync  # load the AD Connect module
 
 If users can't sign in to M365 with their AD password despite sync being healthy:
 
-1. Confirm Password Hash Sync is enabled: `Entra admin center → Hybrid management → Entra Connect → Password hash sync` → should show "Enabled"
+1. Confirm Password Hash Sync is enabled: `Entra admin center → Entra ID → Entra Connect → Password hash sync` → should show "Enabled"
 2. Force a password hash sync cycle on the AD Connect server:
 
 <details>
@@ -184,7 +184,7 @@ If you suspect a new OU is missing from sync:
 - Modifying the AD Connect configuration (connector rules, OU scoping) should go through a change-control plan — route through independent plan review before making rule changes in production
 
 ## ✅ Verification checklist
-- [ ] Entra admin center → Hybrid management shows: Last sync < 40 min ago, no sync errors
+- [ ] Entra admin center → Entra ID → Entra Connect → Connect sync shows: Last sync < 40 min ago, no sync errors
 - [ ] Synchronization Service Manager → Operations tab: latest run shows "Success" on both AD and Azure AD connectors
 - [ ] New user appears in `entra.microsoft.com → Users` with correct display name, UPN, and attributes
 - [ ] User's UPN ends in `@[@Aegion_DOMAIN]` (not `.local` or unverified domain)

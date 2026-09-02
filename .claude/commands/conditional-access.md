@@ -17,7 +17,7 @@ disable-model-invocation: true
 > 4. Have a second admin available to revert if needed.
 
 ## What to check first
-- **Is there a sign-in failure you're troubleshooting?** Check `Entra → Monitoring → Sign-in logs → [UPN]` first — the failure reason will say which CA policy blocked it.
+- **Is there a sign-in failure you're troubleshooting?** Check `Entra ID → Monitoring & health → Sign-in logs → [UPN]` first — the failure reason will say which CA policy blocked it.
 - **Are you creating a new policy or modifying an existing one?** Existing = check current scope and exclusions before touching it.
 - **Is a break-glass account confirmed?** Never make an org-wide CA change without one. See break-glass section below.
 - **What license tier?** CA requires Entra ID P1 (included in M365 Business Premium). Named Locations and compliant device conditions require P1. Continuous Access Evaluation requires P2.
@@ -37,14 +37,14 @@ disable-model-invocation: true
 **Policy evaluation:** Entra evaluates ALL enabled policies. If any policy says Block, the user is blocked — even if another policy grants access. Report-only policies log what WOULD happen without affecting actual sign-ins.
 
 ## View existing policies
-`Entra portal (entra.microsoft.com) → Protection → Conditional Access → Policies`
+`Entra admin center (entra.microsoft.com) → Entra ID → Conditional Access → Policies`
 
 You'll see all policies with their state: On / Off / Report-only.
 
 To understand what a policy covers: click it → read Assignments (users, apps, conditions) and Grant controls side by side.
 
 To see what fired for a specific sign-in:
-`Entra → Monitoring → Sign-in logs → [UPN] → click the sign-in event → Conditional Access tab`
+`Entra ID → Monitoring & health → Sign-in logs → [UPN] → click the sign-in event → Conditional Access tab`
 Each policy shows: Applied / Not applied / Report-only, and the grant result.
 
 ## Common policies — what they do and how to create them
@@ -54,7 +54,7 @@ Each policy shows: Applied / Not applied / Report-only, and the grant result.
 > **PREVIEW ONLY [ca-policy-legacy]:** Policy creation, location creation, exclusions, and account changes are not authorized by this reference. Use a separate reviewed change with exported pre-state, Report-only evidence, break-glass verification, rollback, and an exact target-bound confirmation.
 **Why:** Legacy auth protocols (SMTP AUTH, POP3, IMAP, MAPI over HTTP, ActiveSync) don't support MFA. Attackers use them to bypass MFA entirely. This is the highest-value CA policy to enable first.
 
-`Entra → Protection → Conditional Access → Policies → + New policy`
+`Entra ID → Conditional Access → Policies → + New policy`
 - Name: `Block legacy authentication`
 - Users: **All users** | Exclude: break-glass account + any service accounts that need legacy auth (document them)
 - Target resources: **All cloud apps**
@@ -69,7 +69,7 @@ Each policy shows: Applied / Not applied / Report-only, and the grant result.
 > **PREVIEW ONLY [ca-policy-mfa-all]:** Policy creation, location creation, exclusions, and account changes are not authorized by this reference. Use a separate reviewed change with exported pre-state, Report-only evidence, break-glass verification, rollback, and an exact target-bound confirmation.
 **Why:** Every sign-in from any device/location requires MFA. Stops credential-stuffing attacks cold.
 
-`Entra → Protection → Conditional Access → + New policy`
+`Entra ID → Conditional Access → + New policy`
 - Name: `Require MFA — all users`
 - Users: **All users** | Exclude: break-glass account
 - Target resources: **All cloud apps**
@@ -109,7 +109,7 @@ Each policy shows: Applied / Not applied / Report-only, and the grant result.
 **Why:** If your org only operates in specific countries, block sign-ins from everywhere else. Reduces attack surface significantly.
 
 Step 1 — Create a Named Location:
-`Entra → Protection → Conditional Access → Named locations → + Countries location`
+`Entra ID → Conditional Access → Named locations → + Countries location`
 - Name: `Allowed countries — [@Aegion]`
 - Select countries your staff legitimately sign in from
 - Save
@@ -127,7 +127,7 @@ Step 2 — Create the CA policy:
 
 > **PREVIEW ONLY [ca-policy-create]:** Policy creation, location creation, exclusions, and account changes are not authorized by this reference. Use a separate reviewed change with exported pre-state, Report-only evidence, break-glass verification, rollback, and an exact target-bound confirmation.
 
-`Entra portal (entra.microsoft.com) → Protection → Conditional Access → Policies → + New policy`
+`Entra admin center (entra.microsoft.com) → Entra ID → Conditional Access → Policies → + New policy`
 
 1. **Name:** use a descriptive name (`Require MFA — all users`, `Block legacy auth`, etc.) — this is what shows in sign-in logs
 2. **Users and groups:** select users/groups in scope → add exclusions (break-glass, service accounts)
@@ -153,14 +153,14 @@ Step 2 — Create the CA policy:
 
 **Report-only mode:** The policy evaluates every sign-in and logs what it WOULD have done — but takes no action. Zero user impact. This is mandatory before setting any policy to On.
 
-`Entra → Monitoring → Sign-in logs → filter by date → click a sign-in → Conditional Access tab`
+`Entra ID → Monitoring & health → Sign-in logs → filter by date → click a sign-in → Conditional Access tab`
 - Look for your policy in Report-only state
 - Check "Would have granted" or "Would have blocked" for representative sign-ins
 - Look for unexpected blocks (e.g., service accounts, external partners, break-glass)
 
 **What-If tool:** Simulates policy evaluation for a specific user/app/location without waiting for a real sign-in.
 
-`Entra → Protection → Conditional Access → What If`
+`Entra ID → Conditional Access → What If`
 - User: `[UPN]`
 - Application: select the app
 - IP address / Country: test a location
@@ -182,10 +182,10 @@ A break-glass account is a cloud-only Global Admin that is **excluded from ALL C
 - Excluded from ALL CA policies by user exclusion (not group exclusion — group membership can change)
 - Password stored offline (physical secure location) and rotated periodically
 - MFA: use a FIDO2 key or a dedicated authenticator device (not the same phone as the admin's personal account)
-- Monitored: set an alert when it signs in — `Entra → Monitoring → Diagnostic settings → send sign-in logs to Log Analytics` + alert rule on break-glass UPN
+- Monitored: set an alert when it signs in — `Entra ID → Monitoring & health → Diagnostic settings → send sign-in logs to Log Analytics` + alert rule on break-glass UPN
 
 **To verify your break-glass is correctly excluded:**
-`Entra → Protection → Conditional Access → Policies → click each enabled policy → Assignments → Users → Exclude`
+`Entra ID → Conditional Access → Policies → click each enabled policy → Assignments → Users → Exclude`
 Confirm the break-glass UPN (not just a group) appears in every policy's exclusion list.
 
 <details>

@@ -23,8 +23,8 @@ disable-model-invocation: true
 
 ### 1. Navigate to the user in the [@Aegion_VOIP] admin portal
 
-1. Log in to the [@Aegion_VOIP] admin portal.
-2. Go to **Users** → search by name [USER_NAME] or extension [EXTENSION].
+1. Log in to the [@Aegion_VOIP] admin portal ([@Aegion_VOIP_URL]).
+2. [@Aegion_VOIP_URL] → **Users** → **Manage users** → search by name [USER_NAME] or extension [EXTENSION].
 3. Open the user record.
 4. Click the **Voicemail** tab.
 

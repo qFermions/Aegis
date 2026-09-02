@@ -19,8 +19,8 @@ disable-model-invocation: true
 1. Devices → All devices → `[DEVICE_NAME]` → **Device compliance** → expand the failing policy → read the **red setting**.
 2. Common failures → fix:
    - **BitLocker/encryption not on** → enable BitLocker (Windows) / device encryption.
-   - **OS version below minimum** → run updates (`/push-updates` via Update Rings).
-   - **Defender/AV not running or signatures stale** → start/҅update Microsoft Defender.
+   - **OS version below minimum** → run updates: on the device, Settings → Windows Update → **Check for updates**; fleet-wide via intune.microsoft.com → Devices → Windows → **Update rings for Windows 10 and later**.
+   - **Defender/AV not running or signatures stale** → start/update Microsoft Defender.
    - **Secure Boot / TPM / firewall off** → enable in settings/BIOS.
    - **Not encrypted within grace period** → complete encryption, then **Sync**.
 3. Force a check-in: device → **Sync** (or Company Portal → Settings → Sync) and wait for re-evaluation.

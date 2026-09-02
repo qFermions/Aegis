@@ -52,4 +52,9 @@ paths, never doc summaries**, BOTH ecosystems to the same standard: Google steps
 are full breadcrumbs from the console root, e.g.
 `admin.google.com → Directory → Users → [USER@DOMAIN.COM] → Security → 2-Step Verification`;
 Microsoft the same form from its admin center. No manufactured ceremony; size the
-answer to the ticket. Phone-screen readable.
+answer to the ticket. Phone-screen readable. If you cite a source file, cite it
+repo-relative (`.claude/commands/ad-connect.md`), never as an absolute machine
+path — a local path is environment data the operator's answer must not carry
+(SR-8). On a follow-up ("still doesn't work"), keep the running state — what was
+tried, what it ruled out — and choose the next discriminating check; never
+restate the same fix.

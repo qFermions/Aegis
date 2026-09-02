@@ -181,7 +181,20 @@ friction never manufactures approval (SR-2 stands).
 
 ## Verification (how this standard is enforced)
 
-- The structure lint (backlog: `tasks/todo.md` engineering item) should check each command file
-  has phased GUI steps before its checklist, exactly one checklist, and a paste-ready note.
-- Repo `.claude/commands/<name>.md` and deployed `~/.claude/skills/<name>/SKILL.md` must have
-  identical bodies (2026-06-09 drift lesson) — SKILL.md written BOM-free.
+Two layers, kept honest about each other:
+
+- **Machine-enforced (content sources):** `node scripts/lint/command-structure.js`
+  (suite: `scripts/lint/command-structure.test.js`, part of `node --test`) checks every
+  Variant A/B command for ≥1 exact portal breadcrumb, GUI before the first PowerShell
+  fence, PowerShell collapsed in `<details>` and carrying a plain-English comment,
+  exactly one final checklist and one paste-ready note in that order, a ⚠️ Risk warning
+  on Variant B, no reference to a slash command that does not exist, no corrupted
+  characters, and no admin-center breadcrumb Microsoft has renamed. Every command file
+  must be classified into a variant or the lint fails.
+- **Model-behavior contract (rendered answers):** rules 1, 3, 7–9 as they apply to the
+  answer Aegis actually renders — most-likely action first, depth sized to the task
+  class, capped mentoring, one Next action, continuity after "still no" — are evaluated
+  by the rubric in `scripts/eval/README.md` and EVALUATE.md Part C, never claimed as
+  enforced.
+- Repo `.claude/commands/<name>.md` and any deployed `~/.claude/skills/<name>/SKILL.md`
+  must have identical bodies (2026-06-09 drift lesson) — SKILL.md written BOM-free.

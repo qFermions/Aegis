@@ -36,6 +36,6 @@ This index is read-only routing/reference material. It does not authorize any po
 | Device not enrolling | Enrollment restrictions? | Intune → Devices → Enrollment restrictions |
 | No phone dial tone | Extension status? | [@Aegion_VOIP] admin → Extensions |
 | Slow internet | Which site, which device? | Meraki → Network-wide → Clients |
-| New user not in M365 | AD sync ran? | Entra → Hybrid management → Entra Connect |
+| New user not in M365 | AD sync ran? | Entra ID → Entra Connect |
 | Shared mailbox access | Delegation set? | EAC → Recipients → Mailboxes → Delegation |
 | Account locked | Too many failed attempts? | Entra → Users → [UPN] → Sign-in logs |

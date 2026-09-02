@@ -10,14 +10,17 @@ moves things around.
 ## Entra (entra.microsoft.com)
 > **PREVIEW ONLY [portal-nav-entra-reference]:** Navigation reference only. Any state-changing final control named below requires its owning action-specific runbook, resolved target, preview, exact confirmation, and read-back; do not click it from this reference.
 
-- Users: Identity → Users → All Users
-- Groups: Identity → Groups → All Groups
-- MFA per user: Identity → Users → [user] → Authentication methods
-- Conditional Access: Protection → Conditional Access → Policies
-- Entra Connect: Identity → Hybrid management → Microsoft Entra Connect
-- Sign-in logs: Identity → Users → [user] → Sign-in logs
-- Risky users: Protection → Identity Protection → Risky users
-- Roles: Identity → Roles & admins → All roles
+> Left-nav naming checked against Microsoft Learn on 2026-09-01: the former **Identity** menu is now **Entra ID**, Conditional Access and Authentication methods sit directly under it, the old "Hybrid management" node is **Entra Connect**, and Identity Protection is the sibling **ID Protection** menu. `scripts/lint/command-structure.js` fails the build if a retired breadcrumb comes back (the retired forms are listed in that file, not here, so this page never re-teaches them).
+
+- Users: Entra ID → Users → All users
+- Groups: Entra ID → Groups → All groups
+- MFA per user: Entra ID → Users → [user] → Authentication methods (**Require re-register MFA** / **Revoke sessions** sit at the top of that page)
+- Authentication methods policy (tenant-wide enable/target): Entra ID → Authentication methods → Policies
+- Conditional Access: Entra ID → Conditional Access → Policies
+- Entra Connect: Entra ID → Entra Connect → Connect sync
+- Sign-in logs: Entra ID → Monitoring & health → Sign-in logs (per user: Entra ID → Users → [user] → Sign-in logs)
+- Risky users: ID Protection → Risky users
+- Roles: Entra ID → Roles & admins → All roles
 
 ## Intune (intune.microsoft.com)
 > **PREVIEW ONLY [portal-nav-intune-reference]:** Navigation reference only. Wipe, retire, delete, assignment, and policy changes require a separate action-specific gate; do not execute them from this page.

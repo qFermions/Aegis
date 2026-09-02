@@ -89,7 +89,7 @@ Entra Connect runs on the AD Connect server and syncs:
 
 ### Checking Sync Status
 
-**Portal:** Entra → Identity → Hybrid management → Microsoft Entra Connect
+**Portal:** Entra ID → Entra Connect → Connect sync
 - `Sync Status`: should show `Enabled`
 - `Last Sync`: should be < 30 min ago
 - `Provisioning errors`: should be 0

@@ -29,9 +29,9 @@ const NODE_RETRY_MAX = 1; // one retry per node (Error Recovery Protocol), then 
 // SR-2 trigger scan — deterministic destructive-intent patterns over plan text.
 // A model can under-classify; these force-raise effective risk to R3.
 const SR2_TRIGGER_PATTERNS = [
-  { pattern: /\bwipe\b|Clear-MobileDevice|Fresh\s*Start/i, label: 'device wipe' },
-  { pattern: /\bdelete\b.*\b(user|account|mailbox|group)\b|Remove-Mg(User|Group)|Remove-Mailbox|Remove-ADUser/i, label: 'account/mailbox/group deletion' },
-  { pattern: /\bdisable\b.*\b(user|account|sign[- ]?in)\b|Disable-ADAccount|BlockCredential\s*\$true|Set-MgUser\s+.*-AccountEnabled\s*:?\s*\$false/i, label: 'account disable / sign-in block' },
+  { pattern: /\bwipe\b|\bretire\b.*(?:\b(device|devices|phone|laptop|iphone|android|ipad|mac|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|Clear-MobileDevice|Invoke-MgRetireDeviceManagementManagedDevice|Fresh\s*Start/i, label: 'device wipe / retire' },
+  { pattern: /\bdelete\b.*\b(user|account|mailbox|group|device|devices)\b|Remove-Mg(User|Group|DeviceManagementManagedDevice)|Remove-Mailbox|Remove-ADUser/i, label: 'account/mailbox/group/device deletion' },
+  { pattern: /\bdisable\b.*\b(user|account|mailbox|mailboxes|sign[- ]?in)\b|Disable-ADAccount|Disable-Mailbox|BlockCredential\s*\$true|Set-MgUser\s+.*-AccountEnabled\s*:?\s*\$false/i, label: 'account/mailbox disable / sign-in block' },
   { pattern: /\bremove\b.*\blicense\b|Set-MgUserLicense\s+.*-RemoveLicenses/i, label: 'license removal' },
   { pattern: /\bremove\b.*\b(from|member).*\bgroup\b|Remove-MgGroupMember/i, label: 'group membership removal' },
   { pattern: /Revoke-MgUserSignInSession|revoke\s+sessions?/i, label: 'session revocation' },
@@ -148,11 +148,21 @@ function scanSr2Triggers(plan) {
   }
   texts.push(plan.powershell || '');
   const joined = texts.join('\n');
+  // Fold before matching so a confusable or an invisible format character cannot
+  // hide a trigger word. Mirrors the support lane's confusable folding (kept
+  // local on purpose: the fortress never imports the lane).
+  const folded = joined.replace(/\p{Cf}/gu, '').normalize('NFKD').replace(/\p{M}/gu, '')
+    .replace(/[^\x00-\x7F]/g, (ch) => SR2_CONFUSABLES[ch] || ch);
   for (const { pattern, label } of SR2_TRIGGER_PATTERNS) {
-    if (pattern.test(joined)) hits.push(label);
+    if (pattern.test(folded)) hits.push(label);
   }
   return Array.from(new Set(hits));
 }
+const SR2_CONFUSABLES = {
+  'ı': 'i', 'ſ': 's', 'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x', 'у': 'y', 'і': 'i', 'ѕ': 's', 'һ': 'h', 'ԁ': 'd', 'ԝ': 'w',
+  'ο': 'o', 'ν': 'v', 'ρ': 'p', 'α': 'a', 'ε': 'e', 'ι': 'i', 'κ': 'k', 'τ': 't', 'υ': 'u', 'χ': 'x',
+  'ᴀ': 'a', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ɪ': 'i', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u', 'ᴠ': 'v', 'ᴡ': 'w',
+};
 
 function recomputeRisk(state) {
   const levels = state.risk.assessments.map((a) => a.level);

@@ -37,7 +37,9 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /Revoke-MgUserSignInSession|revoke\s+sessions?/i, label: 'session revocation' },
   { pattern: /\b(disable|bypass|exclude)\b.*\b(MFA|conditional access|CA policy|defender|firewall|antivirus)\b/i, label: 'security-control change' },
   // Google Workspace / Okta / Jamf consequential actions — mirrors the support
-  // lane's floor set (kept local: the fortress never imports the lane).
+  // lane's floor set (kept local: the fortress never imports the lane). Written
+  // in this file's `.*` style, so it is a superset of the guard's sentence-bounded
+  // `[^.]*` patterns: more ceremony across sentences, never less.
   { pattern: /\btransfer(?:s|red|ring)?\b.*\b(?:ownership|owner|drive|calendar|data|files|docs)\b|\bownership\s+transfer\b|\bdata\s+transfer\b/i, label: 'Drive / Calendar / data ownership transfer' },
   { pattern: /\bde-?provision(?:s|ed|ing)?\b/i, label: 'deprovision (device or account)' },
   { pattern: /\bpower\s*-?wash(?:es|ed|ing)?\b/i, label: 'Chromebook powerwash' },

@@ -57,7 +57,10 @@ const ESCALATION_PATTERNS = [
   // "new phone" MFA reset. It belongs to the existing /security-alert-triage path.
   { pattern: /\b(compromis(?:e|ed|ing)|breach(?:ed)?|hacked|phish(?:ed|ing) (?:link|click|success)|attacker|unauthori[sz]ed (?:access|sign[- ]?in|login))\b/i, label: 'suspected compromise / security incident (existing /security-alert-triage path)' },
   // G1 — Google Workspace / Okta / Jamf consequential actions. Mirrored in the
-  // graph engine's SR2_TRIGGER_PATTERNS; tier-routing.test.js pins both.
+  // graph engine's SR2_TRIGGER_PATTERNS; tier-routing.test.js pins both. The
+  // engine writes each pattern in its own pre-existing `.*` style (and drops the
+  // `from` in the 2SV exclusion), so it floors a superset of what this guard
+  // floors: it can over-trigger across sentences, never fail open against it.
   { pattern: /\btransfer(?:s|red|ring)?\b[^.]*\b(?:ownership|owner|drive|calendar|data|files|docs)\b|\bownership\s+transfer\b|\bdata\s+transfer\b/i, label: 'Drive / Calendar / data ownership transfer (R2+ — capture pre-state first)' },
   { pattern: /\bde-?provision(?:s|ed|ing)?\b/i, label: 'deprovision — device or account (SR-2)' },
   { pattern: /\bpower\s*-?wash(?:es|ed|ing)?\b/i, label: 'Chromebook powerwash — factory reset (SR-2)' },

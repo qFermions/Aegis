@@ -1638,7 +1638,7 @@ const G1_SHELL_MUTATIONS = [
   ['gam cros "[DEVICE_ID]" action deprovision_retiring_device', 'gam-write'],
   ['gam issuecommand cros "[DEVICE_ID]" command remote_powerwash doit', 'gam-write'],
   ['gam user "[USER@DOMAIN.COM]" signout', 'gam-write'],
-  ['sudo ~/bin/gam7/gam update group "[GROUP@DOMAIN.COM]" add member "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sudo ~/bin/gam7/gam update group "[GROUP_EMAIL]" add member "[USER@DOMAIN.COM]"', 'gam-write'],
   ['gam print users query "isSuspended=True" | gam update user "[USER@DOMAIN.COM]" suspended off', 'gam-write'],
   ['result=$(gam delete user "[USER@DOMAIN.COM]")', 'gam-write'],
   ['gcloud iam service-accounts keys create key.json --iam-account="fixture"', 'gcloud-write'],

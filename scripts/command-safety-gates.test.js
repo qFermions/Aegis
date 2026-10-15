@@ -1093,7 +1093,7 @@ const SHELL_SHADOWING = [
   [new RegExp(String.raw`${SHELL_COMMAND_POSITION}\.\s+\S`), 'dot-sourcing is forbidden in a gated fence'],
   // any function name, including `[` (`[ () { return 0; }` shadows the test builtin)
   [new RegExp(String.raw`${SHELL_COMMAND_POSITION}(?:function\s+[^\s;&|()]+|[^\s;&|(){}]+\s*\(\s*\))\s*(?:\{|\(|$)`), 'function definitions are forbidden in a gated fence (they can shadow read/[ or hide sinks)'],
-  [new RegExp(String.raw`(?:^|[;&|(){}\s])(?:export\s+)?(?:PROMPT_COMMAND|PS0|precmd_functions|preexec_functions)\+?=|${SHELL_COMMAND_POSITION}(?:bind|bindkey|zle|disable)\b`), 'prompt hooks, key bindings and builtin switches are forbidden'],
+  [new RegExp(String.raw`(?:^|[;&|(){}\s])(?:export\s+)?(?:PROMPT_COMMAND|PS0|precmd_functions|preexec_functions|BASH_ALIASES)(?:\[[^\]]*\])?\+?=|${SHELL_COMMAND_POSITION}(?:bind|bindkey|zle|disable)\b`), 'prompt hooks, key bindings and builtin switches are forbidden'],
 ];
 const SHELL_FORBIDDEN = [
   ...SHELL_SHADOWING,
@@ -2335,6 +2335,7 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     ['continued-function-after-fi', [...header, ...body, '[ (\\', ') { return 0; }']],
     ['continued-alias-after-fi', [...header, ...body, 'ali\\', `as '['=true`]],
     ['nested-brace-alias-after-fi', [...header, ...body, `{a{l,},}ias '['=true`]],
+    ['bash-aliases-after-fi', [...header, ...body, `BASH_ALIASES['[']=true`]],
     ['exit-256-in-else', replace('  exit 1', '  exit 256')],
     ['exit-512-in-else', replace('  exit 1', '  exit 512')],
   ];
@@ -2450,9 +2451,9 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
     assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
   }
   // WARDEN pass 7, P7-1/P7-3: bash joins a backslash-newline before it reads a word, and
-  // expands nested braces
+  // expands nested braces; P7-2: BASH_ALIASES sets an alias by assignment
   for (const shadow of [['[ (\\', ') { return 0; }'], ['ali\\', `as '['=true`], ['read\\', 'only required_confirm""ation='],
-    [`{a{l,},}ias '['=true`]]) {
+    [`{a{l,},}ias '['=true`], [`BASH_ALIASES['[']=true`], ['BASH_ALIASES+=([read]=true)']]) {
     assert.match(failuresOf(fence(shadow) + gated), /shadow|redefine|hook|gate variables/, shadow.join(' / '));
   }
   // the detector joins a split word the same way

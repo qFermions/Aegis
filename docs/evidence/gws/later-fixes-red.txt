@@ -414,3 +414,32 @@ not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administrati
 +   'bash: curl -sS -H "X-HTTP-Method-Override: PURGE" "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
 +   'bash: http PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
 +   'bash: https MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
+
+=== red-warden6-p61.txt — WARDEN pass 6, P6-1: locale and ANSI-C quoting, escapes, brace expansion, quote-split names — before the fix (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
+error: '$"readonly" required_confirm""ation=""'
++   'locale-quoted-readonly-after-fi',
++   'brace-expanded-alias-after-fi',
++   'ansi-c-escaped-alias-after-fi'
+# bash ground truth (gate lines with a mocked sink, one sibling line before them), empty input:
+$ printf '\n' | bash  # sibling line before the gate: $"readonly" required_confirm""ation=""
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: $'\x72eadonly' required_confirm""ation=
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: re{adonly,} required_confirm""ation=
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: $"declare" -n confirm""ation=required_confirm""ation
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: <none, control>
+Confirmation did not match. No change was made.
+status=1

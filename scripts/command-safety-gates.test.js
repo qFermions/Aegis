@@ -1037,11 +1037,31 @@ const SHELL_PROMPT_LINE = /^\s*(?:printf '%s\\n'|echo) "(?:[^"$`\\]|\$required_c
 // Shell command positions only (a case label's `)` included; `=` and `:` are not
 // command starts in a shell).
 const SHELL_COMMAND_POSITION = String.raw`(?:${SHELL_PROMPT}|^|[;&|(){}\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}\\?`;
-// Quotes and backslashes inside a word do not change the word bash runs
-// (`'alias'`, `"alias"`, `$'alias'`, `al\ias`, `r''eadonly` all run the builtin), so
-// the shadowing rows are also tried on a copy with them removed.
-const unquotedShellWords = (statement) => statement.replace(/\$'/g, "'").replace(/["'\\]/g, '');
-const shadows = ([pattern], statement) => pattern.test(statement) || pattern.test(unquotedShellWords(statement));
+// Quoting does not change the word bash runs: `'alias'`, `"alias"`, `$"alias"`
+// (locale), `$'\x61lias'` / `$'\141lias'` / `$'\u0061lias'` (ANSI-C escapes), `al\ias`
+// and `r''eadonly` all run the builtin, and a brace expansion runs its first
+// alternative as the command (`a{lias,}`, `re{adonly,}`). Every gate rule is also
+// tried on a copy with ANSI-C escapes decoded, quotes and backslashes removed, and
+// brace expansions reduced to their first alternative. A word produced by any other
+// expansion (a variable, a substitution) in command position is an indirect-execution
+// sink of its own.
+const decodeAnsiC = (body) => body.replace(/\\(x[0-9A-Fa-f]{1,2}|u[0-9A-Fa-f]{1,4}|U[0-9A-Fa-f]{1,8}|[0-7]{1,3}|[\s\S])/g, (match, escape) => {
+  if (/^[xuU]/.test(escape)) return String.fromCodePoint(parseInt(escape.slice(1), 16));
+  if (/^[0-7]/.test(escape)) return String.fromCharCode(parseInt(escape, 8));
+  return escape;
+});
+const unquotedShellWords = (statement) => statement
+  .replace(/\$'((?:[^'\\]|\\[\s\S])*)'/g, (match, body) => decodeAnsiC(body))
+  .replace(/\$"/g, '"')
+  .replace(/["'\\]/g, '');
+const firstBraceAlternative = (statement) => statement
+  .replace(/(^|[^$])\{([^{}\s,]*)(?:,[^{}\s]*)+\}/g, '$1$2')
+  .replace(/(^|[^$])\{(-?\w+)\.\.-?\w+(?:\.\.-?\d+)?\}/g, '$1$2');
+const shellReadings = (statement) => {
+  const unquoted = unquotedShellWords(statement);
+  return [...new Set([statement, unquoted, firstBraceAlternative(unquoted)])];
+};
+const shadows = ([pattern], statement) => shellReadings(statement).some((reading) => pattern.test(reading));
 const SHELL_SHADOWING = [
   [new RegExp(String.raw`${SHELL_COMMAND_POSITION}(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b`), 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
   [new RegExp(String.raw`${SHELL_COMMAND_POSITION}\.\s+\S`), 'dot-sourcing is forbidden in a gated fence'],
@@ -1116,7 +1136,7 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
   code.forEach((statement, index) => {
     if (!statement) return;
     for (const row of SHELL_FORBIDDEN) {
-      if (SHELL_SHADOWING.includes(row) ? shadows(row, statement) : row[0].test(statement)) problems.push(`line ${index + 1}: ${row[1]}`);
+      if (shadows(row, statement)) problems.push(`line ${index + 1}: ${row[1]}`);
     }
   });
 
@@ -2075,7 +2095,7 @@ function gateVariablesOutsideGates(document, gatedFenceIds) {
   const problems = [];
   for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
     fence.lines.forEach((rawLine, offset) => {
-      if (/\b(?:required_)?confirmation\b/.test(shellCodeOf(rawLine))) {
+      if (shellReadings(shellCodeOf(rawLine)).some((reading) => /\b(?:required_)?confirmation\b/.test(reading))) {
         problems.push(`${document.file}:${fence.startLine + offset}: gate variables (confirmation, required_confirmation) may only appear inside a gated shell fence`);
       }
     });
@@ -2264,6 +2284,10 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     ['quoted-alias-after-fi', [...header, ...body, `'alias' '['=true`]],
     ['escaped-readonly-after-fi', [...header, ...body, 'read\\only required_confirmation=']],
     ['case-label-after-fi', [...header, ...body, `case x in x) alias '['=true;; esac`]],
+    // WARDEN pass 6
+    ['locale-quoted-readonly-after-fi', [...header, ...body, `$"readonly" required_confirm""ation=""`]],
+    ['brace-expanded-alias-after-fi', [...header, ...body, `a{lias,} '['=true`]],
+    ['ansi-c-escaped-alias-after-fi', [...header, ...body, `$'\\x61lias' '['=true`]],
     ['exit-256-in-else', replace('  exit 1', '  exit 256')],
     ['exit-512-in-else', replace('  exit 1', '  exit 512')],
   ];
@@ -2368,8 +2392,16 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
     // WARDEN pass 5, P5-1: a quoted or escaped name, a case label, and a comment or
     // trailing comment that turns into code where `#` is a plain word
     `'alias' '['=true`, `"alias" '['=true`, `$'alias' '['=true`, `al\\ias '['=true`, `r''eadonly required_confirmation=`,
-    `case x in x) alias '['=true;; esac`, `# note; alias '['=true`, `gam info user "[USER@DOMAIN.COM]"   # ; alias '['=true`]) {
+    `case x in x) alias '['=true;; esac`, `# note; alias '['=true`, `gam info user "[USER@DOMAIN.COM]"   # ; alias '['=true`,
+    // WARDEN pass 6, P6-1: locale and ANSI-C quoting, escapes, brace expansion, quote-split variable names
+    `$"readonly" required_confirm""ation=""`, `$'\\x61lias' '['=true`, `$'\\141lias' '['=true`, `$"alias" '['=true`,
+    `a{lias,} '['=true`, `re{adonly,} x=`, `$"declare" -n confirm""ation=required_confirm""ation`, `$"typeset" -n x=y`,
+    `# note; $"readonly" x=`, `$"builtin" alias '['=true`, `$'\\u0061lias' '['=true`]) {
     assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
+  }
+  // a gate variable named with a split or quoted spelling is still a gate variable
+  for (const named of [`required_confirm""ation=x`, `$"confirmation"=x`, `confirm{ation,}=x`]) {
+    assert.match(failuresOf(fence([named]) + gated), /gate variables/, named);
   }
   assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"']) + gated), '');
 });

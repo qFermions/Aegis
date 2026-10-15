@@ -1,6 +1,6 @@
 $ node scripts/replay/replay-demo.js
-# run 2026-10-15T17:20Z at cba6462 + working tree (snapshot, counts and this battery)
-Aegis replay demo — sandboxed store: /tmp/aegis-replay-demo-Olg6fj/store
+# run 2026-10-15T17:42Z at 850c5ce + working tree (snapshot and this battery)
+Aegis replay demo — sandboxed store: /tmp/aegis-replay-demo-3qzWGU/store
 
  1. first occurrence → MISS, routed to the adaptive (model) path
     exit 0 → {"result":"MISS","route":"adaptive"}
@@ -33,10 +33,10 @@ Aegis replay demo — sandboxed store: /tmp/aegis-replay-demo-Olg6fj/store
 15. a real email address cannot enter the store either (SR-1)
     exit 4 → {"ok":false,"error":"sanitization BLOCK — refused to persist: real email address (use [USER@DOMAIN.COM] / [UPN])"}
 16. authority file changed → STALE (fingerprint, not a clock); history preserved
-    exit 0 → {"result":"STALE","changed":[{"path":"/tmp/aegis-replay-demo-Olg6fj/authority.md","reason":"content changed"}]}
+    exit 0 → {"result":"STALE","changed":[{"path":"/tmp/aegis-replay-demo-3qzWGU/authority.md","reason":"content changed"}]}
 17. render refuses a stale case unless --historical is passed
-    exit 3 → {"ok":false,"error":"render refused: case is STALE (authority changed: [{\"path\":\"/tmp/aegis-replay-demo-Olg6fj/authority.md\",\"reason\":\"content changed\"}]) — pass --historical to view as historical evidence"}
+    exit 3 → {"ok":false,"error":"render refused: case is STALE (authority changed: [{\"path\":\"/tmp/aegis-replay-demo-3qzWGU/authority.md\",\"reason\":\"content changed\"}]) — pass --historical to view as historical evidence"}
 
 Done. Every step above was a child-process invocation of the CLI with no model, agent, loop, graph, or network involved.
-Sandbox left at /tmp/aegis-replay-demo-Olg6fj — delete it when you are done.
+Sandbox left at /tmp/aegis-replay-demo-3qzWGU — delete it when you are done.
 exit=0

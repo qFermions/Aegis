@@ -1,5 +1,5 @@
 $ node scripts/harness/check-continuity.js
-# run 2026-10-15T17:20Z at cba6462 + working tree (snapshot, counts and this battery)
+# run 2026-10-15T17:42Z at 850c5ce + working tree (snapshot and this battery)
 PASS  snapshot readable (3143 bytes)
 PASS  section present: ## Identity
 PASS  section present: ## Repo ground truth
@@ -7,7 +7,7 @@ PASS  section present: ## Component state
 PASS  section present: ## Active work
 PASS  section present: ## Next actions
 PASS  section present: ## Verification
-PASS  HEAD binding current (cba6462)
+PASS  HEAD binding current (850c5ce)
 PASS  Snapshot-Date present
 PASS  all 20 referenced repo paths exist
 

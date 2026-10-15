@@ -1,6 +1,6 @@
 # Aegis continuity snapshot
 
-HEAD: cba6462
+HEAD: 850c5ce
 Snapshot-Date: 2026-10-15
 Validate with `node scripts/harness/check-continuity.js` (exit 2 = STALE: HEAD moved
 since this was written — refresh, don't trust).
@@ -43,8 +43,8 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 
 - Claim `g1-google-lane` (batch G1) until the batch report; release with
   `node scripts/dev/claim.js release --task g1-google-lane`.
-- Fresh-context review: WARDEN passes 1–6 REJECT, all findings corrected in their own
-  commits (`docs/evidence/gws/g1-checks.md` §H); pass 7 pending.
+- Fresh-context review: WARDEN passes 1–7 REJECT, all findings corrected in their own
+  commits (`docs/evidence/gws/g1-checks.md` §H); pass 8 pending.
 
 ## Next actions
 

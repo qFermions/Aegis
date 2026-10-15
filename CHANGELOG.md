@@ -15,12 +15,19 @@ All notable changes to the Aegis IT Operations Agent are documented here.
 
 ### Changed
 - `scripts/repository-structure.test.js` pins 77 commands (was 58; still an exact pin).
+- The 19 commands join the safety-gate suite's mixed-state list, so each must stay operator-only (`disable-model-invocation: true`) with an execution boundary — an added assertion, not an exemption.
 - Tier handler cards point at the Google navigation doc and runbooks; `docs/portal-nav-2026.md` points at its Google companion.
 
 ### Fixed
 - **Tier guard fail-open:** `[^.]*` stopped at the dot inside `[first.last]` / `[USER@DOMAIN.COM]`, so "Disable [first.last]'s account today" and five similar wordings were not floored; in-token dots no longer end a sentence (additive).
 - **Scanner guidance:** the GOCSPX secret label fell through to "replace with a placeholder" instead of "revoke or rotate".
 - **Dictionary drift:** five `[@Aegion_*]` tokens in use were undefined; a new test fails on any used-but-undefined org token.
+- **Scanner precision (this batch's own WARN patterns):** `gam … turnoff2sv` / `deprovision` fired on a runbook's Sources line citing the GAM wiki page *Users-Signout-Turnoff2SV*; the sub-command must now sit in argument position. The Jamf MDM-command WARN fired on a read-only `GET …/mdm/commands?filter=` status check; it now needs a write method or body. Each with its own test.
+- **Portal discovery gaps (this batch's own grammar):** the cue knew only the retired name *Apple Business Manager*, and ChromeOS's "click **Re-enable selected devices**" / "At the top, click **Disable selected devices**" were not candidates. The cue accepts *Apple Business*; Re-enable joins the G1 click grammar only; inside a G1 lane document the click grammar also applies to generically cued list items. Microsoft runbooks' candidates are unchanged (inventory diff touches G1 files only).
+- **Release staging:** `.gitignore`'s `*password*` rule re-included only `password-reset.md`, so a fresh staging would have dropped `gws-password-reset.md`; it gets the same negation and its own test.
+
+### Verified (2026-10-15)
+- `node --test` 483/483 · `node scripts/lint/command-structure.js` 77 commands clean · `node scripts/eval/ms-ticket-eval.js` 28/28 · 6/6 · `node scripts/eval/gws-ticket-eval.js` 38/38 · 9/9 · `node scripts/pre-commit-check.js --all` exit 0, 0 BLOCK, 170 WARN (baseline 143 + 27 G1 dangerous-verb WARNs: 23 on gated command lines in the runbooks, 3 on runbook prose that names the dangerous command, 1 in the reversibility table) · `node scripts/harness/release-boundary-check.js` PASS · `node scripts/replay/replay-demo.js` exit 0. Exact outputs: `docs/evidence/gws/battery-*.txt`; acceptance table: `docs/evidence/gws/g1-checks.md`.
 
 ## [v8.8-public] - 2026-09-02 — recruiter-grade proof: ticket eval, structure lint, replay V2, Fable 5.1 policy
 

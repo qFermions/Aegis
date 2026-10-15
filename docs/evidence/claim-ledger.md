@@ -1,4 +1,4 @@
-# Claim → evidence ledger (v8.8, 2026-09-02)
+# Claim → evidence ledger (v8.9, 2026-10-15; v8.8 rows from 2026-09-02 unless marked)
 
 Every material technical claim the public README makes, read the way a skeptical
 engineer reads it, with the command or file that proves it. Status vocabulary:
@@ -10,6 +10,7 @@ engineer reads it, with the command or file that proves it. Status vocabulary:
 | **MODEL CONTRACT** | cannot be checked without a model; stated as behavior, evaluated by rubric/probe, never claimed as enforced |
 | **WEAKENED** | the README wording was stronger than the evidence and was changed in v8.8 |
 | **NOT TESTED** | no evidence either way; the README does not claim it |
+| **PENDING** | the deterministic part is in place; the named evidence (lab excerpt, rubric run, re-check) is still missing and is listed in the row |
 
 Re-run everything with `node --test` (full battery), or the individual commands listed.
 
@@ -24,8 +25,8 @@ Re-run everything with `node --test` (full battery), or the individual commands 
 | Depth sized to the ticket class (QUICK FIX / DIAGNOSTIC / PROCEDURE / REFERENCE) | MODEL CONTRACT | `docs/command-output-standard.md` v1.2; corpus carries all four classes (`scripts/eval/ms-tickets.json`); rubric row "Classification"; samples show a 4-step T1 answer vs a ranked-checks T2 answer |
 | Troubleshooting continuity after "still doesn't work" | MODEL CONTRACT | `docs/command-output-standard.md` §Failure escalation; tier2 card now carries the rule; one captured follow-up in samples |
 | Verification checklist and Jira-ready note on every runbook | PROVEN (content) | `one-final-checklist`, `paste-ready-note`, `checklist-before-note` lint rules on all A/B commands |
-| 58 runbook slash commands | PROVEN | `ls .claude/commands | wc -l` = 58; `variant-mapped` lint rule classifies every one; `scripts/repository-structure.test.js` validates frontmatter |
-| Microsoft and Google coverage | WEAKENED | 0 Google runbooks in `.claude/commands/`; both handler cards cover Google (tier suite asserts the markers). README now says "Microsoft first; Google through the same handlers, no Google runbooks ship yet" |
+| 77 runbook slash commands (58 Microsoft-lane + 19 Google/Okta/Jamf/macOS) | PROVEN | `ls .claude/commands | wc -l` = 77; `variant-mapped` lint rule classifies every one; `scripts/repository-structure.test.js` pins the count and validates frontmatter |
+| Microsoft and Google coverage | PARTIALLY PROVEN (v8.9) | **Proven:** 19 Google Workspace / Okta / Jamf / macOS runbooks in `.claude/commands/` (`gws-*`, `okta-*`, `jamf-*`, `mac-*`, `zoom-room-issue`) pass the same structure lint and safety-gate suite as the Microsoft ones, and the 38-ticket Google corpus passes the same deterministic evaluator (`node scripts/eval/gws-ticket-eval.js`) — see the G1 section below. **Pending:** the operator's own lab excerpts (`docs/evidence/gws/README.md`), the fresh-context rubric run on the Google corpus, and the model-judged half generally. Both handler cards cover both ecosystems (tier suite asserts the markers) |
 
 ## Safety
 
@@ -39,6 +40,20 @@ Re-run everything with `node --test` (full battery), or the individual commands 
 | Independent review, maker ≠ checker, nothing in-session satisfies it | PROVEN (graph) | `graph.test.js` — `independentReviewRequired` cannot be satisfied by agent output; hash-bound human gate |
 | Bounded loops (machine gate, ceiling 3) | MODEL CONTRACT | `docs/harness.md` §Bounded-loop contract; the graph's review ceiling is tested, ad-hoc loops are doctrine |
 | Deterministic gates outside the model (scanner, boundary guard) | PROVEN | `scripts/pre-commit-check.test.js`, `scripts/harness/release-boundary-check.js` (PASS), CI workflow `release-gate.yml` on ubuntu + windows |
+
+## Google Workspace / Okta / Jamf lane (v8.9, batch G1)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| The safety-gate test sees every gam, gcloud, Okta/Jamf API, jamf and macOS mutation in a shell fence and requires a same-fence SAFETY GATE | PROVEN | `scripts/command-safety-gates.test.js` — "G1 detector" (73 mutation forms × 5 fence languages, 36 read-only forms), "G1 fixtures" (`scripts/fixtures/command-safety-gates/`: ungated GAM fence fails, gated passes), "G1 shell gate analyzer" (21 bypass shapes rejected), one per-gate test per shell and portal gate in the 19 runbooks; red and green runs in `docs/evidence/gws/phase1-red-green.md`. The grammar is a documented set, not universal (`docs/security/COMMAND_RISK_METADATA.md`) |
+| Shell gates are explicit and fail-closed without PowerShell | PROVEN | plain-text analyzer + exact-equality model in the same test; the source-derived phrase is executed in bash where available (always on Linux CI): exact phrase reaches the mocked sink once, empty / `yes` / case / padding / trailing backslash exit non-zero |
+| Google, Okta, Jamf and macOS runbooks meet the Microsoft structure contract | PROVEN (content) | `node scripts/lint/command-structure.js` (G1 roots; `cli-collapsed`, `cli-commented`, `gui-before-cli`, `cli-human-run`, `cli-in-shell-fence`; `STALE_PORTAL_PATHS_G1`), suite `scripts/lint/command-structure.test.js` |
+| Consequential Google/Okta/Jamf wordings floor to the Tier-3 / R-ladder path in the guard and the graph engine | PROVEN (pattern set) | `scripts/tier/tier-routing.test.js` — "G1 ESCALATION", "G1 routine", "G1 folding"; the floor is a pattern-set fail-safe, not a classifier |
+| Google, Okta and Jamf secret formats are blocked | PROVEN (pattern set) | `scripts/pre-commit-check.test.js` — one temp-repo test per format, synthetic values, redacted output; dangerous-verb WARNs for the lane's sinks |
+| Google corpus: routine vs consequential, routes, replay MISS, dangerous pairs | PROVEN (deterministic half) | `node scripts/eval/gws-ticket-eval.js` (38 tickets, 9 pairs), `scripts/eval/gws-ticket-eval.test.js`; both lanes run `scripts/eval/ticket-eval-core.js` |
+| The rendered Google/Okta/Jamf answers are useful (first action, depth, continuity, human-executes framing) | PENDING | the fresh-context rubric run on `gws-tickets.json` has not been done (`scripts/eval/README.md` §2b) |
+| Runbook procedures work in a real tenant | PENDING | the operator's lab excerpts (`docs/evidence/gws/README.md` template); none in the tree yet |
+| Reversibility table and navigation paths are current | PARTIALLY PROVEN | every row/path cites an official vendor page checked live on 2026-10-15 (`docs/gws-reversibility.md`, `docs/portal-nav-google-2026.md`); the freshness lint keeps the listed retired wording out; vendor drift after the check date is not detected by any script — re-check on a cadence |
 
 ## Recurring-ticket economics (replay)
 

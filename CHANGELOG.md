@@ -2,6 +2,26 @@
 
 All notable changes to the Aegis IT Operations Agent are documented here.
 
+## [v8.9] - 2026-10-15 — Google Workspace / Okta / Jamf lane with deterministic gates (batch G1)
+
+### Added
+- **Safety-gate test sees the lane** (`scripts/command-safety-gates.test.js`): shell fences now count `gam`, `gcloud`, HTTP-API writes (`curl`/`wget`/HTTPie with a write method or body), the `jamf` binary, `profiles`, `dscl`, `fdesetup`, `diskutil`, `softwareupdate`, `networksetup -set…`, `systemsetup -set…`, `defaults write`, `launchctl` and ARD `kickstart` as mutations; read-only diagnostics stay live and unlisted verbs fail closed. A same-fence `# SAFETY GATE [id]` in a tagged bash/zsh fence is checked by a **plain-text shell gate analyzer** (no pwsh): six fields, one literal phrase equal to the field, one `IFS= read -r confirmation`, one top-level exact comparison dominating every owned sink, an else that exits non-zero; 21 bypass shapes rejected; the phrase is executed in bash against the standard rejection set. Committed fixtures prove a GAM fence without a marker fails and the same fence with a marker passes. Portal discovery learned the lane's verbs and cues.
+- **Structure lint** (`scripts/lint/command-structure.js`): G1 breadcrumb roots (Admin console, Okta, Jamf Pro, Apple Business, Fleet, System Settings, Self Service, Finder, Terminal, Zoom Rooms); `cli-collapsed`, `cli-commented`, `gui-before-cli`, `cli-human-run`, `cli-in-shell-fence`; `STALE_PORTAL_PATHS_G1` (retired Admin console, Okta, Jamf and Apple Business wording, each with its vendor page and check date); the three new knowledge docs on the freshness list.
+- **Tier guard + graph engine floors** (kept in sync): Drive/Calendar/data ownership transfer, deprovision, powerwash, account/work-profile removal from a device, OAuth token / app-password revocation, admin-role grants, Vault/litigation holds and retention changes, Okta deactivate / clear sessions / reset all factors, Jamf/MDM erase, remote lock, lost mode, MDM-profile removal and unmanage, Google 2-Step Verification / security keys / passkeys / Context-Aware Access changes — each with routine counterparts that stay clean and homoglyph/zero-width folding.
+- **Scanner**: BLOCKs Google API keys, OAuth client secrets, service-account key JSON, Okta SSWS and bare tokens, and Bearer/Basic credentials in Authorization headers; WARNs on the lane's dangerous sinks (GAM delete/suspend/transfer/2SV-off/deprovision/licence removal/ChromeOS actions, Okta lifecycle and DELETE calls, Jamf MDM commands and `removeFramework`, `profiles` removal, `fdesetup` changes, `diskutil` erase).
+- **Google ticket corpus + eval** (`scripts/eval/gws-tickets.json`, `gws-ticket-eval.js`): 38 placeholder-only tickets, 16 floored, nine dangerous pairs (five must floor apart); both lanes now run one shared evaluator (`ticket-eval-core.js`) — the Microsoft eval output is byte-identical after the extraction.
+- **19 runbooks**: `gws-new-user`, `gws-offboard`, `gws-password-reset`, `gws-2sv-reset`, `gws-group-membership`, `gws-ou-move`, `gws-license-assign`, `gws-drive-transfer`, `gws-audit-log`, `gws-chromeos-device`, `okta-app-assignment`, `okta-mfa-reset`, `okta-user-lifecycle`, `jamf-enroll-mac`, `jamf-lock-erase`, `mac-new-hire-laptop` (operational) and `gws-gmail-delivery`, `mac-troubleshoot`, `zoom-room-issue` (troubleshooting) — written from each ecosystem's own behaviour (Okta first for Okta-provisioned Google accounts, OUs as policy, 2SV is not MFA, suspend R1 / delete R3 with the vendor's 20-day window, transfer R2 with pre-state, powerwash ≠ deprovision, Jamf lock reversible with the PIN and Wipe Computer not), every mutation gated, every source cited with its check date.
+- **Knowledge docs**: `docs/gws-reversibility.md` (R-class, undo, window, source and check date per action), `docs/portal-nav-google-2026.md` (Admin console, ChromeOS, Okta, Jamf Pro, Apple Business, Fleet, macOS, Zoom Rooms paths), `docs/evidence/gws/README.md` (lab-evidence capture template); dictionary tokens for the lane.
+
+### Changed
+- `scripts/repository-structure.test.js` pins 77 commands (was 58; still an exact pin).
+- Tier handler cards point at the Google navigation doc and runbooks; `docs/portal-nav-2026.md` points at its Google companion.
+
+### Fixed
+- **Tier guard fail-open:** `[^.]*` stopped at the dot inside `[first.last]` / `[USER@DOMAIN.COM]`, so "Disable [first.last]'s account today" and five similar wordings were not floored; in-token dots no longer end a sentence (additive).
+- **Scanner guidance:** the GOCSPX secret label fell through to "replace with a placeholder" instead of "revoke or rotate".
+- **Dictionary drift:** five `[@Aegion_*]` tokens in use were undefined; a new test fails on any used-but-undefined org token.
+
 ## [v8.8-public] - 2026-09-02 — recruiter-grade proof: ticket eval, structure lint, replay V2, Fable 5.1 policy
 
 ### Added

@@ -42,7 +42,11 @@ summaries** — every console step is a full breadcrumb from the console root, o
 click per arrow, BOTH ecosystems held to the same standard: Google =
 `admin.google.com → Directory → Users → [USER@DOMAIN.COM] → Security → 2-Step Verification`,
 Microsoft = the same form from its admin center. "Go to the Admin Console and
-manage the user" is a defect, not a step. Then a short verification check and a
+manage the user" is a defect, not a step. Google Workspace / Okta / Jamf Pro / Apple Business / macOS paths
+(each with its live vendor page and check date): `docs/portal-nav-google-2026.md`;
+the lane's runbooks are `.claude/commands/gws-*`, `okta-*`, `jamf-*`, `mac-*` and
+`zoom-room-issue`, and `docs/gws-reversibility.md` gives the undo and window for
+each action. Then a short verification check and a
 Jira-ready note. **No manufactured ceremony:** if two steps solve and verify it,
 give two steps. Phone-screen readable. Plain English for end-user-facing text.
 

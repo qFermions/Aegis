@@ -184,10 +184,10 @@ const CLI_INDIRECT = String.raw`(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|
 // `[user@host ~]$ `) still runs the command after it.
 const SHELL_PROMPT = String.raw`^\s*(?:[$%❯]|[\w.-]+@[\w.-]+:\S*[$#%]|\[[^\]]+\][$#%])(?=\s)`;
 const CLI_COMMAND_START = String.raw`(?:^|${SHELL_PROMPT}|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
-const CLI_TOOL_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})["']?(?=\s|$|\$)`, 'i');
+const CLI_TOOL_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})(?:\.exe)?["']?(?=\s|$|\$)`, 'i');
 // Inside a shell fence the indirect forms count too; in a PowerShell fence `$name`
 // is ordinary syntax, so cli-in-shell-fence looks for the named tools only.
-const CLI_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}(?:[\\"']?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})["']?(?=\s|$|\$)|${CLI_INDIRECT})`, 'i');
+const CLI_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}(?:[\\"']?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})(?:\.exe)?["']?(?=\s|$|\$)|${CLI_INDIRECT})`, 'i');
 // Read-only diagnostics that may sit outside <details> (they still need a
 // comment). An explicit allowlist: anything not on it is treated as mutating.
 const READ_ONLY_CLI = [

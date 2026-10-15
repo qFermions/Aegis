@@ -188,7 +188,8 @@ function isMutation(command, statement) {
 // any options (including -u user / --user=user), command, env and inline VAR=value
 // assignments, nohup, time, nice, caffeinate, exec, script and xargs. The tool may
 // sit behind a quoted or variable path ("$HOME/bin/gam7/gam"), be quoted or
-// backslash-escaped ('gam', \gam) or run into an expansion (gam${IFS}delete); a
+// backslash-escaped ('gam', \gam), carry a Windows .exe suffix, or run into an
+// expansion (gam${IFS}delete); a
 // wrapper may be called by its path (/usr/bin/sudo, "/usr/bin/env"); arch is one too.
 const CLI_WRAPPER_PATH = String.raw`"?(?:[\w.~-]*\/)*`;
 const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|${CLI_WRAPPER_PATH}doas"?(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}timeout"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|${CLI_WRAPPER_PATH}command"?(?:\s+-[pvV]+)?|${CLI_WRAPPER_PATH}env"?(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}nohup"?|${CLI_WRAPPER_PATH}time"?(?:\s+-p)?|${CLI_WRAPPER_PATH}nice"?(?:\s+-n\s*-?\d+|\s+-\d+)?|${CLI_WRAPPER_PATH}caffeinate"?(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|${CLI_WRAPPER_PATH}exec"?(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|${CLI_WRAPPER_PATH}script"?(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|${CLI_WRAPPER_PATH}xargs"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}arch"?(?:\s+-\w+)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
@@ -200,7 +201,7 @@ const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-
 const SHELL_PROMPT = String.raw`^\s*(?:[$%❯]|[\w.-]+@[\w.-]+:\S*[$#%]|\[[^\]]+\][$#%])(?=\s)`;
 const CLI_COMMAND_START = String.raw`(?:^|${SHELL_PROMPT}|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
 const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*`;
-const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})["']?(?=\\s|$|\\$)([^;|&]*)`, 'gi'))]
+const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})(?:\\.exe)?["']?(?=\\s|$|\\$)([^;|&]*)`, 'gi'))]
   .map((match) => match[1].trim());
 // Indirect execution hides the command from every per-tool rule, so it is a sink
 // in its own right (fail-closed): an interpreter one-liner (python/perl/ruby/node/
@@ -231,8 +232,10 @@ const GCLOUD_MUTATING = new Set(['create', 'update', 'delete', 'set', 'add-iam-p
   'revoke', 'activate-service-account']);
 // A method taken from an expansion ($METHOD, ${METHOD}, $(…)) can be any verb: a write.
 const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(])|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(])|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*(?:DELETE|POST|PUT|PATCH)\b/i;
-// -K reads a config file that can set the method or a body: fail-closed.
-const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFTK](?=\s|["'@{]|$)|X\s*["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(]))/;
+// -K reads a config file that can set the method or a body: fail-closed. A short
+// option's value may be glued to it (`-dname=value`, `-d$BODY`), and curl sends a
+// method in any case (`-sXpost`).
+const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFTK]|X\s*["']?(?:(?:[Dd][Ee][Ll][Ee][Tt][Ee]|[Pp][Oo][Ss][Tt]|[Pp][Uu][Tt]|[Pp][Aa][Tt][Cc][Hh])\b|\$[\w{(]))/;
 // An unquoted `$VAR` / `${…}` / `$(…)` argument can expand into any option,
 // including a write method or a body, so it is a write (fail-closed). Expansions
 // inside quotes ("…${OKTA_API_TOKEN}") stay single arguments and are fine.
@@ -1946,6 +1949,13 @@ const G1_SHELL_MUTATIONS = [
   ['admin@host:~$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['[admin@host ~]$ sudo jamf removeFramework', 'jamf-write'],
   ['$ curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | bash', 'indirect-exec'],
+  // P4-5: a Windows-style .exe name and curl values glued to their short option
+  ['gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['curl.exe -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS -d$BODY "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend"', 'http-write'],
+  ['curl -sS -dname=value "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sXpost "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend"', 'http-write'],
+  ['curl -sS -Xdelete "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
 ];
 
 const G1_SHELL_READ_ONLY = [
@@ -1999,6 +2009,9 @@ const G1_SHELL_READ_ONLY = [
   'arch',
   'At <script or command>:<line number>',
   '$ gam info user "[USER@DOMAIN.COM]"',
+  'gam.exe info user "[USER@DOMAIN.COM]"',
+  'curl -sSfL "https://[@Aegion_JAMF_URL]/api/v1/fixture" -H "Authorization: Bearer ${JAMF_TOKEN}"',
+  'curl -sS -o /tmp/fixture.json -w "%{http_code}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
 ];
 
 test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {

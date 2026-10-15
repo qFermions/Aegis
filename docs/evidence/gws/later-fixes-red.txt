@@ -349,3 +349,17 @@ not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command,
   error: '$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
 # pass 27
 # fail 1
+
+=== red-warden4-p45.txt — WARDEN pass 4, P4-5: .exe names, glued curl values, lowercase short method, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: gam.exe delete user "[USER@DOMAIN.COM]" → []',
++   'bash: curl.exe -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS -d$BODY "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend" → []',
++   'bash: curl -sS -dname=value "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sXpost "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'gam.exe delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 27
+# fail 1

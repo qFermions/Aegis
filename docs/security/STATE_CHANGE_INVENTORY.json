@@ -1063,6 +1063,178 @@
       ]
     },
     {
+      "id": "gws-offboard-calendar-transfer-portal",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:calendar",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-offboard-data-transfer",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gam-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-offboard-delete",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gam-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-offboard-delete-portal",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-offboard-devices-preview",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "gws-offboard-drive-transfer-portal",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:transfer",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-offboard-okta-deactivate",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "http-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-offboard-okta-deactivate-portal",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:deactivate",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-offboard-suspend",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gam-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-offboard-suspend-portal",
+      "file": ".claude/commands/gws-offboard.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:suspend",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
       "id": "health-compliance-remediation",
       "file": "modules/systems/health_checks.md",
       "kind": "portal",
@@ -5534,6 +5706,30 @@
       "impactCategories": [
         "external-system mutation",
         "identity-related"
+      ]
+    },
+    {
+      "id": "zoom-room-restart-app-portal",
+      "file": ".claude/commands/zoom-room-issue.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "zoom-room-restart-computer-portal",
+      "file": ".claude/commands/zoom-room-issue.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
       ]
     }
   ],

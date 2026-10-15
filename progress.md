@@ -7,7 +7,7 @@
   - Phase 0 — baseline recorded (346/346, lint 58 clean, MS eval 28/28 · 6/6, scanner 0 BLOCK / 143 WARN, continuity STALE as expected).
   - Phase 1 — 1.1 safety-gate shell lane + plain-text shell gate analyzer (184/184); 1.2 lint G1 rules (24/24); 1.3 tier/engine floors (21/21); 1.4 scanner secrets (41/41); 1.5 tokens. Acceptance: `node --test` 375/375, lint clean, MS eval 28/28 · 6/6, scanner exit 0.
 - **Decisions (evidence):**
-  - `[GROUP_EMAIL]` instead of `[GROUP@DOMAIN.COM]` — the `@` form BLOCKs in the scanner; no exemption widened (`docs/evidence/gws/phase1-red-green.md` §1.5).
+  - `[GROUP_EMAIL]` instead of an @-shaped group token — the @ form BLOCKs in the scanner; no exemption widened (`docs/evidence/gws/phase1-red-green.md` §1.5).
   - Google stale paths live in `STALE_PORTAL_PATHS_G1` — the existing lint test pins Microsoft Learn citations on `STALE_PORTAL_PATHS`.
   - Arrow-mutation discovery is live only for G1 cue lines — fixing the dead Microsoft arrow guard surfaces an unowned candidate in `troubleshoot.md` (Microsoft runbooks may not change); reported as a decision.
   - Vendor facts: `/tmp/…/scratchpad/vendor-facts.md` (204 rows, 200 verified 2026-10-15); GAM syntax from `raw.githubusercontent.com/wiki/GAM-team/GAM/*.md` (github.com wiki itself is proxy-blocked).

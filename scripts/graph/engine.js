@@ -46,6 +46,7 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\b(?:grant|assign|make|add|give|promote|elevate)\b.*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:role|rights|privileges?|access)|global admin|org(?:anization)? admin|delegated admin)\b/i, label: 'admin-role grant' },
   { pattern: /\b(?:vault|litigation|legal)\s+hold\b|\bretention\s+(?:rule|rules|polic(?:y|ies)|period|settings?)\b/i, label: 'Vault / litigation hold or retention-rule change' },
   { pattern: /\bokta\b.*\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b.*\bokta\b|\bclear(?:s|ed|ing)?\b.*\bsessions?\b|\breset\b.*\ball\b.*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors' },
+  { pattern: /\b(?:disable|bypass|turn\s*off|relax|unenforce|exclude|remove|delete)\b.*\b(?:2-?step verification|2-?step|context[- ]aware access|security keys?|passkeys?)\b/i, label: 'security-control change — Google 2-Step Verification, security keys/passkeys, or Context-Aware Access' },
   { pattern: /\berase\b.*\b(?:device|devices|mac|macs|macbook|computer|computers|laptop|iphone|ipad|disk)\b|\bremote(?:ly)?[- ]?lock\b|\block\b.*\bremote(?:ly)?\b|\bjamf\b.*\block\b|\block\b.*\bjamf\b|\blost mode\b|\bremove\b.*\bmdm profile\b|\bunmanag(?:e|ed|ing)\b|\bremoveFramework\b/i, label: 'Jamf / MDM erase, remote lock, lost mode, MDM-profile removal or unmanage' },
 ];
 const SR2_MASS_THRESHOLD = 10; // > 10 objects = mass operation (SR-2)

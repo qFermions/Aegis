@@ -234,10 +234,14 @@ const G1_FLOORS = [
   ['jamf', 'Put the iPad [SERIAL_NUMBER] in Lost Mode.'],
   ['jamf', 'Remove the MDM profile from [DEVICE_NAME].'],
   ['jamf', 'Unmanage [SERIAL_NUMBER] in Jamf Pro.'],
+  ['2sv', 'Turn off 2-Step Verification for [USER@DOMAIN.COM] so they can sign in without their phone.'],
+  ['2sv', 'Exclude [USER@DOMAIN.COM] from the Context-Aware Access policy while they travel.'],
+  ['2sv', 'Remove the security keys and passkeys from [USER@DOMAIN.COM]; they lost the key.'],
 ];
 const G1_LABEL_WORD = {
   transfer: /transfer/i, deprovision: /deprovision/i, powerwash: /powerwash/i, 'work-profile': /work-profile|deletion/i,
   oauth: /oauth|app-password/i, 'admin-role': /admin-role/i, hold: /hold|retention/i, okta: /okta|disable/i, jamf: /jamf|wipe/i,
+  '2sv': /2-step|security-control/i,
 };
 const G1_ROUTINE = [
   'Reset the 2-Step Verification backup codes for [USER@DOMAIN.COM]; they lost the printed sheet.',

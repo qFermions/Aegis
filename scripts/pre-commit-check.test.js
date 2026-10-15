@@ -610,6 +610,25 @@ test('blocks a Google OAuth client secret without printing the value or source l
   assertBlocksSyntheticCredential(t, 'google-oauth-secret.md', secret, 'Google OAuth client secret (GOCSPX-…)');
 });
 
+test('every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance', function (t) {
+  const repo = makeRepo(t);
+  const secrets = [
+    'AIza' + 'C'.repeat(35),
+    'GOCSPX-' + 'D'.repeat(24),
+    ['SSWS', '00' + 'E'.repeat(40)].join(' '),
+    ['Authorization:', 'Bearer', 'F'.repeat(32)].join(' '),
+  ];
+  writeFile(repo, 'rotate-guidance.md', secrets.map((secret, index) => `${secret} rotate-marker-${index}`).join('\n') + '\n');
+  stageAll(repo);
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 1);
+  const guidance = output.split('\n').filter((line) => /Guidance:/.test(line));
+  assert.ok(guidance.length >= secrets.length, 'one guidance line per finding');
+  assert.deepEqual(guidance.filter((line) => !/revoke or rotate/.test(line)), [], 'a credential finding fell through to placeholder guidance');
+  assertRedacted(output, [...secrets, repo]);
+});
+
 test('blocks a Google service-account key JSON type marker without printing the source line', function (t) {
   const secret = ['"type"', '"service_account"'].join(': ');
   assertBlocksSyntheticCredential(t, 'service-account-type.json', secret, 'Google service-account key JSON (type service_account)');

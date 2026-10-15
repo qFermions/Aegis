@@ -288,7 +288,7 @@ function remediationGuidance(issue) {
   if (issue.severity === 'WARN') {
     return 'Review the operation, add the required warning/confirmation gate, and keep it only if intentional.';
   }
-  if (/credential|token|key|JWT|SAS/i.test(issue.label)) {
+  if (/credential|token|key|secret|JWT|SAS/i.test(issue.label)) {
     return 'Remove the value. If it is live, revoke or rotate it before any history cleanup.';
   }
   return 'Replace the value with the canonical placeholder for this data category.';

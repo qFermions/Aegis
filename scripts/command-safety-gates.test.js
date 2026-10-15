@@ -146,17 +146,23 @@ const NON_PERSISTENT = new Set([
 const MUTATING_VERB = /^(?:Add|Clear|Delete|Disable|Enable|Export|Grant|Install|Move|New|Out|Publish|Register|Release|Remove|Rename|Reset|Restart|Restore|Revoke|Set|Start|Stop|Submit|Uninstall|Unlock|Unregister|Update)-/i;
 const COMMAND_AT_BOUNDARY = /(?:^|[;|{}=:])\s*&?\s*([A-Za-z]+-[A-Za-z0-9*]+)\b/g;
 
-function stripExecutableComment(line) {
+function stripExecutableComment(line, shell = false) {
   let single = false;
   let double = false;
+  let escaped = -1;
   for (let index = 0; index < line.length; index += 1) {
     const char = line[index];
-    if (char === '`') { index += 1; continue; }
+    // PowerShell escapes with a backtick, bash with a backslash (outside single
+    // quotes): `echo \ #;cmd` runs cmd, the escaped space glues `#` to its word.
+    if (shell ? char === '\\' && !single : char === '`') { index += 1; escaped = index; continue; }
     if (char === "'" && !double) { single = !single; continue; }
     if (char === '"' && !single) { double = !double; continue; }
     // bash and PowerShell start a comment only at a word boundary: `true#;cmd`
-    // runs cmd, so a glued `#` must not hide the rest of the line.
-    if (char === '#' && !single && !double && (index === 0 || /[\s;&|(){}<>]/.test(line[index - 1]))) return line.slice(0, index);
+    // runs cmd, so a glued `#` must not hide the rest of the line. In bash the
+    // boundary is whitespace or a metacharacter (; & | ( ) < >) — `{` and `}` are
+    // ordinary word characters (`${#var}`, `{#;cmd` run cmd); PowerShell also
+    // opens a comment after `{` or `}`.
+    if (char === '#' && !single && !double && (index === 0 || (index - 1 !== escaped && (shell ? /[\s;&|()<>]/ : /[\s;&|(){}<>]/).test(line[index - 1])))) return line.slice(0, index);
   }
   return line;
 }
@@ -343,12 +349,12 @@ function mutationHits(document) {
       const line = fence.startLine + offset;
       const rawLine = fence.lines[offset];
       const comment = rawLine.match(/^\s*#\s?(.*)$/);
-      let statement = comment ? comment[1] : stripExecutableComment(rawLine);
+      let statement = comment ? comment[1] : stripExecutableComment(rawLine, shell);
       // A shell line ending in a backslash continues on the next line: the logical
       // command is judged as one statement and attributed to its first line.
       while (shell && !comment && /\\\s*$/.test(statement) && offset + 1 < fence.lines.length) {
         offset += 1;
-        statement = `${statement.replace(/\\\s*$/, ' ')}${stripExecutableComment(fence.lines[offset])}`;
+        statement = `${statement.replace(/\\\s*$/, ' ')}${stripExecutableComment(fence.lines[offset], shell)}`;
       }
       for (const command of commandsIn(statement, fence.language)) {
         (comment ? preview : executable).push({ file: document.file, fenceId: fence.id, line, command, statement: statement.trim() });
@@ -1018,7 +1024,7 @@ const SHELL_FORBIDDEN = [
 ];
 
 function shellCodeOf(line) {
-  return /^\s*#/.test(line) ? '' : stripExecutableComment(line).trim();
+  return /^\s*#/.test(line) ? '' : stripExecutableComment(line, true).trim();
 }
 
 function shellBlockDelta(code) {
@@ -2171,6 +2177,19 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
   assert.match(failuresOf(fence(['x=1#;sudo /usr/local/bin/jamf removeFramework'])), /jamf-write has 0 owners/);
   assert.match(failuresOf(fence(['Write-Host a#;Remove-MgUser -UserId "[UPN]"'], 'powershell')), /Remove-MgUser has 0 owners/);
   assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"   # a real comment: gam delete user is only mentioned'])), '');
+  // bash starts a comment only after whitespace or ; & | ( ) < > — never after { or }
+  // (WARDEN pass 3, N-2): `${#var}`, `{#` and `}#` hide nothing in a shell fence
+  assert.match(failuresOf(fence(['[ ${#serial} -eq 12 ] && sudo jamf recon'])), /jamf-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo ${#x}; gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['{#;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo done}#;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo \\ #;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo `#`;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]";# gam delete user is only mentioned'])), '');
+  assert.equal(stripExecutableComment('echo ${#x};gam delete', true), 'echo ${#x};gam delete');
+  assert.equal(stripExecutableComment('true;# note', true), 'true;');
+  // PowerShell keeps its own rule: `{#` opens a comment inside a script block
+  assert.equal(stripExecutableComment('Get-MgUser {# Remove-MgUser'), 'Get-MgUser {');
   // a backslash-continued write is one statement
   assert.match(failuresOf(fence(['curl -sS -H "Authorization: SSWS ${OKTA_API_TOKEN}" \\', '  -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);
   assert.match(failuresOf(fence(['http \\', '  DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);

@@ -333,3 +333,19 @@ MOCKED_SINK_REACHED
 status=0
 $ bash -c 'exit 256'
 status=0
+
+=== red-warden4-p44.txt — WARDEN pass 4, P4-4: prompt-prefixed lines and console transcripts, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+not ok 3 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 1
+# fail 2
++   'bash: $ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: % sudo jamf removeFramework → []',
++   'bash: ❯ gam update user "[USER@DOMAIN.COM]" suspended on → []',
++   'bash: admin@host:~$ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: [admin@host ~]$ sudo jamf removeFramework → []',
+error: 'console'
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: '$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 27
+# fail 1

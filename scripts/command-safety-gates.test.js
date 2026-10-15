@@ -8,7 +8,9 @@ const test = require('node:test');
 
 const ROOT = path.resolve(__dirname, '..');
 const POWER_SHELL_LANGUAGES = new Set(['powershell', 'pwsh', 'ps1']);
-const SHELL_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh', '']);
+// Console and shell-session transcripts are scanned like shell fences (a prompt-
+// prefixed line is a command); they can carry PREVIEW ONLY markers, never a gate.
+const SHELL_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh', '', 'console', 'shellsession', 'shell-session', 'sh-session', 'bash-session', 'zsh-session', 'terminal']);
 // A gated shell region must sit in an explicitly tagged shell fence; an untagged
 // fence can carry PREVIEW ONLY markers but never an executable gate.
 const SHELL_GATE_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh']);
@@ -193,7 +195,10 @@ const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-
 // A command starts at the line start, after a separator, inside $(…) or a
 // backtick, after a shell keyword that introduces a command (do, then, else,
 // elif, if, while, until), or after a `!` negation.
-const CLI_COMMAND_START = String.raw`(?:^|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
+// A line copied with its interactive prompt (`$ `, `% `, `❯ `, `user@host:~$ `,
+// `[user@host ~]$ `) still runs the command after it.
+const SHELL_PROMPT = String.raw`^\s*(?:[$%❯]|[\w.-]+@[\w.-]+:\S*[$#%]|\[[^\]]+\][$#%])(?=\s)`;
+const CLI_COMMAND_START = String.raw`(?:^|${SHELL_PROMPT}|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
 const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*`;
 const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})["']?(?=\\s|$|\\$)([^;|&]*)`, 'gi'))]
   .map((match) => match[1].trim());
@@ -206,7 +211,7 @@ const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`$
 // `env -S`, `find … -exec`, eval, and a substitution or variable in command
 // position (`$(which gam) …`, a backtick, `${GAM:-gam} …`, `"$GAM" …`, `"$@"`). An
 // assignment-shaped `$name = value` line (another language's syntax) is not one.
-const INDIRECT_EXEC = new RegExp(String.raw`(?:^|[;|{}&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|ruby|node|expect|php)(?=\s)[^;|&]*?\s(?:-[A-Za-z]*[ceE](?=[\s"']|$)|--eval\b)|at\s+(?:-[A-Za-z]+|now|noon|midnight|teatime|today|tomorrow|\d)|batch(?=\s*(?:$|[;|&)]|-[A-Za-z]))|(?:[\w.~-]*\/)*crontab(?!\s+-l\b)(?=\s|$)|(?:[\w.~-]*\/)*sudo"?(?:\s+(?:-[A-Za-z]+|--[\w-]+(?:=[^\s;|&]+)?)(?:\s+(?!-)[^\s;|&]+)?)*?\s+(?:-[A-Za-z]*[si][A-Za-z]*|--(?:shell|login))(?=\s|$)|ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`, 'i');
+const INDIRECT_EXEC = new RegExp(String.raw`(?:^|${SHELL_PROMPT}|[;|{}&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|ruby|node|expect|php)(?=\s)[^;|&]*?\s(?:-[A-Za-z]*[ceE](?=[\s"']|$)|--eval\b)|at\s+(?:-[A-Za-z]+|now|noon|midnight|teatime|today|tomorrow|\d)|batch(?=\s*(?:$|[;|&)]|-[A-Za-z]))|(?:[\w.~-]*\/)*crontab(?!\s+-l\b)(?=\s|$)|(?:[\w.~-]*\/)*sudo"?(?:\s+(?:-[A-Za-z]+|--[\w-]+(?:=[^\s;|&]+)?)(?:\s+(?!-)[^\s;|&]+)?)*?\s+(?:-[A-Za-z]*[si][A-Za-z]*|--(?:shell|login))(?=\s|$)|ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`, 'i');
 const cliTokens = (args) => args.split(/\s+/).map((token) => token.replace(/^["']+|["']+$/g, '')).filter(Boolean);
 function firstListedVerb(tokens, readOnly, mutating) {
   for (const token of tokens) {
@@ -329,7 +334,7 @@ function commandsIn(statement, language) {
     }
   }
   if (SHELL_LANGUAGES.has(language)) {
-    const boundary = '(?:^|[;|{}=:&])\\s*';
+    const boundary = `(?:^|${SHELL_PROMPT}|[;|{}=:&])\\s*`;
     const nativePatterns = [
       [new RegExp(`${boundary}git\\s+(?:add|branch|checkout|clean|clone|commit|fetch|init|merge|mv|push|rebase|reset|restore|rm|switch|tag)\\b`, 'i'), 'git-write'],
       [new RegExp(`${boundary}scp\\s+`, 'i'), 'scp'],
@@ -1934,6 +1939,13 @@ const G1_SHELL_MUTATIONS = [
   [`'gam' delete user "[USER@DOMAIN.COM]"`, 'gam-write'],
   ['\\gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['gam${IFS}delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  // WARDEN pass 4, P4-4: a line copied with its shell prompt is still a command
+  ['$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['% sudo jamf removeFramework', 'jamf-write'],
+  ['❯ gam update user "[USER@DOMAIN.COM]" suspended on', 'gam-write'],
+  ['admin@host:~$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['[admin@host ~]$ sudo jamf removeFramework', 'jamf-write'],
+  ['$ curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | bash', 'indirect-exec'],
 ];
 
 const G1_SHELL_READ_ONLY = [
@@ -1986,6 +1998,7 @@ const G1_SHELL_READ_ONLY = [
   'crontab -l',
   'arch',
   'At <script or command>:<line number>',
+  '$ gam info user "[USER@DOMAIN.COM]"',
 ];
 
 test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {
@@ -2279,6 +2292,11 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
   assert.equal(stripExecutableComment('true;# note', true), 'true;');
   // PowerShell keeps its own rule: `{#` opens a comment inside a script block
   assert.equal(stripExecutableComment('Get-MgUser {# Remove-MgUser'), 'Get-MgUser {');
+  // a console or shell-session fence is scanned like a shell fence and can never host a gate (WARDEN pass 4, P4-4)
+  for (const language of ['console', 'shellsession', 'shell-session', 'sh-session', 'terminal']) {
+    assert.match(failuresOf(fence(['$ gam delete user "[USER@DOMAIN.COM]"'], language)), /gam-write has 0 owners/, language);
+    assert.equal(failuresOf(fence(['$ gam info user "[USER@DOMAIN.COM]"', 'primaryEmail: [USER@DOMAIN.COM]'], language)), '', language);
+  }
   // a backslash-continued write is one statement
   assert.match(failuresOf(fence(['curl -sS -H "Authorization: SSWS ${OKTA_API_TOKEN}" \\', '  -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);
   assert.match(failuresOf(fence(['http \\', '  DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);

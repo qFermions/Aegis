@@ -240,7 +240,10 @@ test('G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, 
     'sudo -i jamf removeFramework   # unmanages the Mac from a root shell',
     'arch -arm64 gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
     "'gam' delete user \"[USER@DOMAIN.COM]\"   # deletes the account",
-    '\\gam delete user "[USER@DOMAIN.COM]"   # deletes the account']) {
+    '\\gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    // fourth fresh-context review: a line copied with its prompt
+    '$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    'admin@host:~$ sudo jamf removeFramework   # unmanages the Mac']) {
     const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', sink);
     const found = g1Findings(text);
     assert.ok(found.includes('cli-collapsed') && found.includes('cli-human-run'), `${sink} → ${found.join(', ')}`);
@@ -298,6 +301,10 @@ test('G1 cli-in-shell-fence: Google/Okta/Jamf/macOS CLI inside a PowerShell or u
   assert.ok(g1Findings(inPowerShell).includes('cli-in-shell-fence'));
   const untagged = G1_GOOD.replace('```bash\n# HUMAN-RUN', '```\n# HUMAN-RUN');
   assert.ok(g1Findings(untagged).includes('cli-in-shell-fence'));
+  // a console transcript with a prompt-prefixed command (fourth fresh-context review)
+  const transcript = G1_GOOD.replace('```bash\n# HUMAN-RUN', '```console\n# HUMAN-RUN')
+    .replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', '$ gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences');
+  assert.ok(g1Findings(transcript).includes('cli-in-shell-fence'));
 });
 
 test('G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; the current wording passes; every entry cites a vendor page and a check date', () => {

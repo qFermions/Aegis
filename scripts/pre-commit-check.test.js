@@ -685,3 +685,55 @@ test('rejects unknown arguments with deterministic exit 2', function (t) {
   assert.equal(combinedOutput(first), combinedOutput(second));
   assert.match(combinedOutput(first), /invalid arguments/);
 });
+
+test('warns on Google Workspace, Okta, Jamf and macOS destructive sinks (G1 lane)', function (t) {
+  const repo = makeRepo(t);
+  const cases = [
+    ['gam delete user "[USER@DOMAIN.COM]"', /GAM user deletion/],
+    ['gam suspend user "[USER@DOMAIN.COM]"', /GAM user suspension/],
+    ['gam update user "[USER@DOMAIN.COM]" suspended on', /GAM user suspension/],
+    ['gam create datatransfer "[USER@DOMAIN.COM]" drive "[MANAGER_UPN]" all', /GAM data transfer/],
+    ['gam user "[USER@DOMAIN.COM]" transfer drive "[MANAGER_UPN]"', /GAM data transfer/],
+    ['gam user "[USER@DOMAIN.COM]" turnoff2sv', /GAM 2-Step Verification turn-off/],
+    ['gam user "[USER@DOMAIN.COM]" deprovision', /GAM deprovision/],
+    ['gam update cros "[DEVICE_ID]" action deprovision_retiring_device', /GAM ChromeOS device action/],
+    ['gam issuecommand cros "[DEVICE_ID]" command remote_powerwash doit', /GAM ChromeOS remote command/],
+    ['gam user "[USER@DOMAIN.COM]" delete license "[LICENSE_TYPE]"', /GAM licence removal/],
+    ['curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/deactivate"', /Okta lifecycle change/],
+    ['curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"', /Okta session or user deletion/],
+    ['curl -sS -X POST "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands" --data @erase-device.json', /Jamf MDM command/],
+    ['sudo /usr/local/bin/jamf removeFramework', /Jamf framework removal/],
+    ['sudo profiles remove -identifier fixture.profile', /profiles removal/],
+    ['sudo fdesetup disable', /FileVault change/],
+    ['diskutil eraseDisk APFS Fixture disk9', /disk erase/],
+  ];
+  const fixtureLines = cases.map(([line], index) => `${line} # g1-scanner-source-${index}`);
+  writeFile(repo, 'g1-sinks.md', `${fixtureLines.join('\n')}\n`);
+  stageAll(repo);
+
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 0);
+  for (const [, expectedLabel] of cases) assert.match(output, expectedLabel);
+  assert.match(output, new RegExp(`${cases.length} warning\\(s\\) found`));
+  assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `g1-scanner-source-${index}`), repo]);
+});
+
+test('read-only Google, Okta, Jamf and macOS diagnostics do not warn', function (t) {
+  const repo = makeRepo(t);
+  writeFile(repo, 'g1-read-only.md', [
+    'gam info user "[USER@DOMAIN.COM]"',
+    'gam print users query "isSuspended=True"',
+    'gam user "[USER@DOMAIN.COM]" print filecounts',
+    'curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"',
+    'profiles show -type enrollment',
+    'fdesetup status',
+    'diskutil list',
+    'sudo jamf recon',
+    '',
+  ].join('\n'));
+  stageAll(repo);
+  const result = runScanner(repo);
+  assertExit(result, 0);
+  assert.match(combinedOutput(result), /Clean/);
+});

@@ -1014,7 +1014,8 @@ const SHELL_PROMPT_LINE = /^\s*(?:printf '%s\\n'|echo) "(?:[^"$`\\]|\$required_c
 const SHELL_FORBIDDEN = [
   [/(?:^|[;&|(]\s*)(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b/, 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
   [/(?:^|[;&|(]\s*)(?:\.\s+\S)/, 'dot-sourcing is forbidden in a gated fence'],
-  [/(?:^|[;&|(]\s*)(?:function\s+[\w.:-]+|[\w.:-]+\s*\(\s*\))\s*(?:\{|\(|$)/, 'function definitions are forbidden in a gated fence (they can shadow read/[ or hide sinks)'],
+  // any function name, including `[` (`[ () { return 0; }` shadows the test builtin)
+  [/(?:^|[;&|(]\s*)(?:function\s+[^\s;&|()]+|[^\s;&|()]+\s*\(\s*\))\s*(?:\{|\(|$)/, 'function definitions are forbidden in a gated fence (they can shadow read/[ or hide sinks)'],
   [/\$\{\s*(?:required_)?confirmation\b/, 'parameter expansion of a gate variable is forbidden (it can fold case or substitute values)'],
   [/(?:^|[;&|\s(])(?:export\s+|local\s+)?confirmation\+?=/, 'confirmation may only be assigned by the single IFS= read -r line'],
   // Other ways to assign a variable (WARDEN review): printf -v, mapfile/readarray,
@@ -1987,6 +1988,33 @@ function gateVariablesOutsideGates(document, gatedFenceIds) {
   return problems;
 }
 
+// The same paste can shadow the comparison without naming a gate variable: a
+// sibling shell fence that defines a function (`[ () { return 0; }`), sets an
+// alias, disables a builtin, sources a file, or hooks the prompt or a key binding
+// runs before the gate in the operator's shell. In a document with a gated shell
+// fence, every other shell fence is held to the gated fence's first three
+// forbidden rows plus the prompt and key-binding hooks.
+const SHELL_SIBLING_FORBIDDEN = [
+  ...SHELL_FORBIDDEN.slice(0, 3),
+  [/(?:^|[;&|(\s])(?:export\s+)?(?:PROMPT_COMMAND|PS0|precmd_functions|preexec_functions)\+?=|(?:^|[;&|(]\s*)(?:bind|bindkey|zle|disable)\b/, 'prompt hooks, key bindings and builtin switches are forbidden'],
+];
+function gateShadowingOutsideGates(document, gatedFenceIds) {
+  if (!gatedFenceIds.size) return [];
+  const problems = [];
+  for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
+    fence.lines.forEach((rawLine, offset) => {
+      const statement = shellCodeOf(rawLine);
+      if (!statement) return;
+      for (const [pattern, message] of SHELL_SIBLING_FORBIDDEN) {
+        if (pattern.test(statement)) {
+          problems.push(`${document.file}:${fence.startLine + offset}: a shell fence beside a gated fence may not shadow or redefine read, [ or the shell (${message})`);
+        }
+      }
+    });
+  }
+  return problems;
+}
+
 function evaluateGateDocument(file, source) {
   const document = parseFences(file, source);
   const found = discoverMarkers(document);
@@ -2008,7 +2036,9 @@ function evaluateGateDocument(file, source) {
     if (!owner || owner.mode !== 'preview') failures.push(`${hit.file}:${hit.line}: commented ${hit.command} is not owned by PREVIEW ONLY`);
   }
   const analyses = [];
-  failures.push(...gateVariablesOutsideGates(document, new Set(found.filter((item) => item.kind === 'shell' && item.mode === 'gated').map((item) => item.fenceId))));
+  const gatedShellFences = new Set(found.filter((item) => item.kind === 'shell' && item.mode === 'gated').map((item) => item.fenceId));
+  failures.push(...gateVariablesOutsideGates(document, gatedShellFences));
+  failures.push(...gateShadowingOutsideGates(document, gatedShellFences));
   for (const marker of found.filter((item) => item.kind === 'shell' && item.mode === 'gated')) {
     const fence = document.fences.find((item) => item.id === marker.fenceId);
     const regionEndLine = ((byFence.get(marker.fenceId) || []).find((item) => item.line > marker.line)?.line || fence.endLine + 1) - 1;
@@ -2214,6 +2244,13 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
   const gated = fs.readFileSync(path.join(G1_FIXTURE_DIR, 'gam-fence-gated.md.txt'), 'utf8');
   assert.equal(failuresOf(gated), '');
   assert.match(failuresOf(fence(['readonly confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"']) + gated), /gate variables/);
+  // a sibling fence that shadows `[` or `read`, or hooks the prompt, opens the gate
+  // without naming a gate variable (WARDEN pass 3, N-5)
+  for (const shadow of [`alias '['=true`, '[ () { return 0; }', 'function read { :; }', 'read() { :; }', 'enable -n read',
+    "PROMPT_COMMAND='confirmation=x'", `bind -x '"\\C-m": true'`, 'source ./fixture-helpers.sh', 'unset -f gam']) {
+    assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
+  }
+  assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"']) + gated), '');
 });
 
 test('every document with a gated shell fence keeps its gate variables inside gated fences', () => {
@@ -2221,6 +2258,15 @@ test('every document with a gated shell fence keeps its gate variables inside ga
   for (const document of documents.values()) {
     const gatedFences = new Set(markers.filter((marker) => marker.file === document.file && marker.kind === 'shell' && marker.mode === 'gated').map((marker) => marker.fenceId));
     problems.push(...gateVariablesOutsideGates(document, gatedFences));
+  }
+  assert.deepEqual(problems, []);
+});
+
+test('no shell fence beside a gated shell fence shadows read, [ or the shell', () => {
+  const problems = [];
+  for (const document of documents.values()) {
+    const gatedFences = new Set(markers.filter((marker) => marker.file === document.file && marker.kind === 'shell' && marker.mode === 'gated').map((marker) => marker.fenceId));
+    problems.push(...gateShadowingOutsideGates(document, gatedFences));
   }
   assert.deepEqual(problems, []);
 });

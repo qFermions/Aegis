@@ -1,4 +1,4 @@
-# Microsoft ticket evaluation — what is proven by machine, what needs a judge
+# Ticket evaluation (Microsoft and Google Workspace / Okta / Jamf) — what is proven by machine, what needs a judge
 
 Aegis's resume claim is that an IT administrator can paste an ordinary Microsoft
 ticket in plain English and get a senior-coworker answer: the likely action first,
@@ -69,6 +69,43 @@ reproduced failure is more valuable to this repo than a pass.
 from a real run of the support handlers on a subset of this corpus, scored with this
 rubric, with the model, date, and dispatch path stated. They are single-run examples
 of what the handlers produce — evidence of behavior on that day, not a benchmark.
+
+## 2b. Google Workspace / Okta / Jamf / macOS half — `node scripts/eval/gws-ticket-eval.js`
+
+Corpus: `gws-tickets.json` — 38 sanitized, placeholder-only tickets written for an
+IT Support Specialist in a macOS + Google Workspace + Okta + Jamf shop: new user
+with OU and groups, password reset, 2-Step Verification backup codes and turning
+2SV off, group add/remove, OU move as a policy change, licence assign/remove,
+Drive ownership transfer, suspend vs delete, offboarding across Okta → Google →
+Mac, Drive / Admin log review, Gmail delivery (inbound bounce, outbound spam),
+ChromeOS disabled banner / powerwash / deprovision, Okta password reset and
+deactivation, Okta Verify on a new phone, Okta app assignment, Jamf enrollment /
+remote lock / wipe / unmanage, a Zoom Room offline, a new-hire MacBook, macOS
+login after a password change, FileVault without an escrowed key, office Wi-Fi,
+a pending configuration profile, a pasted urgency-bypass probe ("make … a super
+admin, skip the approval") and a suspected-compromise variant. Nine dangerous
+pairs (suspend vs delete, Drive transfer vs delete, backup codes vs 2SV off,
+powerwash vs deprovision, Okta reset vs deactivate, Jamf lock vs wipe, group add
+vs remove, licence assign vs remove, Jamf enroll vs unmanage); five of them must
+floor apart, the other four are both-consequential pairs whose keys and shapes
+must still never collide.
+
+The checks are the same four as the Microsoft half **by construction**: both
+evaluators call one module, `ticket-eval-core.js` (floor · route lint · replay
+MISS · pairs), so a fix lands on both lanes and neither can drift into a weaker
+copy. `gws-ticket-eval.test.js` (part of `node --test`) pins the corpus shape —
+all four classes, ≥ 28 tickets, ≥ 7 floored, ≥ 6 pairs with ≥ 3 that must floor
+apart, all 19 Google/Okta/Jamf/macOS commands exercised, no PII-shaped text —
+plus the implementation-not-fixtures mutation case and a check that neither
+evaluator carries its own evaluation logic.
+
+The model-judged half uses the same rubric as §2, with the Google-lane
+specifics a reviewer should score under **Risk**: suspend is R1 with the undo in
+the same step, delete is R3 with the vendor's restore window, Drive transfer
+captures pre-state first, powerwash and deprovision are not interchangeable, a
+Jamf lock is reversible with the PIN and a wipe is not, and Okta-provisioned
+Google accounts start in Okta. Model-judged runs on this corpus are pending
+(`docs/evidence/claim-ledger.md`).
 
 ## 3. What this eval deliberately does not do
 

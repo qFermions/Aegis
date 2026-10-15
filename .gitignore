@@ -11,6 +11,7 @@ node_modules/
 *credential*
 *password*
 !.claude/commands/password-reset.md
+!.claude/commands/gws-password-reset.md
 Keys
 
 # Local Claude settings (may contain machine-specific paths)

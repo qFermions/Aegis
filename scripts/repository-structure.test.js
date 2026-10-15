@@ -24,7 +24,7 @@ function textFiles() {
 test('all command files have valid description frontmatter', () => {
   const directory = path.join(ROOT, '.claude', 'commands');
   const files = fs.readdirSync(directory).filter(file => file.endsWith('.md')).sort();
-  assert.strictEqual(files.length, 58);
+  assert.strictEqual(files.length, 77);
 
   const failures = [];
   for (const file of files) {
@@ -64,6 +64,21 @@ test('fresh release staging includes the public password-reset runbook without w
   assert.strictEqual(publicRunbook.status, 1, 'the canonical public runbook must not be ignored');
   assert.strictEqual(unrelatedPasswordArtifact.error, undefined);
   assert.strictEqual(unrelatedPasswordArtifact.status, 0, 'unrelated password-named artifacts must stay ignored');
+});
+
+test('fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores', () => {
+  const ignored = file => spawnSync(
+    'git',
+    ['check-ignore', '--quiet', '--no-index', '--', file],
+    { cwd: ROOT, encoding: 'utf8' }
+  );
+  const googleRunbook = ignored('.claude/commands/gws-password-reset.md');
+  const nearMiss = ignored('.claude/commands/gws-password-reset-notes.md');
+
+  assert.strictEqual(googleRunbook.error, undefined);
+  assert.strictEqual(googleRunbook.status, 1, 'the public Google password-reset runbook must not be ignored');
+  assert.strictEqual(nearMiss.error, undefined);
+  assert.strictEqual(nearMiss.status, 0, 'other password-named files beside it must stay ignored');
 });
 
 test('working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text', () => {
@@ -121,4 +136,19 @@ test('legacy parallel tenant and operator placeholders are absent', () => {
     if (matches) failures.push(`${file}: ${matches.join(', ')}`);
   }
   assert.deepStrictEqual(failures, [], `Legacy parallel placeholders found: ${failures.join('; ')}`);
+});
+
+test('every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary', () => {
+  // Dictionary validation rule 1, made deterministic: an org token that is used
+  // but not defined is drift (a reader cannot tell what value it stands for).
+  const dictionary = fs.readFileSync(path.join(ROOT, 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
+  const defined = new Set(dictionary.match(/\[@Aegion(?:_[A-Z0-9_]+)?\]/g) || []);
+  const undefinedUses = [];
+  for (const file of textFiles()) {
+    const content = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    for (const token of new Set(content.match(/\[@Aegion(?:_[A-Z0-9_]+)?\]/g) || [])) {
+      if (!defined.has(token)) undefinedUses.push(`${file}: ${token}`);
+    }
+  }
+  assert.deepStrictEqual(undefinedUses, [], `Org tokens used but not defined in the dictionary:\n${undefinedUses.join('\n')}`);
 });

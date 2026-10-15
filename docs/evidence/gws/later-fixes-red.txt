@@ -1,0 +1,541 @@
+=== red-scanner-cite.txt (exact output, saved when the test was first run)
+# Subtest: a Sources line citing GAM wiki page names does not warn; the command it names still does
+not ok 1 - a Sources line citing GAM wiki page names does not warn; the command it names still does
+      '    ⚠️  WARN  Line 1: GAM 2-Step Verification turn-off\n' +
+      '    ⚠️  WARN  Line 2: GAM deprovision (tokens, app passwords, backup codes)\n' +
+      '⚠️  2 warning(s) found — review the flagged lines above.\n' +
+        ⚠️  WARN  Line 1: GAM 2-Step Verification turn-off
+        ⚠️  WARN  Line 2: GAM deprovision (tokens, app passwords, backup codes)
+    ⚠️  2 warning(s) found — review the flagged lines above.
+# pass 0
+# fail 1
+
+=== red-portal-g1b.txt (exact output, saved when the test was first run)
+not ok 1 - G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar
+    + actual - expected
+    + {}
+    - {
+    -   '3': 'release',
+    -   '4': 're-enable',
+    -   '5': 'disable'
+    - }
+  expected:
+  actual:
+# pass 0
+# fail 1
+
+=== red-jamf-get.txt (exact output, saved when the test was first run)
+not ok 1 - read-only Google, Okta, Jamf and macOS diagnostics do not warn
+      '    ⚠️  WARN  Line 9: Jamf MDM command (lock / wipe)\n' +
+        ⚠️  WARN  Line 9: Jamf MDM command (lock / wipe)
+# pass 0
+# fail 1
+
+=== red-gitignore.txt (exact output, saved when the test was first run)
+not ok 1 - fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores
+    the public Google password-reset runbook must not be ignored
+# pass 0
+# fail 1
+
+=== red-warden-blocker.txt (exact output, saved when the test was first run)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+    +   'printf-v-overwrite',
+    +   'printf-v-required-overwrite',
+    +   'mapfile-overwrite',
+    +   'readarray-overwrite',
+    +   'for-loop-overwrite',
+    +   'for-loop-required-overwrite',
+    +   'array-element-overwrite',
+    +   'prompt-with-printf-v',
+    +   'unrelated-statement-before-compare',
+    +   'statement-between-marker-and-template'
+not ok 2 - G1 shell gate harness executes the fence's own lines up to the comparison
+# pass 0
+# fail 2
+
+=== red-warden-detector.txt (exact output, saved when the test was first run)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+    +   'bash: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'zsh: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'sh: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'shell: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   '(untagged): nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'bash: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+
+=== red-warden-lint-wrap.txt (exact output, saved when the test was first run)
+not ok 1 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'sudo -u admin gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 0
+# fail 1
+
+=== red-warden-lint-chain.txt (exact output, saved when the test was first run)
+not ok 1 - G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)
+  error: 'gam info user "[USER@DOMAIN.COM]"; gam delete user "[USER@DOMAIN.COM]"   # reads, then deletes'
+# pass 0
+# fail 1
+
+=== red-warden-imperative.txt (exact output, saved when the test was first run)
+not ok 1 - G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar
+    + actual - expected
+    + []
+    - [
+    -   'delete'
+    - ]
+# pass 0
+# fail 1
+
+=== red-warden2.txt — node --test --test-name-pattern="G1 detector|G1 shell gate analyzer|G1 statements|gate variables inside" scripts/command-safety-gates.test.js (exact output)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+ok 2 - G1 detector: read-only diagnostics stay live and are not sinks
+not ok 3 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 4 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+not ok 5 - every document with a gated shell fence keeps its gate variables inside gated fences
+# pass 1
+# fail 4
+
+=== red-warden2-full.txt — first 60 lines of the same run's full output
+TAP version 13
+# Subtest: G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+  ---
+  duration_ms: 58.733697
+  type: 'test'
+  location: 'scripts/command-safety-gates.test.js:1860:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'bash: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'zsh: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'sh: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'shell: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   '(untagged): for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'bash: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'zsh: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'sh: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'shell: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   '(untagged): if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'bash: while true; do sudo jamf removeFramework; break; done → []',
+    +   'zsh: while true; do sudo jamf removeFramework; break; done → []',
+    +   'sh: while true; do sudo jamf removeFramework; break; done → []',
+    +   'shell: while true; do sudo jamf removeFramework; break; done → []',
+    +   '(untagged): while true; do sudo jamf removeFramework; break; done → []',
+    +   'bash: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   "bash: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "zsh: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "sh: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "shell: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "(untagged): /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   'bash: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   'zsh: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   'sh: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   'shell: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   '(untagged): /bin/bash -c "sudo jamf removeFramework" → []',
+    +   `bash: /usr/bin/osascript -e 'do shell script "sudo jamf removeFramework"' → []`,
+    +   `zsh: /usr/bin/osascript -e 'do shell script "sudo jamf removeFramework"' → []`,
+
+=== red-warden2-lint.txt — node --test scripts/lint/command-structure.test.js (exact output)
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'sudo -- gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+not ok 20 - G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)
+  error: 'gam info user "[USER@DOMAIN.COM]" & gam delete user "[USER@DOMAIN.COM]"   # reads in the background, then deletes'
+# tests 28
+# pass 26
+# fail 2
+
+=== WARDEN pass 3, N-1 — interactive-shell hazards of the old gate form (scratchpad experiments, exact output)
+# paste-current.sh / paste-proposed.sh / literal-*.sh hold the gate lines with the sink replaced by printf MOCKED_SINK_REACHED.
+# literal-*.sh write # as the quoted word '#' — what a shell that does not treat # as a comment sees.
+$ bash -s < paste-current.sh   # old form, fed on stdin as a line-by-line paste is
+Type exactly: SUSPEND GOOGLE USER [USER@DOMAIN.COM]
+MOCKED_SINK_REACHED
+bash: line 5: syntax error near unexpected token `else'
+bash: line 5: `else'
+exit=2
+$ bash -s < paste-proposed.sh  # new form, same mode
+Type exactly: SUSPEND GOOGLE USER [USER@DOMAIN.COM]
+Confirmation did not match. No change was made.
+exit=1
+$ printf "\n" | bash literal-old.sh   # old form where # is a plain word (zsh without interactive_comments), empty input
+n1/literal-old.sh: line 1: #: command not found
+n1/literal-old.sh: line 2: read: `#': not a valid identifier
+n1/literal-old.sh: line 3: #: command not found
+MOCKED_SINK_REACHED
+exit=0
+$ printf "\n" | bash literal-new.sh   # new form, same mode, empty input
+n1/literal-new.sh: line 1: #: command not found
+n1/literal-new.sh: line 3: #: command not found
+Confirmation did not match. No change was made.
+exit=1
+$ printf "SUSPEND GOOGLE USER [USER@DOMAIN.COM]\n" | bash literal-new.sh   # new form, exact phrase
+n1/literal-new.sh: line 1: #: command not found
+n1/literal-new.sh: line 3: #: command not found
+MOCKED_SINK_REACHED
+exit=0
+
+=== red-warden3-n1.txt — node --test scripts/command-safety-gates.test.js, new tests, runbooks and fixture still in the old form (exact summary)
+# tests 286
+# pass 241
+# fail 45
+not ok 238 - G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes
+not ok 240 - G1 shell gate harness executes the fence's own lines up to the comparison
+not ok 283 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# plus 42 per-gate tests ("<id>: shell gate is explicit, dominates its sinks, and is fail-closed"), for example:
++   'fixture-gws-user-suspend: line 5: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote',
++   'fixture-gws-user-suspend: line 7: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote',
++   'fixture-gws-user-suspend: line 8: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote',
++   'fixture-gws-user-suspend: line 9: no executable line in a gated fence may carry a trailing comment (put it on its own line above)',
+
+=== red-warden3-n2.txt — node --test --test-name-pattern="G1 statements", new cases with the pass-2 stripper (boundary [\s;&|(){}<>], no backslash escape)
+not ok 1 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 1
+  error: |-
+    The input did not match the regular expression /jamf-write has 0 owners/. Input:
+    
+    ''
+    
+# bash ground truth (same session): `true {#;echo RAN` → RAN · `true }#;echo RAN` → RAN · `echo ${#x};echo RAN` → 3, RAN · `echo \ #;echo RAN` → " #", RAN · `echo `#`;echo RAN` → RAN; after ; & | ( < > the # opens a comment
+
+=== red-warden3-n3.txt — node --test --test-name-pattern="G1 detector: every", new cases with the pass-2 HTTP method rule (exact bash-language lines)
+# pass 0
+# fail 1
++   'bash: curl -sS -X "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS --request="${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS -X"${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sSX "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS -X "$(printf DELETE)" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: wget -q --method="${METHOD}" "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
+
+=== red-warden3-n4.txt — path-prefixed wrappers with the pass-2 wrapper rule (detector, exact bash-language lines; lint test 19)
+# pass 0
+# fail 1
++   'bash: /usr/bin/sudo gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: /usr/bin/env gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: /usr/bin/nohup gam delete user "[USER@DOMAIN.COM]" & → []',
++   'bash: /usr/bin/sudo /usr/local/bin/jamf removeFramework → []',
++   'bash: /usr/bin/timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: "/usr/bin/sudo" -u admin /usr/local/bin/jamf removeFramework → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: '/usr/bin/sudo gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 27
+# fail 1
+
+=== red-warden3-n5.txt — node --test --test-name-pattern="G1 statements", sibling-fence shadowing cases before the rule (exact)
+not ok 1 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 1
+error: "alias '['=true"
+# bash ground truth — a sibling fence [ () { return 0; } pasted before the gate, empty input:
+$ printf "\n" | bash sibling-shadow.sh
+MOCKED_SINK_REACHED
+exit=0
+
+=== red-warden3-n6.txt — N-6 shapes with the pass-2 detector and lint (exact bash-language lines; lint test 19)
+# pass 1
+# fail 1
++   `bash: python3 -c "import subprocess; subprocess.run(['gam', 'delete', 'user', '[USER@DOMAIN.COM]'])" → []`,
++   "bash: /usr/bin/python3 -c 'print(1)' → []",
++   `bash: perl -e 'system("gam delete user [USER@DOMAIN.COM]")' → [gam-write]`,
++   `bash: ruby -e 'system("sudo jamf removeFramework")' → [jamf-write]`,
++   `bash: node -e 'require("child_process").execSync("gam delete user [USER@DOMAIN.COM]")' → [gam-write]`,
++   "bash: expect -c 'spawn gam delete user [USER@DOMAIN.COM]; interact' → []",
++   "bash: echo 'gam delete user [USER@DOMAIN.COM]' | at now → []",
++   'bash: crontab /tmp/fixture-cron → []',
++   'bash: sudo -s → []',
++   'bash: sudo -i jamf removeFramework → [jamf-write]',
++   'bash: sudo --login → []',
++   'bash: arch -arm64 gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: /usr/bin/arch -x86_64 /usr/local/bin/jamf removeFramework → []',
++   `bash: 'gam' delete user "[USER@DOMAIN.COM]" → []`,
++   'bash: \\gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: gam${IFS}delete user "[USER@DOMAIN.COM]" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: `python3 -c "import subprocess; subprocess.run(['gam', 'delete', 'user', '[USER@DOMAIN.COM]'])"   # deletes the account → `
+# pass 27
+# fail 1
+# first green attempt: `at` in any command position flagged a Microsoft runbook line (untagged fence, ps-error-decode.md:20, "At <script or command>:<line number>"); at now needs a time or an option, batch must end the command — the line is now a read-only guard case
+
+=== red-warden4-p41.txt — WARDEN pass 4, P4-1 (shadowing behind a brace group, keyword, wrapper or backslash) and P4-3 (exit 256), before the fix (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
+error: 'c=required_confirm; { readonly "${c}ation="; }'
++   'shadow-after-fi-brace',
++   'shadow-after-fi-keyword',
++   'hook-after-fi',
++   'exit-256-in-else',
++   'exit-512-in-else'
+# bash ground truth (WARDEN pass 4 scripts; the gate fixture with a mocked sink, preceded by one sibling line), empty input:
+$ printf '\n' | bash poison.sh   # first line: c=required_confirm; { readonly "${c}ation="; }
+/tmp/claude-0/-home-user-Aegis/5ad90bc7-0cf2-5167-b7a3-d42591e744dd/scratchpad/warden4/poison.sh: line 7: required_confirmation: readonly variable
+Type exactly: 
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash poison3.sh   # first line: { [ () { return 0; }; }
+Type exactly: SUSPEND GOOGLE USER [USER@DOMAIN.COM]
+MOCKED_SINK_REACHED
+status=0
+$ bash -c 'exit 256'
+status=0
+
+=== red-warden4-p44.txt — WARDEN pass 4, P4-4: prompt-prefixed lines and console transcripts, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+not ok 3 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 1
+# fail 2
++   'bash: $ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: % sudo jamf removeFramework → []',
++   'bash: ❯ gam update user "[USER@DOMAIN.COM]" suspended on → []',
++   'bash: admin@host:~$ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: [admin@host ~]$ sudo jamf removeFramework → []',
+error: 'console'
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: '$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 27
+# fail 1
+
+=== red-warden4-p45.txt — WARDEN pass 4, P4-5: .exe names, glued curl values, lowercase short method, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: gam.exe delete user "[USER@DOMAIN.COM]" → []',
++   'bash: curl.exe -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS -d$BODY "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend" → []',
++   'bash: curl -sS -dname=value "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sXpost "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'gam.exe delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 27
+# fail 1
+
+=== red-warden5-p51.txt — WARDEN pass 5, P5-1: quoted or escaped shadowing names, a case label, a comment that is code where # is a plain word — before the fix (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
+error: "'alias' '['=true"
++   'quoted-alias-after-fi',
++   'case-label-after-fi'
+# bash ground truth (gate lines with a mocked sink, one sibling line before them), empty input:
+$ printf '\n' | bash  # sibling line before the gate: 'readonly' required_confirmation=
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: case x in x) [ () { return 0; };; esac
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: '#' note; readonly required_confirmation=
+p.sh: line 1: #: command not found
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: <none, control>
+Confirmation did not match. No change was made.
+status=1
+
+=== red-warden5-p52.txt — WARDEN pass 5, P5-2: more prompt shapes, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: admin@MacBook-Pro ~ % sudo jamf removeFramework → []',
++   'bash: bash-5.2$ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: sh-3.2# sudo jamf removeFramework → []',
++   'bash: (venv) $ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: PS C:\\> gam.exe delete user "[USER@DOMAIN.COM]" → []',
++   'bash: C:\\Users\\admin> gam.exe delete user "[USER@DOMAIN.COM]" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'admin@MacBook-Pro ~ % sudo jamf removeFramework   # unmanages the Mac → '
+# pass 27
+# fail 1
+
+=== red-warden5-p53.txt — WARDEN pass 5, P5-3: HTTP methods outside DELETE/POST/PUT/PATCH, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: curl -sS -X PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
++   'bash: curl -sS --request MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
++   'bash: wget -q --method=COPY "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
++   'bash: curl -sS -H "X-HTTP-Method-Override: PURGE" "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
++   'bash: http PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
++   'bash: https MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',
+
+=== red-warden6-p61.txt — WARDEN pass 6, P6-1: locale and ANSI-C quoting, escapes, brace expansion, quote-split names — before the fix (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
+error: '$"readonly" required_confirm""ation=""'
++   'locale-quoted-readonly-after-fi',
++   'brace-expanded-alias-after-fi',
++   'ansi-c-escaped-alias-after-fi'
+# bash ground truth (gate lines with a mocked sink, one sibling line before them), empty input:
+$ printf '\n' | bash  # sibling line before the gate: $"readonly" required_confirm""ation=""
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: $'\x72eadonly' required_confirm""ation=
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: re{adonly,} required_confirm""ation=
+p.sh: line 2: required_confirmation: readonly variable
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: $"declare" -n confirm""ation=required_confirm""ation
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # sibling line before the gate: <none, control>
+Confirmation did not match. No change was made.
+status=1
+
+=== red-warden6-p62.txt — WARDEN pass 6, P6-2: pre-Catalina macOS bash prompt and the oh-my-zsh arrow, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: ➜  ~ sudo jamf removeFramework → []',
++   'bash: ➜ gam delete user "[USER@DOMAIN.COM]" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 27
+# fail 1
+
+=== red-warden6-p63.txt — WARDEN pass 6, P6-3: native sinks behind a wrapper, before the fix (exact; the gap was present at 0febaa9)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: sudo rm -rf /tmp/fixture → []',
++   'bash: echo "[@Aegion_DOMAIN] fixture" | sudo tee -a /etc/hosts → []',
++   'bash: sudo -u admin mv /tmp/fixture-a /tmp/fixture-b → []',
++   'bash: sudo chmod 600 /tmp/fixture → []',
++   'bash: sudo brew install fixture → []',
++   'bash: xargs rm < /tmp/fixture-list → []',
+
+=== red-warden6-p64.txt — WARDEN pass 6, P6-4: a # inside a backtick substitution, before the fix (exact)
+not ok 1 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 1
+# the first new assertion received '' (no failure) where it expected gam-write has 0 owners
+# bash ground truth: `echo `true #`; echo RAN` → RAN
+
+=== red-warden6-p65.txt — WARDEN pass 6, P6-5: curl -XGET read as a write, before the fix (exact)
+not ok 2 - G1 detector: read-only diagnostics stay live and are not sinks
+# pass 1
+# fail 1
++   'curl -sS -XGET "https://[@Aegion_JAMF_URL]/api/v1/fixture" → [http-write]',
++   'curl -sXOPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture" → [http-write]'
+
+=== red-warden6-p67.txt — WARDEN pass 6, P6-7: the evaluator left its temporary replay store behind, before the fix (exact)
+not ok 5 - the evaluator removes its temporary replay store (no /tmp residue per run)
+# pass 4
+# fail 1
+left behind: /tmp/aegis-eval-P9yjMb
+
+=== red-warden7-p71.txt — WARDEN pass 7, P7-1: a backslash-newline joins a split word, before the fix (exact; all pass-7 cases ran together)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
+error: '[ (\\ / ) { return 0; }'
++   'continued-function-after-fi',
++   'continued-alias-after-fi',
++   'nested-brace-alias-after-fi',
++   'bash-aliases-after-fi',
++   'split-required-assignment-after-fi'
+# bash ground truth (gate lines with a mocked sink, sibling lines before them), empty input:
+$ printf '\n' | bash  # sibling lines before the gate: [ (\ / ) { return 0; }
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # interactive alias model (shopt -s expand_aliases), sibling: {a{l,},}ias '['=true
+p.sh: line 2: alias: aias: not found
+p.sh: line 2: alias: ias: not found
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # interactive alias model (shopt -s expand_aliases), sibling: BASH_ALIASES['[']=true
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # control, no sibling line
+Confirmation did not match. No change was made.
+status=1
+
+=== red-warden7-p73.txt — WARDEN pass 7, P7-3: nested brace expansion, single-pass reduction (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
++   'nested-brace-alias-after-fi'
+
+=== red-warden7-p72.txt — WARDEN pass 7, P7-2: BASH_ALIASES assignment (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
++   'bash-aliases-after-fi'
+
+=== red-warden7-p75.txt — WARDEN pass 7, P7-5: a split required_confirmation assignment after fi (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+# pass 1
+# fail 1
++   'split-required-assignment-after-fi'
+
+=== red-warden8-httpie.txt — HTTPie method after an option value (lead from WARDEN pass 8, stopped before its report; verified here), before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: http --timeout 30 DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',

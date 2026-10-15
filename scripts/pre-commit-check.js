@@ -89,6 +89,26 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /\b(?:scp|sftp)\b/i,               label: 'scp/sftp — local or remote file transfer' },
   { pattern: /(?:\b(?:chmod|cp|install|mv|tee)\b|\bCopy-Item\b|\bSet-Content\b|>)[^\r\n]*\.git[\\/]hooks[\\/]/i, label: 'Git hook installation — repository-local executable change' },
   { pattern: /(?:^|[;|&]\s*)&?\s*\$ssh\b[^\r\n]*\$remoteCommand\b/i, label: 'Dynamic SSH remote command invocation' },
+  // Google Workspace / Okta / Jamf / macOS sinks (G1) — order matters: one WARN per line.
+  // GAM sub-commands must sit in argument position (whitespace before, no hyphen or
+  // word after) so a citation of a GAM wiki page name (Users-Signout-Turnoff2SV) stays quiet.
+  { pattern: /\bgam\s+issuecommand\b/i,           label: 'GAM ChromeOS remote command (powerwash / wipe users)' },
+  { pattern: /\bgam\b[^\r\n]*\bcros\b[^\r\n]*\baction\b/i, label: 'GAM ChromeOS device action (disable / deprovision)' },
+  { pattern: /\bgam\s+(?:delete|del)\s+users?\b/i, label: 'GAM user deletion' },
+  { pattern: /\bgam\s+suspend\s+users?\b|\bgam\s+update\s+users?\b[^\r\n]*\bsuspended\s+(?:on|true)\b/i, label: 'GAM user suspension' },
+  { pattern: /\bgam\b[^\r\n]*\b(?:create|add)\s+(?:datatransfer|transfer)\b|\bgam\b[^\r\n]*\btransfer\s+drive\b/i, label: 'GAM data transfer (Drive / Calendar ownership)' },
+  { pattern: /\bgam\s[^\r\n]*(?<![\w/-])turnoff2sv(?![\w-])/i, label: 'GAM 2-Step Verification turn-off' },
+  { pattern: /\bgam\s[^\r\n]*(?<![\w/-])deprovision(?![\w-])/i, label: 'GAM deprovision (tokens, app passwords, backup codes)' },
+  { pattern: /\bgam\b[^\r\n]*\b(?:delete|remove)\s+licen[cs]es?\b/i, label: 'GAM licence removal' },
+  { pattern: /\/api\/v1\/users\/[^\s"']+\/lifecycle\/(?:deactivate|suspend|reset_factors|reset_password|expire_password)\b/i, label: 'Okta lifecycle change (deactivate / suspend / reset)' },
+  { pattern: /-X\s*["']?DELETE\b[^\r\n]*\/api\/v1\/users\b|\/api\/v1\/users\b[^\r\n]*-X\s*["']?DELETE\b/i, label: 'Okta session or user deletion (DELETE /api/v1/users…)' },
+  // A Jamf MDM command is a write (POST, or a request body); a GET of the same path only
+  // reads command status and stays quiet.
+  { pattern: /-X\s*["']?(?:POST|PUT|PATCH|DELETE)\b[^\r\n]*\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b|\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b[^\r\n]*(?:-X\s*["']?(?:POST|PUT|PATCH|DELETE)\b|--data\b|--json\b|\s-d\s)/i, label: 'Jamf MDM command (lock / wipe)' },
+  { pattern: /\bjamf\s+removeFramework\b/i,        label: 'Jamf framework removal (unmanage)' },
+  { pattern: /\bprofiles\s+(?:remove\b|-R\b|-D\b)/, label: 'profiles removal (configuration / MDM profile)' },
+  { pattern: /\bfdesetup\s+(?:disable|remove|changerecovery|removerecovery)\b/i, label: 'FileVault change (fdesetup)' },
+  { pattern: /\bdiskutil\s+(?:erase\w*|secureErase|zeroDisk|apfs\s+delete\w*)\b/i, label: 'disk erase (diskutil)' },
 ];
 
 // ── PII patterns ──────────────────────────────────────────────────────────────
@@ -142,6 +162,16 @@ const CREDENTIAL_PATTERNS = [
   { pattern: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/,                                  label: 'Slack token' },
   { pattern: /AccountKey=[A-Za-z0-9+/=]{40,}/,                                    label: 'Azure storage account key' },
   { pattern: /SharedAccessSignature\s*=/i,                                        label: 'Azure SAS token assignment' },
+  // Google / Okta / Jamf secret formats — exact prefixes or line-level markers
+  // (all BLOCK). Placeholder forms (${VAR}, [TOKEN]) never match: the token
+  // classes exclude `$`, `{`, `[`, and the key-id marker requires hex.
+  { pattern: /\bAIza[0-9A-Za-z_-]{35}\b/,                                         label: 'Google API key (AIza…)' },
+  { pattern: /\bGOCSPX-[A-Za-z0-9_-]{20,}/,                                       label: 'Google OAuth client secret (GOCSPX-…)' },
+  { pattern: /"type"\s*:\s*"service_account"/,                                    label: 'Google service-account key JSON (type service_account)' },
+  { pattern: /"private_key_id"\s*:\s*"[0-9a-f]{16,}"/,                            label: 'Google service-account key JSON (private_key_id)' },
+  { pattern: /\bSSWS\s+[A-Za-z0-9_-]{40,}/,                                       label: 'Okta API token (SSWS header)' },
+  { pattern: /\b00[A-Za-z0-9_-]{40}\b/,                                           label: 'Okta API token (bare 00… token)' },
+  { pattern: /Authorization\s*:\s*(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{20,}/i,   label: 'Bearer/Basic credential in an Authorization header (Jamf Pro API and others)' },
 ];
 
 // ── Tenant literals (SR-8) ────────────────────────────────────────────────────
@@ -278,7 +308,7 @@ function remediationGuidance(issue) {
   if (issue.severity === 'WARN') {
     return 'Review the operation, add the required warning/confirmation gate, and keep it only if intentional.';
   }
-  if (/credential|token|key|JWT|SAS/i.test(issue.label)) {
+  if (/credential|token|key|secret|JWT|SAS/i.test(issue.label)) {
     return 'Remove the value. If it is live, revoke or rotate it before any history cleanup.';
   }
   return 'Replace the value with the canonical placeholder for this data category.';

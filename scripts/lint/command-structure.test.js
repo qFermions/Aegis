@@ -221,7 +221,15 @@ test('G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, 
     '"$GAM" suspend user "[USER@DOMAIN.COM]"   # suspends the account',
     "ssh [DEVICE_NAME] 'sudo jamf removeFramework'   # unmanages the Mac remotely",
     "bash -c 'gam delete user [USER@DOMAIN.COM]'   # deletes the account",
-    `osascript -e 'do shell script "sudo jamf removeFramework"'   # unmanages the Mac`]) {
+    `osascript -e 'do shell script "sudo jamf removeFramework"'   # unmanages the Mac`,
+    // second fresh-context review
+    'sudo -- gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    'timeout 30 gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    'if true; then gam delete user "[USER@DOMAIN.COM]"; fi   # deletes the account',
+    "/bin/sh -c 'gam delete user [USER@DOMAIN.COM]'   # deletes the account",
+    '$(which gam) delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    'curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | sudo bash   # runs a downloaded script',
+    'find /tmp/fixture -exec gam delete user {} \\;   # deletes accounts']) {
     const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', sink);
     const found = g1Findings(text);
     assert.ok(found.includes('cli-collapsed') && found.includes('cli-human-run'), `${sink} → ${found.join(', ')}`);
@@ -235,13 +243,20 @@ test('G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, 
 test('G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)', () => {
   for (const chained of ['gam info user "[USER@DOMAIN.COM]"; gam delete user "[USER@DOMAIN.COM]"   # reads, then deletes',
     'gam info user "[USER@DOMAIN.COM]" && gam delete user "[USER@DOMAIN.COM]"   # reads, then deletes',
-    'fdesetup status || sudo fdesetup disable   # reads, then disables']) {
+    'fdesetup status || sudo fdesetup disable   # reads, then disables',
+    'gam info user "[USER@DOMAIN.COM]" & gam delete user "[USER@DOMAIN.COM]"   # reads in the background, then deletes']) {
     const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', chained);
     assert.ok(g1Findings(text).includes('cli-collapsed'), chained);
   }
   const twoReads = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences',
     'gam info user "[USER@DOMAIN.COM]"; fdesetup status   # two reads');
   assert.ok(!g1Findings(twoReads).includes('cli-collapsed'));
+});
+
+test('G1 lint: a backslash-continued HTTP write in an open fence still fails cli-collapsed', () => {
+  const continued = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences',
+    'curl -sS -H "Authorization: SSWS ${OKTA_API_TOKEN}" \\\n  -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"   # clears the sessions');
+  assert.ok(g1Findings(continued).includes('cli-collapsed'), g1Findings(continued).join(', '));
 });
 
 test('G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above)', () => {

@@ -168,16 +168,19 @@ function commandNames(dir = COMMANDS_DIR) {
 const SHELL_FENCES = new Set(['bash', 'sh', 'shell', 'zsh']);
 const CLI_TOOLS = 'gam|gcloud|curl|wget|https?|jamf|profiles|dscl|fdesetup|diskutil|softwareupdate|networksetup|systemsetup|defaults|launchctl|kickstart';
 // Mirrors the safety-gate detector (scripts/command-safety-gates.test.js): wrappers
-// that run the next word (sudo with options, command, env, VAR=value, nohup, time,
-// nice, caffeinate, exec, script, xargs) are transparent, the tool may sit behind a
-// quoted or variable path, and indirect execution (ssh with a remote command, a
-// shell's -c, osascript -e, eval, "$VAR" in command position) counts as a CLI line.
-const CLI_WRAPPER = String.raw`(?:(?:sudo(?:\s+(?:--[\w-]+(?:=[^\s;|&]+)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|command(?:\s+-[pvV]+)?|env(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|nohup|time(?:\s+-p)?|nice(?:\s+-n\s*-?\d+|\s+-\d+)?|caffeinate(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|exec(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|script(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|xargs(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
-const CLI_INDIRECT = String.raw`(?:ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:bash|sh|zsh|dash|ksh)\s+-[a-z]*c\b|osascript\s+(?:-[a-z]+\s+)*-e\b|eval\s|"?\$\{?[A-Za-z_]\w*\}?"?(?=\s+[^=\s]|\s*$))`;
-const CLI_TOOL_INVOCATION = new RegExp(String.raw`(?:^|[;|{}=:&(\x60]|\$\()\s*${CLI_WRAPPER}"?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})"?(?=\s|$)`, 'i');
+// that run the next word (sudo with options or --, doas, timeout, command, env,
+// VAR=value, nohup, time, nice, caffeinate, exec, script, xargs) are transparent, a
+// command also starts after do/then/else/elif/if/while/until or `! `, the tool may
+// sit behind a quoted or variable path, and indirect execution (ssh with a remote
+// command, any shell interpreter or osascript in command position, su -c, env -S,
+// find -exec, eval, a substitution or variable in command position) counts too.
+const CLI_WRAPPER = String.raw`(?:(?:sudo(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|doas(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|timeout(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|command(?:\s+-[pvV]+)?|env(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|nohup|time(?:\s+-p)?|nice(?:\s+-n\s*-?\d+|\s+-\d+)?|caffeinate(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|exec(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|script(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|xargs(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
+const CLI_INDIRECT = String.raw`(?:ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`;
+const CLI_COMMAND_START = String.raw`(?:^|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
+const CLI_TOOL_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}"?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})"?(?=\s|$)`, 'i');
 // Inside a shell fence the indirect forms count too; in a PowerShell fence `$name`
 // is ordinary syntax, so cli-in-shell-fence looks for the named tools only.
-const CLI_INVOCATION = new RegExp(String.raw`(?:^|[;|{}=:&(\x60]|\$\()\s*${CLI_WRAPPER}(?:"?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})"?(?=\s|$)|${CLI_INDIRECT})`, 'i');
+const CLI_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}(?:"?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})"?(?=\s|$)|${CLI_INDIRECT})`, 'i');
 // Read-only diagnostics that may sit outside <details> (they still need a
 // comment). An explicit allowlist: anything not on it is treated as mutating.
 const READ_ONLY_CLI = [
@@ -314,7 +317,7 @@ function lintCommand(name, text, opts = {}) {
     const cliLines = code.map((c, j) => ({ c, j })).filter(({ c }) => CLI_INVOCATION.test(c));
     // Every command on a line is judged (`a; b`, `a && b`, `a || b`, `a | b`): a
     // read-only first command does not make a chained mutation read-only.
-    const segmentsOf = (c) => c.split(/;|&&|\|\||\|/).map((x) => x.trim()).filter(Boolean);
+    const segmentsOf = (c) => c.split(/;|&&|\|\||\||&(?![>\d])/).map((x) => x.trim()).filter(Boolean);
     const readOnly = !f.body.some((l) => /#\s*SAFETY GATE\b/.test(l)) &&
       cliLines.every(({ c }) => !/(?:^|\s)>{1,2}\s*[^&\s]/.test(c) &&
         segmentsOf(c).every((seg) => !CLI_INVOCATION.test(seg) || READ_ONLY_CLI.some((re) => re.test(seg))));

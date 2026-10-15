@@ -493,7 +493,7 @@ function portalMutationCandidates(document) {
     const cue = portalCue.test(line) || g1PortalCue.test(line);
     const match = line.match(navigationListMutation) ||
       ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
-      ((cue || inPortalRegion) ? line.match(imperativeMutation) : null) ||
+      ((cue || inPortalRegion || g1LaneDocument) ? line.match(imperativeMutation) : null) ||
       (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
       ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g1ArrowMutation) : null);
     if (match) {
@@ -2045,5 +2045,10 @@ test('G1 portal grammar: the current Apple Business name and the selected-device
   // A Microsoft runbook: only the product-name cue is global; its click grammar is unchanged.
   assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'release' });
   assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has('re-enable'), 're-enable needs a confirmation family');
+  // A bare imperative step with no cue at all: a candidate in a G1 runbook, not in a Microsoft one.
+  const bare = ['# fixture', '', '3. Click **Delete user** and confirm.', ''].join('\n');
+  const bareActions = (file) => portalMutationCandidates(parseFences(file, bare)).map((candidate) => candidate.actionWord.toLowerCase());
+  assert.deepEqual(bareActions('.claude/commands/okta-fixture.md'), ['delete']);
+  assert.deepEqual(bareActions('.claude/commands/ms-fixture.md'), []);
   assert.match('RE-ENABLE CHROMEBOOK [DEVICE_ID]', PORTAL_CONFIRMATION_BY_ACTION.get('re-enable'));
 });

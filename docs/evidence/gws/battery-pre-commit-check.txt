@@ -232,7 +232,7 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: CHANGELOG.md
-    ⚠️  WARN  Line 232: scp/sftp — local or remote file transfer
+    ⚠️  WARN  Line 234: scp/sftp — local or remote file transfer
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: docs/adr/ADR-001-blast-radius-classes.md

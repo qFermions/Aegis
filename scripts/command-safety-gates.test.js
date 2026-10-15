@@ -1062,9 +1062,18 @@ const unquotedShellWords = (statement) => statement
   .replace(/\$'((?:[^'\\]|\\[\s\S])*)'/g, (match, body) => decodeAnsiC(body))
   .replace(/\$"/g, '"')
   .replace(/["'\\]/g, '');
-const firstBraceAlternative = (statement) => statement
-  .replace(/(^|[^$])\{([^{}\s,]*)(?:,[^{}\s]*)+\}/g, '$1$2')
-  .replace(/(^|[^$])\{(-?\w+)\.\.-?\w+(?:\.\.-?\d+)?\}/g, '$1$2');
+// innermost first, until nothing changes (`{a{l,},}ias` → `{al,}ias` → `alias`)
+const firstBraceAlternative = (statement) => {
+  let current = statement;
+  for (let round = 0; round < 16; round += 1) {
+    const next = current
+      .replace(/(^|[^$])\{([^{}\s,]*)(?:,[^{}\s]*)+\}/g, '$1$2')
+      .replace(/(^|[^$])\{(-?\w+)\.\.-?\w+(?:\.\.-?\d+)?\}/g, '$1$2');
+    if (next === current) return current;
+    current = next;
+  }
+  return current;
+};
 // bash removes a backslash-newline before it splits words, so `[ (\` + `) { … }`
 // defines a function named `[` and `ali\` + `as` runs `alias`: every rule reads the
 // logical line that starts at each physical line.
@@ -2325,6 +2334,7 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     // WARDEN pass 7
     ['continued-function-after-fi', [...header, ...body, '[ (\\', ') { return 0; }']],
     ['continued-alias-after-fi', [...header, ...body, 'ali\\', `as '['=true`]],
+    ['nested-brace-alias-after-fi', [...header, ...body, `{a{l,},}ias '['=true`]],
     ['exit-256-in-else', replace('  exit 1', '  exit 256')],
     ['exit-512-in-else', replace('  exit 1', '  exit 512')],
   ];
@@ -2439,8 +2449,10 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
     `# note; $"readonly" x=`, `$"builtin" alias '['=true`, `$'\\u0061lias' '['=true`]) {
     assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
   }
-  // WARDEN pass 7, P7-1: bash joins a backslash-newline before it reads a word
-  for (const shadow of [['[ (\\', ') { return 0; }'], ['ali\\', `as '['=true`], ['read\\', 'only required_confirm""ation=']]) {
+  // WARDEN pass 7, P7-1/P7-3: bash joins a backslash-newline before it reads a word, and
+  // expands nested braces
+  for (const shadow of [['[ (\\', ') { return 0; }'], ['ali\\', `as '['=true`], ['read\\', 'only required_confirm""ation='],
+    [`{a{l,},}ias '['=true`]]) {
     assert.match(failuresOf(fence(shadow) + gated), /shadow|redefine|hook|gate variables/, shadow.join(' / '));
   }
   // the detector joins a split word the same way

@@ -5,7 +5,7 @@
     "preview": "Read-only as authored; mutation vocabulary is inert and describes a separately prohibited or review-routed effect."
   },
   "scope": {
-    "discoveredMarkdown": "Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native, and portal mutation grammar.",
+    "discoveredMarkdown": "Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native (including gam, gcloud, HTTP-API, jamf, and macOS administration tools, with plain-text shell gates), and portal mutation grammar.",
     "clientBoundaries": "State-changing or disclosure-capable Jira, memory, and security-audit implementations outside Markdown fence discovery.",
     "limitation": "Novel syntax and prose still require semantic review and grammar extension."
   },

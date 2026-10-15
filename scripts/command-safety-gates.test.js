@@ -9,6 +9,9 @@ const test = require('node:test');
 const ROOT = path.resolve(__dirname, '..');
 const POWER_SHELL_LANGUAGES = new Set(['powershell', 'pwsh', 'ps1']);
 const SHELL_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh', '']);
+// A gated shell region must sit in an explicitly tagged shell fence; an untagged
+// fence can carry PREVIEW ONLY markers but never an executable gate.
+const SHELL_GATE_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh']);
 const MUTATION_FENCE_LANGUAGES = new Set([...POWER_SHELL_LANGUAGES, ...SHELL_LANGUAGES]);
 
 const MIXED_STATE_COMMANDS = [
@@ -97,9 +100,10 @@ function discoverMarkers(document) {
     let match;
 
     if ((match = line.match(/^\s*#\s*SAFETY GATE \[([a-z0-9-]+)\]\s*$/i))) {
-      assert.ok(fence && POWER_SHELL_LANGUAGES.has(fence.language),
-        `${document.file}:${lineNumber}: PowerShell gate is not in a PowerShell fence`);
-      markers.push({ id: match[1], mode: 'gated', kind: 'powershell', file: document.file, line: lineNumber, fenceId: fence.id });
+      const shellGate = Boolean(fence && SHELL_GATE_LANGUAGES.has(fence.language));
+      assert.ok(fence && (POWER_SHELL_LANGUAGES.has(fence.language) || shellGate),
+        `${document.file}:${lineNumber}: code gate is not in a PowerShell fence or an explicitly tagged bash/sh/shell/zsh fence`);
+      markers.push({ id: match[1], mode: 'gated', kind: shellGate ? 'shell' : 'powershell', file: document.file, line: lineNumber, fenceId: fence.id });
       return;
     }
     if ((match = line.match(/^\s*#\s*PREVIEW ONLY \[([a-z0-9-]+)\]/i))) {
@@ -159,6 +163,90 @@ function isMutation(command, statement) {
   return MUTATING_VERB.test(command);
 }
 
+// ── G1 shell sinks: Google Workspace (gam, gcloud), HTTP APIs (Okta, Jamf Pro),
+// the jamf binary, and macOS administration tools. Each invocation is decided
+// on its own; explicit read-only forms stay live diagnostics, and an
+// invocation whose verb is not on a read-only list counts as a mutation
+// (fail-closed). Command names match case-insensitively because the default
+// macOS filesystem resolves them that way.
+const CLI_BOUNDARY = String.raw`(?:^|[;|{}=:&(\x60]|\$\()\s*(?:sudo\s+(?:-[A-Za-z]+\s+)*)?(?:[\w.~-]*\/)*`;
+const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})(?=\\s|$)([^;|&]*)`, 'gi'))]
+  .map((match) => match[1].trim());
+const cliTokens = (args) => args.split(/\s+/).map((token) => token.replace(/^["']+|["']+$/g, '')).filter(Boolean);
+function firstListedVerb(tokens, readOnly, mutating) {
+  for (const token of tokens) {
+    const lower = token.toLowerCase();
+    if (readOnly.has(lower)) return 'read';
+    if (mutating.has(lower)) return 'write';
+  }
+  return 'unknown';
+}
+const GAM_READ_ONLY = new Set(['print', 'info', 'report', 'show', 'whatis', 'version', 'help', 'checkconn']);
+const GAM_MUTATING = new Set(['create', 'update', 'delete', 'undelete', 'suspend', 'unsuspend', 'transfer', 'move', 'add',
+  'remove', 'revoke', 'wipe', 'deprovision', 'action', 'signout', 'turnoff2sv', 'issuecommand', 'clear', 'sync', 'rename',
+  'redirect', 'sendemail', 'replace', 'modify', 'copy', 'trash', 'untrash', 'purge', 'empty']);
+const GCLOUD_READ_ONLY = new Set(['list', 'describe', 'get-iam-policy', 'get-value', 'info', 'version', 'help', 'search', 'read']);
+const GCLOUD_MUTATING = new Set(['create', 'update', 'delete', 'set', 'add-iam-policy-binding', 'remove-iam-policy-binding',
+  'set-iam-policy', 'enable', 'disable', 'undelete', 'deploy', 'import', 'patch', 'reset', 'unset', 'add', 'remove', 'login',
+  'revoke', 'activate-service-account']);
+const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:DELETE|POST|PUT|PATCH)\b|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file)\b|(?:^|\s)--method[\s=]+["']?(?:DELETE|POST|PUT|PATCH)\b/i;
+const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFT](?=\s|["'@{]|$)|X\s*["']?(?:DELETE|POST|PUT|PATCH)\b)/;
+const JAMF_READ_ONLY = new Set(['help', 'version', 'about', 'checkjssconnection', 'listusers', 'getcomputername']);
+const FDESETUP_READ_ONLY = new Set(['status', 'list', 'isactive', 'haspersonalrecoverykey', 'hasinstitutionalrecoverykey',
+  'usingrecoverykey', 'showdeferralinfo', 'supportsauthrestart', 'version', 'help']);
+const DISKUTIL_READ_ONLY = new Set(['list', 'info', 'information', 'activity', 'listfilesystems', 'verifyvolume', 'verifydisk', 'help']);
+const DISKUTIL_APFS_READ_ONLY = new Set(['list', 'listcryptousers', 'listsnapshots', 'listvolumegroups', 'listusers']);
+const DEFAULTS_READ_ONLY = new Set(['read', 'read-type', 'domains', 'find', 'help']);
+const LAUNCHCTL_READ_ONLY = new Set(['list', 'print', 'print-cache', 'print-disabled', 'blame', 'help', 'version', 'procinfo',
+  'hostinfo', 'examine', 'dumpstate', 'managerpid', 'manageruid', 'managername', 'getenv', 'error', 'variant']);
+
+const G1_CLI_SINKS = [
+  ['gam-write', 'gam', (args) => firstListedVerb(cliTokens(args), GAM_READ_ONLY, GAM_MUTATING) !== 'read'],
+  ['gcloud-write', 'gcloud', (args) => firstListedVerb(cliTokens(args).filter((token) => !token.startsWith('-')), GCLOUD_READ_ONLY, GCLOUD_MUTATING) !== 'read'],
+  ['http-write', 'curl|wget', (args) => HTTP_WRITE_LONG.test(` ${args}`) || HTTP_WRITE_SHORT.test(` ${args}`)],
+  ['http-write', 'https?', (args) => {
+    const tokens = cliTokens(args);
+    const positional = tokens.filter((token) => !token.startsWith('-'));
+    if (/^(?:POST|PUT|PATCH|DELETE)$/i.test(positional[0] || '')) return true;
+    if (HTTP_WRITE_LONG.test(` ${args}`) || /(?:^|\s)-f(?=\s|$)/.test(` ${args}`)) return true;
+    return positional.slice(1).some((token) => /^[^=\s:]+(?::=|=(?!=)|@)/.test(token));
+  }],
+  ['jamf-write', 'jamf', (args) => !JAMF_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
+  ['profiles-write', 'profiles', (args) => {
+    const tokens = cliTokens(args);
+    if (tokens.some((token) => /^(?:install|remove|renew|sync)$/i.test(token) || /^-[IRD]$/.test(token))) return true;
+    return !/^(?:show|list|status|validate|version|help|-P|-L|-C|-H)$/.test(tokens[0] || '');
+  }],
+  ['dscl-write', 'dscl', (args) => /(?:^|\s)-(?:create|delete|append|change|passwd|merge|mcx(?:set|delete|import|edit))\w*\b/i.test(` ${args}`) ||
+    !/(?:^|\s)-(?:read|readall|list|search|readpl|readpli)\b/i.test(` ${args}`)],
+  ['fdesetup-write', 'fdesetup', (args) => !FDESETUP_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
+  ['diskutil-write', 'diskutil', (args) => {
+    const tokens = cliTokens(args).map((token) => token.toLowerCase());
+    if (tokens[0] === 'apfs') return !DISKUTIL_APFS_READ_ONLY.has(tokens[1] || '');
+    return !DISKUTIL_READ_ONLY.has(tokens[0] || '');
+  }],
+  ['softwareupdate-write', 'softwareupdate', (args) => /(?:^|\s)(?:-i\w*|--install\S*|-d|--download|--fetch-full-installer|--schedule|--reset-ignored|--ignore|--background)\b/.test(` ${args}`) ||
+    !/(?:^|\s)(?:-l|--list|--history|--list-full-installers|--help|-h)\b/.test(` ${args}`)],
+  ['networksetup-write', 'networksetup', (args) => cliTokens(args).filter((token) => token.startsWith('-'))
+    .some((token) => !/^-(?:get|list|print|version|help|show)/i.test(token)) || !cliTokens(args).some((token) => token.startsWith('-'))],
+  ['systemsetup-write', 'systemsetup', (args) => cliTokens(args).filter((token) => token.startsWith('-'))
+    .some((token) => !/^-(?:get|list|print|help|version)/i.test(token)) || !cliTokens(args).some((token) => token.startsWith('-'))],
+  ['defaults-write', 'defaults', (args) => {
+    const tokens = cliTokens(args).filter((token, index, all) => !/^-(?:currentHost|host)$/i.test(token) && !/^-host$/i.test(all[index - 1] || ''));
+    return !DEFAULTS_READ_ONLY.has((tokens[0] || '').toLowerCase());
+  }],
+  ['launchctl-write', 'launchctl', (args) => !LAUNCHCTL_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
+  ['kickstart-write', 'kickstart', () => true],
+];
+
+function g1CliHits(statement) {
+  const hits = [];
+  for (const [label, name, isWrite] of G1_CLI_SINKS) {
+    if (cliInvocations(statement, name).some((args) => isWrite(args))) hits.push(label);
+  }
+  return [...new Set(hits)];
+}
+
 function commandsIn(statement, language) {
   const hits = [];
   COMMAND_AT_BOUNDARY.lastIndex = 0;
@@ -201,6 +289,7 @@ function commandsIn(statement, language) {
     for (const [pattern, label] of nativePatterns) {
       if (pattern.test(statement)) hits.push(label);
     }
+    hits.push(...g1CliHits(statement));
   }
   return hits;
 }
@@ -252,8 +341,23 @@ function classifyImpact(command, text) {
     categories.add('data-removal related');
   }
   if (!dotNetLocalFile && /security|conditionalaccess|compliance|block|isolate|quarantine|mfa|session/.test(value)) categories.add('security-sensitive');
+  // G1 sinks: remote admin APIs vs on-device macOS administration, plus the
+  // destructive and security vocabulary those ecosystems use.
+  if (G1_REMOTE_SINKS.has(command)) categories.add('external-system mutation');
+  if (G1_DEVICE_SINKS.has(command)) categories.add('device configuration change');
+  if (G1_REMOTE_SINKS.has(command) || G1_DEVICE_SINKS.has(command)) {
+    if (/erase|powerwash|deprovision|wipe|unmanage|removeframework|undelete/.test(value)) {
+      categories.add('destructive');
+      categories.add('data-removal related');
+    }
+    if (/fdesetup|filevault|2sv|factor|session|token|lock|passw|signout|suspend|deactivat/.test(value)) categories.add('security-sensitive');
+    if (/user|group|member|license|licence|admin|role|account|dscl/.test(value)) categories.add('identity-related');
+  }
   return [...categories];
 }
+const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write']);
+const G1_DEVICE_SINKS = new Set(['profiles-write', 'dscl-write', 'fdesetup-write', 'diskutil-write', 'softwareupdate-write',
+  'networksetup-write', 'systemsetup-write', 'defaults-write', 'launchctl-write', 'kickstart-write']);
 
 const EFFECT_FAMILIES = [
   [/^(?:invalidate|revoke)(?:s|d|ing)?\b/i, /\bREVOKE\b/],
@@ -281,6 +385,20 @@ const EFFECT_FAMILIES = [
   [/^(?:submit|report)(?:s|ted|ting|ed|ing)?\b/i, /\b(?:SUBMIT|REPORT)\b/],
   [/^transfer(?:s|red|ring)?\b/i, /\bTRANSFER\b/],
   [/^stop(?:s|ped|ping)?\b/i, /\bSTOP\b/],
+  // G1 — Google Workspace, Okta, Jamf and macOS action families
+  [/^suspend(?:s|ed|ing)?\b/i, /\bSUSPEND\b/],
+  [/^(?:unsuspend|reactivate|reinstate)(?:s|d|ed|ing)?\b/i, /\b(?:UNSUSPEND|REACTIVATE|RESTORE)\b/],
+  [/^undelete(?:s|d|ing)?\b/i, /\b(?:UNDELETE|RESTORE)\b/],
+  [/^powerwash(?:es|ed|ing)?\b/i, /\bPOWERWASH\b/],
+  [/^deprovision(?:s|ed|ing)?\b/i, /\bDEPROVISION\b/],
+  [/^lock(?:s|ed|ing)?\b/i, /\bLOCK\b/],
+  [/^unlock(?:s|ed|ing)?\b/i, /\bUNLOCK\b/],
+  [/^unassign(?:s|ed|ing)?\b/i, /\b(?:UNASSIGN|REMOVE)\b/],
+  [/^activate(?:s|d|ing)?\b/i, /\b(?:ACTIVATE|ENABLE)\b/],
+  [/^enroll(?:s|ed|ing)?\b/i, /\bENROLL\b/],
+  [/^(?:unenroll|unmanage)(?:s|d|ed|ing)?\b/i, /\b(?:UNENROLL|UNMANAGE|REMOVE)\b/],
+  [/^(?:sign|log)\s+out\b/i, /\b(?:SIGN OUT|REVOKE)\b/],
+  [/^promote(?:s|d|ing)?\b/i, /\b(?:GRANT|ASSIGN|PROMOTE)\b/],
 ];
 
 function assertEffectCorrespondence(effect, expected, context) {
@@ -323,13 +441,21 @@ function nextMarkerLine(marker) {
 
 function portalMutationCandidates(document) {
   const candidates = [];
-  const action = '(?:Add|Allow|Assign|Block|Calendar|Clear|Convert|Coordinate|Create|Deactivate|Delete|Disable|Enable|Fix|Grant|Install|Isolate|Log|Move|Purge|Reclaim|Reimage|Release|Remove|Rename|Replace|Require|Reset|Restore|Restrict|Retire|Revoke|Run|Schedule|Send|Set|Start|Stop|Submit|Transfer|Uncheck|Update|Wipe)';
+  const action = '(?:Add|Allow|Assign|Block|Calendar|Clear|Convert|Coordinate|Create|Deactivate|Delete|Disable|Enable|Fix|Grant|Install|Isolate|Log|Move|Purge|Reclaim|Reimage|Release|Remove|Rename|Replace|Require|Reset|Restore|Restrict|Retire|Revoke|Run|Schedule|Send|Set|Start|Stop|Submit|Transfer|Uncheck|Update|Wipe|Activate|Deprovision|Enroll|Erase|Lock|Powerwash|Reactivate|Suspend|Unassign|Undelete|Unenroll|Unlock|Unmanage|Unsuspend)';
   const actionBody = action.slice(3, -1);
   const arrowMutation = new RegExp(`→\\s*(?:\\*{0,2}|\`)?(${actionBody})\\b`, 'i');
   const imperativeMutation = new RegExp(`^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+(?:\\*\\*[^*]+:\\*\\*\\s*)?(?:Click|Select|Choose)\\s+(?:\\*{0,2}|\`)?(${actionBody})\\b`, 'i');
   const navigationListMutation = new RegExp(`^\\s*[-*]\\s+(${actionBody})(?:\\s*\\/\\s*(?:${actionBody}))+\\s*:.*→`, 'i');
   const navigationLabelMutation = new RegExp(`^\\s*[-*]\\s+(${actionBody})[^:]*:.*→`, 'i');
   const portalCue = /\b(?:Entra|Intune|EAC|Defender|Exchange|SharePoint|Teams|Zoom|Adobe|Meraki|admin portal|Recipients|Devices|Users|Groups|Policies|Settings)\b/i;
+  // G1 lane cue (Google Admin console, Okta, Jamf, Apple Business Manager, macOS,
+  // Fleet, Zoom Rooms). Lines carrying it also get the arrow rule, so a breadcrumb
+  // that ends in an action (`… → **Suspend user**`) is a mutation candidate.
+  // Case-sensitive on purpose: these are product names ("fleet-wide" is not Fleet).
+  const g1PortalCue = /\b(?:admin\.google\.com|Admin console|Google Workspace|Okta|Jamf|Apple Business Manager|System Settings|Self Service|Fleet(?!-)|Zoom Rooms|ChromeOS|Chromebook)\b/;
+  const listItem = /^\s*(?:>\s*)?(?:\d+[.)]|[-*])\s+/;
+  const g1ArrowMutation = new RegExp(`(?:→\\s*|\\b(?:Click|Select|Choose|Tap)\\s+)(?:\\*{0,2}|\`)?(${actionBody})\\b`, 'i');
+  const navReference = document.file === 'docs/portal-nav-2026.md' || document.file === 'docs/portal-nav-google-2026.md';
   const frontmatterEnd = document.lines[0] === '---' ? document.lines.indexOf('---', 1) : -1;
   document.lines.forEach((line, index) => {
     const lineNumber = index + 1;
@@ -339,10 +465,12 @@ function portalMutationCandidates(document) {
     if (/^\s*(?:<!--\s*SAFETY GATE|>\s*\*\*PREVIEW ONLY|[-*]\s+\*\*(?:Target|Effect|Scope|Reversibility|Required confirmation|Failure behavior|Undo))/.test(line)) return;
     const inPortalRegion = markers.some((marker) => marker.kind === 'portal' && marker.file === document.file &&
       marker.line < lineNumber && lineNumber < nextMarkerLine(marker));
+    const cue = portalCue.test(line) || g1PortalCue.test(line);
     const match = line.match(navigationListMutation) ||
-      ((portalCue.test(line) || document.file === 'docs/portal-nav-2026.md') ? line.match(navigationLabelMutation) : null) ||
-      ((portalCue.test(line) || inPortalRegion) ? line.match(imperativeMutation) : null) ||
-      (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null);
+      ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
+      ((cue || inPortalRegion) ? line.match(imperativeMutation) : null) ||
+      (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
+      (g1PortalCue.test(line) && listItem.test(line) ? line.match(g1ArrowMutation) : null);
     if (match) {
       const actionWord = match[1];
       candidates.push({ file: document.file, line: lineNumber, statement: line.trim(), actionWord });
@@ -374,6 +502,14 @@ const PORTAL_CONFIRMATION_BY_ACTION = new Map([
   ['submit', /\b(?:SUBMIT|REPORT|SEND)\b/], ['transfer', /\b(?:TRANSFER|GRANT|ASSIGN)\b/],
   ['uncheck', /\b(?:UNCHECK|DISABLE)\b/], ['update', /\b(?:UPDATE|CHANGE|SET)\b/],
   ['wipe', /\bWIPE\b/],
+  // G1 — Google Workspace, Okta, Jamf and macOS actions
+  ['activate', /\b(?:ACTIVATE|REACTIVATE|ENABLE)\b/], ['deprovision', /\bDEPROVISION\b/],
+  ['enroll', /\bENROLL\b/], ['erase', /\b(?:ERASE|WIPE)\b/],
+  ['lock', /\bLOCK\b/], ['powerwash', /\bPOWERWASH\b/],
+  ['reactivate', /\b(?:REACTIVATE|RESTORE|UNSUSPEND)\b/], ['suspend', /\bSUSPEND\b/],
+  ['unassign', /\b(?:UNASSIGN|REMOVE)\b/], ['undelete', /\b(?:UNDELETE|RESTORE)\b/],
+  ['unenroll', /\b(?:UNENROLL|REMOVE)\b/], ['unlock', /\bUNLOCK\b/],
+  ['unmanage', /\bUNMANAGE\b/], ['unsuspend', /\b(?:UNSUSPEND|RESTORE|REACTIVATE)\b/],
 ]);
 
 const portalCandidates = [...documents.values()].flatMap(portalMutationCandidates);
@@ -527,7 +663,7 @@ function currentStateChangeInventory() {
       preview: 'Read-only as authored; mutation vocabulary is inert and describes a separately prohibited or review-routed effect.',
     },
     scope: {
-      discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native, and portal mutation grammar.',
+      discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native (including gam, gcloud, HTTP-API, jamf, and macOS administration tools, with plain-text shell gates), and portal mutation grammar.',
       clientBoundaries: 'State-changing or disclosure-capable Jira, memory, and security-audit implementations outside Markdown fence discovery.',
       limitation: 'Novel syntax and prose still require semantic review and grammar extension.',
     },
@@ -767,6 +903,184 @@ function executeSourceGateHarness(analysis, context, engine) {
   ].join('\n');
   const output = runPowerShell(engine, script, `${context} runtime harness`);
   assert.match(output, new RegExp(`SOURCE_GATE_HARNESS_OK ${context.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+}
+
+// ── Shell gate analyzer (G1) — plain-text grammar, no pwsh ────────────────────
+// The shell form of an action-local gate, in an explicitly tagged bash/sh/shell/
+// zsh fence, is fixed and auditable:
+//
+//   # SAFETY GATE [id]
+//   # Target: …  # Effect: …  # Scope: …  # Reversibility: …
+//   # Required confirmation: type exactly `PHRASE`
+//   # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
+//   required_confirmation="PHRASE"
+//   IFS= read -r confirmation
+//   if [ "$confirmation" = "$required_confirmation" ]; then
+//     <owned sinks only>
+//   else
+//     echo "…" >&2          (optional, stderr only)
+//     exit <non-zero>
+//   fi
+//
+// `IFS=` keeps leading/trailing whitespace so a padded phrase never matches;
+// `=` inside `[ ]` is an exact, case-sensitive string compare. The analyzer
+// rejects anything that could overwrite, shadow, fold, or route around that
+// comparison, and the harness proves the exact phrase reaches the mocked sink
+// once while every rejected input stops with a non-zero exit.
+const SHELL_GATE_FIELDS = ['Target', 'Effect', 'Scope', 'Reversibility', 'Required confirmation', 'Failure behavior'];
+const SHELL_FAILURE_BEHAVIOR = 'Empty, declined, `yes`, or any other response means stop; no change is made.';
+const SHELL_REQUIRED_LINE = /^\s*required_confirmation="([^"$`\\]+)"\s*$/;
+const SHELL_READ_LINE = /^\s*IFS= read -r confirmation\s*$/;
+const SHELL_GATE_IF_LINE = /^\s*if \[ "\$confirmation" = "\$required_confirmation" \]; then\s*$/;
+const SHELL_ELSE_NOTICE_LINE = /^\s*(?:echo|printf)\s[^;&|`$()<>]*>&2\s*$/;
+const SHELL_ELSE_EXIT_LINE = /^\s*exit [1-9][0-9]{0,2}\s*$/;
+const SHELL_FORBIDDEN = [
+  [/(?:^|[;&|(]\s*)(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b/, 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
+  [/(?:^|[;&|(]\s*)(?:\.\s+\S)/, 'dot-sourcing is forbidden in a gated fence'],
+  [/(?:^|[;&|(]\s*)(?:function\s+[\w.:-]+|[\w.:-]+\s*\(\s*\))\s*(?:\{|\(|$)/, 'function definitions are forbidden in a gated fence (they can shadow read/[ or hide sinks)'],
+  [/\$\{\s*(?:required_)?confirmation\b/, 'parameter expansion of a gate variable is forbidden (it can fold case or substitute values)'],
+  [/(?:^|[;&|\s(])(?:export\s+|local\s+)?confirmation\+?=/, 'confirmation may only be assigned by the single IFS= read -r line'],
+];
+
+function shellCodeOf(line) {
+  return /^\s*#/.test(line) ? '' : stripExecutableComment(line).trim();
+}
+
+function shellBlockDelta(code) {
+  let delta = 0;
+  for (const raw of code.split(/;;|;|&&|\|\|/)) {
+    const segment = raw.trim();
+    if (!segment) continue;
+    const word = segment.split(/\s+/)[0];
+    if (/^(?:if|case|for|while|until|select)$/.test(word)) delta += 1;
+    else if (/^(?:fi|esac|done)$/.test(word)) delta -= 1;
+    else if (word === '{' || (/^\((?!\()/.test(segment))) delta += 1;
+    else if (word === '}' || segment === ')') delta -= 1;
+  }
+  return delta;
+}
+
+function analyzeShellGate(fence, marker, regionEndLine, owned) {
+  const problems = [];
+  const lines = fence.lines;
+  const markerIndex = marker.line - fence.startLine;
+  const endIndex = regionEndLine - fence.startLine;
+  const code = lines.map(shellCodeOf);
+  const inRegion = (index) => index > markerIndex && index <= endIndex;
+
+  const fields = {};
+  for (let index = markerIndex + 1; index <= endIndex; index += 1) {
+    const field = lines[index].match(/^\s*#\s*(Target|Effect|Scope|Reversibility|Required confirmation|Failure behavior):\s*(.+?)\s*$/);
+    if (!field) continue;
+    if (fields[field[1]] !== undefined) problems.push(`duplicate ${field[1]} field`);
+    fields[field[1]] = field[2];
+  }
+  for (const name of SHELL_GATE_FIELDS) if (!fields[name]) problems.push(`missing ${name} field`);
+  const expected = (fields['Required confirmation'] || '').match(/type exactly `([^`]+)`/i)?.[1] || '';
+  if (fields['Required confirmation'] && !expected) problems.push('Required confirmation must say: type exactly `PHRASE`');
+  if (fields['Failure behavior'] && fields['Failure behavior'] !== SHELL_FAILURE_BEHAVIOR) problems.push(`Failure behavior must read exactly: ${SHELL_FAILURE_BEHAVIOR}`);
+
+  code.forEach((statement, index) => {
+    if (!statement) return;
+    for (const [pattern, message] of SHELL_FORBIDDEN) if (pattern.test(statement)) problems.push(`line ${index + 1}: ${message}`);
+  });
+
+  const requiredAssignments = code.map((statement, index) => ({ statement, index }))
+    .filter(({ statement }) => /(?:^|[;&|\s(])(?:export\s+|local\s+)?required_confirmation\+?=/.test(statement));
+  const reads = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /(?:^|[;&|(\s])read\b/.test(statement));
+  const gateIfs = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /\$confirmation\b|\$required_confirmation\b/.test(statement) && /(?:^|[;&|\s])(?:if|elif|while|until|\[\[?|test)\b/.test(statement));
+
+  let requiredLiteral = '';
+  if (requiredAssignments.length !== 1 || !inRegion(requiredAssignments[0].index)) problems.push('required_confirmation must have exactly one assignment, inside the gate region');
+  else {
+    const literal = code[requiredAssignments[0].index].match(SHELL_REQUIRED_LINE);
+    if (!literal) problems.push('required_confirmation must be one double-quoted literal with no expansion ($, backtick, backslash)');
+    else requiredLiteral = literal[1];
+  }
+  if (requiredLiteral && expected && requiredLiteral !== expected) problems.push(`required_confirmation literal does not equal the Required confirmation phrase (${requiredLiteral} ≠ ${expected})`);
+  if (reads.length !== 1 || !inRegion(reads[0].index) || !SHELL_READ_LINE.test(code[reads[0].index])) problems.push('the fence must contain exactly one read, the canonical `IFS= read -r confirmation`, inside the gate region');
+  if (gateIfs.length !== 1 || !inRegion(gateIfs[0].index) || !SHELL_GATE_IF_LINE.test(code[gateIfs[0].index])) problems.push('the region must contain exactly one comparison, the canonical `if [ "$confirmation" = "$required_confirmation" ]; then`');
+
+  const gateIndex = gateIfs.length === 1 && SHELL_GATE_IF_LINE.test(code[gateIfs[0].index]) ? gateIfs[0].index : -1;
+  let elseIndex = -1;
+  let fiIndex = -1;
+  const elseBody = [];
+  if (gateIndex >= 0) {
+    if (requiredAssignments.length === 1 && reads.length === 1 && !(requiredAssignments[0].index < reads[0].index && reads[0].index < gateIndex)) {
+      problems.push('order must be: required_confirmation assignment, then the read, then the comparison');
+    }
+    let depth = 0;
+    for (let index = 0; index < gateIndex; index += 1) depth += shellBlockDelta(code[index]);
+    if (depth !== 0) problems.push('the gate comparison is nested inside another block (dead or conditional guard)');
+    depth = 0;
+    for (let index = gateIndex + 1; index < lines.length; index += 1) {
+      const statement = code[index];
+      if (!statement) continue;
+      if (depth === 0 && /^(?:elif)\b/.test(statement)) problems.push('elif branches are forbidden in a gate');
+      if (depth === 0 && statement === 'else') { if (elseIndex < 0) elseIndex = index; else problems.push('more than one else'); continue; }
+      depth += shellBlockDelta(statement);
+      if (depth < 0) { fiIndex = index; break; }
+    }
+    if (elseIndex < 0) problems.push('the comparison needs a direct else branch');
+    if (fiIndex < 0) problems.push('the comparison is never closed with fi');
+    if (fiIndex >= 0 && code[fiIndex] !== 'fi') problems.push('the gate must close with a bare fi');
+    if (fiIndex >= 0 && fiIndex > endIndex) problems.push('the gate block extends past the gate region');
+    if (elseIndex >= 0 && fiIndex > elseIndex) {
+      const statements = [];
+      for (let index = elseIndex + 1; index < fiIndex; index += 1) if (code[index]) { statements.push(code[index]); elseBody.push(code[index]); }
+      const exits = statements.filter((statement) => SHELL_ELSE_EXIT_LINE.test(statement));
+      if (exits.length !== 1 || !SHELL_ELSE_EXIT_LINE.test(statements.at(-1) || '')) problems.push('the else branch must end with exactly one `exit <non-zero>`');
+      if (statements.some((statement) => !SHELL_ELSE_EXIT_LINE.test(statement) && !SHELL_ELSE_NOTICE_LINE.test(statement))) {
+        problems.push('the else branch may only print a notice to stderr and exit non-zero');
+      }
+    }
+  }
+  for (const sink of owned) {
+    const index = sink.line - fence.startLine;
+    if (!(gateIndex >= 0 && elseIndex > gateIndex && index > gateIndex && index < elseIndex)) {
+      problems.push(`sink ${sink.command} at line ${sink.line} is not dominated by the positive confirmation branch`);
+    }
+  }
+  return { problems: [...new Set(problems)], fields, expected, requiredLiteral, elseBody };
+}
+
+const SHELL_ENGINES = ['bash'].filter((engine) => {
+  const probe = spawnSync(engine, ['-c', 'printf ok'], { encoding: 'utf8', windowsHide: true, timeout: 10000 });
+  return probe.status === 0 && probe.stdout === 'ok';
+});
+
+function assertShellGateFailClosed(analysis, context) {
+  assert.deepEqual(analysis.problems, [], `${context}: ${analysis.problems.join(' | ')}`);
+  const expected = analysis.expected;
+  assert.ok(expected && expected === analysis.requiredLiteral, `${context}: source literal and Required confirmation phrase differ`);
+  // Plain-text model of the canonical comparison: exact string equality.
+  for (const rejected of [undefined, '', 'yes', 'YES', 'arbitrary wrong value', ` ${expected}`, `${expected} `, expected.toLowerCase(), `${expected}\\`]) {
+    if (rejected !== expected) assert.equal(exactGateModel(expected, rejected), false);
+  }
+  assert.equal(exactGateModel(expected, expected), true);
+  // Real execution where a POSIX shell exists (always on Linux/macOS CI).
+  if (process.platform !== 'win32') assert.ok(SHELL_ENGINES.length > 0, `${context}: bash is required to execute the shell gate harness`);
+  const script = [
+    `required_confirmation="${analysis.requiredLiteral}"`,
+    'IFS= read -r confirmation',
+    'if [ "$confirmation" = "$required_confirmation" ]; then',
+    "  printf '%s\\n' MOCKED_SINK_REACHED",
+    'else',
+    ...analysis.elseBody.map((statement) => `  ${statement}`),
+    'fi',
+  ].join('\n');
+  for (const engine of SHELL_ENGINES) {
+    const run = (input) => spawnSync(engine, ['-c', script], { input, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    const approved = run(`${expected}\n`);
+    assert.equal(approved.status, 0, `${context}: exact phrase did not traverse the gate (${approved.stderr})`);
+    assert.match(approved.stdout, /MOCKED_SINK_REACHED/, `${context}: exact phrase did not reach the mocked sink`);
+    for (const rejected of [undefined, '', 'yes', 'YES', 'arbitrary wrong value', ` ${expected}`, `${expected} `, expected.toLowerCase(), `${expected}\\`]) {
+      if (rejected === expected) continue;
+      const result = run(rejected === undefined ? '' : `${rejected}\n`);
+      assert.notEqual(result.status, 0, `${context}: rejected input ${JSON.stringify(rejected)} exited zero`);
+      assert.doesNotMatch(result.stdout || '', /MOCKED_SINK_REACHED/, `${context}: rejected input ${JSON.stringify(rejected)} reached the sink`);
+    }
+  }
 }
 
 test('all Markdown fences are balanced and files end with a newline', () => {
@@ -1298,4 +1612,291 @@ test('inventory includes the named audit hot spots', () => {
     'quarantine-release-all', 'quarantine-release-one', 'device-full-wipe',
     'rollback-bulk-usage-location', 'security-account-block', 'security-session-revoke',
   ]) assert.ok(ids.has(id), `missing required hot-spot inventory item: ${id}`);
+});
+
+// ── G1: Google Workspace / Okta / Jamf / macOS shell sinks ────────────────────
+// The shell-fence detector must see every gam, gcloud, HTTP-API, jamf and macOS
+// administration mutation, leave read-only diagnostics live, and require a
+// same-fence `# SAFETY GATE [id]` whose plain-text confirmation grammar is
+// explicit and fail-closed (no pwsh involved).
+
+const G1_SHELL_MUTATIONS = [
+  ['gam create user "[USER@DOMAIN.COM]" firstname "[FIRST_NAME]" lastname "[LAST_NAME]" password random', 'gam-write'],
+  ['gam update user "[USER@DOMAIN.COM]" suspended on', 'gam-write'],
+  ['gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam undelete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam suspend user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam unsuspend user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" transfer drive "[MANAGER_UPN]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" move drivefile "[FILE_ID]" parentid root', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" add license "[LICENSE_TYPE]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" remove license "[LICENSE_TYPE]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" revoke tokens', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" wipe', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" deprovision', 'gam-write'],
+  ['gam update cros "[DEVICE_ID]" action disable', 'gam-write'],
+  ['gam cros "[DEVICE_ID]" action deprovision_retiring_device', 'gam-write'],
+  ['gam issuecommand cros "[DEVICE_ID]" command remote_powerwash doit', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" signout', 'gam-write'],
+  ['sudo ~/bin/gam7/gam update group "[GROUP@DOMAIN.COM]" add member "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam print users query "isSuspended=True" | gam update user "[USER@DOMAIN.COM]" suspended off', 'gam-write'],
+  ['result=$(gam delete user "[USER@DOMAIN.COM]")', 'gam-write'],
+  ['gcloud iam service-accounts keys create key.json --iam-account="fixture"', 'gcloud-write'],
+  ['gcloud projects add-iam-policy-binding fixture-project --member="user:fixture" --role="roles/viewer"', 'gcloud-write'],
+  ['gcloud projects remove-iam-policy-binding fixture-project --member="user:fixture" --role="roles/viewer"', 'gcloud-write'],
+  ['gcloud config set project fixture-project', 'gcloud-write'],
+  ['gcloud iam service-accounts delete fixture', 'gcloud-write'],
+  ['gcloud iam service-accounts update fixture --display-name="fixture"', 'gcloud-write'],
+  ['curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/deactivate" -H "Authorization: SSWS ${OKTA_API_TOKEN}"', 'http-write'],
+  ['curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"', 'http-write'],
+  ['curl -sS --request PUT "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sSX PATCH "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS --data "{}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS -d @body.json "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS --json "{}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['wget --method=POST "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['wget --post-data="x" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['http POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/reset_password"', 'http-write'],
+  ['https DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"', 'http-write'],
+  ['https "https://[@Aegion_JAMF_URL]/api/v1/fixture" name=value', 'http-write'],
+  ['sudo jamf policy', 'jamf-write'],
+  ['sudo jamf recon', 'jamf-write'],
+  ['sudo jamf manage', 'jamf-write'],
+  ['sudo jamf removeFramework', 'jamf-write'],
+  ['sudo /usr/local/bin/jamf enroll -prompt', 'jamf-write'],
+  ['sudo profiles renew -type enrollment', 'profiles-write'],
+  ['sudo profiles install -path fixture.mobileconfig', 'profiles-write'],
+  ['sudo profiles remove -identifier fixture.profile', 'profiles-write'],
+  ['sudo profiles -I -F fixture.mobileconfig', 'profiles-write'],
+  ['sudo profiles -R -p fixture.profile', 'profiles-write'],
+  ['sudo dscl . -create /Users/fixture', 'dscl-write'],
+  ['sudo dscl . -delete /Users/fixture', 'dscl-write'],
+  ['sudo dscl . -append /Groups/admin GroupMembership fixture', 'dscl-write'],
+  ['sudo dscl . -change /Users/fixture RealName old new', 'dscl-write'],
+  ['sudo dscl . -passwd /Users/fixture', 'dscl-write'],
+  ['sudo fdesetup enable', 'fdesetup-write'],
+  ['sudo fdesetup disable', 'fdesetup-write'],
+  ['sudo fdesetup add -usertoadd fixture', 'fdesetup-write'],
+  ['sudo fdesetup remove -user fixture', 'fdesetup-write'],
+  ['sudo fdesetup changerecovery -personal', 'fdesetup-write'],
+  ['diskutil eraseDisk APFS Fixture disk9', 'diskutil-write'],
+  ['diskutil eraseVolume APFS Fixture disk9s1', 'diskutil-write'],
+  ['diskutil apfs deleteVolume disk9s9', 'diskutil-write'],
+  ['diskutil partitionDisk disk9 GPT APFS Fixture 100%', 'diskutil-write'],
+  ['sudo softwareupdate -i -a', 'softwareupdate-write'],
+  ['sudo softwareupdate --install --all --restart', 'softwareupdate-write'],
+  ['sudo networksetup -setairportnetwork en0 fixture-ssid', 'networksetup-write'],
+  ['sudo networksetup -setdnsservers Wi-Fi Empty', 'networksetup-write'],
+  ['sudo systemsetup -setremotelogin on', 'systemsetup-write'],
+  ['defaults write com.apple.fixture Key -bool true', 'defaults-write'],
+  ['sudo launchctl load -w /Library/LaunchDaemons/fixture.plist', 'launchctl-write'],
+  ['sudo launchctl unload /Library/LaunchDaemons/fixture.plist', 'launchctl-write'],
+  ['sudo launchctl bootstrap system /Library/LaunchDaemons/fixture.plist', 'launchctl-write'],
+  ['sudo launchctl bootout system/fixture', 'launchctl-write'],
+  ['sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -on', 'kickstart-write'],
+];
+
+const G1_SHELL_READ_ONLY = [
+  'gam info user "[USER@DOMAIN.COM]"',
+  'gam print users query "isSuspended=True" fields primaryemail,suspended',
+  'gam report admin event DELETE_USER',
+  'gam user "[USER@DOMAIN.COM]" show tokens',
+  'gam whatis "[USER@DOMAIN.COM]"',
+  'gam print groups member "[USER@DOMAIN.COM]"',
+  'gam info cros "[DEVICE_ID]"',
+  'gcloud projects describe fixture-project',
+  'gcloud iam service-accounts list',
+  'curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"',
+  'curl -sS -X GET "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'http GET "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" Authorization:"SSWS ${OKTA_API_TOKEN}"',
+  'sudo jamf version',
+  'jamf checkJSSConnection',
+  'profiles show -type enrollment',
+  'sudo profiles list',
+  'profiles status -type enrollment',
+  'dscl . -read /Users/fixture',
+  'dscl . -list /Users',
+  'fdesetup status',
+  'sudo fdesetup list',
+  'diskutil list',
+  'diskutil info disk0',
+  'diskutil apfs list',
+  'softwareupdate -l',
+  'softwareupdate --history',
+  'networksetup -getairportnetwork en0',
+  'networksetup -listallhardwareports',
+  'sudo systemsetup -getremotelogin',
+  'defaults read com.apple.fixture',
+  'launchctl list',
+  'launchctl print system/fixture',
+  'system_profiler SPHardwareDataType',
+  'log show --last 1h --style compact',
+  'ping -c 4 fixture.example.org',
+  'dig +short fixture.example.org',
+];
+
+test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {
+  const missed = [];
+  for (const [line, label] of G1_SHELL_MUTATIONS) {
+    for (const language of ['bash', 'zsh', 'sh', 'shell', '']) {
+      const hits = commandsIn(line, language);
+      if (!hits.includes(label)) missed.push(`${language || '(untagged)'}: ${line} → [${hits.join(', ')}]`);
+    }
+  }
+  assert.deepEqual(missed, []);
+});
+
+test('G1 detector: read-only diagnostics stay live and are not sinks', () => {
+  const flagged = [];
+  for (const line of G1_SHELL_READ_ONLY) {
+    const hits = commandsIn(line, 'bash');
+    if (hits.length) flagged.push(`${line} → [${hits.join(', ')}]`);
+  }
+  assert.deepEqual(flagged, []);
+});
+
+function evaluateGateDocument(file, source) {
+  const document = parseFences(file, source);
+  const found = discoverMarkers(document);
+  const { executable, preview } = mutationHits(document);
+  const byFence = new Map();
+  for (const marker of found.filter((item) => item.kind !== 'portal')) {
+    if (!byFence.has(marker.fenceId)) byFence.set(marker.fenceId, []);
+    byFence.get(marker.fenceId).push(marker);
+  }
+  for (const list of byFence.values()) list.sort((a, b) => a.line - b.line);
+  const nearest = (hit) => (byFence.get(hit.fenceId) || []).filter((marker) => marker.line <= hit.line).at(-1);
+  const failures = [];
+  for (const hit of executable) {
+    const owner = nearest(hit);
+    if (!owner || owner.mode !== 'gated') failures.push(`${hit.file}:${hit.line}: ${hit.command} has 0 owners (${hit.statement})`);
+  }
+  for (const hit of preview) {
+    const owner = nearest(hit);
+    if (!owner || owner.mode !== 'preview') failures.push(`${hit.file}:${hit.line}: commented ${hit.command} is not owned by PREVIEW ONLY`);
+  }
+  const analyses = [];
+  for (const marker of found.filter((item) => item.kind === 'shell' && item.mode === 'gated')) {
+    const fence = document.fences.find((item) => item.id === marker.fenceId);
+    const regionEndLine = ((byFence.get(marker.fenceId) || []).find((item) => item.line > marker.line)?.line || fence.endLine + 1) - 1;
+    const owned = executable.filter((hit) => hit.fenceId === marker.fenceId && nearest(hit) === marker);
+    if (!owned.length) failures.push(`${marker.id}: gate owns no executable mutation`);
+    const analysis = analyzeShellGate(fence, marker, regionEndLine, owned);
+    for (const problem of analysis.problems) failures.push(`${marker.id}: ${problem}`);
+    analyses.push({ marker, analysis });
+  }
+  return { failures, executable, markers: found, analyses };
+}
+
+const G1_FIXTURE_DIR = path.join(ROOT, 'scripts', 'fixtures', 'command-safety-gates');
+
+test('G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes', () => {
+  const read = (name) => fs.readFileSync(path.join(G1_FIXTURE_DIR, name), 'utf8');
+  const ungated = evaluateGateDocument('fixture/gam-fence-no-marker.md', read('gam-fence-no-marker.md.txt'));
+  assert.ok(ungated.executable.some((hit) => hit.command === 'gam-write'), 'the detector must see the gam update line');
+  assert.ok(ungated.failures.some((failure) => /gam-write has 0 owners/.test(failure)), ungated.failures.join(' | '));
+
+  const gated = evaluateGateDocument('fixture/gam-fence-gated.md', read('gam-fence-gated.md.txt'));
+  assert.equal(gated.executable.filter((hit) => hit.command === 'gam-write').length, 1, 'exactly one sink, owned by the gate');
+  assert.deepEqual(gated.failures, []);
+  assert.equal(gated.analyses.length, 1);
+  assertShellGateFailClosed(gated.analyses[0].analysis, 'fixture-gws-user-suspend');
+});
+
+test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
+  const header = [
+    '# SAFETY GATE [fixture-shell]',
+    '# Target: [USER@DOMAIN.COM]',
+    '# Effect: suspend one Google Workspace user account',
+    '# Scope: one user',
+    '# Reversibility: R1 — reversible by the separate unsuspend procedure',
+    '# Required confirmation: type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`',
+    '# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.',
+  ];
+  const body = [
+    'required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"',
+    'IFS= read -r confirmation',
+    'if [ "$confirmation" = "$required_confirmation" ]; then',
+    '  gam update user "[USER@DOMAIN.COM]" suspended on   # suspends the account',
+    'else',
+    '  echo "Confirmation did not match. No change was made." >&2',
+    '  exit 1',
+    'fi',
+  ];
+  const fenceOf = (lines) => ['```bash', ...lines, '```', ''].join('\n');
+  const verdict = (lines) => evaluateGateDocument('fixture/shell-bypass.md', fenceOf(lines)).failures;
+  assert.deepEqual(verdict([...header, ...body]), [], 'the canonical gate must pass');
+  const replace = (from, to) => [...header, ...body].map((line) => (line === from ? to : line));
+  const cases = [
+    ['no-exit-in-else', replace('  exit 1', '  :')],
+    ['exit-zero-in-else', replace('  exit 1', '  exit 0')],
+    ['whitespace-trimming-read', replace('IFS= read -r confirmation', 'read -r confirmation')],
+    ['confirmation-overwrite', [...header, body[0], body[1], 'confirmation="$required_confirmation"', ...body.slice(2)]],
+    ['sink-after-fi', [...header, body[0], body[1], body[2], '  :', ...body.slice(4), 'gam update user "[USER@DOMAIN.COM]" suspended on']],
+    ['sink-before-gate', [...header, 'gam update user "[USER@DOMAIN.COM]" suspended on', ...body]],
+    ['dead-wrapper', [...header, 'if false; then', ...body, 'fi']],
+    ['read-function-override', ['read() { confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"; }', ...header, ...body]],
+    ['alias-override', ["alias read='true'", ...header, ...body]],
+    ['trap', ["trap 'true' ERR", ...header, ...body]],
+    ['eval', [...header, ...body.slice(0, 3), '  eval "gam update user [USER@DOMAIN.COM] suspended on"', ...body.slice(4)]],
+    ['template-mismatch', replace('required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"', 'required_confirmation="yes"')],
+    ['case-folded-compare', replace('if [ "$confirmation" = "$required_confirmation" ]; then', 'if [ "${confirmation^^}" = "$required_confirmation" ]; then')],
+    ['or-true', replace('if [ "$confirmation" = "$required_confirmation" ]; then', 'if [ "$confirmation" = "$required_confirmation" ] || true; then')],
+    ['negated-compare', replace('if [ "$confirmation" = "$required_confirmation" ]; then', 'if [ "$confirmation" != "$required_confirmation" ]; then')],
+    ['elif-branch', [...header, ...body.slice(0, 4), 'elif true; then', '  :', ...body.slice(4)]],
+    ['mutation-in-else', replace('  echo "Confirmation did not match. No change was made." >&2', '  gam update user "[USER@DOMAIN.COM]" suspended on')],
+    ['missing-failure-behavior', [...header.slice(0, 6), ...body]],
+    ['missing-required-confirmation-field', [...header.slice(0, 5), header[6], ...body]],
+    ['second-read', [...header, body[0], body[1], 'IFS= read -r confirmation', ...body.slice(2)]],
+    ['expansion-in-template', replace('required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"', 'required_confirmation="SUSPEND GOOGLE USER $(whoami)"')],
+  ];
+  const accepted = [];
+  for (const [name, lines] of cases) {
+    let failures;
+    try { failures = verdict(lines); } catch (error) { failures = [String(error.message)]; }
+    if (!failures.length) accepted.push(name);
+  }
+  assert.deepEqual(accepted, [], 'every bypass-shaped fixture must be rejected');
+});
+
+for (const marker of markers.filter((item) => item.kind === 'shell' && item.mode === 'gated')) {
+  test(`${marker.id}: shell gate is explicit, dominates its sinks, and is fail-closed`, () => {
+    const document = documents.get(marker.file);
+    const fence = document.fences.find((item) => item.id === marker.fenceId);
+    const owned = executableHits.filter((hit) => hit.fenceId === marker.fenceId && nearestMarker(hit) === marker);
+    assert.ok(owned.length > 0, `${marker.file}:${marker.line}: gate owns no executable mutation`);
+    const analysis = analyzeShellGate(fence, marker, nextMarkerLine(marker) - 1, owned);
+    assert.deepEqual(analysis.problems, [], `${marker.id}: ${analysis.problems.join(' | ')}`);
+    for (const binding of extractTargetBindings(analysis.fields.Target || '')) {
+      assert.ok(analysis.expected.includes(binding), `${marker.id}: exact confirmation does not bind target token ${binding}`);
+    }
+    assertEffectCorrespondence(analysis.fields.Effect || '', analysis.expected, marker.id);
+    assertShellGateFailClosed(analysis, marker.id);
+  });
+}
+
+test('G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates', () => {
+  const source = [
+    '# fixture',
+    '',
+    '1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Suspend user**',
+    '2. Admin console → Devices → Chrome → Devices → `[DEVICE_ID]` → **Deprovision**',
+    '3. Okta Admin Console → Directory → People → `[UPN]` → More Actions → **Deactivate**',
+    '4. Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]` → Management → **Lock Computer**',
+    '5. Jamf Pro → Computers → `[SERIAL_NUMBER]` → Management → Click **Erase Computer**',
+    '6. Admin console → Apps → Google Workspace → Drive and Docs → **Transfer ownership**',
+    '- Click **Powerwash** in the Chromebook device panel.',
+    '- Unsuspend user: Admin console → Directory → Users → `[USER@DOMAIN.COM]` → Reactivate',
+    '7. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner',
+    '- OS updates fleet-wide via intune.microsoft.com → Devices → run updates',
+    '',
+  ].join('\n');
+  const candidates = portalMutationCandidates(parseFences('fixture/g1-portal.md', source));
+  const byLine = Object.fromEntries(candidates.map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
+  assert.deepEqual(byLine, { 3: 'suspend', 4: 'deprovision', 5: 'deactivate', 6: 'lock', 7: 'erase', 8: 'transfer', 9: 'powerwash', 10: 'unsuspend' });
+  for (const action of ['suspend', 'deprovision', 'deactivate', 'lock', 'erase', 'transfer', 'powerwash', 'unsuspend']) {
+    assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
+  }
+  assert.doesNotThrow(() => assertEffectCorrespondence('suspend one user; powerwash one Chromebook', 'SUSPEND [USER@DOMAIN.COM] AND POWERWASH [DEVICE_ID]', 'g1-effect-fixture'));
+  assert.throws(() => assertEffectCorrespondence('deprovision one Chromebook', 'DISABLE [DEVICE_ID]', 'g1-effect-mismatch'));
 });

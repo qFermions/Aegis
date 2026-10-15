@@ -1011,7 +1011,8 @@ const SHELL_GATE_IF_LINE = /^\s*if IFS= read -r confirmation && \[ "\$confirmati
 const SHELL_GATE_IF_CANONICAL = 'if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then';
 const SHELL_COMMENT_UNSAFE = /[`$;|&<>()\\'!]/;
 const SHELL_ELSE_NOTICE_LINE = /^\s*(?:echo|printf)\s[^;&|`$()<>]*>&2\s*$/;
-const SHELL_ELSE_EXIT_LINE = /^\s*exit [1-9][0-9]{0,2}\s*$/;
+// 1–255 only: bash takes an exit status modulo 256, so `exit 256` succeeds.
+const SHELL_ELSE_EXIT_LINE = /^\s*exit (?:[1-9][0-9]?|1[0-9]{2}|2[0-4][0-9]|25[0-5])\s*$/;
 // The only statement allowed between the template and the comparison: a plain
 // prompt that may show the template.
 const SHELL_PROMPT_LINE = /^\s*(?:printf '%s\\n'|echo) "(?:[^"$`\\]|\$required_confirmation\b)*"(?:\s*>&2)?\s*$/;
@@ -2194,11 +2195,14 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     ['old-backtick-required-field', replace(header[5], '# Required confirmation: type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`')],
     ['old-failure-sentence', replace(header[6], '# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.')],
     ['unsafe-comment-after-fi', [...header, ...body, '# done; exit 0']],
-    // WARDEN pass 4: a gated fence's own lines after fi may not shadow the next gate
+    // WARDEN pass 4: a gated fence's own lines after fi may not shadow the next gate,
+    // and an exit status of 256 or more wraps to 0
     ['shadow-after-fi-brace', [...header, ...body, `{ alias '['=true; }`]],
     ['shadow-after-fi-keyword', [...header, ...body, 'if :; then [ () { return 0; }; fi']],
     ['shadow-after-fi-wrapper', [...header, ...body, 'command declare -r confirmation=x']],
     ['hook-after-fi', [...header, ...body, `{ PROMPT_COMMAND='true'; }`]],
+    ['exit-256-in-else', replace('  exit 1', '  exit 256')],
+    ['exit-512-in-else', replace('  exit 1', '  exit 512')],
   ];
   const accepted = [];
   for (const [name, lines] of cases) {

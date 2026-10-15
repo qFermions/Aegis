@@ -1,6 +1,6 @@
 # Aegis continuity snapshot
 
-HEAD: 07a5bfc
+HEAD: cba6462
 Snapshot-Date: 2026-10-15
 Validate with `node scripts/harness/check-continuity.js` (exit 2 = STALE: HEAD moved
 since this was written — refresh, don't trust).
@@ -15,7 +15,7 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 - Branch claude/aegis-google-okta-jamf-wibzp6 (batch G1, v8.9) on top of the
   v8.8-public release `0febaa9`; draft pull request qFermions/Aegis#2, not merged.
 - Zero npm dependencies; Node 24 in CI (ubuntu + windows). Full battery
-  `node --test` green on 2026-10-15 (490 tests).
+  `node --test` green on 2026-10-15 (491 tests).
 - Scanner `node scripts/pre-commit-check.js --all` exit 0 (0 BLOCK, 170 WARN — 27 of
   them the lane's documented dangerous-verb WARNs);
   `node scripts/harness/release-boundary-check.js` PASS.
@@ -43,8 +43,8 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 
 - Claim `g1-google-lane` (batch G1) until the batch report; release with
   `node scripts/dev/claim.js release --task g1-google-lane`.
-- Fresh-context review: WARDEN passes 1–5 REJECT, all findings corrected in their own
-  commits (`docs/evidence/gws/g1-checks.md` §H); pass 6 pending.
+- Fresh-context review: WARDEN passes 1–6 REJECT, all findings corrected in their own
+  commits (`docs/evidence/gws/g1-checks.md` §H); pass 7 pending.
 
 ## Next actions
 

@@ -74,7 +74,7 @@ Re-run everything with `node --test` (full battery), or the individual commands 
 
 | Claim | Status | Evidence |
 |---|---|---|
-| Reproducible tests; counts in the README | PROVEN | `node --test` on 2026-10-15: 490 tests, 0 failures (v8.9, `docs/evidence/gws/battery-node-test.txt`); 346 on 2026-09-02 (v8.8). Badge reads graph 33 · memory 14 · replay 15 · ticket eval 28+38 · lint 77, each reconciled against its suite |
+| Reproducible tests; counts in the README | PROVEN | `node --test` on 2026-10-15: 491 tests, 0 failures (v8.9, `docs/evidence/gws/battery-node-test.txt`); 346 on 2026-09-02 (v8.8). Badge reads graph 33 · memory 14 · replay 15 · ticket eval 28+38 · lint 77, each reconciled against its suite |
 | Public repo contains the real product; only data stays private | PROVEN (structure) | boundary guard PASS; `.gitignore` private stores; no `[@Aegion_*]` literal in the tree (scanner) |
 | Fresh-session usability (clone, run, no hidden dependencies) | PROVEN | zero npm dependencies (no `package.json`); Node 24 built-ins only; CI runs the same commands on a clean checkout |
 | Multi-session coordination (atomic claims, overlap refusal) | PROVEN | `scripts/dev/claim.test.js` (6 tests incl. the README phantom-task regression) |

@@ -730,6 +730,7 @@ test('read-only Google, Okta, Jamf and macOS diagnostics do not warn', function 
     'fdesetup status',
     'diskutil list',
     'sudo jamf recon',
+    'curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands?filter=clientData.managementId==[DEVICE_ID]"',
     '',
   ].join('\n'));
   stageAll(repo);

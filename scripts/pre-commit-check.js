@@ -102,7 +102,9 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /\bgam\b[^\r\n]*\b(?:delete|remove)\s+licen[cs]es?\b/i, label: 'GAM licence removal' },
   { pattern: /\/api\/v1\/users\/[^\s"']+\/lifecycle\/(?:deactivate|suspend|reset_factors|reset_password|expire_password)\b/i, label: 'Okta lifecycle change (deactivate / suspend / reset)' },
   { pattern: /-X\s*["']?DELETE\b[^\r\n]*\/api\/v1\/users\b|\/api\/v1\/users\b[^\r\n]*-X\s*["']?DELETE\b/i, label: 'Okta session or user deletion (DELETE /api/v1/users…)' },
-  { pattern: /\/api\/v[12]\/mdm\/commands\b|\/JSSResource\/computercommands\b/i, label: 'Jamf MDM command (lock / wipe)' },
+  // A Jamf MDM command is a write (POST, or a request body); a GET of the same path only
+  // reads command status and stays quiet.
+  { pattern: /-X\s*["']?(?:POST|PUT|PATCH|DELETE)\b[^\r\n]*\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b|\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b[^\r\n]*(?:-X\s*["']?(?:POST|PUT|PATCH|DELETE)\b|--data\b|--json\b|\s-d\s)/i, label: 'Jamf MDM command (lock / wipe)' },
   { pattern: /\bjamf\s+removeFramework\b/i,        label: 'Jamf framework removal (unmanage)' },
   { pattern: /\bprofiles\s+(?:remove\b|-R\b|-D\b)/, label: 'profiles removal (configuration / MDM profile)' },
   { pattern: /\bfdesetup\s+(?:disable|remove|changerecovery|removerecovery)\b/i, label: 'FileVault change (fdesetup)' },

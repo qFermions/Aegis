@@ -149,7 +149,7 @@ Green — `node --test scripts/pre-commit-check.test.js`: `# tests 44` · `# pas
 ### Portal discovery: "Apple Business" and the ChromeOS selected-devices controls (`140abfb`)
 
 Red — the new "current Apple Business name" test: actual `{}`, expected `{ 3: 'release', 4: 're-enable', 5: 'disable' }`.
-Green — both G1 portal grammar tests ok; inventory diff touched G1 files only.
+Green — both G1 portal grammar tests ok; the inventory diff of this commit touched G1 files only (the batch's one non-G1 inventory change, the README preview region, is recorded below).
 
 ### Scanner: a read-only Jamf status GET raised the MDM-command WARN (`f1a4064`)
 

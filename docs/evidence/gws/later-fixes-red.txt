@@ -250,3 +250,13 @@ not ok 1 - G1 statements: a glued \# is not a comment, continued lines are one s
     ''
     
 # bash ground truth (same session): `true {#;echo RAN` → RAN · `true }#;echo RAN` → RAN · `echo ${#x};echo RAN` → 3, RAN · `echo \ #;echo RAN` → " #", RAN · `echo `#`;echo RAN` → RAN; after ; & | ( < > the # opens a comment
+
+=== red-warden3-n3.txt — node --test --test-name-pattern="G1 detector: every", new cases with the pass-2 HTTP method rule (exact bash-language lines)
+# pass 0
+# fail 1
++   'bash: curl -sS -X "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS --request="${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS -X"${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sSX "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: curl -sS -X "$(printf DELETE)" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',
++   'bash: wget -q --method="${METHOD}" "https://[@Aegion_JAMF_URL]/api/v1/fixture" → []',

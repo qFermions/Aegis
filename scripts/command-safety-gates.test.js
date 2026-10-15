@@ -218,9 +218,10 @@ const GCLOUD_READ_ONLY = new Set(['list', 'describe', 'get-iam-policy', 'get-val
 const GCLOUD_MUTATING = new Set(['create', 'update', 'delete', 'set', 'add-iam-policy-binding', 'remove-iam-policy-binding',
   'set-iam-policy', 'enable', 'disable', 'undelete', 'deploy', 'import', 'patch', 'reset', 'unset', 'add', 'remove', 'login',
   'revoke', 'activate-service-account']);
-const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:DELETE|POST|PUT|PATCH|\$)\b|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?(?:DELETE|POST|PUT|PATCH)\b|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*(?:DELETE|POST|PUT|PATCH)\b/i;
+// A method taken from an expansion ($METHOD, ${METHOD}, $(…)) can be any verb: a write.
+const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(])|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(])|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*(?:DELETE|POST|PUT|PATCH)\b/i;
 // -K reads a config file that can set the method or a body: fail-closed.
-const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFTK](?=\s|["'@{]|$)|X\s*["']?(?:DELETE|POST|PUT|PATCH)\b)/;
+const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFTK](?=\s|["'@{]|$)|X\s*["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(]))/;
 // An unquoted `$VAR` / `${…}` / `$(…)` argument can expand into any option,
 // including a write method or a body, so it is a write (fail-closed). Expansions
 // inside quotes ("…${OKTA_API_TOKEN}") stay single arguments and are fine.
@@ -1884,6 +1885,13 @@ const G1_SHELL_MUTATIONS = [
   ['METHOD=DELETE; curl -sS -X "$METHOD" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
   ['curl -sS --request "$METHOD" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
   ['curl $CURL_ARGS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  // Third fresh-context review (WARDEN pass 3, N-3): the braces form the runbooks use
+  ['curl -sS -X "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS --request="${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS -X"${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sSX "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS -X "$(printf DELETE)" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['wget -q --method="${METHOD}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
 ];
 
 const G1_SHELL_READ_ONLY = [

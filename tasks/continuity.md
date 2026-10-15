@@ -1,6 +1,6 @@
 # Aegis continuity snapshot
 
-HEAD: 850c5ce
+HEAD: b9acd99
 Snapshot-Date: 2026-10-15
 Validate with `node scripts/harness/check-continuity.js` (exit 2 = STALE: HEAD moved
 since this was written — refresh, don't trust).
@@ -41,15 +41,17 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 
 ## Active work
 
-- Claim `g1-google-lane` (batch G1) until the batch report; release with
-  `node scripts/dev/claim.js release --task g1-google-lane`.
+- No active claim: `g1-google-lane` released at the batch report
+  (`node scripts/dev/claim.js list` → none active).
 - Fresh-context review: WARDEN passes 1–7 REJECT, all findings corrected in their own
-  commits (`docs/evidence/gws/g1-checks.md` §H); pass 8 pending.
+  commits; pass 8 stopped by the operator before a verdict (its one lead fixed,
+  `62841f6`). No ACCEPT exists for the final head (`docs/evidence/gws/g1-checks.md` §H).
 
 ## Next actions
 
 1. Operator reviews draft PR qFermions/Aegis#2 and decides the open items in
-   `docs/evidence/gws/g1-checks.md` (merge is the operator's call).
+   `docs/evidence/gws/g1-checks.md` — another fresh-context review or accept as is,
+   F9 branch name, E9 continuity self-binding (merge is the operator's call).
 2. Operator captures lab excerpts per `docs/evidence/gws/README.md`; run the
    fresh-context rubric on `scripts/eval/gws-tickets.json` (`scripts/eval/README.md` §2b).
 3. Refresh this snapshot after the next commit (HEAD binding goes STALE by design).

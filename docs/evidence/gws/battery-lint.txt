@@ -1,5 +1,5 @@
 $ node scripts/lint/command-structure.js
-# run 2026-10-15T17:42Z at 850c5ce + working tree (snapshot and this battery)
+# run 2026-10-15T18:03Z at b9acd99 + working tree (snapshot and this battery)
 command-structure lint — 77 commands (B:19 E:6 D:3 C:11 A:36 ALIAS:2)
 
 clean — structural GUI-first contract holds for every operational/troubleshooting command

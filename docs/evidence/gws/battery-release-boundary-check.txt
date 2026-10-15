@@ -1,4 +1,4 @@
 $ node scripts/harness/release-boundary-check.js
-# run 2026-10-15T17:42Z at 850c5ce + working tree (snapshot and this battery)
+# run 2026-10-15T18:03Z at b9acd99 + working tree (snapshot and this battery)
 RELEASE BOUNDARY: PASS — 0 boundary paths clean, private stores ignored, workflows secret-free
 exit=0

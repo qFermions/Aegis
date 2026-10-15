@@ -128,3 +128,69 @@ fix (`fix(dictionary)`): red — the new repository-structure test listed
 | `node scripts/lint/command-structure.js` | 58 commands, `clean` |
 | `node scripts/eval/ms-ticket-eval.js` | `28/28 tickets · 6/6 dangerous pairs` |
 | `node scripts/pre-commit-check.js --all` | exit 0 · 0 BLOCK · 143 WARN |
+
+## Later gate fixes — red before, green after (2026-10-15)
+
+Each fix below was found after Phase 1 (by the Phase 3 builders, by checking the
+scanner's WARN set, or by the fresh-context WARDEN review), began with a test
+that failed on the code as it stood, and landed in its own commit. The exact red
+output of each is in `later-fixes-red.txt` (a text file, so quoting a dangerous
+command there raises no scanner WARN).
+
+### Scanner: a cited GAM wiki page name raised a WARN (`523fe62`)
+
+Red — `node --test --test-name-pattern="Sources line citing" scripts/pre-commit-check.test.js`:
+
+`not ok 1 - a Sources line citing GAM wiki page names does not warn; the command it names still does` —
+both citation lines raised the 2SV turn-off and deprovision WARNs (exact lines: `later-fixes-red.txt`).
+
+Green — `node --test scripts/pre-commit-check.test.js`: `# tests 44` · `# pass 44` · `# fail 0`.
+
+### Portal discovery: "Apple Business" and the ChromeOS selected-devices controls (`140abfb`)
+
+Red — the new "current Apple Business name" test: actual `{}`, expected `{ 3: 'release', 4: 're-enable', 5: 'disable' }`.
+Green — both G1 portal grammar tests ok; inventory diff touched G1 files only.
+
+### Scanner: a read-only Jamf status GET raised the MDM-command WARN (`f1a4064`)
+
+Red — `not ok 1 - read-only Google, Okta, Jamf and macOS diagnostics do not warn` · `⚠️  WARN  Line 9: Jamf MDM command (lock / wipe)`.
+Green — `# tests 44` · `# pass 44` · `# fail 0`.
+
+### Release staging: `*password*` swallowed `gws-password-reset.md` (`4921c7b`)
+
+Red — `not ok 1 - fresh release staging includes the public Google password-reset runbook (G1) …` · `the public Google password-reset runbook must not be ignored`.
+Green — `node --test scripts/repository-structure.test.js`: `# tests 9` · `# pass 9` · `# fail 0`.
+
+### WARDEN blocker: post-read overwrites in a shell gate (`3f281bc`)
+
+Red — `node --test --test-name-pattern="G1 shell gate" scripts/command-safety-gates.test.js`:
+
+```text
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+    +   'printf-v-overwrite',
+    +   'printf-v-required-overwrite',
+    +   'mapfile-overwrite',
+    +   'readarray-overwrite',
+    +   'for-loop-overwrite',
+    +   'for-loop-required-overwrite',
+    +   'array-element-overwrite',
+    +   'prompt-with-printf-v',
+    +   'unrelated-statement-before-compare',
+    +   'statement-between-marker-and-template'
+not ok 2 - G1 shell gate harness executes the fence's own lines up to the comparison
+```
+
+Green — both ok; full suite `# tests 284` · `# pass 284` · `# fail 0` (every real shell gate passes the stricter grammar unchanged).
+
+### WARDEN major: wrapped and indirect CLI invocations (`3cff27f`)
+
+Red — "G1 detector": every one of the 28 new forms returned `[]` in every fence
+language — for example a `sudo -u admin`-wrapped GAM user deletion in a bash fence → `[]`;
+the new lint test failed on that same first case (no finding). Exact lines: `later-fixes-red.txt`.
+Green — G1 detector 2/2, lint 26/26, safety-gate suite 286/286 with links, checked-in inventory unchanged.
+
+### WARDEN minors: chained commands in the lint, bare imperative steps in G1 runbooks (`b40e743`, `0f4b90e`)
+
+Red — `not ok 1 - G1 read-only allowlist judges every command on a line …` (`gam info …; gam delete …` passed);
+`not ok 1 - G1 portal grammar: the current Apple Business name …` (bare `3. Click **Delete user**` → `[]`, expected `['delete']`).
+Green — lint `# tests 27` · `# pass 27`; safety-gate suite `# tests 284` · `# pass 284`.

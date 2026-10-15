@@ -1,0 +1,119 @@
+=== red-scanner-cite.txt (exact output, saved when the test was first run)
+# Subtest: a Sources line citing GAM wiki page names does not warn; the command it names still does
+not ok 1 - a Sources line citing GAM wiki page names does not warn; the command it names still does
+      '    ⚠️  WARN  Line 1: GAM 2-Step Verification turn-off\n' +
+      '    ⚠️  WARN  Line 2: GAM deprovision (tokens, app passwords, backup codes)\n' +
+      '⚠️  2 warning(s) found — review the flagged lines above.\n' +
+        ⚠️  WARN  Line 1: GAM 2-Step Verification turn-off
+        ⚠️  WARN  Line 2: GAM deprovision (tokens, app passwords, backup codes)
+    ⚠️  2 warning(s) found — review the flagged lines above.
+# pass 0
+# fail 1
+
+=== red-portal-g1b.txt (exact output, saved when the test was first run)
+not ok 1 - G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar
+    + actual - expected
+    + {}
+    - {
+    -   '3': 'release',
+    -   '4': 're-enable',
+    -   '5': 'disable'
+    - }
+  expected:
+  actual:
+# pass 0
+# fail 1
+
+=== red-jamf-get.txt (exact output, saved when the test was first run)
+not ok 1 - read-only Google, Okta, Jamf and macOS diagnostics do not warn
+      '    ⚠️  WARN  Line 9: Jamf MDM command (lock / wipe)\n' +
+        ⚠️  WARN  Line 9: Jamf MDM command (lock / wipe)
+# pass 0
+# fail 1
+
+=== red-gitignore.txt (exact output, saved when the test was first run)
+not ok 1 - fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores
+    the public Google password-reset runbook must not be ignored
+# pass 0
+# fail 1
+
+=== red-warden-blocker.txt (exact output, saved when the test was first run)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+    +   'printf-v-overwrite',
+    +   'printf-v-required-overwrite',
+    +   'mapfile-overwrite',
+    +   'readarray-overwrite',
+    +   'for-loop-overwrite',
+    +   'for-loop-required-overwrite',
+    +   'array-element-overwrite',
+    +   'prompt-with-printf-v',
+    +   'unrelated-statement-before-compare',
+    +   'statement-between-marker-and-template'
+not ok 2 - G1 shell gate harness executes the fence's own lines up to the comparison
+# pass 0
+# fail 2
+
+=== red-warden-detector.txt (exact output, saved when the test was first run)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+    +   'bash: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): sudo -u admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): sudo --user=admin gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): command gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'zsh: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'sh: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'shell: nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   '(untagged): nohup gam delete user "[USER@DOMAIN.COM]" & → []',
+    +   'bash: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): time gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: nice -n 10 gam delete user "[USER@DOMAIN.COM]" → []',
+
+=== red-warden-lint-wrap.txt (exact output, saved when the test was first run)
+not ok 1 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'sudo -u admin gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 0
+# fail 1
+
+=== red-warden-lint-chain.txt (exact output, saved when the test was first run)
+not ok 1 - G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)
+  error: 'gam info user "[USER@DOMAIN.COM]"; gam delete user "[USER@DOMAIN.COM]"   # reads, then deletes'
+# pass 0
+# fail 1
+
+=== red-warden-imperative.txt (exact output, saved when the test was first run)
+not ok 1 - G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar
+    + actual - expected
+    + []
+    - [
+    -   'delete'
+    - ]
+# pass 0
+# fail 1
+

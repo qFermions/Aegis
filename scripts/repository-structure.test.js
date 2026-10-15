@@ -122,3 +122,18 @@ test('legacy parallel tenant and operator placeholders are absent', () => {
   }
   assert.deepStrictEqual(failures, [], `Legacy parallel placeholders found: ${failures.join('; ')}`);
 });
+
+test('every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary', () => {
+  // Dictionary validation rule 1, made deterministic: an org token that is used
+  // but not defined is drift (a reader cannot tell what value it stands for).
+  const dictionary = fs.readFileSync(path.join(ROOT, 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
+  const defined = new Set(dictionary.match(/\[@Aegion(?:_[A-Z0-9_]+)?\]/g) || []);
+  const undefinedUses = [];
+  for (const file of textFiles()) {
+    const content = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    for (const token of new Set(content.match(/\[@Aegion(?:_[A-Z0-9_]+)?\]/g) || [])) {
+      if (!defined.has(token)) undefinedUses.push(`${file}: ${token}`);
+    }
+  }
+  assert.deepStrictEqual(undefinedUses, [], `Org tokens used but not defined in the dictionary:\n${undefinedUses.join('\n')}`);
+});

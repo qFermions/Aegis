@@ -15,7 +15,10 @@ this file — never invent a parallel set.
 | `[@Aegion_SIZE]` | Approximate staff size | `~150` |
 | `[@Aegion_ISP]` | Internet service provider | `[ISP_VENDOR]` |
 | `[@Aegion_WAN]` | WAN technology between sites | `point-to-point microwave` |
-| `[@Aegion_SITE_2]`/`_3`/`_4` | Office site labels | `[SITE_2]` … |
+| `[@Aegion_SITE_2]` / `[@Aegion_SITE_3]` / `[@Aegion_SITE_4]` | Office site labels | `[SITE_2]` … |
+| `[@Aegion_SITE_COUNT]` | Number of office sites | `4` |
+| `[@Aegion_DOMAIN_SHORT]` | Domain label without the suffix (AD distinguished names) | `aegion` |
+| `[@Aegion_DOMAIN_SP]` | SharePoint Online tenant host; runbooks use it as `https://[@Aegion_DOMAIN_SP]` and its `-admin` form | `[SP_TENANT_HOST]` |
 | `[@Aegion_VOIP]` | Current VoIP vendor | `[VOIP_VENDOR]` |
 | `[@Aegion_VOIP_LEGACY]` | Legacy VoIP vendor | `[LEGACY_VOIP]` |
 | `[@Aegion_VOIP_URL]` | VoIP admin portal URL | `voip.example.com` |

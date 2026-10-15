@@ -66,6 +66,21 @@ test('fresh release staging includes the public password-reset runbook without w
   assert.strictEqual(unrelatedPasswordArtifact.status, 0, 'unrelated password-named artifacts must stay ignored');
 });
 
+test('fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores', () => {
+  const ignored = file => spawnSync(
+    'git',
+    ['check-ignore', '--quiet', '--no-index', '--', file],
+    { cwd: ROOT, encoding: 'utf8' }
+  );
+  const googleRunbook = ignored('.claude/commands/gws-password-reset.md');
+  const nearMiss = ignored('.claude/commands/gws-password-reset-notes.md');
+
+  assert.strictEqual(googleRunbook.error, undefined);
+  assert.strictEqual(googleRunbook.status, 1, 'the public Google password-reset runbook must not be ignored');
+  assert.strictEqual(nearMiss.error, undefined);
+  assert.strictEqual(nearMiss.status, 0, 'other password-named files beside it must stay ignored');
+});
+
 test('working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text', () => {
   const encodingFailures = [];
   const jsonFailures = [];

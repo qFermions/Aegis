@@ -3427,6 +3427,25 @@
       ]
     },
     {
+      "id": "portal-nav-apple-business-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:assign",
+          "count": 1
+        },
+        {
+          "sink": "portal:release",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
       "id": "portal-nav-defender-reference",
       "file": "docs/portal-nav-2026.md",
       "kind": "portal",
@@ -3464,6 +3483,85 @@
       ]
     },
     {
+      "id": "portal-nav-fleet-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "portal-nav-google-admin-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        },
+        {
+          "sink": "portal:calendar",
+          "count": 1
+        },
+        {
+          "sink": "portal:delete",
+          "count": 1
+        },
+        {
+          "sink": "portal:remove",
+          "count": 1
+        },
+        {
+          "sink": "portal:rename",
+          "count": 1
+        },
+        {
+          "sink": "portal:reset",
+          "count": 1
+        },
+        {
+          "sink": "portal:restore",
+          "count": 1
+        },
+        {
+          "sink": "portal:suspend",
+          "count": 1
+        },
+        {
+          "sink": "portal:transfer",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "portal-nav-google-chrome-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
       "id": "portal-nav-intune-reference",
       "file": "docs/portal-nav-2026.md",
       "kind": "portal",
@@ -3483,6 +3581,20 @@
         "destructive",
         "external-system mutation",
         "security-sensitive"
+      ]
+    },
+    {
+      "id": "portal-nav-jamf-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
       ]
     },
     {
@@ -3520,6 +3632,23 @@
       ]
     },
     {
+      "id": "portal-nav-macos-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:erase",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "portal-nav-meraki-reference",
       "file": "docs/portal-nav-2026.md",
       "kind": "portal",
@@ -3531,6 +3660,26 @@
       ]
     },
     {
+      "id": "portal-nav-okta-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:suspend",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "portal-nav-voip-reference",
       "file": "docs/portal-nav-2026.md",
       "kind": "portal",
@@ -3538,6 +3687,16 @@
       "sinks": [],
       "impactCategories": [
         "identity-related"
+      ]
+    },
+    {
+      "id": "portal-nav-zoom-rooms-reference",
+      "file": "docs/portal-nav-google-2026.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
       ]
     },
     {

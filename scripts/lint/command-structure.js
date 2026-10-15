@@ -348,7 +348,9 @@ const FRESHNESS_DOCS = ['docs/portal-nav-2026.md', 'docs/ticket-examples.md', 'd
   'modules/it_support/README.md', 'modules/it_support/troubleshooting.md', 'modules/it_support/workflows.md',
   'modules/security/compliance_checks.md', 'modules/security/incident_response.md', 'modules/security/vulnerability_scan.md',
   'modules/security/threat_detection.md', 'modules/systems/health_checks.md', 'modules/systems/infrastructure.md',
-  'modules/systems/network_ops.md', 'modules/automation/powershell/examples.md', '.claude/plugins/enterprise-it-ops/skills/it-ops.md', 'CLAUDE.md'];
+  'modules/systems/network_ops.md', 'modules/automation/powershell/examples.md', '.claude/plugins/enterprise-it-ops/skills/it-ops.md', 'CLAUDE.md',
+  // G1 — Google Workspace / Okta / Jamf / macOS knowledge docs
+  'docs/portal-nav-google-2026.md', 'docs/gws-reversibility.md', 'docs/evidence/gws/README.md'];
 
 module.exports = { lintCommand, lintAll, lintDocFreshness, VARIANTS, VARIANT_OF, STALE_PORTAL_PATHS, STALE_PORTAL_PATHS_G1, FRESHNESS_DOCS, APP_SWITCH_ALLOWLIST, READ_ONLY_CLI, parse };
 

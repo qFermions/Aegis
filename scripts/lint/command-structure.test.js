@@ -270,3 +270,11 @@ test('G1 commands are classified: every Phase-3 runbook name has a variant', () 
     'jamf-lock-erase', 'mac-new-hire-laptop']) assert.equal(lint.VARIANT_OF[name], 'A', name);
   for (const name of ['gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue']) assert.equal(lint.VARIANT_OF[name], 'B', name);
 });
+
+test('G1 knowledge docs are on the freshness list (retired vendor wording can never come back there)', () => {
+  for (const doc of ['docs/portal-nav-google-2026.md', 'docs/gws-reversibility.md', 'docs/evidence/gws/README.md']) {
+    assert.ok(lint.FRESHNESS_DOCS.includes(doc), doc);
+  }
+  const findings = lint.lintDocFreshness(['docs/portal-nav-google-2026.md']);
+  assert.deepEqual(findings, []);
+});

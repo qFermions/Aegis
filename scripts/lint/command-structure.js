@@ -182,8 +182,9 @@ const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-
 const CLI_INDIRECT = String.raw`(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|ruby|node|expect|php)(?=\s)[^;|&]*?\s(?:-[A-Za-z]*[ceE](?=[\s"']|$)|--eval\b)|at\s+(?:-[A-Za-z]+|now|noon|midnight|teatime|today|tomorrow|\d)|batch(?=\s*(?:$|[;|&)]|-[A-Za-z]))|(?:[\w.~-]*\/)*crontab(?!\s+-l\b)(?=\s|$)|(?:[\w.~-]*\/)*sudo"?(?:\s+(?:-[A-Za-z]+|--[\w-]+(?:=[^\s;|&]+)?)(?:\s+(?!-)[^\s;|&]+)?)*?\s+(?:-[A-Za-z]*[si][A-Za-z]*|--(?:shell|login))(?=\s|$)|ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`;
 // A line copied with its interactive prompt still runs the command after it: `$ `,
 // `% `, `❯ `, `user@host:~$ `, the macOS zsh default `user@host ~ % `,
-// `[user@host ~]$ `, `bash-5.2$ `, `sh-3.2# `, a `(venv) ` prefix, `PS C:\> `, `C:\…> `.
-const SHELL_PROMPT = String.raw`^\s*(?:\([^)\s]+\)\s+)?(?:[$%❯]|[\w.-]+@[\w.-]+(?::\S*|\s+[^\s$#%]+)?\s?[$#%]|[\w.-]*\d[\w.-]*[$#%]|\[[^\]]+\][$#%]|PS\s[^>]*>|[A-Za-z]:\\[^>]*>)(?=\s)`;
+// `[user@host ~]$ `, `bash-5.2$ `, `sh-3.2# `, a `(venv) ` prefix, `PS C:\> `, `C:\…> `,
+// the pre-Catalina macOS bash `host:~ user$ ` and the oh-my-zsh `➜  ~ `.
+const SHELL_PROMPT = String.raw`^\s*(?:\([^)\s]+\)\s+)?(?:[$%❯]|➜(?:\s+\S+)?|[\w.-]+:\S*\s+[\w.-]+\$|[\w.-]+@[\w.-]+(?::\S*|\s+[^\s$#%]+)?\s?[$#%]|[\w.-]*\d[\w.-]*[$#%]|\[[^\]]+\][$#%]|PS\s[^>]*>|[A-Za-z]:\\[^>]*>)(?=\s)`;
 const CLI_COMMAND_START = String.raw`(?:^|${SHELL_PROMPT}|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
 const CLI_TOOL_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})(?:\.exe)?["']?(?=\s|$|\$)`, 'i');
 // Inside a shell fence the indirect forms count too; in a PowerShell fence `$name`

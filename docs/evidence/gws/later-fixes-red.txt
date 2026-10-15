@@ -443,3 +443,15 @@ status=0
 $ printf '\n' | bash  # sibling line before the gate: <none, control>
 Confirmation did not match. No change was made.
 status=1
+
+=== red-warden6-p62.txt — WARDEN pass 6, P6-2: pre-Catalina macOS bash prompt and the oh-my-zsh arrow, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: ➜  ~ sudo jamf removeFramework → []',
++   'bash: ➜ gam delete user "[USER@DOMAIN.COM]" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+# pass 27
+# fail 1

@@ -198,8 +198,9 @@ const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-
 // elif, if, while, until), or after a `!` negation.
 // A line copied with its interactive prompt still runs the command after it: `$ `,
 // `% `, `❯ `, `user@host:~$ `, the macOS zsh default `user@host ~ % `,
-// `[user@host ~]$ `, `bash-5.2$ `, `sh-3.2# `, a `(venv) ` prefix, `PS C:\> `, `C:\…> `.
-const SHELL_PROMPT = String.raw`^\s*(?:\([^)\s]+\)\s+)?(?:[$%❯]|[\w.-]+@[\w.-]+(?::\S*|\s+[^\s$#%]+)?\s?[$#%]|[\w.-]*\d[\w.-]*[$#%]|\[[^\]]+\][$#%]|PS\s[^>]*>|[A-Za-z]:\\[^>]*>)(?=\s)`;
+// `[user@host ~]$ `, `bash-5.2$ `, `sh-3.2# `, a `(venv) ` prefix, `PS C:\> `, `C:\…> `,
+// the pre-Catalina macOS bash `host:~ user$ ` and the oh-my-zsh `➜  ~ `.
+const SHELL_PROMPT = String.raw`^\s*(?:\([^)\s]+\)\s+)?(?:[$%❯]|➜(?:\s+\S+)?|[\w.-]+:\S*\s+[\w.-]+\$|[\w.-]+@[\w.-]+(?::\S*|\s+[^\s$#%]+)?\s?[$#%]|[\w.-]*\d[\w.-]*[$#%]|\[[^\]]+\][$#%]|PS\s[^>]*>|[A-Za-z]:\\[^>]*>)(?=\s)`;
 const CLI_COMMAND_START = String.raw`(?:^|${SHELL_PROMPT}|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
 const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*`;
 const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})(?:\\.exe)?["']?(?=\\s|$|\\$)([^;|&]*)`, 'gi'))]
@@ -1990,6 +1991,10 @@ const G1_SHELL_MUTATIONS = [
   ['(venv) $ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['PS C:\\> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['C:\\Users\\admin> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  // WARDEN pass 6, P6-2: the pre-Catalina macOS bash default and the oh-my-zsh arrow
+  ['MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['➜  ~ sudo jamf removeFramework', 'jamf-write'],
+  ['➜ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   // P5-3: any explicit method that is not GET, HEAD, OPTIONS or TRACE (fail-closed, as for gam and gcloud verbs)
   ['curl -sS -X PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
   ['curl -sS --request MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],

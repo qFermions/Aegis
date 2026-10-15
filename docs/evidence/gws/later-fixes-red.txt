@@ -473,3 +473,10 @@ not ok 1 - G1 statements: a glued \# is not a comment, continued lines are one s
 # fail 1
 # the first new assertion received '' (no failure) where it expected gam-write has 0 owners
 # bash ground truth: `echo `true #`; echo RAN` → RAN
+
+=== red-warden6-p65.txt — WARDEN pass 6, P6-5: curl -XGET read as a write, before the fix (exact)
+not ok 2 - G1 detector: read-only diagnostics stay live and are not sinks
+# pass 1
+# fail 1
++   'curl -sS -XGET "https://[@Aegion_JAMF_URL]/api/v1/fixture" → [http-write]',
++   'curl -sXOPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture" → [http-write]'

@@ -244,7 +244,8 @@ const HTTP_WRITE_LONG = new RegExp(String.raw`(?:^|\s)(?:-X\s*|--request[\s=]+)[
 // -K reads a config file that can set the method or a body: fail-closed. A short
 // option's value may be glued to it (`-dname=value`, `-d$BODY`), and curl sends a
 // method in any case (`-sXpost`).
-const HTTP_WRITE_SHORT = new RegExp(String.raw`(?:^|\s)-[A-Za-z]*(?:[dFTK]|X\s*["']?${HTTP_METHOD_WRITE})`);
+// The cluster letters before the flag exclude X, so `-XGET` cannot read its T as -T.
+const HTTP_WRITE_SHORT = new RegExp(String.raw`(?:^|\s)-[A-WYZa-z]*(?:[dFTK]|X\s*["']?${HTTP_METHOD_WRITE})`);
 // An unquoted `$VAR` / `${…}` / `$(…)` argument can expand into any option,
 // including a write method or a body, so it is a write (fail-closed). Expansions
 // inside quotes ("…${OKTA_API_TOKEN}") stay single arguments and are fine.
@@ -2081,6 +2082,8 @@ const G1_SHELL_READ_ONLY = [
   'curl -sS -X HEAD "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
   'curl -sS --request OPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
   'http HEAD "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sS -XGET "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sXOPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
 ];
 
 test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {

@@ -142,6 +142,16 @@ const CREDENTIAL_PATTERNS = [
   { pattern: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/,                                  label: 'Slack token' },
   { pattern: /AccountKey=[A-Za-z0-9+/=]{40,}/,                                    label: 'Azure storage account key' },
   { pattern: /SharedAccessSignature\s*=/i,                                        label: 'Azure SAS token assignment' },
+  // Google / Okta / Jamf secret formats — exact prefixes or line-level markers
+  // (all BLOCK). Placeholder forms (${VAR}, [TOKEN]) never match: the token
+  // classes exclude `$`, `{`, `[`, and the key-id marker requires hex.
+  { pattern: /\bAIza[0-9A-Za-z_-]{35}\b/,                                         label: 'Google API key (AIza…)' },
+  { pattern: /\bGOCSPX-[A-Za-z0-9_-]{20,}/,                                       label: 'Google OAuth client secret (GOCSPX-…)' },
+  { pattern: /"type"\s*:\s*"service_account"/,                                    label: 'Google service-account key JSON (type service_account)' },
+  { pattern: /"private_key_id"\s*:\s*"[0-9a-f]{16,}"/,                            label: 'Google service-account key JSON (private_key_id)' },
+  { pattern: /\bSSWS\s+[A-Za-z0-9_-]{40,}/,                                       label: 'Okta API token (SSWS header)' },
+  { pattern: /\b00[A-Za-z0-9_-]{40}\b/,                                           label: 'Okta API token (bare 00… token)' },
+  { pattern: /Authorization\s*:\s*(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{20,}/i,   label: 'Bearer/Basic credential in an Authorization header (Jamf Pro API and others)' },
 ];
 
 // ── Tenant literals (SR-8) ────────────────────────────────────────────────────

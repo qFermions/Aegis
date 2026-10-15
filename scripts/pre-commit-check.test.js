@@ -582,6 +582,81 @@ test('classifies mailbox permission removal as access revocation, not mailbox de
   assertRedacted(output, [sourceLine, repo]);
 });
 
+// Google / Okta / Jamf secret formats — every synthetic value is assembled at
+// runtime from pieces so this test source never contains a matching literal.
+function assertBlocksSyntheticCredential(t, fileName, secret, label) {
+  const repo = makeRepo(t);
+  const sourceMarker = `${path.parse(fileName).name}-source-marker`;
+  const sourceLine = `${secret} ${sourceMarker}`;
+  writeFile(repo, fileName, `${sourceLine}\n`);
+  stageAll(repo);
+
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 1);
+  assert.match(output, new RegExp(`File: ${fileName.replace(/[.]/g, '\\.')}`));
+  assert.equal(output.includes(label), true, `scanner output is missing the label: ${label}`);
+  assert.match(output, /Guidance:/);
+  assertRedacted(output, [secret, sourceLine, sourceMarker, repo]);
+}
+
+test('blocks a Google API key without printing the value or source line', function (t) {
+  const secret = 'AIza' + 'A'.repeat(35);
+  assertBlocksSyntheticCredential(t, 'google-api-key.md', secret, 'Google API key (AIza…)');
+});
+
+test('blocks a Google OAuth client secret without printing the value or source line', function (t) {
+  const secret = 'GOCSPX-' + 'B'.repeat(24);
+  assertBlocksSyntheticCredential(t, 'google-oauth-secret.md', secret, 'Google OAuth client secret (GOCSPX-…)');
+});
+
+test('blocks a Google service-account key JSON type marker without printing the source line', function (t) {
+  const secret = ['"type"', '"service_account"'].join(': ');
+  assertBlocksSyntheticCredential(t, 'service-account-type.json', secret, 'Google service-account key JSON (type service_account)');
+});
+
+test('blocks a Google service-account key JSON private_key_id without printing the value', function (t) {
+  const keyId = '0123456789abcdef'.repeat(2);
+  const secret = ['"private_key_id"', `"${keyId}"`].join(': ');
+  assertBlocksSyntheticCredential(t, 'service-account-key-id.json', secret, 'Google service-account key JSON (private_key_id)');
+});
+
+test('blocks an Okta SSWS API token header without printing the value or source line', function (t) {
+  const secret = 'SSWS ' + 'C'.repeat(42);
+  assertBlocksSyntheticCredential(t, 'okta-ssws-token.md', secret, 'Okta API token (SSWS header)');
+});
+
+test('blocks a bare Okta API token without printing the value or source line', function (t) {
+  const secret = '00' + 'D'.repeat(40);
+  assertBlocksSyntheticCredential(t, 'okta-bare-token.md', secret, 'Okta API token (bare 00… token)');
+});
+
+test('blocks a Bearer credential in an Authorization header without printing the value', function (t) {
+  const secret = ['Authorization', 'Bearer ' + 'E'.repeat(32)].join(': ');
+  assertBlocksSyntheticCredential(t, 'jamf-bearer-header.md', secret, 'Bearer/Basic credential in an Authorization header (Jamf Pro API and others)');
+});
+
+test('blocks a Basic credential in an Authorization header without printing the value', function (t) {
+  const secret = ['Authorization', 'Basic ' + 'F'.repeat(28) + '=='].join(': ');
+  assertBlocksSyntheticCredential(t, 'jamf-basic-header.md', secret, 'Bearer/Basic credential in an Authorization header (Jamf Pro API and others)');
+});
+
+test('allows Google, Okta, and Jamf placeholder forms', function (t) {
+  const repo = makeRepo(t);
+  writeFile(repo, 'google-okta-jamf-placeholders.md', [
+    'SSWS ${OKTA_API_TOKEN}',
+    'Authorization: Bearer ${JAMF_TOKEN}',
+    'Authorization: Bearer [JAMF_API_TOKEN]',
+    '"private_key_id": "[KEY_ID]"',
+    '',
+  ].join('\n'));
+  stageAll(repo);
+
+  const result = runScanner(repo);
+  assertExit(result, 0);
+  assert.match(combinedOutput(result), /Clean/);
+});
+
 test('rejects unknown arguments with deterministic exit 2', function (t) {
   const repo = makeRepo(t);
   const first = runScanner(repo, ['--unknown']);

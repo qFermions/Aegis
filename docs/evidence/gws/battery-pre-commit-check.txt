@@ -1,3 +1,5 @@
+$ node scripts/pre-commit-check.js --all
+# run 2026-10-15T16:18Z at 6d151e6 + working tree (snapshot and this battery)
 pre-commit-check: --all mode — scanning 235 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals to enable.
 
@@ -58,51 +60,51 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/gws-2sv-reset.md
-    ⚠️  WARN  Line 184: GAM 2-Step Verification turn-off
+    ⚠️  WARN  Line 193: GAM 2-Step Verification turn-off
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/gws-chromeos-device.md
-    ⚠️  WARN  Line 167: GAM ChromeOS device action (disable / deprovision)
+    ⚠️  WARN  Line 170: GAM ChromeOS device action (disable / deprovision)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 188: GAM ChromeOS device action (disable / deprovision)
+    ⚠️  WARN  Line 197: GAM ChromeOS device action (disable / deprovision)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 251: GAM ChromeOS device action (disable / deprovision)
+    ⚠️  WARN  Line 278: GAM ChromeOS device action (disable / deprovision)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 264: GAM deprovision (tokens, app passwords, backup codes)
+    ⚠️  WARN  Line 294: GAM deprovision (tokens, app passwords, backup codes)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/gws-drive-transfer.md
     ⚠️  WARN  Line 34: GAM data transfer (Drive / Calendar ownership)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 137: GAM data transfer (Drive / Calendar ownership)
+    ⚠️  WARN  Line 140: GAM data transfer (Drive / Calendar ownership)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 159: GAM data transfer (Drive / Calendar ownership)
+    ⚠️  WARN  Line 169: GAM data transfer (Drive / Calendar ownership)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 180: GAM data transfer (Drive / Calendar ownership)
+    ⚠️  WARN  Line 196: GAM data transfer (Drive / Calendar ownership)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/gws-license-assign.md
-    ⚠️  WARN  Line 143: GAM licence removal
+    ⚠️  WARN  Line 152: GAM licence removal
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/gws-offboard.md
-    ⚠️  WARN  Line 160: Okta lifecycle change (deactivate / suspend / reset)
+    ⚠️  WARN  Line 163: Okta lifecycle change (deactivate / suspend / reset)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 181: GAM user suspension
+    ⚠️  WARN  Line 190: GAM user suspension
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 202: GAM data transfer (Drive / Calendar ownership)
+    ⚠️  WARN  Line 217: GAM data transfer (Drive / Calendar ownership)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 223: GAM user deletion
+    ⚠️  WARN  Line 244: GAM user deletion
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/jamf-lock-erase.md
     ⚠️  WARN  Line 31: Jamf framework removal (unmanage)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 115: Jamf framework removal (unmanage)
+    ⚠️  WARN  Line 118: Jamf framework removal (unmanage)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 181: Jamf MDM command (lock / wipe)
+    ⚠️  WARN  Line 190: Jamf MDM command (lock / wipe)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 202: Jamf MDM command (lock / wipe)
+    ⚠️  WARN  Line 217: Jamf MDM command (lock / wipe)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/jira-create.md
@@ -126,7 +128,7 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/mac-troubleshoot.md
-    ⚠️  WARN  Line 148: FileVault change (fdesetup)
+    ⚠️  WARN  Line 151: FileVault change (fdesetup)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/mailbox-permissions.md
@@ -164,21 +166,21 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/okta-mfa-reset.md
-    ⚠️  WARN  Line 108: Okta session or user deletion (DELETE /api/v1/users…)
+    ⚠️  WARN  Line 111: Okta session or user deletion (DELETE /api/v1/users…)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 129: Okta lifecycle change (deactivate / suspend / reset)
+    ⚠️  WARN  Line 138: Okta lifecycle change (deactivate / suspend / reset)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/okta-user-lifecycle.md
-    ⚠️  WARN  Line 233: Okta lifecycle change (deactivate / suspend / reset)
+    ⚠️  WARN  Line 236: Okta lifecycle change (deactivate / suspend / reset)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 254: Okta session or user deletion (DELETE /api/v1/users…)
+    ⚠️  WARN  Line 263: Okta session or user deletion (DELETE /api/v1/users…)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 275: Okta lifecycle change (deactivate / suspend / reset)
+    ⚠️  WARN  Line 290: Okta lifecycle change (deactivate / suspend / reset)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 317: Okta lifecycle change (deactivate / suspend / reset)
+    ⚠️  WARN  Line 344: Okta lifecycle change (deactivate / suspend / reset)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
-    ⚠️  WARN  Line 359: Okta session or user deletion (DELETE /api/v1/users…)
+    ⚠️  WARN  Line 398: Okta session or user deletion (DELETE /api/v1/users…)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: .claude/commands/onedrive-issue.md
@@ -232,7 +234,7 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: CHANGELOG.md
-    ⚠️  WARN  Line 234: scp/sftp — local or remote file transfer
+    ⚠️  WARN  Line 236: scp/sftp — local or remote file transfer
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: docs/adr/ADR-001-blast-radius-classes.md
@@ -445,3 +447,4 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
    These are dangerous cmdlets in scripts. Confirm they are intentional.
    Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
 
+exit=0

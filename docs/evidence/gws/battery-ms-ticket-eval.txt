@@ -1,3 +1,5 @@
+$ node scripts/eval/ms-ticket-eval.js
+# run 2026-10-15T16:17Z at 6d151e6 + working tree (snapshot and this battery)
 Microsoft ticket eval — deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
@@ -38,3 +40,4 @@ PASS  pair T05-auth-method-sms-fallback ≠ T14-ca-disable-mfa-urgent — same s
 
 28/28 tickets · 6/6 dangerous pairs · 7 floored to T3 · 22 commands exercised · classes {"QUICK_FIX":7,"DIAGNOSTIC":13,"PROCEDURE":7,"REFERENCE":1}
 Model-judged half (first action, depth, continuity, human-executes framing): scripts/eval/README.md
+exit=0

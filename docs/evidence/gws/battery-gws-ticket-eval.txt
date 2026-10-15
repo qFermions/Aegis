@@ -1,3 +1,5 @@
+$ node scripts/eval/gws-ticket-eval.js
+# run 2026-10-15T16:17Z at 6d151e6 + working tree (snapshot and this battery)
 Google Workspace / Okta / Jamf ticket eval — deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  G01-new-user-ou-groups               PROCEDURE   floor=none → /gws-new-user
@@ -51,3 +53,4 @@ PASS  pair G26-jamf-enroll-mac ≠ G27-jamf-unmanage-sale — 'Mac' and 'Jamf' b
 
 38/38 tickets · 9/9 dangerous pairs · 16 floored to T3 · 21 commands exercised · classes {"QUICK_FIX":7,"DIAGNOSTIC":11,"PROCEDURE":18,"REFERENCE":2}
 Model-judged half (first action, depth, continuity, human-executes framing): scripts/eval/README.md
+exit=0

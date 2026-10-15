@@ -76,7 +76,7 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed   # baseline for the ne
 - **Target:** [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
 - **Effect:** transfer ownership of the user's My Drive files to the new owner; Trash is skipped
 - **Scope:** files owned by one user; shared-drive files are not touched; access lists stay as they are, so the previous owner keeps edit access unless removed later
-- **Reversibility:** not reversible from the Admin console — no undo is documented; a reverse transfer in the other direction is a new R2 with its own pre-state, and the Phase 1 counts plus the shared-items CSV are the only record of what moved
+- **Reversibility:** R2 — not reversible from the Admin console; no undo is documented; a reverse transfer in the other direction is a new R2 with its own pre-state, and the Phase 1 counts plus the shared-items CSV are the only record of what moved
 - **Required confirmation:** Type exactly `TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-drive-transfer-drive-portal]:** Only after the Phase 1 pre-state is in the ticket and the exact match:

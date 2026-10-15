@@ -196,9 +196,10 @@ const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-
 // A command starts at the line start, after a separator, inside $(…) or a
 // backtick, after a shell keyword that introduces a command (do, then, else,
 // elif, if, while, until), or after a `!` negation.
-// A line copied with its interactive prompt (`$ `, `% `, `❯ `, `user@host:~$ `,
-// `[user@host ~]$ `) still runs the command after it.
-const SHELL_PROMPT = String.raw`^\s*(?:[$%❯]|[\w.-]+@[\w.-]+:\S*[$#%]|\[[^\]]+\][$#%])(?=\s)`;
+// A line copied with its interactive prompt still runs the command after it: `$ `,
+// `% `, `❯ `, `user@host:~$ `, the macOS zsh default `user@host ~ % `,
+// `[user@host ~]$ `, `bash-5.2$ `, `sh-3.2# `, a `(venv) ` prefix, `PS C:\> `, `C:\…> `.
+const SHELL_PROMPT = String.raw`^\s*(?:\([^)\s]+\)\s+)?(?:[$%❯]|[\w.-]+@[\w.-]+(?::\S*|\s+[^\s$#%]+)?\s?[$#%]|[\w.-]*\d[\w.-]*[$#%]|\[[^\]]+\][$#%]|PS\s[^>]*>|[A-Za-z]:\\[^>]*>)(?=\s)`;
 const CLI_COMMAND_START = String.raw`(?:^|${SHELL_PROMPT}|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
 const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*`;
 const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})(?:\\.exe)?["']?(?=\\s|$|\\$)([^;|&]*)`, 'gi'))]
@@ -1958,6 +1959,13 @@ const G1_SHELL_MUTATIONS = [
   ['admin@host:~$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['[admin@host ~]$ sudo jamf removeFramework', 'jamf-write'],
   ['$ curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | bash', 'indirect-exec'],
+  // WARDEN pass 5, P5-2: the macOS default zsh prompt, versioned shells, a venv prefix, Windows prompts
+  ['admin@MacBook-Pro ~ % sudo jamf removeFramework', 'jamf-write'],
+  ['bash-5.2$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sh-3.2# sudo jamf removeFramework', 'jamf-write'],
+  ['(venv) $ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['PS C:\\> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['C:\\Users\\admin> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   // P4-5: a Windows-style .exe name and curl values glued to their short option
   ['gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['curl.exe -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],

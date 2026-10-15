@@ -388,3 +388,18 @@ status=0
 $ printf '\n' | bash  # sibling line before the gate: <none, control>
 Confirmation did not match. No change was made.
 status=1
+
+=== red-warden5-p52.txt — WARDEN pass 5, P5-2: more prompt shapes, before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: admin@MacBook-Pro ~ % sudo jamf removeFramework → []',
++   'bash: bash-5.2$ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: sh-3.2# sudo jamf removeFramework → []',
++   'bash: (venv) $ gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: PS C:\\> gam.exe delete user "[USER@DOMAIN.COM]" → []',
++   'bash: C:\\Users\\admin> gam.exe delete user "[USER@DOMAIN.COM]" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'admin@MacBook-Pro ~ % sudo jamf removeFramework   # unmanages the Mac → '
+# pass 27
+# fail 1

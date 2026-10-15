@@ -244,7 +244,9 @@ test('G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, 
     // fourth fresh-context review: a line copied with its prompt
     '$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
     'admin@host:~$ sudo jamf removeFramework   # unmanages the Mac',
-    'gam.exe delete user "[USER@DOMAIN.COM]"   # deletes the account']) {
+    'gam.exe delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    'admin@MacBook-Pro ~ % sudo jamf removeFramework   # unmanages the Mac',
+    'bash-5.2$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account']) {
     const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', sink);
     const found = g1Findings(text);
     assert.ok(found.includes('cli-collapsed') && found.includes('cli-human-run'), `${sink} → ${found.join(', ')}`);

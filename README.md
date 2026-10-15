@@ -161,8 +161,7 @@ This public repo contains the **real product**: the same harness contract, engin
 
 ```bash
 # PREVIEW ONLY [readme-hook-install]: install a reviewed hook without overwriting an existing hook
-# printf '%s
-' '#!/bin/sh' 'node scripts/pre-commit-check.js' > .git/hooks/pre-commit
+# printf '%s\n' '#!/bin/sh' 'node scripts/pre-commit-check.js' > .git/hooks/pre-commit
 # chmod +x .git/hooks/pre-commit            # on Windows, git runs the hook via sh
 ```
 

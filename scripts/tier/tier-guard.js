@@ -63,11 +63,23 @@ const ESCALATION_PATTERNS = [
   { pattern: /settings\.local\.json|Invoke-Expression|\bIEX\b|Install-Module|git push --force|git reset --hard/i, label: 'extended-gate operation (SR-2)' },
 ];
 
+// The sentence-limited patterns use `[^.]*`, so a dot INSIDE a token — the
+// canonical `[first.last]` / `[USER@DOMAIN.COM]` placeholders, a dotted name, a
+// file name — must not end the "sentence": "Disable [first.last]'s account"
+// is one sentence. Each pattern is also tried against a copy where in-token dots
+// are a non-ASCII leader (U+2024) that `[^.]` can cross. Additive by design: it
+// can only add floors, never remove one, and a dot followed by whitespace still
+// ends a sentence.
+function joinInTokenDots(text) {
+  return text.replace(/(?<=[^\s.])\.(?=[^\s.])/g, '․');
+}
+
 function assess(text) {
   const folded = foldConfusables(text);
+  const joined = joinInTokenDots(folded);
   const triggers = [];
   for (const { pattern, label } of ESCALATION_PATTERNS) {
-    if (pattern.test(folded)) triggers.push(label);
+    if (pattern.test(folded) || pattern.test(joined)) triggers.push(label);
   }
   return { floor: triggers.length ? 'T3' : 'none', triggers };
 }

@@ -191,3 +191,18 @@ test('T3 REGRESSION: the fortress is unaware of the lane (no coupling in either 
     assert.ok(!/\btier[12]-support\b|tier-guard/.test(read(t3)), `${t3} must not reference the tier lane`);
   }
 });
+
+test('a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end — existing floors hold', () => {
+  for (const t of [
+    "Disable [first.last]'s account today",
+    "Delete [first.last]'s mailbox before Friday",
+    'Remove [first.last] from the finance group',
+    'Remove the [first.last] licence',
+    'Revoke [USER@DOMAIN.COM] sessions',
+    'Exclude [first.last] from the MFA policy',
+  ]) assert.equal(assess(t).floor, 'T3', `must floor: ${t}`);
+  // a real sentence end still bounds a pattern: two unrelated sentences do not combine
+  assert.equal(assess('Disable the screen saver. The user account is fine.').floor, 'none');
+  // the dotted extended-gate literal still matches
+  assert.equal(assess('edit .claude/settings.local.json').floor, 'T3');
+});

@@ -15,6 +15,6 @@
   - Google stale paths live in `STALE_PORTAL_PATHS_G1` — the existing lint test pins Microsoft Learn citations on `STALE_PORTAL_PATHS`.
   - The pre-existing Microsoft arrow guard is dead (double-escaped regex); fixing it surfaces an unowned candidate in `troubleshoot.md` (Microsoft runbooks may not change) — reported as a decision, not fixed.
   - `.gitignore` `*password*` would have dropped `gws-password-reset.md` from a fresh release staging; it now has the same negation as `password-reset.md` (`4921c7b`, own test).
-- **Phase 5:** `docs/evidence/gws/g1-checks.md` (77 rows: 75 pass, 1 fail = branch-name deviation F9, 1 unresolved = continuity self-binding E9); WARDEN pass 1 REJECT → 1 blocker, 2 major, 7 minor fixed in their own commits (section H); `node --test` 486/486; battery files in `docs/evidence/gws/`.
-- **Open issues:** WARDEN pass 2 on the corrected branch; final battery capture; claim release.
-- **Next action:** run WARDEN pass 2 on the corrected branch and record its verdict in `docs/evidence/gws/g1-checks.md` §H.
+- **Phase 5:** `docs/evidence/gws/g1-checks.md` (77 rows: 75 pass, 1 fail = branch-name deviation F9, 1 unresolved = continuity self-binding E9); WARDEN pass 1 REJECT and pass 2 REJECT, every finding fixed in its own commit with red/green evidence (section H, `phase1-red-green.md`, `later-fixes-red.txt`); `node --test` green; battery files in `docs/evidence/gws/`.
+- **Open issues:** WARDEN pass 3 on the corrected branch; claim release; the final report.
+- **Next action:** run WARDEN pass 3 on the corrected branch and record its verdict in `docs/evidence/gws/g1-checks.md` §H.

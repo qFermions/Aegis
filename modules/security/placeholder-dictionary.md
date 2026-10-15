@@ -25,6 +25,9 @@ this file — never invent a parallel set.
 | `[@Aegion_FINANCE_SERVER]` | Finance server name | `[FINANCE_SERVER]` |
 | `[@Aegion_NETPARTNER]` | Networking/cabling partner | `[NET_PARTNER]` |
 | `[@Aegion_REMOTE_ACCESS]` | Remote access endpoint | `[REMOTE_ACCESS]` |
+| `[@Aegion_GWS_CUSTOMER_ID]` | Google Workspace customer ID (Admin console → Account → Account settings) | `[GWS_CUSTOMER_ID]` |
+| `[@Aegion_OKTA_ORG_URL]` | Okta org URL (the org's Okta Admin Console host) | `[OKTA_ORG_URL]` |
+| `[@Aegion_JAMF_URL]` | Jamf Pro server URL | `[JAMF_PRO_URL]` |
 
 ## Generic operational tokens (always-placeholder)
 
@@ -36,6 +39,15 @@ this file — never invent a parallel set.
 `[WORK_PHONE_ENROLLMENT_GROUP]` · `[REMOTE_USER_GROUP]` · `[START_DATE]` ·
 `[GUEST_UPN]` (a B2B guest's sign-in name — distinct from `[UPN]`, which is always
 a member user; the replay cache binds identity-variant cases to that difference)
+
+Google Workspace / Okta / Jamf / macOS lane (v8.9): `[MANAGER_UPN]` (the manager's
+sign-in name) · `[USER_ID]` (an immutable directory ID — Entra object ID, Google
+user ID, or Okta user ID) · `[GROUP_EMAIL]` (a Google Group's address, written
+without `@` so it can never be mistaken for a real mailbox) · `[OU_PATH]` (a Google
+organizational-unit path such as `/[OU_PATH]`) · `[DEVICE_ID]` (an Admin console,
+Jamf Pro, or Okta device ID) · `[SERIAL_NUMBER]` (a hardware serial number) ·
+`[APP_NAME]` (an Okta or Google app display name) · `[LOCK_PIN]` (a remote-lock
+passcode — kept in the password manager, never in a ticket)
 
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in

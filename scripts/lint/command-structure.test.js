@@ -232,6 +232,18 @@ test('G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, 
   assert.ok(!g1Findings(phrase).includes('cli-collapsed'));
 });
 
+test('G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)', () => {
+  for (const chained of ['gam info user "[USER@DOMAIN.COM]"; gam delete user "[USER@DOMAIN.COM]"   # reads, then deletes',
+    'gam info user "[USER@DOMAIN.COM]" && gam delete user "[USER@DOMAIN.COM]"   # reads, then deletes',
+    'fdesetup status || sudo fdesetup disable   # reads, then disables']) {
+    const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', chained);
+    assert.ok(g1Findings(text).includes('cli-collapsed'), chained);
+  }
+  const twoReads = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences',
+    'gam info user "[USER@DOMAIN.COM]"; fdesetup status   # two reads');
+  assert.ok(!g1Findings(twoReads).includes('cli-collapsed'));
+});
+
 test('G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above)', () => {
   // the HUMAN-RUN label moves below the command, so nothing explains the bare line
   const bare = G1_GOOD.replace('# HUMAN-RUN — the administrator runs this; Aegis never does\ngam update user "[USER@DOMAIN.COM]" org "[OU_PATH]"   # moves the user to the new organizational unit',

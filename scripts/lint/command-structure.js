@@ -312,8 +312,12 @@ function lintCommand(name, text, opts = {}) {
   for (const f of cliFences) {
     const code = f.body.map(shellCode);
     const cliLines = code.map((c, j) => ({ c, j })).filter(({ c }) => CLI_INVOCATION.test(c));
+    // Every command on a line is judged (`a; b`, `a && b`, `a || b`, `a | b`): a
+    // read-only first command does not make a chained mutation read-only.
+    const segmentsOf = (c) => c.split(/;|&&|\|\||\|/).map((x) => x.trim()).filter(Boolean);
     const readOnly = !f.body.some((l) => /#\s*SAFETY GATE\b/.test(l)) &&
-      cliLines.every(({ c }) => READ_ONLY_CLI.some((re) => re.test(c)) && !/(?:^|\s)>{1,2}\s*[^&\s]/.test(c) && !/\|\s*(?:sudo\s+)?(?:[\w.~-]*\/)*(?:gam|gcloud|curl|wget|jamf|profiles|dscl|fdesetup|diskutil|softwareupdate|networksetup|systemsetup|defaults|launchctl|kickstart)\b/i.test(c));
+      cliLines.every(({ c }) => !/(?:^|\s)>{1,2}\s*[^&\s]/.test(c) &&
+        segmentsOf(c).every((seg) => !CLI_INVOCATION.test(seg) || READ_ONLY_CLI.some((re) => re.test(seg))));
     if (!readOnly && f.depth < 1) add('cli-collapsed', f.open, 'mutating CLI fence is not inside a <details> block (the scale version is secondary — collapse it)');
     if (!readOnly && !f.body.some((l) => /HUMAN-RUN/.test(l))) add('cli-human-run', f.open, 'mutating CLI fence carries no HUMAN-RUN label (Aegis advises; a human administrator runs it)');
     for (const { j } of cliLines) {

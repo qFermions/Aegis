@@ -185,8 +185,10 @@ function isMutation(command, statement) {
 // Wrappers that run the following word as the command are transparent: sudo with
 // any options (including -u user / --user=user), command, env and inline VAR=value
 // assignments, nohup, time, nice, caffeinate, exec, script and xargs. The tool may
-// sit behind a quoted or variable path ("$HOME/bin/gam7/gam").
-const CLI_WRAPPER = String.raw`(?:(?:sudo(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|doas(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|timeout(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|command(?:\s+-[pvV]+)?|env(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|nohup|time(?:\s+-p)?|nice(?:\s+-n\s*-?\d+|\s+-\d+)?|caffeinate(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|exec(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|script(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|xargs(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
+// sit behind a quoted or variable path ("$HOME/bin/gam7/gam"), and so may a wrapper.
+// A wrapper may be called by its path, quoted or not (`/usr/bin/sudo`, `"/usr/bin/env"`).
+const CLI_WRAPPER_PATH = String.raw`"?(?:[\w.~-]*\/)*`;
+const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|${CLI_WRAPPER_PATH}doas"?(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}timeout"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|${CLI_WRAPPER_PATH}command"?(?:\s+-[pvV]+)?|${CLI_WRAPPER_PATH}env"?(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}nohup"?|${CLI_WRAPPER_PATH}time"?(?:\s+-p)?|${CLI_WRAPPER_PATH}nice"?(?:\s+-n\s*-?\d+|\s+-\d+)?|${CLI_WRAPPER_PATH}caffeinate"?(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|${CLI_WRAPPER_PATH}exec"?(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|${CLI_WRAPPER_PATH}script"?(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|${CLI_WRAPPER_PATH}xargs"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
 // A command starts at the line start, after a separator, inside $(…) or a
 // backtick, after a shell keyword that introduces a command (do, then, else,
 // elif, if, while, until), or after a `!` negation.
@@ -1892,6 +1894,13 @@ const G1_SHELL_MUTATIONS = [
   ['curl -sSX "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
   ['curl -sS -X "$(printf DELETE)" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
   ['wget -q --method="${METHOD}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  // N-4: a wrapper called by its path is still a wrapper
+  ['/usr/bin/sudo gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['/usr/bin/env gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['/usr/bin/nohup gam delete user "[USER@DOMAIN.COM]" &', 'gam-write'],
+  ['/usr/bin/sudo /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  ['/usr/bin/timeout 30 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['"/usr/bin/sudo" -u admin /usr/local/bin/jamf removeFramework', 'jamf-write'],
 ];
 
 const G1_SHELL_READ_ONLY = [

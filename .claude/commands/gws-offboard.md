@@ -225,7 +225,7 @@ else
   echo "Confirmation did not match. No change was made." >&2   # explains the stop
   exit 1   # stops with a failure status
 fi
-gam print users query "isSuspended=True"   # read-back: lists suspended users still in the domain
+gam print users deleted_only   # read-back: lists recently deleted users; the account should appear here (restorable for 20 days)
 ```
 </details>
 
@@ -239,7 +239,7 @@ gam print users query "isSuspended=True"   # read-back: lists suspended users st
 ## ✅ Verification checklist
 
 - [ ] Okta: Directory → People → `[UPN]` reads **Deactivated** (API read-back status `DEPROVISIONED`).
-- [ ] Google: `gam info user "[USER@DOMAIN.COM]"` shows the account suspended (or the Phase D deletion appears in Admin log events).
+- [ ] Google: `gam info user "[USER@DOMAIN.COM]"` shows the account suspended — or, after Phase D, `gam print users deleted_only` lists it and the deletion appears in Admin log events.
 - [ ] Data: `gam print datatransfers` shows Drive and Calendar transfers completed; `[MANAGER_UPN]` opened a sample file; the pre-state file count is in the ticket.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the suspend / transfer / delete events with the expected admin and time.
 - [ ] Devices handed to `/jamf-lock-erase` and `/gws-chromeos-device`, each with its own read-back.

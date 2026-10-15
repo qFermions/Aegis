@@ -985,14 +985,22 @@ function executeSourceGateHarness(analysis, context, engine) {
 // comparison, and the harness proves the exact phrase reaches the mocked sink
 // once while every rejected input stops with a non-zero exit.
 const SHELL_GATE_FIELDS = ['Target', 'Effect', 'Scope', 'Reversibility', 'Required confirmation', 'Failure behavior'];
-const SHELL_FAILURE_BEHAVIOR = 'Empty, declined, `yes`, or any other response means stop; no change is made.';
+// Shell gate text is written to stay inert in a shell that does not treat `#` as a
+// comment (stock interactive zsh without interactive_comments): no backticks, `$`,
+// `;`, `|`, `&`, `<`, `>`, parentheses, backslash, apostrophe or `!` in a gated
+// fence's comments, so the phrase is double-quoted and the failure sentence has none.
+const SHELL_FAILURE_BEHAVIOR = 'Empty, declined, "yes", or any other response means stop, and no change is made.';
 const SHELL_REQUIRED_LINE = /^\s*required_confirmation="([^"$`\\]+)"\s*$/;
-const SHELL_READ_LINE = /^\s*IFS= read -r confirmation\s*$/;
-const SHELL_GATE_IF_LINE = /^\s*if \[ "\$confirmation" = "\$required_confirmation" \]; then\s*$/;
+// The read sits inside the comparison's condition, so the shell parses the whole
+// if … fi before reading: a line-by-line paste (or a script fed on stdin) can never
+// hand the next pasted line to `read` and then run the sink outside the gate.
+const SHELL_GATE_IF_LINE = /^\s*if IFS= read -r confirmation && \[ "\$confirmation" = "\$required_confirmation" \]; then\s*$/;
+const SHELL_GATE_IF_CANONICAL = 'if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then';
+const SHELL_COMMENT_UNSAFE = /[`$;|&<>()\\'!]/;
 const SHELL_ELSE_NOTICE_LINE = /^\s*(?:echo|printf)\s[^;&|`$()<>]*>&2\s*$/;
 const SHELL_ELSE_EXIT_LINE = /^\s*exit [1-9][0-9]{0,2}\s*$/;
-// The only statement allowed between the template and the read (or the read and the
-// comparison) besides the read itself: a plain prompt that may show the template.
+// The only statement allowed between the template and the comparison: a plain
+// prompt that may show the template.
 const SHELL_PROMPT_LINE = /^\s*(?:printf '%s\\n'|echo) "(?:[^"$`\\]|\$required_confirmation\b)*"(?:\s*>&2)?\s*$/;
 const SHELL_FORBIDDEN = [
   [/(?:^|[;&|(]\s*)(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b/, 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
@@ -1043,8 +1051,21 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
     fields[field[1]] = field[2];
   }
   for (const name of SHELL_GATE_FIELDS) if (!fields[name]) problems.push(`missing ${name} field`);
-  const expected = (fields['Required confirmation'] || '').match(/type exactly `([^`]+)`/i)?.[1] || '';
-  if (fields['Required confirmation'] && !expected) problems.push('Required confirmation must say: type exactly `PHRASE`');
+  const expected = (fields['Required confirmation'] || '').match(/type exactly "([^"]+)"/i)?.[1] || '';
+  if (fields['Required confirmation'] && !expected) problems.push('Required confirmation must say: type exactly "PHRASE"');
+
+  // Comments must stay inert where `#` is not a comment, and no executable line may
+  // carry a trailing comment (it would become arguments, or an env-prefixed command).
+  lines.forEach((rawLine, index) => {
+    if (/^\s*#/.test(rawLine)) {
+      const text = rawLine.replace(/^\s*#/, '');
+      if (SHELL_COMMENT_UNSAFE.test(text) || (text.match(/"/g) || []).length % 2) {
+        problems.push(`line ${index + 1}: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote`);
+      }
+    } else if (code[index] && code[index] !== rawLine.trim()) {
+      problems.push(`line ${index + 1}: no executable line in a gated fence may carry a trailing comment (put it on its own line above)`);
+    }
+  });
   if (fields['Failure behavior'] && fields['Failure behavior'] !== SHELL_FAILURE_BEHAVIOR) problems.push(`Failure behavior must read exactly: ${SHELL_FAILURE_BEHAVIOR}`);
 
   code.forEach((statement, index) => {
@@ -1065,13 +1086,14 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
     else requiredLiteral = literal[1];
   }
   if (requiredLiteral && expected && requiredLiteral !== expected) problems.push(`required_confirmation literal does not equal the Required confirmation phrase (${requiredLiteral} ≠ ${expected})`);
-  if (reads.length !== 1 || !inRegion(reads[0].index) || !SHELL_READ_LINE.test(code[reads[0].index])) problems.push('the fence must contain exactly one read, the canonical `IFS= read -r confirmation`, inside the gate region');
-  if (gateIfs.length !== 1 || !inRegion(gateIfs[0].index) || !SHELL_GATE_IF_LINE.test(code[gateIfs[0].index])) problems.push('the region must contain exactly one comparison, the canonical `if [ "$confirmation" = "$required_confirmation" ]; then`');
+  if (gateIfs.length !== 1 || !inRegion(gateIfs[0].index) || !SHELL_GATE_IF_LINE.test(code[gateIfs[0].index])) problems.push(`the region must contain exactly one comparison, the canonical \`${SHELL_GATE_IF_CANONICAL}\``);
+  if (reads.length !== 1 || gateIfs.length !== 1 || reads[0].index !== gateIfs[0].index) problems.push('the fence must contain exactly one read, inside the canonical comparison');
 
   const gateIndex = gateIfs.length === 1 && SHELL_GATE_IF_LINE.test(code[gateIfs[0].index]) ? gateIfs[0].index : -1;
   // Between the marker and the template only the comment header may sit; between the
-  // template and the comparison only the canonical read and plain prompt lines. Any
-  // other statement could pre-satisfy or rewrite the comparison.
+  // template and the comparison only plain prompt lines. Any other statement could
+  // pre-satisfy or rewrite the comparison. The harness executes the fence's own lines
+  // from its first line up to the comparison.
   const requiredIndex = requiredAssignments.length === 1 ? requiredAssignments[0].index : -1;
   const preCompareLines = [];
   for (let index = 0; index < markerIndex; index += 1) {
@@ -1083,11 +1105,11 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
     }
   }
   if (requiredIndex >= 0 && gateIndex > requiredIndex) {
-    for (let index = requiredIndex; index < gateIndex; index += 1) {
-      preCompareLines.push(lines[index]);
-      if (index === requiredIndex || !code[index]) continue;
-      if (!SHELL_READ_LINE.test(code[index]) && !SHELL_PROMPT_LINE.test(code[index])) {
-        problems.push(`line ${index + 1}: between required_confirmation and the comparison only the canonical read and a plain printf/echo prompt may appear`);
+    for (let index = 0; index < gateIndex; index += 1) preCompareLines.push(lines[index]);
+    for (let index = requiredIndex + 1; index < gateIndex; index += 1) {
+      if (!code[index]) continue;
+      if (!SHELL_PROMPT_LINE.test(code[index])) {
+        problems.push(`line ${index + 1}: between required_confirmation and the comparison only a plain printf/echo prompt may appear`);
       }
     }
   }
@@ -1095,8 +1117,8 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
   let fiIndex = -1;
   const elseBody = [];
   if (gateIndex >= 0) {
-    if (requiredAssignments.length === 1 && reads.length === 1 && !(requiredAssignments[0].index < reads[0].index && reads[0].index < gateIndex)) {
-      problems.push('order must be: required_confirmation assignment, then the read, then the comparison');
+    if (requiredAssignments.length === 1 && !(requiredAssignments[0].index < gateIndex)) {
+      problems.push('order must be: required_confirmation assignment, then the comparison');
     }
     let depth = 0;
     for (let index = 0; index < gateIndex; index += 1) depth += shellBlockDelta(code[index]);
@@ -1149,28 +1171,42 @@ function assertShellGateFailClosed(analysis, context) {
   assert.equal(exactGateModel(expected, expected), true);
   // Real execution where a POSIX shell exists (always on Linux/macOS CI).
   if (process.platform !== 'win32') assert.ok(SHELL_ENGINES.length > 0, `${context}: bash is required to execute the shell gate harness`);
-  // The fence's own lines from the template to the comparison run verbatim; the
-  // positive branch's sinks are replaced by one mocked line, the else body is the
-  // fence's own. Nothing that reaches a sink is ever executed.
+  // The fence's own lines from its first line up to the comparison run verbatim; the
+  // positive branch is replaced by one mocked line, the else body is the fence's own.
+  // Nothing that reaches a sink is ever executed. Three ways an operator may run it:
+  // as a script (normal), pasted into a shell that does not treat `#` as a comment
+  // (literal: every comment line's `#` becomes a plain word, as in stock interactive
+  // zsh), and pasted line by line or fed on stdin (piped: the read shares the input
+  // with the script, and a read-back line follows the gate).
   assert.ok(Array.isArray(analysis.preCompareLines) && analysis.preCompareLines.length > 0, `${context}: no source lines to execute`);
-  const script = [
-    ...analysis.preCompareLines,
-    'if [ "$confirmation" = "$required_confirmation" ]; then',
+  const gateScript = (lines) => [
+    ...lines,
+    SHELL_GATE_IF_CANONICAL,
     "  printf '%s\\n' MOCKED_SINK_REACHED",
     'else',
     ...analysis.elseBody.map((statement) => `  ${statement}`),
     'fi',
   ].join('\n');
+  const normal = gateScript(analysis.preCompareLines);
+  const literal = gateScript(analysis.preCompareLines.map((line) => line.replace(/^(\s*)#/, "$1'#'")));
+  const rejectedInputs = [undefined, '', 'yes', 'YES', 'arbitrary wrong value', ` ${expected}`, `${expected} `, expected.toLowerCase(), `${expected}\\`];
   for (const engine of SHELL_ENGINES) {
-    const run = (input) => spawnSync(engine, ['-c', script], { input, encoding: 'utf8', windowsHide: true, timeout: 10000 });
-    const approved = run(`${expected}\n`);
-    assert.equal(approved.status, 0, `${context}: exact phrase did not traverse the gate (${approved.stderr})`);
-    assert.match(approved.stdout, /MOCKED_SINK_REACHED/, `${context}: exact phrase did not reach the mocked sink`);
-    for (const rejected of [undefined, '', 'yes', 'YES', 'arbitrary wrong value', ` ${expected}`, `${expected} `, expected.toLowerCase(), `${expected}\\`]) {
-      if (rejected === expected) continue;
-      const result = run(rejected === undefined ? '' : `${rejected}\n`);
-      assert.notEqual(result.status, 0, `${context}: rejected input ${JSON.stringify(rejected)} exited zero`);
-      assert.doesNotMatch(result.stdout || '', /MOCKED_SINK_REACHED/, `${context}: rejected input ${JSON.stringify(rejected)} reached the sink`);
+    for (const [mode, script] of [['normal', normal], ['literal-#', literal]]) {
+      const run = (input) => spawnSync(engine, ['-c', script], { input, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      const approved = run(`${expected}\n`);
+      assert.equal(approved.status, 0, `${context} (${mode}): exact phrase did not traverse the gate (${approved.stderr})`);
+      assert.match(approved.stdout, /MOCKED_SINK_REACHED/, `${context} (${mode}): exact phrase did not reach the mocked sink`);
+      for (const rejected of rejectedInputs) {
+        if (rejected === expected) continue;
+        const result = run(rejected === undefined ? '' : `${rejected}\n`);
+        assert.notEqual(result.status, 0, `${context} (${mode}): rejected input ${JSON.stringify(rejected)} exited zero`);
+        assert.doesNotMatch(result.stdout || '', /MOCKED_SINK_REACHED/, `${context} (${mode}): rejected input ${JSON.stringify(rejected)} reached the sink`);
+      }
+    }
+    for (const script of [normal, literal]) {
+      const piped = spawnSync(engine, ['-s'], { input: `${script}\nprintf '%s\\n' READ_BACK_PLACEHOLDER\n`, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      assert.notEqual(piped.status, 0, `${context} (piped): a line-by-line paste must stop at the gate`);
+      assert.doesNotMatch(piped.stdout || '', /MOCKED_SINK_REACHED/, `${context} (piped): a pasted line was taken as the confirmation and the sink ran`);
     }
   }
 }
@@ -1984,14 +2020,16 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     '# Effect: suspend one Google Workspace user account',
     '# Scope: one user',
     '# Reversibility: R1 — reversible by the separate unsuspend procedure',
-    '# Required confirmation: type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`',
-    '# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.',
+    '# Required confirmation: type exactly "SUSPEND GOOGLE USER [USER@DOMAIN.COM]"',
+    `# Failure behavior: ${SHELL_FAILURE_BEHAVIOR}`,
   ];
+  const sink = '  gam update user "[USER@DOMAIN.COM]" suspended on';
   const body = [
     'required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"',
-    'IFS= read -r confirmation',
-    'if [ "$confirmation" = "$required_confirmation" ]; then',
-    '  gam update user "[USER@DOMAIN.COM]" suspended on   # suspends the account',
+    '# reads one line exactly as typed and runs the change only on an exact, case-sensitive match',
+    SHELL_GATE_IF_CANONICAL,
+    '  # suspends the account',
+    sink,
     'else',
     '  echo "Confirmation did not match. No change was made." >&2',
     '  exit 1',
@@ -2001,28 +2039,32 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
   const verdict = (lines) => evaluateGateDocument('fixture/shell-bypass.md', fenceOf(lines)).failures;
   assert.deepEqual(verdict([...header, ...body]), [], 'the canonical gate must pass');
   const replace = (from, to) => [...header, ...body].map((line) => (line === from ? to : line));
+  const ifWith = (condition) => replace(SHELL_GATE_IF_CANONICAL, `if ${condition}; then`);
+  // inserts lines between the template and the comparison
+  const beforeCompare = (...inserted) => [...header, body[0], ...inserted, ...body.slice(1)];
   const cases = [
     ['no-exit-in-else', replace('  exit 1', '  :')],
     ['exit-zero-in-else', replace('  exit 1', '  exit 0')],
-    ['whitespace-trimming-read', replace('IFS= read -r confirmation', 'read -r confirmation')],
-    ['confirmation-overwrite', [...header, body[0], body[1], 'confirmation="$required_confirmation"', ...body.slice(2)]],
-    ['sink-after-fi', [...header, body[0], body[1], body[2], '  :', ...body.slice(4), 'gam update user "[USER@DOMAIN.COM]" suspended on']],
-    ['sink-before-gate', [...header, 'gam update user "[USER@DOMAIN.COM]" suspended on', ...body]],
+    ['whitespace-trimming-read', ifWith('read -r confirmation && [ "$confirmation" = "$required_confirmation" ]')],
+    ['confirmation-overwrite', beforeCompare('confirmation="$required_confirmation"')],
+    ['sink-after-fi', [...header, body[0], body[1], body[2], '  :', ...body.slice(5), sink.trim()]],
+    ['sink-before-gate', [...header, sink.trim(), ...body]],
     ['dead-wrapper', [...header, 'if false; then', ...body, 'fi']],
     ['read-function-override', ['read() { confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"; }', ...header, ...body]],
     ['alias-override', ["alias read='true'", ...header, ...body]],
     ['trap', ["trap 'true' ERR", ...header, ...body]],
-    ['eval', [...header, ...body.slice(0, 3), '  eval "gam update user [USER@DOMAIN.COM] suspended on"', ...body.slice(4)]],
-    ['template-mismatch', replace('required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"', 'required_confirmation="yes"')],
-    ['case-folded-compare', replace('if [ "$confirmation" = "$required_confirmation" ]; then', 'if [ "${confirmation^^}" = "$required_confirmation" ]; then')],
-    ['or-true', replace('if [ "$confirmation" = "$required_confirmation" ]; then', 'if [ "$confirmation" = "$required_confirmation" ] || true; then')],
-    ['negated-compare', replace('if [ "$confirmation" = "$required_confirmation" ]; then', 'if [ "$confirmation" != "$required_confirmation" ]; then')],
-    ['elif-branch', [...header, ...body.slice(0, 4), 'elif true; then', '  :', ...body.slice(4)]],
-    ['mutation-in-else', replace('  echo "Confirmation did not match. No change was made." >&2', '  gam update user "[USER@DOMAIN.COM]" suspended on')],
+    ['eval', replace(sink, '  eval "gam update user [USER@DOMAIN.COM] suspended on"')],
+    ['template-mismatch', replace(body[0], 'required_confirmation="yes"')],
+    ['case-folded-compare', ifWith('IFS= read -r confirmation && [ "${confirmation^^}" = "$required_confirmation" ]')],
+    ['or-true', ifWith('IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ] || true')],
+    ['negated-compare', ifWith('IFS= read -r confirmation && [ "$confirmation" != "$required_confirmation" ]')],
+    ['read-or-compare', ifWith('IFS= read -r confirmation || [ "$confirmation" = "$required_confirmation" ]')],
+    ['elif-branch', [...header, ...body.slice(0, 5), 'elif true; then', '  :', ...body.slice(5)]],
+    ['mutation-in-else', replace('  echo "Confirmation did not match. No change was made." >&2', sink)],
     ['missing-failure-behavior', [...header.slice(0, 6), ...body]],
     ['missing-required-confirmation-field', [...header.slice(0, 5), header[6], ...body]],
-    ['second-read', [...header, body[0], body[1], 'IFS= read -r confirmation', ...body.slice(2)]],
-    ['expansion-in-template', replace('required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"', 'required_confirmation="SUSPEND GOOGLE USER $(whoami)"')],
+    ['second-read', beforeCompare('IFS= read -r confirmation')],
+    ['expansion-in-template', replace(body[0], 'required_confirmation="SUSPEND GOOGLE USER $(whoami)"')],
     // Post-read overwrites (WARDEN review, 2026-10-15): each pre-satisfies the comparison.
     ...[
       ['printf-v-overwrite', `printf -v confirmation '%s' "$required_confirmation"`],
@@ -2034,14 +2076,38 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
       ['array-element-overwrite', 'confirmation[0]="$required_confirmation"'],
       ['prompt-with-printf-v', `printf -v confirmation '%s\\n' "$required_confirmation"`],
       ['unrelated-statement-before-compare', 'cd /tmp'],
-    ].map(([name, inserted]) => [name, [...header, body[0], body[1], inserted, ...body.slice(2)]]),
+    ].map(([name, inserted]) => [name, beforeCompare(inserted)]),
     ['statement-between-marker-and-template', [...header, 'IFS=x', ...body]],
     // A `#` glued to a word is not a comment in bash (WARDEN pass 2): these hid
     // statements that pre-satisfy the comparison before the marker or the read.
     ['pre-marker-readonly-glued-hash', ['true#;readonly confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"', ...header, ...body]],
     ['pre-marker-exec-stdin-glued-hash', [`true#;exec 0< <(printf '%s\\n' "SUSPEND GOOGLE USER [USER@DOMAIN.COM]")`, ...header, ...body]],
     ['pre-marker-statement', ['echo preparing', ...header, ...body]],
-    ['glued-hash-in-prompt', [...header, body[0], `printf '%s\\n' "Type exactly"#;confirmation="$required_confirmation"`, ...body.slice(1)]],
+    ['glued-hash-in-prompt', beforeCompare(`printf '%s\\n' "Type exactly"#;confirmation="$required_confirmation"`)],
+    // WARDEN pass 3: a standalone read takes the next pasted line (non-bracketed paste,
+    // bash -s), and a trailing or punctuated comment turns into code where `#` is a
+    // plain word (interactive zsh without interactive_comments).
+    ['standalone-read-old-form', [...header, body[0], 'IFS= read -r confirmation', 'if [ "$confirmation" = "$required_confirmation" ]; then', ...body.slice(3)]],
+    ['trailing-comment-on-template', replace(body[0], `${body[0]}   # the exact phrase to type`)],
+    ['trailing-comment-on-compare', replace(SHELL_GATE_IF_CANONICAL, `${SHELL_GATE_IF_CANONICAL}   # exact match only`)],
+    ['trailing-comment-on-sink', replace(sink, `${sink}   # suspends the account`)],
+    ['trailing-comment-on-exit', replace('  exit 1', '  exit 1   # stops')],
+    ...[
+      ['apostrophe-in-comment', "# the admin's exact phrase"],
+      ['backtick-in-comment', '# type `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`'],
+      ['semicolon-in-comment', '# stops; exit 0'],
+      ['parenthesis-in-comment', '# one user (data kept)'],
+      ['dollar-in-comment', '# shows $required_confirmation'],
+      ['pipe-in-comment', '# compares | exact'],
+      ['ampersand-in-comment', '# read & compare'],
+      ['redirect-in-comment', '# writes > the log'],
+      ['backslash-in-comment', '# continues \\'],
+      ['bang-in-comment', '# careful!'],
+      ['unbalanced-quote-in-comment', '# type exactly "SUSPEND GOOGLE USER'],
+    ].map(([name, comment]) => [name, beforeCompare(comment)]),
+    ['old-backtick-required-field', replace(header[5], '# Required confirmation: type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`')],
+    ['old-failure-sentence', replace(header[6], '# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.')],
+    ['unsafe-comment-after-fi', [...header, ...body, '# done; exit 0']],
   ];
   const accepted = [];
   for (const [name, lines] of cases) {
@@ -2050,9 +2116,9 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     if (!failures.length) accepted.push(name);
   }
   assert.deepEqual(accepted, [], 'every bypass-shaped fixture must be rejected');
-  // The canonical stdout prompt stays allowed.
-  const prompted = [...header, body[0], `printf '%s\\n' "Type exactly: $required_confirmation"`, ...body.slice(1)];
-  assert.deepEqual(verdict(prompted), [], 'a printf prompt between the template and the read must pass');
+  // The canonical stdout prompt and plain comments stay allowed.
+  const prompted = beforeCompare('# shows the phrase to type', `printf '%s\\n' "Type exactly: $required_confirmation"`);
+  assert.deepEqual(verdict(prompted), [], 'a printf prompt between the template and the comparison must pass');
 });
 
 test('G1 shell gate harness executes the fence\'s own lines up to the comparison', () => {
@@ -2060,14 +2126,24 @@ test('G1 shell gate harness executes the fence\'s own lines up to the comparison
   const gated = evaluateGateDocument('fixture/gam-fence-gated.md', source);
   assert.deepEqual(gated.failures, []);
   const { analysis } = gated.analyses[0];
+  const fenceLines = source.split('```bash\n')[1].split('\n');
   assert.ok(Array.isArray(analysis.preCompareLines) && analysis.preCompareLines.length >= 2, 'the analysis must carry the fence\'s own pre-comparison lines');
-  assert.match(analysis.preCompareLines[0], /^\s*required_confirmation="/);
+  assert.equal(analysis.preCompareLines[0], fenceLines[0], 'the harness starts at the fence\'s first line');
+  assert.deepEqual(analysis.preCompareLines, fenceLines.slice(0, analysis.preCompareLines.length));
+  assert.ok(analysis.preCompareLines.some((line) => /^\s*required_confirmation="/.test(line)));
+  assert.equal(fenceLines[analysis.preCompareLines.length], SHELL_GATE_IF_CANONICAL, 'the lines stop at the comparison');
   assertShellGateFailClosed(analysis, 'fixture-harness-canonical');
-  // A line the grammar would reject, smuggled straight into the harness, must make it fail:
-  // the harness runs the source lines, not a re-synthesized canonical script.
+  // Lines the grammar would reject, smuggled straight into the harness, must make it
+  // fail: the harness runs the source lines, not a re-synthesized canonical script.
   if (SHELL_ENGINES.length > 0) {
-    const smuggled = { ...analysis, problems: [], preCompareLines: [...analysis.preCompareLines, `printf -v confirmation '%s' "$required_confirmation"`] };
-    assert.throws(() => assertShellGateFailClosed(smuggled, 'fixture-harness-smuggled'), /reached the sink|exited zero/);
+    const smuggle = (...extra) => ({ ...analysis, problems: [], preCompareLines: [...analysis.preCompareLines, ...extra] });
+    // a pre-comparison overwrite is now moot (the read inside the condition runs last),
+    // but a shadowed read still pre-satisfies the comparison
+    assert.throws(() => assertShellGateFailClosed(smuggle('read() { confirmation="$required_confirmation"; }'), 'fixture-harness-smuggled'), /\(normal\).*(?:reached the sink|exited zero)/);
+    // a standalone read eats the typed phrase, so the comparison never sees it
+    assert.throws(() => assertShellGateFailClosed(smuggle('IFS= read -r confirmation'), 'fixture-harness-standalone-read'), /\(normal\): exact phrase did not traverse the gate/);
+    // only the literal-# run sees a comment that turns into code where # is a plain word
+    assert.throws(() => assertShellGateFailClosed(smuggle('# note; read() { confirmation="$required_confirmation"; }'), 'fixture-harness-literal-comment'), /\(literal-#\): rejected input .* (?:reached the sink|exited zero)/);
   }
 });
 

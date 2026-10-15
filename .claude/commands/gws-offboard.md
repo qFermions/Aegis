@@ -144,88 +144,112 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 <summary>GAM / Okta API — the scale version (HUMAN-RUN, for reference)</summary>
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
-# Okta API token: export OKTA_API_TOKEN from the secret manager first; never paste it into a ticket
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
+# Okta API token: export OKTA_API_TOKEN from the secret manager first — never paste it into a ticket
 # SAFETY GATE [gws-offboard-okta-deactivate]
 # Target: [USER_ID] in Okta
-# Effect: deactivate the Okta user; Okta deprovisions every assigned app that has deprovisioning enabled
+# Effect: deactivate the Okta user — Okta deprovisions every assigned app that has deprovisioning enabled
 # Scope: one Okta user and its app assignments
-# Reversibility: R3 — reactivation may need app assignments re-created; the Okta password is permanently deleted
-# Required confirmation: type exactly `DEACTIVATE OKTA USER [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="DEACTIVATE OKTA USER [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/deactivate" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # deactivates the user in Okta
+# Reversibility: R3 — reactivation may need app assignments re-created — the Okta password is permanently deleted
+# Required confirmation: type exactly "DEACTIVATE OKTA USER [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="DEACTIVATE OKTA USER [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # deactivates the user in Okta
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/deactivate" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: status should read DEPROVISIONED
+# read-back: status should read DEPROVISIONED
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
 # HUMAN-RUN — suspend only if Okta did not already suspend the Google account
 # SAFETY GATE [gws-offboard-suspend]
 # Target: [USER@DOMAIN.COM]
-# Effect: suspend one Google Workspace user; nothing is deleted
-# Scope: one user; data, licences and group memberships are kept
+# Effect: suspend one Google Workspace user — nothing is deleted
+# Scope: one user — data, licences and group memberships are kept
 # Reversibility: R1 — undo with the separate unsuspend procedure under its own phrase
-# Required confirmation: type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam suspend user "[USER@DOMAIN.COM]"   # suspends the account; sign-in stops
+# Required confirmation: type exactly "SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # suspends the account — sign-in stops
+  gam suspend user "[USER@DOMAIN.COM]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]"   # read-back: the account shows as suspended
+# read-back: the account shows as suspended
+gam info user "[USER@DOMAIN.COM]"
 ```
 
 ```bash
-# HUMAN-RUN — transfer Drive and Calendar data with Google's data-transfer service
+# HUMAN-RUN — transfer Drive and Calendar data with Google’s data-transfer service
 # SAFETY GATE [gws-offboard-data-transfer]
-# Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
-# Effect: transfer ownership of the user's Drive files and future calendar events to the new owner
-# Scope: one source user; "all" includes files that were never shared (the default moves shared files only)
-# Reversibility: R2 — not reversible from the Admin console; the recorded file count is the only pre-state
-# Required confirmation: type exactly `TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam create datatransfer "[USER@DOMAIN.COM]" drive,calendar "[MANAGER_UPN]" all   # starts the transfer and prints its ID
+# Target: [USER@DOMAIN.COM] — source — and [MANAGER_UPN] — new owner
+# Effect: transfer ownership of the user’s Drive files and future calendar events to the new owner
+# Scope: one source user — "all" includes files that were never shared — the default moves shared files only
+# Reversibility: R2 — not reversible from the Admin console — the recorded file count is the only pre-state
+# Required confirmation: type exactly "TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # starts the transfer and prints its ID
+  gam create datatransfer "[USER@DOMAIN.COM]" drive,calendar "[MANAGER_UPN]" all
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam print datatransfers   # read-back: the transfer and its status
+# read-back: the transfer and its status
+gam print datatransfers
 ```
 
 ```bash
 # HUMAN-RUN — delete only after the independent review and the retention decision
 # SAFETY GATE [gws-offboard-delete]
 # Target: [USER@DOMAIN.COM]
-# Effect: delete the Google Workspace account; untransferred data is deleted with it
-# Scope: one account; shared-drive files stay
+# Effect: delete the Google Workspace account — untransferred data is deleted with it
+# Scope: one account — shared-drive files stay
 # Reversibility: R3 — a super admin can restore it for 20 days, then the data is gone
-# Required confirmation: type exactly `DELETE GOOGLE USER [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="DELETE GOOGLE USER [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam delete user "[USER@DOMAIN.COM]"   # deletes the account (20-day restore window starts)
+# Required confirmation: type exactly "DELETE GOOGLE USER [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="DELETE GOOGLE USER [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # deletes the account — 20-day restore window starts
+  gam delete user "[USER@DOMAIN.COM]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam print users deleted_only   # read-back: lists recently deleted users; the account should appear here (restorable for 20 days)
+# read-back: lists recently deleted users — the account should appear here — restorable for 20 days
+gam print users deleted_only
 ```
 </details>
 

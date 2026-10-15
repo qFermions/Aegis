@@ -128,66 +128,84 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/groups/${GROUP_ID}/users?limit=2
 ```
 
 ```bash
-# HUMAN-RUN — assign the app to one person (Individual assignment)
+# HUMAN-RUN — assign the app to one person — Individual assignment
 # SAFETY GATE [okta-app-assignment-assign-person]
-# Target: [APP_NAME] (as APP_ID) and [USER_ID]
-# Effect: assign the app integration to one person; with provisioning enabled, Okta creates or reactivates the external account
+# Target: [APP_NAME] — as APP_ID — and [USER_ID]
+# Effect: assign the app integration to one person — with provisioning enabled, Okta creates or reactivates the external account
 # Scope: one user, one app
-# Reversibility: R1 — undo is the separate unassign gate below under its own phrase; with Deactivate User on, that undo deactivates the external account
-# Required confirmation: type exactly `ASSIGN [APP_NAME] TO [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="ASSIGN [APP_NAME] TO [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users" -H "Authorization: SSWS ${OKTA_API_TOKEN}" -H "Content-Type: application/json" -d '{"id":"[USER_ID]","scope":"USER"}'   # creates the Individual assignment
+# Reversibility: R1 — undo is the separate unassign gate below under its own phrase — with Deactivate User on, that undo deactivates the external account
+# Required confirmation: type exactly "ASSIGN [APP_NAME] TO [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="ASSIGN [APP_NAME] TO [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # creates the Individual assignment
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users" -H "Authorization: SSWS ${OKTA_API_TOKEN}" -H "Content-Type: application/json" -d '{"id":"[USER_ID]","scope":"USER"}'
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: scope USER; status ACTIVE or PROVISIONED
+# read-back: scope USER — status ACTIVE or PROVISIONED
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — assign the app to a group (every member gets a Group assignment)
+# HUMAN-RUN — assign the app to a group — every member gets a Group assignment
 # SAFETY GATE [okta-app-assignment-assign-group]
-# Target: [APP_NAME] (as APP_ID) and [GROUP_EMAIL] (as GROUP_ID)
+# Target: [APP_NAME] — as APP_ID — and [GROUP_EMAIL] — as GROUP_ID
 # Effect: assign the app integration to every member of one Okta group
-# Scope: every current and future member of the group (record the member count first)
+# Scope: every current and future member of the group — record the member count first
 # Reversibility: R2 — unassigning the app from the group is a separate reviewed change that removes it from every member
-# Required confirmation: type exactly `ASSIGN [APP_NAME] TO GROUP [GROUP_EMAIL]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="ASSIGN [APP_NAME] TO GROUP [GROUP_EMAIL]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X PUT "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/groups/${GROUP_ID}" -H "Authorization: SSWS ${OKTA_API_TOKEN}" -H "Content-Type: application/json" -d '{}'   # assigns the group; priority and profile are optional and left at their defaults
+# Required confirmation: type exactly "ASSIGN [APP_NAME] TO GROUP [GROUP_EMAIL]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="ASSIGN [APP_NAME] TO GROUP [GROUP_EMAIL]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # assigns the group — priority and profile are optional and left at their defaults
+  curl -sS -X PUT "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/groups/${GROUP_ID}" -H "Authorization: SSWS ${OKTA_API_TOKEN}" -H "Content-Type: application/json" -d '{}'
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/groups/${GROUP_ID}" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: the group assignment exists
+# read-back: the group assignment exists
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/groups/${GROUP_ID}" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — unassign the app from one person (destructive: the app profile cannot be recovered)
+# HUMAN-RUN — unassign the app from one person — destructive: the app profile cannot be recovered
 # SAFETY GATE [okta-app-assignment-unassign-person]
-# Target: [APP_NAME] (as APP_ID) and [USER_ID]
-# Effect: unassign the app integration from one person; with Deactivate User provisioning on, Okta deactivates the external account
-# Scope: one Individual (scope USER) assignment; a scope GROUP assignment goes through the group instead
-# Reversibility: R2 — reassigning under the assign phrase reactivates the external account, but the app profile is not recoverable; R3 when the app's deprovisioning destroys data
-# Required confirmation: type exactly `UNASSIGN [APP_NAME] FROM [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="UNASSIGN [APP_NAME] FROM [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # removes the Individual assignment
+# Target: [APP_NAME] — as APP_ID — and [USER_ID]
+# Effect: unassign the app integration from one person — with Deactivate User provisioning on, Okta deactivates the external account
+# Scope: one Individual — scope USER — assignment — a scope GROUP assignment goes through the group instead
+# Reversibility: R2 — reassigning under the assign phrase reactivates the external account, but the app profile is not recoverable — R3 when the app’s deprovisioning destroys data
+# Required confirmation: type exactly "UNASSIGN [APP_NAME] FROM [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="UNASSIGN [APP_NAME] FROM [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # removes the Individual assignment
+  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: 404 means the assignment is gone
+# read-back: 404 means the assignment is gone
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 </details>
 

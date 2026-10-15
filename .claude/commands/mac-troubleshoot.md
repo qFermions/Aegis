@@ -132,26 +132,33 @@ log show --last 1h --info --predicate 'process == "mdmclient"'   # reads the las
 ```
 
 ```zsh
-# HUMAN-RUN — Branch B, generate and escrow a new personal recovery key (the Jamf-documented procedure)
+# HUMAN-RUN — Branch B, generate and escrow a new personal recovery key — the Jamf-documented procedure
 # Needs the FileVault escrow configuration profile already installed and a local user with a secure token at the keyboard
 # SAFETY GATE [mac-troubleshoot-prk-replace]
 # Target: [DEVICE_NAME]
 # Effect: replace the FileVault personal recovery key on the Mac and escrow the new key to Jamf Pro at the next inventory update
-# Scope: one Mac; the disk stays encrypted and no data is touched; the previous key stops working
-# Reversibility: R2 — not reversible — the previous key is invalidated; the new key is the only one Jamf Pro holds
-# Required confirmation: type exactly `REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  sudo /usr/bin/fdesetup changerecovery -personal   # asks for the secure-token user's name and password, then shows the new key
-  sudo /usr/local/bin/jamf recon   # submits an inventory update so Jamf Pro receives the escrowed key
+# Scope: one Mac — the disk stays encrypted and no data is touched — the previous key stops working
+# Reversibility: R2 — not reversible — the previous key is invalidated — the new key is the only one Jamf Pro holds
+# Required confirmation: type exactly "REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # asks for the secure-token user’s name and password, then shows the new key
+  sudo /usr/bin/fdesetup changerecovery -personal
+  # submits an inventory update so Jamf Pro receives the escrowed key
+  sudo /usr/local/bin/jamf recon
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-sudo fdesetup status   # read-back on the Mac; then read Personal Recovery Key Validation = Valid in Jamf Pro
+# read-back on the Mac — then read Personal Recovery Key Validation = Valid in Jamf Pro
+sudo fdesetup status
 ```
 
 ```zsh
@@ -159,20 +166,26 @@ sudo fdesetup status   # read-back on the Mac; then read Personal Recovery Key V
 # SAFETY GATE [mac-troubleshoot-jamf-checkin]
 # Target: [DEVICE_NAME]
 # Effect: request an immediate check-in with Jamf Pro from the Mac so every policy pending for it runs now
-# Scope: one Mac; only policies already scoped to it run — nothing new is created
-# Reversibility: R1 — nothing to undo for the check-in itself; whatever a policy installs is governed by that policy's own undo
-# Required confirmation: type exactly `SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  sudo /usr/local/bin/jamf policy   # starts a check-in with Jamf Pro (Jamf 100 course wording)
+# Scope: one Mac — only policies already scoped to it run — nothing new is created
+# Reversibility: R1 — nothing to undo for the check-in itself — whatever a policy installs is governed by that policy’s own undo
+# Required confirmation: type exactly "SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # starts a check-in with Jamf Pro — Jamf 100 course wording
+  sudo /usr/local/bin/jamf policy
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-sudo profiles show   # read-back on the Mac; the expected configuration profile now appears (counts toward the 10-per-24-hours profiles limit)
+# read-back on the Mac — the expected configuration profile now appears — counts toward the 10-per-24-hours profiles limit
+sudo profiles show
 ```
 </details>
 

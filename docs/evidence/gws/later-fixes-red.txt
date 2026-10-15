@@ -196,3 +196,46 @@ not ok 20 - G1 read-only allowlist judges every command on a line (a chained mut
 # tests 28
 # pass 26
 # fail 2
+
+=== WARDEN pass 3, N-1 — interactive-shell hazards of the old gate form (scratchpad experiments, exact output)
+# paste-current.sh / paste-proposed.sh / literal-*.sh hold the gate lines with the sink replaced by printf MOCKED_SINK_REACHED.
+# literal-*.sh write # as the quoted word '#' — what a shell that does not treat # as a comment sees.
+$ bash -s < paste-current.sh   # old form, fed on stdin as a line-by-line paste is
+Type exactly: SUSPEND GOOGLE USER [USER@DOMAIN.COM]
+MOCKED_SINK_REACHED
+bash: line 5: syntax error near unexpected token `else'
+bash: line 5: `else'
+exit=2
+$ bash -s < paste-proposed.sh  # new form, same mode
+Type exactly: SUSPEND GOOGLE USER [USER@DOMAIN.COM]
+Confirmation did not match. No change was made.
+exit=1
+$ printf "\n" | bash literal-old.sh   # old form where # is a plain word (zsh without interactive_comments), empty input
+n1/literal-old.sh: line 1: #: command not found
+n1/literal-old.sh: line 2: read: `#': not a valid identifier
+n1/literal-old.sh: line 3: #: command not found
+MOCKED_SINK_REACHED
+exit=0
+$ printf "\n" | bash literal-new.sh   # new form, same mode, empty input
+n1/literal-new.sh: line 1: #: command not found
+n1/literal-new.sh: line 3: #: command not found
+Confirmation did not match. No change was made.
+exit=1
+$ printf "SUSPEND GOOGLE USER [USER@DOMAIN.COM]\n" | bash literal-new.sh   # new form, exact phrase
+n1/literal-new.sh: line 1: #: command not found
+n1/literal-new.sh: line 3: #: command not found
+MOCKED_SINK_REACHED
+exit=0
+
+=== red-warden3-n1.txt — node --test scripts/command-safety-gates.test.js, new tests, runbooks and fixture still in the old form (exact summary)
+# tests 286
+# pass 241
+# fail 45
+not ok 238 - G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes
+not ok 240 - G1 shell gate harness executes the fence's own lines up to the comparison
+not ok 283 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# plus 42 per-gate tests ("<id>: shell gate is explicit, dominates its sinks, and is fail-closed"), for example:
++   'fixture-gws-user-suspend: line 5: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote',
++   'fixture-gws-user-suspend: line 7: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote',
++   'fixture-gws-user-suspend: line 8: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote',
++   'fixture-gws-user-suspend: line 9: no executable line in a gated fence may carry a trailing comment (put it on its own line above)',

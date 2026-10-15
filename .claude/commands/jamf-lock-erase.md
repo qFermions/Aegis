@@ -100,24 +100,30 @@ Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → General �
 <summary>Terminal on the Mac — remove the Jamf management framework (HUMAN-RUN)</summary>
 
 ```zsh
-# HUMAN-RUN — the administrator runs this in Terminal on the Mac, or over SSH; Aegis never does
+# HUMAN-RUN — the administrator runs this in Terminal on the Mac, or over SSH — Aegis never does
 # SAFETY GATE [jamf-lock-erase-unmanage]
 # Target: [SERIAL_NUMBER]
 # Effect: unmanage one Mac by removing every Jamf management framework component from it
-# Scope: one Mac; the MDM profile stays until the portal gate below removes it; the inventory record stays in Jamf Pro
-# Reversibility: R3 — only by enrolling the Mac again (Automated Device Enrollment or user-initiated enrollment)
-# Required confirmation: type exactly `UNMANAGE MAC [SERIAL_NUMBER]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="UNMANAGE MAC [SERIAL_NUMBER]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  sudo /usr/local/bin/jamf removeFramework   # removes every Jamf management framework component, including the jamf binary
+# Scope: one Mac — the MDM profile stays until the portal gate below removes it — the inventory record stays in Jamf Pro
+# Reversibility: R3 — only by enrolling the Mac again — Automated Device Enrollment or user-initiated enrollment
+# Required confirmation: type exactly "UNMANAGE MAC [SERIAL_NUMBER]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="UNMANAGE MAC [SERIAL_NUMBER]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # removes every Jamf management framework component, including the jamf binary
+  sudo /usr/local/bin/jamf removeFramework
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-sudo profiles show   # read-back: the MDM profile is still listed until the portal gate removes it
+# read-back: the MDM profile is still listed until the portal gate removes it
+sudo profiles show
 ```
 </details>
 
@@ -166,45 +172,57 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 ```
 
 ```bash
-# HUMAN-RUN — lock one Mac through the Jamf Pro API; the administrator runs this, Aegis never does
+# HUMAN-RUN — lock one Mac through the Jamf Pro API — the administrator runs this, Aegis never does
 # SAFETY GATE [jamf-lock-erase-lock-api]
 # Target: [SERIAL_NUMBER], management ID [DEVICE_ID]
-# Effect: lock one Mac with the six-digit [LOCK_PIN]; the user is logged out and the Mac restarts into the lock screen
-# Scope: one Mac; the DEVICE_LOCK command is queued and runs at the next check-in
-# Reversibility: R2 — reversible only by typing [LOCK_PIN] on the Mac; the PIN is pre-state: store it in the password manager first
-# Required confirmation: type exactly `LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands" -H "Authorization: Bearer ${JAMF_TOKEN}" -H "Content-Type: application/json" -d '{"clientData":[{"managementId":"[DEVICE_ID]"}],"commandData":{"commandType":"DEVICE_LOCK","pin":"[LOCK_PIN]","message":"Property of [@Aegion] - call [PHONE_NUMBER]"}}'   # queues DEVICE_LOCK for the next check-in
+# Effect: lock one Mac with the six-digit [LOCK_PIN] — the user is logged out and the Mac restarts into the lock screen
+# Scope: one Mac — the DEVICE_LOCK command is queued and runs at the next check-in
+# Reversibility: R2 — reversible only by typing [LOCK_PIN] on the Mac — the PIN is pre-state: store it in the password manager first
+# Required confirmation: type exactly "LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # queues DEVICE_LOCK for the next check-in
+  curl -sS -X POST "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands" -H "Authorization: Bearer ${JAMF_TOKEN}" -H "Content-Type: application/json" -d '{"clientData":[{"managementId":"[DEVICE_ID]"}],"commandData":{"commandType":"DEVICE_LOCK","pin":"[LOCK_PIN]","message":"Property of [@Aegion] - call [PHONE_NUMBER]"}}'
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands?filter=clientManagementId==[DEVICE_ID]"   # read-back: the command list for this Mac with each command's status
+# read-back: the command list for this Mac with each command’s status
+curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands?filter=clientManagementId==[DEVICE_ID]"
 ```
 
 ```bash
 # HUMAN-RUN — wipe one Mac through the Jamf Pro API, only after the independent review
 # SAFETY GATE [jamf-lock-erase-wipe-api]
 # Target: [SERIAL_NUMBER], management ID [DEVICE_ID]
-# Effect: wipe one Mac permanently with the ERASE_DEVICE command; every local file is destroyed and the Mac leaves management
-# Scope: one Mac; obliterationBehavior Default means Erase All Content and Settings first, then the erase fallback; the record stays in Jamf Pro
-# Reversibility: R3 — not reversible; the data is gone unless it lives elsewhere
-# Required confirmation: type exactly `WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands" -H "Authorization: Bearer ${JAMF_TOKEN}" -H "Content-Type: application/json" -d '{"clientData":[{"managementId":"[DEVICE_ID]"}],"commandData":{"commandType":"ERASE_DEVICE","obliterationBehavior":"Default"}}'   # queues ERASE_DEVICE; it runs at the next check-in
+# Effect: wipe one Mac permanently with the ERASE_DEVICE command — every local file is destroyed and the Mac leaves management
+# Scope: one Mac — obliterationBehavior Default means Erase All Content and Settings first, then the erase fallback — the record stays in Jamf Pro
+# Reversibility: R3 — not reversible — the data is gone unless it lives elsewhere
+# Required confirmation: type exactly "WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # queues ERASE_DEVICE — it runs at the next check-in
+  curl -sS -X POST "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands" -H "Authorization: Bearer ${JAMF_TOKEN}" -H "Content-Type: application/json" -d '{"clientData":[{"managementId":"[DEVICE_ID]"}],"commandData":{"commandType":"ERASE_DEVICE","obliterationBehavior":"Default"}}'
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands?filter=clientManagementId==[DEVICE_ID]"   # read-back: the command list for this Mac with each command's status
+# read-back: the command list for this Mac with each command’s status
+curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/api/v2/mdm/commands?filter=clientManagementId==[DEVICE_ID]"
 ```
 </details>
 

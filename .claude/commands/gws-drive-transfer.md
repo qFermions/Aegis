@@ -122,67 +122,86 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed   # baseline for the ne
 Two routes, different defaults: GAM's own per-file transfer leaves the source with **no** access unless `retainrole` says otherwise (the console leaves edit access), and places the files in a subfolder of the new owner's root named after the source. Its `preview` word writes a CSV of OldOwner, NewOwner, type, id, title without transferring anything — a previewed line is still a mutation and stays inside its gate. Google's data-transfer service (second fence) moves **shared** files only by default; `all` moves every file.
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-drive-transfer-drive]
-# Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
-# Effect: transfer ownership of every file the user owns (Trash excluded) to the new owner
-# Scope: one source user; files land in a subfolder of the new owner's My Drive; the source keeps no access by default
-# Reversibility: R2 — not reversible; the Phase 1 counts and the shared-items CSV are the only record
-# Required confirmation: type exactly `TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam user "[USER@DOMAIN.COM]" transfer drive "[MANAGER_UPN]"   # transfers every owned file (not Trash) to the new owner
+# Target: [USER@DOMAIN.COM] — source — and [MANAGER_UPN] — new owner
+# Effect: transfer ownership of every file the user owns — Trash excluded — to the new owner
+# Scope: one source user — files land in a subfolder of the new owner’s My Drive — the source keeps no access by default
+# Reversibility: R2 — not reversible — the Phase 1 counts and the shared-items CSV are the only record
+# Required confirmation: type exactly "TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # transfers every owned file — not Trash — to the new owner
+  gam user "[USER@DOMAIN.COM]" transfer drive "[MANAGER_UPN]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam user "[USER@DOMAIN.COM]" print filecounts excludetrashed   # read-back: the source's owned-file count should be near zero
-gam user "[MANAGER_UPN]" print filecounts excludetrashed   # read-back: the new owner's count rose by about the Phase 1 figure
+# read-back: the source’s owned-file count should be near zero
+gam user "[USER@DOMAIN.COM]" print filecounts excludetrashed
+# read-back: the new owner’s count rose by about the Phase 1 figure
+gam user "[MANAGER_UPN]" print filecounts excludetrashed
 ```
 
 ```bash
-# HUMAN-RUN — Google's data-transfer service; "all" is deliberate (the default moves shared files only)
+# HUMAN-RUN — Google’s data-transfer service — "all" is deliberate — the default moves shared files only
 # SAFETY GATE [gws-drive-transfer-datatransfer]
-# Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
-# Effect: transfer ownership of every Drive file the user owns (shared or not) to the new owner
-# Scope: one source user; a transfer folder is created in the new owner's My Drive; the previous owner keeps edit access
-# Reversibility: R2 — not reversible from the Admin console; the Phase 1 counts are the only record
-# Required confirmation: type exactly `TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam create datatransfer "[USER@DOMAIN.COM]" drive "[MANAGER_UPN]" all   # starts the transfer and prints its transfer ID
+# Target: [USER@DOMAIN.COM] — source — and [MANAGER_UPN] — new owner
+# Effect: transfer ownership of every Drive file the user owns — shared or not — to the new owner
+# Scope: one source user — a transfer folder is created in the new owner’s My Drive — the previous owner keeps edit access
+# Reversibility: R2 — not reversible from the Admin console — the Phase 1 counts are the only record
+# Required confirmation: type exactly "TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # starts the transfer and prints its transfer ID
+  gam create datatransfer "[USER@DOMAIN.COM]" drive "[MANAGER_UPN]" all
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam print datatransfers oldowner "[USER@DOMAIN.COM]"   # read-back: the transfer and its status (inprogress, completed or failed)
+# read-back: the transfer and its status — inprogress, completed or failed
+gam print datatransfers oldowner "[USER@DOMAIN.COM]"
 ```
 
 ```bash
-# HUMAN-RUN — future calendar events through the same data-transfer service (its own gate)
+# HUMAN-RUN — future calendar events through the same data-transfer service — its own gate
 # SAFETY GATE [gws-drive-transfer-calendar]
-# Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new organizer)
-# Effect: transfer the user's future non-private calendar events to the new organizer
-# Scope: future non-private events with at least one guest or resource; past events and secondary calendars do not move
-# Reversibility: R2 — not reversible from the Admin console; record the upcoming-event count first
-# Required confirmation: type exactly `TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam create datatransfer "[USER@DOMAIN.COM]" calendar "[MANAGER_UPN]"   # starts the calendar transfer; booked resources are kept by default
+# Target: [USER@DOMAIN.COM] — source — and [MANAGER_UPN] — new organizer
+# Effect: transfer the user’s future non-private calendar events to the new organizer
+# Scope: future non-private events with at least one guest or resource — past events and secondary calendars do not move
+# Reversibility: R2 — not reversible from the Admin console — record the upcoming-event count first
+# Required confirmation: type exactly "TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # starts the calendar transfer — booked resources are kept by default
+  gam create datatransfer "[USER@DOMAIN.COM]" calendar "[MANAGER_UPN]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam print datatransfers oldowner "[USER@DOMAIN.COM]"   # read-back: both transfers and their status
+# read-back: both transfers and their status
+gam print datatransfers oldowner "[USER@DOMAIN.COM]"
 ```
 </details>
 

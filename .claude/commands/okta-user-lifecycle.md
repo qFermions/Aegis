@@ -218,150 +218,192 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 ```
 
 ```bash
-# HUMAN-RUN — reset the password by API; the user sits in RECOVERY until they finish the reset flow
+# HUMAN-RUN — reset the password by API — the user sits in RECOVERY until they finish the reset flow
 # SAFETY GATE [okta-user-lifecycle-reset-password]
 # Target: [USER_ID]
-# Effect: reset the user's Okta password; the user cannot sign in until they complete the reset flow
-# Scope: one user; sendEmail=true emails the one-time link, sendEmail=false returns the link in the response for out-of-band delivery
-# Reversibility: R1 — no undo as such; a new reset replaces it; for an AD-sourced user the original AD password does not expire
-# Required confirmation: type exactly `RESET OKTA PASSWORD FOR [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="RESET OKTA PASSWORD FOR [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/reset_password?sendEmail=true" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # emails the one-time reset link; status becomes RECOVERY
+# Effect: reset the user’s Okta password — the user cannot sign in until they complete the reset flow
+# Scope: one user — sendEmail=true emails the one-time link, sendEmail=false returns the link in the response for out-of-band delivery
+# Reversibility: R1 — no undo as such — a new reset replaces it — for an AD-sourced user the original AD password does not expire
+# Required confirmation: type exactly "RESET OKTA PASSWORD FOR [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="RESET OKTA PASSWORD FOR [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # emails the one-time reset link — status becomes RECOVERY
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/reset_password?sendEmail=true" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: status RECOVERY until the user finishes, then ACTIVE
+# read-back: status RECOVERY until the user finishes, then ACTIVE
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — clear the user's Okta sessions
+# HUMAN-RUN — clear the user’s Okta sessions
 # SAFETY GATE [okta-user-lifecycle-clear-sessions]
 # Target: [USER_ID]
-# Effect: clear every active Okta identity-provider session for the user; sessions inside web or native apps are not cleared
-# Scope: one user's Okta sessions
-# Reversibility: R1 — not reversible and none needed; the user authenticates again
-# Required confirmation: type exactly `CLEAR OKTA SESSIONS FOR [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="CLEAR OKTA SESSIONS FOR [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # revokes all active identity-provider sessions
+# Effect: clear every active Okta identity-provider session for the user — sessions inside web or native apps are not cleared
+# Scope: one user’s Okta sessions
+# Reversibility: R1 — not reversible and none needed — the user authenticates again
+# Required confirmation: type exactly "CLEAR OKTA SESSIONS FOR [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="CLEAR OKTA SESSIONS FOR [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # revokes all active identity-provider sessions
+  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: the user is still ACTIVE; the System Log shows the session end
+# read-back: the user is still ACTIVE — the System Log shows the session end
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — suspend (only an ACTIVE user can be suspended)
+# HUMAN-RUN — suspend — only an ACTIVE user can be suspended
 # SAFETY GATE [okta-user-lifecycle-suspend]
 # Target: [USER_ID]
-# Effect: suspend one Okta user; group and app assignments are retained
+# Effect: suspend one Okta user — group and app assignments are retained
 # Scope: one ACTIVE user
 # Reversibility: R1 — undo with the separate unsuspend gate below under its own phrase
-# Required confirmation: type exactly `SUSPEND OKTA USER [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="SUSPEND OKTA USER [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # suspends the user
+# Required confirmation: type exactly "SUSPEND OKTA USER [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="SUSPEND OKTA USER [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # suspends the user
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: status SUSPENDED
+# read-back: status SUSPENDED
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — unsuspend (only a SUSPENDED user)
+# HUMAN-RUN — unsuspend — only a SUSPENDED user
 # SAFETY GATE [okta-user-lifecycle-unsuspend]
 # Target: [USER_ID]
-# Effect: unsuspend one Okta user; the user returns to ACTIVE with memberships intact
+# Effect: unsuspend one Okta user — the user returns to ACTIVE with memberships intact
 # Scope: one SUSPENDED user
 # Reversibility: R1 — suspend again under the suspend phrase
-# Required confirmation: type exactly `UNSUSPEND OKTA USER [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="UNSUSPEND OKTA USER [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/unsuspend" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # returns the user to ACTIVE
+# Required confirmation: type exactly "UNSUSPEND OKTA USER [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="UNSUSPEND OKTA USER [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # returns the user to ACTIVE
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/unsuspend" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: status ACTIVE
+# read-back: status ACTIVE
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — deactivate (destructive; the API warns it cannot be recovered)
+# HUMAN-RUN — deactivate — destructive — the API warns it cannot be recovered
 # SAFETY GATE [okta-user-lifecycle-deactivate]
 # Target: [USER_ID] in Okta
-# Effect: deactivate the Okta user; Okta deprovisions every assigned app that has deprovisioning enabled
-# Scope: one Okta user and its app assignments; groups and factors are kept
-# Reversibility: R3 — activation may need app assignments re-created; the Okta password is permanently deleted; app data destroyed by deprovisioning is not recovered
-# Required confirmation: type exactly `DEACTIVATE OKTA USER [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="DEACTIVATE OKTA USER [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/deactivate" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # deactivates the user; transitioningToStatus DEPROVISIONED while it runs
+# Effect: deactivate the Okta user — Okta deprovisions every assigned app that has deprovisioning enabled
+# Scope: one Okta user and its app assignments — groups and factors are kept
+# Reversibility: R3 — activation may need app assignments re-created — the Okta password is permanently deleted — app data destroyed by deprovisioning is not recovered
+# Required confirmation: type exactly "DEACTIVATE OKTA USER [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="DEACTIVATE OKTA USER [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # deactivates the user — transitioningToStatus DEPROVISIONED while it runs
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/deactivate" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: status DEPROVISIONED
+# read-back: status DEPROVISIONED
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — activate a STAGED or DEPROVISIONED user (reactivate is a different call for PROVISIONED or RECOVERY users)
+# HUMAN-RUN — activate a STAGED or DEPROVISIONED user — reactivate is a different call for PROVISIONED or RECOVERY users
 # SAFETY GATE [okta-user-lifecycle-activate]
 # Target: [USER_ID]
-# Effect: activate one STAGED or DEPROVISIONED Okta user; Okta emails the activation link
-# Scope: one user; apps removed at deactivation are not restored by this call
-# Reversibility: R1 — suspend under the suspend phrase undoes the access (deactivating again is the separate R3 gate); the user has no password until they complete the activation link
-# Required confirmation: type exactly `ACTIVATE OKTA USER [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="ACTIVATE OKTA USER [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/activate?sendEmail=true" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # starts activation and emails the link
+# Effect: activate one STAGED or DEPROVISIONED Okta user — Okta emails the activation link
+# Scope: one user — apps removed at deactivation are not restored by this call
+# Reversibility: R1 — suspend under the suspend phrase undoes the access — deactivating again is the separate R3 gate — the user has no password until they complete the activation link
+# Required confirmation: type exactly "ACTIVATE OKTA USER [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="ACTIVATE OKTA USER [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # starts activation and emails the link
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/activate?sendEmail=true" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: transitioningToStatus ACTIVE, then ACTIVE (PROVISIONED until the link is used when no password exists)
+# read-back: transitioningToStatus ACTIVE, then ACTIVE — PROVISIONED until the link is used when no password exists
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — delete (permanent; only a DEPROVISIONED user; on a user not yet deactivated the first call deactivates and a second call deletes)
+# HUMAN-RUN — delete — permanent — only a DEPROVISIONED user — on a user not yet deactivated the first call deactivates and a second call deletes
 # SAFETY GATE [okta-user-lifecycle-delete]
 # Target: [USER_ID]
-# Effect: delete one DEPROVISIONED Okta user permanently; on a user who is not yet deactivated this call deactivates instead and a second call deletes
+# Effect: delete one DEPROVISIONED Okta user permanently — on a user who is not yet deactivated this call deactivates instead and a second call deletes
 # Scope: one deactivated user and its factors, group memberships, linked objects and directory record
-# Reversibility: R3 — none; the deletion cannot be undone
-# Required confirmation: type exactly `DELETE OKTA USER [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="DELETE OKTA USER [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # deletes the deactivated user
+# Reversibility: R3 — none — the deletion cannot be undone
+# Required confirmation: type exactly "DELETE OKTA USER [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="DELETE OKTA USER [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # deletes the deactivated user
+  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: 404 — the user is no longer returned
+# read-back: 404 — the user is no longer returned
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 </details>
 

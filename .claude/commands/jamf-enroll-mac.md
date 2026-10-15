@@ -113,25 +113,31 @@ System Settings → General → Device Management → read whether an MDM profil
 <summary>Terminal on the Mac — re-run enrollment (HUMAN-RUN)</summary>
 
 ```zsh
-# HUMAN-RUN — the administrator runs this in Terminal on the Mac; Aegis never does
-# macOS 14 or earlier needs sudo; on macOS 15 or later the same command runs without it
+# HUMAN-RUN — the administrator runs this in Terminal on the Mac — Aegis never does
+# macOS 14 or earlier needs sudo — on macOS 15 or later the same command runs without it
 # SAFETY GATE [jamf-enroll-mac-renew]
 # Target: [SERIAL_NUMBER]
 # Effect: reset the device enrollment on one Mac so it re-runs Automated Device Enrollment without erasing
-# Scope: one Mac; counts as one of the 10 profiles calls Apple allows per 24 hours on an organization-owned Mac
-# Reversibility: R1 — nothing is deleted; on macOS 14 or later the user sees a full-screen prompt and may choose Not now once
-# Required confirmation: type exactly `RESET ENROLLMENT ON MAC [SERIAL_NUMBER]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="RESET ENROLLMENT ON MAC [SERIAL_NUMBER]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  sudo profiles renew -type enrollment   # asks Apple for the device enrollment again; the enrollment prompt follows
+# Scope: one Mac — counts as one of the 10 profiles calls Apple allows per 24 hours on an organization-owned Mac
+# Reversibility: R1 — nothing is deleted — on macOS 14 or later the user sees a full-screen prompt and may choose Not now once
+# Required confirmation: type exactly "RESET ENROLLMENT ON MAC [SERIAL_NUMBER]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="RESET ENROLLMENT ON MAC [SERIAL_NUMBER]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # asks Apple for the device enrollment again — the enrollment prompt follows
+  sudo profiles renew -type enrollment
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-sudo profiles show   # read-back: lists the installed profiles (also one of the rationed profiles calls)
+# read-back: lists the installed profiles — also one of the rationed profiles calls
+sudo profiles show
 ```
 </details>
 
@@ -147,25 +153,32 @@ Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → History �
 <summary>Terminal on the Mac — check in and submit inventory (HUMAN-RUN)</summary>
 
 ```zsh
-# HUMAN-RUN — the administrator runs this in Terminal on the enrolled Mac; Aegis never does
+# HUMAN-RUN — the administrator runs this in Terminal on the enrolled Mac — Aegis never does
 # SAFETY GATE [jamf-enroll-mac-checkin]
 # Target: [SERIAL_NUMBER]
 # Effect: submit a fresh inventory from one Mac after a policy check-in
-# Scope: one Mac; policies scoped to it run during the check-in, exactly as they would at the next scheduled one
-# Reversibility: R1 — nothing is deleted; whatever a policy changes is that policy's own change, not this gate's
-# Required confirmation: type exactly `SUBMIT INVENTORY FROM MAC [SERIAL_NUMBER]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="SUBMIT INVENTORY FROM MAC [SERIAL_NUMBER]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  sudo jamf policy   # starts a check-in; policies scoped to this Mac run now
-  sudo jamf recon   # submits a fresh inventory record
+# Scope: one Mac — policies scoped to it run during the check-in, exactly as they would at the next scheduled one
+# Reversibility: R1 — nothing is deleted — whatever a policy changes is that policy’s own change, not this gate’s
+# Required confirmation: type exactly "SUBMIT INVENTORY FROM MAC [SERIAL_NUMBER]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="SUBMIT INVENTORY FROM MAC [SERIAL_NUMBER]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # starts a check-in — policies scoped to this Mac run now
+  sudo jamf policy
+  # submits a fresh inventory record
+  sudo jamf recon
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-jamf help   # read-back: the binary's manual page answers, so the management framework is installed
+# read-back: the binary’s manual page answers, so the management framework is installed
+jamf help
 ```
 </details>
 

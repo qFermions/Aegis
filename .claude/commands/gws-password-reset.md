@@ -96,45 +96,57 @@ gam info user "[USER@DOMAIN.COM]"   # prints status, OU, suspension and 2SV enro
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-password-reset-password]
 # Target: [USER@DOMAIN.COM]
-# Effect: reset the user's Google Workspace password to a random value that must be changed at the next sign-in
-# Scope: one account's password; the user is signed out immediately when changepassword is set
-# Reversibility: R1 — the old password cannot be restored; another reset under a fresh phrase is the only undo
-# Required confirmation: type exactly `RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam update user "[USER@DOMAIN.COM]" password random changepassword true logpassword -   # sets a random password, forces a change at next sign-in, prints the password once
+# Effect: reset the user’s Google Workspace password to a random value that must be changed at the next sign-in
+# Scope: one account’s password — the user is signed out immediately when changepassword is set
+# Reversibility: R1 — the old password cannot be restored — another reset under a fresh phrase is the only undo
+# Required confirmation: type exactly "RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # sets a random password, forces a change at next sign-in, prints the password once
+  gam update user "[USER@DOMAIN.COM]" password random changepassword true logpassword -
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]"   # read-back: the change-password-at-next-login flag is now set
+# read-back: the change-password-at-next-login flag is now set
+gam info user "[USER@DOMAIN.COM]"
 ```
 
 ```bash
-# HUMAN-RUN — optional; only when existing sessions must end now
+# HUMAN-RUN — optional — only when existing sessions must end now
 # SAFETY GATE [gws-password-reset-cookies]
 # Target: [USER@DOMAIN.COM]
-# Effect: reset the user's sign-in cookies; every web and device session is signed out
-# Scope: one account's Google sessions
-# Reversibility: R1 — nothing is deleted; the user signs in again
-# Required confirmation: type exactly `RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam user "[USER@DOMAIN.COM]" signout   # signs the user out of all web and device sessions and resets their sign-in cookies
+# Effect: reset the user’s sign-in cookies — every web and device session is signed out
+# Scope: one account’s Google sessions
+# Reversibility: R1 — nothing is deleted — the user signs in again
+# Required confirmation: type exactly "RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # signs the user out of all web and device sessions and resets their sign-in cookies
+  gam user "[USER@DOMAIN.COM]" signout
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]"   # read-back: the account is still Active; the sign-out shows as a fresh sign-in prompt on the user's devices
+# read-back: the account is still Active — the sign-out shows as a fresh sign-in prompt on the user’s devices
+gam info user "[USER@DOMAIN.COM]"
 ```
 </details>
 

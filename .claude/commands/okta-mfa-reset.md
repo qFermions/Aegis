@@ -93,45 +93,57 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 ```
 
 ```bash
-# HUMAN-RUN — unenroll one factor (the single-factor equivalent of Phase B)
+# HUMAN-RUN — unenroll one factor — the single-factor equivalent of Phase B
 # SAFETY GATE [okta-mfa-reset-factor]
-# Target: [USER_ID] (the factor set in FACTOR_ID)
-# Effect: unenroll one MFA factor for the user; the user can then enroll a new one
-# Scope: one factor on one Active user; unenrolling an Okta Verify push or signed_nonce factor also unenrolls the user's other Okta Verify factors
-# Reversibility: R2 — not reversible — the enrollment is gone and the user enrolls again; the call is refused on a deactivated user
-# Required confirmation: type exactly `UNENROLL OKTA FACTOR FOR [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="UNENROLL OKTA FACTOR FOR [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors/${FACTOR_ID}" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # unenrolls that one factor
+# Target: [USER_ID] — the factor set in FACTOR_ID
+# Effect: unenroll one MFA factor for the user — the user can then enroll a new one
+# Scope: one factor on one Active user — unenrolling an Okta Verify push or signed_nonce factor also unenrolls the user’s other Okta Verify factors
+# Reversibility: R2 — not reversible — the enrollment is gone and the user enrolls again — the call is refused on a deactivated user
+# Required confirmation: type exactly "UNENROLL OKTA FACTOR FOR [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="UNENROLL OKTA FACTOR FOR [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # unenrolls that one factor
+  curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors/${FACTOR_ID}" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: the factor is no longer listed
+# read-back: the factor is no longer listed
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 
 ```bash
-# HUMAN-RUN — reset ALL factors (the API equivalent of Phase C); the user stays ACTIVE
+# HUMAN-RUN — reset ALL factors — the API equivalent of Phase C — the user stays ACTIVE
 # SAFETY GATE [okta-mfa-reset-all]
 # Target: [USER_ID]
-# Effect: reset every MFA factor enrollment for the user to the unenrolled state; the user's status stays ACTIVE
+# Effect: reset every MFA factor enrollment for the user to the unenrolled state — the user’s status stays ACTIVE
 # Scope: all factors on one user
 # Reversibility: R3 — not reversible — the user enrolls every factor again
-# Required confirmation: type exactly `RESET ALL OKTA FACTORS FOR [USER_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="RESET ALL OKTA FACTORS FOR [USER_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/reset_factors" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # returns every factor to the unenrolled state
+# Required confirmation: type exactly "RESET ALL OKTA FACTORS FOR [USER_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="RESET ALL OKTA FACTORS FOR [USER_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # returns every factor to the unenrolled state
+  curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/reset_factors" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Authorization: SSWS ${OKTA_API_TOKEN}"   # read-back: an empty list
+# read-back: an empty list
+curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Authorization: SSWS ${OKTA_API_TOKEN}"
 ```
 </details>
 

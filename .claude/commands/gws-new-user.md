@@ -125,45 +125,57 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-new-user-create]
 # Target: [USER@DOMAIN.COM] in [OU_PATH]
 # Effect: create one Google Workspace user account in the organizational unit with a random password the user must change
-# Scope: one account; licence and settings follow the OU and the licence rule
-# Reversibility: R1 as a creation — the undo is the separate delete-user procedure (20-day restore window)
-# Required confirmation: type exactly `CREATE GOOGLE USER [USER@DOMAIN.COM] IN [OU_PATH]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="CREATE GOOGLE USER [USER@DOMAIN.COM] IN [OU_PATH]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam create user "[USER@DOMAIN.COM]" firstname "[FIRST_NAME]" lastname "[LAST_NAME]" ou "[OU_PATH]" password random changepassword true logpassword -   # creates the account in the OU; prints the random password once (hand it over out of band)
+# Scope: one account — licence and settings follow the OU and the licence rule
+# Reversibility: R1 as a creation — the undo is the separate delete-user procedure — 20-day restore window
+# Required confirmation: type exactly "CREATE GOOGLE USER [USER@DOMAIN.COM] IN [OU_PATH]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="CREATE GOOGLE USER [USER@DOMAIN.COM] IN [OU_PATH]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # creates the account in the OU — prints the random password once — hand it over out of band
+  gam create user "[USER@DOMAIN.COM]" firstname "[FIRST_NAME]" lastname "[LAST_NAME]" ou "[OU_PATH]" password random changepassword true logpassword -
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]"   # read-back: status, OU, licences and group memberships
+# read-back: status, OU, licences and group memberships
+gam info user "[USER@DOMAIN.COM]"
 ```
 
 ```bash
-# HUMAN-RUN — one group per run; repeat with a fresh confirmation for each group
+# HUMAN-RUN — one group per run — repeat with a fresh confirmation for each group
 # SAFETY GATE [gws-new-user-group-add]
 # Target: [USER@DOMAIN.COM] and [GROUP_EMAIL]
 # Effect: add one member to the group with the Member role
 # Scope: one user in one group
 # Reversibility: R1 — the undo is the separate remove-member procedure under its own phrase
-# Required confirmation: type exactly `ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam update group "[GROUP_EMAIL]" add member "[USER@DOMAIN.COM]"   # adds the user to the group as a Member
+# Required confirmation: type exactly "ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # adds the user to the group as a Member
+  gam update group "[GROUP_EMAIL]" add member "[USER@DOMAIN.COM]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam print group-members group "[GROUP_EMAIL]"   # read-back: the member list with role and status
+# read-back: the member list with role and status
+gam print group-members group "[GROUP_EMAIL]"
 ```
 </details>
 

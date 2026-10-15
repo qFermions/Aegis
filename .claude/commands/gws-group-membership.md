@@ -93,45 +93,57 @@ gam info member "[USER@DOMAIN.COM]" "[GROUP_EMAIL]"   # the user's membership re
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-group-membership-add]
 # Target: [USER@DOMAIN.COM] and [GROUP_EMAIL]
 # Effect: add one member to the group with the Member role
 # Scope: one user in one group
 # Reversibility: R1 — the undo is the separate remove-member gate below under its own phrase
-# Required confirmation: type exactly `ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam update group "[GROUP_EMAIL]" add member "[USER@DOMAIN.COM]"   # adds the user to the group with the Member role
+# Required confirmation: type exactly "ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # adds the user to the group with the Member role
+  gam update group "[GROUP_EMAIL]" add member "[USER@DOMAIN.COM]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam print group-members group "[GROUP_EMAIL]"   # read-back: the user is listed with role MEMBER
+# read-back: the user is listed with role MEMBER
+gam print group-members group "[GROUP_EMAIL]"
 ```
 
 ```bash
-# HUMAN-RUN — capture the pre-state first (the Phase A member list), then remove
+# HUMAN-RUN — capture the pre-state first — the Phase A member list, then remove
 # SAFETY GATE [gws-group-membership-remove]
 # Target: [USER@DOMAIN.COM] and [GROUP_EMAIL]
 # Effect: remove one member from the group
-# Scope: one membership; nothing else on the user or the group changes
-# Reversibility: R2 — SR-2 group removal; the separate add gate restores membership as Member only, so the captured role is the record
-# Required confirmation: type exactly `REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam update group "[GROUP_EMAIL]" remove member "[USER@DOMAIN.COM]"   # removes the membership regardless of the member's role
+# Scope: one membership — nothing else on the user or the group changes
+# Reversibility: R2 — SR-2 group removal — the separate add gate restores membership as Member only, so the captured role is the record
+# Required confirmation: type exactly "REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # removes the membership regardless of the member’s role
+  gam update group "[GROUP_EMAIL]" remove member "[USER@DOMAIN.COM]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam print group-members group "[GROUP_EMAIL]"   # read-back: the user no longer appears in the member list
+# read-back: the user no longer appears in the member list
+gam print group-members group "[GROUP_EMAIL]"
 ```
 </details>
 

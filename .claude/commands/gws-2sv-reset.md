@@ -148,45 +148,57 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-2sv-reset-backup-codes]
 # Target: [USER@DOMAIN.COM]
-# Effect: replace the user's backup verification codes with a new set; the previous set stops working
-# Scope: one user's backup codes; 2SV and the enrolled keys are untouched
-# Reversibility: R1 — the old set cannot be restored; another run under a fresh phrase issues another set
-# Required confirmation: type exactly `REPLACE BACKUP CODES FOR [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="REPLACE BACKUP CODES FOR [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam user "[USER@DOMAIN.COM]" update backupcodes   # generates a new set of backup codes; the old set is invalidated (fails for a suspended user)
+# Effect: replace the user’s backup verification codes with a new set — the previous set stops working
+# Scope: one user’s backup codes — 2SV and the enrolled keys are untouched
+# Reversibility: R1 — the old set cannot be restored — another run under a fresh phrase issues another set
+# Required confirmation: type exactly "REPLACE BACKUP CODES FOR [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="REPLACE BACKUP CODES FOR [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # generates a new set of backup codes — the old set is invalidated — fails for a suspended user
+  gam user "[USER@DOMAIN.COM]" update backupcodes
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam user "[USER@DOMAIN.COM]" show backupcodes   # read-back: the new set; hand ONE code to the user out of band, never in the ticket
+# read-back: the new set — hand ONE code to the user out of band, never in the ticket
+gam user "[USER@DOMAIN.COM]" show backupcodes
 ```
 
 ```bash
-# HUMAN-RUN — last resort only; the pre-state and justification must already be in the ticket
+# HUMAN-RUN — last resort only — the pre-state and justification must already be in the ticket
 # SAFETY GATE [gws-2sv-reset-turn-off]
 # Target: [USER@DOMAIN.COM]
-# Effect: disable 2-Step Verification for one user; every registered second step is removed with it
-# Scope: one user; the call fails if the user is suspended, not enrolled, enforced, or in the Advanced Protection Program
-# Reversibility: R3 — only the user can turn 2SV back on; the recorded pre-state is the reference for re-enrollment
-# Required confirmation: type exactly `DISABLE 2-STEP VERIFICATION FOR [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="DISABLE 2-STEP VERIFICATION FOR [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam user "[USER@DOMAIN.COM]" turnoff2sv   # turns 2SV off for the user and removes all registered second steps (Directory API behavior)
+# Effect: disable 2-Step Verification for one user — every registered second step is removed with it
+# Scope: one user — the call fails if the user is suspended, not enrolled, enforced, or in the Advanced Protection Program
+# Reversibility: R3 — only the user can turn 2SV back on — the recorded pre-state is the reference for re-enrollment
+# Required confirmation: type exactly "DISABLE 2-STEP VERIFICATION FOR [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="DISABLE 2-STEP VERIFICATION FOR [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # turns 2SV off for the user and removes all registered second steps — Directory API behavior
+  gam user "[USER@DOMAIN.COM]" turnoff2sv
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]"   # read-back: Is Enrolled In 2Sv now reads False
+# read-back: Is Enrolled In 2Sv now reads False
+gam info user "[USER@DOMAIN.COM]"
 ```
 </details>
 

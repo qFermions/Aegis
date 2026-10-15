@@ -91,24 +91,30 @@ gam info ou "[OU_PATH]" nousers   # prints the destination unit without listing 
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-ou-move-user]
-# Target: [USER@DOMAIN.COM] (destination [OU_PATH])
-# Effect: move one user to [OU_PATH] so the user inherits that organizational unit's settings
-# Scope: one user; group memberships, licences, data and admin roles are untouched
+# Target: [USER@DOMAIN.COM] — destination [OU_PATH]
+# Effect: move one user to [OU_PATH] so the user inherits that organizational unit’s settings
+# Scope: one user — group memberships, licences, data and admin roles are untouched
 # Reversibility: R2 — a second move back to the source path recorded as pre-state, under its own phrase
-# Required confirmation: type exactly `MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam update user "[USER@DOMAIN.COM]" ou "[OU_PATH]"   # moves the user; the destination unit's settings now apply
+# Required confirmation: type exactly "MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # moves the user — the destination unit’s settings now apply
+  gam update user "[USER@DOMAIN.COM]" ou "[OU_PATH]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]" fields ou   # read-back: the organizational unit should read [OU_PATH]
+# read-back: the organizational unit should read [OU_PATH]
+gam info user "[USER@DOMAIN.COM]" fields ou
 ```
 </details>
 

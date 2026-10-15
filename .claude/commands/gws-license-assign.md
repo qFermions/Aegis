@@ -107,46 +107,59 @@ Archiving is the vendor's data-keeping alternative: an Archived User licence kee
 In GAM, licence commands take the SKU as `[LICENSE_TYPE]` (a SKU ID or one of GAM's abbreviations from its Licenses page). Both commands accept a `preview` word that shows the change without making it — a previewed line is still a mutation and stays inside its gate.
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-license-assign-assign]
-# Target: [USER@DOMAIN.COM] ([LICENSE_TYPE])
+# Target: [USER@DOMAIN.COM] — [LICENSE_TYPE]
 # Effect: assign one [LICENSE_TYPE] licence to the user
 # Scope: one user, one subscription
 # Reversibility: R1 — undo with the separate removal gate under its own phrase
-# Required confirmation: type exactly `ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam user "[USER@DOMAIN.COM]" add license "[LICENSE_TYPE]"   # assigns the SKU to the user
+# Required confirmation: type exactly "ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # assigns the SKU to the user
+  gam user "[USER@DOMAIN.COM]" add license "[LICENSE_TYPE]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]" licenses   # read-back: the SKU should be listed for the user
+# read-back: the SKU should be listed for the user
+gam info user "[USER@DOMAIN.COM]" licenses
 ```
 
 ```bash
 # HUMAN-RUN — remove only after the Phase 1 pre-state and the archive-or-remove decision are in the ticket
 # SAFETY GATE [gws-license-assign-remove]
-# Target: [USER@DOMAIN.COM] ([LICENSE_TYPE])
-# Effect: remove one [LICENSE_TYPE] licence from the user; data behind that licence may be lost
-# Scope: one user, one subscription; the account stays active
-# Reversibility: R3 — re-assigning does not restore data lost in between; the Phase 1 record is the only pre-state
-# Required confirmation: type exactly `REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam user "[USER@DOMAIN.COM]" delete license "[LICENSE_TYPE]"   # removes the SKU from the user
+# Target: [USER@DOMAIN.COM] — [LICENSE_TYPE]
+# Effect: remove one [LICENSE_TYPE] licence from the user — data behind that licence may be lost
+# Scope: one user, one subscription — the account stays active
+# Reversibility: R3 — re-assigning does not restore data lost in between — the Phase 1 record is the only pre-state
+# Required confirmation: type exactly "REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # removes the SKU from the user
+  gam user "[USER@DOMAIN.COM]" delete license "[LICENSE_TYPE]"
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info user "[USER@DOMAIN.COM]" licenses   # read-back: the SKU should no longer be listed
-gam show licenses   # read-back: the freed seat shows in the per-SKU counts (reassignment may lag up to 24 hours)
+# read-back: the SKU should no longer be listed
+gam info user "[USER@DOMAIN.COM]" licenses
+# read-back: the freed seat shows in the per-SKU counts — reassignment may lag up to 24 hours
+gam show licenses
 ```
 </details>
 

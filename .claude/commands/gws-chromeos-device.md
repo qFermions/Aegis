@@ -152,108 +152,138 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
 ```bash
-# HUMAN-RUN — the administrator runs this in their own terminal; Aegis never does
+# HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-chromeos-device-reenable]
 # Target: [DEVICE_ID]
 # Effect: enable one disabled ChromeOS device again
-# Scope: one device; it stays in its OU with its policies and needs an available upgrade
+# Scope: one device — it stays in its OU with its policies and needs an available upgrade
 # Reversibility: R1 — the separate disable procedure under its own phrase
-# Required confirmation: type exactly `RE-ENABLE CHROMEBOOK [DEVICE_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="RE-ENABLE CHROMEBOOK [DEVICE_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam cros "[DEVICE_ID]" update action reenable   # re-enables the device; it has to be online for the change to land
+# Required confirmation: type exactly "RE-ENABLE CHROMEBOOK [DEVICE_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="RE-ENABLE CHROMEBOOK [DEVICE_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # re-enables the device — it has to be online for the change to land
+  gam cros "[DEVICE_ID]" update action reenable
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info cros "[DEVICE_ID]" fields status,lastsync   # read-back: the status is no longer disabled
+# read-back: the status is no longer disabled
+gam info cros "[DEVICE_ID]" fields status,lastsync
 ```
 
 ```bash
 # HUMAN-RUN — lost or stolen: disable with a lock screen
 # SAFETY GATE [gws-chromeos-device-disable]
 # Target: [DEVICE_ID]
-# Effect: disable one ChromeOS device; nobody can sign in until it is re-enabled
-# Scope: one device; it stays enrolled with its upgrade and its policies
+# Effect: disable one ChromeOS device — nobody can sign in until it is re-enabled
+# Scope: one device — it stays enrolled with its upgrade and its policies
 # Reversibility: R1 — the separate re-enable procedure under its own phrase
-# Required confirmation: type exactly `DISABLE CHROMEBOOK [DEVICE_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="DISABLE CHROMEBOOK [DEVICE_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam cros "[DEVICE_ID]" update action disable   # disables the device; it has to be online for the change to land
+# Required confirmation: type exactly "DISABLE CHROMEBOOK [DEVICE_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="DISABLE CHROMEBOOK [DEVICE_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # disables the device — it has to be online for the change to land
+  gam cros "[DEVICE_ID]" update action disable
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info cros "[DEVICE_ID]" fields status,lastsync   # read-back: the status reads disabled
+# read-back: the status reads disabled
+gam info cros "[DEVICE_ID]" fields status,lastsync
 ```
 
 ```bash
 # HUMAN-RUN — broken profile: clear the user profiles, device stays enrolled
 # SAFETY GATE [gws-chromeos-device-wipe-users]
 # Target: [DEVICE_ID]
-# Effect: clear every user profile from one ChromeOS device; unsynced local data is deleted and the device stays in the fleet
+# Effect: clear every user profile from one ChromeOS device — unsynced local data is deleted and the device stays in the fleet
 # Scope: one device, through the wipe_users remote command
-# Reversibility: R3 — the removed data cannot be recovered; no re-enrollment is needed
-# Required confirmation: type exactly `CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam cros "[DEVICE_ID]" issuecommand command wipe_users times_to_check_status 10 doit   # queues wipe_users (doit acknowledges the data loss) and polls its status up to 10 times
+# Reversibility: R3 — the removed data cannot be recovered — no re-enrollment is needed
+# Required confirmation: type exactly "CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # queues wipe_users — doit acknowledges the data loss — and polls its status up to 10 times
+  gam cros "[DEVICE_ID]" issuecommand command wipe_users times_to_check_status 10 doit
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info cros "[DEVICE_ID]" fields status,lastsync,recentusers   # read-back: still enrolled; the recent-users list restarts once the device reports in
+# read-back: still enrolled — the recent-users list restarts once the device reports in
+gam info cros "[DEVICE_ID]" fields status,lastsync,recentusers
 ```
 
 ```bash
-# HUMAN-RUN — start over: remote powerwash (Factory Reset); read the forced re-enrollment value first
+# HUMAN-RUN — start over: remote powerwash — Factory Reset — read the forced re-enrollment value first
 # SAFETY GATE [gws-chromeos-device-powerwash]
 # Target: [DEVICE_ID]
-# Effect: powerwash one ChromeOS device remotely; all local data including user profiles is removed and the device re-enrolls automatically only if forced re-enrollment is on
-# Scope: one device, through the remote_powerwash remote command; the device must be reconnected to Wi-Fi by hand
-# Reversibility: R3 — cannot be undone; with forced re-enrollment off the device comes back unmanaged and must be enrolled manually
-# Required confirmation: type exactly `POWERWASH CHROMEBOOK [DEVICE_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="POWERWASH CHROMEBOOK [DEVICE_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam cros "[DEVICE_ID]" issuecommand command remote_powerwash times_to_check_status 10 doit   # queues the powerwash (doit acknowledges data and management loss) and polls its status up to 10 times
+# Effect: powerwash one ChromeOS device remotely — all local data including user profiles is removed and the device re-enrolls automatically only if forced re-enrollment is on
+# Scope: one device, through the remote_powerwash remote command — the device must be reconnected to Wi-Fi by hand
+# Reversibility: R3 — cannot be undone — with forced re-enrollment off the device comes back unmanaged and must be enrolled manually
+# Required confirmation: type exactly "POWERWASH CHROMEBOOK [DEVICE_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="POWERWASH CHROMEBOOK [DEVICE_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # queues the powerwash — doit acknowledges data and management loss — and polls its status up to 10 times
+  gam cros "[DEVICE_ID]" issuecommand command remote_powerwash times_to_check_status 10 doit
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info cros "[DEVICE_ID]" fields status,lastsync,lastenrollmenttime   # read-back: a new enrollment time appears once the device re-enrolls
+# read-back: a new enrollment time appears once the device re-enrolls
+gam info cros "[DEVICE_ID]" fields status,lastsync,lastenrollmenttime
 ```
 
 ```bash
 # HUMAN-RUN — retirement: deprovision as "retiring from fleet", only after the independent review
 # SAFETY GATE [gws-chromeos-device-deprovision]
 # Target: [DEVICE_ID]
-# Effect: deprovision one ChromeOS device as retiring from fleet; every policy is removed and the device leaves management
-# Scope: one device (the default max_to_deprov of one refuses a wider selection); the device stays listed in its OU
-# Reversibility: R3 — no undo; wipe the device and enroll it manually to manage it again
-# Required confirmation: type exactly `DEPROVISION CHROMEBOOK [DEVICE_ID]`
-# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
-required_confirmation="DEPROVISION CHROMEBOOK [DEVICE_ID]"   # the exact phrase to type
-printf '%s\n' "Type exactly: $required_confirmation"   # shows the phrase
-IFS= read -r confirmation   # reads one line exactly as typed
-if [ "$confirmation" = "$required_confirmation" ]; then   # exact, case-sensitive match only
-  gam cros "[DEVICE_ID]" update action deprovision_retiring_device acknowledge_device_touch_requirement   # deprovisions with reason "retiring from fleet"; the acknowledgement flag is mandatory because the action is not reversible
+# Effect: deprovision one ChromeOS device as retiring from fleet — every policy is removed and the device leaves management
+# Scope: one device — the default max_to_deprov of one refuses a wider selection — the device stays listed in its OU
+# Reversibility: R3 — no undo — wipe the device and enroll it manually to manage it again
+# Required confirmation: type exactly "DEPROVISION CHROMEBOOK [DEVICE_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase to type
+required_confirmation="DEPROVISION CHROMEBOOK [DEVICE_ID]"
+# shows the phrase
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # deprovisions with reason "retiring from fleet" — the acknowledgement flag is mandatory because the action is not reversible
+  gam cros "[DEVICE_ID]" update action deprovision_retiring_device acknowledge_device_touch_requirement
 else
-  echo "Confirmation did not match. No change was made." >&2   # explains the stop
-  exit 1   # stops with a failure status
+  # explains the stop
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
 fi
-gam info cros "[DEVICE_ID]" fields status,deprovisionreason,lastdeprovisiontimestamp   # read-back: status deprovisioned, with the reason and timestamp
+# read-back: status deprovisioned, with the reason and timestamp
+gam info cros "[DEVICE_ID]" fields status,deprovisionreason,lastdeprovisiontimestamp
 ```
 </details>
 

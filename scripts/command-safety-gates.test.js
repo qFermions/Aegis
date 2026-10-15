@@ -1029,7 +1029,14 @@ const SHELL_PROMPT_LINE = /^\s*(?:printf '%s\\n'|echo) "(?:[^"$`\\]|\$required_c
 // start, after ; & | ( ) { } ! = :, a backtick, $(, do/then/else/elif/if/while/until)
 // and behind any wrapper (command, env, time, nohup, sudo, …) or a leading backslash —
 // `{ alias '['=true; }` and `if :; then alias …; fi` are as live as a bare `alias`.
-const SHELL_COMMAND_POSITION = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}\\?`;
+// Shell command positions only (a case label's `)` included; `=` and `:` are not
+// command starts in a shell).
+const SHELL_COMMAND_POSITION = String.raw`(?:${SHELL_PROMPT}|^|[;&|(){}\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}\\?`;
+// Quotes and backslashes inside a word do not change the word bash runs
+// (`'alias'`, `"alias"`, `$'alias'`, `al\ias`, `r''eadonly` all run the builtin), so
+// the shadowing rows are also tried on a copy with them removed.
+const unquotedShellWords = (statement) => statement.replace(/\$'/g, "'").replace(/["'\\]/g, '');
+const shadows = ([pattern], statement) => pattern.test(statement) || pattern.test(unquotedShellWords(statement));
 const SHELL_SHADOWING = [
   [new RegExp(String.raw`${SHELL_COMMAND_POSITION}(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b`), 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
   [new RegExp(String.raw`${SHELL_COMMAND_POSITION}\.\s+\S`), 'dot-sourcing is forbidden in a gated fence'],
@@ -1103,7 +1110,9 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
 
   code.forEach((statement, index) => {
     if (!statement) return;
-    for (const [pattern, message] of SHELL_FORBIDDEN) if (pattern.test(statement)) problems.push(`line ${index + 1}: ${message}`);
+    for (const row of SHELL_FORBIDDEN) {
+      if (SHELL_SHADOWING.includes(row) ? shadows(row, statement) : row[0].test(statement)) problems.push(`line ${index + 1}: ${row[1]}`);
+    }
   });
 
   const requiredAssignments = code.map((statement, index) => ({ statement, index }))
@@ -2063,11 +2072,12 @@ function gateShadowingOutsideGates(document, gatedFenceIds) {
   const problems = [];
   for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
     fence.lines.forEach((rawLine, offset) => {
-      const statement = shellCodeOf(rawLine);
-      if (!statement) return;
-      for (const [pattern, message] of SHELL_SIBLING_FORBIDDEN) {
-        if (pattern.test(statement)) {
-          problems.push(`${document.file}:${fence.startLine + offset}: a shell fence beside a gated fence may not shadow or redefine read, [ or the shell (${message})`);
+      // As bash reads it, and as a shell that does not treat `#` as a comment reads
+      // it (a comment line or a trailing comment is then code).
+      const readings = [shellCodeOf(rawLine), rawLine.trim()].filter(Boolean);
+      for (const row of SHELL_SIBLING_FORBIDDEN) {
+        if (readings.some((statement) => shadows(row, statement))) {
+          problems.push(`${document.file}:${fence.startLine + offset}: a shell fence beside a gated fence may not shadow or redefine read, [ or the shell (${row[1]})`);
         }
       }
     });
@@ -2227,6 +2237,10 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     ['shadow-after-fi-keyword', [...header, ...body, 'if :; then [ () { return 0; }; fi']],
     ['shadow-after-fi-wrapper', [...header, ...body, 'command declare -r confirmation=x']],
     ['hook-after-fi', [...header, ...body, `{ PROMPT_COMMAND='true'; }`]],
+    // WARDEN pass 5: quoted or escaped names and a case label after fi
+    ['quoted-alias-after-fi', [...header, ...body, `'alias' '['=true`]],
+    ['escaped-readonly-after-fi', [...header, ...body, 'read\\only required_confirmation=']],
+    ['case-label-after-fi', [...header, ...body, `case x in x) alias '['=true;; esac`]],
     ['exit-256-in-else', replace('  exit 1', '  exit 256')],
     ['exit-512-in-else', replace('  exit 1', '  exit 512')],
   ];
@@ -2327,7 +2341,11 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
   for (const shadow of ['c=required_confirm; { readonly "${c}ation="; }', '{ [ () { return 0; }; }', `{ alias '['=true; }`,
     `if :; then alias '['=true; fi`, `command alias '['=true`, `\\alias '['=true`, `time alias '['=true`, `! alias '['=true`,
     `for x in 1; do alias '['=true; done`, `env alias '['=true`, 'command declare -f', '{ . ./fixture-helpers.sh; }',
-    `if :; then PROMPT_COMMAND='confirmation=x'; fi`, `{ bind -x '"\\C-m": true'; }`]) {
+    `if :; then PROMPT_COMMAND='confirmation=x'; fi`, `{ bind -x '"\\C-m": true'; }`,
+    // WARDEN pass 5, P5-1: a quoted or escaped name, a case label, and a comment or
+    // trailing comment that turns into code where `#` is a plain word
+    `'alias' '['=true`, `"alias" '['=true`, `$'alias' '['=true`, `al\\ias '['=true`, `r''eadonly required_confirmation=`,
+    `case x in x) alias '['=true;; esac`, `# note; alias '['=true`, `gam info user "[USER@DOMAIN.COM]"   # ; alias '['=true`]) {
     assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
   }
   assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"']) + gated), '');

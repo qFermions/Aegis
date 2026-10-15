@@ -151,7 +151,7 @@ gam info user "[USER@DOMAIN.COM]"   # read-back: the account is still Active; th
 - [ ] `gam info user "[USER@DOMAIN.COM]"` shows the account Active with the change-password-at-next-login flag set (cleared again once the user has changed it).
 - [ ] The user signed in with the temporary password, set a new one, and reaches Gmail on their device.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the password-reset event (and the sign-in-cookie reset, if used) with the expected admin and time.
-- [ ] Okta SSO path: the Okta reset was done in the Okta procedure and this runbook's Phase B was skipped — recorded in the ticket.
+- [ ] Okta SSO path: the Okta reset was done in `/okta-user-lifecycle` and this runbook's Phase B was skipped — recorded in the ticket.
 
 ## 📝 Jira-ready note
 

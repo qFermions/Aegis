@@ -38,7 +38,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 1. Phase 1 — capture the pre-state: both accounts' status, owned-file count, shared-item count, Vault hold check (R0).
 2. Phase 2 — transfer Drive ownership (R2 gate). **WAIT UNTIL** the confirmation email arrives and the counts move.
 3. Phase 3 — transfer future calendar events (separate R2 gate). **WAIT UNTIL** the new secondary calendar appears for the new owner.
-4. Phase 4 — read back, record, hand the account to the offboarding runbook if it is being closed.
+4. Phase 4 — read back, record, hand the account to `/gws-offboard` if it is being closed.
 
 ## Phase 1 — Pre-state (R0)
 
@@ -66,7 +66,7 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed   # baseline for the ne
 
 **Verification checkpoint** — [ ] both statuses recorded · [ ] owned-file count and shared-item count (and the shared-items CSV) attached to the ticket · [ ] no Vault hold · [ ] recipient's baseline count recorded.
 
-**Gotcha** — the vendor's own Step 1 suggests suspending the source account during the transfer so they cannot create or move content meanwhile. Suspension is its own gated action (the offboarding runbook holds it); do it there if the ticket calls for it, and restore the account afterwards if it stays.
+**Gotcha** — the vendor's own Step 1 suggests suspending the source account during the transfer so they cannot create or move content meanwhile. Suspension is its own gated action (`/gws-offboard` holds it); do it there if the ticket calls for it, and restore the account afterwards if it stays.
 
 ## Phase 2 — Transfer Drive ownership (R2)
 

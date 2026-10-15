@@ -14,7 +14,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## ⚠️ Admin / safety gate
 
 - **Stop first if the ticket smells like a compromise** — sign-ins the user did not make, a phishing click, Okta Verify pushes they did not send, or a "reset my MFA" request that arrived by email or chat instead of from the person. Route it through `/security-alert-triage` before any reset: resetting MFA on a compromised account hands the attacker a fresh enrollment.
-- **Okta MFA is not Google 2-Step Verification.** They are two separate controls on two separate systems. Resetting Okta authenticators does nothing to the user's Google 2-Step Verification, and the reverse is also true. Google 2-Step Verification (backup codes, security keys, passkeys) is managed in the Google Admin console by the Google 2-Step Verification runbook, not here.
+- **Okta MFA is not Google 2-Step Verification.** They are two separate controls on two separate systems. Resetting Okta authenticators does nothing to the user's Google 2-Step Verification, and the reverse is also true. Google 2-Step Verification (backup codes, security keys, passkeys) is managed in the Google Admin console by `/gws-2sv-reset`, not here.
 - **A reset cannot be undone.** Okta cancels the selected enrollments and the user must enroll again. Resetting *selected* authenticators (Phase B) and resetting *all* authenticators (Phase C) are separate gates with separate phrases.
 - Verify the person's identity out of band before any reset — **[org gap — confirm the identity-proofing step]**. Never accept the request on the strength of the message it arrived in.
 - Not done until the user has re-enrolled and completed a sign-in.

@@ -189,7 +189,7 @@ Activate and reactivate are two different API calls: **activate** works on STAGE
 1. Okta Admin Console → Directory → People → filter the **Status** menu to **Deactivated** → `[UPN]` → **Activate** on the profile page.
 2. Confirm in the **Activate Person** dialog, then read the status back as **Active** (or **Pending user action** until the user finishes the activation email).
 
-**WAIT UNTIL** the user completes the activation email, then check the Applications tab and re-assign what the role needs (the Okta app assignment runbook).
+**WAIT UNTIL** the user completes the activation email, then check the Applications tab and re-assign what the role needs (`/okta-app-assignment`).
 
 ## Phase H — Delete (R3, permanent, after deactivation and independent review)
 

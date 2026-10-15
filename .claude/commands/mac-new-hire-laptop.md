@@ -48,7 +48,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Read first (R0):** Apple Business → Devices → Inventory → search `[SERIAL_NUMBER]` → read the device row and its current device management assignment.
 
-**WAIT UNTIL** the Mac is visible in Apple Business. If it was bought outside Apple, an Apple Authorized Reseller or an authorized carrier, it has to be added with Apple Configurator for iPhone or Apple Configurator for Mac first — that intake is the jamf-enroll-mac runbook's job, not this one's (Apple gives such a device a 30-day provisional period in which the user can release it). Do not power the Mac on until it is listed.
+**WAIT UNTIL** the Mac is visible in Apple Business. If it was bought outside Apple, an Apple Authorized Reseller or an authorized carrier, it has to be added with Apple Configurator for iPhone or Apple Configurator for Mac first — that intake is `/jamf-enroll-mac`'s job, not this one's (Apple gives such a device a 30-day provisional period in which the user can release it). Do not power the Mac on until it is listed.
 
 If the row already names the Jamf device management service, skip the gate and go to Phase B.
 
@@ -101,7 +101,7 @@ If the row already names the Jamf device management service, skip the gate and g
 1. Unbox, power on, and connect to a network with internet access. Jamf's requirement: the Mac must have internet access during Setup Assistant so it can check in with Jamf Pro and receive the initial configuration. Use Ethernet or the office Wi-Fi password — the Wi-Fi configuration profile is not on the Mac yet.
 2. Advance through the language and region panes the PreStage did not skip.
 3. **WAIT UNTIL** the Remote Management pane appears, naming the organization and the Jamf service. Done when: the Mac states it will be managed and continues into enrollment.
-   - If it never appears: STOP. Do not create a local account. Power the Mac off and go back to Phases A and B — not assigned, not in scope, token expired, or no internet. A Mac that leaves Setup Assistant unenrolled is re-enrolled through the jamf-enroll-mac runbook (Apple documents resetting enrollment with the `profiles` tool's renew option for a Mac already in Apple Business, limited to 10 such calls per 24 hours on organization-owned Macs).
+   - If it never appears: STOP. Do not create a local account. Power the Mac off and go back to Phases A and B — not assigned, not in scope, token expired, or no internet. A Mac that leaves Setup Assistant unenrolled is re-enrolled through `/jamf-enroll-mac` (Apple documents resetting enrollment with the `profiles` tool's renew option for a Mac already in Apple Business, limited to 10 such calls per 24 hours on organization-owned Macs).
 4. Account creation — one of two paths, **[org gap — confirm which]**:
    - **Platform SSO with Okta:** an Okta sign-in window replaces the Create a Computer Account pane; the user authenticates with their Okta email, password and MFA, and a local account linked to Okta is created.
    - **Local account:** the user, or the technician per the PreStage's Account Settings payload, creates the first account; Okta Verify registration comes after the hand-off.
@@ -128,8 +128,8 @@ If the row already names the Jamf device management service, skip the gate and g
 
 **Purpose** — the laptop is useless until the accounts behind it exist; account creation lives in its own runbooks and is only read here.
 
-1. Okta Admin Console → Directory → People → `[UPN]` → read **Status**. **WAIT UNTIL** it reads Active (created and activated through the okta-user-lifecycle runbook; activating emails the user).
-2. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the account and its status. **WAIT UNTIL** the account exists and is active. How it gets there is **[org gap]**: Okta provisions it when the Google Workspace app is assigned, or an admin creates it with the gws-new-user runbook (Google services can take up to 24 hours to become available, and the welcome email's password-reset link expires in 48 hours).
+1. Okta Admin Console → Directory → People → `[UPN]` → read **Status**. **WAIT UNTIL** it reads Active (created and activated through `/okta-user-lifecycle`; activating emails the user).
+2. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the account and its status. **WAIT UNTIL** the account exists and is active. How it gets there is **[org gap]**: Okta provisions it when the Google Workspace app is assigned, or an admin creates it with `/gws-new-user` (Google services can take up to 24 hours to become available, and the welcome email's password-reset link expires in 48 hours).
 3. Hand the Mac to `[FIRST_NAME] [LAST_NAME]` on `[START_DATE]`. **WAIT UNTIL** the user signs in: with Platform SSO, with their Okta credentials at the login window; otherwise with the local account, then Okta Verify registration and the Okta dashboard in the browser, then Google through Okta.
 4. Read-back: Okta Admin Console → Reports → System Log → read the user's sign-in events; Admin console → Reporting → Audit and investigation → User log events → read the first Google sign-in (user account events can take tens of minutes to appear).
 

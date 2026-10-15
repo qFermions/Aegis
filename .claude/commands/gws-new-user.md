@@ -37,7 +37,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 1. Phase A — confirm the creation path (R0): Okta app assignment, or the Admin console.
 2. Phase B — create the account in `[OU_PATH]` (R1 gate) — Admin console path only.
 3. **WAIT UNTIL** the account appears in Directory → Users; services can take up to 24 hours.
-4. Phase C — confirm the licence (R0; a manual assignment is the licence runbook, not this one).
+4. Phase C — confirm the licence (R0; a manual assignment is `/gws-license-assign`, not this one).
 5. Phase D — add the team groups (R1 gate per group).
 6. Phase E — hand over the credentials; the welcome email's reset link expires after 48 hours.
 7. Verify every read-back before `[START_DATE]`.

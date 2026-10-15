@@ -37,7 +37,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 3. Phase B — suspend in Google only if Okta did not (R1 gate, undo stated in the gate).
 4. Phase C — capture the Drive pre-state, then transfer Drive and Calendar to `[MANAGER_UPN]` (R2 gates). **WAIT UNTIL** both transfers finish.
 5. Phase D — delete only after the independent review and the retention decision (R3 gate), or leave the account suspended.
-6. Phase E — devices: lock or wipe the Mac and handle the Chromebook in their own runbooks.
+6. Phase E — devices: lock or wipe the Mac and handle the Chromebook in their own runbooks (`/jamf-lock-erase`, `/gws-chromeos-device`).
 
 ## Phase A — Start in Okta (the identity source)
 
@@ -138,7 +138,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 > **PREVIEW ONLY [gws-offboard-devices-preview]:** Device actions are separate runbooks with their own gates; nothing in this command locks, wipes, or deprovisions a device.
 
 - **Mac (Jamf):** use the Jamf lock/wipe runbook — the lock is reversible with its PIN, the wipe is not.
-- **Chromebook:** use the ChromeOS device runbook — powerwash and deprovision are different actions with different undo stories.
+- **Chromebook:** use `/gws-chromeos-device` — powerwash and deprovision are different actions with different undo stories.
 
 <details>
 <summary>GAM / Okta API — the scale version (HUMAN-RUN, for reference)</summary>
@@ -242,7 +242,7 @@ gam print users query "isSuspended=True"   # read-back: lists suspended users st
 - [ ] Google: `gam info user "[USER@DOMAIN.COM]"` shows the account suspended (or the Phase D deletion appears in Admin log events).
 - [ ] Data: `gam print datatransfers` shows Drive and Calendar transfers completed; `[MANAGER_UPN]` opened a sample file; the pre-state file count is in the ticket.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the suspend / transfer / delete events with the expected admin and time.
-- [ ] Devices handed to the Jamf and ChromeOS runbooks, each with its own read-back.
+- [ ] Devices handed to `/jamf-lock-erase` and `/gws-chromeos-device`, each with its own read-back.
 
 ## 📝 Jira-ready note
 

@@ -100,7 +100,7 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 2. Scroll the table all the way to the right, hover over the lost key's row and click **Remove**.
 3. Click **Remove** to confirm, then **Done**. Admin log events adds an entry each time a passkey or security key is revoked.
 
-**Gotcha** — an automatically created Android passkey is removed under **Connected applications** on the same Security page, not in the key table; and to stop another one being created, reset the password and the sign-in cookies (the password-reset runbook).
+**Gotcha** — an automatically created Android passkey is removed under **Connected applications** on the same Security page, not in the key table; and to stop another one being created, reset the password and the sign-in cookies (`/gws-password-reset`).
 
 **Verification checkpoint** — [ ] the key table no longer lists the lost key · [ ] the user can still sign in with another factor or a Phase B code.
 

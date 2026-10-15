@@ -47,7 +47,7 @@ Four tickets, one starting point: read the Jamf Pro inventory record — last ch
 **Steps:**
 1. System Settings → Users & Groups → read the Network account server entry: Apple shows the Platform SSO registration status there (read only; the repair option is a change).
 2. System Settings → General → Device Management → read whether the SSO extension profile is installed; Jamf Pro → Computers → Configuration profiles → the Platform SSO profile → read whether its scope includes `[DEVICE_NAME]`.
-3. Okta Admin Console → Directory → People → `[UPN]` → read Status. A locked account is the okta-user-lifecycle runbook's job, not a Mac fix.
+3. Okta Admin Console → Directory → People → `[UPN]` → read Status. A locked account is `/okta-user-lifecycle`'s job, not a Mac fix.
 4. Have the user lock the screen from the Apple menu and unlock it with the new Okta password; if macOS asks for the old password for the keychain, they enter it once. Done when: the new password works at the lock screen and at the login window.
 5. If the Mac is registered but never prompts for the Okta password: have the user turn off Do Not Disturb, then wait a few minutes or sign out and back in.
 

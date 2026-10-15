@@ -152,8 +152,12 @@ function stripExecutableComment(line, shell = false) {
   let single = false;
   let double = false;
   let escaped = -1;
+  let backtick = false;
   for (let index = 0; index < line.length; index += 1) {
     const char = line[index];
+    // in bash a `#` inside a backtick substitution comments only up to the closing
+    // backtick, so it never hides what follows (`echo \`true #\`; cmd` runs cmd)
+    if (shell && char === '`' && !single) { backtick = !backtick; continue; }
     // PowerShell escapes with a backtick, bash with a backslash (outside single
     // quotes): `echo \ #;cmd` runs cmd, the escaped space glues `#` to its word.
     if (shell ? char === '\\' && !single : char === '`') { index += 1; escaped = index; continue; }
@@ -164,7 +168,7 @@ function stripExecutableComment(line, shell = false) {
     // boundary is whitespace or a metacharacter (; & | ( ) < >) — `{` and `}` are
     // ordinary word characters (`${#var}`, `{#;cmd` run cmd); PowerShell also
     // opens a comment after `{` or `}`.
-    if (char === '#' && !single && !double && (index === 0 || (index - 1 !== escaped && (shell ? /[\s;&|()<>]/ : /[\s;&|(){}<>]/).test(line[index - 1])))) return line.slice(0, index);
+    if (char === '#' && !single && !double && !backtick && (index === 0 || (index - 1 !== escaped && (shell ? /[\s;&|()<>]/ : /[\s;&|(){}<>]/).test(line[index - 1])))) return line.slice(0, index);
   }
   return line;
 }
@@ -2374,6 +2378,9 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
   assert.match(failuresOf(fence(['echo done}#;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
   assert.match(failuresOf(fence(['echo \\ #;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
   assert.match(failuresOf(fence(['echo `#`;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  // a comment inside a backtick substitution ends at the closing backtick (WARDEN pass 6, P6-4)
+  assert.match(failuresOf(fence(['echo `true #`; gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['x=`date # now`; sudo jamf removeFramework'])), /jamf-write has 0 owners/);
   assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]";# gam delete user is only mentioned'])), '');
   assert.equal(stripExecutableComment('echo ${#x};gam delete', true), 'echo ${#x};gam delete');
   assert.equal(stripExecutableComment('true;# note', true), 'true;');

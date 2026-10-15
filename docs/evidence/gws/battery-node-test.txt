@@ -24,7 +24,7 @@ TAP version 13
 # Subtest: modules/automation/scripts/deploy-check.test.js
 ok 1 - modules/automation/scripts/deploy-check.test.js
   ---
-  duration_ms: 63.05789
+  duration_ms: 55.48856
   type: 'test'
   ...
 #   ok  provider failure: Windows CPU and disk remain UNKNOWN
@@ -50,1806 +50,1812 @@ ok 1 - modules/automation/scripts/deploy-check.test.js
 # Subtest: modules/systems/scripts/health-check.test.js
 ok 2 - modules/systems/scripts/health-check.test.js
   ---
-  duration_ms: 61.966356
+  duration_ms: 70.843899
   type: 'test'
   ...
 # Subtest: credential-sensitive and direct-write commands are manual and risk classified
 ok 3 - credential-sensitive and direct-write commands are manual and risk classified
   ---
-  duration_ms: 1.537084
+  duration_ms: 1.988125
   type: 'test'
   ...
 # Subtest: public claims distinguish behavioral policy from deterministic controls
 ok 4 - public claims distinguish behavioral policy from deterministic controls
   ---
-  duration_ms: 0.569114
+  duration_ms: 0.673921
   type: 'test'
   ...
 # Subtest: tracked tip contains no privileged host/path examples or fixed development path
 ok 5 - tracked tip contains no privileged host/path examples or fixed development path
   ---
-  duration_ms: 43.161794
+  duration_ms: 48.101235
   type: 'test'
   ...
 # Subtest: all Markdown fences are balanced and files end with a newline
 ok 6 - all Markdown fences are balanced and files end with a newline
   ---
-  duration_ms: 3.781307
+  duration_ms: 4.304501
   type: 'test'
   ...
 # Subtest: every discovered safety/preview marker ID is globally unique
 ok 7 - every discovered safety/preview marker ID is globally unique
   ---
-  duration_ms: 0.717979
+  duration_ms: 0.631257
   type: 'test'
   ...
 # Subtest: checked-in state-change inventory exactly matches discovery and client boundaries
 ok 8 - checked-in state-change inventory exactly matches discovery and client boundaries
   ---
-  duration_ms: 480.78713
+  duration_ms: 357.774859
   type: 'test'
   ...
 # Subtest: every non-Markdown client boundary retains implementation and adversarial-test evidence
 ok 9 - every non-Markdown client boundary retains implementation and adversarial-test evidence
   ---
-  duration_ms: 1.00462
+  duration_ms: 0.947018
   type: 'test'
   ...
 # Subtest: every executable mutation has exactly one same-fence owner
 ok 10 - every executable mutation has exactly one same-fence owner
   ---
-  duration_ms: 0.963547
+  duration_ms: 0.838197
   type: 'test'
   ...
 # Subtest: every commented mutation is owned by the nearest PREVIEW ONLY marker
 ok 11 - every commented mutation is owned by the nearest PREVIEW ONLY marker
   ---
-  duration_ms: 0.997935
+  duration_ms: 0.55493
   type: 'test'
   ...
 # Subtest: every discovered manual portal mutation has one action-local gate or preview owner
 ok 12 - every discovered manual portal mutation has one action-local gate or preview owner
   ---
-  duration_ms: 2.271954
+  duration_ms: 2.206263
   type: 'test'
   ...
 # Subtest: install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed
 ok 13 - install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1282.913743
+  duration_ms: 1279.908533
   type: 'test'
   ...
 # Subtest: device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed
 ok 14 - device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1380.567666
+  duration_ms: 1320.626756
   type: 'test'
   ...
 # Subtest: install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed
 ok 15 - install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1205.730521
+  duration_ms: 1151.36269
   type: 'test'
   ...
 # Subtest: quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed
 ok 16 - quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1315.252063
+  duration_ms: 1225.462213
   type: 'test'
   ...
 # Subtest: quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed
 ok 17 - quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1226.66161
+  duration_ms: 1247.161712
   type: 'test'
   ...
 # Subtest: quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed
 ok 18 - quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1261.888962
+  duration_ms: 1274.435771
   type: 'test'
   ...
 # Subtest: install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed
 ok 19 - install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1248.910099
+  duration_ms: 1262.376686
   type: 'test'
   ...
 # Subtest: restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed
 ok 20 - restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1234.389955
+  duration_ms: 1248.455634
   type: 'test'
   ...
 # Subtest: install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed
 ok 21 - install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1384.363527
+  duration_ms: 1193.969989
   type: 'test'
   ...
 # Subtest: mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed
 ok 22 - mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1264.072511
+  duration_ms: 1204.330457
   type: 'test'
   ...
 # Subtest: mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
 ok 23 - mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1240.729177
+  duration_ms: 1251.261641
   type: 'test'
   ...
 # Subtest: password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed
 ok 24 - password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1250.308331
+  duration_ms: 1240.463376
   type: 'test'
   ...
 # Subtest: password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
 ok 25 - password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1284.068483
+  duration_ms: 1219.614188
   type: 'test'
   ...
 # Subtest: print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed
 ok 26 - print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1306.296298
+  duration_ms: 1297.30436
   type: 'test'
   ...
 # Subtest: security-account-block: actual source gate is AST-dominated, explicit, and fail-closed
 ok 27 - security-account-block: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1260.431508
+  duration_ms: 1262.565133
   type: 'test'
   ...
 # Subtest: security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed
 ok 28 - security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1232.806073
+  duration_ms: 1193.773054
   type: 'test'
   ...
 # Subtest: security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed
 ok 29 - security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1295.996348
+  duration_ms: 1286.497453
   type: 'test'
   ...
 # Subtest: security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
 ok 30 - security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1319.582776
+  duration_ms: 1286.814463
   type: 'test'
   ...
 # Subtest: sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed
 ok 31 - sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1303.904056
+  duration_ms: 1238.041481
   type: 'test'
   ...
 # Subtest: install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed
 ok 32 - install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1445.002388
+  duration_ms: 1251.268529
   type: 'test'
   ...
 # Subtest: automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 33 - automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1539.346697
+  duration_ms: 1407.596299
   type: 'test'
   ...
 # Subtest: automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed
 ok 34 - automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1304.732606
+  duration_ms: 1308.695807
   type: 'test'
   ...
 # Subtest: automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed
 ok 35 - automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1369.759176
+  duration_ms: 1362.898489
   type: 'test'
   ...
 # Subtest: automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 36 - automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1495.00692
+  duration_ms: 1500.384087
   type: 'test'
   ...
 # Subtest: automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed
 ok 37 - automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1429.37609
+  duration_ms: 1708.480317
   type: 'test'
   ...
 # Subtest: rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 38 - rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1332.816073
+  duration_ms: 1345.785296
   type: 'test'
   ...
 # Subtest: rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 39 - rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1296.977142
+  duration_ms: 1407.563463
   type: 'test'
   ...
 # Subtest: rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed
 ok 40 - rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1194.75163
+  duration_ms: 1295.499122
   type: 'test'
   ...
 # Subtest: rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 41 - rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1311.943562
+  duration_ms: 1462.53522
   type: 'test'
   ...
 # Subtest: rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed
 ok 42 - rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1302.380509
+  duration_ms: 1287.03915
   type: 'test'
   ...
 # Subtest: rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 43 - rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1199.633541
+  duration_ms: 1213.452392
   type: 'test'
   ...
 # Subtest: safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed
 ok 44 - safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1129.022309
+  duration_ms: 1380.266409
   type: 'test'
   ...
 # Subtest: safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 45 - safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1231.078499
+  duration_ms: 1267.600845
   type: 'test'
   ...
 # Subtest: safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed
 ok 46 - safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1261.979065
+  duration_ms: 1184.498306
   type: 'test'
   ...
 # Subtest: safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 47 - safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1269.139255
+  duration_ms: 1279.599217
   type: 'test'
   ...
 # Subtest: safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
 ok 48 - safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1288.672752
+  duration_ms: 1197.692264
   type: 'test'
   ...
 # Subtest: safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed
 ok 49 - safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed
   ---
-  duration_ms: 1206.18154
+  duration_ms: 1174.850466
   type: 'test'
   ...
 # Subtest: ad-connect-delta: preview region contains no executable mutation
 ok 50 - ad-connect-delta: preview region contains no executable mutation
   ---
-  duration_ms: 0.357886
+  duration_ms: 0.496811
   type: 'test'
   ...
 # Subtest: ad-connect-initial: preview region contains no executable mutation
 ok 51 - ad-connect-initial: preview region contains no executable mutation
   ---
-  duration_ms: 0.59925
+  duration_ms: 0.070302
   type: 'test'
   ...
 # Subtest: ad-connect-password-hash: preview region contains no executable mutation
 ok 52 - ad-connect-password-hash: preview region contains no executable mutation
   ---
-  duration_ms: 0.08029
+  duration_ms: 0.047218
   type: 'test'
   ...
 # Subtest: device-retire: preview region contains no executable mutation
 ok 53 - device-retire: preview region contains no executable mutation
   ---
-  duration_ms: 0.04871
+  duration_ms: 0.06176
   type: 'test'
   ...
 # Subtest: distribution-create: preview region contains no executable mutation
 ok 54 - distribution-create: preview region contains no executable mutation
   ---
-  duration_ms: 0.043225
+  duration_ms: 0.052238
   type: 'test'
   ...
 # Subtest: distribution-member-add: preview region contains no executable mutation
 ok 55 - distribution-member-add: preview region contains no executable mutation
   ---
-  duration_ms: 0.038466
+  duration_ms: 0.04799
   type: 'test'
   ...
 # Subtest: distribution-external-senders: preview region contains no executable mutation
 ok 56 - distribution-external-senders: preview region contains no executable mutation
   ---
-  duration_ms: 0.041656
+  duration_ms: 0.05302
   type: 'test'
   ...
 # Subtest: email-allow-sender: preview region contains no executable mutation
 ok 57 - email-allow-sender: preview region contains no executable mutation
   ---
-  duration_ms: 0.048853
+  duration_ms: 0.044195
   type: 'test'
   ...
 # Subtest: email-allow-domain: preview region contains no executable mutation
 ok 58 - email-allow-domain: preview region contains no executable mutation
   ---
-  duration_ms: 0.044663
+  duration_ms: 0.036425
   type: 'test'
   ...
 # Subtest: email-mailbox-safe-sender: preview region contains no executable mutation
 ok 59 - email-mailbox-safe-sender: preview region contains no executable mutation
   ---
-  duration_ms: 0.087794
+  duration_ms: 0.091765
   type: 'test'
   ...
 # Subtest: mailbox-full-access-grant: preview region contains no executable mutation
 ok 60 - mailbox-full-access-grant: preview region contains no executable mutation
   ---
-  duration_ms: 0.045514
+  duration_ms: 0.050574
   type: 'test'
   ...
 # Subtest: mailbox-send-as-grant: preview region contains no executable mutation
 ok 61 - mailbox-send-as-grant: preview region contains no executable mutation
   ---
-  duration_ms: 0.044779
+  duration_ms: 0.05776
   type: 'test'
   ...
 # Subtest: device-rename-restart: preview region contains no executable mutation
 ok 62 - device-rename-restart: preview region contains no executable mutation
   ---
-  duration_ms: 0.044675
+  duration_ms: 0.046008
   type: 'test'
   ...
 # Subtest: new-user-ad-create: preview region contains no executable mutation
 ok 63 - new-user-ad-create: preview region contains no executable mutation
   ---
-  duration_ms: 0.039755
+  duration_ms: 0.041143
   type: 'test'
   ...
 # Subtest: new-user-delta-sync: preview region contains no executable mutation
 ok 64 - new-user-delta-sync: preview region contains no executable mutation
   ---
-  duration_ms: 0.036995
+  duration_ms: 0.039575
   type: 'test'
   ...
 # Subtest: offboard-ad-disable-ps: preview region contains no executable mutation
 ok 65 - offboard-ad-disable-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.036832
+  duration_ms: 0.513671
   type: 'test'
   ...
 # Subtest: offboard-delta-sync-ps: preview region contains no executable mutation
 ok 66 - offboard-delta-sync-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.037831
+  duration_ms: 0.086381
   type: 'test'
   ...
 # Subtest: offboard-cloud-block-ps: preview region contains no executable mutation
 ok 67 - offboard-cloud-block-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.037867
+  duration_ms: 0.057926
   type: 'test'
   ...
 # Subtest: offboard-mailbox-convert-ps: preview region contains no executable mutation
 ok 68 - offboard-mailbox-convert-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.042324
+  duration_ms: 0.044604
   type: 'test'
   ...
 # Subtest: offboard-mailbox-delegate-ps: preview region contains no executable mutation
 ok 69 - offboard-mailbox-delegate-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.040897
+  duration_ms: 0.043077
   type: 'test'
   ...
 # Subtest: offboard-group-removal: preview region contains no executable mutation
 ok 70 - offboard-group-removal: preview region contains no executable mutation
   ---
-  duration_ms: 0.039136
+  duration_ms: 0.037988
   type: 'test'
   ...
 # Subtest: onedrive-client-reset: preview region contains no executable mutation
 ok 71 - onedrive-client-reset: preview region contains no executable mutation
   ---
-  duration_ms: 0.119841
+  duration_ms: 0.108915
   type: 'test'
   ...
 # Subtest: onedrive-client-restart: preview region contains no executable mutation
 ok 72 - onedrive-client-restart: preview region contains no executable mutation
   ---
-  duration_ms: 0.045341
+  duration_ms: 0.050865
   type: 'test'
   ...
 # Subtest: onedrive-sharepoint-module-install: preview region contains no executable mutation
 ok 73 - onedrive-sharepoint-module-install: preview region contains no executable mutation
   ---
-  duration_ms: 0.037601
+  duration_ms: 0.077499
   type: 'test'
   ...
 # Subtest: onedrive-quota-change: preview region contains no executable mutation
 ok 74 - onedrive-quota-change: preview region contains no executable mutation
   ---
-  duration_ms: 0.081746
+  duration_ms: 0.05012
   type: 'test'
   ...
 # Subtest: onedrive-manager-admin: preview region contains no executable mutation
 ok 75 - onedrive-manager-admin: preview region contains no executable mutation
   ---
-  duration_ms: 0.12768
+  duration_ms: 0.052164
   type: 'test'
   ...
 # Subtest: outlook-auto-reply: preview region contains no executable mutation
 ok 76 - outlook-auto-reply: preview region contains no executable mutation
   ---
-  duration_ms: 0.051169
+  duration_ms: 0.060739
   type: 'test'
   ...
 # Subtest: password-reset-delta-sync: preview region contains no executable mutation
 ok 77 - password-reset-delta-sync: preview region contains no executable mutation
   ---
-  duration_ms: 0.0409
+  duration_ms: 0.535819
   type: 'test'
   ...
 # Subtest: shared-mailbox-create: preview region contains no executable mutation
 ok 78 - shared-mailbox-create: preview region contains no executable mutation
   ---
-  duration_ms: 0.041458
+  duration_ms: 0.056252
   type: 'test'
   ...
 # Subtest: shared-mailbox-full-access: preview region contains no executable mutation
 ok 79 - shared-mailbox-full-access: preview region contains no executable mutation
   ---
-  duration_ms: 0.038074
+  duration_ms: 0.042273
   type: 'test'
   ...
 # Subtest: shared-mailbox-send-as: preview region contains no executable mutation
 ok 80 - shared-mailbox-send-as: preview region contains no executable mutation
   ---
-  duration_ms: 0.06022
+  duration_ms: 0.097533
   type: 'test'
   ...
 # Subtest: shared-mailbox-send-on-behalf: preview region contains no executable mutation
 ok 81 - shared-mailbox-send-on-behalf: preview region contains no executable mutation
   ---
-  duration_ms: 0.058081
+  duration_ms: 0.039093
   type: 'test'
   ...
 # Subtest: shared-mailbox-convert: preview region contains no executable mutation
 ok 82 - shared-mailbox-convert: preview region contains no executable mutation
   ---
-  duration_ms: 0.065715
+  duration_ms: 0.036457
   type: 'test'
   ...
 # Subtest: sharepoint-member-grant: preview region contains no executable mutation
 ok 83 - sharepoint-member-grant: preview region contains no executable mutation
   ---
-  duration_ms: 0.041977
+  duration_ms: 0.038315
   type: 'test'
   ...
 # Subtest: sharepoint-item-grant: preview region contains no executable mutation
 ok 84 - sharepoint-item-grant: preview region contains no executable mutation
   ---
-  duration_ms: 0.038117
+  duration_ms: 0.034318
   type: 'test'
   ...
 # Subtest: teams-policy-grant: preview region contains no executable mutation
 ok 85 - teams-policy-grant: preview region contains no executable mutation
   ---
-  duration_ms: 0.037035
+  duration_ms: 0.039425
   type: 'test'
   ...
 # Subtest: evaluate-repo-clone: preview region contains no executable mutation
 ok 86 - evaluate-repo-clone: preview region contains no executable mutation
   ---
-  duration_ms: 0.039073
+  duration_ms: 0.041113
   type: 'test'
   ...
 # Subtest: readme-repo-clone: preview region contains no executable mutation
 ok 87 - readme-repo-clone: preview region contains no executable mutation
   ---
-  duration_ms: 0.037029
+  duration_ms: 0.043593
   type: 'test'
   ...
 # Subtest: readme-hook-install: preview region contains no executable mutation
 ok 88 - readme-hook-install: preview region contains no executable mutation
   ---
-  duration_ms: 0.03943
+  duration_ms: 0.040144
   type: 'test'
   ...
 # Subtest: sample-t09-mailbox-grant: preview region contains no executable mutation
 ok 89 - sample-t09-mailbox-grant: preview region contains no executable mutation
   ---
-  duration_ms: 0.188938
+  duration_ms: 0.28164
   type: 'test'
   ...
 # Subtest: sample-t09-mailbox-undo: preview region contains no executable mutation
 ok 90 - sample-t09-mailbox-undo: preview region contains no executable mutation
   ---
-  duration_ms: 0.089776
+  duration_ms: 0.086747
   type: 'test'
   ...
 # Subtest: sample-t06-delta-sync: preview region contains no executable mutation
 ok 91 - sample-t06-delta-sync: preview region contains no executable mutation
   ---
-  duration_ms: 0.051958
+  duration_ms: 0.052806
   type: 'test'
   ...
 # Subtest: example-commit-attempt-stage: preview region contains no executable mutation
 ok 92 - example-commit-attempt-stage: preview region contains no executable mutation
   ---
-  duration_ms: 0.041233
+  duration_ms: 0.04291
   type: 'test'
   ...
 # Subtest: example-commit-attempt-create: preview region contains no executable mutation
 ok 93 - example-commit-attempt-create: preview region contains no executable mutation
   ---
-  duration_ms: 0.03689
+  duration_ms: 0.037747
   type: 'test'
   ...
 # Subtest: example-recommit-stage: preview region contains no executable mutation
 ok 94 - example-recommit-stage: preview region contains no executable mutation
   ---
-  duration_ms: 0.037169
+  duration_ms: 0.041559
   type: 'test'
   ...
 # Subtest: example-recommit-create: preview region contains no executable mutation
 ok 95 - example-recommit-create: preview region contains no executable mutation
   ---
-  duration_ms: 0.036112
+  duration_ms: 0.035676
   type: 'test'
   ...
 # Subtest: ticket-delta-sync-ps: preview region contains no executable mutation
 ok 96 - ticket-delta-sync-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.044802
+  duration_ms: 0.051333
   type: 'test'
   ...
 # Subtest: ticket-mfa-method-remove-ps: preview region contains no executable mutation
 ok 97 - ticket-mfa-method-remove-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.0355
+  duration_ms: 0.035701
   type: 'test'
   ...
 # Subtest: ticket-license-remove-ps: preview region contains no executable mutation
 ok 98 - ticket-license-remove-ps: preview region contains no executable mutation
   ---
-  duration_ms: 0.031613
+  duration_ms: 0.031213
   type: 'test'
   ...
 # Subtest: automation-no-mfa-report: preview region contains no executable mutation
 ok 99 - automation-no-mfa-report: preview region contains no executable mutation
   ---
-  duration_ms: 0.03228
+  duration_ms: 0.03436
   type: 'test'
   ...
 # Subtest: automation-group-members-report: preview region contains no executable mutation
 ok 100 - automation-group-members-report: preview region contains no executable mutation
   ---
-  duration_ms: 0.036291
+  duration_ms: 0.033781
   type: 'test'
   ...
 # Subtest: automation-inactive-users-report: preview region contains no executable mutation
 ok 101 - automation-inactive-users-report: preview region contains no executable mutation
   ---
-  duration_ms: 0.140572
+  duration_ms: 0.034738
   type: 'test'
   ...
 # Subtest: safety-group-poststate-export: preview region contains no executable mutation
 ok 102 - safety-group-poststate-export: preview region contains no executable mutation
   ---
-  duration_ms: 0.05163
+  duration_ms: 0.034756
   type: 'test'
   ...
 # Subtest: safety-bulk-license-route: preview region contains no executable mutation
 ok 103 - safety-bulk-license-route: preview region contains no executable mutation
   ---
-  duration_ms: 0.047208
+  duration_ms: 0.077537
   type: 'test'
   ...
 # Subtest: safety-cryptic-bulk-mutation: preview region contains no executable mutation
 ok 104 - safety-cryptic-bulk-mutation: preview region contains no executable mutation
   ---
-  duration_ms: 0.037153
+  duration_ms: 0.054248
   type: 'test'
   ...
 # Subtest: safety-readable-bulk-mutation: preview region contains no executable mutation
 ok 105 - safety-readable-bulk-mutation: preview region contains no executable mutation
   ---
-  duration_ms: 0.035927
+  duration_ms: 0.04227
   type: 'test'
   ...
 # Subtest: hook-install-copy: preview region contains no executable mutation
 ok 106 - hook-install-copy: preview region contains no executable mutation
   ---
-  duration_ms: 0.036773
+  duration_ms: 0.039413
   type: 'test'
   ...
 # Subtest: hook-install-mode: preview region contains no executable mutation
 ok 107 - hook-install-mode: preview region contains no executable mutation
   ---
-  duration_ms: 0.037928
+  duration_ms: 0.044498
   type: 'test'
   ...
 # Subtest: workflow-user-create: preview region contains no executable mutation
 ok 108 - workflow-user-create: preview region contains no executable mutation
   ---
-  duration_ms: 0.097851
+  duration_ms: 0.040105
   type: 'test'
   ...
 # Subtest: workflow-delta-sync: preview region contains no executable mutation
 ok 109 - workflow-delta-sync: preview region contains no executable mutation
   ---
-  duration_ms: 0.044395
+  duration_ms: 0.046189
   type: 'test'
   ...
 # Subtest: compliance-guest-report-write: preview region contains no executable mutation
 ok 110 - compliance-guest-report-write: preview region contains no executable mutation
   ---
-  duration_ms: 0.040894
+  duration_ms: 0.037872
   type: 'test'
   ...
 # Subtest: health-delta-sync: preview region contains no executable mutation
 ok 111 - health-delta-sync: preview region contains no executable mutation
   ---
-  duration_ms: 0.039634
+  duration_ms: 0.036385
   type: 'test'
   ...
 # Subtest: health-force-replication: preview region contains no executable mutation
 ok 112 - health-force-replication: preview region contains no executable mutation
   ---
-  duration_ms: 0.034203
+  duration_ms: 0.034466
   type: 'test'
   ...
 # Subtest: infrastructure-delta-sync: preview region contains no executable mutation
 ok 113 - infrastructure-delta-sync: preview region contains no executable mutation
   ---
-  duration_ms: 0.0358
+  duration_ms: 0.736236
   type: 'test'
   ...
 # Subtest: infrastructure-gpo-refresh: preview region contains no executable mutation
 ok 114 - infrastructure-gpo-refresh: preview region contains no executable mutation
   ---
-  duration_ms: 0.035429
+  duration_ms: 0.05808
   type: 'test'
   ...
 # Subtest: infrastructure-local-gpo-refresh: preview region contains no executable mutation
 ok 115 - infrastructure-local-gpo-refresh: preview region contains no executable mutation
   ---
-  duration_ms: 0.040829
+  duration_ms: 0.041097
   type: 'test'
   ...
 # Subtest: infrastructure-force-replication: preview region contains no executable mutation
 ok 116 - infrastructure-force-replication: preview region contains no executable mutation
   ---
-  duration_ms: 0.034334
+  duration_ms: 0.044291
   type: 'test'
   ...
 # Subtest: conditional-access-enable-portal: portal gate is action-local and fail-closed
 ok 117 - conditional-access-enable-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 1.588451
+  duration_ms: 1.057127
   type: 'test'
   ...
 # Subtest: device-full-wipe-portal: portal gate is action-local and fail-closed
 ok 118 - device-full-wipe-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.429948
+  duration_ms: 0.374565
   type: 'test'
   ...
 # Subtest: distribution-external-senders-portal: portal gate is action-local and fail-closed
 ok 119 - distribution-external-senders-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.255731
+  duration_ms: 0.252793
   type: 'test'
   ...
 # Subtest: quarantine-release-all-portal: portal gate is action-local and fail-closed
 ok 120 - quarantine-release-all-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.535152
+  duration_ms: 0.275841
   type: 'test'
   ...
 # Subtest: quarantine-release-one-portal: portal gate is action-local and fail-closed
 ok 121 - quarantine-release-one-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.157636
+  duration_ms: 0.130912
   type: 'test'
   ...
 # Subtest: quarantine-delete-portal: portal gate is action-local and fail-closed
 ok 122 - quarantine-delete-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.141308
+  duration_ms: 0.128566
   type: 'test'
   ...
 # Subtest: restricted-entity-unblock-portal: portal gate is action-local and fail-closed
 ok 123 - restricted-entity-unblock-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.131631
+  duration_ms: 0.255053
   type: 'test'
   ...
 # Subtest: gws-2sv-reset-backup-codes-portal: portal gate is action-local and fail-closed
 ok 124 - gws-2sv-reset-backup-codes-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.224625
+  duration_ms: 0.275855
   type: 'test'
   ...
 # Subtest: gws-2sv-reset-key-remove-portal: portal gate is action-local and fail-closed
 ok 125 - gws-2sv-reset-key-remove-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.256067
+  duration_ms: 0.246908
   type: 'test'
   ...
 # Subtest: gws-2sv-reset-challenge-portal: portal gate is action-local and fail-closed
 ok 126 - gws-2sv-reset-challenge-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.201184
+  duration_ms: 0.180972
   type: 'test'
   ...
 # Subtest: gws-2sv-reset-turn-off-portal: portal gate is action-local and fail-closed
 ok 127 - gws-2sv-reset-turn-off-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.183319
+  duration_ms: 0.183882
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-reenable-portal: portal gate is action-local and fail-closed
 ok 128 - gws-chromeos-device-reenable-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.308437
+  duration_ms: 0.238932
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-disable-portal: portal gate is action-local and fail-closed
 ok 129 - gws-chromeos-device-disable-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.161083
+  duration_ms: 0.148198
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-clear-profiles-portal: portal gate is action-local and fail-closed
 ok 130 - gws-chromeos-device-clear-profiles-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.103381
+  duration_ms: 0.119267
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-powerwash-portal: portal gate is action-local and fail-closed
 ok 131 - gws-chromeos-device-powerwash-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.908198
+  duration_ms: 0.177322
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-deprovision-portal: portal gate is action-local and fail-closed
 ok 132 - gws-chromeos-device-deprovision-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.208682
+  duration_ms: 0.256567
   type: 'test'
   ...
 # Subtest: gws-drive-transfer-drive-portal: portal gate is action-local and fail-closed
 ok 133 - gws-drive-transfer-drive-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.168161
+  duration_ms: 0.230528
   type: 'test'
   ...
 # Subtest: gws-drive-transfer-calendar-portal: portal gate is action-local and fail-closed
 ok 134 - gws-drive-transfer-calendar-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.211027
+  duration_ms: 0.175218
   type: 'test'
   ...
 # Subtest: gws-gmail-delivery-mx-change-portal: portal gate is action-local and fail-closed
 ok 135 - gws-gmail-delivery-mx-change-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.13267
+  duration_ms: 0.137688
   type: 'test'
   ...
 # Subtest: gws-gmail-delivery-spf-change-portal: portal gate is action-local and fail-closed
 ok 136 - gws-gmail-delivery-spf-change-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.161192
+  duration_ms: 1.575749
   type: 'test'
   ...
 # Subtest: gws-gmail-delivery-dkim-generate-portal: portal gate is action-local and fail-closed
 ok 137 - gws-gmail-delivery-dkim-generate-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.183245
+  duration_ms: 0.353335
   type: 'test'
   ...
 # Subtest: gws-gmail-delivery-dkim-dns-portal: portal gate is action-local and fail-closed
 ok 138 - gws-gmail-delivery-dkim-dns-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.319478
+  duration_ms: 0.136059
   type: 'test'
   ...
 # Subtest: gws-gmail-delivery-dkim-start-portal: portal gate is action-local and fail-closed
 ok 139 - gws-gmail-delivery-dkim-start-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.196
+  duration_ms: 0.280387
   type: 'test'
   ...
 # Subtest: gws-gmail-delivery-dmarc-add-portal: portal gate is action-local and fail-closed
 ok 140 - gws-gmail-delivery-dmarc-add-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.17869
+  duration_ms: 0.149025
   type: 'test'
   ...
 # Subtest: gws-group-membership-add-portal: portal gate is action-local and fail-closed
 ok 141 - gws-group-membership-add-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.120995
+  duration_ms: 0.118012
   type: 'test'
   ...
 # Subtest: gws-group-membership-remove-portal: portal gate is action-local and fail-closed
 ok 142 - gws-group-membership-remove-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.112275
+  duration_ms: 0.108288
   type: 'test'
   ...
 # Subtest: gws-license-assign-assign-portal: portal gate is action-local and fail-closed
 ok 143 - gws-license-assign-assign-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.14922
+  duration_ms: 0.15014
   type: 'test'
   ...
 # Subtest: gws-license-assign-remove-portal: portal gate is action-local and fail-closed
 ok 144 - gws-license-assign-remove-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.161402
+  duration_ms: 0.118208
   type: 'test'
   ...
 # Subtest: gws-new-user-create-portal: portal gate is action-local and fail-closed
 ok 145 - gws-new-user-create-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.203731
+  duration_ms: 0.193833
   type: 'test'
   ...
 # Subtest: gws-new-user-group-add-portal: portal gate is action-local and fail-closed
 ok 146 - gws-new-user-group-add-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.120233
+  duration_ms: 0.118195
   type: 'test'
   ...
 # Subtest: gws-offboard-okta-deactivate-portal: portal gate is action-local and fail-closed
 ok 147 - gws-offboard-okta-deactivate-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.112556
+  duration_ms: 0.345848
   type: 'test'
   ...
 # Subtest: gws-offboard-suspend-portal: portal gate is action-local and fail-closed
 ok 148 - gws-offboard-suspend-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.252134
+  duration_ms: 0.280614
   type: 'test'
   ...
 # Subtest: gws-offboard-drive-transfer-portal: portal gate is action-local and fail-closed
 ok 149 - gws-offboard-drive-transfer-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.161841
+  duration_ms: 0.295374
   type: 'test'
   ...
 # Subtest: gws-offboard-calendar-transfer-portal: portal gate is action-local and fail-closed
 ok 150 - gws-offboard-calendar-transfer-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.140638
+  duration_ms: 0.14799
   type: 'test'
   ...
 # Subtest: gws-offboard-delete-portal: portal gate is action-local and fail-closed
 ok 151 - gws-offboard-delete-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.872354
+  duration_ms: 0.11949
   type: 'test'
   ...
 # Subtest: gws-ou-move-user-portal: portal gate is action-local and fail-closed
 ok 152 - gws-ou-move-user-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.253509
+  duration_ms: 0.222909
   type: 'test'
   ...
 # Subtest: gws-password-reset-password-portal: portal gate is action-local and fail-closed
 ok 153 - gws-password-reset-password-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.206187
+  duration_ms: 0.135497
   type: 'test'
   ...
 # Subtest: gws-password-reset-cookies-portal: portal gate is action-local and fail-closed
 ok 154 - gws-password-reset-cookies-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.118419
+  duration_ms: 0.188425
   type: 'test'
   ...
 # Subtest: jamf-enroll-mac-assign-portal: portal gate is action-local and fail-closed
 ok 155 - jamf-enroll-mac-assign-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.150631
+  duration_ms: 0.123786
   type: 'test'
   ...
 # Subtest: jamf-enroll-mac-prestage-portal: portal gate is action-local and fail-closed
 ok 156 - jamf-enroll-mac-prestage-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.132933
+  duration_ms: 0.13127
   type: 'test'
   ...
 # Subtest: jamf-lock-erase-lock-portal: portal gate is action-local and fail-closed
 ok 157 - jamf-lock-erase-lock-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.19043
+  duration_ms: 0.665783
   type: 'test'
   ...
 # Subtest: jamf-lock-erase-wipe-portal: portal gate is action-local and fail-closed
 ok 158 - jamf-lock-erase-wipe-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.13286
+  duration_ms: 0.212383
   type: 'test'
   ...
 # Subtest: jamf-lock-erase-remove-mdm-portal: portal gate is action-local and fail-closed
 ok 159 - jamf-lock-erase-remove-mdm-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.179408
+  duration_ms: 0.187951
   type: 'test'
   ...
 # Subtest: jamf-lock-erase-lost-mode-portal: portal gate is action-local and fail-closed
 ok 160 - jamf-lock-erase-lost-mode-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.133261
+  duration_ms: 0.144099
   type: 'test'
   ...
 # Subtest: license-remove-portal: portal gate is action-local and fail-closed
 ok 161 - license-remove-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.127781
+  duration_ms: 0.090274
   type: 'test'
   ...
 # Subtest: mac-new-hire-laptop-assign-portal: portal gate is action-local and fail-closed
 ok 162 - mac-new-hire-laptop-assign-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.208005
+  duration_ms: 0.099133
   type: 'test'
   ...
 # Subtest: mac-new-hire-laptop-prestage-scope-portal: portal gate is action-local and fail-closed
 ok 163 - mac-new-hire-laptop-prestage-scope-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.141104
+  duration_ms: 0.204198
   type: 'test'
   ...
 # Subtest: mac-troubleshoot-filevault-enable-portal: portal gate is action-local and fail-closed
 ok 164 - mac-troubleshoot-filevault-enable-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.149649
+  duration_ms: 0.128669
   type: 'test'
   ...
 # Subtest: mac-troubleshoot-wifi-forget-portal: portal gate is action-local and fail-closed
 ok 165 - mac-troubleshoot-wifi-forget-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.140449
+  duration_ms: 0.157475
   type: 'test'
   ...
 # Subtest: mac-troubleshoot-blank-push-portal: portal gate is action-local and fail-closed
 ok 166 - mac-troubleshoot-blank-push-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.166481
+  duration_ms: 0.160836
   type: 'test'
   ...
 # Subtest: mailbox-permission-remove-portal: portal gate is action-local and fail-closed
 ok 167 - mailbox-permission-remove-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.143353
+  duration_ms: 0.081948
   type: 'test'
   ...
 # Subtest: mfa-session-revoke-portal: portal gate is action-local and fail-closed
 ok 168 - mfa-session-revoke-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.212277
+  duration_ms: 0.110222
   type: 'test'
   ...
 # Subtest: mfa-method-delete-portal: portal gate is action-local and fail-closed
 ok 169 - mfa-method-delete-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.09394
+  duration_ms: 0.071799
   type: 'test'
   ...
 # Subtest: offboard-ad-disable-portal: portal gate is action-local and fail-closed
 ok 170 - offboard-ad-disable-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.084102
+  duration_ms: 0.22805
   type: 'test'
   ...
 # Subtest: offboard-cloud-block-portal: portal gate is action-local and fail-closed
 ok 171 - offboard-cloud-block-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.139376
+  duration_ms: 0.155255
   type: 'test'
   ...
 # Subtest: offboard-revoke-sessions-portal: portal gate is action-local and fail-closed
 ok 172 - offboard-revoke-sessions-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.128629
+  duration_ms: 0.101506
   type: 'test'
   ...
 # Subtest: offboard-password-reset-portal: portal gate is action-local and fail-closed
 ok 173 - offboard-password-reset-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.118511
+  duration_ms: 0.088515
   type: 'test'
   ...
 # Subtest: offboard-clear-mfa-portal: portal gate is action-local and fail-closed
 ok 174 - offboard-clear-mfa-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.728493
+  duration_ms: 0.098521
   type: 'test'
   ...
 # Subtest: offboard-mailbox-convert-portal: portal gate is action-local and fail-closed
 ok 175 - offboard-mailbox-convert-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.265515
+  duration_ms: 0.136552
   type: 'test'
   ...
 # Subtest: offboard-mailbox-delegate-portal: portal gate is action-local and fail-closed
 ok 176 - offboard-mailbox-delegate-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.268058
+  duration_ms: 0.170169
   type: 'test'
   ...
 # Subtest: offboard-onedrive-portal: portal gate is action-local and fail-closed
 ok 177 - offboard-onedrive-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.211534
+  duration_ms: 0.132818
   type: 'test'
   ...
 # Subtest: offboard-license-remove-portal: portal gate is action-local and fail-closed
 ok 178 - offboard-license-remove-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.19952
+  duration_ms: 0.144841
   type: 'test'
   ...
 # Subtest: offboard-group-strip-portal: portal gate is action-local and fail-closed
 ok 179 - offboard-group-strip-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.151227
+  duration_ms: 0.091624
   type: 'test'
   ...
 # Subtest: offboard-dl-strip-portal: portal gate is action-local and fail-closed
 ok 180 - offboard-dl-strip-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.357739
+  duration_ms: 0.10516
   type: 'test'
   ...
 # Subtest: offboard-mailbox-delegation-strip-portal: portal gate is action-local and fail-closed
 ok 181 - offboard-mailbox-delegation-strip-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.199012
+  duration_ms: 0.690443
   type: 'test'
   ...
 # Subtest: offboard-device-wipe-portal: portal gate is action-local and fail-closed
 ok 182 - offboard-device-wipe-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.168966
+  duration_ms: 0.129877
   type: 'test'
   ...
 # Subtest: offboard-work-phone-wipe-portal: portal gate is action-local and fail-closed
 ok 183 - offboard-work-phone-wipe-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.135464
+  duration_ms: 0.156391
   type: 'test'
   ...
 # Subtest: offboard-work-phone-group-remove-portal: portal gate is action-local and fail-closed
 ok 184 - offboard-work-phone-group-remove-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.128997
+  duration_ms: 0.089804
   type: 'test'
   ...
 # Subtest: offboard-voip-deactivate-portal: portal gate is action-local and fail-closed
 ok 185 - offboard-voip-deactivate-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.216474
+  duration_ms: 0.084859
   type: 'test'
   ...
 # Subtest: offboard-voip-reclaim-extension-portal: portal gate is action-local and fail-closed
 ok 186 - offboard-voip-reclaim-extension-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.155495
+  duration_ms: 0.083224
   type: 'test'
   ...
 # Subtest: offboard-voicemail-clear-portal: portal gate is action-local and fail-closed
 ok 187 - offboard-voicemail-clear-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.195637
+  duration_ms: 0.184132
   type: 'test'
   ...
 # Subtest: offboard-zoom-portal: portal gate is action-local and fail-closed
 ok 188 - offboard-zoom-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.141417
+  duration_ms: 0.112775
   type: 'test'
   ...
 # Subtest: offboard-adobe-portal: portal gate is action-local and fail-closed
 ok 189 - offboard-adobe-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.135713
+  duration_ms: 0.08152
   type: 'test'
   ...
 # Subtest: offboard-vpn-portal: portal gate is action-local and fail-closed
 ok 190 - offboard-vpn-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.255584
+  duration_ms: 0.095342
   type: 'test'
   ...
 # Subtest: offboard-physical-portal: portal gate is action-local and fail-closed
 ok 191 - offboard-physical-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.281985
+  duration_ms: 0.150956
   type: 'test'
   ...
 # Subtest: offboard-disabled-ou-portal: portal gate is action-local and fail-closed
 ok 192 - offboard-disabled-ou-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.185816
+  duration_ms: 0.106234
   type: 'test'
   ...
 # Subtest: okta-app-assignment-assign-person-portal: portal gate is action-local and fail-closed
 ok 193 - okta-app-assignment-assign-person-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.126256
+  duration_ms: 0.107421
   type: 'test'
   ...
 # Subtest: okta-app-assignment-assign-group-portal: portal gate is action-local and fail-closed
 ok 194 - okta-app-assignment-assign-group-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.093423
+  duration_ms: 0.128866
   type: 'test'
   ...
 # Subtest: okta-app-assignment-unassign-person-portal: portal gate is action-local and fail-closed
 ok 195 - okta-app-assignment-unassign-person-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.226152
+  duration_ms: 0.202914
   type: 'test'
   ...
 # Subtest: okta-mfa-reset-selected-portal: portal gate is action-local and fail-closed
 ok 196 - okta-mfa-reset-selected-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.113631
+  duration_ms: 0.107261
   type: 'test'
   ...
 # Subtest: okta-mfa-reset-all-portal: portal gate is action-local and fail-closed
 ok 197 - okta-mfa-reset-all-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.097901
+  duration_ms: 0.093659
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed
 ok 198 - okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.107982
+  duration_ms: 0.101119
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-clear-sessions-portal: portal gate is action-local and fail-closed
 ok 199 - okta-user-lifecycle-clear-sessions-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.697018
+  duration_ms: 0.082313
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-suspend-portal: portal gate is action-local and fail-closed
 ok 200 - okta-user-lifecycle-suspend-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.098185
+  duration_ms: 0.079512
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-unsuspend-portal: portal gate is action-local and fail-closed
 ok 201 - okta-user-lifecycle-unsuspend-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.171677
+  duration_ms: 0.140391
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed
 ok 202 - okta-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.245916
+  duration_ms: 0.150455
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-activate-portal: portal gate is action-local and fail-closed
 ok 203 - okta-user-lifecycle-activate-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.340888
+  duration_ms: 0.133271
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-delete-portal: portal gate is action-local and fail-closed
 ok 204 - okta-user-lifecycle-delete-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.122248
+  duration_ms: 0.108352
   type: 'test'
   ...
 # Subtest: password-reset-synced-portal: portal gate is action-local and fail-closed
 ok 205 - password-reset-synced-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.1029
+  duration_ms: 0.092153
   type: 'test'
   ...
 # Subtest: password-reset-cloud-portal: portal gate is action-local and fail-closed
 ok 206 - password-reset-cloud-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.087893
+  duration_ms: 0.272872
   type: 'test'
   ...
 # Subtest: password-session-revoke-portal: portal gate is action-local and fail-closed
 ok 207 - password-session-revoke-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.08057
+  duration_ms: 0.12198
   type: 'test'
   ...
 # Subtest: print-queue-delete-portal: portal gate is action-local and fail-closed
 ok 208 - print-queue-delete-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.160893
+  duration_ms: 0.177707
   type: 'test'
   ...
 # Subtest: security-session-revoke-portal: portal gate is action-local and fail-closed
 ok 209 - security-session-revoke-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.080551
+  duration_ms: 0.09265
   type: 'test'
   ...
 # Subtest: shared-mailbox-convert-portal: portal gate is action-local and fail-closed
 ok 210 - shared-mailbox-convert-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.16274
+  duration_ms: 0.115783
   type: 'test'
   ...
 # Subtest: sharepoint-access-revoke-portal: portal gate is action-local and fail-closed
 ok 211 - sharepoint-access-revoke-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.09637
+  duration_ms: 0.079242
   type: 'test'
   ...
 # Subtest: zoom-room-restart-app-portal: portal gate is action-local and fail-closed
 ok 212 - zoom-room-restart-app-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.135513
+  duration_ms: 0.121158
   type: 'test'
   ...
 # Subtest: zoom-room-restart-computer-portal: portal gate is action-local and fail-closed
 ok 213 - zoom-room-restart-computer-portal: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.131235
+  duration_ms: 0.173399
   type: 'test'
   ...
 # Subtest: ir-session-revoke: portal gate is action-local and fail-closed
 ok 214 - ir-session-revoke: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.096071
+  duration_ms: 0.095709
   type: 'test'
   ...
 # Subtest: ir-clear-mfa: portal gate is action-local and fail-closed
 ok 215 - ir-clear-mfa: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.083609
+  duration_ms: 0.105199
   type: 'test'
   ...
 # Subtest: ir-phish-quarantine: portal gate is action-local and fail-closed
 ok 216 - ir-phish-quarantine: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.085272
+  duration_ms: 0.095212
   type: 'test'
   ...
 # Subtest: ir-sender-domain-block: portal gate is action-local and fail-closed
 ok 217 - ir-sender-domain-block: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.076609
+  duration_ms: 0.086965
   type: 'test'
   ...
 # Subtest: ir-work-device-wipe: portal gate is action-local and fail-closed
 ok 218 - ir-work-device-wipe: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.079808
+  duration_ms: 0.079902
   type: 'test'
   ...
 # Subtest: ir-intune-device-delete: portal gate is action-local and fail-closed
 ok 219 - ir-intune-device-delete: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.128527
+  duration_ms: 0.075865
   type: 'test'
   ...
 # Subtest: ir-byod-retire: portal gate is action-local and fail-closed
 ok 220 - ir-byod-retire: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.093635
+  duration_ms: 0.087578
   type: 'test'
   ...
 # Subtest: ir-endpoint-isolate: portal gate is action-local and fail-closed
 ok 221 - ir-endpoint-isolate: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.116605
+  duration_ms: 0.179834
   type: 'test'
   ...
 # Subtest: ir-device-reimage: portal gate is action-local and fail-closed
 ok 222 - ir-device-reimage: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.100389
+  duration_ms: 0.147295
   type: 'test'
   ...
 # Subtest: ir-admin-role-remove: portal gate is action-local and fail-closed
 ok 223 - ir-admin-role-remove: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.094428
+  duration_ms: 0.094835
   type: 'test'
   ...
 # Subtest: ir-ca-restore: portal gate is action-local and fail-closed
 ok 224 - ir-ca-restore: portal gate is action-local and fail-closed
   ---
-  duration_ms: 0.266826
+  duration_ms: 0.084097
   type: 'test'
   ...
 # Subtest: PowerShell AST analyzer rejects bypass-shaped control flow
 ok 225 - PowerShell AST analyzer rejects bypass-shaped control flow
   ---
-  duration_ms: 6812.614066
+  duration_ms: 6689.314788
   type: 'test'
   ...
 # Subtest: effect and target assertions reject omitted composite families and bindings
 ok 226 - effect and target assertions reject omitted composite families and bindings
   ---
-  duration_ms: 0.751794
+  duration_ms: 0.705942
   type: 'test'
   ...
 # Subtest: WhatIf exemption is command-local and cannot hide a later mutation
 ok 227 - WhatIf exemption is command-local and cannot hide a later mutation
   ---
-  duration_ms: 0.147584
+  duration_ms: 0.119705
   type: 'test'
   ...
 # Subtest: printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail
 ok 228 - printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail
   ---
-  duration_ms: 644.117481
+  duration_ms: 598.690382
   type: 'test'
   ...
 # Subtest: group rollback distinguishes verified recovery, unresolved recovery, and successful forward state
 ok 229 - group rollback distinguishes verified recovery, unresolved recovery, and successful forward state
   ---
-  duration_ms: 1555.076954
+  duration_ms: 1476.012335
   type: 'test'
   ...
 # Subtest: checkpointed Graph mutations bind and revalidate the exact checkpoint before the first remote sink
 ok 230 - checkpointed Graph mutations bind and revalidate the exact checkpoint before the first remote sink
   ---
-  duration_ms: 0.830208
+  duration_ms: 0.755799
   type: 'test'
   ...
 # Subtest: actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID
 ok 231 - actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID
   ---
-  duration_ms: 3866.208664
+  duration_ms: 3731.041041
   type: 'test'
   ...
 # Subtest: every PORTAL ACTION maps one-to-one to a discovered portal safety marker
 ok 232 - every PORTAL ACTION maps one-to-one to a discovered portal safety marker
   ---
-  duration_ms: 2.817947
+  duration_ms: 2.545944
   type: 'test'
   ...
 # Subtest: manual PREVIEW ONLY regions cannot masquerade as gated portal actions
 ok 233 - manual PREVIEW ONLY regions cannot masquerade as gated portal actions
   ---
-  duration_ms: 3.393234
+  duration_ms: 3.893228
   type: 'test'
   ...
 # Subtest: direct R1 inventory is exact and remains operator-only
 ok 234 - direct R1 inventory is exact and remains operator-only
   ---
-  duration_ms: 0.270569
+  duration_ms: 0.301053
   type: 'test'
   ...
 # Subtest: mixed-state commands and aliases remain operator-only with an execution boundary
 ok 235 - mixed-state commands and aliases remain operator-only with an execution boundary
   ---
-  duration_ms: 0.382199
+  duration_ms: 0.484468
   type: 'test'
   ...
 # Subtest: reference surfaces state a non-executing boundary
 ok 236 - reference surfaces state a non-executing boundary
   ---
-  duration_ms: 0.201985
+  duration_ms: 0.270606
   type: 'test'
   ...
 # Subtest: safe read-only diagnostics remain live and available
 ok 237 - safe read-only diagnostics remain live and available
   ---
-  duration_ms: 0.165855
+  duration_ms: 0.274967
   type: 'test'
   ...
 # Subtest: provider lookups escape OData literals and bind mutations to exact returned names and immutable IDs
 ok 238 - provider lookups escape OData literals and bind mutations to exact returned names and immutable IDs
   ---
-  duration_ms: 0.186287
+  duration_ms: 0.245761
   type: 'test'
   ...
 # Subtest: completion-note templates require cited read-backs or an explicit partial-state open note
 ok 239 - completion-note templates require cited read-backs or an explicit partial-state open note
   ---
-  duration_ms: 0.581908
+  duration_ms: 0.792277
   type: 'test'
   ...
 # Subtest: inventory includes the named audit hot spots
 ok 240 - inventory includes the named audit hot spots
   ---
-  duration_ms: 0.159976
+  duration_ms: 0.547512
   type: 'test'
   ...
 # Subtest: G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
 ok 241 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
   ---
-  duration_ms: 14.060713
+  duration_ms: 37.861891
   type: 'test'
   ...
 # Subtest: G1 detector: read-only diagnostics stay live and are not sinks
 ok 242 - G1 detector: read-only diagnostics stay live and are not sinks
   ---
-  duration_ms: 2.107787
+  duration_ms: 4.045204
   type: 'test'
   ...
 # Subtest: G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes
 ok 243 - G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes
   ---
-  duration_ms: 45.353806
+  duration_ms: 42.33714
   type: 'test'
   ...
 # Subtest: G1 shell gate analyzer rejects bypass-shaped control flow
 ok 244 - G1 shell gate analyzer rejects bypass-shaped control flow
   ---
-  duration_ms: 19.327054
+  duration_ms: 58.111727
+  type: 'test'
+  ...
+# Subtest: G1 shell gate harness executes the fence's own lines up to the comparison
+ok 245 - G1 shell gate harness executes the fence's own lines up to the comparison
+  ---
+  duration_ms: 56.761016
   type: 'test'
   ...
 # Subtest: gws-2sv-reset-backup-codes: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 245 - gws-2sv-reset-backup-codes: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 246 - gws-2sv-reset-backup-codes: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.904054
+  duration_ms: 43.270896
   type: 'test'
   ...
 # Subtest: gws-2sv-reset-turn-off: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 246 - gws-2sv-reset-turn-off: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 247 - gws-2sv-reset-turn-off: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.232192
+  duration_ms: 48.480253
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-reenable: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 247 - gws-chromeos-device-reenable: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 248 - gws-chromeos-device-reenable: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 38.923121
+  duration_ms: 37.328283
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-disable: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 248 - gws-chromeos-device-disable: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 249 - gws-chromeos-device-disable: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.212694
+  duration_ms: 45.779222
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-wipe-users: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 249 - gws-chromeos-device-wipe-users: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 250 - gws-chromeos-device-wipe-users: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 38.158197
+  duration_ms: 44.26835
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-powerwash: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 250 - gws-chromeos-device-powerwash: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 251 - gws-chromeos-device-powerwash: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 40.360907
+  duration_ms: 58.908279
   type: 'test'
   ...
 # Subtest: gws-chromeos-device-deprovision: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 251 - gws-chromeos-device-deprovision: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 252 - gws-chromeos-device-deprovision: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 41.012488
+  duration_ms: 38.892593
   type: 'test'
   ...
 # Subtest: gws-drive-transfer-drive: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 252 - gws-drive-transfer-drive: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 253 - gws-drive-transfer-drive: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 40.358457
+  duration_ms: 37.615462
   type: 'test'
   ...
 # Subtest: gws-drive-transfer-datatransfer: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 253 - gws-drive-transfer-datatransfer: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 254 - gws-drive-transfer-datatransfer: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 35.859477
+  duration_ms: 38.764539
   type: 'test'
   ...
 # Subtest: gws-drive-transfer-calendar: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 254 - gws-drive-transfer-calendar: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 255 - gws-drive-transfer-calendar: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 37.990722
+  duration_ms: 39.893842
   type: 'test'
   ...
 # Subtest: gws-group-membership-add: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 255 - gws-group-membership-add: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 256 - gws-group-membership-add: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 40.367902
+  duration_ms: 41.057128
   type: 'test'
   ...
 # Subtest: gws-group-membership-remove: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 256 - gws-group-membership-remove: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 257 - gws-group-membership-remove: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 34.658138
+  duration_ms: 38.795565
   type: 'test'
   ...
 # Subtest: gws-license-assign-assign: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 257 - gws-license-assign-assign: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 258 - gws-license-assign-assign: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 34.061723
+  duration_ms: 38.313243
   type: 'test'
   ...
 # Subtest: gws-license-assign-remove: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 258 - gws-license-assign-remove: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 259 - gws-license-assign-remove: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 40.78434
+  duration_ms: 44.015501
   type: 'test'
   ...
 # Subtest: gws-new-user-create: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 259 - gws-new-user-create: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 260 - gws-new-user-create: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 39.053736
+  duration_ms: 41.753016
   type: 'test'
   ...
 # Subtest: gws-new-user-group-add: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 260 - gws-new-user-group-add: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 261 - gws-new-user-group-add: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.652445
+  duration_ms: 45.3188
   type: 'test'
   ...
 # Subtest: gws-offboard-okta-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 261 - gws-offboard-okta-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 262 - gws-offboard-okta-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.65887
+  duration_ms: 46.493743
   type: 'test'
   ...
 # Subtest: gws-offboard-suspend: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 262 - gws-offboard-suspend: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 263 - gws-offboard-suspend: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 37.342662
+  duration_ms: 40.961129
   type: 'test'
   ...
 # Subtest: gws-offboard-data-transfer: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 263 - gws-offboard-data-transfer: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 264 - gws-offboard-data-transfer: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 40.365432
+  duration_ms: 132.72797
   type: 'test'
   ...
 # Subtest: gws-offboard-delete: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 264 - gws-offboard-delete: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 265 - gws-offboard-delete: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 42.068179
+  duration_ms: 45.723997
   type: 'test'
   ...
 # Subtest: gws-ou-move-user: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 265 - gws-ou-move-user: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 266 - gws-ou-move-user: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.788157
+  duration_ms: 45.856045
   type: 'test'
   ...
 # Subtest: gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 266 - gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 267 - gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 39.242705
+  duration_ms: 39.371356
   type: 'test'
   ...
 # Subtest: gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 267 - gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 268 - gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.760705
+  duration_ms: 39.255397
   type: 'test'
   ...
 # Subtest: jamf-enroll-mac-renew: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 268 - jamf-enroll-mac-renew: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 269 - jamf-enroll-mac-renew: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 40.258238
+  duration_ms: 44.781545
   type: 'test'
   ...
 # Subtest: jamf-enroll-mac-checkin: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 269 - jamf-enroll-mac-checkin: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 270 - jamf-enroll-mac-checkin: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 42.889905
+  duration_ms: 39.167351
   type: 'test'
   ...
 # Subtest: jamf-lock-erase-unmanage: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 270 - jamf-lock-erase-unmanage: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 271 - jamf-lock-erase-unmanage: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 42.441375
+  duration_ms: 40.567103
   type: 'test'
   ...
 # Subtest: jamf-lock-erase-lock-api: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 271 - jamf-lock-erase-lock-api: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 272 - jamf-lock-erase-lock-api: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 39.566152
+  duration_ms: 39.481488
   type: 'test'
   ...
 # Subtest: jamf-lock-erase-wipe-api: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 272 - jamf-lock-erase-wipe-api: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 273 - jamf-lock-erase-wipe-api: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 44.276992
+  duration_ms: 41.536427
   type: 'test'
   ...
 # Subtest: mac-troubleshoot-prk-replace: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 273 - mac-troubleshoot-prk-replace: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 274 - mac-troubleshoot-prk-replace: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 37.498058
+  duration_ms: 43.29796
   type: 'test'
   ...
 # Subtest: mac-troubleshoot-jamf-checkin: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 274 - mac-troubleshoot-jamf-checkin: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 275 - mac-troubleshoot-jamf-checkin: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 43.832117
+  duration_ms: 36.337306
   type: 'test'
   ...
 # Subtest: okta-app-assignment-assign-person: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 275 - okta-app-assignment-assign-person: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 276 - okta-app-assignment-assign-person: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 39.045022
+  duration_ms: 37.722937
   type: 'test'
   ...
 # Subtest: okta-app-assignment-assign-group: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 276 - okta-app-assignment-assign-group: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 277 - okta-app-assignment-assign-group: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 35.508675
+  duration_ms: 36.762712
   type: 'test'
   ...
 # Subtest: okta-app-assignment-unassign-person: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 277 - okta-app-assignment-unassign-person: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 278 - okta-app-assignment-unassign-person: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 36.920054
+  duration_ms: 37.19953
   type: 'test'
   ...
 # Subtest: okta-mfa-reset-factor: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 278 - okta-mfa-reset-factor: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 279 - okta-mfa-reset-factor: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 37.698555
+  duration_ms: 42.01928
   type: 'test'
   ...
 # Subtest: okta-mfa-reset-all: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 279 - okta-mfa-reset-all: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 280 - okta-mfa-reset-all: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 38.327743
+  duration_ms: 37.471455
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 280 - okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 281 - okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 34.579917
+  duration_ms: 37.578989
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-clear-sessions: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 281 - okta-user-lifecycle-clear-sessions: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 282 - okta-user-lifecycle-clear-sessions: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 37.519144
+  duration_ms: 39.533251
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-suspend: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 282 - okta-user-lifecycle-suspend: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 283 - okta-user-lifecycle-suspend: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 39.647902
+  duration_ms: 38.123627
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-unsuspend: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 283 - okta-user-lifecycle-unsuspend: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 284 - okta-user-lifecycle-unsuspend: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 38.291035
+  duration_ms: 35.520472
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 284 - okta-user-lifecycle-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 285 - okta-user-lifecycle-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 38.398667
+  duration_ms: 37.815157
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-activate: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 285 - okta-user-lifecycle-activate: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 286 - okta-user-lifecycle-activate: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 39.012432
+  duration_ms: 36.499737
   type: 'test'
   ...
 # Subtest: okta-user-lifecycle-delete: shell gate is explicit, dominates its sinks, and is fail-closed
-ok 286 - okta-user-lifecycle-delete: shell gate is explicit, dominates its sinks, and is fail-closed
+ok 287 - okta-user-lifecycle-delete: shell gate is explicit, dominates its sinks, and is fail-closed
   ---
-  duration_ms: 39.265492
+  duration_ms: 39.737821
   type: 'test'
   ...
 # Subtest: G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates
-ok 287 - G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates
+ok 288 - G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates
   ---
-  duration_ms: 1.487812
+  duration_ms: 1.358363
   type: 'test'
   ...
 # Subtest: G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar
-ok 288 - G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar
+ok 289 - G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar
   ---
-  duration_ms: 0.733645
+  duration_ms: 0.434931
   type: 'test'
   ...
 # {"ok":false,"error":"SCOPE COLLISION — another active task owns overlapping files; wait or hand off explicitly, never overwrite","collisions":[{"task":"rework-tier-guard","owner":"session-A","theirs":"scripts/tier","mine":"scripts/tier/tier-guard.js"}]}
 # {"ok":false,"error":"task \\"same-id\\" is already claimed — pick another id or coordinate with its owner"}
 # Subtest: K: two sessions with non-overlapping scopes both claim, see each other, and complete
-ok 289 - K: two sessions with non-overlapping scopes both claim, see each other, and complete
+ok 290 - K: two sessions with non-overlapping scopes both claim, see each other, and complete
   ---
-  duration_ms: 298.747399
+  duration_ms: 265.099985
   type: 'test'
   ...
 # Subtest: L: a second session claiming an overlapping scope is REFUSED and told who owns it
-ok 290 - L: a second session claiming an overlapping scope is REFUSED and told who owns it
+ok 291 - L: a second session claiming an overlapping scope is REFUSED and told who owns it
   ---
-  duration_ms: 221.200196
+  duration_ms: 212.440182
   type: 'test'
   ...
 # Subtest: L2: duplicate task id is an atomic refusal (O_EXCL), never an overwrite
-ok 291 - L2: duplicate task id is an atomic refusal (O_EXCL), never an overwrite
+ok 292 - L2: duplicate task id is an atomic refusal (O_EXCL), never an overwrite
   ---
-  duration_ms: 105.229304
+  duration_ms: 96.090882
   type: 'test'
   ...
 # Subtest: documentation files in tasks/active are never reported as claims (README regression)
-ok 292 - documentation files in tasks/active are never reported as claims (README regression)
+ok 293 - documentation files in tasks/active are never reported as claims (README regression)
   ---
-  duration_ms: 135.435093
+  duration_ms: 160.718296
   type: 'test'
   ...
 # Subtest: check is report-only and directional overlap works both ways
-ok 293 - check is report-only and directional overlap works both ways
+ok 294 - check is report-only and directional overlap works both ways
   ---
-  duration_ms: 108.242369
+  duration_ms: 134.767183
   type: 'test'
   ...
 # Subtest: bootstrap canon exists for fresh sessions (contract, state, team, dev roles)
-ok 294 - bootstrap canon exists for fresh sessions (contract, state, team, dev roles)
+ok 295 - bootstrap canon exists for fresh sessions (contract, state, team, dev roles)
   ---
-  duration_ms: 1.505711
+  duration_ms: 2.025674
   type: 'test'
   ...
 # Subtest: corpus covers the representative Google Workspace / Okta / Jamf / macOS ticket classes and duties
-ok 295 - corpus covers the representative Google Workspace / Okta / Jamf / macOS ticket classes and duties
+ok 296 - corpus covers the representative Google Workspace / Okta / Jamf / macOS ticket classes and duties
   ---
-  duration_ms: 7.060541
+  duration_ms: 5.51015
   type: 'test'
   ...
 # Subtest: deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs
-ok 296 - deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs
+ok 297 - deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs
   ---
-  duration_ms: 2259.639041
+  duration_ms: 2482.439061
   type: 'test'
   ...
 # Subtest: the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail
-ok 297 - the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail
+ok 298 - the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail
   ---
-  duration_ms: 4329.718074
+  duration_ms: 4331.59305
   type: 'test'
   ...
 # Subtest: both lanes run one shared evaluator (no copy-pasted evaluation logic)
-ok 298 - both lanes run one shared evaluator (no copy-pasted evaluation logic)
+ok 299 - both lanes run one shared evaluator (no copy-pasted evaluation logic)
   ---
-  duration_ms: 3142.518475
+  duration_ms: 3116.376559
   type: 'test'
   ...
 # Subtest: corpus covers the representative Microsoft ticket classes and workloads
-ok 299 - corpus covers the representative Microsoft ticket classes and workloads
+ok 300 - corpus covers the representative Microsoft ticket classes and workloads
   ---
-  duration_ms: 5.784407
+  duration_ms: 4.852247
   type: 'test'
   ...
 # Subtest: deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs
-ok 300 - deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs
+ok 301 - deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs
   ---
-  duration_ms: 1621.149205
+  duration_ms: 1615.999192
   type: 'test'
   ...
 # Subtest: the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail
-ok 301 - the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail
+ok 302 - the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail
   ---
-  duration_ms: 3208.706574
+  duration_ms: 3096.067209
   type: 'test'
   ...
-# graph.test.js: runs dir /tmp/atg-test-4JPHkx/runs
+# graph.test.js: runs dir /tmp/atg-test-nhFKwa/runs
 # PASS A1 dry-run R0 info ticket: resolves; EXECUTOR never runs; humanRequired false
 # PASS A2 dry-run R1 MFA re-register: resolves with non-empty undo on the mutating step
 # PASS A3 endpoint ticket routes lane=endpoint and resolves
@@ -1887,503 +1893,515 @@ ok 301 - the eval checks implementation, not fixtures: a mutated expectation, a 
 # Subtest: scripts/graph/graph.test.js
 ok 8 - scripts/graph/graph.test.js
   ---
-  duration_ms: 23014.861967
+  duration_ms: 22025.90882
   type: 'test'
   ...
 # Subtest: default mode previews every target and performs no filesystem write
-ok 303 - default mode previews every target and performs no filesystem write
+ok 304 - default mode previews every target and performs no filesystem write
   ---
-  duration_ms: 69.491414
+  duration_ms: 63.601762
   type: 'test'
   ...
 # Subtest: missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes
-ok 304 - missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes
+ok 305 - missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes
   ---
-  duration_ms: 331.9488
+  duration_ms: 385.138629
   type: 'test'
   ...
 # Subtest: the exact initial-create phrase installs the target set once
-ok 305 - the exact initial-create phrase installs the target set once
+ok 306 - the exact initial-create phrase installs the target set once
   ---
-  duration_ms: 215.93976
+  duration_ms: 175.929152
   type: 'test'
   ...
 # Subtest: existing and partial memory remain read-only until a force plan is exactly authorized
-ok 306 - existing and partial memory remain read-only until a force plan is exactly authorized
+ok 307 - existing and partial memory remain read-only until a force plan is exactly authorized
   ---
-  duration_ms: 138.200377
+  duration_ms: 136.28952
   type: 'test'
   ...
 # Subtest: force replacement requires its own exact plan and creates a verified checkpoint
-ok 307 - force replacement requires its own exact plan and creates a verified checkpoint
+ok 308 - force replacement requires its own exact plan and creates a verified checkpoint
   ---
-  duration_ms: 346.370552
+  duration_ms: 313.159991
   type: 'test'
   ...
 # Subtest: an injected install failure rolls back installed targets and reports partial state
-ok 308 - an injected install failure rolls back installed targets and reports partial state
+ok 309 - an injected install failure rolls back installed targets and reports partial state
   ---
-  duration_ms: 155.31599
+  duration_ms: 150.238837
   type: 'test'
   ...
 # Subtest: a concurrent create is preserved and causes rollback instead of clobber
-ok 309 - a concurrent create is preserved and causes rollback instead of clobber
+ok 310 - a concurrent create is preserved and causes rollback instead of clobber
   ---
-  duration_ms: 18.496085
+  duration_ms: 12.133933
   type: 'test'
   ...
 # Subtest: force execution detects drift after backup and never installs over the changed target
-ok 310 - force execution detects drift after backup and never installs over the changed target
+ok 311 - force execution detects drift after backup and never installs over the changed target
   ---
-  duration_ms: 149.193009
+  duration_ms: 135.192867
   type: 'test'
   ...
 # Subtest: symbolic-link or junction memory paths are rejected without touching the referent
-ok 311 - symbolic-link or junction memory paths are rejected without touching the referent
+ok 312 - symbolic-link or junction memory paths are rejected without touching the referent
   ---
-  duration_ms: 64.041925
+  duration_ms: 52.872693
   type: 'test'
   ...
 # Subtest: repository-derived keys include the full stable path
-ok 312 - repository-derived keys include the full stable path
+ok 313 - repository-derived keys include the full stable path
   ---
-  duration_ms: 0.623115
+  duration_ms: 0.478082
   type: 'test'
   ...
 # Subtest: PROJECT_KEY accepts only a bounded slug and cannot escape the project root
-ok 313 - PROJECT_KEY accepts only a bounded slug and cannot escape the project root
+ok 314 - PROJECT_KEY accepts only a bounded slug and cannot escape the project root
   ---
-  duration_ms: 0.639228
+  duration_ms: 0.494287
   type: 'test'
   ...
 # Subtest: strict argument parsing rejects value-smuggling, duplicates, and detached confirmations
-ok 314 - strict argument parsing rejects value-smuggling, duplicates, and detached confirmations
+ok 315 - strict argument parsing rejects value-smuggling, duplicates, and detached confirmations
   ---
-  duration_ms: 0.56218
+  duration_ms: 0.353295
   type: 'test'
   ...
 # Subtest: site validation accepts and canonicalizes one Atlassian tenant label
-ok 315 - site validation accepts and canonicalizes one Atlassian tenant label
+ok 316 - site validation accepts and canonicalizes one Atlassian tenant label
   ---
-  duration_ms: 1.304936
+  duration_ms: 2.184509
   type: 'test'
   ...
 # Subtest: site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls
-ok 316 - site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls
+ok 317 - site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls
   ---
-  duration_ms: 0.889823
+  duration_ms: 1.367164
   type: 'test'
   ...
 # Subtest: direct apiRequest validates the destination before invoking the transport
-ok 317 - direct apiRequest validates the destination before invoking the transport
+ok 318 - direct apiRequest validates the destination before invoking the transport
   ---
-  duration_ms: 0.378659
+  duration_ms: 0.471131
   type: 'test'
   ...
 # Subtest: argument parser requires --confirm VALUE while execute/public remain bare booleans
-ok 318 - argument parser requires --confirm VALUE while execute/public remain bare booleans
+ok 319 - argument parser requires --confirm VALUE while execute/public remain bare booleans
   ---
-  duration_ms: 1.92335
+  duration_ms: 1.019637
   type: 'test'
   ...
 # Subtest: argument parser rejects duplicate, malformed, and unknown flags
-ok 319 - argument parser rejects duplicate, malformed, and unknown flags
+ok 320 - argument parser rejects duplicate, malformed, and unknown flags
   ---
-  duration_ms: 0.306068
+  duration_ms: 0.550971
   type: 'test'
   ...
 # Subtest: issue keys are normalized but paths and placeholder text are rejected
-ok 320 - issue keys are normalized but paths and placeholder text are rejected
+ok 321 - issue keys are normalized but paths and placeholder text are rejected
   ---
-  duration_ms: 0.303428
+  duration_ms: 0.415891
   type: 'test'
   ...
 # Subtest: create payload is exact, numeric-id-bound, and deterministically serialized
-ok 321 - create payload is exact, numeric-id-bound, and deterministically serialized
+ok 322 - create payload is exact, numeric-id-bound, and deterministically serialized
   ---
-  duration_ms: 1.650159
+  duration_ms: 2.76914
   type: 'test'
   ...
 # Subtest: create confirmation contains a full SHA-256 and changes with every material field
-ok 322 - create confirmation contains a full SHA-256 and changes with every material field
+ok 323 - create confirmation contains a full SHA-256 and changes with every material field
   ---
-  duration_ms: 0.999991
+  duration_ms: 1.099762
   type: 'test'
   ...
 # Subtest: create dry run and missing/wrong confirmations use zero credentials and zero network
-ok 323 - create dry run and missing/wrong confirmations use zero credentials and zero network
+ok 324 - create dry run and missing/wrong confirmations use zero credentials and zero network
   ---
-  duration_ms: 1.515464
+  duration_ms: 2.259897
   type: 'test'
   ...
 # Subtest: exact create confirmation sends one bound POST then verifies identity, type, and fields by GET
-ok 324 - exact create confirmation sends one bound POST then verifies identity, type, and fields by GET
+ok 325 - exact create confirmation sends one bound POST then verifies identity, type, and fields by GET
   ---
-  duration_ms: 1.375576
+  duration_ms: 1.780434
   type: 'test'
   ...
 # Subtest: create receipt/read-back failure or mismatch is partial/unknown and is never retried
     # Subtest: case 1
     ok 1 - case 1
       ---
-      duration_ms: 0.364503
+      duration_ms: 0.517735
       type: 'test'
       ...
     # Subtest: case 2
     ok 2 - case 2
       ---
-      duration_ms: 0.221085
+      duration_ms: 0.207825
       type: 'test'
       ...
     # Subtest: case 3
     ok 3 - case 3
       ---
-      duration_ms: 0.144507
+      duration_ms: 0.17957
       type: 'test'
       ...
     # Subtest: case 4
     ok 4 - case 4
       ---
-      duration_ms: 0.266092
+      duration_ms: 0.449285
       type: 'test'
       ...
     1..4
-ok 325 - create receipt/read-back failure or mismatch is partial/unknown and is never retried
+ok 326 - create receipt/read-back failure or mismatch is partial/unknown and is never retried
   ---
-  duration_ms: 1.693263
+  duration_ms: 2.402616
   type: 'test'
   ...
 # Subtest: invalid create destination fails before credentials/network and is not echoed
-ok 326 - invalid create destination fails before credentials/network and is not echoed
+ok 327 - invalid create destination fails before credentials/network and is not echoed
   ---
-  duration_ms: 0.358328
+  duration_ms: 0.628215
   type: 'test'
   ...
 # Subtest: comment confirmations bind issue, visibility, site, and full payload digest
-ok 327 - comment confirmations bind issue, visibility, site, and full payload digest
+ok 328 - comment confirmations bind issue, visibility, site, and full payload digest
   ---
-  duration_ms: 0.391937
+  duration_ms: 0.688623
   type: 'test'
   ...
 # Subtest: comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes
-ok 328 - comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes
+ok 329 - comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes
   ---
-  duration_ms: 0.721402
+  duration_ms: 0.681745
   type: 'test'
   ...
 # Subtest: exact INTERNAL and PUBLIC confirmations send the requested visibility only
-ok 329 - exact INTERNAL and PUBLIC confirmations send the requested visibility only
+ok 330 - exact INTERNAL and PUBLIC confirmations send the requested visibility only
   ---
-  duration_ms: 0.636671
+  duration_ms: 0.936951
   type: 'test'
   ...
 # Subtest: comment receipt/read-back failure or mismatch is partial/unknown and is never retried
     # Subtest: case 1
     ok 1 - case 1
       ---
-      duration_ms: 0.401736
+      duration_ms: 0.670423
       type: 'test'
       ...
     # Subtest: case 2
     ok 2 - case 2
       ---
-      duration_ms: 0.220575
+      duration_ms: 0.434066
       type: 'test'
       ...
     # Subtest: case 3
     ok 3 - case 3
       ---
-      duration_ms: 1.19748
+      duration_ms: 0.180719
       type: 'test'
       ...
     # Subtest: case 4
     ok 4 - case 4
       ---
-      duration_ms: 0.22847
+      duration_ms: 1.466238
       type: 'test'
       ...
     1..4
-ok 330 - comment receipt/read-back failure or mismatch is partial/unknown and is never retried
+ok 331 - comment receipt/read-back failure or mismatch is partial/unknown and is never retried
   ---
-  duration_ms: 3.136927
+  duration_ms: 3.40668
   type: 'test'
   ...
 # Subtest: an attempted comment with a non-201 result is partial/unknown and is never retried
-ok 331 - an attempted comment with a non-201 result is partial/unknown and is never retried
+ok 332 - an attempted comment with a non-201 result is partial/unknown and is never retried
   ---
-  duration_ms: 0.242213
+  duration_ms: 0.557356
   type: 'test'
   ...
 # Subtest: transition local preview calls neither credentials nor Jira
-ok 332 - transition local preview calls neither credentials nor Jira
+ok 333 - transition local preview calls neither credentials nor Jira
   ---
-  duration_ms: 0.32676
+  duration_ms: 0.719896
   type: 'test'
   ...
 # Subtest: transition --execute performs paginated read-only preflight and prints immutable confirmation
-ok 333 - transition --execute performs paginated read-only preflight and prints immutable confirmation
+ok 334 - transition --execute performs paginated read-only preflight and prints immutable confirmation
   ---
-  duration_ms: 1.518244
+  duration_ms: 1.280852
   type: 'test'
   ...
 # Subtest: wrong transition confirmation performs only the necessary read preflight and no POST
-ok 334 - wrong transition confirmation performs only the necessary read preflight and no POST
+ok 335 - wrong transition confirmation performs only the necessary read preflight and no POST
   ---
-  duration_ms: 0.331841
+  duration_ms: 0.638369
   type: 'test'
   ...
 # Subtest: transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
     # Subtest: duplicate selected names
     ok 1 - duplicate selected names
       ---
-      duration_ms: 0.390608
+      duration_ms: 0.715095
       type: 'test'
       ...
     # Subtest: duplicate ids across pages
     ok 2 - duplicate ids across pages
       ---
-      duration_ms: 0.165119
+      duration_ms: 0.197788
       type: 'test'
       ...
     # Subtest: no match
     ok 3 - no match
       ---
-      duration_ms: 0.104397
+      duration_ms: 0.191944
       type: 'test'
       ...
     # Subtest: non-progressing page
     ok 4 - non-progressing page
       ---
-      duration_ms: 0.407599
+      duration_ms: 0.498095
       type: 'test'
       ...
     # Subtest: wrong page start
     ok 5 - wrong page start
       ---
-      duration_ms: 0.144868
+      duration_ms: 0.338293
       type: 'test'
       ...
     # Subtest: missing current-state version
     ok 6 - missing current-state version
       ---
-      duration_ms: 0.082947
+      duration_ms: 0.263964
       type: 'test'
       ...
     1..6
-ok 335 - transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+ok 336 - transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
   ---
-  duration_ms: 1.744544
+  duration_ms: 3.05402
   type: 'test'
   ...
 # Subtest: exact transition repeats preflight, POSTs once, and verifies changed state by immutable id
-ok 336 - exact transition repeats preflight, POSTs once, and verifies changed state by immutable id
+ok 337 - exact transition repeats preflight, POSTs once, and verifies changed state by immutable id
   ---
-  duration_ms: 0.653356
+  duration_ms: 1.228404
   type: 'test'
   ...
 # Subtest: state drift between repeated preflights invalidates an otherwise exact phrase and makes zero POSTs
-ok 337 - state drift between repeated preflights invalidates an otherwise exact phrase and makes zero POSTs
+ok 338 - state drift between repeated preflights invalidates an otherwise exact phrase and makes zero POSTs
   ---
-  duration_ms: 0.516776
+  duration_ms: 0.698963
   type: 'test'
   ...
 # Subtest: POST acceptance followed by unchanged state reports partial/unknown and never retries
-ok 338 - POST acceptance followed by unchanged state reports partial/unknown and never retries
+ok 339 - POST acceptance followed by unchanged state reports partial/unknown and never retries
   ---
-  duration_ms: 0.398367
+  duration_ms: 0.405522
   type: 'test'
   ...
 # Subtest: POST transport ambiguity and read-back failure both report partial/unknown without retry
     # Subtest: POST transport error
     ok 1 - POST transport error
       ---
-      duration_ms: 0.343372
+      duration_ms: 0.889127
       type: 'test'
       ...
     # Subtest: read-back failure
     ok 2 - read-back failure
       ---
-      duration_ms: 0.320685
+      duration_ms: 0.747713
       type: 'test'
       ...
     1..2
-ok 339 - POST transport ambiguity and read-back failure both report partial/unknown without retry
+ok 340 - POST transport ambiguity and read-back failure both report partial/unknown without retry
   ---
-  duration_ms: 0.888792
+  duration_ms: 2.232966
   type: 'test'
   ...
 # Subtest: API failures with bodies fail closed and never disclose response content
-ok 340 - API failures with bodies fail closed and never disclose response content
+ok 341 - API failures with bodies fail closed and never disclose response content
   ---
-  duration_ms: 0.289607
+  duration_ms: 0.322715
   type: 'test'
   ...
 # Subtest: apiRequest timeout is finite, destroys the request, and rejects
-ok 341 - apiRequest timeout is finite, destroys the request, and rejects
+ok 342 - apiRequest timeout is finite, destroys the request, and rejects
   ---
-  duration_ms: 38.484587
+  duration_ms: 40.363459
   type: 'test'
   ...
 # Subtest: live command surface: every operational/troubleshooting command satisfies the GUI-first structural contract
-ok 342 - live command surface: every operational/troubleshooting command satisfies the GUI-first structural contract
+ok 343 - live command surface: every operational/troubleshooting command satisfies the GUI-first structural contract
   ---
-  duration_ms: 98.882405
+  duration_ms: 89.085377
   type: 'test'
   ...
 # Subtest: live docs carrying portal paths are fresh and uncorrupted
-ok 343 - live docs carrying portal paths are fresh and uncorrupted
+ok 344 - live docs carrying portal paths are fresh and uncorrupted
   ---
-  duration_ms: 20.876172
+  duration_ms: 21.71599
   type: 'test'
   ...
 # Subtest: a compliant synthetic command passes every rule (the lint is not vacuously strict)
-ok 344 - a compliant synthetic command passes every rule (the lint is not vacuously strict)
+ok 345 - a compliant synthetic command passes every rule (the lint is not vacuously strict)
   ---
-  duration_ms: 0.4596
+  duration_ms: 0.433132
   type: 'test'
   ...
 # Subtest: an unclassified command is a finding — new commands must be classified
-ok 345 - an unclassified command is a finding — new commands must be classified
+ok 346 - an unclassified command is a finding — new commands must be classified
   ---
-  duration_ms: 0.417496
+  duration_ms: 0.429033
   type: 'test'
   ...
 # Subtest: gui-before-powershell: a PowerShell fence ahead of the first breadcrumb fails
-ok 346 - gui-before-powershell: a PowerShell fence ahead of the first breadcrumb fails
+ok 347 - gui-before-powershell: a PowerShell fence ahead of the first breadcrumb fails
   ---
-  duration_ms: 0.344835
+  duration_ms: 0.543579
   type: 'test'
   ...
 # Subtest: powershell-collapsed / powershell-commented: uncollapsed or uncommented PowerShell fails
-ok 347 - powershell-collapsed / powershell-commented: uncollapsed or uncommented PowerShell fails
+ok 348 - powershell-collapsed / powershell-commented: uncollapsed or uncommented PowerShell fails
   ---
-  duration_ms: 0.363473
+  duration_ms: 0.360986
   type: 'test'
   ...
 # Subtest: one-final-checklist / paste-ready-note / checklist-before-note
-ok 348 - one-final-checklist / paste-ready-note / checklist-before-note
+ok 349 - one-final-checklist / paste-ready-note / checklist-before-note
   ---
-  duration_ms: 0.829118
+  duration_ms: 0.390863
   type: 'test'
   ...
 # Subtest: gui-steps-present: a command with no exact breadcrumb fails; a docs/comms command is exempt
-ok 349 - gui-steps-present: a command with no exact breadcrumb fails; a docs/comms command is exempt
+ok 350 - gui-steps-present: a command with no exact breadcrumb fails; a docs/comms command is exempt
   ---
-  duration_ms: 0.461369
+  duration_ms: 0.622247
   type: 'test'
   ...
 # Subtest: risk-warning-present applies to troubleshooting commands only
-ok 350 - risk-warning-present applies to troubleshooting commands only
+ok 351 - risk-warning-present applies to troubleshooting commands only
   ---
-  duration_ms: 0.520874
+  duration_ms: 0.6543
   type: 'test'
   ...
 # Subtest: slash-refs-exist: a dangling command reference fails; app switches are allowlisted
-ok 351 - slash-refs-exist: a dangling command reference fails; app switches are allowlisted
+ok 352 - slash-refs-exist: a dangling command reference fails; app switches are allowlisted
   ---
-  duration_ms: 0.95235
+  duration_ms: 0.7067
   type: 'test'
   ...
 # Subtest: no-corrupted-chars: a stray combining mark fails
-ok 352 - no-corrupted-chars: a stray combining mark fails
+ok 353 - no-corrupted-chars: a stray combining mark fails
   ---
-  duration_ms: 0.403598
+  duration_ms: 0.339653
   type: 'test'
   ...
 # Subtest: fresh-portal-paths: a retired Entra breadcrumb fails, in prose or inside a fence
-ok 353 - fresh-portal-paths: a retired Entra breadcrumb fails, in prose or inside a fence
+ok 354 - fresh-portal-paths: a retired Entra breadcrumb fails, in prose or inside a fence
   ---
-  duration_ms: 0.711857
+  duration_ms: 0.664901
   type: 'test'
   ...
 # Subtest: fresh-portal-paths: Markdown emphasis, links, or HTML cannot hide a retired breadcrumb (review finding)
-ok 354 - fresh-portal-paths: Markdown emphasis, links, or HTML cannot hide a retired breadcrumb (review finding)
+ok 355 - fresh-portal-paths: Markdown emphasis, links, or HTML cannot hide a retired breadcrumb (review finding)
   ---
-  duration_ms: 1.455565
+  duration_ms: 2.342298
   type: 'test'
   ...
 # Subtest: gui-before-powershell: a frontmatter description arrow is not a breadcrumb (review finding)
-ok 355 - gui-before-powershell: a frontmatter description arrow is not a breadcrumb (review finding)
+ok 356 - gui-before-powershell: a frontmatter description arrow is not a breadcrumb (review finding)
   ---
-  duration_ms: 0.445511
+  duration_ms: 0.500727
   type: 'test'
   ...
 # Subtest: CLI exits 0 on the live tree
-ok 356 - CLI exits 0 on the live tree
+ok 357 - CLI exits 0 on the live tree
   ---
-  duration_ms: 172.841537
+  duration_ms: 154.421198
   type: 'test'
   ...
 # Subtest: G1: a compliant Google/Okta/Jamf command passes every rule (read-only fence may stay open)
-ok 357 - G1: a compliant Google/Okta/Jamf command passes every rule (read-only fence may stay open)
+ok 358 - G1: a compliant Google/Okta/Jamf command passes every rule (read-only fence may stay open)
   ---
-  duration_ms: 1.64997
+  duration_ms: 5.697955
   type: 'test'
   ...
 # Subtest: G1 breadcrumb roots: Admin console, Okta, Jamf Pro, Apple Business, Fleet, System Settings, Self Service, Finder, Terminal and Zoom Rooms count; an unknown root does not
-ok 358 - G1 breadcrumb roots: Admin console, Okta, Jamf Pro, Apple Business, Fleet, System Settings, Self Service, Finder, Terminal and Zoom Rooms count; an unknown root does not
+ok 359 - G1 breadcrumb roots: Admin console, Okta, Jamf Pro, Apple Business, Fleet, System Settings, Self Service, Finder, Terminal and Zoom Rooms count; an unknown root does not
   ---
-  duration_ms: 11.653254
+  duration_ms: 3.726203
   type: 'test'
   ...
 # Subtest: G1 cli-collapsed: a mutating gam/jamf/curl/profiles fence outside <details> fails; read-only diagnostics may stay open
-ok 359 - G1 cli-collapsed: a mutating gam/jamf/curl/profiles fence outside <details> fails; read-only diagnostics may stay open
+ok 360 - G1 cli-collapsed: a mutating gam/jamf/curl/profiles fence outside <details> fails; read-only diagnostics may stay open
   ---
-  duration_ms: 7.816344
+  duration_ms: 6.026767
+  type: 'test'
+  ...
+# Subtest: G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+ok 361 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  ---
+  duration_ms: 2.429285
+  type: 'test'
+  ...
+# Subtest: G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)
+ok 362 - G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)
+  ---
+  duration_ms: 0.946408
   type: 'test'
   ...
 # Subtest: G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above)
-ok 360 - G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above)
+ok 363 - G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above)
   ---
-  duration_ms: 1.315416
+  duration_ms: 0.826376
   type: 'test'
   ...
 # Subtest: G1 gui-before-cli: a CLI fence ahead of the first portal breadcrumb fails
-ok 361 - G1 gui-before-cli: a CLI fence ahead of the first portal breadcrumb fails
+ok 364 - G1 gui-before-cli: a CLI fence ahead of the first portal breadcrumb fails
   ---
-  duration_ms: 0.417577
+  duration_ms: 0.435807
   type: 'test'
   ...
 # Subtest: G1 cli-human-run: a mutating CLI fence must say HUMAN-RUN
-ok 362 - G1 cli-human-run: a mutating CLI fence must say HUMAN-RUN
+ok 365 - G1 cli-human-run: a mutating CLI fence must say HUMAN-RUN
   ---
-  duration_ms: 0.363241
+  duration_ms: 0.369484
   type: 'test'
   ...
 # Subtest: G1 cli-in-shell-fence: Google/Okta/Jamf/macOS CLI inside a PowerShell or untagged fence fails (the gate grammar would not see it)
-ok 363 - G1 cli-in-shell-fence: Google/Okta/Jamf/macOS CLI inside a PowerShell or untagged fence fails (the gate grammar would not see it)
+ok 366 - G1 cli-in-shell-fence: Google/Okta/Jamf/macOS CLI inside a PowerShell or untagged fence fails (the gate grammar would not see it)
   ---
-  duration_ms: 0.65663
+  duration_ms: 0.684364
   type: 'test'
   ...
 # Subtest: G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; the current wording passes; every entry cites a vendor page and a check date
-ok 364 - G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; the current wording passes; every entry cites a vendor page and a check date
+ok 367 - G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; the current wording passes; every entry cites a vendor page and a check date
   ---
-  duration_ms: 3.709503
+  duration_ms: 3.856945
   type: 'test'
   ...
 # Subtest: G1 commands are classified: every Phase-3 runbook name has a variant
-ok 365 - G1 commands are classified: every Phase-3 runbook name has a variant
+ok 368 - G1 commands are classified: every Phase-3 runbook name has a variant
   ---
-  duration_ms: 0.252123
+  duration_ms: 0.2717
   type: 'test'
   ...
 # Subtest: G1 knowledge docs are on the freshness list (retired vendor wording can never come back there)
-ok 366 - G1 knowledge docs are on the freshness list (retired vendor wording can never come back there)
+ok 369 - G1 knowledge docs are on the freshness list (retired vendor wording can never come back there)
   ---
-  duration_ms: 0.927506
+  duration_ms: 1.018829
   type: 'test'
   ...
 # Subtest: relative Markdown file links resolve inside the repository
-ok 367 - relative Markdown file links resolve inside the repository
+ok 370 - relative Markdown file links resolve inside the repository
   ---
-  duration_ms: 36.030526
+  duration_ms: 32.520996
   type: 'test'
   ...
 # Subtest: PowerShell casts and invocations inside fenced code are not parsed as Markdown links
-ok 368 - PowerShell casts and invocations inside fenced code are not parsed as Markdown links
+ok 371 - PowerShell casts and invocations inside fenced code are not parsed as Markdown links
   ---
-  duration_ms: 0.299759
+  duration_ms: 0.332046
   type: 'test'
   ...
 # PASS M1 reusable lesson: candidate with provenance promotes and a later relevant query retrieves it
@@ -2404,271 +2422,271 @@ ok 368 - PowerShell casts and invocations inside fenced code are not parsed as M
 # Subtest: scripts/memory/memory.test.js
 ok 13 - scripts/memory/memory.test.js
   ---
-  duration_ms: 8052.611397
+  duration_ms: 7863.155591
   type: 'test'
   ...
 # Subtest: blocks a staged synthetic secret without printing the value or source line
-ok 370 - blocks a staged synthetic secret without printing the value or source line
+ok 373 - blocks a staged synthetic secret without printing the value or source line
   ---
-  duration_ms: 157.528049
+  duration_ms: 151.029078
   type: 'test'
   ...
 # Subtest: handles spaces, brackets, quotes, Unicode, and a leading dash in staged filenames
-ok 371 - handles spaces, brackets, quotes, Unicode, and a leading dash in staged filenames
+ok 374 - handles spaces, brackets, quotes, Unicode, and a leading dash in staged filenames
   ---
-  duration_ms: 108.701855
+  duration_ms: 103.614879
   type: 'test'
   ...
 # Subtest: redacts every C0 and DEL control character from displayed paths
-ok 372 - redacts every C0 and DEL control character from displayed paths
+ok 375 - redacts every C0 and DEL control character from displayed paths
   ---
-  duration_ms: 1.628591
+  duration_ms: 2.202352
   type: 'test'
   ...
 # Subtest: detects binary content from bytes rather than the filename suffix
-ok 373 - detects binary content from bytes rather than the filename suffix
+ok 376 - detects binary content from bytes rather than the filename suffix
   ---
-  duration_ms: 0.272011
+  duration_ms: 0.467402
   type: 'test'
   ...
 # Subtest: fails closed when NUL or invalid UTF-8 bytes precede credential-shaped text
-ok 374 - fails closed when NUL or invalid UTF-8 bytes precede credential-shaped text
+ok 377 - fails closed when NUL or invalid UTF-8 bytes precede credential-shaped text
   ---
-  duration_ms: 95.335866
+  duration_ms: 94.758068
   type: 'test'
   ...
 # Subtest: scans text content even when the filename has a binary-looking suffix
-ok 375 - scans text content even when the filename has a binary-looking suffix
+ok 378 - scans text content even when the filename has a binary-looking suffix
   ---
-  duration_ms: 71.408578
+  duration_ms: 81.64063
   type: 'test'
   ...
 # Subtest: force-staged backups and snapshots receive the same PII scan as other text
-ok 376 - force-staged backups and snapshots receive the same PII scan as other text
+ok 379 - force-staged backups and snapshots receive the same PII scan as other text
   ---
-  duration_ms: 96.53023
+  duration_ms: 92.093184
   type: 'test'
   ...
 # Subtest: uses argument-array Git execution and NUL-delimited filename lists
-ok 377 - uses argument-array Git execution and NUL-delimited filename lists
+ok 380 - uses argument-array Git execution and NUL-delimited filename lists
   ---
-  duration_ms: 1.426987
+  duration_ms: 1.152614
   type: 'test'
   ...
 # Subtest: the scanner integration test source is itself scanner-clean
-ok 378 - the scanner integration test source is itself scanner-clean
+ok 381 - the scanner integration test source is itself scanner-clean
   ---
-  duration_ms: 112.175137
+  duration_ms: 75.613622
   type: 'test'
   ...
 # Subtest: does not let bracket metadata hide a real email address
-ok 379 - does not let bracket metadata hide a real email address
+ok 382 - does not let bracket metadata hide a real email address
   ---
-  duration_ms: 92.021449
+  duration_ms: 75.400914
   type: 'test'
   ...
 # Subtest: blocks an email address on a subdomain
-ok 380 - blocks an email address on a subdomain
+ok 383 - blocks an email address on a subdomain
   ---
-  duration_ms: 89.930718
+  duration_ms: 73.455451
   type: 'test'
   ...
 # Subtest: only exempts the exact canonical email placeholder
-ok 381 - only exempts the exact canonical email placeholder
+ok 384 - only exempts the exact canonical email placeholder
   ---
-  duration_ms: 80.578866
+  duration_ms: 81.15323
   type: 'test'
   ...
 # Subtest: allows canonical placeholders
-ok 382 - allows canonical placeholders
+ok 385 - allows canonical placeholders
   ---
-  duration_ms: 91.170325
+  duration_ms: 70.277446
   type: 'test'
   ...
 # Subtest: allows precise operational metadata email patterns
-ok 383 - allows precise operational metadata email patterns
+ok 386 - allows precise operational metadata email patterns
   ---
-  duration_ms: 81.62382
+  duration_ms: 78.808015
   type: 'test'
   ...
 # Subtest: blocks registered-looking domains that are not IANA example domains
-ok 384 - blocks registered-looking domains that are not IANA example domains
+ok 387 - blocks registered-looking domains that are not IANA example domains
   ---
-  duration_ms: 117.287793
+  duration_ms: 73.603034
   type: 'test'
   ...
 # Subtest: blocks operational accounts, hosts, and privileged paths without printing them
-ok 385 - blocks operational accounts, hosts, and privileged paths without printing them
+ok 388 - blocks operational accounts, hosts, and privileged paths without printing them
   ---
-  duration_ms: 81.146883
+  duration_ms: 94.036267
   type: 'test'
   ...
 # Subtest: redacts a sensitive filename while retaining a deterministic file index
-ok 386 - redacts a sensitive filename while retaining a deterministic file index
+ok 389 - redacts a sensitive filename while retaining a deterministic file index
   ---
-  duration_ms: 90.764912
+  duration_ms: 105.756172
   type: 'test'
   ...
 # Subtest: blocks a real phone number while keeping it and its source line redacted
-ok 387 - blocks a real phone number while keeping it and its source line redacted
+ok 390 - blocks a real phone number while keeping it and its source line redacted
   ---
-  duration_ms: 98.408032
+  duration_ms: 83.839706
   type: 'test'
   ...
 # Subtest: distinguishes an empty staged set from a Git failure outside a repository
-ok 388 - distinguishes an empty staged set from a Git failure outside a repository
+ok 391 - distinguishes an empty staged set from a Git failure outside a repository
   ---
-  duration_ms: 133.445366
+  duration_ms: 130.504562
   type: 'test'
   ...
 # Subtest: fails closed with sanitized output when Git cannot be executed
-ok 389 - fails closed with sanitized output when Git cannot be executed
+ok 392 - fails closed with sanitized output when Git cannot be executed
   ---
-  duration_ms: 59.183158
+  duration_ms: 69.178602
   type: 'test'
   ...
 # Subtest: --all scans tracked working-tree content that is not staged
-ok 390 - --all scans tracked working-tree content that is not staged
+ok 393 - --all scans tracked working-tree content that is not staged
   ---
-  duration_ms: 270.494411
+  duration_ms: 279.986642
   type: 'test'
   ...
 # Subtest: --all scans a non-ignored untracked repair file
-ok 391 - --all scans a non-ignored untracked repair file
+ok 394 - --all scans a non-ignored untracked repair file
   ---
-  duration_ms: 115.636811
+  duration_ms: 134.698059
   type: 'test'
   ...
 # Subtest: --all fails closed when a tracked text file cannot be read
-ok 392 - --all fails closed when a tracked text file cannot be read
+ok 395 - --all fails closed when a tracked text file cannot be read
   ---
-  duration_ms: 226.156033
+  duration_ms: 175.022654
   type: 'test'
   ...
 # Subtest: --all treats a readable empty tracked file as success
-ok 393 - --all treats a readable empty tracked file as success
+ok 396 - --all treats a readable empty tracked file as success
   ---
-  duration_ms: 181.103399
+  duration_ms: 180.357189
   type: 'test'
   ...
 # Subtest: staged regular-to-symlink typechanges are scanned and cannot hide a secret
-ok 394 - staged regular-to-symlink typechanges are scanned and cannot hide a secret
+ok 397 - staged regular-to-symlink typechanges are scanned and cannot hide a secret
   ---
-  duration_ms: 225.897786
+  duration_ms: 225.623849
   type: 'test'
   ...
 # Subtest: blocks configured tenant literals without printing the host or source line
-ok 395 - blocks configured tenant literals without printing the host or source line
+ok 398 - blocks configured tenant literals without printing the host or source line
   ---
-  duration_ms: 109.19738
+  duration_ms: 95.957856
   type: 'test'
   ...
 # Subtest: warning-only findings exit zero and keep the source line redacted
-ok 396 - warning-only findings exit zero and keep the source line redacted
+ok 399 - warning-only findings exit zero and keep the source line redacted
   ---
-  duration_ms: 106.076363
+  duration_ms: 68.560384
   type: 'test'
   ...
 # Subtest: warns on high-impact operational sinks that the legacy matcher missed
-ok 397 - warns on high-impact operational sinks that the legacy matcher missed
+ok 400 - warns on high-impact operational sinks that the legacy matcher missed
   ---
-  duration_ms: 76.970368
+  duration_ms: 94.298388
   type: 'test'
   ...
 # Subtest: does not warn on output formatting cmdlets or Revoke-prefixed prose
-ok 398 - does not warn on output formatting cmdlets or Revoke-prefixed prose
+ok 401 - does not warn on output formatting cmdlets or Revoke-prefixed prose
   ---
-  duration_ms: 89.549153
+  duration_ms: 83.50683
   type: 'test'
   ...
 # Subtest: classifies mailbox permission removal as access revocation, not mailbox deletion
-ok 399 - classifies mailbox permission removal as access revocation, not mailbox deletion
+ok 402 - classifies mailbox permission removal as access revocation, not mailbox deletion
   ---
-  duration_ms: 97.144951
+  duration_ms: 80.287986
   type: 'test'
   ...
 # Subtest: blocks a Google API key without printing the value or source line
-ok 400 - blocks a Google API key without printing the value or source line
+ok 403 - blocks a Google API key without printing the value or source line
   ---
-  duration_ms: 115.108496
+  duration_ms: 80.296681
   type: 'test'
   ...
 # Subtest: blocks a Google OAuth client secret without printing the value or source line
-ok 401 - blocks a Google OAuth client secret without printing the value or source line
+ok 404 - blocks a Google OAuth client secret without printing the value or source line
   ---
-  duration_ms: 85.47922
+  duration_ms: 105.05343
   type: 'test'
   ...
 # Subtest: every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance
-ok 402 - every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance
+ok 405 - every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance
   ---
-  duration_ms: 83.750387
+  duration_ms: 87.181213
   type: 'test'
   ...
 # Subtest: blocks a Google service-account key JSON type marker without printing the source line
-ok 403 - blocks a Google service-account key JSON type marker without printing the source line
+ok 406 - blocks a Google service-account key JSON type marker without printing the source line
   ---
-  duration_ms: 98.268353
+  duration_ms: 76.992624
   type: 'test'
   ...
 # Subtest: blocks a Google service-account key JSON private_key_id without printing the value
-ok 404 - blocks a Google service-account key JSON private_key_id without printing the value
+ok 407 - blocks a Google service-account key JSON private_key_id without printing the value
   ---
-  duration_ms: 86.213852
+  duration_ms: 80.216669
   type: 'test'
   ...
 # Subtest: blocks an Okta SSWS API token header without printing the value or source line
-ok 405 - blocks an Okta SSWS API token header without printing the value or source line
+ok 408 - blocks an Okta SSWS API token header without printing the value or source line
   ---
-  duration_ms: 83.581002
+  duration_ms: 84.565605
   type: 'test'
   ...
 # Subtest: blocks a bare Okta API token without printing the value or source line
-ok 406 - blocks a bare Okta API token without printing the value or source line
+ok 409 - blocks a bare Okta API token without printing the value or source line
   ---
-  duration_ms: 91.450521
+  duration_ms: 79.790095
   type: 'test'
   ...
 # Subtest: blocks a Bearer credential in an Authorization header without printing the value
-ok 407 - blocks a Bearer credential in an Authorization header without printing the value
+ok 410 - blocks a Bearer credential in an Authorization header without printing the value
   ---
-  duration_ms: 95.220195
+  duration_ms: 93.437513
   type: 'test'
   ...
 # Subtest: blocks a Basic credential in an Authorization header without printing the value
-ok 408 - blocks a Basic credential in an Authorization header without printing the value
+ok 411 - blocks a Basic credential in an Authorization header without printing the value
   ---
-  duration_ms: 94.148658
+  duration_ms: 93.889299
   type: 'test'
   ...
 # Subtest: allows Google, Okta, and Jamf placeholder forms
-ok 409 - allows Google, Okta, and Jamf placeholder forms
+ok 412 - allows Google, Okta, and Jamf placeholder forms
   ---
-  duration_ms: 79.057683
+  duration_ms: 92.594489
   type: 'test'
   ...
 # Subtest: rejects unknown arguments with deterministic exit 2
-ok 410 - rejects unknown arguments with deterministic exit 2
+ok 413 - rejects unknown arguments with deterministic exit 2
   ---
-  duration_ms: 119.808925
+  duration_ms: 130.339234
   type: 'test'
   ...
 # Subtest: warns on Google Workspace, Okta, Jamf and macOS destructive sinks (G1 lane)
-ok 411 - warns on Google Workspace, Okta, Jamf and macOS destructive sinks (G1 lane)
+ok 414 - warns on Google Workspace, Okta, Jamf and macOS destructive sinks (G1 lane)
   ---
-  duration_ms: 88.817881
+  duration_ms: 78.745219
   type: 'test'
   ...
 # Subtest: read-only Google, Okta, Jamf and macOS diagnostics do not warn
-ok 412 - read-only Google, Okta, Jamf and macOS diagnostics do not warn
+ok 415 - read-only Google, Okta, Jamf and macOS diagnostics do not warn
   ---
-  duration_ms: 74.995303
+  duration_ms: 84.14166
   type: 'test'
   ...
 # Subtest: a Sources line citing GAM wiki page names does not warn; the command it names still does
-ok 413 - a Sources line citing GAM wiki page names does not warn; the command it names still does
+ok 416 - a Sources line citing GAM wiki page names does not warn; the command it names still does
   ---
-  duration_ms: 158.405347
+  duration_ms: 166.341924
   type: 'test'
   ...
 # PASS R1 first occurrence is a MISS routed to adaptive
@@ -2681,7 +2699,7 @@ ok 413 - a Sources line citing GAM wiki page names does not warn; the command it
 # {"ok":false,"error":"verification refused: --evidence is required — unverified output is not authoritative memory"}
 # {"ok":false,"error":"verification refused: no authority dependencies recorded — a dep-less case can never auto-stale. Re-record with --deps, or acknowledge explicitly with --no-deps"}
 # PASS R5 verification demands evidence AND a dependency basis (or explicit --no-deps)
-# {"ok":false,"error":"render refused: case is STALE (authority changed: [{\\"path\\":\\"/tmp/aegis-replay-O8y5U0/authority.md\\",\\"reason\\":\\"content changed\\"}]) — pass --historical to view as historical evidence"}
+# {"ok":false,"error":"render refused: case is STALE (authority changed: [{\\"path\\":\\"/tmp/aegis-replay-me6ETM/authority.md\\",\\"reason\\":\\"content changed\\"}]) — pass --historical to view as historical evidence"}
 # PASS R6 authority-file change invalidates: STALE at lookup, render refuses, history preserved
 # PASS R7 unrelated file change leaves the cache hit intact
 # {"ok":false,"error":"sanitization BLOCK — refused to persist: GitHub token"}
@@ -2711,7 +2729,7 @@ ok 413 - a Sources line citing GAM wiki page names does not warn; the command it
 # {"ok":false,"error":"identity-variants refused: the stored ticket contains non-ASCII letters — a homoglyph could hide a risk word from the guard, so such tickets replay on exact keys and aliases only"}
 # PASS R11 shape never matches across object count, changed wording, a consequential ticket, or a case that did not opt in
 # PASS R12 corpus dangerous pairs: no exact-key or shape-key collision, floors differ
-# {"ok":false,"error":"store is locked by another writer — retry after it completes (stale lock: remove /tmp/aegis-replay-zXqbNt/store/.lock)"}
+# {"ok":false,"error":"store is locked by another writer — retry after it completes (stale lock: remove /tmp/aegis-replay-lXaqWO/store/.lock)"}
 # PASS R13 lock contention: writes fail closed with exit 5 while a lock is held; lookups are unaffected; a failed write leaves no partial case
 # PASS R14 parallel records never corrupt the store — each writer succeeds or is refused, never half-written
 # {"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class — write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
@@ -2724,333 +2742,333 @@ ok 413 - a Sources line citing GAM wiki page names does not warn; the command it
 # Subtest: scripts/replay/replay.test.js
 ok 15 - scripts/replay/replay.test.js
   ---
-  duration_ms: 9078.966038
+  duration_ms: 8922.06207
   type: 'test'
   ...
 # Subtest: all command files have valid description frontmatter
-ok 415 - all command files have valid description frontmatter
+ok 418 - all command files have valid description frontmatter
   ---
-  duration_ms: 10.089983
+  duration_ms: 8.277617
   type: 'test'
   ...
 # Subtest: the bundled Claude plugin uses the canonical manifest and resolvable command paths
-ok 416 - the bundled Claude plugin uses the canonical manifest and resolvable command paths
+ok 419 - the bundled Claude plugin uses the canonical manifest and resolvable command paths
   ---
-  duration_ms: 1.143062
+  duration_ms: 0.844769
   type: 'test'
   ...
 # Subtest: fresh release staging includes the public password-reset runbook without weakening credential ignores
-ok 417 - fresh release staging includes the public password-reset runbook without weakening credential ignores
+ok 420 - fresh release staging includes the public password-reset runbook without weakening credential ignores
   ---
-  duration_ms: 8.612309
+  duration_ms: 7.564904
   type: 'test'
   ...
 # Subtest: fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores
-ok 418 - fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores
+ok 421 - fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores
   ---
-  duration_ms: 7.276248
+  duration_ms: 5.956156
   type: 'test'
   ...
 # Subtest: working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text
-ok 419 - working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text
+ok 422 - working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text
   ---
-  duration_ms: 18.348066
+  duration_ms: 19.979708
   type: 'test'
   ...
 # Subtest: Markdown fences are balanced
-ok 420 - Markdown fences are balanced
+ok 423 - Markdown fences are balanced
   ---
-  duration_ms: 15.291805
+  duration_ms: 13.692718
   type: 'test'
   ...
 # Subtest: working-tree text files end with a newline and have no UTF-8 BOM
-ok 421 - working-tree text files end with a newline and have no UTF-8 BOM
+ok 424 - working-tree text files end with a newline and have no UTF-8 BOM
   ---
-  duration_ms: 8.272077
+  duration_ms: 9.614728
   type: 'test'
   ...
 # Subtest: legacy parallel tenant and operator placeholders are absent
-ok 422 - legacy parallel tenant and operator placeholders are absent
+ok 425 - legacy parallel tenant and operator placeholders are absent
   ---
-  duration_ms: 18.84272
+  duration_ms: 17.436039
   type: 'test'
   ...
 # Subtest: every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary
-ok 423 - every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary
+ok 426 - every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary
   ---
-  duration_ms: 17.498058
+  duration_ms: 16.938348
   type: 'test'
   ...
 # Subtest: default execution computes a target-bound preview and writes nothing
-ok 424 - default execution computes a target-bound preview and writes nothing
+ok 427 - default execution computes a target-bound preview and writes nothing
   ---
-  duration_ms: 80.681214
+  duration_ms: 72.388651
   type: 'test'
   ...
 # Subtest: a non-Git directory requires explicit standalone-private mode
-ok 425 - a non-Git directory requires explicit standalone-private mode
+ok 428 - a non-Git directory requires explicit standalone-private mode
   ---
-  duration_ms: 69.376998
+  duration_ms: 69.328056
   type: 'test'
   ...
 # Subtest: standalone-private cannot bypass a broken Git worktree probe
-ok 426 - standalone-private cannot bypass a broken Git worktree probe
+ok 429 - standalone-private cannot bypass a broken Git worktree probe
   ---
-  duration_ms: 57.475832
+  duration_ms: 64.371849
   type: 'test'
   ...
 # Subtest: missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes
-ok 427 - missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes
+ok 430 - missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes
   ---
-  duration_ms: 347.863268
+  duration_ms: 343.915957
   type: 'test'
   ...
 # Subtest: the exact target/content phrase creates one verified report and never overwrites it
-ok 428 - the exact target/content phrase creates one verified report and never overwrites it
+ok 431 - the exact target/content phrase creates one verified report and never overwrites it
   ---
-  duration_ms: 332.640412
+  duration_ms: 272.811806
   type: 'test'
   ...
 # Subtest: content drift invalidates an otherwise exact target confirmation before any write
-ok 429 - content drift invalidates an otherwise exact target confirmation before any write
+ok 432 - content drift invalidates an otherwise exact target confirmation before any write
   ---
-  duration_ms: 124.228953
+  duration_ms: 141.581993
   type: 'test'
   ...
 # Subtest: an existing owner file blocks writing even when an earlier exact phrase is replayed
-ok 430 - an existing owner file blocks writing even when an earlier exact phrase is replayed
+ok 433 - an existing owner file blocks writing even when an earlier exact phrase is replayed
   ---
-  duration_ms: 143.975559
+  duration_ms: 131.298684
   type: 'test'
   ...
 # Subtest: output paths outside the resolved working directory are rejected without writes
-ok 431 - output paths outside the resolved working directory are rejected without writes
+ok 434 - output paths outside the resolved working directory are rejected without writes
   ---
-  duration_ms: 46.317302
+  duration_ms: 48.364772
   type: 'test'
   ...
 # Subtest: non-Markdown and Git-metadata targets are rejected without report writes
-ok 432 - non-Markdown and Git-metadata targets are rejected without report writes
+ok 435 - non-Markdown and Git-metadata targets are rejected without report writes
   ---
-  duration_ms: 133.028652
+  duration_ms: 102.393911
   type: 'test'
   ...
 # Subtest: symbolic-link or junction output parents are rejected without touching the referent
-ok 433 - symbolic-link or junction output parents are rejected without touching the referent
+ok 436 - symbolic-link or junction output parents are rejected without touching the referent
   ---
-  duration_ms: 72.832154
+  duration_ms: 55.399196
   type: 'test'
   ...
 # Subtest: a target created after temp preparation wins the race and is never clobbered
-ok 434 - a target created after temp preparation wins the race and is never clobbered
+ok 437 - a target created after temp preparation wins the race and is never clobbered
   ---
-  duration_ms: 40.197414
+  duration_ms: 34.674105
   type: 'test'
   ...
 # Subtest: write, fsync, and close failures clean ignored invocation-owned temps with exact partial state
-ok 435 - write, fsync, and close failures clean ignored invocation-owned temps with exact partial state
+ok 438 - write, fsync, and close failures clean ignored invocation-owned temps with exact partial state
   ---
-  duration_ms: 56.38867
+  duration_ms: 50.921813
   type: 'test'
   ...
 # Subtest: install failure removes only the identity-bound invocation temp
-ok 436 - install failure removes only the identity-bound invocation temp
+ok 439 - install failure removes only the identity-bound invocation temp
   ---
-  duration_ms: 30.706804
+  duration_ms: 25.285825
   type: 'test'
   ...
 # Subtest: post-install read-back failure rolls back the identity-bound target
-ok 437 - post-install read-back failure rolls back the identity-bound target
+ok 440 - post-install read-back failure rolls back the identity-bound target
   ---
-  duration_ms: 35.966441
+  duration_ms: 40.516516
   type: 'test'
   ...
 # Subtest: rollback unlink failure preserves the installed report and reports unresolved state
-ok 438 - rollback unlink failure preserves the installed report and reports unresolved state
+ok 441 - rollback unlink failure preserves the installed report and reports unresolved state
   ---
-  duration_ms: 35.814961
+  duration_ms: 37.732653
   type: 'test'
   ...
 # Subtest: temp cleanup failure preserves the invocation temp and reports its exact unresolved state
-ok 439 - temp cleanup failure preserves the invocation temp and reports its exact unresolved state
+ok 442 - temp cleanup failure preserves the invocation temp and reports its exact unresolved state
   ---
-  duration_ms: 15.853965
+  duration_ms: 17.475681
   type: 'test'
   ...
 # Subtest: a filesystem without a stable nonzero inode fails closed and preserves the unresolved temp
-ok 440 - a filesystem without a stable nonzero inode fails closed and preserves the unresolved temp
+ok 443 - a filesystem without a stable nonzero inode fails closed and preserves the unresolved temp
   ---
-  duration_ms: 14.976681
+  duration_ms: 21.437442
   type: 'test'
   ...
 # Subtest: a concurrently replaced temp is preserved when its filesystem identity changes
-ok 441 - a concurrently replaced temp is preserved when its filesystem identity changes
+ok 444 - a concurrently replaced temp is preserved when its filesystem identity changes
   ---
-  duration_ms: 24.271255
+  duration_ms: 36.252286
   type: 'test'
   ...
 # Subtest: a concurrently replaced target is preserved even when its content matches the report
-ok 442 - a concurrently replaced target is preserved even when its content matches the report
+ok 445 - a concurrently replaced target is preserved even when its content matches the report
   ---
-  duration_ms: 34.814883
+  duration_ms: 46.448412
   type: 'test'
   ...
 # Subtest: a Git worktree rejects trackable report targets and accepts only ignored safe names while requiring the generated temp to be ignored
-ok 443 - a Git worktree rejects trackable report targets and accepts only ignored safe names while requiring the generated temp to be ignored
+ok 446 - a Git worktree rejects trackable report targets and accepts only ignored safe names while requiring the generated temp to be ignored
   ---
-  duration_ms: 434.821958
+  duration_ms: 436.606166
   type: 'test'
   ...
 # Subtest: Git ignore drift before or after installation fails closed without a trackable report
-ok 444 - Git ignore drift before or after installation fails closed without a trackable report
+ok 447 - Git ignore drift before or after installation fails closed without a trackable report
   ---
-  duration_ms: 123.200335
+  duration_ms: 116.96856
   type: 'test'
   ...
 # Subtest: custom trackable-style filenames are rejected before any report write
-ok 445 - custom trackable-style filenames are rejected before any report write
+ok 448 - custom trackable-style filenames are rejected before any report write
   ---
-  duration_ms: 50.838933
+  duration_ms: 57.162947
   type: 'test'
   ...
 # Subtest: strict argument parsing rejects boolean values, duplicates, and detached confirmations
-ok 446 - strict argument parsing rejects boolean values, duplicates, and detached confirmations
+ok 449 - strict argument parsing rejects boolean values, duplicates, and detached confirmations
   ---
-  duration_ms: 0.468106
+  duration_ms: 0.405362
   type: 'test'
   ...
 # Subtest: T1-A Microsoft: routine single-user ticket has no escalation floor
-ok 447 - T1-A Microsoft: routine single-user ticket has no escalation floor
+ok 450 - T1-A Microsoft: routine single-user ticket has no escalation floor
   ---
-  duration_ms: 12.168236
+  duration_ms: 14.116364
   type: 'test'
   ...
 # Subtest: T1-B Google: routine single-user Workspace/ChromeOS ticket has no escalation floor
-ok 448 - T1-B Google: routine single-user Workspace/ChromeOS ticket has no escalation floor
+ok 451 - T1-B Google: routine single-user Workspace/ChromeOS ticket has no escalation floor
   ---
-  duration_ms: 0.466723
+  duration_ms: 0.447495
   type: 'test'
   ...
 # Subtest: T2-A Microsoft: bounded troubleshooting ticket has no escalation floor
-ok 449 - T2-A Microsoft: bounded troubleshooting ticket has no escalation floor
+ok 452 - T2-A Microsoft: bounded troubleshooting ticket has no escalation floor
   ---
-  duration_ms: 3.665899
+  duration_ms: 3.143976
   type: 'test'
   ...
 # Subtest: T2-B Google: bounded troubleshooting ticket has no escalation floor
-ok 450 - T2-B Google: bounded troubleshooting ticket has no escalation floor
+ok 453 - T2-B Google: bounded troubleshooting ticket has no escalation floor
   ---
-  duration_ms: 0.28935
+  duration_ms: 0.297289
   type: 'test'
   ...
 # Subtest: ESCALATION: single-account disable floors to the existing path (SR-2, tier never overrides risk)
-ok 451 - ESCALATION: single-account disable floors to the existing path (SR-2, tier never overrides risk)
+ok 454 - ESCALATION: single-account disable floors to the existing path (SR-2, tier never overrides risk)
   ---
-  duration_ms: 0.285074
+  duration_ms: 0.277647
   type: 'test'
   ...
 # Subtest: ESCALATION: mass disable floors with a DISTINCT trigger set from the single case
-ok 452 - ESCALATION: mass disable floors with a DISTINCT trigger set from the single case
+ok 455 - ESCALATION: mass disable floors with a DISTINCT trigger set from the single case
   ---
-  duration_ms: 0.20135
+  duration_ms: 0.193882
   type: 'test'
   ...
 # Subtest: ESCALATION: wipe, MFA-off, license removal, offboarding, org-wide, extended gate all floor
-ok 453 - ESCALATION: wipe, MFA-off, license removal, offboarding, org-wide, extended gate all floor
+ok 456 - ESCALATION: wipe, MFA-off, license removal, offboarding, org-wide, extended gate all floor
   ---
-  duration_ms: 0.901651
+  duration_ms: 0.473614
   type: 'test'
   ...
 # Subtest: ESCALATION: a suspected compromise floors even when the wording looks like a routine MFA reset
-ok 454 - ESCALATION: a suspected compromise floors even when the wording looks like a routine MFA reset
+ok 457 - ESCALATION: a suspected compromise floors even when the wording looks like a routine MFA reset
   ---
-  duration_ms: 0.323872
+  duration_ms: 0.261336
   type: 'test'
   ...
 # Subtest: ESCALATION: SR-2 retire/delete-device/disable-mailbox wordings floor; confusable homoglyphs cannot hide a risk word
-ok 455 - ESCALATION: SR-2 retire/delete-device/disable-mailbox wordings floor; confusable homoglyphs cannot hide a risk word
+ok 458 - ESCALATION: SR-2 retire/delete-device/disable-mailbox wordings floor; confusable homoglyphs cannot hide a risk word
   ---
-  duration_ms: 14.567548
+  duration_ms: 14.110587
   type: 'test'
   ...
 # Subtest: guard is report-only: exit 0 for both outcomes via CLI
-ok 456 - guard is report-only: exit 0 for both outcomes via CLI
+ok 459 - guard is report-only: exit 0 for both outcomes via CLI
   ---
-  duration_ms: 121.009143
+  duration_ms: 104.710644
   type: 'test'
   ...
 # Subtest: exactly two lightweight handler agents exist
-ok 457 - exactly two lightweight handler agents exist
+ok 460 - exactly two lightweight handler agents exist
   ---
-  duration_ms: 0.715956
+  duration_ms: 0.666705
   type: 'test'
   ...
 # Subtest: NEGATIVE EVIDENCE: handler toolsets contain no spawning or orchestration capability
-ok 458 - NEGATIVE EVIDENCE: handler toolsets contain no spawning or orchestration capability
+ok 461 - NEGATIVE EVIDENCE: handler toolsets contain no spawning or orchestration capability
   ---
-  duration_ms: 1.214265
+  duration_ms: 1.159304
   type: 'test'
   ...
 # Subtest: both handlers cover BOTH ecosystems (no per-ecosystem split)
-ok 459 - both handlers cover BOTH ecosystems (no per-ecosystem split)
+ok 462 - both handlers cover BOTH ecosystems (no per-ecosystem split)
   ---
-  duration_ms: 0.45263
+  duration_ms: 0.376495
   type: 'test'
   ...
 # Subtest: handler models match policy (Fable on all support paths; no haiku/sonnet anywhere in agents)
-ok 460 - handler models match policy (Fable on all support paths; no haiku/sonnet anywhere in agents)
+ok 463 - handler models match policy (Fable on all support paths; no haiku/sonnet anywhere in agents)
   ---
-  duration_ms: 2.379569
+  duration_ms: 3.217821
   type: 'test'
   ...
 # Subtest: COLD START wiring: routing doctrine lives in the already-referenced harness doc
-ok 461 - COLD START wiring: routing doctrine lives in the already-referenced harness doc
+ok 464 - COLD START wiring: routing doctrine lives in the already-referenced harness doc
   ---
-  duration_ms: 0.618213
+  duration_ms: 0.550388
   type: 'test'
   ...
 # Subtest: REPLAY: a verified T1-class repeat is a deterministic CACHE_HIT before any handler exists in the flow
-ok 462 - REPLAY: a verified T1-class repeat is a deterministic CACHE_HIT before any handler exists in the flow
+ok 465 - REPLAY: a verified T1-class repeat is a deterministic CACHE_HIT before any handler exists in the flow
   ---
-  duration_ms: 201.163715
+  duration_ms: 228.311717
   type: 'test'
   ...
 # Subtest: T3 REGRESSION: the fortress is unaware of the lane (no coupling in either direction)
-ok 463 - T3 REGRESSION: the fortress is unaware of the lane (no coupling in either direction)
+ok 466 - T3 REGRESSION: the fortress is unaware of the lane (no coupling in either direction)
   ---
-  duration_ms: 1.038395
+  duration_ms: 1.115416
   type: 'test'
   ...
 # Subtest: a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end — existing floors hold
-ok 464 - a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end — existing floors hold
+ok 467 - a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end — existing floors hold
   ---
-  duration_ms: 0.512007
+  duration_ms: 0.550788
   type: 'test'
   ...
 # Subtest: G1 ESCALATION: every new Google/Okta/Jamf consequential wording floors in the guard and the graph engine
-ok 465 - G1 ESCALATION: every new Google/Okta/Jamf consequential wording floors in the guard and the graph engine
+ok 468 - G1 ESCALATION: every new Google/Okta/Jamf consequential wording floors in the guard and the graph engine
   ---
-  duration_ms: 4.537315
+  duration_ms: 5.647348
   type: 'test'
   ...
 # Subtest: G1 routine: the Google-lane counterparts (backup codes, add to group, move one OU, one licence, enroll one Mac) stay clean
-ok 466 - G1 routine: the Google-lane counterparts (backup codes, add to group, move one OU, one licence, enroll one Mac) stay clean
+ok 469 - G1 routine: the Google-lane counterparts (backup codes, add to group, move one OU, one licence, enroll one Mac) stay clean
   ---
-  duration_ms: 0.610587
+  duration_ms: 0.919834
   type: 'test'
   ...
 # Subtest: G1 folding: homoglyphs and invisible characters cannot hide a new floor (guard and engine)
-ok 467 - G1 folding: homoglyphs and invisible characters cannot hide a new floor (guard and engine)
+ok 470 - G1 folding: homoglyphs and invisible characters cannot hide a new floor (guard and engine)
   ---
-  duration_ms: 4.082603
+  duration_ms: 5.423988
   type: 'test'
   ...
-1..467
-# tests 483
+1..470
+# tests 486
 # suites 0
-# pass 483
+# pass 486
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 64046.940698
+# duration_ms 63686.023774

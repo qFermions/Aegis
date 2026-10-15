@@ -1,6 +1,6 @@
 # Aegis continuity snapshot
 
-HEAD: b9a4f53
+HEAD: ff3a1f3
 Snapshot-Date: 2026-10-15
 Validate with `node scripts/harness/check-continuity.js` (exit 2 = STALE: HEAD moved
 since this was written — refresh, don't trust).
@@ -15,7 +15,7 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 - Branch claude/aegis-google-okta-jamf-wibzp6 (batch G1, v8.9) on top of the
   v8.8-public release `0febaa9`; draft pull request qFermions/Aegis#2, not merged.
 - Zero npm dependencies; Node 24 in CI (ubuntu + windows). Full battery
-  `node --test` green on 2026-10-15 (483 tests).
+  `node --test` green on 2026-10-15 (486 tests).
 - Scanner `node scripts/pre-commit-check.js --all` exit 0 (0 BLOCK, 170 WARN — 27 of
   them the lane's documented dangerous-verb WARNs);
   `node scripts/harness/release-boundary-check.js` PASS.
@@ -24,9 +24,10 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 
 - Commands: 77 in `.claude/commands/` (58 Microsoft-lane + 19 Google Workspace / Okta /
   Jamf / macOS: `gws-*`, `okta-*`, `jamf-*`, `mac-*`, `zoom-room-issue`).
-- Safety gates (`scripts/command-safety-gates.test.js`, 283 tests): shell lane sees gam,
-  gcloud, HTTP-API writes, jamf and macOS admin CLIs; plain-text shell gate analyzer
-  (no pwsh); inventory `docs/security/STATE_CHANGE_INVENTORY.json`.
+- Safety gates (`scripts/command-safety-gates.test.js`, 284 tests): shell lane sees gam,
+  gcloud, HTTP-API writes, jamf and macOS admin CLIs, wrapped or indirect; plain-text
+  shell gate analyzer (no pwsh) whose harness runs the fence's own lines; inventory
+  `docs/security/STATE_CHANGE_INVENTORY.json`.
 - Structure lint (`scripts/lint/command-structure.js`): 77 commands clean; G1 roots,
   `cli-*` rules, `STALE_PORTAL_PATHS_G1`.
 - Tier guard / graph engine: G1 floors kept in sync (`scripts/tier/tier-routing.test.js`).
@@ -40,6 +41,8 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 
 - Claim `g1-google-lane` (batch G1) until the batch report; release with
   `node scripts/dev/claim.js release --task g1-google-lane`.
+- Fresh-context review: WARDEN pass 1 REJECT, all findings corrected
+  (`docs/evidence/gws/g1-checks.md` §H); pass 2 recorded there.
 
 ## Next actions
 

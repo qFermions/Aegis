@@ -1,4 +1,4 @@
-pre-commit-check: --all mode — scanning 234 tracked and non-ignored files.
+pre-commit-check: --all mode — scanning 235 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals to enable.
 
 ╔══════════════════════════════════════════════╗
@@ -232,7 +232,7 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: CHANGELOG.md
-    ⚠️  WARN  Line 231: scp/sftp — local or remote file transfer
+    ⚠️  WARN  Line 232: scp/sftp — local or remote file transfer
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: docs/adr/ADR-001-blast-radius-classes.md

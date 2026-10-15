@@ -5551,6 +5551,10 @@
         {
           "sink": "metadata-write",
           "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
         }
       ],
       "impactCategories": [

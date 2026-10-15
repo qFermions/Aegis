@@ -154,7 +154,9 @@ function stripExecutableComment(line) {
     if (char === '`') { index += 1; continue; }
     if (char === "'" && !double) { single = !single; continue; }
     if (char === '"' && !single) { double = !double; continue; }
-    if (char === '#' && !single && !double) return line.slice(0, index);
+    // bash and PowerShell start a comment only at a word boundary: `true#;cmd`
+    // runs cmd, so a glued `#` must not hide the rest of the line.
+    if (char === '#' && !single && !double && (index === 0 || /[\s;&|(){}<>]/.test(line[index - 1]))) return line.slice(0, index);
   }
   return line;
 }
@@ -178,15 +180,21 @@ function isMutation(command, statement) {
 // any options (including -u user / --user=user), command, env and inline VAR=value
 // assignments, nohup, time, nice, caffeinate, exec, script and xargs. The tool may
 // sit behind a quoted or variable path ("$HOME/bin/gam7/gam").
-const CLI_WRAPPER = String.raw`(?:(?:sudo(?:\s+(?:--[\w-]+(?:=[^\s;|&]+)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|command(?:\s+-[pvV]+)?|env(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|nohup|time(?:\s+-p)?|nice(?:\s+-n\s*-?\d+|\s+-\d+)?|caffeinate(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|exec(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|script(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|xargs(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
-const CLI_BOUNDARY = String.raw`(?:^|[;|{}=:&(\x60]|\$\()\s*${CLI_WRAPPER}"?(?:[\w.~$\{\}-]*\/)*`;
+const CLI_WRAPPER = String.raw`(?:(?:sudo(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|doas(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|timeout(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|command(?:\s+-[pvV]+)?|env(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|nohup|time(?:\s+-p)?|nice(?:\s+-n\s*-?\d+|\s+-\d+)?|caffeinate(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|exec(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|script(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|xargs(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
+// A command starts at the line start, after a separator, inside $(…) or a
+// backtick, after a shell keyword that introduces a command (do, then, else,
+// elif, if, while, until), or after a `!` negation.
+const CLI_COMMAND_START = String.raw`(?:^|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
+const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}"?(?:[\w.~$\{\}-]*\/)*`;
 const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})"?(?=\\s|$)([^;|&]*)`, 'gi'))]
   .map((match) => match[1].trim());
 // Indirect execution hides the command from every per-tool rule, so it is a sink
-// in its own right (fail-closed): ssh with a remote command, a shell's -c, osascript
-// -e, eval, and a variable in command position ("$GAM" delete …). An
+// in its own right (fail-closed): ssh with a remote command, any shell interpreter
+// or osascript in command position (`| bash`, `bash <(…)`, `/bin/sh -c`), `su … -c`,
+// `env -S`, `find … -exec`, eval, and a substitution or variable in command
+// position (`$(which gam) …`, a backtick, `${GAM:-gam} …`, `"$GAM" …`, `"$@"`). An
 // assignment-shaped `$name = value` line (another language's syntax) is not one.
-const INDIRECT_EXEC = new RegExp(String.raw`(?:^|[;|{}&(\x60]|\$\()\s*${CLI_WRAPPER}(?:ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:bash|sh|zsh|dash|ksh)\s+-[a-z]*c\b|osascript\s+(?:-[a-z]+\s+)*-e\b|eval\s|"?\$\{?[A-Za-z_]\w*\}?"?(?=\s+[^=\s]|\s*$))`, 'i');
+const INDIRECT_EXEC = new RegExp(String.raw`(?:^|[;|{}&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}(?:ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`, 'i');
 const cliTokens = (args) => args.split(/\s+/).map((token) => token.replace(/^["']+|["']+$/g, '')).filter(Boolean);
 function firstListedVerb(tokens, readOnly, mutating) {
   for (const token of tokens) {
@@ -204,9 +212,24 @@ const GCLOUD_READ_ONLY = new Set(['list', 'describe', 'get-iam-policy', 'get-val
 const GCLOUD_MUTATING = new Set(['create', 'update', 'delete', 'set', 'add-iam-policy-binding', 'remove-iam-policy-binding',
   'set-iam-policy', 'enable', 'disable', 'undelete', 'deploy', 'import', 'patch', 'reset', 'unset', 'add', 'remove', 'login',
   'revoke', 'activate-service-account']);
-const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:DELETE|POST|PUT|PATCH)\b|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?(?:DELETE|POST|PUT|PATCH)\b|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*(?:DELETE|POST|PUT|PATCH)\b/i;
+const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:DELETE|POST|PUT|PATCH|\$)\b|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?(?:DELETE|POST|PUT|PATCH)\b|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*(?:DELETE|POST|PUT|PATCH)\b/i;
 // -K reads a config file that can set the method or a body: fail-closed.
 const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFTK](?=\s|["'@{]|$)|X\s*["']?(?:DELETE|POST|PUT|PATCH)\b)/;
+// An unquoted `$VAR` / `${…}` / `$(…)` argument can expand into any option,
+// including a write method or a body, so it is a write (fail-closed). Expansions
+// inside quotes ("…${OKTA_API_TOKEN}") stay single arguments and are fine.
+function unquotedExpansionArgument(args) {
+  let single = false;
+  let double = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const char = args[index];
+    if (char === '\\') { index += 1; continue; }
+    if (char === "'" && !double) { single = !single; continue; }
+    if (char === '"' && !single) { double = !double; continue; }
+    if (char === '$' && !single && !double && (index === 0 || /\s/.test(args[index - 1]))) return true;
+  }
+  return false;
+}
 const JAMF_READ_ONLY = new Set(['help', 'version', 'about', 'checkjssconnection', 'listusers', 'getcomputername']);
 const FDESETUP_READ_ONLY = new Set(['status', 'list', 'isactive', 'haspersonalrecoverykey', 'hasinstitutionalrecoverykey',
   'usingrecoverykey', 'showdeferralinfo', 'supportsauthrestart', 'version', 'help']);
@@ -219,7 +242,7 @@ const LAUNCHCTL_READ_ONLY = new Set(['list', 'print', 'print-cache', 'print-disa
 const G1_CLI_SINKS = [
   ['gam-write', 'gam', (args) => firstListedVerb(cliTokens(args), GAM_READ_ONLY, GAM_MUTATING) !== 'read'],
   ['gcloud-write', 'gcloud', (args) => firstListedVerb(cliTokens(args).filter((token) => !token.startsWith('-')), GCLOUD_READ_ONLY, GCLOUD_MUTATING) !== 'read'],
-  ['http-write', 'curl|wget', (args) => HTTP_WRITE_LONG.test(` ${args}`) || HTTP_WRITE_SHORT.test(` ${args}`)],
+  ['http-write', 'curl|wget', (args) => HTTP_WRITE_LONG.test(` ${args}`) || HTTP_WRITE_SHORT.test(` ${args}`) || unquotedExpansionArgument(args)],
   ['http-write', 'https?', (args) => {
     const tokens = cliTokens(args);
     const positional = tokens.filter((token) => !token.startsWith('-'));
@@ -315,14 +338,22 @@ function mutationHits(document) {
   const executable = [];
   const preview = [];
   for (const fence of document.fences.filter((item) => MUTATION_FENCE_LANGUAGES.has(item.language))) {
-    fence.lines.forEach((rawLine, offset) => {
+    const shell = SHELL_LANGUAGES.has(fence.language);
+    for (let offset = 0; offset < fence.lines.length; offset += 1) {
       const line = fence.startLine + offset;
+      const rawLine = fence.lines[offset];
       const comment = rawLine.match(/^\s*#\s?(.*)$/);
-      const statement = comment ? comment[1] : stripExecutableComment(rawLine);
+      let statement = comment ? comment[1] : stripExecutableComment(rawLine);
+      // A shell line ending in a backslash continues on the next line: the logical
+      // command is judged as one statement and attributed to its first line.
+      while (shell && !comment && /\\\s*$/.test(statement) && offset + 1 < fence.lines.length) {
+        offset += 1;
+        statement = `${statement.replace(/\\\s*$/, ' ')}${stripExecutableComment(fence.lines[offset])}`;
+      }
       for (const command of commandsIn(statement, fence.language)) {
         (comment ? preview : executable).push({ file: document.file, fenceId: fence.id, line, command, statement: statement.trim() });
       }
-    });
+    }
   }
   return { executable, preview };
 }
@@ -1043,6 +1074,9 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
   // other statement could pre-satisfy or rewrite the comparison.
   const requiredIndex = requiredAssignments.length === 1 ? requiredAssignments[0].index : -1;
   const preCompareLines = [];
+  for (let index = 0; index < markerIndex; index += 1) {
+    if (code[index]) problems.push(`line ${index + 1}: only comments may precede the SAFETY GATE marker in a gated fence`);
+  }
   if (requiredIndex > markerIndex) {
     for (let index = markerIndex + 1; index < requiredIndex; index += 1) {
       if (code[index]) problems.push(`line ${index + 1}: only the comment header may sit between the SAFETY GATE marker and required_confirmation`);
@@ -1781,6 +1815,33 @@ const G1_SHELL_MUTATIONS = [
   ['curl -sS -H "X-HTTP-Method-Override: DELETE" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
   ['curl --config /tmp/fixture-request.cfg', 'http-write'],
   ['curl -sK /tmp/fixture-request.cfg', 'http-write'],
+  // Second fresh-context review (WARDEN pass 2, 2026-10-15)
+  ['sudo -- gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['timeout 30 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['doas gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done', 'gam-write'],
+  ['if true; then gam delete user "[USER@DOMAIN.COM]"; fi', 'gam-write'],
+  ['while true; do sudo jamf removeFramework; break; done', 'jamf-write'],
+  ['! gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ["/bin/sh -c 'gam delete user [USER@DOMAIN.COM]'", 'indirect-exec'],
+  ['/bin/bash -c "sudo jamf removeFramework"', 'indirect-exec'],
+  [`/usr/bin/osascript -e 'do shell script "sudo jamf removeFramework"'`, 'indirect-exec'],
+  ['$(which gam) delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['$(command -v gam) delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['`which gam` delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['${GAM:-gam} delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | sudo bash', 'indirect-exec'],
+  ['curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | sh', 'indirect-exec'],
+  ["echo 'gam delete user [USER@DOMAIN.COM]' | bash", 'indirect-exec'],
+  ['bash <(curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh")', 'indirect-exec'],
+  ['su admin -c "gam delete user [USER@DOMAIN.COM]"', 'indirect-exec'],
+  ["sudo su - -c 'jamf removeFramework'", 'indirect-exec'],
+  ['find /tmp/fixture -name "*.txt" -exec gam delete user {} \;', 'indirect-exec'],
+  ['env -S "gam delete user [USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['set -- gam delete user "[USER@DOMAIN.COM]"; "$@"', 'indirect-exec'],
+  ['METHOD=DELETE; curl -sS -X "$METHOD" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS --request "$METHOD" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl $CURL_ARGS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
 ];
 
 const G1_SHELL_READ_ONLY = [
@@ -1788,6 +1849,9 @@ const G1_SHELL_READ_ONLY = [
   'sudo -u admin gam info user "[USER@DOMAIN.COM]"',
   'required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"',
   '$variable = "value"',
+  'for u in [USER@DOMAIN.COM]; do gam info user "$u"; done',
+  'if gam info user "[USER@DOMAIN.COM]"; then echo found; fi',
+  '#!/bin/sh',
   'env GAMCFGDIR=/tmp/fixture gam print users',
   '"$HOME/bin/gam7/gam" info user "[USER@DOMAIN.COM]"',
   'gam print users query "isSuspended=True" fields primaryemail,suspended',
@@ -1847,6 +1911,23 @@ test('G1 detector: read-only diagnostics stay live and are not sinks', () => {
   assert.deepEqual(flagged, []);
 });
 
+// Gate variables belong to their gated fence. An operator pastes fences into one
+// shell, so a sibling fence that sets or declares them (`readonly confirmation=…`)
+// could pre-satisfy a gate: in a document with a gated shell fence, no other shell
+// fence may name them at all.
+function gateVariablesOutsideGates(document, gatedFenceIds) {
+  if (!gatedFenceIds.size) return [];
+  const problems = [];
+  for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
+    fence.lines.forEach((rawLine, offset) => {
+      if (/\b(?:required_)?confirmation\b/.test(shellCodeOf(rawLine))) {
+        problems.push(`${document.file}:${fence.startLine + offset}: gate variables (confirmation, required_confirmation) may only appear inside a gated shell fence`);
+      }
+    });
+  }
+  return problems;
+}
+
 function evaluateGateDocument(file, source) {
   const document = parseFences(file, source);
   const found = discoverMarkers(document);
@@ -1868,6 +1949,7 @@ function evaluateGateDocument(file, source) {
     if (!owner || owner.mode !== 'preview') failures.push(`${hit.file}:${hit.line}: commented ${hit.command} is not owned by PREVIEW ONLY`);
   }
   const analyses = [];
+  failures.push(...gateVariablesOutsideGates(document, new Set(found.filter((item) => item.kind === 'shell' && item.mode === 'gated').map((item) => item.fenceId))));
   for (const marker of found.filter((item) => item.kind === 'shell' && item.mode === 'gated')) {
     const fence = document.fences.find((item) => item.id === marker.fenceId);
     const regionEndLine = ((byFence.get(marker.fenceId) || []).find((item) => item.line > marker.line)?.line || fence.endLine + 1) - 1;
@@ -1954,6 +2036,12 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
       ['unrelated-statement-before-compare', 'cd /tmp'],
     ].map(([name, inserted]) => [name, [...header, body[0], body[1], inserted, ...body.slice(2)]]),
     ['statement-between-marker-and-template', [...header, 'IFS=x', ...body]],
+    // A `#` glued to a word is not a comment in bash (WARDEN pass 2): these hid
+    // statements that pre-satisfy the comparison before the marker or the read.
+    ['pre-marker-readonly-glued-hash', ['true#;readonly confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"', ...header, ...body]],
+    ['pre-marker-exec-stdin-glued-hash', [`true#;exec 0< <(printf '%s\\n' "SUSPEND GOOGLE USER [USER@DOMAIN.COM]")`, ...header, ...body]],
+    ['pre-marker-statement', ['echo preparing', ...header, ...body]],
+    ['glued-hash-in-prompt', [...header, body[0], `printf '%s\\n' "Type exactly"#;confirmation="$required_confirmation"`, ...body.slice(1)]],
   ];
   const accepted = [];
   for (const [name, lines] of cases) {
@@ -1998,6 +2086,32 @@ for (const marker of markers.filter((item) => item.kind === 'shell' && item.mode
     assertShellGateFailClosed(analysis, marker.id);
   });
 }
+
+test('G1 statements: a glued # is not a comment, continued lines are one statement, gate variables stay in their gated fence', () => {
+  const fence = (lines, language = 'bash') => ['```' + language, ...lines, '```', ''].join('\n');
+  const failuresOf = (source) => evaluateGateDocument('fixture/g1-statements.md', source).failures.join(' | ');
+  // a glued `#` hides nothing (bash and PowerShell only start a comment at a word boundary)
+  assert.match(failuresOf(fence(['true#;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['x=1#;sudo /usr/local/bin/jamf removeFramework'])), /jamf-write has 0 owners/);
+  assert.match(failuresOf(fence(['Write-Host a#;Remove-MgUser -UserId "[UPN]"'], 'powershell')), /Remove-MgUser has 0 owners/);
+  assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"   # a real comment: gam delete user is only mentioned'])), '');
+  // a backslash-continued write is one statement
+  assert.match(failuresOf(fence(['curl -sS -H "Authorization: SSWS ${OKTA_API_TOKEN}" \\', '  -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);
+  assert.match(failuresOf(fence(['http \\', '  DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);
+  // gate variables set in a sibling fence would pre-satisfy the gate once both are pasted into one shell
+  const gated = fs.readFileSync(path.join(G1_FIXTURE_DIR, 'gam-fence-gated.md.txt'), 'utf8');
+  assert.equal(failuresOf(gated), '');
+  assert.match(failuresOf(fence(['readonly confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"']) + gated), /gate variables/);
+});
+
+test('every document with a gated shell fence keeps its gate variables inside gated fences', () => {
+  const problems = [];
+  for (const document of documents.values()) {
+    const gatedFences = new Set(markers.filter((marker) => marker.file === document.file && marker.kind === 'shell' && marker.mode === 'gated').map((marker) => marker.fenceId));
+    problems.push(...gateVariablesOutsideGates(document, gatedFences));
+  }
+  assert.deepEqual(problems, []);
+});
 
 test('G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates', () => {
   const source = [

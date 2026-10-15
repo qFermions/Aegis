@@ -2,11 +2,11 @@
 
 Used by `scripts/command-safety-gates.test.js` ("G1 fixtures"). Same sink as
 `gam-fence-no-marker.md.txt`, now owned by a same-fence shell gate whose
-confirmation is explicit, exact, case-sensitive and fail-closed. It must PASS.
+confirmation is explicit, exact, case-sensitive and fail-closed. Only comments
+precede the marker; the read-only lookup moved to the read-back after `fi`. It must PASS.
 
 ```bash
 # HUMAN-RUN — suspends one Google Workspace user after an exact typed confirmation
-gam info user "[USER@DOMAIN.COM]"                    # read-only: confirm the account before acting
 # SAFETY GATE [fixture-gws-user-suspend]
 # Target: [USER@DOMAIN.COM]
 # Effect: suspend one Google Workspace user account

@@ -1745,8 +1745,8 @@ const G1_SHELL_READ_ONLY = [
   'launchctl print system/fixture',
   'system_profiler SPHardwareDataType',
   'log show --last 1h --style compact',
-  'ping -c 4 fixture.example.org',
-  'dig +short fixture.example.org',
+  'ping -c 4 [@Aegion_DOMAIN]',
+  'dig +short [@Aegion_DOMAIN]',
 ];
 
 test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {

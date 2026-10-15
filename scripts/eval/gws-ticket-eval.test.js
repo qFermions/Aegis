@@ -84,3 +84,12 @@ test('both lanes run one shared evaluator (no copy-pasted evaluation logic)', ()
   const direct = core.evaluate(JSON.parse(fs.readFileSync(path.join(__dirname, 'ms-tickets.json'), 'utf8')));
   assert.deepEqual(ms.summary, direct.summary);
 });
+
+test('the evaluator removes its temporary replay store (no /tmp residue per run)', () => {
+  const made = [];
+  const original = fs.mkdtempSync;
+  fs.mkdtempSync = (...args) => { const dir = original.apply(fs, args); made.push(dir); return dir; };
+  try { evaluate(); } finally { fs.mkdtempSync = original; }
+  assert.ok(made.length >= 1, 'the evaluator creates a sandboxed store');
+  for (const dir of made) assert.equal(fs.existsSync(dir), false, `left behind: ${dir}`);
+});

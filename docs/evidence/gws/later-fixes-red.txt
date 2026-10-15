@@ -480,3 +480,9 @@ not ok 2 - G1 detector: read-only diagnostics stay live and are not sinks
 # fail 1
 +   'curl -sS -XGET "https://[@Aegion_JAMF_URL]/api/v1/fixture" → [http-write]',
 +   'curl -sXOPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture" → [http-write]'
+
+=== red-warden6-p67.txt — WARDEN pass 6, P6-7: the evaluator left its temporary replay store behind, before the fix (exact)
+not ok 5 - the evaluator removes its temporary replay store (no /tmp residue per run)
+# pass 4
+# fail 1
+left behind: /tmp/aegis-eval-P9yjMb

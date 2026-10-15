@@ -41,7 +41,16 @@ function replayLookup(store, ticket) {
 
 function evaluate(corpus) {
   const commands = new Set(fs.readdirSync(path.join(ROOT, '.claude', 'commands')).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3)));
-  const store = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-eval-')), 'store');
+  // a sandboxed replay store, removed when the run ends
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-eval-'));
+  try {
+    return evaluateIn(corpus, commands, path.join(sandbox, 'store'));
+  } finally {
+    fs.rmSync(sandbox, { recursive: true, force: true });
+  }
+}
+
+function evaluateIn(corpus, commands, store) {
   const lintCache = new Map();
   const lintOf = (name) => {
     if (!lintCache.has(name)) {

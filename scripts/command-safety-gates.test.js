@@ -1168,7 +1168,7 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
   });
 
   const requiredAssignments = logical.map((statement, index) => ({ statement, index }))
-    .filter(({ statement }) => /(?:^|[;&|\s(])(?:export\s+|local\s+)?required_confirmation\+?=/.test(statement));
+    .filter(({ statement }) => statement && shellReadings(statement).some((reading) => /(?:^|[;&|\s(])(?:export\s+|local\s+)?required_confirmation\+?=/.test(reading)));
   const reads = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /(?:^|[;&|(\s])read\b/.test(statement));
   const gateIfs = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /\$confirmation\b|\$required_confirmation\b/.test(statement) && /(?:^|[;&|\s])(?:if|elif|while|until|\[\[?|test)\b/.test(statement));
 
@@ -2336,6 +2336,7 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     ['continued-alias-after-fi', [...header, ...body, 'ali\\', `as '['=true`]],
     ['nested-brace-alias-after-fi', [...header, ...body, `{a{l,},}ias '['=true`]],
     ['bash-aliases-after-fi', [...header, ...body, `BASH_ALIASES['[']=true`]],
+    ['split-required-assignment-after-fi', [...header, ...body, 'required_confirm""ation=x']],
     ['exit-256-in-else', replace('  exit 1', '  exit 256')],
     ['exit-512-in-else', replace('  exit 1', '  exit 512')],
   ];

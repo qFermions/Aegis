@@ -309,3 +309,27 @@ not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command,
 # pass 27
 # fail 1
 # first green attempt: `at` in any command position flagged a Microsoft runbook line (untagged fence, ps-error-decode.md:20, "At <script or command>:<line number>"); at now needs a time or an option, batch must end the command — the line is now a read-only guard case
+
+=== red-warden4-p41.txt — WARDEN pass 4, P4-1 (shadowing behind a brace group, keyword, wrapper or backslash) and P4-3 (exit 256), before the fix (exact)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
+error: 'c=required_confirm; { readonly "${c}ation="; }'
++   'shadow-after-fi-brace',
++   'shadow-after-fi-keyword',
++   'hook-after-fi',
++   'exit-256-in-else',
++   'exit-512-in-else'
+# bash ground truth (WARDEN pass 4 scripts; the gate fixture with a mocked sink, preceded by one sibling line), empty input:
+$ printf '\n' | bash poison.sh   # first line: c=required_confirm; { readonly "${c}ation="; }
+/tmp/claude-0/-home-user-Aegis/5ad90bc7-0cf2-5167-b7a3-d42591e744dd/scratchpad/warden4/poison.sh: line 7: required_confirmation: readonly variable
+Type exactly: 
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash poison3.sh   # first line: { [ () { return 0; }; }
+Type exactly: SUSPEND GOOGLE USER [USER@DOMAIN.COM]
+MOCKED_SINK_REACHED
+status=0
+$ bash -c 'exit 256'
+status=0

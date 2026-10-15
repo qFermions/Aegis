@@ -1015,11 +1015,21 @@ const SHELL_ELSE_EXIT_LINE = /^\s*exit [1-9][0-9]{0,2}\s*$/;
 // The only statement allowed between the template and the comparison: a plain
 // prompt that may show the template.
 const SHELL_PROMPT_LINE = /^\s*(?:printf '%s\\n'|echo) "(?:[^"$`\\]|\$required_confirmation\b)*"(?:\s*>&2)?\s*$/;
-const SHELL_FORBIDDEN = [
-  [/(?:^|[;&|(]\s*)(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b/, 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
-  [/(?:^|[;&|(]\s*)(?:\.\s+\S)/, 'dot-sourcing is forbidden in a gated fence'],
+// Statements that can shadow `read`, `[` or the shell for every later gate pasted into
+// the same shell. They are judged in any command position the detector knows (line
+// start, after ; & | ( ) { } ! = :, a backtick, $(, do/then/else/elif/if/while/until)
+// and behind any wrapper (command, env, time, nohup, sudo, …) or a leading backslash —
+// `{ alias '['=true; }` and `if :; then alias …; fi` are as live as a bare `alias`.
+const SHELL_COMMAND_POSITION = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}\\?`;
+const SHELL_SHADOWING = [
+  [new RegExp(String.raw`${SHELL_COMMAND_POSITION}(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b`), 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
+  [new RegExp(String.raw`${SHELL_COMMAND_POSITION}\.\s+\S`), 'dot-sourcing is forbidden in a gated fence'],
   // any function name, including `[` (`[ () { return 0; }` shadows the test builtin)
-  [/(?:^|[;&|(]\s*)(?:function\s+[^\s;&|()]+|[^\s;&|()]+\s*\(\s*\))\s*(?:\{|\(|$)/, 'function definitions are forbidden in a gated fence (they can shadow read/[ or hide sinks)'],
+  [new RegExp(String.raw`${SHELL_COMMAND_POSITION}(?:function\s+[^\s;&|()]+|[^\s;&|(){}]+\s*\(\s*\))\s*(?:\{|\(|$)`), 'function definitions are forbidden in a gated fence (they can shadow read/[ or hide sinks)'],
+  [new RegExp(String.raw`(?:^|[;&|(){}\s])(?:export\s+)?(?:PROMPT_COMMAND|PS0|precmd_functions|preexec_functions)\+?=|${SHELL_COMMAND_POSITION}(?:bind|bindkey|zle|disable)\b`), 'prompt hooks, key bindings and builtin switches are forbidden'],
+];
+const SHELL_FORBIDDEN = [
+  ...SHELL_SHADOWING,
   [/\$\{\s*(?:required_)?confirmation\b/, 'parameter expansion of a gate variable is forbidden (it can fold case or substitute values)'],
   [/(?:^|[;&|\s(])(?:export\s+|local\s+)?confirmation\+?=/, 'confirmation may only be assigned by the single IFS= read -r line'],
   // Other ways to assign a variable (WARDEN review): printf -v, mapfile/readarray,
@@ -2018,12 +2028,9 @@ function gateVariablesOutsideGates(document, gatedFenceIds) {
 // sibling shell fence that defines a function (`[ () { return 0; }`), sets an
 // alias, disables a builtin, sources a file, or hooks the prompt or a key binding
 // runs before the gate in the operator's shell. In a document with a gated shell
-// fence, every other shell fence is held to the gated fence's first three
-// forbidden rows plus the prompt and key-binding hooks.
-const SHELL_SIBLING_FORBIDDEN = [
-  ...SHELL_FORBIDDEN.slice(0, 3),
-  [/(?:^|[;&|(\s])(?:export\s+)?(?:PROMPT_COMMAND|PS0|precmd_functions|preexec_functions)\+?=|(?:^|[;&|(]\s*)(?:bind|bindkey|zle|disable)\b/, 'prompt hooks, key bindings and builtin switches are forbidden'],
-];
+// fence, every other shell fence is held to the gated fence's shadowing rows
+// (SHELL_SHADOWING); a gated fence's own lines, after fi included, already are.
+const SHELL_SIBLING_FORBIDDEN = SHELL_SHADOWING;
 function gateShadowingOutsideGates(document, gatedFenceIds) {
   if (!gatedFenceIds.size) return [];
   const problems = [];
@@ -2187,6 +2194,11 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     ['old-backtick-required-field', replace(header[5], '# Required confirmation: type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`')],
     ['old-failure-sentence', replace(header[6], '# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.')],
     ['unsafe-comment-after-fi', [...header, ...body, '# done; exit 0']],
+    // WARDEN pass 4: a gated fence's own lines after fi may not shadow the next gate
+    ['shadow-after-fi-brace', [...header, ...body, `{ alias '['=true; }`]],
+    ['shadow-after-fi-keyword', [...header, ...body, 'if :; then [ () { return 0; }; fi']],
+    ['shadow-after-fi-wrapper', [...header, ...body, 'command declare -r confirmation=x']],
+    ['hook-after-fi', [...header, ...body, `{ PROMPT_COMMAND='true'; }`]],
   ];
   const accepted = [];
   for (const [name, lines] of cases) {
@@ -2274,6 +2286,13 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
   // without naming a gate variable (WARDEN pass 3, N-5)
   for (const shadow of [`alias '['=true`, '[ () { return 0; }', 'function read { :; }', 'read() { :; }', 'enable -n read',
     "PROMPT_COMMAND='confirmation=x'", `bind -x '"\\C-m": true'`, 'source ./fixture-helpers.sh', 'unset -f gam']) {
+    assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
+  }
+  // the same shapes behind a brace group, a keyword, a wrapper or a backslash (WARDEN pass 4, P4-1)
+  for (const shadow of ['c=required_confirm; { readonly "${c}ation="; }', '{ [ () { return 0; }; }', `{ alias '['=true; }`,
+    `if :; then alias '['=true; fi`, `command alias '['=true`, `\\alias '['=true`, `time alias '['=true`, `! alias '['=true`,
+    `for x in 1; do alias '['=true; done`, `env alias '['=true`, 'command declare -f', '{ . ./fixture-helpers.sh; }',
+    `if :; then PROMPT_COMMAND='confirmation=x'; fi`, `{ bind -x '"\\C-m": true'; }`]) {
     assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
   }
   assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"']) + gated), '');

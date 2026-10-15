@@ -8,12 +8,13 @@
   - Phase 1 — 1.1 safety-gate shell lane + plain-text shell gate analyzer; 1.2 lint G1 rules; 1.3 tier/engine floors; 1.4 scanner secrets; 1.5 tokens. Acceptance at the time: `node --test` 375/375, lint clean, MS eval 28/28 · 6/6, scanner exit 0. Red/green: `docs/evidence/gws/phase1-red-green.md`.
   - Phase 2 — corpus 38 tickets / 9 pairs (5 must floor apart); shared core; MS eval output byte-identical after the extraction.
   - Phase 3 — 19 runbooks merged (two exemplars + five FORGE worktrees, cherry-picked; worktrees and their branches removed); wired into the mixed-state list, count pin 58 → 77, risk metadata, inventory; 17 prose mentions turned into slash links. Lint 77 clean; gws eval 38/38 · 9/9; MS eval 28/28 · 6/6; scanner exit 0, 0 BLOCK, every new WARN a dangerous-verb label.
-  - Fixed beyond the task (own commits + tests): scanner citation false positive (turnoff2sv/deprovision), Jamf GET status read raising the MDM-command WARN, portal cue "Apple Business" + ChromeOS Re-enable / selected-devices controls.
-  - Phase 4 — reversibility, Google nav doc, evidence README, tier cards, ledger, README, EVALUATE, harness, CHANGELOG v8.9, PROJECT_STATE committed; final counts being reconciled.
+  - Fixed beyond the task (own commits + tests): scanner citation false positive (turnoff2sv/deprovision), Jamf GET status read raising the MDM-command WARN, portal cue "Apple Business" + ChromeOS Re-enable / selected-devices controls, the `*password*` release-staging ignore.
+  - Phase 4 — reversibility, Google nav doc, evidence README, tier cards, ledger, README, EVALUATE, harness, CHANGELOG v8.9, PROJECT_STATE committed; counts final (486 tests).
 - **Decisions (evidence):**
   - `[GROUP_EMAIL]` instead of an @-shaped group token — the @ form BLOCKs in the scanner; no exemption widened (`docs/evidence/gws/phase1-red-green.md` §1.5). Okta groups reuse it (pushed Google Groups), per "reuse an existing token".
   - Google stale paths live in `STALE_PORTAL_PATHS_G1` — the existing lint test pins Microsoft Learn citations on `STALE_PORTAL_PATHS`.
   - The pre-existing Microsoft arrow guard is dead (double-escaped regex); fixing it surfaces an unowned candidate in `troubleshoot.md` (Microsoft runbooks may not change) — reported as a decision, not fixed.
-  - `.gitignore` `*password*` ignores `gws-password-reset.md`; it is tracked (`git add -f`, same as `password-reset.md`), so the gates see it.
-- **Open issues:** WARDEN fresh-context review; `docs/evidence/gws/g1-checks.md`; final battery files; continuity refresh; claim release.
-- **Next action:** finish Phase 4 counts, write `docs/evidence/gws/g1-checks.md`, run the WARDEN review on spec + diff vs `0febaa9` + checks table + saved outputs.
+  - `.gitignore` `*password*` would have dropped `gws-password-reset.md` from a fresh release staging; it now has the same negation as `password-reset.md` (`4921c7b`, own test).
+- **Phase 5:** `docs/evidence/gws/g1-checks.md` (77 rows: 75 pass, 1 fail = branch-name deviation F9, 1 unresolved = continuity self-binding E9); WARDEN pass 1 REJECT → 1 blocker, 2 major, 7 minor fixed in their own commits (section H); `node --test` 486/486; battery files in `docs/evidence/gws/`.
+- **Open issues:** WARDEN pass 2 on the corrected branch; final battery capture; claim release.
+- **Next action:** run WARDEN pass 2 on the corrected branch and record its verdict in `docs/evidence/gws/g1-checks.md` §H.

@@ -455,3 +455,14 @@ not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command,
   error: 'MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
 # pass 27
 # fail 1
+
+=== red-warden6-p63.txt — WARDEN pass 6, P6-3: native sinks behind a wrapper, before the fix (exact; the gap was present at 0febaa9)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: sudo rm -rf /tmp/fixture → []',
++   'bash: echo "[@Aegion_DOMAIN] fixture" | sudo tee -a /etc/hosts → []',
++   'bash: sudo -u admin mv /tmp/fixture-a /tmp/fixture-b → []',
++   'bash: sudo chmod 600 /tmp/fixture → []',
++   'bash: sudo brew install fixture → []',
++   'bash: xargs rm < /tmp/fixture-list → []',

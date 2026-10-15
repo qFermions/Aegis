@@ -343,7 +343,8 @@ function commandsIn(statement, language) {
     }
   }
   if (SHELL_LANGUAGES.has(language)) {
-    const boundary = `(?:^|${SHELL_PROMPT}|[;|{}=:&])\\s*`;
+    // a wrapper (sudo, env, xargs, time, …) in front of a native sink hides nothing
+    const boundary = `(?:^|${SHELL_PROMPT}|[;|{}=:&])\\s*${CLI_WRAPPER}`;
     const nativePatterns = [
       [new RegExp(`${boundary}git\\s+(?:add|branch|checkout|clean|clone|commit|fetch|init|merge|mv|push|rebase|reset|restore|rm|switch|tag)\\b`, 'i'), 'git-write'],
       [new RegExp(`${boundary}scp\\s+`, 'i'), 'scp'],
@@ -1995,6 +1996,13 @@ const G1_SHELL_MUTATIONS = [
   ['MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['➜  ~ sudo jamf removeFramework', 'jamf-write'],
   ['➜ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  // P6-3: the shell lane's native sinks behind a wrapper (the normal macOS form)
+  ['sudo rm -rf /tmp/fixture', 'file-write'],
+  ['echo "[@Aegion_DOMAIN] fixture" | sudo tee -a /etc/hosts', 'file-write'],
+  ['sudo -u admin mv /tmp/fixture-a /tmp/fixture-b', 'file-write'],
+  ['sudo chmod 600 /tmp/fixture', 'metadata-write'],
+  ['sudo brew install fixture', 'package-write'],
+  ['xargs rm < /tmp/fixture-list', 'file-write'],
   // P5-3: any explicit method that is not GET, HEAD, OPTIONS or TRACE (fail-closed, as for gam and gcloud verbs)
   ['curl -sS -X PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
   ['curl -sS --request MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],

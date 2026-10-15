@@ -9,7 +9,7 @@
   - Phase 2 — corpus 38 tickets / 9 pairs (5 must floor apart); shared core; MS eval output byte-identical after the extraction.
   - Phase 3 — 19 runbooks merged (two exemplars + five FORGE worktrees, cherry-picked; worktrees and their branches removed); wired into the mixed-state list, count pin 58 → 77, risk metadata, inventory; 17 prose mentions turned into slash links. Lint 77 clean; gws eval 38/38 · 9/9; MS eval 28/28 · 6/6; scanner exit 0, 0 BLOCK, every new WARN a dangerous-verb label.
   - Fixed beyond the task (own commits + tests): scanner citation false positive (turnoff2sv/deprovision), Jamf GET status read raising the MDM-command WARN, portal cue "Apple Business" + ChromeOS Re-enable / selected-devices controls, the `*password*` release-staging ignore.
-  - Phase 4 — reversibility, Google nav doc, evidence README, tier cards, ledger, README, EVALUATE, harness, CHANGELOG v8.9, PROJECT_STATE committed; counts final (486 tests).
+  - Phase 4 — reversibility, Google nav doc, evidence README, tier cards, ledger, README, EVALUATE, harness, CHANGELOG v8.9, PROJECT_STATE committed; counts final (489 tests).
 - **Decisions (evidence):**
   - `[GROUP_EMAIL]` instead of an @-shaped group token — the @ form BLOCKs in the scanner; no exemption widened (`docs/evidence/gws/phase1-red-green.md` §1.5). Okta groups reuse it (pushed Google Groups), per "reuse an existing token".
   - Google stale paths live in `STALE_PORTAL_PATHS_G1` — the existing lint test pins Microsoft Learn citations on `STALE_PORTAL_PATHS`.

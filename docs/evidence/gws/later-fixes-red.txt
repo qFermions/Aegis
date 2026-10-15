@@ -533,3 +533,9 @@ not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
 # pass 1
 # fail 1
 +   'split-required-assignment-after-fi'
+
+=== red-warden8-httpie.txt — HTTPie method after an option value (lead from WARDEN pass 8, stopped before its report; verified here), before the fix (exact)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+# pass 1
+# fail 1
++   'bash: http --timeout 30 DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" → []',

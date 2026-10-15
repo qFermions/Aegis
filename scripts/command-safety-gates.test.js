@@ -277,8 +277,11 @@ const G1_CLI_SINKS = [
   ['http-write', 'https?', (args) => {
     const tokens = cliTokens(args);
     const positional = tokens.filter((token) => !token.startsWith('-'));
-    // a method-shaped first positional other than GET, HEAD or OPTIONS (HTTPie's syntax)
-    if (/^[A-Za-z]+$/.test(positional[0] || '') && !/^(?:GET|HEAD|OPTIONS)$/i.test(positional[0])) return true;
+    // a method-shaped word before the URL other than GET, HEAD or OPTIONS (HTTPie's
+    // syntax); an option's separate value (`--timeout 30`) may sit in between
+    const urlAt = positional.findIndex((token) => /[/:.[]/.test(token));
+    const beforeUrl = urlAt < 0 ? positional : positional.slice(0, urlAt);
+    if (beforeUrl.some((token) => /^[A-Za-z]+$/.test(token) && !/^(?:GET|HEAD|OPTIONS)$/i.test(token))) return true;
     if (HTTP_WRITE_LONG.test(` ${args}`) || /(?:^|\s)(?:-f|--raw)(?=[\s=]|$)/.test(` ${args}`)) return true;
     return positional.slice(1).some((token) => /^[^=\s:]+(?::=|=(?!=)|@)/.test(token));
   }],
@@ -2036,6 +2039,9 @@ const G1_SHELL_MUTATIONS = [
   ['curl -sS -H "X-HTTP-Method-Override: PURGE" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
   ['http PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
   ['https MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  // an option with a separate value before HTTPie's method (WARDEN pass 8, stopped before its report)
+  ['http --timeout 30 DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['https --session fixture DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
   // P4-5: a Windows-style .exe name and curl values glued to their short option
   ['gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['curl.exe -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
@@ -2104,6 +2110,7 @@ const G1_SHELL_READ_ONLY = [
   'http HEAD "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
   'curl -sS -XGET "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
   'curl -sXOPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'http --timeout 30 GET "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
 ];
 
 test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {

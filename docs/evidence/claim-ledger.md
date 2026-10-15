@@ -32,7 +32,7 @@ Re-run everything with `node --test` (full battery), or the individual commands 
 
 | Claim | Status | Evidence |
 |---|---|---|
-| Aegis advises, humans execute (no tenant writes) | PROVEN (structure) + MODEL CONTRACT (prose) | `scripts/command-safety-gates.test.js` (286 tests in v8.9; 179 in v8.8): every discovered mutation in a command is inert preview or owned by an action-local gate; no code path in the tree performs a tenant write (`grep` for Graph/EXO write cmdlets finds only Markdown examples; `scripts/jira-client.js` is dry-run-first with a zero-network tripwire). Handler cards say HUMAN-RUN; samples show it |
+| Aegis advises, humans execute (no tenant writes) | PROVEN (structure) + MODEL CONTRACT (prose) | `scripts/command-safety-gates.test.js` (287 tests in v8.9; 179 in v8.8): every discovered mutation in a command is inert preview or owned by an action-local gate; no code path in the tree performs a tenant write (`grep` for Graph/EXO write cmdlets finds only Markdown examples; `scripts/jira-client.js` is dry-run-first with a zero-network tripwire). Handler cards say HUMAN-RUN; samples show it |
 | R0–R3 blast-radius authorization | MODEL CONTRACT + deterministic floors | stated as behavioral policy (`README`, `CLAUDE.md` enforcement boundary); deterministic pieces: tier guard floor (`scripts/tier/tier-routing.test.js`), graph SR-2 trigger scan (`scripts/graph/graph.test.js`), CLI write flags |
 | Tier 1 / Tier 2 / Tier 3 routing; tier never overrides risk | PARTIALLY PROVEN | floor is deterministic and tested (17 tests incl. mass, wipe/retire, delete device, disable account/mailbox, license removal, offboarding, security control, suspected compromise, confusable homoglyphs); it is a pattern-set floor beneath judgment, not a classifier (`PRODUCT_CONTRACT.md` §Tier philosophy) — the T1-vs-T2 split and any wording outside the set are judgment (model contract) |
 | Placeholders always; no real names/UPNs/tenant values | PROVEN (tree) + MODEL CONTRACT (answers) | `node scripts/pre-commit-check.js --all` (CI); replay store refuses real emails/phones (R9); corpus is PII-free (eval test); answer-time behavior is SR-1/SR-8 doctrine + EVALUATE.md probe 1 |
@@ -74,7 +74,7 @@ Re-run everything with `node --test` (full battery), or the individual commands 
 
 | Claim | Status | Evidence |
 |---|---|---|
-| Reproducible tests; counts in the README | PROVEN | `node --test` on 2026-10-15: 489 tests, 0 failures (v8.9, `docs/evidence/gws/battery-node-test.txt`); 346 on 2026-09-02 (v8.8). Badge reads graph 33 · memory 14 · replay 15 · ticket eval 28+38 · lint 77, each reconciled against its suite |
+| Reproducible tests; counts in the README | PROVEN | `node --test` on 2026-10-15: 490 tests, 0 failures (v8.9, `docs/evidence/gws/battery-node-test.txt`); 346 on 2026-09-02 (v8.8). Badge reads graph 33 · memory 14 · replay 15 · ticket eval 28+38 · lint 77, each reconciled against its suite |
 | Public repo contains the real product; only data stays private | PROVEN (structure) | boundary guard PASS; `.gitignore` private stores; no `[@Aegion_*]` literal in the tree (scanner) |
 | Fresh-session usability (clone, run, no hidden dependencies) | PROVEN | zero npm dependencies (no `package.json`); Node 24 built-ins only; CI runs the same commands on a clean checkout |
 | Multi-session coordination (atomic claims, overlap refusal) | PROVEN | `scripts/dev/claim.test.js` (6 tests incl. the README phantom-task regression) |

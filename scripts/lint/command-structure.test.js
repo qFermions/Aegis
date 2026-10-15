@@ -254,6 +254,8 @@ test('G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; th
     'Admin console → Devices → Mobile & endpoints → Devices', 'Admin console → Devices → Overview → Mobile devices', 'Admin console → Directory → Users → Add new user',
     'Okta Admin Console → Applications and Resources → Applications', 'Jamf Pro → Computers → [SERIAL_NUMBER] → Management → Wipe Computer',
     'Apple Business → Devices → Inventory → Assign Device Management',
+    'Admin console → Directory → Users → `[USER@DOMAIN.COM]` → Security → 2-step verification',
+    'admin.google.com → Directory → Users → [USER@DOMAIN.COM] → Security → 2-Step Verification',
   ];
   for (const s of stale) assert.ok(g1Findings(G1_GOOD.replace('Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.', s)).includes('fresh-portal-paths'), s);
   for (const c of current) assert.ok(!g1Findings(G1_GOOD.replace('Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.', c)).includes('fresh-portal-paths'), c);

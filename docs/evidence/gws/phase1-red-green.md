@@ -194,3 +194,14 @@ Green — G1 detector 2/2, lint 26/26, safety-gate suite 286/286 with links, che
 Red — `not ok 1 - G1 read-only allowlist judges every command on a line …` (`gam info …; gam delete …` passed);
 `not ok 1 - G1 portal grammar: the current Apple Business name …` (bare `3. Click **Delete user**` → `[]`, expected `['delete']`).
 Green — lint `# tests 27` · `# pass 27`; safety-gate suite `# tests 284` · `# pass 284`.
+
+### WARDEN pass 2: glued `#`, pre-marker statements, continued lines, more indirect forms, sibling-fence variables (`f414d0e`, `0f0cd25`, `b7b082d`)
+
+Red — `node --test --test-name-pattern="G1 detector|G1 shell gate analyzer|G1 statements|gate variables inside" scripts/command-safety-gates.test.js`:
+`not ok` for the detector (260 misses across the new forms in the five fence
+languages), the bypass test (the four new glued-`#` / pre-marker fixtures
+accepted), the statements test and the new document-level test; the lint suite
+failed on `sudo --` and on a background-`&` chain. Exact lines: `later-fixes-red.txt`.
+Green — safety-gate suite with links `# tests 288` · `# pass 288` · `# fail 0`;
+lint `# tests 28` · `# pass 28`; the only inventory change is the README preview
+region recording the redirect it owns, after the README line was rejoined.

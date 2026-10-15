@@ -117,3 +117,82 @@ not ok 1 - G1 portal grammar: the current Apple Business name and the selected-d
 # pass 0
 # fail 1
 
+=== red-warden2.txt — node --test --test-name-pattern="G1 detector|G1 shell gate analyzer|G1 statements|gate variables inside" scripts/command-safety-gates.test.js (exact output)
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+ok 2 - G1 detector: read-only diagnostics stay live and are not sinks
+not ok 3 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 4 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+not ok 5 - every document with a gated shell fence keeps its gate variables inside gated fences
+# pass 1
+# fail 4
+
+=== red-warden2-full.txt — first 60 lines of the same run's full output
+TAP version 13
+# Subtest: G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+not ok 1 - G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink
+  ---
+  duration_ms: 58.733697
+  type: 'test'
+  location: 'scripts/command-safety-gates.test.js:1860:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'bash: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): sudo -- gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): timeout 30 gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): doas gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'bash: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'zsh: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'sh: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'shell: for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   '(untagged): for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done → []',
+    +   'bash: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'zsh: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'sh: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'shell: if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   '(untagged): if true; then gam delete user "[USER@DOMAIN.COM]"; fi → []',
+    +   'bash: while true; do sudo jamf removeFramework; break; done → []',
+    +   'zsh: while true; do sudo jamf removeFramework; break; done → []',
+    +   'sh: while true; do sudo jamf removeFramework; break; done → []',
+    +   'shell: while true; do sudo jamf removeFramework; break; done → []',
+    +   '(untagged): while true; do sudo jamf removeFramework; break; done → []',
+    +   'bash: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'zsh: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'sh: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   'shell: ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   '(untagged): ! gam delete user "[USER@DOMAIN.COM]" → []',
+    +   "bash: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "zsh: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "sh: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "shell: /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   "(untagged): /bin/sh -c 'gam delete user [USER@DOMAIN.COM]' → []",
+    +   'bash: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   'zsh: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   'sh: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   'shell: /bin/bash -c "sudo jamf removeFramework" → []',
+    +   '(untagged): /bin/bash -c "sudo jamf removeFramework" → []',
+    +   `bash: /usr/bin/osascript -e 'do shell script "sudo jamf removeFramework"' → []`,
+    +   `zsh: /usr/bin/osascript -e 'do shell script "sudo jamf removeFramework"' → []`,
+
+=== red-warden2-lint.txt — node --test scripts/lint/command-structure.test.js (exact output)
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: 'sudo -- gam delete user "[USER@DOMAIN.COM]"   # deletes the account → '
+not ok 20 - G1 read-only allowlist judges every command on a line (a chained mutation is not read-only)
+  error: 'gam info user "[USER@DOMAIN.COM]" & gam delete user "[USER@DOMAIN.COM]"   # reads in the background, then deletes'
+# tests 28
+# pass 26
+# fail 2

@@ -213,6 +213,25 @@ test('G1 cli-collapsed: a mutating gam/jamf/curl/profiles fence outside <details
   }
 });
 
+test('G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)', () => {
+  for (const sink of ['sudo -u admin gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    'command gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    'env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    '"$HOME/bin/gam7/gam" delete user "[USER@DOMAIN.COM]"   # deletes the account',
+    '"$GAM" suspend user "[USER@DOMAIN.COM]"   # suspends the account',
+    "ssh [DEVICE_NAME] 'sudo jamf removeFramework'   # unmanages the Mac remotely",
+    "bash -c 'gam delete user [USER@DOMAIN.COM]'   # deletes the account",
+    `osascript -e 'do shell script "sudo jamf removeFramework"'   # unmanages the Mac`]) {
+    const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', sink);
+    const found = g1Findings(text);
+    assert.ok(found.includes('cli-collapsed') && found.includes('cli-human-run'), `${sink} → ${found.join(', ')}`);
+  }
+  // a quoted confirmation phrase that names a tool is not an invocation
+  const phrase = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences',
+    'required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"   # the exact phrase to type');
+  assert.ok(!g1Findings(phrase).includes('cli-collapsed'));
+});
+
 test('G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above)', () => {
   // the HUMAN-RUN label moves below the command, so nothing explains the bare line
   const bare = G1_GOOD.replace('# HUMAN-RUN — the administrator runs this; Aegis never does\ngam update user "[USER@DOMAIN.COM]" org "[OU_PATH]"   # moves the user to the new organizational unit',

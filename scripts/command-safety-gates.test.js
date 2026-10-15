@@ -174,9 +174,19 @@ function isMutation(command, statement) {
 // invocation whose verb is not on a read-only list counts as a mutation
 // (fail-closed). Command names match case-insensitively because the default
 // macOS filesystem resolves them that way.
-const CLI_BOUNDARY = String.raw`(?:^|[;|{}=:&(\x60]|\$\()\s*(?:sudo\s+(?:-[A-Za-z]+\s+)*)?(?:[\w.~-]*\/)*`;
-const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})(?=\\s|$)([^;|&]*)`, 'gi'))]
+// Wrappers that run the following word as the command are transparent: sudo with
+// any options (including -u user / --user=user), command, env and inline VAR=value
+// assignments, nohup, time, nice, caffeinate, exec, script and xargs. The tool may
+// sit behind a quoted or variable path ("$HOME/bin/gam7/gam").
+const CLI_WRAPPER = String.raw`(?:(?:sudo(?:\s+(?:--[\w-]+(?:=[^\s;|&]+)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|command(?:\s+-[pvV]+)?|env(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|nohup|time(?:\s+-p)?|nice(?:\s+-n\s*-?\d+|\s+-\d+)?|caffeinate(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|exec(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|script(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|xargs(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
+const CLI_BOUNDARY = String.raw`(?:^|[;|{}=:&(\x60]|\$\()\s*${CLI_WRAPPER}"?(?:[\w.~$\{\}-]*\/)*`;
+const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})"?(?=\\s|$)([^;|&]*)`, 'gi'))]
   .map((match) => match[1].trim());
+// Indirect execution hides the command from every per-tool rule, so it is a sink
+// in its own right (fail-closed): ssh with a remote command, a shell's -c, osascript
+// -e, eval, and a variable in command position ("$GAM" delete …). An
+// assignment-shaped `$name = value` line (another language's syntax) is not one.
+const INDIRECT_EXEC = new RegExp(String.raw`(?:^|[;|{}&(\x60]|\$\()\s*${CLI_WRAPPER}(?:ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:bash|sh|zsh|dash|ksh)\s+-[a-z]*c\b|osascript\s+(?:-[a-z]+\s+)*-e\b|eval\s|"?\$\{?[A-Za-z_]\w*\}?"?(?=\s+[^=\s]|\s*$))`, 'i');
 const cliTokens = (args) => args.split(/\s+/).map((token) => token.replace(/^["']+|["']+$/g, '')).filter(Boolean);
 function firstListedVerb(tokens, readOnly, mutating) {
   for (const token of tokens) {
@@ -194,8 +204,9 @@ const GCLOUD_READ_ONLY = new Set(['list', 'describe', 'get-iam-policy', 'get-val
 const GCLOUD_MUTATING = new Set(['create', 'update', 'delete', 'set', 'add-iam-policy-binding', 'remove-iam-policy-binding',
   'set-iam-policy', 'enable', 'disable', 'undelete', 'deploy', 'import', 'patch', 'reset', 'unset', 'add', 'remove', 'login',
   'revoke', 'activate-service-account']);
-const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:DELETE|POST|PUT|PATCH)\b|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file)\b|(?:^|\s)--method[\s=]+["']?(?:DELETE|POST|PUT|PATCH)\b/i;
-const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFT](?=\s|["'@{]|$)|X\s*["']?(?:DELETE|POST|PUT|PATCH)\b)/;
+const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:DELETE|POST|PUT|PATCH)\b|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?(?:DELETE|POST|PUT|PATCH)\b|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*(?:DELETE|POST|PUT|PATCH)\b/i;
+// -K reads a config file that can set the method or a body: fail-closed.
+const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFTK](?=\s|["'@{]|$)|X\s*["']?(?:DELETE|POST|PUT|PATCH)\b)/;
 const JAMF_READ_ONLY = new Set(['help', 'version', 'about', 'checkjssconnection', 'listusers', 'getcomputername']);
 const FDESETUP_READ_ONLY = new Set(['status', 'list', 'isactive', 'haspersonalrecoverykey', 'hasinstitutionalrecoverykey',
   'usingrecoverykey', 'showdeferralinfo', 'supportsauthrestart', 'version', 'help']);
@@ -213,7 +224,7 @@ const G1_CLI_SINKS = [
     const tokens = cliTokens(args);
     const positional = tokens.filter((token) => !token.startsWith('-'));
     if (/^(?:POST|PUT|PATCH|DELETE)$/i.test(positional[0] || '')) return true;
-    if (HTTP_WRITE_LONG.test(` ${args}`) || /(?:^|\s)-f(?=\s|$)/.test(` ${args}`)) return true;
+    if (HTTP_WRITE_LONG.test(` ${args}`) || /(?:^|\s)(?:-f|--raw)(?=[\s=]|$)/.test(` ${args}`)) return true;
     return positional.slice(1).some((token) => /^[^=\s:]+(?::=|=(?!=)|@)/.test(token));
   }],
   ['jamf-write', 'jamf', (args) => !JAMF_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
@@ -249,6 +260,7 @@ function g1CliHits(statement) {
   for (const [label, name, isWrite] of G1_CLI_SINKS) {
     if (cliInvocations(statement, name).some((args) => isWrite(args))) hits.push(label);
   }
+  if (INDIRECT_EXEC.test(statement)) hits.push('indirect-exec');
   return [...new Set(hits)];
 }
 
@@ -360,7 +372,7 @@ function classifyImpact(command, text) {
   }
   return [...categories];
 }
-const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write']);
+const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write', 'indirect-exec']);
 const G1_DEVICE_SINKS = new Set(['profiles-write', 'dscl-write', 'fdesetup-write', 'diskutil-write', 'softwareupdate-write',
   'networksetup-write', 'systemsetup-write', 'defaults-write', 'launchctl-write', 'kickstart-write']);
 
@@ -1740,10 +1752,44 @@ const G1_SHELL_MUTATIONS = [
   ['sudo launchctl bootstrap system /Library/LaunchDaemons/fixture.plist', 'launchctl-write'],
   ['sudo launchctl bootout system/fixture', 'launchctl-write'],
   ['sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -on', 'kickstart-write'],
+  // Wrapper and indirect forms (WARDEN review, 2026-10-15)
+  ['sudo -u admin gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sudo --user=admin gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sudo -E gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['command gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['nohup gam delete user "[USER@DOMAIN.COM]" &', 'gam-write'],
+  ['time gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['nice -n 10 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['caffeinate -i gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['exec gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['script -q /dev/null gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['xargs -n 1 gam delete user < fixture-users.txt', 'gam-write'],
+  ['"$HOME/bin/gam7/gam" delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sudo -u admin /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  ['$GAM delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['GAM=/usr/local/bin/gam; "$GAM" suspend user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['"${GAM}" suspend user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ["ssh [DEVICE_NAME] 'sudo jamf removeFramework'", 'indirect-exec'],
+  ['ssh -t [DEVICE_NAME] sudo jamf removeFramework', 'indirect-exec'],
+  ["bash -c 'gam delete user [USER@DOMAIN.COM]'", 'indirect-exec'],
+  ["zsh -c 'sudo jamf removeFramework'", 'indirect-exec'],
+  [`osascript -e 'do shell script "sudo jamf removeFramework" with administrator privileges'`, 'indirect-exec'],
+  ['eval "gam delete user [USER@DOMAIN.COM]"', 'indirect-exec'],
+  [`http --raw '{}' "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend"`, 'http-write'],
+  ['curl -sS -H "X-HTTP-Method-Override: DELETE" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl --config /tmp/fixture-request.cfg', 'http-write'],
+  ['curl -sK /tmp/fixture-request.cfg', 'http-write'],
 ];
 
 const G1_SHELL_READ_ONLY = [
   'gam info user "[USER@DOMAIN.COM]"',
+  'sudo -u admin gam info user "[USER@DOMAIN.COM]"',
+  'required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"',
+  '$variable = "value"',
+  'env GAMCFGDIR=/tmp/fixture gam print users',
+  '"$HOME/bin/gam7/gam" info user "[USER@DOMAIN.COM]"',
   'gam print users query "isSuspended=True" fields primaryemail,suspended',
   'gam report admin event DELETE_USER',
   'gam user "[USER@DOMAIN.COM]" show tokens',

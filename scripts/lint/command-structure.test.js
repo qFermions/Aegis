@@ -143,3 +143,130 @@ test('CLI exits 0 on the live tree', () => {
   const out = execFileSync('node', [path.join(__dirname, 'command-structure.js')], { encoding: 'utf8' });
   assert.match(out, /clean/);
 });
+
+// ── G1: Google Workspace / Okta / Jamf / macOS lane ──────────────────────────
+const G1_GOOD = `---
+description: synthetic G1
+---
+
+# /synthetic-g1
+
+## Fast path
+1. Admin console → Directory → Users → \`[USER@DOMAIN.COM]\` → read the status banner.
+
+\`\`\`bash
+# read-only: confirm the account and its organizational unit
+gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences
+\`\`\`
+
+<details>
+<summary>GAM — the scale version (HUMAN-RUN)</summary>
+
+\`\`\`bash
+# HUMAN-RUN — the administrator runs this; Aegis never does
+gam update user "[USER@DOMAIN.COM]" org "[OU_PATH]"   # moves the user to the new organizational unit
+\`\`\`
+</details>
+
+## ⚠️ Risk warning
+- moving an OU changes which policies apply.
+
+## ✅ Verification checklist
+- [ ] the user shows the new OU
+
+## 📝 Jira-ready note
+> Resolved [date/time]. Time spent: [X] min.
+`;
+const g1Findings = (text, variant = 'A') => lint.lintCommand('synthetic-g1', text, { commands: KNOWN, variant }).findings.map((f) => f.rule);
+
+test('G1: a compliant Google/Okta/Jamf command passes every rule (read-only fence may stay open)', () => {
+  assert.deepEqual(g1Findings(G1_GOOD), []);
+  assert.deepEqual(g1Findings(G1_GOOD, 'B'), []);
+});
+
+test('G1 breadcrumb roots: Admin console, Okta, Jamf Pro, Apple Business, Fleet, System Settings, Self Service, Finder, Terminal and Zoom Rooms count; an unknown root does not', () => {
+  for (const crumb of ['Admin console → Directory → Users', 'admin.google.com → Directory → Users', 'Okta Admin Console → Directory → People',
+    'Okta → Directory → People', 'Jamf Pro → Computers → Search inventory', 'Jamf → Computers → PreStage enrollments',
+    'Apple Business Manager → Devices → Inventory', 'Apple Business → Devices → Inventory', 'Fleet → Hosts → Actions',
+    'System Settings → Privacy & Security → FileVault', 'Self Service → Featured', 'Finder → Applications → Utilities',
+    'Terminal → New Window', 'Zoom Rooms → Room Management', 'Zoom admin → Room Management → Zoom Rooms']) {
+    const text = G1_GOOD.replace('Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.', `${crumb} → read it.`);
+    assert.ok(!g1Findings(text).includes('gui-steps-present'), crumb);
+  }
+  const unknown = G1_GOOD.replace('Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.', 'Somewhere → Elsewhere → read it.');
+  assert.ok(g1Findings(unknown).includes('gui-steps-present'));
+});
+
+test('G1 cli-collapsed: a mutating gam/jamf/curl/profiles fence outside <details> fails; read-only diagnostics may stay open', () => {
+  const open = G1_GOOD.replace('<details>\n<summary>GAM — the scale version (HUMAN-RUN)</summary>\n\n', '').replace('</details>\n', '');
+  assert.ok(g1Findings(open).includes('cli-collapsed'));
+  for (const sink of ['sudo jamf recon   # sends inventory', 'sudo profiles renew -type enrollment   # re-runs enrollment',
+    'curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend"   # suspends in Okta']) {
+    const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', sink);
+    assert.ok(g1Findings(text).includes('cli-collapsed'), sink);
+  }
+  for (const diagnostic of ['profiles show -type enrollment   # lists installed profiles', 'dscl . -read /Users/[FIRST_NAME]   # reads the local account',
+    'system_profiler SPHardwareDataType   # hardware summary', 'log show --last 1h --style compact   # recent log', 'networksetup -getairportnetwork en0   # current Wi-Fi',
+    'gam print users query "isSuspended=True"   # lists suspended users', 'dig +short [@Aegion_DOMAIN] mx   # mail exchangers', 'fdesetup status   # FileVault state']) {
+    const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', diagnostic);
+    assert.ok(!g1Findings(text).includes('cli-collapsed'), diagnostic);
+  }
+});
+
+test('G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above)', () => {
+  // the HUMAN-RUN label moves below the command, so nothing explains the bare line
+  const bare = G1_GOOD.replace('# HUMAN-RUN — the administrator runs this; Aegis never does\ngam update user "[USER@DOMAIN.COM]" org "[OU_PATH]"   # moves the user to the new organizational unit',
+    'gam update user "[USER@DOMAIN.COM]" org "[OU_PATH]"\n# HUMAN-RUN — the administrator runs this; Aegis never does');
+  assert.notEqual(bare, G1_GOOD);
+  assert.ok(g1Findings(bare).includes('cli-commented'));
+  const above = bare.replace('gam update user "[USER@DOMAIN.COM]" org "[OU_PATH]"', '# moves the user to the new organizational unit\ngam update user "[USER@DOMAIN.COM]" org "[OU_PATH]"');
+  assert.ok(!g1Findings(above).includes('cli-commented'));
+  const bareRead = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', 'gam info user "[USER@DOMAIN.COM]"')
+    .replace('# read-only: confirm the account and its organizational unit\n', '');
+  assert.ok(g1Findings(bareRead).includes('cli-commented'), 'read-only diagnostics still need the comment');
+});
+
+test('G1 gui-before-cli: a CLI fence ahead of the first portal breadcrumb fails', () => {
+  const cliFirst = G1_GOOD.replace('## Fast path\n1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.\n\n', '').replace('## ⚠️ Risk warning', 'Admin console → Directory → Users → check.\n\n## ⚠️ Risk warning');
+  assert.ok(g1Findings(cliFirst).includes('gui-before-cli'));
+});
+
+test('G1 cli-human-run: a mutating CLI fence must say HUMAN-RUN', () => {
+  const unlabeled = G1_GOOD.replace('# HUMAN-RUN — the administrator runs this; Aegis never does\n', '# the administrator runs this\n');
+  assert.ok(g1Findings(unlabeled).includes('cli-human-run'));
+});
+
+test('G1 cli-in-shell-fence: Google/Okta/Jamf/macOS CLI inside a PowerShell or untagged fence fails (the gate grammar would not see it)', () => {
+  const inPowerShell = G1_GOOD.replace('```bash\n# HUMAN-RUN', '```powershell\n# HUMAN-RUN');
+  assert.ok(g1Findings(inPowerShell).includes('cli-in-shell-fence'));
+  const untagged = G1_GOOD.replace('```bash\n# HUMAN-RUN', '```\n# HUMAN-RUN');
+  assert.ok(g1Findings(untagged).includes('cli-in-shell-fence'));
+});
+
+test('G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; the current wording passes; every entry cites a vendor page and a check date', () => {
+  const stale = [
+    'Admin console → Apps → G Suite → Gmail', 'Admin console → Security → Basic settings', 'Admin console → Devices → Mobile devices',
+    'Admin console → Security → 2-step verification', 'Admin console → Users → Add new user', 'Okta Admin Console → Applications → Applications',
+    'Jamf Pro → Computers → [SERIAL_NUMBER] → Management → Erase Computer', 'Apple Business Manager → Devices → Edit MDM Server',
+  ];
+  const current = [
+    'Admin console → Apps → Google Workspace → Gmail', 'Admin console → Security → Authentication → 2-step verification',
+    'Admin console → Devices → Mobile & endpoints → Devices', 'Admin console → Devices → Overview → Mobile devices', 'Admin console → Directory → Users → Add new user',
+    'Okta Admin Console → Applications and Resources → Applications', 'Jamf Pro → Computers → [SERIAL_NUMBER] → Management → Wipe Computer',
+    'Apple Business → Devices → Inventory → Assign Device Management',
+  ];
+  for (const s of stale) assert.ok(g1Findings(G1_GOOD.replace('Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.', s)).includes('fresh-portal-paths'), s);
+  for (const c of current) assert.ok(!g1Findings(G1_GOOD.replace('Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.', c)).includes('fresh-portal-paths'), c);
+  assert.ok(lint.STALE_PORTAL_PATHS_G1.length >= 8);
+  for (const s of lint.STALE_PORTAL_PATHS_G1) {
+    assert.match(s.source, /^https:\/\/(?:knowledge\.workspace\.google\.com|support\.google\.com|help\.okta\.com|learn\.jamf\.com|support\.apple\.com)\//, 'every G1 stale entry cites an official vendor page');
+    assert.match(s.checked, /^\d{4}-\d{2}-\d{2}$/, 'every G1 stale entry carries its check date');
+  }
+});
+
+test('G1 commands are classified: every Phase-3 runbook name has a variant', () => {
+  for (const name of ['gws-new-user', 'gws-offboard', 'gws-password-reset', 'gws-2sv-reset', 'gws-group-membership', 'gws-ou-move', 'gws-license-assign',
+    'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device', 'okta-app-assignment', 'okta-mfa-reset', 'okta-user-lifecycle', 'jamf-enroll-mac',
+    'jamf-lock-erase', 'mac-new-hire-laptop']) assert.equal(lint.VARIANT_OF[name], 'A', name);
+  for (const name of ['gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue']) assert.equal(lint.VARIANT_OF[name], 'B', name);
+});

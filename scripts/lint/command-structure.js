@@ -21,6 +21,21 @@
 //   fresh-portal-paths     no admin-center breadcrumb that Microsoft has renamed
 //   variant-mapped         every command file is classified (new files must be)
 //
+// Google Workspace / Okta / Jamf / macOS lane (G1) — siblings of the PowerShell
+// rules for bash/sh/shell/zsh fences that run gam, gcloud, curl/wget/HTTPie,
+// jamf, profiles, dscl, fdesetup, diskutil, softwareupdate, networksetup,
+// systemsetup, defaults, launchctl or kickstart:
+//   cli-collapsed          a mutating CLI fence sits inside a <details> block; a
+//                          fence of read-only diagnostics only may stay open
+//   cli-commented          every CLI invocation carries a plain-English comment
+//                          (trailing, or a comment line directly above)
+//   gui-before-cli         the first breadcrumb precedes the first CLI fence
+//   cli-human-run          a mutating CLI fence is labeled HUMAN-RUN
+//   cli-in-shell-fence     those CLIs live only in bash/sh/shell/zsh fences, where
+//                          the safety-gate grammar can see them
+//   fresh-portal-paths     also reads STALE_PORTAL_PATHS_G1 (Admin console, Okta,
+//                          Jamf Pro, Apple Business retired wording)
+//
 // What this lint does NOT prove: that the model leads with the most useful
 // action, sizes depth to the ticket class, or carries a failed attempt forward.
 // Those stay model-behavior contracts, evaluated by the ticket eval rubric
@@ -42,10 +57,16 @@ const VARIANTS = {
   A: ['new-user', 'offboard', 'device-wipe', 'sharepoint-access', 'shared-mailbox', 'distribution-list',
     'mailbox-permissions', 'email-whitelist', 'email-quarantine', 'new-device-setup', 'unite-extension-create',
     'unite-voicemail-reset', 'group-membership-audit', 'license-audit', 'onedrive-restore', 'conditional-access',
-    'password-reset', 'meraki-site-vpn', 'jira-create', 'jira-update'],
+    'password-reset', 'meraki-site-vpn', 'jira-create', 'jira-update',
+    // G1 — Google Workspace / Okta / Jamf / macOS lane
+    'gws-new-user', 'gws-offboard', 'gws-password-reset', 'gws-2sv-reset', 'gws-group-membership', 'gws-ou-move',
+    'gws-license-assign', 'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device', 'okta-app-assignment', 'okta-mfa-reset',
+    'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase', 'mac-new-hire-laptop'],
   B: ['troubleshoot', 'mfa-issue', 'printer-issue', 'wifi-issue', 'lan-wan', 'vpn-check', 'ad-connect', 'teams-issue',
     'outlook-issue', 'onedrive-issue', 'email-to-spam', 'intune-compliance', 'meraki-health', 'meraki-vpn-status',
-    'sip-trunk-status', 'security-alert-triage'],
+    'sip-trunk-status', 'security-alert-triage',
+    // G1
+    'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue'],
   C: ['write-sop', 'runbook', 'incident-report', 'board-report', 'vendor-email', 'escalation-note', 'ticket-response',
     'draft-email', 'daily-start', 'daily-wrap', 'vent'],
   D: ['cloud-lab', 'devops-drill', 'ai-engineer-drill'],
@@ -62,7 +83,11 @@ const INTEGRATION_ONLY = new Set(['jira-create', 'jira-update']);
 
 // ── Pattern sets ──────────────────────────────────────────────────────────────
 // A breadcrumb is a non-fence line with an arrow AND a recognizable admin surface.
-const BREADCRUMB_ROOT = /(admin center|admin\.microsoft\.com|entra\.microsoft\.com|intune\.microsoft\.com|admin\.exchange\.microsoft\.com|security\.microsoft\.com|admin\.teams\.microsoft\.com|portal\.azure\.com|dashboard\.meraki\.com|\bEAC\b|\bADUC\b|\bEntra\b|\bIntune\b|\bDefender\b|\bMeraki\b|\bSettings\b|Control Panel|Task Manager|Device Manager|File Explorer|\bOutlook\b|\bTeams\b|\bOneDrive\b|\bWin\+R\b|\bStart\b|\[@Aegion_VOIP_URL\]|\[@Aegion_JIRA_URL\]|Jira|Zoom|Adobe|Company Portal|Synchronization Service|Dashboard|dashboard|portal)/;
+const BREADCRUMB_ROOT_MS = /(admin center|admin\.microsoft\.com|entra\.microsoft\.com|intune\.microsoft\.com|admin\.exchange\.microsoft\.com|security\.microsoft\.com|admin\.teams\.microsoft\.com|portal\.azure\.com|dashboard\.meraki\.com|\bEAC\b|\bADUC\b|\bEntra\b|\bIntune\b|\bDefender\b|\bMeraki\b|\bSettings\b|Control Panel|Task Manager|Device Manager|File Explorer|\bOutlook\b|\bTeams\b|\bOneDrive\b|\bWin\+R\b|\bStart\b|\[@Aegion_VOIP_URL\]|\[@Aegion_JIRA_URL\]|Jira|Zoom|Adobe|Company Portal|Synchronization Service|Dashboard|dashboard|portal)/;
+// G1 roots — an explicit, auditable allowlist for the Google Workspace / Okta /
+// Jamf / macOS lane (Apple Business Manager is now "Apple Business"; both count).
+const BREADCRUMB_ROOT_G1 = /(admin\.google\.com|Admin console|Okta Admin Console|\bOkta\b|Jamf Pro|\bJamf\b|Apple Business Manager|Apple Business|\bFleet\b|System Settings|Self Service|\bFinder\b|\bTerminal\b|Zoom Rooms|Zoom admin)/;
+const BREADCRUMB_ROOT = { test: (line) => BREADCRUMB_ROOT_MS.test(line) || BREADCRUMB_ROOT_G1.test(line) };
 
 const CHECKLIST_HEADING = /^## (✅ Verification checklist|✅ Completion checklist|Final verification checklist)\s*$/;
 const NOTE_HEADING = /^## (📝 Jira-ready note|Paste-ready ticket note)\s*$/;
@@ -87,6 +112,22 @@ const STALE_PORTAL_PATHS = [
   { pattern: /(?<!& health\s*)(?<!&\s)Monitoring\s*→\s*(Sign-in logs|Audit logs|Diagnostic settings|Provisioning logs|Workbooks)/, current: 'Entra ID → Monitoring & health → … (learn.microsoft.com/entra/identity/monitoring-health/how-to-view-applied-conditional-access-policies)' },
   { pattern: /Azure Active Directory\s*→/, current: 'Entra ID → … (the Azure AD blade name retired with the Entra rename)' },
 ];
+// Google Admin console, Okta, Jamf Pro and Apple Business wording that the
+// vendors have retired. Each entry cites the live official page it was checked
+// against and the check date. Kept as a sibling of STALE_PORTAL_PATHS (whose
+// entries cite Microsoft Learn); the freshness rule reads both. Extend, never
+// delete.
+const STALE_PORTAL_PATHS_G1 = [
+  { pattern: /Apps\s*→\s*G Suite\b/, current: 'Apps → Google Workspace → … (G Suite was rebranded)', source: 'https://knowledge.workspace.google.com/admin/security/set-up-dkim', checked: '2026-10-15' },
+  { pattern: /Security\s*→\s*Basic settings\b/, current: 'Security → Authentication → 2-step verification (the less-secure-apps control that lived under Basic settings is gone)', source: 'https://knowledge.workspace.google.com/admin/security/deploy-2-step-verification', checked: '2026-10-15' },
+  { pattern: /Devices\s*→\s*Mobile devices\b/, current: 'Devices → Mobile & endpoints → Devices (or Devices → Overview → Mobile devices card)', source: 'https://knowledge.workspace.google.com/admin/devices/view-mobile-device-details', checked: '2026-10-15' },
+  { pattern: /Security\s*→\s*2-?step verification/i, current: 'Security → Authentication → 2-step verification', source: 'https://knowledge.workspace.google.com/admin/security/deploy-2-step-verification', checked: '2026-10-15' },
+  { pattern: /(?<!Directory\s*→\s*)\bUsers\s*→\s*Add new user\b/, current: 'Directory → Users → Add new user', source: 'https://knowledge.workspace.google.com/admin/users/add-an-account-for-a-new-user', checked: '2026-10-15' },
+  { pattern: /\bApplications\s*→\s*Applications\b/, current: 'Okta Admin Console → Applications and Resources → Applications', source: 'https://help.okta.com/oie/en-us/content/topics/provisioning/lcm/lcm-assign-app-user.htm', checked: '2026-10-15' },
+  { pattern: /\bErase Computer\b/, current: 'Jamf Pro → Computers → [computer] → Management → Wipe Computer', source: 'https://learn.jamf.com/r/en-US/jamf-pro-documentation-current/Remote_Commands_for_Computers', checked: '2026-10-15' },
+  { pattern: /\bEdit MDM Server\b/, current: 'Apple Business → Devices → Inventory → Assign Device Management', source: 'https://support.apple.com/guide/business/assign-reassign-or-unassign-devices-axmf500c0851/web', checked: '2026-10-15' },
+];
+const ALL_STALE_PORTAL_PATHS = () => [...STALE_PORTAL_PATHS, ...STALE_PORTAL_PATHS_G1.map((entry) => ({ pattern: entry.pattern, current: `${entry.current} (${entry.source}, checked ${entry.checked})` }))];
 // Markdown emphasis must not hide a breadcrumb from the freshness check
 // ("Protection → **Conditional Access**" is the same retired path).
 const plainNav = (line) => line.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/<\/?[a-z][^>]*>/gi, '').replace(/[*_`]/g, '');
@@ -123,6 +164,60 @@ function commandNames(dir = COMMANDS_DIR) {
   return new Set(fs.readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3)));
 }
 
+// ── G1 CLI fences ─────────────────────────────────────────────────────────────
+const SHELL_FENCES = new Set(['bash', 'sh', 'shell', 'zsh']);
+const CLI_TOOLS = 'gam|gcloud|curl|wget|https?|jamf|profiles|dscl|fdesetup|diskutil|softwareupdate|networksetup|systemsetup|defaults|launchctl|kickstart';
+const CLI_INVOCATION = new RegExp(`(?:^|[;|{}=:&(\`]|\\$\\()\\s*(?:sudo\\s+(?:-[A-Za-z]+\\s+)*)?(?:[\\w.~-]*\\/)*(?:${CLI_TOOLS})(?=\\s|$)`, 'i');
+// Read-only diagnostics that may sit outside <details> (they still need a
+// comment). An explicit allowlist: anything not on it is treated as mutating.
+const READ_ONLY_CLI = [
+  /^(?:sudo\s+)?(?:[\w.~-]*\/)*gam\s+(?:(?:user|users|group|groups|ou|cros|mobile)\s+\S+\s+)?(?:info|print|report|show|whatis)\b/i,
+  /^(?:sudo\s+)?gcloud\s+(?:[\w-]+\s+)*?(?:list|describe)\b/i,
+  /^(?:sudo\s+)?(?:[\w.~-]*\/)*profiles\s+(?:show|list|status)\b/i,
+  /^(?:sudo\s+)?dscl\s+\S+\s+-(?:read|readall|list|search)\b/i,
+  /^(?:sudo\s+)?fdesetup\s+(?:status|list|isactive|haspersonalrecoverykey|hasinstitutionalrecoverykey)\b/i,
+  /^(?:sudo\s+)?diskutil\s+(?:list|info|apfs\s+list)\b/i,
+  /^(?:sudo\s+)?softwareupdate\s+(?:-l|--list|--history)\b/i,
+  /^(?:sudo\s+)?networksetup\s+-(?:get|list)\w*/i,
+  /^(?:sudo\s+)?systemsetup\s+-get\w*/i,
+  /^defaults\s+read\b/i,
+  /^(?:sudo\s+)?launchctl\s+(?:list|print)\b/i,
+  /^(?:sudo\s+)?(?:[\w.~-]*\/)*jamf\s+(?:version|checkJSSConnection|help|about)\b/i,
+];
+function shellCode(line) {
+  if (/^\s*#/.test(line)) return '';
+  let single = false;
+  let double = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (ch === '\\') { i += 1; continue; }
+    if (ch === "'" && !double) single = !single;
+    else if (ch === '"' && !single) double = !double;
+    else if (ch === '#' && !single && !double && (i === 0 || /\s/.test(line[i - 1]))) return line.slice(0, i).trim();
+  }
+  return line.trim();
+}
+const hasTrailingComment = (line) => shellCode(line) !== line.trim() && !/^\s*#/.test(line);
+function fencesOf(lines, fenceAt, detailsDepthAt) {
+  // Same open/close grammar as parse(); frontmatter is never a fence.
+  const fences = [];
+  let current = null;
+  lines.forEach((line, i) => {
+    if (fenceAt[i] === 'frontmatter') return;
+    if (current === null) {
+      const m = line.match(FENCE_OPEN);
+      if (m) current = { lang: (m[1] || '').toLowerCase(), open: i + 1, close: null, depth: detailsDepthAt[i] };
+    } else if (/^```\s*$/.test(line)) {
+      current.close = i + 1;
+      fences.push(current);
+      current = null;
+    }
+  });
+  if (current) { current.close = lines.length + 1; fences.push(current); }
+  for (const f of fences) f.body = lines.slice(f.open, f.close - 1);
+  return fences;
+}
+
 // ── The lint ──────────────────────────────────────────────────────────────────
 /**
  * lintCommand(name, text, opts) → { name, variant, findings: [{ rule, line, message }] }
@@ -154,10 +249,19 @@ function lintCommand(name, text, opts = {}) {
   // fresh-portal-paths (all variants, prose and fences alike — a stale path in a comment misleads too)
   lines.forEach((line, i) => {
     const nav = plainNav(line);
-    for (const { pattern, current } of STALE_PORTAL_PATHS) {
+    for (const { pattern, current } of ALL_STALE_PORTAL_PATHS()) {
       if (pattern.test(nav)) add('fresh-portal-paths', i + 1, `stale admin-center path "${nav.match(pattern)[0]}" — current: ${current}`);
     }
   });
+
+  // cli-in-shell-fence (all variants) — the safety-gate grammar sees these CLIs
+  // only in bash/sh/shell/zsh fences, so they may not live anywhere else.
+  const allFences = fencesOf(lines, fenceAt, detailsDepthAt);
+  for (const f of allFences) {
+    if (SHELL_FENCES.has(f.lang)) continue;
+    const at = f.body.findIndex((l) => CLI_INVOCATION.test(shellCode(l)));
+    if (at >= 0) add('cli-in-shell-fence', f.open + 1 + at, `${f.lang || 'untagged'} fence runs a Google/Okta/Jamf/macOS CLI — tag it bash or zsh so the safety-gate grammar applies`);
+  }
 
   const structural = (variant === 'A' || variant === 'B') && !INTEGRATION_ONLY.has(name);
   if (!structural) return { name, variant: variant || null, findings };
@@ -192,6 +296,25 @@ function lintCommand(name, text, opts = {}) {
   if (psFences.length && breadcrumbLines.length && psFences[0].open < breadcrumbLines[0]) {
     add('gui-before-powershell', psFences[0].open, `first PowerShell fence (line ${psFences[0].open}) precedes the first portal breadcrumb (line ${breadcrumbLines[0]})`);
   }
+
+  // G1 CLI fences (bash/sh/shell/zsh running a Google/Okta/Jamf/macOS CLI)
+  const cliFences = allFences.filter((f) => SHELL_FENCES.has(f.lang) && f.body.some((l) => CLI_INVOCATION.test(shellCode(l))));
+  for (const f of cliFences) {
+    const code = f.body.map(shellCode);
+    const cliLines = code.map((c, j) => ({ c, j })).filter(({ c }) => CLI_INVOCATION.test(c));
+    const readOnly = !f.body.some((l) => /#\s*SAFETY GATE\b/.test(l)) &&
+      cliLines.every(({ c }) => READ_ONLY_CLI.some((re) => re.test(c)) && !/(?:^|\s)>{1,2}\s*[^&\s]/.test(c) && !/\|\s*(?:sudo\s+)?(?:[\w.~-]*\/)*(?:gam|gcloud|curl|wget|jamf|profiles|dscl|fdesetup|diskutil|softwareupdate|networksetup|systemsetup|defaults|launchctl|kickstart)\b/i.test(c));
+    if (!readOnly && f.depth < 1) add('cli-collapsed', f.open, 'mutating CLI fence is not inside a <details> block (the scale version is secondary — collapse it)');
+    if (!readOnly && !f.body.some((l) => /HUMAN-RUN/.test(l))) add('cli-human-run', f.open, 'mutating CLI fence carries no HUMAN-RUN label (Aegis advises; a human administrator runs it)');
+    for (const { j } of cliLines) {
+      const above = f.body.slice(0, j).reverse().find((l) => l.trim() !== '');
+      const commented = hasTrailingComment(f.body[j]) || (above !== undefined && /^\s*#/.test(above));
+      if (!commented) add('cli-commented', f.open + 1 + j, 'CLI invocation carries no plain-English comment (trailing, or on the line directly above)');
+    }
+  }
+  if (cliFences.length && breadcrumbLines.length && cliFences[0].open < breadcrumbLines[0]) {
+    add('gui-before-cli', cliFences[0].open, `first CLI fence (line ${cliFences[0].open}) precedes the first portal breadcrumb (line ${breadcrumbLines[0]})`);
+  }
   return { name, variant, findings };
 }
 
@@ -212,7 +335,7 @@ function lintDocFreshness(files) {
     const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     text.split('\n').forEach((line, i) => {
       const nav = plainNav(line);
-      for (const { pattern, current } of STALE_PORTAL_PATHS) {
+      for (const { pattern, current } of ALL_STALE_PORTAL_PATHS()) {
         if (pattern.test(nav)) out.push({ file: rel, line: i + 1, rule: 'fresh-portal-paths', message: `stale admin-center path "${nav.match(pattern)[0]}" — current: ${current}` });
       }
       if (CORRUPTION.test(line)) out.push({ file: rel, line: i + 1, rule: 'no-corrupted-chars', message: 'stray combining/replacement character' });
@@ -227,7 +350,7 @@ const FRESHNESS_DOCS = ['docs/portal-nav-2026.md', 'docs/ticket-examples.md', 'd
   'modules/security/threat_detection.md', 'modules/systems/health_checks.md', 'modules/systems/infrastructure.md',
   'modules/systems/network_ops.md', 'modules/automation/powershell/examples.md', '.claude/plugins/enterprise-it-ops/skills/it-ops.md', 'CLAUDE.md'];
 
-module.exports = { lintCommand, lintAll, lintDocFreshness, VARIANTS, VARIANT_OF, STALE_PORTAL_PATHS, FRESHNESS_DOCS, APP_SWITCH_ALLOWLIST, parse };
+module.exports = { lintCommand, lintAll, lintDocFreshness, VARIANTS, VARIANT_OF, STALE_PORTAL_PATHS, STALE_PORTAL_PATHS_G1, FRESHNESS_DOCS, APP_SWITCH_ALLOWLIST, READ_ONLY_CLI, parse };
 
 if (require.main === module) {
   const json = process.argv.includes('--json');

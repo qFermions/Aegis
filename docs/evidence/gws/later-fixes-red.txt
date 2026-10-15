@@ -486,3 +486,30 @@ not ok 5 - the evaluator removes its temporary replay store (no /tmp residue per
 # pass 4
 # fail 1
 left behind: /tmp/aegis-eval-P9yjMb
+
+=== red-warden7-p71.txt — WARDEN pass 7, P7-1: a backslash-newline joins a split word, before the fix (exact; all pass-7 cases ran together)
+not ok 1 - G1 shell gate analyzer rejects bypass-shaped control flow
+not ok 2 - G1 statements: a glued \# is not a comment, continued lines are one statement, gate variables stay in their gated fence
+# pass 0
+# fail 2
+error: '[ (\\ / ) { return 0; }'
++   'continued-function-after-fi',
++   'continued-alias-after-fi',
++   'nested-brace-alias-after-fi',
++   'bash-aliases-after-fi',
++   'split-required-assignment-after-fi'
+# bash ground truth (gate lines with a mocked sink, sibling lines before them), empty input:
+$ printf '\n' | bash  # sibling lines before the gate: [ (\ / ) { return 0; }
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # interactive alias model (shopt -s expand_aliases), sibling: {a{l,},}ias '['=true
+p.sh: line 2: alias: aias: not found
+p.sh: line 2: alias: ias: not found
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # interactive alias model (shopt -s expand_aliases), sibling: BASH_ALIASES['[']=true
+MOCKED_SINK_REACHED
+status=0
+$ printf '\n' | bash  # control, no sibling line
+Confirmation did not match. No change was made.
+status=1

@@ -381,7 +381,8 @@ function mutationHits(document) {
       // command is judged as one statement and attributed to its first line.
       while (shell && !comment && /\\\s*$/.test(statement) && offset + 1 < fence.lines.length) {
         offset += 1;
-        statement = `${statement.replace(/\\\s*$/, ' ')}${stripExecutableComment(fence.lines[offset], shell)}`;
+        // bash removes a backslash-newline outright (`ga\` + `m …` runs gam)
+        statement = `${statement.replace(/\\(\s*)$/, (match, space) => (space ? ' ' : ''))}${stripExecutableComment(fence.lines[offset], shell)}`;
       }
       for (const command of commandsIn(statement, fence.language)) {
         (comment ? preview : executable).push({ file: document.file, fenceId: fence.id, line, command, statement: statement.trim() });
@@ -1064,6 +1065,15 @@ const unquotedShellWords = (statement) => statement
 const firstBraceAlternative = (statement) => statement
   .replace(/(^|[^$])\{([^{}\s,]*)(?:,[^{}\s]*)+\}/g, '$1$2')
   .replace(/(^|[^$])\{(-?\w+)\.\.-?\w+(?:\.\.-?\d+)?\}/g, '$1$2');
+// bash removes a backslash-newline before it splits words, so `[ (\` + `) { … }`
+// defines a function named `[` and `ali\` + `as` runs `alias`: every rule reads the
+// logical line that starts at each physical line.
+const continuesLine = (text) => /(?:^|[^\\])(?:\\\\)*\\$/.test(text);
+const logicalLines = (texts) => texts.map((text, index) => {
+  let joined = text;
+  for (let next = index + 1; continuesLine(joined) && next < texts.length; next += 1) joined = joined.slice(0, -1) + texts[next];
+  return joined;
+});
 const shellReadings = (statement) => {
   const unquoted = unquotedShellWords(statement);
   return [...new Set([statement, unquoted, firstBraceAlternative(unquoted)])];
@@ -1140,14 +1150,15 @@ function analyzeShellGate(fence, marker, regionEndLine, owned) {
   });
   if (fields['Failure behavior'] && fields['Failure behavior'] !== SHELL_FAILURE_BEHAVIOR) problems.push(`Failure behavior must read exactly: ${SHELL_FAILURE_BEHAVIOR}`);
 
-  code.forEach((statement, index) => {
+  const logical = logicalLines(code);
+  logical.forEach((statement, index) => {
     if (!statement) return;
     for (const row of SHELL_FORBIDDEN) {
       if (shadows(row, statement)) problems.push(`line ${index + 1}: ${row[1]}`);
     }
   });
 
-  const requiredAssignments = code.map((statement, index) => ({ statement, index }))
+  const requiredAssignments = logical.map((statement, index) => ({ statement, index }))
     .filter(({ statement }) => /(?:^|[;&|\s(])(?:export\s+|local\s+)?required_confirmation\+?=/.test(statement));
   const reads = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /(?:^|[;&|(\s])read\b/.test(statement));
   const gateIfs = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /\$confirmation\b|\$required_confirmation\b/.test(statement) && /(?:^|[;&|\s])(?:if|elif|while|until|\[\[?|test)\b/.test(statement));
@@ -2114,8 +2125,9 @@ function gateVariablesOutsideGates(document, gatedFenceIds) {
   if (!gatedFenceIds.size) return [];
   const problems = [];
   for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
+    const asBash = logicalLines(fence.lines.map(shellCodeOf));
     fence.lines.forEach((rawLine, offset) => {
-      if (shellReadings(shellCodeOf(rawLine)).some((reading) => /\b(?:required_)?confirmation\b/.test(reading))) {
+      if (asBash[offset] && shellReadings(asBash[offset]).some((reading) => /\b(?:required_)?confirmation\b/.test(reading))) {
         problems.push(`${document.file}:${fence.startLine + offset}: gate variables (confirmation, required_confirmation) may only appear inside a gated shell fence`);
       }
     });
@@ -2134,10 +2146,12 @@ function gateShadowingOutsideGates(document, gatedFenceIds) {
   if (!gatedFenceIds.size) return [];
   const problems = [];
   for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
+    const asBash = logicalLines(fence.lines.map(shellCodeOf));
+    const hashAsWord = logicalLines(fence.lines.map((line) => line.trim()));
     fence.lines.forEach((rawLine, offset) => {
       // As bash reads it, and as a shell that does not treat `#` as a comment reads
-      // it (a comment line or a trailing comment is then code).
-      const readings = [shellCodeOf(rawLine), rawLine.trim()].filter(Boolean);
+      // it (a comment line or a trailing comment is then code), continuations joined.
+      const readings = [asBash[offset], hashAsWord[offset]].filter(Boolean);
       for (const row of SHELL_SIBLING_FORBIDDEN) {
         if (readings.some((statement) => shadows(row, statement))) {
           problems.push(`${document.file}:${fence.startLine + offset}: a shell fence beside a gated fence may not shadow or redefine read, [ or the shell (${row[1]})`);
@@ -2308,6 +2322,9 @@ test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
     ['locale-quoted-readonly-after-fi', [...header, ...body, `$"readonly" required_confirm""ation=""`]],
     ['brace-expanded-alias-after-fi', [...header, ...body, `a{lias,} '['=true`]],
     ['ansi-c-escaped-alias-after-fi', [...header, ...body, `$'\\x61lias' '['=true`]],
+    // WARDEN pass 7
+    ['continued-function-after-fi', [...header, ...body, '[ (\\', ') { return 0; }']],
+    ['continued-alias-after-fi', [...header, ...body, 'ali\\', `as '['=true`]],
     ['exit-256-in-else', replace('  exit 1', '  exit 256')],
     ['exit-512-in-else', replace('  exit 1', '  exit 512')],
   ];
@@ -2422,6 +2439,12 @@ test('G1 statements: a glued # is not a comment, continued lines are one stateme
     `# note; $"readonly" x=`, `$"builtin" alias '['=true`, `$'\\u0061lias' '['=true`]) {
     assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
   }
+  // WARDEN pass 7, P7-1: bash joins a backslash-newline before it reads a word
+  for (const shadow of [['[ (\\', ') { return 0; }'], ['ali\\', `as '['=true`], ['read\\', 'only required_confirm""ation=']]) {
+    assert.match(failuresOf(fence(shadow) + gated), /shadow|redefine|hook|gate variables/, shadow.join(' / '));
+  }
+  // the detector joins a split word the same way
+  assert.match(failuresOf(fence(['ga\\', 'm delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
   // a gate variable named with a split or quoted spelling is still a gate variable
   for (const named of [`required_confirm""ation=x`, `$"confirmation"=x`, `confirm{ation,}=x`]) {
     assert.match(failuresOf(fence([named]) + gated), /gate variables/, named);

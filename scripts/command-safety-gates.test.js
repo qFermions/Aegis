@@ -399,6 +399,7 @@ const EFFECT_FAMILIES = [
   [/^(?:unenroll|unmanage)(?:s|d|ed|ing)?\b/i, /\b(?:UNENROLL|UNMANAGE|REMOVE)\b/],
   [/^(?:sign|log)\s+out\b/i, /\b(?:SIGN OUT|REVOKE)\b/],
   [/^promote(?:s|d|ing)?\b/i, /\b(?:GRANT|ASSIGN|PROMOTE)\b/],
+  [/^restart(?:s|ed|ing)?\b/i, /\bRESTART\b/],
 ];
 
 function assertEffectCorrespondence(effect, expected, context) {
@@ -1899,4 +1900,6 @@ test('G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action
   }
   assert.doesNotThrow(() => assertEffectCorrespondence('suspend one user; powerwash one Chromebook', 'SUSPEND [USER@DOMAIN.COM] AND POWERWASH [DEVICE_ID]', 'g1-effect-fixture'));
   assert.throws(() => assertEffectCorrespondence('deprovision one Chromebook', 'DISABLE [DEVICE_ID]', 'g1-effect-mismatch'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('restart the Zoom Rooms app on one room device', 'RESTART ZOOM ROOMS APP IN [DEVICE_NAME]', 'g1-restart-fixture'));
+  assert.throws(() => assertEffectCorrespondence('restart the room computer', 'REBOOT [DEVICE_NAME]', 'g1-restart-mismatch'));
 });

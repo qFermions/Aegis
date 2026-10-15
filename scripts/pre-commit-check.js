@@ -89,14 +89,16 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /\b(?:scp|sftp)\b/i,               label: 'scp/sftp — local or remote file transfer' },
   { pattern: /(?:\b(?:chmod|cp|install|mv|tee)\b|\bCopy-Item\b|\bSet-Content\b|>)[^\r\n]*\.git[\\/]hooks[\\/]/i, label: 'Git hook installation — repository-local executable change' },
   { pattern: /(?:^|[;|&]\s*)&?\s*\$ssh\b[^\r\n]*\$remoteCommand\b/i, label: 'Dynamic SSH remote command invocation' },
-  // Google Workspace / Okta / Jamf / macOS sinks (G1) — order matters: one WARN per line
+  // Google Workspace / Okta / Jamf / macOS sinks (G1) — order matters: one WARN per line.
+  // GAM sub-commands must sit in argument position (whitespace before, no hyphen or
+  // word after) so a citation of a GAM wiki page name (Users-Signout-Turnoff2SV) stays quiet.
   { pattern: /\bgam\s+issuecommand\b/i,           label: 'GAM ChromeOS remote command (powerwash / wipe users)' },
   { pattern: /\bgam\b[^\r\n]*\bcros\b[^\r\n]*\baction\b/i, label: 'GAM ChromeOS device action (disable / deprovision)' },
   { pattern: /\bgam\s+(?:delete|del)\s+users?\b/i, label: 'GAM user deletion' },
   { pattern: /\bgam\s+suspend\s+users?\b|\bgam\s+update\s+users?\b[^\r\n]*\bsuspended\s+(?:on|true)\b/i, label: 'GAM user suspension' },
   { pattern: /\bgam\b[^\r\n]*\b(?:create|add)\s+(?:datatransfer|transfer)\b|\bgam\b[^\r\n]*\btransfer\s+drive\b/i, label: 'GAM data transfer (Drive / Calendar ownership)' },
-  { pattern: /\bgam\b[^\r\n]*\bturnoff2sv\b/i,     label: 'GAM 2-Step Verification turn-off' },
-  { pattern: /\bgam\b[^\r\n]*\bdeprovision\b/i,    label: 'GAM deprovision (tokens, app passwords, backup codes)' },
+  { pattern: /\bgam\s[^\r\n]*(?<![\w/-])turnoff2sv(?![\w-])/i, label: 'GAM 2-Step Verification turn-off' },
+  { pattern: /\bgam\s[^\r\n]*(?<![\w/-])deprovision(?![\w-])/i, label: 'GAM deprovision (tokens, app passwords, backup codes)' },
   { pattern: /\bgam\b[^\r\n]*\b(?:delete|remove)\s+licen[cs]es?\b/i, label: 'GAM licence removal' },
   { pattern: /\/api\/v1\/users\/[^\s"']+\/lifecycle\/(?:deactivate|suspend|reset_factors|reset_password|expire_password)\b/i, label: 'Okta lifecycle change (deactivate / suspend / reset)' },
   { pattern: /-X\s*["']?DELETE\b[^\r\n]*\/api\/v1\/users\b|\/api\/v1\/users\b[^\r\n]*-X\s*["']?DELETE\b/i, label: 'Okta session or user deletion (DELETE /api/v1/users…)' },

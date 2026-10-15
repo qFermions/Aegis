@@ -737,3 +737,27 @@ test('read-only Google, Okta, Jamf and macOS diagnostics do not warn', function 
   assertExit(result, 0);
   assert.match(combinedOutput(result), /Clean/);
 });
+
+test('a Sources line citing GAM wiki page names does not warn; the command it names still does', function (t) {
+  const repo = makeRepo(t);
+  writeFile(repo, 'g1-sources.md', [
+    '**Sources (checked 2026-10-15):** GAM syntax: raw.githubusercontent.com/wiki/GAM-team/GAM (Users and Users-Signout-Turnoff2SV pages)',
+    'GAM syntax: raw.githubusercontent.com/wiki/GAM-team/GAM/Users-Deprovision.md',
+    '',
+  ].join('\n'));
+  stageAll(repo);
+  const clean = runScanner(repo);
+  assertExit(clean, 0);
+  assert.match(combinedOutput(clean), /Clean/);
+
+  writeFile(repo, 'g1-sources.md', [
+    'gam user "[USER@DOMAIN.COM]" turnoff2sv',
+    'gam user "[USER@DOMAIN.COM]" deprovision',
+    '',
+  ].join('\n'));
+  stageAll(repo);
+  const warned = combinedOutput(runScanner(repo));
+  assert.match(warned, /GAM 2-Step Verification turn-off/);
+  assert.match(warned, /GAM deprovision/);
+  assert.match(warned, /2 warning\(s\) found/);
+});

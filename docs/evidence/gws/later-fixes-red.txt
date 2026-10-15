@@ -284,3 +284,28 @@ error: "alias '['=true"
 $ printf "\n" | bash sibling-shadow.sh
 MOCKED_SINK_REACHED
 exit=0
+
+=== red-warden3-n6.txt — N-6 shapes with the pass-2 detector and lint (exact bash-language lines; lint test 19)
+# pass 1
+# fail 1
++   `bash: python3 -c "import subprocess; subprocess.run(['gam', 'delete', 'user', '[USER@DOMAIN.COM]'])" → []`,
++   "bash: /usr/bin/python3 -c 'print(1)' → []",
++   `bash: perl -e 'system("gam delete user [USER@DOMAIN.COM]")' → [gam-write]`,
++   `bash: ruby -e 'system("sudo jamf removeFramework")' → [jamf-write]`,
++   `bash: node -e 'require("child_process").execSync("gam delete user [USER@DOMAIN.COM]")' → [gam-write]`,
++   "bash: expect -c 'spawn gam delete user [USER@DOMAIN.COM]; interact' → []",
++   "bash: echo 'gam delete user [USER@DOMAIN.COM]' | at now → []",
++   'bash: crontab /tmp/fixture-cron → []',
++   'bash: sudo -s → []',
++   'bash: sudo -i jamf removeFramework → [jamf-write]',
++   'bash: sudo --login → []',
++   'bash: arch -arm64 gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: /usr/bin/arch -x86_64 /usr/local/bin/jamf removeFramework → []',
++   `bash: 'gam' delete user "[USER@DOMAIN.COM]" → []`,
++   'bash: \\gam delete user "[USER@DOMAIN.COM]" → []',
++   'bash: gam${IFS}delete user "[USER@DOMAIN.COM]" → []',
+not ok 19 - G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript)
+  error: `python3 -c "import subprocess; subprocess.run(['gam', 'delete', 'user', '[USER@DOMAIN.COM]'])"   # deletes the account → `
+# pass 27
+# fail 1
+# first green attempt: `at` in any command position flagged a Microsoft runbook line (untagged fence, ps-error-decode.md:20, "At <script or command>:<line number>"); at now needs a time or an option, batch must end the command — the line is now a read-only guard case

@@ -171,18 +171,20 @@ const CLI_TOOLS = 'gam|gcloud|curl|wget|https?|jamf|profiles|dscl|fdesetup|disku
 // that run the next word (sudo with options or --, doas, timeout, command, env,
 // VAR=value, nohup, time, nice, caffeinate, exec, script, xargs) are transparent, a
 // command also starts after do/then/else/elif/if/while/until or `! `, the tool may
-// sit behind a quoted or variable path, and indirect execution (ssh with a remote
-// command, any shell interpreter or osascript in command position, su -c, env -S,
-// find -exec, eval, a substitution or variable in command position) counts too.
+// sit behind a quoted or variable path or be quoted/escaped, a wrapper may be called
+// by its path, arch is a wrapper, and indirect execution (an interpreter one-liner
+// with -c/-e/--eval, at/batch/crontab, sudo -s/-i, ssh with a remote command, any
+// shell interpreter or osascript in command position, su -c, env -S, find -exec,
+// eval, a substitution or variable in command position) counts too.
 // A wrapper may be called by its path, quoted or not (`/usr/bin/sudo`, `"/usr/bin/env"`).
 const CLI_WRAPPER_PATH = String.raw`"?(?:[\w.~-]*\/)*`;
-const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|${CLI_WRAPPER_PATH}doas"?(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}timeout"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|${CLI_WRAPPER_PATH}command"?(?:\s+-[pvV]+)?|${CLI_WRAPPER_PATH}env"?(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}nohup"?|${CLI_WRAPPER_PATH}time"?(?:\s+-p)?|${CLI_WRAPPER_PATH}nice"?(?:\s+-n\s*-?\d+|\s+-\d+)?|${CLI_WRAPPER_PATH}caffeinate"?(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|${CLI_WRAPPER_PATH}exec"?(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|${CLI_WRAPPER_PATH}script"?(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|${CLI_WRAPPER_PATH}xargs"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
-const CLI_INDIRECT = String.raw`(?:ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`;
+const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|${CLI_WRAPPER_PATH}doas"?(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}timeout"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|${CLI_WRAPPER_PATH}command"?(?:\s+-[pvV]+)?|${CLI_WRAPPER_PATH}env"?(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}nohup"?|${CLI_WRAPPER_PATH}time"?(?:\s+-p)?|${CLI_WRAPPER_PATH}nice"?(?:\s+-n\s*-?\d+|\s+-\d+)?|${CLI_WRAPPER_PATH}caffeinate"?(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|${CLI_WRAPPER_PATH}exec"?(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|${CLI_WRAPPER_PATH}script"?(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|${CLI_WRAPPER_PATH}xargs"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}arch"?(?:\s+-\w+)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
+const CLI_INDIRECT = String.raw`(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|ruby|node|expect|php)(?=\s)[^;|&]*?\s(?:-[A-Za-z]*[ceE](?=[\s"']|$)|--eval\b)|at\s+(?:-[A-Za-z]+|now|noon|midnight|teatime|today|tomorrow|\d)|batch(?=\s*(?:$|[;|&)]|-[A-Za-z]))|(?:[\w.~-]*\/)*crontab(?!\s+-l\b)(?=\s|$)|(?:[\w.~-]*\/)*sudo"?(?:\s+(?:-[A-Za-z]+|--[\w-]+(?:=[^\s;|&]+)?)(?:\s+(?!-)[^\s;|&]+)?)*?\s+(?:-[A-Za-z]*[si][A-Za-z]*|--(?:shell|login))(?=\s|$)|ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`;
 const CLI_COMMAND_START = String.raw`(?:^|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
-const CLI_TOOL_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}"?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})"?(?=\s|$)`, 'i');
+const CLI_TOOL_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})["']?(?=\s|$|\$)`, 'i');
 // Inside a shell fence the indirect forms count too; in a PowerShell fence `$name`
 // is ordinary syntax, so cli-in-shell-fence looks for the named tools only.
-const CLI_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}(?:"?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})"?(?=\s|$)|${CLI_INDIRECT})`, 'i');
+const CLI_INVOCATION = new RegExp(String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}(?:[\\"']?(?:[\w.~$\{\}-]*\/)*(?:${CLI_TOOLS})["']?(?=\s|$|\$)|${CLI_INDIRECT})`, 'i');
 // Read-only diagnostics that may sit outside <details> (they still need a
 // comment). An explicit allowlist: anything not on it is treated as mutating.
 const READ_ONLY_CLI = [

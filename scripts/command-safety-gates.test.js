@@ -185,24 +185,28 @@ function isMutation(command, statement) {
 // Wrappers that run the following word as the command are transparent: sudo with
 // any options (including -u user / --user=user), command, env and inline VAR=value
 // assignments, nohup, time, nice, caffeinate, exec, script and xargs. The tool may
-// sit behind a quoted or variable path ("$HOME/bin/gam7/gam"), and so may a wrapper.
-// A wrapper may be called by its path, quoted or not (`/usr/bin/sudo`, `"/usr/bin/env"`).
+// sit behind a quoted or variable path ("$HOME/bin/gam7/gam"), be quoted or
+// backslash-escaped ('gam', \gam) or run into an expansion (gam${IFS}delete); a
+// wrapper may be called by its path (/usr/bin/sudo, "/usr/bin/env"); arch is one too.
 const CLI_WRAPPER_PATH = String.raw`"?(?:[\w.~-]*\/)*`;
-const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|${CLI_WRAPPER_PATH}doas"?(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}timeout"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|${CLI_WRAPPER_PATH}command"?(?:\s+-[pvV]+)?|${CLI_WRAPPER_PATH}env"?(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}nohup"?|${CLI_WRAPPER_PATH}time"?(?:\s+-p)?|${CLI_WRAPPER_PATH}nice"?(?:\s+-n\s*-?\d+|\s+-\d+)?|${CLI_WRAPPER_PATH}caffeinate"?(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|${CLI_WRAPPER_PATH}exec"?(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|${CLI_WRAPPER_PATH}script"?(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|${CLI_WRAPPER_PATH}xargs"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
+const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|${CLI_WRAPPER_PATH}doas"?(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}timeout"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|${CLI_WRAPPER_PATH}command"?(?:\s+-[pvV]+)?|${CLI_WRAPPER_PATH}env"?(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}nohup"?|${CLI_WRAPPER_PATH}time"?(?:\s+-p)?|${CLI_WRAPPER_PATH}nice"?(?:\s+-n\s*-?\d+|\s+-\d+)?|${CLI_WRAPPER_PATH}caffeinate"?(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|${CLI_WRAPPER_PATH}exec"?(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|${CLI_WRAPPER_PATH}script"?(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|${CLI_WRAPPER_PATH}xargs"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}arch"?(?:\s+-\w+)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
 // A command starts at the line start, after a separator, inside $(…) or a
 // backtick, after a shell keyword that introduces a command (do, then, else,
 // elif, if, while, until), or after a `!` negation.
 const CLI_COMMAND_START = String.raw`(?:^|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
-const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}"?(?:[\w.~$\{\}-]*\/)*`;
-const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})"?(?=\\s|$)([^;|&]*)`, 'gi'))]
+const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*`;
+const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})["']?(?=\\s|$|\\$)([^;|&]*)`, 'gi'))]
   .map((match) => match[1].trim());
 // Indirect execution hides the command from every per-tool rule, so it is a sink
-// in its own right (fail-closed): ssh with a remote command, any shell interpreter
+// in its own right (fail-closed): an interpreter one-liner (python/perl/ruby/node/
+// expect/php with -c, -e or --eval), a scheduled run (at with a time, batch, crontab
+// other than -l), a root shell (sudo -s, -i, --shell, --login), ssh with a remote
+// command, any shell interpreter
 // or osascript in command position (`| bash`, `bash <(…)`, `/bin/sh -c`), `su … -c`,
 // `env -S`, `find … -exec`, eval, and a substitution or variable in command
 // position (`$(which gam) …`, a backtick, `${GAM:-gam} …`, `"$GAM" …`, `"$@"`). An
 // assignment-shaped `$name = value` line (another language's syntax) is not one.
-const INDIRECT_EXEC = new RegExp(String.raw`(?:^|[;|{}&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}(?:ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`, 'i');
+const INDIRECT_EXEC = new RegExp(String.raw`(?:^|[;|{}&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|ruby|node|expect|php)(?=\s)[^;|&]*?\s(?:-[A-Za-z]*[ceE](?=[\s"']|$)|--eval\b)|at\s+(?:-[A-Za-z]+|now|noon|midnight|teatime|today|tomorrow|\d)|batch(?=\s*(?:$|[;|&)]|-[A-Za-z]))|(?:[\w.~-]*\/)*crontab(?!\s+-l\b)(?=\s|$)|(?:[\w.~-]*\/)*sudo"?(?:\s+(?:-[A-Za-z]+|--[\w-]+(?:=[^\s;|&]+)?)(?:\s+(?!-)[^\s;|&]+)?)*?\s+(?:-[A-Za-z]*[si][A-Za-z]*|--(?:shell|login))(?=\s|$)|ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`, 'i');
 const cliTokens = (args) => args.split(/\s+/).map((token) => token.replace(/^["']+|["']+$/g, '')).filter(Boolean);
 function firstListedVerb(tokens, readOnly, mutating) {
   for (const token of tokens) {
@@ -1902,6 +1906,23 @@ const G1_SHELL_MUTATIONS = [
   ['/usr/bin/sudo /usr/local/bin/jamf removeFramework', 'jamf-write'],
   ['/usr/bin/timeout 30 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['"/usr/bin/sudo" -u admin /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  // N-6: interpreter one-liners, scheduled runs, root shells, arch, quoted or escaped names
+  [`python3 -c "import subprocess; subprocess.run(['gam', 'delete', 'user', '[USER@DOMAIN.COM]'])"`, 'indirect-exec'],
+  [`/usr/bin/python3 -c 'print(1)'`, 'indirect-exec'],
+  [`perl -e 'system("gam delete user [USER@DOMAIN.COM]")'`, 'indirect-exec'],
+  [`ruby -e 'system("sudo jamf removeFramework")'`, 'indirect-exec'],
+  [`node -e 'require("child_process").execSync("gam delete user [USER@DOMAIN.COM]")'`, 'indirect-exec'],
+  [`expect -c 'spawn gam delete user [USER@DOMAIN.COM]; interact'`, 'indirect-exec'],
+  [`echo 'gam delete user [USER@DOMAIN.COM]' | at now`, 'indirect-exec'],
+  ['crontab /tmp/fixture-cron', 'indirect-exec'],
+  ['sudo -s', 'indirect-exec'],
+  ['sudo -i jamf removeFramework', 'indirect-exec'],
+  ['sudo --login', 'indirect-exec'],
+  ['arch -arm64 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['/usr/bin/arch -x86_64 /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  [`'gam' delete user "[USER@DOMAIN.COM]"`, 'gam-write'],
+  ['\\gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam${IFS}delete user "[USER@DOMAIN.COM]"', 'gam-write'],
 ];
 
 const G1_SHELL_READ_ONLY = [
@@ -1949,6 +1970,11 @@ const G1_SHELL_READ_ONLY = [
   'log show --last 1h --style compact',
   'ping -c 4 [@Aegion_DOMAIN]',
   'dig +short [@Aegion_DOMAIN]',
+  'curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}" | python3 -m json.tool',
+  'node scripts/lint/command-structure.js',
+  'crontab -l',
+  'arch',
+  'At <script or command>:<line number>',
 ];
 
 test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {

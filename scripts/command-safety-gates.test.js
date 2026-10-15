@@ -24,6 +24,11 @@ const MIXED_STATE_COMMANDS = [
   'sip-trunk-status', 'teams-issue', 'unite-extension-create',
   'unite-migration-status', 'unite-voicemail-reset', 'vpn-check', 'wifi-issue',
   'onboard', 'shared-mailbox-create', 'meraki-vpn-status', 'ps-error-decode',
+  // G1 — Google Workspace / Okta / Jamf / macOS lane
+  'gws-new-user', 'gws-offboard', 'gws-password-reset', 'gws-2sv-reset', 'gws-group-membership',
+  'gws-ou-move', 'gws-license-assign', 'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device',
+  'okta-app-assignment', 'okta-mfa-reset', 'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase',
+  'mac-new-hire-laptop', 'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue',
 ];
 
 const REFERENCE_BOUNDARIES = [

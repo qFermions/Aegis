@@ -33,6 +33,7 @@ Mixed-state procedural set (validated by `scripts/command-safety-gates.test.js`)
 - `/security-alert-triage`, `/shared-mailbox`, `/sharepoint-access`, `/sip-trunk-status`, `/teams-issue`
 - `/unite-extension-create`, `/unite-migration-status`, `/unite-voicemail-reset`, `/vpn-check`, `/wifi-issue`
 - aliases `/onboard` and `/shared-mailbox-create`
+- Google Workspace / Okta / Jamf / macOS lane (v8.9): `/gws-new-user`, `/gws-offboard`, `/gws-password-reset`, `/gws-2sv-reset`, `/gws-group-membership`, `/gws-ou-move`, `/gws-license-assign`, `/gws-drive-transfer`, `/gws-audit-log`, `/gws-chromeos-device`, `/okta-app-assignment`, `/okta-mfa-reset`, `/okta-user-lifecycle`, `/jamf-enroll-mac`, `/jamf-lock-erase`, `/mac-new-hire-laptop`, `/gws-gmail-delivery`, `/mac-troubleshoot`, `/zoom-room-issue`
 
 Each listed mixed-state command is operator-only and states an execution boundary: read-only diagnostics remain available, an adjacent action-specific `SAFETY GATE` may authorize only its named mutation, and explicit `PREVIEW ONLY` regions must move to a separately reviewed runbook. This is a tested documentation contract, not a claim that arbitrary prose is rendered technically unexecutable.
 
@@ -40,7 +41,7 @@ The repository does not claim that this metadata makes R0–R3 a complete author
 
 ## Why arbitrary frontmatter was not added
 
-The installed Claude Code version does not document custom `risk`, `access`, or `credential-sensitive` command-frontmatter fields as enforcement inputs. Adding unsupported keys to all 58 commands would look machine-enforced without creating a real control. Risk metadata therefore remains explicit Markdown, while `disable-model-invocation` uses a documented field with deterministic behavior.
+The installed Claude Code version does not document custom `risk`, `access`, or `credential-sensitive` command-frontmatter fields as enforcement inputs. Adding unsupported keys to all 77 commands would look machine-enforced without creating a real control. Risk metadata therefore remains explicit Markdown, while `disable-model-invocation` uses a documented field with deterministic behavior.
 
 ## Procedural command safety boundary
 

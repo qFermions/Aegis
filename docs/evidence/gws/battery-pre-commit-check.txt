@@ -1,5 +1,5 @@
 $ node scripts/pre-commit-check.js --all
-# run 2026-10-15T16:18Z at 6d151e6 + working tree (snapshot and this battery)
+# run 2026-10-15T16:46Z at 07a5bfc + working tree (snapshot and this battery)
 pre-commit-check: --all mode — scanning 235 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals to enable.
 
@@ -234,7 +234,7 @@ pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: CHANGELOG.md
-    ⚠️  WARN  Line 236: scp/sftp — local or remote file transfer
+    ⚠️  WARN  Line 237: scp/sftp — local or remote file transfer
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: docs/adr/ADR-001-blast-radius-classes.md

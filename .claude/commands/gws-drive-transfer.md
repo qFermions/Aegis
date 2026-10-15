@@ -96,7 +96,7 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed   # baseline for the ne
 - **Target:** [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new organizer)
 - **Effect:** transfer the user's future non-private primary-calendar events to the new organizer; private events are cancelled
 - **Scope:** future, non-private events on the primary calendar with at least one guest or resource; past events and secondary calendars do not move; the dialog's Release resources box is a different outcome (rooms freed, events not transferred) and is not what this gate authorizes
-- **Reversibility:** not reversible from the Admin console; a user on litigation hold has nothing transferred; record the upcoming-event count with the user first
+- **Reversibility:** R2 — not reversible from the Admin console; a user on litigation hold has nothing transferred; record the upcoming-event count with the user first
 - **Required confirmation:** Type exactly `TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-drive-transfer-calendar-portal]:** Only after the exact match:
@@ -127,7 +127,7 @@ Two routes, different defaults: GAM's own per-file transfer leaves the source wi
 # Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
 # Effect: transfer ownership of every file the user owns (Trash excluded) to the new owner
 # Scope: one source user; files land in a subfolder of the new owner's My Drive; the source keeps no access by default
-# Reversibility: not reversible; the Phase 1 counts and the shared-items CSV are the only record
+# Reversibility: R2 — not reversible; the Phase 1 counts and the shared-items CSV are the only record
 # Required confirmation: type exactly `TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"   # the exact phrase to type
@@ -149,7 +149,7 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed   # read-back: the new 
 # Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
 # Effect: transfer ownership of every Drive file the user owns (shared or not) to the new owner
 # Scope: one source user; a transfer folder is created in the new owner's My Drive; the previous owner keeps edit access
-# Reversibility: not reversible from the Admin console; the Phase 1 counts are the only record
+# Reversibility: R2 — not reversible from the Admin console; the Phase 1 counts are the only record
 # Required confirmation: type exactly `TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"   # the exact phrase to type
@@ -170,7 +170,7 @@ gam print datatransfers oldowner "[USER@DOMAIN.COM]"   # read-back: the transfer
 # Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new organizer)
 # Effect: transfer the user's future non-private calendar events to the new organizer
 # Scope: future non-private events with at least one guest or resource; past events and secondary calendars do not move
-# Reversibility: not reversible from the Admin console; record the upcoming-event count first
+# Reversibility: R2 — not reversible from the Admin console; record the upcoming-event count first
 # Required confirmation: type exactly `TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"   # the exact phrase to type

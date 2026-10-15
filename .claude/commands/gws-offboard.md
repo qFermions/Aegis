@@ -94,7 +94,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 - **Target:** [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
 - **Effect:** transfer ownership of the user's My Drive files to the new owner
 - **Scope:** files owned by one user, excluding Trash; shared-drive files are not touched (the organization owns them)
-- **Reversibility:** not reversible from the Admin console — no undo is documented; the previous owner keeps edit access unless removed, so the recorded pre-state is the only record of what moved
+- **Reversibility:** R2 — not reversible from the Admin console — no undo is documented; the previous owner keeps edit access unless removed, so the recorded pre-state is the only record of what moved
 - **Required confirmation:** Type exactly `TRANSFER DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-offboard-drive-transfer-portal]:** Only after the pre-state is recorded and the exact match:
@@ -107,7 +107,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 - **Target:** [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new organizer)
 - **Effect:** transfer the user's future, non-private calendar events to the new organizer
 - **Scope:** future non-private events on the primary calendar; past events and secondary calendars do not move
-- **Reversibility:** not reversible from the Admin console; record the event count first
+- **Reversibility:** R2 — not reversible from the Admin console; record the event count first
 - **Required confirmation:** Type exactly `TRANSFER CALENDAR EVENTS FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-offboard-calendar-transfer-portal]:** Only after the exact match:
@@ -192,7 +192,7 @@ gam info user "[USER@DOMAIN.COM]"   # read-back: the account shows as suspended
 # Target: [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new owner)
 # Effect: transfer ownership of the user's Drive files and future calendar events to the new owner
 # Scope: one source user; "all" includes files that were never shared (the default moves shared files only)
-# Reversibility: not reversible from the Admin console; the recorded file count is the only pre-state
+# Reversibility: R2 — not reversible from the Admin console; the recorded file count is the only pre-state
 # Required confirmation: type exactly `TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"   # the exact phrase to type

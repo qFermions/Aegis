@@ -113,7 +113,7 @@ Activate and reactivate are two different API calls: **activate** works on STAGE
 - **Target:** [UPN]
 - **Effect:** clear every active Okta session for one user; with the dialog option ticked, Okta also revokes tokens for logout-enabled apps and Okta API tokens
 - **Scope:** Okta identity-provider sessions (and optionally those tokens); sessions already created inside web or native apps are not cleared
-- **Reversibility:** not reversible and none needed — the user authenticates again on the next request
+- **Reversibility:** R1 — not reversible and none needed — the user authenticates again on the next request
 - **Required confirmation:** Type exactly `CLEAR OKTA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [okta-user-lifecycle-clear-sessions-portal]:** Only after the exact match:
@@ -182,7 +182,7 @@ Activate and reactivate are two different API calls: **activate** works on STAGE
 - **Target:** [UPN]
 - **Effect:** activate one deactivated Okta user; the user receives an activation email with setup instructions
 - **Scope:** one user; apps removed at deactivation are not restored automatically — re-assign them directly or through group memberships and rules
-- **Reversibility:** R2 — deactivating again is the Phase F gate; the user has no password until they complete the activation email, so the account sits at Pending user action until then
+- **Reversibility:** R1 — one account; the access it grants is undone by suspending it under the Phase D phrase (deactivating again is the separate R3 Phase F gate); the user has no password until they complete the activation email, so the account sits at Pending user action until then
 - **Required confirmation:** Type exactly `ACTIVATE OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [okta-user-lifecycle-activate-portal]:** Only after the exact match:
@@ -244,7 +244,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Target: [USER_ID]
 # Effect: clear every active Okta identity-provider session for the user; sessions inside web or native apps are not cleared
 # Scope: one user's Okta sessions
-# Reversibility: not reversible and none needed; the user authenticates again
+# Reversibility: R1 — not reversible and none needed; the user authenticates again
 # Required confirmation: type exactly `CLEAR OKTA SESSIONS FOR [USER_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="CLEAR OKTA SESSIONS FOR [USER_ID]"   # the exact phrase to type
@@ -328,7 +328,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Target: [USER_ID]
 # Effect: activate one STAGED or DEPROVISIONED Okta user; Okta emails the activation link
 # Scope: one user; apps removed at deactivation are not restored by this call
-# Reversibility: R2 — deactivate again under the deactivate phrase; the user has no password until they complete the activation link
+# Reversibility: R1 — suspend under the suspend phrase undoes the access (deactivating again is the separate R3 gate); the user has no password until they complete the activation link
 # Required confirmation: type exactly `ACTIVATE OKTA USER [USER_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="ACTIVATE OKTA USER [USER_ID]"   # the exact phrase to type

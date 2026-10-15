@@ -51,7 +51,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN]
 - **Effect:** reset the selected authenticator enrollments for one user; the user must set those authenticators up again at their next sign-in
 - **Scope:** only the authenticators ticked in the dialog (Okta Verify for a new phone); unticked authenticators stay enrolled
-- **Reversibility:** not reversible — Okta states the action cannot be undone; the only way back is the user's own re-enrollment
+- **Reversibility:** R2 — not reversible — Okta states the action cannot be undone; the only way back is the user's own re-enrollment
 - **Required confirmation:** Type exactly `RESET SELECTED OKTA AUTHENTICATORS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [okta-mfa-reset-selected-portal]:** Only after identity is verified out of band and the exact match:
@@ -71,7 +71,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN]
 - **Effect:** reset every enrolled authenticator for one user; the account stays Active and the user must enroll all authenticators again
 - **Scope:** all authenticators on one user
-- **Reversibility:** not reversible — the action cannot be undone; the user re-enrolls from scratch
+- **Reversibility:** R3 — not reversible — the action cannot be undone; the user re-enrolls from scratch
 - **Required confirmation:** Type exactly `RESET ALL OKTA AUTHENTICATORS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [okta-mfa-reset-all-portal]:** Only after the triage decision is recorded in the ticket and the exact match:
@@ -98,7 +98,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Target: [USER_ID] (the factor set in FACTOR_ID)
 # Effect: unenroll one MFA factor for the user; the user can then enroll a new one
 # Scope: one factor on one Active user; unenrolling an Okta Verify push or signed_nonce factor also unenrolls the user's other Okta Verify factors
-# Reversibility: not reversible — the enrollment is gone and the user enrolls again; the call is refused on a deactivated user
+# Reversibility: R2 — not reversible — the enrollment is gone and the user enrolls again; the call is refused on a deactivated user
 # Required confirmation: type exactly `UNENROLL OKTA FACTOR FOR [USER_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="UNENROLL OKTA FACTOR FOR [USER_ID]"   # the exact phrase to type
@@ -119,7 +119,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Target: [USER_ID]
 # Effect: reset every MFA factor enrollment for the user to the unenrolled state; the user's status stays ACTIVE
 # Scope: all factors on one user
-# Reversibility: not reversible — the user enrolls every factor again
+# Reversibility: R3 — not reversible — the user enrolls every factor again
 # Required confirmation: type exactly `RESET ALL OKTA FACTORS FOR [USER_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="RESET ALL OKTA FACTORS FOR [USER_ID]"   # the exact phrase to type

@@ -104,7 +104,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 - **Target:** [DEVICE_ID]
 - **Effect:** reset one ChromeOS device by clearing every user profile on it; local data that was never synced with Chrome Sync is deleted while the device stays in your fleet
 - **Scope:** one device; the device is not deprovisioned
-- **Reversibility:** none — Google's dialog states the removed data cannot be undone; no re-enrollment is needed afterwards
+- **Reversibility:** R3 — Google's dialog states the removed data cannot be undone; no re-enrollment is needed afterwards
 - **Required confirmation:** Type exactly `RESET CHROMEBOOK [DEVICE_ID] AND CLEAR USER PROFILES`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-chromeos-device-clear-profiles-portal]:** Only after the pre-state is recorded and the exact match:
@@ -117,7 +117,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 - **Target:** [DEVICE_ID]
 - **Effect:** powerwash one ChromeOS device (Factory Reset); all data including user profiles, device policies and enrollment data is removed, the device re-enrolls automatically only if forced re-enrollment is on for its OU
 - **Scope:** one device; photos, downloaded files and saved networks that were never synced are gone, and the device has to be reconnected to Wi-Fi by hand
-- **Reversibility:** none — cannot be undone; with forced re-enrollment off the device comes back unmanaged and must be enrolled manually (physical access needed)
+- **Reversibility:** R3 — cannot be undone; with forced re-enrollment off the device comes back unmanaged and must be enrolled manually (physical access needed)
 - **Required confirmation:** Type exactly `POWERWASH CHROMEBOOK [DEVICE_ID] BY FACTORY RESET`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-chromeos-device-powerwash-portal]:** Only after the forced re-enrollment value and the pre-state are recorded and the exact match:
@@ -199,7 +199,7 @@ gam info cros "[DEVICE_ID]" fields status,lastsync   # read-back: the status rea
 # Target: [DEVICE_ID]
 # Effect: clear every user profile from one ChromeOS device; unsynced local data is deleted and the device stays in the fleet
 # Scope: one device, through the wipe_users remote command
-# Reversibility: none — the removed data cannot be recovered; no re-enrollment is needed
+# Reversibility: R3 — the removed data cannot be recovered; no re-enrollment is needed
 # Required confirmation: type exactly `CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]"   # the exact phrase to type
@@ -220,7 +220,7 @@ gam info cros "[DEVICE_ID]" fields status,lastsync,recentusers   # read-back: st
 # Target: [DEVICE_ID]
 # Effect: powerwash one ChromeOS device remotely; all local data including user profiles is removed and the device re-enrolls automatically only if forced re-enrollment is on
 # Scope: one device, through the remote_powerwash remote command; the device must be reconnected to Wi-Fi by hand
-# Reversibility: none — cannot be undone; with forced re-enrollment off the device comes back unmanaged and must be enrolled manually
+# Reversibility: R3 — cannot be undone; with forced re-enrollment off the device comes back unmanaged and must be enrolled manually
 # Required confirmation: type exactly `POWERWASH CHROMEBOOK [DEVICE_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="POWERWASH CHROMEBOOK [DEVICE_ID]"   # the exact phrase to type

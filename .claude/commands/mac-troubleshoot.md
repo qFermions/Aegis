@@ -112,7 +112,7 @@ Four tickets, one starting point: read the Jamf Pro inventory record — last ch
 - **Target:** [DEVICE_NAME]
 - **Effect:** request a check-in from the Mac by sending a blank push through APNs and the declarative status channel
 - **Scope:** one Mac; no setting, profile or data changes — the Mac only contacts Jamf Pro for its queued instructions
-- **Reversibility:** nothing to undo; the commands that then run are the ones already visible under Pending Commands
+- **Reversibility:** R1 — nothing to undo; the commands that then run are the ones already visible under Pending Commands
 - **Required confirmation:** Type exactly `SEND BLANK PUSH TO [DEVICE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [mac-troubleshoot-blank-push-portal]:** Only after step 2 shows the Mac online and the exact match:
@@ -138,7 +138,7 @@ log show --last 1h --info --predicate 'process == "mdmclient"'   # reads the las
 # Target: [DEVICE_NAME]
 # Effect: replace the FileVault personal recovery key on the Mac and escrow the new key to Jamf Pro at the next inventory update
 # Scope: one Mac; the disk stays encrypted and no data is touched; the previous key stops working
-# Reversibility: not reversible — the previous key is invalidated; the new key is the only one Jamf Pro holds
+# Reversibility: R2 — not reversible — the previous key is invalidated; the new key is the only one Jamf Pro holds
 # Required confirmation: type exactly `REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]"   # the exact phrase to type
@@ -160,7 +160,7 @@ sudo fdesetup status   # read-back on the Mac; then read Personal Recovery Key V
 # Target: [DEVICE_NAME]
 # Effect: request an immediate check-in with Jamf Pro from the Mac so every policy pending for it runs now
 # Scope: one Mac; only policies already scoped to it run — nothing new is created
-# Reversibility: nothing to undo for the check-in itself; whatever a policy installs is governed by that policy's own undo
+# Reversibility: R1 — nothing to undo for the check-in itself; whatever a policy installs is governed by that policy's own undo
 # Required confirmation: type exactly `SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"   # the exact phrase to type

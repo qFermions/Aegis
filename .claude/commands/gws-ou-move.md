@@ -14,7 +14,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## ⚠️ Admin / safety gate
 
 - **An OU move is a policy change, not a filing change.** A user belongs to exactly one organizational unit and inherits that unit's settings; the unit decides which features and services the user can access. One move swaps every inherited setting at once — Gmail, Drive and Docs, Chrome, 2-Step Verification enforcement, service on/off.
-- R1: one user, one reversible write. The undo is a second move back to the source OU recorded in Phase 1, under its own exact phrase — which is why nothing moves until the source OU is in the ticket.
+- R2: one user, but the OU carries policy, so the undo needs data captured first — the source OU and the settings that differ, recorded in Phase 1. The undo is a second move back to that source OU, under its own exact phrase — which is why nothing moves until the source OU is in the ticket.
 - Needs the Organizational unit privilege (and the User management privilege to see the Users list controls). Without them the controls are hidden, not greyed out.
 - Not done until the read-backs in the final checklist pass.
 
@@ -33,7 +33,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## Fast path
 
 1. Phase 1 — record the source OU and compare the settings that differ between source and `[OU_PATH]` (R0).
-2. Phase 2 — move the user (R1 gate). **WAIT UNTIL** the account page reads the new unit, then allow the settings window.
+2. Phase 2 — move the user (R2 gate, pre-state from Phase 1). **WAIT UNTIL** the account page reads the new unit, then allow the settings window.
 3. Phase 3 — verify the settings the ticket asked for actually apply; the source OU stays in the ticket as the undo path.
 
 ## Phase 1 — Pre-state: source OU and the settings delta (R0)
@@ -56,7 +56,7 @@ gam info ou "[OU_PATH]" nousers   # prints the destination unit without listing 
 
 **Gotcha** — target unit enforces 2-Step Verification and the user is not enrolled (`isEnrolledIn2Sv` false)? Have them enroll before the move, or they lose sign-in the moment the policy applies.
 
-## Phase 2 — Move the user (R1)
+## Phase 2 — Move the user (R2)
 
 **Purpose** — one user, one write, with the undo path already written down.
 
@@ -64,7 +64,7 @@ gam info ou "[OU_PATH]" nousers   # prints the destination unit without listing 
 - **Target:** [USER@DOMAIN.COM] (destination [OU_PATH])
 - **Effect:** move one user to [OU_PATH] so the user inherits that organizational unit's settings instead of the source unit's
 - **Scope:** one user; group memberships, licences, data and admin roles are untouched, but every inherited service setting changes with the unit
-- **Reversibility:** R1 — undo is a second move back to the source OU recorded in Phase 1, in the same place (Admin console → Directory → Users → tick the user → More → Change organizational unit), under its own exact phrase that names the recorded source path
+- **Reversibility:** R2 — a policy change whose undo needs the pre-state: a second move back to the source OU recorded in Phase 1, in the same place (Admin console → Directory → Users → tick the user → More → Change organizational unit), under its own exact phrase that names the recorded source path
 - **Required confirmation:** Type exactly `MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-ou-move-user-portal]:** Only after the Phase 1 pre-state is in the ticket and the exact match:
@@ -96,7 +96,7 @@ gam info ou "[OU_PATH]" nousers   # prints the destination unit without listing 
 # Target: [USER@DOMAIN.COM] (destination [OU_PATH])
 # Effect: move one user to [OU_PATH] so the user inherits that organizational unit's settings
 # Scope: one user; group memberships, licences, data and admin roles are untouched
-# Reversibility: R1 — a second move back to the recorded source path under its own phrase
+# Reversibility: R2 — a second move back to the source path recorded as pre-state, under its own phrase
 # Required confirmation: type exactly `MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]"   # the exact phrase to type

@@ -37,7 +37,7 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 ## Fast path
 
 1. Phase A — read the record: management ID, macOS, chip, bootstrap token, last check-in (R0).
-2. Phase B — left in a taxi: Lock Computer (R1 gate); `[LOCK_PIN]` goes to the password manager first. **WAIT UNTIL** History shows the command completed.
+2. Phase B — left in a taxi: Lock Computer (R2 gate — the PIN is pre-state); `[LOCK_PIN]` goes to the password manager first. **WAIT UNTIL** History shows the command completed.
 3. Phase C — stolen with sensitive data: Wipe Computer (R3 gate, after review). **WAIT UNTIL** History shows the command completed; the record stays.
 4. Phase D — sold or leaving the fleet: removeFramework on the Mac (R3 gate), then Remove MDM Profile (R3 gate); the holder erases the Mac afterwards. Releasing it from Apple Business is a separate decision.
 5. Phase E — supervised iPhone/iPad: Lost Mode (R1 gate).
@@ -52,7 +52,7 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 
 **Verification checkpoint** — [ ] management ID, macOS version, chip, bootstrap token state and last check-in are in the ticket · [ ] no pending or failed commands.
 
-## Phase B — Left in a taxi: Lock Computer (R1, reversible with the PIN)
+## Phase B — Left in a taxi: Lock Computer (R2, reversible only with the PIN)
 
 **Purpose** — stop anyone using the Mac while it may still come back; nothing is deleted.
 
@@ -60,7 +60,7 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 - **Target:** [SERIAL_NUMBER]
 - **Effect:** lock one Mac; the user is logged out, the Mac restarts and stays locked until the six-digit [LOCK_PIN] is entered
 - **Scope:** one Mac; data is untouched; the command runs at the next check-in and the record stays in Jamf Pro
-- **Reversibility:** R1 — reversible by typing [LOCK_PIN] on the Mac; the PIN lives in the password manager, never in the ticket; on Apple silicon with macOS 11.4 or earlier the passcode is not set and the Mac boots to Recovery's Activation screen instead
+- **Reversibility:** R2 — one Mac, but unlocking needs [LOCK_PIN], data that must be captured before the command is sent (it is the pre-state): reversible by typing [LOCK_PIN] on the Mac; the PIN lives in the password manager, never in the ticket; on Apple silicon with macOS 11.4 or earlier the passcode is not set and the Mac boots to Recovery's Activation screen instead
 - **Required confirmation:** Type exactly `LOCK MAC [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [jamf-lock-erase-lock-portal]:** Only after `[LOCK_PIN]` is stored in the password manager and the exact match:
@@ -79,7 +79,7 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 - **Target:** [SERIAL_NUMBER]
 - **Effect:** wipe one Mac permanently and immediately (macOS EraseDevice); every local file, the MDM profile and the Jamf management framework are removed
 - **Scope:** one Mac; the computer record stays in Jamf Pro; on macOS 12.0.1 or later Erase All Content and Settings runs first and, if its preflight fails, the fallback erases with obliteration (macOS must be reinstalled); an Apple silicon Mac needs a bootstrap token escrowed with Jamf Pro
-- **Reversibility:** none — not reversible; the data is gone unless it lives elsewhere; Activation Lock may still block reuse, and on a Mac the bypass code is entered through Recovery Assistant's "Activate with MDM key" option when Jamf Pro holds it
+- **Reversibility:** R3 — not reversible; the data is gone unless it lives elsewhere; Activation Lock may still block reuse, and on a Mac the bypass code is entered through Recovery Assistant's "Activate with MDM key" option when Jamf Pro holds it
 - **Required confirmation:** Type exactly `WIPE MAC [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [jamf-lock-erase-wipe-portal]:** Only after the independent review, the Phase A read-back and the exact match:
@@ -171,7 +171,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 # Target: [SERIAL_NUMBER], management ID [DEVICE_ID]
 # Effect: lock one Mac with the six-digit [LOCK_PIN]; the user is logged out and the Mac restarts into the lock screen
 # Scope: one Mac; the DEVICE_LOCK command is queued and runs at the next check-in
-# Reversibility: R1 — reversible by typing [LOCK_PIN] on the Mac; store the PIN in the password manager first
+# Reversibility: R2 — reversible only by typing [LOCK_PIN] on the Mac; the PIN is pre-state: store it in the password manager first
 # Required confirmation: type exactly `LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"   # the exact phrase to type
@@ -192,7 +192,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 # Target: [SERIAL_NUMBER], management ID [DEVICE_ID]
 # Effect: wipe one Mac permanently with the ERASE_DEVICE command; every local file is destroyed and the Mac leaves management
 # Scope: one Mac; obliterationBehavior Default means Erase All Content and Settings first, then the erase fallback; the record stays in Jamf Pro
-# Reversibility: none — not reversible; the data is gone unless it lives elsewhere
+# Reversibility: R3 — not reversible; the data is gone unless it lives elsewhere
 # Required confirmation: type exactly `WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]`
 # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
 required_confirmation="WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"   # the exact phrase to type

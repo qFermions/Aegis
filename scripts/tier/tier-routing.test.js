@@ -206,3 +206,85 @@ test('a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sente
   // the dotted extended-gate literal still matches
   assert.equal(assess('edit .claude/settings.local.json').floor, 'T3');
 });
+
+// ── G1: Google Workspace / Okta / Jamf consequential wordings ────────────────
+// Each new floor has a ticket that must floor (guard AND graph engine, kept in
+// sync) and a routine Google-lane counterpart that must stay clean.
+const G1_FLOORS = [
+  ['transfer', "Transfer [USER@DOMAIN.COM]'s Drive ownership to [MANAGER_UPN] before the account is closed."],
+  ['transfer', 'Transfer the Calendar data from [USER@DOMAIN.COM] to [MANAGER_UPN] this afternoon.'],
+  ['deprovision', 'Deprovision the Chromebook [DEVICE_ID] in the Admin console; it is leaving the fleet.'],
+  ['deprovision', 'Please de-provision [DEVICE_ID] so it stops counting against our upgrades.'],
+  ['powerwash', 'Powerwash the Chromebook [DEVICE_ID] remotely, the screen is frozen.'],
+  ['work-profile', "Remove the work profile from [FIRST_NAME]'s Android phone, they are switching phones."],
+  ['work-profile', "Clear [USER@DOMAIN.COM]'s account off the shared Chromebook in the front office."],
+  ['oauth', "Revoke the OAuth tokens for the unknown app on [USER@DOMAIN.COM]'s account."],
+  ['oauth', 'Revoke all app passwords for [USER@DOMAIN.COM] and their access tokens.'],
+  ['admin-role', 'Make [USER@DOMAIN.COM] a super admin in the Admin console for the migration.'],
+  ['admin-role', 'Assign the Help Desk Admin role to [USER@DOMAIN.COM] so they can reset passwords.'],
+  ['hold', 'Put [USER@DOMAIN.COM] on a Vault hold before anything is cleaned up.'],
+  ['hold', 'Change the Vault retention rule for Gmail to ninety days.'],
+  ['hold', 'Legal asked for a litigation hold on [USER@DOMAIN.COM].'],
+  ['okta', 'Okta: deactivate [UPN] today, HR confirmed.'],
+  ['okta', 'Clear all Okta sessions for [UPN] right now.'],
+  ['okta', 'Reset all factors for [UPN] in Okta.'],
+  ['okta', 'Deprovision [UPN] from Okta and every assigned app.'],
+  ['jamf', 'Jamf: send Erase Computer to [SERIAL_NUMBER], the Mac was stolen.'],
+  ['jamf', 'Remote lock the MacBook [SERIAL_NUMBER] in Jamf.'],
+  ['jamf', 'Put the iPad [SERIAL_NUMBER] in Lost Mode.'],
+  ['jamf', 'Remove the MDM profile from [DEVICE_NAME].'],
+  ['jamf', 'Unmanage [SERIAL_NUMBER] in Jamf Pro.'],
+];
+const G1_LABEL_WORD = {
+  transfer: /transfer/i, deprovision: /deprovision/i, powerwash: /powerwash/i, 'work-profile': /work-profile|deletion/i,
+  oauth: /oauth|app-password/i, 'admin-role': /admin-role/i, hold: /hold|retention/i, okta: /okta|disable/i, jamf: /jamf|wipe/i,
+};
+const G1_ROUTINE = [
+  'Reset the 2-Step Verification backup codes for [USER@DOMAIN.COM]; they lost the printed sheet.',
+  'Add [USER@DOMAIN.COM] to the [GROUP_EMAIL] group so they get the team mail.',
+  'Move [USER@DOMAIN.COM] to the [OU_PATH] organizational unit after their team change.',
+  'Assign one Google Workspace licence to [USER@DOMAIN.COM] for their start date.',
+  'Enroll one new Mac in Jamf through Automated Device Enrollment for the new hire.',
+  'Okta: reset the password for [UPN] and send the reset link.',
+  'Assign the [APP_NAME] app to [UPN] in Okta.',
+  'The Chromebook [DEVICE_ID] cannot join the office Wi-Fi.',
+  'Look up the Drive log events for a shared file in the audit log.',
+];
+
+test('G1 ESCALATION: every new Google/Okta/Jamf consequential wording floors in the guard and the graph engine', () => {
+  const engine = require('../graph/engine.js');
+  const misses = [];
+  for (const [kind, ticket] of G1_FLOORS) {
+    const r = assess(ticket);
+    if (r.floor !== 'T3' || !r.triggers.some((t) => G1_LABEL_WORD[kind].test(t))) misses.push(`guard: ${ticket} → ${r.floor} ${r.triggers.join('|')}`);
+    const hits = engine.scanSr2Triggers({ steps: [{ id: 's1', action: ticket, undo: '', verify: '' }], powershell: '' });
+    if (!hits.some((h) => G1_LABEL_WORD[kind].test(h))) misses.push(`engine: ${ticket} → ${hits.join('|') || 'no hit'}`);
+  }
+  assert.deepEqual(misses, []);
+});
+
+test('G1 routine: the Google-lane counterparts (backup codes, add to group, move one OU, one licence, enroll one Mac) stay clean', () => {
+  const engine = require('../graph/engine.js');
+  for (const ticket of G1_ROUTINE) {
+    assert.deepEqual(assess(ticket), { floor: 'none', triggers: [] }, ticket);
+    assert.deepEqual(engine.scanSr2Triggers({ steps: [{ id: 's1', action: ticket, undo: '', verify: '' }], powershell: '' }), [], `engine: ${ticket}`);
+  }
+});
+
+test('G1 folding: homoglyphs and invisible characters cannot hide a new floor (guard and engine)', () => {
+  const engine = require('../graph/engine.js');
+  const disguise = (text) => text
+    .replace(/a/, 'а')      // Cyrillic a (U+0430)
+    .replace(/o/, 'о')      // Cyrillic o (U+043E)
+    .replace(/e/, 'е')      // Cyrillic e (U+0435)
+    .replace(/(\w)(\w)/, '$1' + String.fromCharCode(0x200b) + '$2');  // zero-width space inside the first word
+  const misses = [];
+  for (const [kind, ticket] of G1_FLOORS) {
+    const disguised = disguise(ticket);
+    assert.notEqual(disguised, ticket);
+    if (assess(disguised).floor !== 'T3') misses.push(`guard: ${JSON.stringify(disguised)}`);
+    const hits = engine.scanSr2Triggers({ steps: [{ id: 's1', action: disguised, undo: '', verify: '' }], powershell: '' });
+    if (!hits.some((h) => G1_LABEL_WORD[kind].test(h))) misses.push(`engine: ${JSON.stringify(disguised)}`);
+  }
+  assert.deepEqual(misses, []);
+});

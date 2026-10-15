@@ -56,6 +56,17 @@ const ESCALATION_PATTERNS = [
   // says the account may be compromised must never be handled as a routine
   // "new phone" MFA reset. It belongs to the existing /security-alert-triage path.
   { pattern: /\b(compromis(?:e|ed|ing)|breach(?:ed)?|hacked|phish(?:ed|ing) (?:link|click|success)|attacker|unauthori[sz]ed (?:access|sign[- ]?in|login))\b/i, label: 'suspected compromise / security incident (existing /security-alert-triage path)' },
+  // G1 — Google Workspace / Okta / Jamf consequential actions. Mirrored in the
+  // graph engine's SR2_TRIGGER_PATTERNS; tier-routing.test.js pins both.
+  { pattern: /\btransfer(?:s|red|ring)?\b[^.]*\b(?:ownership|owner|drive|calendar|data|files|docs)\b|\bownership\s+transfer\b|\bdata\s+transfer\b/i, label: 'Drive / Calendar / data ownership transfer (R2+ — capture pre-state first)' },
+  { pattern: /\bde-?provision(?:s|ed|ing)?\b/i, label: 'deprovision — device or account (SR-2)' },
+  { pattern: /\bpower\s*-?wash(?:es|ed|ing)?\b/i, label: 'Chromebook powerwash — factory reset (SR-2)' },
+  { pattern: /\b(?:remove|clear|delete|wipe|erase)\b[^.]*\b(?:account|work profile|work data|managed profile|user profiles?)\b[^.]*\b(?:from|on|off)\b[^.]*\b(?:device|devices|phone|phones|laptop|laptops|chromebook|chromebooks|mac|macbook|tablet|ipad|iphone|android)\b/i, label: 'account / work-profile removal from a device (SR-2)' },
+  { pattern: /\brevok(?:e|ed|es|ing)\b[^.]*\b(?:oauth|tokens?|app[- ]?passwords?|app[- ]specific passwords?|app access|third[- ]party (?:app )?access|api access)\b|\b(?:delete|remove|reset)\b[^.]*\bapp[- ]?passwords?\b/i, label: 'OAuth token / app-password / app-access revocation (SR-2 session class)' },
+  { pattern: /\b(?:grant|assign|make|add|give|promote|elevate)\b[^.]*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:role|rights|privileges?|access)|global admin|org(?:anization)? admin|delegated admin)\b/i, label: 'admin-role grant — super admin or any admin role (privilege change, SR-2 class)' },
+  { pattern: /\b(?:vault|litigation|legal)\s+hold\b|\bretention\s+(?:rule|rules|polic(?:y|ies)|period|settings?)\b/i, label: 'Vault / litigation hold or retention-rule change (records preservation)' },
+  { pattern: /\bokta\b[^.]*\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b[^.]*\bokta\b|\bclear(?:s|ed|ing)?\b[^.]*\bsessions?\b|\breset\b[^.]*\ball\b[^.]*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors (SR-2)' },
+  { pattern: /\berase\b[^.]*\b(?:device|devices|mac|macs|macbook|computer|computers|laptop|iphone|ipad|disk)\b|\bremote(?:ly)?[- ]?lock\b|\block\b[^.]*\bremote(?:ly)?\b|\bjamf\b[^.]*\block\b|\block\b[^.]*\bjamf\b|\blost mode\b|\bremove\b[^.]*\bmdm profile\b|\bunmanag(?:e|ed|ing)\b|\bremoveFramework\b/i, label: 'Jamf / MDM erase, remote lock, lost mode, MDM-profile removal or unmanage (SR-2)' },
   // Mass / broad blast radius — numbers, "all", org-wide phrasing
   { pattern: /\b(all|every|entire|org[- ]?wide|company[- ]?wide|tenant[- ]?wide|domain[- ]?wide)\b[^.]*\b(user|users|staff|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|workstation)/i, label: 'org-wide / all-objects operation (mass)' },
   { pattern: /\b(1[1-9]|[2-9]\d|\d{3,})\s*(\+\s*)?(user|users|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|member|members|staff|contractor|contractors|people)\b/i, label: 'mass operation (>10 objects)' },

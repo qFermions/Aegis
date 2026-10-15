@@ -231,12 +231,15 @@ const GCLOUD_READ_ONLY = new Set(['list', 'describe', 'get-iam-policy', 'get-val
 const GCLOUD_MUTATING = new Set(['create', 'update', 'delete', 'set', 'add-iam-policy-binding', 'remove-iam-policy-binding',
   'set-iam-policy', 'enable', 'disable', 'undelete', 'deploy', 'import', 'patch', 'reset', 'unset', 'add', 'remove', 'login',
   'revoke', 'activate-service-account']);
-// A method taken from an expansion ($METHOD, ${METHOD}, $(…)) can be any verb: a write.
-const HTTP_WRITE_LONG = /(?:^|\s)(?:-X\s*|--request[\s=]+)["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(])|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?(?:(?:DELETE|POST|PUT|PATCH)\b|\$[\w{(])|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*(?:DELETE|POST|PUT|PATCH)\b/i;
+// Any explicit method that is not GET, HEAD, OPTIONS or TRACE is a write (fail-closed,
+// as for unlisted gam and gcloud verbs: PURGE, MOVE, COPY, LOCK … change state), and a
+// method taken from an expansion ($METHOD, ${METHOD}, $(…)) can be any verb.
+const HTTP_METHOD_WRITE = String.raw`(?:(?!(?:GET|HEAD|OPTIONS|TRACE|get|head|options|trace)\b)[A-Za-z]+\b|\$[\w{(])`;
+const HTTP_WRITE_LONG = new RegExp(String.raw`(?:^|\s)(?:-X\s*|--request[\s=]+)["']?${HTTP_METHOD_WRITE}|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?${HTTP_METHOD_WRITE}|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*${HTTP_METHOD_WRITE}`, 'i');
 // -K reads a config file that can set the method or a body: fail-closed. A short
 // option's value may be glued to it (`-dname=value`, `-d$BODY`), and curl sends a
 // method in any case (`-sXpost`).
-const HTTP_WRITE_SHORT = /(?:^|\s)-[A-Za-z]*(?:[dFTK]|X\s*["']?(?:(?:[Dd][Ee][Ll][Ee][Tt][Ee]|[Pp][Oo][Ss][Tt]|[Pp][Uu][Tt]|[Pp][Aa][Tt][Cc][Hh])\b|\$[\w{(]))/;
+const HTTP_WRITE_SHORT = new RegExp(String.raw`(?:^|\s)-[A-Za-z]*(?:[dFTK]|X\s*["']?${HTTP_METHOD_WRITE})`);
 // An unquoted `$VAR` / `${…}` / `$(…)` argument can expand into any option,
 // including a write method or a body, so it is a write (fail-closed). Expansions
 // inside quotes ("…${OKTA_API_TOKEN}") stay single arguments and are fine.
@@ -268,7 +271,8 @@ const G1_CLI_SINKS = [
   ['http-write', 'https?', (args) => {
     const tokens = cliTokens(args);
     const positional = tokens.filter((token) => !token.startsWith('-'));
-    if (/^(?:POST|PUT|PATCH|DELETE)$/i.test(positional[0] || '')) return true;
+    // a method-shaped first positional other than GET, HEAD or OPTIONS (HTTPie's syntax)
+    if (/^[A-Za-z]+$/.test(positional[0] || '') && !/^(?:GET|HEAD|OPTIONS)$/i.test(positional[0])) return true;
     if (HTTP_WRITE_LONG.test(` ${args}`) || /(?:^|\s)(?:-f|--raw)(?=[\s=]|$)/.test(` ${args}`)) return true;
     return positional.slice(1).some((token) => /^[^=\s:]+(?::=|=(?!=)|@)/.test(token));
   }],
@@ -1966,6 +1970,14 @@ const G1_SHELL_MUTATIONS = [
   ['(venv) $ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['PS C:\\> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['C:\\Users\\admin> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  // P5-3: any explicit method that is not GET, HEAD, OPTIONS or TRACE (fail-closed, as for gam and gcloud verbs)
+  ['curl -sS -X PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS --request MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sXLOCK "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['wget -q --method=COPY "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS -H "X-HTTP-Method-Override: PURGE" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['http PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['https MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
   // P4-5: a Windows-style .exe name and curl values glued to their short option
   ['gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
   ['curl.exe -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
@@ -2029,6 +2041,9 @@ const G1_SHELL_READ_ONLY = [
   'gam.exe info user "[USER@DOMAIN.COM]"',
   'curl -sSfL "https://[@Aegion_JAMF_URL]/api/v1/fixture" -H "Authorization: Bearer ${JAMF_TOKEN}"',
   'curl -sS -o /tmp/fixture.json -w "%{http_code}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sS -X HEAD "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sS --request OPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'http HEAD "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
 ];
 
 test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {

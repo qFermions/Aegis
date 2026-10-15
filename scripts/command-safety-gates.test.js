@@ -458,9 +458,16 @@ function portalMutationCandidates(document) {
   // Fleet, Zoom Rooms). Lines carrying it also get the arrow rule, so a breadcrumb
   // that ends in an action (`… → **Suspend user**`) is a mutation candidate.
   // Case-sensitive on purpose: these are product names ("fleet-wide" is not Fleet).
-  const g1PortalCue = /\b(?:admin\.google\.com|Admin console|Google Workspace|Okta|Jamf|Apple Business Manager|System Settings|Self Service|Fleet(?!-)|Zoom Rooms|ChromeOS|Chromebook)\b/;
+  // "Apple Business" is the product's current name (formerly Apple Business Manager).
+  const g1PortalCue = /\b(?:admin\.google\.com|Admin console|Google Workspace|Okta|Jamf|Apple Business(?: Manager)?|System Settings|Self Service|Fleet(?!-)|Zoom Rooms|ChromeOS|Chromebook)\b/;
   const listItem = /^\s*(?:>\s*)?(?:\d+[.)]|[-*])\s+/;
-  const g1ArrowMutation = new RegExp(`(?:→\\s*|\\b(?:Click|Select|Choose|Tap)\\s+)(?:\\*{0,2}|\`)?(${actionBody})\\b`, 'i');
+  // The G1 click grammar also knows ChromeOS's "Re-enable selected devices". It is kept out
+  // of the global vocabulary so the Microsoft runbooks' candidates do not change.
+  const g1ArrowMutation = new RegExp(`(?:→\\s*|\\b(?:Click|Select|Choose|Tap)\\s+)(?:\\*{0,2}|\`)?(${actionBody}|Re-enable)\\b`, 'i');
+  // Inside a G1 lane document (the 19 runbooks and the two G1 knowledge docs) the click
+  // grammar applies to any portal-cued list item, so a control named without the product
+  // ("At the top, click **Disable selected devices**") is still a candidate.
+  const g1LaneDocument = /^\.claude\/commands\/(?:gws|okta|jamf|mac)-[\w-]+\.md$|^\.claude\/commands\/zoom-room-issue\.md$|^docs\/(?:portal-nav-google-2026|gws-reversibility)\.md$/.test(document.file);
   const navReference = document.file === 'docs/portal-nav-2026.md' || document.file === 'docs/portal-nav-google-2026.md';
   const frontmatterEnd = document.lines[0] === '---' ? document.lines.indexOf('---', 1) : -1;
   document.lines.forEach((line, index) => {
@@ -476,7 +483,7 @@ function portalMutationCandidates(document) {
       ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
       ((cue || inPortalRegion) ? line.match(imperativeMutation) : null) ||
       (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
-      (g1PortalCue.test(line) && listItem.test(line) ? line.match(g1ArrowMutation) : null);
+      ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g1ArrowMutation) : null);
     if (match) {
       const actionWord = match[1];
       candidates.push({ file: document.file, line: lineNumber, statement: line.trim(), actionWord });
@@ -516,6 +523,7 @@ const PORTAL_CONFIRMATION_BY_ACTION = new Map([
   ['unassign', /\b(?:UNASSIGN|REMOVE)\b/], ['undelete', /\b(?:UNDELETE|RESTORE)\b/],
   ['unenroll', /\b(?:UNENROLL|REMOVE)\b/], ['unlock', /\bUNLOCK\b/],
   ['unmanage', /\bUNMANAGE\b/], ['unsuspend', /\b(?:UNSUSPEND|RESTORE|REACTIVATE)\b/],
+  ['re-enable', /\b(?:RE-ENABLE|ENABLE|REACTIVATE)\b/],
 ]);
 
 const portalCandidates = [...documents.values()].flatMap(portalMutationCandidates);
@@ -1907,4 +1915,25 @@ test('G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action
   assert.throws(() => assertEffectCorrespondence('deprovision one Chromebook', 'DISABLE [DEVICE_ID]', 'g1-effect-mismatch'));
   assert.doesNotThrow(() => assertEffectCorrespondence('restart the Zoom Rooms app on one room device', 'RESTART ZOOM ROOMS APP IN [DEVICE_NAME]', 'g1-restart-fixture'));
   assert.throws(() => assertEffectCorrespondence('restart the room computer', 'REBOOT [DEVICE_NAME]', 'g1-restart-mismatch'));
+});
+
+test('G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar', () => {
+  const lines = [
+    '# fixture',
+    '',
+    '1. Apple Business → Inventory → select `[SERIAL_NUMBER]` → **Release from Organization**',
+    '2. At the top, click **Re-enable selected devices**, then click **Enable** to confirm.',
+    '3. At the top, click **Disable selected devices** → choose **Disable with lock screen** → click **Disable**.',
+    '4. At the top, read the status column in the devices list.',
+    '',
+  ];
+  const source = lines.join('\n');
+  const actionsByLine = (file) => Object.fromEntries(portalMutationCandidates(parseFences(file, source))
+    .map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
+  // A G1 runbook: the lane's own click grammar applies to any portal-cued list item.
+  assert.deepEqual(actionsByLine('.claude/commands/gws-fixture.md'), { 3: 'release', 4: 're-enable', 5: 'disable' });
+  // A Microsoft runbook: only the product-name cue is global; its click grammar is unchanged.
+  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'release' });
+  assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has('re-enable'), 're-enable needs a confirmation family');
+  assert.match('RE-ENABLE CHROMEBOOK [DEVICE_ID]', PORTAL_CONFIRMATION_BY_ACTION.get('re-enable'));
 });

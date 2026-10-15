@@ -1201,7 +1201,7 @@
       "sinks": [
         {
           "sink": "portal:deprovision",
-          "count": 1
+          "count": 2
         }
       ],
       "impactCategories": [
@@ -1231,7 +1231,12 @@
       "file": ".claude/commands/gws-chromeos-device.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:disable",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -1295,7 +1300,12 @@
       "file": ".claude/commands/gws-chromeos-device.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:re-enable",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related"
@@ -4977,7 +4987,7 @@
       "sinks": [
         {
           "sink": "portal:add",
-          "count": 1
+          "count": 2
         },
         {
           "sink": "portal:calendar",
@@ -5027,7 +5037,12 @@
       "file": "docs/portal-nav-google-2026.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:reset",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -5063,7 +5078,12 @@
       "file": "docs/portal-nav-google-2026.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:enable",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -5140,6 +5160,10 @@
       "kind": "portal",
       "mode": "preview",
       "sinks": [
+        {
+          "sink": "portal:reset",
+          "count": 2
+        },
         {
           "sink": "portal:suspend",
           "count": 1

@@ -134,3 +134,15 @@ test('a path git would quote (non-ASCII) still matches its tier glob', () => {
   assert.deepEqual(run(cwd, ['main']), ['tier=C', '.claude/commands/caf\u00e9-reset.md']);
 });
 
+test('a file moved out of a C path still sets tier C (both sides of the rename are listed)', () => {
+  const cwd = sandbox();
+  git(cwd, 'checkout', '-q', 'main');
+  commit(cwd, ['modules/security/old-doctrine.md'], 'seed');
+  git(cwd, 'checkout', '-q', 'work');
+  git(cwd, 'merge', '-q', 'main');
+  fs.mkdirSync(path.join(cwd, 'docs'), { recursive: true });
+  git(cwd, 'mv', 'modules/security/old-doctrine.md', 'docs/old-doctrine.md');
+  git(cwd, 'commit', '-q', '-m', 'move');
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', 'modules/security/old-doctrine.md']);
+});
+

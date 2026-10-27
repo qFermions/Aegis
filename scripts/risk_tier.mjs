@@ -82,14 +82,15 @@ export function resolveBase(base, cwd) {
 }
 
 // NUL-separated output (-z): git never quotes a path, so names with non-ASCII, tabs or quotes
-// still match the globs.
+// still match the globs. --no-renames lists both sides of a move, so a file moved out of a
+// C or B path still sets that tier.
 function nulSeparated(text) {
   return text.split('\0').filter(Boolean);
 }
 
 export function changedPaths(base, cwd) {
-  const committed = nulSeparated(git(['diff', '--name-only', '-z', `${base}...HEAD`], cwd));
-  const uncommitted = nulSeparated(git(['diff', '--name-only', '-z', 'HEAD'], cwd));
+  const committed = nulSeparated(git(['diff', '--name-only', '-z', '--no-renames', `${base}...HEAD`], cwd));
+  const uncommitted = nulSeparated(git(['diff', '--name-only', '-z', '--no-renames', 'HEAD'], cwd));
   const untracked = nulSeparated(git(['ls-files', '--others', '--exclude-standard', '-z'], cwd));
   return [...new Set([...committed, ...uncommitted, ...untracked])].sort();
 }

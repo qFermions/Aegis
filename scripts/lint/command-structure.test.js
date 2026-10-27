@@ -349,3 +349,47 @@ test('G1 knowledge docs are on the freshness list (retired vendor wording can ne
   const findings = lint.lintDocFreshness(['docs/portal-nav-google-2026.md']);
   assert.deepEqual(findings, []);
 });
+
+// ── G2: Fleet, Slack and Linear (Google Workspace and Jamf keep the G1 roots) ──
+test('G2 breadcrumb roots: Fleet, Slack and Linear count as admin surfaces', () => {
+  for (const crumb of ['Fleet → Hosts → [host] → Host details', 'Slack → [workspace name] → Tools & settings → Manage members',
+    'Slack admin → Workspace settings → Security', 'Linear → Settings → Administration → Members', 'Linear → [ISSUE_ID] → Leave a comment']) {
+    const text = G1_GOOD.replace('Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner.', `${crumb} → read it.`);
+    assert.ok(!g1Findings(text).includes('gui-steps-present'), crumb);
+  }
+});
+
+test('G2 paste-ready-note: a Linear-ready note counts as the one ticket note; two notes still fail', () => {
+  const linear = G1_GOOD.replace('## 📝 Jira-ready note', '## 📝 Linear-ready note');
+  assert.deepEqual(g1Findings(linear), []);
+  const both = `${linear}\n## 📝 Jira-ready note\n> second note\n`;
+  assert.ok(g1Findings(both).includes('paste-ready-note'));
+});
+
+test('G2 fleetctl: a mutating fleetctl fence must be collapsed, commented and HUMAN-RUN; read-only fleetctl may stay open', () => {
+  for (const sink of ['fleetctl run-script --script-path ./fix.sh --host [HOST_ID]   # runs a script on one host',
+    'fleetctl mdm lock --host [HOST_ID]   # locks one host', 'fleetctl delete --host [HOST_ID]   # deletes the host record',
+    'fleetctl apply -f [FILE_NAME]   # applies a configuration file', 'sudo fleetctl hosts transfer --fleet [FLEET_NAME] --hosts [HOST_ID]   # moves a host']) {
+    const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', sink);
+    const rules = g1Findings(text);
+    assert.ok(rules.includes('cli-collapsed') && rules.includes('cli-human-run'), `${sink} → ${rules.join(',')}`);
+  }
+  for (const read of ['fleetctl get hosts   # lists hosts', 'fleetctl get host [HOST_ID] --json   # one host as JSON',
+    'fleetctl query --hosts [HOST_ID] --query "SELECT * FROM os_version;"   # a live osquery read', 'fleetctl --version   # client version']) {
+    const text = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', read);
+    assert.ok(!g1Findings(text).includes('cli-collapsed'), read);
+  }
+  const uncommented = G1_GOOD.replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', 'fleetctl get hosts');
+  assert.ok(g1Findings(uncommented.replace('# read-only: confirm the account and its organizational unit\n', '')).includes('cli-commented'));
+  const inPowerShell = G1_GOOD.replace('```bash\n# read-only: confirm', '```powershell\n# read-only: confirm').replace('gam info user "[USER@DOMAIN.COM]"   # prints status, OU and licences', 'fleetctl get hosts   # lists hosts');
+  assert.ok(g1Findings(inPowerShell).includes('cli-in-shell-fence'));
+});
+
+test('G2 commands are classified: every G2 runbook name has a variant before it is written', () => {
+  const g2 = ['fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation', 'fleet-device-actions',
+    'linear-intake', 'linear-triage', 'linear-ticket-note', 'linear-workspace-admin',
+    'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings', 'slack-incident-comms',
+    'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault', 'jamf-inventory-groups',
+    'gws-drive-sharing', 'gws-2sv-enforcement', 'gws-account-containment', 'gws-admin-roles', 'gws-security-posture'];
+  for (const name of g2) assert.ok(['A', 'B'].includes(lint.VARIANT_OF[name]), `${name} must be an operational (A) or troubleshooting (B) command`);
+});

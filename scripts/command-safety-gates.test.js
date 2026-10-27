@@ -2550,3 +2550,98 @@ test('G1 portal grammar: the current Apple Business name and the selected-device
   assert.deepEqual(bareActions('.claude/commands/ms-fixture.md'), []);
   assert.match('RE-ENABLE CHROMEBOOK [DEVICE_ID]', PORTAL_CONFIRMATION_BY_ACTION.get('re-enable'));
 });
+
+// ── G2: Fleet, Slack and Linear, plus the new Jamf Pro and Google Workspace runbooks ──
+// fleetctl is a shell sink like gam: reads (get, a live osquery read, version, help)
+// stay live and every other verb is a write (fail-closed). A Linear GraphQL call made
+// with curl is a POST with a body, so it is a write even when it only reads: the
+// runbooks read Linear through scripts/adapters/linear-client.js instead.
+const G2_SHELL_MUTATIONS = [
+  ['fleetctl run-script --script-path ./fix.sh --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl mdm lock --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl mdm unlock --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl mdm wipe --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl delete host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl apply -f [FILE_NAME]', 'fleetctl-write'],
+  ['fleetctl gitops -f [FILE_NAME]', 'fleetctl-write'],
+  ['fleetctl hosts transfer --fleet [FLEET_NAME] --hosts [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl login --email [USER@DOMAIN.COM]', 'fleetctl-write'],
+  ['fleetctl --config ./fleet.yml mdm lock --host [HOST_ID]', 'fleetctl-write'],
+  ['sudo -u [ADMIN_NAME] fleetctl mdm wipe --host [HOST_ID]', 'fleetctl-write'],
+  ['"$HOME/bin/fleetctl" mdm lock --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl.exe run-script --script-path fix.ps1 --host [HOST_ID]', 'fleetctl-write'],
+  ['\\fleetctl mdm wipe --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl', 'fleetctl-write'],
+  ['curl -sS -X POST "https://api.linear.app/graphql" -H "Authorization: ${LINEAR_API_KEY}" --json \'{"query":"{ viewer { id } }"}\'', 'http-write'],
+  ['curl -sS -X POST "https://slack.com/api/chat.postMessage" -H "Authorization: Bearer ${SLACK_TOKEN}" --data "channel=[CHANNEL_ID]"', 'http-write'],
+  ['curl -sS "https://slack.com/api/admin.users.remove" -H "Authorization: Bearer ${SLACK_TOKEN}" -d "user_id=[USER_ID]"', 'http-write'],
+];
+const G2_SHELL_READ_ONLY = [
+  'fleetctl get hosts',
+  'fleetctl get host [HOST_ID] --json',
+  'fleetctl get software --json',
+  'fleetctl query --hosts [HOST_ID] --query "SELECT version FROM os_version"',
+  'fleetctl --version',
+  'fleetctl --help',
+  'curl -sS "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]" -H "Authorization: Bearer ${FLEET_API_TOKEN}"',
+  'curl -sS "https://slack.com/api/users.info?user=[USER_ID]" -H "Authorization: Bearer ${SLACK_TOKEN}"',
+  'node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute',
+];
+
+test('G2 detector: every fleetctl write and every Slack or Linear API write in a shell fence is a sink', () => {
+  const missed = [];
+  for (const [line, label] of G2_SHELL_MUTATIONS) {
+    for (const language of ['bash', 'zsh', 'sh', 'shell', '']) {
+      const hits = commandsIn(line, language);
+      if (!hits.includes(label)) missed.push(`${language || '(untagged)'}: ${line} → [${hits.join(', ')}]`);
+    }
+  }
+  assert.deepEqual(missed, []);
+});
+
+test('G2 detector: fleetctl reads and API GET reads stay live and are not sinks', () => {
+  const flagged = [];
+  for (const line of G2_SHELL_READ_ONLY) {
+    const hits = commandsIn(line, 'bash');
+    if (hits.length) flagged.push(`${line} → [${hits.join(', ')}]`);
+  }
+  assert.deepEqual(flagged, []);
+});
+
+test('G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 runbooks; G1 and Microsoft files keep their grammar', () => {
+  const lines = [
+    '# fixture',
+    '',
+    '1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Wipe**',
+    '2. Slack → `#[CHANNEL_NAME]` → channel name → Settings → **Archive channel**',
+    '3. Linear → Settings → Administration → Members → `[USER_ID]` → **Suspend**',
+    '4. Slack admin → Workspace settings → Import/Export Data → Click **Export**',
+    '5. Jamf Pro → Computers → Policies → `[POLICY_NAME]` → Logs → **Flush All**',
+    '6. Slack → `[APP_NAME]` → Click **Approve**',
+    '7. Slack → Workspace settings → Slack Connect connections → `[EXTERNAL_DOMAIN]` → **Disconnect**',
+    '8. Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]` → Disk Encryption → **Show Key**',
+    '9. Linear → `[ISSUE_ID]` → Leave a comment → read the thread',
+    '10. Fleet → Software → `[APP_NAME]` → Actions → **Uninstall**',
+    '',
+  ];
+  const source = lines.join('\n');
+  const actionsByLine = (file) => Object.fromEntries(portalMutationCandidates(parseFences(file, source))
+    .map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
+  assert.deepEqual(actionsByLine('.claude/commands/slack-fixture.md'),
+    { 3: 'wipe', 4: 'archive', 5: 'suspend', 6: 'export', 7: 'flush', 8: 'approve', 9: 'disconnect', 10: 'show', 12: 'uninstall' });
+  assert.deepEqual(actionsByLine('.claude/commands/gws-account-containment.md'), actionsByLine('.claude/commands/slack-fixture.md'), 'a named new Google runbook is a G2 document');
+  // A G1 runbook and a Microsoft runbook keep their grammar: the existing cues (Fleet, a
+  // generic Settings) find the existing verbs, and no G2 verb becomes a candidate there.
+  assert.deepEqual(actionsByLine('.claude/commands/okta-fixture.md'), { 3: 'wipe', 5: 'suspend' });
+  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'wipe' });
+  for (const action of ['archive', 'export', 'flush', 'approve', 'disconnect', 'show', 'uninstall', 'unarchive', 'trash', 'rotate', 'post', 'accept', 'decline', 'distribute', 'redeploy']) {
+    assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
+  }
+  assert.doesNotThrow(() => assertEffectCorrespondence('archive one Slack channel', 'ARCHIVE SLACK CHANNEL [CHANNEL_NAME]', 'g2-archive', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('run one saved script on one host', 'RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID]', 'g2-run', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('reveal the FileVault recovery key of one Mac', 'SHOW FILEVAULT KEY FOR [SERIAL_NUMBER]', 'g2-reveal', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('turn off MDM for one host', 'TURN OFF MDM FOR HOST [HOST_ID]', 'g2-turn-off', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('shorten message retention for the workspace', 'SET SLACK RETENTION TO [DAYS] DAYS', 'g2-shorten', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('post one incident update to one channel', 'POST INCIDENT UPDATE TO [CHANNEL_NAME]', 'g2-post', '.claude/commands/slack-fixture.md'));
+  assert.throws(() => assertEffectCorrespondence('disconnect one external organization', 'ARCHIVE [EXTERNAL_DOMAIN]', 'g2-mismatch', '.claude/commands/slack-fixture.md'));
+});

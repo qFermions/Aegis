@@ -212,6 +212,22 @@ test('no Mac gets a second FileVault profile: Phase A reads each Mac\'s profiles
   assert.match(phaseB, /Phase A step 5 finds no other FileVault or escrow profile on the rollout Macs/);
 });
 
+test('every pilot gate stops above 10 Macs, in the steps before it and in its Only after line', () => {
+  const pilots = [
+    ['jamf-patch-management', PATCH, 'Phase C', 'jamf-patch-management-pilot-policy-portal'],
+    ['jamf-patch-management', PATCH, 'Phase E', 'jamf-patch-management-pilot-plan-portal'],
+    ['jamf-patch-management', PATCH, 'Phase F', 'jamf-patch-management-app-installer-portal'],
+    ['jamf-filevault', FILEVAULT, 'Phase B', 'jamf-filevault-pilot-profile-portal'],
+  ];
+  for (const [name, text, phase, id] of pilots) {
+    assert.match(section(text, phase), /\*\*Stop if\*\* (?:the pilot group's )?`\[MEMBER_COUNT\]` is more than 10: a pilot above 10 Macs is the rollout stage/, `${name} ${phase}: the stop before ${id}`);
+    assert.match(gate(text, id).portal, /`verify-group-count` passes, `\[MEMBER_COUNT\]` is 10 or fewer/, `${name}: ${id} repeats the bound in its Only after line`);
+  }
+  // the one pilot gate that already had the stop keeps it
+  assert.match(section(PROFILES, 'Phase C'), /\*\*Stop if\*\* `\[MEMBER_COUNT\]` is more than 10: a pilot above 10 Macs is R3/);
+  assert.match(gate(PROFILES, 'jamf-config-profiles-pilot-scope-portal').portal, /Only after the count reads 10 or fewer/);
+});
+
 test('the inventory update gate states its downstream effect and records the Mac\'s groups before and after', () => {
   const phaseB = section(GROUPS, 'Phase B');
   const scope = (phaseB.match(/^# Scope: (.+)$/m) || [])[1] || '';

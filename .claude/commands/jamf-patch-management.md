@@ -113,6 +113,9 @@ node scripts/adapters/jamf-client.js patch-report --id [PATCH_TITLE_ID] --execut
 
 **Purpose:** install the target version on 10 Macs or fewer and watch what happens before anyone else gets it.
 
+1. The pilot group's `[MEMBER_COUNT]` is in the ticket from Phase A, and `verify-group-count` passes for it.
+2. **Stop if** `[MEMBER_COUNT]` is more than 10: a pilot above 10 Macs is the rollout stage (Phase D, after the pilot read-back and the review).
+
 **Role needed:** a Jamf Pro account with the privileges for patch policies (Jamf's English name for that privilege was not in this batch's sources: read it on the account's privilege set before starting), plus Read Patch Management Software Titles for the read-backs.
 
 <!-- SAFETY GATE [jamf-patch-management-pilot-policy-portal] -->
@@ -122,7 +125,7 @@ node scripts/adapters/jamf-client.js patch-report --id [PATCH_TITLE_ID] --execut
 - **Reversibility:** R2: the app cannot be downgraded through a patch policy; Phase G stops further installs, and going back means redeploying the older package through a regular policy
 - **Required confirmation:** Type exactly `CREATE PATCH POLICY [POLICY_NAME] TO INSTALL [APP_NAME] ON [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [jamf-patch-management-pilot-policy-portal]:** Only after `verify-group-count` passes and the exact match:
+**PORTAL ACTION [jamf-patch-management-pilot-policy-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, and the exact match:
 1. Jamf Pro → Computers → Patch Management → `[APP_NAME]` → Patch Policies → New (labels from a search excerpt; confirm on screen).
 2. Name it `[POLICY_NAME]`, pick the target version, the distribution method (automatic, or Self Service with an optional Notification Center prompt) and the update deadline, then Scope → `[SMART_GROUP]` → Save.
 
@@ -174,6 +177,7 @@ Before either gate:
 - Apple removed the software update MDM commands in macOS 27, and Jamf recommends blueprints for those Macs (read from a French page of Jamf's 11.32.0 documentation; unverified in English). Safer reading: a target group that holds any Mac on macOS 27 or later is a stop condition for this phase.
 - An older Spanish page (11.20.0) says declarative scheduling needs macOS 14 or later and is not offered on Jamf Premium Cloud Plus. It may be stale; confirm on the current page before relying on a schedule.
 - Whether a deployed plan can be cancelled before its deadline was not confirmed. Safer reading: once deployed, it runs.
+- **Stop if** the pilot group's `[MEMBER_COUNT]` is more than 10: a pilot above 10 Macs is the rollout stage, which waits for the pilot read-back and the review.
 - A major upgrade uses the same plan with a major version selected. "Every Mac tonight" is a fleet stage without a pilot: it waits for the pilot read-back and the review whatever the ticket says about deadlines or approval.
 
 **Role needed:** a Jamf Pro account that may create Managed Software Update plans (the create privilege's English name was not in this batch's sources); reading plans needs Read Managed Software Updates, Read Computers and Read Mobile Devices.
@@ -185,7 +189,7 @@ Before either gate:
 - **Reversibility:** R3: macOS cannot be downgraded; cancelling a deployed plan was not confirmed in this batch's sources
 - **Required confirmation:** Type exactly `CREATE UPDATE PLAN TO INSTALL MACOS ON [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [jamf-patch-management-pilot-plan-portal]:** Only after `verify-group-count` passes, no target Mac runs macOS 27 or later, users have the restart notice, and the exact match:
+**PORTAL ACTION [jamf-patch-management-pilot-plan-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, no target Mac runs macOS 27 or later, users have the restart notice, and the exact match:
 1. Jamf Pro → Computers → Managed Software Updates → New (menu location from a search excerpt; confirm on screen).
 2. Target the computer group `[SMART_GROUP]`, pick the macOS version recorded in Phase A, the update action (only "Download and schedule to install" uses declarative device management) and the schedule, then Save. Field labels are unverified; read each one on screen.
 

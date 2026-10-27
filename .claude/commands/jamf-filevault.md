@@ -90,6 +90,8 @@ node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 
 Before the gate: `verify-group-count` passes for the pilot group, Phase A step 5 found no FileVault or escrow profile on any pilot Mac, and the payload fields to set are the ones `/mac-troubleshoot` Branch B reads (this batch's sources did not name the payloads).
 
+**Stop if** `[MEMBER_COUNT]` is more than 10: a pilot above 10 Macs is the rollout stage (the widen gate below, after the pilot read-back and the review).
+
 **Stop if** any pilot Mac already lists a FileVault or escrow profile: change that profile's scope with `/jamf-config-profiles` instead.
 
 **Role needed:** a Jamf Pro account with the privileges for computer configuration profiles and for the computers in scope (English names not in this batch's sources).
@@ -101,7 +103,7 @@ Before the gate: `verify-group-count` passes for the pilot group, Phase A step 5
 - **Reversibility:** R3: a security control on every pilot Mac; whether taking the profile away decrypts the disk was not confirmed in this batch's sources (safer reading: it does not, and it only stops enforcement)
 - **Required confirmation:** Type exactly `CREATE AND SCOPE FILEVAULT PROFILE [PROFILE_NAME] TO [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [jamf-filevault-pilot-profile-portal]:** Only after `verify-group-count` passes, no pilot Mac lists another FileVault or escrow profile, and the exact match:
+**PORTAL ACTION [jamf-filevault-pilot-profile-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, no pilot Mac lists another FileVault or escrow profile, and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → New → General: name `[PROFILE_NAME]`, computer level.
 2. In the FileVault payload, turn FileVault on with a personal recovery key and escrow it to Jamf Pro (payload labels unverified in this batch; the fields `/mac-troubleshoot` Branch B reads are the ones to set).
 3. Scope → Targets → `[SMART_GROUP]` → Save.

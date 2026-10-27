@@ -139,11 +139,11 @@ wc -l "[FILE_NAME]"
 
 **Purpose:** turn the exports and the live tenant into statuses and counts.
 
-1. Run the generator once per export:
+1. Run the generator on both exports in one command, the users export first. It reads the first `--export` as the `gam print users` CSV and the second as the `gam print admins` CSV, and refuses an admins export given first or alone (exit 2). Give each `[FILE_NAME]` as its full path in the folder from Inputs; with only the users export, pass that one alone.
 
 ```bash
-# read-only: reads one local GAM export and prints the report with the checks it computes, nothing is written
-node scripts/gws-posture-audit.js --export [FILE_NAME]
+# read-only: reads the two local GAM exports, users export first and admins export second, and prints the report with the checks it computes, nothing is written
+node scripts/gws-posture-audit.js --export [FILE_NAME] --export [FILE_NAME]
 ```
 
 2. Read the same posture live through the adapter. Each line is a read; nothing here can change Google.

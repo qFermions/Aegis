@@ -27,7 +27,7 @@ For the owner. One page on what each file does, how a change moves, what you rea
 
 - Tier C (CI, instruction files, `.claude/**`, security modules, memory and replay stores, tool adapters, tier routing): the whole diff, line by line, before merging.
 - Tier B (agent logic, prompts, evaluation code, other modules): the pull request body and the evidence in checks.md; spot-check three rows.
-- Tier A (docs, tests): the pull request body, then merge.
+- Tier A (docs and anything outside the C and B globs; a test takes its directory's tier): the pull request body, then merge.
 
 ## How to revert
 

@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[ISSUE_ID]` (the Linear issue identifier, such as `[@Aegion_LINEAR_TEAM]-123`) · `[NOTE_FILE]` (the plain-text file that holds the drafted note: a `.md` or `.txt` file, outside any `.ssh`, `.aws`, `.config`, `.gnupg` or `.claude` folder) · `[NOTE_SHA256]` (the note's digest, printed by `note`) · `[NOT_BEFORE]` (the time `note` printed; the read-back accepts only a comment created after it) · `[ADMIN_NAME]` (the administrator who posts) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[ISSUE_ID]` (the Linear issue identifier, such as `[@Aegion_LINEAR_TEAM]-123`) · `[NOTE_FILE]` (the plain-text file that holds the drafted note: a `.md` or `.txt` file, outside any `.ssh`, `.aws`, `.config`, `.gnupg` or `.claude` folder) · `[NOTE_SHA256]` (the note's digest, printed by `note`) · `[NOT_BEFORE]` (the time `note` printed; the read-back accepts only a comment created after it) · `[COMMENT_ID]` (the `id` of one comment, as the `comments` read prints it; not yet in the placeholder dictionary) · `[ADMIN_NAME]` (the administrator who posts) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 ## ⚠️ Admin / safety gate
 
@@ -125,8 +125,8 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 
 1. GUI read-back: Linear → `[ISSUE_ID]` → the newest comment shows `[ADMIN_NAME]`, a time after `[NOT_BEFORE]` and the note text.
 2. If `verify-comment` finds no comment after `[NOT_BEFORE]`: the note was posted on another issue, posted before `note` ran, or not posted. Check the issue page first; never post a second copy until you know which.
-3. If a comment is there but the digest differs: the text changed on the way in. Compare the stored body from the comments read with the printed body, then use the Phase F replace gate.
-4. If two copies are there: use the Phase F delete gate on the extra copy.
+3. If a comment is there but the digest differs: the text changed on the way in. Compare the stored body from the comments read with the printed body, copy that comment's `id` from the comments read into `[COMMENT_ID]`, then use the Phase F replace gate.
+4. If two copies are there: keep the copy created first. The `id` of the later copy (by `createdAt` in the comments read) is `[COMMENT_ID]`; use the Phase F delete gate on it.
 
 **Verification checkpoint:** [ ] `verify-comment` passed · [ ] exactly one copy of the note on the issue.
 
@@ -139,14 +139,14 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 **Role needed:** the Member who posted the comment (the sources read do not state who else may edit a comment).
 
 <!-- SAFETY GATE [linear-ticket-note-replace-portal] -->
-- **Target:** [ISSUE_ID], note digest [NOTE_SHA256]
+- **Target:** [ISSUE_ID], comment [COMMENT_ID], note digest [NOTE_SHA256]
 - **Effect:** replace the text of one posted comment with the exact note body
-- **Scope:** only the comment the administrator posted on [ISSUE_ID] after [NOT_BEFORE]; never a comment someone else wrote; the sources read do not say whether an edit reaches an email copy that Asks already sent
+- **Scope:** only comment [COMMENT_ID], which the administrator posted on [ISSUE_ID] after [NOT_BEFORE]; never a comment someone else wrote; the sources read do not say whether an edit reaches an email copy that Asks already sent
 - **Reversibility:** R1, edit the comment again; the earlier text stays in the working notes and in the comments read from Phase E
-- **Required confirmation:** Type exactly `REPLACE NOTE TEXT ON [ISSUE_ID] WITH [NOTE_SHA256]`.
+- **Required confirmation:** Type exactly `REPLACE TEXT OF COMMENT [COMMENT_ID] ON [ISSUE_ID] WITH [NOTE_SHA256]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [linear-ticket-note-replace-portal]:** Only after the Phase E comparison and the exact match:
-1. Linear → `[ISSUE_ID]` → the comment → "..." → Edit → paste the body exactly as `note` printed it over the old text.
+1. Linear → `[ISSUE_ID]` → the comment whose posted time matches the `createdAt` the comments read printed for `[COMMENT_ID]` (if two comments show the same time on screen, stop: do not guess) → "..." → Edit → paste the body exactly as `note` printed it over the old text.
 2. Save the edit (Edit and Save are the labels on Linear's search-indexed comments page; confirm them on screen).
 3. Read-back: run the Phase E `verify-comment` line again with the same `[NOTE_SHA256]` and `[NOT_BEFORE]`. The schema keeps editedAt apart from createdAt, so an edit should keep the creation time (not stated outright in the sources read); if the time check fails, compare the comments read instead of posting again.
 
@@ -157,14 +157,14 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 **R3 before step 1:** a deleted comment has no documented restore, so write two things in the ticket first. The pre-state: the Phase E `comments` read, saved. The written rollback path: re-post the text of `[NOTE_FILE]` under the Phase D gate with a fresh `[NOT_BEFORE]` from a new `note` run.
 
 <!-- SAFETY GATE [linear-ticket-note-delete-portal] -->
-- **Target:** [ISSUE_ID] (the issue that carries the extra or misplaced copy), note digest [NOTE_SHA256]
+- **Target:** [ISSUE_ID] (the issue that carries the extra or misplaced copy), comment [COMMENT_ID]
 - **Effect:** delete one duplicate or misplaced copy of the note
-- **Scope:** one comment the administrator posted after [NOT_BEFORE]; never the only copy on the right issue, never a comment with replies, never a comment someone else wrote
+- **Scope:** only comment [COMMENT_ID], a copy of the note with digest [NOTE_SHA256] that the administrator posted after [NOT_BEFORE]; never the only copy on the right issue, never a comment with replies, never a comment someone else wrote
 - **Reversibility:** R3 (a delete with no documented restore), capture the pre-state first (save the Phase E comments read); no restore for a deleted comment is documented in the sources read, so the written rollback path is posting the text from [NOTE_FILE] again under the Phase D gate with a fresh [NOT_BEFORE]; an email copy is not recalled
-- **Required confirmation:** Type exactly `DELETE DUPLICATE NOTE [NOTE_SHA256] ON [ISSUE_ID]`.
+- **Required confirmation:** Type exactly `DELETE NOTE COPY [COMMENT_ID] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [linear-ticket-note-delete-portal]:** Only after the pre-state is saved, the written rollback path is in the ticket, and the exact match:
-1. Linear → `[ISSUE_ID]` → the extra copy → "..." → **Delete**.
+1. Linear → `[ISSUE_ID]` → the copy whose posted time matches the `createdAt` the comments read printed for `[COMMENT_ID]` (if two copies show the same time on screen, stop: do not guess) → "..." → **Delete**.
 2. Read-back: the `comments` read lists one copy fewer, and on the right issue `verify-comment` still passes for the copy that stays.
 
 **Verification checkpoint:** [ ] exactly one copy of the note on the right issue · [ ] `verify-comment` passes for it.

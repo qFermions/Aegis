@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[ISSUE_ID]` (the issue Linear creates, such as `[@Aegion_LINEAR_TEAM]-123`) · `[@Aegion_LINEAR_TEAM]` (the key of the team that holds IT tickets) · `[LABEL_NAME]` (an existing label, read from the label list) · `[STATE_NAME]` (the status the new issue should show, read from the team's statuses) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the intake note, its digest and the time its read-back starts from) · `[ADMIN_NAME]` · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[ISSUE_ID]` (the issue Linear creates, such as `[@Aegion_LINEAR_TEAM]-123`) · `[@Aegion_LINEAR_TEAM]` (the key of the team that holds IT tickets) · `[LABEL_NAME]` (an existing label, read from the label list) · `[PRIORITY_LEVEL]` (the level the IT priority rule gives: Urgent, High, Medium or Low; not yet in the placeholder dictionary) · `[STATE_NAME]` (the status the new issue should show, read from the team's statuses) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the intake note, its digest and the time its read-back starts from) · `[ADMIN_NAME]` · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 ## ⚠️ Admin / safety gate
 
@@ -111,26 +111,26 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` → Triage (or the team's view
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team for applying an existing label and setting a priority (no narrower role is stated in the sources read). Creating or editing labels can be limited to Admins by the workspace's label management setting (securitySettings.labelManagementRole in the schema), which is why intake never creates one.
 
 <!-- SAFETY GATE [linear-intake-label-priority-portal] -->
-- **Target:** [ISSUE_ID], label [LABEL_NAME]
-- **Effect:** add one existing label to one issue, set its priority
+- **Target:** [ISSUE_ID], priority [PRIORITY_LEVEL], label [LABEL_NAME]
+- **Effect:** set the priority of one issue to [PRIORITY_LEVEL]; add one existing label [LABEL_NAME] to it
 - **Scope:** one issue; a label from a single-select group replaces the group's current label on that issue; with SLAs on, an Urgent or High priority starts an SLA clock (24 hours and 1 week under the default rules, search excerpt)
 - **Reversibility:** R1, remove the label or set the previous priority under a new phrase; whether lowering the priority stops an SLA clock that already started is not documented in the sources read
-- **Required confirmation:** Type exactly `ADD LABEL [LABEL_NAME] AND SET PRIORITY ON [ISSUE_ID]`.
+- **Required confirmation:** Type exactly `SET PRIORITY [PRIORITY_LEVEL] AND ADD LABEL [LABEL_NAME] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [linear-intake-label-priority-portal]:** Only after Phase B's read-back (or Phase A's read of an Asks issue) and the exact match:
 1. Linear → `[ISSUE_ID]` → Labels → pick `[LABEL_NAME]` from the list. Never type a "Group/Label" name into Add label: that shorthand creates the group and the label (search excerpt).
-2. Linear → `[ISSUE_ID]` → the priority property → pick Urgent, High, Medium or Low per the IT priority rule (the property's on-screen label is not in the sources read; confirm it).
+2. Linear → `[ISSUE_ID]` → the priority property → pick `[PRIORITY_LEVEL]`, the level typed in the phrase (the property's on-screen label is not in the sources read; confirm it).
 
 ```bash
 # read-back: passes only when the issue carries [LABEL_NAME]
 node scripts/adapters/linear-client.js verify-labels --issue [ISSUE_ID] --has [LABEL_NAME] --execute
-# read-back: shows the priority, and the SLA type, start and breach times if a rule matched
+# read-back: priorityLabel must read [PRIORITY_LEVEL]; also the SLA type, start and breach times if a rule matched
 node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute
 ```
 
-GUI read-back: Linear → `[ISSUE_ID]` → the label and the priority show on the issue; with SLAs on, the SLA icon shows next to it (gray, then yellow, orange and red as the breach nears, search excerpt).
+GUI read-back: Linear → `[ISSUE_ID]` → the label and `[PRIORITY_LEVEL]` show on the issue; with SLAs on, the SLA icon shows next to it (gray, then yellow, orange and red as the breach nears, search excerpt).
 
-**Verification checkpoint:** [ ] `verify-labels` passed · [ ] the issue read shows the priority you set · [ ] if SLAs are on, `slaBreachesAt` is recorded for the intake note.
+**Verification checkpoint:** [ ] `verify-labels` passed · [ ] the issue read's priorityLabel is `[PRIORITY_LEVEL]` · [ ] if SLAs are on, `slaBreachesAt` is recorded for the intake note.
 
 ## Phase D: Intake channels (planning only)
 
@@ -150,7 +150,7 @@ GUI read-back: Linear → `[ISSUE_ID]` → the label and the priority show on th
 - [ ] Phase A found no open issue for the same fault, or the new details went onto the existing one instead.
 - [ ] The issue read returns `[ISSUE_ID]` in team `[@Aegion_LINEAR_TEAM]` with the sanitized title.
 - [ ] `verify-state --issue [ISSUE_ID] --state "[STATE_NAME]"` passed.
-- [ ] `verify-labels --issue [ISSUE_ID] --has [LABEL_NAME]` passed, and the issue read shows the priority you set.
+- [ ] `verify-labels --issue [ISSUE_ID] --has [LABEL_NAME]` passed, and the issue read's priorityLabel is `[PRIORITY_LEVEL]`.
 - [ ] Linear → `[ISSUE_ID]` shows the label and priority, and no name, address or secret in the title, description or comments.
 - [ ] `verify-comment` passed for the intake note on `[ISSUE_ID]`.
 
@@ -158,7 +158,7 @@ GUI read-back: Linear → `[ISSUE_ID]` → the label and the priority show on th
 
 Use the completed form only when every read-back above passed; otherwise write the partial-state form, naming what is verified, what is pending and the next owner.
 
-> [Only if every read-back passed] Logged [date/time] as [ISSUE_ID] in [@Aegion_LINEAR_TEAM] from [email to IT / Asks / template address]. Request: [one sanitized sentence: what, where, since when, how many people]. Duplicate check: no open issue for the same fault. Label: [LABEL_NAME]. Priority: [Urgent / High / Medium / Low] per the IT priority rule[; SLA breaches at [time]]. Verified: issue read, verify-state "[STATE_NAME]" and verify-labels [LABEL_NAME] passed at [time]. Next owner: triage, [ADMIN_NAME]. Time spent: [X] min.
+> [Only if every read-back passed] Logged [date/time] as [ISSUE_ID] in [@Aegion_LINEAR_TEAM] from [email to IT / Asks / template address]. Request: [one sanitized sentence: what, where, since when, how many people]. Duplicate check: no open issue for the same fault. Label: [LABEL_NAME]. Priority: [PRIORITY_LEVEL] per the IT priority rule[; SLA breaches at [time]]. Verified: issue read, verify-state "[STATE_NAME]" and verify-labels [LABEL_NAME] passed at [time]. Next owner: triage, [ADMIN_NAME]. Time spent: [X] min.
 
 > [Otherwise] Partial state, keep open: [ISSUE_ID] created in [@Aegion_LINEAR_TEAM] (issue read passed at [time]). Verified: [what passed]. Pending: [label, priority or status read-back that did not pass, and why]. Next owner: [ADMIN_NAME] by [date/time].
 

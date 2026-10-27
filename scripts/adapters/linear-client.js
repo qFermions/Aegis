@@ -56,7 +56,7 @@ const {
 const ORG_TAIL = ' organization { urlKey } }';
 const DOCUMENTS = Object.freeze({
   AegisViewer: 'query AegisViewer { viewer { id admin guest owner organization { urlKey } } organization { urlKey } }',
-  AegisIssue: 'query AegisIssue($id: String!) { issue(id: $id) { id identifier title priority createdAt archivedAt trashed triagedAt slaType slaStartedAt slaBreachesAt state { name type } labels(first: 100) { nodes { id name } pageInfo { hasNextPage } } assignee { id } team { key } } organization { urlKey } }',
+  AegisIssue: 'query AegisIssue($id: String!) { issue(id: $id) { id identifier title priority priorityLabel createdAt archivedAt trashed triagedAt slaType slaStartedAt slaBreachesAt state { name type } labels(first: 100) { nodes { id name } pageInfo { hasNextPage } } assignee { id } team { key } } organization { urlKey } }',
   AegisIssueComments: 'query AegisIssueComments($id: String!, $after: String) { issue(id: $id) { identifier comments(first: 50, after: $after) { nodes { id body createdAt user { id } } pageInfo { hasNextPage endCursor } } } organization { urlKey } }',
   AegisTeamStates: 'query AegisTeamStates($teamKey: String!) { workflowStates(first: 100, filter: { team: { key: { eq: $teamKey } } }) { nodes { id name type position team { key } } pageInfo { hasNextPage } } organization { urlKey } }',
   AegisLabels: 'query AegisLabels { issueLabels(first: 100) { nodes { id name isGroup retiredAt parent { name } team { key } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',

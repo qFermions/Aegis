@@ -132,7 +132,7 @@ function reply(data, { org = ORG, status = 200 } = {}) {
 
 function issueNode(over = {}) {
   return {
-    id: 'issue-1', identifier: ISSUE, title: 'Printer offline at the front desk', priority: 2,
+    id: 'issue-1', identifier: ISSUE, title: 'Printer offline at the front desk', priority: 2, priorityLabel: 'High',
     createdAt: '2026-10-26T09:00:00.000Z', archivedAt: null, trashed: null, triagedAt: '2026-10-26T10:00:00.000Z',
     slaType: null, slaStartedAt: null, slaBreachesAt: null,
     state: { name: 'In Progress', type: 'started' },
@@ -218,6 +218,8 @@ test('the spec: seven named documents, a fixed host, one POST path, no GET route
   for (const write of LANE_WRITES) assert.ok(linear.WRITE_MUTATIONS.includes(write), `${write} is refused by name`);
   assert.throws(() => linear.checkDocuments({ X: 'query X { commentCreate { id } organization { urlKey } }' }), /commentCreate/);
   assert.throws(() => linear.checkDocuments({ X: 'query X { viewer { id } }' }), /organization/);
+  // The runbooks' priority gates name [PRIORITY_LEVEL]; the issue read must show it as text.
+  assert.match(spec.graphql.documents.AegisIssue, /\bpriority priorityLabel\b/, 'AegisIssue reads priorityLabel beside priority');
 });
 
 test('every read and verify-* sends POST api.linear.app/graphql with its named document byte-equal, and the key only in the Authorization header', async () => {

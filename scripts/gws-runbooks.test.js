@@ -376,3 +376,19 @@ test('the containment suspend gate waits for a user read in the ticket, also on 
     assert.doesNotMatch(line, /run Phase B first|go straight to the Phase B gate/, line);
   }
 });
+
+// ── Finding: opening external sharing to a domain needs an approver ────────────
+// Inputs name an approver for any change to external sharing, and the lane lists "open
+// external sharing" as a consequential action. Adding a domain to the organization-wide
+// allowlist opens sharing to it for every unit set to Allowlisted Domains, so the gate
+// waits for the approver, as Phase E's gates do (and the removal rollback too).
+test('every Drive sharing gate that changes who outside can be shared with waits for a named approver', () => {
+  for (const id of ['gws-drive-sharing-allowlist-add-portal', 'gws-drive-sharing-allowlist-remove-portal', 'gws-drive-sharing-restrict-portal', 'gws-drive-sharing-turn-off-portal', 'gws-drive-sharing-allow-portal']) {
+    assert.match(onlyAfter(gateById(id)), /approver/, `${id}: the PORTAL ACTION waits for the approver`);
+  }
+  const lines = linesOf('gws-drive-sharing');
+  const add = gateById('gws-drive-sharing-allowlist-add-portal');
+  const phaseStart = lines.findIndex((l) => /^## Phase D: Add a partner domain/.test(l));
+  const before = lines.slice(phaseStart, add.line - 1).join('\n');
+  assert.match(before, /^Prerequisites:.*the approver is named in the ticket/m);
+});

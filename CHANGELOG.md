@@ -13,9 +13,9 @@ Branch `chore/baseline-and-boundary`, base `d5fc8c0`. Phase 0 and branch batteri
 - **`CLAUDE.md` diet:** 39,948 to 19,041 bytes (39,360 to 18,821 characters); the Script Safety Auto-Scan and the Extended Confirmation Gate stay in it under "Script gates". Identity, teaching rules, training mode and tone moved to `docs/aegis/operating-rules.md`; orchestration through build/upgrade mode to `docs/aegis/workflow.md`; live environment state, physical security, Jira fields and active projects to `docs/aegis/operator-context.md`. The boundary sentence, Harness and Review are unchanged.
 
 ### Added
-- `docs/aegis/capability-map.md` (35 rows, drift), `docs/aegis/boundary-audit.md` (19 paths), evidence captures in `docs/aegis/evidence/`.
+- `docs/aegis/capability-map.md` (36 rows, drift), `docs/aegis/boundary-audit.md` (19 paths), evidence captures in `docs/aegis/evidence/`.
 - `scripts/untrusted/`: 57 tests for instruction injection, poisoned memory and wrong-customer cases, each file opening with its expected decision.
-- Tests: `CLAUDE.md` under 20,000 bytes; the Extended Confirmation Gate quotes SR-2 exactly; deploy-check.js and init-memory.js are tier C.
+- Tests: `CLAUDE.md` under 20,000 bytes; `CLAUDE.md` keeps the always-on script gates and the error-recovery pointer; the Extended Confirmation Gate quotes SR-2 exactly; deploy-check.js and init-memory.js are tier C.
 - `PRODUCT_CONTRACT.md`: the boundary paragraph, where code enforces it, and the standing rules for answers. `PROJECT_STATE.md` rewritten with a roadmap skeleton.
 
 ### Fixed

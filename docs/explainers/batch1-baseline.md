@@ -4,8 +4,8 @@ For the owner. One page. Details: `docs/aegis/capability-map.md`, `docs/aegis/bo
 
 ## What Aegis can do today
 
-- The capability map has 35 rows across the five capabilities, Microsoft and Google kept apart: 17 verified now, 1 implemented but unverified, 13 partial, 4 missing. Every "verified now" row cites a test or command run in this session.
-- Verified now: ticket routing and risk floors on both corpora (28/28 Microsoft tickets, 38/38 Google tickets, every dangerous pair floored), Okta and Jamf routing, the advisory-only gates in every runbook (77 commands lint clean), the ticket graph, the replay and memory engines, the scanner, and the Jira client's GET-only boundary.
+- The capability map has 36 rows across the five capabilities, with Microsoft and Google in separate rows (Okta, Jamf and macOS share the Google rows where one check covers them): 18 verified now, 1 implemented but unverified, 13 partial, 4 missing. Every "verified now" row cites a test or command run in this session.
+- Verified now: ticket routing and risk floors on both corpora (28/28 Microsoft tickets, 38/38 Google tickets, every dangerous pair kept apart), Okta and Jamf routing, the advisory-only gates in every runbook (287 safety-gate tests), the ticket graph, the replay and memory engines, the scanner, and the Jira client's GET-only boundary.
 - Not proven: answer quality. The ticket evals check routing and runbook structure; nobody has scored the answers with the model-judged rubric yet.
 - Test battery: 588 tests, 588 pass in a clean clone (505 at the start, 83 added by this batch). Capture: `docs/baseline/branch/node-test.txt:746-749`.
 
@@ -23,7 +23,7 @@ For the owner. One page. Details: `docs/aegis/capability-map.md`, `docs/aegis/bo
 
 - CLAUDE.md went from 39,948 bytes to 19,041; every moved passage is in `docs/aegis/` and the four lost passages are restored. A test fails at 20,000 bytes.
 - PRODUCT_CONTRACT.md carries the boundary and the standing rules, with a "Changes in this batch" section.
-- Three review rounds: 45 findings, 42 fixed with a test each, 3 closed with a reason (`checks.md`, "Review rounds").
+- Three review rounds: 45 findings, 42 fixed (35 with a test that fails before the fix, 7 docs, comment, efficiency or refactor fixes), 3 closed with a reason (`checks.md`, "Review rounds").
 
 ## What batch 2 should be
 

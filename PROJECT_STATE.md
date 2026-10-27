@@ -25,10 +25,13 @@
 | Scanner | `node scripts/pre-commit-check.js --all` | 352 files, 0 BLOCK, 170 WARN, exit 0 | `docs/baseline/branch/pre-commit-check-all.txt:3`, `:448-452` |
 | Release boundary | `node scripts/harness/release-boundary-check.js` | PASS | `docs/baseline/branch/release-boundary-check.txt:3` |
 
-What those checks prove, by capability, is in `docs/aegis/capability-map.md`: 17 of 35 rows are
-verified now, among them Microsoft and Google ticket routing and risk floors, Okta and Jamf
-routing, the advisory-only gates in every runbook, the ticket graph, replay and memory engines,
-the scanner, and the Jira client's GET-only boundary. The ticket evals prove routing and runbook
+What those checks prove, by capability, is in `docs/aegis/capability-map.md`: 18 of 36 rows are
+verified now, among them Microsoft and Google ticket routing and risk floors (rows 1, 4, 9, 11),
+Okta and Jamf routing (rows 6, 7), the tier floor (rows 22, 36), the advisory-only gates in every
+runbook (rows 30, 31), the ticket graph (row 23), replay and memory engines (row 27), the scanner
+(row 33), and the Jira client's GET-only boundary (row 32). Each row cites a capture run on
+2026-10-27; every suite behind them ran again on the branch in `node --test`
+(`docs/baseline/branch/node-test.txt:746-749`). The ticket evals prove routing and runbook
 structure, not answer quality.
 
 ## Changed by batch 1
@@ -44,17 +47,22 @@ structure, not answer quality.
   `docs/aegis/operating-rules.md`, `docs/aegis/workflow.md` and `docs/aegis/operator-context.md`.
 - **Contract:** `PRODUCT_CONTRACT.md` carries the boundary paragraph, where code enforces it, and
   the standing rules for answers.
-- **Review:** three rounds, 45 findings, 42 fixed with a test each, 3 closed with a reason
-  (`checks.md`, "Review rounds").
+- **Review:** three rounds, 45 findings: 42 fixed (35 with a test that fails before the fix, 7
+  docs, comment, efficiency or refactor fixes) and 3 closed with a reason (`checks.md`, "Review
+  rounds").
 
 ## Partial
 
-Rendered answer quality on both corpora (no model-judged run in this session); portal-path
-currency in `scripts/security-audit.js`; network, VPN, SIP and VoIP routing (no corpus ticket);
-Google and Okta containment (G36 and G37 route to a Microsoft-only runbook); the security audit's
-checklist content; the log analyzer and hash checker (no tests); PowerShell and GAM procedure
-correctness; strategy selection, loops and review independence (model behaviour); injection and
-wrong-customer cases beyond the deterministic edges. Rows and evidence: capability map.
+13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
+portal-path currency in `scripts/security-audit.js` (row 3); network, VPN, SIP and VoIP routing
+(row 8, no corpus ticket); Microsoft incident triage and report guidance, structure and gates
+checked but not the containment order (row 10); Google and Okta containment (row 12: G36 and G37
+route to a Microsoft-only runbook); the security audit's checklist content (row 13); the log
+analyzer and hash checker (row 15, no tests); PowerShell and GAM procedure correctness (rows 16,
+17); strategy selection, loops and review independence (row 24, model behaviour); session
+bootstrap, with a stale continuity snapshot (row 29); injection and wrong-customer cases beyond
+the deterministic edges (rows 34, 35). Implemented but unverified: Google answer quality and
+real-tenant procedure evidence (row 5).
 
 ## Missing
 
@@ -82,17 +90,22 @@ Batch 1's draft pull request. `node scripts/dev/claim.js list` showed 0 active c
 ## Roadmap skeleton
 
 The five capabilities, where each stands, and the next step. No batch 2 work has started.
+"Verified" below means a capability-map row marked verified now (row numbers given); each cites a
+capture run on 2026-10-27, and the branch battery re-ran them all (`docs/baseline/branch/`).
 
 1. **IT support and infrastructure troubleshooting:** routing, floors and runbook structure
-   verified on both corpora; answer quality unscored; network and VoIP have no corpus tickets.
-2. **Defensive cybersecurity and incident response guidance:** Microsoft floors and triage
-   routes verified; Google and Okta containment missing; no Google posture audit.
+   verified on both corpora (rows 1, 4, 6, 7); answer quality unscored (rows 2, 5); network and
+   VoIP have no corpus tickets (row 8).
+2. **Defensive cybersecurity and incident response guidance:** Microsoft and Google compromise
+   floors and triage routes verified (rows 9, 11); Google and Okta containment missing (row 12); no Google posture
+   audit (row 14).
 3. **Platform engineering and infrastructure development:** release tooling and health checks
-   verified; no infrastructure as code.
-4. **Agent strategy and workflow design:** tier floor and ticket graph verified; strategy and
-   loop behaviour is doctrine without a judged run.
+   verified (rows 20, 21); no infrastructure as code (rows 18, 19).
+4. **Agent strategy and workflow design:** tier floor and ticket graph verified (rows 22, 23,
+   36); strategy and loop behaviour is doctrine without a judged run (row 24).
 5. **Agent development, testing and operation:** battery, replay, memory, scanner and boundary
-   verified; no automated judged-eval runner; shell-holding agents have no code gate.
+   verified (rows 25, 27, 28, 30 to 33); no automated judged-eval runner (row 26); shell-holding
+   agents have no code gate (`docs/aegis/boundary-audit.md` rows 4, 5).
 
 **Batch 2 candidate: Microsoft 365 account-access recovery** (locked account, password reset,
 MFA re-registration, Conditional Access sign-in block), worked end to end: intake, replay,
@@ -100,7 +113,8 @@ read-only diagnosis, a HUMAN-RUN fix, verification, and the Jira note with its `
 
 - *Closest to verified:* capability-map rows 1 (Microsoft routing and floors), 9 (compromise and
   MFA-urgency floors), 22 (tier floor), 27 (replay and memory), 30 (runbook gates) and 32 (Jira
-  boundary) are verified now; the open gap is row 2 (answer quality) and row 26 (judged-eval runner).
+  boundary) are verified now, each citing its capture and re-run in `docs/baseline/branch/`; the
+  open gap is row 2 (answer quality) and row 26 (judged-eval runner).
 - *Business situation:* a staff member who cannot sign in cannot work, and the same request is an
   attacker's favourite (T28: an MFA reset on a suspected compromise must floor to T3). 12 of the
   28 Microsoft corpus tickets are this class: T01, T02, T03, T04, T05, T13, T14, T19, T23, T25,

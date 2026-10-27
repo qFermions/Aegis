@@ -37,7 +37,7 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /git\s+reset\s+--hard/i, label: 'git reset --hard — destroys uncommitted work' },
 ];
 
-// ── PII patterns (WARN at the edge; placeholders exempt the line) ────────────
+// ── PII patterns (WARN at the edge; only canonical placeholder tokens are blanked first) ──
 const PII_PATTERNS = [
   { pattern: /\b[A-Za-z0-9._%+-]+@(?!YOUR_DOMAIN|example-corp\.|vendor-example\.|example\.|github\.com|noreply\.github\.com)[a-z0-9.-]+\.(org|com|net)\b/, label: 'Real email address (use [USER@DOMAIN.COM])' },
   { pattern: /\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/, label: 'Phone number pattern (use [PHONE_NUMBER])' },

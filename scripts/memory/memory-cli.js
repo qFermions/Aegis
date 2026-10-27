@@ -96,15 +96,15 @@ function loadRecord(id) {
 // verify, merge or mark-stale. Terminal statuses (rejected, superseded) never
 // serve, so disposing of a bad record is never blocked.
 const SERVABLE = ['candidate', 'verified', 'stale'];
+function refuseUnlessGatesPass(rec) {
+  const problems = store.storedRecordProblems(rec);
+  if (!problems.length) return;
+  ledger('RESEAL_REFUSED', { id: rec.id, problems: problems.slice(0, 5).map((p) => p.problem) });
+  const code = problems.some((p) => p.code === 3) ? 3 : problems.some((p) => p.code === 4) ? 4 : 2;
+  fail(code, `refused: ${rec.id} does not pass the persist gates as stored on disk (changed outside memory-cli.js?); nothing written`, problems.map((p) => p.problem));
+}
 function saveRecord(rec) {
-  if (SERVABLE.includes(rec.status)) {
-    const problems = store.storedRecordProblems(rec);
-    if (problems.length) {
-      ledger('RESEAL_REFUSED', { id: rec.id, problems: problems.slice(0, 5).map((p) => p.problem) });
-      const code = problems.some((p) => p.code === 3) ? 3 : problems.some((p) => p.code === 4) ? 4 : 2;
-      fail(code, `refused: ${rec.id} does not pass the persist gates as stored on disk (changed outside memory-cli.js?); nothing written`, problems.map((p) => p.problem));
-    }
-  }
+  if (SERVABLE.includes(rec.status)) refuseUnlessGatesPass(rec);
   fs.mkdirSync(MEM_DIR, { recursive: true });
   atomicWrite(recordPath(rec.id), JSON.stringify(rec, null, 2) + '\n');
 }
@@ -396,6 +396,9 @@ function cmdPromote(id, flags) {
     const rec = loadRecord(id);
     const index = loadIndex();
     if (rec.status !== 'candidate') fail(2, `promote requires status candidate (found: ${rec.status})`);
+    // Gate the candidate as stored BEFORE any write: a refused promote must
+    // not have already superseded the record it was meant to replace.
+    refuseUnlessGatesPass(rec);
 
     // Raw/external content can support, never solely justify (SR-3).
     if (!rec.provenance.some((p) => store.TRUSTED_PROVENANCE.includes(p.kind))) {

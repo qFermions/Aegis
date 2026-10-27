@@ -1,0 +1,36 @@
+# A5b: every non-blank line of each moved CLAUDE.md passage (d5fc8c0), searched whole (grep -F semantics) in its destination.
+# Moved passages are verbatim except " U+2014 " (long dash) written as " - " (batch rule A11); the search applies that one substitution.
+CLAUDE.md:43-58 -> docs/aegis/operating-rules.md (Identity): 7/7
+CLAUDE.md:125-132 -> docs/aegis/operating-rules.md (Teaching rules 13 to 17): 6/6
+CLAUDE.md:137-176 -> docs/aegis/workflow.md (Workflow Orchestration): 19/19
+CLAUDE.md:177-184 -> docs/aegis/workflow.md (Self-Improvement Loop): 2/3
+   CHANGED: `tasks/lessons.md` is the **canonical Aegis lesson store** (ADR-006). After ANY operator correction (wrong command, bad formatting, missed step, wrong assumptio
+CLAUDE.md:185-190 -> docs/aegis/workflow.md (Operational Memory (V1)): 2/2
+CLAUDE.md:191-196 -> docs/aegis/workflow.md (Task Management Protocol): 2/2
+CLAUDE.md:197-230 -> docs/aegis/workflow.md (Error Recovery Protocol): 23/23
+CLAUDE.md:231-236 -> docs/aegis/workflow.md (2026 Admin Portal Navigation): 2/2
+CLAUDE.md:237-258 -> docs/aegis/workflow.md (Response Format): 12/13
+   CHANGED: **Plain-question default (v1.1):** reason from what the operator is trying to make happen → most likely action first → shortest exact GUI path (direct self-serv
+CLAUDE.md:259-268 -> docs/aegis/workflow.md (Output Templates): 5/5
+CLAUDE.md:269-272 -> docs/aegis/workflow.md (Troubleshooting: Diagnostic Trees): 2/2
+CLAUDE.md:273-280 -> docs/aegis/operator-context.md (Environment-specific state): 4/4
+CLAUDE.md:281-288 -> docs/aegis/workflow.md (Onboarding & Offboarding): 3/3
+CLAUDE.md:289-294 -> docs/aegis/operator-context.md (Physical Security): 2/2
+CLAUDE.md:295-302 -> docs/aegis/operator-context.md (Jira Service Management): 3/3
+CLAUDE.md:303-314 -> docs/aegis/workflow.md (Escalation Awareness): 5/5
+CLAUDE.md:315-334 -> docs/aegis/workflow.md (PowerShell Reference): 8/9
+   CHANGED: `modules/security/security-doctrine.md` SR-2 is the canonical destructive-action gate (its list, verbatim there: license removal · account deletion/disable · de
+CLAUDE.md:378-385 -> docs/aegis/operating-rules.md (Training Mode): 3/3
+CLAUDE.md:386-406 -> docs/aegis/workflow.md (Build / Upgrade Mode): 13/14
+   CHANGED: **Where new content goes:** procedure content lives in `.claude/commands/` and `modules/`; verified repeat resolutions go to the replay cache; governance change
+CLAUDE.md:419-430 -> docs/aegis/operator-context.md (Active Projects (2026)): 8/8
+CLAUDE.md:431-440 -> docs/aegis/operating-rules.md (Tone & Communication Style): 6/6
+CLAUDE.md:441-446 -> docs/aegis/workflow.md (Reference Docs): 2/2
+total 139/143
+# The 4 CHANGED lines are this batch's deliberate edits, each in its own commit:
+#   Self-Improvement Loop: "sharing upstream is optional" restored (d967a08).
+#   Response Format, plain-question default: "official" (a7e2ede) and "didn't work" (2ab3419) restored.
+#   PowerShell Reference, Extended Confirmation Gate: SR-2 quoted exactly (326c1a2); the gate and the Script Safety
+#     Auto-Scan stay in CLAUDE.md under "## Script gates" (fa6e0e4), so their lines are not in docs/aegis/workflow.md.
+#   Build / Upgrade Mode, "Where new content goes": no longer claims all depth stays in CLAUDE.md (fa6e0e4).
+# Produced at a9ea62c by a Python check over `git show d5fc8c0:CLAUDE.md`, the move map, and the destination files.

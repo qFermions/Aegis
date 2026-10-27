@@ -12,7 +12,7 @@
 // matching is case-sensitive. `.github/**` also matches `.github` itself and `a/**/b` matches `a/b`.
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -114,7 +114,11 @@ export function run(argv, cwd, tierFile) {
   return [`tier=${result.tier}`, ...result.paths].join('\n');
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+// Compare real paths on both sides so a symlinked checkout (macOS /tmp, a linked clone) still runs the CLI.
+function realpathOrSelf(p) {
+  try { return realpathSync(p); } catch { return resolve(p); }
+}
+const isMain = Boolean(process.argv[1]) && realpathOrSelf(process.argv[1]) === realpathOrSelf(fileURLToPath(import.meta.url));
 if (isMain) {
   const cwd = process.cwd();
   const root = git(['rev-parse', '--show-toplevel'], cwd).trim();

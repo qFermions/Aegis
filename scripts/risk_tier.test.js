@@ -154,3 +154,10 @@ test('a tier file with a non-string glob fails closed with exit 1', () => {
   assert.match(run(cwd, ['main'], 1, { env: { RISK_TIERS_FILE: broken } }), /non-string or empty glob/);
 });
 
+test('the CLI runs when invoked through a symlinked path', () => {
+  const cwd = sandbox();
+  commit(cwd, ['.nvmrc']);
+  const link = path.join(cwd, 'risk_tier_link.mjs');
+  fs.symlinkSync(SCRIPT, link);
+  assert.deepEqual(run(cwd, ['main'], 0, { script: link }), ['tier=C', '.nvmrc']);
+});

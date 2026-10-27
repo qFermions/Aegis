@@ -13,9 +13,10 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R2) removes the record, and the host usually comes back as a new one. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.
+- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one's history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.
 - **Role needed:** Maintainer or Admin in Fleet (global, or on the host's fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person's session, a shared login or an API token that carries a higher role.
 - Wipe, Turn off MDM and a script on more than 10 hosts (or all hosts) are R3: save the pre-state, write the rollback path, and get an independent out-of-session review before the gate runs. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.
+- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).
 - Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).
 - Every action is queued for the host's next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.
 
@@ -42,7 +43,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.
 4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.
 5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.
-6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R2 gate) once nothing is pending.
+6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.
 7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).
 
 ## Phase A: Read the host (R0)
@@ -192,7 +193,7 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **Verification checkpoint**: [ ] `verify-script` passed for the pilot and for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
 
-## Phase F: Leaving the fleet, Turn off MDM then delete (R3, then R2)
+## Phase F: Leaving the fleet, Turn off MDM then delete (R3 each)
 
 **Purpose**: stop managing the device, then remove its record, in that order.
 
@@ -227,10 +228,10 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 - **Target:** [HOST_ID] (serial [SERIAL_NUMBER])
 - **Effect:** delete one host record from Fleet; its history and labels go with it
 - **Scope:** one record; this does not unenroll the device: macOS, Windows and Linux hosts re-enroll while their agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours, Apple Business hosts at once as Pending; deleting also removes Fleet's record of commands already sent
-- **Reversibility:** R2: a host that still has the agent or MDM comes back on its own as a new record with a new host ID; the old record's history and labels do not come back
+- **Reversibility:** R3: Fleet cannot restore a deleted record; the record comes back only if the agent or MDM re-enrolls the device, and then as a new record with a new host ID, while the old record's history and labels are lost for good
 - **Required confirmation:** Type exactly `DELETE HOST [HOST_ID] SERIAL [SERIAL_NUMBER] FROM FLEET`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-device-actions-delete-portal]:** Only when nothing is pending for the host (never while a wipe is pending), a wiped host already reads Wiped, `[NOT_BEFORE]` is noted, and after the exact match:
+**PORTAL ACTION [fleet-device-actions-delete-portal]:** Only when nothing is pending for the host (never while a wipe is pending), a wiped host already reads Wiped, the Phase A pre-state is saved to `tasks/checkpoints/`, the rollback path is written in the ticket before step 1 (the record comes back only if the agent or MDM re-enrolls the device, as a new record; its history and labels are lost), `[NOT_BEFORE]` is noted, and after the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Delete**.
 2. If Fleet asks for confirmation, confirm.
 

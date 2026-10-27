@@ -88,6 +88,10 @@ const ESCALATION_PATTERNS = [
   { pattern: /\breset\w*\b[^.]*\bsessions?\b|\bsign(?:s|ed|ing)?\s*out\b[^.]*\bsessions?\b/i, label: 'session reset / sign-out (SR-2 session class)' },
   { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b[^.]*\bretention\b/i, label: 'retention change (records preservation)' },
   { pattern: /\bdisconnect\w*\b[^.]*\b(?:slack connect|organi[sz]ations?|external (?:orgs?|organi[sz]ations?|channels?|workspaces?))\b/i, label: 'Slack Connect disconnection (R3)' },
+  // G2 — Jamf Pro (beyond G1's lock, erase and unmanage)
+  { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|decrypt\w*|remove[sd]?|removing|deactivate[sd]?|deactivating)\b[^.]*\b(?:filevault|disk encryption)\b/i, label: 'FileVault / disk-encryption turned off (security control, SR-2)' },
+  { pattern: /\b(?:delete|remove)\b[^.]*\b(?:computer|mobile device) records?\b/i, label: 'computer or mobile-device record deletion (SR-2)' },
+  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|deploy|push|update|upgrade|scope|redeploy|enable|disable|run)\w*\b[^.]*(?:\b(?:all|every|entire)\b[^.]*\b(?:computers?|macs?|macbooks?|mobile devices?|endpoints?|ipads?|iphones?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:computers|macs|macbooks|mobile devices|endpoints|ipads|iphones)\b)/i, label: 'fleet-wide computer or Mac operation (mass)' },
   // Mass / broad blast radius — numbers, "all", org-wide phrasing
   { pattern: /\b(all|every|entire|org[- ]?wide|company[- ]?wide|tenant[- ]?wide|domain[- ]?wide)\b[^.]*\b(user|users|staff|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|workstation)/i, label: 'org-wide / all-objects operation (mass)' },
   { pattern: /\b(1[1-9]|[2-9]\d|\d{3,})\s*(\+\s*)?(user|users|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|member|members|staff|contractor|contractors|people)\b/i, label: 'mass operation (>10 objects)' },

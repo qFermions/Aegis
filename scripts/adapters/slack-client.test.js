@@ -52,8 +52,8 @@
 //    --type multi (is_restricted is true and is_ultra_restricted is not), never for
 //    a deactivated account; verify-archived (channel.is_archived is true);
 //    verify-posted (conversations.history with oldest = --not-before and limit 50;
-//    a plain message, no subtype, after --not-before whose normalised text has the
-//    expected SHA-256); verify-app-approved (in admin.apps.approved.list and no
+//    a person's plain message, with no subtype, bot_id or app_id, after --not-before
+//    whose normalised text has the expected SHA-256); verify-app-approved (in admin.apps.approved.list and no
 //    longer in admin.apps.requests.list, following next_cursor); verify-app-restricted
 //    (in admin.apps.restricted.list).
 // 7. Tenant. SLACK_TEAM_ID is required before any read. A user, member, team or
@@ -574,6 +574,8 @@ test('verify-posted passes only on a plain message after --not-before whose norm
     ['posted before not-before', [message(text, TS_BEFORE)]],
     ['posted at exactly not-before', [message(text, OLDEST)]],
     ['a bot or system message', [message(text, TS_AFTER, { subtype: 'bot_message' })]],
+    ['an app post with bot_id and no subtype', [message(text, TS_AFTER, { bot_id: 'B0BOT00001' })]],
+    ['an app post with app_id and no subtype', [message(text, TS_AFTER, { app_id: 'A0APP00001' })]],
     ['a malformed ts', [message(text, 'soon')]],
     ['no messages', []],
   ];
@@ -581,6 +583,7 @@ test('verify-posted passes only on a plain message after --not-before whose norm
     const r = await verdict(argv, [authBody(), historyBody(messages)]);
     assert.equal(r.code, 2, label);
     assert.equal(r.res.verified, false, label);
+    assert.match(r.res.reason, /subtype, bot_id or app_id/, `${label}: the reason names what is skipped`);
   }
   const busy = await verdict(argv, [authBody(), historyBody([other], true)]);
   assert.equal(busy.code, 2);

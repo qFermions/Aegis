@@ -135,7 +135,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-decline-invitation-portal]:** Only after the exact match:
 1. Slack admin → Slack Connect settings → the pending request from `[EXTERNAL_DOMAIN]` for `#[CHANNEL_NAME]` → **Decline**.
-2. Read-back: the request is no longer pending, and the Phase A `channel` read shows `is_pending_ext_shared` false and `is_ext_shared` false (expected values; not confirmed on Slack's page).
+2. Read-back: the request is no longer pending, and the Phase A `channel` read, run again, shows `is_pending_ext_shared` false and `is_ext_shared` unchanged from the Phase A read (true when the channel already shares with another organization; expected values, not confirmed on Slack's page).
 
 **Verification checkpoint:** [ ] the partner was confirmed through a contact on record · [ ] after an approval, Organizations lists `[EXTERNAL_DOMAIN]` and the `channel` read shows the share complete · [ ] after a decline, nothing is pending.
 

@@ -15,7 +15,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 - **Aegis drafts; a person posts.** Aegis never sends a Slack message, reaction or pin. Every post below is a human step behind its own exact-phrase gate, and the read-back proves what landed.
 - **Facts before words.** Every bracket in a draft is filled from evidence in `[ISSUE_ID]` (scope, start time, workaround); a sentence that cannot be filled is deleted, never guessed.
-- **Right channel, right audience.** Confirm that `#[CHANNEL_NAME]` is not archived and is not shared with another organization (Slack Connect) before posting internal incident details.
+- **Right channel, right audience.** Confirm that `#[CHANNEL_NAME]` is not archived, is not shared with another organization (Slack Connect) and has no share with one pending, before posting internal incident details.
 - **One post, one confirmation.** The status update, each interim update and the resolved follow-up get their own draft file, digest and typed confirmation; a phrase never carries into a later post.
 - Posting is R1 (the sender can delete the message, or unsend it within 15 seconds on desktop), but an announcement reaches everyone at once: read the draft twice.
 - Slack labels here come from Slack's search-indexed help pages and a 2019 Slack blog, not the live pages (the hosts could not be opened on 2026-10-27): confirm each label on screen.
@@ -34,7 +34,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Email is down, so Slack carries the news.** Diagnosis of a mail outage is `/gws-gmail-delivery`; the post-incident write-up is `/incident-report`; this runbook only carries the words in between.
 - **Posting permissions.** On paid plans a channel's posting can be limited to make an announcement channel, and admins can limit who changes that (a 2019 Slack blog; current labels unconfirmed). By default any member who is not a guest can post and pin.
 - **Pins are not records.** Any member can pin and unpin, so the ticket, not a pin, is the record of what was said.
-- **The digest read-back.** The adapter's offline `digest` prints the SHA-256 of the whitespace-normalised draft and the exact verify-posted line; `verify-posted` reads the channel history from `[NOT_BEFORE]` and passes only when a message's text has that digest. Any change to the text before or after posting changes the digest, so the draft is posted exactly as saved, as plain text.
+- **The digest read-back.** The adapter's offline `digest` prints the SHA-256 of the whitespace-normalised draft and the exact verify-posted line; `verify-posted` reads the channel history from `[NOT_BEFORE]` and passes only when a person's plain message (no subtype, `bot_id` or `app_id`) has that digest. Any change to the text before or after posting changes the digest, so the draft is posted exactly as saved, as plain text.
 - **The adapter cannot post.** It refuses chat.postMessage, chat.update, chat.delete, reactions.add and every POST before credentials or network.
 
 ## Fast path
@@ -95,14 +95,14 @@ Still seeing a problem? Reply to this message or tell IT in [ISSUE_ID].
 # HUMAN-RUN read-only. SLACK_TOKEN and SLACK_TEAM_ID are exported in the shell first, the token from an app a human installed with the read and history scopes in Inputs, and never pasted into a ticket
 # shows which workspace the token belongs to, stop if it is not the one in SLACK_TEAM_ID
 node scripts/adapters/slack-client.js whoami --execute
-# reads the channel, is_archived must be false and is_ext_shared false, meaning not shared with another organization
+# reads the channel, is_archived must be false, is_ext_shared false and is_pending_ext_shared false, meaning not shared with another organization and no share pending
 node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 ```
 </details>
 
-**Stop if:** the channel is archived or shared with another organization, or a fact in the draft is not in the ticket.
+**Stop if:** the channel is archived, shared with another organization (`is_ext_shared` true) or about to be (`is_pending_ext_shared` true: anything posted now could reach the partner once the share completes), or a fact in the draft is not in the ticket.
 
-**Verification checkpoint:** [ ] the facts are confirmed in `[ISSUE_ID]` · [ ] the channel is not archived and not externally shared · [ ] the person posting can post there.
+**Verification checkpoint:** [ ] the facts are confirmed in `[ISSUE_ID]` · [ ] the channel is not archived, not externally shared and has no share pending · [ ] the person posting can post there.
 
 ## Phase B: Post the status update (R1)
 
@@ -111,7 +111,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 **Prepare (offline, no token, no network):**
 1. Fill the brackets in Draft 1 and save the final text as `[NOTE_FILE]`, a local text file outside the repository.
 2. Run the digest below: it prints `[NOTE_SHA256]` and the exact verify-posted line to run after posting.
-3. Note the time just before posting: that is `[NOT_BEFORE]`.
+3. `[NOT_BEFORE]` is the `not_before` value the digest printed (it is earlier than the post). To note your own time instead, write it as an ISO 8601 time with a zone (for example 2026-10-27T18:30:00Z) or as epoch milliseconds; `verify-posted` refuses a local time such as 10:42 (exit 1).
 
 ```bash
 # HUMAN-RUN offline, prints the SHA-256 of the whitespace-normalised draft and the exact verify-posted line, no token and no network
@@ -154,7 +154,7 @@ If `verify-posted` fails while the message is visible, the posted text differs f
 
 **Purpose:** close the loop with what people should do now.
 
-**Before:** the fix is verified in `[ISSUE_ID]` (for mail, the `/gws-gmail-delivery` verification checklist passed: a test message in and a test message out delivered); fill Draft 3, save it as a new `[NOTE_FILE]`, run the Phase B digest and note `[NOT_BEFORE]`.
+**Before:** the fix is verified in `[ISSUE_ID]` (for mail, the `/gws-gmail-delivery` verification checklist passed: a test message in and a test message out delivered); fill Draft 3, save it as a new `[NOTE_FILE]`, run the Phase B digest and take `[NOT_BEFORE]` from it (Phase B step 3 gives the formats).
 
 **Role needed:** a member who can post in `#[CHANNEL_NAME]` (the same rule as Phase B).
 
@@ -187,7 +187,7 @@ node scripts/adapters/slack-client.js verify-posted --channel [CHANNEL_ID] --exp
 
 ## ✅ Verification checklist
 
-- [ ] Phase A: the facts are in `[ISSUE_ID]`; the `channel` read shows not archived and not externally shared.
+- [ ] Phase A: the facts are in `[ISSUE_ID]`; the `channel` read shows not archived, not externally shared and no share pending.
 - [ ] Status update: `verify-posted` passed, or the mismatch is recorded with the GUI read-back.
 - [ ] Interim updates went out at each promised time, each with its own `verify-posted` result.
 - [ ] The resolved follow-up was posted only after the fix was verified, and `verify-posted` passed.

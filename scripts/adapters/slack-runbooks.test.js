@@ -27,6 +27,10 @@
 //    gate", "through Phase C", "a separately reviewed change" ...) names the gate's
 //    PORTAL ACTION id or a PREVIEW ONLY id in brackets, and every such id resolves to a
 //    marker in one of the six runbooks.
+// 7. Read-backs check what they claim: incident comms stops on a channel pending a share
+//    with another organization and says which --not-before formats verify-posted takes;
+//    a declined Slack Connect invitation leaves is_ext_shared as Phase A read it; a
+//    deleted channel's failed read counts only when Phase A read it with the same token.
 //
 // Reads the Markdown and the adapter's SCOPES table only: no credential, no network,
 // no Slack call.
@@ -342,4 +346,37 @@ test('the reviewed rollbacks exist: a channel-removal gate in the user lifecycle
   assert.match(apps, /> \*\*PREVIEW ONLY \[slack-app-approval-require-off-preview\]:\*\* Planning only;/);
   const settings = DOCS.get('slack-security-settings').text;
   assert.match(settings, /> \*\*PREVIEW ONLY \[slack-security-settings-file-sharing-on-preview\]:\*\* Planning only;/);
+});
+
+// ── 7. Read-backs check what they claim ────────────────────────────────────────────
+test('slack-incident-comms: Phase A stops on a channel pending a share with another organization, and the not-before format is stated', () => {
+  const doc = DOCS.get('slack-incident-comms');
+  const phaseA = sectionLines(doc, doc.lines.find((l) => /^## Phase A:/.test(l)));
+  const stop = phaseA.find((l) => l.startsWith('**Stop if:**')) || '';
+  assert.match(stop, /is_pending_ext_shared/, 'the Stop-if line names is_pending_ext_shared');
+  const readComment = phaseA.find((l, i) => /^# /.test(l) && /node scripts\/adapters\/slack-client\.js channel /.test(phaseA[i + 1] || ''));
+  assert.match(readComment || '', /is_pending_ext_shared false/, 'the channel read comment names is_pending_ext_shared');
+  const phaseB = sectionLines(doc, doc.lines.find((l) => /^## Phase B:/.test(l))).join('\n');
+  assert.match(phaseB, /`not_before`/, 'use the not_before value digest printed');
+  assert.match(phaseB, /ISO 8601 time with a zone/);
+  assert.match(phaseB, /epoch milliseconds/);
+});
+
+test('slack-guests-connect: a declined invitation expects is_pending_ext_shared false and is_ext_shared unchanged from Phase A', () => {
+  const decline = GATES.get('slack-guests-connect').find((g) => /^DECLINE SLACK CONNECT INVITATION\b/.test(g.phrase));
+  assert.ok(decline);
+  const text = decline.steps.join('\n');
+  assert.match(text, /`is_pending_ext_shared` false/);
+  assert.match(text, /`is_ext_shared` unchanged from the Phase A read/);
+  assert.doesNotMatch(text, /`is_ext_shared` false/);
+});
+
+test('slack-retention-export: a deleted channel\'s failed read counts only when Phase A read the same channel with the same token', () => {
+  const del = GATES.get('slack-retention-export').find((g) => /^DELETE SLACK CHANNEL\b/.test(g.phrase));
+  assert.ok(del);
+  const doc = DOCS.get('slack-retention-export');
+  const phaseF = sectionLines(doc, del.section).join('\n');
+  for (const line of phaseF.split('\n').filter((l) => /channel_not_found|channel error code/.test(l))) {
+    assert.match(line, /Phase A `channel` read of the same `?\[CHANNEL_ID\]`? succeeded with the same token/, line);
+  }
 });

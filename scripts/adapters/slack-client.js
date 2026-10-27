@@ -39,8 +39,9 @@
 //                                          conversations.info: is_archived is true
 //     verify-posted --channel [CHANNEL_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE]
 //                                          auth.test, then conversations.history
-//                                          (oldest = not-before, limit 50): a plain
-//                                          message after not-before with that digest
+//                                          (oldest = not-before, limit 50): a person's
+//                                          plain message (no subtype, bot_id or app_id)
+//                                          after not-before with that digest
 //     verify-app-approved --app-id [APP_ID]
 //                                          in admin.apps.approved.list and out of
 //                                          admin.apps.requests.list (10 pages each at most)
@@ -609,7 +610,10 @@ async function verifyPosted(command, args, ctx, client, steps) {
   let plainAfter = 0;
   let matched = null;
   for (const m of body.messages) {
-    if (!isObject(m) || m.type !== 'message' || has(m, 'subtype')) continue; // a plain message has no subtype
+    // A person's plain message: no subtype, and no bot_id or app_id (an app posting with
+    // a bot token may carry those without a subtype). bot_id and app_id were not in the
+    // sources read; skipping them can only turn a pass into "not verified".
+    if (!isObject(m) || m.type !== 'message' || has(m, 'subtype') || has(m, 'bot_id') || has(m, 'app_id')) continue;
     const ts = tsToMicros(m.ts);
     if (ts === null || ts <= oldest) continue;
     plainAfter += 1;
@@ -620,8 +624,8 @@ async function verifyPosted(command, args, ctx, client, steps) {
   let reason = '';
   if (matched === null) {
     reason = hasMore
-      ? `Slack returned ${body.messages.length} messages after --not-before and says more exist (has_more); none of the ${HISTORY_LIMIT} read is a plain message with the expected SHA-256, so the read cannot prove the post: use a --not-before closer to the post or confirm it in the channel`
-      : 'no plain message (no subtype) posted after --not-before in this channel has the expected SHA-256; an edited, reformatted or app-posted message does not match';
+      ? `Slack returned ${body.messages.length} messages after --not-before and says more exist (has_more); none of the ${HISTORY_LIMIT} read is a person's plain message (no subtype, bot_id or app_id) with the expected SHA-256, so the read cannot prove the post: use a --not-before closer to the post or confirm it in the channel`
+      : 'no message posted after --not-before in this channel without a subtype, bot_id or app_id has the expected SHA-256; an edited or reformatted message does not match, and a message carrying a subtype, bot_id or app_id is skipped';
   }
   return verdict(command, matched !== null, expected, observed, reason, outcome.flags);
 }

@@ -205,11 +205,11 @@ Before the gate:
 2. GUI read-back: Slack → Directories → search for `[CHANNEL_NAME]` with archived channels included → no result.
 
 ```bash
-# read-only: expect a failed read (exit 2) with an error code such as channel_not_found (the exact code for a deleted channel was not confirmed); exit 2 with missing_scope or not_authed proves nothing
+# read-only: expect a failed read (exit 2) with an error code such as channel_not_found (the exact code for a deleted channel was not confirmed); it counts only when the Phase A `channel` read of the same [CHANNEL_ID] succeeded with the same token; exit 2 with missing_scope or not_authed proves nothing
 node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 ```
 
-**Verification checkpoint:** [ ] Directories finds no channel · [ ] the `channel` read fails with a channel error code, not an auth or scope code.
+**Verification checkpoint:** [ ] Directories finds no channel · [ ] the `channel` read fails with a channel error code, not an auth or scope code, and counts only when the Phase A `channel` read of the same `[CHANNEL_ID]` succeeded with the same token (a private channel the token cannot see also answers channel_not_found).
 
 <details>
 <summary>Slack Web API reads through the adapter: the scale version (HUMAN-RUN, read-only)</summary>
@@ -243,7 +243,7 @@ The writes behind these gates (`chat.delete`, `files.delete`, `admin.conversatio
 - [ ] Export: Ready for download was shown, and the SHA-256, the evidence location and the downloader are in the ticket.
 - [ ] Retention: the setting shows the approved period, with the approval, the review and the previous setting in the ticket.
 - [ ] Messages: every listed message is ticked off and no longer opens; files are recorded and untouched.
-- [ ] Channel: Directories finds nothing and the `channel` read fails with a channel error code.
+- [ ] Channel: Directories finds nothing and the `channel` read fails with a channel error code, after the Phase A `channel` read of the same `[CHANNEL_ID]` succeeded with the same token.
 
 ## 📝 Linear-ready note
 

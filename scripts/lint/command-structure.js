@@ -376,6 +376,8 @@ const FRESHNESS_DOCS = ['docs/portal-nav-2026.md', 'docs/ticket-examples.md', 'd
   'modules/security/compliance_checks.md', 'modules/security/incident_response.md', 'modules/security/vulnerability_scan.md',
   'modules/security/threat_detection.md', 'modules/systems/health_checks.md', 'modules/systems/infrastructure.md',
   'modules/systems/network_ops.md', 'modules/automation/powershell/examples.md', '.claude/plugins/enterprise-it-ops/skills/it-ops.md', 'CLAUDE.md',
+  // Batch 1: the passages that moved out of CLAUDE.md keep the same freshness check
+  'docs/aegis/operating-rules.md', 'docs/aegis/workflow.md', 'docs/aegis/operator-context.md',
   // G1 — Google Workspace / Okta / Jamf / macOS knowledge docs
   'docs/portal-nav-google-2026.md', 'docs/gws-reversibility.md', 'docs/evidence/gws/README.md'];
 

@@ -157,3 +157,8 @@ test('CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-norma
   const content = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\r\n/g, '\n');
   assert.ok(content.length <= 40000, `CLAUDE.md is ${content.length} chars; Claude Code truncates the tail past 40,000`);
 });
+
+test('CLAUDE.md stays under 20,000 bytes so every session loads it whole (batch 1, A5b)', () => {
+  const bytes = fs.statSync(path.join(ROOT, 'CLAUDE.md')).size;
+  assert.ok(bytes < 20000, `CLAUDE.md is ${bytes} bytes; move product rules, capability descriptions and procedures to the documents it points to`);
+});

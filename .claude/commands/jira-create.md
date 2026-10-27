@@ -52,10 +52,10 @@ CREATE JSM REQUEST ON <tenant>.atlassian.net DESK <numeric-id> TYPE <numeric-id>
 
 3. The administrator creates the request, either in the customer portal of that service desk with the printed summary and description pasted unedited, or by running the printed `curl` line in their own terminal (it prompts for the API token). Aegis does not run either step.
 
-4. Prove the create with the printed read-back, filling in the issue key Jira returned:
+4. Prove the create with the printed read-back, filling in the issue key Jira returned. `--not-before` is the time the preview printed (epoch milliseconds, ten minutes early for clock skew):
 
 ```bash
-node scripts/jira-client.js verify-create --issue [JIRA-###] --summary "[ONE-LINE SUMMARY]" --description "[2-3 SENTENCE DESCRIPTION]" --execute
+node scripts/jira-client.js verify-create --issue [JIRA-###] --summary "[ONE-LINE SUMMARY]" --description "[2-3 SENTENCE DESCRIPTION]" --not-before [PREVIEW_TIME_MS] --execute
 ```
 
 To create on behalf of a reporter, add `--on-behalf-of [USER@DOMAIN.COM]` to the preview. Use only the operator-supplied reporter value; never invent one.
@@ -65,9 +65,9 @@ To create on behalf of a reporter, add `--on-behalf-of [USER@DOMAIN.COM]` to the
 - `create` without flags: preview only, zero credentials, zero network, exit 0.
 - `create` with `--execute` or `--confirm`, exact phrase or not: refusal, zero credentials, zero network, exit 1.
 - Invalid `JIRA_SITE`: refusal before credentials or network.
-- `verify-create` without `--execute`: dry run, zero network. With it: one GET; any mismatch in key, immutable ID, service desk, request type, summary, or description is exit 2 and the create is not proven.
+- `verify-create` without `--execute`: dry run, zero network. With it: one GET; any mismatch in key, immutable ID, service desk, request type, summary, or description, or a request created before the preview (an older request with the same text), is exit 2 and the create is not proven.
 - API response bodies are withheld from terminal errors.
 
 ## Verification
 
-`verify-create` passes only when one independent GET returns the same key with a valid immutable ID plus the approved service desk, request type, summary, and description. It does not prove downstream automation or notifications completed; open the exact request in JSM and check its reporter and automation state before reporting the wider workflow complete. Record the verified `[JIRA-###]` key in the local ticket thread.
+`verify-create` passes only when one independent GET returns the same key with a valid immutable ID, a creation time after the preview, and the approved service desk, request type, summary, and description. It does not prove downstream automation or notifications completed; open the exact request in JSM and check its reporter and automation state before reporting the wider workflow complete. Record the verified `[JIRA-###]` key in the local ticket thread.

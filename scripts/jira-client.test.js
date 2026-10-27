@@ -22,6 +22,12 @@ const {
   serializePayload,
 } = require('./jira-client');
 
+// A fixed clock: previews print NOW minus the ten-minute margin as --not-before.
+const NOW = 1_000_000_000_000;
+const NOT_BEFORE = String(NOW - 10 * 60 * 1000);
+const AFTER = NOW + 60_000;
+const BEFORE = NOW - 24 * 60 * 60 * 1000;
+
 const BASE_ENV = Object.freeze({
   JIRA_SITE: 'Example-Tenant.atlassian.net',
   JIRA_EMAIL: 'api@example.org',
@@ -53,12 +59,14 @@ function createdRequestJson({
   requestTypeId = '34',
   summary = 'Test',
   description = 'Description',
+  createdMillis = AFTER,
 } = {}) {
   return {
     issueKey,
     issueId,
     serviceDeskId,
     requestTypeId,
+    createdDate: { epochMillis: createdMillis },
     requestFieldValues: [
       { fieldId: 'summary', value: summary },
       { fieldId: 'description', value: description },
@@ -107,6 +115,7 @@ async function invoke(argv, {
     return { email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN };
   });
   const code = await run(argv, env, {
+    now: () => NOW,
     fetch,
     getCredentials: async (...args) => {
       if (getCredentials) credentialCalls += 1;
@@ -266,11 +275,11 @@ test('the exact create phrase is refused too: zero credentials, zero network, an
   assert.match(result.stdout, /HUMAN-RUN procedure/);
   assert.ok(result.stdout.includes(serializePayload(payload)), 'the procedure carries the exact serialized payload');
   assert.match(result.stdout, /--request POST 'https:\/\/example-tenant\.atlassian\.net\/rest\/servicedeskapi\/request'/);
-  assert.match(result.stdout, /verify-create --issue \[JIRA-###\] --service-desk 12 --request-type 34 --summary 'Test' --description 'Description' --execute/);
+  assert.ok(result.stdout.includes(`verify-create --issue [JIRA-###] --service-desk 12 --request-type 34 --summary 'Test' --description 'Description' --not-before ${NOT_BEFORE} --execute`));
 });
 
 test('verify-create proves the human-created request by an independent GET and fails closed on any mismatch', async (t) => {
-  const argv = ['verify-create', '--issue', 'HELP-123', '--summary', 'Test', '--description', 'Description', '--execute'];
+  const argv = ['verify-create', '--issue', 'HELP-123', '--summary', 'Test', '--description', 'Description', '--not-before', NOT_BEFORE, '--execute'];
   await t.test('match', async () => {
     const queue = queuedFetch([{ status: 200, json: createdRequestJson() }]);
     const result = await invoke(argv, { fetch: queue.fetch });
@@ -285,6 +294,8 @@ test('verify-create proves the human-created request by an independent GET and f
     ['different service desk', { status: 200, json: createdRequestJson({ serviceDeskId: '13' }) }],
     ['drifted summary', { status: 200, json: createdRequestJson({ summary: 'drifted' }) }],
     ['drifted description', { status: 200, json: createdRequestJson({ description: 'drifted' }) }],
+    ['an older request with the same text (created before the preview)', { status: 200, json: createdRequestJson({ createdMillis: BEFORE }) }],
+    ['no creation time', { status: 200, json: { ...createdRequestJson(), createdDate: undefined } }],
     ['read failure', { status: 503, json: null }],
   ];
   for (const [name, response] of mismatches) {
@@ -362,23 +373,25 @@ test('exact INTERNAL and PUBLIC phrases are refused, and each procedure names th
     assert.ok(result.stdout.includes(exact), 'the binding line is printed for the human to compare');
     assert.ok(result.stdout.includes(serializePayload(payload)));
     assert.match(result.stdout, isPublic ? /Reply to customer/ : /Add internal note/);
-    assert.match(result.stdout, isPublic ? /verify-comment .* --public --execute/ : /verify-comment (?:(?!--public).)* --execute/);
+    assert.match(result.stdout, isPublic ? new RegExp(`verify-comment .* --public --not-before ${NOT_BEFORE} --execute`) : new RegExp(`verify-comment (?:(?!--public).)* --not-before ${NOT_BEFORE} --execute`));
   }
 });
 
 test('verify-comment proves the comment id, body and visibility and fails closed on any mismatch', async (t) => {
-  const argv = ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note', '--execute'];
+  const argv = ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note', '--not-before', NOT_BEFORE, '--execute'];
+  const created = { epochMillis: AFTER };
   await t.test('match', async () => {
-    const queue = queuedFetch([{ status: 200, json: { id: '7001', body: 'note', public: false } }]);
+    const queue = queuedFetch([{ status: 200, json: { id: '7001', body: 'note', public: false, created } }]);
     const result = await invoke(argv, { fetch: queue.fetch });
     assert.equal(result.code, 0);
     assert.deepEqual(queue.calls.map((call) => [call.method, call.apiPath]), [['GET', '/rest/servicedeskapi/request/HELP-123/comment/7001']]);
     assert.match(result.stdout, /Verified: INTERNAL comment 7001 on HELP-123/);
   });
   const mismatches = [
-    ['different id', { status: 200, json: { id: '7002', body: 'note', public: false } }],
-    ['drifted body', { status: 200, json: { id: '7001', body: 'drifted', public: false } }],
-    ['wrong visibility', { status: 200, json: { id: '7001', body: 'note', public: true } }],
+    ['different id', { status: 200, json: { id: '7002', body: 'note', public: false, created } }],
+    ['drifted body', { status: 200, json: { id: '7001', body: 'drifted', public: false, created } }],
+    ['wrong visibility', { status: 200, json: { id: '7001', body: 'note', public: true, created } }],
+    ['an older comment with the same body (created before the preview)', { status: 200, json: { id: '7001', body: 'note', public: false, created: { epochMillis: BEFORE } } }],
     ['malformed', { status: 200, json: null }],
     ['read failure', { status: 503, body: 'synthetic-comment-sentinel', json: null }],
   ];
@@ -393,7 +406,7 @@ test('verify-comment proves the comment id, body and visibility and fails closed
     });
   }
   await t.test('a non-numeric comment id is an input error before credentials or network', async () => {
-    const result = await invoke(['verify-comment', '--issue', 'HELP-123', '--comment-id', '[COMMENT_ID]', '--body', 'note', '--execute'], {
+    const result = await invoke(['verify-comment', '--issue', 'HELP-123', '--comment-id', '[COMMENT_ID]', '--body', 'note', '--not-before', NOT_BEFORE, '--execute'], {
       getCredentials: () => { throw new Error('credentials should not load'); },
     });
     assert.equal(result.code, 1);
@@ -534,21 +547,22 @@ test('the transition preflight prints a HUMAN-RUN procedure bound to the resolve
   assert.match(result.stdout, /Re-run this preflight just before you act/);
   assert.match(result.stdout, /--request POST 'https:\/\/example-tenant\.atlassian\.net\/rest\/servicedeskapi\/request\/HELP-123\/transition'/);
   assert.ok(result.stdout.includes('{"id":"20"}'));
-  assert.match(result.stdout, /verify-transition --issue HELP-123 --issue-id 10001 --from-status 'Open' --execute/);
+  assert.ok(result.stdout.includes("verify-transition --issue HELP-123 --issue-id 10001 --from-version 1000 --to-status '[STATUS AFTER]' --execute"));
 });
 
 test('verify-transition proves the same immutable request left the preflight status and fails closed otherwise', async (t) => {
-  const argv = ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-status', 'Open', '--execute'];
-  await t.test('moved', async () => {
+  const argv = ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', '1000', '--to-status', 'Resolved', '--execute'];
+  await t.test('moved to the expected status', async () => {
     const queue = queuedFetch([{ status: 200, json: requestJson({ status: 'Resolved', epochMillis: 2000 }) }]);
     const result = await invoke(argv, { fetch: queue.fetch });
     assert.equal(result.code, 0);
     assert.deepEqual(queue.calls.map((call) => call.method), ['GET']);
-    assert.match(result.stdout, /Verified: HELP-123 ID 10001 moved Open -> Resolved/);
+    assert.match(result.stdout, /Verified: HELP-123 ID 10001 moved after the preflight and is now Resolved/);
   });
   const failures = [
-    ['unchanged status', { status: 200, json: requestJson() }, /still Open/],
-    ['different immutable id', { status: 200, json: requestJson({ issueId: '10002', status: 'Resolved' }) }, /different immutable issue id/],
+    ['unchanged since the preflight', { status: 200, json: requestJson() }, /has not changed since the preflight/],
+    ['moved, but to another status (an automation, not this transition)', { status: 200, json: requestJson({ status: 'In progress', epochMillis: 2000 }) }, /is in In progress, not Resolved/],
+    ['different immutable id', { status: 200, json: requestJson({ issueId: '10002', status: 'Resolved', epochMillis: 2000 }) }, /different immutable issue id/],
     ['read failure', { status: 503, json: null }, /HTTP 503/],
   ];
   for (const [name, response, message] of failures) {
@@ -561,6 +575,13 @@ test('verify-transition proves the same immutable request left the preflight sta
       assert.doesNotMatch(result.stdout, /Verified/);
     });
   }
+  await t.test('the printed placeholder status is an input error before credentials or network', async () => {
+    const result = await invoke(['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', '1000', '--to-status', '[STATUS AFTER]', '--execute'], {
+      getCredentials: () => { throw new Error('credentials should not load'); },
+    });
+    assert.equal(result.code, 1);
+    assert.equal(result.credentialCalls, 0);
+  });
 });
 
 test('the transport refuses every method but GET, and any payload, before touching the network', () => {
@@ -622,9 +643,9 @@ test('printed procedures never carry the token, make curl prompt for it, and quo
 
 test('verify commands without --execute are dry runs with zero credentials and zero network', async () => {
   const cases = [
-    ['verify-create', '--issue', 'HELP-123', '--summary', 'Test'],
-    ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note'],
-    ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-status', 'Open'],
+    ['verify-create', '--issue', 'HELP-123', '--summary', 'Test', '--not-before', NOT_BEFORE],
+    ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note', '--not-before', NOT_BEFORE],
+    ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', '1000', '--to-status', 'Resolved'],
   ];
   for (const argv of cases) {
     let fetchCalls = 0;

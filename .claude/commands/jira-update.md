@@ -50,10 +50,10 @@ POST PUBLIC JSM COMMENT ON <tenant>.atlassian.net ISSUE [JIRA-###] PAYLOAD SHA25
 3. Prove it with the printed read-back, filling in the comment ID Jira returned:
 
 ```bash
-node scripts/jira-client.js verify-comment --issue [JIRA-###] --comment-id [COMMENT_ID] --body "[NOTE]" --execute
+node scripts/jira-client.js verify-comment --issue [JIRA-###] --comment-id [COMMENT_ID] --body "[NOTE]" --not-before [PREVIEW_TIME_MS] --execute
 ```
 
-Add `--public` to the read-back for a public reply. An INTERNAL read-back fails on a PUBLIC comment and the reverse.
+Add `--public` to the read-back for a public reply. An INTERNAL read-back fails on a PUBLIC comment and the reverse, and a comment created before the preview fails too.
 
 ## Transition one request
 
@@ -81,11 +81,13 @@ TRANSITION JSM ISSUE [JIRA-###] ID <immutable-id> ON <tenant>.atlassian.net FROM
 
 4. The administrator applies the printed transition, from the request's status button or by running the printed `curl` line in their own terminal. Aegis does not run either step.
 
-5. Prove it with the printed read-back:
+5. Prove it with the printed read-back, naming the status the transition should leave the request in:
 
 ```bash
-node scripts/jira-client.js verify-transition --issue [JIRA-###] --issue-id [ISSUE_ID] --from-status "[STATUS BEFORE]" --execute
+node scripts/jira-client.js verify-transition --issue [JIRA-###] --issue-id [ISSUE_ID] --from-version [STATUS_VERSION] --to-status "[STATUS AFTER]" --execute
 ```
+
+It passes only when the same immutable request changed status since the preflight and now sits in that status; a move to any other status (an automation, a customer reply) does not prove the transition.
 
 ## Failure behavior
 
@@ -93,7 +95,7 @@ node scripts/jira-client.js verify-transition --issue [JIRA-###] --issue-id [ISS
 - Transition `--execute` without `--confirm`: read-only GET preflight; zero POST.
 - Any `--confirm` on `comment` or `transition`, and `--execute` on `comment`: refusal, zero credentials, zero network, exit 1.
 - Duplicate transition names, duplicate transition IDs, missing match, malformed pages, or non-progressing pagination: exit 2.
-- A read-back that does not prove the write (different ID, different body or visibility, unchanged status, read failure): exit 2, and the write is not proven.
+- A read-back that does not prove the write (different ID, different body or visibility, created before the preview, unchanged status, a different status than expected, read failure): exit 2, and the write is not proven.
 - API response bodies are withheld from terminal errors.
 
 ## Risk warning
@@ -106,5 +108,5 @@ node scripts/jira-client.js verify-transition --issue [JIRA-###] --issue-id [ISS
 ## Verification
 
 - Comment: `verify-comment` proved the immutable comment ID, the exact body, and the intended visibility by one independent GET. Inspect the comment in JSM before reporting downstream effects.
-- Transition: `verify-transition` proved the same immutable issue ID left the status the preflight saw. If it exits 2, do not claim completion; inspect the actual Jira state.
+- Transition: `verify-transition` proved the same immutable issue ID changed status since the preflight and now sits in the expected status. If it exits 2, do not claim completion; inspect the actual Jira state.
 - Record the verified change in the local ticket thread so the work-up stays synchronized with `[JIRA-###]`.

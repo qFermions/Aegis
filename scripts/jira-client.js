@@ -38,6 +38,10 @@ const https = require('node:https');
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TRANSITION_PAGE_LIMIT = 50;
+// A verify-* read-back proves the administrator's write only if the object was made
+// after the preview that prepared it. The preview prints its own time minus this
+// margin, so modest clock skew between this machine and Jira cannot fail a real write.
+const NOT_BEFORE_MARGIN_MS = 10 * 60 * 1000;
 const MAX_TRANSITION_PAGES = 100;
 
 const BOOLEAN_FLAGS = new Set(['execute', 'public']);
@@ -53,7 +57,9 @@ const VALUE_FLAGS = new Set([
   'confirm',
   'comment-id',
   'issue-id',
-  'from-status',
+  'from-version',
+  'to-status',
+  'not-before',
 ]);
 const KNOWN_FLAGS = new Set([...BOOLEAN_FLAGS, ...VALUE_FLAGS]);
 
@@ -290,6 +296,7 @@ function createRuntime(env, dependencies = {}) {
     env,
     fetch: dependencies.fetch || apiRequest,
     getCredentials: dependencies.getCredentials || loadCredentials,
+    now: dependencies.now || Date.now,
     out: dependencies.out || defaultOut,
     err: dependencies.err || defaultErr,
   };
@@ -324,6 +331,21 @@ function refuseWrite(runtime, next) {
   runtime.err(next);
   runtime.err('No credentials were read and no network call was made.');
   return 1;
+}
+
+function previewNotBefore(runtime) {
+  return Math.max(0, Math.floor(runtime.now()) - NOT_BEFORE_MARGIN_MS);
+}
+
+function requireNotBefore(args) {
+  return Number(normalizePositiveId(args['not-before'], '--not-before (epoch milliseconds printed by the preview)'));
+}
+
+// The creation time Jira stamped on a request or comment, in epoch milliseconds.
+function createdMillis(json, field, label) {
+  const stamp = json && json[field];
+  if (!stamp || !Number.isInteger(stamp.epochMillis)) throw new ContractError(`${label} read-back carries no creation time.`);
+  return stamp.epochMillis;
 }
 
 // POSIX single-quote quoting for the commands a procedure prints; the human pastes them.
@@ -541,7 +563,7 @@ async function cmdCreate(runtime, args) {
     '  2. Or the API, in your own terminal (curl asks for your API token):',
     curlPostLine(site, '/rest/servicedeskapi/request', payload),
     '  3. Prove it with a read-back, using the issue key Jira returned:',
-    `     node scripts/jira-client.js verify-create --issue [JIRA-###] ${payloadArgs(payload)} --execute`,
+    `     node scripts/jira-client.js verify-create --issue [JIRA-###] ${payloadArgs(payload)} --not-before ${previewNotBefore(runtime)} --execute`,
   ]);
   if (args.execute === true || args.confirm !== undefined) {
     return refuseWrite(runtime, 'Run the HUMAN-RUN procedure printed above yourself, in the portal or your own terminal.');
@@ -564,7 +586,7 @@ async function cmdComment(runtime, args) {
     curlPostLine(site, apiPath, payload),
     '  3. Prove it with a read-back, using the comment id Jira returned:',
     `     node scripts/jira-client.js verify-comment --issue ${issueKey} --comment-id [COMMENT_ID] --body ${shellQuote(payload.body)}` +
-      `${payload.public ? ' --public' : ''} --execute`,
+      `${payload.public ? ' --public' : ''} --not-before ${previewNotBefore(runtime)} --execute`,
   ]);
   if (args.execute === true || args.confirm !== undefined) {
     return refuseWrite(runtime, 'Run the HUMAN-RUN procedure printed above yourself, in the portal or your own terminal.');
@@ -613,7 +635,8 @@ async function cmdTransition(runtime, args) {
     curlPostLine(site, `/rest/servicedeskapi/request/${encodeURIComponent(snapshot.issueKey)}/transition`, { id: transition.id }),
     '  3. Prove it with a read-back:',
     `     node scripts/jira-client.js verify-transition --issue ${snapshot.issueKey} --issue-id ${snapshot.issueId}` +
-      ` --from-status ${shellQuote(snapshot.currentStatus)} --execute`,
+      ` --from-version ${snapshot.statusVersion} --to-status '[STATUS AFTER]' --execute`,
+    '     Replace [STATUS AFTER] with the status this transition should leave the request in.',
   ]);
   return 0;
 }
@@ -630,6 +653,7 @@ async function cmdVerifyCreate(runtime, args) {
   const issueKey = normalizeIssueKey(args.issue);
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const payload = createPayloadFromArgs(runtime, args);
+  const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}`;
   if (dryRunRead(runtime, args, apiPath)) return 0;
   const cfg = await networkConfig(runtime, site);
@@ -637,7 +661,12 @@ async function cmdVerifyCreate(runtime, args) {
   const observed = normalizeWriteReceipt(response.json, 'create read-back');
   if (observed.issueKey !== issueKey) throw new ContractError('Jira returned a different issue key.');
   verifyCreatedRequestReadBack(response.json, observed, payload);
-  runtime.out(`Verified: ${observed.issueKey} ID ${observed.issueId} carries the approved service desk, request type, summary and description.`);
+  // Same text is not the same write: an older request with this summary and description
+  // (a recurring ticket) was not created by the procedure this preview printed.
+  if (createdMillis(response.json, 'createdDate', 'Create') < notBefore) {
+    throw new ContractError('The request was created before the preview that prepared it; it is not the administrator\'s new request.');
+  }
+  runtime.out(`Verified: ${observed.issueKey} ID ${observed.issueId} was created after the preview and carries the approved service desk, request type, summary and description.`);
   return 0;
 }
 
@@ -647,20 +676,29 @@ async function cmdVerifyComment(runtime, args) {
   const commentId = normalizePositiveId(args['comment-id'], '--comment-id');
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const payload = buildCommentPayload({ body: args.body, isPublic: args.public });
+  const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}/comment/${encodeURIComponent(commentId)}`;
   if (dryRunRead(runtime, args, apiPath)) return 0;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   verifyCommentReadBack(response.json, { id: commentId }, payload);
+  if (createdMillis(response.json, 'created', 'Comment') < notBefore) {
+    throw new ContractError('The comment was created before the preview that prepared it; it is not the administrator\'s new comment.');
+  }
   runtime.out(`Verified: ${payload.public ? 'PUBLIC' : 'INTERNAL'} comment ${commentId} on ${issueKey} carries the approved body and visibility.`);
   return 0;
 }
 
-// verify-transition: prove the same immutable request left the status the preflight saw.
+// verify-transition: prove the same immutable request moved after the preflight (its
+// status version changed) and now sits in the status the administrator expected. A
+// different status (an automation, a customer reply, another transition) does not pass.
 async function cmdVerifyTransition(runtime, args) {
   const issueKey = normalizeIssueKey(args.issue);
   const issueId = normalizePositiveId(args['issue-id'], '--issue-id');
-  const fromStatus = requireText(args['from-status'], 'from-status', { controlsAllowed: false });
+  const fromVersion = requireText(args['from-version'], 'from-version', { controlsAllowed: false });
+  if (!/^[0-9A-Za-z:.+-]{1,64}$/.test(fromVersion)) throw new InputError('--from-version must be the status version the preflight printed.');
+  const toStatus = requireText(args['to-status'], 'to-status', { controlsAllowed: false });
+  if (/^\[.*\]$/.test(toStatus)) throw new InputError('--to-status still holds the placeholder; name the status the transition should leave.');
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}`;
   if (dryRunRead(runtime, args, apiPath)) return 0;
@@ -668,8 +706,11 @@ async function cmdVerifyTransition(runtime, args) {
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   const after = normalizeCustomerRequest(response.json, issueKey);
   if (after.issueId !== issueId) throw new ContractError('Jira returned a different immutable issue id.');
-  if (after.currentStatus === fromStatus) throw new ContractError(`Status is still ${fromStatus}; the transition is not proven.`);
-  runtime.out(`Verified: ${after.issueKey} ID ${after.issueId} moved ${fromStatus} -> ${after.currentStatus}.`);
+  if (after.statusVersion === fromVersion) throw new ContractError('The status has not changed since the preflight; the transition is not proven.');
+  if (after.currentStatus !== toStatus) {
+    throw new ContractError(`The request is in ${after.currentStatus}, not ${toStatus}; something other than this transition moved it, or it has not been applied.`);
+  }
+  runtime.out(`Verified: ${after.issueKey} ID ${after.issueId} moved after the preflight and is now ${after.currentStatus}.`);
   return 0;
 }
 

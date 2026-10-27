@@ -190,13 +190,13 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 ```bash
 # read-back: the roles the user now holds, the roleId of the assigned role should be listed
 node scripts/adapters/gws-client.js role-assignments --user [USER@DOMAIN.COM] --execute
-# read-back: a role-assignment event with you as the actor after NOT_BEFORE, the event name as recorded in /gws-audit-log
-node scripts/adapters/gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --execute
+# read-back: a role-assignment event with you as the actor after NOT_BEFORE whose parameters name the user, the event name as recorded in /gws-audit-log
+node scripts/adapters/gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
 ```
 
-For Super Admin the event may be recorded as `GRANT_ADMIN_PRIVILEGE` instead; both names come from `/gws-audit-log` (checked 2026-10-15, not re-confirmed in this lane's sources), so run the read again with that name before concluding the event is missing. GUI read-back: Admin console → Account → Admin roles → `[ROLE_NAME]` → **Admins** lists `[USER@DOMAIN.COM]` with the recorded scope.
+`--target` makes the read prove this user's assignment, not another one you made since `[NOT_BEFORE]`; the read prints the matched event's parameters. For Super Admin the event may be recorded as `GRANT_ADMIN_PRIVILEGE` instead; both names come from `/gws-audit-log` (checked 2026-10-15, not re-confirmed in this lane's sources), and the parameter names are not confirmed either, so run the read again with that name, keeping `--target [USER@DOMAIN.COM]`, before concluding the event is missing. GUI read-back: Admin console → Account → Admin roles → `[ROLE_NAME]` → **Admins** lists `[USER@DOMAIN.COM]` with the recorded scope.
 
-**Verification checkpoint**: [ ] `role-assignments` lists the role for the user · [ ] `verify-event` exit 0 · [ ] approver and scope in the ticket.
+**Verification checkpoint**: [ ] `role-assignments` lists the role for the user · [ ] `verify-event --target [USER@DOMAIN.COM]` exit 0 · [ ] approver and scope in the ticket.
 
 ## Phase D: Remove a role
 
@@ -275,7 +275,7 @@ GUI read-back: Admin console → Directory → Users → `[USER@DOMAIN.COM]` →
 
 - [ ] Super admins counted as people (groups expanded), each holder's path recorded, service-account holders listed, delegated admins recorded with role and scope.
 - [ ] Super admin account recovery value recorded per unit and per group; after a B1 or B2 change, the panel shows the new value for `[OU_PATH]` (the proof), and the `activities --app admin` read lists the change (supporting evidence).
-- [ ] After an assignment: `role-assignments --user [USER@DOMAIN.COM]` lists the role, `verify-event` exits 0 (or the `GRANT_ADMIN_PRIVILEGE` form does), and the approver is in the ticket.
+- [ ] After an assignment: `role-assignments --user [USER@DOMAIN.COM]` lists the role, `verify-event --target [USER@DOMAIN.COM]` exits 0 (or the `GRANT_ADMIN_PRIVILEGE` form does, with the same target), and the approver is in the ticket.
 - [ ] After a removal: `verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID]` exits 0, the role's Admins tab no longer lists the user, and at least one other active super admin remains.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows each change with your address as the actor and the expected time.
 - [ ] The Linear comment is proved by `verify-comment` (below).

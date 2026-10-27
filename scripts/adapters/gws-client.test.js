@@ -61,8 +61,9 @@
 //    (orgUnitPath is exactly the path given), verify-admin-role-removed (the user
 //    record is the user asked for and no direct assignment of the role ID is listed,
 //    on a list with no further page) and verify-event (an event of that name in that
-//    application, by that user, at or after --not-before). A record about another
-//    user is never proof.
+//    application, by that user, at or after --not-before; with --target, that same
+//    event also carries a parameter value equal to the target, and the matched event's
+//    parameters are printed). A record about another user is never proof.
 // 9. Instruction text in a response field is flagged and quoted in the CLI output,
 //    and no request follows from it.
 // 10. Bad input (an unknown command or flag, a flag that does not belong to the
@@ -176,12 +177,12 @@ const assignmentsList = (roleIds, extra = {}) => ({
 const membersList = () => ({ kind: 'admin#directory#members', members: [{ id: USER_ID, email: USER, role: 'MEMBER', type: 'USER', status: 'ACTIVE' }] });
 const mobileList = () => ({ kind: 'admin#directory#mobiledevices', mobiledevices: [{ resourceId: 'res-1', email: [USER], status: 'APPROVED', os: 'Android 14' }] });
 const chromeosList = () => ({ kind: 'admin#directory#chromeosdevices', chromeosdevices: [{ deviceId: 'dev-1', status: 'ACTIVE', orgUnitPath: '/Staff', osVersion: '120' }] });
-function activity({ app = 'admin', name = 'CHANGE_PASSWORD', time = AFTER, actor = USER, customerId = CUSTOMER } = {}) {
+function activity({ app = 'admin', name = 'CHANGE_PASSWORD', time = AFTER, actor = USER, customerId = CUSTOMER, parameters } = {}) {
   return {
     kind: 'admin#reports#activity',
     id: { time, uniqueQualifier: '5501', applicationName: app, customerId },
     actor: { email: actor, profileId: USER_ID },
-    events: [{ type: 'USER_SETTINGS', name }],
+    events: [{ type: 'USER_SETTINGS', name, ...(parameters ? { parameters } : {}) }],
   };
 }
 const activitiesList = (items, extra = {}) => ({ kind: 'admin#reports#activities', items, ...extra });
@@ -709,6 +710,48 @@ test('verify-event: an event of that name, in that application, by that user, at
   assert.equal(login.code, 0, login.stdout);
 });
 
+test('verify-event --target: the matched event must name the target in a parameter value; the same admin acting on another account is never proof', async () => {
+  const COMPROMISED = at('compromised');
+  const argv = (target) => ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', USER, '--not-before', NOT_BEFORE, '--target', target, '--execute'];
+  const run = (items, target = COMPROMISED, extra = {}) => cli(argv(target), { replies: [tokenReply(), ok(activitiesList(items, extra))] });
+  const on = (account, name = 'CHANGE_PASSWORD') => activity({ name, parameters: [{ name: 'USER_EMAIL', value: account }] });
+
+  // The admin reset another account during the incident: not proof for the compromised one.
+  const other = await run([on(OTHER_USER)]);
+  assert.equal(other.code, 2, other.stdout);
+  const no = firstJson(other.stdout);
+  assert.equal(no.verified, false);
+  assert.match(no.reason, /whose parameters name/);
+  assert.deepEqual(no.observed.recordsSinceNotBefore[0].parameters, [{ name: 'USER_EMAIL', value: OTHER_USER }], 'the parameters that did not match are printed');
+
+  // The right account, also after an event for another one, and in any case.
+  const proven = await run([on(OTHER_USER), on(COMPROMISED)]);
+  assert.equal(proven.code, 0, proven.stdout);
+  const yes = firstJson(proven.stdout);
+  assert.equal(yes.verified, true);
+  assert.deepEqual(yes.expected, { app: 'admin', event: 'CHANGE_PASSWORD', user: USER, notBefore: NOT_BEFORE, target: COMPROMISED });
+  assert.deepEqual(yes.observed.match.parameters, [{ name: 'USER_EMAIL', value: COMPROMISED }]);
+  assert.equal(proven.transport.calls[1].path, EVENT_PATH, 'the target is judged on the same allowed GET, never sent');
+  assert.equal((await run([on(COMPROMISED.toUpperCase())])).code, 0, 'an email address matches in any case');
+  assert.equal((await run([activity({ parameters: [{ name: 'USERS', multiValue: [OTHER_USER, COMPROMISED] }] })])).code, 0, 'a multiValue entry matches');
+
+  // Non-email targets (a file name) match exactly; a parameter-less event never matches.
+  const file = (title) => activity({ app: 'drive', name: 'change_user_access', parameters: [{ name: 'doc_title', value: title }] });
+  const driveArgv = (target) => ['verify-event', '--app', 'drive', '--event', 'change_user_access', '--user', USER, '--not-before', NOT_BEFORE, '--target', target, '--execute'];
+  assert.equal((await cli(driveArgv('Budget sheet'), { replies: [tokenReply(), ok(activitiesList([file('Budget sheet')]))] })).code, 0);
+  assert.equal((await cli(driveArgv('Budget sheet'), { replies: [tokenReply(), ok(activitiesList([file('budget sheet')]))] })).code, 2, 'a file name matches exactly');
+  assert.equal((await run([activity()])).code, 2, 'an event with no parameters does not name the target');
+  // The target must be on the event of that name, not on another event in the record.
+  const mixed = { ...on(COMPROMISED, 'ADD_GROUP_MEMBER') };
+  mixed.events = [...mixed.events, { type: 'USER_SETTINGS', name: 'CHANGE_PASSWORD', parameters: [{ name: 'USER_EMAIL', value: OTHER_USER }] }];
+  assert.equal((await run([mixed])).code, 2, 'a parameter on another event in the same record is not the match');
+
+  // Without --target the match still prints the parameters, so the operator can see whom the event touched.
+  const plain = await cli(['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', USER, '--not-before', NOT_BEFORE, '--execute'], { replies: [tokenReply(), ok(activitiesList([on(OTHER_USER)]))] });
+  assert.equal(plain.code, 0);
+  assert.deepEqual(firstJson(plain.stdout).observed.match.parameters, [{ name: 'USER_EMAIL', value: OTHER_USER }]);
+});
+
 test('credentials never appear in stdout, stderr or results, also when the transport error or the response echoes them', async () => {
   // Whole credential values, as a misbehaving server or proxy would echo them back.
   const echo = [TOKEN, PRIVATE_KEY, SA_EMAIL, ADMIN].join(' ');
@@ -816,6 +859,9 @@ test('bad input is refused with exit 1 before anything is read or sent', async (
     ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', 'all', '--not-before', NOT_BEFORE],
     ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', USER, '--not-before', 'yesterday'],
     ['verify-event', '--app', 'admin', '--user', USER, '--not-before', NOT_BEFORE],
+    ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', USER, '--not-before', NOT_BEFORE, '--target', 'line\nbreak'],
+    ['verify-suspended', '--user', USER, '--target', USER],
+    ['activities', '--app', 'admin', '--target', USER],
   ];
   for (const argv of bad) {
     const label = JSON.stringify(argv);

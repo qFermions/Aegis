@@ -26,7 +26,13 @@
 //     verify-ou                 --user [USER@DOMAIN.COM] --ou [OU_PATH]
 //     verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id N
 //     verify-event              --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]
-//   --user also takes a numeric user ID ([USER_ID]).
+//                               [--target [USER@DOMAIN.COM]]
+//   --user also takes a numeric user ID ([USER_ID]). For verify-event, --user is the actor;
+//   --target is who or what the event acted on: the matched event must carry a parameter
+//   whose value (or one of whose multiValue entries) equals it (an email address in any
+//   case, any other text exactly). Parameter names are not confirmed in the lane's sources,
+//   so the match ignores them, and the matched event's parameters are printed in
+//   observed.match.parameters. The match is judged on the same allowed GET; no new route.
 //
 // Environment, read only under --execute and only after the request is allowed:
 //   GWS_SA_CLIENT_EMAIL  the service account's email (the JWT issuer)
@@ -138,6 +144,7 @@ const USER_QUERY = /^[^\u0000-\u001f\u007f-\u009f]{1,256}$/u;
 const USAGE_PARAMETER = '[a-z][a-z0-9_]{0,40}:[a-z][a-z0-9_]{0,80}';
 const USAGE_PARAMETERS = new RegExp(`^${USAGE_PARAMETER}(?:,${USAGE_PARAMETER}){0,19}$`);
 const OU_PATH = /^\/[^\u0000-\u001f\u007f-\u009f]{0,255}$/u;
+const TARGET = /^[^\u0000-\u001f\u007f-\u009f]{1,256}$/u;
 
 // ── The allow-list: the lane's nine reads ────────────────────────────────────
 const DIRECTORY = '/admin/directory/v1';
@@ -308,13 +315,13 @@ const COMMANDS = Object.freeze({
     expected: (a) => ({ user: a.user, roleId: a.roleId, assigned: false }),
   },
   'verify-event': {
-    kind: 'verify', required: ['app', 'event', 'user', 'not-before'], optional: [],
+    kind: 'verify', required: ['app', 'event', 'user', 'not-before'], optional: ['target'],
     paths: (a) => [PATHS.activities({ user: a.user, app: a.app, start: a.notBefore, event: a.event })],
-    expected: (a) => ({ app: a.app, event: a.event, user: a.user, notBefore: a.notBefore }),
+    expected: (a) => ({ app: a.app, event: a.event, user: a.user, notBefore: a.notBefore, ...(a.target === undefined ? {} : { target: a.target }) }),
   },
 });
 
-const VALUE_FLAGS = ['user', 'query', 'max-results', 'page-token', 'role-id', 'group', 'app', 'start', 'end', 'event', 'date', 'parameters', 'ou', 'not-before'];
+const VALUE_FLAGS = ['user', 'query', 'max-results', 'page-token', 'role-id', 'group', 'app', 'start', 'end', 'event', 'date', 'parameters', 'ou', 'not-before', 'target'];
 
 const USAGE = [
   'Usage: node scripts/adapters/gws-client.js <command> [flags] [--execute]',
@@ -330,6 +337,7 @@ const USAGE = [
   '           verify-ou --user [USER@DOMAIN.COM] --ou [OU_PATH]',
   '           verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id N',
   '           verify-event --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]',
+  '                        [--target [USER@DOMAIN.COM]]   (who or what the event acted on)',
   'Reads and read-backs are a dry run unless the bare --execute flag is given. No command writes to Google Workspace.',
   '',
 ].join('\n');
@@ -402,6 +410,10 @@ function validate(command, def, args) {
     if (!OU_PATH.test(args.ou)) throw new RefusedError('--ou must be an organizational unit path that starts with /, such as /[OU_PATH]');
     a.ou = args.ou;
   }
+  if (args.target !== undefined) {
+    if (!TARGET.test(args.target)) throw new RefusedError('--target must be 1 to 256 printable characters: the account, file or domain the event acted on, such as [USER@DOMAIN.COM]');
+    a.target = args.target;
+  }
   return a;
 }
 
@@ -431,6 +443,27 @@ function sameUser(record, wanted, ctx) {
 }
 
 const NOT_THE_USER = 'the user record read is not the user asked for';
+
+// An activity event's parameters, as printed: each one's name with its value or
+// multiValue (the string forms the Reports API returns; other value kinds are listed by
+// name only).
+function parametersOf(event) {
+  const list = Array.isArray(event.parameters) ? event.parameters.filter(isObject) : [];
+  return list.slice(0, MAX_LISTED).map((p) => {
+    const shown = { name: orNull(p.name) };
+    if (typeof p.value === 'string') shown.value = p.value;
+    if (Array.isArray(p.multiValue)) shown.multiValue = p.multiValue.filter((v) => typeof v === 'string');
+    return shown;
+  });
+}
+
+// --target matches a parameter value: an email address in any case (and a redacted
+// credential identity when --target names it), any other text exactly.
+function eventNamesTarget(event, target, ctx) {
+  const list = Array.isArray(event.parameters) ? event.parameters.filter(isObject) : [];
+  const values = list.flatMap((p) => [p.value, ...(Array.isArray(p.multiValue) ? p.multiValue : [])]).filter((v) => typeof v === 'string');
+  return EMAIL.test(target) ? values.some((v) => identityMatches(v, target, ctx)) : values.includes(target);
+}
 
 const JUDGES = Object.freeze({
   'verify-suspended': (a, [user], ctx) => {
@@ -481,18 +514,23 @@ const JUDGES = Object.freeze({
       const time = typeof item.id.time === 'string' ? item.id.time : null;
       const t = time === null ? NaN : Date.parse(time);
       if (!Number.isFinite(t) || t < notBeforeMs) continue;
-      const names = Array.isArray(item.events) ? item.events.filter(isObject).map((e) => e.name).filter((n) => typeof n === 'string') : [];
+      const events = Array.isArray(item.events) ? item.events.filter(isObject) : [];
+      const names = events.map((e) => e.name).filter((n) => typeof n === 'string');
+      const named = events.filter((e) => e.name === a.event);
       const actor = isObject(item.actor) ? item.actor : {};
       const summary = { time, application: orNull(item.id.applicationName), events: names, actorEmail: orNull(actor.email) };
+      if (named.length) summary.parameters = parametersOf(named[0]);
       const sameApp = item.id.applicationName === undefined || item.id.applicationName === a.app;
       const sameActor = NUMERIC_ID.test(a.user) ? actor.profileId === a.user : identityMatches(actor.email, a.user, ctx);
-      if (sameApp && sameActor && names.includes(a.event)) {
-        observed.match = summary;
+      const hit = named.find((e) => a.target === undefined || eventNamesTarget(e, a.target, ctx));
+      if (sameApp && sameActor && hit) {
+        observed.match = { ...summary, parameters: parametersOf(hit) };
         return { verified: true, observed };
       }
       if (observed.recordsSinceNotBefore.length < MAX_LISTED) observed.recordsSinceNotBefore.push(summary);
     }
-    let reason = `no ${a.app} event named ${a.event} by the user at or after ${a.notBefore} among the ${items.length} record(s) read`;
+    const about = a.target === undefined ? '' : ` whose parameters name ${a.target}`;
+    let reason = `no ${a.app} event named ${a.event} by the user${about} at or after ${a.notBefore} among the ${items.length} record(s) read`;
     if (morePages) reason += '; the read has another page, so this is not proof either way';
     return { verified: false, observed, reason };
   },

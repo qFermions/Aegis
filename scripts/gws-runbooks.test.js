@@ -280,3 +280,21 @@ test('each exact phrase binds one effect: shared only by gates with the same eff
   }
   assert.ok(!allGates().some((g) => g.id === 'gws-admin-roles-recovery-portal'), 'the two-way recovery gate is gone');
 });
+
+// ── Finding: an admin's event proves a change only when it names the target ────────
+// verify-event matches the actor, the event name and the time. When the actor is the
+// administrator ([UPN]), the same admin's change on another account or file (during the
+// incident, or the same afternoon) would pass, so every such read-back carries --target,
+// and the checklists ask for it.
+test('every verify-event whose actor is the administrator carries --target, and the checklists require the target', () => {
+  const adminActor = RUNBOOKS.flatMap(adapterLines).filter((l) => /\bverify-event\b/.test(l.text) && /--user \[UPN\]/.test(l.text))
+    .filter((l) => !/EVENT_NAME_FROM_THE_READ_ABOVE/.test(l.text)); // the copied-name form: its own finding
+  assert.ok(adminActor.length >= 3, `only ${adminActor.length} admin-actor verify-event lines`);
+  for (const l of adminActor) {
+    assert.match(l.text, /--target (?:\[USER@DOMAIN\.COM\]|"\[FILE_NAME\]"|\[EXTERNAL_DOMAIN\]|\[OU_PATH\])/, `${l.file}:${l.line}: ${l.text}`);
+  }
+  assert.match(textOf('gws-account-containment'), /^- \[ \] Phase C: `verify-event --app admin --event CHANGE_PASSWORD --target \[USER@DOMAIN\.COM\]` exited 0/m);
+  assert.match(textOf('gws-account-containment'), /or the Admin log events entry for `\[USER@DOMAIN\.COM\]` was found in the GUI/);
+  assert.match(textOf('gws-admin-roles'), /`verify-event --target \[USER@DOMAIN\.COM\]` exits 0/);
+  assert.match(textOf('gws-drive-sharing'), /`verify-event --app drive --target "\[FILE_NAME\]"` passed/);
+});

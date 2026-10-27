@@ -113,13 +113,13 @@ Prerequisites: the Phase B role is in the ticket; the file is in My Drive. Write
 ```bash
 # read-only: Drive events since [NOT_BEFORE], each with its actor and event name
 node scripts/adapters/gws-client.js activities --app drive --user all --start [NOT_BEFORE] --execute
-# read-only: passes only if a change_user_access Drive event by [UPN] exists after [NOT_BEFORE]
-node scripts/adapters/gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --execute
+# read-only: passes only if a change_user_access Drive event by [UPN] after [NOT_BEFORE] names [FILE_NAME] in its parameters
+node scripts/adapters/gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]" --execute
 ```
 
-The event name `change_user_access` is listed in the lane's sources but not confirmed, and the lane could not confirm which account Google records as the actor for a change made in the investigation tool. If the activities read shows the removal under another name, or under the owner `[USER@DOMAIN.COM]`, rerun `verify-event` with that name or with `--user [USER@DOMAIN.COM]`, and note it in the ticket. The GUI read-back above decides.
+`--target` ties the event to `[FILE_NAME]`: a sharing change you made on another file since `[NOT_BEFORE]` does not pass, and the read prints the matched event's parameters. The event name `change_user_access` is listed in the lane's sources but not confirmed, the parameter that carries the file name is not confirmed either, and the lane could not confirm which account Google records as the actor for a change made in the investigation tool. If the activities read shows the removal under another name, or under the owner `[USER@DOMAIN.COM]`, rerun `verify-event` with that name or with `--user [USER@DOMAIN.COM]`, keeping `--target "[FILE_NAME]"`, and note it in the ticket. The GUI read-back above decides.
 
-**Verification checkpoint:** [ ] the People tab no longer lists the account · [ ] `verify-event` passed, with the event name and actor noted · [ ] the GAM filelist read (scale version) no longer lists the permission.
+**Verification checkpoint:** [ ] the People tab no longer lists the account · [ ] `verify-event --target "[FILE_NAME]"` passed, with the event name and actor noted · [ ] the GAM filelist read (scale version) no longer lists the permission.
 
 <details>
 <summary>GAM: removing external permissions in bulk (PREVIEW ONLY, not authorized here)</summary>
@@ -255,7 +255,7 @@ Google's event name for a Drive setting change is not in the lane's sources; rep
 
 - [ ] Phase A pre-state in the ticket: the option for `[OU_PATH]`, any group value and the allowlist, with the time read.
 - [ ] Phase B finding quoted with placeholders: actor, time, the external account's domain `[EXTERNAL_DOMAIN]` and its role.
-- [ ] Phase C (if run): a fresh Audit File Permissions view no longer lists the account; `verify-event --app drive` passed, or the activities read shows the removal and its actor, noted in the ticket.
+- [ ] Phase C (if run): a fresh Audit File Permissions view no longer lists the account; `verify-event --app drive --target "[FILE_NAME]"` passed, or the activities read shows the removal on `[FILE_NAME]` and its actor, noted in the ticket.
 - [ ] Phase D (if run): Admin console → Account → Domains → Allowlisted domains lists `[EXTERNAL_DOMAIN]`; `verify-event --app admin` passed.
 - [ ] Phase E (if run): the sharing panel shows the new value for `[OU_PATH]`; `verify-event --app admin` passed; 24 hours have passed and the Phase B spot check matches.
 - [ ] The Linear comment is proven by `verify-comment` (below).

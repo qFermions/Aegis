@@ -124,13 +124,13 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 3. Copy the password into the password-manager entry for this case as `[TEMP_PASSWORD]`; it never goes into the ticket or a chat.
 
 ```bash
-# read-back: a password-change event with you as the actor after NOT_BEFORE, the event name as recorded in /gws-audit-log
-node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --execute
+# read-back: a password-change event with you as the actor after NOT_BEFORE whose parameters name the compromised account, the event name as recorded in /gws-audit-log
+node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
 ```
 
-GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the password change for `[USER@DOMAIN.COM]` with your address as the actor. The event name is not confirmed in this lane's sources: if `verify-event` finds nothing, read the entry in the GUI before concluding the reset did not happen.
+`--target` makes the read prove this account's reset: a password change you made on another account during the incident does not pass. The read prints the matched event's parameters. GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the password change for `[USER@DOMAIN.COM]` with your address as the actor. The event name and its parameter names are not confirmed in this lane's sources: if `verify-event` finds nothing, read the entry for `[USER@DOMAIN.COM]` in the GUI before concluding the reset did not happen.
 
-**Verification checkpoint**: [ ] `verify-event` exit 0 (or the GUI entry found) · [ ] `[TEMP_PASSWORD]` only in the password manager.
+**Verification checkpoint**: [ ] `verify-event --target [USER@DOMAIN.COM]` exit 0, or the GUI entry for `[USER@DOMAIN.COM]` found · [ ] `[TEMP_PASSWORD]` only in the password manager.
 
 ## Phase D: Close the other doors
 
@@ -325,7 +325,7 @@ gam user "[USER@DOMAIN.COM]" print tokens
 
 - [ ] Pre-state recorded: status, OU, admin roles, 2-Step Verification state and factors, app password count, connected apps with client IDs, first suspicious event.
 - [ ] Phase B: `verify-suspended --user [USER@DOMAIN.COM]` exited 0 and the account page read Suspended.
-- [ ] Phase C: `verify-event --app admin --event CHANGE_PASSWORD` exited 0, or the Admin log events entry was found in the GUI.
+- [ ] Phase C: `verify-event --app admin --event CHANGE_PASSWORD --target [USER@DOMAIN.COM]` exited 0 (the matched event names this account), or the Admin log events entry for `[USER@DOMAIN.COM]` was found in the GUI.
 - [ ] Phase D: the App passwords panel is empty (the GAM read exits 60); Connected applications lists no unknown app; the token read shows each revoke or the lag is noted.
 - [ ] 2-Step Verification, admin roles, Okta and devices each closed in their runbook with its own read-back, or recorded as not affected.
 - [ ] Phase F: the `user` read shows the account active and `verify-event --app login --event login_success` exited 0 for a sign-in after `[NOT_BEFORE]`.

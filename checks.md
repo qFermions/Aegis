@@ -1,46 +1,38 @@
-# checks: batch review-layers
+# checks: batch 1, baseline and boundary
 
-Branch `chore/review-layers` on qFermions/Aegis, base `main` at e7c445c. Evidence files: `docs/review/baseline/` (Phase 0, fresh clone) and `docs/review/baseline/branch/` (battery 4 on the branch at 1901321, plus the scanner run that blocked the fixture email before 9fd7e7b). Verdicts: pass, fail, unresolved.
+Branch `chore/baseline-and-boundary` on qFermions/Aegis, base `main` at `d5fc8c0` (the merge of PR #3). Evidence files: `docs/baseline/` (Phase 0, fresh clone) and `docs/baseline/branch/` (the battery on the branch). Verdicts: pass, fail, unresolved. The previous batch's table is kept at `docs/review/batches/review-layers-checks.md`.
+
+## Baseline (Phase 0, fresh clone of d5fc8c0, node v24.22.1, pwsh 7.5.4)
+
+| check | command | result | evidence |
+|---|---|---|---|
+| clone | `git clone --depth 1 https://github.com/qFermions/Aegis /tmp/fresh` | exit 0, HEAD `d5fc8c0`; no `package.json`, no lockfile, nothing to install | `docs/baseline/clone.txt` |
+| tests | `node --test` | 505 tests, 505 pass, 0 fail, exit 0 | `docs/baseline/node-test.txt` (tail) |
+| Microsoft eval | `node scripts/eval/ms-ticket-eval.js` | 28/28 tickets, 6/6 dangerous pairs, exit 0 | `docs/baseline/ms-ticket-eval.txt` |
+| Google eval | `node scripts/eval/gws-ticket-eval.js` | 38/38 tickets, 9/9 dangerous pairs, exit 0 | `docs/baseline/gws-ticket-eval.txt` |
+| structure lint | `node scripts/lint/command-structure.js` | 77 commands, clean, exit 0 | `docs/baseline/command-structure-lint.txt` |
+| replay demo | `node scripts/replay/replay-demo.js` | 17 steps, exit 0 | `docs/baseline/replay-demo.txt` |
+| scanner | `node scripts/pre-commit-check.js --all` | 276 files, 0 BLOCK, 170 WARN, exit 0 | `docs/baseline/pre-commit-check-all.txt` |
+| release boundary | `node scripts/harness/release-boundary-check.js` | PASS, exit 0 | `docs/baseline/release-boundary-check.txt` |
+| continuity (session-start gate, not in CI) | `node scripts/harness/check-continuity.js` | STALE, exit 2 (snapshot HEAD `b9acd99`, live `d5fc8c0`) | `docs/baseline/check-continuity.txt` |
+
+Floors from PR #3's head match on every row: 505 tests, 28/28 and 6/6, 38/38 and 9/9, 77 clean, 0 BLOCK, PASS. No gap.
 
 ## Acceptance checks
 
 | requirement | verdict | evidence | correction |
 |---|---|---|---|
-| R0 baseline rows exist with exact commands and counts | pass | `docs/review/baseline/*.txt`: `node --test` 491 tests, 450 pass, 41 fail without pwsh (`node-test.txt:648-651`), 491/491 with pwsh (`node-test-with-pwsh.txt`); `ms-ticket-eval` 28/28, 6/6 pairs; `gws-ticket-eval` 38/38, 9/9 pairs; `lint` 77 commands clean; `replay-demo` exit 0; `pre-commit-check --all` exit 0, 0 BLOCK; `release-boundary-check` PASS; `check-continuity` exit 2 STALE (HEAD moved from b9acd99). Runtime and licenses: `dependencies.md`. | pwsh was an undeclared prerequisite; declared in `EVALUATE.md:5` (commit 26771c4) |
-| H1 Harness section, agent card, settings untouched, CLAUDE.md diff only added lines | fail (one sub-check) | `grep -c "^## Harness$" CLAUDE.md` = 1; `claude plugin validate .claude/agents` = "Validation passed" (`docs/review/baseline/branch/claude-plugin-validate.txt`); `head -1 .claude/agents/evidence-reviewer.md` = `---`, frontmatter has `tools: Read, Grep, Glob, WebSearch, WebFetch`, `model: opus`, `effort: high`; `.claude/settings.json` absent before and after. Failing sub-check: `git diff origin/main...HEAD -- CLAUDE.md` shows 23 removed lines, not only added lines (Deviations, D1). | none possible without re-breaking the 40k limit; the owner reads the CLAUDE.md diff line by line (tier C) |
-| R1 REVIEW.md has 6 headings in order | pass | `grep -c "^## " REVIEW.md` = 6: Project failure, Ignore, How to report, Risk tiers, Convergence, Incidents are the eval | |
-| R2 Review section once, Harness once, only added lines | fail (one sub-check) | `grep -c "^## Review$" CLAUDE.md` = 1; `grep -c "^## Harness$" CLAUDE.md` = 1; the diff also removes 23 lines (Deviations, D1) | same as H1 |
-| R3 PR template has the six headings in order | pass | `grep "^## " .github/PULL_REQUEST_TEMPLATE.md`: What and why, Testing, Risk tier, How to revert, Review, Actions outside the working copy | |
-| R4 CODEOWNERS names the owner's login | pass | `.github/CODEOWNERS:6` = `* @qFermions`; login confirmed by the GitHub API (collaborators: qFermions, admin) | |
-| R5 tier tests pass; script prints tier=C with ci.yml | pass | `node --test scripts/risk_tier.test.js`: 13 tests, 13 pass; `node scripts/risk_tier.mjs origin/main` prints `tier=C` and lists `.github/workflows/ci.yml` (`docs/review/baseline/branch/risk-tier.txt`) | |
-| R6a ci.yml parses; actionlint passes | pass | `docs/review/baseline/branch/ci-yml-parse.txt` (PyYAML 6.0.3 `safe_load`, exit 0) and `docs/review/baseline/branch/actionlint.txt` (actionlint 1.7.7, no output, exit 0), both captured with their command lines | |
-| R6b workflow runs on the pull request | pass | CI run 1 on PR #3 at b8177bb: https://github.com/qFermions/Aegis/actions/runs/40451295176, conclusion success; jobs verify (success, 1 min 47 s), detect (success, 4 s), risk-tier (success, 7 s), evals (success, 9 s); run duration 2 min 1 s; billable minutes 0 (public repository). The pre-existing Release Gate run 46 (https://github.com/qFermions/Aegis/actions/runs/40451295151) was red on windows-latest: `scripts/risk_tier.test.js` imported the ESM script with a bare `D:\...` path (ERR_UNSUPPORTED_ESM_URL_SCHEME); ubuntu was green (505/505). | fixed in 918612d (the test imports through `pathToFileURL`). Reruns: CI run 2 on 918612d https://github.com/qFermions/Aegis/actions/runs/40451700486 success, 1 min 44 s; Release Gate run 47 on 918612d https://github.com/qFermions/Aegis/actions/runs/40451700501 success (ubuntu and windows); CI run 3 on a1f602c https://github.com/qFermions/Aegis/actions/runs/40451993721 success, 2 min 14 s; Release Gate run 48 on a1f602c https://github.com/qFermions/Aegis/actions/runs/40451993832 success. Billable minutes 0 on every run (public repository). PR mergeable state: clean. |
-| R7 fresh clone, install, every declared check starts | pass | `docs/review/baseline/clone.txt` (shallow clone of e7c445c, no manifest so no install), every check in `docs/review/baseline/*.txt` started; `node --test` needs pwsh on PATH to pass (`node-test-with-pwsh.txt`: 491/491) | prerequisite declared in EVALUATE.md |
-| R8 incidents.md header row and layer legend | pass | `docs/review/incidents.md:3` (layers 1 to 7), `:5` (table header) | |
-| R9 preview rule tested or explainer section exists | pass | no deployment exists; `docs/explainers/review-layers.md` section "Running a branch when there is no preview" | |
-| R10 review rounds recorded, no finding open, evidence-reviewer counts | pass | rounds 1 to 3 recorded below, every finding fixed or closed with a reason; evidence-reviewer (read-only, run once on the finished outputs): 19 rows, 13 pass / 2 fail / 4 unresolved; the 2 fails are H1 and R2 (the only-added-lines sub-check, D1); its 4 unresolved rows (R6a hand-written capture, R6b pending, R10 counts pending, R11 PR body not openable) are resolved by the captures added in this commit: `ci-yml-parse.txt`, `actionlint.txt`, `claude-plugin-validate.txt`, `pr-3-body.md`, and the CI rows below. Its five corrections were applied (H1/R2 verdicts, Deviations section, captured parser output, R13 wording, R14 scope, progress.md). | |
-| R11 draft PR with six sections filled; refs unchanged | pass | draft PR qFermions/Aegis#3 (https://github.com/qFermions/Aegis/pull/3) with all six template sections filled, Risk tier C from the script (body captured in `docs/review/baseline/branch/pr-3-body.md`); `docs/review/baseline/refs-after.txt` equals `refs-before.txt` for every ref except the created `refs/heads/chore/review-layers`, `refs/pull/3/head`, `refs/pull/3/merge` (diff of the two files, created refs excluded: empty) | |
-| R12 baseline floors hold | pass | battery 4 on the branch at 1901321 (pwsh on PATH), captures in `docs/review/baseline/branch/`: `node --test` 505 tests, 505 pass, 0 fail (`node-test.txt`, baseline 491); ms eval 28/28, 6/6; gws eval 38/38, 9/9; lint 77 clean; replay-demo exit 0; scanner exit 0, 0 BLOCK; release boundary PASS; continuity STALE exit 2 (unchanged, HEAD moved) | |
-| R13 no secret, token, personal path or private email in the diff | pass | `git diff origin/main...HEAD \| grep -n -i -E "api[_-]?key\|secret\|token\|password\|/Users/\|C:\\\\Users\|@gmail"`: 104 hits, all of them words, no values: test names and scanner WARN labels inside the baseline captures (`password-reset`, `Revoke-* session/token`), the REVIEW.md rule text ("A secret, token, personal path..."), ci.yml comment and step names ("no secret value", "secret formats"), pre-existing CLAUDE.md lines in the trim context, removed progress.md lines from batch G1. Outside this row's own pattern text, zero `/Users/`, `C:\Users` or `@gmail` hits. | |
-| R14 no em-dash in files this batch wrote | pass | `LC_ALL=C.UTF-8 grep -nP "\x{2014}"` over REVIEW.md, checks.md, progress.md, the agent card, PR template, CODEOWNERS, risk-tiers.json, ci.yml, .nvmrc, risk_tier.mjs, risk_tier.test.js, incidents.md, the explainer, dependencies.md prints nothing; the lines this batch added to CLAUDE.md (`## Harness`, `## Review`), TEAM.md (roster row), EVALUATE.md (line 5) and scripts/repository-structure.test.js (last test) contain none. Out of scope: baseline captures; the compressed pre-existing CLAUDE.md lines keep the file's own em-dash style. | one em-dash removed from the test header (this commit) |
-| R15 ci.yml needs no secret | pass | `grep -n secrets .github/workflows/ci.yml` prints nothing (exit 1) | |
-| R16 dependencies and tools added, with version, license, install | pass | `docs/review/baseline/dependencies.md`: Node 24.22.1 (MIT, nvm), PowerShell 7.5.4 (MIT, GitHub release tarball), actionlint 1.7.7 (MIT, GitHub release tarball), PyYAML 6.0.3 (MIT, present); no repository dependency added | |
-
-## Review rounds
-
-| round | command | findings | fixed (commit) | closed with reason |
-|---|---|---|---|---|
-| 1 | `/security-review` (subagent, REVIEW.md applied) on origin/main...1da49a1 | 0 | | |
-| 1 | `/code-review xhigh origin/main...HEAD` | 14 | CLAUDE.md over 40k chars (0425829, test pins the limit); symlinked isMain fail-open (26aa665); quoted paths never match (2417cb1); renames out of a C path (decf81e); Install step exits 1 with a manifest (1c97518); non-string globs (e842f86); tier prose vs computed tiers + CODEOWNERS comment (64d7956); push-event risk tier always A (1c97518); sandbox leak (bb15faa); evidence-reviewer not in the TEAM.md roster (dcff039) | detect/evals skip: the batch instruction specifies the detect gate and the skip-with-reason job name; recorded as a decision for the owner. progress.md/checks.md beside tasks/continuity.md: the batch instruction mandates both files; continuity.md stays the machine-checked HEAD snapshot, progress.md is per-batch state. `model: opus`: the batch instruction fixes the frontmatter, and TEAM.md permits Opus on a reviewer card. Duplicate test runs with release-gate.yml: changing or deleting release-gate.yml is outside scope; decision for the owner. |
-| 2 | `/code-review xhigh 1da49a1...HEAD` (diff only) | 11 | missing or misnamed tier keys fail open (ec99154); "R3 items above" and lost baseline definition and misleading "index" label in CLAUDE.md (138f37a); npm ci without a lockfile and HEAD fallback (2f81a45, superseded by a19dc92); Windows symlink EPERM (f556691); REVIEW.md C prose omits the tier script (c2ff6c5) | Opus on the roster: same class as round 1, already closed. claim.test.js four-card invariant: the agent body is fixed by the batch instruction and carries no dev-plane markers; the TEAM.md row says when each reviewer applies; extending the test would mean changing the prescribed body. |
-| 2 | security re-check (subagent) on 1da49a1...HEAD | 0 | | |
-| 3 | `/code-review xhigh dcff039...HEAD` (diff only) | 11 | npm install dirtied the tree for the release-boundary step, lifecycle scripts, HEAD/HEAD~1 fallbacks under-tier a force-push or root commit (a19dc92: lockfile required, `--ignore-scripts`, unreachable before fails closed); unknown tier keys ignored and classify's lenient fallback (ff3b9e5); symlink skip on any EPERM (a06bd84); SR-2 paraphrase drift (1901321); write() helper (ff3b9e5); progress.md stale (rewritten in this commit) | base resolution split between YAML and script: the remaining shell only selects the ref name (target branch, before SHA, or fail); the script validates whatever it receives and that path is tested. |
-| 3 | security re-check (subagent) on 1da49a1...HEAD | 0 | | |
-
-Evidence-reviewer: 19 rows, 13 pass / 2 fail / 4 unresolved before this commit's captures (see R10).
-
-## Deviations
-
-- **D1. CLAUDE.md is not add-only.** The batch's H1 and R2 checks require the CLAUDE.md diff to show only added lines. Appending `## Harness` and `## Review` took the file to 42,018 LF-normalized chars; the file's own banner pins a 40k limit and `CHANGELOG.md:165` records that Claude Code truncates the tail past it, so the new sections would have been the part cut. Pointer prose that duplicates its canonical source was compressed with zero rule loss (banner history to CHANGELOG.md, Reference Docs, T-01..T-10 pointer, slash-command standard, Execution Shapes, plain-question default, Identity style paragraph, out-of-scope history note, Koinon lesson pointer, escalation pointer, SR-2 list quoted verbatim). Result: 39,948 chars, 23 lines removed, 35 added; a repository-structure test pins the limit. The two checks are left unchanged and recorded as fail on that sub-check. The owner's tier C read covers the whole CLAUDE.md diff.
-- **D2. `check-continuity` is not in CI.** It exits 2 (STALE) whenever HEAD moves past the snapshot, so it would be red on every pull request by design. It is a session-start gate (CLAUDE.md "Session Start"), not one of the declared release checks in EVALUATE.md Part A or the README evidence block; it is recorded in the baseline and branch batteries instead.
-- **D3. `release-gate.yml` kept.** The instruction's CI job duplicates its `node --test` and scanner run. Deleting or rewriting a file I did not create is outside the batch's room; the owner decides whether to fold one workflow into the other.
+| A1 capability map rows carry evidence | unresolved | not yet run | |
+| A2 boundary audit: no gate "none" left | unresolved | not yet run | |
+| A3 three untrusted-data tests, expected decision first | unresolved | not yet run | |
+| A4 harness and review layers present | unresolved | not yet run | |
+| A5 PRODUCT_CONTRACT.md changes readable line by line | unresolved | not yet run | |
+| A5b CLAUDE.md under 20000 bytes, moves traceable | unresolved | not yet run | |
+| A6 PROJECT_STATE.md verified claims point to this session | unresolved | not yet run | |
+| A7 CI and Release Gate green on the pull request | unresolved | not yet run | |
+| A8 no finding open; refs unchanged | unresolved | not yet run | |
+| A9 baseline floors hold | unresolved | not yet run | |
+| A10 no secret, token, personal path or private email in the diff | unresolved | not yet run | |
+| A11 no em-dash in files this batch wrote | unresolved | not yet run | |
+| A12 dependencies and tools added | unresolved | not yet run | |
+| A13 no real tenant, device, ticket system, scheduler, mailbox or payment call | unresolved | not yet run | |

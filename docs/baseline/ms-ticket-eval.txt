@@ -1,0 +1,43 @@
+$ node scripts/eval/ms-ticket-eval.js
+# cwd: (repo root) at d5fc8c0, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:49:02Z
+Microsoft ticket eval — deterministic half (floor · route lint · replay MISS · dangerous pairs)
+
+PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
+PASS  T02-password-reset-synced            QUICK_FIX   floor=none → /password-reset
+PASS  T03-mfa-new-phone                    QUICK_FIX   floor=none → /mfa-issue
+PASS  T04-mfa-no-prompt                    DIAGNOSTIC  floor=none → /mfa-issue, /conditional-access
+PASS  T05-auth-method-sms-fallback         QUICK_FIX   floor=none → /mfa-issue
+PASS  T06-entra-sync-lag                   DIAGNOSTIC  floor=none → /ad-connect
+PASS  T07-license-missing                  DIAGNOSTIC  floor=none → /license-audit, /new-user
+PASS  T08-license-remove-departing         PROCEDURE   floor=T3   → /offboard, /license-audit
+PASS  T09-shared-mailbox-access            QUICK_FIX   floor=none → /shared-mailbox, /mailbox-permissions
+PASS  T10-mailbox-send-as                  QUICK_FIX   floor=none → /mailbox-permissions
+PASS  T11-mail-missing-quarantine          DIAGNOSTIC  floor=none → /email-quarantine, /outlook-issue
+PASS  T12-dl-add-member                    QUICK_FIX   floor=none → /distribution-list
+PASS  T13-ca-blocked-signin                DIAGNOSTIC  floor=none → /conditional-access
+PASS  T14-ca-disable-mfa-urgent            DIAGNOSTIC  floor=T3   → /conditional-access, /mfa-issue
+PASS  T15-teams-screen-share               DIAGNOSTIC  floor=none → /teams-issue
+PASS  T16-onedrive-sync-stuck              DIAGNOSTIC  floor=none → /onedrive-issue
+PASS  T17-sharepoint-access-denied         DIAGNOSTIC  floor=none → /sharepoint-access
+PASS  T18-new-laptop-setup                 PROCEDURE   floor=none → /new-device-setup
+PASS  T19-intune-noncompliant              DIAGNOSTIC  floor=none → /intune-compliance
+PASS  T20-device-wipe-stolen               PROCEDURE   floor=T3   → /device-wipe
+PASS  T21-onboarding                       PROCEDURE   floor=none → /new-user, /onboard
+PASS  T22-offboarding                      PROCEDURE   floor=T3   → /offboard
+PASS  T23-outlook-password-prompt          DIAGNOSTIC  floor=none → /outlook-issue
+PASS  T24-account-disable-compromised      PROCEDURE   floor=T3   → /security-alert-triage, /offboard
+PASS  T25-mass-password-reset              PROCEDURE   floor=T3   → /password-reset
+PASS  T26-reference-cmdlet                 REFERENCE   floor=none → /mfa-issue
+PASS  T27-group-membership-audit           DIAGNOSTIC  floor=none → /group-membership-audit
+PASS  T28-mfa-reset-suspected-compromise   DIAGNOSTIC  floor=T3   → /security-alert-triage, /mfa-issue
+
+PASS  pair T03-mfa-new-phone ≠ T28-mfa-reset-suspected-compromise — same words about a phone, different required resolution (routine re-registration vs incident containment)
+PASS  pair T07-license-missing ≠ T08-license-remove-departing — 'license' both times; one is provisioning, the other is a destructive removal
+PASS  pair T23-outlook-password-prompt ≠ T24-account-disable-compromised — Outlook credential loop vs an account-disable incident
+PASS  pair T19-intune-noncompliant ≠ T20-device-wipe-stolen — non-compliance triage vs a device wipe
+PASS  pair T02-password-reset-synced ≠ T25-mass-password-reset — single-user reset vs a tenant-wide mass reset
+PASS  pair T05-auth-method-sms-fallback ≠ T14-ca-disable-mfa-urgent — same subject (MFA), one asks for a fallback method, the other for a policy exception under pressure
+
+28/28 tickets · 6/6 dangerous pairs · 7 floored to T3 · 22 commands exercised · classes {"QUICK_FIX":7,"DIAGNOSTIC":13,"PROCEDURE":7,"REFERENCE":1}
+Model-judged half (first action, depth, continuity, human-executes framing): scripts/eval/README.md
+# exit: 0, finished 2026-10-27T06:49:04Z

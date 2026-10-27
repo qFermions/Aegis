@@ -45,7 +45,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 2. New member: Phase B (the Okta assignment, or one gated invitation), then Phase C for channels. **WAIT UNTIL** Slack lists the account.
 3. Leaver: Okta first when SCIM is on; otherwise Phase D (R3 gate, after review). Read back with `verify-deactivated`.
 4. Returner: Phase E (R1 gate), then Phase C to rebuild channels from the Phase A list. Read back with `verify-reactivated`.
-5. Member to guest or back: Phase F (R2 gate). Read back with `verify-guest`.
+5. Member to guest or back: Phase F (one R2 gate per destination type; an Owner or Admin stops it). Read back with `verify-guest`.
 6. A session-reset request: Phase G. For one person the sources offer deactivation, not a per-user GUI reset; for everyone, an R3 gate for a verified requester only.
 7. Primary Owner transfer: Phase H (planning only).
 
@@ -186,28 +186,60 @@ node scripts/adapters/slack-client.js verify-reactivated --user [USER_ID] --exec
 
 **Purpose:** narrow a contractor's access to named channels, or make a guest a full member.
 
-**Before:** Owners and Admins must first be made regular members; a workspace-level member-to-guest change works only when the member belongs to one workspace; guests exist on paid plans only; single-channel guests are capped at five per paid active member.
+**Before:** a workspace-level member-to-guest change works only when the member belongs to one workspace; guests exist on paid plans only; single-channel guests are capped at five per paid active member. Each destination type has its own gate and phrase; use only the one the ticket names.
+
+**Stop if:** the Phase A record shows Owner, Admin or Primary Owner. Slack converts only regular members and guests, and removing an Owner or Admin role is a separate privilege change that this runbook does not make (the same rule as the Primary Owner stop in Phase A).
 
 **Role needed:** Workspace Owner or Workspace Admin (Enterprise: Org Owner or Org Admin).
 
-<!-- SAFETY GATE [slack-user-lifecycle-account-type-portal] -->
+<!-- SAFETY GATE [slack-user-lifecycle-to-single-guest-portal] -->
 - **Target:** [USER_ID]
-- **Effect:** convert one Slack account to the account type the ticket names (regular member, multi-channel guest or single-channel guest); channel access follows the new type
-- **Scope:** one account; a guest sees only the channels set in the dialog, with an optional time limit after which the guest account is deactivated
-- **Reversibility:** R2: the type can be changed back under its own phrase, but channel access lost in a member-to-guest change must be rebuilt from the Phase A list (Phase C)
-- **Required confirmation:** Type exactly `CONVERT SLACK ACCOUNT TYPE FOR [USER_ID]`.
+- **Effect:** convert one regular member or multi-channel guest to a single-channel guest; the account then sees one channel only
+- **Scope:** one account; the one channel set in the dialog, with an optional time limit after which the guest account is deactivated
+- **Reversibility:** R2 (narrows access): change it back under the gate for the type the Phase A record shows; channels lost here are rebuilt from the Phase A list (Phase C)
+- **Required confirmation:** Type exactly `CONVERT SLACK ACCOUNT [USER_ID] TO SINGLE-CHANNEL GUEST`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [slack-user-lifecycle-account-type-portal]:** Only after the Phase A record is in the ticket and the exact match:
-1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → Change account type → **Regular member**, **Multi-channel guest** or **Single-channel guest** → Next.
-2. For a guest, set the channels and the optional time limit in the dialog, then **Make multi-channel guest** or **Make single-channel guest**.
+**PORTAL ACTION [slack-user-lifecycle-to-single-guest-portal]:** Only after the Phase A record is in the ticket, the stop check, and the exact match:
+1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → Change account type → **Single-channel guest** → Next.
+2. Set the one channel and the optional time limit in the dialog, then **Make single-channel guest**.
 
 ```bash
-# HUMAN-RUN read-only read-backs, run only the line for the type chosen
-# single-channel guest, passes when users.info reports is_ultra_restricted true
+# HUMAN-RUN read-only read-back, passes when users.info reports is_ultra_restricted true
 node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type single --execute
-# multi-channel guest, passes when users.info reports is_restricted true
+```
+
+**Role needed:** Workspace Owner or Workspace Admin (Enterprise: Org Owner or Org Admin).
+
+<!-- SAFETY GATE [slack-user-lifecycle-to-multi-guest-portal] -->
+- **Target:** [USER_ID]
+- **Effect:** convert one regular member or single-channel guest to a multi-channel guest; the account then sees only the channels set in the dialog
+- **Scope:** one account; the channels set in the dialog, with an optional time limit after which the guest account is deactivated; a multi-channel guest is billed as a member
+- **Reversibility:** R2 (narrows a member's access, widens a single-channel guest's): change it back under the gate for the type the Phase A record shows; channels a member loses here are rebuilt from the Phase A list (Phase C)
+- **Required confirmation:** Type exactly `CONVERT SLACK ACCOUNT [USER_ID] TO MULTI-CHANNEL GUEST`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [slack-user-lifecycle-to-multi-guest-portal]:** Only after the Phase A record is in the ticket, the stop check, and the exact match:
+1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → Change account type → **Multi-channel guest** → Next.
+2. Set the channels and the optional time limit in the dialog, then **Make multi-channel guest**.
+
+```bash
+# HUMAN-RUN read-only read-back, passes when users.info reports is_restricted true and is_ultra_restricted not true
 node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type multi --execute
-# regular member, read the record and both guest fields must be false
+```
+
+**Role needed:** Workspace Owner or Workspace Admin (Enterprise: Org Owner or Org Admin).
+
+<!-- SAFETY GATE [slack-user-lifecycle-to-member-portal] -->
+- **Target:** [USER_ID]
+- **Effect:** convert one guest to a regular member; the account can then join any public channel
+- **Scope:** one account; it is billed as a member, and private channels stay as they are
+- **Reversibility:** R2 (widens access): convert it back under the gate for the guest type the Phase A record shows; what the person read as a member stays read
+- **Required confirmation:** Type exactly `CONVERT SLACK ACCOUNT [USER_ID] TO REGULAR MEMBER`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [slack-user-lifecycle-to-member-portal]:** Only after the Phase A record and the business owner's approval for full membership are in the ticket, and the exact match:
+1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → Change account type → **Regular member** → Next, then confirm the dialog (its final label was not in the sources read; confirm it on screen).
+
+```bash
+# HUMAN-RUN read-only read-back, deleted false and both guest fields false for a regular member
 node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 ```
 
@@ -271,7 +303,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form.
 
-> [Completed, only when every read-back passed] Slack `[@Aegion_SLACK_URL]`, member `[USER_ID]`: [invited and joined / deactivated / reactivated / converted to multi-channel guest / converted to single-channel guest / forced SSO session reset for the chosen group] on [date/time] by [ADMIN_NAME], confirmed by the exact phrase[, after independent review]. Pre-state recorded in this ticket: [type], [roles], [N] channels. Read-back: [verify command] passed at [time]; the GUI shows [state]. [Okta: changed in Okta first; the Okta read-back agrees.] [Channels re-added: N of N.] Time spent: [X] min.
+> [Completed, only when every read-back passed] Slack `[@Aegion_SLACK_URL]`, member `[USER_ID]`: [invited and joined / deactivated / reactivated / converted to multi-channel guest / converted to single-channel guest / converted to regular member / forced SSO session reset for the chosen group] on [date/time] by [ADMIN_NAME], confirmed by the exact phrase[, after independent review]. Pre-state recorded in this ticket: [type], [roles], [N] channels. Read-back: [verify command] passed at [time]; the GUI shows [state]. [Okta: changed in Okta first; the Okta read-back agrees.] [Channels re-added: N of N.] Time spent: [X] min.
 >
 > [Partial state, keep open] Verified: [what passed]. Pending: [what has not passed or not run, for example the SCIM push has not landed, or N channels are still to re-add]. Next owner: [ADMIN_NAME or team]; next step: [one line].
 

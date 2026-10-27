@@ -16,6 +16,9 @@
 //    header, the phase headings and the fast path agree with the gates.
 // 3. Each runbook names the token variable and every scope of the adapter commands it
 //    runs (SCOPES in slack-client.js), and never asks for the admin scope in SLACK_TOKEN.
+// 4. A phrase names its direction: an account-type change names its destination type,
+//    one gate per destination, and no two gates share a phrase. Phase F of the user
+//    lifecycle stops on an Owner or Admin: removing that role is a separate change.
 //
 // Reads the Markdown and the adapter's SCOPES table only: no credential, no network,
 // no Slack call.
@@ -246,4 +249,31 @@ test('each runbook names the token variable and every scope of the adapter comma
     });
   }
   assert.deepEqual(failures, []);
+});
+
+// ── 4. A phrase names its direction ───────────────────────────────────────────────
+test('no two gates in a Slack runbook share a confirmation phrase', () => {
+  for (const [name, gates] of GATES) {
+    const phrases = gates.map((g) => g.phrase);
+    assert.equal(new Set(phrases).size, phrases.length, `${name}: ${phrases.join(' | ')}`);
+  }
+});
+
+test('slack-user-lifecycle: each account-type change has its own gate whose phrase names the destination, and Phase F stops on an Owner or Admin', () => {
+  const doc = DOCS.get('slack-user-lifecycle');
+  const converts = GATES.get('slack-user-lifecycle').filter((g) => /^convert\b/i.test(g.effect));
+  const TYPES = { 'SINGLE-CHANNEL GUEST': /single-channel guest/i, 'MULTI-CHANNEL GUEST': /multi-channel guest/i, 'REGULAR MEMBER': /regular member/i };
+  const destinations = converts.map((g) => (g.phrase.match(/^CONVERT SLACK ACCOUNT \[USER_ID\] TO (SINGLE-CHANNEL GUEST|MULTI-CHANNEL GUEST|REGULAR MEMBER)$/) || [])[1]);
+  assert.deepEqual([...destinations].sort(), Object.keys(TYPES).sort(), 'one gate per destination type, each phrase naming it');
+  converts.forEach((gate, i) => {
+    const destination = destinations[i];
+    assert.match(gate.effect, new RegExp(`\\bto an? ${TYPES[destination].source}`, 'i'), `${gate.id}: Effect names the destination`);
+    for (const [other, pattern] of Object.entries(TYPES)) {
+      if (other === destination) continue;
+      for (const step of gate.steps) assert.ok(!new RegExp(`\\*\\*(?:Make )?${pattern.source}\\*\\*`, 'i').test(step), `${gate.id}: a step chooses ${other}: ${step}`);
+    }
+  });
+  const phaseF = sectionLines(doc, doc.lines.find((l) => /^## Phase F:/.test(l))).join('\n');
+  assert.match(phaseF, /\*\*Stop if:\*\*[^\n]*\bOwner(?:, | or )Admin\b[^\n]*\bseparate\b/, 'Phase F stops on an Owner or Admin');
+  assert.doesNotMatch(phaseF, /must first be made regular members/, 'a role removal is not an unstated step of Phase F');
 });

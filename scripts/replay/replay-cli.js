@@ -484,7 +484,7 @@ function main() {
             }
           });
         }
-        out({ ok: true, result: 'STALE', caseId: r.caseId, via: r.via, changed: drift.length ? drift : 'previously detected (status shows the checked history)', route: 'adaptive', note: 'authority basis changed — preserved as historical, not current' });
+        out({ ok: true, result: 'STALE', caseId: r.caseId, via: r.via, changed: drift.length ? drift : 'previously detected (status shows the checked history)', route: 'adaptive', note: 'authority basis changed; preserved as historical, not current' });
         break;
       }
       const hit = { ok: true, result: 'CACHE_HIT', caseId: r.caseId, via: r.via, verifiedAt: c.provenance.verifiedAt, deps: c.deps.length, render: `node scripts/replay/replay-cli.js render ${r.caseId}` };

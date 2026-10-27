@@ -9,7 +9,7 @@ subagent, and submits the subagent's JSON artifact back to the engine.
 Decision record: `docs/adr/ADR-004-internal-ticket-graph.md`.
 Ancestry: `identity-lifecycle-factory/` (artifact shapes, loop limits, double-key
 gate), `.claude/commands/troubleshoot.md` (lane taxonomy), CLAUDE.md §Zero-Trust
-(R0–R3), `scripts/pre-commit-check.js` (sanitizer pattern set — keep in sync); the injection markers, folding and second-org rule are shared with the replay cache from `scripts/tier/tier-guard.js` (one copy).
+(R0–R3), `scripts/pre-commit-check.js` (sanitizer pattern set; keep in sync); the injection markers, folding and second-org rule are shared with the replay cache from `scripts/tier/tier-guard.js` (one copy).
 
 ## Modes
 

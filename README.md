@@ -135,7 +135,7 @@ scripts/
 ├── eval/                    # Microsoft and Google ticket corpora + one shared deterministic evaluator + judging rubric
 ├── harness/                 # Continuity checker + release-boundary guard
 ├── dev/                     # Multi-session task claims (atomic, scope-overlap refusal)
-├── jira-client.js           # JSM client — GET-only; writes print as HUMAN-RUN procedures, verify-* read-backs
+├── jira-client.js           # JSM client: GET-only; writes print as HUMAN-RUN procedures, verify-* read-backs
 └── pre-commit-check.js      # The commit/CI safety scanner
 docs/                        # Architecture, ADRs, security model, worked ticket examples,
                              # evidence/ (claim ledger, captured handler samples)

@@ -44,7 +44,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## Fast path
 
-1. Phase A: read your role, the member, the issue and the security settings (R0). Not an Admin: stop and escalate.
+1. Phase A: read your role, the member, the issue and the security settings (R0). The person who makes the change is not a workspace Admin (Owner for export): stop and escalate, whatever the key's role.
 2. Phase B: one issue: delete (R3 gate, after the written rollback path is in the ticket), or restore within the window (R1 gate). Faster permanent removal is planning only.
 3. Phase C: more than 10 issues: decide whether the change is needed at all, capture `[FILE_NAME]`, get the independent review, then the bulk status gate or the bulk delete gate (R3).
 4. Phase D: suspend a member (R3 gate) or unsuspend (R2 gate); with SCIM on, the identity provider instead.
@@ -56,7 +56,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Purpose:** confirm the role before any gate, and record the pre-state the gates need.
 
-1. Linear → Settings → Administration → Members → find `[USER@DOMAIN.COM]` → read the role and the status, Active or Suspended (search excerpt).
+1. Linear → Settings → Administration → Members → find your own row → read your role; then find `[USER@DOMAIN.COM]` → read the role and the status, Active or Suspended (search excerpt).
 2. Linear → Settings → Security → read whether SAML and SCIM are on (the same page may sit at Settings → Administration → Security or Settings → Workspace → Security; Enterprise only; search excerpt).
 3. Linear → `[ISSUE_ID]` → read the status, the attachments and the linked issues: what a delete would take with it.
 4. Linear → `[@Aegion_LINEAR_TEAM]` team settings → Workflow → read the auto-archive period for closed issues (search excerpt).
@@ -77,7 +77,7 @@ node scripts/adapters/linear-client.js states --team [@Aegion_LINEAR_TEAM] --exe
 ```
 </details>
 
-**Stop if:** the `viewer` read shows the key's user is neither admin nor owner and the person who will make the change is not an Admin either. Every gate below needs a workspace Admin (export needs an Owner). Escalate with `/escalation-note` to a workspace Admin, attaching the ticket; there is no Member-level route.
+**Stop if:** the person who will make the change is not a workspace Admin (an Owner for the export), whatever the key's role. Each change is made in Linear's GUI as that person, so their own role (step 1, or the `viewer` read when the key is their own) is the one that counts; the key's role never stands in for it. A key whose user is not that person is itself a stop: no borrowed Admin key (Admin / safety gate above). Every gate below needs a workspace Admin (export needs an Owner). Escalate with `/escalation-note` to a workspace Admin, attaching the ticket; there is no Member-level route.
 
 **Verification checkpoint:** [ ] your role, the member's role and status, SAML and SCIM state, and the issue's pre-state are in the ticket.
 

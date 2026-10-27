@@ -21,6 +21,10 @@
 //    sample values, runs as a dry run (no --execute, no environment, no transport)
 //    and exits 0; a placeholder with no sample value fails the test. The snooze gate
 //    is followed by a verify-snoozed read-back.
+// 4. The workspace-admin role check is about the person. Phase A stops when the person
+//    who will make the change is not a workspace Admin (Owner for export), whatever
+//    the key's role, and a key that is not that person's is itself a stop; the two
+//    role checks are never joined so that an Admin's key lets a Member through.
 //
 // Nothing here reads a credential or opens a socket: the runbooks are files on disk.
 
@@ -168,4 +172,15 @@ test('every adapter line in the runbooks is one the adapter accepts, and the sno
   const snooze = ALL_GATES.find((g) => g.id === 'linear-triage-snooze-portal');
   assert.match(snooze.region, /node scripts\/adapters\/linear-client\.js verify-snoozed --issue \[ISSUE_ID\] --execute/, 'the snooze gate is read back with verify-snoozed');
   assert.ok(!/carries no snooze field/.test(text['linear-triage']), 'the runbook no longer says the issue read has no snooze field');
+});
+
+test('the workspace-admin Phase A stop depends on the person who makes the change, never on the key', () => {
+  const phaseA = section('linear-workspace-admin', 'Phase A');
+  const stop = (phaseA.match(/^\*\*Stop if:\*\*.*$/m) || [''])[0];
+  assert.match(stop, /the person who will make the change is not a workspace Admin \(an Owner for the export\), whatever the key's role/);
+  assert.match(stop, /A key whose user is not that person is itself a stop/);
+  assert.ok(!/neither admin nor owner/i.test(stop) && !/\bkey's user is\b[^.]*\band the person\b/i.test(stop), 'the key check and the person check are not joined with "and"');
+  const fast = (section('linear-workspace-admin', 'Fast path').match(/^1\. Phase A:.*$/m) || [''])[0];
+  assert.match(fast, /The person who makes the change is not a workspace Admin \(Owner for export\): stop and escalate, whatever the key's role/);
+  assert.match(phaseA, /Members → find your own row → read your role/, 'Phase A reads the person\'s own role');
 });

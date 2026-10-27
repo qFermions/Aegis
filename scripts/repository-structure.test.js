@@ -162,3 +162,15 @@ test('CLAUDE.md stays under 20,000 bytes so every session loads it whole (batch 
   const bytes = fs.statSync(path.join(ROOT, 'CLAUDE.md')).size;
   assert.ok(bytes < 20000, `CLAUDE.md is ${bytes} bytes; move product rules, capability descriptions and procedures to the documents it points to`);
 });
+
+test('the Extended Confirmation Gate quotes the SR-2 list exactly as the security doctrine states it', () => {
+  // docs/aegis/workflow.md says the list is quoted "verbatim"; PR #3's trim had paraphrased one item.
+  const squash = (text) => text.replace(/\s+/g, ' ').trim();
+  const doctrine = fs.readFileSync(path.join(ROOT, 'modules', 'security', 'security-doctrine.md'), 'utf8');
+  const workflow = fs.readFileSync(path.join(ROOT, 'docs', 'aegis', 'workflow.md'), 'utf8');
+  const source = squash(doctrine).match(/requires an explicit "yes, proceed" from the operator before execution: (.+?)\. Casual instructions/);
+  const quoted = squash(workflow).match(/\(its list, verbatim there: (.+?)\)\. On top of SR-2/);
+  assert.ok(source, 'SR-2 list not found in modules/security/security-doctrine.md');
+  assert.ok(quoted, 'the quoted SR-2 list not found in docs/aegis/workflow.md');
+  assert.equal(quoted[1], source[1]);
+});

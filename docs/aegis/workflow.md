@@ -150,7 +150,7 @@ Before presenting ANY PowerShell script, scan it for the dangerous-cmdlet patter
 
 ### Extended Confirmation Gate
 
-`modules/security/security-doctrine.md` SR-2 is the canonical destructive-action gate (its list, verbatim there: license removal · account deletion/disable · device wipe/retire/delete · group/DL removal affecting permissions · mass operations >10 objects · `git push --force` / `git reset --hard` · modifying `.claude/settings.local.json` · `Invoke-Expression`/`IEX` · installing PowerShell modules). On top of SR-2, two more require explicit "yes, proceed": running any script in `scripts/` against a production server or AD, and creating or modifying files outside `tasks/`, `scripts/`, `.claude/commands/`.
+`modules/security/security-doctrine.md` SR-2 is the canonical destructive-action gate (its list, verbatim there: license removal · account deletion/disable · device wipe/retire/delete · group/DL removal affecting permissions · mass operations >10 objects · `git push --force` / `git reset --hard` · modifying the agent's own permission model (`.claude/settings.local.json`) · `Invoke-Expression`/`IEX` · installing PowerShell modules). On top of SR-2, two more require explicit "yes, proceed": running any script in `scripts/` against a production server or AD, and creating or modifying files outside `tasks/`, `scripts/`, `.claude/commands/`.
 
 **Common modules:** `Install-Module Microsoft.Graph -Scope CurrentUser` (Entra/Intune/M365 users) · `Install-Module ExchangeOnlineManagement -Scope CurrentUser` (mailboxes, groups, mail flow). Force Entra Connect sync (on the AD Connect server): `Start-ADSyncSyncCycle -PolicyType Delta` - Delta syncs changes only (fast); Initial is the rare full sync.
 

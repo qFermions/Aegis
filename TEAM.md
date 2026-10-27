@@ -23,6 +23,7 @@ handlers never spawn. **Aegis advises; humans execute** (`PRODUCT_CONTRACT.md`).
 | **ATLAS** | `atlas` | Fable 5.1, high | System/Product Architect. Judges whether a proposed change fits the architecture and invariants BEFORE it is built. Read-only; returns fit/misfit + the smallest compliant design. |
 | **FORGE** | `forge` | Fable 5.1, xhigh | Implementation Builder. Executes a bounded brief exactly: claims scope, edits only owned files, runs the relevant suites, reports diff + evidence. Does not spawn. |
 | **WARDEN** | `warden` | Fable 5.1, xhigh | Independent Code/Contract Reviewer. Fresh context, receives spec + diff + ground truth (never the maker's reasoning); returns ACCEPT / REJECT + invariant violations. Used where independence genuinely adds value, not as ceremony. |
+| **evidence-reviewer** | `evidence-reviewer` | Opus, high (second model family, operator's choice per the reviewer-card allowance below) | Read-only acceptance checker, once per batch before "done" (CLAUDE.md "Harness", REVIEW.md). Opens the evidence each checks.md row names and returns a verdict table (pass / fail / unresolved). Not a code reviewer: WARDEN judges a change against the contract; this card checks that claimed evidence exists and says what it claims. |
 
 **Invocation:** the operator addresses roles by name in plain English —
 "ZAC, fix how Aegis handles X" · "ATLAS, does this change fit?" · "FORGE,

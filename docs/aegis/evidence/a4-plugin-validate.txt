@@ -1,0 +1,7 @@
+$ claude plugin validate .claude/agents
+# at dfc9da3, 2026-10-27T07:09:42Z, claude 2.1.311 (Claude Code)
+Validating components in: (repo root)/.claude/agents
+
+√ Validation passed
+# exit: 0
+# post-processed: the absolute checkout path replaced by "(repo root)"; nothing else changed

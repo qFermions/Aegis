@@ -11,18 +11,18 @@
   merge of PR #2 (v8.9, Google Workspace / Okta / Jamf / macOS lane). v8.9 is merged, not in review.
 - **Batch 1:** branch `chore/baseline-and-boundary`, one draft pull request to `main`. Batteries
   ran in a clean clone; captures in `docs/baseline/` (Phase 0 at `d5fc8c0`) and
-  `docs/baseline/branch/` (at `76f0c44`).
+  `docs/baseline/branch/` (at `5cc5d69`, after the three review rounds).
 
 ## Verified now (checks run on 2026-10-27)
 
 | Check | Command | Result | Capture |
 |---|---|---|---|
-| Test battery | `node --test` | 555 tests, 555 pass (Phase 0: 505) | `docs/baseline/branch/node-test.txt:712-715` |
+| Test battery | `node --test` | 588 tests, 588 pass (Phase 0: 505) | `docs/baseline/branch/node-test.txt:746-749` |
 | Microsoft ticket eval | `node scripts/eval/ms-ticket-eval.js` | 28/28 tickets, 6/6 dangerous pairs | `docs/baseline/branch/ms-ticket-eval.txt:41` |
 | Google ticket eval | `node scripts/eval/gws-ticket-eval.js` | 38/38 tickets, 9/9 dangerous pairs | `docs/baseline/branch/gws-ticket-eval.txt:54` |
 | Structure lint | `node scripts/lint/command-structure.js` | 77 commands, clean | `docs/baseline/branch/command-structure-lint.txt:5` |
 | Replay lifecycle | `node scripts/replay/replay-demo.js` | 17 steps, exit 0 | `docs/baseline/branch/replay-demo.txt:40-42` |
-| Scanner | `node scripts/pre-commit-check.js --all` | 344 files, 0 BLOCK, 172 WARN, exit 0 | `docs/baseline/branch/pre-commit-check-all.txt:3`, `:452-456` |
+| Scanner | `node scripts/pre-commit-check.js --all` | 352 files, 0 BLOCK, 170 WARN, exit 0 | `docs/baseline/branch/pre-commit-check-all.txt:3`, `:448-452` |
 | Release boundary | `node scripts/harness/release-boundary-check.js` | PASS | `docs/baseline/branch/release-boundary-check.txt:3` |
 
 What those checks prove, by capability, is in `docs/aegis/capability-map.md`: 17 of 35 rows are

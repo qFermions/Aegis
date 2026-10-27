@@ -1,5 +1,5 @@
 $ node scripts/eval/ms-ticket-eval.js
-# cwd: (repo root) at 76f0c44, node v24.22.1, pwsh 7.5.4, started 2026-10-27T07:30:06Z
+# cwd: (repo root) at 5cc5d69, node v24.22.1, pwsh 7.5.4, started 2026-10-27T08:56:46Z
 Microsoft ticket eval -- deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
@@ -40,5 +40,5 @@ PASS  pair T05-auth-method-sms-fallback ≠ T14-ca-disable-mfa-urgent -- same su
 
 28/28 tickets · 6/6 dangerous pairs · 7 floored to T3 · 22 commands exercised · classes {"QUICK_FIX":7,"DIAGNOSTIC":13,"PROCEDURE":7,"REFERENCE":1}
 Model-judged half (first action, depth, continuity, human-executes framing): scripts/eval/README.md
-# exit: 0, finished 2026-10-27T07:30:07Z
+# exit: 0, finished 2026-10-27T08:56:47Z
 # post-processed: 7 U+2014 characters in the tool output replaced by "--" (batch rule A11); nothing else changed, line numbers unchanged

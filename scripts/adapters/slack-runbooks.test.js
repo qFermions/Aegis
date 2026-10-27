@@ -154,6 +154,22 @@ test('slack-app-approval: the require gate leaves the request policy and the req
   assert.match(remove.reversibility, /^R1\b/);
 });
 
+test('slack-app-approval: granting app request management waits for the request-management approver named in Inputs, not the app sign-off', () => {
+  const doc = DOCS.get('slack-app-approval');
+  const inputs = sectionLines(doc, '## Inputs needed');
+  assert.ok(inputs.some((l) => /\bapprove granting app request management\b/i.test(l) && /\[org gap: confirm the approver\]/.test(l)), 'Inputs names who may approve the grant');
+  const phaseE = sectionLines(doc, doc.lines.find((l) => /^## Phase E:/.test(l)));
+  const stop = phaseE.find((l) => l.startsWith('**Stop if:**')) || '';
+  assert.match(stop, /\bthe request-management approver named in Inputs\b/, 'the Stop-if names the grant approver');
+  assert.doesNotMatch(stop, /\bthe sign-off named in Inputs\b/, 'the app sign-off is not the grant approver');
+  const grant = GATES.get('slack-app-approval').find((g) => g.id === 'slack-app-approval-request-managers-grant-portal');
+  assert.match(grant.region, /\*\*PORTAL ACTION \[slack-app-approval-request-managers-grant-portal\]:\*\* [^\n]*\bthe request-management approver named in Inputs\b/, 'the grant runs only after that approver');
+  const checkpoint = phaseE.find((l) => l.startsWith('**Verification checkpoint:**')) || '';
+  assert.match(checkpoint, /\brequest-management approver\b/, 'the checkpoint names that approver');
+  const checklist = sectionLines(doc, '## ✅ Verification checklist').find((l) => /Request management/.test(l)) || '';
+  assert.match(checklist, /\brequest-management approver\b/, 'the checklist names that approver');
+});
+
 test('slack-security-settings: blocking SMS is its own R3 gate with the Phase A value as rollback, and the two-factor requirement leaves the methods as recorded', () => {
   const doc = DOCS.get('slack-security-settings');
   const gates = GATES.get('slack-security-settings');

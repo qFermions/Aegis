@@ -100,10 +100,10 @@ Before the gate: `verify-group-count` passes for the pilot group, Phase A step 5
 - **Target:** [PROFILE_NAME] scoped to [SMART_GROUP]
 - **Effect:** create one FileVault configuration profile [PROFILE_NAME] that turns on FileVault with a personal recovery key escrowed to Jamf Pro; scope it to the pilot group [SMART_GROUP]
 - **Scope:** the pilot Macs counted in Phase A, 10 or fewer; each installs the profile at its next check-in
-- **Reversibility:** R3: a security control on every pilot Mac; whether taking the profile away decrypts the disk was not confirmed in this batch's sources (safer reading: it does not, and it only stops enforcement)
+- **Reversibility:** R3: a security control on every pilot Mac; the written rollback is `/jamf-config-profiles` Phase G's first gate (the pilot group out of Targets), and whether that decrypts the disk was not confirmed in this batch's sources (safer reading: it does not, and it only stops enforcement)
 - **Required confirmation:** Type exactly `CREATE AND SCOPE FILEVAULT PROFILE [PROFILE_NAME] TO [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [jamf-filevault-pilot-profile-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, no pilot Mac lists another FileVault or escrow profile, and the exact match:
+**PORTAL ACTION [jamf-filevault-pilot-profile-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, no pilot Mac lists another FileVault or escrow profile, the pre-state (each pilot Mac's Phase A reads; no FileVault profile yet) and the rollback gate named in the ticket, and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → New → General: name `[PROFILE_NAME]`, computer level.
 2. In the FileVault payload, turn FileVault on with a personal recovery key and escrow it to Jamf Pro (payload labels unverified in this batch; the fields `/mac-troubleshoot` Branch B reads are the ones to set).
 3. Scope → Targets → `[SMART_GROUP]` → Save.
@@ -133,10 +133,10 @@ Rollout stage, after the pilot read-back passed for every pilot Mac and an indep
 - **Target:** [PROFILE_NAME] scoped to [SMART_GROUP]
 - **Effect:** scope FileVault profile [PROFILE_NAME] to the rollout group [SMART_GROUP]; distribute it to newly assigned Macs only; turn on FileVault on each new member at its next check-in
 - **Scope:** every member of the rollout group at the recorded count, more than 10 Macs or all computers; Macs that already have the profile are left as they are
-- **Reversibility:** R3: a security control across the fleet; narrowing the scope again is its own change, and decryption is not confirmed to follow
+- **Reversibility:** R3: a security control across the fleet; the written rollback is `/jamf-config-profiles` Phase G's third gate (the rollout group, more than 10 Macs, out of Targets, after its own review), and decryption is not confirmed to follow
 - **Required confirmation:** Type exactly `SCOPE AND DISTRIBUTE FILEVAULT PROFILE [PROFILE_NAME] TO [SMART_GROUP] TO TURN ON FILEVAULT`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [jamf-filevault-widen-profile-portal]:** Only after the pilot read-back, the independent review, `verify-group-count` on the rollout group and the exact match:
+**PORTAL ACTION [jamf-filevault-widen-profile-portal]:** Only after the pilot read-back, the profile's current scope in the ticket and the rollback gate named, the independent review, `verify-group-count` on the rollout group and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → Edit → Scope → Targets → `[SMART_GROUP]` → Save.
 2. When Jamf Pro asks how to distribute the change, choose **Distribute to Newly Assigned Devices Only**. The other choice sends a remove command and then reinstalls the profile on every Mac that already has it.
 
@@ -226,7 +226,7 @@ GUI read-back: Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]`
 
 **Purpose:** answer "turn FileVault off so the repair shop can work on it" without removing the control from this runbook.
 
-> **PREVIEW ONLY [jamf-filevault-turn-off-preview]:** Planning only: nothing here authorizes turning FileVault off, taking the FileVault profile off a Mac or decrypting a disk. Turning FileVault off removes a security control (R3). This batch's Jamf sources describe turning FileVault on and replacing keys, not a Jamf Pro action that turns it off, and whether taking the profile away decrypts the disk is unverified (safer reading: it does not, and enforcement simply stops). A real need goes to a separately reviewed change: the repair provider's written reason, a "Temporary exception (high risk)" record with approver and expiry, the revert path (the Mac back in the Phase B profile's scope and Valid in Disk Encryption), and an independent out-of-session review.
+> **PREVIEW ONLY [jamf-filevault-turn-off-preview]:** Planning only: nothing here authorizes turning FileVault off, taking the FileVault profile off a Mac or decrypting a disk. Turning FileVault off removes a security control (R3). The one exception is the rollback a Phase B stage wrote into its ticket before it ran, which runs under `/jamf-config-profiles` Phase G's gates, not here. This batch's Jamf sources describe turning FileVault on and replacing keys, not a Jamf Pro action that turns it off, and whether taking the profile away decrypts the disk is unverified (safer reading: it does not, and enforcement simply stops). A real need goes to a separately reviewed change: the repair provider's written reason, a "Temporary exception (high risk)" record with approver and expiry, the revert path (the Mac back in the Phase B profile's scope and Valid in Disk Encryption), and an independent out-of-session review.
 
 What to offer instead, from this runbook: the user unlocks the Mac in front of the provider; or, when the user cannot, Phase C shows the key under its own gate and Phase D replaces it the day the Mac comes back.
 

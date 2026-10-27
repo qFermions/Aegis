@@ -228,6 +228,20 @@ test('every pilot gate stops above 10 Macs, in the steps before it and in its On
   assert.match(gate(PROFILES, 'jamf-config-profiles-pilot-scope-portal').portal, /Only after the count reads 10 or fewer/);
 });
 
+test('each FileVault R3 scope gate names its written rollback and needs the pre-state and that rollback in the ticket before step 1', () => {
+  const pilot = gate(FILEVAULT, 'jamf-filevault-pilot-profile-portal');
+  assert.match(pilot.field('Reversibility'), /^R3: .*the written rollback is `\/jamf-config-profiles` Phase G's first gate \(the pilot group out of Targets\)/);
+  assert.match(pilot.portal, /the pre-state \(each pilot Mac's Phase A reads; no FileVault profile yet\) and the rollback gate named in the ticket/);
+  const widen = gate(FILEVAULT, 'jamf-filevault-widen-profile-portal');
+  assert.match(widen.field('Reversibility'), /^R3: .*the written rollback is `\/jamf-config-profiles` Phase G's third gate \(the rollout group, more than 10 Macs, out of Targets, after its own review\)/);
+  assert.doesNotMatch(widen.field('Reversibility'), /narrowing the scope again is its own change/, 'a rollback that no gate carries out is not a rollback');
+  assert.match(widen.portal, /the profile's current scope in the ticket and the rollback gate named, the independent review/);
+  // the named gates exist where the FileVault runbook says they are
+  assert.match(gate(PROFILES, 'jamf-config-profiles-remove-pilot-portal').field('Scope'), /10 or fewer/);
+  assert.match(gate(PROFILES, 'jamf-config-profiles-remove-group-portal').field('Scope'), /more than 10 Macs/);
+  assert.match(FILEVAULT, /The one exception is the rollback a Phase B stage wrote into its ticket before it ran, which runs under `\/jamf-config-profiles` Phase G's gates, not here/);
+});
+
 test('the inventory update gate states its downstream effect and records the Mac\'s groups before and after', () => {
   const phaseB = section(GROUPS, 'Phase B');
   const scope = (phaseB.match(/^# Scope: (.+)$/m) || [])[1] || '';

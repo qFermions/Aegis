@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[SERIAL_NUMBER]` (the Mac, as searched in Jamf Pro) · `[DEVICE_ID]` (the Jamf Pro computer ID that the inventory record and `computer` show; `history` takes it) · `[PROFILE_NAME]` / `[PROFILE_ID]` (the FileVault configuration profile) · `[POLICY_NAME]` / `[POLICY_ID]` (the new-key policy) · `[SMART_GROUP]` (the pilot group, or the rollout group where a gate says so) · `[SMART_GROUP_ID]` and `[MEMBER_COUNT]` (that group's ID and the member count recorded before the change) · `[ISSUE_ID]` (the Linear issue) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server, `JAMF_URL` for the adapter) · org values from `modules/security/placeholder-dictionary.md`. The recovery key itself never gets a placeholder: it is never written down.
+**Placeholders:** `[SERIAL_NUMBER]` (the Mac, as searched in Jamf Pro) · `[DEVICE_ID]` (the Jamf Pro computer ID that the inventory record and `computer` show; `history` takes it) · `[PROFILE_NAME]` / `[PROFILE_ID]` (the FileVault configuration profile) · `[PROFILE_IDENTIFIER]` (that profile's own PayloadIdentifier: `payloadSummary[0].profile.PayloadIdentifier` in the `profile --id` read) · `[POLICY_NAME]` / `[POLICY_ID]` (the new-key policy) · `[SMART_GROUP]` (the pilot group, or the rollout group where a gate says so) · `[SMART_GROUP_ID]` and `[MEMBER_COUNT]` (that group's ID and the member count recorded before the change) · `[ISSUE_ID]` (the Linear issue) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server, `JAMF_URL` for the adapter) · org values from `modules/security/placeholder-dictionary.md`. The recovery key itself never gets a placeholder: it is never written down.
 
 ## ⚠️ Admin / safety gate
 
@@ -105,8 +105,10 @@ Before the gate: `verify-group-count` passes for the pilot group, and the payloa
 <summary>Read-back through the adapter (HUMAN-RUN, read-only)</summary>
 
 ```bash
-# proves one pilot Mac lists the FileVault profile
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --execute
+# the new profile's own identifier is payloadSummary[0].profile.PayloadIdentifier - write it in the ticket as [PROFILE_IDENTIFIER]
+node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
+# proves one pilot Mac lists this FileVault profile, by its id and its identifier
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
 # proves FileVault is enabled on that Mac and its escrowed key is Valid
 node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --execute
 ```

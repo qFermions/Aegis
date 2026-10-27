@@ -20,7 +20,10 @@
 //     patch-titles | patch-report --id N | update-plans | update-plan-events --id [PLAN_UUID]
 //   Read-backs (also a dry run unless --execute):
 //     verify-command     --management-id [DEVICE_ID] --type [COMMAND_TYPE] --not-before [NOT_BEFORE]
-//     verify-profile     --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] [--absent]
+//                        [--profile-identifier [PROFILE_IDENTIFIER]] (required for INSTALL_PROFILE
+//                        and REMOVE_PROFILE, so a command for another profile is never proof)
+//     verify-profile     --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID]
+//                        --profile-identifier [PROFILE_IDENTIFIER] [--absent]
 //     verify-group-count --id N --expect N
 //     verify-filevault   --serial [SERIAL_NUMBER]
 //     verify-policy      --id [POLICY_ID] [--trigger T] [--frequency F]
@@ -66,7 +69,13 @@
 //   - The serial number filter field (hardware.serialNumber) is the one the G1 runbook
 //     uses; each Mac read-back first confirms the serial number on the record itself.
 //   - MDM command status values are not confirmed: only "Acknowledged" (any case)
-//     counts. The sort dateSent:desc uses the syntax the reference shows for asc.
+//     counts. The sort dateSent:desc uses the syntax the reference shows for asc. The
+//     profileIdentifier filter and record field come from a search excerpt of the
+//     reference; a profile command counts only when the record itself carries the
+//     identifier asked for.
+//   - Whether an inventory configurationProfiles[].id is the console profile ID is not
+//     confirmed. verify-profile needs one entry whose id and profileIdentifier both
+//     match, and --absent needs neither to be listed and every entry to carry both.
 //   - The FileVault state and personal key validation fields are found by name (one
 //     key ending in FileVault2State or FileVaultState, one key holding RecoveryKey and
 //     Valid that is not the institutional key). Neither value is printed unless it is
@@ -86,6 +95,10 @@ const SERIAL = /^[A-Za-z0-9]{4,40}$/;
 const MANAGEMENT_ID = /^[A-Za-z0-9][A-Za-z0-9-]{0,63}$/;
 const UUID = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
 const COMMAND_TYPE = /^[A-Z][A-Z0-9_]{1,63}$/;
+const PROFILE_COMMAND = /PROFILE$/;
+// A profile's PayloadIdentifier: reverse-DNS names and UUIDs; no quote or separator, so
+// it can sit inside the MDM command filter as one quoted value.
+const PROFILE_IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/;
 const GROUP_NAME = /^[A-Za-z0-9 _.()&'+*:-]{1,100}$/;
 const SUBSET = /^(?:PolicyLogs|Commands)$/;
 const PAGE_SIZE = 100;
@@ -100,7 +113,7 @@ const ROUTES = {
   mdmCommands: {
     method: 'GET', path: '/api/v2/mdm/commands',
     fixedQuery: { sort: 'dateSent:desc', 'page-size': String(PAGE_SIZE) },
-    query: { filter: /^clientManagementId=="[A-Za-z0-9][A-Za-z0-9-]{0,63}"(?:;command==[A-Z][A-Z0-9_]{1,63})?$/, page: /^(?:0|[1-9][0-9]?)$/ },
+    query: { filter: /^clientManagementId=="[A-Za-z0-9][A-Za-z0-9-]{0,63}"(?:;command==[A-Z][A-Z0-9_]{1,63})?(?:;profileIdentifier=="[A-Za-z0-9][A-Za-z0-9._-]{0,254}")?$/, page: /^(?:0|[1-9][0-9]?)$/ },
   },
   smartGroups: { method: 'GET', path: '/api/v2/computer-groups/smart-groups', query: { filter: /^name=="[A-Za-z0-9 _.()&'+*:-]{1,100}"$/ } },
   smartGroupMembership: { method: 'GET', path: '/api/v2/computer-groups/smart-group-membership/:id', params: { id: NUMERIC_ID } },
@@ -234,10 +247,10 @@ const MAX_PAGES = 10;
 const MAX_SUMMARIES = 20;
 
 const serialFilter = (serial) => `hardware.serialNumber=="${serial}"`;
-const commandFilter = (managementId, type) => `clientManagementId=="${managementId}"${type ? `;command==${type}` : ''}`;
+const commandFilter = (managementId, type, identifier) => `clientManagementId=="${managementId}"${type ? `;command==${type}` : ''}${identifier ? `;profileIdentifier=="${identifier}"` : ''}`;
 const inventoryQuery = (serial, section) => ({ section, filter: serialFilter(serial) });
 
-const VALUE_FLAGS = ['serial', 'section', 'id', 'management-id', 'name', 'subset', 'type', 'not-before', 'profile-id', 'expect', 'trigger', 'frequency'];
+const VALUE_FLAGS = ['serial', 'section', 'id', 'management-id', 'name', 'subset', 'type', 'not-before', 'profile-id', 'profile-identifier', 'expect', 'trigger', 'frequency'];
 
 // Each command names its required flags, its optional flags and the request(s) it makes.
 const COMMANDS = Object.freeze({
@@ -255,15 +268,15 @@ const COMMANDS = Object.freeze({
   'update-plans': { kind: 'read', flags: [], request: () => ['updatePlans', {}, {}] },
   'update-plan-events': { kind: 'read', flags: ['id'], idShape: 'uuid', request: (a) => ['updatePlanEvents', { id: a.id }, {}] },
   'verify-command': {
-    kind: 'verify', flags: ['management-id', 'type', 'not-before'],
-    plans: (a) => [['mdmCommands', {}, { filter: commandFilter(a.managementId, a.type), page: '0' }]],
+    kind: 'verify', flags: ['management-id', 'type', 'not-before'], optional: ['profile-identifier'],
+    plans: (a) => [['mdmCommands', {}, { filter: commandFilter(a.managementId, a.type, a.profileIdentifier), page: '0' }]],
     pages: `then page 1, 2 and so on, up to ${MAX_PAGES} pages, while a page is full and no acknowledged command is found`,
-    expected: (a) => ({ managementId: a.managementId, commandType: a.type, status: 'Acknowledged', notBefore: a.notBefore }),
+    expected: (a) => ({ managementId: a.managementId, commandType: a.type, profileIdentifier: a.profileIdentifier || null, status: 'Acknowledged', notBefore: a.notBefore }),
   },
   'verify-profile': {
-    kind: 'verify', flags: ['serial', 'profile-id'], optional: ['absent'],
+    kind: 'verify', flags: ['serial', 'profile-id', 'profile-identifier'], optional: ['absent'],
     plans: (a) => [['inventory', {}, inventoryQuery(a.serial, 'HARDWARE')], ['inventory', {}, inventoryQuery(a.serial, 'CONFIGURATION_PROFILES')]],
-    expected: (a) => ({ serial: a.serial, profileId: a.profileId, listed: !a.absent }),
+    expected: (a) => ({ serial: a.serial, profileId: a.profileId, profileIdentifier: a.profileIdentifier, listed: !a.absent }),
   },
   'verify-group-count': {
     kind: 'verify', flags: ['id', 'expect'],
@@ -290,7 +303,8 @@ const USAGE = [
   '          patch-titles | patch-report --id N | update-plans | update-plan-events --id [PLAN_UUID]',
   `          SECTION is one of ${SECTIONS.join(', ')} (default GENERAL)`,
   '  Verify: verify-command --management-id [DEVICE_ID] --type [COMMAND_TYPE] --not-before [NOT_BEFORE]',
-  '          verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] [--absent]',
+  '            [--profile-identifier [PROFILE_IDENTIFIER]] (required with INSTALL_PROFILE and REMOVE_PROFILE)',
+  '          verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] [--absent]',
   '          verify-group-count --id N --expect N | verify-filevault --serial [SERIAL_NUMBER]',
   '          verify-policy --id [POLICY_ID] [--trigger T] [--frequency F]',
   'Every command is a dry run unless the bare --execute flag is given. No command writes to Jamf Pro.',
@@ -330,6 +344,11 @@ function validate(command, def, args) {
     if (!Number.isFinite(Date.parse(a.notBefore))) throw new RefusedError('--not-before is not a valid time');
   }
   if (args['profile-id'] !== undefined) a.profileId = need(args['profile-id'], NUMERIC_ID, '--profile-id must be a Jamf Pro configuration profile ID: a whole number from 1');
+  if (args['profile-identifier'] !== undefined) a.profileIdentifier = need(args['profile-identifier'], PROFILE_IDENTIFIER, '--profile-identifier must be the profile\'s PayloadIdentifier: letters, digits, dots, hyphens and underscores, up to 255');
+  if (command === 'verify-command') {
+    if (PROFILE_COMMAND.test(a.type) && !a.profileIdentifier) throw new RefusedError(`verify-command --type ${a.type} needs --profile-identifier: an acknowledged command for another profile is not proof`);
+    if (!PROFILE_COMMAND.test(a.type) && a.profileIdentifier) throw new RefusedError('--profile-identifier applies only to a profile command type, such as INSTALL_PROFILE or REMOVE_PROFILE');
+  }
   if (args.expect !== undefined) a.expect = Number(need(args.expect, COUNT, '--expect must be a whole number from 0'));
   if (args.trigger !== undefined) a.trigger = need(args.trigger, TRIGGER, '--trigger must be a trigger or custom event name of 1 to 64 letters, digits, spaces and _ . -');
   if (args.frequency !== undefined) a.frequency = need(args.frequency, FREQUENCY, '--frequency must be the execution frequency as Jamf Pro writes it, such as "Once per computer"');
@@ -419,23 +438,40 @@ async function readMac(client, command, serial, section, observed, flags) {
 async function verifyProfile(client, a) {
   const command = 'verify-profile';
   const expected = COMMANDS[command].expected(a);
-  const observed = { serial: null, computerId: null, listed: null, profiles: [], entriesWithoutId: null };
+  const observed = { serial: null, computerId: null, listed: null, idListed: null, identifierListed: null, profiles: [], entriesWithoutId: null, entriesWithoutIdentifier: null };
   const flags = [];
   const mac = await readMac(client, command, a.serial, 'CONFIGURATION_PROFILES', observed, flags);
   if (mac.failure) return mac.failure;
   if (mac.reason) return verdict(command, false, expected, observed, mac.reason, flags);
   const list = mac.record.configurationProfiles;
   if (!Array.isArray(list)) return verdict(command, false, expected, observed, 'the record holds no configurationProfiles list', flags);
-  const ids = list.map((p) => (isObject(p) ? idOf(p.id) : null));
-  observed.entriesWithoutId = ids.filter((id) => id === null).length;
-  observed.profiles = list.slice(0, MAX_LISTED * 2).map((p, i) => ({ id: ids[i], displayName: isObject(p) && typeof p.displayName === 'string' ? p.displayName : null }));
-  observed.listed = ids.includes(a.profileId);
+  // Whether the inventory's configurationProfiles[].id is the console profile ID is not
+  // confirmed, so an entry is this profile only when its id and its profileIdentifier
+  // both match; either one still listed means the profile is not provably gone.
+  const entries = list.map((p) => ({
+    id: isObject(p) ? idOf(p.id) : null,
+    profileIdentifier: isObject(p) && typeof p.profileIdentifier === 'string' && p.profileIdentifier ? p.profileIdentifier : null,
+    displayName: isObject(p) && typeof p.displayName === 'string' ? p.displayName : null,
+  }));
+  observed.entriesWithoutId = entries.filter((e) => e.id === null).length;
+  observed.entriesWithoutIdentifier = entries.filter((e) => e.profileIdentifier === null).length;
+  observed.profiles = entries.slice(0, MAX_LISTED * 2);
+  observed.idListed = entries.some((e) => e.id === a.profileId);
+  observed.identifierListed = entries.some((e) => e.profileIdentifier === a.profileIdentifier);
+  observed.listed = entries.some((e) => e.id === a.profileId && e.profileIdentifier === a.profileIdentifier);
   if (!a.absent) {
-    return verdict(command, observed.listed, expected, observed, 'the Mac does not list a profile with this id', flags);
+    let reason = 'the Mac lists no profile with this id and this profile identifier';
+    if (observed.identifierListed && !observed.listed) reason = 'an entry carries this profile identifier under another id (whether the inventory id is the console profile ID is not confirmed); check the Mac\'s record on screen';
+    else if (observed.idListed && !observed.listed) reason = 'an entry carries this id but not this profile identifier, so it may be another profile';
+    return verdict(command, observed.listed, expected, observed, reason, flags);
   }
-  if (observed.listed) return verdict(command, false, expected, observed, 'the Mac still lists the profile', flags);
+  if (observed.idListed || observed.identifierListed) return verdict(command, false, expected, observed, 'the Mac still lists the profile (an entry carries its id or its profile identifier)', flags);
   if (observed.entriesWithoutId > 0) {
     return verdict(command, false, expected, observed, `${observed.entriesWithoutId} listed profile(s) carry no id, so absence is not proven; check the Mac's record on screen`, flags);
+  }
+  if (!entries.length || observed.entriesWithoutIdentifier > 0) {
+    const counted = entries.length ? `${observed.entriesWithoutIdentifier} of ${entries.length} listed profile(s) carry no profileIdentifier` : 'the list is empty, so no entry carries a profileIdentifier';
+    return verdict(command, false, expected, observed, `${counted}; absence is proven only by a list whose every entry carries one. Check the Mac's record on screen`, flags);
   }
   return verdict(command, true, expected, observed, null, flags);
 }
@@ -480,10 +516,10 @@ async function verifyCommand(client, a) {
   const command = 'verify-command';
   const expected = COMMANDS[command].expected(a);
   const notBefore = Date.parse(a.notBefore);
-  const observed = { managementId: a.managementId, commandType: a.type, pagesRead: 0, commandsRead: 0, match: null, sameTypeSinceNotBefore: [] };
+  const observed = { managementId: a.managementId, commandType: a.type, profileIdentifier: a.profileIdentifier || null, pagesRead: 0, commandsRead: 0, match: null, sameTypeSinceNotBefore: [], otherProfileCommands: 0 };
   const flags = [];
   for (let page = 0; page < MAX_PAGES; page += 1) {
-    const r = await read(client, 'mdmCommands', {}, { filter: commandFilter(a.managementId, a.type), page: String(page) });
+    const r = await read(client, 'mdmCommands', {}, { filter: commandFilter(a.managementId, a.type, a.profileIdentifier), page: String(page) });
     if (!r.ok) return failed(command, r);
     flags.push(...r.flags.map((f) => ({ ...f, path: `page ${page} ${f.path}` })));
     const list = isObject(r.raw) && Array.isArray(r.raw.results) ? r.raw.results : null;
@@ -494,9 +530,12 @@ async function verifyCommand(client, a) {
       observed.commandsRead += 1;
       const sameMac = typeof c.clientManagementId === 'string' && c.clientManagementId.toLowerCase() === a.managementId.toLowerCase();
       if (!sameMac || c.command !== a.type) continue;
+      // A profile command for another profile (or one that names none) is never proof,
+      // even when the server ignores the profileIdentifier part of the filter.
+      if (a.profileIdentifier && c.profileIdentifier !== a.profileIdentifier) { observed.otherProfileCommands += 1; continue; }
       const sent = typeof c.dateSent === 'string' ? Date.parse(c.dateSent) : NaN;
       if (!Number.isFinite(sent) || sent < notBefore) continue;
-      const summary = { uuid: orNull(c.uuid), command: c.command, status: orNull(c.status), dateSent: c.dateSent, dateCompleted: orNull(c.dateCompleted) };
+      const summary = { uuid: orNull(c.uuid), command: c.command, profileIdentifier: orNull(c.profileIdentifier), status: orNull(c.status), dateSent: c.dateSent, dateCompleted: orNull(c.dateCompleted) };
       if (typeof c.status === 'string' && /^acknowledged$/i.test(c.status)) {
         observed.match = summary;
         return verdict(command, true, expected, observed, null, flags);
@@ -504,7 +543,8 @@ async function verifyCommand(client, a) {
       if (observed.sameTypeSinceNotBefore.length < MAX_SUMMARIES) observed.sameTypeSinceNotBefore.push(summary);
     }
     if (list.length < PAGE_SIZE) {
-      return verdict(command, false, expected, observed, `no ${a.type} command for this Mac sent at or after ${a.notBefore} reads Acknowledged`, flags);
+      const forProfile = a.profileIdentifier ? ` for profile ${a.profileIdentifier}` : '';
+      return verdict(command, false, expected, observed, `no ${a.type} command${forProfile} for this Mac sent at or after ${a.notBefore} reads Acknowledged`, flags);
     }
   }
   return verdict(command, false, expected, observed, `stopped after ${MAX_PAGES} pages without proof`, flags);

@@ -72,3 +72,22 @@ test('reads that can carry secrets are never pasted whole into a ticket: the run
   assert.match(section(GROUPS, 'Phase A'), /copy into the ticket only the fields the question needs .* - never the whole output/);
   assert.match(section(GROUPS, 'Phase B'), /an attribute whose name contains pass, secret, token, key or pin is printed without its value: read it on screen and never copy it into the ticket/);
 });
+
+test('every profile read-back names the profile by its identifier, so an install or an entry for another profile is never proof', () => {
+  for (const [name, text] of [['jamf-config-profiles', PROFILES], ['jamf-filevault', FILEVAULT]]) {
+    const calls = text.split('\n').filter((l) => /jamf-client\.js verify-(?:profile|command) /.test(l));
+    assert.ok(calls.length > 0, `${name}: has profile read-backs`);
+    for (const line of calls) assert.match(line, /--profile-identifier \[PROFILE_IDENTIFIER\]/, `${name}: ${line.trim()}`);
+    const placeholders = text.split('\n').find((l) => l.startsWith('**Placeholders:**')) || '';
+    assert.match(placeholders, /`\[PROFILE_IDENTIFIER\]` \(that profile's own PayloadIdentifier: `payloadSummary\[0\]\.profile\.PayloadIdentifier` in the `profile --id` read/, `${name}: says where the identifier is read`);
+  }
+  for (const phase of ['Phase C', 'Phase D', 'Phase E', 'Phase F']) {
+    const text = section(PROFILES, phase);
+    assert.match(text, /--profile-identifier \[PROFILE_IDENTIFIER\]/, `${phase} reads the profile back by its identifier`);
+  }
+  // Phase F: verify-profile passed before the redistribution too, so the proof of the
+  // reinstall is a fresh acknowledged install for this profile after the distribution time.
+  assert.match(section(PROFILES, 'Phase F'), /verify-command --management-id \[DEVICE_ID\] --type INSTALL_PROFILE --profile-identifier \[PROFILE_IDENTIFIER\] --not-before \[NOT_BEFORE\] --execute/);
+  assert.match(section(PROFILES, 'Phase A'), /Write the profile's identifier in the ticket as `\[PROFILE_IDENTIFIER\]`/);
+  assert.match(section(FILEVAULT, 'Phase B'), /jamf-client\.js profile --id \[PROFILE_ID\] --execute/, 'the FileVault runbook reads the new profile\'s identifier');
+});

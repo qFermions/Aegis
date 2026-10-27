@@ -97,9 +97,9 @@ export function changedPaths(base, cwd) {
 
 export function loadTiers(file) {
   const parsed = JSON.parse(readFileSync(file, 'utf8'));
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(`${file}: the tier file must be a JSON object with "C" and "B" arrays`);
   for (const tier of ORDER) {
-    if (parsed[tier] === undefined) continue;
-    if (!Array.isArray(parsed[tier])) throw new Error(`${file}: "${tier}" must be an array of globs`);
+    if (!Array.isArray(parsed[tier])) throw new Error(`${file}: "${tier}" must be an array of globs (missing or misnamed keys fail closed)`);
     for (const glob of parsed[tier]) {
       if (typeof glob !== 'string' || glob.length === 0) throw new Error(`${file}: "${tier}" holds a non-string or empty glob: ${JSON.stringify(glob)}`);
     }

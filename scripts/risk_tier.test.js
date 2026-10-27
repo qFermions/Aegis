@@ -146,12 +146,22 @@ test('a file moved out of a C path still sets tier C (both sides of the rename a
   assert.deepEqual(run(cwd, ['main']), ['tier=C', 'modules/security/old-doctrine.md']);
 });
 
-test('a tier file with a non-string glob fails closed with exit 1', () => {
+test('a malformed tier file fails closed with exit 1 instead of reporting tier A', () => {
   const cwd = sandbox();
-  commit(cwd, ['docs/notes.md']);
-  const broken = path.join(cwd, 'broken-tiers.json');
-  fs.writeFileSync(broken, JSON.stringify({ C: [['.github/**']], B: [] }));
-  assert.match(run(cwd, ['main'], 1, { env: { RISK_TIERS_FILE: broken } }), /non-string or empty glob/);
+  commit(cwd, ['.github/workflows/ci.yml']);
+  const cases = [
+    [{ C: [['.github/**']], B: [] }, /non-string or empty glob/],
+    [{ C: [''], B: [] }, /non-string or empty glob/],
+    [{ c: ['.github/**'], B: ['scripts/**'] }, /"C" must be an array of globs/],
+    [{ C: ['.github/**'] }, /"B" must be an array of globs/],
+    [[], /must be a JSON object/],
+    ['globs', /must be a JSON object/],
+  ];
+  for (const [shape, message] of cases) {
+    const broken = path.join(cwd, 'broken-tiers.json');
+    fs.writeFileSync(broken, JSON.stringify(shape));
+    assert.match(run(cwd, ['main'], 1, { env: { RISK_TIERS_FILE: broken } }), message, JSON.stringify(shape));
+  }
 });
 
 test('the CLI runs when invoked through a symlinked path', () => {

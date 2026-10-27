@@ -242,28 +242,55 @@ function bindTenantIfUnbound() {
 
 // ── write serialization (one controlled promotion path, no last-writer-wins) ─
 
-// Released once, by the writer that holds it. withLock releases in `finally` and
-// again on process exit (fail() exits from inside fn); without the ownership flag
-// the exit-time call removed a lock another writer had taken in between, letting a
-// third writer in while the second was still writing.
-let lockOwned = false;
-function releaseLock() {
-  if (!lockOwned) return;
-  lockOwned = false;
+// The lock belongs to the writer whose random token is in its owner file. A writer
+// removes the lock only while that file still holds its own token, so a writer that
+// outlived LOCK_STALE_MS never removes the lock of the writer that stole it, and the
+// exit-time release after `finally` is a no-op. Stealing a stale lock is serialized by
+// a second mkdir lock (.lock.steal): under it the stealer re-checks that the lock is
+// still the stale one it saw, so two stealers never both proceed.
+const LOCK_OWNER = path.join(LOCK_PATH, 'owner');
+const STEAL_PATH = LOCK_PATH + '.steal';
+let lockToken = null;
+const lockOwner = () => { try { return fs.readFileSync(LOCK_OWNER, 'utf8'); } catch (e) { return null; } };
+const lockAge = (p) => { try { return Date.now() - fs.statSync(p).mtimeMs; } catch (e) { return null; } };
+function removeLockDir() {
+  try { fs.unlinkSync(LOCK_OWNER); } catch (e) { /* no owner file */ }
   try { fs.rmdirSync(LOCK_PATH); } catch (e) { /* already released */ }
+}
+function takeLock() {
+  fs.mkdirSync(LOCK_PATH); // EEXIST while another writer holds it
+  const token = crypto.randomBytes(16).toString('hex');
+  fs.writeFileSync(LOCK_OWNER, token);
+  lockToken = token;
+}
+function releaseLock() {
+  if (!lockToken) return;
+  const mine = lockOwner() === lockToken;
+  lockToken = null;
+  if (mine) removeLockDir();
+}
+function acquireLock() {
+  try { return takeLock(); } catch (e) { if (e.code !== 'EEXIST') throw e; }
+  const seen = lockOwner();
+  const age = lockAge(LOCK_PATH);
+  if (age !== null && age < LOCK_STALE_MS) fail(1, 'memory store is locked by another writer; retry after it finishes');
+  try { fs.mkdirSync(STEAL_PATH); } catch (e) {
+    if ((lockAge(STEAL_PATH) || 0) >= LOCK_STALE_MS) { try { fs.rmdirSync(STEAL_PATH); } catch (e2) { /* gone */ } } // a stealer crashed mid-steal
+    fail(1, 'memory store lock is being recovered by another writer; retry');
+  }
+  let stole = false;
+  const again = lockAge(LOCK_PATH);
+  if (again === null || (again >= LOCK_STALE_MS && lockOwner() === seen)) { // still the stale lock (crashed writer)
+    removeLockDir();
+    try { takeLock(); stole = true; } catch (e) { if (e.code !== 'EEXIST') { fs.rmdirSync(STEAL_PATH); throw e; } }
+  }
+  fs.rmdirSync(STEAL_PATH);
+  if (!stole) fail(1, 'memory store is locked by another writer; retry after it finishes');
 }
 
 function withLock(fn) {
   fs.mkdirSync(MEM_DIR, { recursive: true });
-  try {
-    fs.mkdirSync(LOCK_PATH);
-  } catch (e) {
-    const age = fs.existsSync(LOCK_PATH) ? Date.now() - fs.statSync(LOCK_PATH).mtimeMs : 0;
-    if (age < LOCK_STALE_MS) fail(1, 'memory store is locked by another writer — retry after it finishes');
-    fs.rmdirSync(LOCK_PATH); // stale lock (crashed writer) — steal it
-    fs.mkdirSync(LOCK_PATH);
-  }
-  lockOwned = true;
+  acquireLock();
   // fail() exits the process from inside fn — release on exit, not just finally.
   process.on('exit', releaseLock);
   try {

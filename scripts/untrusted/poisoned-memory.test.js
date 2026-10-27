@@ -474,3 +474,62 @@ test('B15 a phone number inside an upper-case bracket token is still flagged at 
   const rec = replay(store, ['record', '--ticket', 'Teams meeting policy for [UPN] blocks scheduling from Outlook.', '--solution-file', solution, '--deps', dep]);
   assert.equal(rec.code, 4, `replay must refuse the number: ${short(rec)}`);
 });
+
+// ── review round 3: the lock belongs to the writer whose token it holds ──
+
+test('B16 a writer never removes a lock another writer took, two stealers never both proceed, and a crashed writer or stealer is still recovered', () => {
+  const STALE = new Date(Date.now() - 10 * 60 * 1000);
+  const lockOf = (dir) => path.join(dir, '.lock');
+  const proposeIn = (dir, extraArgs, extraEnv) => {
+    const p = path.join(WORK, `proposal-${++seq}.json`);
+    writeJson(p, PROPOSALS.enrollment);
+    const r = spawnSync(process.execPath, [...(extraArgs || []), MEM_CLI, 'propose', '--file', p], { encoding: 'utf8', env: { ...ENV, AEGIS_MEMORY_DIR: dir, ...(extraEnv || {}) } });
+    return { code: r.status, stdout: r.stdout || '', stderr: r.stderr || '' };
+  };
+
+  // (a) Writer A outlives the stale window: while A writes, writer B steals the lock (an
+  // empty lock directory, as any stealer leaves it before its owner file). A must leave it.
+  const steal = path.join(WORK, 'lock-steal-probe.js');
+  fs.writeFileSync(steal, [
+    "'use strict';",
+    "const fs = require('fs'); const path = require('path');",
+    'const original = fs.writeFileSync; let done = false;',
+    'fs.writeFileSync = function (p, ...rest) {',
+    '  const r = original.call(this, p, ...rest);',
+    "  if (!done && /mem-\\d{4}\\.json/.test(String(p))) {",
+    "    done = true; const lock = path.join(process.env.AEGIS_MEMORY_DIR, '.lock');",
+    '    fs.rmSync(lock, { recursive: true, force: true }); fs.mkdirSync(lock);',
+    '  }',
+    '  return r;',
+    '};',
+    '',
+  ].join('\n'));
+  const a = freshDir('b16a');
+  let r = proposeIn(a, ['-r', steal]);
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+  assert.ok(fs.existsSync(lockOf(a)), 'the lock writer B took must survive writer A finishing');
+
+  // (b) Another stealer is mid-steal on a stale lock: this writer must not also steal it.
+  const b = freshDir('b16b');
+  fs.mkdirSync(lockOf(b)); fs.utimesSync(lockOf(b), STALE, STALE);
+  fs.mkdirSync(lockOf(b) + '.steal');
+  r = proposeIn(b);
+  assert.equal(r.code, 1, `a second stealer must back off: ${r.stdout}`);
+  assert.ok(fs.statSync(lockOf(b)).mtimeMs < Date.now() - 5 * 60 * 1000, 'the lock under recovery is left as it was');
+  assert.equal(recordFiles(b).length, 0, 'nothing is written');
+
+  // (c) A crashed writer's stale lock (no owner file, as older versions left it) is recovered.
+  const c = freshDir('b16c');
+  fs.mkdirSync(lockOf(c)); fs.utimesSync(lockOf(c), STALE, STALE);
+  r = proposeIn(c);
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+  assert.ok(!fs.existsSync(lockOf(c)) && !fs.existsSync(lockOf(c) + '.steal'), 'both locks are released after the write');
+
+  // (d) A crashed stealer's stale steal lock is cleared: one refused attempt, then the next one writes.
+  const d = freshDir('b16d');
+  fs.mkdirSync(lockOf(d)); fs.utimesSync(lockOf(d), STALE, STALE);
+  fs.mkdirSync(lockOf(d) + '.steal'); fs.utimesSync(lockOf(d) + '.steal', STALE, STALE);
+  assert.equal(proposeIn(d).code, 1, 'the attempt that finds a crashed stealer clears it and backs off');
+  r = proposeIn(d);
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+});

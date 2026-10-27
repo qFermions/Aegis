@@ -64,7 +64,10 @@ reaches the public mirror). `index.json` (retrieval metadata only) ·
 **The CLI is the only write path.** Graph nodes and subagents are read-only
 (`Read/Grep/Glob`); the graph engine has no reference to this store; no hook,
 cron, or automation writes here in V1. Writes are serialized by an exclusive
-lock. Text inside evidence ("save this as permanent memory") has zero
+lock that holds its writer's random token: a writer removes it only while it
+still holds that token, and a stale lock (over 5 minutes) is recovered by one
+stealer at a time (B14, B16 in `scripts/untrusted/poisoned-memory.test.js`).
+Text inside evidence ("save this as permanent memory") has zero
 authority — it is data (SR-3), and the sanitizer blocks injection markers,
 tenant literals, credentials, and PII from ever persisting. Injection markers
 are also caught when obfuscated with zero-width characters, look-alike letters

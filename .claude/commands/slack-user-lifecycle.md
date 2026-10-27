@@ -58,6 +58,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 2. Enterprise: Slack → the organization name → Tools & settings → Organization settings → People → Members → search `[USER@DOMAIN.COM]` → read the same fields.
 3. Record the channels the person belongs to in the ticket: for each team channel, Slack → `#[CHANNEL_NAME]` → channel name in the header → read the member list (the member-list label was not in the sources read; confirm it on screen). The adapter does not read channel membership.
 4. If the record shows the Primary Owner, stop here: that account cannot be deactivated or converted until the role is transferred (Phase H).
+5. Bind the ID to the person: on the GUI record found by `[USER@DOMAIN.COM]`, open the profile, read its member ID and write it in the ticket next to the email; it must equal `[USER_ID]`. The adapter's `user` read prints state fields only, never the email, so this is the only link between the two. Where Slack shows the member ID on a profile was not in the sources read: if you cannot find it, stop before any change.
+6. Write the adapter `user` read's `deleted`, `is_restricted` and `is_ultra_restricted` values in the ticket: a later `verify-*` read only proves a change when the account did not already have that state.
 
 <details>
 <summary>Read-only adapter reads, the scale version (HUMAN-RUN)</summary>
@@ -75,7 +77,7 @@ node scripts/adapters/slack-client.js users --limit 100 --execute
 
 **Stop if:** `whoami` shows a team other than `[@Aegion_SLACK_TEAM_ID]`, or the member is the Primary Owner.
 
-**Verification checkpoint:** [ ] the token's team is `[@Aegion_SLACK_TEAM_ID]` · [ ] type, status and roles are in the ticket · [ ] the channel list is in the ticket.
+**Verification checkpoint:** [ ] the token's team is `[@Aegion_SLACK_TEAM_ID]` · [ ] type, status and roles are in the ticket · [ ] the channel list is in the ticket · [ ] the member ID on the GUI record equals `[USER_ID]`.
 
 ## Phase B: New member, through Okta or one invitation (R1)
 
@@ -133,7 +135,7 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 
 **Purpose:** stop all Slack access while keeping the messages. With SCIM on, deactivate in Okta (`/okta-user-lifecycle`) and use only the read-back here; a Slack-side deactivation is for a workspace Okta does not provision, or for a SCIM push that did not land.
 
-**Stop if:** the account is the Primary Owner; the Phase A channel list is not in the ticket; SCIM is on and the Okta change has not been made.
+**Stop if:** the account is the Primary Owner; the Phase A channel list is not in the ticket; SCIM is on and the Okta change has not been made; the Phase A `user` read of `[USER_ID]` already shows deleted true (then `verify-deactivated` would pass with nobody deactivated: find the leaver's real ID); the member ID on the GUI record found by `[USER@DOMAIN.COM]` is not `[USER_ID]`.
 
 **Role needed:** Workspace Owner or Workspace Admin (within the limits of their role); on Enterprise, Org Owner or Org Admin, at the org level only. Nobody can deactivate the Primary Owner.
 
@@ -160,6 +162,8 @@ node scripts/adapters/slack-client.js verify-deactivated --user [USER_ID] --exec
 ## Phase E: Returner, reactivate the account (R1)
 
 **Purpose:** restore sign-in for someone back from leave. With SCIM on, reactivate through Okta (`/okta-user-lifecycle`) and use only the read-back here.
+
+**Stop if:** the Phase A `user` read of `[USER_ID]` already shows deleted false (then `verify-reactivated` would pass with nobody reactivated); the member ID on the GUI record found by `[USER@DOMAIN.COM]` is not `[USER_ID]`.
 
 **Role needed:** Workspace Owner or Workspace Admin; a member deactivated at the org level needs an Org Owner or Org Admin.
 
@@ -188,7 +192,7 @@ node scripts/adapters/slack-client.js verify-reactivated --user [USER_ID] --exec
 
 **Before:** a workspace-level member-to-guest change works only when the member belongs to one workspace; guests exist on paid plans only; single-channel guests are capped at five per paid active member. Each destination type has its own gate and phrase; use only the one the ticket names.
 
-**Stop if:** the Phase A record shows Owner, Admin or Primary Owner. Slack converts only regular members and guests, and removing an Owner or Admin role is a separate privilege change that this runbook does not make (the same rule as the Primary Owner stop in Phase A).
+**Stop if:** the Phase A record shows Owner, Admin or Primary Owner (Slack converts only regular members and guests, and removing an Owner or Admin role is a separate privilege change that this runbook does not make, the same rule as the Primary Owner stop in Phase A); the Phase A `user` read of `[USER_ID]` already shows the destination type (then the read-back would pass with nothing converted); the member ID on the GUI record found by `[USER@DOMAIN.COM]` is not `[USER_ID]`.
 
 **Role needed:** Workspace Owner or Workspace Admin (Enterprise: Org Owner or Org Admin).
 
@@ -303,7 +307,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form.
 
-> [Completed, only when every read-back passed] Slack `[@Aegion_SLACK_URL]`, member `[USER_ID]`: [invited and joined / deactivated / reactivated / converted to multi-channel guest / converted to single-channel guest / converted to regular member / forced SSO session reset for the chosen group] on [date/time] by [ADMIN_NAME], confirmed by the exact phrase[, after independent review]. Pre-state recorded in this ticket: [type], [roles], [N] channels. Read-back: [verify command] passed at [time]; the GUI shows [state]. [Okta: changed in Okta first; the Okta read-back agrees.] [Channels re-added: N of N.] Time spent: [X] min.
+> [Completed, only when every read-back passed] Slack `[@Aegion_SLACK_URL]`, member `[USER_ID]`: [invited and joined / deactivated / reactivated / converted to multi-channel guest / converted to single-channel guest / converted to regular member / forced SSO session reset for the chosen group] on [date/time] by [ADMIN_NAME], confirmed by the exact phrase[, after independent review]. Pre-state recorded in this ticket: [type], [roles], [N] channels, the member ID read from the GUI record next to the email. Read-back: [verify command] passed at [time]; the GUI shows [state]. [Okta: changed in Okta first; the Okta read-back agrees.] [Channels re-added: N of N.] Time spent: [X] min.
 >
 > [Partial state, keep open] Verified: [what passed]. Pending: [what has not passed or not run, for example the SCIM push has not landed, or N channels are still to re-add]. Next owner: [ADMIN_NAME or team]; next step: [one line].
 

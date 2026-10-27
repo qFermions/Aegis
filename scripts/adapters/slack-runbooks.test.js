@@ -19,6 +19,10 @@
 // 4. A phrase names its direction: an account-type change names its destination type,
 //    one gate per destination, and no two gates share a phrase. Phase F of the user
 //    lifecycle stops on an Owner or Admin: removing that role is a separate change.
+// 5. A verify-* read-back proves the person the GUI step acted on: Phase A records the
+//    member ID shown on the GUI record found by [USER@DOMAIN.COM], and every phase whose
+//    GUI step acts on that email and whose proof is a verify-* user read stops when the
+//    member ID is not [USER_ID] or the Phase A read already shows the end state.
 //
 // Reads the Markdown and the adapter's SCOPES table only: no credential, no network,
 // no Slack call.
@@ -276,4 +280,24 @@ test('slack-user-lifecycle: each account-type change has its own gate whose phra
   const phaseF = sectionLines(doc, doc.lines.find((l) => /^## Phase F:/.test(l))).join('\n');
   assert.match(phaseF, /\*\*Stop if:\*\*[^\n]*\bOwner(?:, | or )Admin\b[^\n]*\bseparate\b/, 'Phase F stops on an Owner or Admin');
   assert.doesNotMatch(phaseF, /must first be made regular members/, 'a role removal is not an unstated step of Phase F');
+});
+
+// ── 5. A read-back proves the person the GUI step acted on ──────────────────────────
+test('slack-user-lifecycle: every phase proved by a verify-* user read binds [USER_ID] to the GUI record and stops when the account already had the end state', () => {
+  const doc = DOCS.get('slack-user-lifecycle');
+  const phaseA = sectionLines(doc, doc.lines.find((l) => /^## Phase A:/.test(l)));
+  assert.ok(phaseA.some((l) => /^\d+\. /.test(l) && /\bmember ID\b/.test(l) && l.includes('`[USER@DOMAIN.COM]`') && /must equal `\[USER_ID\]`/.test(l)), 'Phase A records the member ID shown on the GUI record found by the email');
+  const failures = [];
+  const checked = new Set();
+  for (const gate of GATES.get('slack-user-lifecycle')) {
+    const lines = sectionLines(doc, gate.section);
+    if (!/verify-(?:deactivated|reactivated|guest) --user \[USER_ID\]/.test(lines.join('\n'))) continue;
+    if (!gate.steps.some((s) => s.includes('[USER@DOMAIN.COM]'))) continue;
+    checked.add(gate.section);
+    const stop = lines.find((l) => l.startsWith('**Stop if:**')) || '';
+    if (!/\bmember ID\b[^\n]*\bis not `\[USER_ID\]`/.test(stop)) failures.push(`${gate.section}: no stop when the GUI record's member ID is not [USER_ID]`);
+    if (!/Phase A `user` read[^\n]*\balready\b/.test(stop)) failures.push(`${gate.section}: no stop when the Phase A read already shows the end state`);
+  }
+  assert.deepEqual([...new Set(failures)], []);
+  assert.deepEqual([...checked].map((h) => h.slice(0, 10)).sort(), ['## Phase D', '## Phase E', '## Phase F'], 'deactivate, reactivate and account type are the phases bound');
 });

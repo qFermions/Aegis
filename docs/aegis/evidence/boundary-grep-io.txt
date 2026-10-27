@@ -1,0 +1,22 @@
+$ git grep -n -E "https?\.request|require\('node:https?'\)|require\('https?'\)|fetch\(|child_process|net\.connect|nodemailer|smtp|sendmail|crontab|schtasks|setInterval|Register-ScheduledTask|stripe|paypal" -- '*.js' '*.mjs' ':!*.test.js'
+# at 62eff38 on chore/baseline-and-boundary, 2026-10-27T07:06:45Z
+modules/automation/scripts/deploy-check.js:17: * No external dependencies -- Node.js core only (fs, path, child_process).
+modules/automation/scripts/deploy-check.js:24:const { spawnSync } = require('child_process');
+modules/systems/scripts/health-check.js:16: * No external dependencies -- Node.js core only (os, child_process).
+modules/systems/scripts/health-check.js:22:const { execFileSync } = require('child_process');
+scripts/eval/ticket-eval-core.js:25:const { execFileSync } = require('child_process');
+scripts/harness/check-continuity.js:22:const { execSync } = require('child_process');
+scripts/harness/release-boundary-check.js:19:const { execFileSync } = require('child_process');
+scripts/init-memory.js:19:const { execFileSync } = require('child_process');
+scripts/jira-client.js:37:const https = require('node:https');
+scripts/jira-client.js:231:  const requestImpl = options.request || https.request;
+scripts/jira-client.js:307:    response = await runtime.fetch(cfg, method, apiPath);
+scripts/lint/command-structure.js:177:// with -c/-e/--eval, at/batch/crontab, sudo -s/-i, ssh with a remote command, any
+scripts/lint/command-structure.js:183:const CLI_INDIRECT = String.raw`(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|ruby|node|expect|php)(?=\s)[^;|&]*?\s(?:-[A-Za-z]*[ceE](?=[\s"']|$)|--eval\b)|at\s+(?:-[A-Za-z]+|now|noon|midnight|teatime|today|tomorrow|\d)|batch(?=\s*(?:$|[;|&)]|-[A-Za-z]))|(?:[\w.~-]*\/)*crontab(?!\s+-l\b)(?=\s|$)|(?:[\w.~-]*\/)*sudo"?(?:\s+(?:-[A-Za-z]+|--[\w-]+(?:=[^\s;|&]+)?)(?:\s+(?!-)[^\s;|&]+)?)*?\s+(?:-[A-Za-z]*[si][A-Za-z]*|--(?:shell|login))(?=\s|$)|ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`;
+scripts/pre-commit-check.js:24:const { execFileSync } = require('child_process');
+scripts/replay/replay-cli.js:12://   - no network modules (http/https/net/tls/dns), no child_process, no fetch
+scripts/replay/replay-demo.js:19:const { execFileSync } = require('child_process');
+scripts/risk_tier.mjs:14:import { spawnSync } from 'node:child_process';
+scripts/security-audit.js:14:const { spawnSync } = require('child_process');
+# exit: 0
+# post-processed: 2 U+2014 characters in the tool output replaced by "--" (batch rule A11); nothing else changed, line numbers unchanged

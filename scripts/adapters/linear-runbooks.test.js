@@ -25,6 +25,10 @@
 //    who will make the change is not a workspace Admin (Owner for export), whatever
 //    the key's role, and a key that is not that person's is itself a stop; the two
 //    role checks are never joined so that an Admin's key lets a Member through.
+// 5. A replace that does not fix the digest ends. After one replace, a digest that
+//    still differs is a stop: no second edit, the stored digest goes next to
+//    [NOTE_SHA256], and the partial-state note names the editor's change and a next
+//    owner; the checklist and the "not done until" line accept that ending.
 //
 // Nothing here reads a credential or opens a socket: the runbooks are files on disk.
 
@@ -183,4 +187,17 @@ test('the workspace-admin Phase A stop depends on the person who makes the chang
   const fast = (section('linear-workspace-admin', 'Fast path').match(/^1\. Phase A:.*$/m) || [''])[0];
   assert.match(fast, /The person who makes the change is not a workspace Admin \(Owner for export\): stop and escalate, whatever the key's role/);
   assert.match(phaseA, /Members → find your own row → read your role/, 'Phase A reads the person\'s own role');
+});
+
+test('ticket-note: a digest that still differs after one replace is a stop with a partial-state note, not another edit', () => {
+  const replace = ALL_GATES.find((g) => g.id === 'linear-ticket-note-replace-portal');
+  const stop = (replace.region.match(/^\*\*Stop if:\*\*[\s\S]*$/m) || [''])[0];
+  assert.match(stop, /still fails on the digest after one replace/);
+  assert.match(stop, /Do not edit again/);
+  assert.match(stop, /next to `\[NOTE_SHA256\]`, the digest `verify-comment` printed for `\[COMMENT_ID\]`/);
+  assert.match(stop, /partial-state form of the note: it names the editor's change[^\n]*next owner/);
+  assert.match(section('linear-ticket-note', 'Phase E'), /use the Phase F replace gate once\./);
+  const checklist = section('linear-ticket-note', '✅ Verification checklist');
+  assert.match(checklist, /`verify-comment` passed[^\n]*, or, after one replace still left the digest different, [^\n]*partial-state note[^\n]*next owner/);
+  assert.match(section('linear-ticket-note', '⚠️ Admin / safety gate'), /Not done until[^\n]*or, when one replace still leaves the digest different/);
 });

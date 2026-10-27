@@ -194,3 +194,21 @@ test('the CLI runs when invoked through a symlinked path', (t) => {
   }
   assert.deepEqual(run(cwd, ['main'], 0, { script: link }), ['tier=C', '.nvmrc']);
 });
+
+// G2: every read-only adapter and the Google Workspace posture audit generator is an API
+// client or a report generator (REVIEW.md tier C), one case per path.
+for (const adapterPath of [
+  'scripts/adapters/readonly-contract.js',
+  'scripts/adapters/fleet-client.js',
+  'scripts/adapters/jamf-client.js',
+  'scripts/adapters/slack-client.js',
+  'scripts/adapters/linear-client.js',
+  'scripts/adapters/gws-client.js',
+  'scripts/gws-posture-audit.js',
+]) {
+  test(`C: ${adapterPath} is tier C, not scripts/** B`, () => {
+    const cwd = sandbox();
+    commit(cwd, [adapterPath, 'scripts/eval/notes.md']);
+    assert.deepEqual(run(cwd, ['main']), ['tier=C', adapterPath]);
+  });
+}

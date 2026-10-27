@@ -242,3 +242,41 @@ test('every gate that assigns an admin role is R3, matching /gws-audit-log, and 
   assert.match(roles, /\*\*Written rollback \(in the ticket before the change\):\*\*/);
   assert.match(roles, /`\/gws-audit-log` classes role grants R3 regardless; the lane research classes a delegated role R2/);
 });
+
+// ── Finding: one phrase binds one effect ─────────────────────────────────────
+// COMMAND_RISK_METADATA.md: "Use a distinct confirmation for each target and effect." A
+// phrase may appear on two gates only when they make the same change (the GUI gate and
+// the GAM gate for one revoke), and no gate may leave its direction to a value decided
+// later ("change whether …", "ticked or unticked").
+const targetTokens = (g) => [...new Set(((g.fields.Target || '').match(/\[[A-Za-z0-9_@.,-]+\]/g) || []))].sort();
+
+test('each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change', () => {
+  for (const name of RUNBOOKS) {
+    const gates = gatesOf(name);
+    const byPhrase = new Map();
+    for (const g of gates) {
+      if (!byPhrase.has(g.phrase)) byPhrase.set(g.phrase, []);
+      byPhrase.get(g.phrase).push(g);
+      assert.doesNotMatch(g.fields.Effect, /\bwhether\b|\bor not\b|\bon or off\b/i, `${name}:${g.line} ${g.id}: the Effect leaves the direction open`);
+      assert.doesNotMatch(g.block, /ticked or unticked|to the decided value/i, `${name}:${g.line} ${g.id}: the action leaves the direction open`);
+    }
+    for (const [phrase, same] of byPhrase) {
+      for (const other of same.slice(1)) {
+        assert.equal(other.fields.Effect, same[0].fields.Effect, `${name}: "${phrase}" is used for two effects (${same[0].id}, ${other.id})`);
+        assert.deepEqual(targetTokens(other), targetTokens(same[0]), `${name}: "${phrase}" is used for two targets (${same[0].id}, ${other.id})`);
+      }
+    }
+  }
+
+  const allow = gateById('gws-admin-roles-recovery-allow-portal');
+  const off = gateById('gws-admin-roles-recovery-off-portal');
+  assert.equal(allow.phrase, 'ALLOW SUPER ADMIN ACCOUNT RECOVERY FOR OU [OU_PATH]');
+  assert.equal(off.phrase, 'TURN OFF SUPER ADMIN ACCOUNT RECOVERY FOR OU [OU_PATH]');
+  assert.match(allow.fields.Effect, /^allow\b/);
+  assert.match(off.fields.Effect, /^turn off\b/);
+  for (const g of [allow, off]) {
+    assert.equal(g.rClass, 'R3');
+    assert.match(g.fields.Scope, /one organizational unit, not a configuration group/, `${g.id}: the scope names only what the phrase names`);
+  }
+  assert.ok(!allGates().some((g) => g.id === 'gws-admin-roles-recovery-portal'), 'the two-way recovery gate is gone');
+});

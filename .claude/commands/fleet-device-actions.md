@@ -92,11 +92,14 @@ Before the gate: an iPhone or iPad can be locked only when it is supervised (com
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Lock**.
 2. If Fleet asks for confirmation, confirm.
 
-**WAIT UNTIL** Fleet → Hosts → `[HOST_ID]` → Host details shows the Locked badge instead of Lock pending. An iPhone or iPad counts as locked only once Fleet has collected its location (Host details → Vitals → Show location).
+**WAIT UNTIL** Fleet → Hosts → `[HOST_ID]` → Host details shows the Locked badge instead of Lock pending. An iPhone or iPad counts as locked only once Fleet has collected its location (Host details → Vitals → Show location). An Android host never shows Locked: wait until Lock pending is gone, then use the Android read-back.
 
-**Read-back:** `node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute` passes only when `mdm.device_status` is `locked` and nothing is pending. Host details → Activity → Past shows the lock request with the admin's name and the time.
+**Read-back, by platform:**
 
-**Verification checkpoint**: [ ] the badge reads Locked · [ ] `verify-lock` passed · [ ] the activity names the admin and the time.
+- macOS, Windows, Linux, iPhone and iPad: `node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute` passes only when `mdm.device_status` is `locked` and nothing is pending. Host details → Activity → Past shows the lock request with the admin's name and the time.
+- Android: `verify-lock` cannot pass here, because it needs `mdm.device_status` `locked` and Fleet never shows Locked for an Android host. The proof is the locked_host entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` (who sent the lock, and when) plus a person who sees the lock screen on the device and says so in the ticket. If nobody can see the device, the ticket records the lock as sent, not as proven.
+
+**Verification checkpoint**: [ ] the badge reads Locked (Android: Lock pending is gone) · [ ] `verify-lock` passed (Android: the locked_host entry and the on-device confirmation are in the ticket) · [ ] the activity names the admin and the time.
 
 ## Phase C: Found again, Unlock (R1)
 
@@ -140,11 +143,17 @@ Before the gate: the independent out-of-session review has the Phase A pre-state
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Wipe** (Fleet's guide calls this page Host Overview).
 2. If Fleet asks for confirmation, confirm. The unprotected Windows wipe (doWipe) is offered through the API only and is not part of this runbook.
 
-**WAIT UNTIL** Host details shows Wiped instead of Wipe pending. Linux shows no badge: read the wipe script's result and the wiped_host activity instead (the guides do not say whether a Linux host ever reports `wiped`, so expect `verify-wipe` to stay unpassed there; that clause is unverified). If a Windows MDM wipe fails (an error in the command results), Fleet documents a fallback wipe script; running it is its own reviewed change under the Phase E gate.
+**WAIT UNTIL** Host details shows Wiped instead of Wipe pending. Linux shows no badge: use the Linux read-back below. If a Windows MDM wipe fails (an error in the command results), Fleet documents a fallback wipe script; running it is its own reviewed change under the Phase E gate.
 
-**Read-back:** `node scripts/adapters/fleet-client.js verify-wipe --id [HOST_ID] --execute` passes on `wiping` or `wiped` with the EraseDevice or doWipe command acknowledged; for an Apple device, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` shows the command's status. Do not delete the host until it reads wiped: deleting removes Fleet's record of the commands it sent.
+**Read-back, by platform:**
 
-**Verification checkpoint**: [ ] the badge reads Wiped (or, on Linux, the wipe script result and activity are in the ticket) · [ ] `verify-wipe` passed · [ ] the record still exists.
+- Mac, iPhone, iPad and Windows: `node scripts/adapters/fleet-client.js verify-wipe --id [HOST_ID] --execute` passes on `wiping` or `wiped` with the EraseDevice or doWipe command acknowledged; for an Apple device, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` shows the command's status.
+- Company-owned Android: `verify-wipe` cannot pass here, because it proves only an Apple EraseDevice or a Windows doWipe command. The proof is `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` showing `mdm.device_status` `wiping` and then `wiped`, plus the wiped_host entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute`.
+- Linux: `verify-wipe` cannot pass here either (the guides do not say whether a Linux host ever reports `wiped`; unverified). The proof is the wiped_host entry plus the wipe script's result under Host details → Activity → Past; `verify-script --execution-id [EXECUTION_ID]` reads that result when the same `host-activities` read lists the run's execution ID (whether it does is not in the sources read; unverified).
+
+Do not delete the host until it reads wiped: deleting removes Fleet's record of the commands it sent.
+
+**Verification checkpoint**: [ ] the badge reads Wiped (or, on Linux, the wipe script result and activity are in the ticket) · [ ] the read-back for the platform passed: `verify-wipe` (Mac, iPhone, iPad, Windows), `wiped` plus wiped_host (Android), the wipe script's exit code 0 plus wiped_host (Linux) · [ ] the record still exists.
 
 ## Phase E: Run a script (R1 to R3, set by what the script does)
 
@@ -216,7 +225,10 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 
 **WAIT UNTIL** Host details no longer reads MDM On.
 
-**Read-back:** `node scripts/adapters/fleet-client.js verify-mdm-off --id [HOST_ID] --execute` passes when the host's MDM read is empty and its enrollment no longer reads On; Host details → Activity → Past shows the unenrollment (mdm_unenrolled).
+**Read-back, by platform:**
+
+- Mac: `node scripts/adapters/fleet-client.js verify-mdm-off --id [HOST_ID] --execute` passes when the host's MDM read is empty and its enrollment no longer reads On; Host details → Activity → Past shows the unenrollment (mdm_unenrolled).
+- iPhone, iPad and personally owned Android: `verify-mdm-off` covers macOS only here, because its first read (`GET /api/v1/fleet/hosts/:id/mdm`) is documented for macOS and Windows hosts. The proof is the mdm_unenrolled entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` plus `mdm.enrollment_status` in `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` reading Off (not On and not Pending).
 
 > **PREVIEW ONLY [fleet-device-actions-handover-preview]:** Planning only; nothing here authorizes an uninstall, a release or a deletion. A Windows host has no Turn off MDM action in Fleet: Fleet's guide says to uninstall fleetd instead, which is its own reviewed change (the uninstall steps were not in the guides read). A host enrolled through Apple Business must be released from Apple Business before its Fleet record is deleted, or it comes back as Pending; releasing is an asset-disposal decision outside this runbook. After an OS reinstall, the old record is deleted before the host re-enrolls, or Fleet does not escrow a new disk encryption key.
 
@@ -237,7 +249,7 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 
 **Read-back:** `node scripts/adapters/fleet-client.js verify-deleted --identifier [SERIAL_NUMBER] --not-before [NOT_BEFORE] --execute` passes when a deleted_host activity for that serial exists after `[NOT_BEFORE]`; `host --identifier [SERIAL_NUMBER]` then answers not found, or a new host ID if the device re-enrolled.
 
-**Verification checkpoint**: [ ] `verify-mdm-off` passed (F1) · [ ] `verify-deleted` passed (F2) · [ ] the Apple Business decision is in the ticket.
+**Verification checkpoint**: [ ] the F1 read-back for the platform passed: `verify-mdm-off` (Mac), mdm_unenrolled plus enrollment Off (iPhone, iPad, Android) · [ ] `verify-deleted` passed (F2) · [ ] the Apple Business decision is in the ticket.
 
 ## Phase G: Cancel a pending action (the rollback window)
 
@@ -332,18 +344,18 @@ node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID
 
 ## ✅ Verification checklist
 
-- [ ] Lock: Fleet → Hosts → `[HOST_ID]` → Host details shows the Locked badge; `verify-lock` passed; Activity shows the request with the admin and the time.
+- [ ] Lock: Fleet → Hosts → `[HOST_ID]` → Host details shows the Locked badge; `verify-lock` passed; Activity shows the request with the admin and the time. Android: no Locked badge and `verify-lock` cannot pass; the locked_host entry and a person's confirmation on the device are in the ticket instead.
 - [ ] Unlock: `verify-unlock` passed; the PIN appears nowhere in the ticket.
-- [ ] Wipe: Host details shows Wiped (Linux: the wipe script result and activity are in the ticket); `verify-wipe` passed; the record still exists.
+- [ ] Wipe: Host details shows Wiped (Linux: the wipe script result and activity are in the ticket); `verify-wipe` passed (Mac, iPhone, iPad, Windows), or `mdm.device_status` `wiped` plus wiped_host (Android), or the wipe script's exit code 0 plus wiped_host (Linux); the record still exists.
 - [ ] Script: `verify-script` passed for `[EXECUTION_ID]` (and for every checked host in a batch, or the failures are listed).
-- [ ] Turn off MDM: `verify-mdm-off` passed. Delete: `verify-deleted` passed for `[SERIAL_NUMBER]` after `[NOT_BEFORE]`.
+- [ ] Turn off MDM: `verify-mdm-off` passed (Mac), or mdm_unenrolled plus enrollment Off (iPhone, iPad, Android). Delete: `verify-deleted` passed for `[SERIAL_NUMBER]` after `[NOT_BEFORE]`.
 - [ ] Cancel: Upcoming no longer lists the item and the cancellation activity names the admin.
 
 ## 📝 Linear-ready note
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form.
 
-> [Completed: only if every read-back passed] Host `[HOST_ID]` (`[SERIAL_NUMBER]`, `[DEVICE_NAME]`) in Fleet: [Lock / Unlock / Wipe / Run script `[SCRIPT_NAME]` / Turn off MDM / Delete host / Cancel pending action] sent [timestamp] by [ADMIN_NAME] ([Maintainer / Admin / Technician]), confirmed by the exact phrase[, after independent review]. Pre-state: [platform and OS version], [online / offline], last seen [date], MDM [On (automatic) / On (manual)], nothing pending. Read-back: `verify-[lock / unlock / wipe / script / mdm-off / deleted]` passed [timestamp]; Host details shows [Locked / Wiped / exit code 0 / record gone]. Time spent: [X] min.
+> [Completed: only if every read-back passed] Host `[HOST_ID]` (`[SERIAL_NUMBER]`, `[DEVICE_NAME]`) in Fleet: [Lock / Unlock / Wipe / Run script `[SCRIPT_NAME]` / Turn off MDM / Delete host / Cancel pending action] sent [timestamp] by [ADMIN_NAME] ([Maintainer / Admin / Technician]), confirmed by the exact phrase[, after independent review]. Pre-state: [platform and OS version], [online / offline], last seen [date], MDM [On (automatic) / On (manual)], nothing pending. Read-back: `verify-[lock / unlock / wipe / script / mdm-off / deleted]` passed [timestamp] [or, where that read cannot pass on this platform: the activity entry and the state named in the phase's platform read-back]; Host details shows [Locked / Wiped / exit code 0 / record gone]. Time spent: [X] min.
 >
 > [Partial state] Host `[HOST_ID]`: [action] sent [timestamp], confirmed by the exact phrase. Verified: [what passed]. Pending: [badge still Lock pending / Wipe pending / exit code not reported], waiting for the host to check in. Next owner: [ADMIN_NAME], who re-runs `verify-[...]` at [time].
 

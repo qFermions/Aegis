@@ -435,6 +435,28 @@ test('verify-wipe on Windows reads the host\'s commands and needs a doWipe comma
   assert.equal(linux.json.verified, false);
   assert.equal(linux.transport.calls.length, 1);
   assert.match(linux.json.note, /verify-script/);
+  assert.doesNotMatch(linux.json.note, /Android/);
+});
+
+test('verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script', async () => {
+  const android = await cli(['verify-wipe', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'wiped', pending_action: '' }, { platform: 'android' })), ok({ results: [] })] });
+  assert.equal(android.code, 2, 'an Android wipe is not an EraseDevice or doWipe command: this read cannot prove it');
+  assert.equal(android.json.verified, false);
+  assert.equal(android.transport.calls.length, 1, 'no commands read follows for Android');
+  assert.match(android.json.note, /Android/);
+  assert.match(android.json.note, /mdm\.device_status \(wiping, then wiped\) in host --id/);
+  assert.match(android.json.note, /wiped_host entry in host-activities/);
+  assert.doesNotMatch(android.json.note, /verify-script|Linux/, 'the Linux script proof is not offered for Android');
+});
+
+test('verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check', async () => {
+  const android = await cli(['verify-lock', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'unlocked', pending_action: '' }, { platform: 'android' }))] });
+  assert.equal(android.code, 2);
+  assert.equal(android.json.verified, false);
+  assert.match(android.json.note, /verify-lock cannot pass for an Android host/);
+  assert.match(android.json.note, /locked_host entry in host-activities/);
+  const mac = await cli(['verify-lock', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'locked', pending_action: '' }))] });
+  assert.equal(mac.json.note, undefined, 'a Mac lock carries no Android note');
 });
 
 test('verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not', async () => {

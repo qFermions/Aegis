@@ -215,7 +215,11 @@ function deviceStatusVerify(wantStatus) {
     const expected = { 'host.id': [Number(args.id)], 'host.mdm.device_status': [wantStatus], 'host.mdm.pending_action': [''] };
     const verified = Object.keys(expected).every((k) => expected[k].includes(observed[k]));
     const notes = [];
-    if (observed['host.platform'] === 'android') notes.push('Fleet never shows Locked for Android hosts (vendor docs): confirm on the device.');
+    if (observed['host.platform'] === 'android') {
+      notes.push(wantStatus === 'locked'
+        ? 'verify-lock cannot pass for an Android host: Fleet never shows Locked there (vendor docs). Prove the request with the locked_host entry in host-activities, and confirm the lock on the device.'
+        : 'Fleet never shows Locked for Android hosts (vendor docs): confirm on the device.');
+    }
     if (wantStatus === 'unlocked' && APPLE.has(observed['host.platform'])) notes.push('A Mac unlocks only after the PIN is typed on it, and an Apple host unlocked within 1 minute of locking shows Locked until its next check-in (vendor guide).');
     return { verified, observed, expected, note: notes.join(' ') || undefined };
   };
@@ -239,11 +243,14 @@ async function verifyWipe(read, args) {
   };
   const statusOk = expected['host.id'].includes(observed['host.id']) && expected['host.mdm.device_status'].includes(observed['host.mdm.device_status']);
   if (!apple && !windows) {
+    const how = platform === 'android'
+      ? 'A company-owned Android wipe is not an EraseDevice or doWipe command, so prove it with mdm.device_status (wiping, then wiped) in host --id and the wiped_host entry in host-activities.'
+      : 'Fleet wipes a Linux host with a script and shows no Wipe badge for it, so prove that wipe with verify-script --execution-id [EXECUTION_ID] (the id is in host-activities).';
     return {
       verified: false,
       observed,
       expected,
-      note: `This read proves Apple (EraseDevice) and Windows (doWipe) wipes only. Fleet wipes a Linux host with a script and shows no Wipe badge for it, so prove that wipe with verify-script --execution-id [EXECUTION_ID] (the id is in host-activities). Platform read: ${JSON.stringify(platform)}.`,
+      note: `This read proves Apple (EraseDevice) and Windows (doWipe) wipes only. ${how} Platform read: ${JSON.stringify(platform)}.`,
     };
   }
   const serial = field(host, 'hardware_serial');
@@ -390,7 +397,7 @@ const VERIFIES = {
     values: ['id'],
     required: ['id'],
     requests: (a) => [['host', { id: a.id }]],
-    then: 'then GET /api/v1/fleet/commands?host_identifier=<the host\'s serial>&request_type=EraseDevice (Apple) or &per_page=100 (Windows); Linux needs verify-script',
+    then: 'then GET /api/v1/fleet/commands?host_identifier=<the host\'s serial>&request_type=EraseDevice (Apple) or &per_page=100 (Windows); Android needs host --id and host-activities, Linux needs verify-script',
     verify: verifyWipe,
   },
   'verify-script': {

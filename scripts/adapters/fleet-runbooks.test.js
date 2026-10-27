@@ -68,3 +68,29 @@ test('deleting a host record is R3 everywhere (SR-2 device delete), with pre-sta
   assert.match(HEALTH, /removing the stale record is a gated R3 change/, 'fleet-host-health sends the stale record to the R3 gate');
   assert.doesNotMatch(HEALTH, /gated R2 change/);
 });
+
+test('each lock, wipe and Turn off MDM read-back names a proof that can pass on the platform it covers', () => {
+  const lock = section(DEVICE, 'Phase B');
+  assert.match(lock, /^\*\*Read-back, by platform:\*\*$/m);
+  assert.match(lock, /^- Android: `verify-lock` cannot pass here/m, 'Android lock: verify-lock is named as unable to pass');
+  assert.match(lock, /locked_host entry in `node scripts\/adapters\/fleet-client\.js host-activities --id \[HOST_ID\] --execute`/);
+  assert.match(lock, /sees the lock screen on the device/, 'Android lock: the device itself confirms it');
+  assert.match(lock, /An Android host never shows Locked: wait until Lock pending is gone/, 'the wait does not hang on a badge Android never shows');
+
+  const wipe = section(DEVICE, 'Phase D');
+  assert.match(wipe, /^- Company-owned Android: `verify-wipe` cannot pass here/m);
+  assert.match(wipe, /`mdm\.device_status` `wiping` and then `wiped`, plus the wiped_host entry/);
+  assert.match(wipe, /^- Linux: `verify-wipe` cannot pass here either/m);
+  assert.match(wipe, /^- Mac, iPhone, iPad and Windows: `node scripts\/adapters\/fleet-client\.js verify-wipe/m);
+
+  const mdmOff = section(DEVICE, 'F1: Turn off MDM');
+  assert.match(mdmOff, /^- Mac: `node scripts\/adapters\/fleet-client\.js verify-mdm-off/m);
+  assert.match(mdmOff, /^- iPhone, iPad and personally owned Android: `verify-mdm-off` covers macOS only here/m);
+  assert.match(mdmOff, /mdm_unenrolled entry in `node scripts\/adapters\/fleet-client\.js host-activities --id \[HOST_ID\] --execute`/);
+  assert.match(mdmOff, /`mdm\.enrollment_status` in `node scripts\/adapters\/fleet-client\.js host --id \[HOST_ID\] --execute` reading Off/);
+
+  const checklist = section(DEVICE, '✅ Verification checklist');
+  assert.match(checklist, /Android: no Locked badge and `verify-lock` cannot pass/);
+  assert.match(checklist, /`wiped` plus wiped_host \(Android\)/);
+  assert.match(checklist, /mdm_unenrolled plus enrollment Off \(iPhone, iPad, Android\)/);
+});

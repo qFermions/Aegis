@@ -173,8 +173,8 @@ test('the CLI runs when invoked through a symlinked path', (t) => {
     fs.symlinkSync(SCRIPT, link);
   } catch (error) {
     // Windows needs SeCreateSymbolicLinkPrivilege or Developer Mode to create a symlink; without
-    // it the behavior under test cannot be exercised on this host.
-    if (error.code === 'EPERM') return t.skip('symlink creation is not permitted on this host');
+    // it the behavior under test cannot be exercised on this host. Anywhere else an EPERM is a failure.
+    if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('symlink creation is not permitted on this Windows host');
     throw error;
   }
   assert.deepEqual(run(cwd, ['main'], 0, { script: link }), ['tier=C', '.nvmrc']);

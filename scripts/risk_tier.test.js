@@ -164,10 +164,17 @@ test('a malformed tier file fails closed with exit 1 instead of reporting tier A
   }
 });
 
-test('the CLI runs when invoked through a symlinked path', () => {
+test('the CLI runs when invoked through a symlinked path', (t) => {
   const cwd = sandbox();
   commit(cwd, ['.nvmrc']);
   const link = path.join(cwd, 'risk_tier_link.mjs');
-  fs.symlinkSync(SCRIPT, link);
+  try {
+    fs.symlinkSync(SCRIPT, link);
+  } catch (error) {
+    // Windows needs SeCreateSymbolicLinkPrivilege or Developer Mode to create a symlink; without
+    // it the behavior under test cannot be exercised on this host.
+    if (error.code === 'EPERM') return t.skip('symlink creation is not permitted on this host');
+    throw error;
+  }
   assert.deepEqual(run(cwd, ['main'], 0, { script: link }), ['tier=C', '.nvmrc']);
 });

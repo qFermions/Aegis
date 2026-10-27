@@ -1,0 +1,11 @@
+# Fixture — GAM fence with no SAFETY GATE marker
+
+Used by `scripts/command-safety-gates.test.js` ("G1 fixtures"). The file is `.txt`
+on purpose: the live Markdown scan must never see this deliberately ungated fence.
+The evaluator must report the `gam update` line as a mutation with zero owners.
+
+```bash
+# HUMAN-RUN — suspends one Google Workspace user (no gate: this fixture must FAIL)
+gam info user "[USER@DOMAIN.COM]"                    # read-only: confirm the account before acting
+gam update user "[USER@DOMAIN.COM]" suspended on     # suspends the account so sign-in stops
+```

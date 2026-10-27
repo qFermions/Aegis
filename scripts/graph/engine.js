@@ -36,6 +36,20 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\bremove\b.*\b(from|member).*\bgroup\b|Remove-MgGroupMember/i, label: 'group membership removal' },
   { pattern: /Revoke-MgUserSignInSession|revoke\s+sessions?/i, label: 'session revocation' },
   { pattern: /\b(disable|bypass|exclude)\b.*\b(MFA|conditional access|CA policy|defender|firewall|antivirus)\b/i, label: 'security-control change' },
+  // Google Workspace / Okta / Jamf consequential actions — mirrors the support
+  // lane's floor set (kept local: the fortress never imports the lane). Written
+  // in this file's `.*` style, so it is a superset of the guard's sentence-bounded
+  // `[^.]*` patterns: more ceremony across sentences, never less.
+  { pattern: /\btransfer(?:s|red|ring)?\b.*\b(?:ownership|owner|drive|calendar|data|files|docs)\b|\bownership\s+transfer\b|\bdata\s+transfer\b/i, label: 'Drive / Calendar / data ownership transfer' },
+  { pattern: /\bde-?provision(?:s|ed|ing)?\b/i, label: 'deprovision (device or account)' },
+  { pattern: /\bpower\s*-?wash(?:es|ed|ing)?\b/i, label: 'Chromebook powerwash' },
+  { pattern: /\b(?:remove|clear|delete|wipe|erase)\b.*\b(?:account|work profile|work data|managed profile|user profiles?)\b.*\b(?:from|on|off)\b.*\b(?:device|devices|phone|phones|laptop|laptops|chromebook|chromebooks|mac|macbook|tablet|ipad|iphone|android)\b/i, label: 'account / work-profile removal from a device' },
+  { pattern: /\brevok(?:e|ed|es|ing)\b.*\b(?:oauth|tokens?|app[- ]?passwords?|app[- ]specific passwords?|app access|third[- ]party (?:app )?access|api access)\b|\b(?:delete|remove|reset)\b.*\bapp[- ]?passwords?\b/i, label: 'OAuth token / app-password revocation' },
+  { pattern: /\b(?:grant|assign|make|add|give|promote|elevate)\b.*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:role|rights|privileges?|access)|global admin|org(?:anization)? admin|delegated admin)\b/i, label: 'admin-role grant' },
+  { pattern: /\b(?:vault|litigation|legal)\s+hold\b|\bretention\s+(?:rule|rules|polic(?:y|ies)|period|settings?)\b/i, label: 'Vault / litigation hold or retention-rule change' },
+  { pattern: /\bokta\b.*\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b.*\bokta\b|\bclear(?:s|ed|ing)?\b.*\bsessions?\b|\breset\b.*\ball\b.*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors' },
+  { pattern: /\b(?:disable|bypass|turn\s*off|relax|unenforce|exclude|remove|delete)\b.*\b(?:2-?step verification|2-?step|context[- ]aware access|security keys?|passkeys?)\b/i, label: 'security-control change — Google 2-Step Verification, security keys/passkeys, or Context-Aware Access' },
+  { pattern: /\berase\b.*\b(?:device|devices|mac|macs|macbook|computer|computers|laptop|iphone|ipad|disk)\b|\bremote(?:ly)?[- ]?lock\b|\block\b.*\bremote(?:ly)?\b|\bjamf\b.*\block\b|\block\b.*\bjamf\b|\blost mode\b|\bremove\b.*\bmdm profile\b|\bunmanag(?:e|ed|ing)\b|\bremoveFramework\b/i, label: 'Jamf / MDM erase, remote lock, lost mode, MDM-profile removal or unmanage' },
 ];
 const SR2_MASS_THRESHOLD = 10; // > 10 objects = mass operation (SR-2)
 

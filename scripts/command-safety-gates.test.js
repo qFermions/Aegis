@@ -8,7 +8,12 @@ const test = require('node:test');
 
 const ROOT = path.resolve(__dirname, '..');
 const POWER_SHELL_LANGUAGES = new Set(['powershell', 'pwsh', 'ps1']);
-const SHELL_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh', '']);
+// Console and shell-session transcripts are scanned like shell fences (a prompt-
+// prefixed line is a command); they can carry PREVIEW ONLY markers, never a gate.
+const SHELL_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh', '', 'console', 'shellsession', 'shell-session', 'sh-session', 'bash-session', 'zsh-session', 'terminal']);
+// A gated shell region must sit in an explicitly tagged shell fence; an untagged
+// fence can carry PREVIEW ONLY markers but never an executable gate.
+const SHELL_GATE_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh']);
 const MUTATION_FENCE_LANGUAGES = new Set([...POWER_SHELL_LANGUAGES, ...SHELL_LANGUAGES]);
 
 const MIXED_STATE_COMMANDS = [
@@ -21,6 +26,11 @@ const MIXED_STATE_COMMANDS = [
   'sip-trunk-status', 'teams-issue', 'unite-extension-create',
   'unite-migration-status', 'unite-voicemail-reset', 'vpn-check', 'wifi-issue',
   'onboard', 'shared-mailbox-create', 'meraki-vpn-status', 'ps-error-decode',
+  // G1 — Google Workspace / Okta / Jamf / macOS lane
+  'gws-new-user', 'gws-offboard', 'gws-password-reset', 'gws-2sv-reset', 'gws-group-membership',
+  'gws-ou-move', 'gws-license-assign', 'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device',
+  'okta-app-assignment', 'okta-mfa-reset', 'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase',
+  'mac-new-hire-laptop', 'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue',
 ];
 
 const REFERENCE_BOUNDARIES = [
@@ -97,9 +107,10 @@ function discoverMarkers(document) {
     let match;
 
     if ((match = line.match(/^\s*#\s*SAFETY GATE \[([a-z0-9-]+)\]\s*$/i))) {
-      assert.ok(fence && POWER_SHELL_LANGUAGES.has(fence.language),
-        `${document.file}:${lineNumber}: PowerShell gate is not in a PowerShell fence`);
-      markers.push({ id: match[1], mode: 'gated', kind: 'powershell', file: document.file, line: lineNumber, fenceId: fence.id });
+      const shellGate = Boolean(fence && SHELL_GATE_LANGUAGES.has(fence.language));
+      assert.ok(fence && (POWER_SHELL_LANGUAGES.has(fence.language) || shellGate),
+        `${document.file}:${lineNumber}: code gate is not in a PowerShell fence or an explicitly tagged bash/sh/shell/zsh fence`);
+      markers.push({ id: match[1], mode: 'gated', kind: shellGate ? 'shell' : 'powershell', file: document.file, line: lineNumber, fenceId: fence.id });
       return;
     }
     if ((match = line.match(/^\s*#\s*PREVIEW ONLY \[([a-z0-9-]+)\]/i))) {
@@ -137,15 +148,27 @@ const NON_PERSISTENT = new Set([
 const MUTATING_VERB = /^(?:Add|Clear|Delete|Disable|Enable|Export|Grant|Install|Move|New|Out|Publish|Register|Release|Remove|Rename|Reset|Restart|Restore|Revoke|Set|Start|Stop|Submit|Uninstall|Unlock|Unregister|Update)-/i;
 const COMMAND_AT_BOUNDARY = /(?:^|[;|{}=:])\s*&?\s*([A-Za-z]+-[A-Za-z0-9*]+)\b/g;
 
-function stripExecutableComment(line) {
+function stripExecutableComment(line, shell = false) {
   let single = false;
   let double = false;
+  let escaped = -1;
+  let backtick = false;
   for (let index = 0; index < line.length; index += 1) {
     const char = line[index];
-    if (char === '`') { index += 1; continue; }
+    // in bash a `#` inside a backtick substitution comments only up to the closing
+    // backtick, so it never hides what follows (`echo \`true #\`; cmd` runs cmd)
+    if (shell && char === '`' && !single) { backtick = !backtick; continue; }
+    // PowerShell escapes with a backtick, bash with a backslash (outside single
+    // quotes): `echo \ #;cmd` runs cmd, the escaped space glues `#` to its word.
+    if (shell ? char === '\\' && !single : char === '`') { index += 1; escaped = index; continue; }
     if (char === "'" && !double) { single = !single; continue; }
     if (char === '"' && !single) { double = !double; continue; }
-    if (char === '#' && !single && !double) return line.slice(0, index);
+    // bash and PowerShell start a comment only at a word boundary: `true#;cmd`
+    // runs cmd, so a glued `#` must not hide the rest of the line. In bash the
+    // boundary is whitespace or a metacharacter (; & | ( ) < >) — `{` and `}` are
+    // ordinary word characters (`${#var}`, `{#;cmd` run cmd); PowerShell also
+    // opens a comment after `{` or `}`.
+    if (char === '#' && !single && !double && !backtick && (index === 0 || (index - 1 !== escaped && (shell ? /[\s;&|()<>]/ : /[\s;&|(){}<>]/).test(line[index - 1])))) return line.slice(0, index);
   }
   return line;
 }
@@ -157,6 +180,146 @@ function isMutation(command, statement) {
   if (/^Invoke-(?:RestMethod|WebRequest)$/i.test(command) &&
       /(?:-OutFile\b|-Method\s+(?:Delete|Patch|Post|Put)\b)/i.test(statement)) return true;
   return MUTATING_VERB.test(command);
+}
+
+// ── G1 shell sinks: Google Workspace (gam, gcloud), HTTP APIs (Okta, Jamf Pro),
+// the jamf binary, and macOS administration tools. Each invocation is decided
+// on its own; explicit read-only forms stay live diagnostics, and an
+// invocation whose verb is not on a read-only list counts as a mutation
+// (fail-closed). Command names match case-insensitively because the default
+// macOS filesystem resolves them that way.
+// Wrappers that run the following word as the command are transparent: sudo with
+// any options (including -u user / --user=user), command, env and inline VAR=value
+// assignments, nohup, time, nice, caffeinate, exec, script and xargs. The tool may
+// sit behind a quoted or variable path ("$HOME/bin/gam7/gam"), be quoted or
+// backslash-escaped ('gam', \gam), carry a Windows .exe suffix, or run into an
+// expansion (gam${IFS}delete); a
+// wrapper may be called by its path (/usr/bin/sudo, "/usr/bin/env"); arch is one too.
+const CLI_WRAPPER_PATH = String.raw`"?(?:[\w.~-]*\/)*`;
+const CLI_WRAPPER = String.raw`(?:(?:${CLI_WRAPPER_PATH}sudo"?(?:\s+(?:--(?:[\w-]+(?:=[^\s;|&]+)?)?|-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?))*|${CLI_WRAPPER_PATH}doas"?(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}timeout"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*\s+\d+(?:\.\d+)?[smhd]?|${CLI_WRAPPER_PATH}command"?(?:\s+-[pvV]+)?|${CLI_WRAPPER_PATH}env"?(?:\s+-[iu0]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}nohup"?|${CLI_WRAPPER_PATH}time"?(?:\s+-p)?|${CLI_WRAPPER_PATH}nice"?(?:\s+-n\s*-?\d+|\s+-\d+)?|${CLI_WRAPPER_PATH}caffeinate"?(?:\s+-[a-zA-Z]+(?:\s+\d+)?)*|${CLI_WRAPPER_PATH}exec"?(?:\s+-[acl]+(?:\s+(?!-)[^\s;|&]+)?)?|${CLI_WRAPPER_PATH}script"?(?:\s+-[a-zA-Z]+)*(?:\s+(?!-)[^\s;|&]+)?|${CLI_WRAPPER_PATH}xargs"?(?:\s+-[^\s;|&]+(?:\s+(?!-)[^\s;|&]+)?)*|${CLI_WRAPPER_PATH}arch"?(?:\s+-\w+)*|[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s;|&"']*))\s+)*`;
+// A command starts at the line start, after a separator, inside $(…) or a
+// backtick, after a shell keyword that introduces a command (do, then, else,
+// elif, if, while, until), or after a `!` negation.
+// A line copied with its interactive prompt still runs the command after it: `$ `,
+// `% `, `❯ `, `user@host:~$ `, the macOS zsh default `user@host ~ % `,
+// `[user@host ~]$ `, `bash-5.2$ `, `sh-3.2# `, a `(venv) ` prefix, `PS C:\> `, `C:\…> `,
+// the pre-Catalina macOS bash `host:~ user$ ` and the oh-my-zsh `➜  ~ `.
+const SHELL_PROMPT = String.raw`^\s*(?:\([^)\s]+\)\s+)?(?:[$%❯]|➜(?:\s+\S+)?|[\w.-]+:\S*\s+[\w.-]+\$|[\w.-]+@[\w.-]+(?::\S*|\s+[^\s$#%]+)?\s?[$#%]|[\w.-]*\d[\w.-]*[$#%]|\[[^\]]+\][$#%]|PS\s[^>]*>|[A-Za-z]:\\[^>]*>)(?=\s)`;
+const CLI_COMMAND_START = String.raw`(?:^|${SHELL_PROMPT}|[;|{}=:&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))`;
+const CLI_BOUNDARY = String.raw`${CLI_COMMAND_START}\s*${CLI_WRAPPER}[\\"']?(?:[\w.~$\{\}-]*\/)*`;
+const cliInvocations = (statement, name) => [...statement.matchAll(new RegExp(`${CLI_BOUNDARY}(?:${name})(?:\\.exe)?["']?(?=\\s|$|\\$)([^;|&]*)`, 'gi'))]
+  .map((match) => match[1].trim());
+// Indirect execution hides the command from every per-tool rule, so it is a sink
+// in its own right (fail-closed): an interpreter one-liner (python/perl/ruby/node/
+// expect/php with -c, -e or --eval), a scheduled run (at with a time, batch, crontab
+// other than -l), a root shell (sudo -s, -i, --shell, --login), ssh with a remote
+// command, any shell interpreter
+// or osascript in command position (`| bash`, `bash <(…)`, `/bin/sh -c`), `su … -c`,
+// `env -S`, `find … -exec`, eval, and a substitution or variable in command
+// position (`$(which gam) …`, a backtick, `${GAM:-gam} …`, `"$GAM" …`, `"$@"`). An
+// assignment-shaped `$name = value` line (another language's syntax) is not one.
+const INDIRECT_EXEC = new RegExp(String.raw`(?:^|${SHELL_PROMPT}|[;|{}&(\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}(?:(?:[\w.~-]*\/)*(?:python[23]?(?:\.\d+)?|perl|ruby|node|expect|php)(?=\s)[^;|&]*?\s(?:-[A-Za-z]*[ceE](?=[\s"']|$)|--eval\b)|at\s+(?:-[A-Za-z]+|now|noon|midnight|teatime|today|tomorrow|\d)|batch(?=\s*(?:$|[;|&)]|-[A-Za-z]))|(?:[\w.~-]*\/)*crontab(?!\s+-l\b)(?=\s|$)|(?:[\w.~-]*\/)*sudo"?(?:\s+(?:-[A-Za-z]+|--[\w-]+(?:=[^\s;|&]+)?)(?:\s+(?!-)[^\s;|&]+)?)*?\s+(?:-[A-Za-z]*[si][A-Za-z]*|--(?:shell|login))(?=\s|$)|ssh(?:\s+-[A-Za-z]+(?:\s+(?!-)[^\s;|&]+)?)*\s+(?!-)[^\s;|&]+\s+\S|(?:[\w.~-]*\/)*(?:bash|sh|zsh|dash|ksh|fish|osascript)(?=[\s;|&)]|$)|su\b[^;|&]*\s-c\b|env(?:\s+-[^\s;|&]+)*\s+(?:-S|--split-string)\b|find\b[^;|&]*\s-(?:exec|execdir|ok|okdir)\b|eval\s|\$\(|\x60|"?\$\{[^}]*\}"?(?=\s+[^=\s]|\s*$)|"?\$(?:[A-Za-z_]\w*|[@*#?0-9])"?(?=\s+[^=\s]|\s*[;|&]|\s*$))`, 'i');
+const cliTokens = (args) => args.split(/\s+/).map((token) => token.replace(/^["']+|["']+$/g, '')).filter(Boolean);
+function firstListedVerb(tokens, readOnly, mutating) {
+  for (const token of tokens) {
+    const lower = token.toLowerCase();
+    if (readOnly.has(lower)) return 'read';
+    if (mutating.has(lower)) return 'write';
+  }
+  return 'unknown';
+}
+const GAM_READ_ONLY = new Set(['print', 'info', 'report', 'show', 'whatis', 'version', 'help', 'checkconn']);
+const GAM_MUTATING = new Set(['create', 'update', 'delete', 'undelete', 'suspend', 'unsuspend', 'transfer', 'move', 'add',
+  'remove', 'revoke', 'wipe', 'deprovision', 'action', 'signout', 'turnoff2sv', 'issuecommand', 'clear', 'sync', 'rename',
+  'redirect', 'sendemail', 'replace', 'modify', 'copy', 'trash', 'untrash', 'purge', 'empty']);
+const GCLOUD_READ_ONLY = new Set(['list', 'describe', 'get-iam-policy', 'get-value', 'info', 'version', 'help', 'search', 'read']);
+const GCLOUD_MUTATING = new Set(['create', 'update', 'delete', 'set', 'add-iam-policy-binding', 'remove-iam-policy-binding',
+  'set-iam-policy', 'enable', 'disable', 'undelete', 'deploy', 'import', 'patch', 'reset', 'unset', 'add', 'remove', 'login',
+  'revoke', 'activate-service-account']);
+// Any explicit method that is not GET, HEAD, OPTIONS or TRACE is a write (fail-closed,
+// as for unlisted gam and gcloud verbs: PURGE, MOVE, COPY, LOCK … change state), and a
+// method taken from an expansion ($METHOD, ${METHOD}, $(…)) can be any verb.
+const HTTP_METHOD_WRITE = String.raw`(?:(?!(?:GET|HEAD|OPTIONS|TRACE|get|head|options|trace)\b)[A-Za-z]+\b|\$[\w{(])`;
+const HTTP_WRITE_LONG = new RegExp(String.raw`(?:^|\s)(?:-X\s*|--request[\s=]+)["']?${HTTP_METHOD_WRITE}|(?:^|\s)--(?:data(?:-raw|-binary|-urlencode|-ascii)?|json|form|upload-file|post-data|post-file|body-data|body-file|config)\b|(?:^|\s)--method[\s=]+["']?${HTTP_METHOD_WRITE}|X-(?:HTTP-)?Method(?:-Override)?\s*:\s*${HTTP_METHOD_WRITE}`, 'i');
+// -K reads a config file that can set the method or a body: fail-closed. A short
+// option's value may be glued to it (`-dname=value`, `-d$BODY`), and curl sends a
+// method in any case (`-sXpost`).
+// The cluster letters before the flag exclude X, so `-XGET` cannot read its T as -T.
+const HTTP_WRITE_SHORT = new RegExp(String.raw`(?:^|\s)-[A-WYZa-z]*(?:[dFTK]|X\s*["']?${HTTP_METHOD_WRITE})`);
+// An unquoted `$VAR` / `${…}` / `$(…)` argument can expand into any option,
+// including a write method or a body, so it is a write (fail-closed). Expansions
+// inside quotes ("…${OKTA_API_TOKEN}") stay single arguments and are fine.
+function unquotedExpansionArgument(args) {
+  let single = false;
+  let double = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const char = args[index];
+    if (char === '\\') { index += 1; continue; }
+    if (char === "'" && !double) { single = !single; continue; }
+    if (char === '"' && !single) { double = !double; continue; }
+    if (char === '$' && !single && !double && (index === 0 || /\s/.test(args[index - 1]))) return true;
+  }
+  return false;
+}
+const JAMF_READ_ONLY = new Set(['help', 'version', 'about', 'checkjssconnection', 'listusers', 'getcomputername']);
+const FDESETUP_READ_ONLY = new Set(['status', 'list', 'isactive', 'haspersonalrecoverykey', 'hasinstitutionalrecoverykey',
+  'usingrecoverykey', 'showdeferralinfo', 'supportsauthrestart', 'version', 'help']);
+const DISKUTIL_READ_ONLY = new Set(['list', 'info', 'information', 'activity', 'listfilesystems', 'verifyvolume', 'verifydisk', 'help']);
+const DISKUTIL_APFS_READ_ONLY = new Set(['list', 'listcryptousers', 'listsnapshots', 'listvolumegroups', 'listusers']);
+const DEFAULTS_READ_ONLY = new Set(['read', 'read-type', 'domains', 'find', 'help']);
+const LAUNCHCTL_READ_ONLY = new Set(['list', 'print', 'print-cache', 'print-disabled', 'blame', 'help', 'version', 'procinfo',
+  'hostinfo', 'examine', 'dumpstate', 'managerpid', 'manageruid', 'managername', 'getenv', 'error', 'variant']);
+
+const G1_CLI_SINKS = [
+  ['gam-write', 'gam', (args) => firstListedVerb(cliTokens(args), GAM_READ_ONLY, GAM_MUTATING) !== 'read'],
+  ['gcloud-write', 'gcloud', (args) => firstListedVerb(cliTokens(args).filter((token) => !token.startsWith('-')), GCLOUD_READ_ONLY, GCLOUD_MUTATING) !== 'read'],
+  ['http-write', 'curl|wget', (args) => HTTP_WRITE_LONG.test(` ${args}`) || HTTP_WRITE_SHORT.test(` ${args}`) || unquotedExpansionArgument(args)],
+  ['http-write', 'https?', (args) => {
+    const tokens = cliTokens(args);
+    const positional = tokens.filter((token) => !token.startsWith('-'));
+    // a method-shaped word before the URL other than GET, HEAD or OPTIONS (HTTPie's
+    // syntax); an option's separate value (`--timeout 30`) may sit in between
+    const urlAt = positional.findIndex((token) => /[/:.[]/.test(token));
+    const beforeUrl = urlAt < 0 ? positional : positional.slice(0, urlAt);
+    if (beforeUrl.some((token) => /^[A-Za-z]+$/.test(token) && !/^(?:GET|HEAD|OPTIONS)$/i.test(token))) return true;
+    if (HTTP_WRITE_LONG.test(` ${args}`) || /(?:^|\s)(?:-f|--raw)(?=[\s=]|$)/.test(` ${args}`)) return true;
+    return positional.slice(1).some((token) => /^[^=\s:]+(?::=|=(?!=)|@)/.test(token));
+  }],
+  ['jamf-write', 'jamf', (args) => !JAMF_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
+  ['profiles-write', 'profiles', (args) => {
+    const tokens = cliTokens(args);
+    if (tokens.some((token) => /^(?:install|remove|renew|sync)$/i.test(token) || /^-[IRD]$/.test(token))) return true;
+    return !/^(?:show|list|status|validate|version|help|-P|-L|-C|-H)$/.test(tokens[0] || '');
+  }],
+  ['dscl-write', 'dscl', (args) => /(?:^|\s)-(?:create|delete|append|change|passwd|merge|mcx(?:set|delete|import|edit))\w*\b/i.test(` ${args}`) ||
+    !/(?:^|\s)-(?:read|readall|list|search|readpl|readpli)\b/i.test(` ${args}`)],
+  ['fdesetup-write', 'fdesetup', (args) => !FDESETUP_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
+  ['diskutil-write', 'diskutil', (args) => {
+    const tokens = cliTokens(args).map((token) => token.toLowerCase());
+    if (tokens[0] === 'apfs') return !DISKUTIL_APFS_READ_ONLY.has(tokens[1] || '');
+    return !DISKUTIL_READ_ONLY.has(tokens[0] || '');
+  }],
+  ['softwareupdate-write', 'softwareupdate', (args) => /(?:^|\s)(?:-i\w*|--install\S*|-d|--download|--fetch-full-installer|--schedule|--reset-ignored|--ignore|--background)\b/.test(` ${args}`) ||
+    !/(?:^|\s)(?:-l|--list|--history|--list-full-installers|--help|-h)\b/.test(` ${args}`)],
+  ['networksetup-write', 'networksetup', (args) => cliTokens(args).filter((token) => token.startsWith('-'))
+    .some((token) => !/^-(?:get|list|print|version|help|show)/i.test(token)) || !cliTokens(args).some((token) => token.startsWith('-'))],
+  ['systemsetup-write', 'systemsetup', (args) => cliTokens(args).filter((token) => token.startsWith('-'))
+    .some((token) => !/^-(?:get|list|print|help|version)/i.test(token)) || !cliTokens(args).some((token) => token.startsWith('-'))],
+  ['defaults-write', 'defaults', (args) => {
+    const tokens = cliTokens(args).filter((token, index, all) => !/^-(?:currentHost|host)$/i.test(token) && !/^-host$/i.test(all[index - 1] || ''));
+    return !DEFAULTS_READ_ONLY.has((tokens[0] || '').toLowerCase());
+  }],
+  ['launchctl-write', 'launchctl', (args) => !LAUNCHCTL_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
+  ['kickstart-write', 'kickstart', () => true],
+];
+
+function g1CliHits(statement) {
+  const hits = [];
+  for (const [label, name, isWrite] of G1_CLI_SINKS) {
+    if (cliInvocations(statement, name).some((args) => isWrite(args))) hits.push(label);
+  }
+  if (INDIRECT_EXEC.test(statement)) hits.push('indirect-exec');
+  return [...new Set(hits)];
 }
 
 function commandsIn(statement, language) {
@@ -188,7 +351,8 @@ function commandsIn(statement, language) {
     }
   }
   if (SHELL_LANGUAGES.has(language)) {
-    const boundary = '(?:^|[;|{}=:&])\\s*';
+    // a wrapper (sudo, env, xargs, time, …) in front of a native sink hides nothing
+    const boundary = `(?:^|${SHELL_PROMPT}|[;|{}=:&])\\s*${CLI_WRAPPER}`;
     const nativePatterns = [
       [new RegExp(`${boundary}git\\s+(?:add|branch|checkout|clean|clone|commit|fetch|init|merge|mv|push|rebase|reset|restore|rm|switch|tag)\\b`, 'i'), 'git-write'],
       [new RegExp(`${boundary}scp\\s+`, 'i'), 'scp'],
@@ -201,6 +365,7 @@ function commandsIn(statement, language) {
     for (const [pattern, label] of nativePatterns) {
       if (pattern.test(statement)) hits.push(label);
     }
+    hits.push(...g1CliHits(statement));
   }
   return hits;
 }
@@ -209,14 +374,23 @@ function mutationHits(document) {
   const executable = [];
   const preview = [];
   for (const fence of document.fences.filter((item) => MUTATION_FENCE_LANGUAGES.has(item.language))) {
-    fence.lines.forEach((rawLine, offset) => {
+    const shell = SHELL_LANGUAGES.has(fence.language);
+    for (let offset = 0; offset < fence.lines.length; offset += 1) {
       const line = fence.startLine + offset;
+      const rawLine = fence.lines[offset];
       const comment = rawLine.match(/^\s*#\s?(.*)$/);
-      const statement = comment ? comment[1] : stripExecutableComment(rawLine);
+      let statement = comment ? comment[1] : stripExecutableComment(rawLine, shell);
+      // A shell line ending in a backslash continues on the next line: the logical
+      // command is judged as one statement and attributed to its first line.
+      while (shell && !comment && /\\\s*$/.test(statement) && offset + 1 < fence.lines.length) {
+        offset += 1;
+        // bash removes a backslash-newline outright (`ga\` + `m …` runs gam)
+        statement = `${statement.replace(/\\(\s*)$/, (match, space) => (space ? ' ' : ''))}${stripExecutableComment(fence.lines[offset], shell)}`;
+      }
       for (const command of commandsIn(statement, fence.language)) {
         (comment ? preview : executable).push({ file: document.file, fenceId: fence.id, line, command, statement: statement.trim() });
       }
-    });
+    }
   }
   return { executable, preview };
 }
@@ -252,8 +426,23 @@ function classifyImpact(command, text) {
     categories.add('data-removal related');
   }
   if (!dotNetLocalFile && /security|conditionalaccess|compliance|block|isolate|quarantine|mfa|session/.test(value)) categories.add('security-sensitive');
+  // G1 sinks: remote admin APIs vs on-device macOS administration, plus the
+  // destructive and security vocabulary those ecosystems use.
+  if (G1_REMOTE_SINKS.has(command)) categories.add('external-system mutation');
+  if (G1_DEVICE_SINKS.has(command)) categories.add('device configuration change');
+  if (G1_REMOTE_SINKS.has(command) || G1_DEVICE_SINKS.has(command)) {
+    if (/erase|powerwash|deprovision|wipe|unmanage|removeframework|undelete/.test(value)) {
+      categories.add('destructive');
+      categories.add('data-removal related');
+    }
+    if (/fdesetup|filevault|2sv|factor|session|token|lock|passw|signout|suspend|deactivat/.test(value)) categories.add('security-sensitive');
+    if (/user|group|member|license|licence|admin|role|account|dscl/.test(value)) categories.add('identity-related');
+  }
   return [...categories];
 }
+const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write', 'indirect-exec']);
+const G1_DEVICE_SINKS = new Set(['profiles-write', 'dscl-write', 'fdesetup-write', 'diskutil-write', 'softwareupdate-write',
+  'networksetup-write', 'systemsetup-write', 'defaults-write', 'launchctl-write', 'kickstart-write']);
 
 const EFFECT_FAMILIES = [
   [/^(?:invalidate|revoke)(?:s|d|ing)?\b/i, /\bREVOKE\b/],
@@ -281,6 +470,21 @@ const EFFECT_FAMILIES = [
   [/^(?:submit|report)(?:s|ted|ting|ed|ing)?\b/i, /\b(?:SUBMIT|REPORT)\b/],
   [/^transfer(?:s|red|ring)?\b/i, /\bTRANSFER\b/],
   [/^stop(?:s|ped|ping)?\b/i, /\bSTOP\b/],
+  // G1 — Google Workspace, Okta, Jamf and macOS action families
+  [/^suspend(?:s|ed|ing)?\b/i, /\bSUSPEND\b/],
+  [/^(?:unsuspend|reactivate|reinstate)(?:s|d|ed|ing)?\b/i, /\b(?:UNSUSPEND|REACTIVATE|RESTORE)\b/],
+  [/^undelete(?:s|d|ing)?\b/i, /\b(?:UNDELETE|RESTORE)\b/],
+  [/^powerwash(?:es|ed|ing)?\b/i, /\bPOWERWASH\b/],
+  [/^deprovision(?:s|ed|ing)?\b/i, /\bDEPROVISION\b/],
+  [/^lock(?:s|ed|ing)?\b/i, /\bLOCK\b/],
+  [/^unlock(?:s|ed|ing)?\b/i, /\bUNLOCK\b/],
+  [/^unassign(?:s|ed|ing)?\b/i, /\b(?:UNASSIGN|REMOVE)\b/],
+  [/^activate(?:s|d|ing)?\b/i, /\b(?:ACTIVATE|ENABLE)\b/],
+  [/^enroll(?:s|ed|ing)?\b/i, /\bENROLL\b/],
+  [/^(?:unenroll|unmanage)(?:s|d|ed|ing)?\b/i, /\b(?:UNENROLL|UNMANAGE|REMOVE)\b/],
+  [/^(?:sign|log)\s+out\b/i, /\b(?:SIGN OUT|REVOKE)\b/],
+  [/^promote(?:s|d|ing)?\b/i, /\b(?:GRANT|ASSIGN|PROMOTE)\b/],
+  [/^restart(?:s|ed|ing)?\b/i, /\bRESTART\b/],
 ];
 
 function assertEffectCorrespondence(effect, expected, context) {
@@ -323,13 +527,28 @@ function nextMarkerLine(marker) {
 
 function portalMutationCandidates(document) {
   const candidates = [];
-  const action = '(?:Add|Allow|Assign|Block|Calendar|Clear|Convert|Coordinate|Create|Deactivate|Delete|Disable|Enable|Fix|Grant|Install|Isolate|Log|Move|Purge|Reclaim|Reimage|Release|Remove|Rename|Replace|Require|Reset|Restore|Restrict|Retire|Revoke|Run|Schedule|Send|Set|Start|Stop|Submit|Transfer|Uncheck|Update|Wipe)';
+  const action = '(?:Add|Allow|Assign|Block|Calendar|Clear|Convert|Coordinate|Create|Deactivate|Delete|Disable|Enable|Fix|Grant|Install|Isolate|Log|Move|Purge|Reclaim|Reimage|Release|Remove|Rename|Replace|Require|Reset|Restore|Restrict|Retire|Revoke|Run|Schedule|Send|Set|Start|Stop|Submit|Transfer|Uncheck|Update|Wipe|Activate|Deprovision|Enroll|Erase|Lock|Powerwash|Reactivate|Suspend|Unassign|Undelete|Unenroll|Unlock|Unmanage|Unsuspend)';
   const actionBody = action.slice(3, -1);
   const arrowMutation = new RegExp(`→\\s*(?:\\*{0,2}|\`)?(${actionBody})\\b`, 'i');
   const imperativeMutation = new RegExp(`^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+(?:\\*\\*[^*]+:\\*\\*\\s*)?(?:Click|Select|Choose)\\s+(?:\\*{0,2}|\`)?(${actionBody})\\b`, 'i');
   const navigationListMutation = new RegExp(`^\\s*[-*]\\s+(${actionBody})(?:\\s*\\/\\s*(?:${actionBody}))+\\s*:.*→`, 'i');
   const navigationLabelMutation = new RegExp(`^\\s*[-*]\\s+(${actionBody})[^:]*:.*→`, 'i');
   const portalCue = /\b(?:Entra|Intune|EAC|Defender|Exchange|SharePoint|Teams|Zoom|Adobe|Meraki|admin portal|Recipients|Devices|Users|Groups|Policies|Settings)\b/i;
+  // G1 lane cue (Google Admin console, Okta, Jamf, Apple Business Manager, macOS,
+  // Fleet, Zoom Rooms). Lines carrying it also get the arrow rule, so a breadcrumb
+  // that ends in an action (`… → **Suspend user**`) is a mutation candidate.
+  // Case-sensitive on purpose: these are product names ("fleet-wide" is not Fleet).
+  // "Apple Business" is the product's current name (formerly Apple Business Manager).
+  const g1PortalCue = /\b(?:admin\.google\.com|Admin console|Google Workspace|Okta|Jamf|Apple Business(?: Manager)?|System Settings|Self Service|Fleet(?!-)|Zoom Rooms|ChromeOS|Chromebook)\b/;
+  const listItem = /^\s*(?:>\s*)?(?:\d+[.)]|[-*])\s+/;
+  // The G1 click grammar also knows ChromeOS's "Re-enable selected devices". It is kept out
+  // of the global vocabulary so the Microsoft runbooks' candidates do not change.
+  const g1ArrowMutation = new RegExp(`(?:→\\s*|\\b(?:Click|Select|Choose|Tap)\\s+)(?:\\*{0,2}|\`)?(${actionBody}|Re-enable)\\b`, 'i');
+  // Inside a G1 lane document (the 19 runbooks and the two G1 knowledge docs) the click
+  // grammar applies to any portal-cued list item, so a control named without the product
+  // ("At the top, click **Disable selected devices**") is still a candidate.
+  const g1LaneDocument = /^\.claude\/commands\/(?:gws|okta|jamf|mac)-[\w-]+\.md$|^\.claude\/commands\/zoom-room-issue\.md$|^docs\/(?:portal-nav-google-2026|gws-reversibility)\.md$/.test(document.file);
+  const navReference = document.file === 'docs/portal-nav-2026.md' || document.file === 'docs/portal-nav-google-2026.md';
   const frontmatterEnd = document.lines[0] === '---' ? document.lines.indexOf('---', 1) : -1;
   document.lines.forEach((line, index) => {
     const lineNumber = index + 1;
@@ -339,10 +558,12 @@ function portalMutationCandidates(document) {
     if (/^\s*(?:<!--\s*SAFETY GATE|>\s*\*\*PREVIEW ONLY|[-*]\s+\*\*(?:Target|Effect|Scope|Reversibility|Required confirmation|Failure behavior|Undo))/.test(line)) return;
     const inPortalRegion = markers.some((marker) => marker.kind === 'portal' && marker.file === document.file &&
       marker.line < lineNumber && lineNumber < nextMarkerLine(marker));
+    const cue = portalCue.test(line) || g1PortalCue.test(line);
     const match = line.match(navigationListMutation) ||
-      ((portalCue.test(line) || document.file === 'docs/portal-nav-2026.md') ? line.match(navigationLabelMutation) : null) ||
-      ((portalCue.test(line) || inPortalRegion) ? line.match(imperativeMutation) : null) ||
-      (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null);
+      ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
+      ((cue || inPortalRegion || g1LaneDocument) ? line.match(imperativeMutation) : null) ||
+      (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
+      ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g1ArrowMutation) : null);
     if (match) {
       const actionWord = match[1];
       candidates.push({ file: document.file, line: lineNumber, statement: line.trim(), actionWord });
@@ -374,6 +595,15 @@ const PORTAL_CONFIRMATION_BY_ACTION = new Map([
   ['submit', /\b(?:SUBMIT|REPORT|SEND)\b/], ['transfer', /\b(?:TRANSFER|GRANT|ASSIGN)\b/],
   ['uncheck', /\b(?:UNCHECK|DISABLE)\b/], ['update', /\b(?:UPDATE|CHANGE|SET)\b/],
   ['wipe', /\bWIPE\b/],
+  // G1 — Google Workspace, Okta, Jamf and macOS actions
+  ['activate', /\b(?:ACTIVATE|REACTIVATE|ENABLE)\b/], ['deprovision', /\bDEPROVISION\b/],
+  ['enroll', /\bENROLL\b/], ['erase', /\b(?:ERASE|WIPE)\b/],
+  ['lock', /\bLOCK\b/], ['powerwash', /\bPOWERWASH\b/],
+  ['reactivate', /\b(?:REACTIVATE|RESTORE|UNSUSPEND)\b/], ['suspend', /\bSUSPEND\b/],
+  ['unassign', /\b(?:UNASSIGN|REMOVE)\b/], ['undelete', /\b(?:UNDELETE|RESTORE)\b/],
+  ['unenroll', /\b(?:UNENROLL|REMOVE)\b/], ['unlock', /\bUNLOCK\b/],
+  ['unmanage', /\bUNMANAGE\b/], ['unsuspend', /\b(?:UNSUSPEND|RESTORE|REACTIVATE)\b/],
+  ['re-enable', /\b(?:RE-ENABLE|ENABLE|REACTIVATE)\b/],
 ]);
 
 const portalCandidates = [...documents.values()].flatMap(portalMutationCandidates);
@@ -527,7 +757,7 @@ function currentStateChangeInventory() {
       preview: 'Read-only as authored; mutation vocabulary is inert and describes a separately prohibited or review-routed effect.',
     },
     scope: {
-      discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native, and portal mutation grammar.',
+      discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native (including gam, gcloud, HTTP-API, jamf, and macOS administration tools, with plain-text shell gates), and portal mutation grammar.',
       clientBoundaries: 'State-changing or disclosure-capable Jira, memory, and security-audit implementations outside Markdown fence discovery.',
       limitation: 'Novel syntax and prose still require semantic review and grammar extension.',
     },
@@ -767,6 +997,315 @@ function executeSourceGateHarness(analysis, context, engine) {
   ].join('\n');
   const output = runPowerShell(engine, script, `${context} runtime harness`);
   assert.match(output, new RegExp(`SOURCE_GATE_HARNESS_OK ${context.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+}
+
+// ── Shell gate analyzer (G1) — plain-text grammar, no pwsh ────────────────────
+// The shell form of an action-local gate, in an explicitly tagged bash/sh/shell/
+// zsh fence, is fixed and auditable:
+//
+//   # SAFETY GATE [id]
+//   # Target: …  # Effect: …  # Scope: …  # Reversibility: …
+//   # Required confirmation: type exactly `PHRASE`
+//   # Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.
+//   required_confirmation="PHRASE"
+//   IFS= read -r confirmation
+//   if [ "$confirmation" = "$required_confirmation" ]; then
+//     <owned sinks only>
+//   else
+//     echo "…" >&2          (optional, stderr only)
+//     exit <non-zero>
+//   fi
+//
+// `IFS=` keeps leading/trailing whitespace so a padded phrase never matches;
+// `=` inside `[ ]` is an exact, case-sensitive string compare. The analyzer
+// rejects anything that could overwrite, shadow, fold, or route around that
+// comparison, and the harness proves the exact phrase reaches the mocked sink
+// once while every rejected input stops with a non-zero exit.
+const SHELL_GATE_FIELDS = ['Target', 'Effect', 'Scope', 'Reversibility', 'Required confirmation', 'Failure behavior'];
+// Shell gate text is written to stay inert in a shell that does not treat `#` as a
+// comment (stock interactive zsh without interactive_comments): no backticks, `$`,
+// `;`, `|`, `&`, `<`, `>`, parentheses, backslash, apostrophe or `!` in a gated
+// fence's comments, so the phrase is double-quoted and the failure sentence has none.
+const SHELL_FAILURE_BEHAVIOR = 'Empty, declined, "yes", or any other response means stop, and no change is made.';
+const SHELL_REQUIRED_LINE = /^\s*required_confirmation="([^"$`\\]+)"\s*$/;
+// The read sits inside the comparison's condition, so the shell parses the whole
+// if … fi before reading: a line-by-line paste (or a script fed on stdin) can never
+// hand the next pasted line to `read` and then run the sink outside the gate.
+const SHELL_GATE_IF_LINE = /^\s*if IFS= read -r confirmation && \[ "\$confirmation" = "\$required_confirmation" \]; then\s*$/;
+const SHELL_GATE_IF_CANONICAL = 'if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then';
+const SHELL_COMMENT_UNSAFE = /[`$;|&<>()\\'!]/;
+const SHELL_ELSE_NOTICE_LINE = /^\s*(?:echo|printf)\s[^;&|`$()<>]*>&2\s*$/;
+// 1–255 only: bash takes an exit status modulo 256, so `exit 256` succeeds.
+const SHELL_ELSE_EXIT_LINE = /^\s*exit (?:[1-9][0-9]?|1[0-9]{2}|2[0-4][0-9]|25[0-5])\s*$/;
+// The only statement allowed between the template and the comparison: a plain
+// prompt that may show the template.
+const SHELL_PROMPT_LINE = /^\s*(?:printf '%s\\n'|echo) "(?:[^"$`\\]|\$required_confirmation\b)*"(?:\s*>&2)?\s*$/;
+// Statements that can shadow `read`, `[` or the shell for every later gate pasted into
+// the same shell. They are judged in any command position the detector knows (line
+// start, after ; & | ( ) { } ! = :, a backtick, $(, do/then/else/elif/if/while/until)
+// and behind any wrapper (command, env, time, nohup, sudo, …) or a leading backslash —
+// `{ alias '['=true; }` and `if :; then alias …; fi` are as live as a bare `alias`.
+// Shell command positions only (a case label's `)` included; `=` and `:` are not
+// command starts in a shell).
+const SHELL_COMMAND_POSITION = String.raw`(?:${SHELL_PROMPT}|^|[;&|(){}\x60]|\$\(|\b(?:do|then|else|elif|if|while|until)(?=\s)|!(?=\s))\s*${CLI_WRAPPER}\\?`;
+// Quoting does not change the word bash runs: `'alias'`, `"alias"`, `$"alias"`
+// (locale), `$'\x61lias'` / `$'\141lias'` / `$'\u0061lias'` (ANSI-C escapes), `al\ias`
+// and `r''eadonly` all run the builtin, and a brace expansion runs its first
+// alternative as the command (`a{lias,}`, `re{adonly,}`). Every gate rule is also
+// tried on a copy with ANSI-C escapes decoded, quotes and backslashes removed, and
+// brace expansions reduced to their first alternative. A word produced by any other
+// expansion (a variable, a substitution) in command position is an indirect-execution
+// sink of its own.
+const decodeAnsiC = (body) => body.replace(/\\(x[0-9A-Fa-f]{1,2}|u[0-9A-Fa-f]{1,4}|U[0-9A-Fa-f]{1,8}|[0-7]{1,3}|[\s\S])/g, (match, escape) => {
+  if (/^[xuU]/.test(escape)) return String.fromCodePoint(parseInt(escape.slice(1), 16));
+  if (/^[0-7]/.test(escape)) return String.fromCharCode(parseInt(escape, 8));
+  return escape;
+});
+const unquotedShellWords = (statement) => statement
+  .replace(/\$'((?:[^'\\]|\\[\s\S])*)'/g, (match, body) => decodeAnsiC(body))
+  .replace(/\$"/g, '"')
+  .replace(/["'\\]/g, '');
+// innermost first, until nothing changes (`{a{l,},}ias` → `{al,}ias` → `alias`)
+const firstBraceAlternative = (statement) => {
+  let current = statement;
+  for (let round = 0; round < 16; round += 1) {
+    const next = current
+      .replace(/(^|[^$])\{([^{}\s,]*)(?:,[^{}\s]*)+\}/g, '$1$2')
+      .replace(/(^|[^$])\{(-?\w+)\.\.-?\w+(?:\.\.-?\d+)?\}/g, '$1$2');
+    if (next === current) return current;
+    current = next;
+  }
+  return current;
+};
+// bash removes a backslash-newline before it splits words, so `[ (\` + `) { … }`
+// defines a function named `[` and `ali\` + `as` runs `alias`: every rule reads the
+// logical line that starts at each physical line.
+const continuesLine = (text) => /(?:^|[^\\])(?:\\\\)*\\$/.test(text);
+const logicalLines = (texts) => texts.map((text, index) => {
+  let joined = text;
+  for (let next = index + 1; continuesLine(joined) && next < texts.length; next += 1) joined = joined.slice(0, -1) + texts[next];
+  return joined;
+});
+const shellReadings = (statement) => {
+  const unquoted = unquotedShellWords(statement);
+  return [...new Set([statement, unquoted, firstBraceAlternative(unquoted)])];
+};
+const shadows = ([pattern], statement) => shellReadings(statement).some((reading) => pattern.test(reading));
+const SHELL_SHADOWING = [
+  [new RegExp(String.raw`${SHELL_COMMAND_POSITION}(?:alias|unalias|eval|trap|declare|typeset|readonly|unset|exec|source|builtin|enable|shopt|setopt)\b`), 'alias, eval, trap, declare, unset, exec, source, builtin or shell options are forbidden in a gated fence'],
+  [new RegExp(String.raw`${SHELL_COMMAND_POSITION}\.\s+\S`), 'dot-sourcing is forbidden in a gated fence'],
+  // any function name, including `[` (`[ () { return 0; }` shadows the test builtin)
+  [new RegExp(String.raw`${SHELL_COMMAND_POSITION}(?:function\s+[^\s;&|()]+|[^\s;&|(){}]+\s*\(\s*\))\s*(?:\{|\(|$)`), 'function definitions are forbidden in a gated fence (they can shadow read/[ or hide sinks)'],
+  [new RegExp(String.raw`(?:^|[;&|(){}\s])(?:export\s+)?(?:PROMPT_COMMAND|PS0|precmd_functions|preexec_functions|BASH_ALIASES)(?:\[[^\]]*\])?\+?=|${SHELL_COMMAND_POSITION}(?:bind|bindkey|zle|disable)\b`), 'prompt hooks, key bindings and builtin switches are forbidden'],
+];
+const SHELL_FORBIDDEN = [
+  ...SHELL_SHADOWING,
+  [/\$\{\s*(?:required_)?confirmation\b/, 'parameter expansion of a gate variable is forbidden (it can fold case or substitute values)'],
+  [/(?:^|[;&|\s(])(?:export\s+|local\s+)?confirmation\+?=/, 'confirmation may only be assigned by the single IFS= read -r line'],
+  // Other ways to assign a variable (WARDEN review): printf -v, mapfile/readarray,
+  // getopts, let, coproc, wait -p, loop variables, array elements, indirect expansion.
+  [/(?:^|[;&|(\s])(?:printf\s+-v|mapfile|readarray|getopts|let|coproc)\b/, 'printf -v, mapfile, readarray, getopts, let and coproc are forbidden in a gated fence (they assign variables)'],
+  [/(?:^|[;&|(\s])wait\s+-p\b/, 'wait -p is forbidden in a gated fence (it assigns a variable)'],
+  [/(?:^|[;&|(\s])(?:for|select|while|until)\s+(?:required_)?confirmation\b/, 'a gate variable may not be a loop variable'],
+  [/\b(?:required_)?confirmation\s*\[/, 'a gate variable may not be indexed or assigned as an array'],
+  [/\$\{!/, 'indirect parameter expansion is forbidden in a gated fence'],
+];
+
+function shellCodeOf(line) {
+  return /^\s*#/.test(line) ? '' : stripExecutableComment(line, true).trim();
+}
+
+function shellBlockDelta(code) {
+  let delta = 0;
+  for (const raw of code.split(/;;|;|&&|\|\|/)) {
+    const segment = raw.trim();
+    if (!segment) continue;
+    const word = segment.split(/\s+/)[0];
+    if (/^(?:if|case|for|while|until|select)$/.test(word)) delta += 1;
+    else if (/^(?:fi|esac|done)$/.test(word)) delta -= 1;
+    else if (word === '{' || (/^\((?!\()/.test(segment))) delta += 1;
+    else if (word === '}' || segment === ')') delta -= 1;
+  }
+  return delta;
+}
+
+function analyzeShellGate(fence, marker, regionEndLine, owned) {
+  const problems = [];
+  const lines = fence.lines;
+  const markerIndex = marker.line - fence.startLine;
+  const endIndex = regionEndLine - fence.startLine;
+  const code = lines.map(shellCodeOf);
+  const inRegion = (index) => index > markerIndex && index <= endIndex;
+
+  const fields = {};
+  for (let index = markerIndex + 1; index <= endIndex; index += 1) {
+    const field = lines[index].match(/^\s*#\s*(Target|Effect|Scope|Reversibility|Required confirmation|Failure behavior):\s*(.+?)\s*$/);
+    if (!field) continue;
+    if (fields[field[1]] !== undefined) problems.push(`duplicate ${field[1]} field`);
+    fields[field[1]] = field[2];
+  }
+  for (const name of SHELL_GATE_FIELDS) if (!fields[name]) problems.push(`missing ${name} field`);
+  const expected = (fields['Required confirmation'] || '').match(/type exactly "([^"]+)"/i)?.[1] || '';
+  if (fields['Required confirmation'] && !expected) problems.push('Required confirmation must say: type exactly "PHRASE"');
+
+  // Comments must stay inert where `#` is not a comment, and no executable line may
+  // carry a trailing comment (it would become arguments, or an env-prefixed command).
+  lines.forEach((rawLine, index) => {
+    if (/^\s*#/.test(rawLine)) {
+      const text = rawLine.replace(/^\s*#/, '');
+      if (SHELL_COMMENT_UNSAFE.test(text) || (text.match(/"/g) || []).length % 2) {
+        problems.push(`line ${index + 1}: a comment in a gated fence may not contain backticks, $, ;, |, &, <, >, parentheses, a backslash, an apostrophe, ! or an unbalanced double quote`);
+      }
+    } else if (code[index] && code[index] !== rawLine.trim()) {
+      problems.push(`line ${index + 1}: no executable line in a gated fence may carry a trailing comment (put it on its own line above)`);
+    }
+  });
+  if (fields['Failure behavior'] && fields['Failure behavior'] !== SHELL_FAILURE_BEHAVIOR) problems.push(`Failure behavior must read exactly: ${SHELL_FAILURE_BEHAVIOR}`);
+
+  const logical = logicalLines(code);
+  logical.forEach((statement, index) => {
+    if (!statement) return;
+    for (const row of SHELL_FORBIDDEN) {
+      if (shadows(row, statement)) problems.push(`line ${index + 1}: ${row[1]}`);
+    }
+  });
+
+  const requiredAssignments = logical.map((statement, index) => ({ statement, index }))
+    .filter(({ statement }) => statement && shellReadings(statement).some((reading) => /(?:^|[;&|\s(])(?:export\s+|local\s+)?required_confirmation\+?=/.test(reading)));
+  const reads = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /(?:^|[;&|(\s])read\b/.test(statement));
+  const gateIfs = code.map((statement, index) => ({ statement, index })).filter(({ statement }) => /\$confirmation\b|\$required_confirmation\b/.test(statement) && /(?:^|[;&|\s])(?:if|elif|while|until|\[\[?|test)\b/.test(statement));
+
+  let requiredLiteral = '';
+  if (requiredAssignments.length !== 1 || !inRegion(requiredAssignments[0].index)) problems.push('required_confirmation must have exactly one assignment, inside the gate region');
+  else {
+    const literal = code[requiredAssignments[0].index].match(SHELL_REQUIRED_LINE);
+    if (!literal) problems.push('required_confirmation must be one double-quoted literal with no expansion ($, backtick, backslash)');
+    else requiredLiteral = literal[1];
+  }
+  if (requiredLiteral && expected && requiredLiteral !== expected) problems.push(`required_confirmation literal does not equal the Required confirmation phrase (${requiredLiteral} ≠ ${expected})`);
+  if (gateIfs.length !== 1 || !inRegion(gateIfs[0].index) || !SHELL_GATE_IF_LINE.test(code[gateIfs[0].index])) problems.push(`the region must contain exactly one comparison, the canonical \`${SHELL_GATE_IF_CANONICAL}\``);
+  if (reads.length !== 1 || gateIfs.length !== 1 || reads[0].index !== gateIfs[0].index) problems.push('the fence must contain exactly one read, inside the canonical comparison');
+
+  const gateIndex = gateIfs.length === 1 && SHELL_GATE_IF_LINE.test(code[gateIfs[0].index]) ? gateIfs[0].index : -1;
+  // Between the marker and the template only the comment header may sit; between the
+  // template and the comparison only plain prompt lines. Any other statement could
+  // pre-satisfy or rewrite the comparison. The harness executes the fence's own lines
+  // from its first line up to the comparison.
+  const requiredIndex = requiredAssignments.length === 1 ? requiredAssignments[0].index : -1;
+  const preCompareLines = [];
+  for (let index = 0; index < markerIndex; index += 1) {
+    if (code[index]) problems.push(`line ${index + 1}: only comments may precede the SAFETY GATE marker in a gated fence`);
+  }
+  if (requiredIndex > markerIndex) {
+    for (let index = markerIndex + 1; index < requiredIndex; index += 1) {
+      if (code[index]) problems.push(`line ${index + 1}: only the comment header may sit between the SAFETY GATE marker and required_confirmation`);
+    }
+  }
+  if (requiredIndex >= 0 && gateIndex > requiredIndex) {
+    for (let index = 0; index < gateIndex; index += 1) preCompareLines.push(lines[index]);
+    for (let index = requiredIndex + 1; index < gateIndex; index += 1) {
+      if (!code[index]) continue;
+      if (!SHELL_PROMPT_LINE.test(code[index])) {
+        problems.push(`line ${index + 1}: between required_confirmation and the comparison only a plain printf/echo prompt may appear`);
+      }
+    }
+  }
+  let elseIndex = -1;
+  let fiIndex = -1;
+  const elseBody = [];
+  if (gateIndex >= 0) {
+    if (requiredAssignments.length === 1 && !(requiredAssignments[0].index < gateIndex)) {
+      problems.push('order must be: required_confirmation assignment, then the comparison');
+    }
+    let depth = 0;
+    for (let index = 0; index < gateIndex; index += 1) depth += shellBlockDelta(code[index]);
+    if (depth !== 0) problems.push('the gate comparison is nested inside another block (dead or conditional guard)');
+    depth = 0;
+    for (let index = gateIndex + 1; index < lines.length; index += 1) {
+      const statement = code[index];
+      if (!statement) continue;
+      if (depth === 0 && /^(?:elif)\b/.test(statement)) problems.push('elif branches are forbidden in a gate');
+      if (depth === 0 && statement === 'else') { if (elseIndex < 0) elseIndex = index; else problems.push('more than one else'); continue; }
+      depth += shellBlockDelta(statement);
+      if (depth < 0) { fiIndex = index; break; }
+    }
+    if (elseIndex < 0) problems.push('the comparison needs a direct else branch');
+    if (fiIndex < 0) problems.push('the comparison is never closed with fi');
+    if (fiIndex >= 0 && code[fiIndex] !== 'fi') problems.push('the gate must close with a bare fi');
+    if (fiIndex >= 0 && fiIndex > endIndex) problems.push('the gate block extends past the gate region');
+    if (elseIndex >= 0 && fiIndex > elseIndex) {
+      const statements = [];
+      for (let index = elseIndex + 1; index < fiIndex; index += 1) if (code[index]) { statements.push(code[index]); elseBody.push(code[index]); }
+      const exits = statements.filter((statement) => SHELL_ELSE_EXIT_LINE.test(statement));
+      if (exits.length !== 1 || !SHELL_ELSE_EXIT_LINE.test(statements.at(-1) || '')) problems.push('the else branch must end with exactly one `exit <non-zero>`');
+      if (statements.some((statement) => !SHELL_ELSE_EXIT_LINE.test(statement) && !SHELL_ELSE_NOTICE_LINE.test(statement))) {
+        problems.push('the else branch may only print a notice to stderr and exit non-zero');
+      }
+    }
+  }
+  for (const sink of owned) {
+    const index = sink.line - fence.startLine;
+    if (!(gateIndex >= 0 && elseIndex > gateIndex && index > gateIndex && index < elseIndex)) {
+      problems.push(`sink ${sink.command} at line ${sink.line} is not dominated by the positive confirmation branch`);
+    }
+  }
+  return { problems: [...new Set(problems)], fields, expected, requiredLiteral, elseBody, preCompareLines };
+}
+
+const SHELL_ENGINES = ['bash'].filter((engine) => {
+  const probe = spawnSync(engine, ['-c', 'printf ok'], { encoding: 'utf8', windowsHide: true, timeout: 10000 });
+  return probe.status === 0 && probe.stdout === 'ok';
+});
+
+function assertShellGateFailClosed(analysis, context) {
+  assert.deepEqual(analysis.problems, [], `${context}: ${analysis.problems.join(' | ')}`);
+  const expected = analysis.expected;
+  assert.ok(expected && expected === analysis.requiredLiteral, `${context}: source literal and Required confirmation phrase differ`);
+  // Plain-text model of the canonical comparison: exact string equality.
+  for (const rejected of [undefined, '', 'yes', 'YES', 'arbitrary wrong value', ` ${expected}`, `${expected} `, expected.toLowerCase(), `${expected}\\`]) {
+    if (rejected !== expected) assert.equal(exactGateModel(expected, rejected), false);
+  }
+  assert.equal(exactGateModel(expected, expected), true);
+  // Real execution where a POSIX shell exists (always on Linux/macOS CI).
+  if (process.platform !== 'win32') assert.ok(SHELL_ENGINES.length > 0, `${context}: bash is required to execute the shell gate harness`);
+  // The fence's own lines from its first line up to the comparison run verbatim; the
+  // positive branch is replaced by one mocked line, the else body is the fence's own.
+  // Nothing that reaches a sink is ever executed. Three ways an operator may run it:
+  // as a script (normal), pasted into a shell that does not treat `#` as a comment
+  // (literal: every comment line's `#` becomes a plain word, as in stock interactive
+  // zsh), and pasted line by line or fed on stdin (piped: the read shares the input
+  // with the script, and a read-back line follows the gate).
+  assert.ok(Array.isArray(analysis.preCompareLines) && analysis.preCompareLines.length > 0, `${context}: no source lines to execute`);
+  const gateScript = (lines) => [
+    ...lines,
+    SHELL_GATE_IF_CANONICAL,
+    "  printf '%s\\n' MOCKED_SINK_REACHED",
+    'else',
+    ...analysis.elseBody.map((statement) => `  ${statement}`),
+    'fi',
+  ].join('\n');
+  const normal = gateScript(analysis.preCompareLines);
+  const literal = gateScript(analysis.preCompareLines.map((line) => line.replace(/^(\s*)#/, "$1'#'")));
+  const rejectedInputs = [undefined, '', 'yes', 'YES', 'arbitrary wrong value', ` ${expected}`, `${expected} `, expected.toLowerCase(), `${expected}\\`];
+  for (const engine of SHELL_ENGINES) {
+    for (const [mode, script] of [['normal', normal], ['literal-#', literal]]) {
+      const run = (input) => spawnSync(engine, ['-c', script], { input, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      const approved = run(`${expected}\n`);
+      assert.equal(approved.status, 0, `${context} (${mode}): exact phrase did not traverse the gate (${approved.stderr})`);
+      assert.match(approved.stdout, /MOCKED_SINK_REACHED/, `${context} (${mode}): exact phrase did not reach the mocked sink`);
+      for (const rejected of rejectedInputs) {
+        if (rejected === expected) continue;
+        const result = run(rejected === undefined ? '' : `${rejected}\n`);
+        assert.notEqual(result.status, 0, `${context} (${mode}): rejected input ${JSON.stringify(rejected)} exited zero`);
+        assert.doesNotMatch(result.stdout || '', /MOCKED_SINK_REACHED/, `${context} (${mode}): rejected input ${JSON.stringify(rejected)} reached the sink`);
+      }
+    }
+    for (const script of [normal, literal]) {
+      const piped = spawnSync(engine, ['-s'], { input: `${script}\nprintf '%s\\n' READ_BACK_PLACEHOLDER\n`, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      assert.notEqual(piped.status, 0, `${context} (piped): a line-by-line paste must stop at the gate`);
+      assert.doesNotMatch(piped.stdout || '', /MOCKED_SINK_REACHED/, `${context} (piped): a pasted line was taken as the confirmation and the sink ran`);
+    }
+  }
 }
 
 test('all Markdown fences are balanced and files end with a newline', () => {
@@ -1298,4 +1837,710 @@ test('inventory includes the named audit hot spots', () => {
     'quarantine-release-all', 'quarantine-release-one', 'device-full-wipe',
     'rollback-bulk-usage-location', 'security-account-block', 'security-session-revoke',
   ]) assert.ok(ids.has(id), `missing required hot-spot inventory item: ${id}`);
+});
+
+// ── G1: Google Workspace / Okta / Jamf / macOS shell sinks ────────────────────
+// The shell-fence detector must see every gam, gcloud, HTTP-API, jamf and macOS
+// administration mutation, leave read-only diagnostics live, and require a
+// same-fence `# SAFETY GATE [id]` whose plain-text confirmation grammar is
+// explicit and fail-closed (no pwsh involved).
+
+const G1_SHELL_MUTATIONS = [
+  ['gam create user "[USER@DOMAIN.COM]" firstname "[FIRST_NAME]" lastname "[LAST_NAME]" password random', 'gam-write'],
+  ['gam update user "[USER@DOMAIN.COM]" suspended on', 'gam-write'],
+  ['gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam undelete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam suspend user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam unsuspend user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" transfer drive "[MANAGER_UPN]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" move drivefile "[FILE_ID]" parentid root', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" add license "[LICENSE_TYPE]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" remove license "[LICENSE_TYPE]"', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" revoke tokens', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" wipe', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" deprovision', 'gam-write'],
+  ['gam update cros "[DEVICE_ID]" action disable', 'gam-write'],
+  ['gam cros "[DEVICE_ID]" action deprovision_retiring_device', 'gam-write'],
+  ['gam issuecommand cros "[DEVICE_ID]" command remote_powerwash doit', 'gam-write'],
+  ['gam user "[USER@DOMAIN.COM]" signout', 'gam-write'],
+  ['sudo ~/bin/gam7/gam update group "[GROUP_EMAIL]" add member "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam print users query "isSuspended=True" | gam update user "[USER@DOMAIN.COM]" suspended off', 'gam-write'],
+  ['result=$(gam delete user "[USER@DOMAIN.COM]")', 'gam-write'],
+  ['gcloud iam service-accounts keys create key.json --iam-account="fixture"', 'gcloud-write'],
+  ['gcloud projects add-iam-policy-binding fixture-project --member="user:fixture" --role="roles/viewer"', 'gcloud-write'],
+  ['gcloud projects remove-iam-policy-binding fixture-project --member="user:fixture" --role="roles/viewer"', 'gcloud-write'],
+  ['gcloud config set project fixture-project', 'gcloud-write'],
+  ['gcloud iam service-accounts delete fixture', 'gcloud-write'],
+  ['gcloud iam service-accounts update fixture --display-name="fixture"', 'gcloud-write'],
+  ['curl -sS -X POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/deactivate" -H "Authorization: SSWS ${OKTA_API_TOKEN}"', 'http-write'],
+  ['curl -sS -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"', 'http-write'],
+  ['curl -sS --request PUT "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sSX PATCH "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS --data "{}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS -d @body.json "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS --json "{}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['wget --method=POST "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['wget --post-data="x" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['http POST "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/reset_password"', 'http-write'],
+  ['https DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"', 'http-write'],
+  ['https "https://[@Aegion_JAMF_URL]/api/v1/fixture" name=value', 'http-write'],
+  ['sudo jamf policy', 'jamf-write'],
+  ['sudo jamf recon', 'jamf-write'],
+  ['sudo jamf manage', 'jamf-write'],
+  ['sudo jamf removeFramework', 'jamf-write'],
+  ['sudo /usr/local/bin/jamf enroll -prompt', 'jamf-write'],
+  ['sudo profiles renew -type enrollment', 'profiles-write'],
+  ['sudo profiles install -path fixture.mobileconfig', 'profiles-write'],
+  ['sudo profiles remove -identifier fixture.profile', 'profiles-write'],
+  ['sudo profiles -I -F fixture.mobileconfig', 'profiles-write'],
+  ['sudo profiles -R -p fixture.profile', 'profiles-write'],
+  ['sudo dscl . -create /Users/fixture', 'dscl-write'],
+  ['sudo dscl . -delete /Users/fixture', 'dscl-write'],
+  ['sudo dscl . -append /Groups/admin GroupMembership fixture', 'dscl-write'],
+  ['sudo dscl . -change /Users/fixture RealName old new', 'dscl-write'],
+  ['sudo dscl . -passwd /Users/fixture', 'dscl-write'],
+  ['sudo fdesetup enable', 'fdesetup-write'],
+  ['sudo fdesetup disable', 'fdesetup-write'],
+  ['sudo fdesetup add -usertoadd fixture', 'fdesetup-write'],
+  ['sudo fdesetup remove -user fixture', 'fdesetup-write'],
+  ['sudo fdesetup changerecovery -personal', 'fdesetup-write'],
+  ['diskutil eraseDisk APFS Fixture disk9', 'diskutil-write'],
+  ['diskutil eraseVolume APFS Fixture disk9s1', 'diskutil-write'],
+  ['diskutil apfs deleteVolume disk9s9', 'diskutil-write'],
+  ['diskutil partitionDisk disk9 GPT APFS Fixture 100%', 'diskutil-write'],
+  ['sudo softwareupdate -i -a', 'softwareupdate-write'],
+  ['sudo softwareupdate --install --all --restart', 'softwareupdate-write'],
+  ['sudo networksetup -setairportnetwork en0 fixture-ssid', 'networksetup-write'],
+  ['sudo networksetup -setdnsservers Wi-Fi Empty', 'networksetup-write'],
+  ['sudo systemsetup -setremotelogin on', 'systemsetup-write'],
+  ['defaults write com.apple.fixture Key -bool true', 'defaults-write'],
+  ['sudo launchctl load -w /Library/LaunchDaemons/fixture.plist', 'launchctl-write'],
+  ['sudo launchctl unload /Library/LaunchDaemons/fixture.plist', 'launchctl-write'],
+  ['sudo launchctl bootstrap system /Library/LaunchDaemons/fixture.plist', 'launchctl-write'],
+  ['sudo launchctl bootout system/fixture', 'launchctl-write'],
+  ['sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -on', 'kickstart-write'],
+  // Wrapper and indirect forms (WARDEN review, 2026-10-15)
+  ['sudo -u admin gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sudo --user=admin gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sudo -E gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['command gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['env GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['GAMCFGDIR=/tmp/fixture gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['nohup gam delete user "[USER@DOMAIN.COM]" &', 'gam-write'],
+  ['time gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['nice -n 10 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['caffeinate -i gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['exec gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['script -q /dev/null gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['xargs -n 1 gam delete user < fixture-users.txt', 'gam-write'],
+  ['"$HOME/bin/gam7/gam" delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sudo -u admin /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  ['$GAM delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['GAM=/usr/local/bin/gam; "$GAM" suspend user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['"${GAM}" suspend user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ["ssh [DEVICE_NAME] 'sudo jamf removeFramework'", 'indirect-exec'],
+  ['ssh -t [DEVICE_NAME] sudo jamf removeFramework', 'indirect-exec'],
+  ["bash -c 'gam delete user [USER@DOMAIN.COM]'", 'indirect-exec'],
+  ["zsh -c 'sudo jamf removeFramework'", 'indirect-exec'],
+  [`osascript -e 'do shell script "sudo jamf removeFramework" with administrator privileges'`, 'indirect-exec'],
+  ['eval "gam delete user [USER@DOMAIN.COM]"', 'indirect-exec'],
+  [`http --raw '{}' "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend"`, 'http-write'],
+  ['curl -sS -H "X-HTTP-Method-Override: DELETE" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl --config /tmp/fixture-request.cfg', 'http-write'],
+  ['curl -sK /tmp/fixture-request.cfg', 'http-write'],
+  // Second fresh-context review (WARDEN pass 2, 2026-10-15)
+  ['sudo -- gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['timeout 30 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['doas gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['for u in [USER@DOMAIN.COM]; do gam delete user "$u"; done', 'gam-write'],
+  ['if true; then gam delete user "[USER@DOMAIN.COM]"; fi', 'gam-write'],
+  ['while true; do sudo jamf removeFramework; break; done', 'jamf-write'],
+  ['! gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ["/bin/sh -c 'gam delete user [USER@DOMAIN.COM]'", 'indirect-exec'],
+  ['/bin/bash -c "sudo jamf removeFramework"', 'indirect-exec'],
+  [`/usr/bin/osascript -e 'do shell script "sudo jamf removeFramework"'`, 'indirect-exec'],
+  ['$(which gam) delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['$(command -v gam) delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['`which gam` delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['${GAM:-gam} delete user "[USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | sudo bash', 'indirect-exec'],
+  ['curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | sh', 'indirect-exec'],
+  ["echo 'gam delete user [USER@DOMAIN.COM]' | bash", 'indirect-exec'],
+  ['bash <(curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh")', 'indirect-exec'],
+  ['su admin -c "gam delete user [USER@DOMAIN.COM]"', 'indirect-exec'],
+  ["sudo su - -c 'jamf removeFramework'", 'indirect-exec'],
+  ['find /tmp/fixture -name "*.txt" -exec gam delete user {} \;', 'indirect-exec'],
+  ['env -S "gam delete user [USER@DOMAIN.COM]"', 'indirect-exec'],
+  ['set -- gam delete user "[USER@DOMAIN.COM]"; "$@"', 'indirect-exec'],
+  ['METHOD=DELETE; curl -sS -X "$METHOD" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS --request "$METHOD" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl $CURL_ARGS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  // Third fresh-context review (WARDEN pass 3, N-3): the braces form the runbooks use
+  ['curl -sS -X "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS --request="${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS -X"${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sSX "${METHOD}" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS -X "$(printf DELETE)" "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['wget -q --method="${METHOD}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  // N-4: a wrapper called by its path is still a wrapper
+  ['/usr/bin/sudo gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['/usr/bin/env gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['/usr/bin/nohup gam delete user "[USER@DOMAIN.COM]" &', 'gam-write'],
+  ['/usr/bin/sudo /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  ['/usr/bin/timeout 30 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['"/usr/bin/sudo" -u admin /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  // N-6: interpreter one-liners, scheduled runs, root shells, arch, quoted or escaped names
+  [`python3 -c "import subprocess; subprocess.run(['gam', 'delete', 'user', '[USER@DOMAIN.COM]'])"`, 'indirect-exec'],
+  [`/usr/bin/python3 -c 'print(1)'`, 'indirect-exec'],
+  [`perl -e 'system("gam delete user [USER@DOMAIN.COM]")'`, 'indirect-exec'],
+  [`ruby -e 'system("sudo jamf removeFramework")'`, 'indirect-exec'],
+  [`node -e 'require("child_process").execSync("gam delete user [USER@DOMAIN.COM]")'`, 'indirect-exec'],
+  [`expect -c 'spawn gam delete user [USER@DOMAIN.COM]; interact'`, 'indirect-exec'],
+  [`echo 'gam delete user [USER@DOMAIN.COM]' | at now`, 'indirect-exec'],
+  ['crontab /tmp/fixture-cron', 'indirect-exec'],
+  ['sudo -s', 'indirect-exec'],
+  ['sudo -i jamf removeFramework', 'indirect-exec'],
+  ['sudo --login', 'indirect-exec'],
+  ['arch -arm64 gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['/usr/bin/arch -x86_64 /usr/local/bin/jamf removeFramework', 'jamf-write'],
+  [`'gam' delete user "[USER@DOMAIN.COM]"`, 'gam-write'],
+  ['\\gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['gam${IFS}delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  // WARDEN pass 4, P4-4: a line copied with its shell prompt is still a command
+  ['$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['% sudo jamf removeFramework', 'jamf-write'],
+  ['❯ gam update user "[USER@DOMAIN.COM]" suspended on', 'gam-write'],
+  ['admin@host:~$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['[admin@host ~]$ sudo jamf removeFramework', 'jamf-write'],
+  ['$ curl -sS "https://[@Aegion_JAMF_URL]/fixture.sh" | bash', 'indirect-exec'],
+  // WARDEN pass 5, P5-2: the macOS default zsh prompt, versioned shells, a venv prefix, Windows prompts
+  ['admin@MacBook-Pro ~ % sudo jamf removeFramework', 'jamf-write'],
+  ['bash-5.2$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['sh-3.2# sudo jamf removeFramework', 'jamf-write'],
+  ['(venv) $ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['PS C:\\> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['C:\\Users\\admin> gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  // WARDEN pass 6, P6-2: the pre-Catalina macOS bash default and the oh-my-zsh arrow
+  ['MacBook-Pro:~ admin$ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['➜  ~ sudo jamf removeFramework', 'jamf-write'],
+  ['➜ gam delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  // P6-3: the shell lane's native sinks behind a wrapper (the normal macOS form)
+  ['sudo rm -rf /tmp/fixture', 'file-write'],
+  ['echo "[@Aegion_DOMAIN] fixture" | sudo tee -a /etc/hosts', 'file-write'],
+  ['sudo -u admin mv /tmp/fixture-a /tmp/fixture-b', 'file-write'],
+  ['sudo chmod 600 /tmp/fixture', 'metadata-write'],
+  ['sudo brew install fixture', 'package-write'],
+  ['xargs rm < /tmp/fixture-list', 'file-write'],
+  // P5-3: any explicit method that is not GET, HEAD, OPTIONS or TRACE (fail-closed, as for gam and gcloud verbs)
+  ['curl -sS -X PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS --request MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sXLOCK "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['wget -q --method=COPY "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['curl -sS -H "X-HTTP-Method-Override: PURGE" "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['http PURGE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  ['https MOVE "https://[@Aegion_JAMF_URL]/api/v1/fixture"', 'http-write'],
+  // an option with a separate value before HTTPie's method (WARDEN pass 8, stopped before its report)
+  ['http --timeout 30 DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['https --session fixture DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  // P4-5: a Windows-style .exe name and curl values glued to their short option
+  ['gam.exe delete user "[USER@DOMAIN.COM]"', 'gam-write'],
+  ['curl.exe -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sS -d$BODY "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend"', 'http-write'],
+  ['curl -sS -dname=value "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+  ['curl -sXpost "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/lifecycle/suspend"', 'http-write'],
+  ['curl -sS -Xdelete "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', 'http-write'],
+];
+
+const G1_SHELL_READ_ONLY = [
+  'gam info user "[USER@DOMAIN.COM]"',
+  'sudo -u admin gam info user "[USER@DOMAIN.COM]"',
+  'required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"',
+  '$variable = "value"',
+  'for u in [USER@DOMAIN.COM]; do gam info user "$u"; done',
+  'if gam info user "[USER@DOMAIN.COM]"; then echo found; fi',
+  '#!/bin/sh',
+  'env GAMCFGDIR=/tmp/fixture gam print users',
+  '"$HOME/bin/gam7/gam" info user "[USER@DOMAIN.COM]"',
+  'gam print users query "isSuspended=True" fields primaryemail,suspended',
+  'gam report admin event DELETE_USER',
+  'gam user "[USER@DOMAIN.COM]" show tokens',
+  'gam whatis "[USER@DOMAIN.COM]"',
+  'gam print groups member "[USER@DOMAIN.COM]"',
+  'gam info cros "[DEVICE_ID]"',
+  'gcloud projects describe fixture-project',
+  'gcloud iam service-accounts list',
+  'curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}"',
+  'curl -sS -X GET "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'http GET "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" Authorization:"SSWS ${OKTA_API_TOKEN}"',
+  'sudo jamf version',
+  'jamf checkJSSConnection',
+  'profiles show -type enrollment',
+  'sudo profiles list',
+  'profiles status -type enrollment',
+  'dscl . -read /Users/fixture',
+  'dscl . -list /Users',
+  'fdesetup status',
+  'sudo fdesetup list',
+  'diskutil list',
+  'diskutil info disk0',
+  'diskutil apfs list',
+  'softwareupdate -l',
+  'softwareupdate --history',
+  'networksetup -getairportnetwork en0',
+  'networksetup -listallhardwareports',
+  'sudo systemsetup -getremotelogin',
+  'defaults read com.apple.fixture',
+  'launchctl list',
+  'launchctl print system/fixture',
+  'system_profiler SPHardwareDataType',
+  'log show --last 1h --style compact',
+  'ping -c 4 [@Aegion_DOMAIN]',
+  'dig +short [@Aegion_DOMAIN]',
+  'curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorization: SSWS ${OKTA_API_TOKEN}" | python3 -m json.tool',
+  'node scripts/lint/command-structure.js',
+  'crontab -l',
+  'arch',
+  'At <script or command>:<line number>',
+  '$ gam info user "[USER@DOMAIN.COM]"',
+  'gam.exe info user "[USER@DOMAIN.COM]"',
+  'curl -sSfL "https://[@Aegion_JAMF_URL]/api/v1/fixture" -H "Authorization: Bearer ${JAMF_TOKEN}"',
+  'curl -sS -o /tmp/fixture.json -w "%{http_code}" "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sS -X HEAD "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sS --request OPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'http HEAD "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sS -XGET "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'curl -sXOPTIONS "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+  'http --timeout 30 GET "https://[@Aegion_JAMF_URL]/api/v1/fixture"',
+];
+
+test('G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink', () => {
+  const missed = [];
+  for (const [line, label] of G1_SHELL_MUTATIONS) {
+    for (const language of ['bash', 'zsh', 'sh', 'shell', '']) {
+      const hits = commandsIn(line, language);
+      if (!hits.includes(label)) missed.push(`${language || '(untagged)'}: ${line} → [${hits.join(', ')}]`);
+    }
+  }
+  assert.deepEqual(missed, []);
+});
+
+test('G1 detector: read-only diagnostics stay live and are not sinks', () => {
+  const flagged = [];
+  for (const line of G1_SHELL_READ_ONLY) {
+    const hits = commandsIn(line, 'bash');
+    if (hits.length) flagged.push(`${line} → [${hits.join(', ')}]`);
+  }
+  assert.deepEqual(flagged, []);
+});
+
+// Gate variables belong to their gated fence. An operator pastes fences into one
+// shell, so a sibling fence that sets or declares them (`readonly confirmation=…`)
+// could pre-satisfy a gate: in a document with a gated shell fence, no other shell
+// fence may name them at all.
+function gateVariablesOutsideGates(document, gatedFenceIds) {
+  if (!gatedFenceIds.size) return [];
+  const problems = [];
+  for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
+    const asBash = logicalLines(fence.lines.map(shellCodeOf));
+    fence.lines.forEach((rawLine, offset) => {
+      if (asBash[offset] && shellReadings(asBash[offset]).some((reading) => /\b(?:required_)?confirmation\b/.test(reading))) {
+        problems.push(`${document.file}:${fence.startLine + offset}: gate variables (confirmation, required_confirmation) may only appear inside a gated shell fence`);
+      }
+    });
+  }
+  return problems;
+}
+
+// The same paste can shadow the comparison without naming a gate variable: a
+// sibling shell fence that defines a function (`[ () { return 0; }`), sets an
+// alias, disables a builtin, sources a file, or hooks the prompt or a key binding
+// runs before the gate in the operator's shell. In a document with a gated shell
+// fence, every other shell fence is held to the gated fence's shadowing rows
+// (SHELL_SHADOWING); a gated fence's own lines, after fi included, already are.
+const SHELL_SIBLING_FORBIDDEN = SHELL_SHADOWING;
+function gateShadowingOutsideGates(document, gatedFenceIds) {
+  if (!gatedFenceIds.size) return [];
+  const problems = [];
+  for (const fence of document.fences.filter((item) => SHELL_LANGUAGES.has(item.language) && !gatedFenceIds.has(item.id))) {
+    const asBash = logicalLines(fence.lines.map(shellCodeOf));
+    const hashAsWord = logicalLines(fence.lines.map((line) => line.trim()));
+    fence.lines.forEach((rawLine, offset) => {
+      // As bash reads it, and as a shell that does not treat `#` as a comment reads
+      // it (a comment line or a trailing comment is then code), continuations joined.
+      const readings = [asBash[offset], hashAsWord[offset]].filter(Boolean);
+      for (const row of SHELL_SIBLING_FORBIDDEN) {
+        if (readings.some((statement) => shadows(row, statement))) {
+          problems.push(`${document.file}:${fence.startLine + offset}: a shell fence beside a gated fence may not shadow or redefine read, [ or the shell (${row[1]})`);
+        }
+      }
+    });
+  }
+  return problems;
+}
+
+function evaluateGateDocument(file, source) {
+  const document = parseFences(file, source);
+  const found = discoverMarkers(document);
+  const { executable, preview } = mutationHits(document);
+  const byFence = new Map();
+  for (const marker of found.filter((item) => item.kind !== 'portal')) {
+    if (!byFence.has(marker.fenceId)) byFence.set(marker.fenceId, []);
+    byFence.get(marker.fenceId).push(marker);
+  }
+  for (const list of byFence.values()) list.sort((a, b) => a.line - b.line);
+  const nearest = (hit) => (byFence.get(hit.fenceId) || []).filter((marker) => marker.line <= hit.line).at(-1);
+  const failures = [];
+  for (const hit of executable) {
+    const owner = nearest(hit);
+    if (!owner || owner.mode !== 'gated') failures.push(`${hit.file}:${hit.line}: ${hit.command} has 0 owners (${hit.statement})`);
+  }
+  for (const hit of preview) {
+    const owner = nearest(hit);
+    if (!owner || owner.mode !== 'preview') failures.push(`${hit.file}:${hit.line}: commented ${hit.command} is not owned by PREVIEW ONLY`);
+  }
+  const analyses = [];
+  const gatedShellFences = new Set(found.filter((item) => item.kind === 'shell' && item.mode === 'gated').map((item) => item.fenceId));
+  failures.push(...gateVariablesOutsideGates(document, gatedShellFences));
+  failures.push(...gateShadowingOutsideGates(document, gatedShellFences));
+  for (const marker of found.filter((item) => item.kind === 'shell' && item.mode === 'gated')) {
+    const fence = document.fences.find((item) => item.id === marker.fenceId);
+    const regionEndLine = ((byFence.get(marker.fenceId) || []).find((item) => item.line > marker.line)?.line || fence.endLine + 1) - 1;
+    const owned = executable.filter((hit) => hit.fenceId === marker.fenceId && nearest(hit) === marker);
+    if (!owned.length) failures.push(`${marker.id}: gate owns no executable mutation`);
+    const analysis = analyzeShellGate(fence, marker, regionEndLine, owned);
+    for (const problem of analysis.problems) failures.push(`${marker.id}: ${problem}`);
+    analyses.push({ marker, analysis });
+  }
+  return { failures, executable, markers: found, analyses };
+}
+
+const G1_FIXTURE_DIR = path.join(ROOT, 'scripts', 'fixtures', 'command-safety-gates');
+
+test('G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes', () => {
+  const read = (name) => fs.readFileSync(path.join(G1_FIXTURE_DIR, name), 'utf8');
+  const ungated = evaluateGateDocument('fixture/gam-fence-no-marker.md', read('gam-fence-no-marker.md.txt'));
+  assert.ok(ungated.executable.some((hit) => hit.command === 'gam-write'), 'the detector must see the gam update line');
+  assert.ok(ungated.failures.some((failure) => /gam-write has 0 owners/.test(failure)), ungated.failures.join(' | '));
+
+  const gated = evaluateGateDocument('fixture/gam-fence-gated.md', read('gam-fence-gated.md.txt'));
+  assert.equal(gated.executable.filter((hit) => hit.command === 'gam-write').length, 1, 'exactly one sink, owned by the gate');
+  assert.deepEqual(gated.failures, []);
+  assert.equal(gated.analyses.length, 1);
+  assertShellGateFailClosed(gated.analyses[0].analysis, 'fixture-gws-user-suspend');
+});
+
+test('G1 shell gate analyzer rejects bypass-shaped control flow', () => {
+  const header = [
+    '# SAFETY GATE [fixture-shell]',
+    '# Target: [USER@DOMAIN.COM]',
+    '# Effect: suspend one Google Workspace user account',
+    '# Scope: one user',
+    '# Reversibility: R1 — reversible by the separate unsuspend procedure',
+    '# Required confirmation: type exactly "SUSPEND GOOGLE USER [USER@DOMAIN.COM]"',
+    `# Failure behavior: ${SHELL_FAILURE_BEHAVIOR}`,
+  ];
+  const sink = '  gam update user "[USER@DOMAIN.COM]" suspended on';
+  const body = [
+    'required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"',
+    '# reads one line exactly as typed and runs the change only on an exact, case-sensitive match',
+    SHELL_GATE_IF_CANONICAL,
+    '  # suspends the account',
+    sink,
+    'else',
+    '  echo "Confirmation did not match. No change was made." >&2',
+    '  exit 1',
+    'fi',
+  ];
+  const fenceOf = (lines) => ['```bash', ...lines, '```', ''].join('\n');
+  const verdict = (lines) => evaluateGateDocument('fixture/shell-bypass.md', fenceOf(lines)).failures;
+  assert.deepEqual(verdict([...header, ...body]), [], 'the canonical gate must pass');
+  const replace = (from, to) => [...header, ...body].map((line) => (line === from ? to : line));
+  const ifWith = (condition) => replace(SHELL_GATE_IF_CANONICAL, `if ${condition}; then`);
+  // inserts lines between the template and the comparison
+  const beforeCompare = (...inserted) => [...header, body[0], ...inserted, ...body.slice(1)];
+  const cases = [
+    ['no-exit-in-else', replace('  exit 1', '  :')],
+    ['exit-zero-in-else', replace('  exit 1', '  exit 0')],
+    ['whitespace-trimming-read', ifWith('read -r confirmation && [ "$confirmation" = "$required_confirmation" ]')],
+    ['confirmation-overwrite', beforeCompare('confirmation="$required_confirmation"')],
+    ['sink-after-fi', [...header, body[0], body[1], body[2], '  :', ...body.slice(5), sink.trim()]],
+    ['sink-before-gate', [...header, sink.trim(), ...body]],
+    ['dead-wrapper', [...header, 'if false; then', ...body, 'fi']],
+    ['read-function-override', ['read() { confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"; }', ...header, ...body]],
+    ['alias-override', ["alias read='true'", ...header, ...body]],
+    ['trap', ["trap 'true' ERR", ...header, ...body]],
+    ['eval', replace(sink, '  eval "gam update user [USER@DOMAIN.COM] suspended on"')],
+    ['template-mismatch', replace(body[0], 'required_confirmation="yes"')],
+    ['case-folded-compare', ifWith('IFS= read -r confirmation && [ "${confirmation^^}" = "$required_confirmation" ]')],
+    ['or-true', ifWith('IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ] || true')],
+    ['negated-compare', ifWith('IFS= read -r confirmation && [ "$confirmation" != "$required_confirmation" ]')],
+    ['read-or-compare', ifWith('IFS= read -r confirmation || [ "$confirmation" = "$required_confirmation" ]')],
+    ['elif-branch', [...header, ...body.slice(0, 5), 'elif true; then', '  :', ...body.slice(5)]],
+    ['mutation-in-else', replace('  echo "Confirmation did not match. No change was made." >&2', sink)],
+    ['missing-failure-behavior', [...header.slice(0, 6), ...body]],
+    ['missing-required-confirmation-field', [...header.slice(0, 5), header[6], ...body]],
+    ['second-read', beforeCompare('IFS= read -r confirmation')],
+    ['expansion-in-template', replace(body[0], 'required_confirmation="SUSPEND GOOGLE USER $(whoami)"')],
+    // Post-read overwrites (WARDEN review, 2026-10-15): each pre-satisfies the comparison.
+    ...[
+      ['printf-v-overwrite', `printf -v confirmation '%s' "$required_confirmation"`],
+      ['printf-v-required-overwrite', `printf -v required_confirmation '%s' "$confirmation"`],
+      ['mapfile-overwrite', 'mapfile -t confirmation <<< "$required_confirmation"'],
+      ['readarray-overwrite', 'readarray -t confirmation <<< "$required_confirmation"'],
+      ['for-loop-overwrite', 'for confirmation in "$required_confirmation"; do :; done'],
+      ['for-loop-required-overwrite', 'for required_confirmation in "$confirmation"; do :; done'],
+      ['array-element-overwrite', 'confirmation[0]="$required_confirmation"'],
+      ['prompt-with-printf-v', `printf -v confirmation '%s\\n' "$required_confirmation"`],
+      ['unrelated-statement-before-compare', 'cd /tmp'],
+    ].map(([name, inserted]) => [name, beforeCompare(inserted)]),
+    ['statement-between-marker-and-template', [...header, 'IFS=x', ...body]],
+    // A `#` glued to a word is not a comment in bash (WARDEN pass 2): these hid
+    // statements that pre-satisfy the comparison before the marker or the read.
+    ['pre-marker-readonly-glued-hash', ['true#;readonly confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"', ...header, ...body]],
+    ['pre-marker-exec-stdin-glued-hash', [`true#;exec 0< <(printf '%s\\n' "SUSPEND GOOGLE USER [USER@DOMAIN.COM]")`, ...header, ...body]],
+    ['pre-marker-statement', ['echo preparing', ...header, ...body]],
+    ['glued-hash-in-prompt', beforeCompare(`printf '%s\\n' "Type exactly"#;confirmation="$required_confirmation"`)],
+    // WARDEN pass 3: a standalone read takes the next pasted line (non-bracketed paste,
+    // bash -s), and a trailing or punctuated comment turns into code where `#` is a
+    // plain word (interactive zsh without interactive_comments).
+    ['standalone-read-old-form', [...header, body[0], 'IFS= read -r confirmation', 'if [ "$confirmation" = "$required_confirmation" ]; then', ...body.slice(3)]],
+    ['trailing-comment-on-template', replace(body[0], `${body[0]}   # the exact phrase to type`)],
+    ['trailing-comment-on-compare', replace(SHELL_GATE_IF_CANONICAL, `${SHELL_GATE_IF_CANONICAL}   # exact match only`)],
+    ['trailing-comment-on-sink', replace(sink, `${sink}   # suspends the account`)],
+    ['trailing-comment-on-exit', replace('  exit 1', '  exit 1   # stops')],
+    ...[
+      ['apostrophe-in-comment', "# the admin's exact phrase"],
+      ['backtick-in-comment', '# type `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`'],
+      ['semicolon-in-comment', '# stops; exit 0'],
+      ['parenthesis-in-comment', '# one user (data kept)'],
+      ['dollar-in-comment', '# shows $required_confirmation'],
+      ['pipe-in-comment', '# compares | exact'],
+      ['ampersand-in-comment', '# read & compare'],
+      ['redirect-in-comment', '# writes > the log'],
+      ['backslash-in-comment', '# continues \\'],
+      ['bang-in-comment', '# careful!'],
+      ['unbalanced-quote-in-comment', '# type exactly "SUSPEND GOOGLE USER'],
+    ].map(([name, comment]) => [name, beforeCompare(comment)]),
+    ['old-backtick-required-field', replace(header[5], '# Required confirmation: type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`')],
+    ['old-failure-sentence', replace(header[6], '# Failure behavior: Empty, declined, `yes`, or any other response means stop; no change is made.')],
+    ['unsafe-comment-after-fi', [...header, ...body, '# done; exit 0']],
+    // WARDEN pass 4: a gated fence's own lines after fi may not shadow the next gate,
+    // and an exit status of 256 or more wraps to 0
+    ['shadow-after-fi-brace', [...header, ...body, `{ alias '['=true; }`]],
+    ['shadow-after-fi-keyword', [...header, ...body, 'if :; then [ () { return 0; }; fi']],
+    ['shadow-after-fi-wrapper', [...header, ...body, 'command declare -r confirmation=x']],
+    ['hook-after-fi', [...header, ...body, `{ PROMPT_COMMAND='true'; }`]],
+    // WARDEN pass 5: quoted or escaped names and a case label after fi
+    ['quoted-alias-after-fi', [...header, ...body, `'alias' '['=true`]],
+    ['escaped-readonly-after-fi', [...header, ...body, 'read\\only required_confirmation=']],
+    ['case-label-after-fi', [...header, ...body, `case x in x) alias '['=true;; esac`]],
+    // WARDEN pass 6
+    ['locale-quoted-readonly-after-fi', [...header, ...body, `$"readonly" required_confirm""ation=""`]],
+    ['brace-expanded-alias-after-fi', [...header, ...body, `a{lias,} '['=true`]],
+    ['ansi-c-escaped-alias-after-fi', [...header, ...body, `$'\\x61lias' '['=true`]],
+    // WARDEN pass 7
+    ['continued-function-after-fi', [...header, ...body, '[ (\\', ') { return 0; }']],
+    ['continued-alias-after-fi', [...header, ...body, 'ali\\', `as '['=true`]],
+    ['nested-brace-alias-after-fi', [...header, ...body, `{a{l,},}ias '['=true`]],
+    ['bash-aliases-after-fi', [...header, ...body, `BASH_ALIASES['[']=true`]],
+    ['split-required-assignment-after-fi', [...header, ...body, 'required_confirm""ation=x']],
+    ['exit-256-in-else', replace('  exit 1', '  exit 256')],
+    ['exit-512-in-else', replace('  exit 1', '  exit 512')],
+  ];
+  const accepted = [];
+  for (const [name, lines] of cases) {
+    let failures;
+    try { failures = verdict(lines); } catch (error) { failures = [String(error.message)]; }
+    if (!failures.length) accepted.push(name);
+  }
+  assert.deepEqual(accepted, [], 'every bypass-shaped fixture must be rejected');
+  // The canonical stdout prompt and plain comments stay allowed.
+  const prompted = beforeCompare('# shows the phrase to type', `printf '%s\\n' "Type exactly: $required_confirmation"`);
+  assert.deepEqual(verdict(prompted), [], 'a printf prompt between the template and the comparison must pass');
+});
+
+test('G1 shell gate harness executes the fence\'s own lines up to the comparison', () => {
+  const source = fs.readFileSync(path.join(G1_FIXTURE_DIR, 'gam-fence-gated.md.txt'), 'utf8');
+  const gated = evaluateGateDocument('fixture/gam-fence-gated.md', source);
+  assert.deepEqual(gated.failures, []);
+  const { analysis } = gated.analyses[0];
+  const fenceLines = source.split('```bash\n')[1].split('\n');
+  assert.ok(Array.isArray(analysis.preCompareLines) && analysis.preCompareLines.length >= 2, 'the analysis must carry the fence\'s own pre-comparison lines');
+  assert.equal(analysis.preCompareLines[0], fenceLines[0], 'the harness starts at the fence\'s first line');
+  assert.deepEqual(analysis.preCompareLines, fenceLines.slice(0, analysis.preCompareLines.length));
+  assert.ok(analysis.preCompareLines.some((line) => /^\s*required_confirmation="/.test(line)));
+  assert.equal(fenceLines[analysis.preCompareLines.length], SHELL_GATE_IF_CANONICAL, 'the lines stop at the comparison');
+  assertShellGateFailClosed(analysis, 'fixture-harness-canonical');
+  // Lines the grammar would reject, smuggled straight into the harness, must make it
+  // fail: the harness runs the source lines, not a re-synthesized canonical script.
+  if (SHELL_ENGINES.length > 0) {
+    const smuggle = (...extra) => ({ ...analysis, problems: [], preCompareLines: [...analysis.preCompareLines, ...extra] });
+    // a pre-comparison overwrite is now moot (the read inside the condition runs last),
+    // but a shadowed read still pre-satisfies the comparison
+    assert.throws(() => assertShellGateFailClosed(smuggle('read() { confirmation="$required_confirmation"; }'), 'fixture-harness-smuggled'), /\(normal\).*(?:reached the sink|exited zero)/);
+    // a standalone read eats the typed phrase, so the comparison never sees it
+    assert.throws(() => assertShellGateFailClosed(smuggle('IFS= read -r confirmation'), 'fixture-harness-standalone-read'), /\(normal\): exact phrase did not traverse the gate/);
+    // only the literal-# run sees a comment that turns into code where # is a plain word
+    assert.throws(() => assertShellGateFailClosed(smuggle('# note; read() { confirmation="$required_confirmation"; }'), 'fixture-harness-literal-comment'), /\(literal-#\): rejected input .* (?:reached the sink|exited zero)/);
+  }
+});
+
+for (const marker of markers.filter((item) => item.kind === 'shell' && item.mode === 'gated')) {
+  test(`${marker.id}: shell gate is explicit, dominates its sinks, and is fail-closed`, () => {
+    const document = documents.get(marker.file);
+    const fence = document.fences.find((item) => item.id === marker.fenceId);
+    const owned = executableHits.filter((hit) => hit.fenceId === marker.fenceId && nearestMarker(hit) === marker);
+    assert.ok(owned.length > 0, `${marker.file}:${marker.line}: gate owns no executable mutation`);
+    const analysis = analyzeShellGate(fence, marker, nextMarkerLine(marker) - 1, owned);
+    assert.deepEqual(analysis.problems, [], `${marker.id}: ${analysis.problems.join(' | ')}`);
+    for (const binding of extractTargetBindings(analysis.fields.Target || '')) {
+      assert.ok(analysis.expected.includes(binding), `${marker.id}: exact confirmation does not bind target token ${binding}`);
+    }
+    assertEffectCorrespondence(analysis.fields.Effect || '', analysis.expected, marker.id);
+    assertShellGateFailClosed(analysis, marker.id);
+  });
+}
+
+test('G1 statements: a glued # is not a comment, continued lines are one statement, gate variables stay in their gated fence', () => {
+  const fence = (lines, language = 'bash') => ['```' + language, ...lines, '```', ''].join('\n');
+  const failuresOf = (source) => evaluateGateDocument('fixture/g1-statements.md', source).failures.join(' | ');
+  // a glued `#` hides nothing (bash and PowerShell only start a comment at a word boundary)
+  assert.match(failuresOf(fence(['true#;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['x=1#;sudo /usr/local/bin/jamf removeFramework'])), /jamf-write has 0 owners/);
+  assert.match(failuresOf(fence(['Write-Host a#;Remove-MgUser -UserId "[UPN]"'], 'powershell')), /Remove-MgUser has 0 owners/);
+  assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"   # a real comment: gam delete user is only mentioned'])), '');
+  // bash starts a comment only after whitespace or ; & | ( ) < > — never after { or }
+  // (WARDEN pass 3, N-2): `${#var}`, `{#` and `}#` hide nothing in a shell fence
+  assert.match(failuresOf(fence(['[ ${#serial} -eq 12 ] && sudo jamf recon'])), /jamf-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo ${#x}; gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['{#;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo done}#;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo \\ #;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['echo `#`;gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  // a comment inside a backtick substitution ends at the closing backtick (WARDEN pass 6, P6-4)
+  assert.match(failuresOf(fence(['echo `true #`; gam delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  assert.match(failuresOf(fence(['x=`date # now`; sudo jamf removeFramework'])), /jamf-write has 0 owners/);
+  assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]";# gam delete user is only mentioned'])), '');
+  assert.equal(stripExecutableComment('echo ${#x};gam delete', true), 'echo ${#x};gam delete');
+  assert.equal(stripExecutableComment('true;# note', true), 'true;');
+  // PowerShell keeps its own rule: `{#` opens a comment inside a script block
+  assert.equal(stripExecutableComment('Get-MgUser {# Remove-MgUser'), 'Get-MgUser {');
+  // a console or shell-session fence is scanned like a shell fence and can never host a gate (WARDEN pass 4, P4-4)
+  for (const language of ['console', 'shellsession', 'shell-session', 'sh-session', 'terminal']) {
+    assert.match(failuresOf(fence(['$ gam delete user "[USER@DOMAIN.COM]"'], language)), /gam-write has 0 owners/, language);
+    assert.equal(failuresOf(fence(['$ gam info user "[USER@DOMAIN.COM]"', 'primaryEmail: [USER@DOMAIN.COM]'], language)), '', language);
+  }
+  // a backslash-continued write is one statement
+  assert.match(failuresOf(fence(['curl -sS -H "Authorization: SSWS ${OKTA_API_TOKEN}" \\', '  -X DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);
+  assert.match(failuresOf(fence(['http \\', '  DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"'])), /http-write has 0 owners/);
+  // gate variables set in a sibling fence would pre-satisfy the gate once both are pasted into one shell
+  const gated = fs.readFileSync(path.join(G1_FIXTURE_DIR, 'gam-fence-gated.md.txt'), 'utf8');
+  assert.equal(failuresOf(gated), '');
+  assert.match(failuresOf(fence(['readonly confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"']) + gated), /gate variables/);
+  // a sibling fence that shadows `[` or `read`, or hooks the prompt, opens the gate
+  // without naming a gate variable (WARDEN pass 3, N-5)
+  for (const shadow of [`alias '['=true`, '[ () { return 0; }', 'function read { :; }', 'read() { :; }', 'enable -n read',
+    "PROMPT_COMMAND='confirmation=x'", `bind -x '"\\C-m": true'`, 'source ./fixture-helpers.sh', 'unset -f gam']) {
+    assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
+  }
+  // the same shapes behind a brace group, a keyword, a wrapper or a backslash (WARDEN pass 4, P4-1)
+  for (const shadow of ['c=required_confirm; { readonly "${c}ation="; }', '{ [ () { return 0; }; }', `{ alias '['=true; }`,
+    `if :; then alias '['=true; fi`, `command alias '['=true`, `\\alias '['=true`, `time alias '['=true`, `! alias '['=true`,
+    `for x in 1; do alias '['=true; done`, `env alias '['=true`, 'command declare -f', '{ . ./fixture-helpers.sh; }',
+    `if :; then PROMPT_COMMAND='confirmation=x'; fi`, `{ bind -x '"\\C-m": true'; }`,
+    // WARDEN pass 5, P5-1: a quoted or escaped name, a case label, and a comment or
+    // trailing comment that turns into code where `#` is a plain word
+    `'alias' '['=true`, `"alias" '['=true`, `$'alias' '['=true`, `al\\ias '['=true`, `r''eadonly required_confirmation=`,
+    `case x in x) alias '['=true;; esac`, `# note; alias '['=true`, `gam info user "[USER@DOMAIN.COM]"   # ; alias '['=true`,
+    // WARDEN pass 6, P6-1: locale and ANSI-C quoting, escapes, brace expansion, quote-split variable names
+    `$"readonly" required_confirm""ation=""`, `$'\\x61lias' '['=true`, `$'\\141lias' '['=true`, `$"alias" '['=true`,
+    `a{lias,} '['=true`, `re{adonly,} x=`, `$"declare" -n confirm""ation=required_confirm""ation`, `$"typeset" -n x=y`,
+    `# note; $"readonly" x=`, `$"builtin" alias '['=true`, `$'\\u0061lias' '['=true`]) {
+    assert.match(failuresOf(fence([shadow]) + gated), /shadow|redefine|hook/, shadow);
+  }
+  // WARDEN pass 7, P7-1/P7-3: bash joins a backslash-newline before it reads a word, and
+  // expands nested braces; P7-2: BASH_ALIASES sets an alias by assignment
+  for (const shadow of [['[ (\\', ') { return 0; }'], ['ali\\', `as '['=true`], ['read\\', 'only required_confirm""ation='],
+    [`{a{l,},}ias '['=true`], [`BASH_ALIASES['[']=true`], ['BASH_ALIASES+=([read]=true)']]) {
+    assert.match(failuresOf(fence(shadow) + gated), /shadow|redefine|hook|gate variables/, shadow.join(' / '));
+  }
+  // the detector joins a split word the same way
+  assert.match(failuresOf(fence(['ga\\', 'm delete user "[USER@DOMAIN.COM]"'])), /gam-write has 0 owners/);
+  // a gate variable named with a split or quoted spelling is still a gate variable
+  for (const named of [`required_confirm""ation=x`, `$"confirmation"=x`, `confirm{ation,}=x`]) {
+    assert.match(failuresOf(fence([named]) + gated), /gate variables/, named);
+  }
+  assert.equal(failuresOf(fence(['gam info user "[USER@DOMAIN.COM]"']) + gated), '');
+});
+
+test('every document with a gated shell fence keeps its gate variables inside gated fences', () => {
+  const problems = [];
+  for (const document of documents.values()) {
+    const gatedFences = new Set(markers.filter((marker) => marker.file === document.file && marker.kind === 'shell' && marker.mode === 'gated').map((marker) => marker.fenceId));
+    problems.push(...gateVariablesOutsideGates(document, gatedFences));
+  }
+  assert.deepEqual(problems, []);
+});
+
+test('no shell fence beside a gated shell fence shadows read, [ or the shell', () => {
+  const problems = [];
+  for (const document of documents.values()) {
+    const gatedFences = new Set(markers.filter((marker) => marker.file === document.file && marker.kind === 'shell' && marker.mode === 'gated').map((marker) => marker.fenceId));
+    problems.push(...gateShadowingOutsideGates(document, gatedFences));
+  }
+  assert.deepEqual(problems, []);
+});
+
+test('G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates', () => {
+  const source = [
+    '# fixture',
+    '',
+    '1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Suspend user**',
+    '2. Admin console → Devices → Chrome → Devices → `[DEVICE_ID]` → **Deprovision**',
+    '3. Okta Admin Console → Directory → People → `[UPN]` → More Actions → **Deactivate**',
+    '4. Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]` → Management → **Lock Computer**',
+    '5. Jamf Pro → Computers → `[SERIAL_NUMBER]` → Management → Click **Erase Computer**',
+    '6. Admin console → Apps → Google Workspace → Drive and Docs → **Transfer ownership**',
+    '- Click **Powerwash** in the Chromebook device panel.',
+    '- Unsuspend user: Admin console → Directory → Users → `[USER@DOMAIN.COM]` → Reactivate',
+    '7. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status banner',
+    '- OS updates fleet-wide via intune.microsoft.com → Devices → run updates',
+    '',
+  ].join('\n');
+  const candidates = portalMutationCandidates(parseFences('fixture/g1-portal.md', source));
+  const byLine = Object.fromEntries(candidates.map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
+  assert.deepEqual(byLine, { 3: 'suspend', 4: 'deprovision', 5: 'deactivate', 6: 'lock', 7: 'erase', 8: 'transfer', 9: 'powerwash', 10: 'unsuspend' });
+  for (const action of ['suspend', 'deprovision', 'deactivate', 'lock', 'erase', 'transfer', 'powerwash', 'unsuspend']) {
+    assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
+  }
+  assert.doesNotThrow(() => assertEffectCorrespondence('suspend one user; powerwash one Chromebook', 'SUSPEND [USER@DOMAIN.COM] AND POWERWASH [DEVICE_ID]', 'g1-effect-fixture'));
+  assert.throws(() => assertEffectCorrespondence('deprovision one Chromebook', 'DISABLE [DEVICE_ID]', 'g1-effect-mismatch'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('restart the Zoom Rooms app on one room device', 'RESTART ZOOM ROOMS APP IN [DEVICE_NAME]', 'g1-restart-fixture'));
+  assert.throws(() => assertEffectCorrespondence('restart the room computer', 'REBOOT [DEVICE_NAME]', 'g1-restart-mismatch'));
+});
+
+test('G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar', () => {
+  const lines = [
+    '# fixture',
+    '',
+    '1. Apple Business → Inventory → select `[SERIAL_NUMBER]` → **Release from Organization**',
+    '2. At the top, click **Re-enable selected devices**, then click **Enable** to confirm.',
+    '3. At the top, click **Disable selected devices** → choose **Disable with lock screen** → click **Disable**.',
+    '4. At the top, read the status column in the devices list.',
+    '',
+  ];
+  const source = lines.join('\n');
+  const actionsByLine = (file) => Object.fromEntries(portalMutationCandidates(parseFences(file, source))
+    .map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
+  // A G1 runbook: the lane's own click grammar applies to any portal-cued list item.
+  assert.deepEqual(actionsByLine('.claude/commands/gws-fixture.md'), { 3: 'release', 4: 're-enable', 5: 'disable' });
+  // A Microsoft runbook: only the product-name cue is global; its click grammar is unchanged.
+  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'release' });
+  assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has('re-enable'), 're-enable needs a confirmation family');
+  // A bare imperative step with no cue at all: a candidate in a G1 runbook, not in a Microsoft one.
+  const bare = ['# fixture', '', '3. Click **Delete user** and confirm.', ''].join('\n');
+  const bareActions = (file) => portalMutationCandidates(parseFences(file, bare)).map((candidate) => candidate.actionWord.toLowerCase());
+  assert.deepEqual(bareActions('.claude/commands/okta-fixture.md'), ['delete']);
+  assert.deepEqual(bareActions('.claude/commands/ms-fixture.md'), []);
+  assert.match('RE-ENABLE CHROMEBOOK [DEVICE_ID]', PORTAL_CONFIRMATION_BY_ACTION.get('re-enable'));
 });

@@ -1,0 +1,33 @@
+# Fixture — the same GAM fence with a correct SAFETY GATE marker
+
+Used by `scripts/command-safety-gates.test.js` ("G1 fixtures"). Same sink as
+`gam-fence-no-marker.md.txt`, now owned by a same-fence shell gate whose
+confirmation is explicit, exact, case-sensitive and fail-closed. Only comments
+precede the marker; the read-only lookup moved to the read-back after `fi`. It must PASS.
+
+```bash
+# HUMAN-RUN — suspends one Google Workspace user after an exact typed confirmation
+# SAFETY GATE [fixture-gws-user-suspend]
+# Target: [USER@DOMAIN.COM]
+# Effect: suspend one Google Workspace user account
+# Scope: one user — data, licences and group memberships are kept
+# Reversibility: R1 — reversible by the separate unsuspend procedure
+# Required confirmation: type exactly "SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# the exact phrase the admin must type
+required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
+# shows the phrase to type
+printf '%s\n' "Type exactly: $required_confirmation"
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # suspends the account so sign-in stops
+  gam update user "[USER@DOMAIN.COM]" suspended on
+else
+  # explains why nothing ran
+  echo "Confirmation did not match. No change was made." >&2
+  # stops with a failure status
+  exit 1
+fi
+# read-back: the account now shows as suspended
+gam info user "[USER@DOMAIN.COM]"
+```

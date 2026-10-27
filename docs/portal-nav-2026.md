@@ -5,6 +5,8 @@ when a ticket needs a specific portal path — keeps `CLAUDE.md` lean while pres
 the exact-path reference that makes Aegis useful. Update this file when Microsoft
 moves things around.
 
+> Google Workspace, Okta, Jamf Pro, Apple Business, Fleet and macOS paths live in the companion [`docs/portal-nav-google-2026.md`](portal-nav-google-2026.md).
+
 ---
 
 ## Entra (entra.microsoft.com)

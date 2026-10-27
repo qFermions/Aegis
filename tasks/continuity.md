@@ -1,7 +1,7 @@
 # Aegis continuity snapshot
 
-HEAD: 5676da7
-Snapshot-Date: 2026-09-02
+HEAD: b9acd99
+Snapshot-Date: 2026-10-15
 Validate with `node scripts/harness/check-continuity.js` (exit 2 = STALE: HEAD moved
 since this was written — refresh, don't trust).
 
@@ -12,50 +12,52 @@ human administrators execute. Canon: `CLAUDE.md` · `TEAM.md` · `docs/harness.m
 
 ## Repo ground truth
 
-- Public tree, release lineage v8.8-public in progress on top of the v8.7 tag
-  commit above; working tree carries the uncommitted v8.8 change set
-  (`git diff --stat` for the modified count; new `scripts/lint/`, `scripts/eval/`,
-  `docs/evidence/`, `scripts/replay/replay-demo.js`,
-  `scripts/replay/fixtures/shared-mailbox-demo.md`, this snapshot).
-- Zero npm dependencies; Node 24. Full battery `node --test` green on 2026-09-02
-  after two fresh-context WARDEN passes (first REJECT → fixes → second ACCEPT,
-  0 blockers; the second pass's five material residuals were closed the same day).
-- Scanner `node scripts/pre-commit-check.js --all` exit 0 (WARNs only);
+- Branch claude/aegis-google-okta-jamf-wibzp6 (batch G1, v8.9) on top of the
+  v8.8-public release `0febaa9`; draft pull request qFermions/Aegis#2, not merged.
+- Zero npm dependencies; Node 24 in CI (ubuntu + windows). Full battery
+  `node --test` green on 2026-10-15 (491 tests).
+- Scanner `node scripts/pre-commit-check.js --all` exit 0 (0 BLOCK, 170 WARN — 27 of
+  them the lane's documented dangerous-verb WARNs);
   `node scripts/harness/release-boundary-check.js` PASS.
 
 ## Component state
 
-- Replay V2 (`scripts/replay/replay-cli.js`): exact / alias / opt-in shape keys
-  (exactly one slot, ASCII only, floor-clean both sides, object class established
-  and equal on both sides — placeholder / `#EXT#` / explicit `--object-class`),
-  PII boundary with canonical-placeholder exemption only, `explain`; suite 15/15;
-  demo `scripts/replay/replay-demo.js` (17 steps).
-- Tier lane (`scripts/tier/tier-guard.js`): compromise/retire/device-delete/
-  mailbox-disable floors; format-character stripping + NFKD + confusable folding;
-  the graph engine's SR-2 scan mirrors the patterns and fold.
-- Structure lint (`scripts/lint/command-structure.js`): 58 commands + 17 docs clean;
-  emphasis/link/HTML-stripped freshness check; frontmatter skipped.
-- Ticket eval (`scripts/eval/ms-ticket-eval.js`): 28 tickets, 6 dangerous pairs, all pass.
-- Graph 33/33 · memory 14/14 · safety gates 179/179 (inventory regenerated for
-  3 sample markers + 1 nav-note reclassification).
-- Model policy: Fable on every card; T1 medium, T2/ZAC/ATLAS high, FORGE/WARDEN xhigh.
-- Entra admin-center paths refreshed against Microsoft Learn (checked 2026-09-01).
+- Commands: 77 in `.claude/commands/` (58 Microsoft-lane + 19 Google Workspace / Okta /
+  Jamf / macOS: `gws-*`, `okta-*`, `jamf-*`, `mac-*`, `zoom-room-issue`).
+- Safety gates (`scripts/command-safety-gates.test.js`, 287 tests): shell lane sees gam,
+  gcloud, HTTP-API writes, jamf and macOS admin CLIs — wrapped, indirect, prompt-prefixed;
+  plain-text shell gate analyzer (no pwsh): read inside the comparison, inert own-line
+  comments, no shadowing in any shell fence of the document; the harness runs each
+  fence's own lines in bash as a script, with `#` as a plain word, and fed on stdin;
+  inventory `docs/security/STATE_CHANGE_INVENTORY.json`.
+- Structure lint (`scripts/lint/command-structure.js`): 77 commands clean; G1 roots,
+  `cli-*` rules, `STALE_PORTAL_PATHS_G1`.
+- Tier guard / graph engine: G1 floors kept in sync (`scripts/tier/tier-routing.test.js`).
+- Ticket evals on one core (`scripts/eval/ticket-eval-core.js`): Microsoft 28/28 · 6/6,
+  Google 38/38 · 9/9.
+- Knowledge: `docs/gws-reversibility.md`, `docs/portal-nav-google-2026.md` (vendor pages
+  checked 2026-10-15); lab template `docs/evidence/gws/README.md`.
+- Evidence: `docs/evidence/claim-ledger.md` (G1 section), `docs/evidence/gws/`.
 
 ## Active work
 
-- No active claims. The v8.8 audit claim was released on 2026-09-02 (archived
-  under `tasks/completed/`, git-ignored); evidence: `docs/evidence/claim-ledger.md`,
-  `docs/evidence/ticket-eval-samples.md`.
+- No active claim: `g1-google-lane` released at the batch report
+  (`node scripts/dev/claim.js list` → none active).
+- Fresh-context review: WARDEN passes 1–7 REJECT, all findings corrected in their own
+  commits; pass 8 stopped by the operator before a verdict (its one lead fixed,
+  `62841f6`). No ACCEPT exists for the final head (`docs/evidence/gws/g1-checks.md` §H).
 
 ## Next actions
 
-1. Operator reviews `git diff`, commits as v8.8-public (no push was performed).
-2. Refresh this snapshot after the commit (HEAD binding will go STALE by design).
-   (The edited cards were already exercised by a fresh headless session —
-   `docs/evidence/runtime-smoke.md`.)
+1. Operator reviews draft PR qFermions/Aegis#2 and decides the open items in
+   `docs/evidence/gws/g1-checks.md` — another fresh-context review or accept as is,
+   F9 branch name, E9 continuity self-binding (merge is the operator's call).
+2. Operator captures lab excerpts per `docs/evidence/gws/README.md`; run the
+   fresh-context rubric on `scripts/eval/gws-tickets.json` (`scripts/eval/README.md` §2b).
+3. Refresh this snapshot after the next commit (HEAD binding goes STALE by design).
 
 ## Verification
 
-`node --test` · `node scripts/eval/ms-ticket-eval.js` ·
+`node --test` · `node scripts/eval/ms-ticket-eval.js` · `node scripts/eval/gws-ticket-eval.js` ·
 `node scripts/lint/command-structure.js` · `node scripts/replay/replay-demo.js` ·
 `node scripts/pre-commit-check.js --all` · `node scripts/harness/release-boundary-check.js`

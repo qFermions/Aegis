@@ -287,8 +287,7 @@ test('each exact phrase binds one effect: shared only by gates with the same eff
 // incident, or the same afternoon) would pass, so every such read-back carries --target,
 // and the checklists ask for it.
 test('every verify-event whose actor is the administrator carries --target, and the checklists require the target', () => {
-  const adminActor = RUNBOOKS.flatMap(adapterLines).filter((l) => /\bverify-event\b/.test(l.text) && /--user \[UPN\]/.test(l.text))
-    .filter((l) => !/EVENT_NAME_FROM_THE_READ_ABOVE/.test(l.text)); // the copied-name form: its own finding
+  const adminActor = RUNBOOKS.flatMap(adapterLines).filter((l) => /\bverify-event\b/.test(l.text) && /--user \[UPN\]/.test(l.text));
   assert.ok(adminActor.length >= 3, `only ${adminActor.length} admin-actor verify-event lines`);
   for (const l of adminActor) {
     assert.match(l.text, /--target (?:\[USER@DOMAIN\.COM\]|"\[FILE_NAME\]"|\[EXTERNAL_DOMAIN\]|\[OU_PATH\])/, `${l.file}:${l.line}: ${l.text}`);
@@ -297,4 +296,29 @@ test('every verify-event whose actor is the administrator carries --target, and 
   assert.match(textOf('gws-account-containment'), /or the Admin log events entry for `\[USER@DOMAIN\.COM\]` was found in the GUI/);
   assert.match(textOf('gws-admin-roles'), /`verify-event --target \[USER@DOMAIN\.COM\]` exits 0/);
   assert.match(textOf('gws-drive-sharing'), /`verify-event --app drive --target "\[FILE_NAME\]"` passed/);
+});
+
+// ── Finding: a read-back must be able to fail ───────────────────────────────
+// Copying an event name out of the activities output and then running verify-event for
+// that same name passes whenever the admin made any change after NOT_BEFORE. Where the
+// event name is not in the sources, the value read back in the Admin console is the
+// proof and the activities read is supporting evidence; every verify-event names a
+// concrete event, and no checklist or note calls a copied-name read "passed".
+test('no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof', () => {
+  for (const name of RUNBOOKS) {
+    const text = textOf(name);
+    assert.doesNotMatch(text, /EVENT_NAME_FROM_THE_READ_ABOVE|name copied from the read above/, `${name}: a self-confirming read-back`);
+  }
+  for (const l of RUNBOOKS.flatMap(adapterLines).filter((x) => /\bverify-event\b/.test(x.text))) {
+    assert.match(l.text, /--event (?:CHANGE_PASSWORD|ASSIGN_ROLE|GRANT_ADMIN_PRIVILEGE|login_success|change_user_access)\b/, `${l.file}:${l.line}: verify-event names an event from the sources: ${l.text}`);
+  }
+  // the checklists and notes of the two runbooks the finding named
+  const drive = textOf('gws-drive-sharing');
+  assert.match(drive, /^- \[ \] Phase D \(if run\): Admin console → Account → Domains → Allowlisted domains lists `\[EXTERNAL_DOMAIN\]` \(the proof\)/m);
+  assert.match(drive, /^- \[ \] Phase E \(if run\): the sharing panel shows the new value for `\[OU_PATH\]` \(the proof\)/m);
+  assert.doesNotMatch(drive, /`verify-event --app admin` passed/);
+  const posture = textOf('gws-security-posture');
+  assert.match(posture, /^- \[ \] Phase E \(if run\): the panel or app list shows the new value \(the proof\)/m);
+  assert.doesNotMatch(posture, /verify-event/, 'the posture runbook has no setting change a verify-event can prove');
+  assert.doesNotMatch(posture, /the adapter proves the change/);
 });

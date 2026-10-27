@@ -1,5 +1,5 @@
 ---
-description: Google Workspace Drive external sharing - read the sharing settings and allowlisted domains, find who shared a file outside and take that access back, add a partner domain to the allowlist, and restrict, turn off or allow external sharing for one organizational unit, each change behind its own exact-phrase gate with an adapter read-back. Placeholders only.
+description: Google Workspace Drive external sharing - read the sharing settings and allowlisted domains, find who shared a file outside and take that access back, add a partner domain to the allowlist, and restrict, turn off or allow external sharing for one organizational unit, each change behind its own exact-phrase gate and proved by the value read back in the Admin console (plus an adapter read where one can prove it). Placeholders only.
 disable-model-invocation: true
 ---
 
@@ -148,18 +148,16 @@ Prerequisites: `[EXTERNAL_DOMAIN]` is the partner's verified Google Workspace do
 **PORTAL ACTION [gws-drive-sharing-allowlist-add-portal]:** Only after the Phase A allowlist is in the ticket and the exact match:
 1. Admin console → Account → Domains → Allowlisted domains → add `[EXTERNAL_DOMAIN]` to the list and save (the control labels on this page are not in the lane's sources: confirm them on screen).
 
-**WAIT UNTIL** Admin console → Account → Domains → Allowlisted domains lists `[EXTERNAL_DOMAIN]`.
+**WAIT UNTIL** Admin console → Account → Domains → Allowlisted domains lists `[EXTERNAL_DOMAIN]`. That list is the proof: Google's event name for this change is not in the lane's sources, so no `verify-*` read can prove it.
+
+Supporting evidence only: the read below lists your Admin console changes since `[NOT_BEFORE]`. Note in the ticket the event whose parameters carry `[EXTERNAL_DOMAIN]`, with its name, or note that none does; either way the list above decides.
 
 ```bash
-# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters
+# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters, supporting evidence only
 node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start [NOT_BEFORE] --execute
-# read-only: passes only if that event exists for [UPN] after [NOT_BEFORE], with the name copied from the read above
-node scripts/adapters/gws-client.js verify-event --app admin --event EVENT_NAME_FROM_THE_READ_ABOVE --user [UPN] --not-before [NOT_BEFORE] --execute
 ```
 
-Google's event name for this change is not in the lane's sources, so the activities read supplies it; replace `EVENT_NAME_FROM_THE_READ_ABOVE` with the name it shows for the allowlist change.
-
-**Verification checkpoint:** [ ] the allowlist shows `[EXTERNAL_DOMAIN]` · [ ] `verify-event` passed, with the event name noted.
+**Verification checkpoint:** [ ] the allowlist shows `[EXTERNAL_DOMAIN]` (the proof) · [ ] the admin event whose parameters carry `[EXTERNAL_DOMAIN]` noted with its name, or its absence noted.
 
 ## Phase E: Change external sharing for [OU_PATH] (R3)
 
@@ -226,21 +224,17 @@ Opening external sharing is the change most likely to leak data: the ticket name
 
 ### Read-back for whichever Phase E gate ran
 
-1. Admin console → Apps → Google Workspace → Drive and Docs → Sharing settings → Sharing options → `[OU_PATH]` → read the new value of **Sharing outside of [@Aegion]**.
-2. Prove the change in the audit log with the adapter:
+1. The proof: Admin console → Apps → Google Workspace → Drive and Docs → Sharing settings → Sharing options → `[OU_PATH]` → read the new value of **Sharing outside of [@Aegion]**. Google's event name for a Drive setting change is not in the lane's sources, so no `verify-*` read can prove it.
+2. Supporting evidence only: the read below lists your Admin console changes since `[NOT_BEFORE]`. Note in the ticket the event whose parameters carry `[OU_PATH]`, with its name, or note that none does; either way the panel decides.
 
 ```bash
-# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters
+# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters, supporting evidence only
 node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start [NOT_BEFORE] --execute
-# read-only: passes only if that event exists for [UPN] after [NOT_BEFORE], with the name copied from the read above
-node scripts/adapters/gws-client.js verify-event --app admin --event EVENT_NAME_FROM_THE_READ_ABOVE --user [UPN] --not-before [NOT_BEFORE] --execute
 ```
-
-Google's event name for a Drive setting change is not in the lane's sources; replace `EVENT_NAME_FROM_THE_READ_ABOVE` with the name the activities read shows for this change.
 
 3. After the 24 hours, repeat Phase B for `[OU_PATH]`'s users: after E1 or E2 no new external share should appear outside the allowlist; after E3, external shares are expected and are the clean-up list if the change is reversed.
 
-**Verification checkpoint:** [ ] the panel shows the new value for `[OU_PATH]` · [ ] `verify-event` passed, with the event name noted · [ ] the 24-hour window has ended and the Phase B spot check matches the new value.
+**Verification checkpoint:** [ ] the panel shows the new value for `[OU_PATH]` (the proof) · [ ] the admin event whose parameters carry `[OU_PATH]` noted with its name, or its absence noted · [ ] the 24-hour window has ended and the Phase B spot check matches the new value.
 
 ## ⚠️ Risk warning
 
@@ -256,15 +250,15 @@ Google's event name for a Drive setting change is not in the lane's sources; rep
 - [ ] Phase A pre-state in the ticket: the option for `[OU_PATH]`, any group value and the allowlist, with the time read.
 - [ ] Phase B finding quoted with placeholders: actor, time, the external account's domain `[EXTERNAL_DOMAIN]` and its role.
 - [ ] Phase C (if run): a fresh Audit File Permissions view no longer lists the account; `verify-event --app drive --target "[FILE_NAME]"` passed, or the activities read shows the removal on `[FILE_NAME]` and its actor, noted in the ticket.
-- [ ] Phase D (if run): Admin console → Account → Domains → Allowlisted domains lists `[EXTERNAL_DOMAIN]`; `verify-event --app admin` passed.
-- [ ] Phase E (if run): the sharing panel shows the new value for `[OU_PATH]`; `verify-event --app admin` passed; 24 hours have passed and the Phase B spot check matches.
+- [ ] Phase D (if run): Admin console → Account → Domains → Allowlisted domains lists `[EXTERNAL_DOMAIN]` (the proof); the admin event that carries `[EXTERNAL_DOMAIN]` is noted with its name, or its absence is noted.
+- [ ] Phase E (if run): the sharing panel shows the new value for `[OU_PATH]` (the proof); the admin event that carries `[OU_PATH]` is noted with its name, or its absence is noted; 24 hours have passed and the Phase B spot check matches.
 - [ ] The Linear comment is proven by `verify-comment` (below).
 
 ## 📝 Linear-ready note
 
 Use the completed form only when every read-back above passed; otherwise write the partial-state form naming what is verified, what is pending and the next owner.
 
-> [Completed, only if every read-back passed] Drive sharing, [date/time UTC]. Question: [who shared `[FILE_NAME]` outside / allowlist `[EXTERNAL_DOMAIN]` / external sharing for `[OU_PATH]`]. Pre-state: `[OU_PATH]` was [Off / On / Allowlisted Domains], group value [none / `[GROUP_EMAIL]`: value], allowlist [N] domains. Finding: shared outside by `[USER@DOMAIN.COM]` on [date] with an account at `[EXTERNAL_DOMAIN]` as [role]. Change, made by an administrator after the exact phrase: [removed that account from `[FILE_NAME]` / added `[EXTERNAL_DOMAIN]` to the allowlist / set `[OU_PATH]` to [value], approved by [approver]]. Read-back: [Audit File Permissions / allowlist / sharing panel] shows the new state; verify-event passed at [time] (event [name]); 24-hour window ended [time]. Undo: [share again as [role] / remove the domain / put back [Phase A value]]. Time spent: [X] min.
+> [Completed, only if every read-back passed] Drive sharing, [date/time UTC]. Question: [who shared `[FILE_NAME]` outside / allowlist `[EXTERNAL_DOMAIN]` / external sharing for `[OU_PATH]`]. Pre-state: `[OU_PATH]` was [Off / On / Allowlisted Domains], group value [none / `[GROUP_EMAIL]`: value], allowlist [N] domains. Finding: shared outside by `[USER@DOMAIN.COM]` on [date] with an account at `[EXTERNAL_DOMAIN]` as [role]. Change, made by an administrator after the exact phrase: [removed that account from `[FILE_NAME]` / added `[EXTERNAL_DOMAIN]` to the allowlist / set `[OU_PATH]` to [value], approved by [approver]]. Read-back: [Audit File Permissions / allowlist / sharing panel] shows the new state (the proof); [Phase C: verify-event with the file as target passed at [time] (event [name]) / Phase D or E: admin event [name] carrying [the domain / the unit] seen in the activities read, or none found]; 24-hour window ended [time]. Undo: [share again as [role] / remove the domain / put back [Phase A value]]. Time spent: [X] min.
 >
 > [Partial state] Verified: [read-backs that passed]. Pending: [read-back or the 24-hour window, with the time it ends]. Next owner: [ADMIN_NAME]. No other change was made.
 

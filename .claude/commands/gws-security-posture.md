@@ -1,5 +1,5 @@
 ---
-description: Google Workspace security posture review with the local generator scripts/gws-posture-audit.js - print the checklist, feed it a GAM export, read live counts through the read-only adapter, rank what to fix first, and make the fixes this runbook owns (Gmail automatic forwarding, third-party app access) behind exact-phrase gates with adapter read-backs. The generator and the adapter never write to Google. Placeholders only.
+description: Google Workspace security posture review with the local generator scripts/gws-posture-audit.js - print the checklist, feed it a GAM export, read live counts through the read-only adapter, rank what to fix first, and make the fixes this runbook owns (Gmail automatic forwarding, third-party app access) behind exact-phrase gates, each proved by the value read back in the Admin console. The generator and the adapter never write to Google. Placeholders only.
 disable-model-invocation: true
 ---
 
@@ -30,7 +30,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 - **The generator** (`scripts/gws-posture-audit.js`) is a local checklist. Each check prints its read-only Admin console path, its GAM read command, the Google source it rests on with the date it was checked, and a status. `--export` hands it a GAM CSV (`gam print users fields primaryemail,isenrolledin2sv,isenforcedin2sv,isadmin,isdelegatedadmin,suspended`, or `gam print admins`) to compute the user and admin checks from.
 - **The adapter** reads the tenant live through the Directory and Reports APIs with read-only scopes. It does not read OAuth tokens or app passwords from the Directory API (that scope also grants writes); third-party app activity comes from the Reports API token events instead.
-- **The Admin console** holds the settings. A human changes them; the adapter proves the change from the Admin audit log.
+- **The Admin console** holds the settings. A human changes them; the value read back in the Admin console is the proof, and the adapter's Admin audit log read is supporting evidence, because the event names for these settings are not in the lane's sources.
 - **Lag and retention:** Admin console → Reporting → User Reports → Security can lag up to 48 hours, while the Directory API fields isEnrolledIn2Sv and isEnforcedIn2Sv are real time. Admins cannot delete audit log data or change how long it is kept; Admin and Drive events arrive near real time and OAuth events can take a few hours (search excerpts). About 6 months of activity is what third-party sources and the GAM wiki (180 days) report; Google's own retention table was not seen.
 - **Retired check:** the less secure apps settings were removed from the Admin console on June 15 2024 (search excerpt). A posture check for them reads "retired, not applicable", never "fail".
 
@@ -228,18 +228,16 @@ Read first: Admin console → Apps → Google Workspace → Gmail → End User A
 1. Admin console → Apps → Google Workspace → Gmail → End User Access → pick `[OU_PATH]` on the left → **Automatic forwarding**.
 2. Clear the tick in **Allow users to automatically forward email to another address**, then click **Save** (on a child unit the button reads **Override**).
 
-**WAIT UNTIL** the panel for `[OU_PATH]` shows the box cleared, and a test user in the unit no longer sees the forwarding option in Gmail settings.
+**WAIT UNTIL** the panel for `[OU_PATH]` shows the box cleared, and a test user in the unit no longer sees the forwarding option in Gmail settings. The panel is the proof: Google's event name for a Gmail setting change is not in the lane's sources, so no `verify-*` read can prove it.
+
+Supporting evidence only: the read below lists your Admin console changes since `[NOT_BEFORE]`. Note in the ticket the event whose parameters carry `[OU_PATH]`, with its name, or note that none does; either way the panel decides.
 
 ```bash
-# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters
+# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters, supporting evidence only
 node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start [NOT_BEFORE] --execute
-# read-only: passes only if that event exists for [UPN] after [NOT_BEFORE], with the name copied from the read above
-node scripts/adapters/gws-client.js verify-event --app admin --event EVENT_NAME_FROM_THE_READ_ABOVE --user [UPN] --not-before [NOT_BEFORE] --execute
 ```
 
-Google's event name for a Gmail setting change is not in the lane's sources; replace `EVENT_NAME_FROM_THE_READ_ABOVE` with the name the activities read shows for this change.
-
-**Verification checkpoint:** [ ] the panel shows the box cleared for `[OU_PATH]` · [ ] `verify-event` passed, with the event name noted.
+**Verification checkpoint:** [ ] the panel shows the box cleared for `[OU_PATH]` (the proof) · [ ] the admin event whose parameters carry `[OU_PATH]` noted with its name, or its absence noted.
 
 ### E2: Allow automatic forwarding for a unit
 
@@ -257,18 +255,16 @@ Automatic forwarding is a path for mail to leave the organization: the ticket na
 **PORTAL ACTION [gws-security-posture-forwarding-allow-portal]:** Only after the approver and the business reason are in the ticket and the exact match:
 1. Admin console → Apps → Google Workspace → Gmail → End User Access → pick `[OU_PATH]` on the left → **Automatic forwarding** → **Allow users to automatically forward email to another address** (tick it) → **Save** (on a child unit, **Override**).
 
-**WAIT UNTIL** the panel for `[OU_PATH]` shows the box ticked.
+**WAIT UNTIL** the panel for `[OU_PATH]` shows the box ticked. The panel is the proof, as in E1.
+
+Supporting evidence only: the read below lists your Admin console changes since `[NOT_BEFORE]`. Note in the ticket the event whose parameters carry `[OU_PATH]`, with its name, or note that none does; either way the panel decides.
 
 ```bash
-# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters
+# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters, supporting evidence only
 node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start [NOT_BEFORE] --execute
-# read-only: passes only if that event exists for [UPN] after [NOT_BEFORE], with the name copied from the read above
-node scripts/adapters/gws-client.js verify-event --app admin --event EVENT_NAME_FROM_THE_READ_ABOVE --user [UPN] --not-before [NOT_BEFORE] --execute
 ```
 
-Replace `EVENT_NAME_FROM_THE_READ_ABOVE` with the name the activities read shows for this change.
-
-**Verification checkpoint:** [ ] the panel shows the box ticked for `[OU_PATH]` only · [ ] `verify-event` passed, with the event name noted · [ ] the approver and the reason are in the ticket.
+**Verification checkpoint:** [ ] the panel shows the box ticked for `[OU_PATH]` only (the proof) · [ ] the admin event whose parameters carry `[OU_PATH]` noted with its name, or its absence noted · [ ] the approver and the reason are in the ticket.
 
 ### E3: Block a third-party app for a unit
 
@@ -286,20 +282,18 @@ Read first: Admin console → Security → Access and data control → API contr
 **PORTAL ACTION [gws-security-posture-app-block-portal]:** Only after the current access level, the user count and the approver are in the ticket and the exact match:
 1. Admin console → Security → Access and data control → API controls → Manage Third-Party App Access → `[APP_NAME]` → **Change access** → scope `[OU_PATH]` → **Blocked** → confirm (the labels come partly from a search excerpt: confirm them on screen, and stop if they differ).
 
-**WAIT UNTIL** the app list shows `[APP_NAME]` as Blocked for `[OU_PATH]`.
+**WAIT UNTIL** the app list shows `[APP_NAME]` as Blocked for `[OU_PATH]`. The app list is the proof: Google's event name for an API controls change is not in the lane's sources, so no `verify-*` read can prove it.
+
+Supporting evidence only: the reads below list the OAuth events and your Admin console changes since `[NOT_BEFORE]`. Note in the ticket the admin event whose parameters carry `[APP_ID]` or `[OU_PATH]`, with its name, or note that none does; OAuth events can take a few hours to appear (search excerpt). Either way the app list decides.
 
 ```bash
-# read-only: OAuth events since [NOT_BEFORE], grants for the blocked app should now fail
+# read-only: OAuth events since [NOT_BEFORE], grants for the blocked app should now fail, supporting evidence only
 node scripts/adapters/gws-client.js activities --app token --user all --start [NOT_BEFORE] --execute
-# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters
+# read-only: every Admin console change [UPN] made since [NOT_BEFORE], with each event name and its parameters, supporting evidence only
 node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start [NOT_BEFORE] --execute
-# read-only: passes only if that event exists for [UPN] after [NOT_BEFORE], with the name copied from the read above
-node scripts/adapters/gws-client.js verify-event --app admin --event EVENT_NAME_FROM_THE_READ_ABOVE --user [UPN] --not-before [NOT_BEFORE] --execute
 ```
 
-Replace `EVENT_NAME_FROM_THE_READ_ABOVE` with the name the admin activities read shows for this change; OAuth events can take a few hours to appear (search excerpt).
-
-**Verification checkpoint:** [ ] the app list shows Blocked for `[OU_PATH]` · [ ] `verify-event` passed, with the event name noted.
+**Verification checkpoint:** [ ] the app list shows Blocked for `[OU_PATH]` (the proof) · [ ] the admin event whose parameters carry `[APP_ID]` or `[OU_PATH]` noted with its name, or its absence noted.
 
 ### Changes this runbook only previews
 
@@ -350,7 +344,7 @@ If the generator refuses the target, read its reason and pick another name; neve
 - [ ] Phase B (if run): both exports exist outside Git and their `wc -l` counts are plausible; no row reached the ticket.
 - [ ] Phase C: counts for super admins, 2-Step Verification gaps, forwarding, third-party apps and devices are in the ticket.
 - [ ] Phase D: the ranked fix list names the runbook that owns each gate.
-- [ ] Phase E (if run): the panel or app list shows the new value; `verify-event --app admin` passed for each change, with the event name noted.
+- [ ] Phase E (if run): the panel or app list shows the new value (the proof); for each change, the admin event that carries the unit or the app is noted with its name, or its absence is noted.
 - [ ] Phase F (if run): the generator reported one new report written; its location is in the ticket.
 - [ ] The Linear comment is proven by `verify-comment` (below).
 
@@ -358,7 +352,7 @@ If the generator refuses the target, read its reason and pick another name; neve
 
 Use the completed form only when every read-back above passed; otherwise write the partial-state form naming what is verified, what is pending and the next owner.
 
-> [Completed, only if every read-back passed] Google Workspace posture review, [date/time UTC], generator `scripts/gws-posture-audit.js` checked against sources dated [date]. Counts: [N] super admins ([N] groups or service accounts), [N] users and [N] admins not enrolled in 2-Step Verification, automatic forwarding allowed in [N] units, [N] third-party apps with broad access, [N] devices reported compromised or unencrypted; less secure apps: retired. Fix order: [1 ... 8, each with its owning runbook]. Changes made here by an administrator after the exact phrase: [forwarding turned off for `[OU_PATH]` / allowed for `[OU_PATH]`, approved by [approver] / `[APP_NAME]` blocked in `[OU_PATH]` / none]. Read-back: panel shows the new value; verify-event passed at [time] (event [name]). Report saved at [location outside Git]. Time spent: [X] min.
+> [Completed, only if every read-back passed] Google Workspace posture review, [date/time UTC], generator `scripts/gws-posture-audit.js` checked against sources dated [date]. Counts: [N] super admins ([N] groups or service accounts), [N] users and [N] admins not enrolled in 2-Step Verification, automatic forwarding allowed in [N] units, [N] third-party apps with broad access, [N] devices reported compromised or unencrypted; less secure apps: retired. Fix order: [1 ... 8, each with its owning runbook]. Changes made here by an administrator after the exact phrase: [forwarding turned off for `[OU_PATH]` / allowed for `[OU_PATH]`, approved by [approver] / `[APP_NAME]` blocked in `[OU_PATH]` / none]. Read-back: [panel / app list] shows the new value (the proof) at [time]; admin event [name] carrying [the unit / the app] seen in the activities read, or none found. Report saved at [location outside Git]. Time spent: [X] min.
 >
 > [Partial state] Verified: [checks and read-backs that passed]. Pending: [read-back, report lag or approval]. Next owner: [ADMIN_NAME]. No other change was made.
 

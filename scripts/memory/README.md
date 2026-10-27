@@ -142,7 +142,27 @@ Evidence loss is an audit fact, not a truth revocation: the record stays
 verified and retrievable, the loss stays visible.
 
 Exit codes: `0` ok · `1` error · `2` invalid · `3` sanitizer BLOCK ·
-`4` gate refused (case-scope / conflict / provenance / pointer) · `5` duplicate.
+`4` gate refused (case-scope / conflict / provenance / pointer) · `5` duplicate ·
+`6` tenant binding refused (see below).
+
+## Tenant binding: one store, one tenant
+
+The store holds org-internal knowledge for exactly one tenant. Its first write
+under a tenant (`AEGION_DOMAIN` set) binds it: `tenant.json` records
+`aegis.tenant-binding.v1` with a sha256 fingerprint of the lower-cased tenant
+domain, never the literal (SR-8). From then on every command (`retrieve`,
+`show`, `list`, `stats`, `audit`, `propose`, ...) exits `6` and prints nothing
+from the store when the runtime `AEGION_DOMAIN` is a different tenant or is
+unset: a case of tenant B never reads tenant A's memory, and a session that
+cannot say whose case it is reads nobody's.
+
+**Existing stores:** a store with no binding (created before this rule, or
+only ever written with `AEGION_DOMAIN` unset) holds no evidence of whose it
+is, so it stays readable as before; its first write under a tenant binds it
+(`TENANT_BOUND` in the ledger). An operator who works for more than one
+tenant keeps one store per tenant (`AEGIS_MEMORY_DIR`). The fingerprint is a
+plain hash of a guessable value: it keeps the literal out of the store, it is
+not a secret. Pinned by `scripts/untrusted/wrong-customer.test.js` (C5, C7).
 
 ## Tests
 

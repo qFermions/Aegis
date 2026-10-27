@@ -20,6 +20,8 @@
  *             4 promotion gate refused (case-scope, conflict unresolved,
  *               external-only provenance, missing canonical pointer)
  *             5 duplicate (merge into the match instead)
+ *             6 tenant binding refused (the store belongs to another tenant,
+ *               or it is bound and AEGION_DOMAIN is unset)
  *
  * Usage:
  *   node scripts/memory/memory-cli.js propose    --file p.json [--as-of YYYY-MM-DD]
@@ -47,6 +49,7 @@ const MEM_DIR = process.env.AEGIS_MEMORY_DIR || path.join(REPO_ROOT, 'memory');
 const INDEX_PATH = path.join(MEM_DIR, 'index.json');
 const LEDGER_PATH = path.join(MEM_DIR, 'ledger.jsonl');
 const LOCK_PATH = path.join(MEM_DIR, '.lock');
+const TENANT_PATH = path.join(MEM_DIR, 'tenant.json');
 const LOCK_STALE_MS = 5 * 60 * 1000;
 
 function out(obj) { console.log(JSON.stringify(obj, null, 2)); }
@@ -177,6 +180,50 @@ function readLedger() {
   return fs.readFileSync(LEDGER_PATH, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 }
 
+// ── tenant binding (one store, one tenant) ───────────────────────────────────
+// The store holds org-internal knowledge for exactly one tenant. Its first
+// write under a tenant (AEGION_DOMAIN) binds it: tenant.json records a
+// fingerprint of the tenant domain, never the literal (SR-8). From then on
+// every command refuses (exit 6) when the runtime tenant differs or is unset.
+// A store with no binding (created before this rule, or only ever written with
+// AEGION_DOMAIN unset) holds no evidence of whose it is: it stays readable,
+// and its first write under a tenant binds it.
+
+function tenantFingerprint(domain) {
+  return crypto.createHash('sha256').update('aegis.tenant.v1\n' + domain.trim().toLowerCase()).digest('hex');
+}
+
+function runtimeTenant() {
+  const d = process.env.AEGION_DOMAIN;
+  return d && d.trim() ? tenantFingerprint(d) : null;
+}
+
+function boundTenant() {
+  if (!fs.existsSync(TENANT_PATH)) return null;
+  try {
+    const b = JSON.parse(fs.readFileSync(TENANT_PATH, 'utf8'));
+    if (b && b.schema === 'aegis.tenant-binding.v1' && /^[0-9a-f]{64}$/.test(b.tenant)) return b.tenant;
+  } catch (e) { /* unreadable binding: refused below */ }
+  return fail(6, 'tenant binding unreadable: the owner of this store cannot be established; nothing read or written');
+}
+
+function assertTenant() {
+  const bound = boundTenant();
+  if (!bound) return;
+  const current = runtimeTenant();
+  if (!current) fail(6, 'store is bound to a tenant but AEGION_DOMAIN is not set: this case cannot be shown to belong to it; nothing read or written');
+  if (current !== bound) {
+    fail(6, `store belongs to another tenant (binding ${bound.slice(0, 12)}, runtime ${current.slice(0, 12)}): one store, one tenant; nothing read or written`);
+  }
+}
+
+function bindTenantIfUnbound() {
+  const current = runtimeTenant();
+  if (!current || fs.existsSync(TENANT_PATH)) return;
+  atomicWrite(TENANT_PATH, JSON.stringify({ schema: 'aegis.tenant-binding.v1', tenant: current, boundAt: new Date().toISOString() }, null, 2) + '\n');
+  ledger('TENANT_BOUND', { tenant: current.slice(0, 12) });
+}
+
 // ── write serialization (one controlled promotion path, no last-writer-wins) ─
 
 function releaseLock() {
@@ -196,6 +243,7 @@ function withLock(fn) {
   // fail() exits the process from inside fn — release on exit, not just finally.
   process.on('exit', releaseLock);
   try {
+    bindTenantIfUnbound();
     return fn();
   } finally {
     releaseLock();
@@ -537,6 +585,7 @@ function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const id = rest.length > 0 && !rest[0].startsWith('--') ? rest[0] : null;
   const flags = parseFlags(rest);
+  assertTenant(); // every command reads or writes the store
 
   switch (cmd) {
     case 'propose': return cmdPropose(flags);

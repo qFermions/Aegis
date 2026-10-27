@@ -44,7 +44,9 @@
 // and synthetic fixtures are the public artifact).
 //
 // Exit codes: 0 ok · 1 usage/error · 2 refusal (unverified) · 3 stale without
-// --historical · 4 sanitization block · 5 lock contention
+// --historical · 4 sanitization block · 5 lock contention · 6 tenant binding
+// refused (the store belongs to another tenant, or it is bound and
+// AEGION_DOMAIN is unset)
 
 const fs = require('fs');
 const path = require('path');
@@ -55,6 +57,7 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
 const INDEX = path.join(STORE, 'index.json');
 const LOCK = path.join(STORE, '.lock');
+const TENANT = path.join(STORE, 'tenant.json');
 
 // ── deterministic normalization — no model decides what "the same ticket" is ──
 function normalize(text) {
@@ -239,6 +242,40 @@ function loadCase(id) {
   catch (e) { fail(1, `store corrupt: ${id}.json unreadable — ` + e.message); }
 }
 function saveCase(c) { atomicWrite(casePath(c.caseId), JSON.stringify(c, null, 2)); }
+// ── tenant binding (one store, one tenant) ───────────────────────────────────
+// Verified solutions are one tenant's knowledge. The store's first write under
+// a tenant (AEGION_DOMAIN) binds it: tenant.json records a fingerprint of the
+// tenant domain, never the literal (SR-8). Every command then refuses (exit 6)
+// when the runtime tenant differs or is unset. An unbound store (created before
+// this rule, or only written with AEGION_DOMAIN unset) carries no evidence of
+// whose it is: it stays readable, and its first write under a tenant binds it.
+// Same rule as scripts/memory/memory-cli.js (inline: R4 pins this file's deps).
+const tenantFingerprint = (domain) => sha256('aegis.tenant.v1\n' + domain.trim().toLowerCase());
+function runtimeTenant() {
+  const d = process.env.AEGION_DOMAIN;
+  return d && d.trim() ? tenantFingerprint(d) : null;
+}
+function boundTenant() {
+  if (!fs.existsSync(TENANT)) return null;
+  try {
+    const b = JSON.parse(fs.readFileSync(TENANT, 'utf8'));
+    if (b && b.schema === 'aegis.tenant-binding.v1' && /^[0-9a-f]{64}$/.test(b.tenant)) return b.tenant;
+  } catch { /* unreadable binding: refused below */ }
+  return fail(6, 'tenant binding unreadable: the owner of this store cannot be established; nothing read or written');
+}
+function assertTenant() {
+  const bound = boundTenant();
+  if (!bound) return;
+  const current = runtimeTenant();
+  if (!current) fail(6, 'store is bound to a tenant but AEGION_DOMAIN is not set: this case cannot be shown to belong to it; nothing read or written');
+  if (current !== bound) fail(6, `store belongs to another tenant (binding ${bound.slice(0, 12)}, runtime ${current.slice(0, 12)}): one store, one tenant; nothing read or written`);
+}
+function bindTenantIfUnbound() {
+  const current = runtimeTenant();
+  if (!current || fs.existsSync(TENANT)) return;
+  atomicWrite(TENANT, JSON.stringify({ schema: 'aegis.tenant-binding.v1', tenant: current, boundAt: new Date().toISOString() }, null, 2));
+}
+
 let lockHeld = false;
 function withLock(fn) {
   // R8 guard: a write store inside the repo must stay under the git-ignored
@@ -253,7 +290,7 @@ function withLock(fn) {
     fail(5, 'store is locked by another writer — retry after it completes (stale lock: remove ' + LOCK + ')');
   }
   lockHeld = true;
-  try { return fn(); } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
+  try { bindTenantIfUnbound(); return fn(); } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
 }
 
 function fingerprint(deps) {
@@ -337,6 +374,7 @@ function main() {
     return i >= 0 ? argv[i + 1] : undefined;
   }
   const has = (name) => argv.includes('--' + name);
+  assertTenant(); // every command reads or writes the store
 
   switch (cmd) {
     case 'record': {

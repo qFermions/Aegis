@@ -53,6 +53,16 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   reason means the case mixes two tenants, so it never enters the store (same
   rule as the graph edge sanitizer). Pinned by
   `scripts/untrusted/wrong-customer.test.js` C4.
+- **One store, one tenant (exit 6).** The store's first write under a tenant
+  (`AEGION_DOMAIN` set) binds it: `tenant.json` records a sha256 fingerprint
+  of the lower-cased tenant domain, never the literal (SR-8). Every command
+  (`lookup`, `render`, `list`, `status`, `explain`, `record`, ...) then exits
+  `6` and prints nothing from the store when the runtime tenant differs or is
+  unset, so tenant A's verified solutions never render in tenant B's case. A
+  store with no binding (created before this rule, or only written with
+  `AEGION_DOMAIN` unset) carries no evidence of whose it is: it stays readable
+  and its first write under a tenant binds it. Same rule as the memory store.
+  Pinned by `scripts/untrusted/wrong-customer.test.js` C6, C7.
 - **Writes are serialized** by a directory lock: a second writer is refused with
   exit 5 and leaves no partial case; reads never need the lock; parallel writers
   never corrupt the index (R13, R14).

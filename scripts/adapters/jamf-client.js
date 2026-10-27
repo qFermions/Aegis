@@ -26,7 +26,9 @@
 //                        --profile-identifier [PROFILE_IDENTIFIER] [--absent]
 //     verify-group-count --id N --expect N
 //     verify-filevault   --serial [SERIAL_NUMBER]
-//     verify-policy      --id [POLICY_ID] [--trigger T] [--frequency F]
+//     verify-policy      --id [POLICY_ID] and at least one of [--trigger T] [--frequency F]
+//                        [--enabled true|false] [--no-triggers] (a policy that merely exists
+//                        proves no change, so the bare form is refused)
 //
 // Environment, read only after a request is allowed (the host for a dry run too, the
 // credentials only under --execute):
@@ -250,7 +252,8 @@ const serialFilter = (serial) => `hardware.serialNumber=="${serial}"`;
 const commandFilter = (managementId, type, identifier) => `clientManagementId=="${managementId}"${type ? `;command==${type}` : ''}${identifier ? `;profileIdentifier=="${identifier}"` : ''}`;
 const inventoryQuery = (serial, section) => ({ section, filter: serialFilter(serial) });
 
-const VALUE_FLAGS = ['serial', 'section', 'id', 'management-id', 'name', 'subset', 'type', 'not-before', 'profile-id', 'profile-identifier', 'expect', 'trigger', 'frequency'];
+const VALUE_FLAGS = ['serial', 'section', 'id', 'management-id', 'name', 'subset', 'type', 'not-before', 'profile-id', 'profile-identifier', 'expect', 'trigger', 'frequency', 'enabled'];
+const BOOLEAN_FLAGS = ['execute', 'absent', 'no-triggers'];
 
 // Each command names its required flags, its optional flags and the request(s) it makes.
 const COMMANDS = Object.freeze({
@@ -289,9 +292,9 @@ const COMMANDS = Object.freeze({
     expected: (a) => ({ serial: a.serial, fileVaultState: 'ENCRYPTED', keyValidation: 'VALID' }),
   },
   'verify-policy': {
-    kind: 'verify', flags: ['id'], optional: ['trigger', 'frequency'],
+    kind: 'verify', flags: ['id'], optional: ['trigger', 'frequency', 'enabled', 'no-triggers'],
     plans: (a) => [['policy', { id: a.id }, {}]],
-    expected: (a) => ({ policyId: a.id, trigger: a.trigger || null, frequency: a.frequency || null }),
+    expected: (a) => ({ policyId: a.id, trigger: a.trigger || null, frequency: a.frequency || null, enabled: a.enabled === undefined ? null : a.enabled, noTriggers: a.noTriggers }),
   },
 });
 
@@ -306,7 +309,7 @@ const USAGE = [
   '            [--profile-identifier [PROFILE_IDENTIFIER]] (required with INSTALL_PROFILE and REMOVE_PROFILE)',
   '          verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] [--absent]',
   '          verify-group-count --id N --expect N | verify-filevault --serial [SERIAL_NUMBER]',
-  '          verify-policy --id [POLICY_ID] [--trigger T] [--frequency F]',
+  '          verify-policy --id [POLICY_ID] with one or more of --trigger T, --frequency F, --enabled true|false, --no-triggers',
   'Every command is a dry run unless the bare --execute flag is given. No command writes to Jamf Pro.',
   '',
 ].join('\n');
@@ -352,7 +355,15 @@ function validate(command, def, args) {
   if (args.expect !== undefined) a.expect = Number(need(args.expect, COUNT, '--expect must be a whole number from 0'));
   if (args.trigger !== undefined) a.trigger = need(args.trigger, TRIGGER, '--trigger must be a trigger or custom event name of 1 to 64 letters, digits, spaces and _ . -');
   if (args.frequency !== undefined) a.frequency = need(args.frequency, FREQUENCY, '--frequency must be the execution frequency as Jamf Pro writes it, such as "Once per computer"');
+  if (args.enabled !== undefined) a.enabled = need(args.enabled, /^(?:true|false)$/, '--enabled must be true or false') === 'true';
   a.absent = args.absent === true;
+  a.noTriggers = args['no-triggers'] === true;
+  if (command === 'verify-policy') {
+    if (!a.trigger && !a.frequency && a.enabled === undefined && !a.noTriggers) {
+      throw new RefusedError('verify-policy needs --trigger, --frequency, --enabled or --no-triggers: a policy that only exists proves no change');
+    }
+    if (a.noTriggers && a.trigger) throw new RefusedError('--no-triggers and --trigger contradict each other');
+  }
   return a;
 }
 
@@ -604,7 +615,8 @@ async function verifyPolicy(client, a) {
     if (/^trigger/i.test(key) && (typeof value === 'string' || typeof value === 'boolean')) observed.triggers[key] = value;
   }
   observed.scope = summariseScope(policy.scope);
-  if (observed.policyId !== null && observed.policyId !== a.id) return verdict(command, false, expected, observed, 'the policy in the response is not the policy asked for', r.flags);
+  if (observed.policyId === null) return verdict(command, false, expected, observed, `the response carries no general.id, so it cannot be tied to policy ${a.id}`, r.flags);
+  if (observed.policyId !== a.id) return verdict(command, false, expected, observed, 'the policy in the response is not the policy asked for', r.flags);
   const reasons = [];
   if (a.trigger) {
     const want = triggerKey(a.trigger);
@@ -612,10 +624,27 @@ async function verifyPolicy(client, a) {
     if (!hit) reasons.push(`no trigger field reads ${a.trigger} (a trigger field holding that text, or ${want} set to true)`);
   }
   if (a.frequency && observed.frequency !== a.frequency) reasons.push(`the frequency is not "${a.frequency}" (names match exactly)`);
-  const extra = !a.trigger && !a.frequency
-    ? { note: 'no --trigger or --frequency given: this proves only that the policy exists; compare its triggers, frequency and scope with the change record' }
-    : {};
-  return verdict(command, reasons.length === 0, expected, observed, reasons.join('; '), r.flags, extra);
+  if (a.enabled !== undefined && observed.enabled !== a.enabled) {
+    reasons.push(observed.enabled === null ? 'the policy carries no general.enabled yes/no value' : `the policy is ${observed.enabled ? 'enabled' : 'disabled'}, not ${a.enabled ? 'enabled' : 'disabled'}`);
+  }
+  if (a.noTriggers) reasons.push(...noTriggerReasons(general));
+  return verdict(command, reasons.length === 0, expected, observed, reasons.join('; '), r.flags);
+}
+
+// "No trigger ticked" (a Self Service-only policy): every trigger_ yes/no field is false
+// and trigger_other, the custom event, is present and empty. A missing field is not
+// proof, because a ticked trigger turns a Self Service item into an automatic install.
+function noTriggerReasons(general) {
+  const fields = Object.entries(general).filter(([key]) => /^trigger_/i.test(key));
+  const reasons = [];
+  if (!fields.some(([, value]) => typeof value === 'boolean')) reasons.push('the policy carries no trigger_ yes/no fields, so "no trigger ticked" is not proven');
+  const other = fields.find(([key]) => key.toLowerCase() === 'trigger_other');
+  if (!other || typeof other[1] !== 'string') reasons.push('the policy carries no trigger_other text, so a custom event trigger cannot be ruled out');
+  const unreadable = fields.filter(([, value]) => typeof value !== 'boolean' && typeof value !== 'string').map(([key]) => key);
+  if (unreadable.length) reasons.push(`trigger field(s) ${unreadable.join(', ')} hold neither yes/no nor text`);
+  const ticked = fields.filter(([, value]) => value === true || (typeof value === 'string' && value.trim() !== '')).map(([key]) => key);
+  if (ticked.length) reasons.push(`trigger(s) ticked: ${ticked.join(', ')}`);
+  return reasons;
 }
 
 const VERIFY = Object.freeze({
@@ -649,7 +678,7 @@ async function run(argv, env = process.env, deps = {}) {
   const out = deps.out || ((s) => process.stdout.write(s));
   const err = deps.err || ((s) => process.stderr.write(s));
   try {
-    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS, booleans: ['execute', 'absent'] });
+    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
     const command = args._command;
     if (command === 'help' || command === '--help' || command === '-h') { out(USAGE); return 0; }
     if (typeof command !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, command)) {

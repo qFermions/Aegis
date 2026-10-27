@@ -91,3 +91,17 @@ test('every profile read-back names the profile by its identifier, so an install
   assert.match(section(PROFILES, 'Phase A'), /Write the profile's identifier in the ticket as `\[PROFILE_IDENTIFIER\]`/);
   assert.match(section(FILEVAULT, 'Phase B'), /jamf-client\.js profile --id \[PROFILE_ID\] --execute/, 'the FileVault runbook reads the new profile\'s identifier');
 });
+
+test('every policy read-back proves a property, never mere existence: no trigger ticked after the Self Service create, disabled after the disable', () => {
+  for (const [name, text] of Object.entries(ALL)) {
+    for (const line of text.split('\n').filter((l) => /jamf-client\.js verify-policy /.test(l))) {
+      assert.match(line, /--(?:trigger|frequency|enabled|no-triggers)\b/, `${name}: ${line.trim()} names what it proves`);
+    }
+  }
+  const create = section(POLICIES, 'Phase C');
+  assert.match(create, /verify-policy --id \[POLICY_ID\] --frequency "Once per computer" --enabled true --no-triggers --execute/, 'a ticked trigger would turn the Self Service item into an automatic install');
+  const change = section(POLICIES, 'Phase D');
+  assert.match(change, /verify-policy --id \[POLICY_ID\] --enabled false --execute/, 'the disable read-back proves the policy reads disabled');
+  assert.match(change, /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once every day" --enabled true --execute/);
+  assert.match(section(FILEVAULT, 'Phase D'), /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once per computer" --enabled true --execute/, 'the new-key policy read-back proves its trigger and frequency');
+});

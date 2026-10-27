@@ -124,9 +124,9 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 
 ```bash
 # HUMAN-RUN - read-only
-# proves the policy exists with the bounded frequency the change record names
-node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --execute
-# the full policy - no trigger ticked, Self Service on, scope is the one group
+# proves the policy is enabled, runs Once per computer and has no trigger ticked (every trigger_ field false, no custom event): a ticked trigger would make it an automatic install
+node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --enabled true --no-triggers --execute
+# the full policy - Self Service on, scope is the one group
 node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 ```
 </details>
@@ -158,7 +158,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 ```
 </details>
 
-**Verification checkpoint**: [ ] `verify-policy` passed and the policy read shows no trigger · [ ] the test Mac's run reads Completed · [ ] the app is listed for the test Mac after its next inventory update (`/jamf-inventory-groups` Phase B holds the gated inventory update).
+**Verification checkpoint**: [ ] `verify-policy --no-triggers` passed (no trigger ticked) and the policy read shows Self Service on · [ ] the test Mac's run reads Completed · [ ] the app is listed for the test Mac after its next inventory update (`/jamf-inventory-groups` Phase B holds the gated inventory update).
 
 ## Phase D: Change triggers, frequency or scope, or disable a policy (R1, R2 or R3)
 
@@ -190,8 +190,8 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 
 ```bash
 # HUMAN-RUN - read-only - the frequency below is the worked example, use the value the change record names
-# proves the policy now carries the new execution frequency
-node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once every day" --execute
+# proves the policy is enabled with the new trigger and execution frequency - the values are the worked example (Recurring Check-in, Once every day): use the ones the change record names, one --trigger per read for each trigger left ticked
+node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once every day" --enabled true --execute
 # the full policy - compare the ticked triggers and the scope with the change record
 node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 ```
@@ -216,8 +216,8 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 
 ```bash
 # HUMAN-RUN - read-only
-# the policy - its general section now reads disabled - the exact field name was not confirmed
-node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
+# proves the policy reads disabled (general.enabled false; exit 2 while it is still enabled or the field is missing)
+node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --enabled false --execute
 # the policy logs of a sample Mac in scope - no new run after the time the policy was disabled
 node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLogs --execute
 ```
@@ -296,11 +296,11 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 ## ✅ Verification checklist
 
 - [ ] Phase A's pre-state (enabled state, triggers, frequency, scope, Self Service) was in the ticket before the first gate.
-- [ ] `verify-policy` passed with the frequency the change record names, and the policy read shows the triggers and scope it names.
+- [ ] `verify-policy` passed with the trigger, frequency and enabled state the change record names (`--no-triggers` for a Self Service-only policy, `--enabled false` after a disable), and the policy read shows the scope it names.
 - [ ] Self Service: Jamf Pro → Computers → Policies → `[POLICY_NAME]` → Logs shows a Completed run on the test Mac after `[NOT_BEFORE]`, and the app is listed for it after its next inventory update.
 - [ ] Failure: the failing lines are quoted in the ticket and any line that addressed the reader is labelled and was not followed.
 - [ ] Flush: the flushed entries are in the ticket and a new run appears after `[NOT_BEFORE]`.
-- [ ] Disable: the policy read shows it disabled and a sample Mac shows no new run after `[NOT_BEFORE]`.
+- [ ] Disable: `verify-policy --enabled false` passed and a sample Mac shows no new run after `[NOT_BEFORE]`.
 - [ ] Every R3 change has its independent review reference in the ticket.
 
 ## 📝 Linear-ready note

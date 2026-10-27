@@ -183,8 +183,8 @@ Prerequisites: macOS 10.14 or later; the Mac has a valid escrowed key or a FileV
 <summary>Read-back through the adapter (HUMAN-RUN, read-only)</summary>
 
 ```bash
-# reads the policy; trigger, frequency and scope should match the change record
-node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --execute
+# proves the new-key policy is enabled on Recurring Check-in, Once per computer, as the gate created it; exit 2 means it is not
+node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once per computer" --enabled true --execute
 # reads the policy logs of the Mac; the new-key policy should show as completed, not as an authentication error
 node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLogs --execute
 # proves the new escrowed key is Valid after the next inventory update

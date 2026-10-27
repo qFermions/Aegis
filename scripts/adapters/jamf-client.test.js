@@ -43,12 +43,14 @@
 // 6. verify-* print JSON with verified true or false, the observed values and the
 //    expected values, and exit 0 when verified and 2 when not:
 //    verify-command (an acknowledged command of that type for that Mac, sent at or
-//    after --not-before, read across pages), verify-profile (the Mac lists the profile
-//    id, or with --absent provably does not), verify-group-count (the member count),
+//    after --not-before, read across pages; a profile command must carry the named
+//    profile identifier), verify-profile (the Mac lists the profile id and identifier,
+//    or with --absent provably does not), verify-group-count (the member count),
 //    verify-filevault (FileVault state ENCRYPTED and personal key validation VALID,
-//    never printing a key) and verify-policy (the policy exists and, when asked, the
-//    trigger and frequency match). A record about another Mac or another policy is
-//    never proof.
+//    never printing a key) and verify-policy (the policy carries general.id equal to
+//    --id and every property asked for matches: trigger, frequency, enabled state, or
+//    no trigger ticked; the bare form, which would prove only that the policy exists,
+//    is refused). A record about another Mac or another policy is never proof.
 // 7. No credential or access token value appears in stdout, stderr or a result, also
 //    when the transport's own error or the vendor's response echoes it.
 // 8. Instruction text in a response field is flagged and quoted in the CLI output and
@@ -138,7 +140,8 @@ const VERIFY_PLANS = [
   [['verify-profile', '--serial', SERIAL, '--profile-id', '7', '--profile-identifier', PIDS[7], '--absent'], [inventoryPath('HARDWARE'), inventoryPath('CONFIGURATION_PROFILES')]],
   [['verify-group-count', '--id', '12', '--expect', '3'], ['/api/v2/computer-groups/smart-group-membership/12']],
   [['verify-filevault', '--serial', SERIAL], [inventoryPath('HARDWARE'), inventoryPath('DISK_ENCRYPTION')]],
-  [['verify-policy', '--id', '9'], ['/JSSResource/policies/id/9']],
+  [['verify-policy', '--id', '9', '--enabled', 'false'], ['/JSSResource/policies/id/9']],
+  [['verify-policy', '--id', '9', '--no-triggers', '--frequency', 'Once per computer', '--enabled', 'true'], ['/JSSResource/policies/id/9']],
   [['verify-policy', '--id', '9', '--trigger', 'CHECKIN', '--frequency', 'Once per computer'], ['/JSSResource/policies/id/9']],
 ];
 
@@ -570,14 +573,19 @@ const policyOf = (general = {}) => ok({
 });
 const VPOL = (...more) => ['verify-policy', '--id', '9', ...more, '--execute'];
 
-test('verify-policy: the policy exists and, when asked, its trigger and frequency match; another policy is never proof', async () => {
-  const exists = await cli(VPOL(), { replies: [tokenReply(), policyOf()] });
-  assert.equal(exists.code, 0);
-  assert.equal(exists.json.verified, true);
-  assert.equal(exists.json.observed.frequency, 'Once per computer');
-  assert.equal(exists.json.observed.scope.computers, 1);
-  assert.equal(exists.transport.calls[1].path, '/JSSResource/policies/id/9');
-  assert.equal(exists.transport.calls[1].headers.Accept, 'application/json');
+test('verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused', async () => {
+  const bare = await cli(VPOL(), { replies: [tokenReply(), policyOf()] });
+  assert.equal(bare.code, 1, 'a policy that merely exists proves no change');
+  assert.equal(bare.transport.calls.length, 0);
+  assert.match(bare.json.error, /verify-policy needs --trigger, --frequency, --enabled or --no-triggers/);
+
+  const enabled = await cli(VPOL('--enabled', 'true'), { replies: [tokenReply(), policyOf()] });
+  assert.equal(enabled.code, 0);
+  assert.equal(enabled.json.verified, true);
+  assert.equal(enabled.json.observed.frequency, 'Once per computer');
+  assert.equal(enabled.json.observed.scope.computers, 1);
+  assert.equal(enabled.transport.calls[1].path, '/JSSResource/policies/id/9');
+  assert.equal(enabled.transport.calls[1].headers.Accept, 'application/json');
 
   const cases = [
     [['--frequency', 'Once per computer'], 0],
@@ -589,16 +597,46 @@ test('verify-policy: the policy exists and, when asked, its trigger and frequenc
     [['--trigger', 'LOGIN'], 2],
     [['--trigger', 'CHECKIN', '--frequency', 'Once per computer'], 0],
     [['--trigger', 'CHECKIN', '--frequency', 'Once every day'], 2],
+    [['--enabled', 'true'], 0],
+    [['--enabled', 'false'], 2],
+    [['--no-triggers'], 2],
+    [['--trigger', 'CHECKIN', '--frequency', 'Once per computer', '--enabled', 'false'], 2],
   ];
   for (const [flags, code] of cases) {
     const res = await cli(VPOL(...flags), { replies: [tokenReply(), policyOf()] });
     assert.equal(res.code, code, flags.join(' '));
     assert.equal(res.json.verified, code === 0, flags.join(' '));
   }
+  assert.equal((await cli(VPOL('--enabled', 'false'), { replies: [tokenReply(), policyOf({ enabled: false })] })).code, 0, 'a disabled policy reads back as disabled');
+  const noEnabled = await cli(VPOL('--enabled', 'false'), { replies: [tokenReply(), policyOf({ enabled: 'false' })] });
+  assert.equal(noEnabled.code, 2, 'enabled must be a yes/no value, not text');
+
+  // --no-triggers: a Self Service-only policy has every trigger_ field false and trigger_other empty
+  const selfServiceOnly = { trigger: 'USER_INITIATED', trigger_checkin: false, trigger_startup: false, trigger_login: false, trigger_other: '' };
+  const clear = await cli(VPOL('--no-triggers', '--frequency', 'Once per computer'), { replies: [tokenReply(), policyOf(selfServiceOnly)] });
+  assert.equal(clear.code, 0);
+  assert.equal(clear.json.expected.noTriggers, true);
+  const notClear = [
+    ['recurring check-in ticked', { ...selfServiceOnly, trigger_checkin: true }, /trigger_checkin/],
+    ['a custom event', { ...selfServiceOnly, trigger_other: 'installNow' }, /trigger_other/],
+    ['no trigger_other field', { trigger: 'USER_INITIATED', trigger_checkin: false, trigger_startup: false, trigger_other: undefined }, /custom event trigger cannot be ruled out/],
+    ['no yes/no trigger fields', { trigger: 'USER_INITIATED', trigger_checkin: undefined, trigger_startup: undefined, trigger_other: '' }, /no trigger_ yes\/no fields/],
+    ['a trigger field of another shape', { ...selfServiceOnly, trigger_login: 1 }, /hold neither yes\/no nor text/],
+  ];
+  for (const [label, general, reason] of notClear) {
+    const res = await cli(VPOL('--no-triggers'), { replies: [tokenReply(), policyOf(general)] });
+    assert.equal(res.code, 2, label);
+    assert.match(res.json.reason, reason, label);
+  }
+
+  // the policy asked for, and no other
   const another = await cli(VPOL('--frequency', 'Once per computer'), { replies: [tokenReply(), policyOf({ id: 10 })] });
   assert.equal(another.code, 2);
   assert.equal(another.json.verified, false);
-  const none = await cli(VPOL(), { replies: [tokenReply(), ok({})] });
+  const noId = await cli(VPOL('--frequency', 'Once per computer'), { replies: [tokenReply(), policyOf({ id: undefined })] });
+  assert.equal(noId.code, 2, 'a response without general.id cannot be tied to the policy asked for');
+  assert.match(noId.json.reason, /no general\.id/);
+  const none = await cli(VPOL('--enabled', 'true'), { replies: [tokenReply(), ok({})] });
   assert.equal(none.code, 2);
   assert.equal(none.json.verified, false);
 });
@@ -741,7 +779,7 @@ test('no credential or token appears in stdout, stderr or a result, also when th
     [['version', '--execute'], [tokenReply(), { status: 200, body: `not json ${ACCESS}` }], 2],
     [['version', '--execute'], [tokenReply(), ok({ echo: `you sent ${ACCESS}`, [CLIENT_SECRET]: CLIENT_ID, nested: [{ v: CLIENT_SECRET }] })], 0],
     [['version', '--execute'], [{ status: 400, body: { error: `bad client_secret ${CLIENT_SECRET}` } }], 2],
-    [VPOL(), [tokenReply(), ok({ policy: { general: { id: 9, name: `echo ${ACCESS} ${CLIENT_SECRET}` } } })], 0],
+    [VPOL('--enabled', 'true'), [tokenReply(), ok({ policy: { general: { id: 9, enabled: true, name: `echo ${ACCESS} ${CLIENT_SECRET}` } } })], 0],
     [VF, [tokenReply(), hardware([{ id: '42', hardware: { serialNumber: SERIAL, note: ACCESS } }]), { status: 500, body: { error: CLIENT_SECRET } }, leaky(), leaky()], 2],
   ];
   for (const [argv, replies, code] of scenarios) {
@@ -762,7 +800,7 @@ test('instruction text in a response field is flagged and quoted in the CLI outp
   assert.equal(res.transport.calls.length, 2, 'nothing follows from the text');
   assert.equal(res.json.data.results[0].general.name, INSTRUCTION, 'the data is printed as written, inside JSON');
 
-  const verify = await cli(VPOL(), { replies: [tokenReply(), policyOf({ name: INSTRUCTION })] });
+  const verify = await cli(VPOL('--frequency', 'Once per computer'), { replies: [tokenReply(), policyOf({ name: INSTRUCTION })] });
   assert.equal(verify.code, 0);
   assert.match(verify.stdout, /WARNING: 1 field\(s\) carry instruction-like text/, 'a read-back carries the flags of its reads');
   assert.equal(verify.transport.calls.length, 2);
@@ -814,6 +852,9 @@ test('bad input, unknown or write-shaped commands and misplaced flags exit 1 bef
     [['verify-profile', '--serial', SERIAL, '--profile-id', 'all', '--profile-identifier', PIDS[7]], /--profile-id must be/],
     [['verify-policy', '--id', '9', '--frequency', 'Once per computer; rm'], /--frequency must be/],
     [['verify-policy', '--id', '9', '--trigger', '"checkin"'], /--trigger must be/],
+    [['verify-policy', '--id', '9'], /verify-policy needs --trigger, --frequency, --enabled or --no-triggers/],
+    [['verify-policy', '--id', '9', '--enabled', 'yes'], /--enabled must be true or false/],
+    [['verify-policy', '--id', '9', '--no-triggers', '--trigger', 'CHECKIN'], /contradict/],
     [['policy', '--id', '9', '--absent'], /--absent does not apply to policy/],
     [['version', '--serial', SERIAL], /--serial does not apply to version/],
     [['version', '--execute', 'yes'], /unexpected argument/],

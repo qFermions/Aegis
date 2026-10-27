@@ -2,6 +2,29 @@
 
 All notable changes to the Aegis IT Operations Agent are documented here.
 
+## [batch 1] - 2026-10-27: baseline, the product boundary in code, untrusted-data tests, CLAUDE.md diet
+
+Branch `chore/baseline-and-boundary`, base `d5fc8c0`. Phase 0 and branch batteries: `docs/baseline/`.
+
+### Changed (operator-visible)
+- **The Jira client never sends a write** (`scripts/jira-client.js`): the transport sends GET only. `create` and `comment` print the exact payload, a SHA-256 binding line and a HUMAN-RUN procedure (portal steps, or one `curl` line that prompts for the API token); `transition --execute` stays a read-only preflight and prints the same. `--execute` or `--confirm` on a write exits 1 before credentials or network. New `verify-create`, `verify-comment` and `verify-transition` reads prove the administrator's write. `/jira-create` and `/jira-update` describe the new flow. Reason: the preview printed the confirm phrase, so a model could post or close a ticket itself.
+- **Memory serves only sealed records:** each `index.json` row carries a hash of the record the CLI wrote; a row or record edited on disk, or written by hand, is withheld. Rows written before this change are withheld until an operator re-runs `verify <id>` (or `promote <id>`).
+- **Memory and replay stores bind to one tenant:** the first write with `AEGION_DOMAIN` set records a fingerprint of the tenant (never the literal); every later command under another or an unset tenant exits 6 and prints nothing from the store. A store with no binding stays readable as before.
+- **`CLAUDE.md` diet:** 39,948 to 18,069 bytes. Identity, teaching rules, training mode and tone moved to `docs/aegis/operating-rules.md`; orchestration through build/upgrade mode to `docs/aegis/workflow.md`; live environment state, physical security, Jira fields and active projects to `docs/aegis/operator-context.md`. The boundary sentence, Harness and Review are unchanged.
+
+### Added
+- `docs/aegis/capability-map.md` (35 rows, drift), `docs/aegis/boundary-audit.md` (19 paths), evidence captures in `docs/aegis/evidence/`.
+- `scripts/untrusted/`: 36 tests for instruction injection, poisoned memory and wrong-customer cases, each file opening with its expected decision.
+- Tests: `CLAUDE.md` under 20,000 bytes; the Extended Confirmation Gate quotes SR-2 exactly; deploy-check.js and init-memory.js are tier C.
+- `PRODUCT_CONTRACT.md`: the boundary paragraph, where code enforces it, and the standing rules for answers. `PROJECT_STATE.md` rewritten with a roadmap skeleton.
+
+### Fixed
+- Graph and memory sanitizers fold confusables and invisible characters before matching injection markers.
+- The replay cache refuses instruction-shaped solutions and a second org namespace (exit 4); graph intake and memory propose refuse a second org namespace (exit 3).
+- `verify`, `merge`, `mark-stale` and `promote --supersede` refuse a record changed on disk before writing anything.
+- Restored four passages PR #3's trim lost: "direct official self-service link"; "still no"/"didn't work" as diagnostic evidence; "sharing upstream is optional"; the exact SR-2 quote.
+- Tier C now includes `modules/automation/scripts/deploy-check.js` and `scripts/init-memory.js`.
+
 ## [v8.9] - 2026-10-15 — Google Workspace / Okta / Jamf lane with deterministic gates (batch G1)
 
 ### Added

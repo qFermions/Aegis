@@ -109,6 +109,19 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /\bprofiles\s+(?:remove\b|-R\b|-D\b)/, label: 'profiles removal (configuration / MDM profile)' },
   { pattern: /\bfdesetup\s+(?:disable|remove|changerecovery|removerecovery)\b/i, label: 'FileVault change (fdesetup)' },
   { pattern: /\bdiskutil\s+(?:erase\w*|secureErase|zeroDisk|apfs\s+delete\w*)\b/i, label: 'disk erase (diskutil)' },
+  // Fleet, Slack, Linear, Jamf Pro and Google Workspace sinks (G2). A GET of the same
+  // paths reads state and stays quiet; the write needs its verb, method or mutation.
+  { pattern: /\bfleetctl\s+(?:[^\r\n]*\s)?mdm\s+(?:lock|unlock|wipe)\b/i, label: 'Fleet MDM lock / unlock / wipe (fleetctl)' },
+  { pattern: /\bfleetctl\s+(?:[^\r\n]*\s)?run-script\b|\/api\/(?:v1|latest)\/fleet\/scripts\/run(?:\/batch)?\b/i, label: 'Fleet script run on hosts' },
+  { pattern: /\/api\/(?:v1|latest)\/fleet\/hosts\/[^\s"'\/]+\/(?:lock|unlock|wipe|clear_passcode)\b/i, label: 'Fleet host lock, unlock or wipe (REST)' },
+  { pattern: /-X\s*["']?DELETE\b[^\r\n]*\/api\/(?:v1|latest)\/fleet\/hosts\b|\/api\/(?:v1|latest)\/fleet\/hosts\/[^\s"']*[^\r\n]*-X\s*["']?DELETE\b|\bfleetctl\s+(?:[^\r\n]*\s)?delete\b/i, label: 'Fleet host deletion or MDM turn-off' },
+  { pattern: /slack\.com\/api\/(?:admin\.users\.(?:remove|session\.reset\w*|setAdmin|setOwner|setRegular|setExpiration|invite|assign)|admin\.conversations\.(?:delete|archive|disconnectShared|convertToPrivate|setTeams)|admin\.apps\.(?:approve|restrict|uninstall)|users\.admin\.setInactive)\b/i, label: 'Slack admin write (user removal, session reset, conversation or app change)' },
+  { pattern: /slack\.com\/api\/(?:chat\.(?:postMessage|postEphemeral|scheduleMessage|update|delete|meMessage)|files\.delete|conversations\.(?:archive|kick|invite|create|rename))\b/i, label: 'Slack message post or delete, or channel change (Web API)' },
+  { pattern: /-X\s*["']?DELETE\b[^\r\n]*\/scim\/v\d\/Users\b|\/scim\/v\d\/Users\/[^\s"']*[^\r\n]*-X\s*["']?DELETE\b/i, label: 'Slack SCIM deactivation (DELETE /Users)' },
+  { pattern: /\bmutation\b[^\r\n]*\b(?:issue(?:Create|Update|Delete|Archive|BatchUpdate|BatchCreate|AddLabel|RemoveLabel)|comment(?:Create|Update|Delete)|user(?:Suspend|Unsuspend|ChangeRole|RevokeAllSessions|RevokeSession)|organization(?:Update|Delete)|team(?:Delete|Update)|workflowState(?:Archive|Update))\b/, label: 'Linear GraphQL mutation (issue, comment, member or workspace write)' },
+  { pattern: /\/api\/v\d\/computers-inventory(?:\/[^\s"'\/]+)?\/(?:filevault|view-recovery-lock-password|view-device-lock-pin)\b|\/api\/v\d\/local-admin-password\/[^\s"']+\/password\b/i, label: 'Jamf secret disclosure (FileVault key, Recovery Lock, device PIN, LAPS)' },
+  { pattern: /\bgam\b[^\r\n]*\bdelete\s+(?:drivefileacls?|acls?|permissions?)\b/i, label: 'GAM Drive permission removal' },
+  { pattern: /\bgam\s+(?:create|add|delete|del)\s+admin\b/i, label: 'GAM admin-role change (grant or removal)' },
 ];
 
 // ── PII patterns ──────────────────────────────────────────────────────────────
@@ -160,6 +173,9 @@ const CREDENTIAL_PATTERNS = [
   { pattern: /-----BEGIN [A-Z ]*PRIVATE KEY-----/,                                label: 'Private key block' },
   { pattern: /\bsk-[A-Za-z0-9_-]{20,}\b/,                                         label: 'API secret key (sk-…)' },
   { pattern: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/,                                  label: 'Slack token' },
+  // G2: Slack documents xoxe- refresh tokens (token rotation, configuration tokens) and
+  // xapp- app-level tokens; a rotating xoxe.xoxp-/xoxe.xoxb- access token is caught above.
+  { pattern: /\bxoxe-[A-Za-z0-9-]{10,}|\bxapp-[A-Za-z0-9-]{10,}/,                    label: 'Slack refresh or app-level token (xoxe- / xapp-)' },
   { pattern: /AccountKey=[A-Za-z0-9+/=]{40,}/,                                    label: 'Azure storage account key' },
   { pattern: /SharedAccessSignature\s*=/i,                                        label: 'Azure SAS token assignment' },
   // Google / Okta / Jamf secret formats — exact prefixes or line-level markers

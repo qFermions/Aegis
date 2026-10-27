@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-// risk_tier.test.js — the review tier is set by the changed paths, never by the author.
+// risk_tier.test.js: the review tier is set by the changed paths, never by the author.
 // Sandboxed: every case builds a throwaway git repository carrying the real
 // .github/risk-tiers.json, so the repo's own history is never read or touched.
 // Run: node --test scripts/risk_tier.test.js

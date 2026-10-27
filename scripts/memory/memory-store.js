@@ -138,7 +138,10 @@ function sanitizeGate(proposal) {
 function storedRecordProblems(rec) {
   if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return [{ code: 2, problem: 'record is not a JSON object' }];
   const problems = [];
-  for (const k of Object.keys(rec)) if (!RECORD_KEYS.includes(k)) problems.push({ code: 2, problem: `${k}: unknown key (strict aegis.memory.v1)` });
+  // Count unknown keys, never name them: a key name is stored content too, and this
+  // text reaches retrieve's withheld[].reason and the CLI's error output.
+  const unknownKeys = Object.keys(rec).filter((k) => !RECORD_KEYS.includes(k)).length;
+  if (unknownKeys) problems.push({ code: 2, problem: `${unknownKeys} unknown key(s) (strict aegis.memory.v1; names withheld)` });
   if (rec.schema !== 'aegis.memory.v1') problems.push({ code: 2, problem: 'schema: must be "aegis.memory.v1"' });
   if (!STATUSES.includes(rec.status)) problems.push({ code: 2, problem: `status: one of ${STATUSES.join('|')}` });
   if (typeof rec.id !== 'string' || !/^mem-\d{4}$/.test(rec.id)) problems.push({ code: 2, problem: 'id: mem-NNNN required' });

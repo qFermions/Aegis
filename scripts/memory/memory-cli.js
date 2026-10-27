@@ -103,6 +103,22 @@ function refuseUnlessGatesPass(rec) {
   const code = problems.some((p) => p.code === 3) ? 3 : problems.some((p) => p.code === 4) ? 4 : 2;
   fail(code, `refused: ${rec.id} does not pass the persist gates as stored on disk (changed outside memory-cli.js?); nothing written`, problems.map((p) => p.problem));
 }
+// A sealed index row that no longer matches its record file means the record was
+// changed on disk outside this CLI, and a record with no index row was written by
+// hand: no verify, merge, mark-stale or promote may write a fresh seal over either,
+// even when the changed text passes the persist gates. An unsealed row from before
+// sealing is the documented migration path: an operator re-verifies it.
+function refuseIfChangedOnDisk(index, rec) {
+  const row = index.records.find((r) => r.id === rec.id);
+  let reason = null;
+  if (!row) reason = 'no index row for this record (written outside memory-cli.js)';
+  else if (row.seal && store.canonicalJson(row) !== store.canonicalJson(indexRow(rec))) {
+    reason = 'index row and record disagree (seal mismatch): changed on disk outside memory-cli.js';
+  }
+  if (!reason) return;
+  ledger('RESEAL_REFUSED', { id: rec.id, problems: [reason] });
+  fail(3, `refused: ${rec.id}: ${reason}; nothing written`);
+}
 function saveRecord(rec) {
   if (SERVABLE.includes(rec.status)) refuseUnlessGatesPass(rec);
   fs.mkdirSync(MEM_DIR, { recursive: true });
@@ -375,6 +391,7 @@ function cmdMerge(id, flags) {
   return withLock(() => {
     const rec = loadRecord(id);
     if (rec.status === 'rejected' || rec.status === 'superseded') fail(2, `cannot merge into a ${rec.status} record`);
+    refuseIfChangedOnDisk(loadIndex(), rec);
     const entry = { kind: flags.kind, ref: String(flags.ref) };
     if (flags.note) entry.note = String(flags.note);
     const scan = store.sanitizeGate({ p: [entry.ref, entry.note || ''] });
@@ -398,6 +415,7 @@ function cmdPromote(id, flags) {
     if (rec.status !== 'candidate') fail(2, `promote requires status candidate (found: ${rec.status})`);
     // Gate the candidate as stored BEFORE any write: a refused promote must
     // not have already superseded the record it was meant to replace.
+    refuseIfChangedOnDisk(index, rec);
     refuseUnlessGatesPass(rec);
 
     // Raw/external content can support, never solely justify (SR-3).
@@ -479,6 +497,7 @@ function cmdVerify(id, flags) {
   return withLock(() => {
     const rec = loadRecord(id);
     if (rec.status !== 'verified' && rec.status !== 'stale') fail(2, `verify requires status verified|stale (found: ${rec.status})`);
+    refuseIfChangedOnDisk(loadIndex(), rec);
     const date = asOf(flags);
     rec.status = 'verified';
     rec.lastVerified = date;
@@ -497,6 +516,7 @@ function cmdMarkStale(id, flags) {
   return withLock(() => {
     const rec = loadRecord(id);
     if (rec.status !== 'verified') fail(2, `mark-stale requires status verified (found: ${rec.status})`);
+    refuseIfChangedOnDisk(loadIndex(), rec);
     rec.status = 'stale';
     history(rec, 'marked-stale', String(flags.reason || 'dependency changed'));
     saveRecord(rec);
@@ -554,11 +574,19 @@ function cmdAudit(id) {
   out({ ok: true, id: rec.id, status: rec.status, evidence: auditProvenance(rec) });
 }
 
+// Inventory view: every row is labelled with its integrity, and only an intact
+// record's summary is printed (index text changed on disk is stored content).
 function cmdList(flags) {
   const index = loadIndex();
   const rows = index.records
     .filter((r) => !flags.status || r.status === flags.status)
-    .map((r) => ({ id: r.id, type: r.type, status: r.status, scope: r.scope, volatility: r.volatility, summary: r.summary.slice(0, 100) }));
+    .map((r) => {
+      const integrity = integrityOf(r, tryLoadRecord(r.id));
+      return {
+        id: r.id, type: r.type, status: r.status, scope: r.scope, volatility: r.volatility, integrity,
+        summary: integrity === 'intact' ? String(r.summary).slice(0, 100) : null,
+      };
+    });
   out({ ok: true, count: rows.length, records: rows });
 }
 

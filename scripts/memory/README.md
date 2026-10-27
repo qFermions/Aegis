@@ -86,12 +86,16 @@ scope, trusted provenance for `verified`/`stale`). Anything else (an index row
 or record edited by hand, a hand-written record, an unsealed row) is listed
 under `withheld: [{ id, reason }]` and never served; its stored text is not
 printed. `show <id>` still prints the record for audit, labelled
-`integrity: "intact"` or with the reason.
+`integrity: "intact"` or with the reason. `list` labels every row the same way
+and prints a summary only for an intact record. Withheld reasons name fields
+and rules, never stored text: an unknown key is counted, not named.
 
 Every CLI write that leaves a record servable (`candidate`, `verified`,
-`stale`) re-applies the same gates to the whole record first, so `verify`,
-`merge` and `mark-stale` cannot re-seal a record that was changed on disk
-(exit 3 / 4 / 2, `RESEAL_REFUSED` in the ledger). Writes to a terminal status
+`stale`) re-applies the same gates to the whole record first, and `verify`,
+`merge`, `mark-stale` and `promote` first refuse a record whose sealed row no
+longer matches its file, or that has no row at all, even when the changed text
+passes the gates (exit 3; a gate failure is exit 3 / 4 / 2; `RESEAL_REFUSED`
+in the ledger). So none of them can re-seal a record changed on disk. Writes to a terminal status
 (`rejected`, `superseded`) are never blocked, so a bad record can always be
 disposed of.
 

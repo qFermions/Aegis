@@ -48,8 +48,7 @@ export function matchesAny(path, globs) {
 
 export function classify(paths, tiers) {
   for (const tier of ORDER) {
-    const globs = Array.isArray(tiers[tier]) ? tiers[tier] : [];
-    const hits = paths.filter((p) => matchesAny(p, globs));
+    const hits = paths.filter((p) => matchesAny(p, tiers[tier]));
     if (hits.length > 0) return { tier, paths: hits };
   }
   return { tier: 'A', paths: [] };
@@ -98,6 +97,8 @@ export function changedPaths(base, cwd) {
 export function loadTiers(file) {
   const parsed = JSON.parse(readFileSync(file, 'utf8'));
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(`${file}: the tier file must be a JSON object with "C" and "B" arrays`);
+  const unknown = Object.keys(parsed).filter((key) => !ORDER.includes(key) && key !== '$comment');
+  if (unknown.length > 0) throw new Error(`${file}: unknown tier key(s) ${JSON.stringify(unknown)}; only "C", "B" and "$comment" are allowed, so a misnamed key cannot lower a tier`);
   for (const tier of ORDER) {
     if (!Array.isArray(parsed[tier])) throw new Error(`${file}: "${tier}" must be an array of globs (missing or misnamed keys fail closed)`);
     for (const glob of parsed[tier]) {

@@ -152,15 +152,16 @@ test('a malformed tier file fails closed with exit 1 instead of reporting tier A
   const cases = [
     [{ C: [['.github/**']], B: [] }, /non-string or empty glob/],
     [{ C: [''], B: [] }, /non-string or empty glob/],
-    [{ c: ['.github/**'], B: ['scripts/**'] }, /"C" must be an array of globs/],
+    [{ c: ['.github/**'], B: ['scripts/**'] }, /unknown tier key\(s\) \["c"\]/],
+    [{ C: ['.github/**'], B: ['scripts/**'], c: ['CLAUDE.md'] }, /unknown tier key\(s\) \["c"\]/],
+    [{ C: ['.github/**'], B: ['scripts/**'], A: ['docs/**'] }, /unknown tier key\(s\) \["A"\]/],
     [{ C: ['.github/**'] }, /"B" must be an array of globs/],
     [[], /must be a JSON object/],
     ['globs', /must be a JSON object/],
   ];
   for (const [shape, message] of cases) {
-    const broken = path.join(cwd, 'broken-tiers.json');
-    fs.writeFileSync(broken, JSON.stringify(shape));
-    assert.match(run(cwd, ['main'], 1, { env: { RISK_TIERS_FILE: broken } }), message, JSON.stringify(shape));
+    write(cwd, 'broken-tiers.json', JSON.stringify(shape));
+    assert.match(run(cwd, ['main'], 1, { env: { RISK_TIERS_FILE: path.join(cwd, 'broken-tiers.json') } }), message, JSON.stringify(shape));
   }
 });
 

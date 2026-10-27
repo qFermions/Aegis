@@ -292,3 +292,57 @@ test('G1 folding: homoglyphs and invisible characters cannot hide a new floor (g
   }
   assert.deepEqual(misses, []);
 });
+
+// ── G2: Fleet, Linear, Slack, Jamf and Google Workspace consequential wordings ──
+// One block per platform, each proven separately (scripts/eval/g2-tickets.json is the
+// corpus these come from). Every floor must floor in the guard AND the graph engine
+// (kept in sync) with a trigger that names its gate; every routine counterpart must
+// stay clean in both; homoglyphs and invisible characters cannot hide a floor.
+function g2Suite(platform, floors, routine) {
+  const engine = require('../graph/engine.js');
+  const disguise = (text) => text
+    .replace(/a/, 'а')      // Cyrillic a (U+0430)
+    .replace(/o/, 'о')      // Cyrillic o (U+043E)
+    .replace(/e/, 'е')      // Cyrillic e (U+0435)
+    .replace(/(\w)(\w)/, '$1' + String.fromCharCode(0x200b) + '$2');  // zero-width space inside the first word
+  test(`G2 ${platform} ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised`, () => {
+    const misses = [];
+    for (const [word, ticket] of floors) {
+      for (const text of [ticket, disguise(ticket)]) {
+        const r = assess(text);
+        if (r.floor !== 'T3' || !r.triggers.some((t) => word.test(t))) misses.push(`guard: ${JSON.stringify(text)} → ${r.floor} ${r.triggers.join('|')}`);
+        const hits = engine.scanSr2Triggers({ steps: [{ id: 's1', action: text, undo: '', verify: '' }], powershell: '' });
+        if (!hits.some((h) => word.test(h))) misses.push(`engine: ${JSON.stringify(text)} → ${hits.join('|') || 'no hit'}`);
+      }
+    }
+    assert.deepEqual(misses, []);
+  });
+  test(`G2 ${platform} routine: the everyday counterparts stay clean in the guard and the graph engine`, () => {
+    for (const ticket of routine) {
+      assert.deepEqual(assess(ticket), { floor: 'none', triggers: [] }, ticket);
+      assert.deepEqual(engine.scanSr2Triggers({ steps: [{ id: 's1', action: ticket, undo: '', verify: '' }], powershell: '' }), [], `engine: ${ticket}`);
+    }
+  });
+}
+
+g2Suite('Fleet', [
+  [/lock/i, '[FIRST_NAME] left their MacBook on a train; lock it from Fleet so nobody can use it.'],
+  [/lock/i, 'In Fleet, lock the Windows laptop [DEVICE_NAME] until it is found.'],
+  [/turn-off|unenroll|lock/i, 'Turn off MDM for [DEVICE_NAME] in Fleet before it is sold.'],
+  [/unenroll|lock/i, "Unenroll [FIRST_NAME]'s iPhone from Fleet."],
+  [/deletion|lock/i, 'Delete the host [DEVICE_NAME] from Fleet.'],
+  [/script/i, 'Run the cache-clearing script on [DEVICE_NAME] from Fleet.'],
+  [/script/i, 'Fleet: execute the remediation script on [DEVICE_NAME] tonight.'],
+  [/mass/i, 'Install the patched browser on all exposed hosts from Fleet now.'],
+  [/mass/i, 'Uninstall the old VPN client from every host in the Sales fleet.'],
+  [/mass/i, 'Push the configuration to 40 hosts at once.'],
+], [
+  'Fleet has shown [DEVICE_NAME] as offline for three days, but the user says the laptop is on and connected.',
+  'Fleet reports disk encryption as off on the Windows laptop [DEVICE_NAME]; what do I check first?',
+  'The firewall policy in Fleet is failing on 4 Macs; work out why and how to fix them.',
+  'Fleet flags a critical CVE in the browser on 30 hosts; which hosts are exposed and what is the patch plan?',
+  'Use Fleet to check whether any Mac has the launch agent [FILE_NAME] installed.',
+  'Where do I see the output of the script that already ran on [DEVICE_NAME] in Fleet?',
+  'Unlock [DEVICE_NAME] in Fleet; the user found the laptop.',
+  'Refetch the vitals for [DEVICE_NAME] in Fleet.',
+]);

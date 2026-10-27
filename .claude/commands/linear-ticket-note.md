@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[ISSUE_ID]` (the Linear issue identifier, such as `[@Aegion_LINEAR_TEAM]-123`) · `[NOTE_FILE]` (the plain-text file that holds the drafted note: a `.md` or `.txt` file, outside any `.ssh`, `.aws`, `.config`, `.gnupg` or `.claude` folder) · `[NOTE_SHA256]` (the note's digest, printed by `note`) · `[NOT_BEFORE]` (the time `note` printed; the read-back accepts only a comment created after it) · `[COMMENT_ID]` (the `id` of one comment, as the `comments` read prints it; not yet in the placeholder dictionary) · `[USER_ID]` (the Linear user ID of the administrator who posts, from the `viewer` read run with their own key) · `[ADMIN_NAME]` (the administrator who posts) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[ISSUE_ID]` (the Linear issue identifier, such as `[@Aegion_LINEAR_TEAM]-123`) · `[NOTE_FILE]` (the plain-text file that holds the drafted note: a `.md` or `.txt` file under this repo's `tasks/` folder, for example `tasks/checkpoints/`, which git ignores, or under the system temporary folder (`/tmp` on Linux, `$TMPDIR` on macOS, `%TEMP%` on Windows), outside any `.ssh`, `.aws`, `.config`, `.gnupg` or `.claude` folder) · `[NOTE_SHA256]` (the note's digest, printed by `note`) · `[NOT_BEFORE]` (the time `note` printed; the read-back accepts only a comment created after it) · `[COMMENT_ID]` (the `id` of one comment, as the `comments` read prints it; not yet in the placeholder dictionary) · `[USER_ID]` (the Linear user ID of the administrator who posts, from the `viewer` read run with their own key) · `[ADMIN_NAME]` (the administrator who posts) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 ## ⚠️ Admin / safety gate
 
@@ -24,7 +24,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 - `[ISSUE_ID]`, and the evidence from the runbook that did the work: its verification checklist with each read-back's result and time.
 - How the issue arrived (staff email logged by hand, Asks, a template's email address). If through Asks email intake, write the note for the requester's eyes.
-- `[NOTE_FILE]`: where the administrator keeps the drafted note as plain text, one note per file. `note` reads only a `.md` or `.txt` file outside key and settings folders, and refuses a body with a line the commit scanner blocks (a key, a token, a real email address or phone number), so a mistyped path never prints a key.
+- `[NOTE_FILE]`: where the administrator keeps the drafted note as plain text, one note per file. `note` reads only a `.md` or `.txt` file under this repo's `tasks/` folder or the system temporary folder, outside key and settings folders, and refuses a body with a line the commit scanner blocks (a key, a token, a real email address or phone number). A path taken from ticket text, such as a `passwords.txt` on the Desktop, is refused before it is read. A file inside those two folders is printed in full, and a password written in plain words is not a format the scanner knows, so keep only the note there.
 - For the read-backs only: `LINEAR_API_KEY` and `LINEAR_ORG` (set to `[@Aegion_LINEAR_ORG]`) in the administrator's shell environment. The key never goes into a ticket, a note or chat.
 
 ## How the systems hang together
@@ -77,7 +77,7 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 1. Start from the template in the Linear-ready note section below. Use the completed form only when every read-back of the work passed; otherwise the partial-state form, naming what is verified, what is pending and the next owner.
 2. Leave out every secret. Say where a secret is kept ("stored in the password manager"), never the value.
 3. Keep the markdown plain: short sentences, no tables. The sources read do not say how the comment editor stores pasted markdown, and plain text is the least likely to change on the way in.
-4. Save the note as plain text in `[NOTE_FILE]` (a `.md` or `.txt` file) on the administrator's machine.
+4. Save the note as plain text in `[NOTE_FILE]` (a `.md` or `.txt` file under this repo's `tasks/` folder or the system temporary folder) on the administrator's machine; `note` refuses a file anywhere else.
 
 **Verification checkpoint:** [ ] completed or partial form matches the work's read-backs · [ ] no secret, no real name or address beyond what the ticket already holds.
 

@@ -46,9 +46,12 @@
 //    posting steps (open the issue, paste the note in the comment box, post it) and
 //    the exact verify-comment line. note --execute is refused (Aegis never posts).
 //    A body file is read only when its name, and the name of the file it links to,
-//    ends in .md or .txt and no folder on either path is .ssh, .aws, .config, .gnupg
-//    or .claude; a body with a line the commit scanner blocks (a private key block, a
-//    token, a real email address) is refused too. A refused file is never printed.
+//    ends in .md or .txt, no folder on either path is .ssh, .aws, .config, .gnupg
+//    or .claude, and the file it resolves to sits under this repo's tasks/ folder or
+//    the system temporary folder (a .txt holding a password in plain words, outside
+//    those two, is refused before it is read); a body with a line the commit scanner
+//    blocks (a private key block, a token, a real email address) is refused too. A
+//    refused file is never printed.
 //    The digest and not-before that note prints are the ones verify-comment accepts.
 // 7. verify-* print JSON with verified, observed and expected values, and exit 0 when
 //    the read proves the human's write and 2 when it does not: verify-comment (a
@@ -152,12 +155,12 @@ function membersPage(nodes, { hasNextPage = false, endCursor = null } = {}) {
   return reply({ users: { nodes, pageInfo: { hasNextPage, endCursor } } });
 }
 
-async function cli(argv, { env = ENV, replies = [], now = () => NOW } = {}) {
+async function cli(argv, { env = ENV, replies = [], now = () => NOW, noteRoots } = {}) {
   const transport = queuedTransport(replies);
   const out = [];
   const err = [];
   const code = await linear.run(argv, env, {
-    transport, now, sleep: noSleep,
+    transport, now, sleep: noSleep, ...(noteRoots ? { noteRoots } : {}),
     out: (s) => { out.push(String(s)); },
     err: (s) => { err.push(String(s)); },
   });
@@ -493,6 +496,65 @@ test('note and digest read only a .md or .txt note outside key and settings fold
   assert.ok(ok.stdout.includes('Contact [USER@DOMAIN.COM] or [PHONE_NUMBER] if it fails again.'));
   const upper = write('NOTE.MD', 'Toner replaced.\n');
   assert.equal((await cli(['digest', '--body-file', upper])).code, 0, 'the extension is matched without regard to case');
+});
+
+test('note and digest read a note only from this repo\'s tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-linear-roots-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  // The note roots for this test: one folder standing in for tasks/; "Desktop" is
+  // anywhere else, such as a path copied from ticket text.
+  const root = path.join(dir, 'tasks');
+  const desktop = path.join(dir, 'Desktop');
+  fs.mkdirSync(root);
+  fs.mkdirSync(desktop);
+  const noteRoots = [root];
+  // The three bodies the review printed through note: secrets in formats the commit
+  // scanner does not know, built at run time so none sits in this source.
+  const secrets = {
+    'passwords.txt': ['password:', `${'Hunter2'.repeat(2)}!`].join(' '),
+    'cloud-keys.txt': ['aws', 'secret', 'access', 'key'].join('_') + ` = ${'Q7'.repeat(20)}`,
+    'env-copy.md': `LINEAR_API_KEY=${['lin', 'api', 'R5'.repeat(20)].join('_')}`,
+  };
+  const outside = Object.entries(secrets).map(([name, body]) => {
+    const file = path.join(desktop, name);
+    fs.writeFileSync(file, `Note for the ticket.\n${body}\n`);
+    return { file, body };
+  });
+  const linkIn = path.join(root, 'linked-note.md'); // inside a root, pointing out of it
+  fs.symlinkSync(outside[0].file, linkIn);
+  const cases = [...outside, { file: linkIn, body: outside[0].body }];
+  for (const { file, body } of cases) {
+    for (const argv of [['note', '--issue', ISSUE, '--body-file', file], ['digest', '--body-file', file]]) {
+      const { env, reads } = recordingEnv();
+      const r = await cli(argv, { env, noteRoots });
+      const label = `${argv[0]} ${path.relative(dir, file)}`;
+      assert.equal(r.code, 1, `${label}: ${r.stdout}${r.stderr}`);
+      assert.match(r.stderr, /REFUSED[\s\S]*outside this repo's tasks\/ folder and the system temporary folder/, label);
+      assert.equal(r.transport.calls.length, 0, label);
+      assert.deepEqual(linearReads(reads), [], label);
+      const all = r.stdout + r.stderr;
+      assert.ok(!all.includes(body) && !all.includes('Note for the ticket.'), `${label}: the file is never printed`);
+      assert.ok(!all.includes(path.basename(file)), `${label}: the refusal does not echo the path`);
+    }
+  }
+
+  // Control: a note saved under the root is read and printed.
+  const inside = path.join(root, 'note.md');
+  fs.writeFileSync(inside, 'Printer driver reinstalled. Test page printed.\n');
+  const ok = await cli(['note', '--issue', ISSUE, '--body-file', inside], { noteRoots });
+  assert.equal(ok.code, 0, ok.stderr);
+  assert.ok(ok.stdout.includes('\nPrinter driver reinstalled. Test page printed.\n'));
+
+  // The CLI's own roots are exactly this repo's tasks/ folder and the system temporary
+  // folder, and a file of this repo outside tasks/ (this adapter's README) is refused
+  // and not printed when no test override is given.
+  assert.deepEqual(linear.defaultNoteRoots(), [path.resolve(__dirname, '..', '..', 'tasks'), os.tmpdir()]);
+  const readme = path.join(__dirname, 'README.md');
+  const firstLine = fs.readFileSync(readme, 'utf8').split('\n').find((line) => line.trim().length > 20);
+  const repoFile = await cli(['note', '--issue', ISSUE, '--body-file', readme]);
+  assert.equal(repoFile.code, 1, repoFile.stdout);
+  assert.match(repoFile.stderr, /REFUSED/);
+  assert.ok(!(repoFile.stdout + repoFile.stderr).includes(firstLine), 'a repo file outside tasks/ is never printed');
 });
 
 test('verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2)', async () => {

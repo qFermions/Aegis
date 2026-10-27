@@ -11,8 +11,10 @@
 //   Offline (no credentials, no network, never --execute):
 //     note    --issue [ISSUE_ID] --body-file [NOTE_FILE]
 //     digest  --body-file [NOTE_FILE]
-//   [NOTE_FILE] is a .md or .txt file outside any .ssh, .aws, .config, .gnupg or .claude
-//   folder, and a body the commit scanner would block is refused, never printed.
+//   [NOTE_FILE] is a .md or .txt file under this repo's tasks/ folder or the system
+//   temporary folder (os.tmpdir()), outside any .ssh, .aws, .config, .gnupg or .claude
+//   folder; any other file, and a body the commit scanner would block, is refused and
+//   never printed.
 //   Reads (a dry run that prints the planned request unless --execute is given):
 //     viewer | issue --issue [ISSUE_ID] | comments --issue [ISSUE_ID] (the first 50 comments)
 //     states --team [@Aegion_LINEAR_TEAM] | labels | triage | members
@@ -48,6 +50,7 @@
 
 const crypto = require('node:crypto');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const {
@@ -141,13 +144,20 @@ checkDocuments(SPEC.graphql.documents);
 // ── The ticket note and its digest ───────────────────────────────────────────
 const NOTE_MAX_BYTES = 64 * 1024; // Aegis's own cap for a ticket note, not a Linear limit
 const NOT_BEFORE_MARGIN_MS = 10 * 60 * 1000; // allows for a clock difference
-// A note file is read only when all three hold, for the path given and for the file it
+// A note file is read only when all four hold, for the path given and for the file it
 // resolves to: (1) its name ends in .md or .txt (an allow-list: a private key, an AWS
 // credentials file or a JSON key file has another name, so it is never read as a note);
-// (2) no folder on the way is one that holds keys or tool settings; (3) no line of the
-// body is one the commit scanner would block (next function).
+// (2) no folder on the way is one that holds keys or tool settings; (3) the file it
+// resolves to sits under a note root: this repo's tasks/ folder or the system temporary
+// folder; (4) no line of the body is one the commit scanner would block (next function).
+// Rule 3 is the one that keeps a path taken from ticket text (a passwords.txt on the
+// Desktop, a copied .env saved as .md) out of the transcript: (1), (2) and (4) cannot
+// tell a password written in plain words from note text, so only where the file lives
+// can. A file someone puts under a note root is printed in full; keep only notes there.
 const NOTE_FILE_NAME = /^[^/\\]+\.(?:md|txt)$/i;
 const REFUSED_NOTE_FOLDERS = new Set(['.ssh', '.aws', '.config', '.gnupg', '.claude']);
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
+const defaultNoteRoots = () => [path.join(REPO_ROOT, 'tasks'), os.tmpdir()];
 
 // The commit scanner (scripts/pre-commit-check.js, canonical) exports safeDisplayPath,
 // which returns "[REDACTED_FILE_PATH]" for any string that carries one of its BLOCK
@@ -172,6 +182,18 @@ function refusedNotePath(file, how) {
   return null;
 }
 
+// True when the resolved file sits below one of the note roots (each root resolved too,
+// so a link to the temporary folder, as on macOS, still counts). A root that does not
+// exist holds nothing.
+function underNoteRoot(realFile, roots) {
+  return roots.some((root) => {
+    let base;
+    try { base = fs.realpathSync(root); } catch { return false; }
+    const rel = path.relative(base, realFile);
+    return rel !== '' && !path.isAbsolute(rel) && rel.split(/[/\\]+/)[0] !== '..';
+  });
+}
+
 // CRLF to LF, trailing spaces removed from each line, trailing newlines removed.
 function normaliseBody(text) {
   return String(text).replace(/\r\n/g, '\n').split('\n').map((line) => line.replace(/ +$/, '')).join('\n').replace(/\n+$/, '');
@@ -181,16 +203,21 @@ function noteDigest(text) {
   return crypto.createHash('sha256').update(normaliseBody(text), 'utf8').digest('hex');
 }
 
-function readNote(file) {
+function readNote(file, roots) {
   if (typeof file !== 'string' || !file || /[\u0000-\u001f\u007f]/.test(file)) throw new RefusedError('--body-file must be a file path');
   const named = refusedNotePath(file, 'names');
   if (named) throw new RefusedError(named);
   let text;
   try {
     // A link is judged by the file it points to as well, so a note.md that links to a
-    // key file, or into a key folder, is refused before a byte of it is read.
-    const target = refusedNotePath(fs.realpathSync(file), 'points to');
+    // key file, into a key folder, or out of the note roots is refused before a byte of
+    // it is read.
+    const real = fs.realpathSync(file);
+    const target = refusedNotePath(real, 'points to');
     if (target) throw new RefusedError(target);
+    if (!underNoteRoot(real, roots)) {
+      throw new RefusedError('--body-file is outside this repo\'s tasks/ folder and the system temporary folder; save the note in one of them and run note again (a path taken from a ticket is never read)');
+    }
     const stat = fs.statSync(file);
     if (!stat.isFile()) throw new RefusedError('--body-file is not a regular file');
     if (stat.size > NOTE_MAX_BYTES) throw new RefusedError(`--body-file is larger than ${NOTE_MAX_BYTES} bytes; a ticket note is shorter`);
@@ -500,8 +527,8 @@ const VERIFY = {
 };
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-function offline(command, a, now, out) {
-  const body = readNote(a.bodyFile);
+function offline(command, a, now, out, roots) {
+  const body = readNote(a.bodyFile, roots);
   const digest = noteDigest(body);
   if (command === 'digest') {
     out(renderResult({ state: STATES.OK, ok: true, command, sha256: digest, normalisation: 'CRLF to LF, trailing spaces removed from each line, trailing newlines removed' }));
@@ -526,7 +553,9 @@ async function run(argv, env = process.env, deps = {}) {
     }
     const def = COMMANDS[command];
     const a = validate(command, def, args);
-    if (def.kind === 'offline') return offline(command, a, now, out);
+    // deps.noteRoots exists for the tests; the CLI always uses this repo's tasks/ folder
+    // and the system temporary folder.
+    if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots());
 
     // The client only ever sees this view of the environment. It remembers the key
     // the contract read, so the printed output is redacted with it too; this file
@@ -577,4 +606,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { SPEC, run, WRITE_MUTATIONS, checkDocuments, normaliseBody, noteDigest };
+module.exports = { SPEC, run, WRITE_MUTATIONS, checkDocuments, normaliseBody, noteDigest, defaultNoteRoots };

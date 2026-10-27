@@ -34,6 +34,10 @@
 //    schema's, not "unverified"; the comments read is said to cover 50 comments; the
 //    ticket-note read-back names the poster with --author; and the adapter's usage
 //    text uses the dictionary's team token, not [TEAM_KEY].
+// 7. The note guard is described as it holds. ticket-note says `note` reads a file only
+//    from this repo's tasks/ folder or the system temporary folder, says a plain-text
+//    password inside them is still printed, and never promises that a mistyped path
+//    cannot print a key.
 //
 // Nothing here reads a credential or opens a socket: the runbooks are files on disk.
 
@@ -218,4 +222,15 @@ test('wording matches the sources: the scanner rule, the unsuspend role, the 50-
   assert.match(phaseE, /The `comments` read covers the first 50 comments only; on a longer thread, count the copies on the issue page/);
   const adapterSource = fs.readFileSync(path.join(__dirname, 'linear-client.js'), 'utf8');
   assert.ok(!adapterSource.includes('[TEAM_KEY]'), 'the adapter uses [@Aegion_LINEAR_TEAM], a dictionary token');
+});
+
+test('ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key', () => {
+  const note = text['linear-ticket-note'];
+  const inputs = section('linear-ticket-note', 'Inputs needed');
+  assert.match(inputs, /`note` reads only a `\.md` or `\.txt` file under this repo's `tasks\/` folder or the system temporary folder/);
+  assert.match(inputs, /A path taken from ticket text, such as a `passwords\.txt` on the Desktop, is refused before it is read\./);
+  assert.match(inputs, /a password written in plain words is not a format the scanner knows, so keep only the note there/);
+  assert.match(note, /`\[NOTE_FILE\]` \(the plain-text file[^)]*under this repo's `tasks\/` folder/);
+  assert.match(section('linear-ticket-note', 'Phase B'), /under this repo's `tasks\/` folder or the system temporary folder\) on the administrator's machine; `note` refuses a file anywhere else/);
+  assert.ok(!/never prints a key/.test(note), 'no promise that a mistyped path never prints a key');
 });

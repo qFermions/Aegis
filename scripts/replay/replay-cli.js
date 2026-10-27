@@ -149,9 +149,10 @@ function sanitizationHits(text) {
     [/\bpassword\s*[:=]\s*\S{4,}/i, 'plaintext password assignment'],
   ];
   for (const [re, label] of patterns) if (re.test(text)) hits.push(label);
+  const lowerForms = forms.map((f) => f.toLowerCase());
   for (const v of ['AEGION_DOMAIN', 'AEGION_ORG_NAME']) {
     const lit = process.env[v];
-    if (lit && lit.length > 3 && containsLiteral(text, lit, forms)) {
+    if (lit && lit.length > 3 && containsLiteral(text, lit, forms, lowerForms)) {
       hits.push(`tenant literal (${v})`);
     }
   }

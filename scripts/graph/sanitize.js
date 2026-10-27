@@ -92,9 +92,10 @@ function scanText(text, opts = {}) {
   lines.forEach((line, i) => {
     const n = i + 1;
     const forms = foldedForms(line); // one fold per line, shared by every check below
+    const lowerForms = forms.map((f) => f.toLowerCase()); // lower-cased once for the literal checks
 
     for (const literal of tenantLiterals) {
-      if (literal && containsLiteral(line, literal, forms)) {
+      if (literal && containsLiteral(line, literal, forms, lowerForms)) {
         result.blocks.push({ line: n, label: 'Tenant/org literal (SR-8) — use the [@Aegion_*] token', text: '[REDACTED — tenant literal on this line]' });
       }
     }

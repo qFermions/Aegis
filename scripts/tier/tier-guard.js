@@ -159,10 +159,17 @@ function hasForeignOrgToken(text, forms = foldedForms(text)) {
 
 // A tenant literal (SR-8) is found as written and in the folded forms, so a zero-width
 // character or a look-alike letter inside it does not get it past the gate. The literal
-// is folded the same way, so an accented org name still matches its folded text.
-function containsLiteral(text, literal, forms = foldedForms(text)) {
-  const needles = Array.from(new Set([String(literal).toLowerCase(), foldConfusables(literal).toLowerCase()])).filter(Boolean);
-  return needles.length > 0 && forms.some((f) => needles.some((n) => f.toLowerCase().includes(n)));
+// is folded the same way, so an accented org name still matches its folded text. The
+// needles are computed once per literal; lowerForms lets a caller lower-case a line once.
+const NEEDLES = new Map();
+function literalNeedles(literal) {
+  const key = String(literal);
+  if (!NEEDLES.has(key)) NEEDLES.set(key, Array.from(new Set([key.toLowerCase(), foldConfusables(key).toLowerCase()])).filter(Boolean));
+  return NEEDLES.get(key);
+}
+function containsLiteral(text, literal, forms = foldedForms(text), lowerForms = forms.map((f) => f.toLowerCase())) {
+  const needles = literalNeedles(literal);
+  return needles.length > 0 && lowerForms.some((f) => needles.some((n) => f.includes(n)));
 }
 
 // A bracketed token is exempt from a PII scan only when it IS a canonical placeholder:

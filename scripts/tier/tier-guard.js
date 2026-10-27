@@ -151,9 +151,23 @@ function containsLiteral(text, literal, forms = foldedForms(text)) {
   return needles.length > 0 && forms.some((f) => needles.some((n) => f.toLowerCase().includes(n)));
 }
 
+// A bracketed token is exempt from a PII scan only when it IS a canonical placeholder:
+// the literal [USER@DOMAIN.COM], the [@Aegion_*] family, or an upper-case token with no
+// "@" ([UPN], [JIRA-###], [PHONE_NUMBER]). maskCanonicalPlaceholders blanks those and
+// leaves everything else, so a real address next to a placeholder is still scanned.
+function isCanonicalPlaceholder(tok) {
+  if (tok === '[USER@DOMAIN.COM]') return true;
+  if (/^\[@Aegion_[A-Za-z0-9_]*\]$/.test(tok)) return true;
+  return !tok.includes('@') && /^\[[A-Z0-9_.,/#-]+\]$/.test(tok) && /[A-Z]/.test(tok);
+}
+function maskCanonicalPlaceholders(text) {
+  return String(text).replace(/\[[^\]\n]*\]/g, (tok) => (isCanonicalPlaceholder(tok) ? ' ' : tok));
+}
+
 module.exports = {
   assess, foldConfusables, ESCALATION_PATTERNS,
   foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, hasForeignOrgToken, containsLiteral,
+  isCanonicalPlaceholder, maskCanonicalPlaceholders,
 };
 
 if (require.main === module) {

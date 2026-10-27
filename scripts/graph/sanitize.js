@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 // Shared untrusted-text rules (pure, no I/O): one copy for this sanitizer and the replay cache.
-const { foldedForms, INJECTION_MARKERS, hasForeignOrgToken, containsLiteral } = require('../tier/tier-guard.js');
+const { foldedForms, INJECTION_MARKERS, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js');
 
 // ── Dangerous PowerShell patterns (WARN) — mirror of pre-commit-check.js ─────
 const DANGEROUS_PS_PATTERNS = [
@@ -78,10 +78,6 @@ function loadTenantLiterals() {
   return Array.from(new Set(literals.map((l) => l.toLowerCase())));
 }
 
-function isPlaceholderLine(line) {
-  return /\[.*\]/.test(line);
-}
-
 /**
  * Scan one text payload.
  * Returns { blocks:[], warnings:[], injectionFlags:[], piiWarnings:[] }
@@ -108,10 +104,11 @@ function scanText(text, opts = {}) {
     for (const { pattern, label } of DANGEROUS_PS_PATTERNS) {
       if (pattern.test(line)) { result.warnings.push({ line: n, label, text: line.trim().slice(0, 100) }); break; }
     }
-    if (!isPlaceholderLine(line)) {
-      for (const { pattern, label } of PII_PATTERNS) {
-        if (pattern.test(line)) result.piiWarnings.push({ line: n, label });
-      }
+    // Canonical placeholders are blanked, nothing else: a real address or number on
+    // the same line as [JIRA-###] or [UPN] is still found.
+    const unmasked = maskCanonicalPlaceholders(line);
+    for (const { pattern, label } of PII_PATTERNS) {
+      if (pattern.test(unmasked)) result.piiWarnings.push({ line: n, label });
     }
     if (hasForeignOrgToken(line, forms)) {
       result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });

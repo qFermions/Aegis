@@ -392,3 +392,16 @@ test('B11 list labels every row with its integrity and prints no summary for a r
   assert.equal(rows[control].integrity, 'intact');
   assert.equal(typeof rows[control].summary, 'string');
 });
+
+// ── review round 2: a placeholder on the line does not exempt a real address from the PII gate ──
+
+test('B12 a real address next to a canonical placeholder is still flagged at the edge and blocked at memory propose', () => {
+  const { scanText } = require(path.join(ROOT, 'scripts', 'graph', 'sanitize.js'));
+  const address = ['canary.mailbox', 'not-a-real-tenant.com'].join('@');
+  assert.equal(scanText(`Contact ${address} about [JIRA-###] for [UPN]`).piiWarnings.length, 1, 'the placeholder must not hide the address');
+  assert.equal(scanText('Contact [USER@DOMAIN.COM] about [JIRA-###]').piiWarnings.length, 0, 'canonical placeholders alone stay clean');
+  const dir = freshDir('b12');
+  const r = propose(dir, { ...PROPOSALS.enrollment, detail: `Escalate to ${address} and log it on [JIRA-###].` });
+  assert.equal(r.code, 3, `memory must refuse the address: ${short(r)}`);
+  assert.equal(recordFiles(dir).length, 0, 'nothing persists');
+});

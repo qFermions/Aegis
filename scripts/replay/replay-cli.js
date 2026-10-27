@@ -51,7 +51,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral } = require('../tier/tier-guard.js'); // pure functions, no I/O
+const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
@@ -159,7 +159,7 @@ function sanitizationHits(text) {
   // token such as [USER@DOMAIN.COM] / [JIRA-###] or the [@Aegion_*] family. A
   // bracket wrapped around a real, lower-case address or a digit string is not
   // a placeholder and is scanned like any other text.
-  const unbracketed = String(text).replace(/\[[^\]\n]*\]/g, (tok) => (isCanonicalPlaceholder(tok) ? ' ' : tok));
+  const unbracketed = maskCanonicalPlaceholders(text);
   for (const m of unbracketed.matchAll(EMAIL_LITERAL)) {
     const domain = m[0].slice(m[0].indexOf('@') + 1);
     if (!ALLOWED_EMAIL_DOMAIN.test(domain)) { hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])'); break; }
@@ -182,16 +182,7 @@ function injectionHits(text, forms) {
 // +country (0) trunk form · E.164 without separators · bare ten digits
 const PHONE_LITERAL = /(?:\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|\+\d{1,3}\s*\(0\)\s*\d{2,4}(?:[\s-]\d{2,4}){1,4}\b|\+\d{1,3}(?:[\s-]\d{2,4}){2,4}\b|\+\d{9,15}\b|\b\d{10}\b)/;
 
-// A bracketed token is exempt from the PII scan only when it IS a canonical
-// placeholder: the literal [USER@DOMAIN.COM], the [@Aegion_*] family, or an
-// upper-case token with no "@" (e.g. [UPN], [JIRA-###], [PHONE_NUMBER]). An
-// upper-case real address or a digit string with a trailing "#" is not one.
-function isCanonicalPlaceholder(tok) {
-  if (tok === '[USER@DOMAIN.COM]') return true;
-  if (/^\[@Aegion_[A-Za-z0-9_]*\]$/.test(tok)) return true;
-  return !tok.includes('@') && /^\[[A-Z0-9_.,/#-]+\]$/.test(tok) && /[A-Z]/.test(tok);
-}
-
+// Canonical placeholders are recognised by the shared rule in scripts/tier/tier-guard.js.
 // Shape safety: only pure-ASCII tickets are shape-eligible. A homoglyph ("wıpe",
 // Cyrillic "а") or an invisible format character (a zero-width space between
 // "wi" and "pe") could otherwise slip past an English risk pattern and let a

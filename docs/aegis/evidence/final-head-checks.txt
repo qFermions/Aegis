@@ -1,0 +1,42 @@
+# final-head checks at fbf6a15, 2026-10-27T09:27:16Z
+$ wc -c CLAUDE.md
+19041 CLAUDE.md
+# exit: 0
+$ node -e "const s=require('fs').readFileSync('CLAUDE.md','utf8').replace(/\r\n/g,'\n'); console.log(s.length + ' characters (LF-normalized)')"
+18824 characters (LF-normalized)
+# exit: 0
+$ git show d5fc8c0:CLAUDE.md | wc -c
+39948
+# exit: 0
+$ git show d5fc8c0:CLAUDE.md | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(s.replace(/\r\n/g,'\n').length + ' characters (LF-normalized) at d5fc8c0'))"
+39360 characters (LF-normalized) at d5fc8c0
+# exit: 0
+$ grep -c "^## Harness$" CLAUDE.md
+1
+# exit: 0
+$ grep -c "^## Review$" CLAUDE.md
+1
+# exit: 0
+$ git diff --numstat d5fc8c0...HEAD -- CLAUDE.md PRODUCT_CONTRACT.md
+9	262	CLAUDE.md
+73	1	PRODUCT_CONTRACT.md
+# exit: 0
+$ (python) compare the boundary sentence and the ## Harness and ## Review sections of CLAUDE.md at d5fc8c0 and at HEAD
+# Harness section: identical (979 characters)
+# Review section: identical (916 characters)
+# boundary sentence ("AEGIS ADVISES; HUMAN ADMINISTRATORS EXECUTE ..." through the ADR-006 pointer): identical (208 characters)
+$ ls .claude/settings.json .claude/settings.local.json
+ls: cannot access '.claude/settings.json': No such file or directory
+ls: cannot access '.claude/settings.local.json': No such file or directory
+# exit: 2
+$ sed -n 1,7p .claude/agents/evidence-reviewer.md
+---
+name: evidence-reviewer
+description: Read-only reviewer. Checks finished outputs against their acceptance checks and sources and returns a verdict table. Use once per batch before reporting done.
+tools: Read, Grep, Glob, WebSearch, WebFetch
+model: opus
+effort: high
+---
+# exit: 0
+$ (python) count docs/security/STATE_CHANGE_INVENTORY.json examples by mode
+# examples 499: {'preview': 312, 'gated': 187}; clientBoundaries 7: {'gated': 3, 'preview': 4}

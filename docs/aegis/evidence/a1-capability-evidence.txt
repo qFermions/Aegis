@@ -1,38 +1,40 @@
 $ (python) A1 over docs/aegis/capability-map.md: every row has evidence; every "verified now" row cites a capture from this session
-# a capture from this session: a path under docs/baseline/ or docs/aegis/evidence/ (both written by batch 1 on 2026-10-27)
-# row 1: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 2: status=partial; evidence kinds=file; cites this session=no; ok
-# row 3: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 4: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 5: status=implemented but unverified; evidence kinds=file; cites this session=no; ok
-# row 6: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 7: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 8: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 9: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 10: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 11: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 12: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 13: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 14: status=missing; evidence kinds=file; cites this session=yes; ok
-# row 15: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 16: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 17: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 18: status=missing; evidence kinds=file; cites this session=yes; ok
-# row 19: status=missing; evidence kinds=file; cites this session=yes; ok
-# row 20: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 21: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 22: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 23: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 24: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 25: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 26: status=missing; evidence kinds=file; cites this session=yes; ok
-# row 27: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 28: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 29: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 30: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 31: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 32: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 33: status=verified now; evidence kinds=file; cites this session=yes; ok
-# row 34: status=partial; evidence kinds=file; cites this session=yes; ok
-# row 35: status=partial; evidence kinds=file; cites this session=yes; ok
-# rows 35, failing 0
+# at fbf6a15, 2026-10-27T09:27:16Z; a capture from this session is a path under docs/baseline/ or docs/aegis/evidence/ (all written on 2026-10-27)
+# row 1: platform=Microsoft (hybrid AD, Entra, M365, Excha; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 2: platform=Microsoft; status=partial; evidence kinds=file; cites this session=no; ok
+# row 3: platform=Microsoft; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 4: platform=Google (Workspace, Admin console, Gmail,; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 5: platform=Google; status=implemented but unverified; evidence kinds=file; cites this session=no; ok
+# row 6: platform=Okta; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 7: platform=Jamf Pro and macOS; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 8: platform=Cisco Meraki, VoIP provider, Zoom Rooms; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 9: platform=Microsoft (Entra ID Protection, Defender; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 10: platform=Microsoft; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 11: platform=Google; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 12: platform=Google and Okta; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 13: platform=Microsoft; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 14: platform=Google Workspace; status=missing; evidence kinds=file; cites this session=yes; ok
+# row 15: platform=Platform-neutral (synthetic JSON logs, l; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 16: platform=Microsoft; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 17: platform=Google, Okta, Jamf; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 18: platform=Microsoft (Azure); status=missing; evidence kinds=file; cites this session=yes; ok
+# row 19: platform=Google Cloud; status=missing; evidence kinds=file; cites this session=yes; ok
+# row 20: platform=Platform-neutral (Node 24); status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 21: platform=Windows, Linux, POSIX; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 22: platform=Microsoft; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 23: platform=Platform-neutral; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 24: platform=Platform-neutral; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 25: platform=Platform-neutral (Node 24, pwsh 7.5.4, b; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 26: platform=Platform-neutral; status=missing; evidence kinds=file; cites this session=yes; ok
+# row 27: platform=Platform-neutral; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 28: platform=Platform-neutral; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 29: platform=Platform-neutral; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 30: platform=Microsoft (portal, PowerShell, Graph); status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 31: platform=Google, Okta, Jamf, macOS (portal and sh; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 32: platform=Jira Service Management; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 33: platform=Platform-neutral, with Google, Okta and ; status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 34: platform=Platform-neutral; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 35: platform=Platform-neutral; status=partial; evidence kinds=file; cites this session=yes; ok
+# row 36: platform=Google, Okta, Jamf; status=verified now; evidence kinds=file; cites this session=yes; ok
+# rows 36, failing 0; status counts {'verified now': 18, 'partial': 13, 'implemented but unverified': 1, 'missing': 4}; rows whose platform is "Microsoft and Google": 0
+# exit: 0

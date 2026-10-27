@@ -34,6 +34,12 @@
 //    schema's, not "unverified"; the comments read is said to cover 50 comments; the
 //    ticket-note read-back names the poster with --author; and the adapter's usage
 //    text uses the dictionary's team token, not [TEAM_KEY].
+// 8. A reversal over more than 10 issues is its own R3 change. Each gate whose Scope
+//    covers more than 10 issues names its reversal as its own reviewed or R3 change;
+//    the bulk delete's written rollback path is a bulk restore with [FILE_NAME] as its
+//    pre-state, the independent review, a per-issue restore phrase and read-back, a
+//    count check and the last restore day, never N single R1 restores; the R1 restore
+//    gate says so too.
 // 7. The note guard is described as it holds. ticket-note says `note` reads a file only
 //    from this repo's tasks/ folder or the system temporary folder, says a plain-text
 //    password inside them is still printed, and never promises that a mistyped path
@@ -222,6 +228,22 @@ test('wording matches the sources: the scanner rule, the unsuspend role, the 50-
   assert.match(phaseE, /The `comments` read covers the first 50 comments only; on a longer thread, count the copies on the issue page/);
   const adapterSource = fs.readFileSync(path.join(__dirname, 'linear-client.js'), 'utf8');
   assert.ok(!adapterSource.includes('[TEAM_KEY]'), 'the adapter uses [@Aegion_LINEAR_TEAM], a dictionary token');
+});
+
+test('a reversal over more than 10 issues is its own R3 change: the bulk delete rolls back by a reviewed bulk restore, never by N single R1 restores', () => {
+  const bulk = ALL_GATES.filter((g) => /^exactly the issues in \[FILE_NAME\][^;]*more than 10/.test(g.scope));
+  assert.deepEqual(bulk.map((g) => g.id).sort(), ['linear-workspace-admin-bulk-delete-portal', 'linear-workspace-admin-bulk-move-portal']);
+  for (const g of bulk) assert.match(g.reversibility, /its own (?:R3|reviewed) change/, `${g.id}: the reversal of a mass change is itself a reviewed change`);
+  const del = bulk.find((g) => g.id === 'linear-workspace-admin-bulk-delete-portal');
+  const rollback = /a bulk restore of every identifier in `?\[FILE_NAME\]`?, its own R3 change: `?\[FILE_NAME\]`? is its pre-state, it gets the independent review, each issue is restored under `?RESTORE LINEAR ISSUE \[ISSUE_ID\]`? and read back with the `?issue`? read, the restored count must equal the line count of `?\[FILE_NAME\]`?, and it finishes before the last restore day/;
+  assert.match(del.reversibility, rollback, 'the Reversibility line names the bulk restore as its own R3 change');
+  assert.match(del.action, rollback, 'the PORTAL ACTION waits for that rollback path');
+  const admin = text['linear-workspace-admin'];
+  assert.ok(!/restored under the restore gate, one at a time/.test(admin), 'no rollback path of single restores');
+  const restore = ALL_GATES.find((g) => g.id === 'linear-workspace-admin-restore-portal');
+  assert.match(restore.reversibility, /^R1\b/);
+  assert.match(restore.scope, /restoring the issues of a bulk delete \(more than 10\) is not a run of this gate alone but the bulk restore named in Phase C, its own R3 change/);
+  assert.match(section('linear-workspace-admin', '⚠️ Risk warning'), /undoing a bulk delete of 40 issues is a bulk restore: its own R3 change/);
 });
 
 test('ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key', () => {

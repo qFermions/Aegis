@@ -112,13 +112,25 @@ development-plane request — dispatch that agent, never the support lane.
 
 ## Where the rest lives
 
-Moved out of this file in batch 1 (2026-10-27) so it stays under 20,000 bytes; open the file when the task needs it.
+Moved out of this file in batch 1 so it stays under 20,000 bytes (a test checks it); open the file when the task needs it. Rule 11 covers these files too: never ask the operator for what they already say.
 
-- Identity, Core Behavior Rules 13 to 17 (teaching), training mode, tone: `docs/aegis/operating-rules.md`
-- Workflow orchestration (plan mode, verification, execution shapes, independent review), self-improvement loop, operational memory, task management, error recovery, portal navigation, ticket response format, output templates, diagnostic trees, onboarding and offboarding, escalation, PowerShell reference with the script safety scan and the extended confirmation gate, build/upgrade mode, reference docs: `docs/aegis/workflow.md`
-- Live environment state (VoIP and VPN migrations, MFA reset gotcha), physical security, Jira ticket fields, active projects: `docs/aegis/operator-context.md`
-- Product identity, scope and boundary: `PRODUCT_CONTRACT.md` · routing doctrine and live-capability map: `docs/harness.md` · capabilities and the boundary audit: `docs/aegis/capability-map.md`, `docs/aegis/boundary-audit.md` · current state: `PROJECT_STATE.md`
-- Repo stack: Node 24 (`.nvmrc`) and PowerShell 7 for the test battery, no package manifest; declared checks in `EVALUATE.md` Part A and `.github/workflows/ci.yml`. A test keeps this file under 20,000 bytes (`scripts/repository-structure.test.js`).
+- `docs/aegis/workflow.md`: how a ticket is worked. Replay check first, then the memory check, then the response format; plan mode, verification, execution shapes, independent review; error recovery (one retry, then the BLOCKED report; SR-5); the rest of the PowerShell reference; build/upgrade mode.
+- `docs/aegis/operating-rules.md`: identity, teaching rules 13 to 17, training mode, tone.
+- `docs/aegis/operator-context.md`: site migration status, the MFA reset gotcha, physical security, Jira fields, active projects.
+- `PRODUCT_CONTRACT.md` (scope and boundary) · `docs/harness.md` (routing doctrine) · `docs/aegis/capability-map.md`, `docs/aegis/boundary-audit.md` · `PROJECT_STATE.md`.
+- Repo stack: Node 24 (`.nvmrc`), PowerShell 7 for the tests, no package manifest; checks in `EVALUATE.md` Part A and `.github/workflows/ci.yml`.
+
+---
+
+## Script gates (the rest of the PowerShell reference is in `docs/aegis/workflow.md`)
+
+### Script Safety Auto-Scan
+
+Before presenting ANY PowerShell script, scan it for the dangerous-cmdlet patterns enforced by `scripts/pre-commit-check.js` (canonical list there and in `modules/automation/pre_commit_hooks.md` — Remove-*/Clear-*/Disable-*/Revoke-*/Format-*, `IEX`, plaintext credentials, `git push --force`, `git reset --hard`). If any match, prepend: `⚠️ SCRIPT SAFETY SCAN — Line [N]: [cmdlet] — [risk]. Confirm each flagged line before running.`
+
+### Extended Confirmation Gate
+
+`modules/security/security-doctrine.md` SR-2 is the canonical destructive-action gate (its list, verbatim there: license removal · account deletion/disable · device wipe/retire/delete · group/DL removal affecting permissions · mass operations >10 objects · `git push --force` / `git reset --hard` · modifying the agent's own permission model (`.claude/settings.local.json`) · `Invoke-Expression`/`IEX` · installing PowerShell modules). On top of SR-2, two more require explicit "yes, proceed": running any script in `scripts/` against a production server or AD, and creating or modifying files outside `tasks/`, `scripts/`, `.claude/commands/`.
 
 ---
 

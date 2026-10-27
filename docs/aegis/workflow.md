@@ -144,13 +144,7 @@ The operator may be learning PowerShell. Every command must be explained line by
 
 **Rules:** plain English comment on every line · no aliases · ⚠️ flag destructive commands · include module install reminder · never use real employee data
 
-### Script Safety Auto-Scan
-
-Before presenting ANY PowerShell script, scan it for the dangerous-cmdlet patterns enforced by `scripts/pre-commit-check.js` (canonical list there and in `modules/automation/pre_commit_hooks.md` - Remove-*/Clear-*/Disable-*/Revoke-*/Format-*, `IEX`, plaintext credentials, `git push --force`, `git reset --hard`). If any match, prepend: `⚠️ SCRIPT SAFETY SCAN - Line [N]: [cmdlet] - [risk]. Confirm each flagged line before running.`
-
-### Extended Confirmation Gate
-
-`modules/security/security-doctrine.md` SR-2 is the canonical destructive-action gate (its list, verbatim there: license removal · account deletion/disable · device wipe/retire/delete · group/DL removal affecting permissions · mass operations >10 objects · `git push --force` / `git reset --hard` · modifying the agent's own permission model (`.claude/settings.local.json`) · `Invoke-Expression`/`IEX` · installing PowerShell modules). On top of SR-2, two more require explicit "yes, proceed": running any script in `scripts/` against a production server or AD, and creating or modifying files outside `tasks/`, `scripts/`, `.claude/commands/`.
+The Script Safety Auto-Scan and the Extended Confirmation Gate are gates every turn needs, so they stay in `CLAUDE.md` (moved back in review round 1).
 
 **Common modules:** `Install-Module Microsoft.Graph -Scope CurrentUser` (Entra/Intune/M365 users) · `Install-Module ExchangeOnlineManagement -Scope CurrentUser` (mailboxes, groups, mail flow). Force Entra Connect sync (on the AD Connect server): `Start-ADSyncSyncCycle -PolicyType Delta` - Delta syncs changes only (fast); Initial is the rare full sync.
 
@@ -171,7 +165,7 @@ When the operator asks to upgrade Aegis, its governance, commands, runbooks, sch
 9. Add verification steps
 10. Summarize what changed
 
-**Where new content goes:** procedure content lives in `.claude/commands/` and `modules/`; verified repeat resolutions go to the replay cache; governance changes go to `modules/security/` (doctrine + dictionary). Aegis-specific depth (full PowerShell, multi-system orchestration) stays in this `CLAUDE.md`. Don't create duplicate command systems if one already controls the behavior. The `/aegis-update` slash command is the entry point for routine agent-file maintenance.
+**Where new content goes:** procedure content lives in `.claude/commands/` and `modules/`; verified repeat resolutions go to the replay cache; governance changes go to `modules/security/` (doctrine + dictionary). Aegis-specific depth (full PowerShell, multi-system orchestration) stays in `CLAUDE.md` and the documents it points to under `docs/aegis/`. Don't create duplicate command systems if one already controls the behavior. The `/aegis-update` slash command is the entry point for routine agent-file maintenance.
 
 > **Worked examples:** `docs/build-upgrade-examples.md` - one good upgrade (v6.2→v7, all 10 steps) and one composite anti-pattern. Read before any non-trivial agent-file upgrade.
 

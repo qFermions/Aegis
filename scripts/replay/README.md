@@ -59,8 +59,10 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   C14 (the suffix list equals the dictionary).
 - **Re-checked at read time.** `lookup` and `render` run the same persistence
   boundary over the stored ticket and solution before they serve a case;
-  `status` and `list` also check the verification evidence and history, and
-  print only the case id and labels for a case that fails. A case
+  `status` and `list` print every field, so they check every string and key
+  name of the case one by one and require a `case-NNNN` id and a known status,
+  and print only the case id (or null) and labels for a case that fails
+  (A7, A9 in `scripts/untrusted/instruction-injection.test.js`). A case
   changed on disk outside the CLI so that it carries instruction-shaped text, a
   secret, a real address, the tenant literal or a second org namespace is a
   `MISS` with a `withheld` list of labels (lookup) or exit 4 (render); its text is

@@ -199,11 +199,23 @@ function hasNonAscii(text) {
 // so that it carries instruction-shaped text, a secret, a real address, the
 // tenant literal or a second org namespace is withheld. Labels only, never text.
 // Residual: a gate-clean edit is not detected (case files carry no seal).
+// audit: status and list print every field of the case, so every string leaf and key
+// name is checked one by one (a newline inside a leaf stays a newline), and the
+// caseId and status must have their own shapes.
+const CASE_STATUSES = new Set(['candidate', 'verified', 'stale']);
+function stringLeaves(value, out = []) {
+  if (typeof value === 'string') out.push(value);
+  else if (Array.isArray(value)) value.forEach((v) => stringLeaves(v, out));
+  else if (value && typeof value === 'object') for (const [k, v] of Object.entries(value)) { out.push(k); stringLeaves(v, out); }
+  return out;
+}
 function storedCaseHits(c, { audit = false } = {}) {
-  const texts = [c.ticket, c.solution];
-  // status and list also print the verification evidence and the history: check them too.
-  if (audit) texts.push((c.provenance && c.provenance.evidence) || '', JSON.stringify(c.history || []));
-  return Array.from(new Set(texts.flatMap((t) => (typeof t === 'string' ? sanitizationHits(t) : ['stored text is not a string']))));
+  const hits = [c.ticket, c.solution].some((t) => typeof t !== 'string') ? ['stored text is not a string'] : [];
+  const texts = audit ? stringLeaves(c) : [c.ticket, c.solution].filter((t) => typeof t === 'string');
+  for (const t of texts) hits.push(...sanitizationHits(t));
+  if (audit && !validCaseId(c.caseId)) hits.push('stored caseId is not a case id');
+  if (audit && !CASE_STATUSES.has(c.status)) hits.push('stored status is not a replay status');
+  return Array.from(new Set(hits));
 }
 const validCaseId = (id) => (/^case-\d{4}$/.test(String(id)) ? id : null);
 

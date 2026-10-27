@@ -557,6 +557,18 @@ test('the transition preflight prints a HUMAN-RUN procedure bound to the resolve
   assert.ok(result.stdout.includes("verify-transition --issue HELP-123 --issue-id 10001 --from-version 1000 --to-status '[STATUS AFTER]' --execute"));
 });
 
+test('a status version that is not a plain timestamp is refused before anything is printed to paste', async () => {
+  const hostile = { issueKey: 'HELP-123', issueId: '10001', currentStatus: { status: 'Open', statusDate: { iso8601: '$(touch /tmp/aegis-pwned)' } } };
+  const queue = queuedFetch([{ status: 200, json: hostile }, transitionPage([{ id: '20', name: 'Resolve' }])]);
+  const result = await invoke(['transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute'], { fetch: queue.fetch });
+  assert.equal(result.code, 2);
+  assert.doesNotMatch(result.stdout, /HUMAN-RUN|verify-transition|touch/);
+  const plain = { issueKey: 'HELP-123', issueId: '10001', currentStatus: { status: 'Open', statusDate: { iso8601: '2026-10-27T07:00:00.000+0000' } } };
+  const ok = await invoke(['transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute'], { fetch: queuedFetch([{ status: 200, json: plain }, transitionPage([{ id: '20', name: 'Resolve' }])]).fetch });
+  assert.equal(ok.code, 0);
+  assert.ok(ok.stdout.includes('--from-version 2026-10-27T07:00:00.000+0000 '), 'a plain ISO timestamp still prints');
+});
+
 test('verify-transition proves the same immutable request left the preflight status and fails closed otherwise', async (t) => {
   const argv = ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', '1000', '--to-status', 'Resolved', '--execute'];
   await t.test('moved to the expected status', async () => {
@@ -650,6 +662,7 @@ test('printed procedures never carry the token, make curl prompt for it, and quo
   const psLine = lines.find((line) => line.includes('Invoke-RestMethod '));
   assert.ok(psLine.includes("It''s down"), 'PowerShell doubles a straight apostrophe');
   assert.ok(psLine.includes('’’quoted’’'), 'PowerShell doubles a typographic apostrophe, which also ends a single-quoted string');
+  assert.ok(psLine.includes("-ContentType 'application/json; charset=utf-8'"), 'PowerShell before 7.4 needs the charset to send UTF-8');
   const verifyLine = lines.find((line) => line.includes('verify-create '));
   assert.doesNotMatch(verifyLine, /down|quoted|'/, 'the verify line carries no free text, so it pastes the same in any shell');
 });

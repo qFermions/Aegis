@@ -370,10 +370,12 @@ function psQuote(value) {
 }
 
 // The same write for PowerShell 7 on Windows: Get-Credential asks for the API token.
+// The charset is explicit: PowerShell before 7.4 encodes a string body as ISO-8859-1
+// unless the content type names one, which would mangle any non-ASCII text.
 function powershellPostLine(site, apiPath, payload) {
   return `     Invoke-RestMethod -Method Post -Uri ${psQuote(`https://${site}${apiPath}`)} -Authentication Basic ` +
     "-Credential (Get-Credential -UserName $env:JIRA_EMAIL -Message 'Atlassian API token') " +
-    `-ContentType 'application/json' -Body ${psQuote(serializePayload(payload))}`;
+    `-ContentType 'application/json; charset=utf-8' -Body ${psQuote(serializePayload(payload))}`;
 }
 
 function apiLines(site, apiPath, payload) {
@@ -469,7 +471,9 @@ function normalizeCustomerRequest(json, expectedIssueKey) {
   const date = json.currentStatus.statusDate || {};
   let statusVersion = '';
   if (Number.isInteger(date.epochMillis)) statusVersion = String(date.epochMillis);
-  else if (typeof date.iso8601 === 'string' && !/[\x00-\x1f\x7f]/.test(date.iso8601)) statusVersion = date.iso8601;
+  // The version is printed unquoted in the verify-transition line a human pastes, so
+  // it must be a timestamp and nothing else ($, backticks or spaces would be shell).
+  else if (typeof date.iso8601 === 'string' && /^[0-9A-Za-z:.+-]{1,64}$/.test(date.iso8601)) statusVersion = date.iso8601;
   if (statusVersion.length === 0) throw new ContractError('Jira returned no valid current-status version.');
   return { issueKey, issueId, currentStatus: status, statusVersion };
 }

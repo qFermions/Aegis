@@ -17,7 +17,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Facts before words.** Every bracket in a draft is filled from evidence in `[ISSUE_ID]` (scope, start time, workaround); a sentence that cannot be filled is deleted, never guessed.
 - **Right channel, right audience.** Confirm that `#[CHANNEL_NAME]` is not archived, is not shared with another organization (Slack Connect) and has no share with one pending, before posting internal incident details.
 - **One post, one confirmation.** The status update, each interim update and the resolved follow-up get their own draft file, digest and typed confirmation; a phrase never carries into a later post.
-- Posting is R1 (the sender can delete the message, or unsend it within 15 seconds on desktop), but an announcement reaches everyone at once: read the draft twice.
+- Posting is R1: one message, and the way back is a correction, posted as a new message through the same gate. Taking a post down is a message deletion, which this lane floors at T3, so it stays a planning-only preview here [slack-incident-comms-delete-post-preview]. An announcement reaches everyone at once: read the draft twice.
 - Slack labels here come from Slack's search-indexed help pages and a 2019 Slack blog, not the live pages (the hosts could not be opened on 2026-10-27): confirm each label on screen.
 
 ## Inputs needed
@@ -124,7 +124,7 @@ node scripts/adapters/slack-client.js digest --file [NOTE_FILE]
 - **Target:** [CHANNEL_NAME]
 - **Effect:** post one incident status update to one channel, exactly as saved in [NOTE_FILE]
 - **Scope:** one message in one channel; everyone in the channel sees it and may be notified
-- **Reversibility:** R1: the sender can delete the message from its own menu, or unsend it within 15 seconds on desktop; anyone who already read it has read it
+- **Reversibility:** R1: a wrong or outdated update is answered by a correction, posted as a new message through this same gate [slack-incident-comms-status-post-portal] with its own draft, digest and phrase; taking the post down is a deletion, a separately reviewed change [slack-incident-comms-delete-post-preview]; anyone who already read it has read it
 - **Required confirmation:** Type exactly `SEND INCIDENT UPDATE TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-incident-comms-status-post-portal]:** Only after Phase A, the digest, and the exact match:
@@ -138,6 +138,8 @@ node scripts/adapters/slack-client.js verify-posted --channel [CHANNEL_ID] --exp
 ```
 
 If `verify-posted` fails while the message is visible, the posted text differs from the file (an edit, a changed character or added formatting): record the GUI read-back and the mismatch in `[ISSUE_ID]`, and do not repost just to make the check pass.
+
+> **PREVIEW ONLY [slack-incident-comms-delete-post-preview]:** Planning only; nothing here authorizes deleting or unsending a posted update, in Phase B or Phase D. A deleted message is gone for good, this lane floors deleting messages at T3, and `/slack-retention-export` Phase E gates a message deletion at R3, so taking a post down is a separately reviewed change: record in `[ISSUE_ID]` which post, why (for example it carries data it should not), and who approved it. A mistake in the text is answered with a correction through the same gate instead. Slack's author menu (hover → ⋮ → Delete message) and the 15-second desktop unsend come from a search excerpt and are named here for planning only.
 
 **Verification checkpoint:** [ ] `verify-posted` passes, or the mismatch is recorded with the GUI read-back · [ ] the digest is in the ticket.
 
@@ -162,7 +164,7 @@ If `verify-posted` fails while the message is visible, the posted text differs f
 - **Target:** [CHANNEL_NAME]
 - **Effect:** post one resolved follow-up to one channel, exactly as saved in [NOTE_FILE]
 - **Scope:** one message in one channel; everyone in the channel sees it and may be notified
-- **Reversibility:** R1: the sender can delete the message from its own menu, or unsend it within 15 seconds on desktop; anyone who already read it has read it
+- **Reversibility:** R1: a wrong follow-up is answered by a correction, posted as a new message through this same gate [slack-incident-comms-resolved-post-portal] with its own draft, digest and phrase; taking the post down is a deletion, a separately reviewed change [slack-incident-comms-delete-post-preview]; anyone who already read it has read it
 - **Required confirmation:** Type exactly `SEND RESOLVED UPDATE TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-incident-comms-resolved-post-portal]:** Only after the fix is verified in the ticket, the digest, and the exact match:

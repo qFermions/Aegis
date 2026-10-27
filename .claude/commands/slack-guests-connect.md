@@ -130,7 +130,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 - **Target:** [EXTERNAL_DOMAIN] invitation for channel [CHANNEL_NAME]
 - **Effect:** decline one Slack Connect invitation request
 - **Scope:** one pending request; nothing is shared and no existing channel changes
-- **Reversibility:** R1: the partner can send a new invitation (a search excerpt says the inviter must send a new one; not confirmed on the page itself)
+- **Reversibility:** R1: the partner can send a new invitation, which comes back through the approve gate [slack-guests-connect-approve-invitation-portal] (a search excerpt says the inviter must send a new one; not confirmed on the page itself)
 - **Required confirmation:** Type exactly `DECLINE SLACK CONNECT INVITATION FROM [EXTERNAL_DOMAIN] TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-decline-invitation-portal]:** Only after the exact match:

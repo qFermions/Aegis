@@ -276,7 +276,7 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 - **Target:** [@Aegion_SLACK_URL]
 - **Effect:** reset every Slack session in the workspace for the group chosen in the dialog; every member in that group must sign in again
 - **Scope:** a workspace-wide mass action across the chosen group (the dialog filters by SSO status); it needs SSO; choosing everyone also signs out the administrator who runs it
-- **Reversibility:** R3 (mass action): nothing to undo and no data is lost, but every affected member is interrupted and must sign in again
+- **Reversibility:** R3 (mass action): no undo, and none is needed for data, since nothing is lost; every affected member is interrupted and must sign in again
 - **Required confirmation:** Type exactly `RESET ALL SLACK SSO SESSIONS FOR [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-user-lifecycle-session-reset-portal]:** Only after a ticket from a verified requester, the independent review, a warning to members, and the exact match:

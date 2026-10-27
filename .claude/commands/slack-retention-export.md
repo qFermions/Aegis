@@ -13,7 +13,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- Six changes, six gates, six phrases: create a legal hold (R1), export public channels (R3, an irreversible disclosure of every public channel), export every conversation including DMs (R3), shorten retention (R3), delete one member's messages (R3), delete a channel (R3). Applying to Slack for the all-conversations export and deleting files stay planning-only previews here.
+- Six changes, six gates, six phrases: create a legal hold (R1), export public channels (R3, an irreversible disclosure of every public channel), export every conversation including DMs (R3), shorten retention (R3), delete one member's messages (R3), delete a channel (R3). Applying to Slack for the all-conversations export, releasing or narrowing a legal hold, and deleting files stay planning-only previews here.
 - **Retention deletes, message deletion and channel deletion are permanent, and an export cannot be recalled.** Slack runs retention deletions once a day; lengthening retention afterwards brings nothing back; deleting a channel removes its history whatever the retention setting says. Every R3 gate here runs only after an independent out-of-session review and, where anything may be needed later, an export first.
 - **Retention is an owner decision.** A Workspace Admin cannot change it: the request goes to a Workspace Owner (or the Org Owner when an org-level policy exists), never around them.
 - **Private channels and DMs leave Slack only through Slack's approved export.** Slack rejects an application unless it shows valid legal process, the members' consent, or a legal requirement or right.
@@ -81,12 +81,14 @@ Exit 0 is a read; exit 2 is a failed read with Slack's error code only (for exam
 - **Target:** custodian [USER_ID], hold named [ISSUE_ID]
 - **Effect:** create one legal hold that preserves one custodian's messages and files
 - **Scope:** one custodian (a hold takes up to 1,000) for the conversations and date range chosen; Slack Connect content is excluded
-- **Reversibility:** R1 to create: edit the hold or remove the custodian later (that path was not confirmed in the sources read); releasing a hold is effectively R3, because the held data then falls under retention deletion
+- **Reversibility:** R1 to create: the hold only adds protection; taking it back (removing the custodian, narrowing the hold or releasing it) lets the held data fall under retention deletion, so it is a separately reviewed R3 change [slack-retention-export-legal-hold-release-preview] whose path was not confirmed in the sources read
 - **Required confirmation:** Type exactly `CREATE LEGAL HOLD [ISSUE_ID] FOR CUSTODIAN [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-retention-export-legal-hold-portal]:** Only after the written approval is in the ticket and the exact match:
 1. Slack → org name → Tools & settings → Organization settings → Security → Legal Holds → **Create Legal Hold** → name it `[ISSUE_ID]` → choose the conversations and the date range → **Add Custodians** → `[USER_ID]` → **Add** → Save.
 2. GUI read-back: Legal Holds lists `[ISSUE_ID]` with custodian `[USER_ID]`. The adapter has no legal-hold read (Slack's Legal Holds API is not on its allow-list), so the GUI is the read-back.
+
+> **PREVIEW ONLY [slack-retention-export-legal-hold-release-preview]:** Planning only; nothing here authorizes removing a custodian, narrowing a hold's conversations or date range, or releasing a hold. Each one lets the custodian's data fall back under retention deletion, so it is a separately reviewed R3 change: the written approval of **[org gap: who may approve retention, export and deletion requests]**, the independent out-of-session review, and an export first (Phase C) if anything may be needed later. The paths for editing and releasing a hold were not confirmed in the sources read (search excerpt only), so record what the Legal Holds page shows before anyone plans that change.
 
 **Verification checkpoint:** [ ] the hold is listed with its custodian · [ ] the ticket says Slack Connect content is not covered.
 
@@ -169,7 +171,7 @@ Before the gate:
 - **Target:** messages by [USER_ID] in channel [CHANNEL_ID]
 - **Effect:** delete each message by one member that the ticket lists, in one conversation
 - **Scope:** only the listed messages in one public channel, private channel or group DM; no bulk delete exists, so each message is one deletion
-- **Reversibility:** R3: deletion is permanent; the desktop unsend within 15 seconds is the only grace and belongs to the author
+- **Reversibility:** R3: deletion is permanent with no undo; the desktop unsend within 15 seconds belongs to the author, not to an administrator deleting someone else's message
 - **Required confirmation:** Type exactly `DELETE MESSAGES BY [USER_ID] IN SLACK CHANNEL [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-retention-export-delete-messages-portal]:** Only after the review, the holds check and any export, and the exact match, one conversation per phrase:

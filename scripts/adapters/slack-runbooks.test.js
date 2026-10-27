@@ -23,10 +23,12 @@
 //    member ID shown on the GUI record found by [USER@DOMAIN.COM], and every phase whose
 //    GUI step acts on that email and whose proof is a verify-* user read stops when the
 //    member ID is not [USER_ID] or the Phase A read already shows the end state.
-// 6. Every rollback a Reversibility field points to exists: a pointer ("under its own
-//    gate", "through Phase C", "a separately reviewed change" ...) names the gate's
-//    PORTAL ACTION id or a PREVIEW ONLY id in brackets, and every such id resolves to a
-//    marker in one of the six runbooks.
+// 6. Every rollback a Reversibility field points to exists: every Reversibility field
+//    names its rollback by a gate's PORTAL ACTION id or a PREVIEW ONLY id in brackets,
+//    or says plainly that there is no undo ("no undo", "cannot be undone", "cannot be
+//    recalled", "expires"); a gate below R3 names an id or its expiry; every id resolves
+//    to a marker in one of the six runbooks. Phrasing alone is never a rollback, and the
+//    earlier texts that were (legal hold, incident posts, SAML) fail as mutation cases.
 // 7. Read-backs check what they claim: incident comms stops on a channel pending a share
 //    with another organization and says which --not-before formats verify-posted takes;
 //    a declined Slack Connect invitation leaves is_ext_shared as Phase A read it; a
@@ -311,19 +313,35 @@ test('slack-user-lifecycle: every phase proved by a verify-* user read binds [US
 });
 
 // ── 6. Every rollback points to something that exists ───────────────────────────────
+// A Reversibility field either names its rollback by id (a gate's PORTAL ACTION id or a
+// PREVIEW ONLY id, in brackets) or says plainly that there is no undo. Phrasing alone
+// ("the sender can delete it", "edit the hold later") is not a rollback: it names no
+// gate, so nobody can tell whether the step behind it is gated at all. A gate below R3
+// (one reversible write) names its rollback by id, or by the expiry that ends it.
 const ROLLBACK_POINTER = /\bunder (?:its own|the(?: [a-z-]+){0,2}) (?:gate|phrase)\b|\bits own (?:gate|phrase|reviewed change)\b|\bseparately reviewed change\b|\bthrough (?:this same gate|Phase [A-H])\b/i;
+const ROLLBACK_ID = /\[(slack-[a-z0-9-]+-(?:portal|preview))\]/g;
+const HAS_ROLLBACK_ID = /\[slack-[a-z0-9-]+-(?:portal|preview)\]/;
+const NO_UNDO = /\bno undo\b|\bcannot be undone\b|\bcannot be recalled\b|\bexpires?\b/i;
 
-test('every rollback a Reversibility field points to is a gate or a PREVIEW ONLY marker that exists, named by its id', () => {
+function knownIds() {
   const known = new Set();
   for (const doc of DOCS.values()) {
     for (const m of doc.text.matchAll(/<!-- SAFETY GATE \[([a-z0-9-]+)\] -->|> \*\*PREVIEW ONLY \[([a-z0-9-]+)\]:\*\*/g)) known.add(m[1] || m[2]);
   }
+  return known;
+}
+
+function rollbackFailures(gatesByName, known) {
   const failures = [];
   let pointers = 0;
-  for (const gates of GATES.values()) {
+  let named = 0;
+  for (const gates of gatesByName.values()) {
     for (const gate of gates) {
-      const ids = [...gate.reversibility.matchAll(/\[(slack-[a-z0-9-]+-(?:portal|preview))\]/g)].map((m) => m[1]);
+      const ids = [...gate.reversibility.matchAll(ROLLBACK_ID)].map((m) => m[1]);
+      if (ids.length) named += 1;
       for (const id of ids) if (!known.has(id)) failures.push(`${gate.id}: points to ${id}, which does not exist`);
+      if (!ids.length && !NO_UNDO.test(gate.reversibility)) failures.push(`${gate.id}: names no rollback by id and does not say there is no undo: ${gate.reversibility}`);
+      if (!ids.length && !classesOf(gate).includes('R3') && !/\bexpires?\b/i.test(gate.reversibility)) failures.push(`${gate.id}: ${classesOf(gate).join(', ')} names no rollback by id: ${gate.reversibility}`);
       if (ROLLBACK_POINTER.test(gate.reversibility)) {
         pointers += 1;
         if (!ids.length) failures.push(`${gate.id}: a rollback pointer names no gate or preview: ${gate.reversibility}`);
@@ -331,8 +349,51 @@ test('every rollback a Reversibility field points to is a gate or a PREVIEW ONLY
       if (ids.includes(gate.id) && !/\bthrough this same gate\b/i.test(gate.reversibility)) failures.push(`${gate.id}: points to itself without saying so`);
     }
   }
+  return { failures, pointers, named };
+}
+
+// The six runbooks with one gate's Reversibility line replaced, parsed again.
+function withReversibility(name, gateId, text) {
+  const doc = DOCS.get(name);
+  const start = doc.lines.indexOf(`<!-- SAFETY GATE [${gateId}] -->`);
+  assert.ok(start >= 0, `${gateId} exists`);
+  const index = doc.lines.findIndex((l, i) => i > start && l.startsWith('- **Reversibility:** '));
+  const lines = [...doc.lines];
+  lines[index] = `- **Reversibility:** ${text}`;
+  const mutated = parseGates({ name, text: lines.join('\n'), lines });
+  return new Map([...GATES].map(([n, gates]) => [n, n === name ? mutated : gates]));
+}
+
+test('every rollback a Reversibility field points to is a gate or a PREVIEW ONLY marker that exists, named by its id', () => {
+  const { failures, pointers, named } = rollbackFailures(GATES, knownIds());
   assert.deepEqual(failures, []);
   assert.ok(pointers >= 10, `only ${pointers} rollback pointers found`);
+  assert.ok(named >= 28, `only ${named} Reversibility fields name a rollback by id`);
+});
+
+test('a rollback written as phrasing alone fails: the earlier legal-hold, incident-post and SAML texts each name no gate', () => {
+  const known = knownIds();
+  const OLD = [
+    ['slack-retention-export', 'slack-retention-export-legal-hold-portal', 'R1 to create: edit the hold or remove the custodian later (that path was not confirmed in the sources read); releasing a hold is effectively R3, because the held data then falls under retention deletion'],
+    ['slack-incident-comms', 'slack-incident-comms-status-post-portal', 'R1: the sender can delete the message from its own menu, or unsend it within 15 seconds on desktop; anyone who already read it has read it'],
+    ['slack-incident-comms', 'slack-incident-comms-resolved-post-portal', 'R1: the sender can delete the message from its own menu, or unsend it within 15 seconds on desktop; anyone who already read it has read it'],
+    ['slack-security-settings', 'slack-security-settings-saml-require-portal', 'R3 (security control with lock-out risk): returning SSO to optional was not described in the sources read; the Phase A record and an Owner who can still sign in with email and password are the way back'],
+  ];
+  for (const [name, gateId, text] of OLD) {
+    const { failures } = rollbackFailures(withReversibility(name, gateId, text), known);
+    assert.ok(failures.some((f) => f.startsWith(`${gateId}: names no rollback by id`)), `${gateId}: the old text passes: ${failures.join(' | ')}`);
+  }
+  // an id that resolves to nothing fails too
+  const typo = withReversibility('slack-retention-export', 'slack-retention-export-legal-hold-portal', 'R1 to create: taking it back is a separately reviewed R3 change [slack-retention-export-legal-hold-relase-preview]');
+  assert.ok(rollbackFailures(typo, known).failures.some((f) => /legal-hold-relase-preview, which does not exist/.test(f)));
+});
+
+test('slack-security-settings: the header says every gate has its rollback written in the gate, so every gate names one by id', () => {
+  const doc = DOCS.get('slack-security-settings');
+  assert.ok(doc.lines.some((l) => /^- \*\*Every change here is R3/.test(l) && /rollback/.test(l)), 'the header claims a written rollback');
+  for (const gate of GATES.get('slack-security-settings')) {
+    assert.match(gate.reversibility, HAS_ROLLBACK_ID, `${gate.id}: no rollback named by id`);
+  }
 });
 
 test('the reviewed rollbacks exist: a channel-removal gate in the user lifecycle, and planning-only previews for turning Require approved apps off and public file sharing back on', () => {
@@ -346,6 +407,28 @@ test('the reviewed rollbacks exist: a channel-removal gate in the user lifecycle
   assert.match(apps, /> \*\*PREVIEW ONLY \[slack-app-approval-require-off-preview\]:\*\* Planning only;/);
   const settings = DOCS.get('slack-security-settings').text;
   assert.match(settings, /> \*\*PREVIEW ONLY \[slack-security-settings-file-sharing-on-preview\]:\*\* Planning only;/);
+});
+
+test('the rollbacks that were phrasing are previews now: releasing a legal hold, deleting an incident post, and making SSO optional again', () => {
+  const holds = DOCS.get('slack-retention-export').text;
+  assert.match(holds, /> \*\*PREVIEW ONLY \[slack-retention-export-legal-hold-release-preview\]:\*\* Planning only;[^\n]*\bR3\b/);
+  const hold = GATES.get('slack-retention-export').find((g) => g.id === 'slack-retention-export-legal-hold-portal');
+  assert.ok(hold.reversibility.includes('[slack-retention-export-legal-hold-release-preview]'));
+  assert.deepEqual(classesOf(hold), ['R1'], 'creating a hold stays R1; taking it back is the R3 preview');
+
+  const comms = DOCS.get('slack-incident-comms');
+  assert.match(comms.text, /> \*\*PREVIEW ONLY \[slack-incident-comms-delete-post-preview\]:\*\* Planning only;/);
+  for (const gate of GATES.get('slack-incident-comms')) {
+    assert.ok(gate.reversibility.includes('[slack-incident-comms-delete-post-preview]'), `${gate.id}: deleting the post is the preview`);
+    assert.ok(gate.reversibility.includes(`[${gate.id}]`) && /\bthrough this same gate\b/.test(gate.reversibility), `${gate.id}: a correction goes out through this same gate`);
+    assert.doesNotMatch(gate.reversibility, /\bthe sender can delete\b/i);
+  }
+  const header = sectionLines(comms, '## ⚠️ Admin / safety gate').join('\n');
+  assert.doesNotMatch(header, /\bthe sender can delete\b/i, 'the header no longer offers an ungated deletion');
+
+  const saml = GATES.get('slack-security-settings').find((g) => g.id === 'slack-security-settings-saml-require-portal');
+  assert.ok(saml.reversibility.includes('[slack-security-settings-saml-optional-preview]'));
+  assert.match(DOCS.get('slack-security-settings').text, /> \*\*PREVIEW ONLY \[slack-security-settings-saml-optional-preview\]:\*\* Planning only;/);
 });
 
 // ── 7. Read-backs check what they claim ────────────────────────────────────────────

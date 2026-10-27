@@ -313,14 +313,25 @@ Replace `EVENT_NAME_FROM_THE_READ_ABOVE` with the name the admin activities read
 
 **Role needed:** none in Google; the write is one local file. The generator is its own gate: it writes only with the exact phrase its preview prints.
 
+The generator writes only inside the folder it runs from: inside a Git checkout the report must be Git-ignored, and in a folder outside Git it needs `--standalone-private`. The report belongs in the folder from Inputs, outside any Git checkout, so run the generator from that folder. The exact phrase is bound to the report's content, so repeat the Phase C `--export` arguments unchanged and in the same order. The report name must start with `security-audit-gws-` and end with `.md`; `YYYY-MM-DD` below is the review date.
+
+1. In the Aegis repository root, keep the generator's full path:
+
 ```bash
-# preview: the same command without --confirm writes nothing and prints the report target and the exact phrase
-node scripts/gws-posture-audit.js --write [FILE_NAME]
-# writes one new local report only when the phrase matches exactly, and never over an existing file
-node scripts/gws-posture-audit.js --write [FILE_NAME] --confirm "THE EXACT PHRASE THE PREVIEW PRINTED"
+# local: stores the generator's full path in a shell variable for the two commands below, nothing is read or written
+generator="$PWD/scripts/gws-posture-audit.js"
 ```
 
-Choose a `[FILE_NAME]` in the folder from Inputs, outside any Git checkout. If the generator refuses the target, read its reason and pick another name; never point it at an existing file.
+2. In the same terminal, change to the folder from Inputs, then preview and save:
+
+```bash
+# preview: writes nothing, prints the report target, its content SHA-256 and the exact phrase, then stops with "Exact confirmation mismatch" (exit 2), which is expected here
+node "$generator" --standalone-private --export [FILE_NAME] --export [FILE_NAME] --write security-audit-gws-posture-YYYY-MM-DD.md
+# writes one new local report only when the phrase matches exactly, and never over an existing file
+node "$generator" --standalone-private --export [FILE_NAME] --export [FILE_NAME] --write security-audit-gws-posture-YYYY-MM-DD.md --confirm "THE EXACT PHRASE THE PREVIEW PRINTED"
+```
+
+If the generator refuses the target, read its reason and pick another name; never point it at an existing file.
 
 **Verification checkpoint:** [ ] the generator reports the file written once · [ ] the ticket carries the counts and the report's location, not its rows.
 

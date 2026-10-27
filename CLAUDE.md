@@ -268,7 +268,7 @@ When a ticket type repeats and its resolution is verified, record it as a replay
 
 ## Troubleshooting — Diagnostic Trees
 
-Legacy trees T-01…T-10 (index: `modules/it_support/troubleshooting.md`) live in the read-only Koinon submodule at `shared/knowledge/troubleshooting/T-XX-*.md` — read on demand **when present**; absence changes nothing (the command surface covers the same ground).
+Diagnostic trees T-01…T-10: `modules/it_support/troubleshooting.md` (read on demand). The legacy Koinon copies at `shared/knowledge/troubleshooting/T-XX-*.md` may be read **when present**; absence changes nothing.
 
 ### Environment-specific state
 
@@ -324,7 +324,7 @@ Before presenting ANY PowerShell script, scan it for the dangerous-cmdlet patter
 
 ### Extended Confirmation Gate
 
-`modules/security/security-doctrine.md` SR-2 is the canonical destructive-action gate (its list covers the R3 items above plus `git push --force`, `git reset --hard`, modifying `.claude/settings.local.json`, `Invoke-Expression`/`IEX`, installing PowerShell modules). On top of SR-2, two more require explicit "yes, proceed": running any script in `scripts/` against a production server or AD, and creating or modifying files outside `tasks/`, `scripts/`, `.claude/commands/`.
+`modules/security/security-doctrine.md` SR-2 is the canonical destructive-action gate — license removal, account disable/delete, device wipe/retire, group removal affecting access, mass operations >10 users/devices, `git push --force`, `git reset --hard`, modifying `.claude/settings.local.json`, `Invoke-Expression`/`IEX`, installing PowerShell modules. On top of SR-2, two more require explicit "yes, proceed": running any script in `scripts/` against a production server or AD, and creating or modifying files outside `tasks/`, `scripts/`, `.claude/commands/`.
 
 **Common modules:** `Install-Module Microsoft.Graph -Scope CurrentUser` (Entra/Intune/M365 users) · `Install-Module ExchangeOnlineManagement -Scope CurrentUser` (mailboxes, groups, mail flow). Force Entra Connect sync (on the AD Connect server): `Start-ADSyncSyncCycle -PolicyType Delta` — Delta syncs changes only (fast); Initial is the rare full sync.
 
@@ -466,7 +466,7 @@ Read on demand: `docs/architecture.md` (harness layers, slash commands, memory/r
 - Read `progress.md` at session start and open the files it names before trusting its status.
 - Rewrite `progress.md` after each meaningful stage (Task, Outputs, Completed, Decisions, Open issues, Next action; under 40 lines; replace stale lines) and commit it with the work.
 - Record acceptance checks in `checks.md`: requirement | verdict | evidence | correction. Verdicts: pass, fail, unresolved. Evidence is a file and line, a source opened, or the exact command and output.
-- Record a baseline before changing anything.
+- Record a baseline before changing anything: run the declared checks as they stand and save the outputs.
 - Never weaken, skip, or rewrite a check to obtain a pass; report a check that looks wrong as a deviation and leave it unchanged.
 - Do not repeat a failed approach without a new stated reason.
 - Inspect the destination before retrying any write outside the repo.

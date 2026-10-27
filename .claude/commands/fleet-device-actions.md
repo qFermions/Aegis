@@ -15,7 +15,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 - Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one's history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.
 - **Role needed:** Maintainer or Admin in Fleet (global, or on the host's fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person's session, a shared login or an API token that carries a higher role.
-- Wipe, Turn off MDM and a script on more than 10 hosts (or all hosts) are R3: save the pre-state, write the rollback path, and get an independent out-of-session review before the gate runs. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.
+- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.
 - Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).
 - Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).
 - Every action is queued for the host's next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.
@@ -174,7 +174,7 @@ Do not delete the host until it reads wiped: deleting removes Fleet's record of 
 - **Reversibility:** R1 to R3 by script content, set in step 1; while still in Upcoming it can be cancelled (Phase G); after it runs Fleet has no undo, only a compensating script that a human writes and runs under this gate
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-device-actions-run-script-portal]:** Only after step 1, the current value of what the script changes is in the ticket (the pre-state, saved to `tasks/checkpoints/` when the script is R2 or R3), the review when the script is R3, and the exact match:
+**PORTAL ACTION [fleet-device-actions-run-script-portal]:** Only after step 1, the current value of what the script changes is in the ticket, the pre-state of what the script changes is saved to `tasks/checkpoints/` when the script is R2 or R3, and when it is R3 the rollback path, naming the compensating script and who reviews it, is written and the independent review approved it, and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Run Script** → `[SCRIPT_NAME]` → Actions → **Run**.
 
 **WAIT UNTIL** Host details → Activity moves the run from Upcoming to Past.
@@ -323,7 +323,7 @@ node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute
 required_confirmation="RUN SCRIPT [FILE_NAME] ON HOST [SERIAL_NUMBER]"
 # shows the phrase
 printf '%s\n' "Type exactly: $required_confirmation"
-# precondition, checked before you type the phrase: every line of [FILE_NAME] has been read, its R-class from R1 to R3 is written in the ticket, the current value of what it changes is in the ticket as the pre-state, and the independent out-of-session review is done when it is R3
+# precondition, checked before you type the phrase: every line of [FILE_NAME] has been read, its R-class from R1 to R3 is written in the ticket, the current value of what it changes is in the ticket as the pre-state, and the pre-state of what the script changes is saved to tasks/checkpoints/ when the script is R2 or R3, and when it is R3 the rollback path, naming the compensating script and who reviews it, is written and the independent review approved it
 # reads one line exactly as typed and runs the change only on an exact, case-sensitive match
 if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
   # sends the script file to the host as a script run

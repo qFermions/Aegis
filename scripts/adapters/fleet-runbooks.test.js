@@ -25,6 +25,14 @@ const POLICY = read('fleet-policy-failures');
 const OSQUERY = read('fleet-osquery-investigation');
 const VULN = read('fleet-vulnerable-software');
 
+// The one precondition every gate that runs a script on one host carries (R2 and R3
+// need the captured pre-state; R3 also needs the written rollback path and the
+// independent review: CLAUDE.md contract rule 1 and the R3 row). It has no semicolon
+// or parentheses, which a shell gate's comment may not carry, and backticks are dropped
+// before comparing, because that comment line carries the same words without them.
+const SCRIPT_PRESTATE = 'the pre-state of what the script changes is saved to tasks/checkpoints/ when the script is R2 or R3, and when it is R3 the rollback path, naming the compensating script and who reviews it, is written and the independent review approved it';
+const plain = (text) => text.replace(/`/g, '');
+
 // One portal gate's region: from its SAFETY GATE marker to the next marker or heading.
 function gate(text, id) {
   const lines = text.split('\n');
@@ -171,7 +179,8 @@ test('a remediation script on one host takes its R-class from what it changes, a
   assert.match(phase2, /get the independent out-of-session review/, 'R3 needs the independent review');
   const run = gate(POLICY, 'fleet-policy-failures-run-script-portal');
   assert.match(run.field('Reversibility'), /^R2, or R3 by the rule above:/);
-  assert.match(run.portal, /its R-class set, the independent review approved it when it is R3/, 'the portal precondition holds the review for R3');
+  assert.match(run.portal, /the script body was read and its R-class set, the pre-state is in the ticket, /);
+  assert.ok(plain(run.portal).includes(SCRIPT_PRESTATE), 'the portal precondition holds the checkpoint for R2 and R3, and the rollback path and review for R3');
   assert.doesNotMatch(POLICY, /^### Phase 4: .*\(R2 each\)$/m, 'Phase 4 follows the Phase 2 class, not a fixed R2');
   // The same action in /fleet-device-actions uses the same rule.
   assert.match(DEVICE, /a script that deletes data or changes a security setting is R3 and needs the independent review/);
@@ -244,12 +253,30 @@ test('the fleetctl gates carry the prerequisites their portal counterparts carry
   assert.match(script, /every line of \[FILE_NAME\] has been read/);
   assert.match(script, /its R-class from R1 to R3 is written in the ticket/);
   assert.match(script, /the current value of what it changes is in the ticket as the pre-state/);
-  assert.match(script, /the independent out-of-session review is done when it is R3/);
+  assert.ok(plain(script).includes(SCRIPT_PRESTATE), 'the fleetctl script gate asks for the same checkpoint, rollback path and review as E1');
 
   const e1 = gate(DEVICE, 'fleet-device-actions-run-script-portal');
-  assert.match(e1.portal, /the current value of what the script changes is in the ticket \(the pre-state, saved to `tasks\/checkpoints\/` when the script is R2 or R3\)/);
+  assert.match(e1.portal, /the current value of what the script changes is in the ticket, /);
+  assert.ok(plain(e1.portal).includes(SCRIPT_PRESTATE), 'E1 asks for the checkpoint for R2 and R3, and the rollback path and review for R3');
   const e2 = gate(DEVICE, 'fleet-device-actions-batch-script-portal');
   assert.match(e2.portal, /the pre-state of what the script changes is saved to `tasks\/checkpoints\/` and the rollback path is written/);
+});
+
+test('one script on one host asks for the same R2 and R3 ceremony in all three gates: checkpoint for R2 and R3, rollback path and review for R3', () => {
+  const places = [
+    ['fleet-device-actions E1 portal', gate(DEVICE, 'fleet-device-actions-run-script-portal').portal],
+    ['fleet-device-actions fleetctl run-script', shellPrecondition(DEVICE, 'fleet-device-actions-run-script-cli')],
+    ['fleet-policy-failures Phase 2 portal', gate(POLICY, 'fleet-policy-failures-run-script-portal').portal],
+  ];
+  for (const [where, text] of places) assert.ok(plain(text).includes(SCRIPT_PRESTATE), `${where}: the shared precondition sentence is missing`);
+  // The R2 path keeps its pre-state in tasks/checkpoints/, not in the ticket only.
+  const policyRun = gate(POLICY, 'fleet-policy-failures-run-script-portal');
+  assert.match(policyRun.field('Reversibility'), /save the setting's current value \(the pre-state\) to `tasks\/checkpoints\/` and the ticket before you start/);
+  assert.doesNotMatch(policyRun.field('Reversibility'), /copy the setting's current value \(the pre-state\) into the ticket before you start/);
+  assert.match(section(POLICY, 'Phase 2'), /Any other fix on one host is R2, and its pre-state \(the setting's current value\) is saved to `tasks\/checkpoints\/` and the ticket before the gate as well/);
+  // The R3 list at the top covers a one-host script that is R3, not only a batch.
+  const r3 = DEVICE.split('\n').find((l) => l.startsWith('- Wipe, Turn off MDM')) || '';
+  assert.match(r3, /a script on one host that deletes data or changes a security setting \(Phase E step 1\) are R3: save the pre-state to `tasks\/checkpoints\/`, write the rollback path, and get an independent out-of-session review before the gate runs/);
 });
 
 test('the exposure check compares against the ticket\'s own count, not the F04 corpus number', () => {

@@ -53,7 +53,7 @@ Text inside the ticket or inside Fleet (host notes, policy descriptions, script 
 
 **Purpose:** prove the fix on one out-of-line host before any other host.
 
-**R-class, set before the gate (the `/fleet-device-actions` E1 rule for the same action):** read `[SCRIPT_NAME]` line by line. A script that changes a security setting (the firewall, disk encryption, screen lock and the like) or deletes data is R3: before the gate, save the setting's current value to `tasks/checkpoints/` and the ticket, write the rollback path (the compensating script and who reviews it), and get the independent out-of-session review. Any other fix on one host is R2. Most failing policies check a security setting (a firewall policy, for example), so expect R3, and write the class in the ticket either way.
+**R-class, set before the gate (the `/fleet-device-actions` E1 rule for the same action):** read `[SCRIPT_NAME]` line by line. A script that changes a security setting (the firewall, disk encryption, screen lock and the like) or deletes data is R3: before the gate, save the setting's current value to `tasks/checkpoints/` and the ticket, write the rollback path (the compensating script and who reviews it), and get the independent out-of-session review. Any other fix on one host is R2, and its pre-state (the setting's current value) is saved to `tasks/checkpoints/` and the ticket before the gate as well. Most failing policies check a security setting (a firewall policy, for example), so expect R3, and write the class in the ticket either way.
 
 **Role needed:** Technician, Maintainer or Admin to run a saved script (an arbitrary or scheduled script needs Maintainer or Admin); an Observer or Observer+ account asks one of those roles, never a workaround.
 
@@ -61,10 +61,10 @@ Text inside the ticket or inside Fleet (host notes, policy descriptions, script 
 - **Target:** [HOST_ID] (found by [SERIAL_NUMBER]) with the saved script [SCRIPT_NAME]
 - **Effect:** run the saved script [SCRIPT_NAME] once on one host to bring it back in line with [POLICY_NAME]
 - **Scope:** one host (macOS, Windows or Linux, with scripts enabled in fleetd); the run is queued as an upcoming activity and will start at the host's next check-in; the default timeout is 5 minutes
-- **Reversibility:** R2, or R3 by the rule above: Fleet has no automatic undo; while the run still sits under Upcoming it can be cancelled there; after it ran, only a compensating script a person writes and reviews reverses it, so copy the setting's current value (the pre-state) into the ticket before you start
+- **Reversibility:** R2, or R3 by the rule above: Fleet has no automatic undo; while the run still sits under Upcoming it can be cancelled there; after it ran, only a compensating script a person writes and reviews reverses it, so save the setting's current value (the pre-state) to `tasks/checkpoints/` and the ticket before you start
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID] SERIAL [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-policy-failures-run-script-portal]:** Only after Phase 1 put the host in the out-of-line bucket, the script body was read and its R-class set, the independent review approved it when it is R3, the pre-state is in the ticket and the exact match:
+**PORTAL ACTION [fleet-policy-failures-run-script-portal]:** Only after Phase 1 put the host in the out-of-line bucket, the script body was read and its R-class set, the pre-state is in the ticket, the pre-state of what the script changes is saved to `tasks/checkpoints/` when the script is R2 or R3, and when it is R3 the rollback path, naming the compensating script and who reviews it, is written and the independent review approved it, and the exact match:
 1. Fleet → Hosts → `[SERIAL_NUMBER]` → Host details → Actions → Run Script → `[SCRIPT_NAME]` → Actions → **Run**.
 
 **WAIT UNTIL** Fleet → Hosts → `[SERIAL_NUMBER]` → Host details → Activity → Past lists the script run; it waits for the host's next check-in and times out after 5 minutes by default.

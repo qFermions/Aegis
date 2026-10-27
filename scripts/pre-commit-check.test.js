@@ -762,3 +762,83 @@ test('a Sources line citing GAM wiki page names does not warn; the command it na
   assert.match(warned, /GAM deprovision/);
   assert.match(warned, /2 warning\(s\) found/);
 });
+
+// ── G2: Slack credential formats (documented by Slack) and the lane's dangerous sinks ──
+// Fleet, Jamf Pro and Linear document no token format (docs/aegis/lanes/g2.md), so they
+// add no BLOCK pattern; their bearer headers are already caught by the Authorization rule.
+test('blocks a Slack refresh token (xoxe-) without printing the value or source line', function (t) {
+  const secret = 'xoxe-' + '1-' + 'G'.repeat(40);
+  assertBlocksSyntheticCredential(t, 'slack-refresh-token.md', secret, 'Slack refresh or app-level token (xoxe- / xapp-)');
+});
+
+test('blocks a Slack app-level token (xapp-) without printing the value or source line', function (t) {
+  const secret = 'xapp-' + '1-' + 'H'.repeat(12) + '-' + '1234567890' + '-' + 'a'.repeat(32);
+  assertBlocksSyntheticCredential(t, 'slack-app-level-token.md', secret, 'Slack refresh or app-level token (xoxe- / xapp-)');
+});
+
+test('blocks a rotating Slack access token (xoxe.xoxp-) through the existing Slack token rule', function (t) {
+  const secret = 'xoxe.xoxp-' + '1-' + 'J'.repeat(40);
+  assertBlocksSyntheticCredential(t, 'slack-rotating-token.md', secret, 'Slack token');
+});
+
+test('allows the Slack, Linear and Fleet placeholder forms the G2 runbooks use', function (t) {
+  const repo = makeRepo(t);
+  writeFile(repo, 'g2-placeholders.md', [
+    'curl -sS "https://slack.com/api/users.info?user=[USER_ID]" -H "Authorization: Bearer ${SLACK_TOKEN}"',
+    'curl -sS "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]" -H "Authorization: Bearer ${FLEET_API_TOKEN}"',
+    'export LINEAR_API_KEY="[LINEAR_API_KEY]"',
+    '',
+  ].join('\n'));
+  stageAll(repo);
+  const result = runScanner(repo);
+  assertExit(result, 0);
+  assert.match(combinedOutput(result), /Clean/);
+});
+
+test('warns on Fleet, Slack, Linear, Jamf and Google Workspace destructive sinks (G2 lane)', function (t) {
+  const repo = makeRepo(t);
+  const cases = [
+    ['fleetctl mdm wipe --host [HOST_ID]', /Fleet MDM lock \/ unlock \/ wipe/],
+    ['fleetctl mdm lock --host [HOST_ID]', /Fleet MDM lock \/ unlock \/ wipe/],
+    ['fleetctl run-script --script-path ./fix.sh --host [HOST_ID]', /Fleet script run/],
+    ['curl -sS -X POST "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]/wipe" -H "Authorization: Bearer ${FLEET_API_TOKEN}"', /Fleet host lock, unlock or wipe \(REST\)/],
+    ['curl -sS -X POST "https://[@Aegion_FLEET_URL]/api/v1/fleet/scripts/run" --json @run.json', /Fleet script run/],
+    ['curl -sS -X DELETE "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]"', /Fleet host deletion or MDM turn-off/],
+    ['curl -sS -X POST "https://slack.com/api/admin.users.remove" -d "user_id=[USER_ID]"', /Slack admin write/],
+    ['curl -sS -X POST "https://slack.com/api/admin.users.session.reset" -d "user_id=[USER_ID]"', /Slack admin write/],
+    ['curl -sS -X POST "https://slack.com/api/chat.postMessage" -d "channel=[CHANNEL_ID]"', /Slack message post or delete/],
+    ['curl -sS -X DELETE "https://api.slack.com/scim/v2/Users/[USER_ID]"', /Slack SCIM deactivation/],
+    ['curl -sS -X POST "https://api.linear.app/graphql" --json \'{"query":"mutation { issueDelete(id: \\"[ISSUE_ID]\\") { success } }"}\'', /Linear GraphQL mutation/],
+    ['curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/api/v1/computers-inventory/[DEVICE_ID]/filevault"', /Jamf secret disclosure/],
+    ['gam user "[USER@DOMAIN.COM]" delete drivefileacl "[FILE_NAME]" "[EXTERNAL_DOMAIN]"', /GAM Drive permission removal/],
+    ['gam delete admin "[ROLE_NAME]"', /GAM admin-role change/],
+    ['gam create admin "[USER@DOMAIN.COM]" "[ROLE_NAME]" customer', /GAM admin-role change/],
+  ];
+  const fixtureLines = cases.map(([line], index) => `${line} # g2-scanner-source-${index}`);
+  writeFile(repo, 'g2-sinks.md', `${fixtureLines.join('\n')}\n`);
+  stageAll(repo);
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 0);
+  for (const [, expectedLabel] of cases) assert.match(output, expectedLabel);
+  assert.match(output, new RegExp(`${cases.length} warning\\(s\\) found`));
+  assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `g2-scanner-source-${index}`), repo]);
+});
+
+test('read-only Fleet, Slack, Linear, Jamf and Google Workspace diagnostics do not warn (G2 lane)', function (t) {
+  const repo = makeRepo(t);
+  writeFile(repo, 'g2-read-only.md', [
+    'fleetctl get hosts --json',
+    'curl -sS "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]/mdm"',
+    'curl -sS "https://slack.com/api/users.info?user=[USER_ID]"',
+    'node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --execute',
+    'curl -sS "https://[@Aegion_JAMF_URL]/api/v1/computers-inventory?section=DISK_ENCRYPTION"',
+    'gam print admins',
+    'gam user "[USER@DOMAIN.COM]" print drivefileacls "[FILE_NAME]"',
+    '',
+  ].join('\n'));
+  stageAll(repo);
+  const result = runScanner(repo);
+  assertExit(result, 0);
+  assert.match(combinedOutput(result), /Clean/);
+});

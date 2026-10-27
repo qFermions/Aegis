@@ -200,6 +200,16 @@ function hasNonAscii(text) {
   return /[^\x00-\x7F]/.test(String(text));
 }
 
+// Read-time gate: a case file is re-checked against the persistence boundary
+// every time lookup or render would serve it, because render prints the stored
+// solution verbatim with zero reasoning. A case changed on disk outside this CLI
+// so that it carries instruction-shaped text, a secret, a real address, the
+// tenant literal or a second org namespace is withheld. Labels only, never text.
+// Residual: a gate-clean edit is not detected (case files carry no seal).
+function storedCaseHits(c) {
+  return Array.from(new Set([c.ticket, c.solution].flatMap((t) => (typeof t === 'string' ? sanitizationHits(t) : ['stored text is not a string']))));
+}
+
 // ── store primitives (atomic write, mkdir lock) ──────────────────────────────
 function loadIndex() {
   if (!fs.existsSync(INDEX)) return { schema: 'aegis.replay.v2', seq: 0, cases: {}, aliases: {}, shapes: {} };
@@ -445,6 +455,11 @@ function main() {
         out({ ok: true, result: 'MISS', key: r.key, caseId: r.caseId, route: 'adaptive', note: 'case exists but is not verified — candidates never replay' });
         break;
       }
+      const stored = storedCaseHits(c);
+      if (stored.length) {
+        out({ ok: true, result: 'MISS', key: r.key, caseId: r.caseId, route: 'adaptive', withheld: stored, note: 'case withheld: its stored text fails the persistence boundary (changed on disk outside replay-cli.js?); work the ticket fresh' });
+        break;
+      }
       const drift = depDrift(c);
       if (c.status === 'stale' || drift.length) {
         if (c.status !== 'stale') {
@@ -476,6 +491,8 @@ function main() {
       const c = loadCase(caseId);
       if (!c) fail(1, 'no such case: ' + caseId);
       if (c.status === 'candidate') fail(2, 'render refused: case is unverified (candidate) — only verified solutions replay');
+      const stored = storedCaseHits(c);
+      if (stored.length) fail(4, 'render refused: the stored case fails the persistence boundary (changed on disk outside replay-cli.js?): ' + stored.join(', '));
       const drift = depDrift(c);
       if (c.status === 'stale' || drift.length) {
         if (!has('historical')) fail(3, 'render refused: case is STALE (authority changed: ' + JSON.stringify(drift.length ? drift : 'previously detected') + ') — pass --historical to view as historical evidence');

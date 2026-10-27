@@ -53,6 +53,13 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   reason means the case mixes two tenants, so it never enters the store (same
   rule as the graph edge sanitizer). Pinned by
   `scripts/untrusted/wrong-customer.test.js` C4.
+- **Re-checked at read time.** `lookup` and `render` run the same persistence
+  boundary over the stored ticket and solution before they serve a case. A case
+  changed on disk outside the CLI so that it carries instruction-shaped text, a
+  secret, a real address, the tenant literal or a second org namespace is a
+  `MISS` with a `withheld` list of labels (lookup) or exit 4 (render); its text is
+  never printed. Residual: a gate-clean edit to a case file is not detected,
+  because case files carry no seal (the memory store has one).
 - **One store, one tenant (exit 6).** The store's first write under a tenant
   (`AEGION_DOMAIN` set) binds it: `tenant.json` records a sha256 fingerprint
   of the lower-cased tenant domain, never the literal (SR-8). Every command

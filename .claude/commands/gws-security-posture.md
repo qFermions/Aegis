@@ -81,7 +81,7 @@ Prerequisites: GAM approved and authorized **[org gap]**; the folder from Inputs
 # SAFETY GATE [gws-security-posture-users-export]
 # Target: [FILE_NAME]
 # Effect: write one local CSV file with every user and the 2-Step Verification, admin, delegated admin and suspension flags
-# Scope: one new file on the administrator machine, outside any Git checkout, a file of the same name would be replaced, nothing in Google changes
+# Scope: one new file on the administrator machine, outside any Git checkout, the write stops if a file of that name exists, nothing in Google changes
 # Reversibility: R1, delete the local file, it holds real addresses so it never goes into Git or the ticket
 # Required confirmation: type exactly "WRITE GAM USERS EXPORT [FILE_NAME]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
@@ -91,6 +91,13 @@ required_confirmation="WRITE GAM USERS EXPORT [FILE_NAME]"
 printf '%s\n' "Type exactly: $required_confirmation"
 # reads one line exactly as typed and writes the file only on an exact, case-sensitive match
 if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # stops before writing when a file of that name already exists, so nothing is replaced
+  if [ -e "[FILE_NAME]" ]; then
+    # explains the stop
+    echo "[FILE_NAME] already exists. Pick a new name. No change was made." >&2
+    # stops with a failure status
+    exit 1
+  fi
   # prints every user with the five posture fields as CSV into the new local file
   gam print users fields primaryemail,isenrolledin2sv,isenforcedin2sv,isadmin,isdelegatedadmin,suspended > "[FILE_NAME]"
 else
@@ -108,7 +115,7 @@ wc -l "[FILE_NAME]"
 # SAFETY GATE [gws-security-posture-admins-export]
 # Target: [FILE_NAME]
 # Effect: write one local CSV file with every admin role assignment
-# Scope: one new file on the administrator machine, a different name from the users export, a file of the same name would be replaced, nothing in Google changes
+# Scope: one new file on the administrator machine, a different name from the users export, the write stops if a file of that name exists, nothing in Google changes
 # Reversibility: R1, delete the local file, it names every administrator so it never goes into Git or the ticket
 # Required confirmation: type exactly "WRITE GAM ADMINS EXPORT [FILE_NAME]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
@@ -118,6 +125,13 @@ required_confirmation="WRITE GAM ADMINS EXPORT [FILE_NAME]"
 printf '%s\n' "Type exactly: $required_confirmation"
 # reads one line exactly as typed and writes the file only on an exact, case-sensitive match
 if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # stops before writing when a file of that name already exists, so nothing is replaced
+  if [ -e "[FILE_NAME]" ]; then
+    # explains the stop
+    echo "[FILE_NAME] already exists. Pick a new name. No change was made." >&2
+    # stops with a failure status
+    exit 1
+  fi
   # prints every admin role assignment as CSV into the new local file
   gam print admins > "[FILE_NAME]"
 else
@@ -155,19 +169,21 @@ node scripts/adapters/gws-client.js users --query "isEnrolledIn2Sv=false" --max-
 node scripts/adapters/gws-client.js users --query "isAdmin=true" --execute
 # read-only: every admin role with its roleId, isSuperAdminRole marks the super admin role
 node scripts/adapters/gws-client.js roles --execute
-# read-only: every role assignment, users, groups and service accounts alike, count those that carry the super admin roleId
+# read-only: role assignments, users, groups and service accounts alike, first page only, the output says when more exist, count those that carry the super admin roleId
 node scripts/adapters/gws-client.js role-assignments --execute
 # read-only: 2-Step Verification counts for one day, dates are UTC-8, a warning in the answer means missing or partial data for that day, parameter names from a search excerpt
 node scripts/adapters/gws-client.js usage --date YYYY-MM-DD --parameters accounts:num_users_2sv_enrolled,accounts:num_users_2sv_enforced,accounts:num_users_2sv_not_enrolled --execute
-# read-only: OAuth grant and revoke events, the third-party apps users connect and their client IDs
-node scripts/adapters/gws-client.js activities --app token --user all --max-results 1000 --execute
-# read-only: Admin console setting changes, who changed a posture setting and when
-node scripts/adapters/gws-client.js activities --app admin --user all --max-results 1000 --execute
-# read-only: mobile devices with compromised, encryption and device password status
+# read-only: OAuth grant and revoke events since the review window starts, the third-party apps users connect and their client IDs, first page only of up to 1000, the output says when more exist
+node scripts/adapters/gws-client.js activities --app token --user all --start YYYY-MM-DDT00:00:00Z --max-results 1000 --execute
+# read-only: Admin console setting changes since the review window starts, who changed a posture setting and when, first page only of up to 1000, the output says when more exist
+node scripts/adapters/gws-client.js activities --app admin --user all --start YYYY-MM-DDT00:00:00Z --max-results 1000 --execute
+# read-only: mobile devices with compromised, encryption and device password status, first page only, the output says when more exist
 node scripts/adapters/gws-client.js mobile-devices --execute
-# read-only: ChromeOS devices with OS version compliance, auto-update expiry and last sync
+# read-only: ChromeOS devices with OS version compliance, auto-update expiry and last sync, first page only, the output says when more exist
 node scripts/adapters/gws-client.js chromeos-devices --execute
 ```
+
+Set `--start` to the first day of the review window (UTC). The role-assignment, activity and device reads return one page each (the lane's allow-list has no page token for them): when the output says more records exist, narrow the window, count the rest in the Admin console, or use the GAM scale version below, and say in the ticket which counts come from a first page.
 
 3. Record counts in the ticket: super admins (and how many are groups or service accounts), users and admins not enrolled in 2-Step Verification, units with automatic forwarding allowed, apps with broad scopes, devices reported compromised or unencrypted.
 

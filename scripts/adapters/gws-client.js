@@ -547,15 +547,36 @@ async function readAll(client, paths) {
   return { results };
 }
 
+// A user's recovery email and phone are printed as "set" or "missing", never as values:
+// the runbooks record only whether each is set, and the values are personal contact
+// details. A field the response leaves out stays out (a runbook records it as missing).
+const RECOVERY_FIELDS = Object.freeze(['recoveryEmail', 'recoveryPhone']);
+function maskRecovery(record) {
+  if (!isObject(record)) return record;
+  const present = RECOVERY_FIELDS.filter((f) => Object.prototype.hasOwnProperty.call(record, f));
+  if (!present.length) return record;
+  const masked = { ...record };
+  for (const f of present) masked[f] = typeof record[f] === 'string' && record[f].trim() !== '' ? 'set' : 'missing';
+  return masked;
+}
+function maskUserData(command, data) {
+  if (command === 'user') return maskRecovery(data);
+  if (command === 'users' && isObject(data) && Array.isArray(data.users)) return { ...data, users: data.users.map(maskRecovery) };
+  return data;
+}
+
 function readOutput(command, res) {
-  const out = { state: STATES.OK, ok: true, command, status: res.status, attempts: res.attempts, data: res.data };
+  const out = { state: STATES.OK, ok: true, command, status: res.status, attempts: res.attempts, data: maskUserData(command, res.data) };
   if (isObject(res.data) && typeof res.data.nextPageToken === 'string' && res.data.nextPageToken) {
     out.morePages = true;
     out.note = command === 'users'
       ? 'more users: repeat the read with --page-token set to data.nextPageToken'
       : 'more records exist: the lane allow-list reads the first page only, so narrow the read or check the rest in the Admin console';
   }
-  if (res.flags && res.flags.length) out.flags = res.flags;
+  if (res.flags && res.flags.length) {
+    // a flagged recovery detail is reported by path only, so its value is never printed
+    out.flags = res.flags.map((f) => (/\.recovery(?:Email|Phone)$/.test(String(f.path)) ? { ...f, quote: '(recovery detail withheld)' } : f));
+  }
   return out;
 }
 
@@ -661,4 +682,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { SPEC, run, makeSpec, SCOPES, checkScopes, collectTenant };
+module.exports = { SPEC, run, makeSpec, SCOPES, READ_ONLY_SCOPE_NAMES, checkScopes, collectTenant };

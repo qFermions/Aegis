@@ -70,9 +70,11 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 5. Stop if `[FILE_NAME]` lives in a shared drive: Audit File Permissions does not show shared-drive files (search excerpt), so Phase C does not apply. Escalate it in the ticket; this runbook has no gate for shared-drive files.
 
 ```bash
-# read-only: Drive events for the whole organization, each with its actor, event name and item, up to 1000 per page
-node scripts/adapters/gws-client.js activities --app drive --user all --max-results 1000 --execute
+# read-only: Drive events for the whole organization in the ticket's window, each with its actor, event name and item, first page only of up to 1000, the output says when more exist
+node scripts/adapters/gws-client.js activities --app drive --user all --start YYYY-MM-DDT00:00:00Z --end YYYY-MM-DDT23:59:59Z --max-results 1000 --execute
 ```
+
+Set `--start` to the first day and `--end` to the last day of the ticket's window (UTC). The read returns one page: when the output says more records exist, narrow the window, or add `--event` with one of the Drive sharing event names `/gws-audit-log` records (`change_user_access`, `change_document_visibility`, `change_acl_editors`; not confirmed in this lane's sources).
 
 **Verification checkpoint:** [ ] actor and time of the external share quoted in the ticket · [ ] each external account's domain and role recorded · [ ] the file is in My Drive, not a shared drive.
 

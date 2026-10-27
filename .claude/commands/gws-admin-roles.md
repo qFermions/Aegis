@@ -58,7 +58,7 @@ The same reads through the read-only adapter (Aegis or the administrator runs th
 ```bash
 # read-only: every admin role with its roleId, the Super Admin role is the one marked isSuperAdminRole
 node scripts/adapters/gws-client.js roles --execute
-# read-only: every assignment of one role with assignee type and scope, use the roleId from the read above
+# read-only: assignments of one role with assignee type and scope, first page only, the output says when more exist, use the roleId from the read above
 node scripts/adapters/gws-client.js role-assignments --role-id [ROLE_ID] --execute
 # read-only: the members of a group that holds a role
 node scripts/adapters/gws-client.js group-members --group [GROUP_EMAIL] --execute
@@ -88,12 +88,12 @@ gam print users fields primaryemail,isadmin,isdelegatedadmin,suspended   # who i
 **Purpose**: answer "is account recovery set up safely?" from the real setting, not the default.
 
 1. Admin console → Security → Authentication → Account recovery → **Super admin account recovery** → read whether **Allow super admins to recover their account** is ticked, and for which organizational unit or group (path and labels from a search excerpt). Record the value per unit and per configuration group: this is the pre-state.
-2. For each super admin from Phase A, read whether a recovery phone and a recovery email are set: the adapter's `user` read returns `recoveryEmail` and `recoveryPhone` (vendor repo field names). Record "set" or "missing" only, never the values.
+2. For each super admin from Phase A, read whether a recovery phone and a recovery email are set: the adapter's `user` read prints `recoveryEmail` and `recoveryPhone` (vendor repo field names) as `set` or `missing` only, never the values; a field the read leaves out is recorded as missing. Record "set" or "missing" only.
 3. Check the hygiene list against Phase A: more than one super admin; one person per super admin account; each super admin has a separate non-admin daily account.
 4. Decide, with the owner: recovery off with at least two super admins who can help each other back in, or recovery on with every super admin's recovery phone and email controlled by `[@Aegion]`. That rule is Aegis's reading of the guidance above, not a Google statement **[org gap: the owner's policy]**.
 
 ```bash
-# read-only: one super admin, including whether recovery details are set, record set or missing only
+# read-only: one super admin, the recovery email and phone print as set or missing, never their values
 node scripts/adapters/gws-client.js user --user [USER@DOMAIN.COM] --execute
 ```
 

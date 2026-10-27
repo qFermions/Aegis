@@ -392,3 +392,71 @@ test('every Drive sharing gate that changes who outside can be shared with waits
   const before = lines.slice(phaseStart, add.line - 1).join('\n');
   assert.match(before, /^Prerequisites:.*the approver is named in the ticket/m);
 });
+
+// ── Nits: single-page reads say so; recovery details print as set or missing ──────
+test('single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing', () => {
+  for (const l of RUNBOOKS.flatMap(adapterLines)) {
+    const lines = linesOf(l.file);
+    const comment = lines[l.line - 2] || '';
+    const singlePage = /\b(?:activities|role-assignments|mobile-devices|chromeos-devices)\b/.test(l.text) && !/\bverify-/.test(l.text);
+    if (!singlePage) continue;
+    assert.doesNotMatch(comment, /up to 1000 per page|\bevery role assignment\b|\bevery assignment of\b/, `${l.file}:${l.line - 1}: a single-page read described as complete: ${comment}`);
+    if (/--max-results 1000/.test(l.text)) {
+      assert.match(comment, /first page only/, `${l.file}:${l.line - 1}: ${comment}`);
+      assert.match(l.text, /--start /, `${l.file}:${l.line}: a 1000-record read without a time window`);
+    }
+  }
+  assert.match(textOf('gws-drive-sharing'), /activities --app drive --user all --start YYYY-MM-DDT00:00:00Z --end YYYY-MM-DDT23:59:59Z --max-results 1000 --execute/);
+  assert.match(textOf('gws-admin-roles'), /prints `recoveryEmail` and `recoveryPhone` \(vendor repo field names\) as `set` or `missing` only, never the values/);
+});
+
+// ── Nit: an export never replaces an existing file ───────────────────────────
+// The two GAM export gates write with `>`, which would silently replace a file of the same
+// name; the gate's own branch now stops first. Run each fence in bash with a mocked gam on
+// PATH (no real gam, no network): an existing file is left as it was, a new one is written,
+// and a wrong phrase writes nothing.
+const childProcess = require('node:child_process');
+const os = require('node:os');
+
+function exportFences() {
+  const text = textOf('gws-security-posture');
+  return [...text.matchAll(/```bash\n(# HUMAN-RUN[^\n]*\n# SAFETY GATE \[(gws-security-posture-(?:users|admins)-export)\][\s\S]*?)```/g)].map((m) => ({ id: m[2], body: m[1] }));
+}
+
+test('the GAM export gates stop before replacing an existing file (bash, mocked gam)', { skip: childProcess.spawnSync('bash', ['-c', 'true']).status !== 0 && 'bash is not available' }, () => {
+  const fences = exportFences();
+  assert.equal(fences.length, 2);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gws-export-'));
+  try {
+    const bin = path.join(dir, 'bin');
+    fs.mkdirSync(bin);
+    fs.writeFileSync(path.join(bin, 'gam'), '#!/bin/sh\necho "MOCK,CSV"\n', { mode: 0o755 });
+    const env = { PATH: `${bin}:/usr/bin:/bin`, HOME: dir };
+    for (const f of fences) {
+      const phrase = f.body.match(/^required_confirmation="([^"]+)"$/m)[1];
+      const target = path.join(dir, `${f.id}.csv`);
+      const script = f.body.split('[FILE_NAME]').join(target);
+      const typed = phrase.split('[FILE_NAME]').join(target);
+      const run = (input) => childProcess.spawnSync('bash', ['-c', script], { input, env, cwd: dir, encoding: 'utf8', timeout: 20000 });
+
+      fs.writeFileSync(target, 'ORIGINAL\n');
+      const kept = run(`${typed}\n`);
+      assert.equal(kept.status, 1, `${f.id}: an existing file stops the write: ${kept.stdout}${kept.stderr}`);
+      assert.match(kept.stderr, /already exists/);
+      assert.equal(fs.readFileSync(target, 'utf8'), 'ORIGINAL\n', `${f.id}: the existing file is unchanged`);
+
+      fs.rmSync(target);
+      const written = run(`${typed}\n`);
+      assert.equal(written.status, 0, `${f.id}: ${written.stdout}${written.stderr}`);
+      assert.equal(fs.readFileSync(target, 'utf8'), 'MOCK,CSV\n', `${f.id}: a new file is written by the (mocked) gam`);
+
+      fs.rmSync(target);
+      const refused = run('yes\n');
+      assert.equal(refused.status, 1, `${f.id}: a wrong phrase stops`);
+      assert.ok(!fs.existsSync(target), `${f.id}: a wrong phrase writes nothing`);
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  for (const f of fences) assert.doesNotMatch(f.body, /would be replaced/, `${f.id}: the Scope no longer admits a replacement`);
+});

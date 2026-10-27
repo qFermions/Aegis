@@ -71,6 +71,20 @@ role name) · `[NOTE_FILE]` / `[NOTE_SHA256]` (a drafted ticket note and its dig
 `[NOT_BEFORE]` (the time a read-back must start from). `[USER_ID]` also covers a Slack
 member ID and a Linear user ID.
 
+Added with the G2 runbooks (2026-10-27): `[FLEET_ID]` (a Fleet fleet's numeric ID) ·
+`[REPORT_ID]` (a Fleet report's numeric ID) · `[SOFTWARE_TITLE_ID]` (a Fleet software
+title's numeric ID) · `[STATE_NAME]` (a Linear workflow status name, as the team's
+states read prints it) · `[CANONICAL_ISSUE_ID]` (the older Linear issue a duplicate
+points to) · `[SMART_GROUP_ID]` (a Jamf Pro smart or static group's numeric ID) ·
+`[MEMBER_COUNT]` (a group's member count, recorded or predicted before a change) ·
+`[PATCH_TITLE_ID]` (a Jamf Pro patch software title configuration ID) · `[PLAN_UUID]`
+(a Jamf Pro Managed Software Update plan ID) · `[ROLE_ID]` (a Google admin role's
+numeric ID). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
+Jamf Pro. In a Jamf Pro runbook, `[DEVICE_ID]` is either the computer ID or the
+management ID, and the runbook says which. Note templates keep using lowercase or
+single-letter fill-ins (`[X]`, `[N]`, `[timestamp]`) for numbers and times, as the
+existing runbooks do.
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

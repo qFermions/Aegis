@@ -198,3 +198,16 @@ test('every console Save in the five runbooks sits inside an action-local SAFETY
   assert.match(exclude.region, /The Mac itself, never a group: if the picker does not list it, stop/);
   assert.match(section(PROFILES, 'Phase E'), /PREVIEW ONLY \[jamf-config-profiles-one-mac-group-preview\]:\*\* Planning only: a static group that holds only `\[SERIAL_NUMBER\]`/);
 });
+
+test('no Mac gets a second FileVault profile: Phase A reads each Mac\'s profiles, and every FileVault scope gate waits for that read', () => {
+  const stops = FILEVAULT.split('\n').find((l) => l.startsWith('**Stop conditions:**')) || '';
+  assert.match(stops, /already lists a FileVault or escrow profile \(Phase A step 5\): change that profile's scope with `\/jamf-config-profiles` instead/);
+  const phaseA = section(FILEVAULT, 'Phase A');
+  assert.match(phaseA, /^5\. Before Phase B, on each Mac it will reach: .*\*\*Stop if\*\* one is listed/m);
+  assert.match(phaseA, /jamf-client\.js computer --serial \[SERIAL_NUMBER\] --section CONFIGURATION_PROFILES --execute/);
+  const phaseB = section(FILEVAULT, 'Phase B');
+  assert.match(phaseB, /\*\*Stop if\*\* any pilot Mac already lists a FileVault or escrow profile/);
+  assert.match(gate(FILEVAULT, 'jamf-filevault-pilot-profile-portal').portal, /no pilot Mac lists another FileVault or escrow profile/);
+  assert.match(gate(FILEVAULT, 'jamf-filevault-one-mac-scope-portal').portal, /the Mac lists no other FileVault or escrow profile \(Phase A step 5\)/);
+  assert.match(phaseB, /Phase A step 5 finds no other FileVault or escrow profile on the rollout Macs/);
+});

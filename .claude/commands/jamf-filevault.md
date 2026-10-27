@@ -21,7 +21,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Roles needed:** View Disk Encryption Recovery Key for Phase C (the privilege that shows the key) · the configuration profile privileges for Phase B and the policy privileges for Phase D (their English names were not in this batch's sources; a custom privilege set needs privileges on both the computer and the object the task changes). The adapter's own API client holds read privileges only and must never hold View Disk Encryption Recovery Key.
 
-**Stop conditions:** the requester for a key cannot be verified · Personal Recovery Key Validation is not Valid before Phase C (the shown key may not unlock the Mac) · the group's member count differs from the count in the ticket (`verify-group-count` exits 2) · the new-key policy logs "Authentication error" (the escrowed key is invalid; fix escrow first).
+**Stop conditions:** a Mac you are about to put in a FileVault profile's scope already lists a FileVault or escrow profile (Phase A step 5): change that profile's scope with `/jamf-config-profiles` instead, because a second FileVault payload on the same Mac fails or conflicts · the requester for a key cannot be verified · Personal Recovery Key Validation is not Valid before Phase C (the shown key may not unlock the Mac) · the group's member count differs from the count in the ticket (`verify-group-count` exits 2) · the new-key policy logs "Authentication error" (the escrowed key is invalid; fix escrow first).
 
 ## Inputs needed
 
@@ -56,6 +56,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 2. Same record → note the Jamf Pro computer ID (`[DEVICE_ID]`) and the last inventory update.
 3. Same Disk Encryption section → see whether Show Key is offered next to Personal Recovery Key. Do not use it here.
 4. No Show Key on screen: your account lacks the privilege. Stop and escalate (below); there is no workaround.
+5. Before Phase B, on each Mac it will reach: same record → read the configuration profiles the Mac lists, and note any whose name says FileVault, encryption or escrow (or whose payload names do, in `profile --id`; payload type names were not in this batch's sources). **Stop if** one is listed: change that profile's scope with `/jamf-config-profiles` instead of adding a second FileVault profile.
 
 **Role needed (to see a key):** the Jamf Pro privilege View Disk Encryption Recovery Key on the signed-in account (Jamf's support article on permission to view FileVault recovery keys; read as a search excerpt). An account without it may not see the key field at all.
 
@@ -74,16 +75,22 @@ node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] -
 node scripts/adapters/jamf-client.js smart-groups --name [SMART_GROUP] --execute
 # lists the members of that group, so each one can be checked with verify-filevault
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
+# lists the configuration profiles one Mac holds - run it on each Mac Phase B will reach; a FileVault or escrow profile already listed is a stop
+node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section CONFIGURATION_PROFILES --execute
+# the payload names of a listed profile whose name does not say what it does
+node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 ```
 </details>
 
-**Verification checkpoint:** [ ] FileVault state, Personal Recovery Key Validation and `[DEVICE_ID]` are in the ticket · [ ] you know whether your account sees Show Key.
+**Verification checkpoint:** [ ] FileVault state, Personal Recovery Key Validation and `[DEVICE_ID]` are in the ticket · [ ] you know whether your account sees Show Key · [ ] before Phase B: no Mac it will reach lists a FileVault or escrow profile.
 
 ## Phase B: Turn FileVault on with an escrowing profile (R3)
 
 **Purpose:** encrypt Macs that are not encrypted and get each Mac's personal recovery key into Jamf Pro, pilot first.
 
-Before the gate: `verify-group-count` passes for the pilot group, and the payload fields to set are the ones `/mac-troubleshoot` Branch B reads (this batch's sources did not name the payloads).
+Before the gate: `verify-group-count` passes for the pilot group, Phase A step 5 found no FileVault or escrow profile on any pilot Mac, and the payload fields to set are the ones `/mac-troubleshoot` Branch B reads (this batch's sources did not name the payloads).
+
+**Stop if** any pilot Mac already lists a FileVault or escrow profile: change that profile's scope with `/jamf-config-profiles` instead.
 
 **Role needed:** a Jamf Pro account with the privileges for computer configuration profiles and for the computers in scope (English names not in this batch's sources).
 
@@ -94,7 +101,7 @@ Before the gate: `verify-group-count` passes for the pilot group, and the payloa
 - **Reversibility:** R3: a security control on every pilot Mac; whether taking the profile away decrypts the disk was not confirmed in this batch's sources (safer reading: it does not, and it only stops enforcement)
 - **Required confirmation:** Type exactly `CREATE AND SCOPE FILEVAULT PROFILE [PROFILE_NAME] TO [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [jamf-filevault-pilot-profile-portal]:** Only after `verify-group-count` passes and the exact match:
+**PORTAL ACTION [jamf-filevault-pilot-profile-portal]:** Only after `verify-group-count` passes, no pilot Mac lists another FileVault or escrow profile, and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → New → General: name `[PROFILE_NAME]`, computer level.
 2. In the FileVault payload, turn FileVault on with a personal recovery key and escrow it to Jamf Pro (payload labels unverified in this batch; the fields `/mac-troubleshoot` Branch B reads are the ones to set).
 3. Scope → Targets → `[SMART_GROUP]` → Save.
@@ -116,7 +123,7 @@ node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] -
 
 GUI read-back: Jamf Pro → Computers → Configuration Profiles → read the Complete, Remaining and Failed counts on the `[PROFILE_NAME]` row (a count opens the list of Macs behind it); Remaining falls to 0 and Failed stays at 0.
 
-Rollout stage, after the pilot read-back passed for every pilot Mac and an independent out-of-session review is recorded: `verify-group-count` passes for the rollout group first.
+Rollout stage, after the pilot read-back passed for every pilot Mac and an independent out-of-session review is recorded: `verify-group-count` passes for the rollout group first, and Phase A step 5 finds no other FileVault or escrow profile on the rollout Macs (a Mac that lists one stays out of the rollout group until that profile's scope is changed).
 
 **Role needed:** the same configuration profile privileges as the pilot gate.
 
@@ -146,7 +153,7 @@ One Mac that needs the profile and is in neither group (Phase D's prerequisite, 
 - **Reversibility:** R3: a security control on one Mac; the written rollback is `/jamf-config-profiles` Phase E's exclusion gate, and decryption is not confirmed to follow
 - **Required confirmation:** Type exactly `ADD [SERIAL_NUMBER] TO FILEVAULT PROFILE [PROFILE_NAME] SCOPE AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [jamf-filevault-one-mac-scope-portal]:** Only after the pre-state and the written rollback are in the ticket and the exact match:
+**PORTAL ACTION [jamf-filevault-one-mac-scope-portal]:** Only after the pre-state and the written rollback are in the ticket, the Mac lists no other FileVault or escrow profile (Phase A step 5), and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → Edit → Scope → Targets → **Add** → `[SERIAL_NUMBER]` → Save. Whether the Targets picker lists single computers was not in this batch's sources: if it does not, stop; a one-Mac group is a separately reviewed change.
 2. When Jamf Pro asks how to distribute the change, choose **Distribute to Newly Assigned Devices Only**, so no other Mac gets a remove and a reinstall.
 

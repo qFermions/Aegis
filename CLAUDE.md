@@ -484,3 +484,9 @@ Agent design and operating context. Read on demand when the topic comes up.
 - Inspect the destination before retrying any write outside the repo (a push, an API call, a message, an upload): the earlier attempt may already have gone through.
 - Call the evidence-reviewer agent (`.claude/agents/evidence-reviewer.md`) once per batch on finished outputs, and pass it saved output files; it cannot run commands.
 
+## Review
+- Reviews follow REVIEW.md: read it before any review (/code-review, /security-review, the evidence-reviewer agent).
+- Before a pull request is marked ready: /security-review, then /code-review at the tier's effort; every finding fixed in its own commit or closed with a one-line reason in checks.md; at most three rounds, diff-only from round two.
+- Every pull request fills .github/PULL_REQUEST_TEMPLATE.md in full: What and why, Testing, Risk tier (node scripts/risk_tier.mjs <base>), How to revert, Review, Actions outside the working copy. An empty section means not ready.
+- CI (.github/workflows/ci.yml) runs the declared checks on every pull request. A red check blocks ready. A job that skips says why in its name, and the pull request body says so under Testing.
+- docs/review/incidents.md is the eval: every shipped bug, boundary crossing or revert gets a row and one change to the system.

@@ -25,9 +25,14 @@ function write(cwd, file, content = `${file}\n`) {
   fs.writeFileSync(path.join(cwd, file), content);
 }
 
+// Every sandbox is removed when the file's tests finish.
+const sandboxes = [];
+test.after(() => { for (const dir of sandboxes) fs.rmSync(dir, { recursive: true, force: true }); });
+
 // A repo with `main` holding one commit and a work branch checked out on top of it.
 function sandbox() {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-risk-tier-'));
+  sandboxes.push(cwd);
   git(cwd, 'init', '-q', '-b', 'main');
   git(cwd, 'config', 'user.email', '[USER@DOMAIN.COM]'); // the scanner's canonical placeholder; git accepts it as an ident
   git(cwd, 'config', 'user.name', 'risk-tier test');

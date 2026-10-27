@@ -319,3 +319,16 @@ for (const s of SOLUTION_INJECTIONS) {
     assert.equal(look.json.result, 'MISS', short(look));
   });
 }
+
+// ── review round 1: the read-time PII gate keeps no state between strings ──
+
+test('B8 the sanitizer PII scan is stateless: a second address in the same pass, or in the next call, is still flagged', () => {
+  const { scanText, scanArtifact } = require(path.join(ROOT, 'scripts', 'graph', 'sanitize.js'));
+  // Assembled at run time: a literal address would trip the repository scanner (SR-1).
+  const first = `reach ${['canary.mailbox', 'not-a-real-tenant.com'].join('@')} about this ticket`;
+  const second = ['canary2', 'not-a-real-tenant.net'].join('@');
+  assert.equal(scanText(first).piiWarnings.length, 1);
+  assert.equal(scanText(second).piiWarnings.length, 1, 'a global regex must not carry lastIndex into the next call');
+  const merged = scanArtifact({ summary: first, detail: second });
+  assert.equal(merged.piiWarnings.length, 2, 'both strings of one record are flagged');
+});

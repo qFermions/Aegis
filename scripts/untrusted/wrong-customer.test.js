@@ -287,3 +287,40 @@ test('C7 a store with no tenant binding stays readable; its first write under a 
   assert.equal(replayAs(TENANT_B, store)(['lookup', '--ticket', ticket]).code, 6, 'now bound: tenant B is refused');
   assert.equal(replayAs(TENANT_A, store)(['lookup', '--ticket', ticket]).json.result, 'CACHE_HIT', 'tenant A still hits');
 });
+
+// ── 8. review round 1: every spelling of a second namespace, and the own literal disguised ──
+
+test('C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4)', () => {
+  const tokens = ['[@Contoso_Site_DOMAIN]', '[@Other_Org_DOMAIN]', '[@Contoso_Domain]', '[@North-Wind_DOMAIN]'];
+  const dep = writeFile('authority.md', 'authority doctrine v1 for guest access\n');
+  for (const token of tokens) {
+    const ticket = `Guest [GUEST_UPN] from ${token} cannot open the finance site shared by [UPN].`;
+    const before = runDirs();
+    const g = graph(['new', '--ticket-file', writeFile('ticket.txt', ticket)]);
+    assert.equal(g.code, 3, `${token} at graph intake: ${short(g)}`);
+    assert.deepEqual(runDirs(), before, `${token}: no run directory may be created`);
+    const dir = freshDir('c8');
+    const m = memAs(TENANT_A, dir)(['propose', '--file', writeFile('proposal.json', JSON.stringify({ ...PROPOSAL, detail: `Copied from the ${token} runbook.` }))]);
+    assert.equal(m.code, 3, `${token} at memory propose: ${short(m)}`);
+    const store = path.join(freshDir('c8-replay'), 'store');
+    const r = replayAs(TENANT_A, store)(['record', '--ticket', ticket, '--solution-file', writeFile('solution.md', fixture('tenant-solution.md')), '--deps', dep]);
+    assert.equal(r.code, 4, `${token} at replay record: ${short(r)}`);
+  }
+  const ours = graph(['new', '--ticket-file', writeFile('ours.txt', 'Printer at [@Aegion_SITE_2] for [@Aegion_DOMAIN] users is offline.')]);
+  assert.equal(ours.code, 0, `the deployment's own namespace still passes: ${short(ours)}`);
+});
+
+test('C9 the deployment\'s own tenant literal hidden by a zero-width character or a look-alike letter is still blocked (graph 3, memory 3, replay 4)', () => {
+  const disguised = [TENANT_A.replace('-a.', '-a​.'), TENANT_A.replace('a.example', 'а.example'), TENANT_A.replace('example', 'ex­ample')];
+  const dep = writeFile('authority.md', 'authority doctrine v1 for guest access\n');
+  for (const literal of disguised) {
+    const ticket = `Guest [GUEST_UPN] cannot open the finance site at ${literal} shared by [UPN].`;
+    const g = graph(['new', '--ticket-file', writeFile('ticket.txt', ticket)]);
+    assert.equal(g.code, 3, `graph intake: ${short(g)}`);
+    const m = memAs(TENANT_A, freshDir('c9'))(['propose', '--file', writeFile('proposal.json', JSON.stringify({ ...PROPOSAL, detail: `The site lives at ${literal}.` }))]);
+    assert.equal(m.code, 3, `memory propose: ${short(m)}`);
+    const store = path.join(freshDir('c9-replay'), 'store');
+    const r = replayAs(TENANT_A, store)(['record', '--ticket', ticket, '--solution-file', writeFile('solution.md', fixture('tenant-solution.md')), '--deps', dep]);
+    assert.equal(r.code, 4, `replay record: ${short(r)}`);
+  }
+});

@@ -9,7 +9,7 @@ subagent, and submits the subagent's JSON artifact back to the engine.
 Decision record: `docs/adr/ADR-004-internal-ticket-graph.md`.
 Ancestry: `identity-lifecycle-factory/` (artifact shapes, loop limits, double-key
 gate), `.claude/commands/troubleshoot.md` (lane taxonomy), CLAUDE.md §Zero-Trust
-(R0–R3), `scripts/pre-commit-check.js` (sanitizer pattern set — keep in sync).
+(R0–R3), `scripts/pre-commit-check.js` (sanitizer pattern set — keep in sync); the injection markers, folding and second-org rule are shared with the replay cache from `scripts/tier/tier-guard.js` (one copy).
 
 ## Modes
 
@@ -155,7 +155,7 @@ Mapped to the repo's standing rules — the graph strengthens them, never relaxe
 6. **Retry budget** — 1 invalid-artifact retry per node, tracked in `retryLedger`, then BLOCKED (Error Recovery Protocol: one retry, then stop).
 7. **Halt on partial failure** — EXECUTOR stops the batch at the first failed step and emits the ❌ BLOCKED report shape with partial-changes fields (Zero-Trust rule 5).
 8. **Evidence, not booleans** — `verify.v1` results without a non-empty `output` are rejected (SR-6; "never claim tested when it wasn't").
-9. **Every edge is sanitized**: tenant literals BLOCK the submit; PII warns; injection markers get flagged and quoted as data, never followed (SR-3/SR-8). Markers are matched on each line as written and on confusable-folded forms (zero-width and other format characters removed or read as a space, NFKD, combining marks stripped, Latin look-alikes mapped), so a marker hidden from the regex but readable by a model is still flagged; the quote keeps the original line. Pinned by `scripts/untrusted/instruction-injection.test.js` (A2). One deployment serves one tenant: an org environment token of any namespace other than `[@Aegion_*]` (`[@<Name>_<UPPER_SUFFIX>]`, for example a second org's `_DOMAIN`) means the case mixes two tenants, so `new` and `submit` BLOCK it like a tenant literal (exit 3, no run created, state unmoved, token never echoed). A B2B guest (`[GUEST_UPN]`, a `#EXT#` UPN) is one customer's case and is not affected. Pinned by `scripts/untrusted/wrong-customer.test.js` (C1, C2).
+9. **Every edge is sanitized**: tenant literals BLOCK the submit, matched as written and confusable-folded (a zero-width character or look-alike letter inside the domain does not hide it); PII warns; injection markers get flagged and quoted as data, never followed (SR-3/SR-8). Markers are matched on each line as written and on confusable-folded forms (zero-width and other format characters removed or read as a space, NFKD, combining marks stripped, Latin look-alikes mapped), so a marker hidden from the regex but readable by a model is still flagged; the quote keeps the original line. Pinned by `scripts/untrusted/instruction-injection.test.js` (A2). One deployment serves one tenant: an org environment token of any namespace other than `[@Aegion_*]` (`[@<Namespace>_<suffix>]`, any spelling of the suffix: mixed case, digits, hyphens, more underscores, for example a second org's `_DOMAIN`) means the case mixes two tenants, so `new` and `submit` BLOCK it like a tenant literal (exit 3, no run created, state unmoved, token never echoed). A B2B guest (`[GUEST_UPN]`, a `#EXT#` UPN) is one customer's case and is not affected. Pinned by `scripts/untrusted/wrong-customer.test.js` (C1, C2).
 10. **Provenance is typed** — `operator_typed | agent_derived | external_content`; nothing agent-derived or external can satisfy a gate.
 
 ## CLI

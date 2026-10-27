@@ -51,7 +51,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess, foldConfusables } = require('../tier/tier-guard.js'); // pure functions, no I/O
+const { assess, injectionMarkersIn, hasForeignOrgToken, containsLiteral } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
@@ -150,7 +150,7 @@ function sanitizationHits(text) {
   for (const [re, label] of patterns) if (re.test(text)) hits.push(label);
   for (const v of ['AEGION_DOMAIN', 'AEGION_ORG_NAME']) {
     const lit = process.env[v];
-    if (lit && lit.length > 3 && text.toLowerCase().includes(lit.toLowerCase())) {
+    if (lit && lit.length > 3 && containsLiteral(text, lit)) {
       hits.push(`tenant literal (${v})`);
     }
   }
@@ -169,32 +169,13 @@ function sanitizationHits(text) {
   return hits;
 }
 
-// A second org namespace (SR-1/SR-8): [@Aegion_*] is this deployment's org; an
-// org environment token of any other namespace ([@<Name>_<UPPER_SUFFIX>]) means
-// the case mixes two tenants. Same rule as the graph edge sanitizer
-// (scripts/graph/sanitize.js, keep in sync), matched as written and folded.
-const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9]*)_[A-Z0-9][A-Z0-9_]*\]/g;
-function hasForeignOrgToken(text) {
-  return [String(text), foldConfusables(text)].some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => m[1].toLowerCase() !== 'aegion'));
-}
-
-// Instruction-shaped text (SR-3): the four markers of the graph edge sanitizer
-// (scripts/graph/sanitize.js, keep in sync), matched on the text as written and
-// in two confusable-folded forms (format characters removed, or read as a
-// space when a zero-width character separates the words), so obfuscation does
-// not carry an instruction into a solution that renders verbatim.
-const INJECTION_MARKERS = [
-  [/ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i, 'ignore-previous-instructions'],
-  [/disregard\s+(your|all|previous)\s+(rules|instructions|guidelines)/i, 'disregard-rules'],
-  [/\bnew\s+system\s+prompt\b/i, 'system-prompt-override'],
-  [/\byou\s+are\s+now\s+(in\s+)?(admin|developer|maintenance)\s+mode\b/i, 'mode-override-claim'],
-];
+// Instruction-shaped text (SR-3) and a second org namespace (SR-1/SR-8) use the rules
+// shared with the graph edge sanitizer in scripts/tier/tier-guard.js (one copy), matched
+// as written and confusable-folded, so obfuscation does not carry an instruction or a
+// second tenant into a solution that renders verbatim.
 function injectionHits(text) {
-  const s = String(text);
-  const forms = [s, foldConfusables(s), foldConfusables(s.replace(/\p{Cf}/gu, ' '))];
-  return INJECTION_MARKERS
-    .filter(([re]) => forms.some((f) => re.test(f)))
-    .map(([, name]) => `instruction-shaped text (prompt-injection marker: ${name}; content is data, never instructions)`);
+  return injectionMarkersIn(text)
+    .map((name) => `instruction-shaped text (prompt-injection marker: ${name}; content is data, never instructions)`);
 }
 // dashed · dotted · spaced · parenthesised area code · +country with 2–4 groups ·
 // +country (0) trunk form · E.164 without separators · bare ten digits

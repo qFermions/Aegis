@@ -99,7 +99,53 @@ function assess(text) {
   return { floor: triggers.length ? 'T3' : 'none', triggers };
 }
 
-module.exports = { assess, foldConfusables, ESCALATION_PATTERNS };
+// ── untrusted-text rules shared by the graph edge sanitizer and the replay cache ──
+// One copy, here, because both may load this pure module (scripts/graph/sanitize.js;
+// scripts/replay/replay-cli.js, whose R4 test pins its dependencies to this file).
+
+// The text as written and two folded forms: format characters removed, or read as a
+// space (a zero-width character used as the word separator). A marker or token a model
+// can read must not hide behind a homoglyph or an invisible character.
+function foldedForms(text) {
+  const s = String(text);
+  return Array.from(new Set([s, foldConfusables(s), foldConfusables(s.replace(/\p{Cf}/gu, ' '))]));
+}
+
+// Prompt-injection markers (SR-3): flagged or refused as data, never followed.
+const INJECTION_MARKERS = [
+  { pattern: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i, marker: 'ignore-previous-instructions' },
+  { pattern: /disregard\s+(your|all|previous)\s+(rules|instructions|guidelines)/i, marker: 'disregard-rules' },
+  { pattern: /\bnew\s+system\s+prompt\b/i, marker: 'system-prompt-override' },
+  { pattern: /\byou\s+are\s+now\s+(in\s+)?(admin|developer|maintenance)\s+mode\b/i, marker: 'mode-override-claim' },
+];
+function injectionMarkersIn(text) {
+  const forms = foldedForms(text);
+  return INJECTION_MARKERS.filter(({ pattern }) => forms.some((f) => pattern.test(f))).map(({ marker }) => marker);
+}
+
+// A second org namespace (SR-1/SR-8): one deployment serves one tenant, whose org
+// tokens are the [@Aegion_*] family (modules/security/placeholder-dictionary.md). Any
+// org token [@<Namespace>_<suffix>] whose namespace (the text before the first "_") is
+// not Aegion means the case mixes two tenants: mixed case, digits, hyphens and further
+// underscores in the suffix all count. A bare [@name] is not an org token (it is as
+// often a chat mention).
+const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9-]*)_[^\]\s]+\]/g;
+const OWN_ORG_NAMESPACE = 'aegion';
+function hasForeignOrgToken(text) {
+  return foldedForms(text).some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => m[1].toLowerCase() !== OWN_ORG_NAMESPACE));
+}
+
+// A tenant literal (SR-8) is found as written and in the folded forms, so a zero-width
+// character or a look-alike letter inside the real domain does not get it past the gate.
+function containsLiteral(text, literal) {
+  const needle = String(literal).toLowerCase();
+  return needle.length > 0 && foldedForms(text).some((f) => f.toLowerCase().includes(needle));
+}
+
+module.exports = {
+  assess, foldConfusables, ESCALATION_PATTERNS,
+  foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, hasForeignOrgToken, containsLiteral,
+};
 
 if (require.main === module) {
   const i = process.argv.indexOf('--ticket');

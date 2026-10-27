@@ -17,6 +17,8 @@
 
 const fs = require('fs');
 const path = require('path');
+// Shared untrusted-text rules (pure, no I/O): one copy for this sanitizer and the replay cache.
+const { foldedForms, INJECTION_MARKERS, hasForeignOrgToken, containsLiteral } = require('../tier/tier-guard.js');
 
 // ── Dangerous PowerShell patterns (WARN) — mirror of pre-commit-check.js ─────
 const DANGEROUS_PS_PATTERNS = [
@@ -37,8 +39,8 @@ const DANGEROUS_PS_PATTERNS = [
 
 // ── PII patterns (WARN at the edge; placeholders exempt the line) ────────────
 const PII_PATTERNS = [
-  { pattern: /\b[A-Za-z0-9._%+-]+@(?!YOUR_DOMAIN|example-corp\.|vendor-example\.|example\.|github\.com|noreply\.github\.com)[a-z0-9.-]+\.(org|com|net)\b/g, label: 'Real email address (use [USER@DOMAIN.COM])' },
-  { pattern: /\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/g, label: 'Phone number pattern (use [PHONE_NUMBER])' },
+  { pattern: /\b[A-Za-z0-9._%+-]+@(?!YOUR_DOMAIN|example-corp\.|vendor-example\.|example\.|github\.com|noreply\.github\.com)[a-z0-9.-]+\.(org|com|net)\b/, label: 'Real email address (use [USER@DOMAIN.COM])' },
+  { pattern: /\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/, label: 'Phone number pattern (use [PHONE_NUMBER])' },
 ];
 
 // ── Credential/secret patterns (BLOCK) ───────────────────────────────────────
@@ -54,54 +56,10 @@ const CREDENTIAL_PATTERNS = [
   { pattern: /SharedAccessSignature\s*=/i, label: 'Azure SAS token assignment' },
 ];
 
-// ── Prompt-injection markers (FLAG — data, never instructions) ───────────────
-const INJECTION_MARKERS = [
-  { pattern: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i, marker: 'ignore-previous-instructions' },
-  { pattern: /disregard\s+(your|all|previous)\s+(rules|instructions|guidelines)/i, marker: 'disregard-rules' },
-  { pattern: /\bnew\s+system\s+prompt\b/i, marker: 'system-prompt-override' },
-  { pattern: /\byou\s+are\s+now\s+(in\s+)?(admin|developer|maintenance)\s+mode\b/i, marker: 'mode-override-claim' },
-];
-
-// Confusable folding for the injection-marker scan. A marker a model can read
-// but this regex cannot see is an open instruction channel, so each line is
-// matched as written AND in two folded forms: invisible format characters
-// (zero-width space and joiners, soft hyphen, word joiner, BOM) removed, or
-// turned into a space (a zero-width character used as the word separator);
-// then NFKD (fullwidth and mathematical letters to ASCII), combining marks
-// stripped, and the Latin look-alikes below mapped. Same method as the SR-2
-// trigger scan in engine.js and the lane guard under scripts/tier (kept local:
-// the edge sanitizer imports neither). Only marker matching uses the folded
-// forms; the flag quotes the original line.
-const MARKER_CONFUSABLES = {
-  'ı': 'i', 'ſ': 's', 'ɡ': 'g', 'ɩ': 'i',
-  'ᴀ': 'a', 'ʙ': 'b', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ꜰ': 'f', 'ɢ': 'g', 'ʜ': 'h', 'ɪ': 'i', 'ᴊ': 'j', 'ᴋ': 'k', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 'ǫ': 'q', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u', 'ᴠ': 'v', 'ᴡ': 'w', 'ʏ': 'y', 'ᴢ': 'z',
-  'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x', 'у': 'y', 'і': 'i', 'ј': 'j', 'ѕ': 's', 'һ': 'h', 'ԁ': 'd', 'ԛ': 'q', 'ԝ': 'w',
-  'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O', 'Р': 'P', 'С': 'C', 'Т': 'T', 'Х': 'X', 'Ѕ': 'S', 'І': 'I', 'Ј': 'J',
-  'ο': 'o', 'ν': 'v', 'ρ': 'p', 'α': 'a', 'ε': 'e', 'ι': 'i', 'κ': 'k', 'τ': 't', 'υ': 'u', 'χ': 'x', 'γ': 'y',
-};
-
-function foldForMarkers(line, formatCharAs) {
-  return line.replace(/\p{Cf}/gu, formatCharAs).normalize('NFKD').replace(/\p{M}/gu, '')
-    .replace(/[^\x00-\x7F]/g, (ch) => MARKER_CONFUSABLES[ch] || ch);
-}
-
-function markerForms(line) {
-  return Array.from(new Set([line, foldForMarkers(line, ''), foldForMarkers(line, ' ')]));
-}
-
-// ── Second org namespace (BLOCK) ─────────────────────────────────────────────
-// One deployment serves one tenant: its org tokens are the [@Aegion_*] family
-// (modules/security/placeholder-dictionary.md). An org environment token of any
-// other namespace ([@<Name>_<UPPER_SUFFIX>], e.g. a second org's _DOMAIN) means
-// the case mixes two tenants, so it fails closed like a tenant literal. Only the
-// suffixed form counts (a bare [@name] is as often a chat mention), it is
-// matched on the folded forms too (a look-alike letter cannot disguise the
-// namespace), and the report never echoes the token.
-const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9]*)_[A-Z0-9][A-Z0-9_]*\]/g;
-const OWN_ORG_NAMESPACE = 'aegion';
-function hasForeignOrgToken(forms) {
-  return forms.some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => m[1].toLowerCase() !== OWN_ORG_NAMESPACE));
-}
+// Prompt-injection markers (FLAG: data, never instructions), confusable folding and the
+// second-org-namespace rule (BLOCK) live in scripts/tier/tier-guard.js, shared with the
+// replay cache. Marker matching and the org rule use the folded forms; the flag quotes the
+// original line, and the org report never echoes the token.
 
 // Tenant literals (SR-8): loaded at call time from env + gitignored replacements.txt.
 // Real values never appear in this file; scan reports never echo them.
@@ -137,10 +95,9 @@ function scanText(text, opts = {}) {
 
   lines.forEach((line, i) => {
     const n = i + 1;
-    const lower = line.toLowerCase();
 
     for (const literal of tenantLiterals) {
-      if (literal && lower.includes(literal)) {
+      if (literal && containsLiteral(line, literal)) {
         result.blocks.push({ line: n, label: 'Tenant/org literal (SR-8) — use the [@Aegion_*] token', text: '[REDACTED — tenant literal on this line]' });
       }
     }
@@ -155,8 +112,8 @@ function scanText(text, opts = {}) {
         if (pattern.test(line)) result.piiWarnings.push({ line: n, label });
       }
     }
-    const forms = markerForms(line);
-    if (hasForeignOrgToken(forms)) {
+    const forms = foldedForms(line);
+    if (hasForeignOrgToken(line)) {
       result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });
     }
     for (const { pattern, marker } of INJECTION_MARKERS) {

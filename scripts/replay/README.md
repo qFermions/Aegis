@@ -48,11 +48,15 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   other format characters, fullwidth forms, combining marks, Latin
   look-alikes). Pinned by `scripts/untrusted/poisoned-memory.test.js` B7.
 - **A second tenant is refused at the same boundary (exit 4).** `[@Aegion_*]`
-  is this deployment's org; an org environment token of any other namespace
-  (`[@<Namespace>_<suffix>]` whose suffix names an environment value as the placeholder dictionary does (a word such as DOMAIN, SITE, ISP or VOIP in any case, or an all-capitals segment; spaces inside the brackets do not hide it). A chat handle such as `[@jane_doe]` is not an org token; an all-capitals handle such as `[@JOHN_SMITH]` is read as one (known limit)) in a ticket, solution, evidence, alias or
-  reason means the case mixes two tenants, so it never enters the store (same
-  rule as the graph edge sanitizer). Pinned by
-  `scripts/untrusted/wrong-customer.test.js` C4.
+  is this deployment's org. An org environment token of any other namespace in
+  a ticket, solution, evidence, alias or reason means the case mixes two
+  tenants, so it never enters the store (same rule as the graph edge
+  sanitizer). A token is an org token when its suffix is one of the placeholder
+  dictionary's own suffixes, or a numbered variant of one, in any case and any
+  spelling: `[@Contoso_DOMAIN]`, `[@Contoso_SiteCount]`, `[@Contoso _DOMAIN]`.
+  A chat handle such as `[@jane_doe]`, `[@bob_site_visit]` or `[@JOHN_SMITH]`
+  is not one. Pinned by `scripts/untrusted/wrong-customer.test.js` C4, C13 and
+  C14 (the suffix list equals the dictionary).
 - **Re-checked at read time.** `lookup` and `render` run the same persistence
   boundary over the stored ticket and solution before they serve a case;
   `status` and `list` also check the verification evidence and history, and

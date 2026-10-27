@@ -158,6 +158,16 @@ test('the R1 gates that say "installs nothing" keep every path that could instal
   assert.match(add.region, /If automatic install is chosen, or the dialog will not leave it off, stop without saving: .*R3 rollout in Phase 4/);
 });
 
+test('the exposure check compares against the ticket\'s own count, not the F04 corpus number', () => {
+  const phase1 = section(VULN, 'Phase 1');
+  assert.match(phase1, /^3\. Compare the count with the count in the ticket \(`\[N\]`\)\./m);
+  assert.doesNotMatch(VULN, /ticket's 30\b/);
+  // 30 hosts appears only inside the quoted example ticket.
+  for (const line of VULN.split('\n').filter((l) => /\b30 hosts\b/.test(l))) assert.match(line, /"[^"]*\b30 hosts\b[^"]*"/, `unquoted ticket number: ${line.slice(0, 80)}`);
+  const placeholders = VULN.split('\n').find((l) => l.startsWith('**Placeholders:**'));
+  assert.match(placeholders, /`\[N\]` \(the exposed host count the ticket states\)/);
+});
+
 test('the vulnerable-title read that yields [SOFTWARE_TITLE_ID] pages, so a long list can be read to the end', () => {
   assert.match(VULN, /^node scripts\/adapters\/fleet-client\.js software --vulnerable --fleet-id \[FLEET_ID\] --page 0 --per-page 100 --execute$/m);
   assert.doesNotMatch(VULN, /software --vulnerable --fleet-id \[FLEET_ID\] --execute/);

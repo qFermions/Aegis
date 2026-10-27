@@ -220,3 +220,25 @@ test('every 2-Step Verification gate is R3, and the Phase B rollback is gated to
   assert.match(before, /\*\*Stop conditions:\*\* any user in `\[OU_PATH\]` reads `isEnrolledIn2Sv` true/);
   assert.match(before, /gws-client\.js users --query "orgUnitPath='\/\[OU_PATH\]' isEnrolledIn2Sv=true"/);
 });
+
+// ── Finding: every admin-role assignment is R3 ──────────────────────────────
+// /gws-audit-log states that role grants are R3 regardless; the lane research gives R2 for
+// a delegated role. Two runbooks may not give different classes for the same action, and
+// the lane rule is the safer reading, so every gate that assigns a role is R3, with the
+// written rollback in the ticket before the change.
+test('every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict', () => {
+  const audit = fs.readFileSync(fileOf('gws-audit-log'), 'utf8');
+  assert.match(audit, /role grants are R3 regardless/, '/gws-audit-log still states the class this check enforces');
+  const assigning = allGates().filter((g) => /^assign\b[^;]*\brole\b/i.test(g.fields.Effect || ''));
+  assert.ok(assigning.length >= 1, 'the admin-roles runbook has an assignment gate');
+  for (const g of assigning) {
+    assert.equal(g.rClass, 'R3', `${g.file}:${g.line} ${g.id}: ${g.fields.Reversibility}`);
+    assert.doesNotMatch(g.fields.Reversibility, /\bR2\b/, `${g.id}: no R2 branch for a delegated role`);
+    assert.match(onlyAfter(g), /written rollback/, `${g.id}: the R3 ceremony puts the written rollback before the change`);
+  }
+  const roles = textOf('gws-admin-roles');
+  assert.match(roles, /^## Phase C: Assign a role \(R3\)$/m);
+  assert.match(roles, /^3\. Phase C: assign a role \(R3 for every role\b/m);
+  assert.match(roles, /\*\*Written rollback \(in the ticket before the change\):\*\*/);
+  assert.match(roles, /`\/gws-audit-log` classes role grants R3 regardless; the lane research classes a delegated role R2/);
+});

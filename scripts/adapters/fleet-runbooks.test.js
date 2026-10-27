@@ -158,6 +158,34 @@ test('the R1 gates that say "installs nothing" keep every path that could instal
   assert.match(add.region, /If automatic install is chosen, or the dialog will not leave it off, stop without saving: .*R3 rollout in Phase 4/);
 });
 
+// The comment line that sits right above the canonical `if` of one shell gate.
+function shellPrecondition(text, id) {
+  const lines = text.split('\n');
+  const start = lines.findIndex((line) => line.trim() === `# SAFETY GATE [${id}]`);
+  assert.ok(start >= 0, `shell gate ${id} not found`);
+  const ifLine = lines.findIndex((line, i) => i > start && line.startsWith('if IFS= read -r confirmation'));
+  assert.ok(ifLine > start, `shell gate ${id}: no comparison`);
+  return lines.slice(start, ifLine).filter((line) => line.startsWith('# precondition')).join('\n');
+}
+
+test('the fleetctl gates carry the prerequisites their portal counterparts carry, and every script gate asks for the pre-state', () => {
+  const lock = shellPrecondition(DEVICE, 'fleet-device-actions-lock-cli');
+  assert.match(lock, /the Phase A pre-state is saved to tasks\/checkpoints\//);
+  assert.match(lock, /runs Fleet Premium/);
+  assert.match(lock, /you hold Maintainer or Admin/);
+
+  const script = shellPrecondition(DEVICE, 'fleet-device-actions-run-script-cli');
+  assert.match(script, /every line of \[FILE_NAME\] has been read/);
+  assert.match(script, /its R-class from R1 to R3 is written in the ticket/);
+  assert.match(script, /the current value of what it changes is in the ticket as the pre-state/);
+  assert.match(script, /the independent out-of-session review is done when it is R3/);
+
+  const e1 = gate(DEVICE, 'fleet-device-actions-run-script-portal');
+  assert.match(e1.portal, /the current value of what the script changes is in the ticket \(the pre-state, saved to `tasks\/checkpoints\/` when the script is R2 or R3\)/);
+  const e2 = gate(DEVICE, 'fleet-device-actions-batch-script-portal');
+  assert.match(e2.portal, /the pre-state of what the script changes is saved to `tasks\/checkpoints\/` and the rollback path is written/);
+});
+
 test('the exposure check compares against the ticket\'s own count, not the F04 corpus number', () => {
   const phase1 = section(VULN, 'Phase 1');
   assert.match(phase1, /^3\. Compare the count with the count in the ticket \(`\[N\]`\)\./m);

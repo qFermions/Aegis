@@ -173,7 +173,7 @@ Do not delete the host until it reads wiped: deleting removes Fleet's record of 
 - **Reversibility:** R1 to R3 by script content, set in step 1; while still in Upcoming it can be cancelled (Phase G); after it runs Fleet has no undo, only a compensating script that a human writes and runs under this gate
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-device-actions-run-script-portal]:** Only after step 1, the review when the script is R3, and the exact match:
+**PORTAL ACTION [fleet-device-actions-run-script-portal]:** Only after step 1, the current value of what the script changes is in the ticket (the pre-state, saved to `tasks/checkpoints/` when the script is R2 or R3), the review when the script is R3, and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Run Script** → `[SCRIPT_NAME]` → Actions → **Run**.
 
 **WAIT UNTIL** Host details → Activity moves the run from Upcoming to Past.
@@ -193,7 +193,7 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 - **Reversibility:** R3: Fleet has no undo on any host; hosts that have not run it yet can be cancelled only through Fleet's API batch cancel (the console path for a batch cancel is not in the guides read); a compensating script is its own gated batch
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON CHECKED HOSTS IN FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-device-actions-batch-script-portal]:** Only after the pilot passed, the independent review, the host count in the ticket and the exact match:
+**PORTAL ACTION [fleet-device-actions-batch-script-portal]:** Only after the pilot passed, the pre-state of what the script changes is saved to `tasks/checkpoints/` and the rollback path is written, the independent review, the host count in the ticket and the exact match:
 1. Fleet → Hosts → select `[FLEET_NAME]` → check the hosts → **Run script** → choose `[SCRIPT_NAME]`.
 
 **WAIT UNTIL** each checked host shows the run under Host details → Activity → Past; offline hosts stay in Upcoming until they check in.
@@ -293,6 +293,7 @@ fleetctl must already be signed in (`fleetctl login` keeps the token in `~/.flee
 required_confirmation="LOCK HOST [SERIAL_NUMBER]"
 # shows the phrase
 printf '%s\n' "Type exactly: $required_confirmation"
+# precondition, checked before you type the phrase: the Phase A pre-state is saved to tasks/checkpoints/, the Fleet server runs Fleet Premium, and you hold Maintainer or Admin
 # reads one line exactly as typed and runs the change only on an exact, case-sensitive match
 if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
   # queues the lock for this host
@@ -320,6 +321,7 @@ node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute
 required_confirmation="RUN SCRIPT [FILE_NAME] ON HOST [SERIAL_NUMBER]"
 # shows the phrase
 printf '%s\n' "Type exactly: $required_confirmation"
+# precondition, checked before you type the phrase: every line of [FILE_NAME] has been read, its R-class from R1 to R3 is written in the ticket, the current value of what it changes is in the ticket as the pre-state, and the independent out-of-session review is done when it is R3
 # reads one line exactly as typed and runs the change only on an exact, case-sensitive match
 if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
   # sends the script file to the host as a script run

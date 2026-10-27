@@ -152,3 +152,8 @@ test('every [@Aegion_*] org token used in a tracked file is defined in the place
   }
   assert.deepStrictEqual(undefinedUses, [], `Org tokens used but not defined in the dictionary:\n${undefinedUses.join('\n')}`);
 });
+
+test('CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized)', () => {
+  const content = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(content.length <= 40000, `CLAUDE.md is ${content.length} chars; Claude Code truncates the tail past 40,000`);
+});

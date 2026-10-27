@@ -54,9 +54,10 @@
 //    the read proves the human's write and 2 when it does not: verify-comment (a
 //    comment on that issue, created at or after --not-before, whose normalised body
 //    has the expected SHA-256, read across pages), verify-state (the state name),
-//    verify-labels (the label name is on the issue), verify-trashed (trashed is true)
-//    and verify-suspended (the member's active is false, read across pages). A
-//    response about another issue is never proof.
+//    verify-labels (the label name is on the issue), verify-trashed (trashed is true),
+//    verify-snoozed (snoozedUntilAt is a time later than the read) and
+//    verify-suspended (the member's active is false, read across pages). A response
+//    about another issue is never proof.
 // 8. A 200 response carrying GraphQL errors returns no data (exit 2) and prints only
 //    the error type codes. Instruction text in a response field is flagged and quoted
 //    in the CLI output and nothing follows from it.
@@ -133,7 +134,7 @@ function reply(data, { org = ORG, status = 200 } = {}) {
 function issueNode(over = {}) {
   return {
     id: 'issue-1', identifier: ISSUE, title: 'Printer offline at the front desk', priority: 2, priorityLabel: 'High',
-    createdAt: '2026-10-26T09:00:00.000Z', archivedAt: null, trashed: null, triagedAt: '2026-10-26T10:00:00.000Z',
+    createdAt: '2026-10-26T09:00:00.000Z', archivedAt: null, trashed: null, triagedAt: '2026-10-26T10:00:00.000Z', snoozedUntilAt: null,
     slaType: null, slaStartedAt: null, slaBreachesAt: null,
     state: { name: 'In Progress', type: 'started' },
     labels: { nodes: [{ id: 'label-1', name: 'Hardware' }], pageInfo: { hasNextPage: false } },
@@ -184,6 +185,7 @@ const VERIFIES = [
   { argv: ['verify-state', '--issue', ISSUE, '--state', 'Done'], doc: 'AegisIssue', variables: { id: ISSUE }, reply: () => reply({ issue: issueNode() }) },
   { argv: ['verify-labels', '--issue', ISSUE, '--has', 'Hardware'], doc: 'AegisIssue', variables: { id: ISSUE }, reply: () => reply({ issue: issueNode() }) },
   { argv: ['verify-trashed', '--issue', ISSUE], doc: 'AegisIssue', variables: { id: ISSUE }, reply: () => reply({ issue: issueNode() }) },
+  { argv: ['verify-snoozed', '--issue', ISSUE], doc: 'AegisIssue', variables: { id: ISSUE }, reply: () => reply({ issue: issueNode() }) },
   { argv: ['verify-suspended', '--user', 'user-7'], doc: 'AegisMembers', variables: {}, reply: () => membersPage([]) },
 ];
 
@@ -573,6 +575,41 @@ test('verify-state, verify-labels and verify-trashed print verified, observed an
   assert.equal(caseDiffers.code, 2, 'the state name is matched exactly');
 });
 
+test('verify-snoozed: the issue read carries snoozedUntilAt, and a time later than the read proves the snooze (exit 0); empty, past, now, unreadable or another issue is not proof (exit 2)', async () => {
+  assert.match(linear.SPEC.graphql.documents.AegisIssue, /\btriagedAt snoozedUntilAt\b/, 'AegisIssue reads snoozedUntilAt');
+  const args = ['verify-snoozed', '--issue', ISSUE, '--execute'];
+  const readAt = new Date(NOW).toISOString();
+  const future = '2026-10-28T09:00:00.000Z';
+
+  const yes = await cli(args, { replies: [reply({ issue: issueNode({ snoozedUntilAt: future, state: { name: 'Triage', type: 'triage' } }) })] });
+  assert.equal(yes.code, 0, yes.stdout);
+  const y = firstJson(yes.stdout);
+  assert.equal(y.verified, true);
+  assert.equal(y.expected.issue, ISSUE);
+  assert.deepEqual(y.observed, { issue: ISSUE, snoozedUntilAt: future, readAt, state: { name: 'Triage', type: 'triage' } });
+
+  const offset = await cli(args, { replies: [reply({ issue: issueNode({ snoozedUntilAt: '2026-10-27T09:00:00.000-05:00' }) })] });
+  assert.equal(offset.code, 0, 'a time with an offset is read as that moment (14:00 UTC, after the 12:00 read)');
+
+  const misses = [
+    ['not snoozed', issueNode({ snoozedUntilAt: null })],
+    ['field missing', (() => { const n = issueNode(); delete n.snoozedUntilAt; return n; })()],
+    ['already passed', issueNode({ snoozedUntilAt: '2026-10-27T11:59:59.000Z' })],
+    ['exactly the read time', issueNode({ snoozedUntilAt: readAt })],
+    ['not a time', issueNode({ snoozedUntilAt: 'tomorrow' })],
+    ['another issue', issueNode({ snoozedUntilAt: future, identifier: 'IT-999' })],
+  ];
+  for (const [label, node] of misses) {
+    const res = await cli(args, { replies: [reply({ issue: node })] });
+    assert.equal(res.code, 2, label);
+    const n = firstJson(res.stdout);
+    assert.equal(n.verified, false, label);
+    assert.ok(typeof n.reason === 'string' && n.reason.length > 0, label);
+  }
+  const issueRead = await cli(['issue', '--issue', ISSUE, '--execute'], { replies: [reply({ issue: issueNode({ snoozedUntilAt: future }) })] });
+  assert.equal(firstJson(issueRead.stdout).data.issue.snoozedUntilAt, future, 'the issue read prints snoozedUntilAt too');
+});
+
 test('verify-suspended: the member\'s active is false (exit 0); active, or not found on any page, is not proof (exit 2)', async () => {
   // Linear's root users() returns suspended users only with includeDisabled: true (its
   // default is false), so the mock below can stand in for the API only if the document
@@ -678,6 +715,7 @@ test('bad input is refused with exit 1 before anything is read or sent', async (
     ['issue', '--issue', ISSUE, '--issue', 'IT-124'], ['viewer', '--issue', ISSUE], ['comments', '--issue', ISSUE, '--body-file', 'note.md'],
     ['states'], ['states', '--team', 'I T'], ['verify-state', '--issue', ISSUE], ['verify-state', '--issue', ISSUE, '--state', 'Bad\u0007state'],
     ['verify-labels', '--issue', ISSUE, '--has', ''], ['verify-suspended', '--user', 'user 7'], ['verify-suspended'],
+    ['verify-snoozed'], ['verify-snoozed', '--issue', ISSUE, '--state', 'Triage'],
     ['verify-comment', '--issue', ISSUE, '--not-before', NOT_BEFORE],
   ];
   for (const argv of bad) {

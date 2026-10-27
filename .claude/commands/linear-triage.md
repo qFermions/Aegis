@@ -194,11 +194,16 @@ node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "
 **PORTAL ACTION [linear-triage-snooze-portal]:** Only after the exact match:
 1. Linear → `[@Aegion_LINEAR_TEAM]` team → Triage → `[ISSUE_ID]` → **Snooze** (shortcut `H`) → pick `[DATE_TIME]`, the date and time typed in the phrase.
 
-The adapter's issue read carries no snooze field, so this read-back is in Linear: the Triage view no longer shows `[ISSUE_ID]`, and the issue page shows it snoozed. `node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute` still reports status type `triage`.
+```bash
+# read-only read-back: exits 0 only when [ISSUE_ID] reads a snoozedUntilAt later than the time of the read; compare the printed snoozedUntilAt with [DATE_TIME]
+node scripts/adapters/linear-client.js verify-snoozed --issue [ISSUE_ID] --execute
+```
+
+GUI read-back: the Triage view no longer shows `[ISSUE_ID]`, and the issue page shows it snoozed; `verify-snoozed` also prints the status type, still `triage`.
 
 **WAIT UNTIL** the snooze time passes or someone adds activity: the issue returns to Triage and gets a fresh Phase B line.
 
-**Verification checkpoint:** [ ] each duplicate and each decline has a passing `verify-state` · [ ] each snoozed issue is hidden from Triage with its date in the ticket.
+**Verification checkpoint:** [ ] each duplicate and each decline has a passing `verify-state` · [ ] each snoozed issue passes `verify-snoozed`, and its snoozedUntilAt matches `[DATE_TIME]` in the ticket.
 
 ## Phase E: An issue that missed its SLA (R0, one R1 gate)
 
@@ -260,6 +265,7 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 - [ ] Each accepted issue: `verify-labels` and `verify-state` (default status) exit 0.
 - [ ] Each duplicate: `verify-state` (duplicate status) exits 0, and `[CANONICAL_ISSUE_ID]` lists the moved attachments.
 - [ ] Each declined issue: `verify-state` (canceled status) exits 0, and its comment says where the request belongs.
+- [ ] Each snoozed issue: `verify-snoozed` exits 0 and its snoozedUntilAt matches `[DATE_TIME]`.
 - [ ] Each issue that missed its SLA: the note names the window, the time it left Triage, the cause and the next owner.
 - [ ] Each changed issue carries the Linear-ready note, proved by `verify-comment`.
 
@@ -267,7 +273,7 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form, which names what is verified, what is pending and the next owner.
 
-> [Only if every read-back passed] Triage [date/time]: `[ISSUE_ID]` [accepted into [STATE_NAME] with priority [PRIORITY_LEVEL] and label [LABEL_NAME] / marked as a duplicate of [CANONICAL_ISSUE_ID] / declined: [where the request belongs] / snoozed until [DATE_TIME], waiting on [what]]. [SLA: window [slaStartedAt] to [slaBreachesAt]; left Triage [triagedAt]; missed because [cause]; priority [corrected to [PRIORITY_LEVEL] / unchanged]; next step [what], owner [ADMIN_NAME].] Changed by a person in Linear after the exact phrase; read back with linear-client.js [verify-state / verify-labels]. Time spent: [X] min.
+> [Only if every read-back passed] Triage [date/time]: `[ISSUE_ID]` [accepted into [STATE_NAME] with priority [PRIORITY_LEVEL] and label [LABEL_NAME] / marked as a duplicate of [CANONICAL_ISSUE_ID] / declined: [where the request belongs] / snoozed until [DATE_TIME], waiting on [what]]. [SLA: window [slaStartedAt] to [slaBreachesAt]; left Triage [triagedAt]; missed because [cause]; priority [corrected to [PRIORITY_LEVEL] / unchanged]; next step [what], owner [ADMIN_NAME].] Changed by a person in Linear after the exact phrase; read back with linear-client.js [verify-state / verify-labels / verify-snoozed / issue]. Time spent: [X] min.
 
 > [Partial state, keep open] Triage of `[ISSUE_ID]` not finished [date/time]. Verified: [each read-back that passed]. Pending: [the change not yet made, or the read-back that failed and its exit code]. Next owner: [ADMIN_NAME].
 

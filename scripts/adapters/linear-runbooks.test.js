@@ -16,6 +16,11 @@
 //    names [DATE_TIME], and a gate that edits or deletes one comment names
 //    [COMMENT_ID]. A priority-only correction (triage Phase E) goes through a gate whose
 //    Effect changes the priority and nothing else.
+// 3. Every adapter line in the runbooks is one the adapter accepts. Each
+//    `node scripts/adapters/linear-client.js ...` line, with its placeholders filled by
+//    sample values, runs as a dry run (no --execute, no environment, no transport)
+//    and exits 0; a placeholder with no sample value fails the test. The snooze gate
+//    is followed by a verify-snoozed read-back.
 //
 // Nothing here reads a credential or opens a socket: the runbooks are files on disk.
 
@@ -23,15 +28,19 @@ require('./socket-tripwire.js');
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+
+const linear = require('./linear-client.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const RUNBOOKS = ['linear-intake', 'linear-ticket-note', 'linear-triage', 'linear-workspace-admin'];
 const text = Object.fromEntries(RUNBOOKS.map((name) => [name, fs.readFileSync(path.join(ROOT, '.claude', 'commands', `${name}.md`), 'utf8')]));
 
-// Each SAFETY GATE with its fields and the region it owns (up to the next gate, preview
-// marker or heading), as command-safety-gates.test.js bounds a portal gate.
+// Each SAFETY GATE with its fields and the region it owns: up to the next gate, preview
+// marker or Markdown heading (a "# comment" inside a code fence is not a heading, so
+// the read-back fence after a gate belongs to it).
 function gates(name) {
   const lines = text[name].split('\n');
   const out = [];
@@ -39,7 +48,11 @@ function gates(name) {
     const marker = line.match(/^<!-- SAFETY GATE \[([\w-]+)\] -->$/);
     if (!marker) return;
     let end = index + 1;
-    while (end < lines.length && !/^(?:<!-- SAFETY GATE|>\s*\*\*PREVIEW ONLY|#{1,6}\s)/.test(lines[end])) end += 1;
+    let inFence = false;
+    for (; end < lines.length; end += 1) {
+      if (/^```/.test(lines[end])) inFence = !inFence;
+      if (!inFence && /^(?:<!-- SAFETY GATE|>\s*\*\*PREVIEW ONLY|#{1,6}\s)/.test(lines[end])) break;
+    }
     const region = lines.slice(index, end).join('\n');
     const field = (label) => (region.match(new RegExp(`^- \\*\\*${label}:\\*\\*\\s*(.+)$`, 'm')) || [])[1] || '';
     out.push({
@@ -116,4 +129,43 @@ test('triage Phase E corrects a wrong priority under a gate that changes the pri
   assert.ok(phaseE.includes('<!-- SAFETY GATE [linear-triage-priority-portal] -->'), 'the gate sits in Phase E');
   assert.match(phaseE, /wrong priority goes through the priority-only gate/);
   assert.ok(!/fields gate/i.test(phaseE), 'Phase E no longer sends a priority-only change to the fields gate, which adds a label');
+});
+
+// Splits a command line on spaces, keeping a double-quoted value ("[STATE_NAME]") whole.
+function words(line) {
+  return [...line.matchAll(/"([^"]*)"|(\S+)/g)].map((m) => (m[1] !== undefined ? m[1] : m[2]));
+}
+
+test('every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-linear-runbooks-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const noteFile = path.join(dir, 'note.md');
+  fs.writeFileSync(noteFile, 'Printer driver reinstalled on [DEVICE_NAME]. Test page printed.\n');
+  const SAMPLE = {
+    '[ISSUE_ID]': 'IT-123', '[@Aegion_LINEAR_TEAM]': 'IT', '[STATE_NAME]': 'Done', '[LABEL_NAME]': 'Hardware',
+    '[USER_ID]': 'user-7', '[NOTE_SHA256]': 'a'.repeat(64), '[NOT_BEFORE]': '2026-10-27T11:50:00.000Z', '[NOTE_FILE]': noteFile,
+  };
+  const seen = new Set();
+  const problems = [];
+  for (const name of RUNBOOKS) {
+    const lines = text[name].split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      for (const m of lines[i].matchAll(/node scripts\/adapters\/linear-client\.js ([^`\n]+)/g)) {
+        const argv = words(m[1].trim()).filter((w) => w !== '--execute').map((w) => SAMPLE[w] || w);
+        const unknown = argv.filter((w) => /\[[^\]]+\]/.test(w));
+        if (unknown.length) { problems.push(`${name}.md:${i + 1}: no sample value for ${unknown.join(' ')}`); continue; }
+        seen.add(argv[0]);
+        const out = [];
+        const code = await linear.run(argv, {}, { transport: async () => { throw new Error('no transport in a dry run'); }, out: (s) => out.push(s), err: (s) => out.push(s) });
+        if (code !== 0) problems.push(`${name}.md:${i + 1}: exit ${code}: ${argv.join(' ')}: ${out.join('').slice(0, 200)}`);
+      }
+    }
+  }
+  assert.deepEqual(problems, []);
+  for (const cmd of ['note', 'issue', 'comments', 'verify-comment', 'verify-state', 'verify-labels', 'verify-trashed', 'verify-snoozed', 'verify-suspended']) {
+    assert.ok(seen.has(cmd), `the runbooks use ${cmd}`);
+  }
+  const snooze = ALL_GATES.find((g) => g.id === 'linear-triage-snooze-portal');
+  assert.match(snooze.region, /node scripts\/adapters\/linear-client\.js verify-snoozed --issue \[ISSUE_ID\] --execute/, 'the snooze gate is read back with verify-snoozed');
+  assert.ok(!/carries no snooze field/.test(text['linear-triage']), 'the runbook no longer says the issue read has no snooze field');
 });

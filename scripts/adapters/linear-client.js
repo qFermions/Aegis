@@ -21,6 +21,7 @@
 //     verify-state     --issue [ISSUE_ID] --state "[STATE_NAME]"
 //     verify-labels    --issue [ISSUE_ID] --has [LABEL_NAME]
 //     verify-trashed   --issue [ISSUE_ID]
+//     verify-snoozed   --issue [ISSUE_ID]   (snoozedUntilAt is later than the time of the read)
 //     verify-suspended --user [USER_ID]
 //
 // Environment, read only under --execute and only after the request is allowed:
@@ -59,7 +60,7 @@ const {
 const ORG_TAIL = ' organization { urlKey } }';
 const DOCUMENTS = Object.freeze({
   AegisViewer: 'query AegisViewer { viewer { id admin guest owner organization { urlKey } } organization { urlKey } }',
-  AegisIssue: 'query AegisIssue($id: String!) { issue(id: $id) { id identifier title priority priorityLabel createdAt archivedAt trashed triagedAt slaType slaStartedAt slaBreachesAt state { name type } labels(first: 100) { nodes { id name } pageInfo { hasNextPage } } assignee { id } team { key } } organization { urlKey } }',
+  AegisIssue: 'query AegisIssue($id: String!) { issue(id: $id) { id identifier title priority priorityLabel createdAt archivedAt trashed triagedAt snoozedUntilAt slaType slaStartedAt slaBreachesAt state { name type } labels(first: 100) { nodes { id name } pageInfo { hasNextPage } } assignee { id } team { key } } organization { urlKey } }',
   AegisIssueComments: 'query AegisIssueComments($id: String!, $after: String) { issue(id: $id) { identifier comments(first: 50, after: $after) { nodes { id body createdAt user { id } } pageInfo { hasNextPage endCursor } } } organization { urlKey } }',
   AegisTeamStates: 'query AegisTeamStates($teamKey: String!) { workflowStates(first: 100, filter: { team: { key: { eq: $teamKey } } }) { nodes { id name type position team { key } } pageInfo { hasNextPage } } organization { urlKey } }',
   AegisLabels: 'query AegisLabels { issueLabels(first: 100) { nodes { id name isGroup retiredAt parent { name } team { key } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
@@ -239,6 +240,8 @@ const TEAM_KEY = /^[A-Za-z][A-Za-z0-9_]{0,15}$/;
 const USER_ID = /^[A-Za-z0-9][A-Za-z0-9-]{0,63}$/;
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
+// A DateTime value is read as a time only in ISO 8601 form, with a Z or a numeric offset.
+const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
 const CURSOR = /^[A-Za-z0-9_=+/:.-]{1,256}$/;
 const MAX_PAGES = 20;
 const MAX_LISTED = 20;
@@ -258,6 +261,7 @@ const COMMANDS = Object.freeze({
   'verify-state': { kind: 'verify', document: 'AegisIssue', flags: ['issue', 'state'], variables: (a) => ({ id: a.issue }), expected: (a) => ({ issue: a.issue, state: a.state }) },
   'verify-labels': { kind: 'verify', document: 'AegisIssue', flags: ['issue', 'has'], variables: (a) => ({ id: a.issue }), expected: (a) => ({ issue: a.issue, label: a.label }) },
   'verify-trashed': { kind: 'verify', document: 'AegisIssue', flags: ['issue'], variables: (a) => ({ id: a.issue }), expected: (a) => ({ issue: a.issue, trashed: true }) },
+  'verify-snoozed': { kind: 'verify', document: 'AegisIssue', flags: ['issue'], variables: (a) => ({ id: a.issue }), expected: (a) => ({ issue: a.issue, snoozedUntilAt: 'later than readAt, the time of the read' }) },
   'verify-suspended': { kind: 'verify', document: 'AegisMembers', flags: ['user'], variables: () => ({}), expected: (a) => ({ user: a.user, active: false }) },
   note: { kind: 'offline', flags: ['issue', 'body-file'] },
   digest: { kind: 'offline', flags: ['body-file'] },
@@ -269,7 +273,7 @@ const USAGE = [
   '  Reads:     viewer | issue --issue [ISSUE_ID] | comments --issue [ISSUE_ID] | states --team [TEAM_KEY] | labels | triage | members',
   '  Verify:    verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE]',
   '             verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" | verify-labels --issue [ISSUE_ID] --has [LABEL_NAME]',
-  '             verify-trashed --issue [ISSUE_ID] | verify-suspended --user [USER_ID]',
+  '             verify-trashed --issue [ISSUE_ID] | verify-snoozed --issue [ISSUE_ID] | verify-suspended --user [USER_ID]',
   'Reads and read-backs are a dry run unless the bare --execute flag is given. No command writes to Linear.',
   '',
 ].join('\n');
@@ -471,6 +475,19 @@ const VERIFY = {
     observed: { trashed: orNull(n.trashed), archivedAt: orNull(n.archivedAt) },
     reason: 'the issue is not in the trash',
   })),
+  // A snooze is proved by Issue.snoozedUntilAt ("the time until an issue will be snoozed
+  // in Triage view", schema) being later than the moment of the read. The person then
+  // compares the printed value with the [DATE_TIME] typed in the gate phrase.
+  'verify-snoozed': (client, a, now) => issueVerify(client, 'verify-snoozed', a, (n) => {
+    const readAtMs = Math.floor(now());
+    const until = typeof n.snoozedUntilAt === 'string' && ISO_DATE_TIME.test(n.snoozedUntilAt) ? Date.parse(n.snoozedUntilAt) : NaN;
+    const state = n.state && typeof n.state === 'object' ? { name: orNull(n.state.name), type: orNull(n.state.type) } : null;
+    return {
+      verified: Number.isFinite(until) && until > readAtMs,
+      observed: { snoozedUntilAt: orNull(n.snoozedUntilAt), readAt: new Date(readAtMs).toISOString(), state },
+      reason: n.snoozedUntilAt === null || n.snoozedUntilAt === undefined ? 'the issue is not snoozed (snoozedUntilAt is empty)' : 'snoozedUntilAt is not a time later than the read',
+    };
+  }),
 };
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
@@ -529,7 +546,7 @@ async function run(argv, env = process.env, deps = {}) {
       return 0;
     }
 
-    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : await VERIFY[command](client, a);
+    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : await VERIFY[command](client, a, now);
     const code = exitCodeFor(res);
     (code === 1 ? err : out)(renderResult(res, { secrets: seen }));
     return code;

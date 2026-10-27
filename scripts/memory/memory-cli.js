@@ -242,7 +242,14 @@ function bindTenantIfUnbound() {
 
 // ── write serialization (one controlled promotion path, no last-writer-wins) ─
 
+// Released once, by the writer that holds it. withLock releases in `finally` and
+// again on process exit (fail() exits from inside fn); without the ownership flag
+// the exit-time call removed a lock another writer had taken in between, letting a
+// third writer in while the second was still writing.
+let lockOwned = false;
 function releaseLock() {
+  if (!lockOwned) return;
+  lockOwned = false;
   try { fs.rmdirSync(LOCK_PATH); } catch (e) { /* already released */ }
 }
 
@@ -256,6 +263,7 @@ function withLock(fn) {
     fs.rmdirSync(LOCK_PATH); // stale lock (crashed writer) — steal it
     fs.mkdirSync(LOCK_PATH);
   }
+  lockOwned = true;
   // fail() exits the process from inside fn — release on exit, not just finally.
   process.on('exit', releaseLock);
   try {

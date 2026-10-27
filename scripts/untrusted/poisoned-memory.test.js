@@ -431,3 +431,26 @@ test('B13 list prints only the id and the reason for a changed row, and gate pro
   }
   assert.ok(!fs.readFileSync(path.join(dir2, 'ledger.jsonl'), 'utf8').includes('KEYSENTINEL'), 'the ledger must not record it either');
 });
+
+// ── review round 2: the store lock is released once, by the writer that holds it ──
+
+test('B14 a write releases the memory store lock exactly once, so it never removes a lock another writer took after it', () => {
+  // A preload counts every rmdir of the lock path inside the CLI process.
+  const probe = path.join(WORK, 'lock-probe.js');
+  const log = path.join(WORK, 'lock-probe.log');
+  fs.writeFileSync(probe, [
+    "'use strict';",
+    "const fs = require('fs');",
+    'const original = fs.rmdirSync;',
+    "fs.rmdirSync = function (p, ...rest) { if (String(p).endsWith('.lock')) fs.appendFileSync(process.env.LOCK_PROBE_LOG, 'rmdir\\n'); return original.call(this, p, ...rest); };",
+    '',
+  ].join('\n'));
+  const dir = freshDir('b14');
+  fs.rmSync(log, { force: true });
+  const p = path.join(WORK, `proposal-${++seq}.json`);
+  writeJson(p, PROPOSALS.enrollment);
+  const r = spawnSync(process.execPath, ['-r', probe, MEM_CLI, 'propose', '--file', p], { encoding: 'utf8', env: { ...ENV, AEGIS_MEMORY_DIR: dir, LOCK_PROBE_LOG: log } });
+  assert.equal(r.status, 0, r.stderr);
+  const removals = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).length : 0;
+  assert.equal(removals, 1, 'the lock is removed once; a second removal at exit would delete the next writer\'s lock');
+});

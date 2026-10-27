@@ -42,7 +42,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 3. Phase C: `note` prints `[NOTE_SHA256]` and `[NOT_BEFORE]` (R0, offline). Run it before anyone pastes anything.
 4. Phase D: the administrator posts the note (R1 gate).
 5. Phase E: `verify-comment` proves it, plus the read on the issue page (R0).
-6. Phase F, only if Phase E failed: replace the text of the posted note (R1 gate) or delete a duplicate or misplaced copy (R2 gate).
+6. Phase F, only if Phase E failed: replace the text of the posted note (R1 gate) or delete a duplicate or misplaced copy (R3 gate, after the pre-state and the written rollback path are in the ticket).
 
 ## Phase A: Read the issue (R0)
 
@@ -150,18 +150,20 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 2. Save the edit (Edit and Save are the labels on Linear's search-indexed comments page; confirm them on screen).
 3. Read-back: run the Phase E `verify-comment` line again with the same `[NOTE_SHA256]` and `[NOT_BEFORE]`. The schema keeps editedAt apart from createdAt, so an edit should keep the creation time (not stated outright in the sources read); if the time check fails, compare the comments read instead of posting again.
 
-### Delete a duplicate or misplaced copy (R2)
+### Delete a duplicate or misplaced copy (R3)
 
 **Role needed:** the Member who posted the copy (the sources read do not state who else may delete a comment).
+
+**R3 before step 1:** a deleted comment has no documented restore, so write two things in the ticket first. The pre-state: the Phase E `comments` read, saved. The written rollback path: re-post the text of `[NOTE_FILE]` under the Phase D gate with a fresh `[NOT_BEFORE]` from a new `note` run.
 
 <!-- SAFETY GATE [linear-ticket-note-delete-portal] -->
 - **Target:** [ISSUE_ID] (the issue that carries the extra or misplaced copy), note digest [NOTE_SHA256]
 - **Effect:** delete one duplicate or misplaced copy of the note
 - **Scope:** one comment the administrator posted after [NOT_BEFORE]; never the only copy on the right issue, never a comment with replies, never a comment someone else wrote
-- **Reversibility:** R2, capture the pre-state first (save the Phase E comments read); no restore for a deleted comment is documented in the sources read, so the only way back is posting the text from [NOTE_FILE] again under the Phase D gate with a fresh [NOT_BEFORE]; an email copy is not recalled
+- **Reversibility:** R3 (a delete with no documented restore), capture the pre-state first (save the Phase E comments read); no restore for a deleted comment is documented in the sources read, so the written rollback path is posting the text from [NOTE_FILE] again under the Phase D gate with a fresh [NOT_BEFORE]; an email copy is not recalled
 - **Required confirmation:** Type exactly `DELETE DUPLICATE NOTE [NOTE_SHA256] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [linear-ticket-note-delete-portal]:** Only after the pre-state is saved and the exact match:
+**PORTAL ACTION [linear-ticket-note-delete-portal]:** Only after the pre-state is saved, the written rollback path is in the ticket, and the exact match:
 1. Linear → `[ISSUE_ID]` → the extra copy → "..." → **Delete**.
 2. Read-back: the `comments` read lists one copy fewer, and on the right issue `verify-comment` still passes for the copy that stays.
 

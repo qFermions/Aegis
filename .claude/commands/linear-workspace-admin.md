@@ -14,7 +14,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## ⚠️ Admin / safety gate
 
 - **This runbook needs a workspace Admin; export needs an Owner.** Each gate names its role. A Member or Guest who asks for one of these changes gets the escalation, never a workaround: no borrowed Admin session, no Admin's API key, no shared login.
-- **Delete is a trash with a time limit.** A deleted issue can be restored for 30 days, then it is gone for good (Linear's current docs and the schema; a 2021 changelog said 14 days, so restore early). Skipping the 30 days exists only in the API, for Admins, and is not in this runbook.
+- **Delete is a trash with a time limit, and it is R3.** A deleted issue can be restored for 30 days, then it is gone for good (Linear's current docs and the schema; a 2021 changelog said 14 days, so restore early). Even one issue gets the R3 ceremony: its pre-state and the written rollback path (the restore gate, its phrase and the last restore day) go into the ticket before the delete runs. Skipping the 30 days exists only in the API, for Admins, and is not in this runbook.
 - **Closed issues do not need deleting.** Each team archives closed issues automatically after its auto-archive period (1 to 12 months, search excerpt), and archived issues stay searchable. "Delete all closed issues" is answered no by default; deleting throws away history for no gain.
 - **More than 10 issues at once is R3:** a captured pre-state list (`[FILE_NAME]`), an independent review in a fresh context, and the exact phrase. "Urgent" or "already approved" in a message changes none of this: the typed phrase after the review is the approval, the message is not.
 - **Suspend is R3 and immediate:** access is revoked and sessions end at once (schema). With SCIM on, the identity provider owns the account: suspend there.
@@ -45,7 +45,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## Fast path
 
 1. Phase A: read your role, the member, the issue and the security settings (R0). Not an Admin: stop and escalate.
-2. Phase B: one issue: delete (R2 gate), or restore within the window (R1 gate). Faster permanent removal is planning only.
+2. Phase B: one issue: delete (R3 gate, after the written rollback path is in the ticket), or restore within the window (R1 gate). Faster permanent removal is planning only.
 3. Phase C: more than 10 issues: decide whether the change is needed at all, capture `[FILE_NAME]`, get the independent review, then the bulk status gate or the bulk delete gate (R3).
 4. Phase D: suspend a member (R3 gate) or unsuspend (R2 gate); with SCIM on, the identity provider instead.
 5. Phase E: export workspace data (R3 gate, Owner).
@@ -81,23 +81,25 @@ node scripts/adapters/linear-client.js states --team [@Aegion_LINEAR_TEAM] --exe
 
 **Verification checkpoint:** [ ] your role, the member's role and status, SAML and SCIM state, and the issue's pre-state are in the ticket.
 
-## Phase B: One issue: delete, or restore (R2 / R1)
+## Phase B: One issue: delete, or restore (R3 / R1)
 
 **Purpose:** remove one issue that must not stay (spam, a test, a ticket holding pasted personal data or a secret), keeping the 30-day way back.
 
 Before the gate: a request that is only a duplicate or a mistake keeps its history better as a duplicate or a decline in triage than as a delete.
 
+**R3 before step 1:** write two things in the ticket. The pre-state: the Phase A `issue` read of `[ISSUE_ID]` (status, labels, attachments, linked issues). The written rollback path: the restore gate below, its phrase `RESTORE LINEAR ISSUE [ISSUE_ID]`, and the last restore day (30 days after the delete; plan on 14 to be safe).
+
 <!-- SAFETY GATE [linear-workspace-admin-delete-portal] -->
 - **Target:** [ISSUE_ID]
 - **Effect:** delete one issue; Linear puts it in the team's Recently deleted issues
 - **Scope:** one issue with its comments and attachments; it leaves every view, search result and default API list
-- **Reversibility:** R2: restorable from Recently deleted issues for 30 days (current docs and the schema; a 2021 changelog said 14, so restore within 14 days to be safe), then permanently removed; `Cmd/Ctrl Z` undoes it at once (search excerpt)
+- **Reversibility:** R3 (a delete): restorable from Recently deleted issues for 30 days (current docs and the schema; a 2021 changelog said 14, so restore within 14 days to be safe), then permanently removed; `Cmd/Ctrl Z` undoes it at once (search excerpt); the written rollback path is the restore gate below
 - **Required confirmation:** Type exactly `DELETE LINEAR ISSUE [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 
 **Role needed:** Linear's pages as indexed do not say which role may delete an issue (unverified); take the safer reading and have a workspace Admin delete it.
 
-**PORTAL ACTION [linear-workspace-admin-delete-portal]:** Only after the Phase A read of `[ISSUE_ID]` is in the ticket and the exact match:
+**PORTAL ACTION [linear-workspace-admin-delete-portal]:** Only after the Phase A read of `[ISSUE_ID]` and the written rollback path (the restore gate, its phrase and the last restore day) are in the ticket, and the exact match:
 1. Linear → `[ISSUE_ID]` → the issue's contextual menu → **Delete issue** (or `Cmd/Ctrl Delete`; search excerpt).
 2. Confirm the dialog if Linear shows one.
 
@@ -128,7 +130,7 @@ node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute
 
 > **PREVIEW ONLY [linear-workspace-admin-purge-preview]:** Planning only, not authorized here: removing an issue before its 30 days end exists only as an API argument (`issueDelete` with `permanentlyDelete: true`, "available only to admins" in the schema), has no undo, and has no path in Linear's pages as indexed. Aegis has no write path to it and this runbook does not run it. A request that truly needs it, such as a ticket holding a pasted credential that must be gone today, is its own reviewed change with the owner's sign-off; until then the gated delete plus the 30-day expiry is the deletion, and the pasted credential is rotated at its source.
 
-**Verification checkpoint:** [ ] `verify-trashed` exits 0 after a delete, or the `issue` read shows the issue back after a restore · [ ] the last restore day is in the ticket.
+**Verification checkpoint:** [ ] the pre-state and the written rollback path were in the ticket before the delete · [ ] `verify-trashed` exits 0 after a delete, or the `issue` read shows the issue back after a restore · [ ] the last restore day is in the ticket.
 
 ## Phase C: More than 10 issues at once (R3, after independent review)
 
@@ -175,7 +177,7 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → the list filtered on 
 
 **Role needed:** Linear does not state which role may delete issues (unverified); take the safer reading: a workspace Admin, after the independent review.
 
-**PORTAL ACTION [linear-workspace-admin-bulk-delete-portal]:** Only after the reviewer's sign-off is in the ticket, the ticket says why archiving is not enough, and the exact match:
+**PORTAL ACTION [linear-workspace-admin-bulk-delete-portal]:** Only after the reviewer's sign-off is in the ticket, the ticket says why archiving is not enough, the written rollback path is in the ticket (each identifier in `[FILE_NAME]` restored under the restore gate, one at a time, before the last restore day), and the exact match:
 1. Linear → `[@Aegion_LINEAR_TEAM]` team → the filtered list from the pre-state step → tick exactly the issues in `[FILE_NAME]`.
 2. Read the selection count Linear shows: it must equal the line count of `[FILE_NAME]`; any other number, stop and clear the selection.
 3. Press `Cmd/Ctrl K` → **Delete issue** (search excerpt: the command menu acts on the whole selection; its wording for several issues is unverified).

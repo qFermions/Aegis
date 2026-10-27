@@ -2,7 +2,7 @@
 
 Don't take the README's word for any of this. Part A runs the evidence a script can prove with no model and no account. Part B is the 10-minute guided red-team inside Claude Code. Part C is how to judge the part only a reader can judge. File what you find — pass **or** fail — with the [review template](.github/ISSUE_TEMPLATE/review.md).
 
-**You need:** Git · Node.js 24 for Part A; add [Claude Code](https://claude.ai/code) with your own Anthropic account for Parts B and C.
+**You need:** Git · Node.js 24 · PowerShell 7 (`pwsh`, used by the safety-gate tests in `node --test`) for Part A; add [Claude Code](https://claude.ai/code) with your own Anthropic account for Parts B and C.
 
 ```bash
 # PREVIEW ONLY [evaluate-repo-clone]: git clone https://github.com/qFermions/Aegis

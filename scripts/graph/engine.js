@@ -62,7 +62,7 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\b(?:delete[sd]?|deleting|purge[sd]?|purging)\b.*\b(?:messages?|files?|channels?|conversations?|dms?|direct messages|threads?|chat history)\b/i, label: 'Slack message / file / channel deletion' },
   { pattern: /\bexport\w*\b.*\b(?:messages|dms|direct messages|private channels|conversations|chat history|workspace data)\b/i, label: 'message or workspace data export (disclosure)' },
   { pattern: /\breset\w*\b.*\bsessions?\b|\bsign(?:s|ed|ing)?\s*out\b.*\bsessions?\b/i, label: 'session reset / sign-out' },
-  { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b.*\bretention\b/i, label: 'retention change (records preservation)' },
+  { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b.*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b.*\bretention\b|\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b.*\bretention\b.*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b/i, label: 'retention change (records preservation)' },
   { pattern: /\bdisconnect\w*\b.*\b(?:slack connect|organi[sz]ations?|external (?:orgs?|organi[sz]ations?|channels?|workspaces?))\b/i, label: 'Slack Connect disconnection' },
   { pattern: /\bdeactivat\w*\b.*\b(?:user|users|account|accounts)\b/i, label: 'account deactivation (disable)' },
   { pattern: /\b(?:disable|bypass|turn\s*off|relax|exclude)\b.*\b(?:two[- ](?:step|factor)|2fa|mfa)\b/i, label: 'security-control change (two-factor / MFA)' },

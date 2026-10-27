@@ -12,6 +12,7 @@
     "scripts/jira-client.js",
     "scripts/security-audit.js",
     "scripts/pre-commit-check.js",
+    "scripts/init-memory.js",
     "scripts/memory/**",
     "scripts/replay/**",
     "scripts/tier/**",

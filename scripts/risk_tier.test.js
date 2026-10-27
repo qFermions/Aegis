@@ -83,6 +83,12 @@ test('C: the checklist command runner modules/automation/scripts/deploy-check.js
   assert.deepEqual(run(cwd, ['main']), ['tier=C', 'modules/automation/scripts/deploy-check.js']);
 });
 
+test('C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/**', () => {
+  const cwd = sandbox();
+  commit(cwd, ['scripts/init-memory.js', 'scripts/dev/claim.js']);
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', 'scripts/init-memory.js']);
+});
+
 test('one C path wins over many B paths, and only the C path is listed', () => {
   const cwd = sandbox();
   const many = Array.from({ length: 12 }, (_, i) => `scripts/eval/case-${i}.js`);

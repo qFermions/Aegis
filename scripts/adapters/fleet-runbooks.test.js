@@ -142,6 +142,22 @@ test('more than 10 hosts already failing a policy go to the R3 batch gate in /fl
   assert.match(batch.field('Reversibility'), /^R3\b/, 'the gate Phase 4 names is R3');
 });
 
+test('the R1 gates that say "installs nothing" keep every path that could install out of them', () => {
+  const patch = gate(VULN, 'fleet-vulnerable-software-patch-policy-portal');
+  assert.match(patch.field('Reversibility'), /^R1\b/);
+  assert.doesNotMatch(patch.region, /Deploy → \*\*Patch\*\*/, 'the Deploy → Patch control (behaviour unverified) is not a step of the R1 policy gate');
+  assert.match(patch.field('Scope'), /Deploy → Patch control is not part of this gate: the sources read do not say what it creates or whether it installs \(unverified\)/);
+  assert.match(patch.region, /^1\. For every title, a Fleet-maintained app included: Fleet → Policies → `\[FLEET_NAME\]` → \*\*Add policy\*\*/m);
+
+  const add = gate(VULN, 'fleet-vulnerable-software-add-software-portal');
+  assert.match(add.field('Reversibility'), /^R1\b/);
+  assert.doesNotMatch(add.field('Scope'), /^one software title in one fleet; adding it installs nothing on any host$/, 'no unconditional "installs nothing"');
+  assert.match(add.field('Scope'), /offered for manual install only/);
+  assert.match(add.region, /leave the install mode on manual, with any automatic install and self-service option off → \*\*Add\*\*/);
+  assert.match(add.region, /leave any automatic install and self-service option off, before saving/, 'the custom-package path too');
+  assert.match(add.region, /If automatic install is chosen, or the dialog will not leave it off, stop without saving: .*R3 rollout in Phase 4/);
+});
+
 test('the role check reads the operator\'s own role in Fleet; `me` only confirms the adapter token is an Observer', () => {
   for (const [name, text] of [['fleet-policy-failures', POLICY], ['fleet-osquery-investigation', OSQUERY], ['fleet-vulnerable-software', VULN]]) {
     const line = text.split('\n').find((l) => /\*\*Your role \(R0\):\*\*/.test(l)) || '';

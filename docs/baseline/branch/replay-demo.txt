@@ -1,0 +1,43 @@
+$ node scripts/replay/replay-demo.js
+# cwd: (repo root) at 76f0c44, node v24.22.1, pwsh 7.5.4, started 2026-10-27T07:30:11Z
+Aegis replay demo -- sandboxed store: /tmp/aegis-replay-demo-W222gB/store
+
+ 1. first occurrence → MISS, routed to the adaptive (model) path
+    exit 0 → {"result":"MISS","route":"adaptive"}
+ 2. record the verified work-up as a CANDIDATE (not replayable yet)
+    exit 0 → {"caseId":"case-0001","status":"candidate","riskFloor":"none"}
+ 3. candidate never replays → still MISS
+    exit 0 → {"result":"MISS","note":"case exists but is not verified -- candidates never replay"}
+ 4. verify with evidence, opt in to identity variants (single [UPN] slot)
+    exit 0 → {"status":"verified","identityVariants":true,"slots":1}
+ 5. exact repeat → CACHE_HIT (normalization: case, punctuation, whitespace)
+    exit 0 → {"result":"CACHE_HIT","via":"exact"}
+ 6. same words, another member-user placeholder → CACHE_HIT via shape (class anchored by the dictionary token)
+    exit 0 → {"result":"CACHE_HIT","via":"shape","objectClass":"member-user","anchor":"placeholder"}
+ 7. same words, a raw email literal → MISS: its object class (member? guest? shared mailbox? group?) is not deterministic
+    exit 0 → {"result":"MISS","note":"identity literal has no deterministic object class (verified case(s) exist for: member-user) -- pass --object-class <class> only when the operator's own words establish it, otherwise route adaptive"}
+ 8. same literal with the class the operator stated (--object-class member-user) → CACHE_HIT, anchor recorded as "asserted"
+    exit 0 → {"result":"CACHE_HIT","via":"shape","objectClass":"member-user","anchor":"asserted"}
+ 9. same words, a guest UPN (Microsoft #EXT# marker) → MISS: class "guest" ≠ the case's "member-user"
+    exit 0 → {"result":"MISS","note":"object class mismatch: verified case(s) exist for member-user, lookup is \"guest\" (ext-marker)"}
+10. two users instead of one → MISS (slot count is part of the shape)
+    exit 0 → {"result":"MISS"}
+11. one word changes the ask (access → remove) → MISS, and the guard floors it to T3
+    exit 0 → {"result":"MISS","route":"adaptive"}
+12. explain: why a ticket would or would not be consulted
+    exit 0 → {"riskFloor":"T3","riskTriggers":["account/mailbox/group/OU/device deletion (SR-2)"],"wouldConsult":{"exact":false,"alias":false,"shape":"not consulted (tier-guard floor T3)"}}
+13. render the verified solution verbatim (first line)
+    exit 0 → {"raw":"# Verified work-up -- shared-mailbox access (synthetic demo fixture)"}
+14. secret-shaped content cannot enter the store
+    exit 4 → {"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+15. a real email address cannot enter the store either (SR-1)
+    exit 4 → {"ok":false,"error":"sanitization BLOCK -- refused to persist: real email address (use [USER@DOMAIN.COM] / [UPN])"}
+16. authority file changed → STALE (fingerprint, not a clock); history preserved
+    exit 0 → {"result":"STALE","changed":[{"path":"/tmp/aegis-replay-demo-W222gB/authority.md","reason":"content changed"}]}
+17. render refuses a stale case unless --historical is passed
+    exit 3 → {"ok":false,"error":"render refused: case is STALE (authority changed: [{\"path\":\"/tmp/aegis-replay-demo-W222gB/authority.md\",\"reason\":\"content changed\"}]) -- pass --historical to view as historical evidence"}
+
+Done. Every step above was a child-process invocation of the CLI with no model, agent, loop, graph, or network involved.
+Sandbox left at /tmp/aegis-replay-demo-W222gB -- delete it when you are done.
+# exit: 0, finished 2026-10-27T07:30:12Z
+# post-processed: 8 U+2014 characters in the tool output replaced by "--" (batch rule A11); nothing else changed, line numbers unchanged

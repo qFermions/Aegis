@@ -1,0 +1,10 @@
+# git ls-remote origin — 2026-10-27T04:43Z, after the push of chore/review-layers
+e7c445c90594edc1781198634765f36c0ff5bc53	HEAD
+b8177bbb17785fd3555ab1a33a6710b52651a8b0	refs/heads/chore/review-layers
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/heads/claude/aegis-google-okta-jamf-wibzp6
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/heads/codex/public-safety-repair
+e7c445c90594edc1781198634765f36c0ff5bc53	refs/heads/main
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/pull/1/head
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/pull/2/head
+b8177bbb17785fd3555ab1a33a6710b52651a8b0	refs/pull/3/head
+046951c2cfbc1185d049f76ac5357a52aa036634	refs/pull/3/merge

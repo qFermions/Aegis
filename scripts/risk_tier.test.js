@@ -10,6 +10,7 @@ const { execFileSync, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const test = require('node:test');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -114,7 +115,8 @@ test('a missing base ref fails closed with exit 1 and a named ref', () => {
 });
 
 test('glob grammar: * stays in one segment, ? is one character, matching is case-sensitive', async () => {
-  const { globToRegExp } = await import(SCRIPT);
+  // a file URL, not a bare path: on Windows the ESM loader rejects 'D:\\...' as an unsupported scheme
+  const { globToRegExp } = await import(pathToFileURL(SCRIPT).href);
   assert.equal(globToRegExp('docs/portal-nav-*.md').test('docs/portal-nav-2026.md'), true);
   assert.equal(globToRegExp('docs/portal-nav-*.md').test('docs/portal-nav-2026/index.md'), false);
   assert.equal(globToRegExp('scripts/*.js').test('scripts/lint/x.js'), false);

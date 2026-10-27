@@ -1,0 +1,1 @@
+# actionlint 1.7.7 exit=0 on .github/workflows/ci.yml (no output means clean)

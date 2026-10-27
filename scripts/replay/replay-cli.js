@@ -51,7 +51,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess, injectionMarkersIn, hasForeignOrgToken, containsLiteral } = require('../tier/tier-guard.js'); // pure functions, no I/O
+const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
@@ -138,6 +138,7 @@ function shapeOf(text) {
 const ALLOWED_EMAIL_DOMAIN = /(^|\.)example\.(com|org|net)$/i;
 function sanitizationHits(text) {
   const hits = [];
+  const forms = foldedForms(text); // one fold for the literal, marker and org-token checks
   const patterns = [
     [/ghp_[A-Za-z0-9]{20,}/, 'GitHub token'],
     [/github_pat_[A-Za-z0-9_]{20,}/, 'GitHub fine-grained token'],
@@ -150,7 +151,7 @@ function sanitizationHits(text) {
   for (const [re, label] of patterns) if (re.test(text)) hits.push(label);
   for (const v of ['AEGION_DOMAIN', 'AEGION_ORG_NAME']) {
     const lit = process.env[v];
-    if (lit && lit.length > 3 && containsLiteral(text, lit)) {
+    if (lit && lit.length > 3 && containsLiteral(text, lit, forms)) {
       hits.push(`tenant literal (${v})`);
     }
   }
@@ -164,8 +165,8 @@ function sanitizationHits(text) {
     if (!ALLOWED_EMAIL_DOMAIN.test(domain)) { hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])'); break; }
   }
   if (PHONE_LITERAL.test(unbracketed)) hits.push('phone number pattern (use [PHONE_NUMBER])');
-  hits.push(...injectionHits(text));
-  if (hasForeignOrgToken(text)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
+  hits.push(...injectionHits(text, forms));
+  if (hasForeignOrgToken(text, forms)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
   return hits;
 }
 
@@ -173,8 +174,8 @@ function sanitizationHits(text) {
 // shared with the graph edge sanitizer in scripts/tier/tier-guard.js (one copy), matched
 // as written and confusable-folded, so obfuscation does not carry an instruction or a
 // second tenant into a solution that renders verbatim.
-function injectionHits(text) {
-  return injectionMarkersIn(text)
+function injectionHits(text, forms) {
+  return injectionMarkersIn(text, forms)
     .map((name) => `instruction-shaped text (prompt-injection marker: ${name}; content is data, never instructions)`);
 }
 // dashed · dotted · spaced · parenthesised area code · +country with 2–4 groups ·

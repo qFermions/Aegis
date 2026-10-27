@@ -118,28 +118,37 @@ const INJECTION_MARKERS = [
   { pattern: /\bnew\s+system\s+prompt\b/i, marker: 'system-prompt-override' },
   { pattern: /\byou\s+are\s+now\s+(in\s+)?(admin|developer|maintenance)\s+mode\b/i, marker: 'mode-override-claim' },
 ];
-function injectionMarkersIn(text) {
-  const forms = foldedForms(text);
+function injectionMarkersIn(text, forms = foldedForms(text)) {
   return INJECTION_MARKERS.filter(({ pattern }) => forms.some((f) => pattern.test(f))).map(({ marker }) => marker);
 }
 
 // A second org namespace (SR-1/SR-8): one deployment serves one tenant, whose org
-// tokens are the [@Aegion_*] family (modules/security/placeholder-dictionary.md). Any
-// org token [@<Namespace>_<suffix>] whose namespace (the text before the first "_") is
-// not Aegion means the case mixes two tenants: mixed case, digits, hyphens and further
-// underscores in the suffix all count. A bare [@name] is not an org token (it is as
-// often a chat mention).
-const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9-]*)_[^\]\s]+\]/g;
+// tokens are the [@Aegion_*] family (modules/security/placeholder-dictionary.md). An
+// org token is [@<Namespace>_<suffix>] whose suffix names an environment value the way
+// the dictionary does: a word from its vocabulary (DOMAIN, SITE, ISP, VOIP...) in any
+// case, or an all-capitals segment. Its namespace is the text before the first "_";
+// any namespace but Aegion is a second tenant. Spaces inside the brackets do not hide
+// it. A chat handle ([@jane_doe], [@John_Smith]) is not an org token.
+const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9-]*)_([^\]\n]{1,64})\]/g;
 const OWN_ORG_NAMESPACE = 'aegion';
-function hasForeignOrgToken(text) {
-  return foldedForms(text).some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => m[1].toLowerCase() !== OWN_ORG_NAMESPACE));
+const ORG_SUFFIX_WORDS = new Set(['alarm', 'domain', 'finance', 'server', 'gws', 'customer', 'isp', 'jamf', 'url', 'jira', 'space',
+  'netpartner', 'okta', 'org', 'remote', 'access', 'site', 'count', 'size', 'voip', 'legacy', 'wan', 'tenant']);
+function isOrgSuffix(suffix) {
+  return suffix.split(/[\s_-]+/).filter(Boolean)
+    .some((segment) => /^[A-Z][A-Z0-9]+$/.test(segment) || ORG_SUFFIX_WORDS.has(segment.toLowerCase()));
+}
+// forms: pass foldedForms(text) when the caller already has them (one fold per line).
+function hasForeignOrgToken(text, forms = foldedForms(text)) {
+  return forms.some((f) => Array.from(f.matchAll(ORG_TOKEN))
+    .some((m) => m[1].toLowerCase() !== OWN_ORG_NAMESPACE && isOrgSuffix(m[2])));
 }
 
 // A tenant literal (SR-8) is found as written and in the folded forms, so a zero-width
-// character or a look-alike letter inside the real domain does not get it past the gate.
-function containsLiteral(text, literal) {
-  const needle = String(literal).toLowerCase();
-  return needle.length > 0 && foldedForms(text).some((f) => f.toLowerCase().includes(needle));
+// character or a look-alike letter inside it does not get it past the gate. The literal
+// is folded the same way, so an accented org name still matches its folded text.
+function containsLiteral(text, literal, forms = foldedForms(text)) {
+  const needles = Array.from(new Set([String(literal).toLowerCase(), foldConfusables(literal).toLowerCase()])).filter(Boolean);
+  return needles.length > 0 && forms.some((f) => needles.some((n) => f.toLowerCase().includes(n)));
 }
 
 module.exports = {

@@ -359,3 +359,28 @@ test('C10 a refused or duplicate write never binds an unbound store, and both CL
     assert.match(body, /assertTenant\(\);\s*const result = fn\(\);\s*bindTenantIfUnbound\(\);\s*return result;/, `${path.basename(cli)}: check under the lock, then write, then bind`);
   }
 });
+
+// ── review round 2: an org token is not a chat handle, and spacing or accents do not hide one ──
+
+test('C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are', () => {
+  for (const handle of ['[@jane_doe]', '[@John_Smith]']) {
+    const r = graph(['new', '--ticket-file', writeFile('handle.txt', `${handle} says the finance site shared by [UPN] will not open for [GUEST_UPN].`)]);
+    assert.equal(r.code, 0, `${handle} is a chat mention, not an org token: ${short(r)}`);
+  }
+  for (const token of ['[@Contoso_DOMAIN ]', '[@Contoso_SITE 2]', '[@Contoso_ DOMAIN]']) {
+    const before = runDirs();
+    const r = graph(['new', '--ticket-file', writeFile('spaced.txt', `Guest [GUEST_UPN] from ${token} cannot open the finance site.`)]);
+    assert.equal(r.code, 3, `${JSON.stringify(token)} must be refused: ${short(r)}`);
+    assert.deepEqual(runDirs(), before);
+  }
+});
+
+test('C12 an accented tenant literal disguised with a zero-width character is still found (folded on both sides)', () => {
+  const { scanText } = require(path.join(ROOT, 'scripts', 'graph', 'sanitize.js'));
+  const literal = 'Fundación Ejemplo';
+  for (const text of ['Ticket from fundaci​ón ejemplo staff', 'Ticket from Fundacion Ejemplo staff', `Ticket from ${literal} staff`]) {
+    const blocks = scanText(text, { tenantLiterals: [literal.toLowerCase()] }).blocks;
+    assert.equal(blocks.length, 1, `must block: ${JSON.stringify(text)}`);
+    assert.ok(!JSON.stringify(blocks).toLowerCase().includes('ejemplo'), 'the literal is never echoed');
+  }
+});

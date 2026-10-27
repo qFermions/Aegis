@@ -49,7 +49,7 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   look-alikes). Pinned by `scripts/untrusted/poisoned-memory.test.js` B7.
 - **A second tenant is refused at the same boundary (exit 4).** `[@Aegion_*]`
   is this deployment's org; an org environment token of any other namespace
-  (`[@<Namespace>_<suffix>]`, any spelling of the suffix: mixed case, digits, hyphens, more underscores) in a ticket, solution, evidence, alias or
+  (`[@<Namespace>_<suffix>]` whose suffix names an environment value as the placeholder dictionary does (a word such as DOMAIN, SITE, ISP or VOIP in any case, or an all-capitals segment; spaces inside the brackets do not hide it). A chat handle such as `[@jane_doe]` is not an org token; an all-capitals handle such as `[@JOHN_SMITH]` is read as one (known limit)) in a ticket, solution, evidence, alias or
   reason means the case mixes two tenants, so it never enters the store (same
   rule as the graph edge sanitizer). Pinned by
   `scripts/untrusted/wrong-customer.test.js` C4.

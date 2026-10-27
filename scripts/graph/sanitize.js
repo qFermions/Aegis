@@ -95,9 +95,10 @@ function scanText(text, opts = {}) {
 
   lines.forEach((line, i) => {
     const n = i + 1;
+    const forms = foldedForms(line); // one fold per line, shared by every check below
 
     for (const literal of tenantLiterals) {
-      if (literal && containsLiteral(line, literal)) {
+      if (literal && containsLiteral(line, literal, forms)) {
         result.blocks.push({ line: n, label: 'Tenant/org literal (SR-8) — use the [@Aegion_*] token', text: '[REDACTED — tenant literal on this line]' });
       }
     }
@@ -112,8 +113,7 @@ function scanText(text, opts = {}) {
         if (pattern.test(line)) result.piiWarnings.push({ line: n, label });
       }
     }
-    const forms = foldedForms(line);
-    if (hasForeignOrgToken(line)) {
+    if (hasForeignOrgToken(line, forms)) {
       result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });
     }
     for (const { pattern, marker } of INJECTION_MARKERS) {

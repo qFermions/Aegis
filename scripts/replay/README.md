@@ -54,7 +54,9 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   rule as the graph edge sanitizer). Pinned by
   `scripts/untrusted/wrong-customer.test.js` C4.
 - **Re-checked at read time.** `lookup` and `render` run the same persistence
-  boundary over the stored ticket and solution before they serve a case. A case
+  boundary over the stored ticket and solution before they serve a case;
+  `status` and `list` also check the verification evidence and history, and
+  print only the case id and labels for a case that fails. A case
   changed on disk outside the CLI so that it carries instruction-shaped text, a
   secret, a real address, the tenant literal or a second org namespace is a
   `MISS` with a `withheld` list of labels (lookup) or exit 4 (render); its text is

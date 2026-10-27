@@ -198,9 +198,13 @@ function hasNonAscii(text) {
 // so that it carries instruction-shaped text, a secret, a real address, the
 // tenant literal or a second org namespace is withheld. Labels only, never text.
 // Residual: a gate-clean edit is not detected (case files carry no seal).
-function storedCaseHits(c) {
-  return Array.from(new Set([c.ticket, c.solution].flatMap((t) => (typeof t === 'string' ? sanitizationHits(t) : ['stored text is not a string']))));
+function storedCaseHits(c, { audit = false } = {}) {
+  const texts = [c.ticket, c.solution];
+  // status and list also print the verification evidence and the history: check them too.
+  if (audit) texts.push((c.provenance && c.provenance.evidence) || '', JSON.stringify(c.history || []));
+  return Array.from(new Set(texts.flatMap((t) => (typeof t === 'string' ? sanitizationHits(t) : ['stored text is not a string']))));
 }
+const validCaseId = (id) => (/^case-\d{4}$/.test(String(id)) ? id : null);
 
 // ── store primitives (atomic write, mkdir lock) ──────────────────────────────
 function loadIndex() {
@@ -567,6 +571,8 @@ function main() {
     case 'status': {
       const c = loadCase(argv[1]);
       if (!c) fail(1, 'no such case: ' + (argv[1] || '(missing id)'));
+      const stored = storedCaseHits(c, { audit: true });
+      if (stored.length) { out({ ok: true, caseId: validCaseId(c.caseId), withheld: stored, note: 'stored text fails the persistence boundary (changed on disk outside replay-cli.js?); not printed' }); break; }
       out({ ok: true, caseId: c.caseId, status: c.status, shape: c.shape, riskAtRecord: c.riskAtRecord, provenance: c.provenance, deps: c.deps, history: c.history });
       break;
     }
@@ -575,7 +581,10 @@ function main() {
       const ix = loadIndex();
       const rows = Object.values(ix.cases).map((id) => {
         const c = loadCase(id);
-        return c ? { caseId: c.caseId, status: c.status, identityVariants: !!(c.shape && c.shape.enabled), ticket: c.ticket.slice(0, 60) } : { caseId: id, status: 'MISSING' };
+        if (!c) return { caseId: validCaseId(id), status: 'MISSING' };
+        const stored = storedCaseHits(c, { audit: true });
+        if (stored.length) return { caseId: validCaseId(c.caseId), withheld: stored };
+        return { caseId: c.caseId, status: c.status, identityVariants: !!(c.shape && c.shape.enabled), ticket: c.ticket.slice(0, 60) };
       });
       out({ ok: true, count: rows.length, cases: rows });
       break;

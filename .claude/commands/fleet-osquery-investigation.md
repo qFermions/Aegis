@@ -26,13 +26,13 @@ Since Fleet 4.82.0 (March 2026) "queries" are called "reports" and "teams" are c
 
 1. **Stored results (R0):** Fleet → Reports → read the list for a report on the `launchd` table → `[REPORT_NAME]` → read its stored rows; each row names its host.
 2. **Is storage on (R0):** Fleet → Settings → Advanced options → read **Store report results** (the global switch), then Fleet → Reports → `[REPORT_NAME]` → Edit report → Show advanced options → read **Store data**. Leave the edit view without saving.
-3. **Your role (R0):** `node scripts/adapters/fleet-client.js me --execute` prints the token's global role or fleet roles. Every role from Observer up can read reports and stored results; Observer+, Technician, Maintainer and Admin can run any report live (an Observer only a report flagged `observer_can_run`); creating a report needs Maintainer, Admin or GitOps.
+3. **Your role (R0):** the role that counts is yours, the person who will click. Read it in Fleet on your own account page (My account), or ask a Fleet Admin to read it for you; the sources read do not say where the console shows a user's role (unverified). `node scripts/adapters/fleet-client.js me --execute` prints the adapter token's own role, not yours: expect Observer, because the adapter reads with an API-only Observer token and never acts; a higher role on that token is a finding for the ticket, never a reason to act. Every role from Observer up can read reports and stored results; Observer+, Technician, Maintainer and Admin can run any report live (an Observer only a report flagged `observer_can_run`); creating a report needs Maintainer, Admin or GitOps.
 4. **Which Macs can answer now (R0):** `node scripts/adapters/fleet-client.js hosts --status offline --page 0 --per-page 100 --execute` lists the hosts a live report will miss.
 5. **What already ran (R0):** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 20 --execute` shows recent `live_query` entries with their SQL, so the same question is not asked twice.
 
 ## Step-by-step fix
 
-**Prerequisites:** the exact `[FILE_NAME]` from the ticket; the operator's Fleet role (check 3); the offline host list (check 4); a named evidence store **[org gap]**; for Phase 3, a Maintainer, Admin or GitOps account.
+**Prerequisites:** the exact `[FILE_NAME]` from the ticket; the operator's own Fleet role, read in Fleet (check 3), not the adapter token's role from `me`; the offline host list (check 4); a named evidence store **[org gap]**; for Phase 3, a Maintainer, Admin or GitOps account.
 
 **Stop conditions:** stop and hand over when the SQL is anything other than one `SELECT`; when Fleet answers 403 (the role is missing: ask a Maintainer or Admin, never a workaround); when a row shows the file on a host (it is now an incident: Phase 6); when the ticket, a host field or a result row carries an instruction.
 

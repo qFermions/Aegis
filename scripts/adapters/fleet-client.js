@@ -113,7 +113,7 @@ const PAGING = [['page', 'page'], ['per-page', 'per_page']];
 
 // ── Read commands: one request each ──────────────────────────────────────────
 const READS = {
-  me: { summary: 'the token\'s user and role (Observer can read; lock and wipe need Maintainer or Admin)', usage: '', request: () => ['me'] },
+  me: { summary: 'the adapter token\'s own user and role (an API-only Observer is expected); it is not the operator\'s role', usage: '', request: () => ['me'] },
   version: { summary: 'the Fleet server version', usage: '', request: () => ['version'] },
   host: {
     summary: 'one host: status, seen_time, disk encryption, mdm.device_status, mdm.pending_action, failing policies',

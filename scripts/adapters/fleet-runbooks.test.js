@@ -19,6 +19,9 @@ const read = (name) => fs.readFileSync(path.join(ROOT, '.claude', 'commands', `$
 
 const DEVICE = read('fleet-device-actions');
 const HEALTH = read('fleet-host-health');
+const POLICY = read('fleet-policy-failures');
+const OSQUERY = read('fleet-osquery-investigation');
+const VULN = read('fleet-vulnerable-software');
 
 // One portal gate's region: from its SAFETY GATE marker to the next marker or heading.
 function gate(text, id) {
@@ -93,4 +96,17 @@ test('each lock, wipe and Turn off MDM read-back names a proof that can pass on 
   assert.match(checklist, /Android: no Locked badge and `verify-lock` cannot pass/);
   assert.match(checklist, /`wiped` plus wiped_host \(Android\)/);
   assert.match(checklist, /mdm_unenrolled plus enrollment Off \(iPhone, iPad, Android\)/);
+});
+
+test('the role check reads the operator\'s own role in Fleet; `me` only confirms the adapter token is an Observer', () => {
+  for (const [name, text] of [['fleet-policy-failures', POLICY], ['fleet-osquery-investigation', OSQUERY], ['fleet-vulnerable-software', VULN]]) {
+    const line = text.split('\n').find((l) => /\*\*Your role \(R0\):\*\*/.test(l)) || '';
+    assert.ok(line, `${name}: the role check is present`);
+    assert.match(line, /the role that counts is yours, the person who will click/, `${name}: the operator's own role is the evidence`);
+    assert.match(line, /Read it in Fleet on your own account page \(My account\), or ask a Fleet Admin/, `${name}: where the operator reads it`);
+    assert.match(line, /prints the adapter token's own role, not yours: expect Observer/, `${name}: me is the token's role only`);
+    assert.doesNotMatch(line, /me --execute` prints the token's (?:global )?role/, `${name}: me is never presented as the operator's role`);
+    const prerequisites = text.split('\n').find((l) => l.startsWith('**Prerequisites:**')) || '';
+    assert.match(prerequisites, /own Fleet role, read in Fleet \(check \d\), not the adapter token's role from `me`/, `${name}: the prerequisite names the operator's own role`);
+  }
 });

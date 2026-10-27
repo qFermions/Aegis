@@ -499,7 +499,7 @@ const EFFECT_FAMILIES = [
   [/^restart(?:s|ed|ing)?\b/i, /\bRESTART\b/],
 ];
 
-// G2 — Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace action families. They
+// G2: Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace action families. They
 // apply to gates in G2 lane documents only, so every existing Microsoft and G1 gate is judged
 // exactly as before (a clause such as "shows your message" or "Trash is skipped" in a G1
 // runbook keeps its old reading).
@@ -660,7 +660,7 @@ const PORTAL_CONFIRMATION_BY_ACTION = new Map([
   ['unenroll', /\b(?:UNENROLL|REMOVE)\b/], ['unlock', /\bUNLOCK\b/],
   ['unmanage', /\bUNMANAGE\b/], ['unsuspend', /\b(?:UNSUSPEND|RESTORE|REACTIVATE)\b/],
   ['re-enable', /\b(?:RE-ENABLE|ENABLE|REACTIVATE)\b/],
-  // G2 — Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace runbooks
+  // G2: Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace runbooks
   ['archive', /\bARCHIVE\b/], ['unarchive', /\b(?:UNARCHIVE|RESTORE)\b/], ['approve', /\bAPPROVE\b/], ['export', /\b(?:EXPORT|DOWNLOAD)\b/],
   ['disconnect', /\bDISCONNECT\b/], ['flush', /\bFLUSH\b/], ['distribute', /\b(?:DISTRIBUTE|REDEPLOY)\b/],
   ['redeploy', /\b(?:REDEPLOY|DISTRIBUTE)\b/], ['uninstall', /\b(?:UNINSTALL|REMOVE)\b/], ['trash', /\b(?:TRASH|DELETE)\b/],

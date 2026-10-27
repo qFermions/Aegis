@@ -62,7 +62,7 @@ const VARIANTS = {
     'gws-new-user', 'gws-offboard', 'gws-password-reset', 'gws-2sv-reset', 'gws-group-membership', 'gws-ou-move',
     'gws-license-assign', 'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device', 'okta-app-assignment', 'okta-mfa-reset',
     'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase', 'mac-new-hire-laptop',
-    // G2 — Google Workspace, Fleet, Jamf, Slack and Linear lane (docs/aegis/lanes/g2.md)
+    // G2: Google Workspace, Fleet, Jamf, Slack and Linear lane (docs/aegis/lanes/g2.md)
     'fleet-device-actions', 'linear-intake', 'linear-triage', 'linear-ticket-note', 'linear-workspace-admin',
     'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings',
     'slack-incident-comms', 'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault',

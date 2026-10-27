@@ -71,28 +71,28 @@ const ESCALATION_PATTERNS = [
   { pattern: /\bokta\b[^.]*\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b[^.]*\bokta\b|\bclear(?:s|ed|ing)?\b[^.]*\bsessions?\b|\breset\b[^.]*\ball\b[^.]*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors (SR-2)' },
   { pattern: /\berase\b[^.]*\b(?:device|devices|mac|macs|macbook|computer|computers|laptop|iphone|ipad|disk)\b|\bremote(?:ly)?[- ]?lock\b|\block\b[^.]*\bremote(?:ly)?\b|\bjamf\b[^.]*\block\b|\block\b[^.]*\bjamf\b|\blost mode\b|\bremove\b[^.]*\bmdm profile\b|\bunmanag(?:e|ed|ing)\b|\bremoveFramework\b/i, label: 'Jamf / MDM erase, remote lock, lost mode, MDM-profile removal or unmanage (SR-2)' },
   { pattern: /\b(?:disable|bypass|turn\s*off|relax|unenforce|exclude[^.]*from|remove|delete)\b[^.]*\b(?:2-?step verification|2-?step|context[- ]aware access|security keys?|passkeys?)\b/i, label: 'security-control change — Google 2-Step Verification, security keys/passkeys, or Context-Aware Access (SR-2)' },
-  // G2 — Fleet (fleetdm). Each G2 floor is mirrored in the graph engine's
+  // G2: Fleet (fleetdm). Each G2 floor is mirrored in the graph engine's
   // SR2_TRIGGER_PATTERNS (`.*` there, so the engine floors a superset);
   // tier-routing.test.js pins both, one block per platform.
   { pattern: /\bfleet\b[^.]*\block(?:s|ed|ing)?\b|\block(?:s|ed|ing)?\b[^.]*\bfleet\b|\bturn(?:s|ed|ing)?\s*off\b[^.]*\bmdm\b|\bun-?enroll(?:s|ed|ing|ment)?\b|\b(?:delete|remove)\b[^.]*\bhosts?\b(?![- ]file)/i, label: 'Fleet host lock, MDM turn-off / unenroll, or host deletion (SR-2)' },
   { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b[^.]*\bscripts?\b[^.]*\bfleet\b|\bfleet\b[^.]*\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b[^.]*\bscripts?\b/i, label: 'Fleet script run on hosts (code runs on endpoints, SR-2 extended-gate class)' },
   { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b[^.]*(?:\b(?:all|every|entire)\b[^.]*\bhosts?\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
-  // G2 — Linear (the IT ticket system)
+  // G2: Linear (the IT ticket system)
   { pattern: /\b(?:delete[sd]?|deleting|trash(?:es|ed|ing)?|purge[sd]?|purging)\b[^.]*\b(?:issues?|projects?|cycles?|labels?|workflow states?|initiatives?|teams?)\b/i, label: 'Linear issue / project / label / team deletion (SR-2)' },
   { pattern: /\b(?:bulk|mass)\b[^.]*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b[^.]*(?:\b(?:all|every)\b[^.]*\b(?:issues?|tickets?|requests?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
   { pattern: /\b(?:suspend|deactivate|remove|kick)\w*\b[^.]*\bmembers?\b/i, label: 'workspace member suspension or removal (SR-2)' },
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|switch(?:es|ed|ing)?\s*off|relax\w*|remove[sd]?|removing|bypass\w*|unenforce\w*)\b[^.]*\b(?:saml|scim|sso|single sign-on|login methods?|sign-in methods?|authentication methods?)\b/i, label: 'SSO / SCIM / sign-in method change (security control, SR-2)' },
-  // G2 — Slack
+  // G2: Slack
   { pattern: /\b(?:delete[sd]?|deleting|purge[sd]?|purging)\b[^.]*\b(?:messages?|files?|channels?|conversations?|dms?|direct messages|threads?|chat history)\b/i, label: 'Slack message / file / channel deletion (SR-2)' },
   { pattern: /\bexport\w*\b[^.]*\b(?:messages|dms|direct messages|private channels|conversations|chat history|workspace data)\b/i, label: 'message or workspace data export (disclosure, SR-2 class)' },
   { pattern: /\breset\w*\b[^.]*\bsessions?\b|\bsign(?:s|ed|ing)?\s*out\b[^.]*\bsessions?\b/i, label: 'session reset / sign-out (SR-2 session class)' },
   { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b[^.]*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b[^.]*\bretention\b|\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b[^.]*\bretention\b[^.]*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b/i, label: 'retention change (records preservation)' },
   { pattern: /\bdisconnect\w*\b[^.]*\b(?:slack connect|organi[sz]ations?|external (?:orgs?|organi[sz]ations?|channels?|workspaces?))\b/i, label: 'Slack Connect disconnection (R3)' },
-  // G2 — Jamf Pro (beyond G1's lock, erase and unmanage)
+  // G2: Jamf Pro (beyond G1's lock, erase and unmanage)
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|decrypt\w*|remove[sd]?|removing|deactivate[sd]?|deactivating)\b[^.]*\b(?:filevault|disk encryption)\b/i, label: 'FileVault / disk-encryption turned off (security control, SR-2)' },
   { pattern: /\b(?:delete|remove)\b[^.]*\b(?:computer|mobile device) records?\b/i, label: 'computer or mobile-device record deletion (SR-2)' },
   { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|deploy|push|update|upgrade|scope|redeploy|enable|disable|run)\w*\b[^.]*(?:\b(?:all|every|entire)\b[^.]*\b(?:computers?|macs?|macbooks?|mobile devices?|endpoints?|ipads?|iphones?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:computers|macs|macbooks|mobile devices|endpoints|ipads|iphones)\b)/i, label: 'fleet-wide computer or Mac operation (mass)' },
-  // G2 — Google Workspace (beyond G1)
+  // G2: Google Workspace (beyond G1)
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|open(?:s|ed|ing)?(?:\s+up)?|permit(?:s|ted|ting)?)\b[^.]*\b(?:external sharing|sharing outside|share\w*\s+(?:externally|outside)|outside (?:the )?(?:domain|organi[sz]ation|company)|public links?|anyone with the link)/i, label: 'external sharing opened (data exposure, security control)' },
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|permit(?:s|ted|ting)?)\b[^.]*\bauto(?:matic)?[- ]?forward/i, label: 'Gmail automatic forwarding allowed (exfiltration path, security control)' },
   { pattern: /\b(?:remove[sd]?|removing|revok(?:e|es|ed|ing)|unassign\w*|demot\w*|strip\w*)\b[^.]*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:roles?|rights|privileges?|access))/i, label: 'admin-role removal (privilege change, SR-2 class)' },

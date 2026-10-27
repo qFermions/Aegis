@@ -156,3 +156,40 @@ test('no runbook treats exit 2 from a verify-* read as an expected result', () =
   const twoSv = textOf('gws-2sv-enforcement');
   assert.match(twoSv, /verify-2sv-not-enforced --user \[USER@DOMAIN\.COM\]/, 'the 2SV runbook proves "not enforced" with its own read-back');
 });
+
+// ── Finding: exception-group membership is a 2-Step Verification exemption ─────
+// Joining or leaving [GROUP_EMAIL] changes who must use a second step, which the 2SV
+// runbook classes R3. Both changes have their own gate and phrase in that runbook, the
+// phrase names the exemption, and the stop conditions sit next to the gate that runs the
+// change: approver and end date before an add, isEnrolledIn2Sv true before a remove.
+const onlyAfter = (gate) => gate.block.match(/\*\*PORTAL ACTION \[[^\]]+\]:\*\*\s*Only after([^\n]*)/)?.[1] || '';
+
+test('exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate', () => {
+  const twoSv = textOf('gws-2sv-enforcement');
+  assert.doesNotMatch(twoSv, /\/gws-group-membership/, 'exception-group members are never handed to the generic R1 add / R2 remove gates');
+
+  const exempt = gateById('gws-2sv-enforcement-exempt-portal');
+  assert.equal(exempt.phrase, 'ADD [USER@DOMAIN.COM] TO 2-STEP VERIFICATION EXCEPTION GROUP [GROUP_EMAIL]');
+  assert.equal(exempt.rClass, 'R3');
+  assert.match(exempt.fields.Effect, /exempts them from 2-Step Verification enforcement/);
+  assert.match(onlyAfter(exempt), /approver/);
+  assert.match(onlyAfter(exempt), /end date/);
+
+  const end = gateById('gws-2sv-enforcement-end-exemption-portal');
+  assert.equal(end.phrase, 'REMOVE [USER@DOMAIN.COM] FROM 2-STEP VERIFICATION EXCEPTION GROUP [GROUP_EMAIL]');
+  assert.equal(end.rClass, 'R3');
+  assert.match(end.fields.Effect, /ends their 2-Step Verification exemption/);
+  assert.match(onlyAfter(end), /isEnrolledIn2Sv` true/);
+  // the user read that decides the stop condition comes before the gate, in the same phase
+  const lines = linesOf('gws-2sv-enforcement');
+  const phaseStart = lines.findIndex((l) => /^### Phase C3\b/.test(l));
+  assert.ok(phaseStart >= 0 && phaseStart < end.line, 'Phase C3 heading precedes the remove gate');
+  const before = lines.slice(phaseStart, end.line - 1).join('\n');
+  assert.match(before, /\*\*Stop conditions:\*\*[^\n]*isEnrolledIn2Sv` false/);
+  assert.match(before, /gws-client\.js user --user \[USER@DOMAIN\.COM\] --execute/);
+
+  // the two phrases differ from the generic group-membership phrases
+  const phrases = gatesOf('gws-2sv-enforcement').map((g) => g.phrase);
+  assert.ok(!phrases.includes('ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]'));
+  assert.ok(!phrases.includes('REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]'));
+});

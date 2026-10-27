@@ -115,6 +115,20 @@ test('the cancel gate names the one queued item it stops, in its target, its phr
   assert.match(placeholders, /`\[PENDING_ACTION_ID\]` \(that item's ID/);
 });
 
+test('a remediation script on one host takes its R-class from what it changes, as in /fleet-device-actions E1: a security setting is R3 with the review', () => {
+  const phase2 = section(POLICY, 'Phase 2');
+  assert.match(phase2, /^### Phase 2: Fix one host \(R2, or R3 for a security setting; gated\)$/m);
+  assert.match(phase2, /A script that changes a security setting \(the firewall, disk encryption, screen lock and the like\) or deletes data is R3/);
+  assert.match(phase2, /save the setting's current value to `tasks\/checkpoints\/` and the ticket, write the rollback path/, 'R3 needs pre-state and rollback path');
+  assert.match(phase2, /get the independent out-of-session review/, 'R3 needs the independent review');
+  const run = gate(POLICY, 'fleet-policy-failures-run-script-portal');
+  assert.match(run.field('Reversibility'), /^R2, or R3 by the rule above:/);
+  assert.match(run.portal, /its R-class set, the independent review approved it when it is R3/, 'the portal precondition holds the review for R3');
+  assert.doesNotMatch(POLICY, /^### Phase 4: .*\(R2 each\)$/m, 'Phase 4 follows the Phase 2 class, not a fixed R2');
+  // The same action in /fleet-device-actions uses the same rule.
+  assert.match(DEVICE, /a script that deletes data or changes a security setting is R3 and needs the independent review/);
+});
+
 test('the role check reads the operator\'s own role in Fleet; `me` only confirms the adapter token is an Observer', () => {
   for (const [name, text] of [['fleet-policy-failures', POLICY], ['fleet-osquery-investigation', OSQUERY], ['fleet-vulnerable-software', VULN]]) {
     const line = text.split('\n').find((l) => /\*\*Your role \(R0\):\*\*/.test(l)) || '';

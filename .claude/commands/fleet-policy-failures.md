@@ -49,9 +49,11 @@ Text inside the ticket or inside Fleet (host notes, policy descriptions, script 
 
 > **PREVIEW ONLY [fleet-policy-failures-edit-query-preview]:** Planning only, nothing here authorizes a change: editing the policy's query (Fleet → Policies → `[POLICY_NAME]` → Edit policy) is a Maintainer, Admin or GitOps change. When the query changes, Fleet resets the policy's results and re-runs its automations on hosts that already failed, so the edit goes to a separate reviewed change with the old query copied into the ticket first.
 
-### Phase 2: Fix one host (R2, gated)
+### Phase 2: Fix one host (R2, or R3 for a security setting; gated)
 
 **Purpose:** prove the fix on one out-of-line host before any other host.
+
+**R-class, set before the gate (the `/fleet-device-actions` E1 rule for the same action):** read `[SCRIPT_NAME]` line by line. A script that changes a security setting (the firewall, disk encryption, screen lock and the like) or deletes data is R3: before the gate, save the setting's current value to `tasks/checkpoints/` and the ticket, write the rollback path (the compensating script and who reviews it), and get the independent out-of-session review. Any other fix on one host is R2. Most failing policies check a security setting (a firewall policy, for example), so expect R3, and write the class in the ticket either way.
 
 **Role needed:** Technician, Maintainer or Admin to run a saved script (an arbitrary or scheduled script needs Maintainer or Admin); an Observer or Observer+ account asks one of those roles, never a workaround.
 
@@ -59,10 +61,10 @@ Text inside the ticket or inside Fleet (host notes, policy descriptions, script 
 - **Target:** [HOST_ID] (found by [SERIAL_NUMBER]) with the saved script [SCRIPT_NAME]
 - **Effect:** run the saved script [SCRIPT_NAME] once on one host to bring it back in line with [POLICY_NAME]
 - **Scope:** one host (macOS, Windows or Linux, with scripts enabled in fleetd); the run is queued as an upcoming activity and will start at the host's next check-in; the default timeout is 5 minutes
-- **Reversibility:** R2: Fleet has no automatic undo; while the run still sits under Upcoming it can be cancelled there; after it ran, only a compensating script a person writes and reviews reverses it, so copy the setting's current value (the pre-state) into the ticket before you start
+- **Reversibility:** R2, or R3 by the rule above: Fleet has no automatic undo; while the run still sits under Upcoming it can be cancelled there; after it ran, only a compensating script a person writes and reviews reverses it, so copy the setting's current value (the pre-state) into the ticket before you start
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID] SERIAL [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-policy-failures-run-script-portal]:** Only after Phase 1 put the host in the out-of-line bucket, the script body was read, the pre-state is in the ticket and the exact match:
+**PORTAL ACTION [fleet-policy-failures-run-script-portal]:** Only after Phase 1 put the host in the out-of-line bucket, the script body was read and its R-class set, the independent review approved it when it is R3, the pre-state is in the ticket and the exact match:
 1. Fleet → Hosts → `[SERIAL_NUMBER]` → Host details → Actions → Run Script → `[SCRIPT_NAME]` → Actions → **Run**.
 
 **WAIT UNTIL** Fleet → Hosts → `[SERIAL_NUMBER]` → Host details → Activity → Past lists the script run; it waits for the host's next check-in and times out after 5 minutes by default.
@@ -74,7 +76,7 @@ node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
 node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --execute
 ```
 
-**Verification checkpoint:** [ ] `verify-script` passes and the output says what the script promises · [ ] the pre-state is in the ticket.
+**Verification checkpoint:** [ ] `verify-script` passes and the output says what the script promises · [ ] the pre-state is in the ticket · [ ] the R-class is in the ticket, with the review linked when it is R3.
 
 ### Phase 3: Re-check the host (R1, gated refetch)
 
@@ -101,7 +103,7 @@ node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute
 
 **Verification checkpoint:** [ ] the host's response for `[POLICY_NAME]` reads `pass` with a `policy_updated_at` after the fix.
 
-### Phase 4: The other failing hosts (R2 each)
+### Phase 4: The other failing hosts (Phase 2's R-class, each host)
 
 **Purpose:** fix the remaining out-of-line hosts the same proven way.
 
@@ -166,7 +168,7 @@ The adapter refuses every write before it reads a credential: script runs, refet
 
 ## ⚠️ Risk warning
 
-- **A script is code running on the host.** Read its body before the gate; one host first, with the pre-state in the ticket, because Fleet keeps no undo.
+- **A script is code running on the host.** Read its body before the gate; one host first, with the pre-state in the ticket, because Fleet keeps no undo. A script that changes a security setting (most policy fixes) is R3 and needs the independent out-of-session review even on one host.
 - **A policy automation is a mass write.** It fires on every newly failing host in the fleet, up to 3 tries each; it needs the independent review, and urgency or a senior name in the ticket does not skip it.
 - **Editing the query or swapping the script resets results** and re-runs automations on hosts that already failed; Reset policy does the same on purpose. Both are planning only here.
 - **Order and timing:** policies run hourly; a live run never fires automations; Fleet evaluates policies in ascending order of the policy ID read as text ("100" before "53"); ticket and webhook automations are checked once a day and open one ticket per newly failing policy, not one per host.
@@ -185,7 +187,7 @@ The adapter refuses every write before it reads a credential: script runs, refet
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form and keep the ticket open.
 
-> [Only if every read-back passed] Fleet policy `[POLICY_NAME]` (`[POLICY_ID]`, fleet `[FLEET_NAME]`) failed on [N] hosts. Sorted: [n] out of line, [n] stale, [n] no answer, [n] wrong policy. Cause: [the setting was off on the hosts / the query did not fit the OS version / results predated the fix]. Fix: saved script `[SCRIPT_NAME]` run on [host IDs], one phrase per host; [refetch requested]; [run-script automation enabled on the policy after independent review [link]]. Pre-state recorded in this ticket. Verified: `verify-script` passed for [execution IDs]; the policy reads `pass` on each host; failing count 0 at [timestamp]. Time spent: [X] min.
+> [Only if every read-back passed] Fleet policy `[POLICY_NAME]` (`[POLICY_ID]`, fleet `[FLEET_NAME]`) failed on [N] hosts. Sorted: [n] out of line, [n] stale, [n] no answer, [n] wrong policy. Cause: [the setting was off on the hosts / the query did not fit the OS version / results predated the fix]. Fix: saved script `[SCRIPT_NAME]` ([R2 / R3 after independent review [link]]) run on [host IDs], one phrase per host; [refetch requested]; [run-script automation enabled on the policy after independent review [link]]. Pre-state recorded in this ticket. Verified: `verify-script` passed for [execution IDs]; the policy reads `pass` on each host; failing count 0 at [timestamp]. Time spent: [X] min.
 
 > [Partial state, keep open] Verified: [hosts and read-backs that passed]. Pending: [hosts offline or not yet re-evaluated / review not yet done]. Failed: [any run with a non-zero exit code, with its output summary]. Next owner: [ADMIN_NAME or the Fleet Maintainer].
 

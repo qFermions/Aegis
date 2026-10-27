@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[ISSUE_ID]` (the Linear issue identifier, such as `[@Aegion_LINEAR_TEAM]-123`) · `[NOTE_FILE]` (the plain-text file that holds the drafted note: a `.md` or `.txt` file, outside any `.ssh`, `.aws`, `.config`, `.gnupg` or `.claude` folder) · `[NOTE_SHA256]` (the note's digest, printed by `note`) · `[NOT_BEFORE]` (the time `note` printed; the read-back accepts only a comment created after it) · `[COMMENT_ID]` (the `id` of one comment, as the `comments` read prints it; not yet in the placeholder dictionary) · `[ADMIN_NAME]` (the administrator who posts) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[ISSUE_ID]` (the Linear issue identifier, such as `[@Aegion_LINEAR_TEAM]-123`) · `[NOTE_FILE]` (the plain-text file that holds the drafted note: a `.md` or `.txt` file, outside any `.ssh`, `.aws`, `.config`, `.gnupg` or `.claude` folder) · `[NOTE_SHA256]` (the note's digest, printed by `note`) · `[NOT_BEFORE]` (the time `note` printed; the read-back accepts only a comment created after it) · `[COMMENT_ID]` (the `id` of one comment, as the `comments` read prints it; not yet in the placeholder dictionary) · `[USER_ID]` (the Linear user ID of the administrator who posts, from the `viewer` read run with their own key) · `[ADMIN_NAME]` (the administrator who posts) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 ## ⚠️ Admin / safety gate
 
@@ -57,9 +57,11 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ```bash
 # HUMAN-RUN, read-only: the adapter sends named read queries only; LINEAR_API_KEY and LINEAR_ORG come from the environment
+# whose key this is: when the poster runs it with their own key, the viewer id is the poster's [USER_ID] for the Phase E read-back
+node scripts/adapters/linear-client.js viewer --execute
 # reads the issue: title, status name and type, labels, priority, assignee, team key, archivedAt, trashed
 node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute
-# reads the issue's comments: id, body, createdAt and author id
+# reads the first 50 of the issue's comments (one page): id, body, createdAt and author id
 node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 ```
 </details>
@@ -117,11 +119,13 @@ node scripts/adapters/linear-client.js note --issue [ISSUE_ID] --body-file [NOTE
 **Purpose:** prove that the exact text landed on the right issue after `[NOT_BEFORE]`.
 
 ```bash
-# read-back: passes only when a comment created after [NOT_BEFORE] has the digest [NOTE_SHA256]
-node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --execute
-# read-only: lists the comments, to count the copies of the note
+# read-back: passes only when a comment created after [NOT_BEFORE] by Linear user [USER_ID] (the poster) has the digest [NOTE_SHA256]
+node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --author [USER_ID] --execute
+# read-only: lists the first 50 comments (one page), to count the copies of the note
 node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 ```
+
+Without `--author` (the line `note` prints), any author counts: compare the printed `observed.match.userId` with the poster's `viewer` id instead. The `comments` read covers the first 50 comments only; on a longer thread, count the copies on the issue page (`verify-comment` reads every page but stops at the first copy it finds, so it does not count copies).
 
 1. GUI read-back: Linear → `[ISSUE_ID]` → the newest comment shows `[ADMIN_NAME]`, a time after `[NOT_BEFORE]` and the note text.
 2. If `verify-comment` finds no comment after `[NOT_BEFORE]`: the note was posted on another issue, posted before `note` ran, or not posted. Check the issue page first; never post a second copy until you know which.
@@ -187,7 +191,7 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 
 - [ ] `note` printed `[NOTE_SHA256]` and `[NOT_BEFORE]` before anyone pasted the note.
 - [ ] `verify-comment` passed for `[ISSUE_ID]` with that digest and that not-before time, or, after one replace still left the digest different, the stored digest sits next to `[NOTE_SHA256]` in the ticket and the partial-state note names the editor's change and a next owner.
-- [ ] The comments read lists exactly one copy of the note on `[ISSUE_ID]`.
+- [ ] The comments read (or, past 50 comments, the issue page) shows exactly one copy of the note on `[ISSUE_ID]`.
 - [ ] Linear → `[ISSUE_ID]` shows the comment with `[ADMIN_NAME]` and a time after `[NOT_BEFORE]`.
 - [ ] The note's form (completed or partial) matches the work's read-backs, and it carries no secret.
 

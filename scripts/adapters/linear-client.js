@@ -14,10 +14,11 @@
 //   [NOTE_FILE] is a .md or .txt file outside any .ssh, .aws, .config, .gnupg or .claude
 //   folder, and a body the commit scanner would block is refused, never printed.
 //   Reads (a dry run that prints the planned request unless --execute is given):
-//     viewer | issue --issue [ISSUE_ID] | comments --issue [ISSUE_ID]
-//     states --team [TEAM_KEY] | labels | triage | members
+//     viewer | issue --issue [ISSUE_ID] | comments --issue [ISSUE_ID] (the first 50 comments)
+//     states --team [@Aegion_LINEAR_TEAM] | labels | triage | members
 //   Read-backs (also a dry run unless --execute):
 //     verify-comment   --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE]
+//                      [--author [USER_ID]]   (then only a comment by that Linear user counts)
 //     verify-state     --issue [ISSUE_ID] --state "[STATE_NAME]"
 //     verify-labels    --issue [ISSUE_ID] --has [LABEL_NAME]
 //     verify-trashed   --issue [ISSUE_ID]
@@ -246,7 +247,7 @@ const CURSOR = /^[A-Za-z0-9_=+/:.-]{1,256}$/;
 const MAX_PAGES = 20;
 const MAX_LISTED = 20;
 
-const VALUE_FLAGS = ['issue', 'body-file', 'team', 'expect-sha256', 'not-before', 'state', 'has', 'user'];
+const VALUE_FLAGS = ['issue', 'body-file', 'team', 'expect-sha256', 'not-before', 'state', 'has', 'user', 'author'];
 
 const COMMANDS = Object.freeze({
   viewer: { kind: 'read', document: 'AegisViewer', flags: [], variables: () => ({}) },
@@ -256,8 +257,8 @@ const COMMANDS = Object.freeze({
   labels: { kind: 'read', document: 'AegisLabels', flags: [], variables: () => ({}) },
   triage: { kind: 'read', document: 'AegisTriage', flags: [], variables: () => ({}) },
   members: { kind: 'read', document: 'AegisMembers', flags: [], variables: () => ({}) },
-  'verify-comment': { kind: 'verify', document: 'AegisIssueComments', flags: ['issue', 'expect-sha256', 'not-before'], variables: (a) => ({ id: a.issue }),
-    expected: (a) => ({ issue: a.issue, sha256: a.sha256, notBefore: a.notBefore }) },
+  'verify-comment': { kind: 'verify', document: 'AegisIssueComments', flags: ['issue', 'expect-sha256', 'not-before'], optional: ['author'], variables: (a) => ({ id: a.issue }),
+    expected: (a) => ({ issue: a.issue, sha256: a.sha256, notBefore: a.notBefore, ...(a.author ? { author: a.author } : {}) }) },
   'verify-state': { kind: 'verify', document: 'AegisIssue', flags: ['issue', 'state'], variables: (a) => ({ id: a.issue }), expected: (a) => ({ issue: a.issue, state: a.state }) },
   'verify-labels': { kind: 'verify', document: 'AegisIssue', flags: ['issue', 'has'], variables: (a) => ({ id: a.issue }), expected: (a) => ({ issue: a.issue, label: a.label }) },
   'verify-trashed': { kind: 'verify', document: 'AegisIssue', flags: ['issue'], variables: (a) => ({ id: a.issue }), expected: (a) => ({ issue: a.issue, trashed: true }) },
@@ -270,8 +271,8 @@ const COMMANDS = Object.freeze({
 const USAGE = [
   'Usage: node scripts/adapters/linear-client.js <command> [flags] [--execute]',
   '  Offline:   note --issue [ISSUE_ID] --body-file [NOTE_FILE] | digest --body-file [NOTE_FILE]',
-  '  Reads:     viewer | issue --issue [ISSUE_ID] | comments --issue [ISSUE_ID] | states --team [TEAM_KEY] | labels | triage | members',
-  '  Verify:    verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE]',
+  '  Reads:     viewer | issue --issue [ISSUE_ID] | comments --issue [ISSUE_ID] | states --team [@Aegion_LINEAR_TEAM] | labels | triage | members',
+  '  Verify:    verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] [--author [USER_ID]]',
   '             verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" | verify-labels --issue [ISSUE_ID] --has [LABEL_NAME]',
   '             verify-trashed --issue [ISSUE_ID] | verify-snoozed --issue [ISSUE_ID] | verify-suspended --user [USER_ID]',
   'Reads and read-backs are a dry run unless the bare --execute flag is given. No command writes to Linear.',
@@ -289,7 +290,7 @@ function plainName(value, flag) {
 function validate(command, def, args) {
   for (const key of Object.keys(args)) {
     if (key === '_command' || key === 'execute') continue;
-    if (!def.flags.includes(key)) throw new RefusedError(`--${key} does not apply to ${command}`);
+    if (!def.flags.includes(key) && !(def.optional || []).includes(key)) throw new RefusedError(`--${key} does not apply to ${command}`);
   }
   for (const flag of def.flags) if (args[flag] === undefined) throw new RefusedError(`${command} needs --${flag}`);
   if (def.kind === 'offline' && args.execute) {
@@ -307,6 +308,10 @@ function validate(command, def, args) {
   if (args.user !== undefined) {
     if (!USER_ID.test(args.user)) throw new RefusedError('--user must be a Linear user ID');
     a.user = args.user;
+  }
+  if (args.author !== undefined) {
+    if (!USER_ID.test(args.author)) throw new RefusedError('--author must be a Linear user ID (the viewer read prints yours)');
+    a.author = args.author;
   }
   if (args['expect-sha256'] !== undefined) {
     if (!SHA256_HEX.test(args['expect-sha256'])) throw new RefusedError('--expect-sha256 must be the 64-character lower-case hex digest that note printed');
@@ -416,13 +421,17 @@ async function verifyComment(client, a) {
       const created = typeof c.createdAt === 'string' ? Date.parse(c.createdAt) : NaN;
       if (!Number.isFinite(created) || created < notBeforeMs) continue;
       const summary = { id: orNull(c.id), createdAt: c.createdAt, userId: c.user && c.user.id !== undefined ? c.user.id : null, sha256: typeof c.body === 'string' ? noteDigest(c.body) : null };
-      if (summary.sha256 === a.sha256) {
+      // With --author, a comment by anyone else, or by no user (Comment.user is null
+      // for comments created by integrations or bots, schema), is listed but is never
+      // proof, even with the right text.
+      if (summary.sha256 === a.sha256 && (!a.author || summary.userId === a.author)) {
         observed.match = summary;
         return { done: true, verified: true };
       }
       if (observed.commentsSinceNotBefore.length < MAX_LISTED) observed.commentsSinceNotBefore.push(summary);
     }
-    return { done: false, pageInfo: conn.pageInfo, lastReason: `no comment created at or after ${a.notBefore} has the expected SHA-256` };
+    const by = a.author ? ` by ${a.author}` : '';
+    return { done: false, pageInfo: conn.pageInfo, lastReason: `no comment created at or after ${a.notBefore}${by} has the expected SHA-256` };
   });
   if (walk.failed) return walk.failed;
   return verdict(command, walk.verified === true, expected, observed, walk.reason, walk.flags);

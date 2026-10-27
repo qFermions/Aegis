@@ -53,7 +53,8 @@
 // 7. verify-* print JSON with verified, observed and expected values, and exit 0 when
 //    the read proves the human's write and 2 when it does not: verify-comment (a
 //    comment on that issue, created at or after --not-before, whose normalised body
-//    has the expected SHA-256, read across pages), verify-state (the state name),
+//    has the expected SHA-256, read across pages; with --author, only a comment by
+//    that Linear user counts), verify-state (the state name),
 //    verify-labels (the label name is on the issue), verify-trashed (trashed is true),
 //    verify-snoozed (snoozedUntilAt is a time later than the read) and
 //    verify-suspended (the member's active is false, read across pages). A response
@@ -535,6 +536,30 @@ test('verify-comment: a comment created at or after --not-before whose normalise
   assert.equal(paged.transport.calls.length, 2);
   assertGraphqlCall(paged.transport.calls[1], 'AegisIssueComments', { id: ISSUE, after: 'cursor-1' }, 'page 2');
 
+  // --author: only a comment by that Linear user is proof. The same text by someone
+  // else, or by no user (an integration or a bot), is listed and does not verify.
+  const byOther = commentsPage([
+    { id: 'c-bot', body: note, createdAt: AFTER, user: null },
+    { id: 'c-other', body: note, createdAt: AFTER, user: { id: 'user-9' } },
+  ]);
+  const author = await cli([...args, '--author', 'user-2'], { replies: [byOther] });
+  assert.equal(author.code, 2, 'the right text by another author is not proof');
+  const notMine = firstJson(author.stdout);
+  assert.equal(notMine.observed.match, null);
+  assert.deepEqual(notMine.observed.commentsSinceNotBefore.map((c) => c.userId), [null, 'user-9']);
+  assert.equal(notMine.expected.author, 'user-2');
+  assert.match(notMine.reason, /by user-2/);
+  const mine = await cli([...args, '--author', 'user-2'], { replies: [commentsPage([
+    { id: 'c-other', body: note, createdAt: AFTER, user: { id: 'user-9' } },
+    { id: 'c-mine', body: note, createdAt: AFTER, user: { id: 'user-2' } },
+  ])] });
+  assert.equal(mine.code, 0, mine.stdout);
+  assert.equal(firstJson(mine.stdout).observed.match.id, 'c-mine');
+  const anyone = await cli(args, { replies: [byOther] });
+  assert.equal(anyone.code, 0, 'without --author the first matching comment verifies, as before');
+  assert.equal(firstJson(anyone.stdout).observed.match.userId, null, 'and its author is printed for the runbook to compare');
+  assert.equal(firstJson(anyone.stdout).expected.author, undefined);
+
   for (const [flag, value] of [['--expect-sha256', 'abc'], ['--expect-sha256', 'A'.repeat(64)], ['--not-before', '2026-10-27'], ['--not-before', 'yesterday']]) {
     const argv = [...args];
     argv[argv.indexOf(flag) + 1] = value;
@@ -716,6 +741,8 @@ test('bad input is refused with exit 1 before anything is read or sent', async (
     ['states'], ['states', '--team', 'I T'], ['verify-state', '--issue', ISSUE], ['verify-state', '--issue', ISSUE, '--state', 'Bad\u0007state'],
     ['verify-labels', '--issue', ISSUE, '--has', ''], ['verify-suspended', '--user', 'user 7'], ['verify-suspended'],
     ['verify-snoozed'], ['verify-snoozed', '--issue', ISSUE, '--state', 'Triage'],
+    ['verify-comment', '--issue', ISSUE, '--expect-sha256', 'a'.repeat(64), '--not-before', NOT_BEFORE, '--author', 'user 2'],
+    ['verify-state', '--issue', ISSUE, '--state', 'Done', '--author', 'user-2'],
     ['verify-comment', '--issue', ISSUE, '--not-before', NOT_BEFORE],
   ];
   for (const argv of bad) {

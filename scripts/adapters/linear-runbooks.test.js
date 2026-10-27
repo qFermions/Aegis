@@ -29,6 +29,11 @@
 //    still differs is a stop: no second edit, the stored digest goes next to
 //    [NOTE_SHA256], and the partial-state note names the editor's change and a next
 //    owner; the checklist and the "not done until" line accept that ending.
+// 6. Wording matches the sources: no runbook says a GraphQL POST is itself a write
+//    (that is this repo's scanner rule, said as such); the userUnsuspend role is the
+//    schema's, not "unverified"; the comments read is said to cover 50 comments; the
+//    ticket-note read-back names the poster with --author; and the adapter's usage
+//    text uses the dictionary's team token, not [TEAM_KEY].
 //
 // Nothing here reads a credential or opens a socket: the runbooks are files on disk.
 
@@ -200,4 +205,17 @@ test('ticket-note: a digest that still differs after one replace is a stop with 
   const checklist = section('linear-ticket-note', '✅ Verification checklist');
   assert.match(checklist, /`verify-comment` passed[^\n]*, or, after one replace still left the digest different, [^\n]*partial-state note[^\n]*next owner/);
   assert.match(section('linear-ticket-note', '⚠️ Admin / safety gate'), /Not done until[^\n]*or, when one replace still leaves the digest different/);
+});
+
+test('wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token', () => {
+  for (const name of RUNBOOKS) assert.ok(!/counts as a write even when it only reads/.test(text[name]), `${name}: a GraphQL POST is not itself a write in Linear`);
+  for (const name of ['linear-triage', 'linear-workspace-admin']) assert.match(text[name], /This repo's safety scanner treats any curl POST or request body as a write, so this runbook has no curl path/);
+  const admin = text['linear-workspace-admin'];
+  assert.ok(!/description was not read for a role/.test(admin), 'the userUnsuspend role is in the schema');
+  assert.match(admin, /`userUnsuspend` "can only be called by a workspace admin or owner"/);
+  const phaseE = section('linear-ticket-note', 'Phase E');
+  assert.match(phaseE, /verify-comment --issue \[ISSUE_ID\] --expect-sha256 \[NOTE_SHA256\] --not-before \[NOT_BEFORE\] --author \[USER_ID\] --execute/);
+  assert.match(phaseE, /The `comments` read covers the first 50 comments only; on a longer thread, count the copies on the issue page/);
+  const adapterSource = fs.readFileSync(path.join(__dirname, 'linear-client.js'), 'utf8');
+  assert.ok(!adapterSource.includes('[TEAM_KEY]'), 'the adapter uses [@Aegion_LINEAR_TEAM], a dictionary token');
 });

@@ -245,7 +245,7 @@ node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute
 node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 ```
 
-> **PREVIEW ONLY [linear-triage-api-preview]:** Planning reference only; nothing here authorizes a write. In Linear's GraphQL API, accept, decline, snooze and a priority change are all `issueUpdate`, labels are `issueAddLabel` and `issueRemoveLabel`, and many issues at once is `issueBatchUpdate` (at most 50 ids per call, per the schema). A GraphQL call sent with curl is a POST with a body, which counts as a write even when it only reads. The adapter refuses each of these by name, and this runbook has no API write path: a person makes every change in Linear.
+> **PREVIEW ONLY [linear-triage-api-preview]:** Planning reference only; nothing here authorizes a write. In Linear's GraphQL API, accept, decline, snooze and a priority change are all `issueUpdate`, labels are `issueAddLabel` and `issueRemoveLabel`, and many issues at once is `issueBatchUpdate` (at most 50 ids per call, per the schema). This repo's safety scanner treats any curl POST or request body as a write, so this runbook has no curl path; reads go through the adapter's named queries. The adapter refuses each of these by name, and this runbook has no API write path: a person makes every change in Linear.
 </details>
 
 **Verification checkpoint:** [ ] the ticket names the SLA window, the time the issue left Triage, the cause, and the owner of any work still owed · [ ] a corrected priority reads `[PRIORITY_LEVEL]` in the `issue` read.

@@ -322,3 +322,37 @@ test('no read-back copies its event name from the read before it; where no event
   assert.doesNotMatch(posture, /verify-event/, 'the posture runbook has no setting change a verify-event can prove');
   assert.doesNotMatch(posture, /the adapter proves the change/);
 });
+
+// ── Finding: a rollback "under its own phrase" is a gate that exists ──────────────────
+// An R3 change needs its written rollback before step 1 runs. A Reversibility line that
+// promises a rollback "under its own phrase" has to quote that phrase, and the phrase has
+// to be another gate's exact confirmation in the same runbook. A rollback the runbook does
+// not authorize (an Inherit click, re-trusting an app) says it is a separate reviewed change.
+const quotedPhrases = (text) => [...text.matchAll(/`([A-Z0-9][A-Z0-9 .,'-]*(?:\[[A-Za-z0-9_@.,-]+\][A-Z0-9 .,'-]*)*)`/g)]
+  .map((m) => m[1]).filter((p) => /[A-Z]{3,}/.test(p) && / /.test(p));
+
+test('every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook', () => {
+  for (const name of RUNBOOKS) {
+    const gates = gatesOf(name);
+    const phrases = new Set(gates.map((g) => g.phrase));
+    for (const g of gates) {
+      const rev = g.fields.Reversibility || '';
+      const quoted = quotedPhrases(rev);
+      for (const p of quoted) assert.ok(phrases.has(p), `${name}:${g.line} ${g.id}: rollback phrase \`${p}\` is no gate's phrase in this runbook`);
+      for (const p of quoted) assert.notEqual(p, g.phrase, `${name}:${g.line} ${g.id}: a gate is not its own rollback`);
+      if (/own phrase/.test(rev)) assert.ok(quoted.length > 0, `${name}:${g.line} ${g.id}: "own phrase" without the phrase: ${rev}`);
+      if (/click Inherit/i.test(rev)) assert.match(rev, /separate reviewed change/, `${name}:${g.line} ${g.id}: an ungated Inherit click offered as the rollback`);
+    }
+  }
+  // the instances the review named now have their gates
+  assert.equal(gateById('gws-2sv-enforcement-group-reenforce-portal').phrase, 'ENABLE 2-STEP VERIFICATION ENFORCEMENT FOR GROUP [GROUP_EMAIL]');
+  assert.match(onlyAfter(gateById('gws-2sv-enforcement-group-reenforce-portal')), /every member shows `isEnrolledIn2Sv` true/);
+  assert.equal(gateById('gws-2sv-enforcement-methods-restore-portal').phrase, 'RESTORE 2-STEP VERIFICATION METHODS FOR OU [OU_PATH]');
+  assert.equal(gateById('gws-2sv-enforcement-allow-rollback-portal').phrase, 'TURN OFF 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]');
+  assert.equal(gateById('gws-drive-sharing-allowlist-remove-portal').phrase, 'REMOVE ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]');
+  const block = gateById('gws-security-posture-app-block-portal');
+  assert.match(block.fields.Reversibility, /not authorized here/);
+  assert.match(block.fields.Reversibility, /separate reviewed change/);
+  assert.doesNotMatch(block.fields.Reversibility, /own phrase/);
+  assert.match(onlyAfter(block), /written rollback path/);
+});

@@ -89,7 +89,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** suspend one compromised Google Workspace account; Google resets its sign-in cookies and OAuth tokens
 - **Scope:** one account; mail, Drive, Calendar, licences, group memberships and admin roles are kept
-- **Reversibility:** R2: blocks all access and resets sign-in cookies and OAuth tokens; Phase F reactivates under its own phrase, but the reset tokens do not come back: the user signs in again and grants apps again
+- **Reversibility:** R2: blocks all access and resets sign-in cookies and OAuth tokens; Phase F reactivates under its own phrase `REACTIVATE GOOGLE ACCOUNT [USER@DOMAIN.COM]`, but the reset tokens do not come back: the user signs in again and grants apps again
 - **Required confirmation:** Type exactly `SUSPEND COMPROMISED GOOGLE ACCOUNT [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-account-containment-suspend-portal]:** Only after the exact match:
@@ -223,7 +223,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** reactivate one suspended account; the user signs in with the new temporary password and must change it
 - **Scope:** one account; the OAuth tokens the suspension reset stay reset, so apps must be granted again
-- **Reversibility:** R1: suspend again under the Phase B gate and its own phrase
+- **Reversibility:** R1: suspend again under the Phase B gate and its own phrase `SUSPEND COMPROMISED GOOGLE ACCOUNT [USER@DOMAIN.COM]`
 - **Required confirmation:** Type exactly `REACTIVATE GOOGLE ACCOUNT [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-account-containment-reactivate-portal]:** Only after the prerequisites and the exact match:

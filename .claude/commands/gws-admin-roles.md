@@ -216,7 +216,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** remove the Super Admin role from one user
 - **Scope:** one user; the account, its data and any delegated roles stay; at least one other active super admin remains
-- **Reversibility:** R3: removes full control of the tenant from one account; reversible by assigning the role again under the Phase C gate and its own phrase, using the recorded pre-state; the removed admin receives a confirmation email, and with multi-party approval on the request waits for a second super admin and expires after 3 days (search excerpts)
+- **Reversibility:** R3: removes full control of the tenant from one account; reversible by assigning the role again under the Phase C gate and its own phrase `ASSIGN ADMIN ROLE [ROLE_NAME] TO [USER@DOMAIN.COM]`, using the recorded pre-state; the removed admin receives a confirmation email, and with multi-party approval on the request waits for a second super admin and expires after 3 days (search excerpts)
 - **Required confirmation:** Type exactly `REMOVE SUPER ADMIN ROLE FROM [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-admin-roles-remove-super-admin-portal]:** Only after the prerequisites, with no stop condition true, and the exact match:
@@ -248,7 +248,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Target:** [USER@DOMAIN.COM] (role [ROLE_NAME])
 - **Effect:** remove the delegated admin role [ROLE_NAME] from one user
 - **Scope:** one user, one role assigned to that user directly; other roles, other holders and group-held assignments stay
-- **Reversibility:** R2: reversible by assigning the role again under the Phase C gate and its own phrase; the scope must be re-entered from the pre-state recorded with `role-assignments --user`
+- **Reversibility:** R2: reversible by assigning the role again under the Phase C gate and its own phrase `ASSIGN ADMIN ROLE [ROLE_NAME] TO [USER@DOMAIN.COM]`; the scope must be re-entered from the pre-state recorded with `role-assignments --user`
 - **Required confirmation:** Type exactly `REMOVE ADMIN ROLE [ROLE_NAME] FROM [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-admin-roles-remove-role-portal]:** Only after the pre-state is in the ticket and the exact match:

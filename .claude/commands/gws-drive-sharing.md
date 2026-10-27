@@ -13,7 +13,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- **Five changes, five gates.** Removing one external account from one file is R1. Adding an allowlisted domain is R2 (one list for the whole organization). Restricting, turning off or allowing external sharing for an organizational unit is R3 (a security control for every user in the unit). Every other step is a read (R0).
+- **Six changes, six gates.** Removing one external account from one file is R1. Adding an allowlisted domain, and removing it again (its rollback), is R2 (one list for the whole organization). Restricting, turning off or allowing external sharing for an organizational unit is R3 (a security control for every user in the unit). Every other step is a read (R0).
 - **Role needed for the sharing settings:** Super Admin, or a custom admin role that holds the Drive and Docs administrator privilege. The lane's sources name no Help Desk Admin path to these settings: a Help Desk Admin stops, writes the missing role in the ticket and escalates to a Super Admin. Never borrow another administrator's session or ask for a temporary role to get around it.
 - **Pre-state first.** Before any gate, write into the ticket the current option for `[OU_PATH]`, any configuration-group value and the allowlist. The undo for every gate is putting back the value you captured.
 - **Time window.** A sharing-setting change can take up to 24 hours to apply, and inside that window the old and the new setting can both be enforced at times (search excerpt). Not done until the read-backs pass and the 24 hours are over.
@@ -41,7 +41,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 1. Phase A: read the option for `[OU_PATH]`, any group value and the allowlist into the ticket (R0).
 2. Phase B: find who shared `[FILE_NAME]` outside, when, and who outside can open it now (R0).
 3. Phase C: take one external account's access to `[FILE_NAME]` back (R1 gate).
-4. Phase D: add `[EXTERNAL_DOMAIN]` to the allowlist, only if units should share with that partner (R2 gate).
+4. Phase D: add `[EXTERNAL_DOMAIN]` to the allowlist, only if units should share with that partner (R2 gate); its rollback removes it again (R2 gate).
 5. Phase E: restrict, turn off or allow external sharing for `[OU_PATH]` (R3 gates, approver named). **WAIT UNTIL** 24 hours have passed before you call it done.
 
 ## Phase A: Read the current settings (R0)
@@ -142,7 +142,7 @@ Prerequisites: `[EXTERNAL_DOMAIN]` is the partner's verified Google Workspace do
 - **Target:** [EXTERNAL_DOMAIN]
 - **Effect:** add one domain to the organization's allowlisted domains
 - **Scope:** the whole organization: every organizational unit or group set to Allowlisted Domains can share with this domain once it is listed; units set to On or Off are not affected
-- **Reversibility:** R2: removing the domain from the same list reverses it, under its own phrase; whether files shared with the domain while it was listed lose access when it is removed is not confirmed in the lane's sources, so treat them as still shared and check them in Phase B
+- **Reversibility:** R2: the Phase D rollback removes the domain from the same list under its own phrase `REMOVE ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`; whether files shared with the domain while it was listed lose access when it is removed is not confirmed in the lane's sources, so treat them as still shared and check them in Phase B
 - **Required confirmation:** Type exactly `ADD ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-drive-sharing-allowlist-add-portal]:** Only after the Phase A allowlist is in the ticket and the exact match:
@@ -158,6 +158,28 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 ```
 
 **Verification checkpoint:** [ ] the allowlist shows `[EXTERNAL_DOMAIN]` (the proof) · [ ] the admin event whose parameters carry `[EXTERNAL_DOMAIN]` noted with its name, or its absence noted.
+
+### Phase D rollback: Remove a partner domain from the allowlist (R2)
+
+**Purpose:** the written rollback for Phase D: take `[EXTERNAL_DOMAIN]` off the organization's allowlist.
+
+**Role needed:** Super Admin, or a custom admin role with the Domain settings administrator privilege (search excerpt).
+
+Prerequisites: the allowlist before the change is in the ticket; the approver is named in the ticket; the files shared with `[EXTERNAL_DOMAIN]` are listed from Phase B, because the lane's sources do not confirm whether they lose access. Write down `[NOT_BEFORE]` now.
+
+<!-- SAFETY GATE [gws-drive-sharing-allowlist-remove-portal] -->
+- **Target:** [EXTERNAL_DOMAIN]
+- **Effect:** remove one domain from the organization's allowlisted domains
+- **Scope:** the whole organization: units and groups set to Allowlisted Domains no longer offer sharing with this domain; units set to On or Off are not affected; whether files already shared with it lose access is not confirmed in the lane's sources
+- **Reversibility:** R2: reversible by Phase D under its own phrase `ADD ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`
+- **Required confirmation:** Type exactly `REMOVE ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [gws-drive-sharing-allowlist-remove-portal]:** Only after the allowlist and the approver are in the ticket and the exact match:
+1. Admin console → Account → Domains → Allowlisted domains → remove `[EXTERNAL_DOMAIN]` from the list and save (the control labels on this page are not in the lane's sources: confirm them on screen).
+
+**WAIT UNTIL** Admin console → Account → Domains → Allowlisted domains no longer lists `[EXTERNAL_DOMAIN]`. That list is the proof; the Phase D activities read, run again since this `[NOT_BEFORE]`, is supporting evidence only.
+
+**Verification checkpoint:** [ ] the allowlist no longer shows `[EXTERNAL_DOMAIN]` (the proof) · [ ] the Phase B files shared with the domain are re-checked and listed in the ticket.
 
 ## Phase E: Change external sharing for [OU_PATH] (R3)
 
@@ -175,7 +197,7 @@ Write down `[NOT_BEFORE]` now.
 - **Target:** [OU_PATH]
 - **Effect:** restrict sharing outside the organization for one organizational unit to the allowlisted domains
 - **Scope:** every user in [OU_PATH] whose configuration group does not override it; sharing with any domain not on the allowlist is no longer offered to them; the allowlist itself does not change
-- **Reversibility:** R3: put the Phase A value back for [OU_PATH], under its own phrase; each direction can take up to 24 hours, with the old and the new setting both enforced at times in that window (search excerpt); whether existing external shares stop working is not confirmed in the lane's sources, so check them in Phase B afterwards
+- **Reversibility:** R3: put the Phase A value back for [OU_PATH] under the gate for that value, `ALLOW EXTERNAL SHARING FOR OU [OU_PATH]` (On) or `TURN OFF EXTERNAL SHARING FOR OU [OU_PATH]` (Off), each its own phrase; each direction can take up to 24 hours, with the old and the new setting both enforced at times in that window (search excerpt); whether existing external shares stop working is not confirmed in the lane's sources, so check them in Phase B afterwards
 - **Required confirmation:** Type exactly `RESTRICT EXTERNAL SHARING FOR OU [OU_PATH] TO ALLOWLISTED DOMAINS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-drive-sharing-restrict-portal]:** Only after the approver is named, the Phase A pre-state is in the ticket and the exact match:
@@ -194,7 +216,7 @@ Write down `[NOT_BEFORE]` now.
 - **Target:** [OU_PATH]
 - **Effect:** turn off sharing outside the organization for one organizational unit
 - **Scope:** every user in [OU_PATH] whose configuration group does not override it; no external sharing is offered to them, allowlisted domains included
-- **Reversibility:** R3: put the Phase A value back for [OU_PATH], under its own phrase; up to 24 hours each way (search excerpt); whether existing external shares stop working is not confirmed in the lane's sources
+- **Reversibility:** R3: put the Phase A value back for [OU_PATH] under the gate for that value, `ALLOW EXTERNAL SHARING FOR OU [OU_PATH]` (On) or `RESTRICT EXTERNAL SHARING FOR OU [OU_PATH] TO ALLOWLISTED DOMAINS` (Allowlisted Domains), each its own phrase; up to 24 hours each way (search excerpt); whether existing external shares stop working is not confirmed in the lane's sources
 - **Required confirmation:** Type exactly `TURN OFF EXTERNAL SHARING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-drive-sharing-turn-off-portal]:** Only after the approver is named, the Phase A pre-state is in the ticket and the exact match:
@@ -213,7 +235,7 @@ Opening external sharing is the change most likely to leak data: the ticket name
 - **Target:** [OU_PATH]
 - **Effect:** allow users in one organizational unit to share Drive files with people outside the organization
 - **Scope:** every user in [OU_PATH] whose configuration group does not override it; files they own can be shared with any outside Google account; visitor sharing is a separate setting and does not change here
-- **Reversibility:** R3: put the Phase A value back for [OU_PATH], under its own phrase; up to 24 hours each way (search excerpt); files shared outside while it was open stay a Phase B and Phase C clean-up, because the lane's sources do not confirm that restricting again removes existing shares
+- **Reversibility:** R3: put the Phase A value back for [OU_PATH] under the gate for that value, `TURN OFF EXTERNAL SHARING FOR OU [OU_PATH]` (Off) or `RESTRICT EXTERNAL SHARING FOR OU [OU_PATH] TO ALLOWLISTED DOMAINS` (Allowlisted Domains), each its own phrase; up to 24 hours each way (search excerpt); files shared outside while it was open stay a Phase B and Phase C clean-up, because the lane's sources do not confirm that restricting again removes existing shares
 - **Required confirmation:** Type exactly `ALLOW EXTERNAL SHARING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-drive-sharing-allow-portal]:** Only after the approver and the business reason are in the ticket, the Phase A pre-state is recorded and the exact match:

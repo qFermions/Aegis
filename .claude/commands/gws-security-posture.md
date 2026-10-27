@@ -221,7 +221,7 @@ Read first: Admin console → Apps → Google Workspace → Gmail → End User A
 - **Target:** [OU_PATH]
 - **Effect:** turn off automatic forwarding for one organizational unit
 - **Scope:** every user in [OU_PATH] and the child units that inherit from it; users can no longer set up automatic forwarding to another address; whether forwarding they already set up stops at once is not confirmed in the lane's sources
-- **Reversibility:** R3: tick the box again under its own phrase, or click Inherit on a child unit to take back the parent value
+- **Reversibility:** R3: tick the box again under E2's own phrase `ALLOW AUTOMATIC FORWARDING FOR OU [OU_PATH]`; on a child unit whose captured value was Inherited, clicking Inherit is the exact undo, but it has no gate here, so it is a separate reviewed change
 - **Required confirmation:** Type exactly `TURN OFF AUTOMATIC FORWARDING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-security-posture-forwarding-off-portal]:** Only after the current value and the approver are in the ticket and the exact match:
@@ -249,7 +249,7 @@ Automatic forwarding is a path for mail to leave the organization: the ticket na
 - **Target:** [OU_PATH]
 - **Effect:** allow users in one organizational unit to forward their mail automatically to another address
 - **Scope:** every user in [OU_PATH] and the child units that inherit from it; each user can then set up forwarding of their own mail, including to addresses outside [@Aegion_DOMAIN]
-- **Reversibility:** R3: clear the tick again under its own phrase (E1), or click Inherit on a child unit; forwarding that users set up while it was allowed is the clean-up list, because the lane's sources do not confirm that turning it off stops it at once
+- **Reversibility:** R3: clear the tick again under E1's own phrase `TURN OFF AUTOMATIC FORWARDING FOR OU [OU_PATH]`; on a child unit whose captured value was Inherited, clicking Inherit is the exact undo, but it has no gate here, so it is a separate reviewed change; forwarding that users set up while it was allowed is the clean-up list, because the lane's sources do not confirm that turning it off stops it at once
 - **Required confirmation:** Type exactly `ALLOW AUTOMATIC FORWARDING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-security-posture-forwarding-allow-portal]:** Only after the approver and the business reason are in the ticket and the exact match:
@@ -276,10 +276,10 @@ Read first: Admin console → Security → Access and data control → API contr
 - **Target:** [APP_NAME] with OAuth client ID [APP_ID], in [OU_PATH]
 - **Effect:** block one third-party app from Google Workspace data for one organizational unit
 - **Scope:** every user in [OU_PATH] who uses [APP_NAME]; other apps and other units do not change
-- **Reversibility:** R3: set the access level captured above back for the same scope, under its own phrase
+- **Reversibility:** R3: the rollback, setting the captured access level back for the same scope, is not authorized here: when that level is Trusted or Limited it opens access to Google Workspace data again, which is the separate reviewed change the app-trust preview below describes, with the captured level, the app's scopes, its user count and the approver; that written rollback path goes into the ticket before this gate runs
 - **Required confirmation:** Type exactly `BLOCK THIRD-PARTY APP [APP_NAME] ID [APP_ID] IN OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [gws-security-posture-app-block-portal]:** Only after the current access level, the user count and the approver are in the ticket and the exact match:
+**PORTAL ACTION [gws-security-posture-app-block-portal]:** Only after the current access level, the user count, the approver and the written rollback path are in the ticket and the exact match:
 1. Admin console → Security → Access and data control → API controls → Manage Third-Party App Access → `[APP_NAME]` → **Change access** → scope `[OU_PATH]` → **Blocked** → confirm (the labels come partly from a search excerpt: confirm them on screen, and stop if they differ).
 
 **WAIT UNTIL** the app list shows `[APP_NAME]` as Blocked for `[OU_PATH]`. The app list is the proof: Google's event name for an API controls change is not in the lane's sources, so no `verify-*` read can prove it.

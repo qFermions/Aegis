@@ -127,3 +127,10 @@ test('glob grammar: * stays in one segment, ? is one character, matching is case
   assert.equal(globToRegExp('CLAUDE.md').test('claude.md'), false);
   assert.equal(globToRegExp('scripts/x.js').test('scripts/xzjs'), false, 'a literal dot is not a wildcard');
 });
+
+test('a path git would quote (non-ASCII) still matches its tier glob', () => {
+  const cwd = sandbox();
+  commit(cwd, ['.claude/commands/caf\u00e9-reset.md']);
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', '.claude/commands/caf\u00e9-reset.md']);
+});
+

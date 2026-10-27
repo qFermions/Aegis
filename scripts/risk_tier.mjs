@@ -81,14 +81,16 @@ export function resolveBase(base, cwd) {
   throw new Error(`base ref not found: ${base} (also tried origin/${base})`);
 }
 
-function lines(text) {
-  return text.split('\n').map((l) => l.trim()).filter(Boolean);
+// NUL-separated output (-z): git never quotes a path, so names with non-ASCII, tabs or quotes
+// still match the globs.
+function nulSeparated(text) {
+  return text.split('\0').filter(Boolean);
 }
 
 export function changedPaths(base, cwd) {
-  const committed = lines(git(['diff', '--name-only', `${base}...HEAD`], cwd));
-  const uncommitted = lines(git(['diff', '--name-only', 'HEAD'], cwd));
-  const untracked = lines(git(['ls-files', '--others', '--exclude-standard'], cwd));
+  const committed = nulSeparated(git(['diff', '--name-only', '-z', `${base}...HEAD`], cwd));
+  const uncommitted = nulSeparated(git(['diff', '--name-only', '-z', 'HEAD'], cwd));
+  const untracked = nulSeparated(git(['ls-files', '--others', '--exclude-standard', '-z'], cwd));
   return [...new Set([...committed, ...uncommitted, ...untracked])].sort();
 }
 

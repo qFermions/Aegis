@@ -36,14 +36,16 @@ structure, not answer quality.
 - **Boundary:** `scripts/jira-client.js` no longer sends any write. Create, comment and transition
   print a HUMAN-RUN procedure; `verify-*` reads prove the administrator's write
   (`docs/aegis/boundary-audit.md`, 19 paths audited, 1 violation fixed).
-- **Untrusted data:** `scripts/untrusted/` holds 36 tests for instruction injection, poisoned
+- **Untrusted data:** `scripts/untrusted/` holds 57 tests for instruction injection, poisoned
   memory and wrong-customer cases. They found and drove fixes for obfuscated injection markers,
   instruction text in the replay cache, memory records edited on disk, mixed org namespaces, and
   stores shared across tenants.
-- **Instruction file:** `CLAUDE.md` is 18,069 bytes (was 39,948); the moved passages are in
+- **Instruction file:** `CLAUDE.md` is 19,041 bytes (was 39,948); the moved passages are in
   `docs/aegis/operating-rules.md`, `docs/aegis/workflow.md` and `docs/aegis/operator-context.md`.
 - **Contract:** `PRODUCT_CONTRACT.md` carries the boundary paragraph, where code enforces it, and
   the standing rules for answers.
+- **Review:** three rounds, 45 findings, 42 fixed with a test each, 3 closed with a reason
+  (`checks.md`, "Review rounds").
 
 ## Partial
 

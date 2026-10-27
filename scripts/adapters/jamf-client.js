@@ -38,8 +38,18 @@
 //
 // Every response has its key-like fields (any key matching
 // /recoveryKey|personalRecoveryKey|password|passcode|pin$/i, at any depth) removed
-// before it is returned or printed; the output lists the paths it removed. The
-// instruction-text scan runs on what is left.
+// before it is returned or printed; the output lists the paths it removed. Secret
+// values can also sit under keys that do not look like one, so these are withheld
+// too, at any depth and on every read:
+//   - a configuration profile's payloads (an XML property list that can carry Wi-Fi,
+//     802.1X, VPN and directory-bind passwords, certificates and SCEP challenges): the
+//     field is removed and only each payload's PayloadType, PayloadIdentifier and
+//     PayloadDisplayName are printed, under payloadSummary;
+//   - a policy's script parameters (parameter4 to parameter11) and its run_command;
+//   - the values of an extension attribute whose name matches
+//     /pass|secret|token|key|pin/i, or that carries no name (a "LAPS Password"
+//     attribute, for example); its name stays.
+// The instruction-text scan runs on what is left.
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
 // 2 the read failed or a verify-* read did not prove the write. Jamf Pro serves one
@@ -128,27 +138,91 @@ const SPEC = defineAdapter({
 });
 checkRoutes(SPEC.routes);
 
-// ── Key-like fields ──────────────────────────────────────────────────────────
+// ── Key-like fields and other secret-bearing values ──────────────────────────
 const KEY_LIKE = /recoveryKey|personalRecoveryKey|password|passcode|pin$/i;
+const SCRIPT_PARAMETER = /^parameter\d+$/i;
+const RUN_COMMAND = /^run_command$/i;
+const PAYLOADS = /^payloads$/i;
+const EXTENSION_ATTRIBUTES = /^extension_?attributes$/i;
+const SECRET_ATTRIBUTE_NAME = /pass|secret|token|key|pin/i;
 const MAX_LISTED = 50;
 
 function step(at, key) {
   return /^[A-Za-z_$][\w$]*$/.test(key) ? `${at}.${key}` : `${at}[${JSON.stringify(key)}]`;
 }
 
-// A copy of value without any key matching KEY_LIKE, at any depth; removed collects
-// the JSON paths that were dropped.
-function stripKeyLike(value, at = '$', removed = []) {
-  if (Array.isArray(value)) return value.map((item, i) => stripKeyLike(item, `${at}[${i}]`, removed));
+// A copy of value without its secret-bearing fields, at any depth: every key matching
+// KEY_LIKE, every script parameter and run_command, every payloads field (summarised
+// into payloads, see summarisePayloads) and the values of a secret-named extension
+// attribute. removed collects the JSON paths that were dropped.
+function stripKeyLike(value, at = '$', removed = [], payloads = []) {
+  if (Array.isArray(value)) return value.map((item, i) => stripKeyLike(item, `${at}[${i}]`, removed, payloads));
   if (value && typeof value === 'object') {
     const out = {};
     for (const key of Object.keys(value)) {
-      if (KEY_LIKE.test(key)) { removed.push(step(at, key)); continue; }
-      out[key] = stripKeyLike(value[key], step(at, key), removed);
+      const where = step(at, key);
+      if (KEY_LIKE.test(key) || SCRIPT_PARAMETER.test(key) || RUN_COMMAND.test(key)) { removed.push(where); continue; }
+      if (PAYLOADS.test(key)) { removed.push(where); payloads.push(summarisePayloads(value[key], where)); continue; }
+      if (EXTENSION_ATTRIBUTES.test(key) && Array.isArray(value[key])) {
+        out[key] = value[key].map((item, i) => withholdAttribute(item, `${where}[${i}]`, removed, payloads));
+        continue;
+      }
+      out[key] = stripKeyLike(value[key], where, removed, payloads);
     }
     return out;
   }
   return value;
+}
+
+// One extension attribute: its values are withheld when its name looks like a secret,
+// or when it carries no name to judge by.
+function withholdAttribute(item, at, removed, payloads) {
+  const clean = stripKeyLike(item, at, removed, payloads);
+  if (!clean || typeof clean !== 'object' || Array.isArray(clean)) return clean;
+  if (typeof clean.name === 'string' && !SECRET_ATTRIBUTE_NAME.test(clean.name)) return clean;
+  const out = {};
+  for (const key of Object.keys(clean)) {
+    if (/^values?$/i.test(key)) { removed.push(step(at, key)); continue; }
+    out[key] = clean[key];
+  }
+  return out;
+}
+
+// A configuration profile's payloads field is an XML property list. Only three names
+// per dictionary are kept: PayloadType, PayloadIdentifier and PayloadDisplayName. Every
+// other value (a password, a certificate, a challenge) is never read into the output.
+// The outermost dictionary is the profile itself; the inner ones are its payloads.
+const PAYLOAD_NAMES = Object.freeze(['PayloadType', 'PayloadIdentifier', 'PayloadDisplayName']);
+const PLAIN_NAME = /^[^\u0000-\u001f<>]{1,200}$/;
+function decodeXmlText(text) {
+  return text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+}
+function summarisePayloads(value, field) {
+  const summary = { field, profile: null, payloads: [] };
+  if (typeof value !== 'string') {
+    summary.note = 'the payloads field is not a property list string; nothing from it is shown';
+    return summary;
+  }
+  const stack = [];
+  const token = /<(\/?)dict\s*>|<key>([^<]*)<\/key>\s*<string>([^<]*)<\/string>/g;
+  let match;
+  while ((match = token.exec(value)) !== null) {
+    if (match[2] === undefined) {
+      if (match[1] === '') { stack.push({}); continue; }
+      const depth = stack.length;
+      const names = stack.pop();
+      if (!names || !Object.keys(names).length) continue;
+      if (depth === 1) summary.profile = names;
+      else if (summary.payloads.length < MAX_LISTED) summary.payloads.push(names);
+      continue;
+    }
+    const key = match[2].trim();
+    if (!stack.length || !PAYLOAD_NAMES.includes(key)) continue;
+    const text = decodeXmlText(match[3]).trim();
+    stack[stack.length - 1][key] = PLAIN_NAME.test(text) ? text : '(withheld: not a plain name)';
+  }
+  if (!summary.profile && !summary.payloads.length) summary.note = 'no PayloadType, PayloadIdentifier or PayloadDisplayName was found; read the payloads on screen';
+  return summary;
 }
 
 // ── Commands ─────────────────────────────────────────────────────────────────
@@ -270,12 +344,16 @@ async function read(client, routeName, params, query) {
   const res = await client.get(routeName, params, query);
   if (!res.ok) return { ok: false, failure: res };
   const removed = [];
-  const data = stripKeyLike(res.data, '$', removed);
-  return { ok: true, status: res.status, attempts: res.attempts, raw: res.data, data, removed, flags: scanUntrusted(data) };
+  const payloads = [];
+  const data = stripKeyLike(res.data, '$', removed, payloads);
+  const flags = scanUntrusted(data);
+  if (payloads.length) scanUntrusted(payloads, '$payloadSummary', flags);
+  return { ok: true, status: res.status, attempts: res.attempts, raw: res.data, data, removed, payloads, flags };
 }
 
 function readOutput(command, r) {
   const out = { state: STATES.OK, ok: true, command, status: r.status, attempts: r.attempts, data: r.data };
+  if (r.payloads.length) out.payloadSummary = r.payloads;
   if (r.removed.length) {
     out.strippedFields = r.removed.length;
     out.stripped = r.removed.slice(0, MAX_LISTED);

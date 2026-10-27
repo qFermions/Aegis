@@ -60,7 +60,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ```bash
 # HUMAN-RUN - read-only - JAMF_URL, JAMF_CLIENT_ID and JAMF_CLIENT_SECRET come from the environment, never from a ticket
 # without the final --execute flag the adapter only prints the request it would send
-# the profile definition with its general settings, scope and payload names - paste it into the ticket as the pre-state
+# the profile's general settings, scope and payload names; the adapter withholds every payload setting and prints only each payload's type, identifier and display name under payloadSummary
+# copy into the ticket as the pre-state: the level, the distribution method, Targets, Limitations, Exclusions and the payload names - never the whole output
 node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 # the configuration profiles one Mac lists in its inventory
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section CONFIGURATION_PROFILES --execute
@@ -256,7 +257,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 
 **Purpose**: give every Mac in scope corrected settings, knowing each Mac drops the profile for a moment.
 
-1. Pre-state: the Phase A profile read (settings and scope) is in the ticket. Without it there is no way back.
+1. Pre-state: the Phase A read (level, distribution method, scope and payload names) is in the ticket, and the current values of the settings the change record touches are read on screen and written into the change record. A password, certificate or challenge is never copied; its owner keeps it. Without the pre-state there is no way back.
 2. Count the Macs in scope: Complete plus Remaining plus Failed from Phase A. More than 10 is R3: the independent review and a change window come first.
 3. **Stop if** the profile carries Wi-Fi, a certificate or restrictions people work under and the change window is during working hours: the remove-and-reinstall gap is felt on every Mac at once.
 
@@ -280,7 +281,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 
 ```bash
 # HUMAN-RUN - read-only - on a sample of Macs in scope
-# the profile definition now carries the new values - compare it with the change record
+# the profile's payload names and scope are unchanged; the adapter withholds payload settings, so the new values are compared on screen (step 1's payload) with the change record
 node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 # proves this Mac still lists the profile after the reinstall
 node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --execute
@@ -289,7 +290,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 ```
 </details>
 
-**Verification checkpoint**: [ ] the profile read shows the new values · [ ] Remaining 0, Failed 0 · [ ] sample read-backs passed.
+**Verification checkpoint**: [ ] the payload values on screen match the change record (the adapter does not print payload settings) · [ ] Remaining 0, Failed 0 · [ ] sample read-backs passed.
 
 ## Phase G: Roll back a scope change (R2 for the pilot, R3 for All Computers)
 

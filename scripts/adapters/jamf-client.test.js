@@ -34,7 +34,12 @@
 //    and exits 0. --execute performs the read and prints the data through renderResult.
 // 5. Key-like fields (any key matching /recoveryKey|personalRecoveryKey|password|
 //    passcode|pin$/i, at any depth) are stripped from every response before it is
-//    returned or printed, and the instruction-text scan runs on what is left.
+//    returned or printed, and the instruction-text scan runs on what is left. Secret
+//    values under other keys are withheld the same way and listed under stripped: a
+//    profile's payloads property list (only PayloadType, PayloadIdentifier and
+//    PayloadDisplayName are printed, under payloadSummary), a policy's script
+//    parameters and run_command, and the values of an extension attribute whose name
+//    matches /pass|secret|token|key|pin/i or that has no name.
 // 6. verify-* print JSON with verified true or false, the observed values and the
 //    expected values, and exit 0 when verified and 2 when not:
 //    verify-command (an acknowledged command of that type for that Mac, sent at or
@@ -582,6 +587,104 @@ test('key-like fields are stripped from every response before it is printed, and
   const classic = await cli(['policy', '--id', '9', '--execute'], { replies: [tokenReply(), ok({ policy: { general: { id: 9 }, account_maintenance: { accounts: [{ name: 'admin', password: KEY_VALUE }] } } })] });
   assert.equal(classic.code, 0);
   assert.ok(!classic.stdout.includes(KEY_VALUE), 'Classic API responses are stripped too');
+});
+
+// A profile's payloads field is an XML property list; a Wi-Fi or 802.1X payload keeps
+// its password under <key>Password</key>, a certificate payload its PKCS12 data and a
+// SCEP payload its challenge. None of those keys looks like a JSON secret key.
+const PAYLOAD_XML = [
+  '<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict>',
+  '<key>PayloadContent</key><array>',
+  '<dict><key>PayloadType</key><string>com.apple.wifi.managed</string>',
+  '<key>PayloadIdentifier</key><string>com.example.wifi.1</string>',
+  `<key>PayloadDisplayName</key><string>Wi-Fi &amp; 802.1X</string><key>Password</key><string>${KEY_VALUE}</string></dict>`,
+  '<dict><key>PayloadType</key><string>com.apple.security.pkcs12</string>',
+  `<key>PayloadIdentifier</key><string>com.example.cert.1</string><key>PayloadContent</key><data>${KEY_VALUE}</data></dict>`,
+  `<dict><key>PayloadType</key><string>com.apple.security.scep</string><key>PayloadContent</key><dict><key>Challenge</key><string>${KEY_VALUE}</string></dict></dict>`,
+  '</array>',
+  '<key>PayloadDisplayName</key><string>[PROFILE_NAME]</string>',
+  '<key>PayloadIdentifier</key><string>0A1B2C3D-0000-4000-8000-0000000000EE</string>',
+  '<key>PayloadType</key><string>Configuration</string>',
+  '</dict></plist>',
+].join('\n');
+
+test('secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes', async () => {
+  // profile --id: the payloads property list never reaches the output; its names do
+  const profile = {
+    os_x_configuration_profile: {
+      general: { id: 7, name: '[PROFILE_NAME]', level: 'computer', distribution_method: 'Install Automatically', payloads: PAYLOAD_XML },
+      scope: { all_computers: false, computer_groups: [{ id: 12, name: 'FileVault Pilot' }] },
+    },
+  };
+  const prof = await cli(['profile', '--id', '7', '--execute'], { replies: [tokenReply(), ok(profile)] });
+  assert.equal(prof.code, 0);
+  assert.ok(!prof.stdout.includes(KEY_VALUE), 'no payload value is printed');
+  assert.ok(!prof.stdout.includes('Password'), 'not even the name of a payload setting is printed');
+  assert.equal('payloads' in prof.json.data.os_x_configuration_profile.general, false);
+  assert.ok(prof.json.stripped.includes('$.os_x_configuration_profile.general.payloads'), 'the removal is listed');
+  assert.deepEqual(prof.json.payloadSummary, [{
+    field: '$.os_x_configuration_profile.general.payloads',
+    profile: { PayloadDisplayName: '[PROFILE_NAME]', PayloadIdentifier: '0A1B2C3D-0000-4000-8000-0000000000EE', PayloadType: 'Configuration' },
+    payloads: [
+      { PayloadType: 'com.apple.wifi.managed', PayloadIdentifier: 'com.example.wifi.1', PayloadDisplayName: 'Wi-Fi & 802.1X' },
+      { PayloadType: 'com.apple.security.pkcs12', PayloadIdentifier: 'com.example.cert.1' },
+      { PayloadType: 'com.apple.security.scep' },
+    ],
+  }]);
+  assert.equal(prof.json.data.os_x_configuration_profile.scope.computer_groups[0].name, 'FileVault Pilot', 'the scope is still printed');
+  assert.equal(prof.json.data.os_x_configuration_profile.general.level, 'computer', 'the general settings are still printed');
+
+  const odd = await cli(['profile', '--id', '7', '--execute'], { replies: [tokenReply(), ok({ os_x_configuration_profile: { general: { id: 7, payloads: { Password: KEY_VALUE } } } })] });
+  assert.equal(odd.code, 0);
+  assert.ok(!odd.stdout.includes(KEY_VALUE), 'a payloads field of another shape is withheld whole');
+  assert.match(odd.json.payloadSummary[0].note, /not a property list string/);
+
+  const named = await cli(['profile', '--id', '7', '--execute'], { replies: [tokenReply(), ok({ os_x_configuration_profile: { general: { id: 7, payloads: `<plist><dict><key>PayloadDisplayName</key><string>${INSTRUCTION}</string></dict></plist>` } } })] });
+  assert.match(named.stdout, /\$payloadSummary\[0\]\.profile\.PayloadDisplayName/, 'the payload names are scanned for instruction text too');
+
+  // policy --id: script parameters and the run command are withheld, the rest stays
+  const policy = {
+    policy: {
+      general: { id: 9, name: '[POLICY_NAME]', enabled: true, frequency: 'Once per computer' },
+      scripts: [{ id: 3, name: '[SCRIPT_NAME]', priority: 'After', parameter4: KEY_VALUE, parameter5: 'plain text', parameter11: KEY_VALUE }],
+      files_processes: { search_by_path: '', run_command: `/usr/local/bin/[SCRIPT_NAME] --token ${KEY_VALUE}` },
+    },
+  };
+  const pol = await cli(['policy', '--id', '9', '--execute'], { replies: [tokenReply(), ok(policy)] });
+  assert.equal(pol.code, 0);
+  assert.ok(!pol.stdout.includes(KEY_VALUE), 'no script parameter or run command is printed');
+  for (const removed of ['$.policy.scripts[0].parameter4', '$.policy.scripts[0].parameter5', '$.policy.scripts[0].parameter11', '$.policy.files_processes.run_command']) {
+    assert.ok(pol.json.stripped.includes(removed), `${removed} is listed as removed`);
+  }
+  assert.deepEqual(pol.json.data.policy.scripts[0], { id: 3, name: '[SCRIPT_NAME]', priority: 'After' });
+  assert.equal(pol.json.data.policy.general.frequency, 'Once per computer');
+
+  // computer-detail and computer: a secret-named or unnamed extension attribute keeps its name, never its value
+  const attributes = [
+    { definitionId: '1', name: 'LAPS Password', values: [KEY_VALUE] },
+    { definitionId: '2', name: 'Battery Health', values: ['Normal'] },
+    { definitionId: '3', name: 'API Token', values: [KEY_VALUE] },
+    { definitionId: '4', values: [KEY_VALUE] },
+    { definitionId: '5', name: 'Firmware PIN', value: KEY_VALUE },
+    { definitionId: '6', name: 'Client Secret', values: [KEY_VALUE] },
+    { definitionId: '7', name: 'Wi-Fi Key', values: [KEY_VALUE] },
+  ];
+  const detail = await cli(['computer-detail', '--id', '42', '--execute'], { replies: [tokenReply(), ok({ id: '42', general: { name: '[DEVICE_NAME]', extensionAttributes: attributes }, extensionAttributes: attributes })] });
+  assert.equal(detail.code, 0);
+  assert.ok(!detail.stdout.includes(KEY_VALUE), 'no secret-named attribute value is printed');
+  for (const at of ['$.general.extensionAttributes', '$.extensionAttributes']) {
+    for (const [i, key] of [[0, 'values'], [2, 'values'], [3, 'values'], [4, 'value'], [5, 'values'], [6, 'values']]) {
+      assert.ok(detail.json.stripped.includes(`${at}[${i}].${key}`), `${at}[${i}].${key} is listed as removed`);
+    }
+  }
+  assert.deepEqual(detail.json.data.extensionAttributes[1].values, ['Normal'], 'an ordinary attribute keeps its value');
+  assert.equal(detail.json.data.extensionAttributes[0].name, 'LAPS Password', 'a withheld attribute keeps its name');
+  assert.equal(detail.json.strippedFields, 12);
+
+  const general = await cli(['computer', '--serial', SERIAL, '--execute'], { replies: [tokenReply(), ok({ totalCount: 1, results: [{ id: '42', general: { name: '[DEVICE_NAME]', extensionAttributes: attributes } }] })] });
+  assert.equal(general.code, 0);
+  assert.ok(!general.stdout.includes(KEY_VALUE), 'the inventory read withholds the same values');
+  assert.ok(general.json.stripped.includes('$.results[0].general.extensionAttributes[0].values'));
 });
 
 test('no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it', async () => {

@@ -59,7 +59,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section GENERAL --execute
 # the groups this Mac belongs to
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section GROUP_MEMBERSHIPS --execute
-# the whole record with every section - the adapter strips key-like fields before printing
+# the whole record with every section, for reading on screen: the adapter strips key-like fields and withholds the values of any extension attribute whose name contains pass, secret, token, key or pin
+# copy into the ticket only the fields the question needs (last inventory update, last check-in, group names, the one attribute's name and value) - never the whole output
 node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 ```
 </details>
@@ -124,7 +125,8 @@ fi
 # HUMAN-RUN - read-only
 # the last inventory update must be later than the time the update was submitted
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section GENERAL --execute
-# the whole record including the extension attribute value
+# the whole record including the extension attribute value - copy only that attribute's name and value into the ticket
+# an attribute whose name contains pass, secret, token, key or pin is printed without its value: read it on screen and never copy it into the ticket
 node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 ```
 </details>

@@ -57,7 +57,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ```bash
 # HUMAN-RUN - read-only - JAMF_URL, JAMF_CLIENT_ID and JAMF_CLIENT_SECRET come from the environment, never from a ticket
 # without the final --execute flag the adapter only prints the request it would send
-# the policy with its trigger, frequency, scope and Self Service settings - paste it into the ticket as the pre-state
+# the policy with its trigger, frequency, scope and Self Service settings; the adapter withholds script parameters and the run command
+# copy into the ticket as the pre-state: Enabled, the triggers ticked, the execution frequency, Targets, Limitations, Exclusions and the Self Service setting - never the whole output
 node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 ```
 </details>

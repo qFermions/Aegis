@@ -6,7 +6,7 @@
   },
   "scope": {
     "discoveredMarkdown": "Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native (including gam, gcloud, HTTP-API, jamf, and macOS administration tools, with plain-text shell gates), and portal mutation grammar.",
-    "clientBoundaries": "State-changing or disclosure-capable Jira, memory, and security-audit implementations outside Markdown fence discovery.",
+    "clientBoundaries": "State-changing or disclosure-capable memory and security-audit implementations, and the read-only Jira client whose writes are human-run procedures, outside Markdown fence discovery.",
     "limitation": "Novel syntax and prose still require semantic review and grammar extension."
   },
   "directR1": [],
@@ -7427,54 +7427,54 @@
       ]
     },
     {
-      "id": "jira-comment-internal-api-write",
+      "id": "jira-comment-internal-human-run",
       "file": "scripts/jira-client.js",
       "testFile": "scripts/jira-client.test.js",
       "interface": "Jira Service Management API",
-      "mode": "gated",
+      "mode": "preview",
       "evidenceGroup": "jira",
-      "effect": "Post one internal comment to one normalized issue key.",
-      "authorization": "Exact site, issue, INTERNAL visibility, and full payload SHA-256 phrase before credentials/network.",
+      "effect": "Print the exact internal-comment payload and a HUMAN-RUN procedure; the administrator posts it and verify-comment proves it by GET.",
+      "authorization": "None in the client: the transport sends GET only, and --execute or --confirm on comment exits 1 before credentials/network.",
       "impactCategories": [
         "external-system mutation"
       ]
     },
     {
-      "id": "jira-comment-public-api-write",
+      "id": "jira-comment-public-human-run",
       "file": "scripts/jira-client.js",
       "testFile": "scripts/jira-client.test.js",
       "interface": "Jira Service Management API",
-      "mode": "gated",
+      "mode": "preview",
       "evidenceGroup": "jira",
-      "effect": "Post one reporter-visible public comment to one normalized issue key.",
-      "authorization": "Exact site, issue, PUBLIC visibility, and full payload SHA-256 phrase before credentials/network.",
+      "effect": "Print the exact reporter-visible comment payload and a HUMAN-RUN procedure; the administrator posts it and verify-comment proves it by GET.",
+      "authorization": "None in the client: the transport sends GET only, and --execute or --confirm on comment exits 1 before credentials/network.",
       "impactCategories": [
         "external-system mutation",
         "information disclosure"
       ]
     },
     {
-      "id": "jira-create-api-write",
+      "id": "jira-create-human-run",
       "file": "scripts/jira-client.js",
       "testFile": "scripts/jira-client.test.js",
       "interface": "Jira Service Management API",
-      "mode": "gated",
+      "mode": "preview",
       "evidenceGroup": "jira",
-      "effect": "Create one service request in one service desk and request type.",
-      "authorization": "Exact site, desk, request type, and full payload SHA-256 phrase before credentials/network.",
+      "effect": "Print the exact service-request payload and a HUMAN-RUN procedure; the administrator creates it and verify-create proves it by GET.",
+      "authorization": "None in the client: the transport sends GET only, and --execute or --confirm on create exits 1 before credentials/network.",
       "impactCategories": [
         "external-system mutation"
       ]
     },
     {
-      "id": "jira-transition-api-write",
+      "id": "jira-transition-human-run",
       "file": "scripts/jira-client.js",
       "testFile": "scripts/jira-client.test.js",
       "interface": "Jira Service Management API",
-      "mode": "gated",
+      "mode": "preview",
       "evidenceGroup": "jira",
-      "effect": "Apply one transition to one issue after a repeated live preflight.",
-      "authorization": "Exact issue key/immutable ID, current-state hash, transition ID/hash phrase; drift causes zero POST.",
+      "effect": "Read-only preflight, then a HUMAN-RUN procedure bound to the resolved transition; the administrator applies it and verify-transition proves it by GET.",
+      "authorization": "None in the client: the transport sends GET only, and --confirm on transition exits 1 before credentials/network.",
       "impactCategories": [
         "external-system mutation"
       ]

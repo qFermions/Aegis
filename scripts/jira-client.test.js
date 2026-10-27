@@ -8,7 +8,7 @@ const test = require('node:test');
 const {
   REQUEST_TIMEOUT_MS,
   TRANSITION_PAGE_LIMIT,
-  EXIT_PARTIAL_UNKNOWN,
+  WRITE_REFUSAL,
   apiRequest,
   buildCommentConfirmation,
   buildCommentPayload,
@@ -249,47 +249,52 @@ test('create dry run and missing/wrong confirmations use zero credentials and ze
   }
 });
 
-test('exact create confirmation sends one bound POST then verifies identity, type, and fields by GET', async () => {
+test('the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload', async () => {
   const payload = buildCreatePayload({ serviceDeskId: '12', requestTypeId: '34', summary: 'Test', description: 'Description' });
   const exact = buildCreateConfirmation('example-tenant.atlassian.net', payload);
-  const queue = queuedFetch([
-    { status: 201, json: { issueKey: 'HELP-123', issueId: '10001' } },
-    { status: 200, json: createdRequestJson() },
-  ]);
+  let fetchCalls = 0;
   const result = await invoke([
     'create', '--summary', 'Test', '--description', 'Description', '--execute', '--confirm', exact,
-  ], { fetch: queue.fetch });
-  assert.equal(result.code, 0);
-  assert.equal(result.credentialCalls, 1);
-  assert.equal(queue.calls.length, 2);
-  assert.equal(queue.calls[0].method, 'POST');
-  assert.equal(queue.calls[0].apiPath, '/rest/servicedeskapi/request');
-  assert.deepEqual(queue.calls[0].payload, payload);
-  assert.equal(queue.calls[0].cfg.site, 'example-tenant.atlassian.net');
-  assert.equal(queue.calls[1].method, 'GET');
-  assert.equal(queue.calls[1].apiPath, '/rest/servicedeskapi/request/HELP-123');
-  assert.match(result.stdout, /independent GET read-back verified/);
+  ], {
+    fetch: async () => { fetchCalls += 1; throw new Error('network'); },
+    getCredentials: () => { throw new Error('credentials loaded for a write'); },
+  });
+  assert.equal(result.code, 1);
+  assert.equal(fetchCalls, 0);
+  assert.equal(result.credentialCalls, 0);
+  assert.equal(result.stderr.split('\n')[0], WRITE_REFUSAL);
+  assert.match(result.stdout, /HUMAN-RUN procedure/);
+  assert.ok(result.stdout.includes(serializePayload(payload)), 'the procedure carries the exact serialized payload');
+  assert.match(result.stdout, /--request POST 'https:\/\/example-tenant\.atlassian\.net\/rest\/servicedeskapi\/request'/);
+  assert.match(result.stdout, /verify-create --issue \[JIRA-###\] --service-desk 12 --request-type 34 --summary 'Test' --description 'Description' --execute/);
 });
 
-test('create receipt/read-back failure or mismatch is partial/unknown and is never retried', async t => {
-  const payload = buildCreatePayload({ serviceDeskId: '12', requestTypeId: '34', summary: 'Test', description: 'Description' });
-  const exact = buildCreateConfirmation('example-tenant.atlassian.net', payload);
-  const cases = [
-    [{ status: 201, json: { issueKey: 'HELP-123' } }],
-    [{ status: 201, json: { issueKey: 'HELP-123', issueId: '10001' } }, { status: 503, json: null }],
-    [{ status: 201, json: { issueKey: 'HELP-123', issueId: '10001' } }, { status: 200, json: createdRequestJson({ requestTypeId: '35' }) }],
-    [{ status: 201, json: { issueKey: 'HELP-123', issueId: '10001' } }, { status: 200, json: createdRequestJson({ summary: 'drifted' }) }],
+test('verify-create proves the human-created request by an independent GET and fails closed on any mismatch', async (t) => {
+  const argv = ['verify-create', '--issue', 'HELP-123', '--summary', 'Test', '--description', 'Description', '--execute'];
+  await t.test('match', async () => {
+    const queue = queuedFetch([{ status: 200, json: createdRequestJson() }]);
+    const result = await invoke(argv, { fetch: queue.fetch });
+    assert.equal(result.code, 0);
+    assert.deepEqual(queue.calls.map((call) => [call.method, call.apiPath]), [['GET', '/rest/servicedeskapi/request/HELP-123']]);
+    assert.match(result.stdout, /Verified: HELP-123 ID 10001/);
+  });
+  const mismatches = [
+    ['different issue key', { status: 200, json: createdRequestJson({ issueKey: 'HELP-124' }) }],
+    ['missing immutable id', { status: 200, json: { ...createdRequestJson(), issueId: undefined } }],
+    ['different request type', { status: 200, json: createdRequestJson({ requestTypeId: '35' }) }],
+    ['different service desk', { status: 200, json: createdRequestJson({ serviceDeskId: '13' }) }],
+    ['drifted summary', { status: 200, json: createdRequestJson({ summary: 'drifted' }) }],
+    ['drifted description', { status: 200, json: createdRequestJson({ description: 'drifted' }) }],
+    ['read failure', { status: 503, json: null }],
   ];
-  for (const [index, responses] of cases.entries()) {
-    await t.test(`case ${index + 1}`, async () => {
-      const queue = queuedFetch(responses);
-      const result = await invoke([
-        'create', '--summary', 'Test', '--description', 'Description', '--execute', '--confirm', exact,
-      ], { fetch: queue.fetch });
-      assert.equal(result.code, EXIT_PARTIAL_UNKNOWN);
-      assert.equal(queue.calls.filter(call => call.method === 'POST').length, 1);
-      assert.ok(queue.calls.length <= 2);
-      assert.match(result.stderr, /UNKNOWN\/possibly changed/);
+  for (const [name, response] of mismatches) {
+    await t.test(name, async () => {
+      const queue = queuedFetch([response]);
+      const result = await invoke(argv, { fetch: queue.fetch });
+      assert.equal(result.code, 2);
+      assert.equal(queue.calls.length, 1);
+      assert.equal(queue.calls[0].method, 'GET');
+      assert.doesNotMatch(result.stdout, /Verified/);
     });
   }
 });
@@ -338,62 +343,62 @@ test('comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC m
   }
 });
 
-test('exact INTERNAL and PUBLIC confirmations send the requested visibility only', async () => {
+test('exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose', async () => {
   for (const isPublic of [false, true]) {
     const payload = buildCommentPayload({ body: 'note', isPublic });
     const exact = buildCommentConfirmation('example-tenant.atlassian.net', 'HELP-123', payload);
-    const receipt = { id: '7001', body: 'note', public: isPublic };
-    const queue = queuedFetch([
-      { status: 201, json: receipt },
-      { status: 200, json: receipt },
-    ]);
+    let fetchCalls = 0;
     const result = await invoke([
       'comment', '--issue', 'HELP-123', '--body', 'note', ...(isPublic ? ['--public'] : []),
       '--execute', '--confirm', exact,
-    ], { fetch: queue.fetch });
-    assert.equal(result.code, 0);
-    assert.equal(queue.calls.length, 2);
-    assert.equal(queue.calls[0].apiPath, '/rest/servicedeskapi/request/HELP-123/comment');
-    assert.deepEqual(queue.calls[0].payload, payload);
-    assert.equal(queue.calls[1].method, 'GET');
-    assert.equal(queue.calls[1].apiPath, '/rest/servicedeskapi/request/HELP-123/comment/7001');
-    assert.match(result.stdout, /verified by independent GET read-back/);
+    ], {
+      fetch: async () => { fetchCalls += 1; },
+      getCredentials: () => { throw new Error('credentials loaded for a write'); },
+    });
+    assert.equal(result.code, 1);
+    assert.equal(fetchCalls, 0);
+    assert.equal(result.credentialCalls, 0);
+    assert.equal(result.stderr.split('\n')[0], WRITE_REFUSAL);
+    assert.ok(result.stdout.includes(exact), 'the binding line is printed for the human to compare');
+    assert.ok(result.stdout.includes(serializePayload(payload)));
+    assert.match(result.stdout, isPublic ? /Reply to customer/ : /Add internal note/);
+    assert.match(result.stdout, isPublic ? /verify-comment .* --public --execute/ : /verify-comment (?:(?!--public).)* --execute/);
   }
 });
 
-test('comment receipt/read-back failure or mismatch is partial/unknown and is never retried', async t => {
-  const payload = buildCommentPayload({ body: 'note' });
-  const exact = buildCommentConfirmation('example-tenant.atlassian.net', 'HELP-123', payload);
-  const cases = [
-    [{ status: 201, json: {} }],
-    [{ status: 201, json: { id: '7001' } }, { status: 503, json: null }],
-    [{ status: 201, json: { id: '7001' } }, { status: 200, json: { id: '7001', body: 'drifted', public: false } }],
-    [{ status: 201, json: { id: '7001' } }, { status: 200, json: { id: '7001', body: 'note', public: true } }],
+test('verify-comment proves the comment id, body and visibility and fails closed on any mismatch', async (t) => {
+  const argv = ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note', '--execute'];
+  await t.test('match', async () => {
+    const queue = queuedFetch([{ status: 200, json: { id: '7001', body: 'note', public: false } }]);
+    const result = await invoke(argv, { fetch: queue.fetch });
+    assert.equal(result.code, 0);
+    assert.deepEqual(queue.calls.map((call) => [call.method, call.apiPath]), [['GET', '/rest/servicedeskapi/request/HELP-123/comment/7001']]);
+    assert.match(result.stdout, /Verified: INTERNAL comment 7001 on HELP-123/);
+  });
+  const mismatches = [
+    ['different id', { status: 200, json: { id: '7002', body: 'note', public: false } }],
+    ['drifted body', { status: 200, json: { id: '7001', body: 'drifted', public: false } }],
+    ['wrong visibility', { status: 200, json: { id: '7001', body: 'note', public: true } }],
+    ['malformed', { status: 200, json: null }],
+    ['read failure', { status: 503, body: 'synthetic-comment-sentinel', json: null }],
   ];
-  for (const [index, responses] of cases.entries()) {
-    await t.test(`case ${index + 1}`, async () => {
-      const queue = queuedFetch(responses);
-      const result = await invoke([
-        'comment', '--issue', 'HELP-123', '--body', 'note', '--execute', '--confirm', exact,
-      ], { fetch: queue.fetch });
-      assert.equal(result.code, EXIT_PARTIAL_UNKNOWN);
-      assert.equal(queue.calls.filter(call => call.method === 'POST').length, 1);
-      assert.ok(queue.calls.length <= 2);
-      assert.match(result.stderr, /UNKNOWN\/possibly changed/);
+  for (const [name, response] of mismatches) {
+    await t.test(name, async () => {
+      const queue = queuedFetch([response]);
+      const result = await invoke(argv, { fetch: queue.fetch });
+      assert.equal(result.code, 2);
+      assert.equal(queue.calls.length, 1);
+      assert.doesNotMatch(result.stdout + result.stderr, /synthetic-comment-sentinel/);
+      assert.doesNotMatch(result.stdout, /Verified/);
     });
   }
-});
-
-test('an attempted comment with a non-201 result is partial/unknown and is never retried', async () => {
-  const payload = buildCommentPayload({ body: 'note' });
-  const exact = buildCommentConfirmation('example-tenant.atlassian.net', 'HELP-123', payload);
-  const queue = queuedFetch([{ status: 503, body: 'withheld', json: null }]);
-  const result = await invoke([
-    'comment', '--issue', 'HELP-123', '--body', 'note', '--execute', '--confirm', exact,
-  ], { fetch: queue.fetch });
-  assert.equal(result.code, EXIT_PARTIAL_UNKNOWN);
-  assert.equal(queue.calls.length, 1);
-  assert.doesNotMatch(result.stdout + result.stderr, /withheld/);
+  await t.test('a non-numeric comment id is an input error before credentials or network', async () => {
+    const result = await invoke(['verify-comment', '--issue', 'HELP-123', '--comment-id', '[COMMENT_ID]', '--body', 'note', '--execute'], {
+      getCredentials: () => { throw new Error('credentials should not load'); },
+    });
+    assert.equal(result.code, 1);
+    assert.equal(result.credentialCalls, 0);
+  });
 });
 
 test('transition local preview calls neither credentials nor Jira', async () => {
@@ -430,16 +435,25 @@ test('transition --execute performs paginated read-only preflight and prints imm
   assert.match(queue.calls[2].apiPath, /start=1&limit=50$/);
 });
 
-test('wrong transition confirmation performs only the necessary read preflight and no POST', async () => {
-  const queue = queuedFetch([
-    { status: 200, json: requestJson() },
-    transitionPage([{ id: '20', name: 'Resolve' }]),
-  ]);
-  const result = await invoke([
-    'transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute', '--confirm', 'wrong',
-  ], { fetch: queue.fetch });
-  assert.equal(result.code, 1);
-  assert.deepEqual(queue.calls.map((call) => call.method), ['GET', 'GET']);
+test('any transition --confirm, exact or not, is refused before credentials or network', async () => {
+  const exact = buildTransitionConfirmation(
+    'example-tenant.atlassian.net',
+    { issueKey: 'HELP-123', issueId: '10001', currentStatus: 'Open', statusVersion: '1000' },
+    { id: '20', name: 'Resolve' }
+  );
+  for (const confirm of ['wrong', exact]) {
+    let fetchCalls = 0;
+    const result = await invoke([
+      'transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute', '--confirm', confirm,
+    ], {
+      fetch: async () => { fetchCalls += 1; },
+      getCredentials: () => { throw new Error('credentials loaded for a write'); },
+    });
+    assert.equal(result.code, 1);
+    assert.equal(fetchCalls, 0);
+    assert.equal(result.credentialCalls, 0);
+    assert.equal(result.stderr.split('\n')[0], WRITE_REFUSAL);
+  }
 });
 
 test('transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST', async (t) => {
@@ -509,101 +523,120 @@ test('transition preflight rejects duplicate names, duplicate ids, no match, and
   }
 });
 
-test('exact transition repeats preflight, POSTs once, and verifies changed state by immutable id', async () => {
-  const before = requestJson();
-  const after = requestJson({ status: 'Resolved', epochMillis: 2000 });
+test('the transition preflight prints a HUMAN-RUN procedure bound to the resolved id and sends zero POSTs', async () => {
   const transition = { id: '20', name: 'Resolve' };
-  const exact = buildTransitionConfirmation(
-    'example-tenant.atlassian.net',
-    { issueKey: 'HELP-123', issueId: '10001', currentStatus: 'Open', statusVersion: '1000' },
-    transition
-  );
-  const queue = queuedFetch([
-    { status: 200, json: before }, transitionPage([transition]),
-    { status: 200, json: before }, transitionPage([transition]),
-    { status: 204, json: null },
-    { status: 200, json: after },
-  ]);
-  const result = await invoke([
-    'transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute', '--confirm', exact,
-  ], { fetch: queue.fetch });
+  const queue = queuedFetch([{ status: 200, json: requestJson() }, transitionPage([transition])]);
+  const result = await invoke(['transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute'], { fetch: queue.fetch });
   assert.equal(result.code, 0);
-  assert.deepEqual(queue.calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'POST', 'GET']);
-  assert.deepEqual(queue.calls[4].payload, { id: '20' });
-  assert.match(result.stdout, /Transition verified/);
+  assert.deepEqual(queue.calls.map((call) => call.method), ['GET', 'GET']);
   assert.equal(queue.remaining(), 0);
+  assert.match(result.stdout, /HUMAN-RUN procedure/);
+  assert.match(result.stdout, /Re-run this preflight just before you act/);
+  assert.match(result.stdout, /--request POST 'https:\/\/example-tenant\.atlassian\.net\/rest\/servicedeskapi\/request\/HELP-123\/transition'/);
+  assert.ok(result.stdout.includes('{"id":"20"}'));
+  assert.match(result.stdout, /verify-transition --issue HELP-123 --issue-id 10001 --from-status 'Open' --execute/);
 });
 
-test('state drift between repeated preflights invalidates an otherwise exact phrase and makes zero POSTs', async () => {
-  const transition = { id: '20', name: 'Resolve' };
-  const exact = buildTransitionConfirmation(
-    'example-tenant.atlassian.net',
-    { issueKey: 'HELP-123', issueId: '10001', currentStatus: 'Open', statusVersion: '1000' },
-    transition
-  );
-  const queue = queuedFetch([
-    { status: 200, json: requestJson({ epochMillis: 1000 }) }, transitionPage([transition]),
-    { status: 200, json: requestJson({ epochMillis: 1001 }) }, transitionPage([transition]),
-  ]);
-  const result = await invoke([
-    'transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute', '--confirm', exact,
-  ], { fetch: queue.fetch });
-  assert.equal(result.code, 2);
-  assert.match(result.stderr, /drift/i);
-  assert.equal(queue.calls.some((call) => call.method === 'POST'), false);
-});
-
-test('POST acceptance followed by unchanged state reports partial/unknown and never retries', async () => {
-  const transition = { id: '20', name: 'Resolve' };
-  const exact = buildTransitionConfirmation(
-    'example-tenant.atlassian.net',
-    { issueKey: 'HELP-123', issueId: '10001', currentStatus: 'Open', statusVersion: '1000' },
-    transition
-  );
-  const before = requestJson();
-  const queue = queuedFetch([
-    { status: 200, json: before }, transitionPage([transition]),
-    { status: 200, json: before }, transitionPage([transition]),
-    { status: 204, json: null },
-    { status: 200, json: before },
-  ]);
-  const result = await invoke([
-    'transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute', '--confirm', exact,
-  ], { fetch: queue.fetch });
-  assert.equal(result.code, EXIT_PARTIAL_UNKNOWN);
-  assert.match(result.stderr, /UNKNOWN\/possibly changed/);
-  assert.deepEqual(queue.calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'POST', 'GET']);
-});
-
-test('POST transport ambiguity and read-back failure both report partial/unknown without retry', async (t) => {
-  const transition = { id: '20', name: 'Resolve' };
-  const exact = buildTransitionConfirmation(
-    'example-tenant.atlassian.net',
-    { issueKey: 'HELP-123', issueId: '10001', currentStatus: 'Open', statusVersion: '1000' },
-    transition
-  );
-  const prefix = [
-    { status: 200, json: requestJson() }, transitionPage([transition]),
-    { status: 200, json: requestJson() }, transitionPage([transition]),
+test('verify-transition proves the same immutable request left the preflight status and fails closed otherwise', async (t) => {
+  const argv = ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-status', 'Open', '--execute'];
+  await t.test('moved', async () => {
+    const queue = queuedFetch([{ status: 200, json: requestJson({ status: 'Resolved', epochMillis: 2000 }) }]);
+    const result = await invoke(argv, { fetch: queue.fetch });
+    assert.equal(result.code, 0);
+    assert.deepEqual(queue.calls.map((call) => call.method), ['GET']);
+    assert.match(result.stdout, /Verified: HELP-123 ID 10001 moved Open -> Resolved/);
+  });
+  const failures = [
+    ['unchanged status', { status: 200, json: requestJson() }, /still Open/],
+    ['different immutable id', { status: 200, json: requestJson({ issueId: '10002', status: 'Resolved' }) }, /different immutable issue id/],
+    ['read failure', { status: 503, json: null }, /HTTP 503/],
   ];
+  for (const [name, response, message] of failures) {
+    await t.test(name, async () => {
+      const queue = queuedFetch([response]);
+      const result = await invoke(argv, { fetch: queue.fetch });
+      assert.equal(result.code, 2);
+      assert.equal(queue.calls.length, 1);
+      assert.match(result.stderr, message);
+      assert.doesNotMatch(result.stdout, /Verified/);
+    });
+  }
+});
 
-  await t.test('POST transport error', async () => {
-    const queue = queuedFetch([...prefix, new Error('ambiguous transport result')]);
-    const result = await invoke([
-      'transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute', '--confirm', exact,
-    ], { fetch: queue.fetch });
-    assert.equal(result.code, EXIT_PARTIAL_UNKNOWN);
-    assert.deepEqual(queue.calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'POST']);
-  });
+test('the transport refuses every method but GET, and any payload, before touching the network', () => {
+  const cfg = { site: 'example.atlassian.net', email: 'api@example.org', token: 'token' };
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'post']) {
+    let transportCalls = 0;
+    assert.throws(() => apiRequest(cfg, method, '/rest/servicedeskapi/request', { id: '20' }, {
+      request: () => { transportCalls += 1; },
+    }), /GET requests only/);
+    assert.equal(transportCalls, 0, method);
+  }
+  let transportCalls = 0;
+  assert.throws(() => apiRequest(cfg, 'GET', '/rest/servicedeskapi/request', { id: '20' }, {
+    request: () => { transportCalls += 1; },
+  }), /carries no payload/);
+  assert.equal(transportCalls, 0);
+});
 
-  await t.test('read-back failure', async () => {
-    const queue = queuedFetch([...prefix, { status: 204, json: null }, { status: 503, json: null }]);
-    const result = await invoke([
-      'transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute', '--confirm', exact,
-    ], { fetch: queue.fetch });
-    assert.equal(result.code, EXIT_PARTIAL_UNKNOWN);
-    assert.deepEqual(queue.calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'POST', 'GET']);
-  });
+test('no write command reaches the network with anything but GET, under any flag combination', async () => {
+  const writes = [
+    ['create', '--summary', 'Test', '--description', 'Description'],
+    ['comment', '--issue', 'HELP-123', '--body', 'note'],
+    ['comment', '--issue', 'HELP-123', '--body', 'note', '--public'],
+    ['transition', '--issue', 'HELP-123', '--to', 'Resolve'],
+  ];
+  const tails = [[], ['--execute'], ['--confirm', 'anything'], ['--execute', '--confirm', 'anything']];
+  for (const write of writes) {
+    for (const tail of tails) {
+      const methods = [];
+      const fetch = async (cfg, method) => {
+        methods.push(method);
+        return method === 'GET' && methods.length === 1
+          ? { status: 200, json: requestJson() }
+          : transitionPage([{ id: '20', name: 'Resolve' }]);
+      };
+      const result = await invoke([...write, ...tail], { fetch });
+      assert.ok(methods.every((method) => method === 'GET'), `${[...write, ...tail].join(' ')}: ${methods.join(',')}`);
+      if (write[0] !== 'transition' || tail.length !== 1 || tail[0] !== '--execute') assert.equal(methods.length, 0, [...write, ...tail].join(' '));
+      if (tail.includes('--confirm') || (write[0] !== 'transition' && tail.includes('--execute'))) assert.equal(result.code, 1);
+    }
+  }
+});
+
+test('printed procedures never carry the token, make curl prompt for it, and quote text for the shell', async () => {
+  const result = await invoke(['create', '--summary', "It's down", '--description', 'Line one\nline two']);
+  assert.equal(result.code, 0);
+  assert.doesNotMatch(result.stdout, new RegExp(BASE_ENV.JIRA_API_TOKEN));
+  assert.match(result.stdout, /--user "\$JIRA_EMAIL" /);
+  assert.doesNotMatch(result.stdout, /JIRA_API_TOKEN/);
+  assert.ok(result.stdout.includes(`--summary 'It'\\''s down'`), 'a single quote is closed, escaped and reopened');
+  const curlLine = result.stdout.split('\n').find((line) => line.includes('--data-binary '));
+  assert.ok(curlLine, 'the curl command is one physical line');
+  const quoted = curlLine.slice(curlLine.indexOf('--data-binary ') + '--data-binary '.length);
+  assert.match(quoted, /^'.*'$/, 'the payload is one single-quoted argument');
+  const unquoted = quoted.slice(1, -1).split(`'\\''`).join("'");
+  assert.equal(JSON.parse(unquoted).requestFieldValues.description, 'Line one\nline two');
+  assert.equal(JSON.parse(unquoted).requestFieldValues.summary, "It's down");
+});
+
+test('verify commands without --execute are dry runs with zero credentials and zero network', async () => {
+  const cases = [
+    ['verify-create', '--issue', 'HELP-123', '--summary', 'Test'],
+    ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note'],
+    ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-status', 'Open'],
+  ];
+  for (const argv of cases) {
+    let fetchCalls = 0;
+    const result = await invoke(argv, {
+      fetch: async () => { fetchCalls += 1; },
+      getCredentials: () => { throw new Error('credentials should not load'); },
+    });
+    assert.equal(result.code, 0, argv[0]);
+    assert.match(result.stdout, /DRY RUN - would GET/);
+    assert.equal(fetchCalls, 0);
+    assert.equal(result.credentialCalls, 0);
+  }
 });
 
 test('API failures with bodies fail closed and never disclose response content', async () => {

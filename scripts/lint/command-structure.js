@@ -76,9 +76,10 @@ const VARIANTS = {
 const VARIANT_OF = {};
 for (const [v, names] of Object.entries(VARIANTS)) for (const n of names) VARIANT_OF[n] = v;
 
-// Commands whose whole job is state-changing integration: their output contract
-// is the direct-integration policy (scripts/command-policy.test.js), not the
-// runbook shape, so the GUI/checklist/note rules do not apply.
+// Commands whose whole job is the Jira client integration (reads, payload previews,
+// HUMAN-RUN write procedures, read-back verification): their output contract is the
+// direct-integration policy (scripts/command-policy.test.js), not the runbook shape,
+// so the GUI/checklist/note rules do not apply.
 const INTEGRATION_ONLY = new Set(['jira-create', 'jira-update']);
 
 // ── Pattern sets ──────────────────────────────────────────────────────────────

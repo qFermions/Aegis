@@ -32,11 +32,13 @@ jobs:
           package-manager-cache: false
 
       - name: Install
-        # The repository declares no package manifest today. The day one lands: npm ci from its lockfile,
-        # or npm install when a manifest has no lockfile yet (npm ci refuses to run without one).
+        # The repository declares no package manifest today. The day one lands, npm ci installs from its
+        # lockfile with lifecycle scripts off (pattern-only CI). A manifest without a lockfile fails
+        # closed: dependency manifests and lockfiles are tier C (REVIEW.md) and npm install would
+        # write an untracked lockfile that the release-boundary step rejects.
         run: |
-          if [ -f package-lock.json ]; then npm ci
-          elif [ -f package.json ]; then npm install --no-audit --no-fund
+          if [ -f package-lock.json ]; then npm ci --ignore-scripts
+          elif [ -f package.json ]; then echo "::error::package.json without package-lock.json: commit the lockfile (REVIEW.md, tier C)"; exit 1
           else echo "no package manifest, nothing to install"; fi
 
       - name: Prerequisite check (PowerShell is required by the safety-gate tests)
@@ -72,9 +74,9 @@ jobs:
 
       - name: Compute the risk tier against the base
         # Pull request: the target branch. Push: the commit before the push, so a merge to main
-        # reports the tier of what landed; when that commit is unreachable (history rewritten,
-        # branch created) the base is the parent of HEAD and the summary says so. A script error
-        # (missing base, unreadable tier file) exits 1 and fails this job.
+        # reports the tier of what landed. When that commit is unreachable (history rewritten,
+        # shallow checkout, first commit) there is no trustworthy base and the job fails closed,
+        # as it does on any script error (missing base, unreadable tier file).
         env:
           EVENT: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
@@ -82,22 +84,18 @@ jobs:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
-          note=""
           if [ "$EVENT" = pull_request ]; then
             base="origin/${BASE_REF}"
           elif [ -n "$BEFORE" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
             base="$BEFORE"
-          elif git cat-file -e 'HEAD~1^{commit}' 2>/dev/null; then
-            base="HEAD~1"
-            note="(the pushed-from commit ${BEFORE:-unset} is unreachable; diffed the last commit only)"
           else
-            base="HEAD"
-            note="(first commit on ${DEFAULT_BRANCH}; nothing to diff against)"
+            echo "::error::risk-tier: the pushed-from commit (${BEFORE:-unset}) is unreachable on ${DEFAULT_BRANCH} (history rewrite, shallow checkout or first commit); no trustworthy base, failing closed"
+            exit 1
           fi
           out="$(node scripts/risk_tier.mjs "$base")"
           printf '%s\n' "$out"
           {
-            echo "## Risk tier (base: ${base}) ${note}"
+            echo "## Risk tier (base: ${base})"
             echo
             echo '```'
             printf '%s\n' "$out"

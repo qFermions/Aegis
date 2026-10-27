@@ -413,3 +413,25 @@ g2Suite('Jamf', [
   'My Jamf Pro account cannot see the FileVault recovery key for [SERIAL_NUMBER]; what access do I need?',
   'Flush the policy logs for [SERIAL_NUMBER] so the policy runs again.',
 ]);
+
+g2Suite('Google Workspace', [
+  [/external sharing/i, 'Allow external sharing for the Marketing organizational unit in Google Drive.'],
+  [/external sharing/i, 'Turn on sharing outside the company for every shared drive.'],
+  [/external sharing/i, "Enable 'anyone with the link' sharing for the Sales team folders."],
+  [/forwarding/i, 'Allow automatic forwarding in Gmail for the Sales organizational unit.'],
+  [/forwarding/i, 'Enable auto-forwarding to personal addresses for [USER@DOMAIN.COM].'],
+  [/admin-role/i, 'Remove the super admin role from [FIRST_NAME] in Google Workspace.'],
+  [/admin-role/i, 'Revoke the Help Desk Admin role from [USER@DOMAIN.COM].'],
+  [/legacy|third-party/i, 'Allow less secure apps for the warehouse scanners.'],
+  [/legacy|third-party/i, 'Trust all third-party apps so staff stop asking for approvals.'],
+  [/2-step/i, 'Turn off 2-Step Verification enforcement for the Sales organizational unit.'],
+], [
+  'Find out who shared the [FILE_NAME] spreadsheet outside the company and how to take the external access back.',
+  'Restrict external sharing for the Marketing organizational unit in Google Drive to allowlisted domains.',
+  'Turn on 2-Step Verification enforcement for the Sales organizational unit.',
+  'How many super admins do we have in Google Workspace, and is their account recovery set up safely?',
+  'Run the Google Workspace security posture audit and tell me what to fix first.',
+  'I am a Help Desk Admin in Google Workspace; how do I change the Drive external sharing settings?',
+  'Turn off automatic forwarding for the Sales organizational unit.',
+  'Block less secure apps for every organizational unit.',
+]);

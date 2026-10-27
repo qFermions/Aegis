@@ -472,8 +472,9 @@ function normalizeCustomerRequest(json, expectedIssueKey) {
   let statusVersion = '';
   if (Number.isInteger(date.epochMillis)) statusVersion = String(date.epochMillis);
   // The version is printed unquoted in the verify-transition line a human pastes, so
-  // it must be a timestamp and nothing else ($, backticks or spaces would be shell).
-  else if (typeof date.iso8601 === 'string' && /^[0-9A-Za-z:.+-]{1,64}$/.test(date.iso8601)) statusVersion = date.iso8601;
+  // it must be a timestamp and nothing else ($, backticks or spaces would be shell),
+  // starting with a digit so the pasted line never reads it as a flag.
+  else if (typeof date.iso8601 === 'string' && /^\d[0-9A-Za-z:.+-]{0,63}$/.test(date.iso8601)) statusVersion = date.iso8601;
   if (statusVersion.length === 0) throw new ContractError('Jira returned no valid current-status version.');
   return { issueKey, issueId, currentStatus: status, statusVersion };
 }
@@ -740,7 +741,7 @@ async function cmdVerifyTransition(runtime, args) {
   const issueKey = normalizeIssueKey(args.issue);
   const issueId = normalizePositiveId(args['issue-id'], '--issue-id');
   const fromVersion = requireText(args['from-version'], 'from-version', { controlsAllowed: false });
-  if (!/^[0-9A-Za-z:.+-]{1,64}$/.test(fromVersion)) throw new InputError('--from-version must be the status version the preflight printed.');
+  if (!/^\d[0-9A-Za-z:.+-]{0,63}$/.test(fromVersion)) throw new InputError('--from-version must be the status version the preflight printed.');
   const toStatus = requireText(args['to-status'], 'to-status', { controlsAllowed: false });
   if (/^\[.*\]$/.test(toStatus)) throw new InputError('--to-status still holds the placeholder; name the status the transition should leave.');
   const site = normalizeSite(runtime.env.JIRA_SITE);

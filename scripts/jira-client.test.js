@@ -569,6 +569,20 @@ test('a status version that is not a plain timestamp is refused before anything 
   assert.ok(ok.stdout.includes('--from-version 2026-10-27T07:00:00.000+0000 '), 'a plain ISO timestamp still prints');
 });
 
+test('a status version that does not start with a digit is refused, so the printed verify line always parses', async () => {
+  for (const iso8601 of ['--execute', '-1', 'abc']) {
+    const json = { issueKey: 'HELP-123', issueId: '10001', currentStatus: { status: 'Open', statusDate: { iso8601 } } };
+    const result = await invoke(['transition', '--issue', 'HELP-123', '--to', 'Resolve', '--execute'], { fetch: queuedFetch([{ status: 200, json }, transitionPage([{ id: '20', name: 'Resolve' }])]).fetch });
+    assert.equal(result.code, 2, iso8601);
+    assert.doesNotMatch(result.stdout, /HUMAN-RUN|verify-transition/, iso8601);
+  }
+  for (const fromVersion of ['-1', 'abc']) {
+    const verify = await invoke(['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', fromVersion, '--to-status', 'Resolved', '--execute']);
+    assert.equal(verify.code, 1, `verify-transition refuses ${fromVersion} before any network call`);
+    assert.match(verify.stderr, /--from-version must be the status version the preflight printed/);
+  }
+});
+
 test('verify-transition proves the same immutable request left the preflight status and fails closed otherwise', async (t) => {
   const argv = ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', '1000', '--to-status', 'Resolved', '--execute'];
   await t.test('moved to the expected status', async () => {

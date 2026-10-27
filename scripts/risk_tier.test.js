@@ -51,8 +51,8 @@ function commit(cwd, files, message = 'change') {
   git(cwd, 'commit', '-q', '-m', message);
 }
 
-function run(cwd, args = [], expectExit = 0) {
-  const result = spawnSync('node', [SCRIPT, ...args], { cwd, encoding: 'utf8' });
+function run(cwd, args = [], expectExit = 0, options = {}) {
+  const result = spawnSync('node', [options.script || SCRIPT, ...args], { cwd, encoding: 'utf8', env: { ...process.env, ...options.env } });
   assert.equal(result.status, expectExit, `expected exit ${expectExit}, got ${result.status}: ${result.stderr}`);
   return expectExit === 0 ? result.stdout.trim().split('\n') : result.stderr.trim();
 }
@@ -144,5 +144,13 @@ test('a file moved out of a C path still sets tier C (both sides of the rename a
   git(cwd, 'mv', 'modules/security/old-doctrine.md', 'docs/old-doctrine.md');
   git(cwd, 'commit', '-q', '-m', 'move');
   assert.deepEqual(run(cwd, ['main']), ['tier=C', 'modules/security/old-doctrine.md']);
+});
+
+test('a tier file with a non-string glob fails closed with exit 1', () => {
+  const cwd = sandbox();
+  commit(cwd, ['docs/notes.md']);
+  const broken = path.join(cwd, 'broken-tiers.json');
+  fs.writeFileSync(broken, JSON.stringify({ C: [['.github/**']], B: [] }));
+  assert.match(run(cwd, ['main'], 1, { env: { RISK_TIERS_FILE: broken } }), /non-string or empty glob/);
 });
 

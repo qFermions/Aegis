@@ -60,6 +60,7 @@ const VALUE_FLAGS = new Set([
   'from-version',
   'to-status',
   'not-before',
+  'expect-sha256',
 ]);
 const KNOWN_FLAGS = new Set([...BOOLEAN_FLAGS, ...VALUE_FLAGS]);
 
@@ -362,6 +363,29 @@ function curlPostLine(site, apiPath, payload) {
     `--request POST ${shellQuote(`https://${site}${apiPath}`)} --data-binary ${shellQuote(serializePayload(payload))}`;
 }
 
+// PowerShell single-quoted strings end at any of ' and the typographic single quotes
+// U+2018 to U+201B; doubling each keeps it literal.
+function psQuote(value) {
+  return `'${String(value).replace(/['\u2018\u2019\u201A\u201B]/g, (ch) => ch + ch)}'`;
+}
+
+// The same write for PowerShell 7 on Windows: Get-Credential asks for the API token.
+function powershellPostLine(site, apiPath, payload) {
+  return `     Invoke-RestMethod -Method Post -Uri ${psQuote(`https://${site}${apiPath}`)} -Authentication Basic ` +
+    "-Credential (Get-Credential -UserName $env:JIRA_EMAIL -Message 'Atlassian API token') " +
+    `-ContentType 'application/json' -Body ${psQuote(serializePayload(payload))}`;
+}
+
+function apiLines(site, apiPath, payload) {
+  return [
+    '  2. Or the API, in your own terminal; each line asks for your API token instead of reading it from the environment.',
+    '     bash or zsh (macOS, Linux, WSL, Git Bash):',
+    curlPostLine(site, apiPath, payload),
+    '     PowerShell 7 (Windows):',
+    powershellPostLine(site, apiPath, payload),
+  ];
+}
+
 function printProcedure(runtime, lines) {
   runtime.out('HUMAN-RUN procedure (Aegis advises; you execute this write yourself):');
   for (const line of lines) runtime.out(line);
@@ -377,19 +401,30 @@ function normalizeWriteReceipt(json, label) {
   return { issueKey, issueId };
 }
 
-function requireExactRequestField(json, fieldId, expectedValue) {
-  if (!Array.isArray(json.requestFieldValues)) throw new ContractError('Request read-back has no field collection.');
-  const matches = json.requestFieldValues.filter(field => field && field.fieldId === fieldId);
-  if (matches.length !== 1 || typeof matches[0].value !== 'string' || matches[0].value !== expectedValue) {
-    throw new ContractError(`Request read-back did not prove the exact ${fieldId} value.`);
-  }
+// The read-back digest covers exactly what a create read-back can show (service desk,
+// request type, summary, description), so the preview can print it and verify-create can
+// take it in place of free text that would need shell quoting.
+function createDigest({ serviceDeskId, requestTypeId, summary, description }) {
+  return sha256Hex(JSON.stringify({ serviceDeskId, requestTypeId, summary, description }));
 }
 
-function verifyCreatedRequestReadBack(json, receipt, payload) {
+function requestFieldText(json, fieldId, { optional = false } = {}) {
+  if (!Array.isArray(json.requestFieldValues)) throw new ContractError('Request read-back has no field collection.');
+  const matches = json.requestFieldValues.filter((field) => field && field.fieldId === fieldId);
+  if (optional && matches.length === 0) return '';
+  if (matches.length !== 1 || typeof matches[0].value !== 'string') throw new ContractError(`Request read-back did not carry exactly one ${fieldId}.`);
+  return matches[0].value;
+}
+
+function requireDigest(args) {
+  const value = args['expect-sha256'];
+  if (typeof value !== 'string' || !/^[0-9a-f]{64}$/.test(value)) throw new InputError('--expect-sha256 must be the 64-hex digest the preview printed.');
+  return value;
+}
+
+function verifyCreatedRequestReadBack(json, issueKey, expectSha256) {
   const observed = normalizeWriteReceipt(json, 'create read-back');
-  if (observed.issueKey !== receipt.issueKey || observed.issueId !== receipt.issueId) {
-    throw new ContractError('Create read-back identity did not match the expected request.');
-  }
+  if (observed.issueKey !== issueKey) throw new ContractError('Create read-back identity did not match the expected request.');
   let serviceDeskId;
   let requestTypeId;
   try {
@@ -398,18 +433,23 @@ function verifyCreatedRequestReadBack(json, receipt, payload) {
   } catch {
     throw new ContractError('Create read-back returned invalid request type identity.');
   }
-  if (serviceDeskId !== payload.serviceDeskId || requestTypeId !== payload.requestTypeId) {
-    throw new ContractError('Create read-back request type identity did not match the approved payload.');
+  const fields = {
+    serviceDeskId,
+    requestTypeId,
+    summary: requestFieldText(json, 'summary'),
+    description: requestFieldText(json, 'description', { optional: true }),
+  };
+  if (createDigest(fields) !== expectSha256) {
+    throw new ContractError('Create read-back did not match the approved service desk, request type, summary and description.');
   }
-  requireExactRequestField(json, 'summary', payload.requestFieldValues.summary);
-  requireExactRequestField(json, 'description', payload.requestFieldValues.description);
   return observed;
 }
 
-function verifyCommentReadBack(json, receipt, payload) {
+function verifyCommentReadBack(json, commentId, expectSha256) {
   if (!json || typeof json !== 'object') throw new ContractError('Malformed comment read-back.');
   const id = String(json.id === undefined ? '' : json.id);
-  if (id !== receipt.id || typeof json.body !== 'string' || json.body !== payload.body || json.public !== payload.public) {
+  if (id !== commentId || typeof json.body !== 'string' || typeof json.public !== 'boolean' ||
+      sha256Hex(serializePayload({ body: json.body, public: json.public })) !== expectSha256) {
     throw new ContractError('Comment read-back did not prove the approved id, body, and visibility.');
   }
   return { id };
@@ -541,16 +581,6 @@ function createPayloadFromArgs(runtime, args) {
   });
 }
 
-function payloadArgs(payload) {
-  const parts = [
-    '--service-desk', payload.serviceDeskId,
-    '--request-type', payload.requestTypeId,
-    '--summary', shellQuote(payload.requestFieldValues.summary),
-  ];
-  if (payload.requestFieldValues.description !== '') parts.push('--description', shellQuote(payload.requestFieldValues.description));
-  return parts.join(' ');
-}
-
 async function cmdCreate(runtime, args) {
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const payload = createPayloadFromArgs(runtime, args);
@@ -560,10 +590,9 @@ async function cmdCreate(runtime, args) {
     `  1. Portal: the customer portal of service desk ${payload.serviceDeskId} -> Raise a request -> request type ${payload.requestTypeId}` +
       ' -> paste the summary and description from the payload above, unedited -> Create.' +
       (payload.raiseOnBehalfOf === undefined ? '' : ' Raise it on behalf of the reporter named in the payload.'),
-    '  2. Or the API, in your own terminal (curl asks for your API token):',
-    curlPostLine(site, '/rest/servicedeskapi/request', payload),
+    ...apiLines(site, '/rest/servicedeskapi/request', payload),
     '  3. Prove it with a read-back, using the issue key Jira returned:',
-    `     node scripts/jira-client.js verify-create --issue [JIRA-###] ${payloadArgs(payload)} --not-before ${previewNotBefore(runtime)} --execute`,
+    `     node scripts/jira-client.js verify-create --issue [JIRA-###] --expect-sha256 ${createDigest({ ...payload, ...payload.requestFieldValues })} --not-before ${previewNotBefore(runtime)} --execute`,
   ]);
   if (args.execute === true || args.confirm !== undefined) {
     return refuseWrite(runtime, 'Run the HUMAN-RUN procedure printed above yourself, in the portal or your own terminal.');
@@ -582,11 +611,10 @@ async function cmdComment(runtime, args) {
   runtime.out(`Payload binding: ${buildCommentConfirmation(site, issueKey, payload)}`);
   printProcedure(runtime, [
     `  1. Portal: open ${issueKey} -> ${payload.public ? 'Reply to customer' : 'Add internal note'} -> paste the body from the payload above, unedited -> Save.`,
-    '  2. Or the API, in your own terminal (curl asks for your API token):',
-    curlPostLine(site, apiPath, payload),
+    ...apiLines(site, apiPath, payload),
     '  3. Prove it with a read-back, using the comment id Jira returned:',
-    `     node scripts/jira-client.js verify-comment --issue ${issueKey} --comment-id [COMMENT_ID] --body ${shellQuote(payload.body)}` +
-      `${payload.public ? ' --public' : ''} --not-before ${previewNotBefore(runtime)} --execute`,
+    `     node scripts/jira-client.js verify-comment --issue ${issueKey} --comment-id [COMMENT_ID] --expect-sha256 ${sha256Hex(serializePayload(payload))}` +
+      ` --not-before ${previewNotBefore(runtime)} --execute`,
   ]);
   if (args.execute === true || args.confirm !== undefined) {
     return refuseWrite(runtime, 'Run the HUMAN-RUN procedure printed above yourself, in the portal or your own terminal.');
@@ -631,8 +659,7 @@ async function cmdTransition(runtime, args) {
   printProcedure(runtime, [
     '  0. Re-run this preflight just before you act. If the binding line changed, the request moved: stop and read it again.',
     `  1. Portal: open ${snapshot.issueKey} -> status button -> ${transition.name}.`,
-    '  2. Or the API, in your own terminal (curl asks for your API token):',
-    curlPostLine(site, `/rest/servicedeskapi/request/${encodeURIComponent(snapshot.issueKey)}/transition`, { id: transition.id }),
+    ...apiLines(site, `/rest/servicedeskapi/request/${encodeURIComponent(snapshot.issueKey)}/transition`, { id: transition.id }),
     '  3. Prove it with a read-back:',
     `     node scripts/jira-client.js verify-transition --issue ${snapshot.issueKey} --issue-id ${snapshot.issueId}` +
       ` --from-version ${snapshot.statusVersion} --to-status '[STATUS AFTER]' --execute`,
@@ -652,15 +679,13 @@ function dryRunRead(runtime, args, apiPath) {
 async function cmdVerifyCreate(runtime, args) {
   const issueKey = normalizeIssueKey(args.issue);
   const site = normalizeSite(runtime.env.JIRA_SITE);
-  const payload = createPayloadFromArgs(runtime, args);
+  const expectSha256 = requireDigest(args);
   const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}`;
   if (dryRunRead(runtime, args, apiPath)) return 0;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
-  const observed = normalizeWriteReceipt(response.json, 'create read-back');
-  if (observed.issueKey !== issueKey) throw new ContractError('Jira returned a different issue key.');
-  verifyCreatedRequestReadBack(response.json, observed, payload);
+  const observed = verifyCreatedRequestReadBack(response.json, issueKey, expectSha256);
   // Same text is not the same write: an older request with this summary and description
   // (a recurring ticket) was not created by the procedure this preview printed.
   if (createdMillis(response.json, 'createdDate', 'Create') < notBefore) {
@@ -675,17 +700,17 @@ async function cmdVerifyComment(runtime, args) {
   const issueKey = normalizeIssueKey(args.issue);
   const commentId = normalizePositiveId(args['comment-id'], '--comment-id');
   const site = normalizeSite(runtime.env.JIRA_SITE);
-  const payload = buildCommentPayload({ body: args.body, isPublic: args.public });
+  const expectSha256 = requireDigest(args);
   const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}/comment/${encodeURIComponent(commentId)}`;
   if (dryRunRead(runtime, args, apiPath)) return 0;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
-  verifyCommentReadBack(response.json, { id: commentId }, payload);
+  verifyCommentReadBack(response.json, commentId, expectSha256);
   if (createdMillis(response.json, 'created', 'Comment') < notBefore) {
     throw new ContractError('The comment was created before the preview that prepared it; it is not the administrator\'s new comment.');
   }
-  runtime.out(`Verified: ${payload.public ? 'PUBLIC' : 'INTERNAL'} comment ${commentId} on ${issueKey} carries the approved body and visibility.`);
+  runtime.out(`Verified: ${response.json.public ? 'PUBLIC' : 'INTERNAL'} comment ${commentId} on ${issueKey} was created after the preview and carries the approved body and visibility.`);
   return 0;
 }
 
@@ -769,6 +794,7 @@ module.exports = {
   buildCreateConfirmation,
   buildCreatePayload,
   buildTransitionConfirmation,
+  createDigest,
   fetchAllTransitions,
   loadCredentials,
   normalizeIssueKey,

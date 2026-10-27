@@ -50,12 +50,12 @@ CREATE JSM REQUEST ON <tenant>.atlassian.net DESK <numeric-id> TYPE <numeric-id>
 
 2. Review the site, desk, request type, summary, description, and optional reporter. Changing any of them changes the SHA-256 in the binding line.
 
-3. The administrator creates the request, either in the customer portal of that service desk with the printed summary and description pasted unedited, or by running the printed `curl` line in their own terminal (it prompts for the API token). Aegis does not run either step.
+3. The administrator creates the request, either in the customer portal of that service desk with the printed summary and description pasted unedited, or by running the printed API line in their own terminal: the `curl` line in bash or zsh, or the `Invoke-RestMethod` line in PowerShell 7. Each prompts for the API token. Aegis does not run either step.
 
-4. Prove the create with the printed read-back, filling in the issue key Jira returned. `--not-before` is the time the preview printed (epoch milliseconds, ten minutes early for clock skew):
+4. Prove the create with the printed read-back, filling in the issue key Jira returned. `--expect-sha256` is the digest of the service desk, request type, summary and description; `--not-before` is the time the preview printed (epoch milliseconds, ten minutes early for clock skew). Both are printed values with no free text, so the line pastes the same in bash and PowerShell:
 
 ```bash
-node scripts/jira-client.js verify-create --issue [JIRA-###] --summary "[ONE-LINE SUMMARY]" --description "[2-3 SENTENCE DESCRIPTION]" --not-before [PREVIEW_TIME_MS] --execute
+node scripts/jira-client.js verify-create --issue [JIRA-###] --expect-sha256 [DIGEST] --not-before [PREVIEW_TIME_MS] --execute
 ```
 
 To create on behalf of a reporter, add `--on-behalf-of [USER@DOMAIN.COM]` to the preview. Use only the operator-supplied reporter value; never invent one.

@@ -15,12 +15,19 @@ const {
   buildCreateConfirmation,
   buildCreatePayload,
   buildTransitionConfirmation,
+  createDigest,
   normalizeIssueKey,
   normalizeSite,
   parseArgs,
   run,
   serializePayload,
+  sha256Hex,
 } = require('./jira-client');
+const { spawnSync } = require('node:child_process');
+
+// Digests the previews print for verify-* (the read-back fields, or the comment payload).
+const CREATE_SHA = createDigest({ serviceDeskId: '12', requestTypeId: '34', summary: 'Test', description: 'Description' });
+const NOTE_SHA = sha256Hex(serializePayload({ body: 'note', public: false }));
 
 // A fixed clock: previews print NOW minus the ten-minute margin as --not-before.
 const NOW = 1_000_000_000_000;
@@ -275,11 +282,11 @@ test('the exact create phrase is refused too: zero credentials, zero network, an
   assert.match(result.stdout, /HUMAN-RUN procedure/);
   assert.ok(result.stdout.includes(serializePayload(payload)), 'the procedure carries the exact serialized payload');
   assert.match(result.stdout, /--request POST 'https:\/\/example-tenant\.atlassian\.net\/rest\/servicedeskapi\/request'/);
-  assert.ok(result.stdout.includes(`verify-create --issue [JIRA-###] --service-desk 12 --request-type 34 --summary 'Test' --description 'Description' --not-before ${NOT_BEFORE} --execute`));
+  assert.ok(result.stdout.includes(`verify-create --issue [JIRA-###] --expect-sha256 ${CREATE_SHA} --not-before ${NOT_BEFORE} --execute`));
 });
 
 test('verify-create proves the human-created request by an independent GET and fails closed on any mismatch', async (t) => {
-  const argv = ['verify-create', '--issue', 'HELP-123', '--summary', 'Test', '--description', 'Description', '--not-before', NOT_BEFORE, '--execute'];
+  const argv = ['verify-create', '--issue', 'HELP-123', '--expect-sha256', CREATE_SHA, '--not-before', NOT_BEFORE, '--execute'];
   await t.test('match', async () => {
     const queue = queuedFetch([{ status: 200, json: createdRequestJson() }]);
     const result = await invoke(argv, { fetch: queue.fetch });
@@ -373,12 +380,12 @@ test('exact INTERNAL and PUBLIC phrases are refused, and each procedure names th
     assert.ok(result.stdout.includes(exact), 'the binding line is printed for the human to compare');
     assert.ok(result.stdout.includes(serializePayload(payload)));
     assert.match(result.stdout, isPublic ? /Reply to customer/ : /Add internal note/);
-    assert.match(result.stdout, isPublic ? new RegExp(`verify-comment .* --public --not-before ${NOT_BEFORE} --execute`) : new RegExp(`verify-comment (?:(?!--public).)* --not-before ${NOT_BEFORE} --execute`));
+    assert.ok(result.stdout.includes(`verify-comment --issue HELP-123 --comment-id [COMMENT_ID] --expect-sha256 ${sha256Hex(serializePayload(payload))} --not-before ${NOT_BEFORE} --execute`));
   }
 });
 
 test('verify-comment proves the comment id, body and visibility and fails closed on any mismatch', async (t) => {
-  const argv = ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note', '--not-before', NOT_BEFORE, '--execute'];
+  const argv = ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--expect-sha256', NOTE_SHA, '--not-before', NOT_BEFORE, '--execute'];
   const created = { epochMillis: AFTER };
   await t.test('match', async () => {
     const queue = queuedFetch([{ status: 200, json: { id: '7001', body: 'note', public: false, created } }]);
@@ -406,7 +413,7 @@ test('verify-comment proves the comment id, body and visibility and fails closed
     });
   }
   await t.test('a non-numeric comment id is an input error before credentials or network', async () => {
-    const result = await invoke(['verify-comment', '--issue', 'HELP-123', '--comment-id', '[COMMENT_ID]', '--body', 'note', '--not-before', NOT_BEFORE, '--execute'], {
+    const result = await invoke(['verify-comment', '--issue', 'HELP-123', '--comment-id', '[COMMENT_ID]', '--expect-sha256', NOTE_SHA, '--not-before', NOT_BEFORE, '--execute'], {
       getCredentials: () => { throw new Error('credentials should not load'); },
     });
     assert.equal(result.code, 1);
@@ -626,25 +633,57 @@ test('no write command reaches the network with anything but GET, under any flag
 });
 
 test('printed procedures never carry the token, make curl prompt for it, and quote text for the shell', async () => {
-  const result = await invoke(['create', '--summary', "It's down", '--description', 'Line one\nline two']);
+  const result = await invoke(['create', '--summary', "It's down", '--description', 'Line one\nline two ’quoted’']);
   assert.equal(result.code, 0);
   assert.doesNotMatch(result.stdout, new RegExp(BASE_ENV.JIRA_API_TOKEN));
   assert.match(result.stdout, /--user "\$JIRA_EMAIL" /);
+  assert.match(result.stdout, /Get-Credential -UserName \$env:JIRA_EMAIL /);
   assert.doesNotMatch(result.stdout, /JIRA_API_TOKEN/);
-  assert.ok(result.stdout.includes(`--summary 'It'\\''s down'`), 'a single quote is closed, escaped and reopened');
-  const curlLine = result.stdout.split('\n').find((line) => line.includes('--data-binary '));
+  const lines = result.stdout.split('\n');
+  const curlLine = lines.find((line) => line.includes('--data-binary '));
   assert.ok(curlLine, 'the curl command is one physical line');
   const quoted = curlLine.slice(curlLine.indexOf('--data-binary ') + '--data-binary '.length);
   assert.match(quoted, /^'.*'$/, 'the payload is one single-quoted argument');
   const unquoted = quoted.slice(1, -1).split(`'\\''`).join("'");
-  assert.equal(JSON.parse(unquoted).requestFieldValues.description, 'Line one\nline two');
+  assert.equal(JSON.parse(unquoted).requestFieldValues.description, 'Line one\nline two ’quoted’');
   assert.equal(JSON.parse(unquoted).requestFieldValues.summary, "It's down");
+  const psLine = lines.find((line) => line.includes('Invoke-RestMethod '));
+  assert.ok(psLine.includes("It''s down"), 'PowerShell doubles a straight apostrophe');
+  assert.ok(psLine.includes('’’quoted’’'), 'PowerShell doubles a typographic apostrophe, which also ends a single-quoted string');
+  const verifyLine = lines.find((line) => line.includes('verify-create '));
+  assert.doesNotMatch(verifyLine, /down|quoted|'/, 'the verify line carries no free text, so it pastes the same in any shell');
+});
+
+test('the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed)', async (t) => {
+  const description = "Line one\nit's ’two’ & $HOME `whoami` \"q\" ; | > <";
+  const payload = buildCreatePayload({ serviceDeskId: '12', requestTypeId: '34', summary: 'Printer offline', description });
+  const result = await invoke(['create', '--summary', 'Printer offline', '--description', description]);
+  const lines = result.stdout.split('\n').map((line) => line.trim());
+  const expected = serializePayload(payload);
+
+  await t.test('PowerShell 7', (tt) => {
+    const engine = process.platform === 'win32' ? 'pwsh.exe' : 'pwsh';
+    if (spawnSync(engine, ['-NoProfile', '-NonInteractive', '-Command', '1'], { encoding: 'utf8' }).status !== 0) return tt.skip('pwsh is not installed (EVALUATE.md lists it as a prerequisite)');
+    const stubs = 'function Get-Credential { param($UserName, $Message) "stub" }; ' +
+      'function Invoke-RestMethod { param($Method, $Uri, $Authentication, $Credential, $ContentType, $Body) [Console]::Out.Write($Body) }; ';
+    const run = spawnSync(engine, ['-NoProfile', '-NonInteractive', '-Command', stubs + lines.find((line) => line.startsWith('Invoke-RestMethod '))], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+    assert.equal(run.stdout, expected);
+  });
+
+  await t.test('bash', (tt) => {
+    if (process.platform === 'win32') return tt.skip('the Windows leg has no bash (the PowerShell case covers it)');
+    const stub = 'curl() { local last; for last; do :; done; printf "%s" "$last"; }; ';
+    const run = spawnSync('bash', ['-c', stub + lines.find((line) => line.startsWith('curl '))], { encoding: 'utf8', env: { PATH: process.env.PATH } });
+    assert.equal(run.status, 0, run.stderr);
+    assert.equal(run.stdout, expected);
+  });
 });
 
 test('verify commands without --execute are dry runs with zero credentials and zero network', async () => {
   const cases = [
-    ['verify-create', '--issue', 'HELP-123', '--summary', 'Test', '--not-before', NOT_BEFORE],
-    ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--body', 'note', '--not-before', NOT_BEFORE],
+    ['verify-create', '--issue', 'HELP-123', '--expect-sha256', CREATE_SHA, '--not-before', NOT_BEFORE],
+    ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--expect-sha256', NOTE_SHA, '--not-before', NOT_BEFORE],
     ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', '1000', '--to-status', 'Resolved'],
   ];
   for (const argv of cases) {

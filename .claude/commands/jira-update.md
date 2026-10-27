@@ -45,15 +45,15 @@ POST INTERNAL JSM COMMENT ON <tenant>.atlassian.net ISSUE [JIRA-###] PAYLOAD SHA
 POST PUBLIC JSM COMMENT ON <tenant>.atlassian.net ISSUE [JIRA-###] PAYLOAD SHA256 <64-hex-digest>
 ```
 
-2. The administrator posts the comment: in the request's agent view as an internal note or a reply to the customer, matching the printed visibility, with the printed body pasted unedited; or by running the printed `curl` line in their own terminal (it prompts for the API token). Aegis does not run either step.
+2. The administrator posts the comment: in the request's agent view as an internal note or a reply to the customer, matching the printed visibility, with the printed body pasted unedited; or by running the printed API line in their own terminal (`curl` for bash or zsh, `Invoke-RestMethod` for PowerShell 7; each prompts for the API token). Aegis does not run either step.
 
 3. Prove it with the printed read-back, filling in the comment ID Jira returned:
 
 ```bash
-node scripts/jira-client.js verify-comment --issue [JIRA-###] --comment-id [COMMENT_ID] --body "[NOTE]" --not-before [PREVIEW_TIME_MS] --execute
+node scripts/jira-client.js verify-comment --issue [JIRA-###] --comment-id [COMMENT_ID] --expect-sha256 [DIGEST] --not-before [PREVIEW_TIME_MS] --execute
 ```
 
-Add `--public` to the read-back for a public reply. An INTERNAL read-back fails on a PUBLIC comment and the reverse, and a comment created before the preview fails too.
+The digest covers the body and the visibility, so an INTERNAL note does not prove a PUBLIC reply or the reverse, and a comment created before the preview fails too.
 
 ## Transition one request
 
@@ -79,7 +79,7 @@ TRANSITION JSM ISSUE [JIRA-###] ID <immutable-id> ON <tenant>.atlassian.net FROM
 
 3. Re-run the preflight just before acting. If the binding line changed, the request moved: stop and read it again. The client never follows a server-supplied pagination URL; it constructs bounded numeric pages on the already validated Jira host.
 
-4. The administrator applies the printed transition, from the request's status button or by running the printed `curl` line in their own terminal. Aegis does not run either step.
+4. The administrator applies the printed transition, from the request's status button or by running the printed API line (`curl` or `Invoke-RestMethod`) in their own terminal. Aegis does not run either step.
 
 5. Prove it with the printed read-back, naming the status the transition should leave the request in:
 

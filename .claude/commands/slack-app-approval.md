@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[APP_NAME]` (the app as Slack lists it) · `[APP_ID]` (its Slack app ID) · `[USER_ID]` (the member who requested it) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` / `[NOT_BEFORE]` (the ticket note, its digest, and the time its read-back starts from) · `[ADMIN_NAME]` (the person who decides) · `[@Aegion_SLACK_URL]` (the workspace) · `[@Aegion_SLACK_TEAM_ID]` (the workspace ID the read adapter is bound to) · org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[APP_NAME]` (the app as Slack lists it) · `[APP_ID]` (its Slack app ID) · `[USER_ID]` (the member who requested it; in Phase E, the member who gains or loses app request management) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` / `[NOT_BEFORE]` (the ticket note, its digest, and the time its read-back starts from) · `[ADMIN_NAME]` (the person who decides) · `[@Aegion_SLACK_URL]` (the workspace) · `[@Aegion_SLACK_TEAM_ID]` (the workspace ID the read adapter is bound to) · org values from `modules/security/placeholder-dictionary.md`.
 
 ## ⚠️ Admin / safety gate
 

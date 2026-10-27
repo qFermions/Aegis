@@ -232,7 +232,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 
 **Purpose:** stop text-message codes as a second factor without locking out the members who rely on them.
 
-**Before:** Phase B is done and the requirement reads required; Phase A recorded whether SMS is allowed (the pre-state and the rollback value); members were told that SMS codes will stop working and asked to set up another method first. Which members use SMS today was not readable from the sources read, so the warning goes to everyone who signs in with email and password. With SSO, two-factor methods are set in Okta instead: skip this phase.
+**Before:** Phase B is done and the requirement reads required; Phase A recorded whether SMS is allowed (the pre-state and the rollback value); members were told that SMS codes will stop working and asked to set up another method first. The sources read do not say how to list the members who use SMS, so the warning goes to everyone who signs in with email and password. With SSO, two-factor methods are set in Okta instead: skip this phase.
 
 **Role needed:** Workspace Owner or Workspace Admin; on Enterprise, Org Owner or Org Admin (Organization settings).
 

@@ -11,6 +11,8 @@
 //   Offline (no credentials, no network, never --execute):
 //     note    --issue [ISSUE_ID] --body-file [NOTE_FILE]
 //     digest  --body-file [NOTE_FILE]
+//   [NOTE_FILE] is a .md or .txt file outside any .ssh, .aws, .config, .gnupg or .claude
+//   folder, and a body the commit scanner would block is refused, never printed.
 //   Reads (a dry run that prints the planned request unless --execute is given):
 //     viewer | issue --issue [ISSUE_ID] | comments --issue [ISSUE_ID]
 //     states --team [TEAM_KEY] | labels | triage | members
@@ -134,7 +136,36 @@ checkDocuments(SPEC.graphql.documents);
 // ── The ticket note and its digest ───────────────────────────────────────────
 const NOTE_MAX_BYTES = 64 * 1024; // Aegis's own cap for a ticket note, not a Linear limit
 const NOT_BEFORE_MARGIN_MS = 10 * 60 * 1000; // allows for a clock difference
-const REFUSED_NOTE_FILES = /^\.env(?:\..*)?$|\.env$|\.(?:pem|key|p12|pfx)$/i;
+// A note file is read only when all three hold, for the path given and for the file it
+// resolves to: (1) its name ends in .md or .txt (an allow-list: a private key, an AWS
+// credentials file or a JSON key file has another name, so it is never read as a note);
+// (2) no folder on the way is one that holds keys or tool settings; (3) no line of the
+// body is one the commit scanner would block (next function).
+const NOTE_FILE_NAME = /^[^/\\]+\.(?:md|txt)$/i;
+const REFUSED_NOTE_FOLDERS = new Set(['.ssh', '.aws', '.config', '.gnupg', '.claude']);
+
+// The commit scanner (scripts/pre-commit-check.js, canonical) exports safeDisplayPath,
+// which returns "[REDACTED_FILE_PATH]" for any string that carries one of its BLOCK
+// patterns: a credential or secret format (private key block, GitHub, Slack, Google or
+// Okta token, JWT, Authorization header), a real email address, a phone number, a
+// privileged host path or a control character. A note line it would redact is never
+// printed. Loaded only for note and digest, so the read commands never load it.
+function blockedNoteLine(body) {
+  const { safeDisplayPath } = require('../pre-commit-check.js');
+  const lines = body.split('\n');
+  for (let i = 0; i < lines.length; i += 1) {
+    const probe = lines[i].replace(/\t/g, ' '); // a tab is layout, not a secret
+    if (safeDisplayPath(probe, []) !== probe) return i + 1;
+  }
+  return 0;
+}
+
+function refusedNotePath(file, how) {
+  if (!NOTE_FILE_NAME.test(path.basename(file))) return `--body-file ${how} a file that is not .md or .txt; a ticket note is a plain text file`;
+  const folders = path.resolve(file).split(/[/\\]+/).slice(0, -1);
+  if (folders.some((name) => REFUSED_NOTE_FOLDERS.has(name.toLowerCase()))) return `--body-file ${how} a file inside a key or settings folder (.ssh, .aws, .config, .gnupg or .claude); a ticket note does not live there`;
+  return null;
+}
 
 // CRLF to LF, trailing spaces removed from each line, trailing newlines removed.
 function normaliseBody(text) {
@@ -147,12 +178,14 @@ function noteDigest(text) {
 
 function readNote(file) {
   if (typeof file !== 'string' || !file || /[\u0000-\u001f\u007f]/.test(file)) throw new RefusedError('--body-file must be a file path');
-  if (REFUSED_NOTE_FILES.test(path.basename(file))) throw new RefusedError('--body-file names an environment or key file; a ticket note is a plain text file');
+  const named = refusedNotePath(file, 'names');
+  if (named) throw new RefusedError(named);
   let text;
   try {
-    // A link is judged by the file it points to, so a note.md that links to an
-    // environment or key file is refused too, before a byte of it is read.
-    if (REFUSED_NOTE_FILES.test(path.basename(fs.realpathSync(file)))) throw new RefusedError('--body-file points to an environment or key file; a ticket note is a plain text file');
+    // A link is judged by the file it points to as well, so a note.md that links to a
+    // key file, or into a key folder, is refused before a byte of it is read.
+    const target = refusedNotePath(fs.realpathSync(file), 'points to');
+    if (target) throw new RefusedError(target);
     const stat = fs.statSync(file);
     if (!stat.isFile()) throw new RefusedError('--body-file is not a regular file');
     if (stat.size > NOTE_MAX_BYTES) throw new RefusedError(`--body-file is larger than ${NOTE_MAX_BYTES} bytes; a ticket note is shorter`);
@@ -164,6 +197,8 @@ function readNote(file) {
   if (text.includes('\u0000')) throw new RefusedError('--body-file is not a text file');
   const body = normaliseBody(text);
   if (!body.trim()) throw new RefusedError('the note is empty');
+  const line = blockedNoteLine(body);
+  if (line) throw new RefusedError(`line ${line} of the note matches a pattern the commit scanner blocks (a secret, a credential, a real email address, a phone number or a privileged host path); the note is not printed. Remove it and say where the secret is kept instead`);
   return body;
 }
 

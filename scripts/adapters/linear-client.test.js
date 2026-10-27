@@ -45,9 +45,11 @@
 //    removed, a not-before time (ISO 8601 UTC, 10 minutes before now), the HUMAN-RUN
 //    posting steps (open the issue, paste the note in the comment box, post it) and
 //    the exact verify-comment line. note --execute is refused (Aegis never posts).
-//    A body file that is named, or links to, an environment or key file is refused
-//    and never printed. The digest and not-before that note prints are the ones
-//    verify-comment accepts.
+//    A body file is read only when its name, and the name of the file it links to,
+//    ends in .md or .txt and no folder on either path is .ssh, .aws, .config, .gnupg
+//    or .claude; a body with a line the commit scanner blocks (a private key block, a
+//    token, a real email address) is refused too. A refused file is never printed.
+//    The digest and not-before that note prints are the ones verify-comment accepts.
 // 7. verify-* print JSON with verified, observed and expected values, and exit 0 when
 //    the read proves the human's write and 2 when it does not: verify-comment (a
 //    comment on that issue, created at or after --not-before, whose normalised body
@@ -431,6 +433,61 @@ test('note is offline: it prints the exact body, its SHA-256 over the normalised
     assert.ok(!(r.stdout + r.stderr).includes('MARKER-NOT-A-NOTE'), `${JSON.stringify(argv)}: a refused file is never printed`);
   }
   assert.deepEqual(linearReads(reads), []);
+});
+
+test('note and digest read only a .md or .txt note outside key and settings folders, and refuse a body the commit scanner blocks; a refused file is never printed', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-linear-guard-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const MARKER = 'MARKER-NOT-A-NOTE';
+  // Secret shapes are built at run time, so none sits in this source for the scanner.
+  const keyBlock = ['-----BEGIN', 'OPENSSH', 'PRIVATE', 'KEY-----'].join(' ');
+  const email = ['someone', 'mail-host.org'].join('@');
+  const bearer = ['Authorization:', 'Bearer', 'Z'.repeat(32)].join(' ');
+  const write = (rel, text) => { const file = path.join(dir, rel); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); return file; };
+
+  // Files no note may be read from: by name, by folder, by the file a link points to.
+  const sshKey = write('id_ed25519', `${keyBlock}\n${MARKER}\n`);
+  const awsCredentials = write('credentials', `[default]\naws_access_key_id = ${MARKER}\n`);
+  const jsonKey = write('service-key.json', `{ "key": "${MARKER}" }\n`);
+  const inSsh = write(path.join('.ssh', 'notes.md'), `${MARKER}\n`);
+  const inAws = write(path.join('.aws', 'notes.txt'), `${MARKER}\n`);
+  const inConfig = write(path.join('.config', 'tool', 'note.txt'), `${MARKER}\n`);
+  const inGnupg = write(path.join('.gnupg', 'note.md'), `${MARKER}\n`);
+  const inClaude = write(path.join('.claude', 'note.md'), `${MARKER}\n`);
+  const keyLink = path.join(dir, 'key-link.md');
+  fs.symlinkSync(sshKey, keyLink);
+  const folderLink = path.join(dir, 'folder-link.md');
+  fs.symlinkSync(inSsh, folderLink);
+  // .md files whose body carries a line the commit scanner blocks.
+  const keyBody = write('pasted-key.md', `Rotated the key.\n${keyBlock}\n${MARKER}\n`);
+  const emailBody = write('email-body.md', `Reply sent to ${email} about ${MARKER}.\n`);
+  const bearerBody = write('header-body.txt', `${MARKER}\n${bearer}\n`);
+
+  const refused = [sshKey, awsCredentials, jsonKey, inSsh, inAws, inConfig, inGnupg, inClaude, keyLink, folderLink, keyBody, emailBody, bearerBody];
+  for (const file of refused) {
+    for (const argv of [['note', '--issue', ISSUE, '--body-file', file], ['digest', '--body-file', file]]) {
+      const { env, reads } = recordingEnv();
+      const r = await cli(argv, { env });
+      const label = `${argv[0]} ${path.relative(dir, file)}`;
+      assert.equal(r.code, 1, `${label}: ${r.stdout}${r.stderr}`);
+      assert.match(r.stderr, /REFUSED/, label);
+      assert.equal(r.transport.calls.length, 0, label);
+      assert.deepEqual(linearReads(reads), [], label);
+      const all = r.stdout + r.stderr;
+      assert.ok(!all.includes(MARKER), `${label}: a refused file is never printed`);
+      assert.ok(!all.includes('PRIVATE KEY') && !all.includes(email) && !all.includes('Z'.repeat(32)), `${label}: no secret text is echoed`);
+    }
+  }
+  const named = await cli(['note', '--issue', ISSUE, '--body-file', keyBody]);
+  assert.match(named.stderr, /line 2 of the note/, 'the refusal names the line, not its text');
+
+  // Controls: a plain .txt note, a note with a tab, and the canonical placeholders are printed.
+  const plain = write('note.txt', 'Printer driver reinstalled.\tTest page printed.\nContact [USER@DOMAIN.COM] or [PHONE_NUMBER] if it fails again.\n');
+  const ok = await cli(['note', '--issue', ISSUE, '--body-file', plain]);
+  assert.equal(ok.code, 0, ok.stderr);
+  assert.ok(ok.stdout.includes('Contact [USER@DOMAIN.COM] or [PHONE_NUMBER] if it fails again.'));
+  const upper = write('NOTE.MD', 'Toner replaced.\n');
+  assert.equal((await cli(['digest', '--body-file', upper])).code, 0, 'the extension is matched without regard to case');
 });
 
 test('verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2)', async () => {

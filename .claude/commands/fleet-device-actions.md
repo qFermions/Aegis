@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet's search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host's display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet's search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host's display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item's ID: an MDM command's UUID, or a queued script's execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.
 
 ## ⚠️ Admin / safety gate
 
@@ -253,21 +253,27 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 
 ## Phase G: Cancel a pending action (the rollback window)
 
-**Purpose**: stop a lock, wipe or script that is still queued. This window closes the moment the device fetches the command.
+**Purpose**: stop one named lock, wipe or script that is still queued. This window closes the moment the device fetches the command.
 
 **Role needed:** Maintainer or Admin (global, or on `[FLEET_NAME]`); through the API, a global Admin, Maintainer or GitOps user (Observers and Technicians get 403).
 
-<!-- SAFETY GATE [fleet-device-actions-cancel-portal] -->
-- **Target:** [HOST_ID]
-- **Effect:** stop one queued action on one host before the host fetches it
-- **Scope:** one entry under Upcoming: a macOS lock, an iPhone or iPad Lost Mode command, a Windows or Linux lock script, a Mac, iPhone or iPad wipe, the Linux wipe script, or a queued script; an Android lock, a Windows wipe and an Android wipe cannot be cancelled
-- **Reversibility:** R1: send the action again under its own gate; if an Apple device already fetched the command, the cancel is not honoured and the device still locks or wipes
-- **Required confirmation:** Type exactly `STOP PENDING ACTION ON HOST [HOST_ID]`.
-- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-device-actions-cancel-portal]:** Only after the exact match:
-1. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming → **Cancel** on the queued item.
+Before the gate, name the one item. A host can hold several queued items (a wipe and a script, say), so read Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming and write in the ticket the item to cancel (`[PENDING_ACTION]`) and its ID (`[PENDING_ACTION_ID]`):
 
-**Read-back:** Upcoming no longer lists the item; `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows canceled_mdm_command or canceled_run_script; `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` shows `mdm.pending_action` empty; `commands --host-identifier [SERIAL_NUMBER] --command-status pending` no longer lists the command.
+1. A lock, Lost Mode or wipe sent to a Mac, iPhone or iPad is an MDM command: `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute` lists each pending command with its request type (DeviceLock, EnableLostMode, EraseDevice) and its command UUID, which is `[PENDING_ACTION_ID]`.
+2. A queued script (a saved script, a Windows or Linux lock script, the Linux wipe script) is identified by its execution ID. Fleet's upcoming-activities read (`GET /api/v1/fleet/hosts/:id/activities/upcoming`) returns it, but the adapter does not read upcoming activities, and the sources read do not say where the console shows it (unverified).
+3. Two items you cannot tell apart, or an ID you cannot read: stop and hand the ticket to a Fleet Admin who can read the host's upcoming activities, rather than cancel the wrong item.
+
+<!-- SAFETY GATE [fleet-device-actions-cancel-portal] -->
+- **Target:** [PENDING_ACTION] ([PENDING_ACTION_ID]) queued for [HOST_ID]
+- **Effect:** stop one queued action, [PENDING_ACTION], on one host before the host fetches it
+- **Scope:** exactly the one entry under Upcoming that `[PENDING_ACTION_ID]` names; other queued items stay queued; it can be a macOS lock, an iPhone or iPad Lost Mode command, a Windows or Linux lock script, a Mac, iPhone or iPad wipe, the Linux wipe script, or a queued script; an Android lock, a Windows wipe and an Android wipe cannot be cancelled
+- **Reversibility:** R1: send the action again under its own gate; if an Apple device already fetched the command, the cancel is not honoured and the device still locks or wipes
+- **Required confirmation:** Type exactly `STOP PENDING [PENDING_ACTION] [PENDING_ACTION_ID] ON HOST [HOST_ID]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [fleet-device-actions-cancel-portal]:** Only after the item and its ID are written in the ticket and the exact match:
+1. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming → **Cancel** on `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`) only.
+
+**Read-back:** Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), and every other item it listed before is still there. For an MDM command, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute` no longer lists `[PENDING_ACTION_ID]`, and `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows canceled_mdm_command. For a script, the same `host-activities` read shows canceled_run_script. When the cancelled item was the host's only lock or wipe, `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` shows `mdm.pending_action` empty.
 
 <details>
 <summary>fleetctl: the scale version for lock and one script (HUMAN-RUN; wipe, Turn off MDM and delete stay console-only here)</summary>
@@ -349,7 +355,7 @@ node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID
 - [ ] Wipe: Host details shows Wiped (Linux: the wipe script result and activity are in the ticket); `verify-wipe` passed (Mac, iPhone, iPad, Windows), or `mdm.device_status` `wiped` plus wiped_host (Android), or the wipe script's exit code 0 plus wiped_host (Linux); the record still exists.
 - [ ] Script: `verify-script` passed for `[EXECUTION_ID]` (and for every checked host in a batch, or the failures are listed).
 - [ ] Turn off MDM: `verify-mdm-off` passed (Mac), or mdm_unenrolled plus enrollment Off (iPhone, iPad, Android). Delete: `verify-deleted` passed for `[SERIAL_NUMBER]` after `[NOT_BEFORE]`.
-- [ ] Cancel: Upcoming no longer lists the item and the cancellation activity names the admin.
+- [ ] Cancel: Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), the other queued items are still there, and the cancellation activity names the admin.
 
 ## 📝 Linear-ready note
 

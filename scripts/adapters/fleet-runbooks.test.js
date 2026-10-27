@@ -98,6 +98,23 @@ test('each lock, wipe and Turn off MDM read-back names a proof that can pass on 
   assert.match(checklist, /mdm_unenrolled plus enrollment Off \(iPhone, iPad, Android\)/);
 });
 
+test('the cancel gate names the one queued item it stops, in its target, its phrase and its read-back (SR-2: name the object)', () => {
+  const cancel = gate(DEVICE, 'fleet-device-actions-cancel-portal');
+  assert.match(cancel.field('Target'), /\[PENDING_ACTION\] \(\[PENDING_ACTION_ID\]\) queued for \[HOST_ID\]/);
+  assert.equal(cancel.phrase, 'STOP PENDING [PENDING_ACTION] [PENDING_ACTION_ID] ON HOST [HOST_ID]');
+  assert.match(cancel.field('Scope'), /exactly the one entry under Upcoming that `\[PENDING_ACTION_ID\]` names; other queued items stay queued/);
+  assert.match(cancel.portal, /the item and its ID are written in the ticket/);
+  assert.match(cancel.region, /\*\*Cancel\*\* on `\[PENDING_ACTION\]` \(`\[PENDING_ACTION_ID\]`\) only\./);
+  assert.match(cancel.region, /\*\*Read-back:\*\* Upcoming no longer lists `\[PENDING_ACTION\]` \(`\[PENDING_ACTION_ID\]`\), and every other item it listed before is still there/);
+  assert.match(cancel.region, /--command-status pending --execute` no longer lists `\[PENDING_ACTION_ID\]`/);
+  const phaseG = section(DEVICE, 'Phase G');
+  assert.match(phaseG, /lists each pending command with its request type \(DeviceLock, EnableLostMode, EraseDevice\) and its command UUID/, 'where the operator reads an MDM command ID');
+  assert.match(phaseG, /Two items you cannot tell apart, or an ID you cannot read: stop/, 'the stop when the item cannot be named');
+  const placeholders = DEVICE.split('\n').find((l) => l.startsWith('**Placeholders:**'));
+  assert.match(placeholders, /`\[PENDING_ACTION\]` \(the one queued item to cancel/);
+  assert.match(placeholders, /`\[PENDING_ACTION_ID\]` \(that item's ID/);
+});
+
 test('the role check reads the operator\'s own role in Fleet; `me` only confirms the adapter token is an Observer', () => {
   for (const [name, text] of [['fleet-policy-failures', POLICY], ['fleet-osquery-investigation', OSQUERY], ['fleet-vulnerable-software', VULN]]) {
     const line = text.split('\n').find((l) => /\*\*Your role \(R0\):\*\*/.test(l)) || '';

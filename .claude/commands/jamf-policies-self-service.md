@@ -166,7 +166,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 
 1. Phase A's pre-state (general settings and scope) is in the ticket.
 2. Count the Macs the policy will reach after the change: each target group with `/jamf-inventory-groups` Phase C step 1.
-3. Classify: R2 when the change narrows what runs (fewer triggers, a lower frequency, a smaller scope) or reaches 10 Macs or fewer; R3 when it widens an automatic trigger beyond 10 Macs or sets Ongoing with Recurring Check-in on more than 10 Macs, which needs the independent review first.
+3. Classify: R2 when the change narrows what runs (fewer triggers, a lower frequency, a smaller scope) or reaches 10 Macs or fewer; R3 when it widens an automatic trigger beyond 10 Macs, sets Ongoing with Recurring Check-in on more than 10 Macs, or takes a target group of more than 10 Macs out of scope to retire that group (`/jamf-inventory-groups` Phase E), which needs the independent review first.
 4. **Stop if** the change sets Ongoing with Recurring Check-in on a policy that installs a package or runs a script: it would run at every check-in on every Mac in scope.
 
 **Role needed:** a Jamf Pro account with the Administrator privilege set, or a Custom privilege set with read and update for policies plus read for computer groups (privilege names not confirmed on an opened page).

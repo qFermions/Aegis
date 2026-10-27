@@ -105,3 +105,45 @@ test('every policy read-back proves a property, never mere existence: no trigger
   assert.match(change, /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once every day" --enabled true --execute/);
   assert.match(section(FILEVAULT, 'Phase D'), /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once per computer" --enabled true --execute/, 'the new-key policy read-back proves its trigger and frequency');
 });
+
+test('a stage that can reach more than 10 Macs carries R3 ceremony: the App Installers rollout, and a large group leaving a profile\'s Targets', () => {
+  // App Installers: a pilot gate bounded at 10 Macs, then an R3 rollout gate after review
+  const pilot = gate(PATCH, 'jamf-patch-management-app-installer-portal');
+  assert.match(pilot.field('Reversibility'), /^R2\b/);
+  assert.match(pilot.field('Scope'), /10 or fewer/);
+  assert.doesNotMatch(pilot.field('Scope'), /\bR3\b|above that/, 'the R2 gate no longer admits more than 10 Macs');
+  assert.match(pilot.portal, /`\[MEMBER_COUNT\]` is 10 or fewer/);
+  assert.match(section(PATCH, 'Phase F'), /\*\*Stop if\*\* `\[MEMBER_COUNT\]` is more than 10: a pilot above 10 Macs is the rollout stage/);
+  const rollout = gate(PATCH, 'jamf-patch-management-app-installer-rollout-portal');
+  assert.match(rollout.field('Reversibility'), /^R3\b/);
+  assert.match(rollout.field('Scope'), /more than 10 Macs or all computers/);
+  assert.match(rollout.portal, /Only after the pilot read-back, the pre-state, the independent review, `verify-group-count` on the rollout group and the exact match/);
+  assert.notEqual(pilot.phrase, rollout.phrase, 'one phrase never carries into the next stage');
+  assert.match(PATCH, /^## Phase F: .*\(R2 pilot, R3 rollout after independent review\)$/m);
+  assert.match(PATCH, /Phase F, the pilot deployment \(R2 gate\)\..*then the rollout \(R3 gate, after review\)/, 'the fast path names both stages');
+  assert.doesNotMatch(PATCH, /Phase F \(R2 gate\)/);
+
+  // Profiles: a group leaves Targets through a gate whose Scope matches its size
+  const phaseG = section(PROFILES, 'Phase G');
+  const order = [...phaseG.matchAll(/<!-- SAFETY GATE \[([a-z0-9-]+)\] -->/g)].map((m) => m[1]);
+  assert.deepEqual(order, ['jamf-config-profiles-remove-pilot-portal', 'jamf-config-profiles-remove-all-computers-portal', 'jamf-config-profiles-remove-group-portal'], 'first, second and third gate as the other runbooks name them');
+  const small = gate(PROFILES, 'jamf-config-profiles-remove-pilot-portal');
+  assert.match(small.field('Reversibility'), /^R2\b/);
+  assert.match(small.field('Scope'), /10 or fewer/);
+  assert.match(small.portal, /`verify-group-count` reads `\[MEMBER_COUNT\]` of 10 or fewer/);
+  const large = gate(PROFILES, 'jamf-config-profiles-remove-group-portal');
+  assert.match(large.field('Reversibility'), /^R3\b/);
+  assert.match(large.field('Scope'), /more than 10 Macs/);
+  assert.match(large.portal, /the profile's current scope is in the ticket with this gate named as its way back, the independent out-of-session review/);
+  assert.match(large.phrase, /OF \[MEMBER_COUNT\] MACS FROM PROFILE \[PROFILE_NAME\] SCOPE AFTER REVIEW$/);
+  assert.match(phaseG, /\*\*Stop if\*\* `\[MEMBER_COUNT\]` is more than 10/);
+  assert.match(phaseG, /PREVIEW ONLY \[jamf-config-profiles-limitation-exclusion-preview\]/, 'taking a group out of Limitations or Exclusions widens the scope and is not authorized');
+
+  // Inventory groups: the count picks the gate; Limitations and Exclusions are preview only
+  const retire = section(GROUPS, 'Phase E');
+  assert.match(retire, /group of 10 Macs or fewer: `\/jamf-config-profiles` Phase G's first gate \(R2\)/);
+  assert.match(retire, /group of more than 10 Macs: the R3 path, the independent review first, then `\/jamf-config-profiles` Phase G's third gate, whose Scope is a group of more than 10 Macs/);
+  assert.match(retire, /PREVIEW ONLY \[jamf-inventory-groups-limitation-exclusion-preview\]/);
+  assert.doesNotMatch(retire, /a target is taken out with `\/jamf-config-profiles` Phase G for a profile/);
+  assert.match(section(POLICIES, 'Phase D'), /takes a target group of more than 10 Macs out of scope to retire that group/);
+});

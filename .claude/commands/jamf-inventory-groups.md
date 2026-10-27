@@ -252,10 +252,16 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 **Purpose**: retire a group without silently widening or narrowing any scope.
 
 1. Pre-state: the group's criteria and members from Phase C step 1 are in the ticket. A group rebuilt later gets a new ID and is attached to no scope.
-2. Every use from Phase C step 2 is removed first, one reviewed change at a time, and read back: a target is taken out with `/jamf-config-profiles` Phase G for a profile or `/jamf-policies-self-service` Phase D for a policy. An exclusion is the dangerous kind: it protects Macs, so taking it away installs the profile or runs the policy on them; replace it before removing it, as its own reviewed change.
+2. Every use from Phase C step 2 is removed first, one reviewed change at a time, and read back. Count the group first (`verify-group-count`, R0); the count picks the gate:
+   - A profile's Targets, group of 10 Macs or fewer: `/jamf-config-profiles` Phase G's first gate (R2).
+   - A profile's Targets, group of more than 10 Macs: the R3 path, the independent review first, then `/jamf-config-profiles` Phase G's third gate, whose Scope is a group of more than 10 Macs.
+   - A policy's Targets: `/jamf-policies-self-service` Phase D's change gate, with the review first when the group holds more than 10 Macs (R3 there too).
+   - A Limitation or an Exclusion: taking it away widens the scope, so the profile installs or the policy runs on the Macs it held back; an exclusion often protects Macs on purpose. Neither runbook authorizes it (PREVIEW ONLY below).
 3. What Jamf Pro does with a profile or policy whose scope still names a deleted group is not in the sources read. This runbook takes the safer reading: deleting changes those scopes at once, so the delete waits until no use remains.
 4. Independent out-of-session review: the reviewer gets the pre-state, the list of uses and their removal read-backs, never this conversation's reasoning.
 5. **Stop if** any use remains, the owner has not agreed, or the review is missing.
+
+> **PREVIEW ONLY [jamf-inventory-groups-limitation-exclusion-preview]:** Planning only: taking `[SMART_GROUP]` out of a profile's or a policy's Limitations or Exclusions is not authorized here, and neither is emptying it while it sits there. Both put Macs back in scope, so the profile installs or the policy runs on them at their next check-in. Count the Macs it would add, replace the protection first if it is still needed, and carry it out as a separately reviewed change (R3 above 10 Macs); the delete waits until it is done.
 
 **Role needed:** a Jamf Pro account with the Administrator privilege set, or a Custom privilege set with delete for smart computer groups (privilege name not confirmed on an opened page); the reviewer needs only the Auditor privilege set.
 

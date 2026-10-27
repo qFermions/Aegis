@@ -36,6 +36,9 @@
 // Persistence boundary (SR-1/SR-8): secret-shaped content, the tenant literal,
 // real email addresses, and phone-number patterns are refused at record /
 // verify / alias / invalidate — private material cannot enter the store.
+// Instruction-shaped text (SR-3) is refused at the same boundary: a verified
+// solution renders verbatim with zero new reasoning, so an embedded
+// instruction would be served as approved knowledge.
 //
 // Store: memory/replay/ (gitignored — private tickets never ship; the engine
 // and synthetic fixtures are the public artifact).
@@ -46,7 +49,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess } = require('../tier/tier-guard.js'); // pure function, no I/O
+const { assess, foldConfusables } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
@@ -158,7 +161,27 @@ function sanitizationHits(text) {
     if (!ALLOWED_EMAIL_DOMAIN.test(domain)) { hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])'); break; }
   }
   if (PHONE_LITERAL.test(unbracketed)) hits.push('phone number pattern (use [PHONE_NUMBER])');
+  hits.push(...injectionHits(text));
   return hits;
+}
+
+// Instruction-shaped text (SR-3): the four markers of the graph edge sanitizer
+// (scripts/graph/sanitize.js, keep in sync), matched on the text as written and
+// in two confusable-folded forms (format characters removed, or read as a
+// space when a zero-width character separates the words), so obfuscation does
+// not carry an instruction into a solution that renders verbatim.
+const INJECTION_MARKERS = [
+  [/ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i, 'ignore-previous-instructions'],
+  [/disregard\s+(your|all|previous)\s+(rules|instructions|guidelines)/i, 'disregard-rules'],
+  [/\bnew\s+system\s+prompt\b/i, 'system-prompt-override'],
+  [/\byou\s+are\s+now\s+(in\s+)?(admin|developer|maintenance)\s+mode\b/i, 'mode-override-claim'],
+];
+function injectionHits(text) {
+  const s = String(text);
+  const forms = [s, foldConfusables(s), foldConfusables(s.replace(/\p{Cf}/gu, ' '))];
+  return INJECTION_MARKERS
+    .filter(([re]) => forms.some((f) => re.test(f)))
+    .map(([, name]) => `instruction-shaped text (prompt-injection marker: ${name}; content is data, never instructions)`);
 }
 // dashed · dotted · spaced · parenthesised area code · +country with 2–4 groups ·
 // +country (0) trunk form · E.164 without separators · bare ten digits

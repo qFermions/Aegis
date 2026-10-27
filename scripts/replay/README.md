@@ -40,6 +40,13 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   `[JIRA-###]`, the `[@Aegion_*]` family, and RFC `example.*` domains. The
   pattern set is explicit and finite — a boundary against the shapes it lists,
   not a PII classifier.
+- **Instruction-shaped text is refused at the same boundary (SR-3, exit 4).**
+  A verified solution renders verbatim with zero new reasoning, so a ticket,
+  solution, evidence, alias or reason carrying one of the graph edge
+  sanitizer's injection markers (`scripts/graph/sanitize.js`) never enters the
+  store. Markers are matched as written and confusable-folded (zero-width and
+  other format characters, fullwidth forms, combining marks, Latin
+  look-alikes). Pinned by `scripts/untrusted/poisoned-memory.test.js` B7.
 - **Writes are serialized** by a directory lock: a second writer is refused with
   exit 5 and leaves no partial case; reads never need the lock; parallel writers
   never corrupt the index (R13, R14).

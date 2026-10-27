@@ -82,6 +82,12 @@ const ESCALATION_PATTERNS = [
   { pattern: /\b(?:bulk|mass)\b[^.]*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b[^.]*(?:\b(?:all|every)\b[^.]*\b(?:issues?|tickets?|requests?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
   { pattern: /\b(?:suspend|deactivate|remove|kick)\w*\b[^.]*\bmembers?\b/i, label: 'workspace member suspension or removal (SR-2)' },
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|switch(?:es|ed|ing)?\s*off|relax\w*|remove[sd]?|removing|bypass\w*|unenforce\w*)\b[^.]*\b(?:saml|scim|sso|single sign-on|login methods?|sign-in methods?|authentication methods?)\b/i, label: 'SSO / SCIM / sign-in method change (security control, SR-2)' },
+  // G2 — Slack
+  { pattern: /\b(?:delete[sd]?|deleting|purge[sd]?|purging)\b[^.]*\b(?:messages?|files?|channels?|conversations?|dms?|direct messages|threads?|chat history)\b/i, label: 'Slack message / file / channel deletion (SR-2)' },
+  { pattern: /\bexport\w*\b[^.]*\b(?:messages|dms|direct messages|private channels|conversations|chat history|workspace data)\b/i, label: 'message or workspace data export (disclosure, SR-2 class)' },
+  { pattern: /\breset\w*\b[^.]*\bsessions?\b|\bsign(?:s|ed|ing)?\s*out\b[^.]*\bsessions?\b/i, label: 'session reset / sign-out (SR-2 session class)' },
+  { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b[^.]*\bretention\b/i, label: 'retention change (records preservation)' },
+  { pattern: /\bdisconnect\w*\b[^.]*\b(?:slack connect|organi[sz]ations?|external (?:orgs?|organi[sz]ations?|channels?|workspaces?))\b/i, label: 'Slack Connect disconnection (R3)' },
   // Mass / broad blast radius — numbers, "all", org-wide phrasing
   { pattern: /\b(all|every|entire|org[- ]?wide|company[- ]?wide|tenant[- ]?wide|domain[- ]?wide)\b[^.]*\b(user|users|staff|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|workstation)/i, label: 'org-wide / all-objects operation (mass)' },
   { pattern: /\b(1[1-9]|[2-9]\d|\d{3,})\s*(\+\s*)?(user|users|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|member|members|staff|contractor|contractors|people)\b/i, label: 'mass operation (>10 objects)' },

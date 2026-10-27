@@ -69,6 +69,10 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|decrypt\w*|remove[sd]?|removing|deactivate[sd]?|deactivating)\b.*\b(?:filevault|disk encryption)\b/i, label: 'FileVault / disk-encryption turned off' },
   { pattern: /\b(?:delete|remove)\b.*\b(?:computer|mobile device) records?\b/i, label: 'computer or mobile-device record deletion' },
   { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|deploy|push|update|upgrade|scope|redeploy|enable|disable|run)\w*\b.*(?:\b(?:all|every|entire)\b.*\b(?:computers?|macs?|macbooks?|mobile devices?|endpoints?|ipads?|iphones?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:computers|macs|macbooks|mobile devices|endpoints|ipads|iphones)\b)/i, label: 'fleet-wide computer or Mac operation (mass)' },
+  { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|open(?:s|ed|ing)?(?:\s+up)?|permit(?:s|ted|ting)?)\b.*\b(?:external sharing|sharing outside|share\w*\s+(?:externally|outside)|outside (?:the )?(?:domain|organi[sz]ation|company)|public links?|anyone with the link)/i, label: 'external sharing opened (data exposure)' },
+  { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|permit(?:s|ted|ting)?)\b.*\bauto(?:matic)?[- ]?forward/i, label: 'Gmail automatic forwarding allowed' },
+  { pattern: /\b(?:remove[sd]?|removing|revok(?:e|es|ed|ing)|unassign\w*|demot\w*|strip\w*)\b.*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:roles?|rights|privileges?|access))/i, label: 'admin-role removal' },
+  { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|trust(?:s|ed|ing)?)\b.*\b(?:less secure apps?|legacy (?:access|auth\w*|protocols?)|unconfigured third-party apps|all third-party apps|unrestricted (?:api|app) access)/i, label: 'legacy or third-party app access opened' },
 ];
 const SR2_MASS_THRESHOLD = 10; // > 10 objects = mass operation (SR-2)
 

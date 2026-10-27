@@ -142,7 +142,7 @@ function sanitizationHits(text) {
   const patterns = [
     [/ghp_[A-Za-z0-9]{20,}/, 'GitHub token'],
     [/github_pat_[A-Za-z0-9_]{20,}/, 'GitHub fine-grained token'],
-    [/sk-[A-Za-z0-9-]{20,}/, 'API secret key'],
+    [/\bsk-[A-Za-z0-9_-]{20,}/, 'API secret key'], // word boundary as in sanitize.js: "disk-cleanup-..." is prose
     [/AKIA[0-9A-Z]{16}/, 'AWS access key'],
     [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, 'private key material'],
     [/\beyJ[A-Za-z0-9_-]{15,}\.eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{10,}\b/, 'JWT'],

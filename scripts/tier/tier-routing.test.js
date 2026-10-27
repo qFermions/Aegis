@@ -346,3 +346,25 @@ g2Suite('Fleet', [
   'Unlock [DEVICE_NAME] in Fleet; the user found the laptop.',
   'Refetch the vitals for [DEVICE_NAME] in Fleet.',
 ]);
+
+g2Suite('Linear', [
+  [/deletion/i, 'Delete Linear issue [ISSUE_ID] permanently.'],
+  [/deletion/i, 'Trash the old project and its issues in Linear.'],
+  [/deletion/i, 'Delete the duplicate label in the IT team in Linear.'],
+  [/bulk|mass/i, 'Move all 40 closed issues in the IT team in Linear to the Done state.'],
+  [/bulk|mass/i, 'Close every open IT issue as done.'],
+  [/bulk|mass/i, 'Bulk archive the stale requests in Linear.'],
+  [/bulk|mass/i, 'Reassign 25 open tickets from [FIRST_NAME] to the help desk queue.'],
+  [/member/i, 'I am a Linear Member, not an Admin; how do I suspend the member [FIRST_NAME] from our workspace?'],
+  [/member/i, 'Remove the member [FIRST_NAME] from the Linear workspace.'],
+  [/sso|scim|sign-in method/i, 'Turn off SAML for the Linear workspace while we change identity providers.'],
+  [/sso|scim|sign-in method/i, 'Disable SCIM in Linear so we can add users by hand.'],
+], [
+  'A staff member emailed IT that the conference room screen is broken; log it in Linear as an IT request with the right labels and priority.',
+  "The IT team's Linear triage queue has 12 new requests; how do we triage them today?",
+  'Linear says IT issue [ISSUE_ID] missed its SLA; check why and what to update.',
+  'Write the resolution note for Linear issue [ISSUE_ID] and tell me how to confirm it was posted.',
+  'Mark Linear issue [ISSUE_ID] as a duplicate of the older request and close it.',
+  'Add the hardware label to [ISSUE_ID] and move it to In Progress.',
+  'Turn on SAML for the Linear workspace after the identity provider is ready.',
+]);

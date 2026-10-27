@@ -55,7 +55,9 @@
 //    spellings of --execute are refused (exit 1).
 // 8. verify-* print JSON with verified, observed and expected, and exit 0 when the
 //    read proves the human's write and 2 when it does not: verify-suspended
-//    (suspended is true), verify-2sv-enforced (isEnforcedIn2Sv is true), verify-ou
+//    (suspended is true), verify-2sv-enforced (isEnforcedIn2Sv is true),
+//    verify-2sv-not-enforced (isEnforcedIn2Sv is exactly false, on a read that
+//    succeeded: a 403, a 404, a timeout or a missing field is never proof), verify-ou
 //    (orgUnitPath is exactly the path given), verify-admin-role-removed (the user
 //    record is the user asked for and no direct assignment of the role ID is listed,
 //    on a list with no further page) and verify-event (an event of that name in that
@@ -244,6 +246,7 @@ const EVENT_PATH = `/admin/reports/v1/activity/users/${once(USER)}/applications/
 const VERIFIES = [
   { argv: ['verify-suspended', '--user', USER], paths: [USER_PATH], bodies: [userRecord({ suspended: true, suspensionReason: 'ADMIN' })] },
   { argv: ['verify-2sv-enforced', '--user', USER], paths: [USER_PATH], bodies: [userRecord()] },
+  { argv: ['verify-2sv-not-enforced', '--user', USER], paths: [USER_PATH], bodies: [userRecord({ isEnforcedIn2Sv: false })] },
   { argv: ['verify-ou', '--user', USER, '--ou', '/Staff'], paths: [USER_PATH], bodies: [userRecord()] },
   { argv: ['verify-admin-role-removed', '--user', USER, '--role-id', ROLE], paths: [USER_PATH, ASSIGNMENTS_PATH], bodies: [userRecord(), assignmentsList([])] },
   { argv: ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', USER, '--not-before', NOT_BEFORE], paths: [EVENT_PATH], bodies: [activitiesList([activity()])] },
@@ -603,6 +606,40 @@ test('verify-suspended, verify-2sv-enforced and verify-ou: verified true exits 0
   assertNoSecrets(self.stdout + self.stderr, 'verify on the admin subject');
 });
 
+test('verify-2sv-not-enforced: exit 0 only on a successful read of the named user whose isEnforcedIn2Sv is exactly false; a failed read, a missing field or another user is never proof', async () => {
+  const proven = await cli(['verify-2sv-not-enforced', '--user', USER, '--execute'], { replies: [tokenReply(), ok(userRecord({ isEnforcedIn2Sv: false, isEnrolledIn2Sv: false }))] });
+  assert.equal(proven.code, 0, proven.stdout);
+  const yes = firstJson(proven.stdout);
+  assert.equal(yes.state, STATES.OK);
+  assert.equal(yes.verified, true);
+  assert.deepEqual(yes.expected, { user: USER, isEnforcedIn2Sv: false });
+  assert.equal(yes.observed.isEnforcedIn2Sv, false);
+  assert.equal(yes.observed.isEnrolledIn2Sv, false);
+  assert.equal(proven.transport.calls[1].path, USER_PATH);
+
+  const notProof = [
+    ['the user is enforced', [tokenReply(), ok(userRecord({ isEnforcedIn2Sv: true }))]],
+    ['the field is missing', [tokenReply(), ok(userRecord({ isEnforcedIn2Sv: undefined }))]],
+    ['the field is not a boolean', [tokenReply(), ok(userRecord({ isEnforcedIn2Sv: 'false' }))]],
+    ['the record is another user', [tokenReply(), ok(userRecord({ isEnforcedIn2Sv: false, primaryEmail: OTHER_USER }))]],
+    ['403: the service account lacks delegation', [tokenReply(), { status: 403, body: { error: { code: 403, message: 'Not Authorized to access this resource/api' } } }]],
+    ['404: no such user', [tokenReply(), { status: 404, body: {} }]],
+    ['the read times out or the network fails', [tokenReply(), new Error('socket hang up'), new Error('socket hang up'), new Error('socket hang up')]],
+    ['the token exchange fails', [{ status: 400, body: { error: 'invalid_grant' } }]],
+  ];
+  for (const [label, replies] of notProof) {
+    const res = await cli(['verify-2sv-not-enforced', '--user', USER, '--execute'], { replies });
+    assert.equal(res.code, 2, `${label}: ${res.stdout}${res.stderr}`);
+    const printed = firstJson(res.stdout + res.stderr);
+    assert.notEqual(printed.verified, true, `${label}: never verified`);
+  }
+  // The same failed read exits 2 under verify-2sv-enforced too, which is why exit 2 there
+  // is never read as "not enforced".
+  const forbidden = await cli(['verify-2sv-enforced', '--user', USER, '--execute'], { replies: [tokenReply(), { status: 403, body: {} }] });
+  assert.equal(forbidden.code, 2);
+  assert.notEqual(firstJson(forbidden.stdout + forbidden.stderr).state, STATES.OK, 'a 403 is a failed read, not a verdict');
+});
+
 test('verify-admin-role-removed: reads the user, then its role assignments; proof only when no direct assignment of the role is listed and no page follows', async () => {
   const run = (records) => cli(['verify-admin-role-removed', '--user', USER, '--role-id', ROLE, '--execute'], { replies: [tokenReply(), ...records.map(ok)] });
   const removed = await run([userRecord(), assignmentsList([OTHER_ROLE])]);
@@ -770,6 +807,8 @@ test('bad input is refused with exit 1 before anything is read or sent', async (
     ['usage', '--date', '2026-10-25'],
     ['usage', '--date', '2026-10-25', '--parameters', 'accounts:num_users_2sv_enrolled;x'],
     ['verify-suspended'],
+    ['verify-2sv-not-enforced'],
+    ['verify-2sv-not-enforced', '--user', 'all'],
     ['verify-ou', '--user', USER, '--ou', 'Staff'],
     ['verify-ou', '--user', USER],
     ['verify-admin-role-removed', '--user', USER],

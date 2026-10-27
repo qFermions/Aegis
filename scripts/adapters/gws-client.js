@@ -22,6 +22,7 @@
 //   Read-backs (also a dry run unless --execute):
 //     verify-suspended          --user [USER@DOMAIN.COM]
 //     verify-2sv-enforced       --user [USER@DOMAIN.COM]
+//     verify-2sv-not-enforced   --user [USER@DOMAIN.COM]
 //     verify-ou                 --user [USER@DOMAIN.COM] --ou [OU_PATH]
 //     verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id N
 //     verify-event              --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]
@@ -66,7 +67,10 @@
 //     not on the lane's allow-list); verify-admin-role-removed says a role held through a
 //     group is not shown.
 //   - The User Reports 2-Step Verification column may lag up to 48 hours (search excerpt);
-//     verify-2sv-enforced reads the user's isEnforcedIn2Sv field instead.
+//     verify-2sv-enforced and verify-2sv-not-enforced read the user's isEnforcedIn2Sv
+//     field instead. "Not enforced" is its own read-back, never the failure exit of
+//     verify-2sv-enforced: that exit (2) also means a failed read (403, 404, timeout) or a
+//     record for another user, so it proves nothing.
 //   - Rate limits and error codes are unconfirmed; the contract retries a read on 429 or
 //     5xx at most twice and never repeats the token exchange.
 
@@ -286,6 +290,13 @@ const COMMANDS = Object.freeze({
     kind: 'verify', required: ['user'], optional: [], paths: (a) => [PATHS.user(a)],
     expected: (a) => ({ user: a.user, isEnforcedIn2Sv: true }),
   },
+  // Proves the opposite state (an exception-group member, or a unit after enforcement is
+  // turned off): exit 0 only on a successful read of the named user whose
+  // isEnforcedIn2Sv is exactly false.
+  'verify-2sv-not-enforced': {
+    kind: 'verify', required: ['user'], optional: [], paths: (a) => [PATHS.user(a)],
+    expected: (a) => ({ user: a.user, isEnforcedIn2Sv: false }),
+  },
   'verify-ou': {
     kind: 'verify', required: ['user', 'ou'], optional: [], paths: (a) => [PATHS.user(a)],
     expected: (a) => ({ user: a.user, orgUnitPath: a.ou }),
@@ -315,6 +326,7 @@ const USAGE = [
   '                      [--start ISO] [--end ISO] [--event NAME] [--max-results N]',
   '           usage --date YYYY-MM-DD --parameters accounts:num_users_2sv_enrolled,...',
   '  Verify:  verify-suspended --user [USER@DOMAIN.COM] | verify-2sv-enforced --user [USER@DOMAIN.COM]',
+  '           verify-2sv-not-enforced --user [USER@DOMAIN.COM]',
   '           verify-ou --user [USER@DOMAIN.COM] --ou [OU_PATH]',
   '           verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id N',
   '           verify-event --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]',
@@ -430,6 +442,11 @@ const JUDGES = Object.freeze({
     const observed = { user: orNull(isObject(user) ? user.primaryEmail : undefined), isEnforcedIn2Sv: orNull(isObject(user) ? user.isEnforcedIn2Sv : undefined), isEnrolledIn2Sv: orNull(isObject(user) ? user.isEnrolledIn2Sv : undefined) };
     if (!sameUser(user, a.user, ctx)) return { verified: false, observed, reason: NOT_THE_USER };
     return { verified: user.isEnforcedIn2Sv === true, observed, reason: '2-Step Verification is not enforced for the user (isEnforcedIn2Sv is not true)' };
+  },
+  'verify-2sv-not-enforced': (a, [user], ctx) => {
+    const observed = { user: orNull(isObject(user) ? user.primaryEmail : undefined), isEnforcedIn2Sv: orNull(isObject(user) ? user.isEnforcedIn2Sv : undefined), isEnrolledIn2Sv: orNull(isObject(user) ? user.isEnrolledIn2Sv : undefined) };
+    if (!sameUser(user, a.user, ctx)) return { verified: false, observed, reason: NOT_THE_USER };
+    return { verified: user.isEnforcedIn2Sv === false, observed, reason: 'the read does not show 2-Step Verification as not enforced for the user (isEnforcedIn2Sv is not false)' };
   },
   'verify-ou': (a, [user], ctx) => {
     const observed = { user: orNull(isObject(user) ? user.primaryEmail : undefined), orgUnitPath: orNull(isObject(user) ? user.orgUnitPath : undefined) };

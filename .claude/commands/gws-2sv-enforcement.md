@@ -136,8 +136,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 Members join and leave the group through `/gws-group-membership`, one person per gate and phrase. Once enforcement is on for the unit (Phase D), a member reads not enforced while everyone else in the unit reads enforced:
 
 ```bash
-# read-back: a member of the exception group once the unit is enforced, exit 2 is the expected result because the member is not enforced
-node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --execute
+# read-back: proves a member of the exception group is not enforced once the unit is enforced, exit 0 only when the read succeeded for that user and isEnforcedIn2Sv is false
+node scripts/adapters/gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --execute
 # read-only: the exception group members, each one needs an approver and an end date in the ticket
 node scripts/adapters/gws-client.js group-members --group [GROUP_EMAIL] --execute
 ```
@@ -180,7 +180,9 @@ node scripts/adapters/gws-client.js users --query "isEnrolledIn2Sv=false" --max-
 
 The Reporting enforcement column catches up within 48 hours (search excerpt).
 
-**Verification checkpoint**: [ ] `verify-2sv-enforced` exit 0 for each sample user · [ ] an exception-group member reads exit 2 · [ ] nobody in the unit is both not enrolled and outside the exception group.
+**Verification checkpoint**: [ ] `verify-2sv-enforced` exit 0 for each sample user · [ ] `verify-2sv-not-enforced` exit 0 for an exception-group member · [ ] nobody in the unit is both not enrolled and outside the exception group.
+
+Exit 2 from a `verify-*` read is never a pass: it also means the read failed (a 403 from missing delegation, a 404, a timeout) or returned another user. Only exit 0 from the read-back that names the expected state counts.
 
 **Gotcha**: the new-user enrollment period gives an account created after the start date that much time before enforcement applies (search excerpt); `/gws-new-user` creates the account, and the new hire enrolls inside the window.
 
@@ -242,15 +244,15 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 2. Read back in the GUI: reopen the page for `[OU_PATH]` and read Enforcement Off.
 
 ```bash
-# read-back: for a sample user in the unit, exit 2 is the expected result now because the user is no longer enforced
-node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --execute
-# read-only: isEnforcedIn2Sv should read false for the same user
+# read-back: proves a sample user in the unit is no longer enforced, exit 0 only when the read succeeded for that user and isEnforcedIn2Sv is false
+node scripts/adapters/gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --execute
+# read-only: the same user with orgUnitPath and both 2-Step Verification flags, to confirm the sample is in the unit
 node scripts/adapters/gws-client.js user --user [USER@DOMAIN.COM] --execute
 ```
 
 **WAIT UNTIL** the expiry date in the temporary-exception record, then re-enforce with Phase D.
 
-**Verification checkpoint**: [ ] approver, reason, expiry and re-enforce date in the ticket · [ ] `verify-2sv-enforced` exit 2 for the sample user.
+**Verification checkpoint**: [ ] approver, reason, expiry and re-enforce date in the ticket · [ ] `verify-2sv-not-enforced` exit 0 for the sample user.
 
 ## ⚠️ Risk warning
 
@@ -265,16 +267,16 @@ node scripts/adapters/gws-client.js user --user [USER@DOMAIN.COM] --execute
 
 - [ ] Pre-state for `[OU_PATH]` (and `[GROUP_EMAIL]`) recorded: Allow, Enforcement, start date, new-user period, Methods, Inherited or Overridden.
 - [ ] The not-enrolled list for the unit is empty, or every remaining person is in `[GROUP_EMAIL]` with an approver and an end date.
-- [ ] After the start date: `verify-2sv-enforced` exits 0 for two or three sample users in `[OU_PATH]` and exits 2 for an exception-group member.
+- [ ] After the start date: `verify-2sv-enforced` exits 0 for two or three sample users in `[OU_PATH]`, and `verify-2sv-not-enforced` exits 0 for an exception-group member.
 - [ ] Every settings change appears in Admin console → Reporting → Audit and investigation → Admin log events with your address and the time, and in the `activities --app admin` read.
-- [ ] Phase F only: approver, reason, expiry and re-enforce date are in the ticket, and `verify-2sv-enforced` exits 2 for a sample user.
+- [ ] Phase F only: approver, reason, expiry and re-enforce date are in the ticket, and `verify-2sv-not-enforced` exits 0 for a sample user.
 - [ ] The Linear comment is proved by `verify-comment` (below).
 
 ## 📝 Linear-ready note
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form, naming what is verified, what is pending and the next owner.
 
-> [Only if all checks passed] 2-Step Verification for `[OU_PATH]` [date/time]: pre-state [Allow / Enforcement / new-user period / Methods] recorded. [Enrollment allowed / exception group `[GROUP_EMAIL]` set with [N] dated exceptions / enforced from `[START_DATE]` with a [N]-day new-user period and [methods] / tightened to Only security key with a [N]-day grace period / enforcement turned off until [date], approved in writing by `[MANAGER_UPN]`], confirmed by the exact phrase. Read-back: `verify-2sv-enforced` [exit 0 for N sample users / exit 2 as expected] [timestamp]; users left not enrolled: [N]. Time spent: [X] min.
+> [Only if all checks passed] 2-Step Verification for `[OU_PATH]` [date/time]: pre-state [Allow / Enforcement / new-user period / Methods] recorded. [Enrollment allowed / exception group `[GROUP_EMAIL]` set with [N] dated exceptions / enforced from `[START_DATE]` with a [N]-day new-user period and [methods] / tightened to Only security key with a [N]-day grace period / enforcement turned off until [date], approved in writing by `[MANAGER_UPN]`], confirmed by the exact phrase. Read-back: [`verify-2sv-enforced` exit 0 for N sample users / `verify-2sv-not-enforced` exit 0 for N exception-group members or sample users] [timestamp]; users left not enrolled: [N]. Time spent: [X] min.
 >
 > [Partial state, keep open] 2-Step Verification for `[OU_PATH]`: verified [the read-backs that passed]; pending [enrollment of N users / the start date / a read-back]; next owner [role].
 

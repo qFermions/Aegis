@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 // Shared untrusted-text rules (pure, no I/O): one copy for this sanitizer and the replay cache.
-const { foldedForms, INJECTION_MARKERS, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js');
+const { foldedForms, INJECTION_MARKERS, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js');
 
 // ── Dangerous PowerShell patterns (WARN) — mirror of pre-commit-check.js ─────
 const DANGEROUS_PS_PATTERNS = [
@@ -114,8 +114,8 @@ function scanText(text, opts = {}) {
     if (hasForeignOrgToken(line, forms)) {
       result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });
     }
-    for (const { pattern, marker } of INJECTION_MARKERS) {
-      if (forms.some((f) => pattern.test(f))) result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });
+    for (const marker of injectionMarkersIn(line, forms)) {
+      result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });
     }
   });
 

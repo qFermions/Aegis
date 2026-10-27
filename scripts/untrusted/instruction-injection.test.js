@@ -342,3 +342,18 @@ test('A7 replay status and list withhold a case whose stored ticket, evidence or
   const l = run(REPLAY_CLI, ['list'], env);
   assert.equal(l.code, 0, `list must not crash on a non-string ticket: ${short(l)}`);
 });
+
+// ── review round 3: the graph edge and the replay cache share one marker rule ──
+
+test('A8 the graph edge flags exactly the markers the shared rule finds, and keeps no copy of the marker loop', () => {
+  const { scanText } = require(path.join(ROOT, 'scripts', 'graph', 'sanitize.js'));
+  const { injectionMarkersIn } = require(GUARD_CLI);
+  const lines = [...Object.values(MARKER), ...OBFUSCATED.map((o) => o.text), 'Printer at [@Aegion_SITE_2] is offline.'];
+  for (const line of lines) {
+    const flagged = scanText(line, { tenantLiterals: [] }).injectionFlags.map((f) => f.marker);
+    assert.deepEqual(flagged, injectionMarkersIn(line), JSON.stringify(line));
+  }
+  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'graph', 'sanitize.js'), 'utf8');
+  assert.match(src, /injectionMarkersIn\(line, forms\)/, 'scanText calls the shared rule with its folded forms');
+  assert.doesNotMatch(src, /of INJECTION_MARKERS\)/, 'scanText must not loop over the markers itself');
+});

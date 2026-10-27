@@ -68,7 +68,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 # HUMAN-RUN or Aegis, read-only. LINEAR_API_KEY and LINEAR_ORG come from the shell environment, never from the ticket; without --execute a line only prints the query it would send
 # the key's own user with its admin, owner and guest flags, and the workspace that answered; stop if it is not [@Aegion_LINEAR_ORG]
 node scripts/adapters/linear-client.js viewer --execute
-# every member with active, admin, guest and owner flags; note [USER_ID] for [USER@DOMAIN.COM]
+# every member, suspended ones included, with active, admin, guest and owner flags; note [USER_ID] for [USER@DOMAIN.COM]
 node scripts/adapters/linear-client.js members --execute
 # one issue: status, labels, archivedAt and trashed
 node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute

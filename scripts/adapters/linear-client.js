@@ -38,8 +38,11 @@
 //   - issue(id:) is described in the schema as taking "the identifier of the issue",
 //     which suggests but does not prove it accepts [ISSUE_ID]. Every verify-* checks
 //     that the issue in the response is the issue asked for; any other is not proof.
-//   - Whether users() lists suspended members without another argument is not
-//     confirmed. A member who is not in the list is not proof of suspension.
+// Schema fact this file depends on: the root users() query returns disabled or
+// suspended users only with includeDisabled: true (its default is false, Linear's
+// schema.graphql, Query.users), so AegisMembers sets it; without it a suspended member
+// is never listed and verify-suspended could never pass. A member who is still not in
+// the list is not proof of suspension.
 
 const crypto = require('node:crypto');
 const fs = require('node:fs');
@@ -61,7 +64,7 @@ const DOCUMENTS = Object.freeze({
   AegisTeamStates: 'query AegisTeamStates($teamKey: String!) { workflowStates(first: 100, filter: { team: { key: { eq: $teamKey } } }) { nodes { id name type position team { key } } pageInfo { hasNextPage } } organization { urlKey } }',
   AegisLabels: 'query AegisLabels { issueLabels(first: 100) { nodes { id name isGroup retiredAt parent { name } team { key } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
   AegisTriage: 'query AegisTriage { issues(first: 50, filter: { state: { type: { eq: "triage" } } }) { nodes { id identifier title priority createdAt startedTriageAt snoozedUntilAt team { key } state { name type } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
-  AegisMembers: 'query AegisMembers($after: String) { users(first: 100, after: $after, includeArchived: true) { nodes { id active admin guest owner } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
+  AegisMembers: 'query AegisMembers($after: String) { users(first: 100, after: $after, includeArchived: true, includeDisabled: true) { nodes { id active admin guest owner } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
 });
 
 // Write mutations refused by name as well (defence in depth beside the contract's

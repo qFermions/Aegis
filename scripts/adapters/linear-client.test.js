@@ -574,6 +574,12 @@ test('verify-state, verify-labels and verify-trashed print verified, observed an
 });
 
 test('verify-suspended: the member\'s active is false (exit 0); active, or not found on any page, is not proof (exit 2)', async () => {
+  // Linear's root users() returns suspended users only with includeDisabled: true (its
+  // default is false), so the mock below can stand in for the API only if the document
+  // carries that argument; without it a real suspended member never comes back.
+  const members = linear.SPEC.graphql.documents.AegisMembers;
+  assert.match(members, /\busers\([^)]*\bincludeDisabled: true\b[^)]*\)/, 'AegisMembers asks for suspended users');
+  assert.match(members, /\busers\([^)]*\bincludeArchived: true\b[^)]*\)/, 'AegisMembers keeps archived users');
   const args = ['verify-suspended', '--user', 'user-7', '--execute'];
   const member = (id, active) => ({ id, active, admin: false, guest: false, owner: false });
 

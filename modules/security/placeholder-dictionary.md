@@ -31,6 +31,11 @@ this file — never invent a parallel set.
 | `[@Aegion_GWS_CUSTOMER_ID]` | Google Workspace customer ID (Admin console → Account → Account settings) | `[GWS_CUSTOMER_ID]` |
 | `[@Aegion_OKTA_ORG_URL]` | Okta org URL (the org's Okta Admin Console host) | `[OKTA_ORG_URL]` |
 | `[@Aegion_JAMF_URL]` | Jamf Pro server URL | `[JAMF_PRO_URL]` |
+| `[@Aegion_FLEET_URL]` | Fleet server hostname (the Fleet UI and REST API host; `FLEET_URL` for the read-only adapter) | `[FLEET_SERVER_HOST]` |
+| `[@Aegion_SLACK_URL]` | Slack workspace URL (the `<name>.slack.com` host people sign in to) | `[SLACK_WORKSPACE_HOST]` |
+| `[@Aegion_SLACK_TEAM_ID]` | Slack workspace (team) ID; the Slack adapter refuses a record from any other team (`SLACK_TEAM_ID`) | `[SLACK_TEAM_ID]` |
+| `[@Aegion_LINEAR_ORG]` | Linear workspace URL key (`linear.app/<key>`); the Linear adapter refuses a record from any other workspace (`LINEAR_ORG`) | `[LINEAR_URL_KEY]` |
+| `[@Aegion_LINEAR_TEAM]` | Linear team key that holds IT tickets (the prefix of `[ISSUE_ID]`) | `IT` |
 
 ## Generic operational tokens (always-placeholder)
 
@@ -51,6 +56,20 @@ organizational-unit path such as `/[OU_PATH]`) · `[DEVICE_ID]` (an Admin consol
 Jamf Pro, or Okta device ID) · `[SERIAL_NUMBER]` (a hardware serial number) ·
 `[APP_NAME]` (an Okta or Google app display name) · `[LOCK_PIN]` (a remote-lock
 passcode — kept in the password manager, never in a ticket)
+
+Google Workspace, Fleet, Jamf, Slack and Linear lane (G2, 2026-10-27): `[HOST_ID]` (a
+Fleet host ID) · `[FLEET_NAME]` (a Fleet "fleet", formerly a team) · `[EXECUTION_ID]` (a
+Fleet script execution ID) · `[CVE_ID]` (a CVE identifier) · `[REPORT_NAME]` (a Fleet
+report, formerly a saved query) · `[POLICY_ID]` / `[POLICY_NAME]` (a Fleet or Jamf Pro
+policy) · `[PROFILE_ID]` / `[PROFILE_NAME]` (a Jamf Pro configuration profile) ·
+`[SMART_GROUP]` (a Jamf Pro smart or static group) · `[SCRIPT_NAME]` (a Fleet or Jamf
+script) · `[ISSUE_ID]` (a Linear issue identifier such as `[@Aegion_LINEAR_TEAM]-123`) ·
+`[LABEL_NAME]` (a Linear label) · `[CHANNEL_NAME]` / `[CHANNEL_ID]` (a Slack channel) ·
+`[APP_ID]` (a Slack or Google app ID) · `[EXTERNAL_DOMAIN]` (a partner domain outside
+`[@Aegion_DOMAIN]`) · `[FILE_NAME]` (a file or Drive item name) · `[ROLE_NAME]` (an admin
+role name) · `[NOTE_FILE]` / `[NOTE_SHA256]` (a drafted ticket note and its digest) ·
+`[NOT_BEFORE]` (the time a read-back must start from). `[USER_ID]` also covers a Slack
+member ID and a Linear user ID.
 
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in

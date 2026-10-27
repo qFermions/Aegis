@@ -138,7 +138,9 @@ const ORG_TOKEN = /\[@\s*([A-Za-z][A-Za-z0-9_\s-]{0,79})\]/g;
 const OWN_ORG_NAMESPACE = /^Aegion(?:[\s_]|$)/i;
 const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_SP', 'FINANCE_SERVER', 'GWS_CUSTOMER_ID', 'ISP',
   'JAMF_URL', 'JIRA_SPACE', 'JIRA_URL', 'NETPARTNER', 'OKTA_ORG_URL', 'REMOTE_ACCESS', 'SITE_2', 'SITE_3', 'SITE_4',
-  'SITE_COUNT', 'SIZE', 'VOIP', 'VOIP_LEGACY', 'VOIP_URL', 'WAN', 'XYZ']);
+  'SITE_COUNT', 'SIZE', 'VOIP', 'VOIP_LEGACY', 'VOIP_URL', 'WAN', 'XYZ',
+  // G2: Fleet, Slack and Linear
+  'FLEET_URL', 'SLACK_URL', 'SLACK_TEAM_ID', 'LINEAR_ORG', 'LINEAR_TEAM']);
 function orgTokenWords(body) {
   return body.replace(/([a-z])([A-Z])/g, '$1_$2').replace(/([A-Za-z])(\d)/g, '$1_$2').replace(/(\d)([A-Za-z])/g, '$1_$2')
     .toUpperCase().split(/[\s_-]+/).filter(Boolean);

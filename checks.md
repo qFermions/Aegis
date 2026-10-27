@@ -22,20 +22,20 @@ Floors from PR #3's head match on every row: 505 tests, 28/28 and 6/6, 38/38 and
 
 | requirement | verdict | evidence | correction |
 |---|---|---|---|
-| A1 capability map rows carry evidence | unresolved | not yet run | |
-| A2 boundary audit: no gate "none" left | unresolved | not yet run | |
-| A3 three untrusted-data tests, expected decision first | unresolved | not yet run | |
-| A4 harness and review layers present | unresolved | not yet run | |
-| A5 PRODUCT_CONTRACT.md changes readable line by line | unresolved | not yet run | |
-| A5b CLAUDE.md under 20000 bytes, moves traceable | unresolved | not yet run | |
-| A6 PROJECT_STATE.md verified claims point to this session | unresolved | not yet run | |
-| A7 CI and Release Gate green on the pull request | unresolved | not yet run | |
-| A8 no finding open; refs unchanged | unresolved | not yet run | |
-| A9 baseline floors hold | unresolved | not yet run | |
-| A10 no secret, token, personal path or private email in the diff | unresolved | not yet run | |
-| A11 no em-dash in files this batch wrote | unresolved | not yet run | |
-| A12 dependencies and tools added | unresolved | not yet run | |
-| A13 no real tenant, device, ticket system, scheduler, mailbox or payment call | unresolved | not yet run | |
+| A1 capability map rows carry evidence; "verified now" cites this session | pass | `docs/aegis/evidence/a1-capability-evidence.txt`: 35 rows, 0 failing; every row has file or command evidence, and all 17 "verified now" rows cite `docs/baseline/` or `docs/aegis/evidence/` (captured 2026-10-27). Drift section: `docs/aegis/capability-map.md:47`, 20 bullets | |
+| A2 boundary audit: no gate "none" left unnamed; every fix has its own commit and test | pass | `docs/aegis/boundary-audit.md` rows 1 to 19 and "Result": 1 violation (rows 1 and 2), fixed in `519db17` with `scripts/jira-client.test.js` and `scripts/command-safety-gates.test.js` cases; rows 4, 5 and 12 keep no code gate and are named with their reason (owner decisions). Every production-mutating path is in the C list of `.github/risk-tiers.json`; `scripts/risk_tier.test.js` 15/15 | Tier C list gained `modules/automation/scripts/deploy-check.js` and `scripts/init-memory.js`, one test case each |
+| A3 three untrusted-data tests exist, run, pass; expected decision committed first | pass | `docs/aegis/evidence/a3-expected-decision-first.txt`: all three files added in `109387c` with an EXPECTED DECISION header and 0 tests; the test bodies follow in `717b585`, `e996f3d`, `1b7500c`, the fixes after them. Run: `docs/baseline/branch/node-test.txt:689-745`, 57 tests, all pass | |
+| A4 harness and review layers present | pass | `docs/aegis/evidence/a4-harness-files.txt` (12 files plus `release-gate.yml` exist; Harness 1, Review 1; REVIEW.md 6 headings; evidence-reviewer frontmatter has tools, model, effort; `.claude/settings.json` absent and left absent); `docs/aegis/evidence/a4-plugin-validate.txt` (`claude plugin validate .claude/agents`: passed, exit 0). At the head: `grep -c "^## Harness$" CLAUDE.md` 1, `grep -c "^## Review$" CLAUDE.md` 1 | |
+| A5 PRODUCT_CONTRACT.md changes readable line by line | pass | `PRODUCT_CONTRACT.md:125` "## Changes in this batch": each added or changed passage named with its reason, and "Nothing was removed"; `git diff --numstat d5fc8c0...HEAD -- PRODUCT_CONTRACT.md`: 73 added, 1 removed, the one removed line being the scope sentence the section names as changed (`2a3e11d`) | |
+| A5b CLAUDE.md under 20000 bytes, moves traceable | pass | `wc -c CLAUDE.md`: 19041 (was 39948; characters 39360 to 18821); `grep -c "^## Harness$"` 1, `grep -c "^## Review$"` 1; `docs/aegis/evidence/a5b-moved-lines.txt`: 139 of 143 moved non-blank lines found whole in the destination named by the move map, the other 4 are this batch's named edits; the PR body lists all 262 removed lines and the move map; test `scripts/repository-structure.test.js` fails at 20,000 bytes | Title stays v8.7: `CHANGELOG.md`'s latest version entry is v8.9, not v8.8 (reported) |
+| A6 PROJECT_STATE.md verified claims point to this session | pass | `PROJECT_STATE.md:18-26`: each "Verified now" row names the command and its capture in `docs/baseline/branch/` (clean clone at `5cc5d69`, 2026-10-27) | Line citations and suite sizes refreshed after round 3 (`38ef188`) |
+| A7 CI and Release Gate green on the pull request | unresolved | Draft PR https://github.com/qFermions/Aegis/pull/4. At `604cc3c`: CI run 40478557555 success; Release Gate run 40478557631 in progress. Final head not yet run | Recorded after the final push |
+| A8 no finding open; refs unchanged | pass | "Review rounds" below: 45 found, 42 fixed, 3 closed, 0 open. `docs/baseline/refs-after.txt` (09:08:47Z): every ref in `refs-before.txt` unchanged; created by this batch: `refs/heads/chore/baseline-and-boundary`, `refs/pull/4/head`, `refs/pull/4/merge` | |
+| A9 baseline floors hold | pass | `docs/baseline/branch/`: 588/588 tests (floor 505), ms 28/28 and 6/6, gws 38/38 and 9/9, lint 77 clean, scanner 0 BLOCK (170 WARN, same as Phase 0), release boundary PASS | |
+| A10 no secret, token, personal path or private email in the diff | pass | `docs/aegis/evidence/a10-diff-grep.txt`: the charter grep prints 371 lines, every one a word in prose or code ("org token", "API token" prompts, "secret" in scanner labels, test names) or a copy of the grep itself; per-file counts listed; a second pass for real credential shapes in added lines finds 0; no `/Users/`, `C:\Users` or `@gmail` outside the quoted grep command | |
+| A11 no em-dash in files this batch wrote | pass | `docs/aegis/evidence/a11-long-dash.txt`: 78 added files and the added lines of 28 changed files, 0 U+2014 | 3 inherited dashes on edited lines removed in the A11 commit; tool output captures write U+2014 as "--" and say so on their last line |
+| A12 dependencies and tools added | pass | `docs/baseline/dependencies.md:21-24`: Node.js 24.22.1 (MIT, nvm) and PowerShell 7.5.4 (MIT, release tarball with its sha256); nothing installed from the repo (no manifest) | |
+| A13 no real tenant, device, ticket system, scheduler, mailbox or payment call | pass | Fixtures: `scripts/untrusted/fixtures/` (12 files: injection-pasted-ticket.txt, injection-replay-solution.md, injection-wipe-artifacts.json, injection-wipe-preapproved.txt, poison-kb-solution.md, poison-proposals.json, tenant-artifacts.json, tenant-b2b-guest-ticket.txt, tenant-foreign-ticket.txt, tenant-mixed-ticket.txt, tenant-proposal.json, tenant-solution.md); tenants are RFC example domains set per child process; Jira tests pass an in-memory `fetch` queue (`scripts/jira-client.test.js` `queuedFetch`) and the default fetch throws "Network tripwire fired"; `docs/aegis/evidence/boundary-grep-io.txt`: the only HTTPS client in code is the Jira client | |
 
 ## Review rounds
 

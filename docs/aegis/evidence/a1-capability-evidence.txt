@@ -1,0 +1,38 @@
+$ (python) A1 over docs/aegis/capability-map.md: every row has evidence; every "verified now" row cites a capture from this session
+# a capture from this session: a path under docs/baseline/ or docs/aegis/evidence/ (both written by batch 1 on 2026-10-27)
+# row 1: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 2: status=partial; evidence kinds=file; cites this session=no; ok
+# row 3: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 4: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 5: status=implemented but unverified; evidence kinds=file; cites this session=no; ok
+# row 6: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 7: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 8: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 9: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 10: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 11: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 12: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 13: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 14: status=missing; evidence kinds=file; cites this session=yes; ok
+# row 15: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 16: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 17: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 18: status=missing; evidence kinds=file; cites this session=yes; ok
+# row 19: status=missing; evidence kinds=file; cites this session=yes; ok
+# row 20: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 21: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 22: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 23: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 24: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 25: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 26: status=missing; evidence kinds=file; cites this session=yes; ok
+# row 27: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 28: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 29: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 30: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 31: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 32: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 33: status=verified now; evidence kinds=file; cites this session=yes; ok
+# row 34: status=partial; evidence kinds=file; cites this session=yes; ok
+# row 35: status=partial; evidence kinds=file; cites this session=yes; ok
+# rows 35, failing 0

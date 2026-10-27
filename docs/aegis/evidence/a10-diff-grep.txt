@@ -1,0 +1,428 @@
+$ git diff d5fc8c0...HEAD | grep -n -i -E "api[_-]?key|secret|token|password|/Users/|C:\\\\Users|@gmail"
+21:+- **Credential-sensitive:** yes for the read-back only. The preview reads no credentials; the printed `curl` asks the administrator for the API token instead of taking it from the environment.
+34:@@ -24,7 +24,7 @@ Set these values in the shell. Never put the token in a file or commit.
+37: - `JIRA_EMAIL`: the API-token owner's email.
+38:-- `JIRA_API_TOKEN`: the Atlassian API token.
+39:+- `JIRA_API_TOKEN`: the Atlassian API token, used by the read commands only.
+47:-1. Preview the exact request. This makes no API call and does not read the email or token:
+65:+3. The administrator creates the request, either in the customer portal of that service desk with the printed summary and description pasted unedited, or by running the printed API line in their o
+117:+- **Credential-sensitive:** yes for live reads; Jira credentials remain environment-only. The printed `curl` asks the administrator for the API token instead of taking it from the environment.
+143:+2. The administrator posts the comment: in the request's agent view as an internal note or a reply to the customer, matching the printed visibility, with the printed body pasted unedited; or by r
+217: > **PREVIEW ONLY [jira-token-leak-response]:** A suspected token leak requires immediate credential-owner/provider revocation, but this Jira command cannot perform it. Do not paste the token; rep
+270:+- **The Jira client never sends a write** (`scripts/jira-client.js`): the transport sends GET only. `create` and `comment` print the exact payload, a SHA-256 binding line and a HUMAN-RUN procedur
+287:+- Review rounds 1 to 3 (45 findings, 42 fixed, 3 closed; `checks.md`): the tenant literal is matched folded; an org token is matched against the placeholder dictionary's own suffixes in any spell
+347:-**What counts as a "step":** each distinct system-boundary crossing = 1 step (a different admin portal, a script run, a different user/device, or planning→execution). Password reset + MFA delet
+576:@@ -416,34 +191,6 @@ Never use real employee names, emails, phone numbers, addresses, passwords, MFA
+587:-| 1Password rollout | Evaluating | Teams Starter, ~6 paid seats + guest accounts for dept heads. |
+732:-  floors, scanner secret formats, a 38-ticket Google corpus on a shared evaluator, 19
+841:+**Batch 2 candidate: Microsoft 365 account-access recovery** (locked account, password reset,
+878:-- C: tool adapters and API clients (`scripts/jira-client.js`, `scripts/security-audit.js`); anything that can write to a tenant, device, ticket, schedule, mailbox or payment system; auth, permiss
+879:+- C: tool adapters and API clients (`scripts/jira-client.js`, `scripts/security-audit.js`, the checklist command runner `modules/automation/scripts/deploy-check.js`); anything that can write to a
+929:-| R13 no secret, token, personal path or private email in the diff | pass | `git diff origin/main...HEAD \| grep -n -i -E "api[_-]?key\|secret\|token\|password\|/Users/\|C:\\\\Users\|@gmail"`: 10
+931:-| R15 ci.yml needs no secret | pass | `grep -n secrets .github/workflows/ci.yml` prints nothing (exit 1) | |
+943:+| A10 no secret, token, personal path or private email in the diff | unresolved | not yet run | |
+982:+| 1.14 | scripts/graph/sanitize.js:100 | org-token rule misses mixed-case and multi-segment names | fixed | `ae3ea89` (C8) |
+995:+| 2.6 | scripts/graph/sanitize.js:110 | any bracket token exempts the whole line from the PII scan | fixed | `26ecaab` (B12) |
+997:+| 2.8 | scripts/tier/tier-guard.js:132 | a space inside the brackets hides a foreign token | fixed | `99cb18d` (C11) |
+1011:+| 3.1 | scripts/tier/tier-guard.js:132 | an unclosed [@Aegion_ swallows the next foreign token | fixed | `4a22024` (C13) |
+1017:+| 3.7 | scripts/tier/tier-guard.js:130 | a space after "@" or before "_" hides a foreign token | fixed | `4a22024` (C13) |
+1022:+| 3.12 | scripts/graph/README.md:158 | unbalanced parentheses garble the org-token sentence | fixed | `51efa48` |
+1049:+| 1 | `scripts/jira-client.js:512`, `:548`, `:611` at `d5fc8c0` (POST create, comment, transition) | Before the fix: created a JSM request, posted an internal or public comment, and transitioned
+1065:+| 17 | `.github/workflows/ci.yml`, `.github/workflows/release-gate.yml` | Nothing outside the runner | `permissions: contents: read`; no secret; no deploy step | **read-only** |
+1093:+| 6 | 1. IT support: user lifecycle, Okta Verify MFA reset, app assignment | Okta | verified now | `docs/baseline/gws-ticket-eval.txt:26-29` (G22 to G25), `:48` (reset vs deactivate pair); `docs
+1099:+| 12 | 2. Security and IR: investigation and containment guidance | Google and Okta | partial | `.claude/commands/gws-audit-log.md:77-79` (read-only log investigation; hands containment to `/sec
+1120:+| 33 | 5. Agent operation: secret and PII scanner, release boundary | Platform-neutral, with Google, Okta and Jamf secret formats | verified now | `docs/aegis/evidence/scanner-test.txt:47`, `:50
+1122:+| 35 | 5. Agent operation: wrong-customer (wrong-tenant) context resistance | Platform-neutral | partial | `docs/baseline/branch/node-test.txt:731-745` (`scripts/untrusted/wrong-customer.test.js
+1139:+- **Google incident response.** `README.md:5` and `docs/evidence/claim-ledger.md:29` present Microsoft and Google as handled "through the same handlers" with matching proof, and `.claude/command
+1365:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.292725ms)
+1439:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1102.909092ms)
+1440:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1123.401215ms)
+1450:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1037.962522ms)
+1467:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.04474ms)
+1492:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.102103ms)
+1568:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.189186ms)
+1569:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.116088ms)
+1588:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.097068ms)
+1613:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.107094ms)
+1620:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.103114ms)
+1621:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.088218ms)
+1622:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.14328ms)
+1682:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (168.226762ms)
+1683:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (157.182974ms)
+1696:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (166.020893ms)
+2087:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+2226:+{"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+2227:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+2256:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+2257:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+2290:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (9.248774ms)
+2291:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (6.938915ms)
+2296:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (22.341884ms)
+2346:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1197.326683ms)
+2347:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1153.594928ms)
+2357:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1069.24597ms)
+2374:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.045195ms)
+2399:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.061382ms)
+2475:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.178239ms)
+2476:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.10448ms)
+2495:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.134579ms)
+2520:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.116058ms)
+2527:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.088687ms)
+2528:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.071791ms)
+2529:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.074575ms)
+2589:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (145.690358ms)
+2590:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (148.078151ms)
+2603:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (128.617094ms)
+2632:+✔ blocks a staged synthetic secret without printing the value or source line (120.916996ms)
+2656:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (167.689922ms)
+2663:+✔ blocks a Google OAuth client secret without printing the value or source line (70.469695ms)
+2664:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (69.876657ms)
+2667:+✔ blocks an Okta SSWS API token header without printing the value or source line (83.837604ms)
+2668:+✔ blocks a bare Okta API token without printing the value or source line (68.039056ms)
+2710:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.460656ms)
+2750:+PASS  G02-password-forgotten               QUICK_FIX   floor=none → /gws-password-reset
+2770:+PASS  G22-okta-password-reset              QUICK_FIX   floor=none → /okta-user-lifecycle
+2780:+PASS  G32-mac-login-password-sync          DIAGNOSTIC  floor=none → /mac-troubleshoot
+2792:+PASS  pair G22-okta-password-reset ≠ G23-okta-deactivate -- 'Okta' and one user: a password reset is routine, deactivation deprovisions every assigned app
+2812:+PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
+2813:+PASS  T02-password-reset-synced            QUICK_FIX   floor=none → /password-reset
+2834:+PASS  T23-outlook-password-prompt          DIAGNOSTIC  floor=none → /outlook-issue
+2836:+PASS  T25-mass-password-reset              PROCEDURE   floor=T3   → /password-reset
+2843:+PASS  pair T23-outlook-password-prompt ≠ T24-account-disable-compromised -- Outlook credential loop vs an account-disable incident
+2845:+PASS  pair T02-password-reset-synced ≠ T25-mass-password-reset -- single-user reset vs a tenant-wide mass reset
+2927:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1281.792009ms)
+2928:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1194.747684ms)
+2938:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1157.560467ms)
+2955:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.052885ms)
+2980:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.036495ms)
+3056:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.158729ms)
+3057:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.248117ms)
+3076:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.079547ms)
+3101:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.10731ms)
+3108:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.082679ms)
+3109:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.080798ms)
+3110:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.070719ms)
+3170:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (141.386066ms)
+3171:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (145.208281ms)
+3184:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (150.555647ms)
+3345:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+3356:+✔ blocks a staged synthetic secret without printing the value or source line (153.870908ms)
+3380:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (179.010945ms)
+3387:+✔ blocks a Google OAuth client secret without printing the value or source line (63.785636ms)
+3388:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (71.115956ms)
+3391:+✔ blocks an Okta SSWS API token header without printing the value or source line (70.298024ms)
+3392:+✔ blocks a bare Okta API token without printing the value or source line (69.421749ms)
+3413:+{"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+3414:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+3443:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+3444:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+3454:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (8.133902ms)
+3455:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (6.770996ms)
+3460:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (23.280381ms)
+3515:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.343296ms)
+3550:+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (121.354595ms)
+3551:+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (106.594661ms)
+3643:+    ⚠️  WARN  Line 294: GAM deprovision (tokens, app passwords, backup codes)
+3715:+    ⚠️  WARN  Line 70: Revoke-* session/token cmdlet -- session or token revocation
+3762:+  File: .claude/commands/password-reset.md
+3765:+    ⚠️  WARN  Line 93: Update-MgUser -PasswordProfile -- cloud password reset
+3767:+    ⚠️  WARN  Line 123: Revoke-* session/token cmdlet -- session or token revocation
+3769:+    ⚠️  WARN  Line 132: Revoke-* session/token cmdlet -- session or token revocation
+3783:+    ⚠️  WARN  Line 141: Revoke-* session/token cmdlet -- session or token revocation
+3859:+    ⚠️  WARN  Line 310: Revoke-* session/token cmdlet -- session or token revocation
+3913:+    ⚠️  WARN  Line 107: Set-ADAccountPassword -Reset -- on-premises password reset
+3915:+    ⚠️  WARN  Line 108: Invoke-MgInvalidateUserRefreshToken -- refresh-token invalidation
+4030:+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+4053:+ 6. same words, another member-user placeholder → CACHE_HIT via shape (class anchored by the dictionary token)
+4069:+14. secret-shaped content cannot enter the store
+4070:+    exit 4 → {"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+4162:+| 1Password rollout | Evaluating | Teams Starter, ~6 paid seats + guest accounts for dept heads. |
+4186:+**What counts as a "step":** each distinct system-boundary crossing = 1 step (a different admin portal, a script run, a different user/device, or planning→execution). Password reset + MFA dele
+4390:+PASS  G02-password-forgotten               QUICK_FIX   floor=none → /gws-password-reset
+4410:+PASS  G22-okta-password-reset              QUICK_FIX   floor=none → /okta-user-lifecycle
+4420:+PASS  G32-mac-login-password-sync          DIAGNOSTIC  floor=none → /mac-troubleshoot
+4432:+PASS  pair G22-okta-password-reset ≠ G23-okta-deactivate -- 'Okta' and one user: a password reset is routine, deactivation deprovisions every assigned app
+4452:+PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
+4453:+PASS  T02-password-reset-synced            QUICK_FIX   floor=none → /password-reset
+4474:+PASS  T23-outlook-password-prompt          DIAGNOSTIC  floor=none → /outlook-issue
+4476:+PASS  T25-mass-password-reset              PROCEDURE   floor=T3   → /password-reset
+4483:+PASS  pair T23-outlook-password-prompt ≠ T24-account-disable-compromised -- Outlook credential loop vs an account-disable incident
+4485:+PASS  pair T02-password-reset-synced ≠ T25-mass-password-reset -- single-user reset vs a tenant-wide mass reset
+4567:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1198.651002ms)
+4568:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1167.46396ms)
+4578:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1234.003583ms)
+4595:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.045995ms)
+4620:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.033117ms)
+4696:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.288745ms)
+4697:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.273746ms)
+4716:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.218011ms)
+4741:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.234332ms)
+4748:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.21249ms)
+4749:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.216222ms)
+4750:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.221513ms)
+4810:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (129.316707ms)
+4811:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (141.277491ms)
+4824:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (128.926068ms)
+4962:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.400889ms)
+5007:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+5018:+✔ blocks a staged synthetic secret without printing the value or source line (165.054168ms)
+5042:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (178.894058ms)
+5049:+✔ blocks a Google OAuth client secret without printing the value or source line (88.944669ms)
+5050:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (69.82678ms)
+5053:+✔ blocks an Okta SSWS API token header without printing the value or source line (80.017986ms)
+5054:+✔ blocks a bare Okta API token without printing the value or source line (80.874316ms)
+5075:+{"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+5076:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+5105:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+5106:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+5116:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (8.087451ms)
+5117:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (5.867999ms)
+5122:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (22.652296ms)
+5182:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.450355ms)
+5226:+✔ B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record (99.563666ms)
+5231:+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (112.88882ms)
+5232:+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (117.559839ms)
+5236:+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (641.968494ms)
+5239:+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (284.745335ms)
+5241:+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (700.275969ms)
+5242:+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (0.64635ms)
+5331:+    ⚠️  WARN  Line 294: GAM deprovision (tokens, app passwords, backup codes)
+5401:+    ⚠️  WARN  Line 70: Revoke-* session/token cmdlet -- session or token revocation
+5448:+  File: .claude/commands/password-reset.md
+5451:+    ⚠️  WARN  Line 93: Update-MgUser -PasswordProfile -- cloud password reset
+5453:+    ⚠️  WARN  Line 123: Revoke-* session/token cmdlet -- session or token revocation
+5455:+    ⚠️  WARN  Line 132: Revoke-* session/token cmdlet -- session or token revocation
+5469:+    ⚠️  WARN  Line 141: Revoke-* session/token cmdlet -- session or token revocation
+5549:+    ⚠️  WARN  Line 310: Revoke-* session/token cmdlet -- session or token revocation
+5603:+    ⚠️  WARN  Line 107: Set-ADAccountPassword -Reset -- on-premises password reset
+5605:+    ⚠️  WARN  Line 108: Invoke-MgInvalidateUserRefreshToken -- refresh-token invalidation
+5720:+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+5743:+ 6. same words, another member-user placeholder → CACHE_HIT via shape (class anchored by the dictionary token)
+5759:+14. secret-shaped content cannot enter the store
+5760:+    exit 4 → {"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+5866:+PASS  G02-password-forgotten               QUICK_FIX   floor=none → /gws-password-reset
+5886:+PASS  G22-okta-password-reset              QUICK_FIX   floor=none → /okta-user-lifecycle
+5896:+PASS  G32-mac-login-password-sync          DIAGNOSTIC  floor=none → /mac-troubleshoot
+5908:+PASS  pair G22-okta-password-reset ≠ G23-okta-deactivate -- 'Okta' and one user: a password reset is routine, deactivation deprovisions every assigned app
+5928:+PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
+5929:+PASS  T02-password-reset-synced            QUICK_FIX   floor=none → /password-reset
+5950:+PASS  T23-outlook-password-prompt          DIAGNOSTIC  floor=none → /outlook-issue
+5952:+PASS  T25-mass-password-reset              PROCEDURE   floor=T3   → /password-reset
+5959:+PASS  pair T23-outlook-password-prompt ≠ T24-account-disable-compromised -- Outlook credential loop vs an account-disable incident
+5961:+PASS  pair T02-password-reset-synced ≠ T25-mass-password-reset -- single-user reset vs a tenant-wide mass reset
+6043:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1249.153738ms)
+6044:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1197.966108ms)
+6054:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1177.257561ms)
+6071:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.084117ms)
+6096:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.051641ms)
+6172:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.263337ms)
+6173:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.352151ms)
+6192:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.090621ms)
+6217:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.224687ms)
+6224:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.10126ms)
+6225:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.073855ms)
+6226:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.073143ms)
+6286:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (157.628486ms)
+6287:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (157.036098ms)
+6300:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (160.100226ms)
+6461:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+6472:+✔ blocks a staged synthetic secret without printing the value or source line (147.727308ms)
+6496:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (177.21404ms)
+6503:+✔ blocks a Google OAuth client secret without printing the value or source line (74.431566ms)
+6504:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (62.921358ms)
+6507:+✔ blocks an Okta SSWS API token header without printing the value or source line (69.164598ms)
+6508:+✔ blocks a bare Okta API token without printing the value or source line (76.391745ms)
+6529:+{"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+6530:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+6559:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+6560:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --ob
+6570:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (8.659201ms)
+6571:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (6.245384ms)
+6576:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (23.360974ms)
+6631:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (1.095436ms)
+6723:+    ⚠️  WARN  Line 294: GAM deprovision (tokens, app passwords, backup codes)
+6795:+    ⚠️  WARN  Line 70: Revoke-* session/token cmdlet -- session or token revocation
+6842:+  File: .claude/commands/password-reset.md
+6845:+    ⚠️  WARN  Line 93: Update-MgUser -PasswordProfile -- cloud password reset
+6847:+    ⚠️  WARN  Line 123: Revoke-* session/token cmdlet -- session or token revocation
+6849:+    ⚠️  WARN  Line 132: Revoke-* session/token cmdlet -- session or token revocation
+6863:+    ⚠️  WARN  Line 141: Revoke-* session/token cmdlet -- session or token revocation
+6939:+    ⚠️  WARN  Line 310: Revoke-* session/token cmdlet -- session or token revocation
+6993:+    ⚠️  WARN  Line 107: Set-ADAccountPassword -Reset -- on-premises password reset
+6995:+    ⚠️  WARN  Line 108: Invoke-MgInvalidateUserRefreshToken -- refresh-token invalidation
+7125:+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+7148:+ 6. same words, another member-user placeholder → CACHE_HIT via shape (class anchored by the dictionary token)
+7164:+14. secret-shaped content cannot enter the store
+7165:+    exit 4 → {"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+7215:+57 new tests cover instruction injection, poisoned memory and a case that mixes two tenants. The expected decision was committed before any test body. They found and fixed: markers hidden by zer
+7225:+Microsoft 365 account-access recovery: locked account, password reset, MFA re-registration, a Conditional Access sign-in block. 12 of the 28 Microsoft corpus tickets are this class, and the rows
+7261:+| R13 no secret, token, personal path or private email in the diff | pass | `git diff origin/main...HEAD \| grep -n -i -E "api[_-]?key\|secret\|token\|password\|/Users/\|C:\\\\Users\|@gmail"`: 1
+7263:+| R15 ci.yml needs no secret | pass | `grep -n secrets .github/workflows/ci.yml` prints nothing (exit 1) | |
+7512:+9. **Every edge is sanitized**: tenant literals BLOCK the submit, matched as written and confusable-folded (a zero-width character or look-alike letter inside the domain does not hide it); PII w
+7525:+const { foldedForms, INJECTION_MARKERS, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js');
+7534:+// ── PII patterns (WARN at the edge; only canonical placeholder tokens are blanked first) ──
+7542: // ── Credential/secret patterns (BLOCK) ───────────────────────────────────────
+7544:   { pattern: /SharedAccessSignature\s*=/i, label: 'Azure SAS token assignment' },
+7557:+// original line, and the org report never echoes the token.
+7583:         result.blocks.push({ line: n, label: 'Tenant/org literal (SR-8) — use the [@Aegion_*] token', text: '[REDACTED — tenant literal on this line]' });
+7600:+    if (hasForeignOrgToken(line, forms)) {
+7601:+      result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign
+7631:+ * API token interactively) for the administrator to run in their own portal or
+7639:  *   JIRA_EMAIL            API-token owner email
+7640:- *   JIRA_API_TOKEN        Atlassian API token
+7641:+ *   JIRA_API_TOKEN        Atlassian API token (reads only)
+7713:     const auth = Buffer.from(`${credentials.email}:${credentials.token}`, 'utf8').toString('base64');
+7798:+// makes curl prompt for the API token, so the token never sits on the command line, in
+7812:+// The same write for PowerShell 7 on Windows: Get-Credential asks for the API token.
+7817:+    "-Credential (Get-Credential -UserName $env:JIRA_EMAIL -Message 'Atlassian API token') " +
+7823:+    '  2. Or the API, in your own terminal; each line asks for your API token instead of reading it from the environment.',
+8292:     return { email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN };
+8687:+  const cfg = { site: 'example.atlassian.net', email: 'api@example.org', token: 'token' };
+8727:+test('printed procedures never carry the token, make curl prompt for it, and quote text for the shell', async () => {
+8730:+  assert.doesNotMatch(result.stdout, new RegExp(BASE_ENV.JIRA_API_TOKEN));
+8733:+  assert.doesNotMatch(result.stdout, /JIRA_API_TOKEN/);
+8860:+lock that holds its writer's random token: a writer removes it only while it
+8861:+still holds that token, and a stale lock (over 5 minutes) is recovered by one
+8869:+`scripts/untrusted/poisoned-memory.test.js` B1). An org token from another
+8905:+**Residual, stated plainly:** the seal is unkeyed (no secret exists to key
+8949:+not a secret. Pinned by `scripts/untrusted/wrong-customer.test.js` (C5, C7).
+9014:+// is unkeyed (no secret exists to key it with): it makes an edit to either
+9108:+// The lock belongs to the writer whose random token is in its owner file. A writer
+9109:+// removes the lock only while that file still holds its own token, so a writer that
+9116:+let lockToken = null;
+9125:+  const token = crypto.randomBytes(16).toString('hex');
+9126:+  fs.writeFileSync(LOCK_OWNER, token);
+9127:+  lockToken = token;
+9130:+  if (!lockToken) return;
+9131:+  const mine = lockOwner() === lockToken;
+9132:+  lockToken = null;
+9357:   tokenize,
+9376:+  is this deployment's org. An org environment token of any other namespace in
+9379:+  sanitizer). A token is an org token when its suffix is one of the placeholder
+9392:+  secret, a real address, the tenant literal or a second org namespace is a
+9414: // Persistence boundary (SR-1/SR-8): secret-shaped content, the tenant literal,
+9434:+const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js'); // pure functions, no I/O
+9448:+  const forms = foldedForms(text); // one fold for the literal, marker and org-token checks
+9450:     [/ghp_[A-Za-z0-9]{20,}/, 'GitHub token'],
+9451:     [/github_pat_[A-Za-z0-9_]{20,}/, 'GitHub fine-grained token'],
+9453:     [/\bpassword\s*[:=]\s*\S{4,}/i, 'plaintext password assignment'],
+9465:   // token such as [USER@DOMAIN.COM] / [JIRA-###] or the [@Aegion_*] family. A
+9476:+  if (hasForeignOrgToken(text, forms)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
+9492:-// A bracketed token is exempt from the PII scan only when it IS a canonical
+9494:-// upper-case token with no "@" (e.g. [UPN], [JIRA-###], [PHONE_NUMBER]). An
+9513:+// so that it carries instruction-shaped text, a secret, a real address, the
+9722:+// space (a zero-width character used as the word separator). A marker or token a model
+9741:+// tokens are the [@Aegion_*] family (modules/security/placeholder-dictionary.md). A
+9742:+// token is an org token when its suffix is one of the dictionary's own suffixes
+9743:+// (ORG_TOKEN_SUFFIXES, kept equal to the dictionary by a test), after the bracket body
+9750:+// token cannot swallow the next one. A chat handle ([@jane_doe], [@bob_site_visit], [@alex_IT])
+9751:+// is not an org token: its suffix is not a dictionary suffix.
+9752:+const ORG_TOKEN = /\[@\s*([A-Za-z][A-Za-z0-9_\s-]{0,79})\]/g;
+9754:+const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_SP', 'FINANCE_SERVER', 'GWS_CUSTOMER_ID', 'ISP',
+9757:+function orgTokenWords(body) {
+9763:+  const words = orgTokenWords(body);
+9766:+    if (ORG_TOKEN_SUFFIXES.has(suffix) || ORG_TOKEN_SUFFIXES.has(suffix.replace(/_\d+$/, '')) || /^SITE_\d+$/.test(suffix)) return true;
+9771:+function hasForeignOrgToken(text, forms = foldedForms(text)) {
+9772:+  return forms.some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => isForeignOrgBody(m[1])));
+9790:+// A bracketed token is exempt from a PII scan only when it IS a canonical placeholder:
+9791:+// the literal [USER@DOMAIN.COM], the [@Aegion_*] family, or an upper-case token with no
+9807:+  foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, ORG_TOKEN_SUFFIXES, hasForeignOrgToken, containsLiteral,
+10960:+test('B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record', () => {
+10978:+// ── review round 3: the lock belongs to the writer whose token it holds ──
+11050:+// Model: one Aegis deployment serves one tenant. Its org tokens are the
+11052:+// Every case in a deployment is that tenant's case, so an org-namespace token
+11066:+//    Control: a ticket with [@Aegion_*] tokens, [UPN], [GUEST_UPN] and a B2B
+11075:+// 3. scripts/memory/memory-cli.js propose with an [@Otherorg_*] token in
+11079:+// 4. scripts/replay/replay-cli.js record with an [@Otherorg_*] token in the
+11199:+  assert.ok(!JSON.stringify(st).includes('[@Otherorg_'), 'the other tenant\'s token appears nowhere in state');
+11204:+test('C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record', () => {
+11218:+test('C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case', () => {
+11226:+  assert.equal(r.code, 4, `foreign token in the ticket: ${short(r)}`);
+11228:+  assert.equal(r.code, 4, `foreign token in the solution: ${short(r)}`);
+11334:+test('C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4)', () => {
+11335:+  const tokens = ['[@Contoso_Site_DOMAIN]', '[@Other_Org_DOMAIN]', '[@Contoso_Domain]', '[@North-Wind_DOMAIN]'];
+11337:+  for (const token of tokens) {
+11338:+    const ticket = `Guest [GUEST_UPN] from ${token} cannot open the finance site shared by [UPN].`;
+11341:+    assert.equal(g.code, 3, `${token} at graph intake: ${short(g)}`);
+11342:+    assert.deepEqual(runDirs(), before, `${token}: no run directory may be created`);
+11344:+    const m = memAs(TENANT_A, dir)(['propose', '--file', writeFile('proposal.json', JSON.stringify({ ...PROPOSAL, detail: `Copied from the ${token} runbook.` }))]);
+11345:+    assert.equal(m.code, 3, `${token} at memory propose: ${short(m)}`);
+11348:+    assert.equal(r.code, 4, `${token} at replay record: ${short(r)}`);
+11404:+// ── review round 2: an org token is not a chat handle, and spacing or accents do not hide one ──
+11406:+test('C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are', () => {
+11409:+    assert.equal(r.code, 0, `${handle} is a chat mention, not an org token: ${short(r)}`);
+11411:+  for (const token of ['[@Contoso_DOMAIN ]', '[@Contoso_SITE 2]', '[@Contoso_ DOMAIN]']) {
+11413:+    const r = graph(['new', '--ticket-file', writeFile('spaced.txt', `Guest [GUEST_UPN] from ${token} cannot open the finance site.`)]);
+11414:+    assert.equal(r.code, 3, `${JSON.stringify(token)} must be refused: ${short(r)}`);
+11429:+// ── review round 3: an org token is matched against the dictionary's own suffixes ──
+11431:+test('C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace', () => {
+11432:+  const { hasForeignOrgToken } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+11436:+  for (const text of foreign) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} is a second tenant`);
+11439:+  for (const text of ours) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is not a second tenant`);
+11443:+  for (const token of ['[@Contoso_SiteCount]', '[@Contoso _DOMAIN]', '[@Aegion_ [@Contoso_DOMAIN]']) {
+11444:+    const ticket = `Guest [GUEST_UPN] from ${token} cannot open the finance site shared by [UPN].`;
+11447:+    assert.equal(g.code, 3, `${token} at graph intake: ${short(g)}`);
+11449:+    assert.ok(!g.stdout.includes('Contoso') && !g.stderr.includes('Contoso'), 'the foreign token is never echoed');
+11450:+    const m = memAs(TENANT_A, freshDir('c13'))(['propose', '--file', writeFile('proposal.json', JSON.stringify({ ...PROPOSAL, detail: `Copied from the ${token} runbook.` }))]);
+11451:+    assert.equal(m.code, 3, `${token} at memory propose: ${short(m)}`);
+11453:+    assert.equal(r.code, 4, `${token} at replay record: ${short(r)}`);
+11461:+test('C14 the org-token suffix list equals the placeholder dictionary\'s [@Aegion_*] suffixes', () => {
+11462:+  const { ORG_TOKEN_SUFFIXES } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+11465:+  assert.ok(suffixes.size > 0, 'the dictionary lists [@Aegion_*] tokens');
+11466:+  assert.deepEqual([...ORG_TOKEN_SUFFIXES].sort(), [...suffixes].sort(), 'add a dictionary token here when the dictionary gains one');
+# exit: 0
+#
+# Hits per file (added or removed diff lines):
+#   5 .claude/commands/jira-create.md
+#   2 .claude/commands/jira-update.md
+#   2 CHANGELOG.md
+#   2 CLAUDE.md
+#   2 PROJECT_STATE.md
+#   2 REVIEW.md
+#   9 checks.md
+#   2 docs/aegis/boundary-audit.md
+#   5 docs/aegis/capability-map.md
+#   1 docs/aegis/evidence/boundary-jira-tests.txt
+#   15 docs/aegis/evidence/boundary-safety-gate-tests.txt
+#   1 docs/aegis/evidence/memory-test.txt
+#   4 docs/aegis/evidence/replay-test.txt
+#   3 docs/aegis/evidence/repo-structure-test.txt
+#   15 docs/aegis/evidence/safety-gates-test.txt
+#   6 docs/aegis/evidence/scanner-test.txt
+#   1 docs/aegis/evidence/tier-test.txt
+#   4 docs/aegis/evidence/untrusted-gws-ticket-eval.txt
+#   6 docs/aegis/evidence/untrusted-ms-ticket-eval.txt
+#   32 docs/aegis/evidence/untrusted-node-test.txt
+#   10 docs/aegis/evidence/untrusted-pre-commit-check-all.txt
+#   1 docs/aegis/evidence/untrusted-release-boundary-check.txt
+#   3 docs/aegis/evidence/untrusted-replay-demo.txt
+#   1 docs/aegis/operator-context.md
+#   1 docs/aegis/workflow.md
+#   4 docs/baseline/branch/gws-ticket-eval.txt
+#   6 docs/baseline/branch/ms-ticket-eval.txt
+#   38 docs/baseline/branch/node-test.txt
+#   10 docs/baseline/branch/pre-commit-check-all.txt
+#   1 docs/baseline/branch/release-boundary-check.txt
+#   3 docs/baseline/branch/replay-demo.txt
+#   4 docs/baseline/gws-ticket-eval.txt
+#   6 docs/baseline/ms-ticket-eval.txt
+#   30 docs/baseline/node-test.txt
+#   10 docs/baseline/pre-commit-check-all.txt
+#   1 docs/baseline/release-boundary-check.txt
+#   3 docs/baseline/replay-demo.txt
+#   2 docs/explainers/batch1-baseline.md
+#   2 docs/review/batches/review-layers-checks.md
+#   1 scripts/graph/README.md
+#   5 scripts/graph/sanitize.js
+#   7 scripts/jira-client.js
+#   4 scripts/jira-client.test.js
+#   5 scripts/memory/README.md
+#   10 scripts/memory/memory-cli.js
+#   3 scripts/replay/README.md
+#   6 scripts/replay/replay-cli.js
+#   16 scripts/tier/tier-guard.js
+#   2 scripts/untrusted/poisoned-memory.test.js
+#   41 scripts/untrusted/wrong-customer.test.js
+#
+# Second pass, real credential shapes (gh*_ tokens, github_pat_, sk-, AKIA, JWT, private key, quoted 8+ char value assigned to password/secret/token) in added lines only:
+#   0 hits

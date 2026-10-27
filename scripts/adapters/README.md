@@ -23,11 +23,28 @@ Exit codes for every adapter CLI: `0` read or verified; `1` refused, input error
 |---|---|---|---|
 | `fleet-client.js` | Fleet REST API | `FLEET_URL`, `FLEET_API_TOKEN` | Bearer token of an API-only Observer user; no token exchange |
 | `jamf-client.js` | Jamf Pro API and Classic API GETs | `JAMF_URL`, `JAMF_CLIENT_ID`, `JAMF_CLIENT_SECRET` | client-credentials exchange at `POST /api/oauth/token`; secret-disclosure reads (FileVault key, Recovery Lock, LAPS) are not on the allow-list |
-| `slack-client.js` | Slack Web API read methods | `SLACK_TOKEN`, `SLACK_TEAM_ID` | `ok: false` answers are reported as failed reads with the error code only |
+| `slack-client.js` | Slack Web API read methods | `SLACK_TOKEN`, `SLACK_TEAM_ID`; `SLACK_ACCESS_LOGS_TOKEN` for `access-logs` only | `ok: false` answers are reported as failed reads with the error code only; scopes per command below |
 | `linear-client.js` | Linear GraphQL, named queries only | `LINEAR_API_KEY`, `LINEAR_ORG` | `note` prints the ticket note, its SHA-256 and the HUMAN-RUN posting steps offline; `verify-comment` proves the posted note |
 | `gws-client.js` | Admin SDK Directory and Reports, read scopes | `GWS_SA_CLIENT_EMAIL`, `GWS_SA_PRIVATE_KEY`, `GWS_ADMIN_SUBJECT`, `GWS_CUSTOMER_ID` | service-account JWT bearer exchange at `oauth2.googleapis.com/token` with read-only scopes |
 
 Every adapter runs dry by default: it prints the exact request it would make with no credentials read and no network, and only the bare `--execute` flag performs the read. Each adapter's allow-list, refused paths and `verify-*` reads are listed in `docs/aegis/lanes/g2.md`.
+
+### Slack tokens and scopes
+
+Each `slack-client.js` command reads one token variable and needs only the scopes below (`SCOPES` in the code; scope names from Slack's 2021 OpenAPI spec and search excerpts of docs.slack.dev, so confirm them on the app's OAuth page). Where two scopes are listed, the first covers a public channel and the second a private one.
+
+| Command | Token variable | Scopes |
+|---|---|---|
+| `digest` | none (offline) | none |
+| `whoami` | `SLACK_TOKEN` | none (`auth.test`) |
+| `user`, `users`, `verify-deactivated`, `verify-reactivated`, `verify-guest` | `SLACK_TOKEN` | `users:read` |
+| `team` | `SLACK_TOKEN` | `team:read` |
+| `channel`, `verify-archived` | `SLACK_TOKEN` | `channels:read`, `groups:read` |
+| `verify-posted` | `SLACK_TOKEN` | `channels:history`, `groups:history` |
+| `app-requests`, `apps-approved`, `apps-restricted`, `verify-app-approved`, `verify-app-restricted` | `SLACK_TOKEN` | `admin.apps:read` only (an Enterprise org-level user token; never with `admin.apps:write`) |
+| `access-logs` | `SLACK_ACCESS_LOGS_TOKEN` | `admin` (an admin's user token, paid plans) |
+
+The `admin` scope also authorizes Slack's SCIM API, including `DELETE /Users` (a deactivation). So `access-logs` reads its own variable: a separate token, exported for that one read and unset right after, never `SLACK_TOKEN`. No other command reads it, and the main spec refuses `team.accessLogs`, so `SLACK_TOKEN` never needs the `admin` scope.
 
 ## Adding a read
 

@@ -14,8 +14,11 @@
 //    R3 above 10; the public-channel export is R3 after the independent review (the T3
 //    floor for "export messages" in docs/aegis/lanes/g2.md). The "N changes, N gates"
 //    header, the phase headings and the fast path agree with the gates.
+// 3. Each runbook names the token variable and every scope of the adapter commands it
+//    runs (SCOPES in slack-client.js), and never asks for the admin scope in SLACK_TOKEN.
 //
-// Reads the Markdown only: no credential, no network, no Slack call.
+// Reads the Markdown and the adapter's SCOPES table only: no credential, no network,
+// no Slack call.
 
 require('./socket-tripwire.js');
 
@@ -23,6 +26,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+
+const slack = require('./slack-client.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const NAMES = Object.freeze([
@@ -220,6 +225,25 @@ test('the "N changes, N gates, N phrases" header, the phase headings and the fas
       const allowed = new Set(gates.filter((g) => g.section === heading).flatMap(classesOf));
       for (const cls of line.match(/\bR[1-3]\b/g) || []) if (!allowed.has(cls)) failures.push(`${name} fast path: ${cls} is not a class of Phase ${phase[1]}: ${line}`);
     }
+  }
+  assert.deepEqual(failures, []);
+});
+
+// ── 3. Token variables and scopes ──────────────────────────────────────────────────
+test('each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN', () => {
+  const failures = [];
+  for (const [name, doc] of DOCS) {
+    const used = new Set([...doc.text.matchAll(/node scripts\/adapters\/slack-client\.js ([a-z-]+)/g)].map((m) => m[1]));
+    assert.ok(used.size > 0, name);
+    for (const command of used) {
+      const entry = slack.SCOPES[command];
+      if (!entry) { failures.push(`${name}: runs an unknown command ${command}`); continue; }
+      if (entry.token && !doc.text.includes(`\`${entry.token}\``)) failures.push(`${name}: runs ${command} but never names \`${entry.token}\``);
+      for (const scope of entry.scopes) if (!doc.text.includes(`\`${scope}\``)) failures.push(`${name}: runs ${command} but never names \`${scope}\``);
+    }
+    doc.lines.forEach((line, index) => {
+      if (/\bSLACK_TOKEN\b/.test(line) && /\badmin[- ]scope\b|`admin`/i.test(line) && !/\bnever\b/i.test(line)) failures.push(`${name}:${index + 1}: SLACK_TOKEN paired with the admin scope`);
+    });
   }
   assert.deepEqual(failures, []);
 });

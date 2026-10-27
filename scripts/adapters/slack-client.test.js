@@ -12,9 +12,10 @@
 // nothing else. Concretely:
 //
 // 1. Allow-list. Exactly ten Web API methods, each a GET to https://slack.com/api/
-//    <method>: auth.test, users.info, users.list, team.info, conversations.info,
-//    conversations.history, admin.apps.requests.list, admin.apps.approved.list,
-//    admin.apps.restricted.list and team.accessLogs. Every other method name (the
+//    <method>, on two specs: SPEC holds auth.test, users.info, users.list, team.info,
+//    conversations.info, conversations.history, admin.apps.requests.list,
+//    admin.apps.approved.list and admin.apps.restricted.list; ACCESS_LOGS_SPEC holds
+//    team.accessLogs and its own auth.test, nothing else. Every other method name (the
 //    lane spec names chat.postMessage, chat.update, chat.delete, reactions.add,
 //    conversations.archive, conversations.invite, conversations.kick,
 //    admin.users.remove, admin.users.session.reset, admin.conversations.delete,
@@ -24,7 +25,13 @@
 // 2. Credential. SLACK_TOKEN goes only in the Authorization header, as a Bearer
 //    token: never in a path, a body, another header, a result or a printed line,
 //    also when the transport's error or the response echoes it. A missing token is
-//    NO_CREDENTIALS (exit 1) and names the variable, never a value.
+//    NO_CREDENTIALS (exit 1) and names the variable, never a value. team.accessLogs
+//    needs the admin scope, which also authorizes Slack's SCIM API (DELETE /Users
+//    deactivates a member), so access-logs reads SLACK_ACCESS_LOGS_TOKEN and never
+//    SLACK_TOKEN, no other command reads SLACK_ACCESS_LOGS_TOKEN, and SPEC refuses
+//    team.accessLogs: SLACK_TOKEN never needs the admin scope. Every command has an
+//    entry in SCOPES (its token variable and scopes), and the adapter README and the
+//    lane spec list the same scopes.
 // 3. Dry run. Without the bare --execute flag, every read and verify-* command
 //    prints the exact planned request(s) (method, host, path), reads no credential,
 //    calls no transport and exits 0. "--execute=yes", a value after --execute, or
@@ -79,12 +86,13 @@ const { STATES } = contract;
 
 // Sentinel values built at runtime, so no token shape is ever written to a file.
 const TOKEN = ['sentinel', 'value', 'slack', String(7 * 1301)].join('-');
+const ADMIN_TOKEN = ['sentinel', 'value', 'slack', 'logs', String(11 * 1301)].join('-');
 const TEAM = 'T0OURS0001';
 const OTHER_TEAM = 'T0OTHER001';
 const USER = 'U0TEST0001';
 const CHANNEL = 'C0TEST0001';
 const APP = 'A0TEST0001';
-const ENV = Object.freeze({ SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: TEAM });
+const ENV = Object.freeze({ SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: TEAM, SLACK_ACCESS_LOGS_TOKEN: ADMIN_TOKEN });
 
 const NOT_BEFORE_ISO = '2026-10-27T18:30:00.123Z';
 const NOW = Date.parse(NOT_BEFORE_ISO) + 60 * 1000;
@@ -173,8 +181,8 @@ const ROUTE_CASES = [
   { argv: ['app-requests'], replies: [appsBody('app_requests', [APP])], paths: [`/api/admin.apps.requests.list?team_id=${TEAM}`] },
   { argv: ['apps-approved', '--limit', '50'], replies: [appsBody('approved_apps', [APP])], paths: [`/api/admin.apps.approved.list?team_id=${TEAM}&limit=50`] },
   { argv: ['apps-restricted'], replies: [appsBody('restricted_apps', [APP])], paths: [`/api/admin.apps.restricted.list?team_id=${TEAM}`] },
-  { argv: ['access-logs'], replies: [authBody(), logsBody()], paths: ['/api/auth.test', '/api/team.accessLogs'] },
-  { argv: ['access-logs', '--count', '50', '--page', '2'], replies: [authBody(), logsBody()], paths: ['/api/auth.test', '/api/team.accessLogs?count=50&page=2'] },
+  { argv: ['access-logs'], replies: [authBody(), logsBody()], paths: ['/api/auth.test', '/api/team.accessLogs'], token: ADMIN_TOKEN },
+  { argv: ['access-logs', '--count', '50', '--page', '2'], replies: [authBody(), logsBody()], paths: ['/api/auth.test', '/api/team.accessLogs?count=50&page=2'], token: ADMIN_TOKEN },
   { argv: ['verify-deactivated', '--user', USER], replies: [userBody({ deleted: true })], paths: [`/api/users.info?user=${USER}`] },
   { argv: ['verify-reactivated', '--user', USER], replies: [userBody()], paths: [`/api/users.info?user=${USER}`] },
   { argv: ['verify-guest', '--user', USER, '--type', 'single'], replies: [userBody({ is_restricted: true, is_ultra_restricted: true })], paths: [`/api/users.info?user=${USER}`] },
@@ -195,35 +203,129 @@ const ROUTE_CASES = [
 // ── 1. Allow-list and credential placement ──────────────────────────────────
 test('the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange', () => {
   const expected = ['admin.apps.approved.list', 'admin.apps.requests.list', 'admin.apps.restricted.list', 'auth.test', 'conversations.history', 'conversations.info', 'team.accessLogs', 'team.info', 'users.info', 'users.list'];
-  assert.deepEqual(Object.keys(slack.SPEC.routes).sort(), expected);
-  for (const [name, route] of Object.entries(slack.SPEC.routes)) {
-    assert.equal(route.method, 'GET', name);
-    assert.equal(route.path, `/api/${name}`, name);
+  assert.deepEqual([...new Set([...Object.keys(slack.SPEC.routes), ...Object.keys(slack.ACCESS_LOGS_SPEC.routes)])].sort(), expected);
+  assert.deepEqual(Object.keys(slack.SPEC.routes).sort(), expected.filter((name) => name !== 'team.accessLogs'));
+  assert.deepEqual(Object.keys(slack.ACCESS_LOGS_SPEC.routes).sort(), ['auth.test', 'team.accessLogs']);
+  for (const [spec, token] of [[slack.SPEC, 'SLACK_TOKEN'], [slack.ACCESS_LOGS_SPEC, 'SLACK_ACCESS_LOGS_TOKEN']]) {
+    for (const [name, route] of Object.entries(spec.routes)) {
+      assert.equal(route.method, 'GET', name);
+      assert.equal(route.path, `/api/${name}`, name);
+    }
+    assert.equal(spec.host.fixed, 'slack.com');
+    assert.deepEqual([...spec.credentials], [token]);
+    assert.equal(spec.tokenExchange, null, 'no token exchange: oauth.v2.access needs a browser redirect');
+    assert.equal(spec.graphql, null);
+    assert.equal(spec.tenant.env, 'SLACK_TEAM_ID');
   }
-  assert.equal(slack.SPEC.host.fixed, 'slack.com');
-  assert.deepEqual([...slack.SPEC.credentials], ['SLACK_TOKEN']);
-  assert.equal(slack.SPEC.tokenExchange, null, 'no token exchange: oauth.v2.access needs a browser redirect');
-  assert.equal(slack.SPEC.graphql, null);
-  assert.equal(slack.SPEC.tenant.env, 'SLACK_TEAM_ID');
 });
 
 test('every route sends the exact method, host and path, and puts the token only in the Authorization header', async () => {
   for (const c of ROUTE_CASES) {
     const { code, stdout, stderr, transport } = await cli([...c.argv, '--execute'], { replies: c.replies });
     const label = c.argv.join(' ');
+    const token = c.token || TOKEN;
     assert.equal(code, 0, `${label}: ${stdout}`);
     assert.deepEqual(transport.calls.map((r) => r.path), c.paths, label);
     for (const r of transport.calls) {
       assert.equal(r.method, 'GET', label);
       assert.equal(r.hostname, 'slack.com', label);
       assert.equal(r.body, undefined, label);
-      assert.equal(r.headers.Authorization, `Bearer ${TOKEN}`, label);
+      assert.equal(r.headers.Authorization, `Bearer ${token}`, label);
       for (const [name, value] of Object.entries(r.headers)) {
-        if (name !== 'Authorization') assert.ok(!String(value).includes(TOKEN), `${label}: header ${name} carries the token`);
+        if (name !== 'Authorization') assert.ok(!String(value).includes(TOKEN) && !String(value).includes(ADMIN_TOKEN), `${label}: header ${name} carries a token`);
       }
-      assert.ok(!r.path.includes(TOKEN), label);
+      assert.ok(!r.path.includes(TOKEN) && !r.path.includes(ADMIN_TOKEN), label);
     }
-    assert.ok(!stdout.includes(TOKEN) && !stderr.includes(TOKEN), label);
+    for (const t of [TOKEN, ADMIN_TOKEN]) assert.ok(!stdout.includes(t) && !stderr.includes(t), label);
+  }
+});
+
+test('SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs', async () => {
+  for (const c of ROUTE_CASES) {
+    const { env, reads } = recordingEnv();
+    const run = await cli([...c.argv, '--execute'], { env, replies: c.replies });
+    const label = c.argv.join(' ');
+    assert.equal(run.code, 0, label);
+    if (c.argv[0] === 'access-logs') {
+      assert.ok(reads.includes('SLACK_ACCESS_LOGS_TOKEN'), `${label}: reads its own token`);
+      assert.ok(!reads.includes('SLACK_TOKEN'), `${label}: never reads SLACK_TOKEN`);
+    } else {
+      assert.ok(!reads.includes('SLACK_ACCESS_LOGS_TOKEN'), `${label}: reads the admin-scope token`);
+    }
+  }
+  // SLACK_TOKEN alone does not run access-logs: the missing variable is named, nothing is sent
+  const only = recordingEnv({ SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: TEAM });
+  const missing = await cli(['access-logs', '--execute'], { env: only.env, replies: [authBody(), logsBody()] });
+  assert.equal(missing.code, 1);
+  assert.equal(firstJson(missing.stdout).state, STATES.NO_CREDENTIALS);
+  assert.match(firstJson(missing.stdout).error, /SLACK_ACCESS_LOGS_TOKEN/);
+  assert.equal(missing.transport.calls.length, 0);
+  assert.ok(!only.reads.includes('SLACK_TOKEN'));
+  // SPEC refuses team.accessLogs before reading any token; ACCESS_LOGS_SPEC refuses every other read
+  for (const [spec, request] of [
+    [slack.SPEC, { method: 'GET', path: '/api/team.accessLogs' }],
+    [slack.SPEC, { method: 'GET', path: '/api/team.accessLogs?count=10' }],
+    [slack.ACCESS_LOGS_SPEC, { method: 'GET', path: `/api/users.info?user=${USER}` }],
+    [slack.ACCESS_LOGS_SPEC, { method: 'GET', path: `/api/conversations.history?limit=50&channel=${CHANNEL}&oldest=${OLDEST}` }],
+    [slack.ACCESS_LOGS_SPEC, { method: 'GET', path: '/api/admin.apps.approved.list' }],
+    [slack.ACCESS_LOGS_SPEC, { method: 'GET', path: '/scim/v2/Users' }],
+    [slack.ACCESS_LOGS_SPEC, { method: 'POST', path: '/api/team.accessLogs' }],
+  ]) {
+    const { env, reads } = recordingEnv();
+    const transport = queuedTransport([]);
+    const res = await contract.createClient(spec, { env, transport, sleep: async () => {} }).send(request);
+    assert.equal(res.state, STATES.REFUSED, JSON.stringify(request));
+    assert.equal(transport.calls.length, 0);
+    assert.deepEqual(reads.filter((n) => /TOKEN/.test(n)), [], `${JSON.stringify(request)}: a token was read`);
+  }
+});
+
+test('every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes', () => {
+  const commands = Object.keys(slack.COMMANDS).sort();
+  assert.deepEqual(Object.keys(slack.SCOPES).sort(), commands);
+  const expected = {
+    digest: [null, []],
+    whoami: ['SLACK_TOKEN', []],
+    user: ['SLACK_TOKEN', ['users:read']],
+    users: ['SLACK_TOKEN', ['users:read']],
+    team: ['SLACK_TOKEN', ['team:read']],
+    channel: ['SLACK_TOKEN', ['channels:read', 'groups:read']],
+    'app-requests': ['SLACK_TOKEN', ['admin.apps:read']],
+    'apps-approved': ['SLACK_TOKEN', ['admin.apps:read']],
+    'apps-restricted': ['SLACK_TOKEN', ['admin.apps:read']],
+    'access-logs': ['SLACK_ACCESS_LOGS_TOKEN', ['admin']],
+    'verify-deactivated': ['SLACK_TOKEN', ['users:read']],
+    'verify-reactivated': ['SLACK_TOKEN', ['users:read']],
+    'verify-guest': ['SLACK_TOKEN', ['users:read']],
+    'verify-archived': ['SLACK_TOKEN', ['channels:read', 'groups:read']],
+    'verify-posted': ['SLACK_TOKEN', ['channels:history', 'groups:history']],
+    'verify-app-approved': ['SLACK_TOKEN', ['admin.apps:read']],
+    'verify-app-restricted': ['SLACK_TOKEN', ['admin.apps:read']],
+  };
+  for (const name of commands) assert.deepEqual([slack.SCOPES[name].token, [...slack.SCOPES[name].scopes]], expected[name], name);
+  // the admin scope stays off SLACK_TOKEN
+  for (const [name, entry] of Object.entries(slack.SCOPES)) {
+    if (entry.token === 'SLACK_TOKEN') assert.ok(!entry.scopes.includes('admin'), name);
+  }
+
+  const root = path.resolve(__dirname, '..', '..');
+  const header = fs.readFileSync(path.join(__dirname, 'slack-client.js'), 'utf8').split('\nconst crypto')[0];
+  for (const doc of [
+    ['scripts/adapters/README.md', fs.readFileSync(path.join(__dirname, 'README.md'), 'utf8')],
+    ['docs/aegis/lanes/g2.md', fs.readFileSync(path.join(root, 'docs', 'aegis', 'lanes', 'g2.md'), 'utf8')],
+  ]) {
+    const [file, text] = doc;
+    const rows = text.split('\n').filter((l) => /^\|/.test(l));
+    for (const name of commands) {
+      const [token, scopes] = expected[name];
+      const row = rows.find((l) => l.split('|')[1] && l.split('|')[1].includes(`\`${name}\``));
+      assert.ok(row, `${file}: no scope row for ${name}`);
+      if (token) assert.ok(row.includes(`\`${token}\``), `${file}: ${name} row does not name ${token}`);
+      for (const scope of scopes) assert.ok(row.includes(`\`${scope}\``), `${file}: ${name} row does not name ${scope}`);
+    }
+  }
+  for (const word of ['SLACK_ACCESS_LOGS_TOKEN', 'users:read', 'team:read', 'channels:read', 'groups:read', 'channels:history', 'groups:history', 'admin.apps:read', 'DELETE /Users']) {
+    assert.ok(header.includes(word), `the slack-client.js header does not name ${word}`);
   }
 });
 
@@ -278,7 +380,7 @@ test('the CLI dry run prints the exact planned requests, reads no credential and
     const label = c.argv.join(' ');
     assert.equal(code, 0, `${label}: ${stdout}`);
     assert.equal(transport.calls.length, 0, label);
-    assert.ok(!reads.includes('SLACK_TOKEN'), `${label}: the dry run read the token`);
+    assert.ok(!reads.includes('SLACK_TOKEN') && !reads.includes('SLACK_ACCESS_LOGS_TOKEN'), `${label}: the dry run read a token`);
     const res = firstJson(stdout);
     assert.equal(res.dry_run, true, label);
     assert.deepEqual(res.requests.map((r) => [r.method, r.host, r.path]), c.paths.map((p) => ['GET', 'slack.com', p]), label);
@@ -544,11 +646,18 @@ test('the token never appears in stdout, stderr or a result, also when the trans
     [['verify-deactivated', '--user', USER], [userBody({ deleted: true, profile: { title: TOKEN } })]],
     [['verify-posted', '--channel', CHANNEL, '--expect-sha256', sha256(TOKEN), '--not-before', NOT_BEFORE_ISO], [authBody(), historyBody([message(TOKEN)])]],
   ];
+  const leakyLogs = new Error(`connect failed for Bearer ${ADMIN_TOKEN}`);
+  scenarios.push(
+    [['access-logs'], [leakyLogs, leakyLogs, leakyLogs]],
+    [['access-logs'], [{ ok: true, team_id: TEAM, user: ADMIN_TOKEN }, { ok: true, logins: [{ user_id: USER, user_agent: ADMIN_TOKEN }] }]],
+  );
   for (const [argv, replies] of scenarios) {
     const run = await cli([...argv, '--execute'], { replies });
-    const label = `${argv[0]} ${JSON.stringify(replies[0]).slice(0, 60)}`;
-    assert.ok(!run.stdout.includes(TOKEN), `${label}: ${run.stdout}`);
-    assert.ok(!run.stderr.includes(TOKEN), label);
+    const label = `${argv[0]} ${String(replies[0] instanceof Error ? replies[0].message : JSON.stringify(replies[0])).slice(0, 60)}`;
+    for (const t of [TOKEN, ADMIN_TOKEN]) {
+      assert.ok(!run.stdout.includes(t), `${label}: ${run.stdout}`);
+      assert.ok(!run.stderr.includes(t), label);
+    }
   }
   const echoed = await cli(['whoami', '--execute'], { replies: [{ ok: true, team_id: TEAM, user: TOKEN }] });
   assert.equal(firstJson(echoed.stdout).data.user, '[REDACTED]');

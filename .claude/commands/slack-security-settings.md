@@ -27,6 +27,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - The target value for each setting from the ticket: the session duration, the domains to approve, the file sharing decision.
 - For a request to turn two-factor off: the ticket, the requester verified out of band, the reason, the approver **[org gap: who may approve weakening a sign-in control]** and the expiry.
 - A test member `[USER_ID]` for read-backs, and `[ISSUE_ID]`.
+- For the adapter reads: `SLACK_TEAM_ID` is `[@Aegion_SLACK_TEAM_ID]` and `SLACK_TOKEN` holds a token with `users:read` and `team:read` (`whoami` needs no scope). The sign-in log read (`access-logs`) needs the `admin` scope, which also authorizes Slack's SCIM API (a SCIM delete deactivates a member), so it reads a separate admin's user token from `SLACK_ACCESS_LOGS_TOKEN`, exported for that one read and unset right after, never put in `SLACK_TOKEN`.
 
 ## How the systems hang together
 
@@ -35,7 +36,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Session duration** is Slack's own setting, desktop and mobile separately: it can sign members out when they close Slack or after a set period, warns them 2 hours and 15 minutes before, applies from that day and expires sessions gradually.
 - **Approved email domains** let anyone with an address at that domain join; the domains show on the sign-in page.
 - **Public file sharing** is one permission; Slack Connect file-upload permissions are separate.
-- **The read-only adapter** (`scripts/adapters/slack-client.js`, GET only, bound to `[@Aegion_SLACK_TEAM_ID]`) confirms the workspace (`whoami`, `team`), reads one member (`user`, including `has_2fa`, a field from Slack's 2021 API spec whose visibility to the token is unconfirmed) and reads sign-ins (`access-logs`, paid plans, admin scope). It changes no setting.
+- **The read-only adapter** (`scripts/adapters/slack-client.js`, GET only, bound to `[@Aegion_SLACK_TEAM_ID]`) confirms the workspace (`whoami`, `team`), reads one member (`user`, including `has_2fa`, a field from Slack's 2021 API spec whose visibility to the token is unconfirmed) and reads sign-ins (`access-logs`, paid plans, with its own admin-scope token in `SLACK_ACCESS_LOGS_TOKEN`). It changes no setting.
 
 ## Fast path
 
@@ -63,14 +64,15 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 <summary>Read-only adapter reads, the scale version (HUMAN-RUN)</summary>
 
 ```bash
-# HUMAN-RUN read-only. SLACK_TOKEN and SLACK_TEAM_ID are exported in the shell first, from an app a human installed with read scopes, and never pasted into a ticket
+# HUMAN-RUN read-only. SLACK_TOKEN and SLACK_TEAM_ID are exported in the shell first, the token from an app a human installed with users:read and team:read, and never pasted into a ticket
 # shows which workspace the token belongs to, stop if it is not the one in SLACK_TEAM_ID
 node scripts/adapters/slack-client.js whoami --execute
 # reads the workspace name, ID and domain
 node scripts/adapters/slack-client.js team --execute
 # reads one test member, including has_2fa where the token may see it
 node scripts/adapters/slack-client.js user --user [USER_ID] --execute
-# reads recent sign-ins by user, IP and user agent, on paid plans with an admin-scope token
+# reads recent sign-ins by user, IP and user agent, on paid plans
+# SLACK_ACCESS_LOGS_TOKEN holds a separate admin-scope user token, exported for this one read and unset right after, never SLACK_TOKEN
 node scripts/adapters/slack-client.js access-logs --execute
 ```
 </details>
@@ -105,6 +107,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 # one test member, has_2fa should read true where the token may see it
 node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 # sign-ins after the 24-hour window, members returning after setting up two-factor
+# SLACK_ACCESS_LOGS_TOKEN holds the separate admin-scope user token for this one read, unset right after
 node scripts/adapters/slack-client.js access-logs --execute
 ```
 
@@ -159,6 +162,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 
 ```bash
 # HUMAN-RUN read-only read-back, sign-ins after the change, members arriving through Okta
+# SLACK_ACCESS_LOGS_TOKEN holds the separate admin-scope user token for this one read, unset right after
 node scripts/adapters/slack-client.js access-logs --execute
 ```
 

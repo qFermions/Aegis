@@ -26,7 +26,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - The business owner who asked (a role, not a name) and the date a guest's access should end.
 - For Slack Connect: who may approve a new external connection and how the partner is confirmed out of band **[org gap: confirm the approver and the partner-contact record]**.
 - The plan: guest accounts exist on paid plans only; disconnecting individual external people instead of a whole organization is Business+ and Enterprise.
-- For the adapter: `SLACK_TOKEN` holds a read-scoped token (`users:read`, `channels:read`, `groups:read`) and `SLACK_TEAM_ID` is `[@Aegion_SLACK_TEAM_ID]`; a record from another workspace is refused.
+- For the adapter: `SLACK_TOKEN` holds a read-scoped token (`users:read` for `user`, `users` and the guest read-backs; `channels:read` or `groups:read` for `channel` and `verify-archived` on a public or a private channel; `team:read` for `team`; `whoami` needs no scope) and `SLACK_TEAM_ID` is `[@Aegion_SLACK_TEAM_ID]`; a record from another workspace is refused.
 
 ## How the systems hang together
 

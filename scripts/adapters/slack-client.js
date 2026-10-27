@@ -4,7 +4,8 @@
 // refused writes are listed in docs/aegis/lanes/g2.md, section "Slack".
 //
 // Aegis advises; humans execute (PRODUCT_CONTRACT.md). This adapter sends GET reads to
-// https://slack.com/api/<method> for ten methods and nothing else. Every Slack write
+// https://slack.com/api/<method> for ten methods and nothing else: nine on SPEC and
+// team.accessLogs (with its own auth.test) on ACCESS_LOGS_SPEC. Every Slack write
 // (a message, reaction, invite, channel change, deactivation, session reset or app
 // approval) is a HUMAN-RUN step in a runbook under .claude/commands/; the verify-*
 // commands here prove that step afterwards with a read.
@@ -46,11 +47,34 @@
 //     verify-app-restricted --app-id [APP_ID]
 //                                          in admin.apps.restricted.list
 //
-// Environment: SLACK_TOKEN (a token with read scopes only, sent only as
-// Authorization: Bearer) and SLACK_TEAM_ID (this deployment's workspace, T...). A user,
-// member, team or channel record whose team id is another workspace's, or that has
-// none, is refused (exit 3). access-logs and verify-posted, whose answers carry no team
-// id, first read auth.test and stop unless its team_id is SLACK_TEAM_ID.
+// Environment: SLACK_TEAM_ID names this deployment's workspace (T...). Each read sends
+// one token, only as Authorization: Bearer, and needs only the scopes in this table
+// (SCOPES below; scope names from Slack's 2021 OpenAPI spec and search excerpts of
+// docs.slack.dev, so confirm them on the app's OAuth page):
+//   command                                  token variable           scopes
+//   digest                                   none (offline)           none
+//   whoami                                   SLACK_TOKEN              none (auth.test)
+//   user, users, verify-deactivated,         SLACK_TOKEN              users:read
+//     verify-reactivated, verify-guest
+//   team                                     SLACK_TOKEN              team:read
+//   channel, verify-archived                 SLACK_TOKEN              channels:read (public channel),
+//                                                                     groups:read (private channel)
+//   verify-posted                            SLACK_TOKEN              channels:history (public channel),
+//                                                                     groups:history (private channel)
+//   app-requests, apps-approved,             SLACK_TOKEN              admin.apps:read only (an Enterprise
+//     apps-restricted, verify-app-approved,                           org-level user token; never with
+//     verify-app-restricted                                           admin.apps:write)
+//   access-logs                              SLACK_ACCESS_LOGS_TOKEN  admin (an admin's user token,
+//                                                                     paid plans)
+// The admin scope also authorizes Slack's SCIM API, including DELETE /Users (a
+// deactivation), so access-logs reads its own variable: a separate token, exported for
+// that one read and unset right after, never SLACK_TOKEN. No other command reads
+// SLACK_ACCESS_LOGS_TOKEN, access-logs never reads SLACK_TOKEN, and SPEC refuses
+// team.accessLogs, so SLACK_TOKEN never needs the admin scope.
+//
+// A user, member, team or channel record whose team id is another workspace's, or
+// that has none, is refused (exit 3). access-logs and verify-posted, whose answers
+// carry no team id, first read auth.test and stop unless its team_id is SLACK_TEAM_ID.
 //
 // Slack answers HTTP 200 with ok: false on an error. That is a failed read (exit 2)
 // reported with the error code only. There is no token exchange: oauth.v2.access needs
@@ -124,6 +148,7 @@ function teamIdsIn(json) {
 }
 
 const appListQuery = { team_id: PATTERNS.team, limit: PATTERNS.limit1000, cursor: PATTERNS.cursor };
+const AUTH_TEST_ROUTE = { method: 'GET', path: '/api/auth.test' };
 
 const SPEC = defineAdapter({
   platform: 'slack',
@@ -131,7 +156,7 @@ const SPEC = defineAdapter({
   credentials: ['SLACK_TOKEN'],
   auth: (creds) => ({ Authorization: `Bearer ${creds.SLACK_TOKEN}` }),
   routes: {
-    'auth.test': { method: 'GET', path: '/api/auth.test' },
+    'auth.test': AUTH_TEST_ROUTE,
     'users.info': { method: 'GET', path: '/api/users.info', query: { user: PATTERNS.user } },
     'users.list': { method: 'GET', path: '/api/users.list', query: { limit: PATTERNS.limit200, cursor: PATTERNS.cursor } },
     'team.info': { method: 'GET', path: '/api/team.info' },
@@ -145,13 +170,28 @@ const SPEC = defineAdapter({
     'admin.apps.requests.list': { method: 'GET', path: '/api/admin.apps.requests.list', query: appListQuery },
     'admin.apps.approved.list': { method: 'GET', path: '/api/admin.apps.approved.list', query: appListQuery },
     'admin.apps.restricted.list': { method: 'GET', path: '/api/admin.apps.restricted.list', query: appListQuery },
+  },
+  tenant: { env: 'SLACK_TEAM_ID', collect: teamIdsIn },
+});
+
+// team.accessLogs needs the admin scope, so it has its own spec and its own token
+// variable: SLACK_TOKEN is never asked to carry that scope.
+const ACCESS_LOGS_SPEC = defineAdapter({
+  platform: 'slack',
+  host: { fixed: HOST },
+  credentials: ['SLACK_ACCESS_LOGS_TOKEN'],
+  auth: (creds) => ({ Authorization: `Bearer ${creds.SLACK_ACCESS_LOGS_TOKEN}` }),
+  routes: {
+    'auth.test': AUTH_TEST_ROUTE,
     'team.accessLogs': { method: 'GET', path: '/api/team.accessLogs', query: { count: PATTERNS.limit1000, page: PATTERNS.page100 } },
   },
   tenant: { env: 'SLACK_TEAM_ID', collect: teamIdsIn },
 });
 
-for (const name of REFUSED_METHODS) {
-  if (has(SPEC.routes, name)) throw new Error(`slack-client: ${name} is a refused method and cannot be a route`);
+for (const spec of [SPEC, ACCESS_LOGS_SPEC]) {
+  for (const name of REFUSED_METHODS) {
+    if (has(spec.routes, name)) throw new Error(`slack-client: ${name} is a refused method and cannot be a route`);
+  }
 }
 
 // ── Draft digest (the Linear note's normalisation) ──────────────────────────
@@ -332,6 +372,7 @@ const COMMANDS = Object.freeze({
   'apps-restricted': appListCommand('admin.apps.restricted.list', 'restricted_apps'),
   'access-logs': {
     kind: 'read',
+    spec: ACCESS_LOGS_SPEC,
     flags: { count: RULES.limit1000, page: RULES.page100 },
     steps: (a) => [step('auth.test'), step('team.accessLogs', pick(a, ['count', 'page']))],
     shape: SHAPES.logs,
@@ -377,6 +418,37 @@ const COMMANDS = Object.freeze({
     verify: verifyAppRestricted,
   },
 });
+
+// The token variable and the scopes each command needs (the table in the header).
+// channel and verify-archived need channels:read for a public channel or groups:read
+// for a private one; verify-posted needs channels:history or groups:history the same way.
+const scope = (token, scopes) => Object.freeze({ token, scopes: Object.freeze(scopes) });
+const SCOPES = Object.freeze({
+  digest: scope(null, []),
+  whoami: scope('SLACK_TOKEN', []),
+  user: scope('SLACK_TOKEN', ['users:read']),
+  users: scope('SLACK_TOKEN', ['users:read']),
+  team: scope('SLACK_TOKEN', ['team:read']),
+  channel: scope('SLACK_TOKEN', ['channels:read', 'groups:read']),
+  'app-requests': scope('SLACK_TOKEN', ['admin.apps:read']),
+  'apps-approved': scope('SLACK_TOKEN', ['admin.apps:read']),
+  'apps-restricted': scope('SLACK_TOKEN', ['admin.apps:read']),
+  'access-logs': scope('SLACK_ACCESS_LOGS_TOKEN', ['admin']),
+  'verify-deactivated': scope('SLACK_TOKEN', ['users:read']),
+  'verify-reactivated': scope('SLACK_TOKEN', ['users:read']),
+  'verify-guest': scope('SLACK_TOKEN', ['users:read']),
+  'verify-archived': scope('SLACK_TOKEN', ['channels:read', 'groups:read']),
+  'verify-posted': scope('SLACK_TOKEN', ['channels:history', 'groups:history']),
+  'verify-app-approved': scope('SLACK_TOKEN', ['admin.apps:read']),
+  'verify-app-restricted': scope('SLACK_TOKEN', ['admin.apps:read']),
+});
+
+for (const [name, def] of Object.entries(COMMANDS)) {
+  const entry = SCOPES[name];
+  const spec = def.spec || SPEC;
+  if (!entry) throw new Error(`slack-client: ${name} has no scope entry`);
+  if (def.kind !== 'offline' && spec.credentials[0] !== entry.token) throw new Error(`slack-client: ${name} reads ${spec.credentials[0]}, its scope entry names ${entry.token}`);
+}
 
 function parseCommand(argv) {
   if (!Array.isArray(argv) || !argv.every((a) => typeof a === 'string')) throw new RefusedError('arguments must be a list of strings');
@@ -686,7 +758,7 @@ async function run(argv, env, deps = {}) {
       ctx.oldest = oldestFromMs(ctx.notBeforeMs);
     }
     steps = def.steps(args, ctx);
-    client = createClient(SPEC, { env: environment, transport: deps.transport, sleep: deps.sleep, now: deps.now });
+    client = createClient(def.spec || SPEC, { env: environment, transport: deps.transport, sleep: deps.sleep, now: deps.now });
     const planned = steps.map((s) => client.plan(s.route, {}, s.query));
     const refusedPlan = planned.find((p) => p.state !== STATES.OK);
     if (refusedPlan) throw new RefusedError(refusedPlan.error);
@@ -711,11 +783,13 @@ async function run(argv, env, deps = {}) {
   const res = def.kind === 'verify'
     ? await def.verify(command, args, ctx, client, steps)
     : await runRead(command, def, steps, client);
-  const token = res.state === STATES.REFUSED ? undefined : environment.SLACK_TOKEN;
+  // Only the variable this command's spec names is read, and only after the request
+  // was allowed; that value is redacted from everything printed.
+  const token = res.state === STATES.REFUSED ? undefined : environment[(def.spec || SPEC).credentials[0]];
   return emit(res, typeof token === 'string' && token.length ? [token] : []);
 }
 
-module.exports = { SPEC, run, REFUSED_METHODS, normaliseText };
+module.exports = { SPEC, ACCESS_LOGS_SPEC, COMMANDS, SCOPES, run, REFUSED_METHODS, normaliseText };
 
 if (require.main === module) {
   run(process.argv.slice(2), process.env).then(

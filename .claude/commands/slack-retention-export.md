@@ -26,7 +26,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - The written approval and its source (legal, HR, a court order) with the exact retention period or date range **[org gap: who may approve retention, export and deletion requests]**.
 - The plan: legal holds and the all-conversations export through Organization settings are Enterprise; Business+ can apply for Slack's self-serve export tool. Slack's newer pages write "Enterprise" where older ones say "Enterprise Grid".
 - `[USER_ID]` and `[CHANNEL_NAME]` / `[CHANNEL_ID]` as the ticket needs, and the evidence store where an export is kept **[org gap: the approved evidence location and who may open it]**.
-- For the adapter: `SLACK_TOKEN` holds a read-scoped token (`users:read`, `team:read`, `channels:read`, `groups:read`) and `SLACK_TEAM_ID` is `[@Aegion_SLACK_TEAM_ID]`.
+- For the adapter: `SLACK_TEAM_ID` is `[@Aegion_SLACK_TEAM_ID]` and `SLACK_TOKEN` holds a token with `users:read` (`user`, `users`), `team:read` (`team`), and `channels:read` or `groups:read` (`channel`, for a public or a private channel); `whoami` needs no scope. The sign-in log read (`access-logs`) needs the `admin` scope, which also authorizes Slack's SCIM API (a SCIM delete deactivates a member), so it reads a separate admin's user token from `SLACK_ACCESS_LOGS_TOKEN`, exported for that one read and unset right after, never put in `SLACK_TOKEN`.
 
 ## How the systems hang together
 
@@ -215,10 +215,11 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 <summary>Slack Web API reads through the adapter: the scale version (HUMAN-RUN, read-only)</summary>
 
 ```bash
-# HUMAN-RUN: read-only; SLACK_TOKEN holds a read-scoped token and SLACK_TEAM_ID is [@Aegion_SLACK_TEAM_ID], both exported in the shell, never pasted into a ticket
+# HUMAN-RUN: read-only; SLACK_TOKEN holds the read-scoped token from Inputs and SLACK_TEAM_ID is [@Aegion_SLACK_TEAM_ID], both exported in the shell, never pasted into a ticket
 # read-only: one page of members with is_owner, is_admin and deleted, to list who holds the Owner role before routing a retention request; repeat with --cursor from the previous page
 node scripts/adapters/slack-client.js users --limit 200 --execute
-# read-only: sign-in history (team.accessLogs, paid plans, admin scope), to show who signed in around an export or a deletion
+# read-only: sign-in history (team.accessLogs, paid plans), to show who signed in around an export or a deletion
+# SLACK_ACCESS_LOGS_TOKEN holds a separate admin-scope user token, exported for this one read and unset right after, never SLACK_TOKEN
 node scripts/adapters/slack-client.js access-logs --execute
 ```
 </details>

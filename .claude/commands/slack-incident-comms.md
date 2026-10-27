@@ -27,6 +27,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Who posts, and whether posting in that channel is limited to some people. **[org gap: the announcement channel's posting permission]**
 - The update cadence. **[org gap: the incident-communication policy; until one exists, the incident owner sets the next-update time in each post]**
 - Where staff go when Slack is also down. **[org gap: the fallback channel]**
+- For the adapter reads: `SLACK_TEAM_ID` is `[@Aegion_SLACK_TEAM_ID]` and `SLACK_TOKEN` holds a token with `channels:read` and `channels:history` for a public announcement channel, or `groups:read` and `groups:history` for a private one (`whoami` needs no scope). Without the history scope every `verify-posted` read fails with `missing_scope`. The history scopes read message content, so the app that holds them needs the owner sign-off that `/slack-app-approval` asks for.
 
 ## How the systems hang together
 
@@ -91,7 +92,7 @@ Still seeing a problem? Reply to this message or tell IT in [ISSUE_ID].
 <summary>Read-only adapter reads (HUMAN-RUN)</summary>
 
 ```bash
-# HUMAN-RUN read-only. SLACK_TOKEN and SLACK_TEAM_ID are exported in the shell first, from an app a human installed with read scopes, and never pasted into a ticket
+# HUMAN-RUN read-only. SLACK_TOKEN and SLACK_TEAM_ID are exported in the shell first, the token from an app a human installed with the read and history scopes in Inputs, and never pasted into a ticket
 # shows which workspace the token belongs to, stop if it is not the one in SLACK_TEAM_ID
 node scripts/adapters/slack-client.js whoami --execute
 # reads the channel, is_archived must be false and is_ext_shared false, meaning not shared with another organization

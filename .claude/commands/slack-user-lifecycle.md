@@ -28,6 +28,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Whether Okta provisions Slack through SCIM. **[org gap: confirm in the Okta Slack app's provisioning settings]**
 - The channels the person must be in, from the ticket or the manager. **[org gap: the default channels new members join; that setting's GUI path was not in the sources read]**
 - `[ISSUE_ID]` for the ticket note.
+- For the adapter reads: `SLACK_TEAM_ID` is `[@Aegion_SLACK_TEAM_ID]` and `SLACK_TOKEN` holds a token with `users:read` (for `user`, `users` and the `verify-*` reads; `whoami` needs no scope). The sign-in log read (`access-logs`, Phase G) needs the `admin` scope, which also authorizes Slack's SCIM API (a SCIM delete deactivates a member), so it reads a separate admin's user token from `SLACK_ACCESS_LOGS_TOKEN`, exported for that one read and unset right after, never put in `SLACK_TOKEN`.
 
 ## How the systems hang together
 
@@ -62,7 +63,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 <summary>Read-only adapter reads, the scale version (HUMAN-RUN)</summary>
 
 ```bash
-# HUMAN-RUN read-only. SLACK_TOKEN and SLACK_TEAM_ID are exported in the shell first, from an app a human installed with read scopes, and never pasted into a ticket
+# HUMAN-RUN read-only. SLACK_TOKEN and SLACK_TEAM_ID are exported in the shell first, the token from an app a human installed with users:read, and never pasted into a ticket
 # shows which workspace and which principal the token belongs to, stop if the team is not the one in SLACK_TEAM_ID
 node scripts/adapters/slack-client.js whoami --execute
 # reads one member, deleted, is_restricted, is_ultra_restricted, is_admin, is_owner, is_primary_owner and team_id
@@ -236,7 +237,8 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 No `verify-*` read covers a session reset, so the read-back is the sign-in log:
 
 ```bash
-# HUMAN-RUN read-only read-back, sign-ins by user, IP and user agent on paid plans with an admin-scope token, look for sign-ins after the reset time
+# HUMAN-RUN read-only read-back on paid plans, sign-ins by user, IP and user agent, look for sign-ins after the reset time
+# SLACK_ACCESS_LOGS_TOKEN holds a separate admin-scope user token, exported for this one read and unset right after, never SLACK_TOKEN
 node scripts/adapters/slack-client.js access-logs --execute
 ```
 

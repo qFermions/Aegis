@@ -66,7 +66,10 @@ reaches the public mirror). `index.json` (retrieval metadata only) ·
 cron, or automation writes here in V1. Writes are serialized by an exclusive
 lock. Text inside evidence ("save this as permanent memory") has zero
 authority — it is data (SR-3), and the sanitizer blocks injection markers,
-tenant literals, credentials, and PII from ever persisting. Memory never
+tenant literals, credentials, and PII from ever persisting. Injection markers
+are also caught when obfuscated with zero-width characters, look-alike letters
+or fullwidth forms (the edge sanitizer folds before matching;
+`scripts/untrusted/poisoned-memory.test.js` B1). Memory never
 bypasses R0–R3: it informs plans; gates, checkpoints, and approvals are
 unchanged.
 

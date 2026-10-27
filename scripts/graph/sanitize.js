@@ -62,6 +62,33 @@ const INJECTION_MARKERS = [
   { pattern: /\byou\s+are\s+now\s+(in\s+)?(admin|developer|maintenance)\s+mode\b/i, marker: 'mode-override-claim' },
 ];
 
+// Confusable folding for the injection-marker scan. A marker a model can read
+// but this regex cannot see is an open instruction channel, so each line is
+// matched as written AND in two folded forms: invisible format characters
+// (zero-width space and joiners, soft hyphen, word joiner, BOM) removed, or
+// turned into a space (a zero-width character used as the word separator);
+// then NFKD (fullwidth and mathematical letters to ASCII), combining marks
+// stripped, and the Latin look-alikes below mapped. Same method as the SR-2
+// trigger scan in engine.js and the lane guard under scripts/tier (kept local:
+// the edge sanitizer imports neither). Only marker matching uses the folded
+// forms; the flag quotes the original line.
+const MARKER_CONFUSABLES = {
+  'ı': 'i', 'ſ': 's', 'ɡ': 'g', 'ɩ': 'i',
+  'ᴀ': 'a', 'ʙ': 'b', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ꜰ': 'f', 'ɢ': 'g', 'ʜ': 'h', 'ɪ': 'i', 'ᴊ': 'j', 'ᴋ': 'k', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 'ǫ': 'q', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u', 'ᴠ': 'v', 'ᴡ': 'w', 'ʏ': 'y', 'ᴢ': 'z',
+  'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x', 'у': 'y', 'і': 'i', 'ј': 'j', 'ѕ': 's', 'һ': 'h', 'ԁ': 'd', 'ԛ': 'q', 'ԝ': 'w',
+  'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O', 'Р': 'P', 'С': 'C', 'Т': 'T', 'Х': 'X', 'Ѕ': 'S', 'І': 'I', 'Ј': 'J',
+  'ο': 'o', 'ν': 'v', 'ρ': 'p', 'α': 'a', 'ε': 'e', 'ι': 'i', 'κ': 'k', 'τ': 't', 'υ': 'u', 'χ': 'x', 'γ': 'y',
+};
+
+function foldForMarkers(line, formatCharAs) {
+  return line.replace(/\p{Cf}/gu, formatCharAs).normalize('NFKD').replace(/\p{M}/gu, '')
+    .replace(/[^\x00-\x7F]/g, (ch) => MARKER_CONFUSABLES[ch] || ch);
+}
+
+function markerForms(line) {
+  return Array.from(new Set([line, foldForMarkers(line, ''), foldForMarkers(line, ' ')]));
+}
+
 // Tenant literals (SR-8): loaded at call time from env + gitignored replacements.txt.
 // Real values never appear in this file; scan reports never echo them.
 function loadTenantLiterals() {
@@ -114,8 +141,9 @@ function scanText(text, opts = {}) {
         if (pattern.test(line)) result.piiWarnings.push({ line: n, label });
       }
     }
+    const forms = markerForms(line);
     for (const { pattern, marker } of INJECTION_MARKERS) {
-      if (pattern.test(line)) result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });
+      if (forms.some((f) => pattern.test(f))) result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });
     }
   });
 

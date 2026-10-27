@@ -155,7 +155,7 @@ Mapped to the repo's standing rules — the graph strengthens them, never relaxe
 6. **Retry budget** — 1 invalid-artifact retry per node, tracked in `retryLedger`, then BLOCKED (Error Recovery Protocol: one retry, then stop).
 7. **Halt on partial failure** — EXECUTOR stops the batch at the first failed step and emits the ❌ BLOCKED report shape with partial-changes fields (Zero-Trust rule 5).
 8. **Evidence, not booleans** — `verify.v1` results without a non-empty `output` are rejected (SR-6; "never claim tested when it wasn't").
-9. **Every edge is sanitized** — tenant literals BLOCK the submit; PII warns; injection markers get flagged and quoted as data, never followed (SR-3/SR-8).
+9. **Every edge is sanitized**: tenant literals BLOCK the submit; PII warns; injection markers get flagged and quoted as data, never followed (SR-3/SR-8). Markers are matched on each line as written and on confusable-folded forms (zero-width and other format characters removed or read as a space, NFKD, combining marks stripped, Latin look-alikes mapped), so a marker hidden from the regex but readable by a model is still flagged; the quote keeps the original line. Pinned by `scripts/untrusted/instruction-injection.test.js` (A2).
 10. **Provenance is typed** — `operator_typed | agent_derived | external_content`; nothing agent-derived or external can satisfy a gate.
 
 ## CLI

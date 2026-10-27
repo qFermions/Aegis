@@ -123,6 +123,57 @@ function sanitizeGate(proposal) {
   return { blocks, warnings: scan.warnings.map((w) => ({ class: 'dangerous-ps-mention', label: w.label, path: w.path })) };
 }
 
+// ── stored-record gate (read path and every re-seal) ─────────────────────────
+
+/**
+ * The persist gates re-applied to a record AS IT IS ON DISK: strict
+ * aegis.memory.v1 keys, the proposal field rules, the sanitizer, no case
+ * scope, and trusted provenance for anything verified or stale. The CLI runs
+ * this before it seals a servable record and before retrieve serves one, so a
+ * record changed outside the CLI can neither be served nor laundered by a
+ * later verify/merge/mark-stale. Returns [{ code, problem }]; code is the CLI
+ * exit code the problem maps to (2 invalid · 3 sanitizer BLOCK · 4 gate).
+ * Problem texts name fields and pattern labels only, never stored content.
+ */
+function storedRecordProblems(rec) {
+  if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return [{ code: 2, problem: 'record is not a JSON object' }];
+  const problems = [];
+  for (const k of Object.keys(rec)) if (!RECORD_KEYS.includes(k)) problems.push({ code: 2, problem: `${k}: unknown key (strict aegis.memory.v1)` });
+  if (rec.schema !== 'aegis.memory.v1') problems.push({ code: 2, problem: 'schema: must be "aegis.memory.v1"' });
+  if (!STATUSES.includes(rec.status)) problems.push({ code: 2, problem: `status: one of ${STATUSES.join('|')}` });
+  if (typeof rec.id !== 'string' || !/^mem-\d{4}$/.test(rec.id)) problems.push({ code: 2, problem: 'id: mem-NNNN required' });
+  // The proposal-shaped view: store-owned fingerprint fields on provenance
+  // entries (sha256, bytes, capturedAt) are not part of the proposal contract.
+  const view = { schema: 'aegis.memory.proposal.v1' };
+  for (const k of PROPOSAL_KEYS) if (k !== 'schema' && rec[k] !== undefined && rec[k] !== null) view[k] = rec[k];
+  if (Array.isArray(rec.provenance)) {
+    view.provenance = rec.provenance.map((p) => {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return p;
+      const o = { kind: p.kind, ref: p.ref };
+      if (p.note !== undefined) o.note = p.note;
+      return o;
+    });
+  }
+  for (const e of validateProposal(view)) problems.push({ code: 2, problem: e });
+  for (const b of sanitizeGate(view).blocks) problems.push({ code: 3, problem: `sanitizer BLOCK ${b.class}:${b.label} at ${b.path}` });
+  if (rec.scope === 'case') problems.push({ code: 4, problem: 'scope "case" is run state, never durable memory' });
+  if ((rec.status === 'verified' || rec.status === 'stale')
+    && !(Array.isArray(rec.provenance) && rec.provenance.some((p) => p && TRUSTED_PROVENANCE.includes(p.kind)))) {
+    problems.push({ code: 4, problem: `status ${rec.status} without trusted provenance (${TRUSTED_PROVENANCE.join('|')})` });
+  }
+  return problems;
+}
+
+// Canonical JSON (sorted keys, recursively): the seal must not depend on how a
+// writer formatted the file.
+function canonicalJson(value) {
+  if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']';
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map((k) => JSON.stringify(k) + ':' + canonicalJson(value[k])).join(',') + '}';
+  }
+  return JSON.stringify(value === undefined ? null : value);
+}
+
 // ── lexical machinery (deterministic; no embeddings at this scale) ───────────
 
 const STOPWORDS = new Set(['the', 'a', 'an', 'and', 'or', 'for', 'with', 'to', 'of', 'in', 'on', 'at', 'by', 'from',
@@ -264,6 +315,8 @@ module.exports = {
   RECORD_KEYS,
   validateProposal,
   sanitizeGate,
+  storedRecordProblems,
+  canonicalJson,
   tokenize,
   dedupMatch,
   conflictScan,

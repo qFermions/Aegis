@@ -87,13 +87,36 @@ function loadRecord(id) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
+// Every CLI write that leaves a record servable (candidate, verified, stale)
+// re-applies the persist gates to the WHOLE record first: a record changed on
+// disk outside this CLI cannot be laundered into a fresh seal by a later
+// verify, merge or mark-stale. Terminal statuses (rejected, superseded) never
+// serve, so disposing of a bad record is never blocked.
+const SERVABLE = ['candidate', 'verified', 'stale'];
 function saveRecord(rec) {
+  if (SERVABLE.includes(rec.status)) {
+    const problems = store.storedRecordProblems(rec);
+    if (problems.length) {
+      ledger('RESEAL_REFUSED', { id: rec.id, problems: problems.slice(0, 5).map((p) => p.problem) });
+      const code = problems.some((p) => p.code === 3) ? 3 : problems.some((p) => p.code === 4) ? 4 : 2;
+      fail(code, `refused: ${rec.id} does not pass the persist gates as stored on disk (changed outside memory-cli.js?); nothing written`, problems.map((p) => p.problem));
+    }
+  }
   fs.mkdirSync(MEM_DIR, { recursive: true });
   atomicWrite(recordPath(rec.id), JSON.stringify(rec, null, 2) + '\n');
 }
 
+// The seal binds an index row to the exact record content this CLI wrote. It
+// is unkeyed (no secret exists to key it with): it makes an edit to either
+// file, a hand-written record and a stripped seal visible, not impossible to
+// forge for a writer that replays this CLI's own write path.
+function sealOf(rec) {
+  return crypto.createHash('sha256').update('aegis.memory.seal.v1\n' + store.canonicalJson(rec)).digest('hex');
+}
+
 function indexRow(rec) {
   return {
+    seal: sealOf(rec),
     id: rec.id,
     type: rec.type,
     status: rec.status,
@@ -114,6 +137,29 @@ function upsertIndex(index, rec) {
   const row = indexRow(rec);
   const i = index.records.findIndex((r) => r.id === rec.id);
   if (i >= 0) index.records[i] = row; else index.records.push(row);
+}
+
+function tryLoadRecord(id) {
+  const p = recordPath(id);
+  if (!/^mem-\d{4}$/.test(String(id)) || !fs.existsSync(p)) return null;
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return null; }
+}
+
+/**
+ * Read-path integrity: a record is served only when its index row is exactly
+ * the row this CLI would write for the record on disk (seal included) and the
+ * record still passes the persist gates. Anything else was changed outside
+ * memory-cli.js, written by hand, or predates sealing: withheld, never served.
+ * Returns "intact" or the reason (field and rule names only, no content).
+ */
+function integrityOf(row, rec) {
+  if (!rec) return 'withheld: record file missing or unreadable';
+  if (!row) return 'withheld: no index row for this record (written outside memory-cli.js)';
+  if (!row.seal) return 'withheld: unsealed index row (written outside memory-cli.js, or before sealing); re-verify through the CLI to seal it';
+  if (store.canonicalJson(row) !== store.canonicalJson(indexRow(rec))) return 'withheld: index row and record disagree (seal mismatch): changed on disk outside memory-cli.js';
+  const problems = store.storedRecordProblems(rec);
+  if (problems.length) return `withheld: fails the persist gates as stored (${problems[0].problem})`;
+  return 'intact';
 }
 
 // Ledger: the write path must be able to answer "how many candidates were
@@ -289,6 +335,9 @@ function cmdMerge(id, flags) {
     fingerprintProvenance(rec);
     history(rec, 'provenance-merged', `${flags.kind}:${flags.ref}`);
     saveRecord(rec);
+    const index = loadIndex(); // the row's seal must follow the record it describes
+    upsertIndex(index, rec);
+    saveIndex(index);
     ledger('MERGED', { id, evidence: [`${flags.kind}:${flags.ref}`] });
     out({ ok: true, id, provenanceCount: rec.provenance.length });
   });
@@ -426,16 +475,25 @@ function cmdRetrieve(flags) {
     limit: flags.limit ? parseInt(flags.limit, 10) : undefined,
     includeCandidates: Boolean(flags['include-candidates']),
   });
-  // Bounded read path: top-K records opened only for their provenance refs.
+  // Bounded read path: top-K records opened for their provenance refs and the
+  // integrity check. A record that fails it is withheld and named, never
+  // served (its stored text is not printed).
+  const served = [];
+  const withheld = [];
   for (const r of results) {
-    const rec = loadRecord(r.id);
+    const rec = tryLoadRecord(r.id);
+    const integrity = integrityOf(index.records.find((row) => row.id === r.id), rec);
+    if (integrity !== 'intact') { withheld.push({ id: r.id, reason: integrity }); continue; }
     r.provenance = rec.provenance.map((p) => `${p.kind}:${p.ref}`);
+    served.push(r);
   }
-  out({ ok: true, query: flags.query, count: results.length, results });
+  out({ ok: true, query: flags.query, count: served.length, results: served, ...(withheld.length ? { withheld } : {}) });
 }
 
+// Audit view: always prints the record, labelled with its integrity.
 function cmdShow(id) {
-  out({ ok: true, record: loadRecord(id) });
+  const rec = loadRecord(id);
+  out({ ok: true, integrity: integrityOf(loadIndex().records.find((row) => row.id === id), rec), record: rec });
 }
 
 // Evidence audit: reports, never gates. A memory whose evidence has left the

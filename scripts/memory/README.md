@@ -73,6 +73,39 @@ or fullwidth forms (the edge sanitizer folds before matching;
 bypasses R0–R3: it informs plans; gates, checkpoints, and approvals are
 unchanged.
 
+## Integrity: only what the CLI wrote is served
+
+Every `index.json` row carries a `seal`: sha256 over the canonical JSON of the
+record file the CLI just wrote. `retrieve` serves a top-K hit only when its
+row is exactly the row the CLI would write for the record on disk (seal
+included) and the record still passes the persist gates (strict
+`aegis.memory.v1` keys, the proposal field rules, the sanitizer, no `case`
+scope, trusted provenance for `verified`/`stale`). Anything else (an index row
+or record edited by hand, a hand-written record, an unsealed row) is listed
+under `withheld: [{ id, reason }]` and never served; its stored text is not
+printed. `show <id>` still prints the record for audit, labelled
+`integrity: "intact"` or with the reason.
+
+Every CLI write that leaves a record servable (`candidate`, `verified`,
+`stale`) re-applies the same gates to the whole record first, so `verify`,
+`merge` and `mark-stale` cannot re-seal a record that was changed on disk
+(exit 3 / 4 / 2, `RESEAL_REFUSED` in the ledger). Writes to a terminal status
+(`rejected`, `superseded`) are never blocked, so a bad record can always be
+disposed of.
+
+**Existing stores:** rows written before sealing carry no seal and are
+withheld until an operator re-verifies them through the CLI (`verify <id>`;
+`promote <id>` for candidates), which re-runs the gates and seals them.
+Serving unsealed rows would make a hand-written row indistinguishable from
+approved knowledge.
+
+**Residual, stated plainly:** the seal is unkeyed (no secret exists to key
+it), so a writer that replays this CLI's own write path can forge it. The
+read-time gates hold even then: a forged record still cannot serve
+instruction-shaped text, PII, a tenant literal, case state or external-only
+"verified" knowledge. Pinned by `scripts/untrusted/poisoned-memory.test.js`
+(B3 to B6).
+
 ## Read path (just-in-time, bounded)
 
 ```
@@ -82,7 +115,7 @@ node scripts/memory/memory-cli.js retrieve --query "<ticket keywords>"
 Deterministic lexical scoring over `index.json` only; top-K (default 3, hard
 cap 5); superseded/rejected never surface; candidates only with
 `--include-candidates`. Only the top-K record files are opened (for provenance
-refs). Recency is not relevance — there is no "recent memory" preload, and
+refs and the integrity check above; a withheld hit is not back-filled). Recency is not relevance: there is no "recent memory" preload, and
 current-ticket continuity stays in graph/case state (the Failure Edge).
 
 ## CLI

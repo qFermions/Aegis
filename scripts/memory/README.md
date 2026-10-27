@@ -164,7 +164,7 @@ cannot say whose case it is reads nobody's.
 only ever written with `AEGION_DOMAIN` unset) holds no evidence of whose it
 is, so it stays readable as before; its first write under a tenant binds it
 (`TENANT_BOUND` in the ledger). An operator who works for more than one
-tenant keeps one store per tenant (`AEGIS_MEMORY_DIR`). The fingerprint is a
+tenant keeps one store per tenant (`AEGIS_MEMORY_DIR`). The binding is re-checked under the store lock before every write, and it is claimed only by a write that succeeds: a refused or duplicate write leaves an unbound store unbound. The fingerprint is a
 plain hash of a guessable value: it keeps the literal out of the store, it is
 not a secret. Pinned by `scripts/untrusted/wrong-customer.test.js` (C5, C7).
 

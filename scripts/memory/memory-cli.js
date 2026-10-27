@@ -259,8 +259,13 @@ function withLock(fn) {
   // fail() exits the process from inside fn — release on exit, not just finally.
   process.on('exit', releaseLock);
   try {
+    // Re-checked under the lock: another writer may have bound this store since
+    // main() checked it. Bound only after fn() returns: a refused or duplicate
+    // write exits inside fn() and never claims the store for this tenant.
+    assertTenant();
+    const result = fn();
     bindTenantIfUnbound();
-    return fn();
+    return result;
   } finally {
     releaseLock();
   }

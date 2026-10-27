@@ -281,7 +281,10 @@ function withLock(fn) {
     fail(5, 'store is locked by another writer — retry after it completes (stale lock: remove ' + LOCK + ')');
   }
   lockHeld = true;
-  try { bindTenantIfUnbound(); return fn(); } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
+  // Re-checked under the lock (another writer may have bound the store since
+  // main() checked it); bound only after fn() returns, so a refused write never
+  // claims the store. Same rule as scripts/memory/memory-cli.js.
+  try { assertTenant(); const result = fn(); bindTenantIfUnbound(); return result; } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
 }
 
 function fingerprint(deps) {

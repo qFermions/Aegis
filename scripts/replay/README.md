@@ -68,7 +68,7 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   unset, so tenant A's verified solutions never render in tenant B's case. A
   store with no binding (created before this rule, or only written with
   `AEGION_DOMAIN` unset) carries no evidence of whose it is: it stays readable
-  and its first write under a tenant binds it. Same rule as the memory store.
+  and its first write under a tenant binds it. Same rule as the memory store. The binding is re-checked under the store lock before every write, and it is claimed only by a write that succeeds: a refused or duplicate write leaves an unbound store unbound.
   Pinned by `scripts/untrusted/wrong-customer.test.js` C6, C7.
 - **Writes are serialized** by a directory lock: a second writer is refused with
   exit 5 and leaves no partial case; reads never need the lock; parallel writers

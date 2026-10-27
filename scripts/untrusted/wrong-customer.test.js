@@ -324,3 +324,38 @@ test('C9 the deployment\'s own tenant literal hidden by a zero-width character o
     assert.equal(r.code, 4, `replay record: ${short(r)}`);
   }
 });
+
+// ── review round 1: binding is checked under the lock and claimed only by a write that succeeds ──
+
+test('C10 a refused or duplicate write never binds an unbound store, and both CLIs re-check the binding under the store lock', () => {
+  // memory: a duplicate propose (exit 5) under tenant A leaves the store unbound for tenant B
+  const dir = freshDir('c10');
+  const U = memAs(null, dir);
+  let r = U(['propose', '--file', writeFile('proposal.json', JSON.stringify(PROPOSAL))]);
+  assert.equal(r.code, 0, short(r));
+  r = memAs(TENANT_A, dir)(['propose', '--file', writeFile('dup.json', JSON.stringify(PROPOSAL))]);
+  assert.equal(r.code, 5, `duplicate: ${short(r)}`);
+  assert.ok(!fs.existsSync(path.join(dir, 'tenant.json')), 'a duplicate write must not bind the store');
+  r = memAs(TENANT_A, dir)(['propose', '--file', writeFile('foreign.json', JSON.stringify({ ...PROPOSAL, detail: 'From the [@Otherorg_DOMAIN] runbook.' }))]);
+  assert.equal(r.code, 3, short(r));
+  assert.ok(!fs.existsSync(path.join(dir, 'tenant.json')), 'a refused write must not bind the store');
+  assert.equal(memAs(TENANT_B, dir)(['retrieve', '--query', 'guest access review for the finance site']).code, 0, 'still unbound: tenant B reads');
+
+  // replay: a duplicate record (exit 1) under tenant A leaves the store unbound
+  const store = path.join(freshDir('c10-replay'), 'store');
+  const ticket = 'Guest [GUEST_UPN] cannot open the finance site shared by [UPN].';
+  const dep = writeFile('authority.md', 'authority doctrine v1 for guest access\n');
+  const sol = writeFile('solution.md', fixture('tenant-solution.md'));
+  r = replayAs(null, store)(['record', '--ticket', ticket, '--solution-file', sol, '--deps', dep]);
+  assert.equal(r.code, 0, short(r));
+  r = replayAs(TENANT_A, store)(['record', '--ticket', ticket, '--solution-file', sol, '--deps', dep]);
+  assert.notEqual(r.code, 0, `duplicate record must be refused: ${short(r)}`);
+  assert.ok(!fs.existsSync(path.join(store, 'tenant.json')), 'a refused replay write must not bind the store');
+
+  // structure: the binding is re-checked inside withLock, before the write, in both CLIs
+  for (const cli of [MEM_CLI, REPLAY_CLI]) {
+    const src = fs.readFileSync(cli, 'utf8');
+    const body = src.slice(src.indexOf('function withLock('), src.indexOf('\n}\n', src.indexOf('function withLock(')));
+    assert.match(body, /assertTenant\(\);\s*const result = fn\(\);\s*bindTenantIfUnbound\(\);\s*return result;/, `${path.basename(cli)}: check under the lock, then write, then bind`);
+  }
+});

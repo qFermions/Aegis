@@ -392,6 +392,8 @@ g2Suite('Slack', [
   '[FIRST_NAME] requested the [APP_NAME] app in Slack; review its scopes before anyone approves it.',
   'Email is down for everyone; draft the Slack status update for #it-announcements and the follow-up for when it is fixed.',
   'Which Slack plan do we need for message retention controls?',
+  // a Microsoft mailbox retention tag is not a Slack retention change (scripts/replay/replay.test.js R15)
+  'Set the retention tag on the mailbox of [UPN] to two years',
 ]);
 
 g2Suite('Jamf', [

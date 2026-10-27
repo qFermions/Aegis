@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[ISSUE_ID]` (the issue Linear creates, such as `[@Aegion_LINEAR_TEAM]-123`) · `[@Aegion_LINEAR_TEAM]` (the key of the team that holds IT tickets) · `[LABEL_NAME]` (an existing label, read from the label list) · `[PRIORITY_LEVEL]` (the level the IT priority rule gives: Urgent, High, Medium or Low; not yet in the placeholder dictionary) · `[STATE_NAME]` (the status the new issue should show, read from the team's statuses) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the intake note, its digest and the time its read-back starts from) · `[ADMIN_NAME]` · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[ISSUE_ID]` (the issue Linear creates, such as `[@Aegion_LINEAR_TEAM]-123`) · `[@Aegion_LINEAR_TEAM]` (the key of the team that holds IT tickets) · `[LABEL_NAME]` (an existing label, read from the label list) · `[PRIORITY_LEVEL]` (the level the IT priority rule gives: Urgent, High, Medium or Low; not yet in the placeholder dictionary) · `[STATE_NAME]` (the status the new issue should show, read from the team's statuses; not yet in the placeholder dictionary) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the intake note, its digest and the time its read-back starts from) · `[USER_ID]` (the Linear user ID of the administrator who posts the intake note, from the `viewer` read run with their own key) · `[ADMIN_NAME]` · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 ## ⚠️ Admin / safety gate
 
@@ -152,7 +152,7 @@ GUI read-back: Linear → `[ISSUE_ID]` → the label and `[PRIORITY_LEVEL]` show
 - [ ] `verify-state --issue [ISSUE_ID] --state "[STATE_NAME]"` passed.
 - [ ] `verify-labels --issue [ISSUE_ID] --has [LABEL_NAME]` passed, and the issue read's priorityLabel is `[PRIORITY_LEVEL]`.
 - [ ] Linear → `[ISSUE_ID]` shows the label and priority, and no name, address or secret in the title, description or comments.
-- [ ] `verify-comment` passed for the intake note on `[ISSUE_ID]`.
+- [ ] `verify-comment` with `--author [USER_ID]` passed for the intake note on `[ISSUE_ID]`.
 
 ## 📝 Linear-ready note
 
@@ -165,8 +165,8 @@ Use the completed form only when every read-back above passed; otherwise write t
 An administrator posts it as a comment on [ISSUE_ID] in Linear after preparing it with `node scripts/adapters/linear-client.js note --issue [ISSUE_ID] --body-file [NOTE_FILE]` (which prints the digest); the posting gate and the steps for a stray copy are in `/linear-ticket-note`.
 
 ```bash
-# read-back: passes only when a comment created after [NOT_BEFORE] carries the note whose digest is [NOTE_SHA256]
-node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --execute
+# read-back: passes only when a comment created after [NOT_BEFORE] by Linear user [USER_ID] (the poster's id, from the viewer read run with their own key) carries the note whose digest is [NOTE_SHA256]; a bot or integration comment with the same text does not pass
+node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --author [USER_ID] --execute
 ```
 
 Jira path: the same note through `/jira-update`.

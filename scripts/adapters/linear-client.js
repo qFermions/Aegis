@@ -163,14 +163,21 @@ const defaultNoteRoots = () => [path.join(REPO_ROOT, 'tasks'), os.tmpdir()];
 // which returns "[REDACTED_FILE_PATH]" for any string that carries one of its BLOCK
 // patterns: a credential or secret format (private key block, GitHub, Slack, Google or
 // Okta token, JWT, Authorization header), a real email address, a phone number, a
-// privileged host path or a control character. A note line it would redact is never
-// printed. Loaded only for note and digest, so the read commands never load it.
+// privileged host path, a control character, or a tenant literal it is given. A note
+// line it would redact is never printed. The tenant literals (SR-8: the tenant's own
+// domain and name) come from the sources the commit scanner reads (AEGION_DOMAIN,
+// AEGION_ORG_NAME and the gitignored replacements.txt) through the loader that
+// scripts/graph/sanitize.js exports, because pre-commit-check.js exports no loader of
+// its own. With none configured, the tenant check has nothing to match, as in the
+// scanner. Loaded only for note and digest, so the read commands never load either.
 function blockedNoteLine(body) {
   const { safeDisplayPath } = require('../pre-commit-check.js');
+  const { loadTenantLiterals } = require('../graph/sanitize.js');
+  const tenantLiterals = loadTenantLiterals();
   const lines = body.split('\n');
   for (let i = 0; i < lines.length; i += 1) {
     const probe = lines[i].replace(/\t/g, ' '); // a tab is layout, not a secret
-    if (safeDisplayPath(probe, []) !== probe) return i + 1;
+    if (safeDisplayPath(probe, tenantLiterals) !== probe) return i + 1;
   }
   return 0;
 }
@@ -230,7 +237,7 @@ function readNote(file, roots) {
   const body = normaliseBody(text);
   if (!body.trim()) throw new RefusedError('the note is empty');
   const line = blockedNoteLine(body);
-  if (line) throw new RefusedError(`line ${line} of the note matches a pattern the commit scanner blocks (a secret, a credential, a real email address, a phone number or a privileged host path); the note is not printed. Remove it and say where the secret is kept instead`);
+  if (line) throw new RefusedError(`line ${line} of the note matches a pattern the commit scanner blocks (a secret, a credential, a real email address, a phone number, a privileged host path or the tenant's own domain or name); the note is not printed. Remove it, say where a secret is kept instead, and write the tenant as its [@Aegion_*] placeholder`);
   return body;
 }
 

@@ -40,6 +40,13 @@
 //    pre-state, the independent review, a per-issue restore phrase and read-back, a
 //    count check and the last restore day, never N single R1 restores; the R1 restore
 //    gate says so too.
+// 9. Review nits, round 2. Every Linear-ready note read-back proves the poster: intake,
+//    triage and ticket-note pass --author [USER_ID] (the poster's viewer id); the
+//    workspace-admin line, where [USER_ID] is the member, never passes it and sends the
+//    reader to observed.match.userId and /linear-ticket-note Phase E. ticket-note stops
+//    when the comment it needs is past the 50-comment page or the 20-entry list. The
+//    snooze time is compared in UTC. Every token a runbook uses that the placeholder
+//    dictionary lacks is marked "not yet in the placeholder dictionary".
 // 7. The note guard is described as it holds. ticket-note says `note` reads a file only
 //    from this repo's tasks/ folder or the system temporary folder, says a plain-text
 //    password inside them is still printed, and never promises that a mistyped path
@@ -244,6 +251,61 @@ test('a reversal over more than 10 issues is its own R3 change: the bulk delete 
   assert.match(restore.reversibility, /^R1\b/);
   assert.match(restore.scope, /restoring the issues of a bulk delete \(more than 10\) is not a run of this gate alone but the bulk restore named in Phase C, its own R3 change/);
   assert.match(section('linear-workspace-admin', '⚠️ Risk warning'), /undoing a bulk delete of 40 issues is a bulk restore: its own R3 change/);
+});
+
+test('every Linear-ready note read-back proves who posted it; workspace-admin never passes the member as --author', () => {
+  const NOTE_LINE = /node scripts\/adapters\/linear-client\.js verify-comment --issue \[ISSUE_ID\] --expect-sha256 \[NOTE_SHA256\] --not-before \[NOT_BEFORE\]([^`\n]*)/;
+  for (const name of ['linear-intake', 'linear-triage', 'linear-ticket-note']) {
+    const note = section(name, '📝 Linear-ready note');
+    const m = note.match(NOTE_LINE);
+    assert.ok(m, `${name}: the note read-back is there`);
+    assert.equal(m[1].trim(), '--author [USER_ID] --execute', `${name}: the note read-back names the poster`);
+    assert.match(note, /# [^\n]*by Linear user \[USER_ID\] \(the poster's id, from the viewer read run with their own key\)/, `${name}: the comment names [USER_ID] as the poster`);
+    assert.match(text[name], /`\[USER_ID\]` \(the Linear user ID of the administrator who posts/, `${name}: [USER_ID] is defined as the poster`);
+  }
+  const admin = section('linear-workspace-admin', '📝 Linear-ready note');
+  const m = admin.match(NOTE_LINE);
+  assert.ok(m && !/--author/.test(m[1]), 'workspace-admin: [USER_ID] is the member, so the note line passes no --author');
+  assert.match(admin, /in this runbook \[USER_ID\] is the member, never the poster, so do not pass it as --author/);
+  assert.match(admin, /proved only when the printed `observed\.match\.userId` is the poster's own id from the `viewer` read[^\n]*`\/linear-ticket-note` Phase E/);
+  assert.match(section('linear-workspace-admin', '✅ Verification checklist'), /`observed\.match\.userId` is the poster's own `viewer` id/);
+});
+
+test('ticket-note stops when the comment it needs is past the 50-comment page or the 20-entry list', () => {
+  const phaseE = section('linear-ticket-note', 'Phase E');
+  assert.match(phaseE, /\*\*Stop if:\*\* the comment that step 3 or 4 needs is not in the `comments` read \(a thread over 50 comments[^\n]*never pick a comment on screen without its `\[COMMENT_ID\]` and `createdAt` from a read\./);
+  const replace = ALL_GATES.find((g) => g.id === 'linear-ticket-note-replace-portal');
+  assert.match(replace.region, /That list holds at most 20 comments created since `\[NOT_BEFORE\]`; if `\[COMMENT_ID\]` is not in it, write that in the ticket instead and escalate with the issue page open\./);
+  // The numbers in the runbook are the adapter's: one page of 50 comments, at most 20 listed.
+  const src = fs.readFileSync(path.join(__dirname, 'linear-client.js'), 'utf8');
+  assert.match(src, /comments\(first: 50, after: \$after\)/);
+  assert.match(src, /const MAX_LISTED = 20;/);
+});
+
+test('triage compares a snooze time in UTC, the form verify-snoozed prints', () => {
+  const triage = text['linear-triage'];
+  assert.match(triage, /`\[DATE_TIME\]` \(the date and time a snooze ends, written in the ticket and the phrase in UTC/);
+  const snooze = ALL_GATES.find((g) => g.id === 'linear-triage-snooze-portal');
+  assert.match(snooze.region, /compare it with \[DATE_TIME\] in UTC, to the minute/);
+  assert.match(snooze.region, /the sources read do not say which time zone the snooze picker shows/);
+  for (const line of triage.split('\n').filter((l) => /snoozedUntilAt[^\n]*matches `\[DATE_TIME\]`/.test(l))) {
+    assert.match(line, /read in UTC, matches `\[DATE_TIME\]` \(UTC\)[^\n]*to the minute/, line);
+  }
+  assert.equal(triage.split('\n').filter((l) => /snoozedUntilAt[^\n]*matches `\[DATE_TIME\]`/.test(l)).length, 2, 'the Phase D checkpoint and the checklist');
+});
+
+test('every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
+  const known = new Set(dictionary.match(/\[[A-Za-z0-9_@.,#-]+\]/g));
+  const unmarked = [];
+  for (const name of RUNBOOKS) {
+    for (const token of new Set(text[name].match(/\[[A-Z][A-Z0-9_]*\]/g))) {
+      if (known.has(token) || token === '[X]') continue; // [X] is the note template's minutes
+      const escaped = token.replace(/[[\]]/g, '\\$&');
+      if (!new RegExp(`\`${escaped}\` \\([^·]*not yet in the placeholder dictionary\\)`).test(text[name])) unmarked.push(`${name}: ${token}`);
+    }
+  }
+  assert.deepEqual(unmarked, []);
 });
 
 test('ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key', () => {

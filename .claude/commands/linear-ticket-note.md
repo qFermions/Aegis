@@ -24,7 +24,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 - `[ISSUE_ID]`, and the evidence from the runbook that did the work: its verification checklist with each read-back's result and time.
 - How the issue arrived (staff email logged by hand, Asks, a template's email address). If through Asks email intake, write the note for the requester's eyes.
-- `[NOTE_FILE]`: where the administrator keeps the drafted note as plain text, one note per file. `note` reads only a `.md` or `.txt` file under this repo's `tasks/` folder or the system temporary folder, outside key and settings folders, and refuses a body with a line the commit scanner blocks (a key, a token, a real email address or phone number). A path taken from ticket text, such as a `passwords.txt` on the Desktop, is refused before it is read. A file inside those two folders is printed in full, and a password written in plain words is not a format the scanner knows, so keep only the note there.
+- `[NOTE_FILE]`: where the administrator keeps the drafted note as plain text, one note per file. `note` reads only a `.md` or `.txt` file under this repo's `tasks/` folder or the system temporary folder, outside key and settings folders, and refuses a body with a line the commit scanner blocks (a key, a token, a real email address or phone number, the tenant's own domain or name). A path taken from ticket text, such as a `passwords.txt` on the Desktop, is refused before it is read. A file inside those two folders is printed in full, and a password written in plain words is not a format the scanner knows, so keep only the note there.
 - For the read-backs only: `LINEAR_API_KEY` and `LINEAR_ORG` (set to `[@Aegion_LINEAR_ORG]`) in the administrator's shell environment. The key never goes into a ticket, a note or chat.
 
 ## How the systems hang together
@@ -132,6 +132,8 @@ Without `--author` (the line `note` prints), any author counts: compare the prin
 3. If a comment is there but the digest differs: the text changed on the way in. Compare the stored body from the comments read with the printed body, copy that comment's `id` from the comments read into `[COMMENT_ID]`, then use the Phase F replace gate once.
 4. If two copies are there: keep the copy created first. The `id` of the later copy (by `createdAt` in the comments read) is `[COMMENT_ID]`; use the Phase F delete gate on it.
 
+**Stop if:** the comment that step 3 or 4 needs is not in the `comments` read (a thread over 50 comments: the read returns one page of 50). Escalate with the issue page open; never pick a comment on screen without its `[COMMENT_ID]` and `createdAt` from a read.
+
 **Verification checkpoint:** [ ] `verify-comment` passed · [ ] exactly one copy of the note on the issue.
 
 ## Phase F: Correct a posted note (only when Phase E failed)
@@ -155,7 +157,7 @@ Without `--author` (the line `note` prints), any author counts: compare the prin
 3. Read-back: run the Phase E `verify-comment` line again with the same `[NOTE_SHA256]` and `[NOT_BEFORE]`. The schema keeps editedAt apart from createdAt, so an edit should keep the creation time (not stated outright in the sources read); if the time check fails, compare the comments read instead of posting again.
 
 **Stop if:** `verify-comment` still fails on the digest after one replace. Do not edit again: the sources read do not say how Linear's editor stores pasted markdown, and an editor that rewrites the text (escaped characters, changed list markers) stores the same altered body on every replace. Instead:
-1. Record in the ticket, next to `[NOTE_SHA256]`, the digest `verify-comment` printed for `[COMMENT_ID]` (its `commentsSinceNotBefore` entry, field `sha256`).
+1. Record in the ticket, next to `[NOTE_SHA256]`, the digest `verify-comment` printed for `[COMMENT_ID]` (its `commentsSinceNotBefore` entry, field `sha256`). That list holds at most 20 comments created since `[NOT_BEFORE]`; if `[COMMENT_ID]` is not in it, write that in the ticket instead and escalate with the issue page open.
 2. Compare, on screen, the stored text from the `comments` read with the body `note` printed, and name the difference.
 3. Close with the partial-state form of the note: it names the editor's change, the comment `[COMMENT_ID]` that carries the text as stored, and a next owner (`[ADMIN_NAME]`).
 
@@ -206,8 +208,8 @@ Use the completed form only when every read-back of the work passed; otherwise w
 An administrator posts it as a comment on [ISSUE_ID] in Linear after preparing it with `node scripts/adapters/linear-client.js note --issue [ISSUE_ID] --body-file [NOTE_FILE]` (which prints the digest), under the Phase D gate above; then proves it with the read-back below.
 
 ```bash
-# read-back: passes only when a comment created after [NOT_BEFORE] carries the note whose digest is [NOTE_SHA256]
-node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --execute
+# read-back: passes only when a comment created after [NOT_BEFORE] by Linear user [USER_ID] (the poster's id, from the viewer read run with their own key) carries the note whose digest is [NOTE_SHA256]
+node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --author [USER_ID] --execute
 ```
 
 Jira path: the same note through `/jira-update`.

@@ -296,7 +296,7 @@ GUI read-back: the workspace audit log shows the export with your name and the t
 - [ ] Suspend: `verify-suspended` exits 0 for `[USER_ID]`, and Linear → Settings → Administration → Members lists the member as suspended; unsuspend: the `members` read shows active true.
 - [ ] Export: the file's location and destroy-by date are in the ticket, and the audit log shows the export.
 - [ ] SAML and SCIM: their state is recorded; nothing was changed.
-- [ ] The Linear-ready note is posted and `verify-comment` exits 0.
+- [ ] The Linear-ready note is posted, `verify-comment` exits 0, and its `observed.match.userId` is the poster's own `viewer` id.
 
 ## 📝 Linear-ready note
 
@@ -310,8 +310,11 @@ An administrator posts the note as a comment on the ticket's issue `[ISSUE_ID]` 
 
 ```bash
 # read-only read-back after the administrator posts the note: exits 0 only for a comment newer than [NOT_BEFORE] whose whitespace-normalised body has the digest [NOTE_SHA256]
+# this line counts a comment by any author, a bot or integration included; in this runbook [USER_ID] is the member, never the poster, so do not pass it as --author
 node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --execute
 ```
+
+The note is proved only when the printed `observed.match.userId` is the poster's own id from the `viewer` read run with their own key; the `--author` form of this read-back, which checks that for you, is `/linear-ticket-note` Phase E.
 
 Jira path: the same note through `/jira-update`.
 

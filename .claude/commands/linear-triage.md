@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[ISSUE_ID]` (a Linear issue identifier such as `[@Aegion_LINEAR_TEAM]-123`) · `[CANONICAL_ISSUE_ID]` (the older issue a duplicate points to; not yet in the placeholder dictionary) · `[@Aegion_LINEAR_TEAM]` (the IT team key, the prefix of every IT issue) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · `[STATE_NAME]` (a workflow status name exactly as the `states` read prints it; not yet in the placeholder dictionary) · `[LABEL_NAME]` (a Linear label) · `[PRIORITY_LEVEL]` (one of Linear's levels: Urgent, High, Medium, Low or No priority; not yet in the placeholder dictionary) · `[DATE_TIME]` (the date and time a snooze ends; not yet in the placeholder dictionary) · `[ADMIN_NAME]` (the next owner of an open item) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the drafted note, its digest, and the time its read-back starts from) · other org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[ISSUE_ID]` (a Linear issue identifier such as `[@Aegion_LINEAR_TEAM]-123`) · `[CANONICAL_ISSUE_ID]` (the older issue a duplicate points to; not yet in the placeholder dictionary) · `[@Aegion_LINEAR_TEAM]` (the IT team key, the prefix of every IT issue) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · `[STATE_NAME]` (a workflow status name exactly as the `states` read prints it; not yet in the placeholder dictionary) · `[LABEL_NAME]` (a Linear label) · `[PRIORITY_LEVEL]` (one of Linear's levels: Urgent, High, Medium, Low or No priority; not yet in the placeholder dictionary) · `[DATE_TIME]` (the date and time a snooze ends, written in the ticket and the phrase in UTC as ISO 8601, the form `verify-snoozed` prints; not yet in the placeholder dictionary) · `[ADMIN_NAME]` (the next owner of an open item) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the drafted note, its digest, and the time its read-back starts from) · `[USER_ID]` (the Linear user ID of the administrator who posts the note, from the `viewer` read run with their own key) · other org values from `modules/security/placeholder-dictionary.md`.
 
 ## ⚠️ Admin / safety gate
 
@@ -83,7 +83,7 @@ node scripts/adapters/linear-client.js labels --execute
 2. Linear → `[@Aegion_LINEAR_TEAM]` team → the team's issue list → filter on the device, app or requester (filter labels unverified) → read the open issues. An older open issue about the same problem makes this request a duplicate of `[CANONICAL_ISSUE_ID]`.
 3. Pick the priority from the team's rules **[org gap]** and write the level as `[PRIORITY_LEVEL]`. A priority change can start an SLA clock, so pick the level once.
 4. Pick one label per label group.
-5. Pick the action: accept (IT will do it), duplicate (already tracked), decline (not IT's request, or not possible: the comment says where it belongs), or snooze (waiting on the requester or a date: write the end as `[DATE_TIME]`).
+5. Pick the action: accept (IT will do it), duplicate (already tracked), decline (not IT's request, or not possible: the comment says where it belongs), or snooze (waiting on the requester or a date: write the end as `[DATE_TIME]`, in UTC).
 
 **Stop if:** the request needs more than 10 issues changed, an issue deleted, or a member changed: that is `/linear-workspace-admin`.
 
@@ -192,10 +192,10 @@ node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team (no narrower triage role found; unverified).
 
 **PORTAL ACTION [linear-triage-snooze-portal]:** Only after the exact match:
-1. Linear → `[@Aegion_LINEAR_TEAM]` team → Triage → `[ISSUE_ID]` → **Snooze** (shortcut `H`) → pick `[DATE_TIME]`, the date and time typed in the phrase.
+1. Linear → `[@Aegion_LINEAR_TEAM]` team → Triage → `[ISSUE_ID]` → **Snooze** (shortcut `H`) → pick `[DATE_TIME]`, the time typed in the phrase. The phrase holds it in UTC; the sources read do not say which time zone the snooze picker shows, so take the picker as your own local time and convert before you pick.
 
 ```bash
-# read-only read-back: exits 0 only when [ISSUE_ID] reads a snoozedUntilAt later than the time of the read; compare the printed snoozedUntilAt with [DATE_TIME]
+# read-only read-back: exits 0 only when [ISSUE_ID] reads a snoozedUntilAt later than the time of the read; snoozedUntilAt prints as ISO 8601 (Z is UTC; convert any other offset to UTC), so compare it with [DATE_TIME] in UTC, to the minute
 node scripts/adapters/linear-client.js verify-snoozed --issue [ISSUE_ID] --execute
 ```
 
@@ -203,7 +203,7 @@ GUI read-back: the Triage view no longer shows `[ISSUE_ID]`, and the issue page 
 
 **WAIT UNTIL** the snooze time passes or someone adds activity: the issue returns to Triage and gets a fresh Phase B line.
 
-**Verification checkpoint:** [ ] each duplicate and each decline has a passing `verify-state` · [ ] each snoozed issue passes `verify-snoozed`, and its snoozedUntilAt matches `[DATE_TIME]` in the ticket.
+**Verification checkpoint:** [ ] each duplicate and each decline has a passing `verify-state` · [ ] each snoozed issue passes `verify-snoozed`, and its snoozedUntilAt, read in UTC, matches `[DATE_TIME]` (UTC) in the ticket to the minute.
 
 ## Phase E: An issue that missed its SLA (R0, one R1 gate)
 
@@ -265,9 +265,9 @@ node scripts/adapters/linear-client.js comments --issue [ISSUE_ID] --execute
 - [ ] Each accepted issue: `verify-labels` and `verify-state` (default status) exit 0.
 - [ ] Each duplicate: `verify-state` (duplicate status) exits 0, and `[CANONICAL_ISSUE_ID]` lists the moved attachments.
 - [ ] Each declined issue: `verify-state` (canceled status) exits 0, and its comment says where the request belongs.
-- [ ] Each snoozed issue: `verify-snoozed` exits 0 and its snoozedUntilAt matches `[DATE_TIME]`.
+- [ ] Each snoozed issue: `verify-snoozed` exits 0 and its snoozedUntilAt, read in UTC, matches `[DATE_TIME]` (UTC) to the minute.
 - [ ] Each issue that missed its SLA: the note names the window, the time it left Triage, the cause and the next owner.
-- [ ] Each changed issue carries the Linear-ready note, proved by `verify-comment`.
+- [ ] Each changed issue carries the Linear-ready note, proved by `verify-comment` with `--author [USER_ID]`.
 
 ## 📝 Linear-ready note
 
@@ -280,8 +280,8 @@ Use the completed form only when every read-back above passed; otherwise use the
 An administrator posts the note as a comment on `[ISSUE_ID]` in Linear after preparing it with `node scripts/adapters/linear-client.js note --issue [ISSUE_ID] --body-file [NOTE_FILE]`, which works offline and prints the exact body, its SHA-256 digest `[NOTE_SHA256]`, the not-before time `[NOT_BEFORE]` and the posting steps; Aegis never posts it, and on an Asks or email-intake issue the comment can also reach the requester by email.
 
 ```bash
-# read-only read-back after the administrator posts the note: exits 0 only for a comment newer than [NOT_BEFORE] whose whitespace-normalised body has the digest [NOTE_SHA256]
-node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --execute
+# read-only read-back after the administrator posts the note: exits 0 only for a comment newer than [NOT_BEFORE], by Linear user [USER_ID] (the poster's id, from the viewer read run with their own key), whose whitespace-normalised body has the digest [NOTE_SHA256]; a bot or integration comment with the same text does not pass
+node scripts/adapters/linear-client.js verify-comment --issue [ISSUE_ID] --expect-sha256 [NOTE_SHA256] --not-before [NOT_BEFORE] --author [USER_ID] --execute
 ```
 
 Jira path: the same note through `/jira-update`.

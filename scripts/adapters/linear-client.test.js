@@ -50,8 +50,9 @@
 //    or .claude, and the file it resolves to sits under this repo's tasks/ folder or
 //    the system temporary folder (a .txt holding a password in plain words, outside
 //    those two, is refused before it is read); a body with a line the commit scanner
-//    blocks (a private key block, a token, a real email address) is refused too. A
-//    refused file is never printed.
+//    blocks (a private key block, a token, a real email address, or the tenant's own
+//    domain or name from AEGION_DOMAIN, AEGION_ORG_NAME or replacements.txt, SR-8) is
+//    refused too. A refused file is never printed.
 //    The digest and not-before that note prints are the ones verify-comment accepts.
 // 7. verify-* print JSON with verified, observed and expected values, and exit 0 when
 //    the read proves the human's write and 2 when it does not: verify-comment (a
@@ -555,6 +556,45 @@ test('note and digest read a note only from this repo\'s tasks/ folder or the sy
   assert.equal(repoFile.code, 1, repoFile.stdout);
   assert.match(repoFile.stderr, /REFUSED/);
   assert.ok(!(repoFile.stdout + repoFile.stderr).includes(firstLine), 'a repo file outside tasks/ is never printed');
+});
+
+test('note and digest refuse a line carrying the tenant\'s own domain or name (SR-8), read from the same environment names the commit scanner reads, and never print it', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-linear-tenant-'));
+  const saved = { AEGION_DOMAIN: process.env.AEGION_DOMAIN, AEGION_ORG_NAME: process.env.AEGION_ORG_NAME };
+  t.after(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    for (const [name, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[name]; else process.env[name] = value;
+    }
+  });
+  // Stand-in tenant values, built at run time; neither is a real tenant.
+  const domain = ['tenant', 'probe', 'sample'].join('-') + '.invalid';
+  const orgName = ['Probe', 'Sample', 'Org'].join(' ');
+  const file = path.join(dir, 'note.md');
+  fs.writeFileSync(file, `Mailbox rule removed.\nChecked the ${domain.toUpperCase()} admin center for ${orgName}.\n`);
+
+  // Control: with no tenant literal configured, the same note is printed.
+  delete process.env.AEGION_DOMAIN;
+  delete process.env.AEGION_ORG_NAME;
+  const before = await cli(['note', '--issue', ISSUE, '--body-file', file]);
+  assert.equal(before.code, 0, before.stderr);
+
+  for (const [name, value] of [['AEGION_DOMAIN', domain], ['AEGION_ORG_NAME', orgName]]) {
+    delete process.env.AEGION_DOMAIN;
+    delete process.env.AEGION_ORG_NAME;
+    process.env[name] = value;
+    for (const argv of [['note', '--issue', ISSUE, '--body-file', file], ['digest', '--body-file', file]]) {
+      const { env, reads } = recordingEnv();
+      const r = await cli(argv, { env });
+      const label = `${argv[0]} with ${name}`;
+      assert.equal(r.code, 1, `${label}: ${r.stdout}${r.stderr}`);
+      assert.match(r.stderr, /line 2 of the note[^\n]*the tenant's own domain or name/, label);
+      assert.equal(r.transport.calls.length, 0, label);
+      assert.deepEqual(linearReads(reads), [], label);
+      const all = (r.stdout + r.stderr).toLowerCase();
+      assert.ok(!all.includes(domain) && !all.includes(orgName.toLowerCase()) && !all.includes('mailbox rule removed'), `${label}: nothing of the note is printed`);
+    }
+  }
 });
 
 test('verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2)', async () => {

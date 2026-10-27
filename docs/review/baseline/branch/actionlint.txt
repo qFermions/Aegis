@@ -1,0 +1,2 @@
+$ actionlint -no-color .github/workflows/ci.yml   # actionlint 1.7.7
+# exit=0 (actionlint prints nothing when the workflow is clean)

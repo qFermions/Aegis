@@ -1,0 +1,5 @@
+$ claude plugin validate .claude/agents
+Validating components in: /home/user/Aegis/.claude/agents
+
+√ Validation passed
+# exit=0

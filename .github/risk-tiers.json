@@ -1,0 +1,30 @@
+{
+  "$comment": "Risk tiers for qFermions/Aegis. A path matching C sets tier C; otherwise B; otherwise A. Globs: ** spans directories, * stays in one segment, ? is one character, case-sensitive. Computed by scripts/risk_tier.mjs; explained in REVIEW.md.",
+  "C": [
+    ".github/**",
+    ".claude/**",
+    ".nvmrc",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "PRODUCT_CONTRACT.md",
+    "REVIEW.md",
+    "modules/security/**",
+    "scripts/jira-client.js",
+    "scripts/security-audit.js",
+    "scripts/pre-commit-check.js",
+    "scripts/memory/**",
+    "scripts/replay/**",
+    "scripts/tier/**",
+    "scripts/graph/**",
+    "scripts/risk_tier.mjs",
+    "package.json",
+    "package-lock.json"
+  ],
+  "B": [
+    "scripts/**",
+    "modules/**",
+    "TEAM.md",
+    "docs/harness.md",
+    "docs/portal-nav-*.md"
+  ]
+}

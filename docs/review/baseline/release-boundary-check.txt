@@ -1,0 +1,4 @@
+$ node scripts/harness/release-boundary-check.js
+# run 2026-10-27T03:50Z at e7c445c, fresh clone /tmp/fresh, v24.22.1
+RELEASE BOUNDARY: PASS — 0 boundary paths clean, private stores ignored, workflows secret-free
+# exit=0

@@ -1,0 +1,13 @@
+$ node scripts/risk_tier.mjs origin/main
+# run 2026-10-27T04:42Z at 1901321 on chore/review-layers, v24.22.1, pwsh 7.5.4 on PATH
+tier=C
+.claude/agents/evidence-reviewer.md
+.github/CODEOWNERS
+.github/PULL_REQUEST_TEMPLATE.md
+.github/risk-tiers.json
+.github/workflows/ci.yml
+.nvmrc
+CLAUDE.md
+REVIEW.md
+scripts/risk_tier.mjs
+# exit=0

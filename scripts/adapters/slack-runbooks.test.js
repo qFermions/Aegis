@@ -23,6 +23,10 @@
 //    member ID shown on the GUI record found by [USER@DOMAIN.COM], and every phase whose
 //    GUI step acts on that email and whose proof is a verify-* user read stops when the
 //    member ID is not [USER_ID] or the Phase A read already shows the end state.
+// 6. Every rollback a Reversibility field points to exists: a pointer ("under its own
+//    gate", "through Phase C", "a separately reviewed change" ...) names the gate's
+//    PORTAL ACTION id or a PREVIEW ONLY id in brackets, and every such id resolves to a
+//    marker in one of the six runbooks.
 //
 // Reads the Markdown and the adapter's SCOPES table only: no credential, no network,
 // no Slack call.
@@ -300,4 +304,42 @@ test('slack-user-lifecycle: every phase proved by a verify-* user read binds [US
   }
   assert.deepEqual([...new Set(failures)], []);
   assert.deepEqual([...checked].map((h) => h.slice(0, 10)).sort(), ['## Phase D', '## Phase E', '## Phase F'], 'deactivate, reactivate and account type are the phases bound');
+});
+
+// ── 6. Every rollback points to something that exists ───────────────────────────────
+const ROLLBACK_POINTER = /\bunder (?:its own|the(?: [a-z-]+){0,2}) (?:gate|phrase)\b|\bits own (?:gate|phrase|reviewed change)\b|\bseparately reviewed change\b|\bthrough (?:this same gate|Phase [A-H])\b/i;
+
+test('every rollback a Reversibility field points to is a gate or a PREVIEW ONLY marker that exists, named by its id', () => {
+  const known = new Set();
+  for (const doc of DOCS.values()) {
+    for (const m of doc.text.matchAll(/<!-- SAFETY GATE \[([a-z0-9-]+)\] -->|> \*\*PREVIEW ONLY \[([a-z0-9-]+)\]:\*\*/g)) known.add(m[1] || m[2]);
+  }
+  const failures = [];
+  let pointers = 0;
+  for (const gates of GATES.values()) {
+    for (const gate of gates) {
+      const ids = [...gate.reversibility.matchAll(/\[(slack-[a-z0-9-]+-(?:portal|preview))\]/g)].map((m) => m[1]);
+      for (const id of ids) if (!known.has(id)) failures.push(`${gate.id}: points to ${id}, which does not exist`);
+      if (ROLLBACK_POINTER.test(gate.reversibility)) {
+        pointers += 1;
+        if (!ids.length) failures.push(`${gate.id}: a rollback pointer names no gate or preview: ${gate.reversibility}`);
+      }
+      if (ids.includes(gate.id) && !/\bthrough this same gate\b/i.test(gate.reversibility)) failures.push(`${gate.id}: points to itself without saying so`);
+    }
+  }
+  assert.deepEqual(failures, []);
+  assert.ok(pointers >= 10, `only ${pointers} rollback pointers found`);
+});
+
+test('the reviewed rollbacks exist: a channel-removal gate in the user lifecycle, and planning-only previews for turning Require approved apps off and public file sharing back on', () => {
+  const remove = GATES.get('slack-user-lifecycle').find((g) => g.phrase === 'REMOVE SLACK MEMBER [USER_ID] FROM CHANNEL [CHANNEL_NAME]');
+  assert.ok(remove, 'a channel-removal gate');
+  assert.match(remove.reversibility, /^R1\b/);
+  assert.ok(remove.steps.some((s) => /read-back/i.test(s)), 'a GUI read-back');
+  const add = GATES.get('slack-user-lifecycle').find((g) => g.phrase === 'ADD SLACK MEMBER [USER_ID] TO CHANNEL [CHANNEL_NAME]');
+  assert.ok(add.reversibility.includes(`[${remove.id}]`), 'the channel add points to the removal gate');
+  const apps = DOCS.get('slack-app-approval').text;
+  assert.match(apps, /> \*\*PREVIEW ONLY \[slack-app-approval-require-off-preview\]:\*\* Planning only;/);
+  const settings = DOCS.get('slack-security-settings').text;
+  assert.match(settings, /> \*\*PREVIEW ONLY \[slack-security-settings-file-sharing-on-preview\]:\*\* Planning only;/);
 });

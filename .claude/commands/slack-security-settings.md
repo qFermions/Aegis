@@ -93,7 +93,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Target:** [@Aegion_SLACK_URL]
 - **Effect:** require two-factor authentication for every member who signs in with email and password; members without it are signed out after 24 hours until they set it up
 - **Scope:** the whole workspace, every member who signs in with email and password; members on SSO are governed by Okta
-- **Reversibility:** R3 (security control): turning it off again goes only through Phase C; members signed out in the meantime sign back in once they set up two-factor
+- **Reversibility:** R3 (security control): turning it off again goes only through Phase C [slack-security-settings-2fa-off-portal]; members signed out in the meantime sign back in once they set up two-factor
 - **Required confirmation:** Type exactly `REQUIRE TWO-FACTOR AUTHENTICATION FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-security-settings-2fa-require-portal]:** Only after the Phase A record, the announcement to members, and the exact match:
@@ -130,7 +130,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Target:** [@Aegion_SLACK_URL]
 - **Effect:** turn off the two-factor requirement for email sign-in for the workspace; members can sign in with a password alone until it is required again
 - **Scope:** the whole workspace, every member who signs in with email and password
-- **Reversibility:** R3 (security control off): reversible through Phase B under its own phrase, but the exposure while it is off cannot be undone
+- **Reversibility:** R3 (security control off): reversible through Phase B under its own phrase [slack-security-settings-2fa-require-portal], but the exposure while it is off cannot be undone
 - **Required confirmation:** Type exactly `TURN OFF TWO-FACTOR REQUIREMENT FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-security-settings-2fa-off-portal]:** Only after the requester is verified out of band, the written approval and the expiry are in the ticket, the independent review, and the exact match:
@@ -178,7 +178,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Target:** [@Aegion_SLACK_URL]
 - **Effect:** set the desktop or mobile session duration for the workspace; sessions end gradually over the chosen period
 - **Scope:** every member's desktop or mobile sessions; members are warned 2 hours and 15 minutes before a session ends; the change applies from that day
-- **Reversibility:** R3 (a sign-in control for every member): the Phase A value is the checkpoint; restore it under its own phrase; sessions that already ended stay ended and those members sign in again
+- **Reversibility:** R3 (a sign-in control for every member): the Phase A value is the checkpoint; restore it through this same gate [slack-security-settings-session-duration-portal] with a new typed confirmation; sessions that already ended stay ended and those members sign in again
 - **Required confirmation:** Type exactly `SET SLACK SESSION DURATION FOR [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-security-settings-session-duration-portal]:** Only after the Phase A value is recorded and the exact match:
@@ -198,7 +198,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Target:** [@Aegion_SLACK_URL]
 - **Effect:** change the list of approved email domains whose addresses can join the workspace without an invitation
 - **Scope:** sign-up for the whole workspace: anyone with an address at a listed domain, for example `[@Aegion_DOMAIN]`, can join; the domains show on the sign-in page; when SSO is required, SSO overrides this setting
-- **Reversibility:** R3 (who can join the workspace): the Phase A list is the checkpoint; restore it under its own phrase; anyone who joined while a domain was listed keeps the account until it is reviewed with `/slack-user-lifecycle`
+- **Reversibility:** R3 (who can join the workspace): the Phase A list is the checkpoint; restore it through this same gate [slack-security-settings-approved-domains-portal] with a new typed confirmation; anyone who joined while a domain was listed keeps the account until it is reviewed with `/slack-user-lifecycle`
 - **Required confirmation:** Type exactly `CHANGE SLACK APPROVED EMAIL DOMAINS FOR [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-security-settings-approved-domains-portal]:** Only after the Phase A list is recorded and the exact match:
@@ -217,12 +217,14 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Target:** [@Aegion_SLACK_URL]
 - **Effect:** disable public file sharing for the workspace
 - **Scope:** the whole workspace; Slack Connect file-upload permissions are separate and unchanged; what happens to links already shared was not in the sources read
-- **Reversibility:** R3 (a sharing control for the whole workspace): the Phase A value is the checkpoint; tick the permission again under its own phrase
+- **Reversibility:** R3 (a sharing control for the whole workspace): the Phase A value is the checkpoint; turning public file sharing back on reopens public links, so it is a separately reviewed change [slack-security-settings-file-sharing-on-preview]
 - **Required confirmation:** Type exactly `DISABLE PUBLIC FILE SHARING FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-security-settings-file-sharing-portal]:** Only after the Phase A value is recorded and the exact match:
 1. Slack → Admin → Workspace settings → Permissions → Public File Sharing → Expand → untick the checkbox → **Save**.
 2. GUI read-back: Public File Sharing shows off. Test one existing public link from a signed-out browser and record the result, because the sources read do not say whether old links stop working.
+
+> **PREVIEW ONLY [slack-security-settings-file-sharing-on-preview]:** Planning only; nothing here authorizes turning public file sharing back on. It reopens public links to files, so it is a separately reviewed change with a written reason and an approver. Its path is the same control as Phase G step 1, restoring the Phase A value.
 
 **Verification checkpoint:** [ ] the permission reads off · [ ] the old-link result is in the ticket.
 

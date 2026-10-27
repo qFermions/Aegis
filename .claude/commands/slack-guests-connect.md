@@ -73,7 +73,7 @@ Exit 0 is a read; exit 2 is a failed read (Slack answers `ok: false` and the ada
 - **Target:** [USER_ID]
 - **Effect:** set the date on which one guest account is deactivated automatically
 - **Scope:** one guest account; its channels and messages are untouched until that date
-- **Reversibility:** R1: change or clear the time limit in the same dialog before the date; after the date the guest is deactivated, and bringing it back is a reactivation in the Slack user lifecycle runbook
+- **Reversibility:** R1: set a different date through this same gate [slack-guests-connect-time-limit-portal] before the date (clearing the limit is not covered by this gate); after the date the guest is deactivated, and bringing it back is a reactivation in the Slack user lifecycle runbook [slack-user-lifecycle-reactivate-portal]
 - **Required confirmation:** Type exactly `SET TIME LIMIT FOR SLACK GUEST [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-time-limit-portal]:** Only after the Phase A read-back and the exact match:
@@ -111,7 +111,7 @@ The member who received the invitation accepts it in Slack and chooses the chann
 - **Target:** [EXTERNAL_DOMAIN] invitation for channel [CHANNEL_NAME]
 - **Effect:** approve one Slack Connect invitation request so one partner organization joins one channel
 - **Scope:** one channel and one external organization; its people can read the channel's messages and files from then on
-- **Reversibility:** R2: Slack's mechanics allow removing the organization later, but that removal is itself R3 and anything posted while connected has already been seen by the partner
+- **Reversibility:** R2: Slack's mechanics allow removing the organization later, but that removal is itself R3 [slack-guests-connect-remove-org-portal] and anything posted while connected has already been seen by the partner
 - **Required confirmation:** Type exactly `APPROVE SLACK CONNECT INVITATION FROM [EXTERNAL_DOMAIN] TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-approve-invitation-portal]:** Only after steps 1 to 4 and the exact match:
@@ -194,7 +194,7 @@ Before the gate: the Phase A member list is in the ticket, the channel is not `#
 - **Target:** channel [CHANNEL_NAME] ([CHANNEL_ID])
 - **Effect:** archive one channel; nobody can post in it, its history stays and remains searchable on paid plans
 - **Scope:** one channel and its members; nothing is deleted
-- **Reversibility:** R2: unarchive under its own gate below, but its members may not come back with it (Slack's page versions disagree), so the member list in the ticket is the pre-state
+- **Reversibility:** R2: unarchive under its own gate [slack-guests-connect-unarchive-portal], then add the recorded members back under [slack-guests-connect-readd-members-portal]; the members may not come back with the unarchive alone (Slack's page versions disagree), so the member list in the ticket is the pre-state
 - **Required confirmation:** Type exactly `ARCHIVE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-archive-portal]:** Only after the member list is in the ticket and the exact match:
@@ -211,7 +211,7 @@ node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --e
 - **Target:** channel [CHANNEL_NAME] ([CHANNEL_ID])
 - **Effect:** unarchive one channel; nobody is added back by this gate
 - **Scope:** one channel; members can post in it again, and who is still in it is read in step 2
-- **Reversibility:** R1: archive it again under the archive gate
+- **Reversibility:** R1: archive it again under the archive gate [slack-guests-connect-archive-portal]
 - **Required confirmation:** Type exactly `UNARCHIVE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-unarchive-portal]:** Only after the exact match:
@@ -228,7 +228,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 - **Target:** channel [CHANNEL_NAME] ([CHANNEL_ID]) and the `$memberCount` members the unarchive read-back found missing
 - **Effect:** add back to one channel the members the ticket recorded before the archive and the unarchive read-back found missing
 - **Scope:** one channel and exactly the `$memberCount` members on that list, nobody else; each one sees the channel's history at once
-- **Reversibility:** R1 for one member, R2 for 2 to 10 members, R3 above 10 (a mass operation under SR-2, after the independent out-of-session review): the recorded list is the checkpoint, and a person added by mistake has already seen the history
+- **Reversibility:** R1 for one member, R2 for 2 to 10 members, R3 above 10 (a mass operation under SR-2, after the independent out-of-session review): the recorded list is the checkpoint; a person added by mistake comes out again under [slack-user-lifecycle-channel-remove-portal], having already seen the history
 - **Required confirmation:** Render the number of missing members as `$memberCount`, then type exactly `ADD $memberCount RECORDED MEMBERS BACK TO SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-readd-members-portal]:** Only after the unarchive read-back, the missing members and their number in the ticket, for more than 10 members the independent out-of-session review of that list, and the exact match:

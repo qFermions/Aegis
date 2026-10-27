@@ -93,7 +93,7 @@ Exit 0 is a read; exit 2 is a failed read with Slack's error code only (for exam
 - **Target:** [APP_NAME] ([APP_ID])
 - **Effect:** approve one app for the workspace; members can then install it with the scopes reviewed in Phase B
 - **Scope:** one app in one workspace; the data it reaches is whatever its scopes allow once someone installs it
-- **Reversibility:** R1: restrict the app under its own gate; data it read while approved cannot be recalled, and token removal on restrict is not confirmed
+- **Reversibility:** R1: restrict the app under its own gate [slack-app-approval-restrict-portal]; data it read while approved cannot be recalled, and token removal on restrict is not confirmed
 - **Required confirmation:** Type exactly `APPROVE SLACK APP [APP_NAME] [APP_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-app-approval-approve-portal]:** Only after the Phase B recommendation says approve, any needed sign-off is recorded, and the exact match:
@@ -112,7 +112,7 @@ node scripts/adapters/slack-client.js app-requests --execute
 - **Target:** [APP_NAME] ([APP_ID])
 - **Effect:** restrict one app in the workspace; members can no longer install or request it
 - **Scope:** one app in one workspace; whether copies already installed keep their tokens was not confirmed in the sources read
-- **Reversibility:** R1: approve the app under its own gate
+- **Reversibility:** R1: approve the app under its own gate [slack-app-approval-approve-portal]
 - **Required confirmation:** Type exactly `RESTRICT SLACK APP [APP_NAME] [APP_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-app-approval-restrict-portal]:** Only after the Phase B recommendation says restrict and the exact match:
@@ -137,13 +137,15 @@ Read Phase A step 1 first: if **Require approved apps** is already on, skip this
 - **Target:** workspace [@Aegion_SLACK_TEAM_ID]
 - **Effect:** require approval before any app is installed in the workspace
 - **Scope:** every member and every future install; apps already approved stay approved
-- **Reversibility:** R3 (a security control for the whole workspace): the Phase A value is the checkpoint; turning the setting off is its own reviewed change; while it is off, members can install apps with no review
+- **Reversibility:** R3 (a security control for the whole workspace): the Phase A value is the checkpoint; turning the setting off is a separately reviewed change [slack-app-approval-require-off-preview]; while it is off, members can install apps with no review
 - **Required confirmation:** Type exactly `REQUIRE APPROVED APPS IN SLACK WORKSPACE [@Aegion_SLACK_TEAM_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-app-approval-require-portal]:** Only after the Phase A value is in the ticket and the exact match:
 1. Slack admin → Slack Marketplace → App Management Settings → **Require approved apps** → Edit → choose the option that limits installs to pre-approved apps → Save.
 2. Leave the request policy (whether members may request unapproved apps) and the request managers as Phase A recorded them: this gate changes neither. If the page asks for either, keep the recorded value; if it cannot be kept, stop. Granting request management is Phase E.
 3. GUI read-back: App Management Settings shows **Require approved apps** on. Slack exposes no confirmed API field for this setting, so the GUI is the only read-back.
+
+> **PREVIEW ONLY [slack-app-approval-require-off-preview]:** Planning only; nothing here authorizes turning Require approved apps off. Turning it off lets members install apps with no review, so it is a separately reviewed change with a written reason and the sign-off named in Inputs. Its path is the same control as Phase D step 1, restoring the Phase A value.
 
 **Verification checkpoint:** [ ] the setting reads on · [ ] the request policy and the request managers still match the Phase A record.
 

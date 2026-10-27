@@ -12,8 +12,9 @@
 //
 // 1. Allow-list. The spec holds exactly the reads in the lane spec's Fleet table, each
 //    a GET: me, version, host (by id and by identifier), hosts, host MDM, host
-//    software, host activities, global and fleet policies, software titles, one
-//    vulnerability, one script result, MDM commands, activities and report results.
+//    software, host activities, host upcoming activities, global and fleet policies,
+//    software titles, one vulnerability, one script result, MDM commands, activities
+//    and report results. The lane spec's table lists every route the spec holds.
 //    Each CLI command sends the exact method, host and path, and the credential only
 //    in the Authorization header, as "Bearer <token>".
 // 2. Writes and secrets. Every write and secret read the lane spec names (lock,
@@ -128,6 +129,10 @@ const READ_CASES = [
   [['host-activities', '--id', '7'], '/api/v1/fleet/hosts/7/activities?order_key=created_at&order_direction=desc&page=0&per_page=100'],
   [['host-activities', '--id', '7', '--page', '2', '--per-page', '50'], '/api/v1/fleet/hosts/7/activities?order_key=created_at&order_direction=desc&page=2&per_page=50'],
   [['host-activities', '--id', '7', '--page', '1'], '/api/v1/fleet/hosts/7/activities?order_key=created_at&order_direction=desc&page=1&per_page=100'],
+  // Queued items on one host: the read that names a queued script's execution id for the cancel gate.
+  [['host-upcoming', '--id', '7'], '/api/v1/fleet/hosts/7/activities/upcoming?page=0&per_page=100'],
+  [['host-upcoming', '--id', '7', '--page', '1', '--per-page', '50'], '/api/v1/fleet/hosts/7/activities/upcoming?page=1&per_page=50'],
+  [['host-upcoming', '--id', '7', '--page', '2'], '/api/v1/fleet/hosts/7/activities/upcoming?page=2&per_page=100'],
   [['policies'], '/api/v1/fleet/global/policies'],
   [['policies', '--fleet-id', '3'], '/api/v1/fleet/fleets/3/policies'],
   [['software', '--vulnerable', '--fleet-id', '3'], '/api/v1/fleet/software/titles?vulnerable=true&fleet_id=3'],
@@ -175,6 +180,7 @@ test('the spec is the lane allow-list exactly: GET routes only, one Bearer crede
     hostMdm: '/api/v1/fleet/hosts/:id/mdm',
     hostSoftware: '/api/v1/fleet/hosts/:id/software',
     hostActivities: '/api/v1/fleet/hosts/:id/activities',
+    hostUpcoming: '/api/v1/fleet/hosts/:id/activities/upcoming',
     globalPolicies: '/api/v1/fleet/global/policies',
     fleetPolicies: '/api/v1/fleet/fleets/:id/policies',
     softwareTitles: '/api/v1/fleet/software/titles',
@@ -332,6 +338,10 @@ test('input errors exit 1 before any credential or network: unknown command, mis
     ['hosts', '--page', 'x'],
     ['host-activities', '--id', '7', '--per-page', '0'],
     ['host-activities', '--id', '7', '--per-page', '1001'],
+    ['host-upcoming'],
+    ['host-upcoming', '--id', '0'],
+    ['host-upcoming', '--id', '7', '--per-page', '0'],
+    ['host-upcoming', '--id', '7', '--command-status', 'pending'],
     ['activities', '--page', '-1'],
     ['software', '--per-page', 'all'],
     ['hosts', '--policy-response', 'failing'],
@@ -608,8 +618,51 @@ test('tenant: Fleet binds no tenant id; the configured FLEET_URL is the only hos
   assert.deepEqual([...new Set(rec.reads)].sort(), ['FLEET_API_TOKEN', 'FLEET_URL'], 'no tenant variable is read: the host binds the tenant');
 });
 
+test('host-upcoming reads one host\'s queued items (an Observer read) and nothing else: no deeper path, no order or filter keys, no write', async () => {
+  const body = { count: 1, activities: [{ type: 'ran_script', created_at: '2026-10-27T11:00:00Z', details: { host_id: 7, script_execution_id: EXECUTION, script_name: 'fix.sh' } }], meta: { has_next_results: false } };
+  const r = await cli(['host-upcoming', '--id', '7', '--execute'], { replies: [ok(body)] });
+  assert.equal(r.code, 0, r.stdout);
+  assert.equal(r.transport.calls.length, 1, 'one read, nothing follows from the queued items');
+  assert.equal(r.transport.calls[0].method, 'GET');
+  assert.equal(r.transport.calls[0].path, '/api/v1/fleet/hosts/7/activities/upcoming?page=0&per_page=100');
+  assert.deepEqual(r.json.data, body, 'the execution id is printed as Fleet wrote it');
+  const refused = [
+    ['GET', `/api/v1/fleet/hosts/7/activities/upcoming/${EXECUTION}`],
+    ['DELETE', `/api/v1/fleet/hosts/7/activities/upcoming/${EXECUTION}`],
+    ['DELETE', '/api/v1/fleet/hosts/7/activities/upcoming'],
+    ['GET', '/api/v1/fleet/hosts/7/activities/upcoming?order_key=created_at'],
+    ['GET', '/api/v1/fleet/hosts/7/activities/upcoming?activity_type=ran_script'],
+    ['GET', '/api/v1/fleet/hosts/identifier/7/activities/upcoming'],
+  ];
+  for (const [method, p] of refused) {
+    const { env, reads } = recordingEnv();
+    const transport = queuedTransport([ok({})]);
+    const client = contract.createClient(fleet.SPEC, { env, transport, sleep: async () => {} });
+    const res = await client.send({ method, path: p });
+    assert.equal(res.state, STATES.REFUSED, `${method} ${p}`);
+    assert.equal(transport.calls.length, 0, `${method} ${p}`);
+    assert.ok(!reads.includes('FLEET_API_TOKEN'), `${method} ${p}`);
+  }
+});
+
+test('the lane spec\'s Fleet table lists every route on the allow-list, with its method and path', () => {
+  const spec = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'aegis', 'lanes', 'g2.md'), 'utf8');
+  const fleetPart = spec.slice(spec.indexOf('## Fleet'), spec.indexOf('## Linear'));
+  const table = fleetPart.slice(fleetPart.indexOf('### Read-only API surface'));
+  const rows = table.split('\n').filter((l) => l.startsWith('| ') && !l.startsWith('| Read |') && !l.startsWith('|---'));
+  // Parameter names differ in style (:executionId here, :execution_id there): compare the shape.
+  const shape = (p) => p.replace(/:[A-Za-z_]+/g, ':param');
+  const listed = new Set(rows.flatMap((row) => [...row.matchAll(/GET `([^`]+)`/g)].map((m) => shape(m[1]))));
+  for (const [name, route] of Object.entries(fleet.SPEC.routes)) {
+    assert.ok(listed.has(shape(route.path)), `route ${name} (${route.path}) is not in the lane spec's Fleet table`);
+  }
+  const upcomingRow = rows.find((l) => l.includes('`/api/v1/fleet/hosts/:id/activities/upcoming`')) || '';
+  assert.match(upcomingRow, /page, per_page; always sent, page 0 of 100 by default/, 'the spec says the upcoming read always pages');
+  assert.match(upcomingRow, /execution ID/, 'the spec says what the upcoming read is for');
+});
+
 test('activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit', async () => {
-  for (const argv of [['host-activities', '--id', '7'], ['activities']]) {
+  for (const argv of [['host-activities', '--id', '7'], ['host-upcoming', '--id', '7'], ['activities']]) {
     const dry = await cli(argv);
     assert.equal(dry.code, 0);
     const p = dry.json.requests[0].path;
@@ -651,7 +704,7 @@ test('help prints the commands; run directly, the CLI exits with run()\'s code',
   assert.match(noCreds.stdout + noCreds.stderr, /FLEET_API_TOKEN/);
   const help = spawnSync(process.execPath, [ADAPTER, 'help'], { env, encoding: 'utf8' });
   assert.equal(help.status, 0);
-  for (const cmd of ['verify-lock', 'verify-unlock', 'verify-wipe', 'verify-script', 'verify-mdm-off', 'verify-deleted', 'host-activities', 'report-results']) assert.match(help.stdout, new RegExp(cmd));
+  for (const cmd of ['verify-lock', 'verify-unlock', 'verify-wipe', 'verify-script', 'verify-mdm-off', 'verify-deleted', 'host-activities', 'host-upcoming', 'report-results']) assert.match(help.stdout, new RegExp(cmd));
   const none = spawnSync(process.execPath, [ADAPTER], { env, encoding: 'utf8' });
   assert.equal(none.status, 1);
 });

@@ -14,6 +14,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
+const fleet = require('./fleet-client.js');
+
 const ROOT = path.resolve(__dirname, '..', '..');
 const read = (name) => fs.readFileSync(path.join(ROOT, '.claude', 'commands', `${name}.md`), 'utf8');
 
@@ -113,6 +115,52 @@ test('the cancel gate names the one queued item it stops, in its target, its phr
   const placeholders = DEVICE.split('\n').find((l) => l.startsWith('**Placeholders:**'));
   assert.match(placeholders, /`\[PENDING_ACTION\]` \(the one queued item to cancel/);
   assert.match(placeholders, /`\[PENDING_ACTION_ID\]` \(that item's ID/);
+});
+
+test('a queued script\'s cancel can be filled and proven: host-upcoming names its execution ID, and the read-back compares every page with the before list', () => {
+  const phaseG = section(DEVICE, 'Phase G');
+  const steps = phaseG.split('\n');
+  const step2 = steps.find((l) => l.startsWith('2. A queued script')) || '';
+  assert.match(step2, /`node scripts\/adapters\/fleet-client\.js host-upcoming --id \[HOST_ID\] --execute` reads the host's upcoming activities/, 'step 2 names the read that yields a queued script\'s ID');
+  assert.match(step2, /`details\.script_execution_id`, which is `\[PENDING_ACTION_ID\]`/);
+  assert.match(step2, /while `meta\.has_next_results` is true, read the next/, 'every page is read');
+  assert.match(step2, /\(unverified\)/, 'the field names the sources do not list for this read are marked unverified');
+  assert.doesNotMatch(phaseG, /the adapter does not read upcoming activities/);
+  const step3 = steps.find((l) => l.startsWith('3. ')) || '';
+  assert.match(step3, /Write the before list in the ticket: every item steps 1 and 2 returned, every page/);
+  const handOff = steps.find((l) => l.startsWith('4. ')) || '';
+  assert.match(handOff, /Two items you cannot tell apart, or an ID you cannot read: stop and cancel nothing/);
+  assert.match(handOff, /runs the same two reads \(`commands` and `host-upcoming`\) again/, 'the hand-off names the reads the next owner runs');
+
+  const cancel = gate(DEVICE, 'fleet-device-actions-cancel-portal');
+  assert.match(cancel.portal, /the before list from steps 1 to 3 is in the ticket/);
+  const readBack = phaseG.split('\n').find((l) => l.startsWith('**Read-back:**')) || '';
+  assert.match(readBack, /Run the step 1 and step 2 reads again, every page, and compare them with the before list/);
+  assert.match(readBack, /`node scripts\/adapters\/fleet-client\.js host-upcoming --id \[HOST_ID\] --execute` no longer lists `\[PENDING_ACTION_ID\]` and still lists every other queued item from the before list/, 'a script\'s cancel: gone, and the others still queued');
+  assert.match(readBack, /still lists the other pending commands from the before list/, 'an MDM command\'s cancel: the others still pending');
+  assert.match(readBack, /any other missing item means more than the one item was cancelled/);
+
+  // The Phase A scale block (section() stops at the block's first "# " comment line).
+  assert.match(DEVICE, /^node scripts\/adapters\/fleet-client\.js host-upcoming --id \[HOST_ID\] --execute +# items still queued for this host/m, 'the Phase A pre-state read includes the queued items');
+  const checklist = section(DEVICE, '✅ Verification checklist');
+  assert.match(checklist, /the `host-upcoming` and `commands` reads, every page, compared with the before list/);
+});
+
+test('every adapter command a Fleet runbook tells the operator to run exists in fleet-client.js, with flags it accepts', () => {
+  const commands = { ...fleet.READS, ...fleet.VERIFIES };
+  let count = 0;
+  for (const [name, text] of [['fleet-device-actions', DEVICE], ['fleet-host-health', HEALTH], ['fleet-policy-failures', POLICY], ['fleet-osquery-investigation', OSQUERY], ['fleet-vulnerable-software', VULN]]) {
+    for (const m of text.matchAll(/node scripts\/adapters\/fleet-client\.js ([a-z][a-z-]*)([^`\n#]*)/g)) {
+      count += 1;
+      const [, cmd, rest] = m;
+      if (cmd === 'help') continue;
+      assert.ok(Object.prototype.hasOwnProperty.call(commands, cmd), `${name}: fleet-client.js has no command ${cmd}`);
+      const accepted = new Set(['execute', ...(commands[cmd].values || []), ...(commands[cmd].booleans || [])]);
+      for (const f of rest.matchAll(/(?:^|\s)--([a-z][a-z-]*)/g)) assert.ok(accepted.has(f[1]), `${name}: ${cmd} does not take --${f[1]}`);
+    }
+  }
+  assert.ok(count >= 30, `expected the runbooks to name the adapter often, found ${count}`);
+  assert.match(DEVICE, /fleet-client\.js host-upcoming --id \[HOST_ID\]/, 'the cancel gate\'s read is one the adapter has');
 });
 
 test('a remediation script on one host takes its R-class from what it changes, as in /fleet-device-actions E1: a security setting is R3 with the review', () => {

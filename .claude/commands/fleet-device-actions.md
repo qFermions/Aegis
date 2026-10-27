@@ -66,6 +66,7 @@ node scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execut
 node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version
 node scripts/adapters/fleet-client.js host-mdm --id [HOST_ID] --execute   # MDM enrollment for macOS and Windows, empty when the host is not enrolled
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute   # past activity on this host, including ran_script entries with their script_execution_id
+node scripts/adapters/fleet-client.js host-upcoming --id [HOST_ID] --execute   # items still queued for this host (a queued script carries its execution id); read every page while meta.has_next_results is true
 node scripts/adapters/fleet-client.js script-result --execution-id [EXECUTION_ID] --execute   # exit_code, output and host_timeout of a script that already ran
 node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute   # MDM commands still waiting for this host
 ```
@@ -260,8 +261,9 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 Before the gate, name the one item. A host can hold several queued items (a wipe and a script, say), so read Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming and write in the ticket the item to cancel (`[PENDING_ACTION]`) and its ID (`[PENDING_ACTION_ID]`):
 
 1. A lock, Lost Mode or wipe sent to a Mac, iPhone or iPad is an MDM command: `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute` lists each pending command with its request type (DeviceLock, EnableLostMode, EraseDevice) and its command UUID, which is `[PENDING_ACTION_ID]`.
-2. A queued script (a saved script, a Windows or Linux lock script, the Linux wipe script) is identified by its execution ID. Fleet's upcoming-activities read (`GET /api/v1/fleet/hosts/:id/activities/upcoming`) returns it, but the adapter does not read upcoming activities, and the sources read do not say where the console shows it (unverified).
-3. Two items you cannot tell apart, or an ID you cannot read: stop and hand the ticket to a Fleet Admin who can read the host's upcoming activities, rather than cancel the wrong item.
+2. A queued script (a saved script, a Windows or Linux lock script, the Linux wipe script) is identified by its execution ID: `node scripts/adapters/fleet-client.js host-upcoming --id [HOST_ID] --execute` reads the host's upcoming activities (GET `/api/v1/fleet/hosts/:id/activities/upcoming`, an Observer read) and lists each queued item with its type and, for a script, `details.script_execution_id`, which is `[PENDING_ACTION_ID]`. Read every page: while `meta.has_next_results` is true, read the next with `--page 1`, `--page 2` and so on. The sources name those fields for the per-host activity reads and document the upcoming read beside them, not on its own (unverified), and they do not say where the console shows the ID or whether this list also carries the MDM commands of step 1 (unverified): so this read is the source of a script's ID, MDM commands come from step 1, and a queued script this read lists without an execution ID is an ID you cannot read (step 4).
+3. Write the before list in the ticket: every item steps 1 and 2 returned, every page. The read-back compares against it.
+4. Two items you cannot tell apart, or an ID you cannot read: stop and cancel nothing. Hand the ticket, with the before list, to a Fleet Maintainer or Admin, who runs the same two reads (`commands` and `host-upcoming`) again, decides which item goes and writes its ID in the ticket before running this gate, rather than cancel the wrong item.
 
 <!-- SAFETY GATE [fleet-device-actions-cancel-portal] -->
 - **Target:** [PENDING_ACTION] ([PENDING_ACTION_ID]) queued for [HOST_ID]
@@ -270,10 +272,10 @@ Before the gate, name the one item. A host can hold several queued items (a wipe
 - **Reversibility:** R1: send the action again under its own gate; if an Apple device already fetched the command, the cancel is not honoured and the device still locks or wipes
 - **Required confirmation:** Type exactly `STOP PENDING [PENDING_ACTION] [PENDING_ACTION_ID] ON HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [fleet-device-actions-cancel-portal]:** Only after the item and its ID are written in the ticket and the exact match:
+**PORTAL ACTION [fleet-device-actions-cancel-portal]:** Only after the item and its ID are written in the ticket, the before list from steps 1 to 3 is in the ticket, and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming → **Cancel** on `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`) only.
 
-**Read-back:** Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), and every other item it listed before is still there. For an MDM command, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute` no longer lists `[PENDING_ACTION_ID]`, and `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows canceled_mdm_command. For a script, the same `host-activities` read shows canceled_run_script. When the cancelled item was the host's only lock or wipe, `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` shows `mdm.pending_action` empty.
+**Read-back:** Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), and every other item it listed before is still there. Run the step 1 and step 2 reads again, every page, and compare them with the before list. For a script, `node scripts/adapters/fleet-client.js host-upcoming --id [HOST_ID] --execute` no longer lists `[PENDING_ACTION_ID]` and still lists every other queued item from the before list, and `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows canceled_run_script. For an MDM command, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute` no longer lists `[PENDING_ACTION_ID]` and still lists the other pending commands from the before list, the `host-upcoming` read still lists every queued item from the before list, and the same `host-activities` read shows canceled_mdm_command. An item from the before list that ran in the meantime shows under Past in `host-activities`; any other missing item means more than the one item was cancelled: write which items changed in the ticket and use the partial-state note. When the cancelled item was the host's only lock or wipe, `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` shows `mdm.pending_action` empty.
 
 <details>
 <summary>fleetctl: the scale version for lock and one script (HUMAN-RUN; wipe, Turn off MDM and delete stay console-only here)</summary>
@@ -357,7 +359,7 @@ node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID
 - [ ] Wipe: Host details shows Wiped (Linux: the wipe script result and activity are in the ticket); `verify-wipe` passed (Mac, iPhone, iPad, Windows), or `mdm.device_status` `wiped` plus wiped_host (Android), or the wipe script's exit code 0 plus wiped_host (Linux); the record still exists.
 - [ ] Script: `verify-script` passed for `[EXECUTION_ID]` (and for every checked host in a batch, or the failures are listed).
 - [ ] Turn off MDM: `verify-mdm-off` passed (Mac), or mdm_unenrolled plus enrollment Off (iPhone, iPad, Android). Delete: `verify-deleted` passed for `[SERIAL_NUMBER]` after `[NOT_BEFORE]`.
-- [ ] Cancel: Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), the other queued items are still there, and the cancellation activity names the admin.
+- [ ] Cancel: Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), the other queued items are still there (the `host-upcoming` and `commands` reads, every page, compared with the before list), and the cancellation activity names the admin.
 
 ## 📝 Linear-ready note
 

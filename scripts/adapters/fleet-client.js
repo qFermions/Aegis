@@ -74,6 +74,11 @@ const SPEC = defineAdapter({
     hostMdm: { method: 'GET', path: '/api/v1/fleet/hosts/:id/mdm', params: { id: ID } },
     hostSoftware: { method: 'GET', path: '/api/v1/fleet/hosts/:id/software', params: { id: ID }, query: { vulnerable: TRUE_ONLY, page: PAGE, per_page: PER_PAGE } },
     hostActivities: { method: 'GET', path: '/api/v1/fleet/hosts/:id/activities', params: { id: ID }, fixedQuery: NEWEST_FIRST, query: { page: PAGE, per_page: PER_PAGE } },
+    // Queued work on one host (an Observer read): the only read that names a queued
+    // script's execution id before it runs, which the cancel gate needs. The vendor
+    // reference documents it with the per-host activity reads and their paging; it
+    // gives no order parameters for it, so none is sent.
+    hostUpcoming: { method: 'GET', path: '/api/v1/fleet/hosts/:id/activities/upcoming', params: { id: ID }, query: { page: PAGE, per_page: PER_PAGE } },
     globalPolicies: { method: 'GET', path: '/api/v1/fleet/global/policies' },
     fleetPolicies: { method: 'GET', path: '/api/v1/fleet/fleets/:id/policies', params: { id: ID } },
     softwareTitles: { method: 'GET', path: '/api/v1/fleet/software/titles', query: { vulnerable: TRUE_ONLY, fleet_id: ID, page: PAGE, per_page: PER_PAGE } },
@@ -118,8 +123,8 @@ const PAGING = [['page', 'page'], ['per-page', 'per_page']];
 
 // Fleet's activity reads return up to 10,000 records when page and per_page are left
 // out (vendor docs), which can pass the contract's 5 MB response limit on a busy host
-// or server. host-activities and activities therefore always send both: the newest
-// 100 unless --page or --per-page says otherwise.
+// or server. host-activities, host-upcoming and activities therefore always send both:
+// page 0 of 100 unless --page or --per-page says otherwise.
 const ACTIVITY_PAGE = Object.freeze({ page: '0', per_page: '100' });
 function activityPage(args) {
   return {
@@ -161,6 +166,13 @@ const READS = {
     values: ['id', 'page', 'per-page'],
     required: ['id'],
     request: (a) => ['hostActivities', { id: a.id }, activityPage(a)],
+  },
+  'host-upcoming': {
+    summary: 'one host\'s upcoming (queued) activities, such as a queued script and its execution id, read before and after a cancel; 100 per page unless --per-page says otherwise',
+    usage: '--id [HOST_ID] [--page N --per-page N]',
+    values: ['id', 'page', 'per-page'],
+    required: ['id'],
+    request: (a) => ['hostUpcoming', { id: a.id }, activityPage(a)],
   },
   policies: {
     summary: 'global policies, or one fleet\'s policies, with failing counts',

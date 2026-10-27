@@ -1,0 +1,6 @@
+# Code owners for qFermions/Aegis. One owner; GitHub requests their review on every pull request.
+# Tier C globs (.github/risk-tiers.json): .github/**, .claude/**, .nvmrc, CLAUDE.md, AGENTS.md,
+# PRODUCT_CONTRACT.md, REVIEW.md, modules/security/**, scripts/jira-client.js, scripts/security-audit.js,
+# scripts/pre-commit-check.js, scripts/memory/**, scripts/replay/**, scripts/tier/**, scripts/graph/**,
+# package.json, package-lock.json. The owner reads tier C diffs line by line before merging.
+* @qFermions

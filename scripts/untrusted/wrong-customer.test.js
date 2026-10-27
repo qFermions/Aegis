@@ -384,3 +384,43 @@ test('C12 an accented tenant literal disguised with a zero-width character is st
     assert.ok(!JSON.stringify(blocks).toLowerCase().includes('ejemplo'), 'the literal is never echoed');
   }
 });
+
+// ── review round 3: an org token is matched against the dictionary's own suffixes ──
+
+test('C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace', () => {
+  const { hasForeignOrgToken } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+  const foreign = ['[@Contoso_Site2]', '[@Contoso_SiteCount]', '[@Contoso_VoipUrl]', '[@Contoso_domain2]', '[@Contoso_DomainShort]',
+    '[@Contoso _DOMAIN]', '[@ Contoso_DOMAIN]', '[@\u00a0Contoso_DOMAIN]', '[@Contoso_SITE_7]', '[@AegionCo_DOMAIN]', '[@Aegion-Co_DOMAIN]',
+    'see [@Aegion_ [@Contoso_DOMAIN]', 'see [@Aegion_SITE_2 notes [@Contoso_DOMAIN]'];
+  for (const text of foreign) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} is a second tenant`);
+  const ours = ['[@jane_doe]', '[@John_Smith]', '[@JOHN_SMITH]', '[@bob_site_visit]', '[@alex_IT]', '[@jane_doe2]',
+    '[@Aegion_DOMAIN]', '[@aegion_site_2]', '[@Aegion _DOMAIN]', '[@ Aegion_SITE_COUNT]'];
+  for (const text of ours) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is not a second tenant`);
+
+  // end to end on the three persistence gates, for the spellings round 3 found open
+  const dep = writeFile('authority.md', 'authority doctrine v1 for guest access\n');
+  for (const token of ['[@Contoso_SiteCount]', '[@Contoso _DOMAIN]', '[@Aegion_ [@Contoso_DOMAIN]']) {
+    const ticket = `Guest [GUEST_UPN] from ${token} cannot open the finance site shared by [UPN].`;
+    const before = runDirs();
+    const g = graph(['new', '--ticket-file', writeFile('ticket.txt', ticket)]);
+    assert.equal(g.code, 3, `${token} at graph intake: ${short(g)}`);
+    assert.deepEqual(runDirs(), before);
+    assert.ok(!g.stdout.includes('Contoso') && !g.stderr.includes('Contoso'), 'the foreign token is never echoed');
+    const m = memAs(TENANT_A, freshDir('c13'))(['propose', '--file', writeFile('proposal.json', JSON.stringify({ ...PROPOSAL, detail: `Copied from the ${token} runbook.` }))]);
+    assert.equal(m.code, 3, `${token} at memory propose: ${short(m)}`);
+    const r = replayAs(TENANT_A, path.join(freshDir('c13-replay'), 'store'))(['record', '--ticket', ticket, '--solution-file', writeFile('solution.md', fixture('tenant-solution.md')), '--deps', dep]);
+    assert.equal(r.code, 4, `${token} at replay record: ${short(r)}`);
+  }
+  for (const handle of ['[@bob_site_visit]', '[@alex_IT]']) {
+    const r = graph(['new', '--ticket-file', writeFile('handle.txt', `${handle} says the finance site shared by [UPN] will not open for [GUEST_UPN].`)]);
+    assert.equal(r.code, 0, `${handle} is a chat mention: ${short(r)}`);
+  }
+});
+
+test('C14 the org-token suffix list equals the placeholder dictionary\'s [@Aegion_*] suffixes', () => {
+  const { ORG_TOKEN_SUFFIXES } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+  const dictionary = fs.readFileSync(path.join(ROOT, 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
+  const suffixes = new Set(Array.from(dictionary.matchAll(/\[@Aegion_([A-Za-z0-9_]+)\]/g), (m) => m[1].toUpperCase()));
+  assert.ok(suffixes.size > 0, 'the dictionary lists [@Aegion_*] tokens');
+  assert.deepEqual([...ORG_TOKEN_SUFFIXES].sort(), [...suffixes].sort(), 'add a dictionary token here when the dictionary gains one');
+});

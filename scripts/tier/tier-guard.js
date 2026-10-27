@@ -123,24 +123,38 @@ function injectionMarkersIn(text, forms = foldedForms(text)) {
 }
 
 // A second org namespace (SR-1/SR-8): one deployment serves one tenant, whose org
-// tokens are the [@Aegion_*] family (modules/security/placeholder-dictionary.md). An
-// org token is [@<Namespace>_<suffix>] whose suffix names an environment value the way
-// the dictionary does: a word from its vocabulary (DOMAIN, SITE, ISP, VOIP...) in any
-// case, or an all-capitals segment. Its namespace is the text before the first "_";
-// any namespace but Aegion is a second tenant. Spaces inside the brackets do not hide
-// it. A chat handle ([@jane_doe], [@John_Smith]) is not an org token.
-const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9-]*)_([^\]\n]{1,64})\]/g;
-const OWN_ORG_NAMESPACE = 'aegion';
-const ORG_SUFFIX_WORDS = new Set(['alarm', 'domain', 'finance', 'server', 'gws', 'customer', 'isp', 'jamf', 'url', 'jira', 'space',
-  'netpartner', 'okta', 'org', 'remote', 'access', 'site', 'count', 'size', 'voip', 'legacy', 'wan', 'tenant']);
-function isOrgSuffix(suffix) {
-  return suffix.split(/[\s_-]+/).filter(Boolean)
-    .some((segment) => /^[A-Z][A-Z0-9]+$/.test(segment) || ORG_SUFFIX_WORDS.has(segment.toLowerCase()));
+// tokens are the [@Aegion_*] family (modules/security/placeholder-dictionary.md). A
+// token is an org token when its suffix is one of the dictionary's own suffixes
+// (ORG_TOKEN_SUFFIXES, kept equal to the dictionary by a test), after the bracket body
+// is normalized: camelCase and letter-digit boundaries split, spaces, hyphens and
+// underscores read as one separator, upper-cased. Every split point is tried, so a
+// namespace with its own underscores (Other_Org_DOMAIN) is found, and a numbered
+// variant of a dictionary suffix (SITE_5, domain2) counts as that suffix. Any namespace but
+// Aegion is a second tenant; the own namespace is Aegion followed by "_" or a space,
+// so AegionCo or Aegion-Co is another org. The body cannot hold "[", so an unclosed
+// token cannot swallow the next one. A chat handle ([@jane_doe], [@bob_site_visit], [@alex_IT])
+// is not an org token: its suffix is not a dictionary suffix.
+const ORG_TOKEN = /\[@\s*([A-Za-z][A-Za-z0-9_\s-]{0,79})\]/g;
+const OWN_ORG_NAMESPACE = /^Aegion(?:[\s_]|$)/i;
+const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_SP', 'FINANCE_SERVER', 'GWS_CUSTOMER_ID', 'ISP',
+  'JAMF_URL', 'JIRA_SPACE', 'JIRA_URL', 'NETPARTNER', 'OKTA_ORG_URL', 'REMOTE_ACCESS', 'SITE_2', 'SITE_3', 'SITE_4',
+  'SITE_COUNT', 'SIZE', 'VOIP', 'VOIP_LEGACY', 'VOIP_URL', 'WAN', 'XYZ']);
+function orgTokenWords(body) {
+  return body.replace(/([a-z])([A-Z])/g, '$1_$2').replace(/([A-Za-z])(\d)/g, '$1_$2').replace(/(\d)([A-Za-z])/g, '$1_$2')
+    .toUpperCase().split(/[\s_-]+/).filter(Boolean);
+}
+function isForeignOrgBody(body) {
+  if (OWN_ORG_NAMESPACE.test(body)) return false;
+  const words = orgTokenWords(body);
+  for (let k = 1; k < words.length; k += 1) {
+    const suffix = words.slice(k).join('_');
+    if (ORG_TOKEN_SUFFIXES.has(suffix) || ORG_TOKEN_SUFFIXES.has(suffix.replace(/_\d+$/, '')) || /^SITE_\d+$/.test(suffix)) return true;
+  }
+  return false;
 }
 // forms: pass foldedForms(text) when the caller already has them (one fold per line).
 function hasForeignOrgToken(text, forms = foldedForms(text)) {
-  return forms.some((f) => Array.from(f.matchAll(ORG_TOKEN))
-    .some((m) => m[1].toLowerCase() !== OWN_ORG_NAMESPACE && isOrgSuffix(m[2])));
+  return forms.some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => isForeignOrgBody(m[1])));
 }
 
 // A tenant literal (SR-8) is found as written and in the folded forms, so a zero-width
@@ -166,7 +180,7 @@ function maskCanonicalPlaceholders(text) {
 
 module.exports = {
   assess, foldConfusables, ESCALATION_PATTERNS,
-  foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, hasForeignOrgToken, containsLiteral,
+  foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, ORG_TOKEN_SUFFIXES, hasForeignOrgToken, containsLiteral,
   isCanonicalPlaceholder, maskCanonicalPlaceholders,
 };
 

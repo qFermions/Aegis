@@ -1,0 +1,6 @@
+$ git log -1 --format="%h %ad %s" --date=iso-strict e7c445c
+# cwd: (repo root) at d266f6b, started 2026-10-27T06:58:37Z
+e7c445c 2026-10-26T20:36:55-07:00 Merge pull request #2 from qFermions/claude/aegis-google-okta-jamf-wibzp6
+# exit: 0
+$ git merge-base --is-ancestor e7c445c d266f6b
+# exit: 0 (e7c445c is an ancestor of d266f6b, so PR #2 is merged into the mapped commit)

@@ -1,0 +1,19 @@
+$ node --test scripts/eval/ms-ticket-eval.test.js scripts/eval/gws-ticket-eval.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:54:46Z
+✔ corpus covers the representative Google Workspace / Okta / Jamf / macOS ticket classes and duties (4.270129ms)
+✔ deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs (2071.103974ms)
+✔ the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail (4047.698074ms)
+✔ both lanes run one shared evaluator (no copy-pasted evaluation logic) (3113.108094ms)
+✔ the evaluator removes its temporary replay store (no /tmp residue per run) (1970.839082ms)
+✔ corpus covers the representative Microsoft ticket classes and workloads (3.901038ms)
+✔ deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs (1561.72328ms)
+✔ the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail (2879.260708ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11292.276168
+# exit: 0, finished 2026-10-27T06:54:57Z

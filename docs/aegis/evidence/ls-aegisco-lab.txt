@@ -1,0 +1,9 @@
+$ ls tasks/aegisco-lab tasks/active tasks/completed 
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T07:05:02Z
+ls: cannot access 'tasks/aegisco-lab': No such file or directory
+tasks/active:
+README.md
+
+tasks/completed:
+README.md
+# exit: 2, finished 2026-10-27T07:05:02Z

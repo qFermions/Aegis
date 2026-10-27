@@ -1,0 +1,34 @@
+$ node modules/security/scripts/log-analyzer.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:56:57Z
+
+════════════════════════════════════════════════════════════
+  Security Log Analysis Report
+  Generated: 2026-10-27 06:56:57
+  Source:     (repo root)/modules/security/scripts/sample-logs.json
+  Entries:    20
+════════════════════════════════════════════════════════════
+
+  [CRITICAL]  Brute Force Attempt
+           5 failed logins for [USER@DOMAIN.COM]
+           Source IP(s): 203.0.113.34 | First attempt: 2026-04-07T09:01:44Z | Last attempt: 2026-04-07T09:02:50Z
+
+  [CRITICAL]  Impossible Travel
+           [USER@DOMAIN.COM] logged in from two locations 8 min apart
+           [CITY, COUNTRY] (10.0.2.12) at 2026-04-07T10:15:00Z → London, UK (198.51.100.200) at 2026-04-07T10:22:30Z
+
+  [HIGH    ]  Privilege Escalation
+           [USER@DOMAIN.COM] -- User added to Global Admins security group
+           Source: 10.0.1.90 ([CITY, COUNTRY]) at 2026-04-07T14:30:00Z
+
+  [MEDIUM  ]  After-Hours Access
+           [USER@DOMAIN.COM] logged in at 03:14:22 UTC
+           Source: 198.51.100.44 ([CITY, COUNTRY]) | Remote login -- after hours
+
+────────────────────────────────────────────────────────────
+  Summary: 4 finding(s)
+  CRITICAL: 2 | HIGH: 1 | MEDIUM: 1 | LOW: 0
+────────────────────────────────────────────────────────────
+
+# exit: 1, finished 2026-10-27T06:56:57Z
+# post-processed after capture: ANSI colour codes stripped and the absolute checkout path replaced by (repo root); no other change
+# post-processed after capture: each U+2014 dash in the tool output was replaced by two hyphens (repository style rule); no other change

@@ -1,0 +1,28 @@
+$ node --test scripts/memory/memory.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:54:19Z
+PASS M1 reusable lesson: candidate with provenance promotes and a later relevant query retrieves it
+PASS M2 raw content is not truth: injected instruction blocks at propose; external-only provenance cannot promote
+PASS M3 duplicate lesson via two runs: one record with merged provenance, never two competing pages
+PASS M4 contradiction: promoting not-X over verified X refuses without explicit resolution; --supersede is deliberate and audited
+PASS M5 stale vendor fact surfaces only as REVIEW-REQUIRED; verified supersession restores a current answer
+PASS M6 case-scoped state is refused at the boundary and nothing persists
+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+PASS M8 a failed attempt stays run-local case state; the memory store takes none of it
+PASS M9 canonical runbook is pointed to, never duplicated; dead pointers refuse; retrieval returns the pointer not steps
+PASS M10 retrieval stays bounded (top-K ≤ 5, compact output) no matter how many memories exist
+PASS M11 superseded memory: retrieval uses the current version; audit still shows why the prior one existed
+PASS M12 a mundane run writes ZERO memories: decline is auditable, trivia is refused, and no auto-write path exists
+PASS M13 graph-run evidence must exist to promote; fingerprints preserve "once had evidence" after the artifact is gone
+PASS M14 a held lock refuses a second writer deterministically and is released after completion
+
+14/14 passed
+✔ scripts/memory/memory.test.js (7528.579645ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7541.68445
+# exit: 0, finished 2026-10-27T06:54:26Z

@@ -1,0 +1,49 @@
+$ node --test scripts/graph/graph.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:53:39Z
+graph.test.js: runs dir /tmp/atg-test-4oqk6u/runs
+
+PASS A1 dry-run R0 info ticket: resolves; EXECUTOR never runs; humanRequired false
+PASS A2 dry-run R1 MFA re-register: resolves with non-empty undo on the mutating step
+PASS A3 endpoint ticket routes lane=endpoint and resolves
+PASS A3 network ticket routes lane=network and resolves
+PASS A3 automation ticket routes lane=automation and resolves
+PASS B4 R2 sim: EXECUTOR refused exit 4 without checkpoint on disk, proceeds once captured
+PASS B5 R3 sim: awaiting_human; pending submits refused; wrong hash exit 5; correct hash runs EXECUTOR to VERIFIER
+PASS B6 human rejection: terminal rejected state refuses further submits
+PASS B7 approval replay after consumption refused exit 5 (T8); post-approval plan resubmit refused
+PASS B7b plan resubmission cannot ride an existing pending approval (T8)
+PASS B8 hallucinated approval fields in artifact are ignored; gate state unchanged
+PASS B9 mass op (targetCount 500) force-raised to R3 by the SR-2 trigger scan; humanRequired
+PASS B10 risk downgrade attempt (builder R3, finalizer R1): effective stays R3
+PASS C11 reviewer FAIL loops to BUILDER with round increment and findings in the next-envelope
+PASS C12 three reviewer FAILs: terminal DEADLOCK; further submits refused
+PASS D13 injection marker in ticket: flagged and quoted as data, run continues (T1/SR-3)
+PASS D14 unsafe PowerShell in plan: WARN recorded, reviewer FAIL path exercised (T4)
+PASS D15a tenant literal in ticket text: new is blocked with exit 3 (SR-8)
+PASS D15b tenant literal in artifact: submit blocked exit 3, state unmoved, clean resubmit OK
+PASS D16 invalid artifact: exit 2, one retry, second invalid -> run BLOCKED
+PASS D17 sim executor step failure: BLOCKED with partialChanges + rollbackNeeded report (T7)
+PASS D18 verification failure after successful execution: BLOCKED with a rollback note
+PASS D19 verification result without output evidence rejected exit 2 (SR-6)
+PASS D20 mutating step with empty undo rejected exit 2
+PASS E21 out-of-order submit (BUILDER artifact at ROUTER): exit 2, state unmoved
+PASS E22 submits to an aborted (terminal) run are refused
+PASS E23 cross-run approval replay: run A hash refused on run B with exit 5
+PASS F1 review verdict for package A cannot authorize package B (packageId cross-check)
+PASS F2 approval refuses when plan.powershell drifted after the gate armed (full-plan hash)
+PASS F3 executor time-of-use recheck refuses a plan tampered during the checkpoint window
+PASS F4 undo:null legal on non-mutating steps only (live-fire contract resolution)
+PASS CLI status of an unknown runId exits 1
+PASS CLI list exits 0 and includes a created runId
+
+33/33 passed
+✔ scripts/graph/graph.test.js (20624.83931ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20638.679679
+# exit: 0, finished 2026-10-27T06:54:00Z

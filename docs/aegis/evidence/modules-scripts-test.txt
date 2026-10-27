@@ -1,0 +1,92 @@
+$ node --test scripts/security-audit.test.js modules/systems/scripts/health-check.test.js modules/automation/scripts/deploy-check.test.js scripts/init-memory.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:56:17Z
+  ok  command: silent nonzero exit is FAIL
+  ok  command: missing executable is FAIL, never PASS or SKIPPED
+  ok  command: executable and arguments are passed without a shell
+  ok  hook: absent active hook is FAIL
+  ok  hook: installed Windows hook must invoke the scanner
+  ok  hook: installed hook behavior failure is FAIL even when silent
+  ok  hook: Unix hook without executable mode is FAIL
+  ok  hook: a commented scanner command does not count as active behavior
+  ok  hook: an early successful exit cannot mask an unreachable scanner
+  ok  hook: a shell success mask cannot hide scanner failure
+  ok  hook: a scanner path in a trailing comment is not behavior
+  ok  hook: Git active-hook lookup uses argument arrays without a shell
+  ok  scanner: default checklist requires --all mode
+  ok  scanner: validator executes the full-tree mode with the active Node runtime
+  ok  scanner: missing --all is FAIL before execution
+  ok  tracked text: Node inspection replaces Unix redirection and true
+  ok  tracked text: a forbidden marker is FAIL
+  ok  checklist: contains no Unix shell control or redirection snippets
+  ok  summary: READY requires every required check to PASS
+  ok  summary: optional UNKNOWN is DEGRADED, not READY
+  ok  summary: an invalid optional status is normalized to UNKNOWN and DEGRADED
+
+21 passed, 0 failed
+✔ modules/automation/scripts/deploy-check.test.js (53.548366ms)
+  ok  provider failure: Windows CPU and disk remain UNKNOWN
+  ok  provider failure: UNKNOWN produces distinct degraded exit 2
+  ok  provider failure: CLI main returns degraded exit 2
+  ok  Windows CPU: invalid WMIC output falls back to PowerShell
+  ok  Windows CPU: multiple processor values are averaged
+  ok  Windows disk: fixed-drive WMIC data parses without shell syntax
+  ok  Windows disk: PowerShell fallback parses fixed drives when WMIC is unavailable
+  ok  Windows disk: a malformed drive row remains UNKNOWN when fallback fails
+  ok  Windows disk: a clean fallback subset cannot erase an UNKNOWN drive
+  ok  Windows disk: a later healthy fallback cannot erase an earlier critical drive
+  ok  Linux confidence: zero load is valid 0% rather than a Windows fallback
+  ok  Linux confidence: disk uses df argument array with no pipe or tail
+  ok  Linux provider parse failure is UNKNOWN, not 0% OK
+  ok  memory: invalid provider data is UNKNOWN
+  ok  Node OS provider exceptions remain UNKNOWN and produce DEGRADED
+  ok  summary: CRITICAL takes precedence while UNKNOWN stays counted
+  ok  summary: zero collected checks is DEGRADED, never HEALTHY
+  ok  POSIX parser: portable df output is accepted deterministically
+  ok  POSIX parser: impossible free-space totals are rejected
+
+19 passed, 0 failed
+✔ modules/systems/scripts/health-check.test.js (58.177617ms)
+✔ default mode previews every target and performs no filesystem write (62.149567ms)
+✔ missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes (295.299785ms)
+✔ the exact initial-create phrase installs the target set once (166.477366ms)
+✔ existing and partial memory remain read-only until a force plan is exactly authorized (94.349237ms)
+✔ force replacement requires its own exact plan and creates a verified checkpoint (275.333662ms)
+✔ an injected install failure rolls back installed targets and reports partial state (142.208669ms)
+✔ a concurrent create is preserved and causes rollback instead of clobber (9.687817ms)
+✔ force execution detects drift after backup and never installs over the changed target (137.384401ms)
+✔ symbolic-link or junction memory paths are rejected without touching the referent (56.893624ms)
+✔ repository-derived keys include the full stable path (0.947597ms)
+✔ PROJECT_KEY accepts only a bounded slug and cannot escape the project root (0.514883ms)
+✔ strict argument parsing rejects value-smuggling, duplicates, and detached confirmations (0.319221ms)
+✔ default execution computes a target-bound preview and writes nothing (77.751588ms)
+✔ a non-Git directory requires explicit standalone-private mode (53.032822ms)
+✔ standalone-private cannot bypass a broken Git worktree probe (60.47797ms)
+✔ missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes (324.77206ms)
+✔ the exact target/content phrase creates one verified report and never overwrites it (203.168879ms)
+✔ content drift invalidates an otherwise exact target confirmation before any write (99.395483ms)
+✔ an existing owner file blocks writing even when an earlier exact phrase is replayed (114.731267ms)
+✔ output paths outside the resolved working directory are rejected without writes (56.788088ms)
+✔ non-Markdown and Git-metadata targets are rejected without report writes (85.857744ms)
+✔ symbolic-link or junction output parents are rejected without touching the referent (45.231398ms)
+✔ a target created after temp preparation wins the race and is never clobbered (28.460597ms)
+✔ write, fsync, and close failures clean ignored invocation-owned temps with exact partial state (50.397643ms)
+✔ install failure removes only the identity-bound invocation temp (22.717733ms)
+✔ post-install read-back failure rolls back the identity-bound target (34.237059ms)
+✔ rollback unlink failure preserves the installed report and reports unresolved state (30.80148ms)
+✔ temp cleanup failure preserves the invocation temp and reports its exact unresolved state (14.535778ms)
+✔ a filesystem without a stable nonzero inode fails closed and preserves the unresolved temp (14.022271ms)
+✔ a concurrently replaced temp is preserved when its filesystem identity changes (21.340622ms)
+✔ a concurrently replaced target is preserved even when its content matches the report (34.941528ms)
+✔ a Git worktree rejects trackable report targets and accepts only ignored safe names while requiring the generated temp to be ignored (415.169536ms)
+✔ Git ignore drift before or after installation fails closed without a trackable report (106.251346ms)
+✔ custom trackable-style filenames are rejected before any report write (53.964247ms)
+✔ strict argument parsing rejects boolean values, duplicates, and detached confirmations (0.34393ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2088.209445
+# exit: 0, finished 2026-10-27T06:56:19Z

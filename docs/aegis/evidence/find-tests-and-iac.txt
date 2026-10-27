@@ -1,0 +1,22 @@
+$ find scripts modules -name \*.test.js -o -name \*.tf -o -name \*.bicep -o -name \*judge\* -o -name \*rubric\* 
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T07:01:42Z
+scripts/security-audit.test.js
+scripts/init-memory.test.js
+scripts/pre-commit-check.test.js
+scripts/graph/graph.test.js
+scripts/risk_tier.test.js
+scripts/command-safety-gates.test.js
+scripts/dev/claim.test.js
+scripts/markdown-links.test.js
+scripts/lint/command-structure.test.js
+scripts/command-policy.test.js
+scripts/repository-structure.test.js
+scripts/replay/replay.test.js
+scripts/eval/ms-ticket-eval.test.js
+scripts/eval/gws-ticket-eval.test.js
+scripts/tier/tier-routing.test.js
+scripts/jira-client.test.js
+scripts/memory/memory.test.js
+modules/automation/scripts/deploy-check.test.js
+modules/systems/scripts/health-check.test.js
+# exit: 0, finished 2026-10-27T07:01:42Z

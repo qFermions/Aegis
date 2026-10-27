@@ -1,0 +1,33 @@
+$ node --test scripts/tier/tier-routing.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:54:34Z
+✔ T1-A Microsoft: routine single-user ticket has no escalation floor (9.404375ms)
+✔ T1-B Google: routine single-user Workspace/ChromeOS ticket has no escalation floor (0.287543ms)
+✔ T2-A Microsoft: bounded troubleshooting ticket has no escalation floor (1.937897ms)
+✔ T2-B Google: bounded troubleshooting ticket has no escalation floor (0.258895ms)
+✔ ESCALATION: single-account disable floors to the existing path (SR-2, tier never overrides risk) (0.36602ms)
+✔ ESCALATION: mass disable floors with a DISTINCT trigger set from the single case (0.2855ms)
+✔ ESCALATION: wipe, MFA-off, license removal, offboarding, org-wide, extended gate all floor (0.443242ms)
+✔ ESCALATION: a suspected compromise floors even when the wording looks like a routine MFA reset (0.274377ms)
+✔ ESCALATION: SR-2 retire/delete-device/disable-mailbox wordings floor; confusable homoglyphs cannot hide a risk word (12.275621ms)
+✔ guard is report-only: exit 0 for both outcomes via CLI (102.47972ms)
+✔ exactly two lightweight handler agents exist (0.518725ms)
+✔ NEGATIVE EVIDENCE: handler toolsets contain no spawning or orchestration capability (1.266023ms)
+✔ both handlers cover BOTH ecosystems (no per-ecosystem split) (0.399021ms)
+✔ handler models match policy (Fable on all support paths; no haiku/sonnet anywhere in agents) (1.022816ms)
+✔ COLD START wiring: routing doctrine lives in the already-referenced harness doc (0.620177ms)
+✔ REPLAY: a verified T1-class repeat is a deterministic CACHE_HIT before any handler exists in the flow (182.037861ms)
+✔ T3 REGRESSION: the fortress is unaware of the lane (no coupling in either direction) (1.149552ms)
+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.460656ms)
+✔ G1 ESCALATION: every new Google/Okta/Jamf consequential wording floors in the guard and the graph engine (4.622438ms)
+✔ G1 routine: the Google-lane counterparts (backup codes, add to group, move one OU, one licence, enroll one Mac) stay clean (0.928438ms)
+✔ G1 folding: homoglyphs and invisible characters cannot hide a new floor (guard and engine) (3.39232ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 428.347229
+# exit: 0, finished 2026-10-27T06:54:35Z
+# post-processed after capture: each U+2014 dash in the tool output was replaced by two hyphens (repository style rule); no other change

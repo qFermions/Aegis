@@ -1,0 +1,58 @@
+$ node --test scripts/jira-client.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:54:58Z
+✔ site validation accepts and canonicalizes one Atlassian tenant label (1.347332ms)
+✔ site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls (0.612394ms)
+✔ direct apiRequest validates the destination before invoking the transport (0.36266ms)
+✔ argument parser requires --confirm VALUE while execute/public remain bare booleans (0.486132ms)
+✔ argument parser rejects duplicate, malformed, and unknown flags (0.271389ms)
+✔ issue keys are normalized but paths and placeholder text are rejected (0.356324ms)
+✔ create payload is exact, numeric-id-bound, and deterministically serialized (1.179443ms)
+✔ create confirmation contains a full SHA-256 and changes with every material field (0.959938ms)
+✔ create dry run and missing/wrong confirmations use zero credentials and zero network (1.43496ms)
+✔ exact create confirmation sends one bound POST then verifies identity, type, and fields by GET (1.162864ms)
+▶ create receipt/read-back failure or mismatch is partial/unknown and is never retried
+  ✔ case 1 (0.446139ms)
+  ✔ case 2 (0.389074ms)
+  ✔ case 3 (0.326195ms)
+  ✔ case 4 (0.243718ms)
+✔ create receipt/read-back failure or mismatch is partial/unknown and is never retried (2.193515ms)
+✔ invalid create destination fails before credentials/network and is not echoed (0.50902ms)
+✔ comment confirmations bind issue, visibility, site, and full payload digest (0.375862ms)
+✔ comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes (0.476122ms)
+✔ exact INTERNAL and PUBLIC confirmations send the requested visibility only (0.525331ms)
+▶ comment receipt/read-back failure or mismatch is partial/unknown and is never retried
+  ✔ case 1 (0.213525ms)
+  ✔ case 2 (0.148499ms)
+  ✔ case 3 (0.126946ms)
+  ✔ case 4 (0.096088ms)
+✔ comment receipt/read-back failure or mismatch is partial/unknown and is never retried (1.132309ms)
+✔ an attempted comment with a non-201 result is partial/unknown and is never retried (0.435295ms)
+✔ transition local preview calls neither credentials nor Jira (0.3859ms)
+✔ transition --execute performs paginated read-only preflight and prints immutable confirmation (1.205903ms)
+✔ wrong transition confirmation performs only the necessary read preflight and no POST (0.452933ms)
+▶ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+  ✔ duplicate selected names (3.765402ms)
+  ✔ duplicate ids across pages (0.28513ms)
+  ✔ no match (0.18665ms)
+  ✔ non-progressing page (0.194603ms)
+  ✔ wrong page start (0.111027ms)
+  ✔ missing current-state version (0.117601ms)
+✔ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST (5.34984ms)
+✔ exact transition repeats preflight, POSTs once, and verifies changed state by immutable id (0.829856ms)
+✔ state drift between repeated preflights invalidates an otherwise exact phrase and makes zero POSTs (0.428095ms)
+✔ POST acceptance followed by unchanged state reports partial/unknown and never retries (0.328929ms)
+▶ POST transport ambiguity and read-back failure both report partial/unknown without retry
+  ✔ POST transport error (1.474989ms)
+  ✔ read-back failure (0.30494ms)
+✔ POST transport ambiguity and read-back failure both report partial/unknown without retry (2.115501ms)
+✔ API failures with bodies fail closed and never disclose response content (0.278654ms)
+✔ apiRequest timeout is finite, destroys the request, and rejects (13.324287ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 115.044241
+# exit: 0, finished 2026-10-27T06:54:58Z

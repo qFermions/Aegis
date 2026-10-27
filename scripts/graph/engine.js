@@ -55,6 +55,10 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\bfleet\b.*\block(?:s|ed|ing)?\b|\block(?:s|ed|ing)?\b.*\bfleet\b|\bturn(?:s|ed|ing)?\s*off\b.*\bmdm\b|\bun-?enroll(?:s|ed|ing|ment)?\b|\b(?:delete|remove)\b.*\bhosts?\b(?![- ]file)/i, label: 'Fleet host lock, MDM turn-off / unenroll, or host deletion' },
   { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b.*\bscripts?\b.*\bfleet\b|\bfleet\b.*\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b.*\bscripts?\b/i, label: 'Fleet script run on hosts' },
   { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b.*(?:\b(?:all|every|entire)\b.*\bhosts?\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
+  { pattern: /\b(?:delete[sd]?|deleting|trash(?:es|ed|ing)?|purge[sd]?|purging)\b.*\b(?:issues?|projects?|cycles?|labels?|workflow states?|initiatives?|teams?)\b/i, label: 'Linear issue / project / label / team deletion' },
+  { pattern: /\b(?:bulk|mass)\b.*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b.*(?:\b(?:all|every)\b.*\b(?:issues?|tickets?|requests?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
+  { pattern: /\b(?:suspend|deactivate|remove|kick)\w*\b.*\bmembers?\b/i, label: 'workspace member suspension or removal' },
+  { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|switch(?:es|ed|ing)?\s*off|relax\w*|remove[sd]?|removing|bypass\w*|unenforce\w*)\b.*\b(?:saml|scim|sso|single sign-on|login methods?|sign-in methods?|authentication methods?)\b/i, label: 'SSO / SCIM / sign-in method change (security control)' },
 ];
 const SR2_MASS_THRESHOLD = 10; // > 10 objects = mass operation (SR-2)
 

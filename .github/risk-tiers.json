@@ -16,6 +16,7 @@
     "scripts/replay/**",
     "scripts/tier/**",
     "scripts/graph/**",
+    "modules/automation/scripts/deploy-check.js",
     "scripts/risk_tier.mjs",
     "package.json",
     "package-lock.json"

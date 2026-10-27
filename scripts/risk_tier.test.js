@@ -76,6 +76,13 @@ test('C: a CI workflow change is tier C', () => {
   assert.deepEqual(run(cwd, ['main']), ['tier=C', '.github/workflows/ci.yml']);
 });
 
+test('C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B', () => {
+  // It runs any executable a checklist names (boundary audit, docs/aegis/boundary-audit.md), so it is a tool adapter.
+  const cwd = sandbox();
+  commit(cwd, ['modules/automation/scripts/deploy-check.js', 'modules/automation/README.md']);
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', 'modules/automation/scripts/deploy-check.js']);
+});
+
 test('one C path wins over many B paths, and only the C path is listed', () => {
   const cwd = sandbox();
   const many = Array.from({ length: 12 }, (_, i) => `scripts/eval/case-${i}.js`);

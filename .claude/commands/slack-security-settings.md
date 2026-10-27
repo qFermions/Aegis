@@ -1,5 +1,5 @@
 ---
-description: Slack workspace security settings (require two-factor authentication, handle a request to turn it off where urgency or a title never skips the gate, require SAML SSO through Okta, session duration, approved email domains, public file sharing). Pre-state first, each workspace-wide change behind its own exact-phrase gate, GUI read-back with sign-in evidence. Placeholders only.
+description: Slack workspace security settings (require two-factor authentication, handle a request to turn it off where urgency or a title never skips the gate, require SAML SSO through Okta, session duration, approved email domains, public file sharing, blocking SMS as a two-factor method). Pre-state first, each workspace-wide change behind its own exact-phrase gate, GUI read-back with sign-in evidence. Placeholders only.
 disable-model-invocation: true
 ---
 
@@ -22,7 +22,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## Inputs needed
 
-- The Slack plan **[org gap: confirm it]**: custom SAML SSO needs Business+ or Enterprise (Free and Pro only with a connected Salesforce org); blocking SMS as a two-factor method and the public file sharing control need a paid plan.
+- The Slack plan **[org gap: confirm it]**: custom SAML SSO needs Business+ or Enterprise (Free and Pro only with a connected Salesforce org); blocking SMS as a two-factor method (Phase H) and the public file sharing control need a paid plan.
 - Whether members sign in to Slack through Okta SSO today **[org gap: confirm in Phase A]**. With SSO, two-factor is configured in Okta, not in Slack.
 - The target value for each setting from the ticket: the session duration, the domains to approve, the file sharing decision.
 - For a request to turn two-factor off: the ticket, the requester verified out of band, the reason, the approver **[org gap: who may approve weakening a sign-in control]** and the expiry.
@@ -46,13 +46,14 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 5. Phase E: session duration (R2 gate). **WAIT UNTIL** sessions expire over the chosen period.
 6. Phase F: approved email domains (R2 gate).
 7. Phase G: public file sharing off (R2 gate).
+8. Phase H: block SMS as a two-factor method (R3 gate, paid plans), only after Phase B and after members who use SMS codes have another method.
 
 ## Phase A: Read every setting and record the pre-state (R0)
 
 **Purpose:** each later gate restores from this record, so it is written before anything changes.
 
 **GUI steps:**
-1. Slack → Admin → Workspace settings → Security → read Two-factor authentication for email sign-in, SSO & authentication, Desktop session duration and Mobile session duration. Older layout: Slack → the workspace name → Tools & settings → Workspace settings.
+1. Slack → Admin → Workspace settings → Security → read Two-factor authentication for email sign-in (on a paid plan, also whether SMS is allowed as a method; that label was not in the sources read), SSO & authentication, Desktop session duration and Mobile session duration. Older layout: Slack → the workspace name → Tools & settings → Workspace settings.
 2. Enterprise: Slack → Organization settings → Security → Security settings → read Two-factor authentication for email sign-in.
 3. Slack → Admin → Workspace settings → read the setting that lets people with approved email domains join, and who may invite (by default members, not guests; Owners and Admins can require approval).
 4. Slack → Admin → Workspace settings → Permissions → Public File Sharing → read whether it is on.
@@ -82,7 +83,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 
 **Purpose:** make two-factor mandatory for email-and-password sign-in.
 
-**Before:** with SSO, set two-factor in Okta instead and skip this phase; announce the change and the 24-hour window to members; on a paid plan, decide whether to block SMS as a method.
+**Before:** with SSO, set two-factor in Okta instead and skip this phase; announce the change and the 24-hour window to members. This phase leaves the allowed two-factor methods as Phase A recorded them; SMS is changed only in Phase H, under its own gate.
 
 **Role needed:** Workspace Owner or Workspace Admin; on Enterprise, Org Owner or Org Admin (Organization settings).
 
@@ -94,8 +95,8 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Required confirmation:** Type exactly `REQUIRE TWO-FACTOR AUTHENTICATION FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-security-settings-2fa-require-portal]:** Only after the Phase A record, the announcement to members, and the exact match:
-1. Slack → Admin → Workspace settings → Security → Two-factor authentication for email sign-in → **Edit** → turn on the requirement for members → **Save** (the final control labels were not in the sources read; confirm them on screen).
-2. Enterprise: Slack → Organization settings → Security → Security settings → Two-factor authentication for email sign-in → **Edit** → the same choice.
+1. Slack → Admin → Workspace settings → Security → Two-factor authentication for email sign-in → **Edit** → turn on the requirement for members, leaving the allowed methods as Phase A recorded them → **Save** (the final control labels were not in the sources read; confirm them on screen).
+2. Enterprise: Slack → Organization settings → Security → Security settings → Two-factor authentication for email sign-in → **Edit** → the same choice, with the methods as Phase A recorded them.
 3. **WAIT UNTIL** 24 hours have passed: members who had not set up two-factor were signed out and return after setting it up.
 4. GUI read-back: the two-factor setting reads required.
 
@@ -221,6 +222,30 @@ node scripts/adapters/slack-client.js access-logs --execute
 
 **Verification checkpoint:** [ ] the permission reads off · [ ] the old-link result is in the ticket.
 
+## Phase H: Block SMS as a two-factor method (R3, paid plans)
+
+**Purpose:** stop text-message codes as a second factor without locking out the members who rely on them.
+
+**Before:** Phase B is done and the requirement reads required; Phase A recorded whether SMS is allowed (the pre-state and the rollback value); members were told that SMS codes will stop working and asked to set up another method first. Which members use SMS today was not readable from the sources read, so the warning goes to everyone who signs in with email and password. With SSO, two-factor methods are set in Okta instead: skip this phase.
+
+**Role needed:** Workspace Owner or Workspace Admin; on Enterprise, Org Owner or Org Admin (Organization settings).
+
+<!-- SAFETY GATE [slack-security-settings-sms-block-portal] -->
+- **Target:** [@Aegion_SLACK_URL]
+- **Effect:** block SMS as a two-factor method for the workspace; members who sign in with an SMS code must use another method from then on
+- **Scope:** the whole workspace, every member who signs in with email and password and uses SMS codes (paid plans); members on SSO are governed by Okta
+- **Reversibility:** R3 (security control with lock-out risk): the Phase A value is the checkpoint; allowing SMS again weakens two-factor, so it is a separately reviewed change [slack-security-settings-sms-allow-preview]; a member locked out in the meantime is a one-member problem (Phase C step 2), not a reason to undo the block
+- **Required confirmation:** Type exactly `BLOCK SMS TWO-FACTOR FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [slack-security-settings-sms-block-portal]:** Only after Phase B, the Phase A value, the warning to members, and the exact match:
+1. Slack → Admin → Workspace settings → Security → Two-factor authentication for email sign-in → **Edit** → turn off SMS as an allowed method, changing nothing else → **Save**. A search excerpt says paid plans can block SMS; the control's label was not in the sources read, so if the dialog shows no such control, stop.
+2. Enterprise: Slack → Organization settings → Security → Security settings → Two-factor authentication for email sign-in → **Edit** → the same choice.
+3. GUI read-back: the two-factor setting still reads required, and SMS reads not allowed.
+
+> **PREVIEW ONLY [slack-security-settings-sms-allow-preview]:** Planning only; nothing here authorizes allowing SMS again. Allowing it weakens two-factor, so, like Phase C, it needs a verified requester, a written approval, an expiry and a review before anyone changes it. The path for that separate change is the same Edit dialog as Phase H step 1, restoring the Phase A value.
+
+**Verification checkpoint:** [ ] the setting reads required with SMS not allowed · [ ] the Phase A value and the warning to members are in the ticket.
+
 ## ⚠️ Risk warning
 
 - **Workspace-wide means everyone at once.** Record the old value before each change; there is no per-member preview.
@@ -229,6 +254,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **SAML can lock members out.** Test with one member, keep an Owner able to sign in with email and password, and remember Slack ignores Okta's session length and Single Logout.
 - **Approved domains open the door.** Anyone with an address at a listed domain can join; review who joined while a domain was listed.
 - **Turning public file sharing off may not end links already shared** (not in the sources read); test one.
+- **Blocking SMS can strand members who use only SMS codes.** Warn everyone first; one stranded member is a one-member fix, not a reason to allow SMS again.
 
 ## ✅ Verification checklist
 
@@ -238,12 +264,13 @@ node scripts/adapters/slack-client.js access-logs --execute
 - [ ] Session duration: the setting shows the ticket's value.
 - [ ] Approved domains: the setting and the sign-in page list exactly the intended domains.
 - [ ] Public file sharing: the permission reads off and the old-link test result is recorded.
+- [ ] SMS: the two-factor setting reads required with SMS not allowed, and the Phase A value is in the ticket.
 
 ## 📝 Linear-ready note
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form.
 
-> [Completed, only when every read-back passed] Slack `[@Aegion_SLACK_URL]`: [two-factor required / two-factor requirement turned off as a temporary exception until [expiry], approved by [approver] / SAML SSO required through Okta / [desktop or mobile] session duration set to [value] / approved email domains changed to [list] / public file sharing turned off] on [date/time] by [ADMIN_NAME], confirmed by the exact phrase[, after independent review]. Pre-state recorded in this ticket: [old value]. Read-back: the GUI shows [new value][; the access logs show sign-ins after the change]. Time spent: [X] min.
+> [Completed, only when every read-back passed] Slack `[@Aegion_SLACK_URL]`: [two-factor required / two-factor requirement turned off as a temporary exception until [expiry], approved by [approver] / SAML SSO required through Okta / [desktop or mobile] session duration set to [value] / approved email domains changed to [list] / public file sharing turned off / SMS blocked as a two-factor method] on [date/time] by [ADMIN_NAME], confirmed by the exact phrase[, after independent review]. Pre-state recorded in this ticket: [old value]. Read-back: the GUI shows [new value][; the access logs show sign-ins after the change]. Time spent: [X] min.
 >
 > [Partial state, keep open] Verified: [what passed]. Pending: [for example the 24-hour two-factor window, members still to sign in through Okta, or the old-link test]. Next owner: [ADMIN_NAME or team]; next step: [one line].
 

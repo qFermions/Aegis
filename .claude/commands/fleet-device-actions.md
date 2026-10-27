@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet's search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host's display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item's ID: an MDM command's UUID, or a queued script's execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet's search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host's display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item's ID: an MDM command's UUID, or a queued script's execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.
 
 ## ⚠️ Admin / safety gate
 
@@ -187,11 +187,11 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 **Role needed:** Technician, Maintainer or Admin on `[FLEET_NAME]` for a saved script (the role guide read gives no separate batch permission).
 
 <!-- SAFETY GATE [fleet-device-actions-batch-script-portal] -->
-- **Target:** [SCRIPT_NAME] on the hosts checked in [FLEET_NAME]
+- **Target:** [SCRIPT_NAME] on [HOST_COUNT] hosts checked in [FLEET_NAME]
 - **Effect:** run one saved script on every checked host in one fleet
-- **Scope:** every host checked in the Hosts list of [FLEET_NAME]; the number Fleet shows as checked must equal the number written in the ticket, and any other number means stop; offline hosts run it when they next check in
+- **Scope:** every host checked in the Hosts list of [FLEET_NAME]; the number Fleet shows as checked must equal [HOST_COUNT], the number written in the ticket, and any other number means stop; offline hosts run it when they next check in
 - **Reversibility:** R3: Fleet has no undo on any host; hosts that have not run it yet can be cancelled only through Fleet's API batch cancel (the console path for a batch cancel is not in the guides read); a compensating script is its own gated batch
-- **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON CHECKED HOSTS IN FLEET [FLEET_NAME]`.
+- **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON [HOST_COUNT] CHECKED HOSTS IN FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [fleet-device-actions-batch-script-portal]:** Only after the pilot passed, the pre-state of what the script changes is saved to `tasks/checkpoints/` and the rollback path is written, the independent review, the host count in the ticket and the exact match:
 1. Fleet → Hosts → select `[FLEET_NAME]` → check the hosts → **Run script** → choose `[SCRIPT_NAME]`.

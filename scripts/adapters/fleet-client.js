@@ -37,7 +37,11 @@ const ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software titl
 const PAGE = /^(?:0|[1-9][0-9]{0,4})$/; // Fleet pages start at 0
 const PER_PAGE = /^(?:[1-9][0-9]{0,2}|1000)$/; // 1 to 1000
 const IDENTIFIER = /^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$/; // serial, UUID or hostname
-const CVE = /^CVE-[0-9]{4}-[0-9]{4,7}$/;
+const CVE = /^CVE-[0-9]{4}-[0-9]{4,7}$/; // the path always carries the upper-case form
+// The CLI also takes the lower-case form Fleet's own examples use (cve-...). Without
+// the u flag, i never folds a non-ASCII letter into an ASCII one, so a look-alike
+// character is still refused.
+const CVE_ANY_CASE = /^cve-[0-9]{4}-[0-9]{4,7}$/i;
 const EXECUTION_ID = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}[A-Za-z0-9])?$/;
 const HOST_STATUS = /^(?:new|online|offline|mia|missing)$/;
 const POLICY_RESPONSE = /^(?:passing|failing)$/;
@@ -173,10 +177,10 @@ const READS = {
   },
   vulnerability: {
     summary: 'one CVE and the hosts it affects (HTTP 204: Fleet knows the CVE and nothing is affected)',
-    usage: '--cve [CVE_ID]',
+    usage: '--cve [CVE_ID] (CVE-... or cve-...)',
     values: ['cve'],
     required: ['cve'],
-    request: (a) => ['vulnerability', { cve: a.cve }],
+    request: (a) => ['vulnerability', { cve: CVE_ANY_CASE.test(a.cve) ? a.cve.toUpperCase() : a.cve }],
     // Fleet answers 204 with no body when it knows the CVE and no host or
     // software is affected. The contract reads an empty body as not JSON.
     shape: (res) => (res.state === STATES.INVALID_RESPONSE && res.status === 204

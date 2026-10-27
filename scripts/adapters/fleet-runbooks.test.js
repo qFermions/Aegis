@@ -158,6 +158,24 @@ test('the R1 gates that say "installs nothing" keep every path that could instal
   assert.match(add.region, /If automatic install is chosen, or the dialog will not leave it off, stop without saving: .*R3 rollout in Phase 4/);
 });
 
+test('nits: the batch phrase binds the host count, the osquery storage read cancels its edit forms, the lane spec names only verify-wipe on GET /commands', () => {
+  const batch = gate(DEVICE, 'fleet-device-actions-batch-script-portal');
+  assert.equal(batch.phrase, 'RUN SCRIPT [SCRIPT_NAME] ON [HOST_COUNT] CHECKED HOSTS IN FLEET [FLEET_NAME]');
+  assert.match(batch.field('Target'), /\[HOST_COUNT\] hosts checked in \[FLEET_NAME\]/);
+  assert.match(batch.field('Scope'), /must equal \[HOST_COUNT\], the number written in the ticket/);
+  assert.match(DEVICE.split('\n').find((l) => l.startsWith('**Placeholders:**')), /`\[HOST_COUNT\]` \(the number of hosts written in the ticket before a batch\)/);
+
+  const storage = OSQUERY.split('\n').find((l) => /\*\*Is storage on \(R0/.test(l)) || '';
+  assert.match(storage, /read inside edit forms/);
+  assert.match(storage, /close each form with Cancel \(or its close control\) instead of just leaving the page, so no edit is saved/);
+  assert.doesNotMatch(storage, /Leave the edit view without saving\.$/);
+
+  const spec = fs.readFileSync(path.join(ROOT, 'docs', 'aegis', 'lanes', 'g2.md'), 'utf8');
+  const commandsRow = spec.split('\n').find((l) => l.startsWith('| MDM commands | GET `/api/v1/fleet/commands`')) || '';
+  assert.match(commandsRow, /`verify-wipe`: the wipe command's status/);
+  assert.doesNotMatch(commandsRow, /`verify-lock`, `verify-wipe`/, 'verify-lock reads GET /hosts/:id only');
+});
+
 // The comment line that sits right above the canonical `if` of one shell gate.
 function shellPrecondition(text, id) {
   const lines = text.split('\n');

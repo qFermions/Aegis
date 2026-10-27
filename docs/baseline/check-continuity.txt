@@ -7,9 +7,10 @@ PASS  section present: ## Component state
 PASS  section present: ## Active work
 PASS  section present: ## Next actions
 PASS  section present: ## Verification
-STALE HEAD in snapshot b9acd99 != live d5fc8c0 — refresh the snapshot
+STALE HEAD in snapshot b9acd99 != live d5fc8c0 -- refresh the snapshot
 PASS  Snapshot-Date present
 PASS  all 20 referenced repo paths exist
 
-RESULT: STALE — structure OK but HEAD moved; refresh the snapshot (0 warning(s))
+RESULT: STALE -- structure OK but HEAD moved; refresh the snapshot (0 warning(s))
 # exit: 2, finished 2026-10-27T06:49:09Z
+# post-processed: 2 U+2014 characters in the tool output replaced by "--" (batch rule A11); nothing else changed, line numbers unchanged

@@ -211,3 +211,18 @@ test('no Mac gets a second FileVault profile: Phase A reads each Mac\'s profiles
   assert.match(gate(FILEVAULT, 'jamf-filevault-one-mac-scope-portal').portal, /the Mac lists no other FileVault or escrow profile \(Phase A step 5\)/);
   assert.match(phaseB, /Phase A step 5 finds no other FileVault or escrow profile on the rollout Macs/);
 });
+
+test('the inventory update gate states its downstream effect and records the Mac\'s groups before and after', () => {
+  const phaseB = section(GROUPS, 'Phase B');
+  const scope = (phaseB.match(/^# Scope: (.+)$/m) || [])[1] || '';
+  assert.match(scope, /smart group memberships of the Mac may change, so profiles and policies scoped to those groups may install, remove or run on it at its next check-in/);
+  assert.doesNotMatch(scope, /no policy runs and no setting changes$/, 'the old understatement is gone');
+  const reversibility = (phaseB.match(/^# Reversibility: (.+)$/m) || [])[1] || '';
+  assert.match(reversibility, /^R1 - .*compare the GROUP_MEMBERSHIPS reads before and after/);
+  const reads = phaseB.split('\n').map((l, i) => [i, l]).filter(([, l]) => /computer --serial \[SERIAL_NUMBER\] --section GROUP_MEMBERSHIPS --execute/.test(l)).map(([i]) => i);
+  const recon = phaseB.split('\n').findIndex((l) => /^\s*sudo jamf recon$/.test(l));
+  assert.ok(recon > 0, 'the gated recon is in Phase B');
+  assert.ok(reads.some((i) => i < recon), 'the memberships are read before the update');
+  assert.ok(reads.some((i) => i > recon), 'and again after it');
+  assert.match(phaseB, /its group memberships before and after are in the ticket, with any change named/);
+});

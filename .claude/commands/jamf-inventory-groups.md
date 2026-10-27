@@ -79,7 +79,7 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
    - Blank everywhere since one date: something changed then (the attribute, its script, or the Macs' macOS); who edited the attribute is not in the sources read **[org gap]**.
 3. Jamf Pro → Settings → Computer Extension Attributes → the attribute → read the input type, the data type and, for a script, the script itself (R0; reading only). A script whose output does not fit the data type (text in an integer or date attribute) is a likely cause; what Jamf Pro stores then is not in the sources read, so read the value on one Mac before deciding.
 4. A blank built-in field rather than an attribute: Jamf Pro → Settings → Computer Inventory Collection → read whether that optional category is collected. Turning a category on is a server-wide setting this runbook does not change.
-5. Test one Mac from the blank side: the gated inventory update below, then read the value again.
+5. Test one Mac from the blank side: record its group memberships first (the read just before the Terminal step), then the gated inventory update, then read the value and the memberships again.
 
 **Role needed:** a Jamf Pro account with the privileges for advanced computer searches (their English names were not confirmed in the sources read); no Mac privilege is used.
 
@@ -98,6 +98,15 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 
 > **PREVIEW ONLY [jamf-inventory-groups-mass-inventory-preview]:** Planning only: sending Update Inventory to a whole group or search result (Action → Send Remote Commands) is not authorized here. The computer form of that mass action appears only in translated Jamf pages, it is R3 above 10 Macs, and the weekly Update Inventory policy refreshes every Mac without it.
 
+<details>
+<summary>Before the inventory update: the Mac's group memberships (HUMAN-RUN, read-only)</summary>
+
+```bash
+# HUMAN-RUN - read-only - copy the group names into the ticket: an inventory update can move the Mac into or out of a smart group
+node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section GROUP_MEMBERSHIPS --execute
+```
+</details>
+
 **Role needed:** a local administrator account on the Mac (for `sudo`); no Jamf Pro privilege is used by the Terminal step.
 
 <details>
@@ -108,8 +117,8 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 # SAFETY GATE [jamf-inventory-groups-recon]
 # Target: [SERIAL_NUMBER]
 # Effect: submit a fresh inventory from one Mac so its extension attributes and smart group memberships are recalculated
-# Scope: one Mac - inventory only - no policy runs and no setting changes
-# Reversibility: R1 - nothing to undo - the next scheduled inventory replaces the values again
+# Scope: one Mac - recon itself runs no policy and changes no setting, but the smart group memberships of the Mac may change, so profiles and policies scoped to those groups may install, remove or run on it at its next check-in
+# Reversibility: R1 - the inventory needs no undo since the next scheduled inventory replaces the values, but what a membership change set off is not undone by it - compare the GROUP_MEMBERSHIPS reads before and after
 # Required confirmation: type exactly "SUBMIT INVENTORY UPDATE FROM [SERIAL_NUMBER]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
 # the exact phrase to type
@@ -129,7 +138,7 @@ fi
 ```
 </details>
 
-**WAIT UNTIL** Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]` → General shows a last inventory update after `[NOT_BEFORE]` (the time you ran it), then read the attribute again.
+**WAIT UNTIL** Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]` → General shows a last inventory update after `[NOT_BEFORE]` (the time you ran it), then read the attribute and the group memberships again.
 
 <details>
 <summary>Read-back through the read-only adapter (HUMAN-RUN, read-only)</summary>
@@ -138,13 +147,15 @@ fi
 # HUMAN-RUN - read-only
 # the last inventory update must be later than the time the update was submitted
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section GENERAL --execute
+# the groups after the update - compare with the read before the gate; a group joined or left goes into the ticket with the profiles and policies that name it (Phase C step 2)
+node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section GROUP_MEMBERSHIPS --execute
 # the whole record including the extension attribute value - copy only that attribute's name and value into the ticket
 # an attribute whose name contains pass, secret, token, key or pin is printed without its value: read it on screen and never copy it into the ticket
 node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 ```
 </details>
 
-**Verification checkpoint**: [ ] the pattern line is in the ticket · [ ] the tested Mac shows a fresh inventory and either the value or the reason it stays blank.
+**Verification checkpoint**: [ ] the pattern line is in the ticket · [ ] the tested Mac shows a fresh inventory and either the value or the reason it stays blank · [ ] its group memberships before and after are in the ticket, with any change named.
 
 ## Phase C: Smart groups: count, find every use, then create or change criteria (R1, R2 or R3)
 

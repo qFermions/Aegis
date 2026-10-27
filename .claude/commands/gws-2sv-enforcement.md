@@ -13,7 +13,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- **Every change here is a security-control change on a whole organizational unit or group.** Allowing enrollment is R2 (it forces nobody). Enforcing adds protection but locks out each user in `[OU_PATH]` who has not enrolled by the start date (R3). Turning enforcement off for the exception group, adding a person to it or removing a person from it, Only security key and turning enforcement off change who must use a second step (R3). Each has its own gate and exact phrase; "yes" is never a confirmation.
+- **Every change here is a security-control change on a whole organizational unit or group.** Allowing enrollment forces nobody, but it is an MFA setting on a whole unit and its rollback has an unstated effect on users who already enrolled, so it is R3, with a rollback gate that runs only while nobody in the unit is enrolled. Enforcing adds protection but locks out each user in `[OU_PATH]` who has not enrolled by the start date (R3). Turning enforcement off for the exception group, adding a person to it or removing a person from it, Only security key and turning enforcement off change who must use a second step (R3). Each has its own gate and exact phrase; "yes" is never a confirmation.
 - **Role needed for every gate here: Super Admin.** Google states that only super admins can enforce 2-Step Verification for the whole organization (search excerpt, support.google.com/a/answer/1219251); the sources name no narrower privilege for one unit or group, so this runbook takes the safer reading.
 - **One locked-out person is not an enforcement change.** "Turn off 2-Step Verification on the CEO's account now and skip the checks" is a single-user lockout: `/gws-2sv-reset` (verify the requester, then a backup code). That runbook records that its per-user turn-off is a last resort and is unavailable while 2-Step Verification is enforced across the organization. Never turn enforcement off for a unit, and never put a person in the exception group, to let one person in; urgency and authority never skip the identity check or a gate.
 - **Written rollback before Phase D runs:** Phase F (turn enforcement off, its own phrase) for the unit, and a backup code from `/gws-2sv-reset` for one locked-out user. The pre-state is the Phase A record.
@@ -39,7 +39,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## Fast path
 
 1. Phase A: read the unit's 2-Step Verification settings and list who in it is not enrolled (R0).
-2. Phase B: allow users in `[OU_PATH]` to turn on 2-Step Verification, enforcement still off (R2 gate); **WAIT UNTIL** the enrollment gap is closed or every remaining person has an approved, dated exception.
+2. Phase B: allow users in `[OU_PATH]` to turn on 2-Step Verification, enforcement still off (R3 gate, rollback gate only while nobody is enrolled); **WAIT UNTIL** the enrollment gap is closed or every remaining person has an approved, dated exception.
 3. Phase C: the exception group's override (R3 gate), then one person in at a time (R3 gate, approver and end date first) and out again (R3 gate, only once the person reads enrolled).
 4. Phase D: enforce from `[START_DATE]` with the new-user period and methods (R3 gate); read back on sample users after the date.
 5. Phase E (optional): tighten the methods to Only security key (R3 gate).
@@ -82,9 +82,13 @@ The CSV holds every address in the tenant: keep it out of the ticket and quote c
 
 **Verification checkpoint**: [ ] pre-state for `[OU_PATH]` (and `[GROUP_EMAIL]`) in the ticket · [ ] the number of users in the unit with `isEnrolledIn2Sv` false, admins listed first · [ ] suspended users counted separately.
 
-## Phase B: Allow enrollment (R2)
+## Phase B: Allow enrollment (R3)
 
 **Purpose**: let everyone in `[OU_PATH]` enroll while nobody is forced yet. Skip this phase when Phase A already reads the box ticked for the unit.
+
+**Why R3:** it forces nobody, but it is an MFA setting on every user in a unit (CLAUDE.md puts MFA changes and changes to more than 10 objects in R3), and what unticking it later does to users who already enrolled is not stated in the sources.
+
+**Written rollback (in the ticket before the change):** while nobody in `[OU_PATH]` has enrolled, the Phase B rollback gate below unticks the box under its own phrase. Once anyone has enrolled, the rollback is to leave the box ticked with Enforcement Off, which forces nobody; unticking it then is a separate reviewed change, because its effect on enrolled users is unknown.
 
 Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
 
@@ -94,7 +98,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Target:** [OU_PATH]
 - **Effect:** allow users in [OU_PATH] to turn on 2-Step Verification for their own accounts; enforcement stays off
 - **Scope:** every user in one organizational unit and the child units that inherit it; nobody is forced to enroll, so nobody can be locked out by this change
-- **Reversibility:** R2: one unit-wide setting; reversible by restoring the Phase A value under its own phrase; what unticking does to users who already enrolled is not stated in the sources
+- **Reversibility:** R3: an MFA setting on a whole unit; reversible by the Phase B rollback gate under its own phrase `TURN OFF 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]` only while no user in the unit reads `isEnrolledIn2Sv` true; after that the written rollback is to leave the box ticked with Enforcement Off, because what unticking does to users who already enrolled is not stated in the sources
 - **Required confirmation:** Type exactly `ALLOW 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [gws-2sv-enforcement-allow-portal]:** Only after the Phase A pre-state is in the ticket and the exact match:
@@ -111,6 +115,41 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 **WAIT UNTIL** the Phase A list for `[OU_PATH]` is empty, or every person still on it is in Phase C's exception group with an approver and an end date. Re-run the `users` read to judge; the Reporting columns lag up to 48 hours, the flags do not.
 
 **Verification checkpoint**: [ ] the box reads ticked for `[OU_PATH]` with Enforcement Off · [ ] the not-enrolled count falls between reads.
+
+### Phase B rollback: take enrollment back (R3, only while nobody in the unit is enrolled)
+
+**Purpose**: the written rollback for Phase B, with a known effect: it runs only while no user in `[OU_PATH]` has enrolled, so nobody's second step changes.
+
+**Stop conditions:** any user in `[OU_PATH]` reads `isEnrolledIn2Sv` true; the read below refuses the query, prints `morePages`, or lists users outside `[OU_PATH]` (the query syntax is not confirmed in the sources, so then it cannot prove the unit is clear); Enforcement for `[OU_PATH]` is not Off. When a stop condition is true, leave the box ticked with Enforcement Off and record that in the ticket.
+
+```bash
+# read-only: enrolled users in the unit, the gate below runs only when this read succeeds and lists nobody
+node scripts/adapters/gws-client.js users --query "orgUnitPath='/[OU_PATH]' isEnrolledIn2Sv=true" --max-results 500 --execute
+```
+
+Cross-check in the GUI: Admin console → Reporting → User Reports → Security → the **2-Step Verification enrollment** column for users in `[OU_PATH]` (up to 48 hours behind, so it supports the read above and never replaces it).
+
+Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
+
+**Role needed:** Super Admin.
+
+<!-- SAFETY GATE [gws-2sv-enforcement-allow-rollback-portal] -->
+- **Target:** [OU_PATH]
+- **Effect:** turn off 2-Step Verification enrollment for [OU_PATH] by restoring the unticked Phase A value; enforcement stays off
+- **Scope:** every user in one organizational unit and the child units that inherit it; allowed only while none of them is enrolled, so nobody's second step changes
+- **Reversibility:** R3: an MFA setting on a whole unit; reversible by Phase B under its own phrase `ALLOW 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]`
+- **Required confirmation:** Type exactly `TURN OFF 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [gws-2sv-enforcement-allow-rollback-portal]:** Only after the enrolled-users read for `[OU_PATH]` succeeded with nobody listed and is in the ticket, with no stop condition true, and the exact match:
+1. Admin console → Security → Authentication → 2-step verification → pick `[OU_PATH]`, then clear the tick in **Allow users to turn on 2-Step Verification**, leave **Enforcement** at **Off** and click **Save** (labels from a search excerpt; confirm them on screen).
+2. Read back in the GUI: reopen the page for `[OU_PATH]` and read the box cleared and Enforcement Off.
+
+```bash
+# read-back: your own admin events since NOT_BEFORE, the 2-Step Verification setting change should be listed
+node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start [NOT_BEFORE] --execute
+```
+
+**Verification checkpoint**: [ ] the enrolled-users read was empty before the change · [ ] the box reads cleared for `[OU_PATH]` with Enforcement Off.
 
 ## Phase C: The exception group (R3)
 

@@ -193,3 +193,30 @@ test('exception-group membership is gated in /gws-2sv-enforcement as R3, with th
   assert.ok(!phrases.includes('ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]'));
   assert.ok(!phrases.includes('REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]'));
 });
+
+// ── Finding: allowing enrollment for a whole unit is R3 ─────────────────────
+// CLAUDE.md's R0-R3 table puts MFA changes and changes to more than 10 objects in R3, and
+// the effect of unticking Allow on users who already enrolled is not in the sources, so
+// Phase B is R3 and its rollback gate runs only while nobody in the unit is enrolled.
+test('every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect', () => {
+  const gates = gatesOf('gws-2sv-enforcement');
+  for (const g of gates) assert.equal(g.rClass, 'R3', `${g.id}: ${g.fields.Reversibility}`);
+  const text = textOf('gws-2sv-enforcement');
+  assert.doesNotMatch(text, /\bR2\b/, 'no 2-Step Verification change in this runbook is classed R2');
+  assert.match(text, /^## Phase B: Allow enrollment \(R3\)$/m);
+
+  const allow = gateById('gws-2sv-enforcement-allow-portal');
+  assert.match(allow.fields.Reversibility, /`TURN OFF 2-STEP VERIFICATION ENROLLMENT FOR OU \[OU_PATH\]`/);
+  assert.match(allow.fields.Reversibility, /only while no user in the unit reads `isEnrolledIn2Sv` true/);
+
+  const rollback = gateById('gws-2sv-enforcement-allow-rollback-portal');
+  assert.equal(rollback.phrase, 'TURN OFF 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]');
+  assert.equal(rollback.rClass, 'R3');
+  assert.match(onlyAfter(rollback), /enrolled-users read for `\[OU_PATH\]` succeeded with nobody listed/);
+  const lines = linesOf('gws-2sv-enforcement');
+  const phaseStart = lines.findIndex((l) => /^### Phase B rollback\b/.test(l));
+  assert.ok(phaseStart >= 0 && phaseStart < rollback.line);
+  const before = lines.slice(phaseStart, rollback.line - 1).join('\n');
+  assert.match(before, /\*\*Stop conditions:\*\* any user in `\[OU_PATH\]` reads `isEnrolledIn2Sv` true/);
+  assert.match(before, /gws-client\.js users --query "orgUnitPath='\/\[OU_PATH\]' isEnrolledIn2Sv=true"/);
+});

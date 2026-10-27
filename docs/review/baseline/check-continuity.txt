@@ -1,0 +1,15 @@
+$ node scripts/harness/check-continuity.js
+# run 2026-10-27T03:50Z at e7c445c, fresh clone /tmp/fresh, v24.22.1
+PASS  snapshot readable (3328 bytes)
+PASS  section present: ## Identity
+PASS  section present: ## Repo ground truth
+PASS  section present: ## Component state
+PASS  section present: ## Active work
+PASS  section present: ## Next actions
+PASS  section present: ## Verification
+STALE HEAD in snapshot b9acd99 != live e7c445c — refresh the snapshot
+PASS  Snapshot-Date present
+PASS  all 20 referenced repo paths exist
+
+RESULT: STALE — structure OK but HEAD moved; refresh the snapshot (0 warning(s))
+# exit=2

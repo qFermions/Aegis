@@ -29,7 +29,7 @@ function write(cwd, file, content = `${file}\n`) {
 function sandbox() {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-risk-tier-'));
   git(cwd, 'init', '-q', '-b', 'main');
-  git(cwd, 'config', 'user.email', 'test@example.invalid');
+  git(cwd, 'config', 'user.email', '[USER@DOMAIN.COM]'); // the scanner's canonical placeholder; git accepts it as an ident
   git(cwd, 'config', 'user.name', 'risk-tier test');
   git(cwd, 'config', 'commit.gpgsign', 'false');
   write(cwd, '.github/risk-tiers.json', fs.readFileSync(TIERS, 'utf8'));

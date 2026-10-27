@@ -454,3 +454,23 @@ test('B14 a write releases the memory store lock exactly once, so it never remov
   const removals = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).length : 0;
   assert.equal(removals, 1, 'the lock is removed once; a second removal at exit would delete the next writer\'s lock');
 });
+
+// ── review round 3: a phone number dressed as a placeholder is still PII ──
+
+test('B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record', () => {
+  const { scanText } = require(path.join(ROOT, 'scripts', 'graph', 'sanitize.js'));
+  const dressed = ['[TEL', '555', '123', '4567]'].join('-');
+  assert.equal(scanText(`Call ${dressed} about [JIRA-###]`).piiWarnings.length, 1, 'the bracket must not hide the number');
+  assert.equal(scanText('Call [PHONE_NUMBER] about [JIRA-###] at [@Aegion_SITE_2]').piiWarnings.length, 0, 'canonical placeholders stay clean');
+  const dir = freshDir('b15');
+  const r = propose(dir, { ...PROPOSALS.enrollment, detail: `Call the vendor on ${dressed} before re-enrolling.` });
+  assert.equal(r.code, 3, `memory must refuse the number: ${short(r)}`);
+  assert.equal(recordFiles(dir).length, 0, 'nothing persists');
+  const store = path.join(freshDir('b15-replay'), 'store');
+  const dep = path.join(WORK, `authority-${++seq}.md`);
+  fs.writeFileSync(dep, 'authority doctrine v1 for Teams meeting policy\n');
+  const solution = path.join(WORK, `solution-${++seq}.md`);
+  fs.writeFileSync(solution, `Call the vendor on ${dressed} and confirm the policy assignment for [UPN].\n`);
+  const rec = replay(store, ['record', '--ticket', 'Teams meeting policy for [UPN] blocks scheduling from Outlook.', '--solution-file', solution, '--deps', dep]);
+  assert.equal(rec.code, 4, `replay must refuse the number: ${short(rec)}`);
+});

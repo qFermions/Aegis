@@ -167,12 +167,14 @@ function containsLiteral(text, literal, forms = foldedForms(text)) {
 
 // A bracketed token is exempt from a PII scan only when it IS a canonical placeholder:
 // the literal [USER@DOMAIN.COM], the [@Aegion_*] family, or an upper-case token with no
-// "@" ([UPN], [JIRA-###], [PHONE_NUMBER]). maskCanonicalPlaceholders blanks those and
-// leaves everything else, so a real address next to a placeholder is still scanned.
+// "@" and fewer than four digits ([UPN], [JIRA-###], [PHONE_NUMBER], [SITE_2]).
+// maskCanonicalPlaceholders blanks those and leaves everything else, so a real address
+// next to a placeholder, or a phone number dressed as one, is still scanned.
 function isCanonicalPlaceholder(tok) {
   if (tok === '[USER@DOMAIN.COM]') return true;
   if (/^\[@Aegion_[A-Za-z0-9_]*\]$/.test(tok)) return true;
-  return !tok.includes('@') && /^\[[A-Z0-9_.,/#-]+\]$/.test(tok) && /[A-Z]/.test(tok);
+  // Four or more digits make it data, not a placeholder (a real number behind [TEL-).
+  return !tok.includes('@') && /^\[[A-Z0-9_.,/#-]+\]$/.test(tok) && /[A-Z]/.test(tok) && (tok.match(/\d/g) || []).length < 4;
 }
 function maskCanonicalPlaceholders(text) {
   return String(text).replace(/\[[^\]\n]*\]/g, (tok) => (isCanonicalPlaceholder(tok) ? ' ' : tok));

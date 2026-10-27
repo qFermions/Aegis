@@ -71,7 +71,7 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 
 **Purpose**: a blank value usually means "not reported yet" or "nothing to report"; find which before anyone touches the script.
 
-1. Split the Macs: Jamf Pro → Computers → Search Inventory → **New** → Criteria: the extension attribute; Display: the attribute, model, macOS version and last inventory update → **Save** → read the results. Saving creates a saved search other administrators can see (no Mac changes); name it after `[ISSUE_ID]`.
+1. Split the Macs with a saved advanced computer search: the search gate below creates it (R1; a saved search is an object other administrators see, and no Mac changes). Read its results: the attribute, model, macOS version and last inventory update of each Mac.
 2. Read the pattern and write the matching line in the ticket:
    - Blank only where the last inventory update is older than the attribute: those Macs have not reported since it was added. The weekly Update Inventory policy fills them in; test one Mac now with the gate below.
    - Blank on every Mac of one model family: an attribute that reads hardware some models lack (a battery on a desktop Mac) is blank there by design; say so in the ticket rather than "fixing" it.
@@ -80,6 +80,19 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 3. Jamf Pro → Settings → Computer Extension Attributes → the attribute → read the input type, the data type and, for a script, the script itself (R0; reading only). A script whose output does not fit the data type (text in an integer or date attribute) is a likely cause; what Jamf Pro stores then is not in the sources read, so read the value on one Mac before deciding.
 4. A blank built-in field rather than an attribute: Jamf Pro → Settings → Computer Inventory Collection → read whether that optional category is collected. Turning a category on is a server-wide setting this runbook does not change.
 5. Test one Mac from the blank side: the gated inventory update below, then read the value again.
+
+**Role needed:** a Jamf Pro account with the privileges for advanced computer searches (their English names were not confirmed in the sources read); no Mac privilege is used.
+
+<!-- SAFETY GATE [jamf-inventory-groups-saved-search-portal] -->
+- **Target:** a saved advanced computer search named after [ISSUE_ID] (new)
+- **Effect:** create one saved advanced computer search named after [ISSUE_ID]; no Mac, group or scope changes
+- **Scope:** one search object on the Jamf Pro server that other administrators can see; it reads inventory and changes nothing on any Mac
+- **Reversibility:** R1: no Mac is touched; the undo is deleting the saved search, whose control is not in the sources read (confirm it on screen)
+- **Required confirmation:** Type exactly `CREATE SAVED SEARCH [ISSUE_ID]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [jamf-inventory-groups-saved-search-portal]:** Only after the exact match:
+1. Jamf Pro → Computers → Search Inventory → **New** → name the search after `[ISSUE_ID]`.
+2. Criteria: the extension attribute (for Phase C step 3, the new criteria from the change record, in order); Display: the attribute, model, macOS version and last inventory update → **Save** → read the results and their number.
 
 > **PREVIEW ONLY [jamf-inventory-groups-ea-script-preview]:** Planning only: changing the attribute's input type, data type or script is not authorized here. The script runs on every Mac at every inventory update, so the change is fleet-wide: write it with the script's owner, run it by hand on one Mac of each model and macOS version, get an independent review, and carry it out as a separate reviewed change.
 
@@ -139,7 +152,7 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 
 1. Count the group (R0): the adapter reads below (`smart-groups`, `group-members`), or Jamf Pro → Computers → Smart Computer Groups → `[SMART_GROUP]`. Copy the criteria and the members into the ticket: this is the pre-state and the rollback.
 2. Find every use (R0): Jamf Pro → Computers → Configuration Profiles → each profile → Scope, and Jamf Pro → Computers → Policies → each policy → Scope; note every target, limitation and exclusion that names `[SMART_GROUP]`. The sources read describe no "where used" view, so this is a manual read; the adapter reads one object at a time (`profile --id`, `policy --id`).
-3. Predict the new count: build the new criteria as an advanced search first (Phase B step 1) and read the number of results; write it as `[MEMBER_COUNT]`.
+3. Predict the new count: build the new criteria as a saved advanced search first, under Phase B's search gate with this change's `[ISSUE_ID]`, and read the number of results; write it as `[MEMBER_COUNT]`.
 4. Classify: a new group, or nothing names the group and it holds 10 Macs or fewer: R1 or R2. Anything names it, or more than 10 Macs: R3, which needs the independent review and a change window first.
 
 <details>

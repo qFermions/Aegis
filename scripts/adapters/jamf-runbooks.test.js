@@ -41,6 +41,26 @@ function gate(text, id) {
   return { region, field, portal, phrase, start: start + 1 };
 }
 
+// Every line that saves something in the console (a breadcrumb ending in Save, or "then
+// Save"), outside code fences, with the portal gate or preview that owns it: the
+// nearest SAFETY GATE or PREVIEW ONLY marker above it in the same section.
+function saveSteps(text) {
+  const steps = [];
+  let fenced = false;
+  let owner = null;
+  text.split('\n').forEach((line, index) => {
+    if (/^\s*```/.test(line)) { fenced = !fenced; return; }
+    if (fenced) return;
+    if (/^#{1,6} /.test(line)) { owner = null; return; }
+    const gated = line.match(/<!-- SAFETY GATE \[([a-z0-9-]+)\] -->/);
+    if (gated) { owner = { id: gated[1], mode: 'gated' }; return; }
+    const preview = line.match(/^>\s*\*\*PREVIEW ONLY \[([a-z0-9-]+)\]/);
+    if (preview) { owner = { id: preview[1], mode: 'preview' }; return; }
+    if (/→\s*\**Save\b|\bthen Save\b/.test(line)) steps.push({ line: index + 1, text: line.trim(), owner });
+  });
+  return steps;
+}
+
 // The text of one "## " or "### " section, by the start of its heading. A "# " line
 // inside a code fence is a shell comment, not a heading.
 function section(text, heading) {
@@ -146,4 +166,35 @@ test('a stage that can reach more than 10 Macs carries R3 ceremony: the App Inst
   assert.match(retire, /PREVIEW ONLY \[jamf-inventory-groups-limitation-exclusion-preview\]/);
   assert.doesNotMatch(retire, /a target is taken out with `\/jamf-config-profiles` Phase G for a profile/);
   assert.match(section(POLICIES, 'Phase D'), /takes a target group of more than 10 Macs out of scope to retire that group/);
+});
+
+test('every console Save in the five runbooks sits inside an action-local SAFETY GATE: no ungated scope change, saved search or group', () => {
+  for (const [name, text] of Object.entries(ALL)) {
+    const steps = saveSteps(text);
+    assert.ok(steps.length > 0, `${name}: has Save steps`);
+    for (const s of steps) {
+      assert.ok(s.owner && s.owner.mode === 'gated', `${name}:${s.line}: a Save outside a SAFETY GATE (${s.text.slice(0, 90)})`);
+    }
+  }
+
+  // FileVault: one Mac joins the FileVault profile only through its own R3 gate
+  const oneMac = gate(FILEVAULT, 'jamf-filevault-one-mac-scope-portal');
+  assert.match(oneMac.field('Target'), /^\[SERIAL_NUMBER\] in the Targets of FileVault profile \[PROFILE_NAME\]$/);
+  assert.match(oneMac.field('Reversibility'), /^R3\b.*`\/jamf-config-profiles` Phase E's exclusion gate/);
+  assert.equal(oneMac.phrase, 'ADD [SERIAL_NUMBER] TO FILEVAULT PROFILE [PROFILE_NAME] SCOPE AND DISTRIBUTE TO NEWLY ASSIGNED ONLY');
+  assert.match(oneMac.portal, /Only after the pre-state and the written rollback are in the ticket/);
+  assert.match(section(FILEVAULT, 'Phase D'), /put the Mac in the Phase B profile's scope first with Phase B's one-Mac gate \(R3\)/);
+
+  // Inventory groups: the saved search is created under its own gate, and Phase C reuses that gate
+  const search = gate(GROUPS, 'jamf-inventory-groups-saved-search-portal');
+  assert.equal(search.phrase, 'CREATE SAVED SEARCH [ISSUE_ID]');
+  assert.match(search.field('Reversibility'), /^R1\b/);
+  assert.match(search.region, /Search Inventory → \*\*New\*\*/);
+  assert.match(section(GROUPS, 'Phase C'), /under Phase B's search gate with this change's `\[ISSUE_ID\]`/);
+
+  // Config profiles: the one-Mac static group fallback is planning only, and the exclusion names the Mac
+  const exclude = gate(PROFILES, 'jamf-config-profiles-exclude-portal');
+  assert.doesNotMatch(exclude.region, /static group/, 'the exclusion gate authorizes the Mac only');
+  assert.match(exclude.region, /The Mac itself, never a group: if the picker does not list it, stop/);
+  assert.match(section(PROFILES, 'Phase E'), /PREVIEW ONLY \[jamf-config-profiles-one-mac-group-preview\]:\*\* Planning only: a static group that holds only `\[SERIAL_NUMBER\]`/);
 });

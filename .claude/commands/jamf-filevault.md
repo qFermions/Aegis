@@ -13,7 +13,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- Four gated actions and one planning-only request: a FileVault profile for the pilot group (R3, a security control), the same profile widened to the rollout group (R3, after independent review), showing one Mac's recovery key (R3, a disclosure), issuing a new recovery key (R2), and turning FileVault off (planning only here, Phase E).
+- Five gated actions and one planning-only request: a FileVault profile for the pilot group (R3, a security control), the same profile widened to the rollout group (R3, after independent review), one more Mac added to that profile (R3), showing one Mac's recovery key (R3, a disclosure), issuing a new recovery key (R2), and turning FileVault off (planning only here, Phase E).
 - **Showing a key is a gated disclosure.** A person reads it on the Jamf Pro screen for the one Mac in the ticket, after the requester is verified **[org gap]**. It never goes into Linear, Slack, chat, a file or a screenshot, and Phase D replaces it once the Mac is back with its user. The read-only adapter never reads a key: it refuses the FileVault key paths and strips key-like fields from every response.
 - **Never export FileVault keys.** A Jamf support article's title describes exporting keys through the portal; that bulk disclosure is out of scope for Aegis.
 - Turning FileVault off removes a security control (R3). This runbook does not carry it out (Phase E).
@@ -44,7 +44,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 1. Phase A: read the Disk Encryption state, Personal Recovery Key Validation and whether your account sees Show Key (R0).
 2. Not encrypted: Phase B, profile to the pilot group (R3 gate). **WAIT UNTIL** each pilot Mac reads enabled and Valid, then widen to the rollout group (R3 gate, after review).
 3. Forgotten password: Phase C shows the key to unlock one Mac (R3 disclosure gate), then Phase D replaces it (R2 gate).
-4. Key Invalid or missing: Phase D, once the escrow profile from Phase B is in scope.
+4. Key Invalid or missing: Phase D, once the escrow profile from Phase B is in scope (Phase B's one-Mac gate puts a single Mac there).
 5. "Turn FileVault off for the repair shop": Phase E, planning only.
 
 ## Phase A: Read the encryption state and your own access (R0)
@@ -135,6 +135,23 @@ Rollout stage, after the pilot read-back passed for every pilot Mac and an indep
 
 **Verification checkpoint:** [ ] every pilot Mac reads FileVault enabled and Personal Recovery Key Validation Valid · [ ] the rollout sample does too, and Failed is 0.
 
+One Mac that needs the profile and is in neither group (Phase D's prerequisite, for example): the FileVault profile `[PROFILE_NAME]` already exists, the Mac's Phase A reads are in the ticket (the pre-state), and the rollback is written in the ticket: `/jamf-config-profiles` Phase E's exclusion gate takes the profile off this one Mac (whether that decrypts the disk was not confirmed; safer reading: it does not, and enforcement stops).
+
+**Role needed:** the same configuration profile privileges as the pilot gate.
+
+<!-- SAFETY GATE [jamf-filevault-one-mac-scope-portal] -->
+- **Target:** [SERIAL_NUMBER] in the Targets of FileVault profile [PROFILE_NAME]
+- **Effect:** add one Mac to the Targets of FileVault profile [PROFILE_NAME]; the Mac installs it at its next check-in, FileVault turns on if it was off, and the personal recovery key is escrowed at the next inventory update
+- **Scope:** one Mac; every other Mac and the profile's group targets are untouched
+- **Reversibility:** R3: a security control on one Mac; the written rollback is `/jamf-config-profiles` Phase E's exclusion gate, and decryption is not confirmed to follow
+- **Required confirmation:** Type exactly `ADD [SERIAL_NUMBER] TO FILEVAULT PROFILE [PROFILE_NAME] SCOPE AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [jamf-filevault-one-mac-scope-portal]:** Only after the pre-state and the written rollback are in the ticket and the exact match:
+1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → Edit → Scope → Targets → **Add** → `[SERIAL_NUMBER]` → Save. Whether the Targets picker lists single computers was not in this batch's sources: if it does not, stop; a one-Mac group is a separately reviewed change.
+2. When Jamf Pro asks how to distribute the change, choose **Distribute to Newly Assigned Devices Only**, so no other Mac gets a remove and a reinstall.
+
+**WAIT UNTIL** the Mac has checked in and submitted inventory once or twice; then the read-back fence above (`verify-profile`, then `verify-filevault`) passes for `[SERIAL_NUMBER]`.
+
 ## Phase C: Forgotten password: show the key to unlock one Mac (R3 disclosure)
 
 **Purpose:** let the user back into one encrypted Mac with its recovery key, without the key leaving the Jamf Pro screen.
@@ -162,7 +179,7 @@ Read-back: the adapter never reads the key, and whether Jamf Pro logs who viewed
 
 **Purpose:** retire a key that was shown, or replace a key that reads Invalid or is missing.
 
-Prerequisites: macOS 10.14 or later; the Mac has a valid escrowed key or a FileVault-enabled user with a secure token. With an invalid escrowed key this policy fails with "Authentication error": put the Mac in the Phase B profile's scope first, or use the Terminal procedure in `/mac-troubleshoot` Branch B.
+Prerequisites: macOS 10.14 or later; the Mac has a valid escrowed key or a FileVault-enabled user with a secure token. With an invalid escrowed key this policy fails with "Authentication error": put the Mac in the Phase B profile's scope first with Phase B's one-Mac gate (R3), or use the Terminal procedure in `/mac-troubleshoot` Branch B.
 
 **Role needed:** a Jamf Pro account with the privileges for policies and for the computer in scope (English names not in this batch's sources).
 

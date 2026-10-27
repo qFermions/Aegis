@@ -203,6 +203,9 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 
 1. **Stop if** the profile carries the network the Mac uses to reach Jamf Pro (Wi-Fi or a certificate behind it): without it the Mac may never check in again to get it back. Put the Mac on Ethernet or another network first.
 2. Phase A's exclusions are in the ticket.
+3. **Stop if** the Exclusions picker does not list single computers (Jamf's page gives a smart group as the example exclusion; whether a single computer can be picked was not in the sources read). The fallback below is planning only.
+
+> **PREVIEW ONLY [jamf-config-profiles-one-mac-group-preview]:** Planning only: a static group that holds only `[SERIAL_NUMBER]`, excluded in place of the Mac, is not authorized here. Creating that group is a new object (no gate in `/jamf-inventory-groups` covers it), and excluding a group needs a phrase that names the group, not the serial: plan both as a separately reviewed change.
 
 **Role needed:** the same Jamf Pro privileges as Phase C.
 
@@ -214,7 +217,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 - **Required confirmation:** Type exactly `ADD [SERIAL_NUMBER] TO PROFILE [PROFILE_NAME] EXCLUSIONS AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [jamf-config-profiles-exclude-portal]:** Only after the network check and the exact match:
-1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Exclusions → **Add** → pick `[SERIAL_NUMBER]` → **Save**. Jamf's page gives a smart group as the example exclusion; if the picker does not list single computers, use a static group that holds only this Mac (`/jamf-inventory-groups` Phase D) and name that group in the ticket.
+1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Exclusions → **Add** → pick `[SERIAL_NUMBER]` → **Save**. The Mac itself, never a group: if the picker does not list it, stop (step 3).
 2. If Jamf Pro asks how to distribute, choose **Distribute to Newly Assigned Devices Only**. Write the save time as `[NOT_BEFORE]`.
 
 **WAIT UNTIL** the Mac has checked in and no longer lists the profile: the `--absent` read-back below passes and System Settings → General → Device Management on the Mac no longer shows `[PROFILE_NAME]`.

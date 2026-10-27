@@ -1,0 +1,129 @@
+name: CI
+
+# Every declared check on every pull request and on every push to main (REVIEW.md, CLAUDE.md "Review").
+# Pattern-only by design: no secret value reaches any job. The release-gate workflow keeps the
+# two-OS test and scanner run; this workflow adds the rest of the declared battery and the risk tier.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js (version from .nvmrc)
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Install
+        # The repository declares no package manifest or lockfile: there is nothing to install.
+        run: test ! -f package.json && echo "no package manifest, nothing to install"
+
+      - name: Prerequisite check (PowerShell is required by the safety-gate tests)
+        run: pwsh -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.ToString()'
+
+      - name: Test suite
+        run: node --test
+
+      - name: Command structure lint
+        run: node scripts/lint/command-structure.js
+
+      - name: Full-tree scan (PII, credentials, secret formats)
+        run: node scripts/pre-commit-check.js --all
+
+      - name: Release boundary
+        run: node scripts/harness/release-boundary-check.js
+
+  risk-tier:
+    name: risk-tier
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out with full history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js (version from .nvmrc)
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Compute the risk tier against the base branch
+        # A script error (missing base, unreadable tier file) exits 1 and fails this job.
+        env:
+          BASE: ${{ github.base_ref || github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          out="$(node scripts/risk_tier.mjs "origin/${BASE}")"
+          printf '%s\n' "$out"
+          {
+            echo "## Risk tier (base: origin/${BASE})"
+            echo
+            echo '```'
+            printf '%s\n' "$out"
+            echo '```'
+            echo
+            echo 'Tiers are defined in .github/risk-tiers.json and explained in REVIEW.md.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  detect:
+    name: detect
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has_evals: ${{ steps.probe.outputs.has_evals }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Probe for the eval scripts
+        id: probe
+        run: |
+          if [ -f scripts/eval/ms-ticket-eval.js ] && [ -f scripts/eval/gws-ticket-eval.js ] && [ -f scripts/replay/replay-demo.js ]; then
+            echo "has_evals=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_evals=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  evals:
+    name: "${{ needs.detect.outputs.has_evals == 'true' && 'evals' || 'evals (skipped - eval scripts missing)' }}"
+    needs: [verify, detect]
+    if: needs.detect.outputs.has_evals == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js (version from .nvmrc)
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Microsoft ticket eval
+        run: node scripts/eval/ms-ticket-eval.js
+
+      - name: Google Workspace / Okta / Jamf ticket eval
+        run: node scripts/eval/gws-ticket-eval.js
+
+      - name: Replay lifecycle demo
+        run: node scripts/replay/replay-demo.js

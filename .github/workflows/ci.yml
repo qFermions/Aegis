@@ -32,8 +32,9 @@ jobs:
           package-manager-cache: false
 
       - name: Install
-        # The repository declares no package manifest or lockfile: there is nothing to install.
-        run: test ! -f package.json && echo "no package manifest, nothing to install"
+        # The repository declares no package manifest today; the day one lands, npm ci installs from its lockfile.
+        run: |
+          if [ -f package.json ]; then npm ci; else echo "no package manifest, nothing to install"; fi
 
       - name: Prerequisite check (PowerShell is required by the safety-gate tests)
         run: pwsh -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.ToString()'
@@ -66,16 +67,28 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
 
-      - name: Compute the risk tier against the base branch
-        # A script error (missing base, unreadable tier file) exits 1 and fails this job.
+      - name: Compute the risk tier against the base
+        # Pull request: the target branch. Push: the commit before the push, so a merge to main
+        # reports the tier of what landed. A script error (missing base, unreadable tier file)
+        # exits 1 and fails this job.
         env:
-          BASE: ${{ github.base_ref || github.event.repository.default_branch }}
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
-          out="$(node scripts/risk_tier.mjs "origin/${BASE}")"
+          if [ "$EVENT" = pull_request ]; then
+            base="origin/${BASE_REF}"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            base="$BEFORE"
+          else
+            base="origin/${DEFAULT_BRANCH}"
+          fi
+          out="$(node scripts/risk_tier.mjs "$base")"
           printf '%s\n' "$out"
           {
-            echo "## Risk tier (base: origin/${BASE})"
+            echo "## Risk tier (base: ${base})"
             echo
             echo '```'
             printf '%s\n' "$out"

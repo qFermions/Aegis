@@ -13,7 +13,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- Seven changes, seven gates, seven phrases: set a guest's time limit (R1), approve a Slack Connect invitation (R2) or decline it (R1), remove a partner organization from one channel (R3), disconnect a partner organization (R3), archive a channel (R2, its member list is the pre-state) and unarchive it (R1).
+- Eight changes, eight gates, eight phrases: set a guest's time limit (R1), approve a Slack Connect invitation (R2) or decline it (R1), remove a partner organization from one channel (R3), disconnect a partner organization (R3), archive a channel (R2, its member list is the pre-state), unarchive it (R1) and add its recorded members back (R1 for one member, R2 for 2 to 10, R3 above 10 after the independent review).
 - **Removing or disconnecting an organization has no undo.** Slack's help says a disconnect cannot be undone; for a removal from one channel no undo is documented. Both run only after an independent out-of-session review and a written list of every channel and DM the organization shares.
 - Slack's facts and menu labels below come from Slack's search-indexed help and developer pages, read 2026-10-27 (the pages themselves could not be opened); method names and fields come from Slack's own SDK source and its 2021 API spec. Confirm each label on screen; if the screen does not match, stop and record what you see.
 - Not done until the read-back passes: `node scripts/adapters/slack-client.js` sends GET reads only and refuses every write method before it reads a credential, so it proves a human's change and cannot make one.
@@ -42,7 +42,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 2. Phase B: a guest's time limit, one R1 gate. **WAIT UNTIL** the date, then `verify-deactivated` proves Slack deactivated the guest.
 3. Phase C: a partner's invitation. Review it, then approve (R2) or decline (R1). **WAIT UNTIL** the channel read shows the channel shared.
 4. Phase D: ending a partner connection. Remove the organization from one channel, or disconnect it entirely (R3 each, after the independent review).
-5. Phase E: a finished project channel. Archive (R2), proved by `verify-archived`; unarchive (R1) is the rollback.
+5. Phase E: a finished project channel. Archive (R2), proved by `verify-archived`; unarchive (R1) is the rollback, and adding the recorded members back is its own gate (R1 for one member, R2 for 2 to 10, R3 above 10).
 
 ## Phase A: Read the current state (R0)
 
@@ -183,7 +183,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 
 **Verification checkpoint:** [ ] the review is recorded in the ticket · [ ] the organization is gone from Organizations or from Slack Connect connections · [ ] each recorded channel was read back.
 
-## Phase E: Archive a finished channel, or unarchive it (R2 / R1)
+## Phase E: Archive a finished channel, unarchive it, add its members back (R2 archive, R1 unarchive, R1 to R3 re-add)
 
 **Purpose:** close a channel to new messages and keep its history, with a way back.
 
@@ -209,21 +209,33 @@ node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --e
 **Role needed:** the same people who may archive the channel.
 <!-- SAFETY GATE [slack-guests-connect-unarchive-portal] -->
 - **Target:** channel [CHANNEL_NAME] ([CHANNEL_ID])
-- **Effect:** unarchive one channel; add back the members recorded in the ticket before the archive
-- **Scope:** one channel and the members on the recorded list
+- **Effect:** unarchive one channel; nobody is added back by this gate
+- **Scope:** one channel; members can post in it again, and who is still in it is read in step 2
 - **Reversibility:** R1: archive it again under the archive gate
-- **Required confirmation:** Type exactly `UNARCHIVE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID] AND ADD BACK ITS MEMBERS`.
+- **Required confirmation:** Type exactly `UNARCHIVE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-guests-connect-unarchive-portal]:** Only after the exact match:
 1. Slack → Directories → filter to archived channels → `#[CHANNEL_NAME]` → click the channel name in the header → Settings → **Unarchive channel**. The label was not confirmed in the sources read.
-2. Compare the channel's members with the list in the ticket and invite back anyone missing, one by one, from the channel details.
+2. Read-back: compare the channel's members with the list in the ticket and write the missing members and their number in the ticket; that number is `$memberCount` for the re-add gate below. Nobody is added under this gate.
 
 ```bash
 # read-only: the channel after the unarchive; is_archived reads false
 node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 ```
 
-**Verification checkpoint:** [ ] after an archive, `verify-archived` exit 0 and Directories lists the channel as archived · [ ] after an unarchive, the `channel` read shows `is_archived` false and the members match the recorded list.
+**Role needed:** a member of `#[CHANNEL_NAME]` who may add people to it, or a Workspace Owner or Workspace Admin [unverified: channel-invite permissions were not in the sources read].
+<!-- SAFETY GATE [slack-guests-connect-readd-members-portal] -->
+- **Target:** channel [CHANNEL_NAME] ([CHANNEL_ID]) and the `$memberCount` members the unarchive read-back found missing
+- **Effect:** add back to one channel the members the ticket recorded before the archive and the unarchive read-back found missing
+- **Scope:** one channel and exactly the `$memberCount` members on that list, nobody else; each one sees the channel's history at once
+- **Reversibility:** R1 for one member, R2 for 2 to 10 members, R3 above 10 (a mass operation under SR-2, after the independent out-of-session review): the recorded list is the checkpoint, and a person added by mistake has already seen the history
+- **Required confirmation:** Render the number of missing members as `$memberCount`, then type exactly `ADD $memberCount RECORDED MEMBERS BACK TO SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [slack-guests-connect-readd-members-portal]:** Only after the unarchive read-back, the missing members and their number in the ticket, for more than 10 members the independent out-of-session review of that list, and the exact match:
+1. Slack → `#[CHANNEL_NAME]` → click the channel name in the header → the member list → add each member on the list, one by one (the add control's label was not in the sources read; confirm it on screen). Stop at the first person who is not on the list, and stop if the list no longer has `$memberCount` names.
+2. GUI read-back: the member list of `#[CHANNEL_NAME]` matches the recorded list. The adapter does not read channel membership, so this GUI read-back is the proof.
+
+**Verification checkpoint:** [ ] after an archive, `verify-archived` exit 0 and Directories lists the channel as archived · [ ] after an unarchive, the `channel` read shows `is_archived` false · [ ] after the re-add, the members match the recorded list, with the review in the ticket when more than 10 were added.
 
 <details>
 <summary>Slack Web API reads through the adapter: the scale version (HUMAN-RUN, read-only)</summary>
@@ -256,13 +268,13 @@ The writes behind these gates (`conversations.archive`, `conversations.unarchive
 - [ ] Invitation approved: Slack → `#[CHANNEL_NAME]` → channel name → Settings → Organizations lists `[EXTERNAL_DOMAIN]`, and the `channel` read shows the share complete.
 - [ ] Invitation declined: nothing pending for `[EXTERNAL_DOMAIN]`.
 - [ ] Removal or disconnect: the independent review is in the ticket, the organization is gone from Organizations or Slack Connect connections, and every recorded channel was read back.
-- [ ] Archive: `verify-archived` exit 0 and Directories lists `#[CHANNEL_NAME]` as archived; after an unarchive, `is_archived` false and members match the recorded list.
+- [ ] Archive: `verify-archived` exit 0 and Directories lists `#[CHANNEL_NAME]` as archived; after an unarchive, `is_archived` false; after the re-add, members match the recorded list (with the review in the ticket above 10).
 
 ## 📝 Linear-ready note
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form.
 
-> **Completed (every read-back passed):** Slack `[@Aegion_SLACK_URL]`, ticket `[ISSUE_ID]`. Change: [time limit [date] set for guest `[USER_ID]` / Slack Connect invitation from `[EXTERNAL_DOMAIN]` to `#[CHANNEL_NAME]` approved or declined / `[EXTERNAL_DOMAIN]` removed from `#[CHANNEL_NAME]` / `[EXTERNAL_DOMAIN]` disconnected / `#[CHANNEL_NAME]` archived or unarchived], made by `[ADMIN_NAME]` in Slack after the exact phrase [and the independent review]. Pre-state in this ticket: [account type and previous date / member list / organizations and channels shared]. Read-back: [verify-guest / verify-deactivated / channel / verify-archived] exit 0 at [time]; Slack shows [observation]. Time spent: [X] min.
+> **Completed (every read-back passed):** Slack `[@Aegion_SLACK_URL]`, ticket `[ISSUE_ID]`. Change: [time limit [date] set for guest `[USER_ID]` / Slack Connect invitation from `[EXTERNAL_DOMAIN]` to `#[CHANNEL_NAME]` approved or declined / `[EXTERNAL_DOMAIN]` removed from `#[CHANNEL_NAME]` / `[EXTERNAL_DOMAIN]` disconnected / `#[CHANNEL_NAME]` archived or unarchived / [N] recorded members added back to `#[CHANNEL_NAME]`], made by `[ADMIN_NAME]` in Slack after the exact phrase [and the independent review]. Pre-state in this ticket: [account type and previous date / member list / organizations and channels shared]. Read-back: [verify-guest / verify-deactivated / channel / verify-archived] exit 0 at [time]; Slack shows [observation]. Time spent: [X] min.
 >
 > **Partial state (a read-back failed or is pending):** Verified: [what passed, with the command and time]. Pending: [what has not passed, and when it will be read again]. Next owner: [role]. No further change until the pending read-back passes.
 

@@ -13,7 +13,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- Five changes, five gates, five phrases: approve one app (R1), restrict one app (R1), require approval before any app is installed (R1; it tightens a security control), grant one member app request management (R2, a privilege grant) and take it back (R1).
+- Five changes, five gates, five phrases: approve one app (R1), restrict one app (R1), require approval before any app is installed (R3, a workspace-wide security control), grant one member app request management (R2, a privilege grant) and take it back (R1).
 - **An approval hands the app whatever its scopes reach.** Restricting it later reverses the approval, but data it read while approved cannot be recalled, and whether restricting revokes a token the app already holds was not confirmed in the sources read. Review the scopes first (Phase B); the requester does not review their own request.
 - **Never give a read tool `admin.apps:write`.** Slack's developer docs say an admin app that holds both `admin.apps:read` and `admin.apps:write` disables approval in Slack's own pages and becomes the only way to approve. The adapter asks for `admin.apps:read` only.
 - The API reads of requests, approved apps and restricted apps work on Enterprise only (an org-level install with `admin.apps:read`); on other plans the GUI is the read-back.
@@ -40,7 +40,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 1. Phase A: read the approval setting, the app's listing and the pending request (R0).
 2. Phase B: review the scopes against the business need and write a recommendation in the ticket (R0). A "review before anyone approves" ticket ends here.
 3. Phase C: approve (R1) or restrict (R1), proved by `verify-app-approved` or `verify-app-restricted`.
-4. Phase D: if approval is not required yet, require it (R1) so the next app waits for a review too.
+4. Phase D: if approval is not required yet, require it (R3, a workspace-wide security control) so the next app waits for a review too.
 5. Phase E: only when the ticket asks for it, grant one member app request management (R2), or take it back (R1).
 
 ## Phase A: Read the setting, the app and the request (R0)
@@ -126,7 +126,7 @@ node scripts/adapters/slack-client.js verify-app-restricted --app-id [APP_ID] --
 
 **Verification checkpoint:** [ ] the GUI shows the decision · [ ] on Enterprise, the matching `verify-*` read exit 0 and the request is no longer pending.
 
-## Phase D: Require approval for every app (R1)
+## Phase D: Require approval for every app (R3)
 
 **Purpose:** make the next app wait for a review instead of being installed first and reviewed later.
 
@@ -137,10 +137,10 @@ Read Phase A step 1 first: if **Require approved apps** is already on, skip this
 - **Target:** workspace [@Aegion_SLACK_TEAM_ID]
 - **Effect:** require approval before any app is installed in the workspace
 - **Scope:** every member and every future install; apps already approved stay approved
-- **Reversibility:** R1: turn the setting off in the same place under its own reviewed change; while it is off, members can install apps with no review
+- **Reversibility:** R3 (a security control for the whole workspace): the Phase A value is the checkpoint; turning the setting off is its own reviewed change; while it is off, members can install apps with no review
 - **Required confirmation:** Type exactly `REQUIRE APPROVED APPS IN SLACK WORKSPACE [@Aegion_SLACK_TEAM_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [slack-app-approval-require-portal]:** Only after the exact match:
+**PORTAL ACTION [slack-app-approval-require-portal]:** Only after the Phase A value is in the ticket and the exact match:
 1. Slack admin → Slack Marketplace → App Management Settings → **Require approved apps** → Edit → choose the option that limits installs to pre-approved apps → Save.
 2. Leave the request policy (whether members may request unapproved apps) and the request managers as Phase A recorded them: this gate changes neither. If the page asks for either, keep the recorded value; if it cannot be kept, stop. Granting request management is Phase E.
 3. GUI read-back: App Management Settings shows **Require approved apps** on. Slack exposes no confirmed API field for this setting, so the GUI is the only read-back.
@@ -159,7 +159,7 @@ Read Phase A step 1 first: the request managers it recorded are the pre-state. W
 <!-- SAFETY GATE [slack-app-approval-request-managers-grant-portal] -->
 - **Target:** [USER_ID]
 - **Effect:** grant one member app request management; from then on that member approves or restricts app requests for the workspace
-- **Scope:** one member in one workspace; that member's decisions reach every member, so this is a privilege grant
+- **Scope:** one member's role in one workspace; a privilege grant, because that member's approve and restrict decisions then apply across the workspace
 - **Reversibility:** R2 (a privilege grant): the Phase A list of request managers is the pre-state; take the role back under its own gate [slack-app-approval-request-managers-remove-portal]; apps the member approved while holding it stay approved until each is restricted under [slack-app-approval-restrict-portal]
 - **Required confirmation:** Type exactly `GRANT SLACK APP REQUEST MANAGEMENT TO [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.

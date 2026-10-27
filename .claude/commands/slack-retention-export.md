@@ -13,8 +13,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## ⚠️ Admin / safety gate
 
-- Six changes, six gates, six phrases: create a legal hold (R1), export public channels (R2), export every conversation including DMs (R3), shorten retention (R3), delete one member's messages (R3), delete a channel (R3). Applying to Slack for the all-conversations export and deleting files stay planning-only previews here.
-- **Retention deletes, message deletion and channel deletion are permanent.** Slack runs retention deletions once a day; lengthening retention afterwards brings nothing back; deleting a channel removes its history whatever the retention setting says. Every R3 gate here runs only after an independent out-of-session review and, where anything may be needed later, an export first.
+- Six changes, six gates, six phrases: create a legal hold (R1), export public channels (R3, an irreversible disclosure of every public channel), export every conversation including DMs (R3), shorten retention (R3), delete one member's messages (R3), delete a channel (R3). Applying to Slack for the all-conversations export and deleting files stay planning-only previews here.
+- **Retention deletes, message deletion and channel deletion are permanent, and an export cannot be recalled.** Slack runs retention deletions once a day; lengthening retention afterwards brings nothing back; deleting a channel removes its history whatever the retention setting says. Every R3 gate here runs only after an independent out-of-session review and, where anything may be needed later, an export first.
 - **Retention is an owner decision.** A Workspace Admin cannot change it: the request goes to a Workspace Owner (or the Org Owner when an org-level policy exists), never around them.
 - **Private channels and DMs leave Slack only through Slack's approved export.** Slack rejects an application unless it shows valid legal process, the members' consent, or a legal requirement or right.
 - Slack's facts and menu labels below come from Slack's search-indexed help and developer pages, read 2026-10-27 (the pages themselves could not be opened); method names and fields come from Slack's own SDK source and its 2021 API spec. Confirm each label on screen; if the screen does not match, stop and record what you see.
@@ -40,7 +40,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 1. Phase A, always: your role, the plan, the retention setting and the legal holds (R0). A Workspace Admin asking to change retention stops here and escalates to a Workspace Owner.
 2. Phase B: a legal hold first whenever litigation, an investigation or a dispute is possible (R1, Enterprise).
-3. Phase C: an export. Public channels through the standard export (R2); private channels and DMs only through Slack's approved export (R3).
+3. Phase C: an export, after the independent review. Public channels through the standard export (R3); private channels and DMs only through Slack's approved export (R3).
 4. Phase D: shorten retention (R3, after review). **WAIT UNTIL** the next daily run before saying old data is gone; nothing comes back.
 5. Phase E: delete one member's messages (R3, after review), one conversation at a time, with no bulk tool; deleting files stays a preview.
 6. Phase F: delete a channel (R3, after review), export first. Archiving is the reversible alternative (`/slack-guests-connect`).
@@ -90,21 +90,21 @@ Exit 0 is a read; exit 2 is a failed read with Slack's error code only (for exam
 
 **Verification checkpoint:** [ ] the hold is listed with its custodian · [ ] the ticket says Slack Connect content is not covered.
 
-## Phase C: Export (R2 public channels, R3 every conversation)
+## Phase C: Export (R3 public channels, R3 every conversation, after independent review)
 
 **Purpose:** take a copy of what a decision needs, to a place where access is controlled, before anything is deleted.
 
-Before either gate: the written approval names the purpose and the date range, and the evidence store is chosen. A standard export holds public channels only; it never answers a request for DMs.
+Before either gate: the written approval names the purpose and the date range, the evidence store is chosen, and the independent out-of-session review is recorded (an export is an irreversible disclosure, the T3 floor for exporting messages). A standard export holds public channels only; it never answers a request for DMs.
 
 **Role needed:** Workspace Owner or Workspace Admin (a Workspace Admin exports public channels only).
 <!-- SAFETY GATE [slack-retention-export-public-export-portal] -->
 - **Target:** workspace [@Aegion_SLACK_TEAM_ID]
 - **Effect:** export the public-channel history of the workspace for one date range; Slack emails a download link to the person who started it
 - **Scope:** every public channel in the date range, as a zip of JSON with links to files rather than the files; on the Free plan, file links from the last 90 days only
-- **Reversibility:** R2: once downloaded the data cannot be recalled; only who starts it, who receives the link and where the zip is kept can be controlled
+- **Reversibility:** R3 (an irreversible disclosure): once downloaded the data cannot be recalled; only who starts it, who receives the link and where the zip is kept can be controlled
 - **Required confirmation:** Type exactly `START EXPORT OF PUBLIC CHANNELS FROM SLACK WORKSPACE [@Aegion_SLACK_TEAM_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [slack-retention-export-public-export-portal]:** Only after the approval and the evidence store are in the ticket and the exact match:
+**PORTAL ACTION [slack-retention-export-public-export-portal]:** Only after the approval, the evidence store and the independent review are in the ticket, and the exact match:
 1. Slack admin → Workspace settings → Security → Import & export data → **Export** → choose the date range from the approval → **Start Export**. Older layout: Slack → workspace name → Workspace settings → Import/Export Data → **Export** tab → the date range → **Start Export**.
 2. **WAIT UNTIL** the export page shows Ready for download and the email with the link reaches the person who started it.
 3. Download the zip straight into the evidence store, record its SHA-256 in the ticket with the command below, and never attach the zip to the ticket.

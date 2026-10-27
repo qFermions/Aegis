@@ -8,6 +8,12 @@
 // 1. A PORTAL ACTION changes only what its gate names. No step and no "Before:" line
 //    leaves a second setting to the operator's judgement ("decide whether ..."); a second
 //    change gets its own gate.
+// 2. The R-class follows the R0-R3 table in CLAUDE.md and SR-2: a change whose Scope
+//    reaches the whole workspace, every member or every channel is R3; a re-add of
+//    recorded members carries the member count in its phrase and is R2 for 2 to 10 and
+//    R3 above 10; the public-channel export is R3 after the independent review (the T3
+//    floor for "export messages" in docs/aegis/lanes/g2.md). The "N changes, N gates"
+//    header, the phase headings and the fast path agree with the gates.
 //
 // Reads the Markdown only: no credential, no network, no Slack call.
 
@@ -140,4 +146,80 @@ test('slack-security-settings: blocking SMS is its own R3 gate with the Phase A 
   assert.ok(require.steps.some((s) => /methods as Phase A recorded/i.test(s)), 'the requirement gate keeps the allowed methods');
   const phaseA = sectionLines(doc, doc.lines.find((l) => /^## Phase A:/.test(l))).join('\n');
   assert.match(phaseA, /\bSMS\b/, 'Phase A records whether SMS is allowed');
+});
+
+// ── 2. The R-class follows the R0-R3 table ─────────────────────────────────────────
+// The classes a gate declares: every R-token before the first colon of its Reversibility
+// ("R3 (security control): ..." gives R3; "R1 for one member, R2 for 2 to 10, R3 above 10
+// (...): ..." gives all three).
+function classesOf(gate) {
+  const head = gate.reversibility.split(':')[0];
+  return [...new Set(head.match(/\bR[0-3]\b/g) || [])];
+}
+
+const NUMBER_WORDS = Object.freeze({ two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 });
+const WHOLE_WORKSPACE = /\b(?:the whole workspace|every member|every public channel|every channel|workspace-wide)\b/i;
+
+test('a gate whose Scope reaches the whole workspace, every member or every channel is R3', () => {
+  const failures = [];
+  for (const gates of GATES.values()) {
+    for (const gate of gates) {
+      if (WHOLE_WORKSPACE.test(gate.scope) && !/^R3\b/.test(gate.reversibility)) failures.push(`${gate.id}: ${gate.reversibility.split(':')[0]} for "${gate.scope}"`);
+    }
+  }
+  assert.deepEqual(failures, []);
+});
+
+test('unarchive and the re-add of recorded members are separate gates; the re-add phrase carries the member count and the class follows it', () => {
+  const gates = GATES.get('slack-guests-connect');
+  for (const gate of gates) {
+    if (!/^unarchive\b/i.test(gate.effect)) continue;
+    const clauses = gate.effect.split(/\s*;\s*|,\s*(?:and\s+)?|\s+and\s+/);
+    assert.ok(!clauses.some((c) => /^add\b/i.test(c)), `${gate.id}: one Effect both unarchives and re-adds members`);
+    assert.doesNotMatch(gate.phrase, /\bADD\b/, `${gate.id}: the unarchive phrase also adds members`);
+  }
+  const unarchive = gates.find((g) => /^unarchive\b/i.test(g.effect));
+  assert.ok(unarchive);
+  assert.deepEqual(classesOf(unarchive), ['R1']);
+  const readd = gates.find((g) => /\$memberCount\b/.test(g.phrase));
+  assert.ok(readd, 'a re-add gate whose phrase carries $memberCount');
+  assert.match(readd.target, /\$memberCount\b/);
+  assert.deepEqual(classesOf(readd), ['R1', 'R2', 'R3']);
+  assert.match(readd.reversibility, /\bR2 for 2 to 10\b/);
+  assert.match(readd.reversibility, /\bR3 above 10\b[^:]*\bindependent\b/);
+  assert.match(readd.region, /\*\*PORTAL ACTION \[[a-z0-9-]+\]:\*\* [^\n]*independent out-of-session review/, 'the re-add action names the review above 10');
+});
+
+test('the public-channel export is R3 and runs only after the independent review', () => {
+  const gate = GATES.get('slack-retention-export').find((g) => /\bEXPORT OF PUBLIC CHANNELS\b/.test(g.phrase));
+  assert.ok(gate);
+  assert.match(gate.reversibility, /^R3\b/);
+  assert.match(gate.region, /\*\*PORTAL ACTION \[[a-z0-9-]+\]:\*\* Only after [^\n]*independent review/);
+});
+
+test('the "N changes, N gates, N phrases" header, the phase headings and the fast path name the classes the gates declare', () => {
+  const failures = [];
+  for (const [name, gates] of GATES) {
+    const doc = DOCS.get(name);
+    const header = doc.lines.find((l) => /^- \w+ changes, \w+ gates, \w+ phrases:/.test(l));
+    if (header) {
+      const word = header.match(/^- (\w+) changes/)[1].toLowerCase();
+      if (NUMBER_WORDS[word] !== gates.length) failures.push(`${name}: header says ${word}, the runbook has ${gates.length} gates`);
+      const listed = [...header.matchAll(/\((R[0-3])\b[^)]*\)/g)].map((m) => m[1]);
+      const declared = gates.map((g) => classesOf(g)[0]);
+      if (listed.join(' ') !== declared.join(' ')) failures.push(`${name}: header lists ${listed.join(' ')}, the gates declare ${declared.join(' ')}`);
+    }
+    for (const gate of gates) {
+      const inHeading = gate.section.match(/\bR[0-3]\b/g) || [];
+      for (const cls of classesOf(gate)) if (!inHeading.includes(cls)) failures.push(`${name} ${gate.id}: ${cls} is not in "${gate.section}"`);
+    }
+    for (const line of sectionLines(doc, '## Fast path')) {
+      const phase = line.match(/^\d+\. Phase ([A-H])\b/);
+      if (!phase) continue;
+      const heading = doc.lines.find((l) => l.startsWith(`## Phase ${phase[1]}:`));
+      const allowed = new Set(gates.filter((g) => g.section === heading).flatMap(classesOf));
+      for (const cls of line.match(/\bR[1-3]\b/g) || []) if (!allowed.has(cls)) failures.push(`${name} fast path: ${cls} is not a class of Phase ${phase[1]}: ${line}`);
+    }
+  }
+  assert.deepEqual(failures, []);
 });

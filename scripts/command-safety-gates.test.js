@@ -267,6 +267,16 @@ const FDESETUP_READ_ONLY = new Set(['status', 'list', 'isactive', 'haspersonalre
 const DISKUTIL_READ_ONLY = new Set(['list', 'info', 'information', 'activity', 'listfilesystems', 'verifyvolume', 'verifydisk', 'help']);
 const DISKUTIL_APFS_READ_ONLY = new Set(['list', 'listcryptousers', 'listsnapshots', 'listvolumegroups', 'listusers']);
 const DEFAULTS_READ_ONLY = new Set(['read', 'read-type', 'domains', 'find', 'help']);
+// G2: fleetctl reads (get, a live osquery read, version, help); any other verb, or none, is a write.
+const FLEETCTL_READ_ONLY = new Set(['get', 'query', 'version', 'help']);
+const FLEETCTL_MUTATING = new Set(['run-script', 'mdm', 'delete', 'apply', 'gitops', 'hosts', 'login', 'logout', 'user', 'trigger',
+  'generate', 'generate-gitops', 'package', 'convert', 'setup', 'upgrade-packs', 'debug', 'config', 'preview']);
+function fleetctlWrites(args) {
+  const tokens = cliTokens(args);
+  const positional = tokens.filter((token) => !token.startsWith('-'));
+  if (!positional.length) return !tokens.length || !tokens.every((token) => /^--?(?:version|help|h)$/i.test(token));
+  return firstListedVerb(positional, FLEETCTL_READ_ONLY, FLEETCTL_MUTATING) !== 'read';
+}
 const LAUNCHCTL_READ_ONLY = new Set(['list', 'print', 'print-cache', 'print-disabled', 'blame', 'help', 'version', 'procinfo',
   'hostinfo', 'examine', 'dumpstate', 'managerpid', 'manageruid', 'managername', 'getenv', 'error', 'variant']);
 
@@ -311,6 +321,8 @@ const G1_CLI_SINKS = [
   }],
   ['launchctl-write', 'launchctl', (args) => !LAUNCHCTL_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
   ['kickstart-write', 'kickstart', () => true],
+  // G2
+  ['fleetctl-write', 'fleetctl', fleetctlWrites],
 ];
 
 function g1CliHits(statement) {
@@ -440,7 +452,7 @@ function classifyImpact(command, text) {
   }
   return [...categories];
 }
-const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write', 'indirect-exec']);
+const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write', 'indirect-exec', 'fleetctl-write']);
 const G1_DEVICE_SINKS = new Set(['profiles-write', 'dscl-write', 'fdesetup-write', 'diskutil-write', 'softwareupdate-write',
   'networksetup-write', 'systemsetup-write', 'defaults-write', 'launchctl-write', 'kickstart-write']);
 
@@ -487,11 +499,44 @@ const EFFECT_FAMILIES = [
   [/^restart(?:s|ed|ing)?\b/i, /\bRESTART\b/],
 ];
 
-function assertEffectCorrespondence(effect, expected, context) {
+// G2 — Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace action families. They
+// apply to gates in G2 lane documents only, so every existing Microsoft and G1 gate is judged
+// exactly as before (a clause such as "shows your message" or "Trash is skipped" in a G1
+// runbook keeps its old reading).
+const G2_EFFECT_FAMILIES = [
+  [/^archive(?:s|d|ing)?\b/i, /\bARCHIVE\b/],
+  [/^unarchive(?:s|d|ing)?\b/i, /\b(?:UNARCHIVE|RESTORE)\b/],
+  [/^approve(?:s|d|ing)?\b/i, /\bAPPROVE\b/],
+  [/^disconnect(?:s|ed|ing)?\b/i, /\bDISCONNECT\b/],
+  [/^flush(?:es|ed|ing)?\b/i, /\bFLUSH\b/],
+  [/^(?:distribute|redistribute|redeploy)(?:s|d|ed|ing)?\b/i, /\b(?:DISTRIBUTE|REDEPLOY)\b/],
+  [/^uninstall(?:s|ed|ing)?\b/i, /\b(?:UNINSTALL|REMOVE)\b/],
+  [/^trash(?:es|ed|ing)?\b/i, /\b(?:TRASH|DELETE)\b/],
+  [/^(?:rotate|reissue)(?:s|d|ing)?\b/i, /\b(?:ROTATE|ISSUE)\b/],
+  [/^(?:post|publish|announce)(?:s|ed|ing)?\b/i, /\b(?:POST|SEND|PUBLISH)\b/],
+  [/^accept(?:s|ed|ing)?\b/i, /\bACCEPT\b/],
+  [/^decline(?:s|d|ing)?\b/i, /\bDECLINE\b/],
+  [/^(?:reveal|show|view)(?:s|ed|ing|n)?\b/i, /\b(?:REVEAL|SHOW|VIEW)\b/],
+  [/^(?:run|execute)(?:s|ning|d)?\b/i, /\b(?:RUN|EXECUTE)\b/],
+  [/^ran\b/i, /\b(?:RUN|EXECUTE)\b/],
+  [/^turn(?:s|ed|ing)?\s+off\b/i, /\b(?:TURN OFF|DISABLE|REMOVE)\b/],
+  [/^turn(?:s|ed|ing)?\s+on\b/i, /\b(?:TURN ON|ENABLE)\b/],
+  [/^(?:shorten|lengthen|extend|set)(?:s|ed|ing|ting)?\b/i, /\b(?:SET|SHORTEN|EXTEND|CHANGE)\b/],
+  [/^(?:scope|rescope)(?:s|d|ing)?\b/i, /\bSCOPE\b/],
+  [/^exclude(?:s|d|ing)?\b/i, /\bEXCLUDE\b/],
+  [/^(?:require|enforce)(?:s|d|ing)?\b/i, /\b(?:REQUIRE|ENFORCE|ENABLE)\b/],
+  [/^(?:close|resolve)(?:s|d|ing)?\b/i, /\b(?:CLOSE|RESOLVE)\b/],
+  [/^mark(?:s|ed|ing)?\b/i, /\b(?:MARK|CLOSE)\b/],
+  [/^restrict(?:s|ed|ing)?\b/i, /\b(?:RESTRICT|BLOCK)\b/],
+  [/^(?:invite|send)(?:s|d|ing)?\b/i, /\b(?:INVITE|SEND)\b/],
+];
+
+function assertEffectCorrespondence(effect, expected, context, file = '') {
   const clauses = effect.split(/\s*(?:;|,\s*(?:and\s+)?|\band\b)\s*/i)
     .map((clause) => clause.replace(/^(?:only|exactly|permanently|automatically)\s+/i, '').trim())
     .filter(Boolean);
-  const applicable = clauses.map((clause) => EFFECT_FAMILIES.find(([effectPattern]) => effectPattern.test(clause)))
+  const families = G2_LANE_DOCUMENT.test(file) ? [...EFFECT_FAMILIES, ...G2_EFFECT_FAMILIES] : EFFECT_FAMILIES;
+  const applicable = clauses.map((clause) => families.find(([effectPattern]) => effectPattern.test(clause)))
     .filter(Boolean);
   assert.ok(applicable.length > 0, `${context}: Effect is not mapped to a known action family`);
   const missing = applicable.filter(([, confirmationPattern]) => !confirmationPattern.test(expected));
@@ -525,6 +570,11 @@ function nextMarkerLine(marker) {
   return Math.min(nextMarker, structuralBoundary);
 }
 
+// G2 lane documents: the 25 runbooks this lane adds (Fleet, Slack and Linear by prefix,
+// the new Jamf Pro and Google Workspace runbooks by name).
+const G2_LANE_DOCUMENT = /^\.claude\/commands\/(?:(?:fleet|slack|linear)-[\w-]+|jamf-(?:config-profiles|policies-self-service|patch-management|filevault|inventory-groups)|gws-(?:drive-sharing|2sv-enforcement|account-containment|admin-roles|security-posture))\.md$/;
+const G2_PORTAL_ACTIONS = 'Archive|Unarchive|Export|Approve|Disconnect|Flush|Distribute|Redeploy|Uninstall|Trash|Rotate|Post|Accept|Decline|Show(?=\\s+(?:disk encryption\\s+)?key\\b)';
+
 function portalMutationCandidates(document) {
   const candidates = [];
   const action = '(?:Add|Allow|Assign|Block|Calendar|Clear|Convert|Coordinate|Create|Deactivate|Delete|Disable|Enable|Fix|Grant|Install|Isolate|Log|Move|Purge|Reclaim|Reimage|Release|Remove|Rename|Replace|Require|Reset|Restore|Restrict|Retire|Revoke|Run|Schedule|Send|Set|Start|Stop|Submit|Transfer|Uncheck|Update|Wipe|Activate|Deprovision|Enroll|Erase|Lock|Powerwash|Reactivate|Suspend|Unassign|Undelete|Unenroll|Unlock|Unmanage|Unsuspend)';
@@ -547,7 +597,12 @@ function portalMutationCandidates(document) {
   // Inside a G1 lane document (the 19 runbooks and the two G1 knowledge docs) the click
   // grammar applies to any portal-cued list item, so a control named without the product
   // ("At the top, click **Disable selected devices**") is still a candidate.
-  const g1LaneDocument = /^\.claude\/commands\/(?:gws|okta|jamf|mac)-[\w-]+\.md$|^\.claude\/commands\/zoom-room-issue\.md$|^docs\/(?:portal-nav-google-2026|gws-reversibility)\.md$/.test(document.file);
+  const g2LaneDocument = G2_LANE_DOCUMENT.test(document.file);
+  const g1LaneDocument = g2LaneDocument || /^\.claude\/commands\/(?:gws|okta|jamf|mac)-[\w-]+\.md$|^\.claude\/commands\/zoom-room-issue\.md$|^docs\/(?:portal-nav-google-2026|gws-reversibility)\.md$/.test(document.file);
+  // Inside a G2 lane document the click grammar also knows the G2 vocabulary (archive,
+  // export, approve, disconnect, flush, show a key …). It stays out of G1 and Microsoft
+  // documents so their candidates do not change.
+  const g2ArrowMutation = new RegExp(`(?:→\\s*|\\b(?:Click|Select|Choose|Tap)\\s+)(?:\\*{0,2}|\`)?(${actionBody}|Re-enable|${G2_PORTAL_ACTIONS})\\b`, 'i');
   const navReference = document.file === 'docs/portal-nav-2026.md' || document.file === 'docs/portal-nav-google-2026.md';
   const frontmatterEnd = document.lines[0] === '---' ? document.lines.indexOf('---', 1) : -1;
   document.lines.forEach((line, index) => {
@@ -563,7 +618,8 @@ function portalMutationCandidates(document) {
       ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
       ((cue || inPortalRegion || g1LaneDocument) ? line.match(imperativeMutation) : null) ||
       (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
-      ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g1ArrowMutation) : null);
+      ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g2LaneDocument ? g2ArrowMutation : g1ArrowMutation) : null) ||
+      (g2LaneDocument && listItem.test(line) ? line.match(g2ArrowMutation) : null);
     if (match) {
       const actionWord = match[1];
       candidates.push({ file: document.file, line: lineNumber, statement: line.trim(), actionWord });
@@ -604,6 +660,12 @@ const PORTAL_CONFIRMATION_BY_ACTION = new Map([
   ['unenroll', /\b(?:UNENROLL|REMOVE)\b/], ['unlock', /\bUNLOCK\b/],
   ['unmanage', /\bUNMANAGE\b/], ['unsuspend', /\b(?:UNSUSPEND|RESTORE|REACTIVATE)\b/],
   ['re-enable', /\b(?:RE-ENABLE|ENABLE|REACTIVATE)\b/],
+  // G2 — Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace runbooks
+  ['archive', /\bARCHIVE\b/], ['unarchive', /\b(?:UNARCHIVE|RESTORE)\b/], ['approve', /\bAPPROVE\b/], ['export', /\b(?:EXPORT|DOWNLOAD)\b/],
+  ['disconnect', /\bDISCONNECT\b/], ['flush', /\bFLUSH\b/], ['distribute', /\b(?:DISTRIBUTE|REDEPLOY)\b/],
+  ['redeploy', /\b(?:REDEPLOY|DISTRIBUTE)\b/], ['uninstall', /\b(?:UNINSTALL|REMOVE)\b/], ['trash', /\b(?:TRASH|DELETE)\b/],
+  ['rotate', /\b(?:ROTATE|ISSUE)\b/], ['post', /\b(?:POST|SEND|PUBLISH)\b/], ['accept', /\bACCEPT\b/],
+  ['decline', /\bDECLINE\b/], ['show', /\b(?:SHOW|VIEW|REVEAL)\b/],
 ]);
 
 const portalCandidates = [...documents.values()].flatMap(portalMutationCandidates);
@@ -1420,7 +1482,7 @@ for (const marker of markers.filter((item) => item.kind === 'powershell' && item
       assert.ok(expected.includes(binding), `${marker.id}: exact confirmation does not bind target token ${binding}`);
     }
     const effect = gateSource.match(/^\s*# Effect:\s*([^\n]+)/im)?.[1] || '';
-    assertEffectCorrespondence(effect, expected, marker.id);
+    assertEffectCorrespondence(effect, expected, marker.id, marker.file);
     for (const engine of POWER_SHELL_ENGINES) executeSourceGateHarness(analysis, marker.id, engine);
   });
 }
@@ -1458,7 +1520,7 @@ for (const marker of markers.filter((item) => item.kind === 'portal' && item.mod
     }
 
     const effect = region.match(/\*\*Effect:\*\*\s*([^\n]+)/i)?.[1] || '';
-    assertEffectCorrespondence(effect, expected, marker.id);
+    assertEffectCorrespondence(effect, expected, marker.id, marker.file);
   });
 }
 
@@ -2402,7 +2464,7 @@ for (const marker of markers.filter((item) => item.kind === 'shell' && item.mode
     for (const binding of extractTargetBindings(analysis.fields.Target || '')) {
       assert.ok(analysis.expected.includes(binding), `${marker.id}: exact confirmation does not bind target token ${binding}`);
     }
-    assertEffectCorrespondence(analysis.fields.Effect || '', analysis.expected, marker.id);
+    assertEffectCorrespondence(analysis.fields.Effect || '', analysis.expected, marker.id, marker.file);
     assertShellGateFailClosed(analysis, marker.id);
   });
 }

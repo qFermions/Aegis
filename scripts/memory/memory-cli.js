@@ -586,11 +586,12 @@ function cmdList(flags) {
   const rows = index.records
     .filter((r) => !flags.status || r.status === flags.status)
     .map((r) => {
-      const integrity = integrityOf(r, tryLoadRecord(r.id));
-      return {
-        id: r.id, type: r.type, status: r.status, scope: r.scope, volatility: r.volatility, integrity,
-        summary: integrity === 'intact' ? String(r.summary).slice(0, 100) : null,
-      };
+      const id = /^mem-\d{4}$/.test(String(r.id)) ? r.id : null;
+      const integrity = id ? integrityOf(r, tryLoadRecord(id)) : 'withheld: index row carries no valid id';
+      // A row that is not intact is changed index text in every field: print its id and
+      // why, nothing else.
+      if (integrity !== 'intact') return { id, integrity, type: null, status: null, scope: null, volatility: null, summary: null };
+      return { id, integrity, type: r.type, status: r.status, scope: r.scope, volatility: r.volatility, summary: String(r.summary).slice(0, 100) };
     });
   out({ ok: true, count: rows.length, records: rows });
 }

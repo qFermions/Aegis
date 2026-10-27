@@ -158,7 +158,9 @@ function storedRecordProblems(rec) {
     });
   }
   for (const e of validateProposal(view)) problems.push({ code: 2, problem: e });
-  for (const b of sanitizeGate(view).blocks) problems.push({ code: 3, problem: `sanitizer BLOCK ${b.class}:${b.label} at ${b.path}` });
+  // The path is cut to its top-level field: deeper segments are key names a forged
+  // record controls, and this text is printed.
+  for (const b of sanitizeGate(view).blocks) problems.push({ code: 3, problem: `sanitizer BLOCK ${b.class}:${b.label} at ${String(b.path).split(/[.[]/)[0]}` });
   if (rec.scope === 'case') problems.push({ code: 4, problem: 'scope "case" is run state, never durable memory' });
   if ((rec.status === 'verified' || rec.status === 'stale')
     && !(Array.isArray(rec.provenance) && rec.provenance.some((p) => p && TRUSTED_PROVENANCE.includes(p.kind)))) {

@@ -37,7 +37,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## Fast path
 
-1. Phase A: read the account, its sign-ins, OAuth grants, admin activity and devices, and record the pre-state (R0). If the attacker is visibly active right now, run Phase B first and come back.
+1. Phase A: read the account, its sign-ins, OAuth grants, admin activity and devices, and record the pre-state (R0). If the attacker is visibly active right now, run only the `user` read first (status, organizational unit and `isAdmin` into the ticket), then Phase B, and finish Phase A after the suspension.
 2. Phase B: suspend (R2 gate); prove it with `verify-suspended`.
 3. Phase C: reset the password (R2 gate); prove it with `verify-event`.
 4. Phase D: revoke app passwords (R1 gate) and any OAuth grant still listed (R1 gate); hand 2-Step Verification, admin roles, Okta and devices to their runbooks.
@@ -81,6 +81,13 @@ Record the pre-state in the ticket: status, organizational unit, admin roles, 2-
 
 **Purpose**: stop every sign-in now; Google resets the sign-in cookies and OAuth tokens with the suspension.
 
+**Pre-state, always, even on the urgent path:** run the `user` read below and write the account's status, organizational unit and `isAdmin` value into the ticket before the gate. On the urgent path the rest of Phase A follows the suspension. An R2 change never runs without captured pre-state (CLAUDE.md, R0-R3 contract rule 1).
+
+```bash
+# read-only: the minimum pre-state before the suspension, status (suspended), orgUnitPath and isAdmin of the account
+node scripts/adapters/gws-client.js user --user [USER@DOMAIN.COM] --execute
+```
+
 Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
 
 **Role needed:** Super Admin, or an admin role that can suspend users (the exact privilege name is not confirmed in the sources); a Super Admin when `[USER@DOMAIN.COM]` holds an admin role.
@@ -92,7 +99,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R2: blocks all access and resets sign-in cookies and OAuth tokens; Phase F reactivates under its own phrase `REACTIVATE GOOGLE ACCOUNT [USER@DOMAIN.COM]`, but the reset tokens do not come back: the user signs in again and grants apps again
 - **Required confirmation:** Type exactly `SUSPEND COMPROMISED GOOGLE ACCOUNT [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [gws-account-containment-suspend-portal]:** Only after the exact match:
+**PORTAL ACTION [gws-account-containment-suspend-portal]:** Only after the `user` read for `[USER@DOMAIN.COM]` (status, organizational unit and `isAdmin`) is in the ticket and the exact match:
 1. Admin console → Directory → Users → point to `[USER@DOMAIN.COM]` → **More options** → **Suspend user** (the path `/gws-offboard` records; the containment page itself was read only as a search excerpt).
 2. In the dialog, click **Suspend**, then read the status banner as Suspended.
 
@@ -101,7 +108,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --execute
 ```
 
-**Verification checkpoint**: [ ] `verify-suspended` exit 0 · [ ] the account page reads Suspended · [ ] `[NOT_BEFORE]` of this phase in the ticket.
+**Verification checkpoint**: [ ] the `user` read's status, organizational unit and `isAdmin` were in the ticket before the gate · [ ] `verify-suspended` exit 0 · [ ] the account page reads Suspended · [ ] `[NOT_BEFORE]` of this phase in the ticket.
 
 ## Phase C: Reset the password (R2)
 
@@ -358,6 +365,6 @@ Containment that is ordered, reversible first and read back at every step is exa
 
 ## Next action
 
-Run Phase A's reads for `[USER@DOMAIN.COM]`; if the attacker is visibly active right now, go straight to the Phase B gate and come back.
+Run Phase A's reads for `[USER@DOMAIN.COM]`; if the attacker is visibly active right now, run the `user` read, write status, organizational unit and `isAdmin` into the ticket, go to the Phase B gate, and finish Phase A after the suspension.
 
 **Sources (checked 2026-10-27):** support.google.com/a/answer/2984349 (identify and secure compromised accounts: suspend first, suspension resets sign-in cookies and OAuth tokens, user log events up to 6 months, check admin activity and mobile devices, new OAuth tokens only after sign-in with the new password; search excerpt) · support.google.com/a/answer/2537800 (manage a user's security settings: Security, Password, Reset password, app passwords; search excerpt) · support.google.com/a/answer/178854 (sign a user out: desktop apps not signed out, Gmail up to an hour, suspension resets cookies; search excerpt) · support.google.com/a/answer/1219251 (administrator privileges: User Security Management; search excerpt) · docs.cloud.google.com/docs/security/compromised-credentials (tokens already held survive suspension and resets; search excerpt) · support.google.com/a/answer/7061566 (log lag: OAuth up to a few hours; search excerpt) · support.google.com/a/answer/9104586 (alert center: Suspicious login alerts hidden from the default list; search excerpt) · knowledge.workspace.google.com/admin/users/restore-a-recently-deleted-user (20-day restore window; search excerpt) · raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/directory/v1/admin-api.json (`suspended`, `isAdmin`, the tokens and asps scope; vendor repo) · raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/reports/v1/admin-api.json (activities for login, token, admin and user_accounts; vendor repo) · raw.githubusercontent.com/wiki/GAM-team/GAM/Users-Tokens.md, Users-Application-Specific-Passwords.md and Reports.md (GAM syntax, exit status 60; project wiki, GAM is a community tool, not a Google product) · the suspend and reactivate paths: `/gws-offboard`, and the event names: `/gws-audit-log` (both checked 2026-10-15; not re-confirmed in this session).

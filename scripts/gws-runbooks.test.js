@@ -356,3 +356,23 @@ test('every rollback promised "under its own phrase" quotes a gate phrase that e
   assert.doesNotMatch(block.fields.Reversibility, /own phrase/);
   assert.match(onlyAfter(block), /written rollback path/);
 });
+
+// ── Finding: no R2+ change without captured pre-state, urgent or not ───────────
+// CLAUDE.md contract rule 1. The containment fast path may suspend before the rest of
+// Phase A, but never before one `user` read (status, OU, isAdmin) is in the ticket, and
+// the suspend gate's action waits for it.
+test('the containment suspend gate waits for a user read in the ticket, also on the urgent path', () => {
+  const suspend = gateById('gws-account-containment-suspend-portal');
+  assert.match(onlyAfter(suspend), /the `user` read for `\[USER@DOMAIN\.COM\]` \(status, organizational unit and `isAdmin`\) is in the ticket/);
+  const lines = linesOf('gws-account-containment');
+  const phaseStart = lines.findIndex((l) => /^## Phase B: Suspend the account/.test(l));
+  assert.ok(phaseStart >= 0 && phaseStart < suspend.line);
+  const before = lines.slice(phaseStart, suspend.line - 1).join('\n');
+  assert.match(before, /\*\*Pre-state, always, even on the urgent path:\*\*/);
+  assert.match(before, /^node scripts\/adapters\/gws-client\.js user --user \[USER@DOMAIN\.COM\] --execute$/m);
+  const text = textOf('gws-account-containment');
+  for (const line of text.split('\n').filter((l) => /visibly active/.test(l))) {
+    assert.match(line, /run (?:only )?the `user` read/, `the urgent path reads the account first: ${line}`);
+    assert.doesNotMatch(line, /run Phase B first|go straight to the Phase B gate/, line);
+  }
+});

@@ -109,7 +109,7 @@ node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute
 
 1. Repeat Phase 2 and Phase 3 for each remaining host, each with its own phrase (the phrase names the host, so 4 Macs means 4 phrases).
 2. Stale and no-answer hosts get no script: re-read them after the next hourly run.
-3. More than 10 hosts is a mass write (R3): stop and plan it through Phase 5 and an independent out-of-session review instead.
+3. More than 10 out-of-line hosts is a mass write (R3), and Phase 5 does not reach them: its automation covers hosts that newly fail, and on the safer reading not the hosts already failing. Stop the one-phrase-per-host loop here. Fixing those hosts is a separate reviewed change through the R3 batch gate in `/fleet-device-actions` (E2): the Phase 2 pilot passed `verify-script`, the host count is written in the ticket, the independent out-of-session review approved it, and then one batch run goes to exactly those hosts.
 
 > **PREVIEW ONLY [fleet-policy-failures-bulk-preview]:** Planning only, nothing here authorizes a change: Fleet can run one script on many hosts at once (Fleet → Hosts → `[FLEET_NAME]` → tick the hosts → Run script), and Fleet → Policies → `[POLICY_NAME]` → Automation runs → Reset policy re-fires the policy's automation on every host that already fails it, with no undo. Either one across more than 10 hosts is R3 and goes to a separate reviewed change.
 
@@ -122,7 +122,7 @@ node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute
 <!-- SAFETY GATE [fleet-policy-failures-automation-portal] -->
 - **Target:** [POLICY_NAME] in [FLEET_NAME], running [SCRIPT_NAME]
 - **Effect:** enable the run-script automation of [POLICY_NAME] so Fleet runs [SCRIPT_NAME] on every host in [FLEET_NAME] that newly fails it
-- **Scope:** every host in [FLEET_NAME] that newly fails the policy from now on, which can pass 10 hosts (a mass write); Fleet tries each host up to 3 times; only scheduled policy runs fire it, a live run does not; the policy's `continuous_automations_enabled` setting is left as it is; the sources read do not say how hosts that already fail are treated when the automation is turned on (unverified), so the safer reading is that they are not covered (Phase 4 covers them)
+- **Scope:** every host in [FLEET_NAME] that newly fails the policy from now on, which can pass 10 hosts (a mass write); Fleet tries each host up to 3 times; only scheduled policy runs fire it, a live run does not; the policy's `continuous_automations_enabled` setting is left as it is; the sources read do not say how hosts that already fail are treated when the automation is turned on (unverified), so the safer reading is that they are not covered (Phase 4 covers them: up to 10 one host at a time, more than 10 through the batch gate Phase 4 names)
 - **Reversibility:** R3: clearing the policy's checkbox in Manage automations and saving stops new runs; scripts that already ran on hosts are not undone; editing the query or swapping the script later re-runs the automation on hosts that already failed
 - **Required confirmation:** Type exactly `ENABLE RUN SCRIPT AUTOMATION [SCRIPT_NAME] ON POLICY [POLICY_NAME] IN FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.

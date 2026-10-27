@@ -129,6 +129,19 @@ test('a remediation script on one host takes its R-class from what it changes, a
   assert.match(DEVICE, /a script that deletes data or changes a security setting is R3 and needs the independent review/);
 });
 
+test('more than 10 hosts already failing a policy go to the R3 batch gate in /fleet-device-actions, never to Phase 5, which does not reach them', () => {
+  const phase4 = section(POLICY, 'Phase 4');
+  const step3 = phase4.split('\n').find((l) => l.startsWith('3. ')) || '';
+  assert.match(step3, /More than 10 out-of-line hosts is a mass write \(R3\), and Phase 5 does not reach them/);
+  assert.match(step3, /through the R3 batch gate in `\/fleet-device-actions` \(E2\)/);
+  assert.match(step3, /the host count is written in the ticket, the independent out-of-session review approved it/);
+  assert.doesNotMatch(step3, /plan it through Phase 5/, 'Phase 5 is not a route for hosts already failing');
+  const automation = gate(POLICY, 'fleet-policy-failures-automation-portal');
+  assert.match(automation.field('Scope'), /more than 10 through the batch gate Phase 4 names/, 'Phase 5 points back to the same route');
+  const batch = gate(DEVICE, 'fleet-device-actions-batch-script-portal');
+  assert.match(batch.field('Reversibility'), /^R3\b/, 'the gate Phase 4 names is R3');
+});
+
 test('the role check reads the operator\'s own role in Fleet; `me` only confirms the adapter token is an Observer', () => {
   for (const [name, text] of [['fleet-policy-failures', POLICY], ['fleet-osquery-investigation', OSQUERY], ['fleet-vulnerable-software', VULN]]) {
     const line = text.split('\n').find((l) => /\*\*Your role \(R0\):\*\*/.test(l)) || '';

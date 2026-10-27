@@ -123,15 +123,23 @@ const READ_CASES = [
   [['host-mdm', '--id', '7'], '/api/v1/fleet/hosts/7/mdm'],
   [['host-software', '--id', '7'], '/api/v1/fleet/hosts/7/software'],
   [['host-software', '--id', '7', '--vulnerable'], '/api/v1/fleet/hosts/7/software?vulnerable=true'],
-  [['host-activities', '--id', '7'], '/api/v1/fleet/hosts/7/activities?order_key=created_at&order_direction=desc'],
+  [['host-software', '--id', '7', '--vulnerable', '--page', '1', '--per-page', '50'], '/api/v1/fleet/hosts/7/software?vulnerable=true&page=1&per_page=50'],
+  // Activity reads always page: unpaged, Fleet returns up to 10,000 records (vendor docs).
+  [['host-activities', '--id', '7'], '/api/v1/fleet/hosts/7/activities?order_key=created_at&order_direction=desc&page=0&per_page=100'],
+  [['host-activities', '--id', '7', '--page', '2', '--per-page', '50'], '/api/v1/fleet/hosts/7/activities?order_key=created_at&order_direction=desc&page=2&per_page=50'],
+  [['host-activities', '--id', '7', '--page', '1'], '/api/v1/fleet/hosts/7/activities?order_key=created_at&order_direction=desc&page=1&per_page=100'],
   [['policies'], '/api/v1/fleet/global/policies'],
   [['policies', '--fleet-id', '3'], '/api/v1/fleet/fleets/3/policies'],
   [['software', '--vulnerable', '--fleet-id', '3'], '/api/v1/fleet/software/titles?vulnerable=true&fleet_id=3'],
+  [['software', '--vulnerable', '--fleet-id', '3', '--page', '1', '--per-page', '100'], '/api/v1/fleet/software/titles?vulnerable=true&fleet_id=3&page=1&per_page=100'],
   [['vulnerability', '--cve', 'CVE-2026-12345'], '/api/v1/fleet/vulnerabilities/CVE-2026-12345'],
   [['script-result', '--execution-id', EXECUTION], `/api/v1/fleet/scripts/results/${EXECUTION}`],
   [['commands', '--host-identifier', SERIAL], `/api/v1/fleet/commands?host_identifier=${SERIAL}`],
   [['commands', '--host-identifier', SERIAL, '--request-type', 'EraseDevice', '--command-status', 'pending'], `/api/v1/fleet/commands?host_identifier=${SERIAL}&request_type=EraseDevice&command_status=pending`],
+  [['commands', '--host-identifier', SERIAL, '--command-status', 'pending', '--page', '0', '--per-page', '100'], `/api/v1/fleet/commands?host_identifier=${SERIAL}&command_status=pending&page=0&per_page=100`],
+  [['activities'], '/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=0&per_page=100'],
   [['activities', '--page', '0', '--per-page', '20'], '/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=0&per_page=20'],
+  [['activities', '--per-page', '20'], '/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=0&per_page=20'],
   [['report-results', '--id', '5'], '/api/v1/fleet/reports/5/report'],
 ];
 
@@ -319,6 +327,10 @@ test('input errors exit 1 before any credential or network: unknown command, mis
     ['hosts', '--status', 'enrolled'],
     ['hosts', '--per-page', '0'],
     ['hosts', '--page', 'x'],
+    ['host-activities', '--id', '7', '--per-page', '0'],
+    ['host-activities', '--id', '7', '--per-page', '1001'],
+    ['activities', '--page', '-1'],
+    ['software', '--per-page', 'all'],
     ['hosts', '--policy-response', 'failing'],
     ['policies', '--fleet-id', 'all'],
     ['vulnerability', '--cve', 'CVE-26-1'],
@@ -588,6 +600,21 @@ test('tenant: Fleet binds no tenant id; the configured FLEET_URL is the only hos
   const r = await cli(['me', '--execute'], { env: rec.env, replies: [ok({ user: { id: 1, global_role: 'observer' } })] });
   assert.equal(r.code, 0);
   assert.deepEqual([...new Set(rec.reads)].sort(), ['FLEET_API_TOKEN', 'FLEET_URL'], 'no tenant variable is read: the host binds the tenant');
+});
+
+test('activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit', async () => {
+  for (const argv of [['host-activities', '--id', '7'], ['activities']]) {
+    const dry = await cli(argv);
+    assert.equal(dry.code, 0);
+    const p = dry.json.requests[0].path;
+    assert.match(p, /[?&]page=0&per_page=100$/, `${argv.join(' ')}: the dry run shows the default page`);
+    const r = await cli([...argv, '--execute'], { replies: [ok({ activities: [], meta: { has_next_results: false } })] });
+    assert.equal(r.code, 0);
+    const sent = new URL(`https://${HOST}${r.transport.calls[0].path}`).searchParams;
+    assert.equal(sent.get('page'), '0', argv.join(' '));
+    assert.equal(sent.get('per_page'), '100', argv.join(' '));
+  }
+  assert.equal(contract.MAX_RESPONSE_BYTES, 5 * 1024 * 1024, 'the read limit the default page keeps under');
 });
 
 test('vulnerability: HTTP 204 means Fleet knows the CVE and nothing is affected (exit 0, no data)', async () => {

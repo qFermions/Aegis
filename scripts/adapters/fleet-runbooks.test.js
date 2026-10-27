@@ -158,6 +158,11 @@ test('the R1 gates that say "installs nothing" keep every path that could instal
   assert.match(add.region, /If automatic install is chosen, or the dialog will not leave it off, stop without saving: .*R3 rollout in Phase 4/);
 });
 
+test('the vulnerable-title read that yields [SOFTWARE_TITLE_ID] pages, so a long list can be read to the end', () => {
+  assert.match(VULN, /^node scripts\/adapters\/fleet-client\.js software --vulnerable --fleet-id \[FLEET_ID\] --page 0 --per-page 100 --execute$/m);
+  assert.doesNotMatch(VULN, /software --vulnerable --fleet-id \[FLEET_ID\] --execute/);
+});
+
 test('the role check reads the operator\'s own role in Fleet; `me` only confirms the adapter token is an Observer', () => {
   for (const [name, text] of [['fleet-policy-failures', POLICY], ['fleet-osquery-investigation', OSQUERY], ['fleet-vulnerable-software', VULN]]) {
     const line = text.split('\n').find((l) => /\*\*Your role \(R0\):\*\*/.test(l)) || '';

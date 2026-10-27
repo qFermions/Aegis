@@ -75,7 +75,8 @@ const SPEC = defineAdapter({
     softwareTitles: { method: 'GET', path: '/api/v1/fleet/software/titles', query: { vulnerable: TRUE_ONLY, fleet_id: ID, page: PAGE, per_page: PER_PAGE } },
     vulnerability: { method: 'GET', path: '/api/v1/fleet/vulnerabilities/:cve', params: { cve: CVE } },
     scriptResult: { method: 'GET', path: '/api/v1/fleet/scripts/results/:executionId', params: { executionId: EXECUTION_ID } },
-    // per_page is here for verify-wipe on Windows (Fleet's default page is 10 commands).
+    // Fleet's default page is 10 commands: the commands read pages with --page and
+    // --per-page, and verify-wipe on Windows asks for 100.
     mdmCommands: { method: 'GET', path: '/api/v1/fleet/commands', query: { host_identifier: IDENTIFIER, request_type: REQUEST_TYPE, command_status: COMMAND_STATUS, page: PAGE, per_page: PER_PAGE } },
     activities: { method: 'GET', path: '/api/v1/fleet/activities', fixedQuery: NEWEST_FIRST, query: { page: PAGE, per_page: PER_PAGE } },
     reportResults: { method: 'GET', path: '/api/v1/fleet/reports/:id/report', params: { id: ID } },
@@ -111,6 +112,18 @@ function queryFrom(args, pairs) {
 
 const PAGING = [['page', 'page'], ['per-page', 'per_page']];
 
+// Fleet's activity reads return up to 10,000 records when page and per_page are left
+// out (vendor docs), which can pass the contract's 5 MB response limit on a busy host
+// or server. host-activities and activities therefore always send both: the newest
+// 100 unless --page or --per-page says otherwise.
+const ACTIVITY_PAGE = Object.freeze({ page: '0', per_page: '100' });
+function activityPage(args) {
+  return {
+    page: has(args, 'page') ? args.page : ACTIVITY_PAGE.page,
+    per_page: has(args, 'per-page') ? args['per-page'] : ACTIVITY_PAGE.per_page,
+  };
+}
+
 // ── Read commands: one request each ──────────────────────────────────────────
 const READS = {
   me: { summary: 'the adapter token\'s own user and role (an API-only Observer is expected); it is not the operator\'s role', usage: '', request: () => ['me'] },
@@ -132,13 +145,19 @@ const READS = {
   'host-mdm': { summary: 'one host\'s MDM enrollment', usage: '--id [HOST_ID]', values: ['id'], required: ['id'], request: (a) => ['hostMdm', { id: a.id }] },
   'host-software': {
     summary: 'software on one host, optionally only vulnerable software',
-    usage: '--id [HOST_ID] [--vulnerable]',
-    values: ['id'],
+    usage: '--id [HOST_ID] [--vulnerable] [--page N --per-page N]',
+    values: ['id', 'page', 'per-page'],
     booleans: ['vulnerable'],
     required: ['id'],
-    request: (a) => ['hostSoftware', { id: a.id }, queryFrom(a, [['vulnerable', 'vulnerable']])],
+    request: (a) => ['hostSoftware', { id: a.id }, queryFrom(a, [['vulnerable', 'vulnerable'], ...PAGING])],
   },
-  'host-activities': { summary: 'one host\'s activity feed, newest first (script execution ids)', usage: '--id [HOST_ID]', values: ['id'], required: ['id'], request: (a) => ['hostActivities', { id: a.id }] },
+  'host-activities': {
+    summary: 'one host\'s activity feed, newest first (script execution ids); 100 per page unless --per-page says otherwise',
+    usage: '--id [HOST_ID] [--page N --per-page N]',
+    values: ['id', 'page', 'per-page'],
+    required: ['id'],
+    request: (a) => ['hostActivities', { id: a.id }, activityPage(a)],
+  },
   policies: {
     summary: 'global policies, or one fleet\'s policies, with failing counts',
     usage: '[--fleet-id N]',
@@ -147,10 +166,10 @@ const READS = {
   },
   software: {
     summary: 'software titles, optionally only vulnerable ones, optionally for one fleet',
-    usage: '[--vulnerable] [--fleet-id N]',
-    values: ['fleet-id'],
+    usage: '[--vulnerable] [--fleet-id N] [--page N --per-page N]',
+    values: ['fleet-id', 'page', 'per-page'],
     booleans: ['vulnerable'],
-    request: (a) => ['softwareTitles', {}, queryFrom(a, [['vulnerable', 'vulnerable'], ['fleet-id', 'fleet_id']])],
+    request: (a) => ['softwareTitles', {}, queryFrom(a, [['vulnerable', 'vulnerable'], ['fleet-id', 'fleet_id'], ...PAGING])],
   },
   vulnerability: {
     summary: 'one CVE and the hosts it affects (HTTP 204: Fleet knows the CVE and nothing is affected)',
@@ -167,12 +186,17 @@ const READS = {
   'script-result': { summary: 'one script run: exit_code and output', usage: '--execution-id [EXECUTION_ID]', values: ['execution-id'], required: ['execution-id'], request: (a) => ['scriptResult', { executionId: a['execution-id'] }] },
   commands: {
     summary: 'MDM commands sent to one host and their status',
-    usage: '--host-identifier [SERIAL_NUMBER] [--request-type T] [--command-status ran|pending|failed]',
-    values: ['host-identifier', 'request-type', 'command-status'],
+    usage: '--host-identifier [SERIAL_NUMBER] [--request-type T] [--command-status ran|pending|failed] [--page N --per-page N]',
+    values: ['host-identifier', 'request-type', 'command-status', 'page', 'per-page'],
     required: ['host-identifier'],
-    request: (a) => ['mdmCommands', {}, queryFrom(a, [['host-identifier', 'host_identifier'], ['request-type', 'request_type'], ['command-status', 'command_status']])],
+    request: (a) => ['mdmCommands', {}, queryFrom(a, [['host-identifier', 'host_identifier'], ['request-type', 'request_type'], ['command-status', 'command_status'], ...PAGING])],
   },
-  activities: { summary: 'the activity feed (audit trail), newest first', usage: '[--page N --per-page N]', values: ['page', 'per-page'], request: (a) => ['activities', {}, queryFrom(a, PAGING)] },
+  activities: {
+    summary: 'the activity feed (audit trail), newest first; 100 per page unless --per-page says otherwise',
+    usage: '[--page N --per-page N]',
+    values: ['page', 'per-page'],
+    request: (a) => ['activities', {}, activityPage(a)],
+  },
   'report-results': { summary: 'one stored osquery report\'s rows', usage: '--id N', values: ['id'], required: ['id'], request: (a) => ['reportResults', { id: a.id }] },
 };
 

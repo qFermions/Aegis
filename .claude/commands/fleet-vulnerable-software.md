@@ -157,8 +157,8 @@ node scripts/adapters/fleet-client.js vulnerability --cve [CVE_ID] --execute
 ```bash
 # HUMAN-RUN (read-only): who the token belongs to, its role and the fleets it can see (with their IDs)
 node scripts/adapters/fleet-client.js me --execute
-# HUMAN-RUN (read-only): vulnerable software titles in one fleet, with their IDs and host counts
-node scripts/adapters/fleet-client.js software --vulnerable --fleet-id [FLEET_ID] --execute
+# HUMAN-RUN (read-only): vulnerable software titles in one fleet, with their IDs and host counts, 100 per page (pages start at 0; read the next page until [APP_NAME] appears)
+node scripts/adapters/fleet-client.js software --vulnerable --fleet-id [FLEET_ID] --page 0 --per-page 100 --execute
 # HUMAN-RUN (read-only): one CVE: affected software, the fixed version and the host count
 node scripts/adapters/fleet-client.js vulnerability --cve [CVE_ID] --execute
 # HUMAN-RUN (read-only): the hosts that have the title, 100 per page (pages start at 0)

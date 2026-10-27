@@ -22,7 +22,7 @@
  *
  * Examples:
  *   node scripts/jira-client.js create --summary "..." --description "..."
- *   node scripts/jira-client.js verify-create --issue HELP-123 --summary "..." --description "..." --execute
+ *   node scripts/jira-client.js verify-create --issue HELP-123 --expect-sha256 <digest> --not-before <ms> --execute
  *   node scripts/jira-client.js comment --issue HELP-123 --body "..."
  *   node scripts/jira-client.js transition --issue HELP-123 --to Resolved --execute
  *
@@ -672,6 +672,18 @@ async function cmdTransition(runtime, args) {
   return 0;
 }
 
+// The verify-* commands take only what the preview printed (keys, numbers, digests), so a
+// stray free-text flag is refused rather than silently ignored.
+const VERIFY_FLAGS = {
+  'verify-create': ['issue', 'expect-sha256', 'not-before', 'execute'],
+  'verify-comment': ['issue', 'comment-id', 'expect-sha256', 'not-before', 'execute'],
+  'verify-transition': ['issue', 'issue-id', 'from-version', 'to-status', 'execute'],
+};
+function requireVerifyFlags(command, args) {
+  const extra = Object.keys(args).filter((key) => key !== '_' && !VERIFY_FLAGS[command].includes(key));
+  if (extra.length) throw new InputError(`${command} does not take --${extra[0]}; pass only the values the preview printed (${VERIFY_FLAGS[command].map((f) => `--${f}`).join(' ')}).`);
+}
+
 function dryRunRead(runtime, args, apiPath) {
   if (args.execute === true) return false;
   runtime.out(`DRY RUN - would GET ${apiPath}. Add --execute to perform this read.`);
@@ -681,6 +693,7 @@ function dryRunRead(runtime, args, apiPath) {
 // verify-create: the human created the request; prove the key, the immutable id, the
 // service desk, the request type, the summary and the description by an independent GET.
 async function cmdVerifyCreate(runtime, args) {
+  requireVerifyFlags('verify-create', args);
   const issueKey = normalizeIssueKey(args.issue);
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const expectSha256 = requireDigest(args);
@@ -701,6 +714,7 @@ async function cmdVerifyCreate(runtime, args) {
 
 // verify-comment: prove the comment id, the exact body and the visibility the human chose.
 async function cmdVerifyComment(runtime, args) {
+  requireVerifyFlags('verify-comment', args);
   const issueKey = normalizeIssueKey(args.issue);
   const commentId = normalizePositiveId(args['comment-id'], '--comment-id');
   const site = normalizeSite(runtime.env.JIRA_SITE);
@@ -722,6 +736,7 @@ async function cmdVerifyComment(runtime, args) {
 // status version changed) and now sits in the status the administrator expected. A
 // different status (an automation, a customer reply, another transition) does not pass.
 async function cmdVerifyTransition(runtime, args) {
+  requireVerifyFlags('verify-transition', args);
   const issueKey = normalizeIssueKey(args.issue);
   const issueId = normalizePositiveId(args['issue-id'], '--issue-id');
   const fromVersion = requireText(args['from-version'], 'from-version', { controlsAllowed: false });

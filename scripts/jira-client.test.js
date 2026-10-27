@@ -693,6 +693,25 @@ test('the printed bash and PowerShell lines hand each shell the exact payload (n
   });
 });
 
+test('verify commands refuse a free-text flag instead of ignoring it, before credentials or network', async () => {
+  const cases = [
+    ['verify-create', '--issue', 'HELP-123', '--expect-sha256', CREATE_SHA, '--not-before', NOT_BEFORE, '--summary', 'Test', '--execute'],
+    ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--expect-sha256', NOTE_SHA, '--not-before', NOT_BEFORE, '--body', 'note', '--execute'],
+    ['verify-transition', '--issue', 'HELP-123', '--issue-id', '10001', '--from-version', '1000', '--to-status', 'Resolved', '--public', '--execute'],
+  ];
+  for (const argv of cases) {
+    let fetchCalls = 0;
+    const result = await invoke(argv, {
+      fetch: async () => { fetchCalls += 1; },
+      getCredentials: () => { throw new Error('credentials should not load'); },
+    });
+    assert.equal(result.code, 1, argv[0]);
+    assert.match(result.stderr, /does not take --(summary|body|public)/);
+    assert.equal(fetchCalls, 0);
+    assert.equal(result.credentialCalls, 0);
+  }
+});
+
 test('verify commands without --execute are dry runs with zero credentials and zero network', async () => {
   const cases = [
     ['verify-create', '--issue', 'HELP-123', '--expect-sha256', CREATE_SHA, '--not-before', NOT_BEFORE],

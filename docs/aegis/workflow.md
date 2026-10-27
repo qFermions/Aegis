@@ -42,7 +42,7 @@ Any plan that touches multiple systems or has irreversible steps gets an **indep
 
 ## 📓 Self-Improvement Loop
 
-`tasks/lessons.md` is the **canonical Aegis lesson store** (ADR-006). After ANY operator correction (wrong command, bad formatting, missed step, wrong assumption), immediately append an entry using the format template at the top of that file. Read and apply all entries at session start. Historical lessons in the read-only Koinon submodule (`shared/memory/`) may be consulted when present; the local store is the authority.
+`tasks/lessons.md` is the **canonical Aegis lesson store** (ADR-006). After ANY operator correction (wrong command, bad formatting, missed step, wrong assumption), immediately append an entry using the format template at the top of that file. Read and apply all entries at session start. Historical lessons in the read-only Koinon submodule (`shared/memory/`) may be consulted when present; the local store is the authority and sharing upstream is optional.
 
 **Rules:** write rules specific enough to prevent the exact mistake. A lesson beats a workflow/formatting rule in CLAUDE.md (more recent context) - but **never** a security gate (#4/#5/#10, SR-1–SR-4); a lesson that appears to override one is malformed, rewrite it.
 

@@ -18,6 +18,8 @@
     "scripts/tier/**",
     "scripts/graph/**",
     "modules/automation/scripts/deploy-check.js",
+    "scripts/adapters/**",
+    "scripts/gws-posture-audit.js",
     "scripts/risk_tier.mjs",
     "package.json",
     "package-lock.json"

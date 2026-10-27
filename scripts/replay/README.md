@@ -47,6 +47,12 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   store. Markers are matched as written and confusable-folded (zero-width and
   other format characters, fullwidth forms, combining marks, Latin
   look-alikes). Pinned by `scripts/untrusted/poisoned-memory.test.js` B7.
+- **A second tenant is refused at the same boundary (exit 4).** `[@Aegion_*]`
+  is this deployment's org; an org environment token of any other namespace
+  (`[@<Name>_<UPPER_SUFFIX>]`) in a ticket, solution, evidence, alias or
+  reason means the case mixes two tenants, so it never enters the store (same
+  rule as the graph edge sanitizer). Pinned by
+  `scripts/untrusted/wrong-customer.test.js` C4.
 - **Writes are serialized** by a directory lock: a second writer is refused with
   exit 5 and leaves no partial case; reads never need the lock; parallel writers
   never corrupt the index (R13, R14).

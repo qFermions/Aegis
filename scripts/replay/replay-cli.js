@@ -162,7 +162,17 @@ function sanitizationHits(text) {
   }
   if (PHONE_LITERAL.test(unbracketed)) hits.push('phone number pattern (use [PHONE_NUMBER])');
   hits.push(...injectionHits(text));
+  if (hasForeignOrgToken(text)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
   return hits;
+}
+
+// A second org namespace (SR-1/SR-8): [@Aegion_*] is this deployment's org; an
+// org environment token of any other namespace ([@<Name>_<UPPER_SUFFIX>]) means
+// the case mixes two tenants. Same rule as the graph edge sanitizer
+// (scripts/graph/sanitize.js, keep in sync), matched as written and folded.
+const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9]*)_[A-Z0-9][A-Z0-9_]*\]/g;
+function hasForeignOrgToken(text) {
+  return [String(text), foldConfusables(text)].some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => m[1].toLowerCase() !== 'aegion'));
 }
 
 // Instruction-shaped text (SR-3): the four markers of the graph edge sanitizer

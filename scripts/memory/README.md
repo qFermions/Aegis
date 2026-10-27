@@ -69,7 +69,9 @@ authority — it is data (SR-3), and the sanitizer blocks injection markers,
 tenant literals, credentials, and PII from ever persisting. Injection markers
 are also caught when obfuscated with zero-width characters, look-alike letters
 or fullwidth forms (the edge sanitizer folds before matching;
-`scripts/untrusted/poisoned-memory.test.js` B1). Memory never
+`scripts/untrusted/poisoned-memory.test.js` B1). An org token from another
+namespace than `[@Aegion_*]` is a second tenant and BLOCKs the same way
+(`scripts/untrusted/wrong-customer.test.js` C3). Memory never
 bypasses R0–R3: it informs plans; gates, checkpoints, and approvals are
 unchanged.
 

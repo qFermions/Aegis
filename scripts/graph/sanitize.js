@@ -89,6 +89,20 @@ function markerForms(line) {
   return Array.from(new Set([line, foldForMarkers(line, ''), foldForMarkers(line, ' ')]));
 }
 
+// ── Second org namespace (BLOCK) ─────────────────────────────────────────────
+// One deployment serves one tenant: its org tokens are the [@Aegion_*] family
+// (modules/security/placeholder-dictionary.md). An org environment token of any
+// other namespace ([@<Name>_<UPPER_SUFFIX>], e.g. a second org's _DOMAIN) means
+// the case mixes two tenants, so it fails closed like a tenant literal. Only the
+// suffixed form counts (a bare [@name] is as often a chat mention), it is
+// matched on the folded forms too (a look-alike letter cannot disguise the
+// namespace), and the report never echoes the token.
+const ORG_TOKEN = /\[@([A-Za-z][A-Za-z0-9]*)_[A-Z0-9][A-Z0-9_]*\]/g;
+const OWN_ORG_NAMESPACE = 'aegion';
+function hasForeignOrgToken(forms) {
+  return forms.some((f) => Array.from(f.matchAll(ORG_TOKEN)).some((m) => m[1].toLowerCase() !== OWN_ORG_NAMESPACE));
+}
+
 // Tenant literals (SR-8): loaded at call time from env + gitignored replacements.txt.
 // Real values never appear in this file; scan reports never echo them.
 function loadTenantLiterals() {
@@ -142,6 +156,9 @@ function scanText(text, opts = {}) {
       }
     }
     const forms = markerForms(line);
+    if (hasForeignOrgToken(forms)) {
+      result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });
+    }
     for (const { pattern, marker } of INJECTION_MARKERS) {
       if (forms.some((f) => pattern.test(f))) result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });
     }

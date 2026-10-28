@@ -24,10 +24,10 @@ Five kinds, each with a fixed field list, every value of a fixed form; anything 
 | kind | fields |
 |---|---|
 | `connector-call` | connector name, operation (route or query name), result state, attempts, HTTP status, request id, handoff state, duration in ms |
-| `procedure` | command, gate id, R class, one placeholder target such as `[UPN]`, the procedure's SHA-256, change id |
+| `procedure` | command, gate id, R class, one placeholder target such as `[UPN]`, the read-back that proves it (`connector:verify-...`, for a change record), the procedure's SHA-256, change id |
 | `approval` | an issue key such as `IT-123`, gate id, the approved procedure's SHA-256, change id |
 | `verify` | connector, `verify-*` command, verified true or false, result state, change id |
-| `change-link` | change id, the seq of a `verify` entry already in the trail (`change-record.js link`) |
+| `change-link` | change id, the seq of a `verify` entry already in the trail (`change-record.js link`; refused unless it is the connector and command the change named at `open`) |
 
 No body, no response data, no free text, no secret, no token and no personal value can be written: a field outside the list is refused, a value outside its form is refused (a target must be a placeholder, a reference an issue key), and every value is also checked against credential shapes (Slack, GitHub, Google, Okta tokens, a JWT, a bearer or basic header, a private key block).
 

@@ -62,6 +62,8 @@ const OPERATION = /^(?=.{1,64}$)[A-Za-z][A-Za-z0-9]{0,27}(?:[._-][A-Za-z0-9]{1,2
 const REQUEST_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const COMMAND = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const VERIFY_COMMAND = /^verify-[a-z0-9-]{1,48}$/;
+// The read-back a change record names: the connector and its verify-* command.
+const READ_BACK = /^[a-z][a-z0-9-]{1,30}:verify-[a-z0-9-]{1,48}$/;
 const GATE = /^[a-z0-9][a-z0-9-]{0,95}$/;
 const R_CLASS = /^R[0-3]$/;
 // A placeholder from modules/security/placeholder-dictionary.md: one bracketed token.
@@ -88,7 +90,7 @@ const KINDS = Object.freeze({
   },
   procedure: {
     command: matches(COMMAND), gate: nullable(matches(GATE)), r_class: matches(R_CLASS), target: matches(PLACEHOLDER),
-    procedure_sha256: nullable(matches(SHA256)), change: nullable(matches(CHANGE_ID)),
+    read_back: nullable(matches(READ_BACK)), procedure_sha256: nullable(matches(SHA256)), change: nullable(matches(CHANGE_ID)),
   },
   approval: {
     ref: matches(ISSUE_KEY), gate: matches(GATE), procedure_sha256: matches(SHA256), change: matches(CHANGE_ID),
@@ -396,8 +398,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       return 0;
     }
     if (command === 'procedure') {
-      only(flags, ['command', 'gate', 'r-class', 'target', 'procedure-sha256', 'change']);
-      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate ?? null, r_class: flags['r-class'], target: flags.target, procedure_sha256: flags['procedure-sha256'] ?? null, change: flags.change ?? null });
+      only(flags, ['command', 'gate', 'r-class', 'target', 'read-back', 'procedure-sha256', 'change']);
+      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate ?? null, r_class: flags['r-class'], target: flags.target, read_back: flags['read-back'] ?? null, procedure_sha256: flags['procedure-sha256'] ?? null, change: flags.change ?? null });
       out(`recorded procedure as audit entry ${r.seq}\n`);
       return 0;
     }

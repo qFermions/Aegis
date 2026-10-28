@@ -11,7 +11,7 @@
 // The approval authorizes a person's procedure; it never triggers a write by Aegis: this
 // module writes the local audit trail and nothing else.
 //
-//   node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --procedure-file FILE
+//   node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --read-back CONNECTOR:verify-... --procedure-file FILE
 //   node scripts/audit/change-record.js approve --change chg-... --ref IT-123 --procedure-sha256 H
 //   node scripts/audit/change-record.js link --change chg-... --verify-seq N
 //   node scripts/audit/change-record.js status --change chg-...
@@ -25,6 +25,11 @@ const path = require('node:path');
 const audit = require('./audit-log.js');
 
 const MAX_PROCEDURE_BYTES = 1024 * 1024;
+// The read-back that proves the change, named at open: a connector and its verify-* command
+// (okta:verify-factor-reset). The audit entries hold no target value, only placeholders, so
+// the kind of read-back is what binds it; which object it read is the operator's link.
+const READ_BACK = /^[a-z][a-z0-9-]{1,30}:verify-[a-z0-9-]{1,48}$/;
+const kindOf = (e) => `${e.connector}:${e.command}`;
 
 class InputError extends Error {}
 class NotDone extends Error {}
@@ -83,7 +88,7 @@ function changeView(log, change) {
     view.missing.push('no procedure was issued under this change id');
     return view;
   }
-  view.procedure = { seq: procedure.seq, command: procedure.command, gate: procedure.gate, r_class: procedure.r_class, target: procedure.target, procedure_sha256: procedure.procedure_sha256 };
+  view.procedure = { seq: procedure.seq, command: procedure.command, gate: procedure.gate, r_class: procedure.r_class, target: procedure.target, read_back: procedure.read_back, procedure_sha256: procedure.procedure_sha256 };
   const approvals = entries.filter((e) => e.kind === 'approval' && e.change === change && e.seq > procedure.seq);
   const approval = approvals.find((e) => e.procedure_sha256 === procedure.procedure_sha256);
   if (approval) view.approval = { seq: approval.seq, ref: approval.ref, matches: true };
@@ -92,10 +97,12 @@ function changeView(log, change) {
     view.missing.push('the approved digest does not match the procedure Aegis issued, so the approval does not cover it');
   } else view.missing.push('no approval reference was recorded for this change');
   const links = entries.filter((e) => e.kind === 'change-link' && e.change === change);
-  const readBacks = links.map((l) => bySeq.get(l.verify_seq)).filter((e) => e && e.kind === 'verify');
+  const linked = links.map((l) => bySeq.get(l.verify_seq)).filter((e) => e && e.kind === 'verify');
+  const readBacks = linked.filter((e) => kindOf(e) === procedure.read_back);
   const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq);
   if (proving) view.readBack = { seq: proving.seq, connector: proving.connector, command: proving.command, verified: true };
-  else if (!readBacks.length) view.missing.push('no verify-* read-back is linked to this change');
+  else if (!readBacks.length && linked.length) view.missing.push(`the linked read-back is not the one this change names (${procedure.read_back})`);
+  else if (!readBacks.length) view.missing.push(`no ${procedure.read_back} read-back is linked to this change`);
   else if (!readBacks.some((e) => e.verified === true)) view.missing.push('the linked read-back did not verify the change');
   else view.missing.push('the linked read-back ran before the approval, so it does not prove the approved change');
   view.done = view.missing.length === 0;
@@ -110,15 +117,16 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   try {
     const flags = parseFlags(rest);
     if (command === 'open') {
-      need(flags, ['command', 'gate', 'r-class', 'target', 'procedure-file']);
+      need(flags, ['command', 'gate', 'r-class', 'target', 'read-back', 'procedure-file']);
       if (flags['r-class'] !== 'R2' && flags['r-class'] !== 'R3') throw new InputError('a change record is for an R2 or R3 procedure; R0 and R1 need none');
+      if (!READ_BACK.test(flags['read-back'])) throw new InputError('--read-back names the connector and its verify-* command, such as okta:verify-factor-reset');
       const digest = procedureDigest(readProcedure(flags['procedure-file']));
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;
-      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, procedure_sha256: digest, change });
+      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: flags['read-back'], procedure_sha256: digest, change });
       out(`${JSON.stringify({ ok: true, change, procedure_sha256: digest, audit_seq: r.seq, next: [
         'A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>',
         'A person runs the procedure (Aegis does not)',
-        'Run the runbook\'s verify-* read-back, then: link --change <id> --verify-seq <its audit seq>; status --change <id> reports done only when all three match',
+        `Run the ${flags['read-back']} read-back, then: link --change <id> --verify-seq <its audit seq>; status --change <id> reports done only when all three match`,
       ] }, null, 2)}\n`);
       return 0;
     }
@@ -143,6 +151,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (!view.procedure) throw new NotDone('no procedure was issued under this change id');
       const target = log.entries().find((e) => e.seq === seq);
       if (!target || target.kind !== 'verify') throw new NotDone('only a verify-* result can be linked; that audit seq is not one');
+      if (kindOf(target) !== view.procedure.read_back) throw new NotDone(`that read-back is ${kindOf(target)}; this change is proved only by ${view.procedure.read_back}. Nothing was recorded`);
       const r = log.append({ kind: 'change-link', change: flags.change, verify_seq: seq });
       out(`${JSON.stringify({ ok: true, change: flags.change, verify_seq: seq, audit_seq: r.seq }, null, 2)}\n`);
       return 0;

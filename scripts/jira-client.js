@@ -450,7 +450,7 @@ function printFailure(runtime, state, extra, command) {
 function recordProcedure(runtime, command, digest) {
   if (!runtime.audit) return;
   try {
-    runtime.audit({ kind: 'procedure', command, gate: null, r_class: 'R1', target: '[JIRA-###]', procedure_sha256: digest, change: null });
+    runtime.audit({ kind: 'procedure', command, gate: null, r_class: 'R1', target: '[JIRA-###]', read_back: null, procedure_sha256: digest, change: null });
   } catch {
     throw new AuditError('the audit trail could not record the procedure, so it was not printed');
   }

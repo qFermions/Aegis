@@ -29,7 +29,7 @@
 // session that wrote this file.
 
 const {
-  STATES, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted,
+  STATES, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
 
 // ── Validators ───────────────────────────────────────────────────────────────
@@ -463,7 +463,7 @@ const VERIFIES = {
     required: ['identifier', 'not-before'],
     check: (a, now) => {
       const t = Date.parse(a['not-before']);
-      if (!TIMESTAMP.test(a['not-before']) || !Number.isFinite(t)) throw new RefusedError('--not-before must be an ISO 8601 time with a zone, for example 2026-10-27T09:00:00Z');
+      if (!TIMESTAMP.test(a['not-before']) || !Number.isFinite(t) || !realCalendarTime(a['not-before'])) throw new RefusedError('--not-before must be an ISO 8601 time with a zone, for example 2026-10-27T09:00:00Z');
       if (t > now()) throw new RefusedError('--not-before is in the future');
     },
     requests: (a) => [['activities', {}, { page: '0', per_page: DELETED_PER_PAGE }], ['hostByIdentifier', { identifier: a.identifier }]],

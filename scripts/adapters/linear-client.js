@@ -55,7 +55,7 @@ const path = require('node:path');
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
 
 // ── The allow-list: the lane's seven query documents ────────────────────────
@@ -352,7 +352,7 @@ function validate(command, def, args) {
     a.sha256 = args['expect-sha256'];
   }
   if (args['not-before'] !== undefined) {
-    if (!ISO_UTC.test(args['not-before']) || !Number.isFinite(Date.parse(args['not-before']))) {
+    if (!ISO_UTC.test(args['not-before']) || !realCalendarTime(args['not-before'])) {
       throw new RefusedError('--not-before must be the ISO 8601 UTC time that note printed, such as 2026-01-31T09:30:00.000Z');
     }
     a.notBefore = args['not-before'];

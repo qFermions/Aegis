@@ -86,7 +86,7 @@
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
 
 // ── The allow-list: the lane spec's Jamf Pro reads ───────────────────────────
@@ -344,7 +344,7 @@ function validate(command, def, args) {
   if (args.type !== undefined) a.type = need(args.type, COMMAND_TYPE, '--type must be an MDM command type in capitals, such as INSTALL_PROFILE');
   if (args['not-before'] !== undefined) {
     a.notBefore = need(args['not-before'], ISO_UTC, '--not-before must be an ISO 8601 UTC time, such as 2026-01-31T09:30:00Z');
-    if (!Number.isFinite(Date.parse(a.notBefore))) throw new RefusedError('--not-before is not a valid time');
+    if (!realCalendarTime(a.notBefore)) throw new RefusedError('--not-before is not a real date and time');
   }
   if (args['profile-id'] !== undefined) a.profileId = need(args['profile-id'], NUMERIC_ID, '--profile-id must be a Jamf Pro configuration profile ID: a whole number from 1');
   if (args['profile-identifier'] !== undefined) a.profileIdentifier = need(args['profile-identifier'], PROFILE_IDENTIFIER, '--profile-identifier must be the profile\'s PayloadIdentifier: letters, digits, dots, hyphens and underscores, up to 255');

@@ -510,3 +510,20 @@ test('a path parameter that needs encoding is allowed through get() and plan(); 
     assert.throws(() => contract.checkRequest(spec, ENV, { method: 'GET', path: raw }), contract.RefusedError, raw);
   }
 });
+
+test('--not-before must be a real calendar time: an impossible date is refused by the contract and by every adapter that takes it', async () => {
+  assert.equal(contract.realCalendarTime('2026-10-27T09:00:00Z'), true);
+  assert.equal(contract.realCalendarTime('2026-10-27T09:00:00.000Z'), true);
+  for (const bad of ['2026-02-30T09:00:00Z', '2026-13-01T09:00:00Z', '2026-10-27T24:00:00Z', '2026-10-27T09:60:00Z', '2026-10-27']) assert.equal(contract.realCalendarTime(bad), false, bad);
+  const cases = [
+    ['fleet-client.js', ['verify-deleted', '--identifier', 'C02FIXTURE01', '--not-before', '2026-02-30T09:00:00Z', '--execute'], { FLEET_URL: 'fleet.example.org', FLEET_API_TOKEN: 'sentinel-value-1' }],
+    ['linear-client.js', ['verify-comment', '--issue', 'IT-12', '--expect-sha256', '0'.repeat(64), '--not-before', '2026-02-30T09:00:00.000Z', '--execute'], { LINEAR_API_KEY: 'sentinel-value-5', LINEAR_ORG: 'fixture-org' }],
+    ['jamf-client.js', ['verify-command', '--management-id', 'a1b2c3d4-0000-4000-8000-000000000001', '--type', 'INSTALL_PROFILE', '--not-before', '2026-02-30T09:00:00Z', '--execute'], { JAMF_URL: 'jamf.example.org', JAMF_CLIENT_ID: 'sentinel-value-2', JAMF_CLIENT_SECRET: 'sentinel-value-3' }],
+  ];
+  for (const [file, argv, env] of cases) {
+    const transport = queuedTransport([]);
+    const code = await require(`./${file}`).run(argv, env, { transport, out: () => {}, err: () => {}, sleep: async () => {} });
+    assert.equal(code, 1, `${file}: an impossible --not-before is bad input`);
+    assert.equal(transport.calls.length, 0, `${file}: nothing is sent`);
+  }
+});

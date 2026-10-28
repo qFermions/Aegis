@@ -377,6 +377,20 @@ function checkTokenBody(spec, fields) {
   for (const value of Object.values(fields)) if (!plainString(value)) throw new RefusedError('token exchange fields must be plain values');
 }
 
+// An ISO 8601 time with a zone whose date and time fields are real (no 30 February, no
+// hour 24). Date.parse rolls impossible dates forward, so it alone is not enough.
+const ISO_ZONED_TIME = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:\.[0-9]{1,9})?)?(?:Z|[+-]([0-9]{2}):([0-9]{2}))$/;
+function realCalendarTime(value) {
+  const m = typeof value === 'string' ? ISO_ZONED_TIME.exec(value) : null;
+  if (!m) return false;
+  const [year, month, day, hour, minute] = [m[1], m[2], m[3], m[4], m[5]].map(Number);
+  const second = m[6] === undefined ? 0 : Number(m[6]);
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  if (month < 1 || month > 12 || day < 1 || day > lastDay || hour > 23 || minute > 59 || second > 59) return false;
+  if (m[7] !== undefined && (Number(m[7]) > 14 || Number(m[8]) > 59)) return false;
+  return Number.isFinite(Date.parse(value));
+}
+
 // ── Transport ────────────────────────────────────────────────────────────────
 // The transport takes the request function as a parameter so its limits can be tested
 // without a socket. A request that outlives timeoutMs is destroyed (the client stops
@@ -633,5 +647,5 @@ module.exports = {
   STATES, EXIT, MAX_RESPONSE_BYTES, TRIPWIRE_MESSAGE,
   RefusedError, TripwireError,
   defineAdapter, createClient, checkRequest, assertQueryOnly, scanUntrusted, markersIn,
-  renderResult, exitCodeFor, parseArgs, redactDeep, httpsTransport, makeHttpsTransport,
+  renderResult, exitCodeFor, parseArgs, redactDeep, httpsTransport, makeHttpsTransport, realCalendarTime,
 };

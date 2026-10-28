@@ -5,9 +5,11 @@
 // 11 s to about 40 minutes per floor). Patterns are read with `git show`, never executed as
 // code. Run from the repository root:
 //   node docs/aegis/g3/evidence/tools/floor-times.js 9a636aa^ 9a636aa
+// With a third argument `20kb` it times only <before> on a 20 KB line instead (minutes), and
+// for a floor that takes over 2 s on 5 KB it prints its growth on 1, 2 and 4 KB instead.
 const { execFileSync } = require('node:child_process');
 
-const [before, after] = process.argv.slice(2);
+const [before, after, mode] = process.argv.slice(2);
 if (!before || !after) { console.error('usage: floor-times.js <before> <after>'); process.exit(1); }
 
 // Every `{ pattern: /.../flags, label: '...' }` line of a file at a commit, as RegExp objects.
@@ -32,6 +34,13 @@ for (const [side, file] of [['guard', 'scripts/tier/tier-guard.js'], ['engine', 
   for (const [prefix, unit] of cases) {
     const i = a.findIndex((p) => p.label.startsWith(prefix));
     if (i < 0 || a[i].re.source === b[i].re.source) continue;
-    console.log(`${side.padEnd(6)} ${prefix.replace('\u2014', '--').padEnd(32)} ${JSON.stringify(unit).padEnd(22)} 5 KB before ${ms(a[i].re, line(unit, 5000)).padStart(5)} ms, after ${ms(b[i].re, line(unit, 5000)).padStart(3)} ms; 20 KB after ${ms(b[i].re, line(unit, 20000)).padStart(3)} ms`);
+    const name = `${side.padEnd(6)} ${prefix.replace('\u2014', '--').padEnd(32)} ${JSON.stringify(unit).padEnd(22)}`;
+    if (mode === '20kb') {
+      const five = Number(ms(a[i].re, line(unit, 5000)));
+      if (five > 2000) console.log(`${name} before: 1 KB ${ms(a[i].re, line(unit, 1000))} ms, 2 KB ${ms(a[i].re, line(unit, 2000))} ms, 4 KB ${ms(a[i].re, line(unit, 4000))} ms (20 KB not run)`);
+      else console.log(`${name} before: 20 KB ${ms(a[i].re, line(unit, 20000))} ms`);
+      continue;
+    }
+    console.log(`${name} 5 KB before ${ms(a[i].re, line(unit, 5000)).padStart(5)} ms, after ${ms(b[i].re, line(unit, 5000)).padStart(3)} ms; 20 KB after ${ms(b[i].re, line(unit, 20000)).padStart(3)} ms`);
   }
 }

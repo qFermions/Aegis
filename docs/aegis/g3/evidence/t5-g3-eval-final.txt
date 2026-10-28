@@ -1,5 +1,5 @@
 # command: node scripts/eval/g3-ticket-eval.js
-# commit: d28fcc5 (plus uncommitted changes in the working tree)  started: 2026-10-28T10:37:26Z  node: v24.22.1
+# commit: ebb8cc1  started: 2026-10-28T11:18:04Z  node: v24.22.1
 G3 ticket eval (GitHub, Okta, Microsoft 365, ambiguous, intake sources) -- deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  G01-github-repo-read-access          QUICK_FIX   floor=none → /github-repo-access
@@ -71,5 +71,5 @@ Per platform:
   unknown   6/6 tickets · 1 floored · decisions {"ADVISE":0,"GATE":0,"FLAG_INJECTION":0,"CLARIFY":6}
 Minimums: okta 6/6 · microsoft 6/6 · github 10/8 · clarify 6/6 · intake linear 4/4, github 4/4, slack 4/4, email 4/4
 Model-judged half (first action, depth, continuity, human-executes framing): scripts/eval/README.md
-# exit: 0  finished: 2026-10-28T10:37:29Z
+# exit: 0  finished: 2026-10-28T11:18:07Z
 # capture edited after the run: U+2014 written as "--" (9), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

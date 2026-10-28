@@ -1,35 +1,35 @@
 # command: bash -c for i in 1 2 3; do node scripts/eval/latency.js; done
-# commit: 9a636aa (plus uncommitted changes in the working tree)  started: 2026-10-28T10:28:42Z  node: v24.22.1
+# commit: ebb8cc1  started: 2026-10-28T11:18:02Z  node: v24.22.1
 {
   "tickets": 175,
   "intake_tickets": 16,
-  "p50_ms": 0.21,
-  "p95_ms": 0.47,
-  "max_ms": 0.89,
+  "p50_ms": 0.33,
+  "p95_ms": 0.85,
+  "max_ms": 1.16,
   "budget_p95_ms": 50,
   "per_corpus": {
     "ms": {
       "tickets": 28,
-      "p50_ms": 0.19,
-      "p95_ms": 0.32
+      "p50_ms": 0.34,
+      "p95_ms": 0.52
     },
     "gws": {
       "tickets": 38,
-      "p50_ms": 0.21,
-      "p95_ms": 0.45
+      "p50_ms": 0.39,
+      "p95_ms": 0.69
     },
     "g2": {
       "tickets": 65,
-      "p50_ms": 0.22,
-      "p95_ms": 0.36
+      "p50_ms": 0.29,
+      "p95_ms": 0.5
     },
     "g3": {
       "tickets": 44,
-      "p50_ms": 0.25,
-      "p95_ms": 0.58
+      "p50_ms": 0.41,
+      "p95_ms": 0.98
     }
   },
-  "process_start_ms": 30.79,
+  "process_start_ms": 43.35,
   "node": "v24.22.1",
   "platform": "linux",
   "note": "In-process deterministic path per ticket; each CLI a session runs adds about one process start. Model answer time is not measured: it is outside this repository."
@@ -38,32 +38,32 @@
   "tickets": 175,
   "intake_tickets": 16,
   "p50_ms": 0.24,
-  "p95_ms": 0.68,
-  "max_ms": 0.99,
+  "p95_ms": 0.55,
+  "max_ms": 0.7,
   "budget_p95_ms": 50,
   "per_corpus": {
     "ms": {
       "tickets": 28,
-      "p50_ms": 0.24,
-      "p95_ms": 0.62
+      "p50_ms": 0.22,
+      "p95_ms": 0.42
     },
     "gws": {
       "tickets": 38,
-      "p50_ms": 0.22,
-      "p95_ms": 0.61
+      "p50_ms": 0.24,
+      "p95_ms": 0.5
     },
     "g2": {
       "tickets": 65,
-      "p50_ms": 0.22,
-      "p95_ms": 0.38
+      "p50_ms": 0.24,
+      "p95_ms": 0.42
     },
     "g3": {
       "tickets": 44,
-      "p50_ms": 0.3,
-      "p95_ms": 0.85
+      "p50_ms": 0.29,
+      "p95_ms": 0.65
     }
   },
-  "process_start_ms": 32.22,
+  "process_start_ms": 39.61,
   "node": "v24.22.1",
   "platform": "linux",
   "note": "In-process deterministic path per ticket; each CLI a session runs adds about one process start. Model answer time is not measured: it is outside this repository."
@@ -71,36 +71,36 @@
 {
   "tickets": 175,
   "intake_tickets": 16,
-  "p50_ms": 0.23,
-  "p95_ms": 0.63,
-  "max_ms": 1.04,
+  "p50_ms": 0.26,
+  "p95_ms": 0.52,
+  "max_ms": 0.75,
   "budget_p95_ms": 50,
   "per_corpus": {
     "ms": {
       "tickets": 28,
-      "p50_ms": 0.19,
-      "p95_ms": 0.41
+      "p50_ms": 0.23,
+      "p95_ms": 0.37
     },
     "gws": {
       "tickets": 38,
-      "p50_ms": 0.24,
-      "p95_ms": 0.51
+      "p50_ms": 0.25,
+      "p95_ms": 0.47
     },
     "g2": {
       "tickets": 65,
-      "p50_ms": 0.23,
-      "p95_ms": 0.48
+      "p50_ms": 0.27,
+      "p95_ms": 0.41
     },
     "g3": {
       "tickets": 44,
-      "p50_ms": 0.24,
-      "p95_ms": 0.7
+      "p50_ms": 0.26,
+      "p95_ms": 0.65
     }
   },
-  "process_start_ms": 31.71,
+  "process_start_ms": 35.1,
   "node": "v24.22.1",
   "platform": "linux",
   "note": "In-process deterministic path per ticket; each CLI a session runs adds about one process start. Model answer time is not measured: it is outside this repository."
 }
-# exit: 0  finished: 2026-10-28T10:28:43Z
+# exit: 0  finished: 2026-10-28T11:18:03Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

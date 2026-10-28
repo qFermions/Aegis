@@ -262,12 +262,52 @@ const ALLOWED_EMAIL_DOMAIN = /(^|\.)example\.(com|org|net)$/i;
 // dashed, dotted, spaced, parenthesised area code, +country with 2 to 4 groups,
 // +country (0) trunk form, E.164 without separators, bare ten digits
 const PHONE_LITERAL = /(?:\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|\+\d{1,3}\s*\(0\)\s*\d{2,4}(?:[\s-]\d{2,4}){1,4}\b|\+\d{1,3}(?:[\s-]\d{2,4}){2,4}\b|\+\d{9,15}\b|\b\d{10}\b)/;
+// The spans [start, end) that EMAIL_LITERAL's global matching would return, found in
+// linear time. The regex itself backtracks: over a run of local-part characters with no
+// "@" every start rescans the run, so 100,000 characters took 11.6 s (batch G3). Same
+// rules: a local part of [A-Za-z0-9._%+#-] that ends at an "@" (it starts where the
+// previous match ended at the earliest), then a domain label of [A-Za-z0-9-] and one or
+// more ".label" groups, each as long as it can be.
+const EMAIL_LOCAL_CHAR = /^[A-Za-z0-9._%+#-]$/;
+const EMAIL_DOMAIN_CHAR = /^[A-Za-z0-9-]$/;
+function emailSpans(text) {
+  const s = String(text);
+  const spans = [];
+  const domainRun = (from) => { let i = from; while (i < s.length && EMAIL_DOMAIN_CHAR.test(s[i])) i += 1; return i; };
+  let floor = 0;
+  let at = s.indexOf('@');
+  while (at !== -1) {
+    let start = at;
+    while (start > floor && EMAIL_LOCAL_CHAR.test(s[start - 1])) start -= 1;
+    let end = -1;
+    if (start < at) {
+      let i = domainRun(at + 1);
+      if (i > at + 1) {
+        while (s[i] === '.') { const next = domainRun(i + 1); if (next === i + 1) break; end = next; i = next; }
+      }
+    }
+    if (end !== -1) { spans.push([start, end]); floor = end; }
+    at = s.indexOf('@', Math.max(at + 1, floor));
+  }
+  return spans;
+}
+function findEmails(text) {
+  const s = String(text);
+  return emailSpans(s).map(([a, b]) => s.slice(a, b));
+}
+function replaceEmails(text, replacer) {
+  const s = String(text);
+  let out = '';
+  let last = 0;
+  for (const [a, b] of emailSpans(s)) { out += s.slice(last, a) + replacer(s.slice(a, b)); last = b; }
+  return out + s.slice(last);
+}
 // The kinds of personal data in the text: 'email' and 'phone', each at most once.
 function personalDataIn(text) {
   const s = String(text);
   const found = [];
-  for (const m of s.matchAll(EMAIL_LITERAL)) {
-    if (!ALLOWED_EMAIL_DOMAIN.test(m[0].slice(m[0].indexOf('@') + 1))) { found.push('email'); break; }
+  for (const m of findEmails(s)) {
+    if (!ALLOWED_EMAIL_DOMAIN.test(m.slice(m.indexOf('@') + 1))) { found.push('email'); break; }
   }
   if (PHONE_LITERAL.test(s)) found.push('phone');
   return found;
@@ -277,7 +317,7 @@ module.exports = {
   assess, foldConfusables, ESCALATION_PATTERNS,
   foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, ORG_TOKEN_SUFFIXES, hasForeignOrgToken, containsLiteral,
   isCanonicalPlaceholder, maskCanonicalPlaceholders,
-  EMAIL_LITERAL, ALLOWED_EMAIL_DOMAIN, PHONE_LITERAL, personalDataIn,
+  EMAIL_LITERAL, ALLOWED_EMAIL_DOMAIN, PHONE_LITERAL, personalDataIn, findEmails, replaceEmails,
 };
 
 if (require.main === module) {

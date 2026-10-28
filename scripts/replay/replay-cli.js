@@ -51,7 +51,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders, EMAIL_LITERAL, personalDataIn } = require('../tier/tier-guard.js'); // pure functions, no I/O
+const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders, findEmails, replaceEmails, personalDataIn } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
@@ -74,8 +74,9 @@ const keyOf = (text) => sha256(normalize(text));
 // Identity placeholders from modules/security/placeholder-dictionary.md that
 // stand for a single principal's sign-in name, plus any email-shaped literal.
 const IDENTITY_PLACEHOLDERS = ['[UPN]', '[USER@DOMAIN.COM]', '[MANAGER_UPN]', '[USER_UPN]', '[GUEST_UPN]', '[EMAIL]'];
-// EMAIL_LITERAL (shared with the personal-data rule in scripts/tier/tier-guard.js) keeps
-// "#", so a guest UPN (…#EXT#@tenant) is one literal
+// findEmails and replaceEmails (EMAIL_LITERAL's matches in linear time, shared with the
+// personal-data rule in scripts/tier/tier-guard.js) keep "#", so a guest UPN
+// (…#EXT#@tenant) is one literal
 const SLOT = '<id>';
 
 // ── object class of the identity slot ────────────────────────────────────────
@@ -100,8 +101,8 @@ function slotClass(text) {
       return { objectClass: cls, anchor: cls === 'unknown' ? 'none' : 'placeholder' };
     }
   }
-  const lit = s.match(EMAIL_LITERAL);
-  if (lit && GUEST_UPN_MARKER.test(lit[0])) return { objectClass: 'guest', anchor: 'ext-marker' };
+  const lit = findEmails(s);
+  if (lit.length && GUEST_UPN_MARKER.test(lit[0])) return { objectClass: 'guest', anchor: 'ext-marker' };
   return { objectClass: 'unknown', anchor: 'none' };
 }
 
@@ -125,7 +126,7 @@ function shapeOf(text) {
   for (const ph of IDENTITY_PLACEHOLDERS) {
     s = s.replace(new RegExp(ph.replace(/[[\]@.]/g, (ch) => '\\' + ch), 'gi'), SENTINEL);
   }
-  s = s.replace(EMAIL_LITERAL, SENTINEL);
+  s = replaceEmails(s, () => SENTINEL);
   const segments = s.split(SENTINEL);
   const slots = segments.length - 1;
   const shape = segments.map(normalize).join(` ${SLOT} `).replace(/\s+/g, ' ').trim();

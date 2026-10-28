@@ -4,8 +4,9 @@ The scripts behind the batch G3 captures in `docs/aegis/g3/evidence/`, so every 
 command a reviewer can run again. Run each from the repository root with Node 24 on the PATH.
 Each one only reads: the repository, `git show` of a named commit, and test runs (which load
 no network module). None writes outside a temporary folder it removes. A capture's `# commit:`
-line names the commit it ran at; changes under `docs/aegis/g3/evidence/` (the captures
-themselves) do not count as uncommitted changes there.
+line names the commit it ran at, followed by "(plus uncommitted changes in the working tree)" if
+any tracked file differed from it; only the files directly in `docs/aegis/g3/evidence/` (the
+captures and records) are left out of that check, never these tools.
 
 | Tool | Capture | What it prints |
 |---|---|---|

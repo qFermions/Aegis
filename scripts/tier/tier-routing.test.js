@@ -619,3 +619,28 @@ g2Suite('security review 2, Intune unenroll', [
   'Unenroll [FIRST_NAME] from the Intune training.',
   'Unenroll [FIRST_NAME] from the security awareness course.',
 ]);
+
+// Batch G3, G2 close-out: "breached" about an SLA, a deadline or a target is a missed
+// commitment to triage, not a compromise; "breached" about an account, a system or data
+// still floors through the suspected-compromise rule.
+test('an SLA breach stays routine; a breached account, mailbox or system still floors as a compromise', () => {
+  const routine = [
+    'Linear shows IT issue [ISSUE_ID] breached its SLA overnight; who picks it up?',
+    'SLA breached on [JIRA-###]: the first response was late.',
+    'The SLA breach report for last week shows 4 late tickets.',
+    'Ticket [JIRA-###] is in breach of the response SLA.',
+    'We breached the 4-hour resolution target on the printer ticket.',
+    'The breach of SLA alert fired for [ISSUE_ID] again.',
+  ];
+  const compromise = [
+    "[FIRST_NAME]'s Linear account was breached overnight.",
+    'We think the mailbox [USER@DOMAIN.COM] was breached.',
+    'Our Slack workspace was breached and an attacker posted links.',
+    'Possible data breach: files were shared outside the company.',
+    'The SLA tool itself was breached by an unknown sign-in.',
+  ];
+  const wrong = [];
+  for (const t of routine) { const r = assess(t); if (r.floor !== 'none') wrong.push(`routine floored: ${t} -> ${r.triggers.join('|')}`); }
+  for (const t of compromise) { const r = assess(t); if (!r.triggers.some((x) => /compromise/.test(x))) wrong.push(`compromise missed: ${t} -> ${r.floor}`); }
+  assert.deepEqual(wrong, []);
+});

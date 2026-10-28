@@ -52,7 +52,7 @@ test('the charter criteria are all there, and the three that need the owner are 
 
 test('every repository path the page names exists', () => {
   const text = fs.readFileSync(FILE, 'utf8');
-  const paths = new Set([...text.matchAll(/((?:scripts|docs|modules)\/[A-Za-z0-9_./-]+\.(?:js|md|json))/g)].map((m) => m[1]));
+  const paths = new Set([...text.matchAll(/((?:scripts|docs|modules)\/[A-Za-z0-9_./-]+\.(?:json|js|md))(?![A-Za-z0-9])/g)].map((m) => m[1]));
   assert.ok(paths.size >= 10);
   const missing = [...paths].filter((p) => !fs.existsSync(path.join(ROOT, p)));
   assert.deepEqual(missing, []);

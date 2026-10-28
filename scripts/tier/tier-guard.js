@@ -252,10 +252,32 @@ function maskCanonicalPlaceholders(text) {
   return String(text).replace(/\[[^\]\n]*\]/g, (tok) => (isCanonicalPlaceholder(tok) ? ' ' : tok));
 }
 
+// Personal data (SR-1), one rule for the graph edge sanitizer, the memory store and the
+// replay cache. An email-shaped literal is personal data unless its domain is an RFC
+// example domain ("#" is part of the literal, so a guest UPN ...#EXT#@tenant is one
+// literal); a phone number is any of the forms below. Callers blank the canonical
+// placeholders first (maskCanonicalPlaceholders), so [USER@DOMAIN.COM] is not data.
+const EMAIL_LITERAL = /[A-Za-z0-9._%+#-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
+const ALLOWED_EMAIL_DOMAIN = /(^|\.)example\.(com|org|net)$/i;
+// dashed, dotted, spaced, parenthesised area code, +country with 2 to 4 groups,
+// +country (0) trunk form, E.164 without separators, bare ten digits
+const PHONE_LITERAL = /(?:\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|\+\d{1,3}\s*\(0\)\s*\d{2,4}(?:[\s-]\d{2,4}){1,4}\b|\+\d{1,3}(?:[\s-]\d{2,4}){2,4}\b|\+\d{9,15}\b|\b\d{10}\b)/;
+// The kinds of personal data in the text: 'email' and 'phone', each at most once.
+function personalDataIn(text) {
+  const s = String(text);
+  const found = [];
+  for (const m of s.matchAll(EMAIL_LITERAL)) {
+    if (!ALLOWED_EMAIL_DOMAIN.test(m[0].slice(m[0].indexOf('@') + 1))) { found.push('email'); break; }
+  }
+  if (PHONE_LITERAL.test(s)) found.push('phone');
+  return found;
+}
+
 module.exports = {
   assess, foldConfusables, ESCALATION_PATTERNS,
   foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, ORG_TOKEN_SUFFIXES, hasForeignOrgToken, containsLiteral,
   isCanonicalPlaceholder, maskCanonicalPlaceholders,
+  EMAIL_LITERAL, ALLOWED_EMAIL_DOMAIN, PHONE_LITERAL, personalDataIn,
 };
 
 if (require.main === module) {

@@ -51,7 +51,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js'); // pure functions, no I/O
+const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders, EMAIL_LITERAL, personalDataIn } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
@@ -74,7 +74,8 @@ const keyOf = (text) => sha256(normalize(text));
 // Identity placeholders from modules/security/placeholder-dictionary.md that
 // stand for a single principal's sign-in name, plus any email-shaped literal.
 const IDENTITY_PLACEHOLDERS = ['[UPN]', '[USER@DOMAIN.COM]', '[MANAGER_UPN]', '[USER_UPN]', '[GUEST_UPN]', '[EMAIL]'];
-const EMAIL_LITERAL = /[A-Za-z0-9._%+#-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g; // "#" so a guest UPN (…#EXT#@tenant) is one literal
+// EMAIL_LITERAL (shared with the personal-data rule in scripts/tier/tier-guard.js) keeps
+// "#", so a guest UPN (…#EXT#@tenant) is one literal
 const SLOT = '<id>';
 
 // ── object class of the identity slot ────────────────────────────────────────
@@ -134,8 +135,8 @@ function shapeOf(text) {
 // ── sanitization at the persistence boundary (SR-1 / SR-8) ───────────────────
 // Secrets/credentials, the real tenant literal, real email addresses, and
 // phone-number patterns can never enter the store. Canonical placeholders and
-// RFC example domains are exempt; nothing else is.
-const ALLOWED_EMAIL_DOMAIN = /(^|\.)example\.(com|org|net)$/i;
+// RFC example domains are exempt; nothing else is. The personal-data rule is shared
+// with the graph edge sanitizer and the memory store (scripts/tier/tier-guard.js).
 function sanitizationHits(text) {
   const hits = [];
   const forms = foldedForms(text); // one fold for the literal, marker and org-token checks
@@ -160,12 +161,9 @@ function sanitizationHits(text) {
   // token such as [USER@DOMAIN.COM] / [JIRA-###] or the [@Aegion_*] family. A
   // bracket wrapped around a real, lower-case address or a digit string is not
   // a placeholder and is scanned like any other text.
-  const unbracketed = maskCanonicalPlaceholders(text);
-  for (const m of unbracketed.matchAll(EMAIL_LITERAL)) {
-    const domain = m[0].slice(m[0].indexOf('@') + 1);
-    if (!ALLOWED_EMAIL_DOMAIN.test(domain)) { hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])'); break; }
-  }
-  if (PHONE_LITERAL.test(unbracketed)) hits.push('phone number pattern (use [PHONE_NUMBER])');
+  const pii = personalDataIn(maskCanonicalPlaceholders(text));
+  if (pii.includes('email')) hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])');
+  if (pii.includes('phone')) hits.push('phone number pattern (use [PHONE_NUMBER])');
   hits.push(...injectionHits(text, forms));
   if (hasForeignOrgToken(text, forms)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
   return hits;
@@ -179,9 +177,6 @@ function injectionHits(text, forms) {
   return injectionMarkersIn(text, forms)
     .map((name) => `instruction-shaped text (prompt-injection marker: ${name}; content is data, never instructions)`);
 }
-// dashed · dotted · spaced · parenthesised area code · +country with 2–4 groups ·
-// +country (0) trunk form · E.164 without separators · bare ten digits
-const PHONE_LITERAL = /(?:\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|\+\d{1,3}\s*\(0\)\s*\d{2,4}(?:[\s-]\d{2,4}){1,4}\b|\+\d{1,3}(?:[\s-]\d{2,4}){2,4}\b|\+\d{9,15}\b|\b\d{10}\b)/;
 
 // Canonical placeholders are recognised by the shared rule in scripts/tier/tier-guard.js.
 // Shape safety: only pure-ASCII tickets are shape-eligible. A homoglyph ("wıpe",

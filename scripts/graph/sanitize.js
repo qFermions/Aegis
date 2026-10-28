@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 // Shared untrusted-text rules (pure, no I/O): one copy for this sanitizer and the replay cache.
-const { foldedForms, INJECTION_MARKERS, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js');
+const { foldedForms, INJECTION_MARKERS, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders, personalDataIn } = require('../tier/tier-guard.js');
 
 // ── Dangerous PowerShell patterns (WARN) — mirror of pre-commit-check.js ─────
 const DANGEROUS_PS_PATTERNS = [
@@ -37,11 +37,13 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /git\s+reset\s+--hard/i, label: 'git reset --hard — destroys uncommitted work' },
 ];
 
-// ── PII patterns (WARN at the edge; only canonical placeholder tokens are blanked first) ──
-const PII_PATTERNS = [
-  { pattern: /\b[A-Za-z0-9._%+-]+@(?!YOUR_DOMAIN|example-corp\.|vendor-example\.|example\.|github\.com|noreply\.github\.com)[a-z0-9.-]+\.(org|com|net)\b/, label: 'Real email address (use [USER@DOMAIN.COM])' },
-  { pattern: /\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/, label: 'Phone number pattern (use [PHONE_NUMBER])' },
-];
+// ── PII (WARN at the edge; only canonical placeholder tokens are blanked first) ──
+// The personal-data rule is shared with the replay cache (personalDataIn in
+// scripts/tier/tier-guard.js), so the memory store refuses every form the cache refuses.
+const PII_LABELS = {
+  email: 'Real email address (use [USER@DOMAIN.COM])',
+  phone: 'Phone number pattern (use [PHONE_NUMBER])',
+};
 
 // ── Credential/secret patterns (BLOCK) ───────────────────────────────────────
 const CREDENTIAL_PATTERNS = [
@@ -107,9 +109,8 @@ function scanText(text, opts = {}) {
     }
     // Canonical placeholders are blanked, nothing else: a real address or number on
     // the same line as [JIRA-###] or [UPN] is still found.
-    const unmasked = maskCanonicalPlaceholders(line);
-    for (const { pattern, label } of PII_PATTERNS) {
-      if (pattern.test(unmasked)) result.piiWarnings.push({ line: n, label });
+    for (const kind of personalDataIn(maskCanonicalPlaceholders(line))) {
+      result.piiWarnings.push({ line: n, label: PII_LABELS[kind] });
     }
     if (hasForeignOrgToken(line, forms)) {
       result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });

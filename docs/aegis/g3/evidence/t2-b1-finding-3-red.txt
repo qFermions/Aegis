@@ -1,0 +1,30 @@
+node --test --test-name-pattern=B18 scripts/untrusted/poisoned-memory.test.js
+✖ B18 the edge, the memory store and the replay cache share one personal-data rule (6.055384ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 109.05245
+
+✖ failing tests:
+
+test at scripts/untrusted/poisoned-memory.test.js:568:1
+✖ B18 the edge, the memory store and the replay cache share one personal-data rule (6.055384ms)
+  AssertionError [ERR_ASSERTION]: the edge flags it (address at a .io domain)
+      at TestContext.<anonymous> (<repo>/.claude/worktrees/agent-a603dae786bb5eecc/scripts/untrusted/poisoned-memory.test.js:584:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit code: 1
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

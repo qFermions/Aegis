@@ -10,13 +10,14 @@ operator describes a real IT problem in plain English; Aegis decides how much
 reasoning is justified (replay → T1 → T2 → T3 fortress analysis), investigates,
 and produces the **safest technically useful procedure for a HUMAN administrator
 to execute** — portal-first steps, clearly marked HUMAN-RUN CLI, verification,
-rollback where warranted, and a Jira-ready note.
+rollback where warranted, and a Jira-ready or Linear-ready note.
 
 **Scope:** Microsoft (AD/hybrid AD, Entra ID, M365, Exchange Online, Outlook,
 Intune, Windows endpoints, Teams, OneDrive, SharePoint) and Google (Workspace,
 Admin Console, Gmail, Drive, Groups, Chrome Enterprise, ChromeOS, users/OUs),
-plus Okta, Jamf Pro and macOS, Zoom Rooms, and the network/VoIP/endpoint domains
-already in the command surface. Lists are
+plus Okta, Jamf Pro and macOS, Fleet, Slack, Linear (an IT ticket system beside
+Jira), Zoom Rooms, and the network/VoIP/endpoint domains already in the command
+surface. Lists are
 examples, not limits; useful supported domains are not removed by omission.
 Where each capability stands today, with evidence: `docs/aegis/capability-map.md`.
 
@@ -52,6 +53,15 @@ human-executed step is a project failure.
   answers (`scripts/command-safety-gates.test.js`, `docs/security/STATE_CHANGE_INVENTORY.json`).
 - Ticket graph: live execution is refused (`scripts/graph/engine.js`); dry-run and
   sim modes change nothing outside local run state.
+- Vendor reads (added in batch G2): the Fleet, Jamf Pro, Slack, Linear and Google
+  Workspace adapters in `scripts/adapters/` send allow-listed GET reads, named
+  GraphQL query documents (Linear) and the vendor's token exchange only; every
+  other request is refused before credentials or network, and each adapter is a
+  dry run until the bare `--execute` (`scripts/adapters/README.md`,
+  `scripts/g2-boundary.test.js`). A Linear note is printed for a person to post;
+  `verify-comment` proves the post by a read. The Google Workspace posture audit
+  (`scripts/gws-posture-audit.js`) reads an export and writes one local report
+  behind an exact phrase.
 - Not enforced in code: agents that hold a shell (`tier1-support`, `tier2-support`
   and the development plane) are bound by their cards and the operator's Claude
   Code permission mode only. The full audit: `docs/aegis/boundary-audit.md`.
@@ -145,3 +155,18 @@ was removed. Everything not listed here is unchanged from `d5fc8c0`.
 - Added, "How Aegis answers (standing rules)": the batch 1 charter's standing
   rules. Reason: they were not stated in the contract.
 
+Batch G2 (2026-10-28, branch `feat/g2-gws-fleet-jamf-slack-linear`, stacked on
+batch 1 at `3592bd1`). Nothing was removed.
+
+- Changed, "What Aegis is", the answer line: "a Jira-ready note" became "a
+  Jira-ready or Linear-ready note". Reason: every G2 runbook ends with a
+  Linear-ready note and the read-back that proves a person posted it; the Jira path
+  stays beside it.
+- Changed, "What Aegis is", scope: "plus Okta, Jamf Pro and macOS, Zoom Rooms,"
+  became "plus Okta, Jamf Pro and macOS, Fleet, Slack, Linear (an IT ticket system
+  beside Jira), Zoom Rooms,". Reason: the batch ships 5 Fleet, 6 Slack and 4 Linear
+  runbooks with corpus tickets and read-only adapters (`docs/aegis/capability-map.md`,
+  rows 37 to 51).
+- Added, "Where code enforces it": the vendor-read bullet. Reason: five adapters now
+  reach vendor APIs, and the boundary audit (`docs/aegis/boundary-audit.md`, rows 20
+  to 28) records that none of them can write.

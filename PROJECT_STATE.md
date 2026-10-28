@@ -1,6 +1,7 @@
 # Aegis project state
 
-> Dev-facing state file, rewritten by batch 1 on 2026-10-27 to match the repo as it is. Every
+> Dev-facing state file, rewritten by batch 1 on 2026-10-27 to match the repo as it is, and
+> updated by batch G2 on 2026-10-28 (section "Changed by batch G2"). Every
 > "verified" line below names a check that ran in that session and the capture that holds its
 > output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
@@ -51,22 +52,51 @@ structure, not answer quality.
   docs, comment, efficiency or refactor fixes) and 3 closed with a reason (`checks.md`, "Review
   rounds").
 
+## Changed by batch G2
+
+Branch `feat/g2-gws-fleet-jamf-slack-linear`, draft PR #5, stacked on batch 1 (`3592bd1`). The
+lane spec is `docs/aegis/lanes/g2.md`; the corpus is `scripts/eval/g2-tickets.json` (63 tickets,
+12 dangerous pairs). Each platform is proven on its own; captures in `docs/aegis/g2/evidence/`.
+
+| Platform | Status | Commands | Proof (command and count) |
+|---|---|---|---|
+| Fleet | landed whole | `/fleet-host-health`, `/fleet-policy-failures`, `/fleet-vulnerable-software`, `/fleet-osquery-investigation`, `/fleet-device-actions` | `node scripts/eval/g2-ticket-eval.js`: 13/13 tickets, 3/3 pairs; `node --test scripts/adapters/fleet-client.test.js scripts/adapters/fleet-runbooks.test.js`: 43/43 |
+| Linear | landed whole | `/linear-intake`, `/linear-triage`, `/linear-ticket-note`, `/linear-workspace-admin` | G2 eval: 11/11 tickets, 2/2 pairs; `node --test scripts/adapters/linear-client.test.js scripts/adapters/linear-runbooks.test.js`: 33/33 |
+| Slack | landed whole | `/slack-user-lifecycle`, `/slack-guests-connect`, `/slack-app-approval`, `/slack-retention-export`, `/slack-security-settings`, `/slack-incident-comms` | G2 eval: 14/14 tickets, 3/3 pairs; `node --test scripts/adapters/slack-client.test.js scripts/adapters/slack-runbooks.test.js`: 42/42 |
+| Jamf Pro | landed whole | `/jamf-config-profiles`, `/jamf-policies-self-service`, `/jamf-patch-management`, `/jamf-filevault`, `/jamf-inventory-groups` | G2 eval: 12/12 tickets, 2/2 pairs; `node --test scripts/adapters/jamf-client.test.js scripts/adapters/jamf-runbooks.test.js`: 33/33 |
+| Google Workspace | landed whole | `/gws-drive-sharing`, `/gws-2sv-enforcement`, `/gws-account-containment`, `/gws-admin-roles`, `/gws-security-posture` | G2 eval: 13/13 tickets, 2/2 pairs; `node --test scripts/adapters/gws-client.test.js scripts/gws-runbooks.test.js`: 36/36; `node --test scripts/gws-posture-audit.test.js`: 12/12 |
+
+- **Battery at `426b8cd`:** `node --test` 998/998 (`docs/aegis/g2/evidence/node-test.txt:1158-1161`); Microsoft 28/28
+  and 6/6, Google 38/38 and 9/9, unchanged; structure lint 102 commands, clean; scanner 0 BLOCK,
+  182 WARN (170 at batch 1); release boundary PASS.
+- **Boundary:** five read-only adapters on one contract (`scripts/adapters/README.md`) and a
+  posture audit that writes one local report; `scripts/g2-boundary.test.js` (13 tests) proves no
+  adapter command sends a write and every G2 runbook gates or previews each state change
+  (`docs/aegis/boundary-audit.md`, rows 20 to 28).
+- **Capability map:** rows 37 to 62 added, one platform each; row 14 (Google posture audit) is
+  verified now; row 12 names Okta only and its Google half is row 59 (partial: `/gws-audit-log`
+  still hands Google containment to the Microsoft-only triage runbook).
+- **Not verified in this batch:** answer quality for every G2 platform (rows 38, 43, 48, 53, 58),
+  and every vendor fact that rests on a search excerpt or a vendor repository because the vendor
+  documentation hosts were refused by the session network (`docs/aegis/lanes/g2.md`, Sources).
+
 ## Partial
 
-13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
+14 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
 portal-path currency in `scripts/security-audit.js` (row 3); network, VPN, SIP and VoIP routing
 (row 8, no corpus ticket); Microsoft incident triage and report guidance, structure and gates
-checked but not the containment order (row 10); Google and Okta containment (row 12: G36 and G37
-route to a Microsoft-only runbook); the security audit's checklist content (row 13); the log
+checked but not the containment order (row 10); Okta containment (row 12) and Google containment (row 59: the steps exist, but
+`/gws-audit-log` still routes to a Microsoft-only runbook); the security audit's checklist content (row 13); the log
 analyzer and hash checker (row 15, no tests); PowerShell and GAM procedure correctness (rows 16,
 17); strategy selection, loops and review independence (row 24, model behaviour); session
 bootstrap, with a stale continuity snapshot (row 29); injection and wrong-customer cases beyond
 the deterministic edges (rows 34, 35). Implemented but unverified: Google answer quality and
-real-tenant procedure evidence (row 5).
+real-tenant procedure evidence (row 5), and answer quality and vendor-fact currency for each G2
+platform (rows 38, 43, 48, 53, 58).
 
 ## Missing
 
-A Google Workspace posture audit; infrastructure as code for Azure and for Google Cloud; an
+Infrastructure as code for Azure and for Google Cloud; an
 automated runner for the model-judged eval half (the rubric is a document only).
 
 ## Open risks
@@ -84,8 +114,9 @@ automated runner for the model-judged eval half (the rubric is a document only).
 
 ## Current work
 
-Batch 1's draft pull request. `node scripts/dev/claim.js list` showed 0 active claims on
-2026-10-27 (`docs/aegis/evidence/claim-list.txt`).
+Batch 1's draft pull request (#4) and batch G2's draft pull request (#5), stacked on it.
+`node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
+(`docs/aegis/evidence/claim-list.txt`).
 
 ## Roadmap skeleton
 

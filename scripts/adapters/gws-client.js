@@ -57,9 +57,9 @@
 // 2 the read failed or a verify-* read did not prove the write; 3 another customer.
 //
 // Requests are built here as raw paths and pass the contract's own allow-list door
-// (checkRequest for a dry run, client.send for a read). The contract's get() and plan()
-// would encode an email path value twice ([USER@DOMAIN.COM] would leave as %2540), so
-// they are not used.
+// (checkRequest for a dry run, client.send for a read), which tests each value as
+// written and encodes it once. (Before 7cff8a3 the contract's get() and plan() refused a
+// value that needs encoding, which is why this adapter builds raw paths.)
 //
 // Facts the lane could not confirm (vendor pages unreachable; research from Google's
 // discovery documents and auth library on GitHub, docs/aegis/lanes/g2.md), and the safer

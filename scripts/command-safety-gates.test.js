@@ -39,6 +39,8 @@ const MIXED_STATE_COMMANDS = [
   'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings', 'slack-incident-comms',
   // G2: Jamf Pro
   'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault', 'jamf-inventory-groups',
+  // G2: Google Workspace
+  'gws-drive-sharing', 'gws-2sv-enforcement', 'gws-account-containment', 'gws-admin-roles', 'gws-security-posture',
 ];
 
 const REFERENCE_BOUNDARIES = [

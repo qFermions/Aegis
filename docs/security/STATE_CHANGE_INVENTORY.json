@@ -1466,6 +1466,190 @@
       ]
     },
     {
+      "id": "gws-2sv-enforcement-allow-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:allow",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-allow-rollback-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-end-exemption-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-enforce-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-exception-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-exempt-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-group-reenforce-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-keys-only-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:restrict",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-methods-restore-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-2sv-enforcement-off-portal",
+      "file": ".claude/commands/gws-2sv-enforcement.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "gws-2sv-reset-backup-codes",
       "file": ".claude/commands/gws-2sv-reset.md",
       "kind": "shell",
@@ -1555,6 +1739,246 @@
         "external-system mutation",
         "identity-related",
         "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-account-containment-app-passwords",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gam-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-account-containment-app-passwords-portal",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:revoke",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-account-containment-handover-preview",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-account-containment-oauth",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gam-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-account-containment-oauth-portal",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:revoke",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-account-containment-password-portal",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:reset",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-account-containment-reactivate-portal",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:reactivate",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-account-containment-suspend-portal",
+      "file": ".claude/commands/gws-account-containment.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:suspend",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-admin-roles-assign-portal",
+      "file": ".claude/commands/gws-admin-roles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:assign",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-admin-roles-recovery-allow-portal",
+      "file": ".claude/commands/gws-admin-roles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:allow",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-admin-roles-recovery-off-portal",
+      "file": ".claude/commands/gws-admin-roles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-admin-roles-remove-role-portal",
+      "file": ".claude/commands/gws-admin-roles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:unassign",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-admin-roles-remove-super-admin-portal",
+      "file": ".claude/commands/gws-admin-roles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
       ]
     },
     {
@@ -1728,6 +2152,128 @@
       "impactCategories": [
         "data-removal related",
         "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-allow-portal",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-allowlist-add-portal",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-allowlist-remove-portal",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-gam-bulk-preview",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "gam-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-remove-access-portal",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-restrict-portal",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-shared-drive-defaults-preview",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "gws-drive-sharing-turn-off-portal",
+      "file": ".claude/commands/gws-drive-sharing.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
         "external-system mutation",
         "identity-related"
       ]
@@ -2382,6 +2928,111 @@
         "external-system mutation",
         "identity-related",
         "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-security-posture-admins-export",
+      "file": ".claude/commands/gws-security-posture.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "gws-security-posture-app-block-portal",
+      "file": ".claude/commands/gws-security-posture.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-security-posture-app-trust-preview",
+      "file": ".claude/commands/gws-security-posture.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-security-posture-forwarding-allow-portal",
+      "file": ".claude/commands/gws-security-posture.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:allow",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-security-posture-forwarding-off-portal",
+      "file": ".claude/commands/gws-security-posture.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-security-posture-mobile-universal-preview",
+      "file": ".claude/commands/gws-security-posture.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "gws-security-posture-users-export",
+      "file": ".claude/commands/gws-security-posture.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "reversible state change"
       ]
     },
     {

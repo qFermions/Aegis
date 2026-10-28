@@ -67,7 +67,10 @@ const VARIANTS = {
     'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings',
     'slack-incident-comms', 'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault',
     'jamf-inventory-groups', 'gws-drive-sharing', 'gws-2sv-enforcement', 'gws-account-containment', 'gws-admin-roles',
-    'gws-security-posture'],
+    'gws-security-posture',
+    // G3: GitHub (batch G3, task 5a)
+    'github-repo-access', 'github-branch-protection', 'github-org-security', 'github-offboard-member',
+    'github-security-alerts'],
   B: ['troubleshoot', 'mfa-issue', 'printer-issue', 'wifi-issue', 'lan-wan', 'vpn-check', 'ad-connect', 'teams-issue',
     'outlook-issue', 'onedrive-issue', 'email-to-spam', 'intune-compliance', 'meraki-health', 'meraki-vpn-status',
     'sip-trunk-status', 'security-alert-triage',

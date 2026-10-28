@@ -39,7 +39,7 @@ const QUESTION_KINDS = new Set(['system', 'symptom', 'group']);
 const INTAKE_SOURCES = ['linear', 'github', 'slack', 'email'];
 const INTAKE_DIR = path.join(ROOT, 'scripts', 'eval', 'g3-intake');
 // The charter's minimums (task 4b). github rises to 8 with the GitHub runbooks (task 5a).
-const MINIMUMS = Object.freeze({ okta: 6, microsoft: 6, clarify: 6, intakePerSource: 4, github: 0 });
+const MINIMUMS = Object.freeze({ okta: 6, microsoft: 6, clarify: 6, intakePerSource: 4, github: 8 });
 // The deployment the intake fixtures belong to, and a fixed receive time.
 const INTAKE_ENV = Object.freeze({ LINEAR_ORG: 'org-a', GITHUB_ORG: 'org-a', SLACK_TEAM_ID: 'T0OURS0001', AEGION_DOMAIN: 'example.org' });
 const INTAKE_NOW = () => Date.parse('2026-10-28T00:00:00Z');

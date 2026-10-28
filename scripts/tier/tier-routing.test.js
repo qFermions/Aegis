@@ -644,3 +644,31 @@ test('an SLA breach stays routine; a breached account, mailbox or system still f
   for (const t of compromise) { const r = assess(t); if (!r.triggers.some((x) => /compromise/.test(x))) wrong.push(`compromise missed: ${t} -> ${r.floor}`); }
   assert.deepEqual(wrong, []);
 });
+
+// batch G3: EMAIL_LITERAL backtracks over a long run of local-part characters with no
+// "@": each start in the run rescans it, so 100,000 characters took 11.6 s (measured
+// 2026-10-28). findEmails and replaceEmails give the same matches in linear time, and
+// every caller (the personal-data rule, the graph edge sanitizer, the replay key, the
+// intake) uses them.
+test('findEmails and replaceEmails give exactly the matches of EMAIL_LITERAL', () => {
+  const guard = require('./tier-guard.js');
+  const samples = ['a@b.cc+d@e.ff', 'x@y@z.com', 'a@b..com', 'a@b.com.', 'guest_x#EXT#@tenant.example.com and b@c.de', '[USER@DOMAIN.COM] a.b@c.d.e',
+    'no email here', '@@@', 'a@', '@b.com', 'm@n.o-p.q, r@s.t', 'one@two.three@four.five', '...@a.b', 'a%b+c@d-e.f-g.h!', 'x@y.z@'];
+  for (const s of samples) {
+    assert.deepEqual(guard.findEmails(s), s.match(guard.EMAIL_LITERAL) || [], s);
+    assert.equal(guard.replaceEmails(s, () => '<E>'), s.replace(guard.EMAIL_LITERAL, '<E>'), s);
+  }
+});
+
+test('a 60,000-character run with no "@" is checked in well under a second by the personal-data rule, the sanitizer and the replay key', () => {
+  const guard = require('./tier-guard.js');
+  const sanitize = require('../graph/sanitize.js');
+  const replay = require('../replay/replay-cli.js');
+  const run = 'a'.repeat(60000);
+  const started = process.hrtime.bigint();
+  assert.deepEqual(guard.personalDataIn(run), []);
+  assert.equal(sanitize.scanText(run).piiWarnings.length, 0);
+  assert.equal(replay.shapeOf(run).slots, 0);
+  const ms = Number(process.hrtime.bigint() - started) / 1e6;
+  assert.ok(ms < 1000, `took ${Math.round(ms)} ms`);
+});

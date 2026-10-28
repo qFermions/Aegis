@@ -1,0 +1,43 @@
+# command: node --test --test-name-pattern findEmails|60,000 scripts/tier/tier-routing.test.js
+# commit: 37cb3f5 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:39:48Z  node: v24.22.1
+✖ findEmails and replaceEmails give exactly the matches of EMAIL_LITERAL (1.646547ms)
+✖ a 60,000-character run with no "@" is checked in well under a second by the personal-data rule, the sanitizer and the replay key (13168.629877ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13280.492195
+
+✖ failing tests:
+
+test at scripts/tier/tier-routing.test.js:653:1
+✖ findEmails and replaceEmails give exactly the matches of EMAIL_LITERAL (1.646547ms)
+  TypeError [Error]: guard.findEmails is not a function
+      at TestContext.<anonymous> (<repo>/scripts/tier/tier-routing.test.js:658:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at scripts/tier/tier-routing.test.js:663:1
+✖ a 60,000-character run with no "@" is checked in well under a second by the personal-data rule, the sanitizer and the replay key (13168.629877ms)
+  AssertionError [ERR_ASSERTION]: took 13166 ms
+      at TestContext.<anonymous> (<repo>/scripts/tier/tier-routing.test.js:673:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T08:40:01Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

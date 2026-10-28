@@ -783,3 +783,25 @@ test('apiRequest timeout is finite, destroys the request, and rejects', async ()
   assert.equal(transportCalls, 1);
   assert.equal(destroyed, true);
 });
+
+// Batch 1 finding 10, batch G3: the Jira editor may store a pasted note with CRLF line
+// ends, trailing spaces or non-breaking spaces. Those are normalised on both sides of the
+// digest; any change to a word still fails. Markup the editor converts (bold, links) is
+// not normalised: the procedure tells the administrator to post through the plain-text
+// editor, and a converted note fails closed (an owner decision, see the batch report).
+test('verify-comment accepts the posted body after whitespace normalisation and still refuses a changed word', async () => {
+  const body = 'Printer driver reinstalled.\nTest page printed.';
+  const digest = sha256Hex(serializePayload({ body, public: false }));
+  const argv = ['verify-comment', '--issue', 'HELP-123', '--comment-id', '7001', '--expect-sha256', digest, '--not-before', NOT_BEFORE, '--execute'];
+  const created = { epochMillis: AFTER };
+  for (const stored of ['Printer driver reinstalled.\r\nTest page printed.', 'Printer driver reinstalled.  \nTest page printed.\n\n', 'Printer driver reinstalled.\nTest page printed.']) {
+    const queue = queuedFetch([{ status: 200, json: { id: '7001', body: stored, public: false, created } }]);
+    const result = await invoke(argv, { fetch: queue.fetch });
+    assert.equal(result.code, 0, `${JSON.stringify(stored)}: ${result.stderr}`);
+  }
+  const changed = queuedFetch([{ status: 200, json: { id: '7001', body: 'Printer driver reinstalled.\nTest page failed.', public: false, created } }]);
+  assert.equal((await invoke(argv, { fetch: changed.fetch })).code, 2);
+  const preview = await invoke(['comment', '--issue', 'HELP-123', '--body', 'Line one  \r\nline two']);
+  assert.ok(preview.stdout.includes(`--expect-sha256 ${sha256Hex(serializePayload({ body: 'Line one\nline two', public: false }))}`), 'the preview prints the digest of the normalised body');
+  assert.match(preview.stdout, /plain-text editor/, 'the procedure says how to post so the note is stored as typed');
+});

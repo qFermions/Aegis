@@ -191,9 +191,23 @@ function ledger(event, fields) {
   } catch (e) { /* instrumentation only */ }
 }
 
+// The event names this CLI writes. A reader counts these by name; any other name (a line
+// edited on disk) is counted as unknown and never printed, and a line that is not JSON is
+// counted as malformed instead of crashing the reader (batch G3).
+const LEDGER_EVENTS = new Set(['RESEAL_REFUSED', 'TENANT_BOUND', 'INVALID', 'BLOCKED', 'CASE_REFUSED', 'DUPLICATE', 'PROPOSED',
+  'MERGED', 'GATE_REFUSED', 'CONFLICT_REFUSED', 'PROMOTED', 'REJECTED', 'VERIFIED', 'MARKED_STALE', 'DECLINED']);
+
 function readLedger() {
-  if (!fs.existsSync(LEDGER_PATH)) return [];
-  return fs.readFileSync(LEDGER_PATH, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  if (!fs.existsSync(LEDGER_PATH)) return { entries: [], malformed: 0 };
+  const entries = [];
+  let malformed = 0;
+  for (const line of fs.readFileSync(LEDGER_PATH, 'utf8').split('\n').filter(Boolean)) {
+    let entry;
+    try { entry = JSON.parse(line); } catch { entry = null; }
+    if (entry && typeof entry === 'object' && !Array.isArray(entry)) entries.push(entry);
+    else malformed += 1;
+  }
+  return { entries, malformed };
 }
 
 // ── tenant binding (one store, one tenant) ───────────────────────────────────
@@ -651,7 +665,12 @@ function cmdStats() {
     else withheld += 1;
   }
   const events = {};
-  for (const e of readLedger()) events[e.event] = (events[e.event] || 0) + 1;
+  const { entries, malformed } = readLedger();
+  for (const e of entries) {
+    const name = LEDGER_EVENTS.has(e.event) ? e.event : 'unknown';
+    events[name] = (events[name] || 0) + 1;
+  }
+  if (malformed) events.malformed = malformed;
   out({ ok: true, records: { total: index.records.length, ...byStatus, withheld }, ledger: events });
 }
 

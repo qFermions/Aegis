@@ -1,0 +1,34 @@
+# command: node --test --test-name-pattern=B21 scripts/untrusted/poisoned-memory.test.js
+# commit: 69f882e  started: 2026-10-28T07:54:00Z  node: v24.22.1
+✖ B21 stats counts only known ledger events; an edited or malformed ledger line is counted, never printed, and never crashes stats (206.469589ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 321.666963
+
+✖ failing tests:
+
+test at scripts/untrusted/poisoned-memory.test.js:668:1
+✖ B21 stats counts only known ledger events; an edited or malformed ledger line is counted, never printed, and never crashes stats (206.469589ms)
+  AssertionError [ERR_ASSERTION]: exit 1:  | <anonymous_script>:1 not json at all ^ SyntaxError: Unexpected token 'o', "not json at all" is not valid JSON at JSON.parse (<anonymous>) at <repo>/scripts/memory/memory-cli.js:196:91 at Array.map (<anonymous>) at readLedger (<repo>/scripts/memory/memory-cli.js:196:75) at cmdS
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/untrusted/poisoned-memory.test.js:673:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:54:00Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

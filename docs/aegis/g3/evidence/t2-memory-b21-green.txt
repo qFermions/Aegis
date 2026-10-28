@@ -1,0 +1,41 @@
+# command: node --test scripts/untrusted/poisoned-memory.test.js
+# commit: 69f882e (plus uncommitted changes in the working tree)  started: 2026-10-28T07:54:00Z  node: v24.22.1
+✔ B1 memory propose: an obfuscated instruction is a sanitizer BLOCK and nothing persists (zero-width space in detail) (64.978828ms)
+✔ B1 memory propose: an obfuscated instruction is a sanitizer BLOCK and nothing persists (Cyrillic look-alike in summary) (62.077561ms)
+✔ B1 memory propose: an obfuscated instruction is a sanitizer BLOCK and nothing persists (fullwidth letters in detail) (77.22288ms)
+✔ B2 external-content-only candidate: promote refused; hidden from retrieve; labelled candidate when explicitly included (274.820739ms)
+✔ B3 a candidate whose index row was flipped to verified on disk is withheld from retrieve (110.605575ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (index row summary replaced with instruction text) (415.109173ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (index row keywords stuffed for unrelated queries) (421.749784ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (record detail replaced with instruction text) (444.813711ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (record status changed) (406.907119ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (record keywords changed) (399.817628ms)
+✔ B5 a record file and index row written by hand, never through memory-cli.js, are not served (190.886845ms)
+✔ B6 verify refuses a record whose detail was replaced on disk with instruction text, and it stays withheld (231.748238ms)
+✔ B6 promote --supersede of a candidate changed on disk is refused before any write; the record it targets still serves (380.914744ms)
+✔ B7 replay record refuses a solution document carrying an instruction (plain marker); nothing is cached (152.996974ms)
+✔ B7 replay record refuses a solution document carrying an instruction (zero-width obfuscated marker); nothing is cached (156.794064ms)
+✔ B8 the sanitizer PII scan is stateless: a second address in the same pass, or in the next call, is still flagged (5.571188ms)
+✔ B9 a record changed on disk with gate-clean text is not re-sealed by verify, merge, mark-stale or promote (605.113644ms)
+✔ B10 a forged record carrying an instruction-shaped key name is withheld and the key text is never printed (263.239726ms)
+✔ B11 list labels every row with its integrity and prints no summary for a row changed on disk (301.190131ms)
+✔ B12 a real address next to a canonical placeholder is still flagged at the edge and blocked at memory propose (66.232384ms)
+✔ B13 list prints only the id and the reason for a changed row, and gate problems never name a nested key (426.722299ms)
+✔ B14 a write releases the memory store lock exactly once, so it never removes a lock another writer took after it (56.988103ms)
+✔ B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record (101.874761ms)
+✔ B16 a writer never removes a lock another writer took, two stealers never both proceed, and a crashed writer or stealer is still recovered (255.299172ms)
+✔ B17 an instruction marker split across a line break is flagged at the edge, refused at memory propose, and withheld at memory read (339.584648ms)
+✔ B18 the edge, the memory store and the replay cache share one personal-data rule (419.128293ms)
+✔ B19 a stealer that finds the stale lock already gone never removes the lock another writer takes in that moment (50.364811ms)
+✔ B20 stats and audit print no text of a record changed on disk; an untouched record still reports (649.668907ms)
+✔ B21 stats counts only known ledger events; an edited or malformed ledger line is counted, never printed, and never crashes stats (181.152129ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7626.952862
+# exit: 0  finished: 2026-10-28T07:54:08Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

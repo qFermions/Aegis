@@ -400,7 +400,7 @@ function main() {
       const depPaths = (opt('deps') || '').split(',').filter(Boolean).map((p) => p.trim());
       // the dependency paths are stored and printed later, so they are scanned like the text
       const hits = [...sanitizationHits(ticket + '\n' + solution), ...depPaths.flatMap((p) => sanitizationHits(p))];
-      if (hits.length) fail(4, 'sanitization BLOCK — refused to persist: ' + Array.from(new Set(hits)).join(', '));
+      if (hits.length) fail(4, 'sanitization BLOCK: refused to persist: ' + Array.from(new Set(hits)).join(', '));
       withLock(() => {
         const ix = loadIndex();
         const k = keyOf(ticket);
@@ -434,7 +434,7 @@ function main() {
         fail(2, 'verification refused: --evidence is required — unverified output is not authoritative memory');
       }
       const evHits = sanitizationHits(evidence);
-      if (evHits.length) fail(4, 'sanitization BLOCK — evidence text refused: ' + evHits.join(', '));
+      if (evHits.length) fail(4, 'sanitization BLOCK: evidence text refused: ' + evHits.join(', '));
       withLock(() => {
         const c = loadCase(id);
         if (!c) fail(1, 'no such case: ' + id);
@@ -541,7 +541,7 @@ function main() {
       const ticket = opt('ticket');
       if (!id || !ticket) fail(1, 'usage: alias --case <caseId> --ticket "<alias text>"');
       const aHits = sanitizationHits(ticket);
-      if (aHits.length) fail(4, 'sanitization BLOCK — alias text refused: ' + aHits.join(', '));
+      if (aHits.length) fail(4, 'sanitization BLOCK: alias text refused: ' + aHits.join(', '));
       withLock(() => {
         const ix = loadIndex();
         const c = loadCase(id);
@@ -565,7 +565,7 @@ function main() {
       if (!id) fail(1, 'usage: invalidate <caseId> --reason "<why>"');
       const reason = opt('reason') || '(none given)';
       const rHits = sanitizationHits(reason);
-      if (rHits.length) fail(4, 'sanitization BLOCK — reason text refused: ' + rHits.join(', '));
+      if (rHits.length) fail(4, 'sanitization BLOCK: reason text refused: ' + rHits.join(', '));
       withLock(() => {
         const c = loadCase(id);
         if (!c) fail(1, 'no such case: ' + id);

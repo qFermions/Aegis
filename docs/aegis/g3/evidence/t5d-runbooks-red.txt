@@ -1,0 +1,73 @@
+# command: node --test scripts/adapters/g3-runbooks.test.js
+# commit: f0687ec (plus uncommitted changes in the working tree)  started: 2026-10-28T09:27:29Z  node: v24.22.1
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (12.229426ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.128556ms)
+✖ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.823524ms)
+✖ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (0.505925ms)
+✖ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (0.562362ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 96.456536
+
+✖ failing tests:
+
+test at scripts/adapters/g3-runbooks.test.js:65:5
+✖ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.823524ms)
+  AssertionError [ERR_ASSERTION]: intune-compliance calls verify-device-synced
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:70:43)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:65:5
+✖ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (0.505925ms)
+  AssertionError [ERR_ASSERTION]: fleet-host-health calls verify-checked-in
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:70:43)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:65:5
+✖ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (0.562362ms)
+  AssertionError [ERR_ASSERTION]: mac-troubleshoot calls verify-checked-in
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:70:43)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:27:30Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

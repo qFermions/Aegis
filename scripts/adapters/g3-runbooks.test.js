@@ -34,7 +34,23 @@ const CONNECTORS = {
     runbooks: {
       'password-reset': ['verify-password-changed', 'verify-signin'],
       'mfa-issue': ['verify-mfa-cleared', 'verify-mfa-method', 'verify-signin'],
+      'intune-compliance': ['verify-device-synced'],
     },
+  },
+  // task 5d: the device-status and MDM-sync read-backs in the troubleshooting runbooks
+  fleet: {
+    client: () => require('./fleet-client.js'),
+    env: { FLEET_URL: 'fleet.example.invalid' },
+    values: { '[HOST_ID]': '7', '[NOT_BEFORE]': '2026-10-28T09:00:00Z', '[SERIAL_NUMBER]': 'C02TEST0001' },
+    runbooks: { 'fleet-host-health': ['verify-checked-in'] },
+    only: ['verify-checked-in'],
+  },
+  jamf: {
+    client: () => require('./jamf-client.js'),
+    env: { JAMF_URL: 'jamf.example.invalid' },
+    values: { '[SERIAL_NUMBER]': 'C02TEST0001', '[NOT_BEFORE]': '2026-10-28T09:00:00Z' },
+    runbooks: { 'mac-troubleshoot': ['verify-checked-in'] },
+    only: ['verify-checked-in'],
   },
 };
 
@@ -47,7 +63,9 @@ function commandLines(text, connector) {
 for (const [connector, c] of Object.entries(CONNECTORS)) {
   for (const [runbook, required] of Object.entries(c.runbooks)) {
     test(`${runbook}: every ${connector} line runs as written (dry run) and the required read-backs are there`, async () => {
-      const lines = commandLines(read(runbook), connector);
+      // a connector with `only` is checked on the G3 read-backs alone; its other lines
+      // belong to the lane G2 runbook tests
+      const lines = commandLines(read(runbook), connector).filter((argv) => !c.only || c.only.includes(argv[0]));
       const commands = new Set(lines.map((argv) => argv[0]));
       for (const name of required) assert.ok(commands.has(name), `${runbook} calls ${name}`);
       for (const argv of lines) {

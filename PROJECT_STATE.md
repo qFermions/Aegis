@@ -34,7 +34,8 @@ runbook (rows 30, 31), the ticket graph (row 23), replay and memory engines (row
 2026-10-27; every suite behind them ran again on the branch in `node --test`
 (`docs/baseline/branch/node-test.txt:746-749`). The ticket evals prove routing and runbook
 structure, not answer quality. After batch G2 the map has 62 rows: 39 verified now, 6
-implemented but unverified, 14 partial, 3 missing (`docs/aegis/capability-map.md:72`).
+implemented but unverified, 14 partial, 3 missing; after batch G3 it has 83 rows: 60 verified
+now, 7 implemented but unverified, 13 partial, 3 missing (both counts: `docs/aegis/capability-map.md:93`).
 
 ## Changed by batch 1
 

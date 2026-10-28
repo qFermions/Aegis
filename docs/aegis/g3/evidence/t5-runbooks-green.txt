@@ -1,19 +1,19 @@
 # command: node --test scripts/adapters/g3-runbooks.test.js
-# commit: ebb8cc1  started: 2026-10-28T11:19:44Z  node: v24.22.1
-✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (11.769014ms)
-✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.143648ms)
-✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.481632ms)
-✔ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (6.36529ms)
-✔ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (2.054596ms)
-✔ github-org-security: every github line runs as written (dry run) and the required read-backs are there (1.615214ms)
-✔ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (2.424254ms)
-✔ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (1.938349ms)
-✔ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (5.299016ms)
-✔ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (1.545329ms)
-✔ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (1.016242ms)
-✔ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (6.746576ms)
-✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (2.573314ms)
-✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (2.8952ms)
+# commit: a237fac  started: 2026-10-28T12:42:33Z  node: v24.22.1
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (10.09618ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.08897ms)
+✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.558157ms)
+✔ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (4.714843ms)
+✔ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (1.666539ms)
+✔ github-org-security: every github line runs as written (dry run) and the required read-backs are there (1.247486ms)
+✔ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (1.896981ms)
+✔ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (1.425368ms)
+✔ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (5.680975ms)
+✔ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (1.383116ms)
+✔ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (0.988898ms)
+✔ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (3.429862ms)
+✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (2.853605ms)
+✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (2.682533ms)
 ℹ tests 14
 ℹ suites 0
 ℹ pass 14
@@ -21,6 +21,6 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 128.163369
-# exit: 0  finished: 2026-10-28T11:19:44Z
+ℹ duration_ms 122.50162
+# exit: 0  finished: 2026-10-28T12:42:34Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

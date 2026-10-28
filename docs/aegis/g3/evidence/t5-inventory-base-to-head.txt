@@ -1,5 +1,5 @@
 # command: node docs/aegis/g3/evidence/tools/inventory-diff.js f185071
-# commit: ebb8cc1  started: 2026-10-28T11:19:44Z  node: v24.22.1
+# commit: a237fac  started: 2026-10-28T12:42:33Z  node: v24.22.1
 examples: 676 at f185071, 727 now; added 51, removed 0, mode changed 0
   added in .claude/commands/github-branch-protection.md: gated 12
   added in .claude/commands/github-offboard-member.md: gated 4, preview 1
@@ -16,5 +16,5 @@ examples: 676 at f185071, 727 now; added 51, removed 0, mode changed 0
 clientBoundaries: 9 at f185071, 9 now; added 0, removed 0, mode changed 0
   added by mode: {}
   entries present at both with another field changed: {}
-# exit: 0  finished: 2026-10-28T11:19:44Z
+# exit: 0  finished: 2026-10-28T12:42:33Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

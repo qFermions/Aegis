@@ -1,80 +1,109 @@
-# command: bash -c echo '--- the charter command, hit lines:'; git log -p f185071..HEAD | grep -n -i -E 'api[_-]?key|secret|token|password|/Users/|C:\\\\Users|@gmail' | wc -l; echo '--- grouped:'; node docs/aegis/g3/evidence/tools/leak-grep.js f185071
-# commit: ebb8cc1  started: 2026-10-28T11:20:55Z  node: v24.22.1
+# command: bash -c echo '--- the charter command, hit lines:'; git log -p f185071..HEAD | grep -n -i -E 'api[_-]?key|secret|token|password|/Users/|C:\\Users|@gmail' | wc -l; echo '--- grouped:'; node docs/aegis/g3/evidence/tools/leak-grep.js f185071
+# commit: a237fac  started: 2026-10-28T12:43:45Z  node: v24.22.1
 --- the charter command, hit lines:
-1334
+1546
 --- grouped:
-charter grep: 1333 hit lines (case-insensitive) in 117 files; by keyword: {"token":721,"secret":247,"@gmail":1,"/users/":64,"password":290,"api_key":10}
-case-sensitive /Users/, C:\Users or @gmail (a personal path or mail): 4
-  362: docs/aegis/g3/evidence/tools/leak-grep.js: +// the charter's expression: api[_-]?key|secret|token|password|/Users/|C:\\Users|@gmail, case-insensitive
-  363: docs/aegis/g3/evidence/tools/leak-grep.js: +const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\\\Users|@gmail/i;
-  364: docs/aegis/g3/evidence/tools/leak-grep.js: +const personal = /\/Users\/|C:\\\\Users|@gmail/; // case-sensitive: a personal path or mail
-  397: docs/aegis/g3/evidence/tools/leak-grep.js: +console.log(`case-sensitive /Users/, C:\\Users or @gmail (a personal path or mail): ${personalHits.length}`);
+charter grep: 1546 hit lines (case-insensitive) in 131 files; by keyword: {"@gmail":7,"secret":291,"/users/":69,"token":813,"password":356,"api_key":10}
+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 27
+  120: (commit 0e3edaf header and message):     fix(evidence): leak-grep.js searches every line, diff headers included, so its charter count equals the charter grep's (1537 = 1537 at this commit); the per
+  131: docs/aegis/g3/evidence/tools/leak-grep.js:  // the charter's expression (as grep -E receives it: C:\\Users is one backslash), case-insensitive
+  132: docs/aegis/g3/evidence/tools/leak-grep.js:  const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\Users|@gmail/i;
+  133: docs/aegis/g3/evidence/tools/leak-grep.js: -const personal = /\/Users\/|C:\\Users|@gmail/; // case-sensitive: a personal path or mail
+  134: docs/aegis/g3/evidence/tools/leak-grep.js: +// a personal path or mail, over every line: /Users/ case-sensitive (so the API path /users/ is not
+  136: docs/aegis/g3/evidence/tools/leak-grep.js: +// @gmail in any case
+  159: docs/aegis/g3/evidence/tools/leak-grep.js: -console.log(`case-sensitive /Users/, C:\\Users or @gmail (a personal path or mail): ${personalHits.length}`);
+  160: docs/aegis/g3/evidence/tools/leak-grep.js: +console.log(`a personal path or mail on any line (/Users/; C:\\Users or C:\\\\Users in any case; @gmail): ${personalHits.length}`);
+  1180: (commit 185faf2 header and message):     fix(evidence): leak-grep.js reads the charter's C:\\Users as grep -E does, one backslash, so a real Windows home path is found (code review round 2, finding
+  1193: docs/aegis/g3/evidence/tools/leak-grep.js: -// the charter's expression: api[_-]?key|secret|token|password|/Users/|C:\\Users|@gmail, case-insensitive
+  1194: docs/aegis/g3/evidence/tools/leak-grep.js: -const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\\\Users|@gmail/i;
+  1195: docs/aegis/g3/evidence/tools/leak-grep.js: -const personal = /\/Users\/|C:\\\\Users|@gmail/; // case-sensitive: a personal path or mail
+  1196: docs/aegis/g3/evidence/tools/leak-grep.js: +// the charter's expression (as grep -E receives it: C:\\Users is one backslash), case-insensitive
+  1197: docs/aegis/g3/evidence/tools/leak-grep.js: +const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\Users|@gmail/i;
+  1198: docs/aegis/g3/evidence/tools/leak-grep.js: +const personal = /\/Users\/|C:\\Users|@gmail/; // case-sensitive: a personal path or mail
+  1918: checks.md: +| D10 no secret, token, personal path, real name, internal hostname or private email | pass | `d10-leak-grep.txt`: the charter command finds 1,334 hit lines (`
+  2146: docs/aegis/g3/evidence/d10-leak-grep.txt: +# command: bash -c echo '--- the charter command, hit lines:'; git log -p f185071..HEAD | grep -n -i -E 'api[_-]?key|secret|token|password|/Users/|C:\\\\Users|
+  2151: docs/aegis/g3/evidence/d10-leak-grep.txt: +charter grep: 1333 hit lines (case-insensitive) in 117 files; by keyword: {"token":721,"secret":247,"@gmail":1,"/users/":64,"password":290,"api_key":10}
+  2152: docs/aegis/g3/evidence/d10-leak-grep.txt: +case-sensitive /Users/, C:\Users or @gmail (a personal path or mail): 4
+  2153: docs/aegis/g3/evidence/d10-leak-grep.txt: +  362: docs/aegis/g3/evidence/tools/leak-grep.js: +// the charter's expression: api[_-]?key|secret|token|password|/Users/|C:\\Users|@gmail, case-insensitive
+  2154: docs/aegis/g3/evidence/d10-leak-grep.txt: +  363: docs/aegis/g3/evidence/tools/leak-grep.js: +const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\\\Users|@gmail/i;
+  2155: docs/aegis/g3/evidence/d10-leak-grep.txt: +  364: docs/aegis/g3/evidence/tools/leak-grep.js: +const personal = /\/Users\/|C:\\\\Users|@gmail/; // case-sensitive: a personal path or mail
+  2156: docs/aegis/g3/evidence/d10-leak-grep.txt: +  397: docs/aegis/g3/evidence/tools/leak-grep.js: +console.log(`case-sensitive /Users/, C:\\Users or @gmail (a personal path or mail): ${personalHits.length}`)
+  5932: docs/aegis/g3/evidence/tools/leak-grep.js: +// the charter's expression: api[_-]?key|secret|token|password|/Users/|C:\\Users|@gmail, case-insensitive
+  5933: docs/aegis/g3/evidence/tools/leak-grep.js: +const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\\\Users|@gmail/i;
+  5934: docs/aegis/g3/evidence/tools/leak-grep.js: +const personal = /\/Users\/|C:\\\\Users|@gmail/; // case-sensitive: a personal path or mail
+  5967: docs/aegis/g3/evidence/tools/leak-grep.js: +console.log(`case-sensitive /Users/, C:\\Users or @gmail (a personal path or mail): ${personalHits.length}`);
 hits by file (path: lines):
   scripts/adapters/okta-client.test.js: 143
+  docs/aegis/g3/evidence/d12-whole-suite-under-tripwire.txt: 107
   .claude/commands/okta-user-lifecycle.md: 82
   docs/aegis/g3/baseline/node-test.txt: 78
   docs/aegis/g3/vendor-facts.md: 76
   .claude/commands/github-security-alerts.md: 74
   scripts/adapters/scope-manifest.json: 68
+  docs/aegis/g3/evidence/t5-safety-gates-green.txt: 66
   scripts/adapters/okta-client.js: 41
-  scripts/adapters/msgraph-client.test.js: 38
+  scripts/adapters/msgraph-client.test.js: 37
   scripts/adapters/readonly-contract.js: 37
   scripts/adapters/msgraph-client.js: 31
   scripts/adapters/github-client.test.js: 27
-  scripts/adapters/scope-preflight.test.js: 26
   scripts/adapters/contract-g3.test.js: 25
+  docs/aegis/g3/evidence/tools/leak-grep.js: 24
   scripts/adapters/README.md: 24
+  scripts/adapters/scope-preflight.test.js: 24
   docs/aegis/g3/scope-manifest.md: 23
   scripts/adapters/github-client.js: 23
-  docs/aegis/g3/evidence/t5-safety-gates-green.txt: 22
   docs/aegis/g3/evidence/t2-dead-clause-red.txt: 22
+  docs/aegis/capability-map.md: 21
   scripts/eval/g3-tickets.json: 21
   docs/aegis/g3/evidence/t2-dead-clause-green.txt: 18
-  scripts/jira-client.js: 17
-  scripts/g3-boundary.test.js: 14
-  scripts/adapters/failure-messages.test.js: 14
+  docs/aegis/boundary-audit.md: 16
+  scripts/jira-client.js: 16
   .claude/commands/okta-mfa-reset.md: 13
+  scripts/g3-boundary.test.js: 13
+  scripts/adapters/failure-messages.test.js: 13
+  checks.md: 12
   .claude/commands/okta-app-assignment.md: 12
-  docs/aegis/capability-map.md: 11
   .claude/commands/github-org-security.md: 11
   docs/aegis/g3/evidence/t5b-okta-green.txt: 11
   docs/aegis/g3/baseline/pre-commit-check-all.txt: 11
   .claude/commands/gws-audit-log.md: 10
   scripts/jira-contract.test.js: 10
-  docs/aegis/g3/evidence/tools/leak-grep.js: 9
-  docs/aegis/boundary-audit.md: 9
   scripts/audit/audit-log.js: 9
   docs/aegis/g3/vendor-facts-to-check.md: 9
+  docs/explainers/g3-production-hardening.md: 8
+  docs/aegis/g3/evidence/d10-leak-grep.txt: 8
+  .claude/commands/password-reset.md: 8
   scripts/replay/replay-cli.js: 8
   scripts/adapters/gws-client.js: 8
-  scripts/adapters/endpoint-sync.test.js: 7
-  .claude/commands/password-reset.md: 7
   docs/aegis/g3/evidence/t5a-github-client-green.txt: 7
-  scripts/intake/intake.test.js: 7
   scripts/graph/sanitize.js: 7
   docs/aegis/g3/evidence/security-review-1.md: 6
-  docs/explainers/g3-production-hardening.md: 6
   docs/aegis/g3/evidence/t5-g3-eval-final.txt: 6
   scripts/tier/tier-guard.js: 6
-  scripts/adapters/g3-runbooks.test.js: 6
+  scripts/adapters/endpoint-sync.test.js: 6
   docs/aegis/g3/evidence/t5c-msgraph-green.txt: 6
   docs/aegis/g3/evidence/t5a-github-corpus-red.txt: 6
+  scripts/intake/intake.test.js: 6
   scripts/adapters/slack-client.js: 6
   docs/aegis/g3/evidence/t4c-contract-green.txt: 6
-  scripts/audit/audit-log.test.js: 6
   docs/evidence/ticket-eval-samples.md: 6
   docs/aegis/g3/baseline/ms-ticket-eval.txt: 6
+  progress.md: 5
+  scripts/adapters/g3-runbooks.test.js: 5
   docs/security/STATE_CHANGE_INVENTORY.json: 5
   docs/aegis/g3/evidence/t5a-github-absent-green.txt: 5
   scripts/intake/intake.js: 5
   scripts/adapters/jamf-client.js: 5
   scripts/adapters/fleet-client.js: 5
+  scripts/audit/audit-log.test.js: 5
   docs/aegis/g3/evidence/t2-linear-repo-in-tmp-green.txt: 5
   .claude/commands/github-branch-protection.md: 4
   scripts/adapters/scopes.js: 4
   docs/aegis/g3/evidence/t4b-g3-eval-report.txt: 4
   scripts/adapters/linear-client.test.js: 4
   docs/aegis/g3/baseline/gws-ticket-eval.txt: 4
+  docs/aegis/g3/evidence/t5-runbooks-green.txt: 3
+  docs/aegis/g3/evidence/t5-tier-green.txt: 3
   scripts/audit/README.md: 3
   .claude/commands/github-offboard-member.md: 3
   .claude/commands/github-repo-access.md: 3
@@ -85,13 +114,12 @@ hits by file (path: lines):
   scripts/adapters/operator-message.js: 3
   scripts/audit/change-record.js: 3
   scripts/untrusted/poisoned-memory.test.js: 3
-  checks.md: 3
   docs/aegis/g3/baseline/replay-demo.txt: 3
+  PROJECT_STATE.md: 2
+  docs/aegis/g3/evidence/t7-boundary-grep-write-verbs.txt: 2
   scripts/graph/engine.js: 2
   modules/security/placeholder-dictionary.md: 2
-  progress.md: 2
   docs/aegis/g3/evidence/t5b-okta-manifest-red.txt: 2
-  docs/aegis/g3/evidence/t5c-runbooks-green.txt: 2
   docs/aegis/g3/evidence/t5c-msgraph-red.txt: 2
   docs/aegis/g3/evidence/t5a-github-client-red.txt: 2
   scripts/eval/README.md: 2
@@ -102,16 +130,25 @@ hits by file (path: lines):
   docs/aegis/g3/evidence/t2-jira-contract-red.txt: 2
   docs/aegis/g3/evidence/t2-inventory-diff.txt: 2
   docs/review/batches/g2-checks.md: 2
-  PROJECT_STATE.md: 1
-  docs/aegis/g3/evidence/t5-runbooks-green.txt: 1
-  docs/aegis/g3/evidence/t5-tier-green.txt: 1
-  docs/aegis/g3/evidence/t7-boundary-grep-write-verbs.txt: 1
+  (commit 0e3edaf header and message): 1
   .claude/commands/okta-group-membership.md: 1
   PRODUCT_CONTRACT.md: 1
+  (commit b478fe6 header and message): 1
+  (commit f1d3439 header and message): 1
   .claude/commands/mac-troubleshoot.md: 1
   docs/aegis/g3/evidence/t5d-runbooks-green.txt: 1
   docs/aegis/g3/evidence/t5d-runbooks-red.txt: 1
+  (commit e40626e header and message): 1
+  docs/aegis/g3/evidence/t5c-runbooks-green.txt: 1
+  (commit 65a2e98 header and message): 1
+  (commit 3709976 header and message): 1
+  (commit a7c4918 header and message): 1
+  (commit 2b402b9 header and message): 1
   docs/aegis/g3/evidence/t3a-scopes-cli-dry.txt: 1
+  (commit d637281 header and message): 1
+  (commit fd967a2 header and message): 1
+  (commit 27d04fc header and message): 1
+  (commit 5d6bbd3 header and message): 1
   docs/aegis/g3/evidence/t3b-audit-green.txt: 1
   docs/aegis/g3/evidence/t2-memory-b21-green.txt: 1
   docs/aegis/g3/evidence/t2-memory-b21-red.txt: 1
@@ -128,5 +165,5 @@ hits by file (path: lines):
   docs/aegis/g3/baseline/node-test-clone-under-tmp.txt: 1
   docs/aegis/g3/baseline/release-boundary-check.txt: 1
 credential-shape pass over added lines: 0 hit(s)
-# exit: 0  finished: 2026-10-28T11:20:56Z
+# exit: 0  finished: 2026-10-28T12:43:46Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

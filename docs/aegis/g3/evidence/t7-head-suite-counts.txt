@@ -1,5 +1,5 @@
 # command: bash docs/aegis/g3/evidence/tools/suite-counts.sh
-# commit: ebb8cc1  started: 2026-10-28T11:18:07Z  node: v24.22.1
+# commit: a237fac  started: 2026-10-28T12:40:36Z  node: v24.22.1
 scripts/adapters/github-client.test.js: tests 14 pass 14 fail 0
 scripts/adapters/okta-client.test.js: tests 28 pass 28 fail 0
 scripts/adapters/msgraph-client.test.js: tests 6 pass 6 fail 0
@@ -10,8 +10,8 @@ scripts/adapters/contract-g3.test.js: tests 10 pass 10 fail 0
 scripts/adapters/failure-messages.test.js: tests 14 pass 14 fail 0
 scripts/adapters/readonly-contract.test.js: tests 23 pass 23 fail 0
 scripts/intake/intake.test.js: tests 33 pass 33 fail 0
-scripts/audit/audit-log.test.js: tests 10 pass 10 fail 0
-scripts/audit/change-record.test.js: tests 7 pass 7 fail 0
+scripts/audit/audit-log.test.js: tests 13 pass 13 fail 0
+scripts/audit/change-record.test.js: tests 13 pass 13 fail 0
 scripts/eval/g3-ticket-eval.test.js: tests 7 pass 7 fail 0
 scripts/eval/latency.test.js: tests 1 pass 1 fail 0
 scripts/g3-boundary.test.js: tests 10 pass 10 fail 0
@@ -21,5 +21,12 @@ scripts/risk_tier.test.js: tests 27 pass 27 fail 0
 scripts/tier/tier-routing.test.js: tests 60 pass 60 fail 0
 scripts/command-safety-gates.test.js: tests 474 pass 474 fail 0
 scripts/repository-structure.test.js: tests 13 pass 13 fail 0
-# exit: 0  finished: 2026-10-28T11:19:44Z
+scripts/jira-contract.test.js: tests 8 pass 8 fail 0
+scripts/adapters/linear-client.test.js: tests 20 pass 20 fail 0
+scripts/gws-runbooks.test.js: tests 15 pass 15 fail 0
+scripts/jira-client.test.js: tests 65 pass 65 fail 0
+scripts/untrusted/instruction-injection.test.js: tests 21 pass 21 fail 0
+scripts/untrusted/poisoned-memory.test.js: tests 29 pass 29 fail 0
+scripts/untrusted/wrong-customer.test.js: tests 18 pass 18 fail 0
+# exit: 0  finished: 2026-10-28T12:42:33Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

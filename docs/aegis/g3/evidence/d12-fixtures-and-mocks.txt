@@ -1,5 +1,5 @@
 # command: bash docs/aegis/g3/evidence/tools/fixtures-and-mocks.sh f185071
-# commit: ebb8cc1  started: 2026-10-28T11:20:56Z  node: v24.22.1
+# commit: a237fac  started: 2026-10-28T12:43:46Z  node: v24.22.1
 --- fixture files added (data read by tests or the corpus scorer):
 scripts/adapters/scope-manifest.json
 scripts/eval/g3-intake/email-1.eml
@@ -63,5 +63,5 @@ scripts/untrusted/wrong-customer.test.js: tripwire 0, injected transport lines 0
       1 MS_TENANT_ID: '11111111-2222-4333-8444-555555555555'
       2 OKTA_ORG_URL: 'okta.example.invalid'
       1 OKTA_ORG_URL: 'okta.example.org'
-# exit: 0  finished: 2026-10-28T11:20:56Z
+# exit: 0  finished: 2026-10-28T12:43:46Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

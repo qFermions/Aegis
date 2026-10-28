@@ -1,5 +1,5 @@
 # command: bash docs/aegis/g3/evidence/tools/test-counts.sh <clone>
-# commit: ebb8cc1  started: 2026-10-28T11:22:51Z  node: v24.22.1
+# commit: a237fac  started: 2026-10-28T12:45:47Z  node: v24.22.1
 scripts/adapters/contract-g3.test.js: base 0 head 10 (10)
 scripts/adapters/endpoint-sync.test.js: base 0 head 2 (2)
 scripts/adapters/failure-messages.test.js: base 0 head 14 (14)
@@ -9,8 +9,8 @@ scripts/adapters/linear-client.test.js: base 19 head 20 (1)
 scripts/adapters/msgraph-client.test.js: base 0 head 6 (6)
 scripts/adapters/okta-client.test.js: base 0 head 28 (28)
 scripts/adapters/scope-preflight.test.js: base 0 head 8 (8)
-scripts/audit/audit-log.test.js: base 0 head 10 (10)
-scripts/audit/change-record.test.js: base 0 head 7 (7)
+scripts/audit/audit-log.test.js: base 0 head 13 (13)
+scripts/audit/change-record.test.js: base 0 head 13 (13)
 scripts/command-safety-gates.test.js: base 433 head 474 (41)
 scripts/eval/g3-ticket-eval.test.js: base 0 head 7 (7)
 scripts/eval/latency.test.js: base 0 head 1 (1)
@@ -25,7 +25,7 @@ scripts/tier/tier-routing.test.js: base 54 head 60 (6)
 scripts/untrusted/instruction-injection.test.js: base 18 head 21 (3)
 scripts/untrusted/poisoned-memory.test.js: base 24 head 29 (5)
 scripts/untrusted/wrong-customer.test.js: base 17 head 18 (1)
-files: 52; tests added 240; tests removed 0
-whole run: base 1045, head 1285
-# exit: 0  finished: 2026-10-28T11:31:43Z
+files: 52; tests added 249; tests removed 0
+whole run: base 1045, head 1294
+# exit: 0  finished: 2026-10-28T12:54:58Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -530,7 +530,7 @@ test('--not-before must be a real calendar time: an impossible date is refused b
     let printed = '';
     const code = await require(`./${file}`).run(argv, env, { transport, out: (s) => { printed += s; }, err: (s) => { printed += s; }, sleep: async () => {} });
     assert.equal(code, 1, `${file}: an impossible --not-before is bad input`);
-    assert.match(printed, /--not-before/, `${file}: the refusal is about --not-before, not another flag or a credential`);
+    assert.match(printed, /--not-before is not a real date and time/, `${file}: the refusal names an impossible date, not a wrong format, another flag or a credential (round 3, finding 7)`);
     assert.equal(transport.calls.length, 0, `${file}: nothing is sent`);
   }
 });

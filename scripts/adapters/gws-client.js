@@ -391,7 +391,8 @@ function validate(command, def, args) {
   }
   for (const [flag, key] of [['start', 'start'], ['end', 'end'], ['not-before', 'notBefore']]) {
     if (args[flag] === undefined) continue;
-    if (!realTime(args[flag])) throw new RefusedError(`--${flag} must be an ISO 8601 UTC time such as 2026-01-31T09:30:00.000Z`);
+    if (!ISO_UTC.test(args[flag])) throw new RefusedError(`--${flag} must be an ISO 8601 UTC time such as 2026-01-31T09:30:00.000Z`);
+    if (!realTime(args[flag])) throw new RefusedError(`--${flag} is not a real date and time`);
     a[key] = args[flag];
   }
   if (a.start !== undefined && a.end !== undefined && Date.parse(a.start) >= Date.parse(a.end)) throw new RefusedError('--start must be before --end');

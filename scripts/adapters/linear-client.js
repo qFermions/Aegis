@@ -352,9 +352,10 @@ function validate(command, def, args) {
     a.sha256 = args['expect-sha256'];
   }
   if (args['not-before'] !== undefined) {
-    if (!ISO_UTC.test(args['not-before']) || !realCalendarTime(args['not-before'])) {
+    if (!ISO_UTC.test(args['not-before'])) {
       throw new RefusedError('--not-before must be the ISO 8601 UTC time that note printed, such as 2026-01-31T09:30:00.000Z');
     }
+    if (!realCalendarTime(args['not-before'])) throw new RefusedError('--not-before is not a real date and time');
     a.notBefore = args['not-before'];
   }
   if (args.state !== undefined) a.state = plainName(args.state, 'state');

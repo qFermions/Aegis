@@ -73,7 +73,7 @@ Row count by status at `d266f6b`: verified now 16, implemented but unverified 1,
 
 ## Drift
 
-Each bullet: the claim (file and line), what the repo shows (evidence), and the gap.
+Each bullet: the claim (file and line), what the repo shows (evidence), and the gap. A claim's line reference is as of the audit at `d266f6b`, and a "Resolved in batch 1" note cites `3592bd1`; batch G2 moved lines in `PRODUCT_CONTRACT.md`, `PROJECT_STATE.md`, `README.md` and `scripts/graph/engine.js`, so open those files at that commit to follow a reference (`git show 3592bd1:PROJECT_STATE.md`). The session-scope, graph live-mode and audit-cadence bullets were re-pointed to the G2 head, because their references no longer matched any commit (G2 code review).
 
 - **Release status.** `PROJECT_STATE.md:10` says "v8.9 (in review, batch G1, 2026-10-15)". `docs/aegis/evidence/git-pr2-merge.txt` shows PR #2 merged as `e7c445c` on 2026-10-26 and that commit is an ancestor of `d266f6b`; PR #3 (review layers) merged on top as `d5fc8c0`. Gap: v8.9 is merged, not in review, and the state file does not mention the PR #3 review layers (`REVIEW.md`, `scripts/risk_tier.mjs`, the evidence-reviewer card). Resolved in batch 1: `PROJECT_STATE.md:10-11` says v8.9 is merged, not in review (`82c1182`).
 - **Current work pointer.** `PROJECT_STATE.md:27-28` says `node scripts/dev/claim.js list` and `tasks/active/` are the live truth for in-flight work. `docs/aegis/evidence/claim-list.txt` returns 0 active claims and `tasks/active/` holds only `README.md` (`docs/aegis/evidence/ls-aegisco-lab.txt:4-5`), while the `scripts/jira-client.js` audit and the new injection, poisoned-memory and wrong-customer tests are in progress. Gap: the named live-truth sources show nothing in flight.

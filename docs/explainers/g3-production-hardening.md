@@ -22,11 +22,11 @@ For the owner. One page. Details: `docs/aegis/production-readiness.md`, `PROJECT
 - Each connector checks what its credential can do before it uses an answer. Where the vendor shows granted scopes (Slack, GitHub classic tokens, Google Workspace, Okta, Fleet), a write scope is refused. Where it does not (Linear, Jira, Jamf Pro, Microsoft Graph), the connector says so on first use, and `docs/aegis/g3/scope-manifest.md` tells you exactly what to grant.
 - Every connector call, failure, procedure, approval and read-back goes into a local hash-chained audit trail. Editing, cutting or reordering it is detected. An approval authorizes a person's procedure; it never triggers a write.
 - Every failure prints what happened, what was not done and the next step, with no stack trace or secret. Retries back off with jitter and follow Retry-After.
-- The deterministic path from intake to runbook selection: p95 0.47 to 0.68 ms per ticket over three runs, slowest ticket 1.04 ms (budget p95 50 ms). Each command-line tool a session starts adds about 31 ms of Node process start (`docs/aegis/g3/evidence/t6c-latency-runs.txt`). Model answer time is not measured.
+- The deterministic path from intake to runbook selection: p95 0.52 to 0.85 ms per ticket over three runs, slowest ticket 1.16 ms (budget p95 50 ms). Each command-line tool a session starts adds 35 to 43 ms of Node process start (`docs/aegis/g3/evidence/t6c-latency-runs.txt`). Model answer time is not measured.
 
 ## A bug found on the way
 
-Twelve tier floors that already shipped took cubic or worse time on a long line that never completes them: 11 seconds to about 40 minutes for one 20 KB pasted line. They are rewritten with the same matches (0 disagreements in 896,258 comparisons), and a test now rejects that shape in any floor (`docs/review/incidents.md`).
+Twelve tier floors that already shipped took cubic or worse time on a long line that never completes them: 11 seconds to about 40 minutes for one 20 KB pasted line. They are rewritten with the same matches (0 disagreements in 896,280 comparisons), and a test now rejects that shape in any floor (`docs/review/incidents.md`).
 
 ## Decisions for you
 

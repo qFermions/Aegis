@@ -97,11 +97,12 @@ desk hardening in advisory mode: no new write path; every connector reads only. 
 readiness is **NOT PASSED**: `docs/aegis/production-readiness.md` lists the 12 criteria, which
 rows this batch proves for each platform and which only the owner can run (real tenants,
 held-out cases, operator validation, vendor facts by hand). Captures in `docs/aegis/g3/evidence/`;
-every G3 suite count at the batch head is in `docs/aegis/g3/evidence/t7-head-suite-counts.txt`.
+every G3 suite count at `ebb8cc1` (after code review round 1) is in
+`docs/aegis/g3/evidence/t7-head-suite-counts.txt`.
 
 | Platform | Status | Commands | Proof (command and count) |
 |---|---|---|---|
-| GitHub | landed whole: connector, 5 runbooks, 5 floors, corpus | `/github-repo-access`, `/github-branch-protection`, `/github-org-security`, `/github-offboard-member`, `/github-security-alerts` | `node scripts/eval/g3-ticket-eval.js`: 10/10 GitHub tickets, 5/5 pairs (`docs/aegis/g3/evidence/t5-g3-eval-final.txt:62`); `node --test scripts/adapters/github-client.test.js` 14/14; every runbook connector line runs as written, 5/5 (`t5-runbooks-green.txt:6-10`) |
+| GitHub | landed whole: connector, 5 runbooks, 5 floors, corpus | `/github-repo-access`, `/github-branch-protection`, `/github-org-security`, `/github-offboard-member`, `/github-security-alerts` | `node scripts/eval/g3-ticket-eval.js`: 10/10 GitHub tickets (`docs/aegis/g3/evidence/t5-g3-eval-final.txt:62`), 5/5 pairs (`:53-57`); `node --test scripts/adapters/github-client.test.js` 14/14; every runbook connector line runs as written, 5/5 (`t5-runbooks-green.txt:6-10`) |
 | Okta | landed whole: connector, read-backs, group runbook | `/okta-user-lifecycle`, `/okta-mfa-reset`, `/okta-app-assignment` (read-backs added), `/okta-group-membership` (new) | G3 eval: 8/8 Okta tickets (`t5-g3-eval-final.txt:63`); `node --test scripts/adapters/okta-client.test.js` 28/28; runbook lines 4/4 (`t5-runbooks-green.txt:11-14`) |
 | Microsoft 365 (Graph) | landed whole: connector and read-backs | `/password-reset`, `/mfa-issue`, `/intune-compliance` (read-backs added) | G3 eval: 9/9 Microsoft tickets (`t5-g3-eval-final.txt:64`); `node --test scripts/adapters/msgraph-client.test.js` 6/6; runbook lines 3/3 (`t5-runbooks-green.txt:3-5`) |
 | Fleet | read-back added | `/fleet-host-health` (`verify-checked-in`) | `node --test scripts/adapters/endpoint-sync.test.js` 2/2; runbook lines 1/1 (`t5-runbooks-green.txt:15`) |
@@ -113,7 +114,7 @@ every G3 suite count at the batch head is in `docs/aegis/g3/evidence/t7-head-sui
   (`scripts/adapters/scope-manifest.json`, `docs/aegis/g3/scope-manifest.md`); a hash-chained
   local audit trail and change records (`scripts/audit/`); every connector failure ends in a
   named state with a two-part operator message; latency budget p95 50 ms per ticket, measured
-  0.47 to 0.68 ms (`docs/aegis/g3/evidence/t6c-latency-runs.txt`).
+  0.52 to 0.85 ms over three runs (`docs/aegis/g3/evidence/t6c-latency-runs.txt`).
 - **Shipped bug fixed:** twelve tier floors and ten engine twins took cubic or worse time on a
   long line (11 s to about 40 minutes on 20 KB); fixed with the same matches and a test that
   rejects the shape (`docs/review/incidents.md`).

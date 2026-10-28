@@ -55,7 +55,7 @@ const LINEAR_DELETION = {
 };
 
 // No floor chains two unbounded gaps ([^.]* ... [^.]*) in sequence: on a long sentence that
-// never completes the match that is cubic or worse (11 s to 40 minutes on 20 KB, batch G3).
+// never completes the match that is cubic or worse (9 to 48 s on 20 KB for two gaps; batch G3).
 // Every gap but the last is read once as (?=([^.]*?X))\N, which takes the text up to the
 // first X and never gives it back. scripts/tier/tier-routing.test.js checks both lists.
 const ESCALATION_PATTERNS = [

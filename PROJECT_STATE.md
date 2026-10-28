@@ -116,7 +116,7 @@ every G3 suite count at `ebb8cc1` (after code review round 1) is in
   named state with a two-part operator message; latency budget p95 50 ms per ticket, measured
   0.52 to 0.85 ms over three runs (`docs/aegis/g3/evidence/t6c-latency-runs.txt`).
 - **Shipped bug fixed:** twelve tier floors and ten engine twins took cubic or worse time on a
-  long line (11 s to about 40 minutes on 20 KB); fixed with the same matches and a test that
+  long line (9 to 48 s on 20 KB, the three-gap one far longer); fixed with the same matches and a test that
   rejects the shape (`docs/review/incidents.md`).
 - **Boundary:** `docs/aegis/boundary-audit.md` rows 29 to 40; `scripts/g3-boundary.test.js`
   (10 tests) proves no G3 command, connector, intake or audit path can write to a vendor system.

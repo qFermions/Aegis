@@ -1,0 +1,58 @@
+# command: node --test --test-name-pattern=A1[23] scripts/untrusted/instruction-injection.test.js
+# commit: 77c3e17  started: 2026-10-28T07:52:16Z  node: v24.22.1
+✖ A12 lookup returns CACHE_HIT only for a verified case with evidence, like render (233.04401ms)
+✖ A13 record refuses a dependency path that carries instruction text (76.068238ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 386.277184
+
+✖ failing tests:
+
+test at scripts/untrusted/instruction-injection.test.js:475:1
+✖ A12 lookup returns CACHE_HIT only for a verified case with evidence, like render (233.04401ms)
+  AssertionError [ERR_ASSERTION]: status approved, evidence synthetic fixture: methods blade read back after re-registration: exit 0: { "ok": true, "result": "CACHE_HIT", "caseId": "case-0001", "via": "exact", "verifiedAt": "2026-10-28T07:52:17.029Z", "deps": 0, "render": "node scripts/replay/replay-cli.js render case-0001" } | 
+  + actual - expected
+  
+  + 'CACHE_HIT'
+  - 'MISS'
+  
+      at TestContext.<anonymous> (<repo>/scripts/untrusted/instruction-injection.test.js:489:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'CACHE_HIT',
+    expected: 'MISS',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/untrusted/instruction-injection.test.js:495:1
+✖ A13 record refuses a dependency path that carries instruction text (76.068238ms)
+  AssertionError [ERR_ASSERTION]: a dependency path with an injection marker is a sanitization BLOCK: exit 0: { "ok": true, "caseId": "case-0001", "status": "candidate", "riskFloor": "none", "note": "not replayable until verified with evidence" } | 
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/untrusted/instruction-injection.test.js:500:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:52:17Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

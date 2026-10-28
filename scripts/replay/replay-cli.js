@@ -396,8 +396,10 @@ function main() {
       const solutionFile = opt('solution-file');
       if (!ticket || !solutionFile) fail(1, 'usage: record --ticket "<text>" --solution-file <path> [--deps p1,p2]');
       const solution = fs.readFileSync(solutionFile, 'utf8');
-      const hits = sanitizationHits(ticket + '\n' + solution);
-      if (hits.length) fail(4, 'sanitization BLOCK — refused to persist: ' + hits.join(', '));
+      const depPaths = (opt('deps') || '').split(',').filter(Boolean).map((p) => p.trim());
+      // the dependency paths are stored and printed later, so they are scanned like the text
+      const hits = [...sanitizationHits(ticket + '\n' + solution), ...depPaths.flatMap((p) => sanitizationHits(p))];
+      if (hits.length) fail(4, 'sanitization BLOCK — refused to persist: ' + Array.from(new Set(hits)).join(', '));
       withLock(() => {
         const ix = loadIndex();
         const k = keyOf(ticket);
@@ -412,7 +414,7 @@ function main() {
           riskAtRecord: risk,
           status: 'candidate', solution,
           shape: null,
-          deps: (opt('deps') || '').split(',').filter(Boolean).map((p) => ({ path: p.trim(), sha256: null })),
+          deps: depPaths.map((p) => ({ path: p, sha256: null })),
           provenance: { createdAt: now, verifiedAt: null, evidence: null },
           history: [{ at: now, event: 'recorded (candidate — not replayable until verified)' }],
         };

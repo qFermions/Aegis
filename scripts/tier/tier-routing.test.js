@@ -684,7 +684,7 @@ test('no floor in the guard or the engine chains two unbounded gaps in sequence 
 test('the twelve floors that chained two gaps stay under 1 s on a 20 KB line that never completes them (guard and engine)', () => {
   const cases = [
     ['group membership removal', 'remove member from '], ['security-control change (SR-2)', 'exclude from '],
-    ['account / work-profile removal', 'remove account from '], ['security-control change \u2014 Google', 'exclude from '],
+    ['account / work-profile removal', 'remove account from '], ['security-control change: Google', 'exclude from '],
     ['Slack or Linear member', 'kick user '], ['Slack or Linear member', 'slack kick '], ['Okta lifecycle change', 'reset all '],
     ['Okta app unassignment', 'okta remove '], ['Okta app unassignment', 'remove app '], ['Fleet script run', 'run script '],
     ['Fleet script run', 'fleet run '], ['fleet-wide host operation', 'lock all '], ['Linear bulk issue operation', 'delete all '],

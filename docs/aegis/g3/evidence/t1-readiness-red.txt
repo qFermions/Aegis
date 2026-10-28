@@ -1,0 +1,84 @@
+# command: node --test scripts/readiness-gate.test.js
+# commit: 4fbba6a (plus uncommitted changes in the working tree)  started: 2026-10-28T09:30:09Z  node: v24.22.1
+✖ every criterion names a command, a file or an owner action, and who runs it (1.256937ms)
+✖ the charter criteria are all there, and the three that need the owner are labeled owner only (0.313245ms)
+✖ every repository path the page names exists (0.167962ms)
+✖ the page never marks the gate passed (0.121447ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76.588329
+
+✖ failing tests:
+
+test at scripts/readiness-gate.test.js:32:1
+✖ every criterion names a command, a file or an owner action, and who runs it (1.256937ms)
+  Error: ENOENT: no such file or directory, open '<repo>/docs/aegis/production-readiness.md'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/readiness-gate.test.js:33:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/docs/aegis/production-readiness.md'
+  }
+
+test at scripts/readiness-gate.test.js:42:1
+✖ the charter criteria are all there, and the three that need the owner are labeled owner only (0.313245ms)
+  Error: ENOENT: no such file or directory, open '<repo>/docs/aegis/production-readiness.md'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/readiness-gate.test.js:43:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/docs/aegis/production-readiness.md'
+  }
+
+test at scripts/readiness-gate.test.js:53:1
+✖ every repository path the page names exists (0.167962ms)
+  Error: ENOENT: no such file or directory, open '<repo>/docs/aegis/production-readiness.md'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/readiness-gate.test.js:54:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/docs/aegis/production-readiness.md'
+  }
+
+test at scripts/readiness-gate.test.js:61:1
+✖ the page never marks the gate passed (0.121447ms)
+  Error: ENOENT: no such file or directory, open '<repo>/docs/aegis/production-readiness.md'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/readiness-gate.test.js:62:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/docs/aegis/production-readiness.md'
+  }
+# exit: 1  finished: 2026-10-28T09:30:09Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

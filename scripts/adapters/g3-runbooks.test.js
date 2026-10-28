@@ -37,6 +37,22 @@ const CONNECTORS = {
       'intune-compliance': ['verify-device-synced'],
     },
   },
+  // task 5a: the five GitHub runbooks, each change followed by its read-back
+  github: {
+    client: () => require('./github-client.js'),
+    env: { GITHUB_ORG: 'example-org' },
+    values: {
+      '[REPO_NAME]': 'service-repo', '[BRANCH_NAME]': 'main', '[N]': '2', '[GITHUB_USER]': 'octo-person',
+      '[TEAM_SLUG]': 'it-team', '[ROLE_NAME]': 'write', '[ALERT_NUMBER]': '12', '[DISMISS_REASON]': 'tolerable_risk',
+    },
+    runbooks: {
+      'github-repo-access': ['verify-collaborator', 'verify-collaborator-removed', 'verify-team-member'],
+      'github-branch-protection': ['verify-protection'],
+      'github-org-security': ['verify-2fa-required'],
+      'github-offboard-member': ['verify-offboarded'],
+      'github-security-alerts': ['verify-secret-alert', 'verify-dependabot-alert'],
+    },
+  },
   // task 5d: the device-status and MDM-sync read-backs in the troubleshooting runbooks
   fleet: {
     client: () => require('./fleet-client.js'),

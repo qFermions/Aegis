@@ -212,7 +212,9 @@ function sha256Hex(text) {
 }
 
 // ── Time ────────────────────────────────────────────────────────────────────
-const ISO_TIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-]\d{2}:\d{2})$/;
+// the form only (fraction of 1 to 3 digits, as Google Workspace and Linear take it); the
+// calendar and the zone are checked by the contract's realCalendarTime
+const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
 const NOT_BEFORE_RULE = 'an ISO 8601 time with a zone (2026-10-27T18:30:00Z) or epoch milliseconds, not in the future';
 
 function parseNotBefore(value, nowMs) {

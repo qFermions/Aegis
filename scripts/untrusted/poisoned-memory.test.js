@@ -562,3 +562,36 @@ test('B17 an instruction marker split across a line break is flagged at the edge
   assertWithheld(retrieve(dir2, 'intune enrollment restriction'), id);
   assert.notEqual(mem(dir2, ['show', id]).json.integrity, 'intact');
 });
+
+// ── batch 1 finding 3: the memory store refuses every personal-data form the replay cache refuses ──
+
+test('B18 the edge, the memory store and the replay cache share one personal-data rule', () => {
+  const { scanText } = require(path.join(ROOT, 'scripts', 'graph', 'sanitize.js'));
+  const { sanitizationHits } = require(REPLAY_CLI);
+  // Assembled at run time: a literal address or number would trip the repository scanner (SR-1).
+  const forms = [
+    { name: 'address at a .io domain', text: ['canary.mailbox', 'not-a-real-tenant.io'].join('@') },
+    { name: 'address at a vendor-example domain', text: ['canary.mailbox', 'vendor-example.com'].join('@') },
+    { name: 'address at github.com', text: ['canary.mailbox', 'github.com'].join('@') },
+    { name: 'parenthesised area code', text: ['(555)', '123-4567'].join(' ') },
+    { name: 'international groups', text: ['+44', '20', '7946', '0958'].join(' ') },
+    { name: 'E.164 without separators', text: '+1' + '5551234567' },
+    { name: 'bare ten digits', text: '555' + '1234567' },
+  ];
+  for (const f of forms) {
+    const line = `Call ${f.text} before re-enrolling.`;
+    assert.ok(sanitizationHits(line).length > 0, `the replay cache refuses it (${f.name})`);
+    assert.ok(scanText(line).piiWarnings.length > 0, `the edge flags it (${f.name})`);
+    const dir = freshDir('b18');
+    const r = propose(dir, { ...PROPOSALS.enrollment, detail: line });
+    assert.equal(r.code, 3, `memory propose must refuse it (${f.name}): ${short(r)}`);
+    assert.ok(r.json.details.some((d) => d.class === 'pii'), short(r));
+    assert.equal(recordFiles(dir).length, 0, 'nothing persists');
+  }
+  // controls: canonical placeholders and RFC example domains stay clean on both sides
+  const clean = `Call [PHONE_NUMBER] and write to [USER@DOMAIN.COM] or ${['someone', 'example.com'].join('@')} about [JIRA-###].`;
+  assert.equal(scanText(clean).piiWarnings.length, 0);
+  assert.deepEqual(sanitizationHits(clean), []);
+  const guard = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+  assert.equal(typeof guard.personalDataIn, 'function', 'the rule lives in tier-guard.js beside the shared markers');
+});

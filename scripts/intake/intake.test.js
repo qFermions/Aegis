@@ -286,6 +286,7 @@ test('hostile shapes near the 512 KiB limit are handled in linear time: no "@" o
   const shapes = {
     'a run with no @': 'a'.repeat(500000),
     'a run of <': '<'.repeat(500000),
+    'a run of < closed by one >': `<p>x</p>${'<'.repeat(500000)}>`,
     'unclosed comments': '<p>x</p>' + '<!--'.repeat(120000),
     'unclosed scripts': '<p>x</p>' + '<script>'.repeat(60000),
     'spaces then a letter': `${' '.repeat(500000)}x`,

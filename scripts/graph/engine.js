@@ -135,12 +135,36 @@ function planHash(state) {
 
 // ── run creation (INTAKE — engine node, no model) ────────────────────────────
 
-function newState({ ticketText, source = 'operator', mode = 'dry-run' }) {
+// batch G3 (task 4a): the record scripts/intake/intake.js attaches to an imported case.
+// Exact keys only, the tenant bound, the source the same as the run's; anything else is
+// refused, so an unbound or foreign item never becomes a case.
+const INTAKE_VIAS = new Set(['linear-client', 'github-client', 'export-file', 'eml-file']);
+const INTAKE_KEYS = ['html_only', 'origin', 'raw_sha256', 'received_at', 'redactions', 'source', 'tenant', 'via'];
+const INTAKE_REDACTION_KEYS = ['emails', 'mentions', 'phones', 'tenant_values'];
+function checkIntake(intake, source) {
+  const bad = (why) => { throw new GraphError(2, `intake record refused: ${why}`); };
+  if (!intake || typeof intake !== 'object' || Array.isArray(intake)) bad('not an object');
+  if (JSON.stringify(Object.keys(intake).sort()) !== JSON.stringify(INTAKE_KEYS)) bad(`keys must be ${INTAKE_KEYS.join(', ')}`);
+  if (intake.source !== source || !['linear', 'github', 'slack', 'email'].includes(source)) bad('source must be the run source: linear, github, slack or email');
+  if (!INTAKE_VIAS.has(intake.via)) bad('unknown via');
+  if (typeof intake.origin !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._#:-]{0,127}$/.test(intake.origin)) bad('origin must be a short safe id');
+  if (typeof intake.raw_sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(intake.raw_sha256)) bad('raw_sha256 must be a SHA-256 hex digest');
+  if (typeof intake.received_at !== 'string' || Number.isNaN(Date.parse(intake.received_at)) || new Date(intake.received_at).toISOString() !== intake.received_at) bad('received_at must be an ISO time');
+  const t = intake.tenant;
+  if (!t || typeof t !== 'object' || JSON.stringify(Object.keys(t).sort()) !== '["bound","env"]' || t.bound !== true || !/^[A-Z][A-Z0-9_]{1,40}$/.test(t.env || '')) bad('the tenant must be bound');
+  if (typeof intake.html_only !== 'boolean') bad('html_only must be true or false');
+  const r = intake.redactions;
+  if (!r || typeof r !== 'object' || JSON.stringify(Object.keys(r).sort()) !== JSON.stringify(INTAKE_REDACTION_KEYS) || !INTAKE_REDACTION_KEYS.every((k) => Number.isInteger(r[k]) && r[k] >= 0)) bad('redactions must count emails, mentions, phones and tenant_values');
+  return Object.freeze({ ...intake, tenant: Object.freeze({ ...t }), redactions: Object.freeze({ ...r }) });
+}
+
+function newState({ ticketText, source = 'operator', mode = 'dry-run', intake }) {
   if (!schema.MODES.includes(mode)) throw new GraphError(2, `mode must be ${schema.MODES.join('|')}`);
   if (mode === 'live' && process.env.AEGIS_GRAPH_ALLOW_LIVE !== '1') {
     throw new GraphError(4, 'live mode refused — set AEGIS_GRAPH_ALLOW_LIVE=1 (double-key, ILF idiom). v1 executes nothing in live mode regardless.');
   }
   if (typeof ticketText !== 'string' || !ticketText.trim()) throw new GraphError(2, 'ticket text required');
+  const intakeRecord = intake === undefined ? undefined : checkIntake(intake, source);
 
   const scan = sanitize.scanText(ticketText);
   if (scan.blocks.length > 0) {
@@ -168,6 +192,7 @@ function newState({ ticketText, source = 'operator', mode = 'dry-run' }) {
       provenance: source === 'operator' ? 'operator_typed' : 'external_content',
       injectionFlags: scan.injectionFlags,
       sanitization: { tenantLiteralHits: 0, piiWarnings: scan.piiWarnings },
+      ...(intakeRecord ? { intake: intakeRecord } : {}),
     },
     classification: null,
     rankedCauses: [],
@@ -189,6 +214,9 @@ function newState({ ticketText, source = 'operator', mode = 'dry-run' }) {
     history: [],
   };
   pushHistory(state, 'INTAKE', 'run-created', `mode=${mode} source=${source} injectionFlags=${scan.injectionFlags.length}`);
+  if (intakeRecord) {
+    pushHistory(state, 'INTAKE', 'intake-bound', `via=${intakeRecord.via} origin=${intakeRecord.origin} tenant=${intakeRecord.tenant.env} sha256=${intakeRecord.raw_sha256.slice(0, 12)}`);
+  }
   if (scan.injectionFlags.length > 0) {
     pushHistory(state, 'INTAKE', 'injection-flagged', 'embedded directives quoted as data, not followed (SR-3)');
   }

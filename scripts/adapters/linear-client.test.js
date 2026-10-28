@@ -8,15 +8,16 @@
 // of docs/aegis/lanes/g2.md, which is this adapter's allow-list.
 //
 // EXPECTED DECISION
-// The Linear adapter reads Linear through seven named GraphQL query documents and
+// The Linear adapter reads Linear through eight named GraphQL query documents and
 // nothing else, and proves a human's write afterwards with a verify-* read.
 // Concretely, for `run(argv, env, deps)` and the exported SPEC:
 //
 // 1. Allow-list. SPEC holds exactly the lane's seven query documents (AegisViewer,
 //    AegisIssue, AegisIssueComments, AegisTeamStates, AegisLabels, AegisTriage,
-//    AegisMembers), each sent as a POST to the fixed host api.linear.app at the one
-//    path /graphql, with no GET route and no token exchange. Every document also
-//    reads organization { urlKey } at its root.
+//    AegisMembers) and, since batch G3, the intake's AegisIssueIntake, each sent as
+//    a POST to the fixed host api.linear.app at the one path /graphql, with no GET
+//    route and no token exchange. Every document also reads organization { urlKey }
+//    at its root.
 // 2. Writes are refused. Every mutation the lane names (commentCreate, commentUpdate,
 //    commentDelete, issueCreate, issueUpdate, issueBatchUpdate, issueArchive,
 //    issueDelete, issueAddLabel, issueRemoveLabel, userSuspend, userUnsuspend,
@@ -94,7 +95,8 @@ const NOW = Date.UTC(2026, 9, 27, 12, 0, 0);
 const NOT_BEFORE = '2026-10-27T11:50:00.000Z';
 const AFTER = '2026-10-27T12:05:00.000Z';
 const ISSUE = 'IT-123';
-const DOCS = ['AegisViewer', 'AegisIssue', 'AegisIssueComments', 'AegisTeamStates', 'AegisLabels', 'AegisTriage', 'AegisMembers'];
+// batch G3: AegisIssueIntake, the issue text the intake reads (scripts/intake/intake.js)
+const DOCS = ['AegisViewer', 'AegisIssue', 'AegisIssueComments', 'AegisTeamStates', 'AegisLabels', 'AegisTriage', 'AegisMembers', 'AegisIssueIntake'];
 const LANE_WRITES = [
   'commentCreate', 'commentUpdate', 'commentDelete', 'issueCreate', 'issueUpdate', 'issueBatchUpdate',
   'issueArchive', 'issueDelete', 'issueAddLabel', 'issueRemoveLabel', 'userSuspend', 'userUnsuspend',
@@ -206,7 +208,7 @@ function assertGraphqlCall(call, doc, variables, label) {
   assert.deepEqual(JSON.parse(call.body), { query: linear.SPEC.graphql.documents[doc], variables, operationName: doc }, label);
 }
 
-test('the spec: seven named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation', () => {
+test('the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation', () => {
   const spec = linear.SPEC;
   assert.deepEqual(Object.keys(spec.graphql.documents).sort(), [...DOCS].sort());
   assert.deepEqual(spec.routes, {});

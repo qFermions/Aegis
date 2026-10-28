@@ -3,7 +3,8 @@
 // Linear section), built on the shared contract readonly-contract.js (README.md here).
 //
 // Aegis advises; humans execute (PRODUCT_CONTRACT.md). This file reads Linear through
-// seven named GraphQL query documents and nothing else. It never posts a comment,
+// eight named GraphQL query documents (seven for lane G2, plus AegisIssueIntake for the
+// batch G3 intake) and nothing else. It never posts a comment,
 // changes a state or a label, trashes an issue or suspends a member: each of those is
 // a HUMAN-RUN step in a runbook, and a verify-* command below proves it afterwards.
 //
@@ -59,7 +60,7 @@ const {
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
-// ── The allow-list: the lane's seven query documents ────────────────────────
+// ── The allow-list: the lane's seven query documents and the intake's one ─────
 // Each ends by reading organization { urlKey } at its root, so every response names
 // its workspace and the contract can refuse one from another workspace.
 const ORG_TAIL = ' organization { urlKey } }';
@@ -71,6 +72,8 @@ const DOCUMENTS = Object.freeze({
   AegisLabels: 'query AegisLabels { issueLabels(first: 100) { nodes { id name isGroup retiredAt parent { name } team { key } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
   AegisTriage: 'query AegisTriage { issues(first: 50, filter: { state: { type: { eq: "triage" } } }) { nodes { id identifier title priority createdAt startedTriageAt snoozedUntilAt team { key } state { name type } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
   AegisMembers: 'query AegisMembers($after: String) { users(first: 100, after: $after, includeArchived: true, includeDisabled: true) { nodes { id active admin guest owner } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
+  // batch G3 (task 4a): the issue text scripts/intake/intake.js turns into a graph case
+  AegisIssueIntake: 'query AegisIssueIntake($id: String!) { issue(id: $id) { identifier title description comments(first: 50) { nodes { body } pageInfo { hasNextPage } } } organization { urlKey } }',
 });
 
 // Write mutations refused by name as well (defence in depth beside the contract's

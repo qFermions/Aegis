@@ -204,7 +204,10 @@ test('on Windows a lock file that another writer is deleting (EPERM or EACCES) m
 // Code review round 2, finding 4: a lock file being deleted clears in milliseconds; an EPERM
 // or EACCES that lasts, with no lock file there, is a real permission error and is reported
 // as itself, quickly, not as "held by another writer" after the 15 s wait.
-test('on Windows a lasting EPERM with no lock file present is reported as itself, fast', (t) => {
+// Code review round 3, finding 3: a lock pending deletion can be unreadable too, so the test
+// that tells the two apart is whether the folder takes a new file. A real permission error
+// refuses every new file in the folder (here: the lock and any other file).
+test('on Windows a folder that refuses every new file (EPERM) is reported as itself, fast', (t) => {
   const dir = freshDir(t);
   const log = audit.openAuditLog({ dir });
   const platform = Object.getOwnPropertyDescriptor(process, 'platform');
@@ -212,12 +215,37 @@ test('on Windows a lasting EPERM with no lock file present is reported as itself
   t.after(() => { Object.defineProperty(process, 'platform', platform); fs.openSync = realOpen; });
   Object.defineProperty(process, 'platform', { ...platform, value: 'win32' });
   fs.openSync = (file, ...rest) => {
-    if (String(file).endsWith('audit.lock')) throw Object.assign(new Error('EPERM: operation not permitted, open \'audit.lock\''), { code: 'EPERM' });
+    if (String(file).startsWith(dir) && !String(file).endsWith('audit.log')) throw Object.assign(new Error('EPERM: operation not permitted, open'), { code: 'EPERM' });
     return realOpen(file, ...rest);
   };
   const start = Date.now();
   assert.throws(() => log.append(CALL), (e) => e.code === 'EPERM' && !(e instanceof audit.AuditRefused));
   assert.ok(Date.now() - start < 5000, `took ${Date.now() - start} ms`);
+});
+
+test('on Windows a lock that stays pending deletion and unreadable for a while is waited out while the folder takes new files', (t) => {
+  const dir = freshDir(t);
+  const log = audit.openAuditLog({ dir });
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  const realOpen = fs.openSync;
+  const realRead = fs.readFileSync;
+  t.after(() => { Object.defineProperty(process, 'platform', platform); fs.openSync = realOpen; fs.readFileSync = realRead; });
+  Object.defineProperty(process, 'platform', { ...platform, value: 'win32' });
+  let denied = 0;
+  const pending = Object.assign(new Error('EPERM: operation not permitted'), { code: 'EPERM' });
+  fs.openSync = (file, ...rest) => {
+    if (String(file).endsWith('audit.lock') && denied < 60) { denied += 1; throw pending; }
+    return realOpen(file, ...rest);
+  };
+  fs.readFileSync = (file, ...rest) => {
+    if (String(file).endsWith('audit.lock') && denied < 60) throw pending;
+    return realRead(file, ...rest);
+  };
+  log.append(CALL);
+  assert.equal(denied, 60, 'waited through 60 denials');
+  fs.openSync = realOpen;
+  fs.readFileSync = realRead;
+  assert.equal(log.entries().length, 1);
 });
 
 test('status summarises connector failures by connector and state over a time window, matching a known event set', (t) => {

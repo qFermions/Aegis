@@ -174,6 +174,33 @@ test('concurrent writers in separate processes never corrupt the chain', async (
   assert.equal(v.entries, writers * each);
 });
 
+// Release Gate windows-latest failed at 96564ea: on Windows, opening the lock file while
+// another writer is deleting it throws EPERM (or EACCES), not EEXIST, and the writer died
+// instead of waiting its turn. The writer now waits on those codes too, on Windows only.
+test('on Windows a lock file that another writer is deleting (EPERM or EACCES) means wait, not fail', (t) => {
+  const dir = freshDir(t);
+  const log = audit.openAuditLog({ dir });
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  const realOpen = fs.openSync;
+  t.after(() => { Object.defineProperty(process, 'platform', platform); fs.openSync = realOpen; });
+  Object.defineProperty(process, 'platform', { ...platform, value: 'win32' });
+  for (const code of ['EPERM', 'EACCES']) {
+    let thrown = 0;
+    fs.openSync = (file, ...rest) => {
+      if (String(file).endsWith('audit.lock') && thrown < 2) {
+        thrown += 1;
+        throw Object.assign(new Error(`${code}: operation not permitted, open 'audit.lock'`), { code });
+      }
+      return realOpen(file, ...rest);
+    };
+    log.append(CALL);
+    assert.equal(thrown, 2, `${code}: the writer retried`);
+  }
+  fs.openSync = realOpen;
+  assert.equal(log.verify().ok, true);
+  assert.equal(log.entries().length, 2);
+});
+
 test('status summarises connector failures by connector and state over a time window, matching a known event set', (t) => {
   const dir = freshDir(t);
   let clock = NOW - 3 * 24 * 3600 * 1000; // three days ago

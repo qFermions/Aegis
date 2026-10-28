@@ -134,7 +134,7 @@ Total: 445 marked lines.
 | `.claude/commands/linear-workspace-admin.md:264` | search excerpt | GUI read-back: the workspace audit log shows the export with your name and the time (search excerpt; the audit log page's label is unverified). No adapter read covers exports or the audit log. |
 | `.claude/commands/linear-workspace-admin.md:272` | search excerpt | Linear → Settings → Security → read whether SAML and SCIM are on ; Settings → Administration → Security or Settings → Workspace → Security |
 | `.claude/commands/linear-workspace-admin.md:273` | search excerpt | Linear → Settings → Administration → Security → read which sign-in methods are allowed |
-| `.claude/commands/linear-workspace-admin.md:275` | search excerpt | > **PREVIEW ONLY [linear-workspace-admin-sso-preview]:** Planning only, not authorized from this runbook: turning SAML, SCIM or a sign-in method on or off can lock every member out at once. It is a ch |
+| `.claude/commands/linear-workspace-admin.md:275` | search excerpt | (preview region linear-workspace-admin-sso-preview in the runbook): Planning only, not authorized from this runbook: turning SAML, SCIM or a sign-in method on or off can lock every member out at once. It is a ch |
 | `.claude/commands/linear-workspace-admin.md:333` | vendor repository | raw.githubusercontent.com/linear/linear/master/packages/sdk/src/schema.graphql: read in full: `issueDelete` and its `permanentlyDelete` argument with the 30-day grace period, `issueArchive` with `trash`, `issueBatchUpdate` at most 50 ids, `userSuspend` and `userUnsuspend` each callable only by a wor |
 | `.claude/commands/linear-workspace-admin.md:333` | search excerpt | linear.app/docs/delete-archive-issues: delete paths, Recently deleted issues, 30 days, automatic archive of 1 to 12 months |
 | `.claude/commands/linear-workspace-admin.md:333` | search excerpt | linear.app/docs/select-issues: multi-select and the command menu |
@@ -181,7 +181,7 @@ Total: 445 marked lines.
 | `.claude/commands/slack-incident-comms.md:227` | search excerpt | docs.slack.dev/reference/objects/conversation-object: is_archived, is_ext_shared; search excerpt |
 | `.claude/commands/slack-incident-comms.md:227` | vendor repository | github.com/slackapi/python-slack-sdk at commit 449cf2f, slack_sdk/web/client.py : github.com/slackapi/python-slack-sdk at commit 449cf2f, slack_sdk/web/client.py (conversations.history and the write methods the adapter refuses; vendor repo) |
 | `.claude/commands/slack-incident-comms.md:227` | vendor repository | github.com/slackapi/slack-api-specs, web-api/slack_web_openapi_v2_without_exampl: github.com/slackapi/slack-api-specs, web-api/slack_web_openapi_v2_without_examples.json (conversations.history fields; vendor repo, last updated 2021). |
-| `.claude/commands/slack-retention-export.md:91` | search excerpt | > **PREVIEW ONLY [slack-retention-export-legal-hold-release-preview]:** Planning only; nothing here authorizes removing a custodian, narrowing a hold's conversations or date range, or releasing a hold |
+| `.claude/commands/slack-retention-export.md:91` | search excerpt | (preview region slack-retention-export-legal-hold-release-preview in the runbook): Planning only; nothing here authorizes removing a custodian, narrowing a hold's conversations or date range, or releasing a hold |
 | `.claude/commands/slack-retention-export.md:206` | search excerpt | #[CHANNEL_NAME] |
 | `.claude/commands/slack-retention-export.md:239` | search excerpt | - Labels came from search excerpts on 2026-10-27; a screen that does not match is a stop, not a guess. |
 | `.claude/commands/slack-retention-export.md:279` | search excerpt | slack.com/help/articles/203457187: customize data retention: defaults, path, overrides, daily permanent deletion; search excerpt |
@@ -476,7 +476,7 @@ Total: 445 marked lines.
 
 ## How this list was made
 
-A line-based extraction (Python 3, run from the repo root): every line of the files below that says "search excerpt", "vendor repo" or names a raw.githubusercontent.com source; a Sources line is split at " · " into one row per source. A fact is listed under how its line says it was read.
+A line-based extraction (Python 3, run from the repo root): every line of the files below that says "search excerpt", "vendor repo" or names a raw.githubusercontent.com source; a Sources line is split at " · " into one row per source. A fact is listed under how its line says it was read. A gate or preview marker on a line is written as "(gate ... in the runbook)" or "(preview region ... in the runbook)", so this list adds no region to the state-change inventory.
 
 <details><summary>vendor-facts.py</summary>
 
@@ -489,6 +489,12 @@ g2files={'fleet':['.claude/commands/fleet-device-actions.md','.claude/commands/f
  'jamf':['.claude/commands/jamf-config-profiles.md','.claude/commands/jamf-filevault.md','.claude/commands/jamf-inventory-groups.md','.claude/commands/jamf-patch-management.md','.claude/commands/jamf-policies-self-service.md','scripts/adapters/jamf-client.js'],
  'gws':['.claude/commands/gws-2sv-enforcement.md','.claude/commands/gws-account-containment.md','.claude/commands/gws-admin-roles.md','.claude/commands/gws-drive-sharing.md','.claude/commands/gws-security-posture.md','scripts/adapters/gws-client.js','scripts/gws-posture-audit.js']}
 mark=re.compile(r'search excerpt|vendor repo(?:sitory)?|raw\.githubusercontent\.com',re.I)
+# a gate or preview marker copied here would read as a new region to the inventory scan
+def neutral(t):
+    t=re.sub(r'\*\*PREVIEW ONLY \[([\w-]+)\]:\*\*', r'(preview region \1 in the runbook):', t)
+    t=re.sub(r'PREVIEW ONLY \[([\w-]+)\]', r'(preview region \1 in the runbook)', t)
+    t=re.sub(r'SAFETY GATE \[([\w-]+)\]', r'(gate \1 in the runbook)', t)
+    return re.sub(r'^>\s*','',t)
 out=['# Vendor facts to check by hand (batch G2)','',
 'This session\'s network refused the vendor documentation hosts, so each fact below rests on a search excerpt or on the vendor\'s own repository (docs source, schema, SDK or discovery document), as the line itself says. One row per marked line: where it is, how it was read, and the breadcrumb, command or API path on that line. Re-read each against the live vendor page and correct the runbook if they differ. Generated from the runbooks, adapters and the posture audit at the head of `feat/g2-gws-fleet-jamf-slack-linear`.','']
 total=0
@@ -505,7 +511,7 @@ for k,files in g2files.items():
                     m=re.match(r'(\S+)\s*\((.*)\)\.?\s*(.*)$',entry)
                     src,facts=(m.group(1),m.group(2)) if m else (entry[:80],entry)
                     facts=re.sub(r'^(?:vendor repo(?:sitory)?|search excerpt)[,:]?\s*','',facts,flags=re.I)
-                    fact=(src+': '+facts)[:300].replace('|','\\|').replace('\u2014','--')
+                    fact=neutral((src+': '+facts)[:300]).replace('|','\\|').replace('\u2014','--')
                     rows.append(f'| `{f}:{n}` | {how} | {fact} |')
                 continue
             how='search excerpt' if re.search(r'(?<!no )search excerpt',line,re.I) else 'vendor repository'
@@ -513,7 +519,7 @@ for k,files in g2files.items():
             facts=re.findall(r'`([^`]{3,120})`',line)
             facts=[x for x in facts if not x.startswith('node scripts/') and x not in ('--execute',)]
             crumbs=re.findall(r'((?:[A-Z][\w&/ -]{1,40} → ){1,8}[\w&/ -]{1,60})',line)
-            fact='; '.join(dict.fromkeys(crumbs+facts))[:300] or line.strip()[:200]
+            fact=neutral('; '.join(dict.fromkeys(crumbs+facts))[:300] or line.strip()[:200])
             fact=fact.replace('|','\\|').replace('\u2014','--')
             rows.append(f'| `{f}:{n}` | {how} | {fact} |')
     out+= [f'## {plat[k]} ({len(rows)} lines)','','| where | how read | breadcrumb, command or API path on the line |','|---|---|---|']+rows+['']

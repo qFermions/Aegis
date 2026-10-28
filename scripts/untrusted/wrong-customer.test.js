@@ -443,7 +443,7 @@ test('C15 a second org name inside the [@Aegion_*] namespace or joined by a dot 
   }
 });
 
-test('C16 a bracketed chat handle whose last word is a dictionary suffix reads as a second tenant (fail safe), and the refusal says how to write a handle', () => {
+test('C16 a bracketed chat handle whose last word is a dictionary suffix reads as a second tenant (fail safe), and the refusal names that case without a rewrite that would pass a real one', () => {
   const { hasForeignOrgToken } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
   const lookalikes = ['[@it_voip]', '[@ops-wan]', '[@max_size]', '[@globex_domain]', '[@globex_site_2]', '[@Contoso_voip]', '[@IT_VOIP]', '[@contosoDomain]'];
   for (const text of lookalikes) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} reads as a second tenant`);
@@ -455,9 +455,11 @@ test('C16 a bracketed chat handle whose last word is a dictionary suffix reads a
     const g = graph(['new', '--ticket-file', writeFile('handle.txt', ticket)]);
     assert.equal(g.code, 3, `${handle} at graph intake: ${short(g)}`);
     assert.deepEqual(runDirs(), before);
-    assert.match(g.stdout + g.stderr, /a chat handle ending in a dictionary word reads as one: write it without the brackets/, 'the refusal says how to write a handle');
+    assert.match(g.stdout + g.stderr, /a bracketed chat handle ending in a dictionary word reads as one too/, 'the refusal names the handle case');
+    assert.doesNotMatch(g.stdout + g.stderr, /without the brackets|drop the brackets|remove the brackets/i, 'the refusal gives no rewrite that would also pass a real second tenant (round 3, finding 2)');
     const r = replayAs(TENANT_A, path.join(freshDir('c16-replay'), 'store'))(['record', '--ticket', ticket, '--solution-file', writeFile('solution.md', fixture('tenant-solution.md')), '--deps', dep]);
     assert.equal(r.code, 4, `${handle} at replay record: ${short(r)}`);
-    assert.match(r.stdout + r.stderr, /a chat handle ending in a dictionary word reads as one: write it without the brackets/, 'the replay refusal says the same');
+    assert.match(r.stdout + r.stderr, /a bracketed chat handle ending in a dictionary word reads as one too/, 'the replay refusal says the same');
+    assert.doesNotMatch(r.stdout + r.stderr, /without the brackets|drop the brackets|remove the brackets/i, 'the replay refusal gives no rewrite either');
   }
 });

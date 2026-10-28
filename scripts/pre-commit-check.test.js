@@ -755,6 +755,25 @@ test('prompt-injection markers use the shared tier-guard list: a mode-override c
   assert.match(output, /4 warning\(s\) found/);
 });
 
+test('Okta, Jamf MDM, Fleet host and Slack SCIM sinks warn when PowerShell names the method with -Method', function (t) {
+  const repo = makeRepo(t);
+  const cases = [
+    ['Invoke-RestMethod -Method Delete -Uri "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', /Okta session or user deletion/],
+    ['Invoke-RestMethod -Uri "https://[@Aegion_JAMF_URL]/JSSResource/computercommands/command/DeviceLock/id/[DEVICE_ID]" -Method Post', /Jamf MDM command/],
+    ['Invoke-RestMethod -Method:Delete -Uri "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]"', /Fleet host deletion or MDM turn-off/],
+    ['Invoke-WebRequest -Uri "https://api.slack.com/scim/v2/Users/[USER_ID]" -Method "DELETE"', /Slack SCIM deactivation/],
+  ];
+  const fixtureLines = cases.map(([line], index) => `${line} # ps-method-source-${index}`);
+  writeFile(repo, 'ps-method.md', `${fixtureLines.join('\n')}\n`);
+  stageAll(repo);
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 0);
+  for (const [, expectedLabel] of cases) assert.match(output, expectedLabel);
+  assert.match(output, new RegExp(`${cases.length} warning\\(s\\) found`));
+  assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `ps-method-source-${index}`), repo]);
+});
+
 test('Okta deletions and Jamf MDM commands warn when curl names the method with --request', function (t) {
   const repo = makeRepo(t);
   const cases = [

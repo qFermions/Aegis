@@ -378,25 +378,39 @@ function checkTokenBody(spec, fields) {
 }
 
 // ── Transport ────────────────────────────────────────────────────────────────
-function httpsTransport(request) {
-  if (process.env.AEGIS_NETWORK_TRIPWIRE === '1') throw new TripwireError();
-  return new Promise((resolve, reject) => {
-    const req = https.request({ hostname: request.hostname, path: request.path, method: request.method, headers: request.headers, port: 443 }, (res) => {
+// The transport takes the request function as a parameter so its limits can be tested
+// without a socket. A request that outlives timeoutMs is destroyed (the client stops
+// waiting at the same time), so no socket outlives the read; a body over the read limit
+// stops with AEGIS_RESPONSE_TOO_LARGE, which the client reports once and does not retry.
+function makeHttpsTransport(requestFn) {
+  return (request) => new Promise((resolve, reject) => {
+    let deadline = null;
+    const finish = (fn, value) => { if (deadline) clearTimeout(deadline); deadline = null; fn(value); };
+    const req = requestFn({ hostname: request.hostname, path: request.path, method: request.method, headers: request.headers, port: 443 }, (res) => {
       const chunks = [];
       let size = 0;
       res.on('data', (chunk) => {
         size += chunk.length;
-        if (size > MAX_RESPONSE_BYTES + 1) { req.destroy(Object.assign(new Error('response larger than the read limit'), { code: 'AEGIS_RESPONSE_TOO_LARGE' })); return; }
+        if (size > MAX_RESPONSE_BYTES + 1) {
+          req.destroy(Object.assign(new Error('response larger than the read limit'), { code: 'AEGIS_RESPONSE_TOO_LARGE' }));
+          return;
+        }
         chunks.push(chunk);
       });
-      res.on('error', reject);
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks).toString('utf8') }));
+      res.on('error', (error) => finish(reject, error));
+      res.on('end', () => finish(resolve, { status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks).toString('utf8') }));
     });
-    req.on('error', reject);
+    req.on('error', (error) => finish(reject, error));
     req.setTimeout(request.timeoutMs, () => req.destroy(new Error('timeout')));
+    deadline = setTimeout(() => req.destroy(new Error('timeout')), request.timeoutMs);
     if (request.body !== undefined) req.write(request.body);
     req.end();
   });
+}
+
+function httpsTransport(request) {
+  if (process.env.AEGIS_NETWORK_TRIPWIRE === '1') throw new TripwireError();
+  return makeHttpsTransport((options, onResponse) => https.request(options, onResponse))(request);
 }
 
 function withTimeout(promiseFactory, timeoutMs) {
@@ -618,5 +632,5 @@ module.exports = {
   STATES, EXIT, MAX_RESPONSE_BYTES, TRIPWIRE_MESSAGE,
   RefusedError, TripwireError,
   defineAdapter, createClient, checkRequest, assertQueryOnly, scanUntrusted, markersIn,
-  renderResult, exitCodeFor, parseArgs, redactDeep, httpsTransport,
+  renderResult, exitCodeFor, parseArgs, redactDeep, httpsTransport, makeHttpsTransport,
 };

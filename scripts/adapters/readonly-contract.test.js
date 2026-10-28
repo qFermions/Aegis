@@ -449,3 +449,37 @@ test('a response over the read limit is INVALID_RESPONSE "larger than the read l
   assert.match(res.error, /larger than the read limit/);
   assert.equal(transport.calls.length, 2, 'the token exchange and one read, no retry');
 });
+
+// A fake https.request: returns a request whose response the test drives, so the
+// transport's limits are checked without a socket.
+function fakeRequest(drive) {
+  const { EventEmitter } = require('node:events');
+  const made = [];
+  const requestFn = (options, onResponse) => {
+    const req = new EventEmitter();
+    req.destroyed = null;
+    req.setTimeout = () => req;
+    req.write = () => {};
+    req.end = () => { const res = new EventEmitter(); res.statusCode = 200; res.headers = {}; onResponse(res); drive(res, req); };
+    req.destroy = (error) => { req.destroyed = error || new Error('destroyed'); req.emit('error', req.destroyed); };
+    made.push(req);
+    return req;
+  };
+  return { requestFn, made };
+}
+
+test('the HTTPS transport ends a request at its deadline, even while bytes keep trickling in', async () => {
+  let timer;
+  const { requestFn, made } = fakeRequest((res) => { timer = setInterval(() => res.emit('data', Buffer.from('x')), 5); });
+  const transport = contract.makeHttpsTransport(requestFn);
+  await assert.rejects(transport({ hostname: 'example.invalid', path: '/api/v1/me', method: 'GET', headers: {}, timeoutMs: 40 }), /timeout/);
+  clearInterval(timer);
+  assert.ok(made[0].destroyed, 'the request was destroyed, so no socket outlives the read');
+});
+
+test('the HTTPS transport stops an oversized body with a typed error the client does not retry', async () => {
+  const { requestFn, made } = fakeRequest((res) => res.emit('data', Buffer.alloc(contract.MAX_RESPONSE_BYTES + 2)));
+  const transport = contract.makeHttpsTransport(requestFn);
+  await assert.rejects(transport({ hostname: 'example.invalid', path: '/api/v1/me', method: 'GET', headers: {}, timeoutMs: 1000 }), (error) => error.code === 'AEGIS_RESPONSE_TOO_LARGE');
+  assert.ok(made[0].destroyed);
+});

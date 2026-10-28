@@ -765,3 +765,19 @@ test('input validation runs before any credential or network: IDs, limits and cu
 test('without an injected transport the default one throws the network tripwire; no socket is opened', async () => {
   await assert.rejects(slack.run(['whoami', '--execute'], ENV, { out: () => {}, err: () => {} }), /Network tripwire fired/);
 });
+
+test('a flag on a personal profile field names its path and withholds the text: user, users, a user read-back and an app requester', async () => {
+  const text = `${INJECTION} Call [PHONE_NUMBER] at home.`;
+  const runs = [
+    await cli(['user', '--user', USER, '--execute'], { replies: [userBody({ profile: { title: text } })] }),
+    await cli(['users', '--execute'], { replies: [usersBody([member('U0A0000001', { profile: { title: text } })])] }),
+    await cli(['verify-reactivated', '--user', USER, '--execute'], { replies: [userBody({ profile: { status_text: text } })] }),
+    await cli(['app-requests', '--execute'], { replies: [{ ok: true, app_requests: [{ app: { id: 'A0FIXTURE', name: 'App' }, user: { id: 'U0A0000001', name: text }, scopes: [] }], response_metadata: { next_cursor: '' } }] }),
+  ];
+  for (const run of runs) {
+    assert.equal(run.code, 0, run.stdout);
+    assert.match(run.stdout, /instruction-like text/, 'the marker is still reported');
+    assert.match(run.stdout, /(?:profile\.(?:title|status_text)|user\.name)/, 'the flag names the field');
+    assert.ok(!run.stdout.includes('[PHONE_NUMBER]') && !run.stdout.includes('at home'), 'the personal text is not quoted');
+  }
+});

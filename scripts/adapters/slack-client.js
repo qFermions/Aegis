@@ -500,6 +500,19 @@ function invalid(message) {
   return { state: STATES.INVALID_RESPONSE, ok: false, error: message };
 }
 
+// A flag on a person's own text (a profile field, a name, a requester) names its path
+// and withholds the quote, because those reads print state fields only. Flags on other
+// fields (a channel purpose, a message) keep their quote.
+const PERSON_ROUTES = new Set(['users.info', 'users.list']);
+function withholdPersonal(flags, route) {
+  return (flags || []).map((f) => {
+    const path = String(f.path);
+    const lastKey = path.replace(/\[[0-9]+\]/g, '').split('.').pop();
+    const personal = PERSON_ROUTES.has(route) ? !USER_STATE_FIELDS.includes(lastKey) : /\.user\.(?!id$)/.test(path);
+    return personal ? { ...f, quote: '(personal text withheld)' } : f;
+  });
+}
+
 function withPrefix(flags, route) {
   return (flags || []).map((f) => (route ? { ...f, path: `${route} ${f.path}` } : f));
 }
@@ -516,7 +529,7 @@ async function readSteps(client, steps) {
     if (s.route === 'auth.test' && typeof res.data.team_id !== 'string') {
       return { failed: invalid('auth.test answered without a team_id, so the workspace is not proven'), step: s.route };
     }
-    flags.push(...withPrefix(res.flags, multi ? s.route : null));
+    flags.push(...withPrefix(withholdPersonal(res.flags, s.route), multi ? s.route : null));
     last = res;
   }
   return { last, flags };

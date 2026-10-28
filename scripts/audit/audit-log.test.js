@@ -201,6 +201,25 @@ test('on Windows a lock file that another writer is deleting (EPERM or EACCES) m
   assert.equal(log.entries().length, 2);
 });
 
+// Code review round 2, finding 4: a lock file being deleted clears in milliseconds; an EPERM
+// or EACCES that lasts, with no lock file there, is a real permission error and is reported
+// as itself, quickly, not as "held by another writer" after the 15 s wait.
+test('on Windows a lasting EPERM with no lock file present is reported as itself, fast', (t) => {
+  const dir = freshDir(t);
+  const log = audit.openAuditLog({ dir });
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  const realOpen = fs.openSync;
+  t.after(() => { Object.defineProperty(process, 'platform', platform); fs.openSync = realOpen; });
+  Object.defineProperty(process, 'platform', { ...platform, value: 'win32' });
+  fs.openSync = (file, ...rest) => {
+    if (String(file).endsWith('audit.lock')) throw Object.assign(new Error('EPERM: operation not permitted, open \'audit.lock\''), { code: 'EPERM' });
+    return realOpen(file, ...rest);
+  };
+  const start = Date.now();
+  assert.throws(() => log.append(CALL), (e) => e.code === 'EPERM' && !(e instanceof audit.AuditRefused));
+  assert.ok(Date.now() - start < 5000, `took ${Date.now() - start} ms`);
+});
+
 test('status summarises connector failures by connector and state over a time window, matching a known event set', (t) => {
   const dir = freshDir(t);
   let clock = NOW - 3 * 24 * 3600 * 1000; // three days ago

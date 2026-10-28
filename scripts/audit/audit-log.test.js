@@ -244,6 +244,21 @@ test('the CLI: verify exits 0 on an intact chain and 2 naming the first broken l
   assert.doesNotMatch(broken.stdout + broken.stderr, /at Object\.|at Module\./, 'no stack trace');
 });
 
+// Code review round 2, finding 6: a procedure written under a change id must name the
+// read-back that proves it, or change-record.js could never report the change done.
+test('the CLI refuses a procedure under a change id without --read-back, and records one with it', (t) => {
+  const dir = freshDir(t);
+  const env = { ...process.env, AEGIS_AUDIT_DIR: dir };
+  const base = [CLI, 'procedure', '--command', 'okta-mfa-reset', '--r-class', 'R2', '--target', '[UPN]', '--procedure-sha256', 'a'.repeat(64), '--change', 'chg-0123456789ab'];
+  const bare = spawnSync(process.execPath, base, { env, encoding: 'utf8' });
+  assert.equal(bare.status, 1);
+  assert.match(bare.stderr, /--read-back/);
+  assert.equal(audit.openAuditLog({ dir }).entries().length, 0);
+  const ok = spawnSync(process.execPath, [...base, '--read-back', 'okta:verify-factor-reset'], { env, encoding: 'utf8' });
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.equal(audit.openAuditLog({ dir }).entries()[0].read_back, 'okta:verify-factor-reset');
+});
+
 test('the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR overrides it, and the README says what the chain cannot prove', () => {
   const root = path.resolve(__dirname, '..', '..');
   assert.equal(audit.defaultAuditDir({}), path.join(root, '.aegis-state', 'audit'));

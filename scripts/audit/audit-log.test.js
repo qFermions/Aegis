@@ -40,7 +40,7 @@ function freshDir(t) {
 }
 
 const CALL = { kind: 'connector-call', connector: 'fleet', operation: 'host', state: 'OK', attempts: 1, status: 200, request_id: null, handoff: null, duration_ms: 12 };
-const PROCEDURE = { kind: 'procedure', command: 'okta-mfa-reset', gate: 'okta-mfa-reset-selected-portal', r_class: 'R2', target: '[UPN]', procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' };
+const PROCEDURE = { kind: 'procedure', command: 'okta-mfa-reset', gate: 'okta-mfa-reset-selected-portal', r_class: 'R2', target: '[UPN]', read_back: 'okta:verify-factor-reset', procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' };
 const APPROVAL = { kind: 'approval', ref: 'IT-123', gate: 'okta-mfa-reset-selected-portal', procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' };
 const VERIFY = { kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified: true, state: 'OK', change: null };
 

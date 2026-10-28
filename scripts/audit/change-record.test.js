@@ -11,6 +11,10 @@
 //   recorded. The approval authorizes a person's procedure; nothing in the module writes
 //   anywhere but the local audit trail (no network module, no child process).
 // - link joins a verify-* result already in the trail to the change.
+// - Batch G3, code review round 1 (finding 2): open names the read-back that proves the
+//   change (--read-back connector:verify-command, such as okta:verify-factor-reset); link
+//   refuses a verify-* result of any other connector or command, and status never counts
+//   one, even a link written into the trail around the CLI.
 // - status reports the change done only when all three match in order: the issued digest,
 //   an approval of that digest after it, and a verify-* result that verified after the
 //   approval, on an intact chain. Anything missing or mismatched is "not done", with the
@@ -47,7 +51,7 @@ function setup(t) {
 }
 
 function openChange(s, rClass = 'R2') {
-  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', rClass, '--target', '[UPN]', '--procedure-file', s.procedure]);
+  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', rClass, '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', s.procedure]);
   return r;
 }
 const verifyEntry = (s, verified, change = null) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified, state: 'OK', change });
@@ -154,6 +158,35 @@ test('R0 and R1 procedures are refused at open; an unknown change is not done; a
   const st = b.run(CLI, ['status', '--change', o.json.change]);
   assert.equal(st.code, 2);
   assert.ok(st.json.missing.some((m) => /broken/i.test(m)));
+});
+
+test('open needs the read-back that proves the change; link refuses another kind, and status never counts one', (t) => {
+  const s = setup(t);
+  const bare = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--procedure-file', s.procedure]);
+  assert.equal(bare.code, 1, '--read-back is required');
+  assert.match(bare.stderr, /--read-back/);
+  const bad = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:reset-factor', '--procedure-file', s.procedure]);
+  assert.equal(bad.code, 1, 'a read-back is connector:verify-command');
+  const o = openChange(s);
+  assert.equal(o.code, 0, o.stderr);
+  s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  // a verified read-back of another connector, and of another okta command
+  const fleet = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-checked-in', verified: true, state: 'OK', change: null });
+  const status = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-status', verified: true, state: 'OK', change: null });
+  for (const v of [fleet, status]) {
+    const before = s.log.entries().length;
+    const l = s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]);
+    assert.equal(l.code, 2, `link of ${v.seq} refused`);
+    assert.match(l.stderr, /okta:verify-factor-reset/);
+    assert.equal(s.log.entries().length, before, 'nothing recorded');
+  }
+  // a link written into the trail around the CLI still does not make the change done
+  s.log.append({ kind: 'change-link', change: o.json.change, verify_seq: fleet.seq });
+  const st = s.run(CLI, ['status', '--change', o.json.change]);
+  assert.equal(st.code, 2);
+  assert.equal(st.json.done, false);
+  assert.ok(st.json.missing.some((m) => /okta:verify-factor-reset/.test(m)), st.stdout);
+  assert.equal(st.json.procedure.read_back, 'okta:verify-factor-reset');
 });
 
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {

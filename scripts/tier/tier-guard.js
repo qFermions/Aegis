@@ -72,7 +72,10 @@ const ESCALATION_PATTERNS = [
   // Security incident — not an SR-2 class by itself, but a lane floor: a ticket that
   // says the account may be compromised must never be handled as a routine
   // "new phone" MFA reset. It belongs to the existing /security-alert-triage path.
-  { pattern: /\b(compromis(?:e|ed|ing)|breach(?:ed)?|hacked|phish(?:ed|ing) (?:link|click|success)|attacker|unauthori[sz]ed (?:access|sign[- ]?in|login))\b/i, label: 'suspected compromise / security incident (existing /security-alert-triage path)' },
+  // batch G3: "breached" about an SLA, a deadline or a target ("SLA breached", "breached its SLA",
+  // "in breach of the response SLA") is a missed commitment, not a compromise, so it does not
+  // floor here; "the account was breached" and "a data breach" still do.
+  { pattern: /\b(compromis(?:e|ed|ing)|(?<!\b(?:SLAs?|service[- ]levels?|deadlines?|targets?|OLAs?|KPIs?)\s+(?:(?:was|were|is|are|has\s+been|have\s+been|got)\s+)?)breach(?:ed|es)?(?!\s+(?:of\s+)?(?:(?:its|their|the|our|an?|this|that)\s+)?(?:[\w-]+\s+){0,2}(?:SLAs?|service[- ]levels?|deadlines?|targets?|OLAs?|KPIs?)\b)|hacked|phish(?:ed|ing) (?:link|click|success)|attacker|unauthori[sz]ed (?:access|sign[- ]?in|login))\b/i, label: 'suspected compromise / security incident (existing /security-alert-triage path)' },
   // G1 — Google Workspace / Okta / Jamf consequential actions. Mirrored in the
   // graph engine's SR2_TRIGGER_PATTERNS; tier-routing.test.js pins both. The
   // engine writes each pattern in its own pre-existing `.*` style (and drops the

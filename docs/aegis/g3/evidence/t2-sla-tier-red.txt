@@ -1,0 +1,99 @@
+# command: node --test scripts/tier/tier-routing.test.js
+# commit: 92cfb84  started: 2026-10-28T07:39:39Z  node: v24.22.1
+✔ T1-A Microsoft: routine single-user ticket has no escalation floor (32.54385ms)
+✔ T1-B Google: routine single-user Workspace/ChromeOS ticket has no escalation floor (0.387733ms)
+✔ T2-A Microsoft: bounded troubleshooting ticket has no escalation floor (8.282501ms)
+✔ T2-B Google: bounded troubleshooting ticket has no escalation floor (0.719294ms)
+✔ ESCALATION: single-account disable floors to the existing path (SR-2, tier never overrides risk) (0.536739ms)
+✔ ESCALATION: mass disable floors with a DISTINCT trigger set from the single case (0.469591ms)
+✔ ESCALATION: wipe, MFA-off, license removal, offboarding, org-wide, extended gate all floor (1.757822ms)
+✔ ESCALATION: a suspected compromise floors even when the wording looks like a routine MFA reset (0.622833ms)
+✔ ESCALATION: SR-2 retire/delete-device/disable-mailbox wordings floor; confusable homoglyphs cannot hide a risk word (21.311236ms)
+✔ guard is report-only: exit 0 for both outcomes via CLI (162.960585ms)
+✔ exactly two lightweight handler agents exist (1.070792ms)
+✔ NEGATIVE EVIDENCE: handler toolsets contain no spawning or orchestration capability (1.300253ms)
+✔ both handlers cover BOTH ecosystems (no per-ecosystem split) (0.452481ms)
+✔ handler models match policy (Fable on all support paths; no haiku/sonnet anywhere in agents) (1.341333ms)
+✔ COLD START wiring: routing doctrine lives in the already-referenced harness doc (0.465397ms)
+✔ REPLAY: a verified T1-class repeat is a deterministic CACHE_HIT before any handler exists in the flow (351.401261ms)
+✔ T3 REGRESSION: the fortress is unaware of the lane (no coupling in either direction) (1.01012ms)
+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (1.794156ms)
+✔ G1 ESCALATION: every new Google/Okta/Jamf consequential wording floors in the guard and the graph engine (6.91436ms)
+✔ G1 routine: the Google-lane counterparts (backup codes, add to group, move one OU, one licence, enroll one Mac) stay clean (0.855475ms)
+✔ G1 folding: homoglyphs and invisible characters cannot hide a new floor (guard and engine) (6.799181ms)
+✔ G2 Fleet ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (2.432736ms)
+✔ G2 Fleet routine: the everyday counterparts stay clean in the guard and the graph engine (0.869332ms)
+✔ G2 Linear ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (1.815013ms)
+✔ G2 Linear routine: the everyday counterparts stay clean in the guard and the graph engine (2.32368ms)
+✔ G2 Slack ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (3.203983ms)
+✔ G2 Slack routine: the everyday counterparts stay clean in the guard and the graph engine (0.485711ms)
+✔ G2 Jamf ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (1.985032ms)
+✔ G2 Jamf routine: the everyday counterparts stay clean in the guard and the graph engine (0.475652ms)
+✔ G2 Google Workspace ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (1.497418ms)
+✔ G2 Google Workspace routine: the everyday counterparts stay clean in the guard and the graph engine (0.451735ms)
+✔ G2 code review round 1 ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (2.43357ms)
+✔ G2 code review round 1 routine: the everyday counterparts stay clean in the guard and the graph engine (0.609474ms)
+✔ G2 code review round 2, unenroll anchors ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.746051ms)
+✔ G2 code review round 2, unenroll anchors routine: the everyday counterparts stay clean in the guard and the graph engine (0.16044ms)
+✔ G2 code review round 2, Exchange purge ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.529814ms)
+✔ G2 code review round 2, Exchange purge routine: the everyday counterparts stay clean in the guard and the graph engine (0.165986ms)
+✔ G2 code review round 2, Linear issue key ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.254517ms)
+✔ G2 code review round 2, Linear issue key routine: the everyday counterparts stay clean in the guard and the graph engine (0.191717ms)
+✔ G2 code review round 2, sign-out everywhere ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.304864ms)
+✔ G2 code review round 2, sign-out everywhere routine: the everyday counterparts stay clean in the guard and the graph engine (0.125983ms)
+✔ G2 code review round 3, Linear issue key in either case ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.468424ms)
+✔ G2 code review round 3, Linear issue key in either case routine: the everyday counterparts stay clean in the guard and the graph engine (0.34241ms)
+✔ the tier guard and the graph engine use no inline regex modifier group, so they load on Node 22 (1.465645ms)
+✔ G2 code review round 3, unenroll without the Intune word ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.394535ms)
+✔ G2 code review round 3, unenroll without the Intune word routine: the everyday counterparts stay clean in the guard and the graph engine (0.115423ms)
+✔ G2 code review round 3, sign-out without phrasal verbs ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.299936ms)
+✔ G2 code review round 3, sign-out without phrasal verbs routine: the everyday counterparts stay clean in the guard and the graph engine (0.228552ms)
+✔ the purge floor stays fast on a long line that never names a mailbox (guard and engine) (25.094179ms)
+✔ every G2 floor in the guard has the same pattern in the graph engine, with sentence gaps read as line gaps (1.700839ms)
+✔ G2 security review 2, message delete or purge across mailboxes ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.796503ms)
+✔ G2 security review 2, message delete or purge across mailboxes routine: the everyday counterparts stay clean in the guard and the graph engine (0.267625ms)
+✔ G2 security review 2, Intune unenroll ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (0.28489ms)
+✔ G2 security review 2, Intune unenroll routine: the everyday counterparts stay clean in the guard and the graph engine (0.143341ms)
+✖ an SLA breach stays routine; a breached account, mailbox or system still floors as a compromise (2.165996ms)
+ℹ tests 55
+ℹ suites 0
+ℹ pass 54
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 812.74669
+
+✖ failing tests:
+
+test at scripts/tier/tier-routing.test.js:626:1
+✖ an SLA breach stays routine; a breached account, mailbox or system still floors as a compromise (2.165996ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'routine floored: Linear shows IT issue [ISSUE_ID] breached its SLA overnight; who picks it up? -> suspected compromise / security incident (existing /security-alert-triage path)',
+  +   'routine floored: SLA breached on [JIRA-###]: the first response was late. -> suspected compromise / security incident (existing /security-alert-triage path)',
+  +   'routine floored: The SLA breach report for last week shows 4 late tickets. -> suspected compromise / security incident (existing /security-alert-triage path)',
+  +   'routine floored: Ticket [JIRA-###] is in breach of the response SLA. -> suspected compromise / security incident (existing /security-alert-triage path)',
+  +   'routine floored: We breached the 4-hour resolution target on the printer ticket. -> suspected compromise / security incident (existing /security-alert-triage path)',
+  +   'routine floored: The breach of SLA alert fired for [ISSUE_ID] again. -> suspected compromise / security incident (existing /security-alert-triage path)'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/tier/tier-routing.test.js:645:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'routine floored: Linear shows IT issue [ISSUE_ID] breached its SLA overnight; who picks it up? -> suspected compromise / security incident (existing /security-alert-triage path)', 'routine floored: SLA breached on [JIRA-###]: the first response was late. -> suspected compromise / security incident (existing /security-alert-triage path)', 'routine floored: The SLA breach report for last week shows 4 late tickets. -> suspected compromise / security incident (existing /security-alert-triage path)', 'routine floored: Ticket [JIRA-###] is in breach of the response SLA. -> suspected compromise / security incident (existing /security-alert-triage path)', 'routine floored: We breached the 4-hour resolution target on the printer ticket. -> suspected compromise / security incident (existing /security-alert-triage path)', 'routine floored: The breach of SLA alert fired for [ISSUE_ID] again. -> suspected compromise / security incident (existing /security-alert-triage path)' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:39:40Z
+# capture edited after the run: U+2014 written as "--" (1), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

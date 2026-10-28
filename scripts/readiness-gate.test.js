@@ -8,8 +8,9 @@
 // - The criteria the charter lists are all there: zero autonomous writes, deterministic
 //   routing and floors, refused write-capable credentials, a tamper-evident audit trail,
 //   failure messages, the latency budget, a model-judged run on held-out cases, an
-//   operator validation sample, and vendor facts checked by hand. The last three are owner
-//   only.
+//   operator validation sample, and vendor facts checked by hand. The last three, and the
+//   two that need a real tenant (least-privilege credentials set up there, and each connector
+//   run once against it), are owner only, and no other row is.
 // - Every file and test the page names exists in the repository.
 // - The page never marks the gate passed.
 // Run: node --test scripts/readiness-gate.test.js
@@ -39,15 +40,17 @@ test('every criterion names a command, a file or an owner action, and who runs i
   }
 });
 
-test('the charter criteria are all there, and the three that need the owner are labeled owner only', () => {
+test('the charter criteria are all there, and the five that need the owner, and only those, are labeled owner only', () => {
   const rows = criteria(fs.readFileSync(FILE, 'utf8'));
   const find = (re) => rows.find((r) => re.test(r.criterion));
   for (const re of [/autonomous writes/i, /routing and floors/i, /write-capable credentials/i, /audit trail/i, /failure state/i, /latency/i]) assert.ok(find(re), String(re));
-  for (const re of [/held-out/i, /operator validation/i, /vendor facts/i]) {
+  const owner = [/least-privilege credentials set up in each real tenant/i, /held-out/i, /operator validation/i, /vendor facts/i, /against a real tenant/i];
+  for (const re of owner) {
     const r = find(re);
     assert.ok(r, String(re));
     assert.equal(r.who, 'owner only', String(re));
   }
+  assert.equal(rows.filter((r) => r.who === 'owner only').length, owner.length, 'no other row is owner only');
 });
 
 test('every repository path the page names exists', () => {

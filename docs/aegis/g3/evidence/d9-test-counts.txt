@@ -1,5 +1,5 @@
 # command: bash docs/aegis/g3/evidence/tools/test-counts.sh <clone>
-# commit: a237fac  started: 2026-10-28T12:45:47Z  node: v24.22.1
+# commit: ae88348  started: 2026-10-28T13:14:24Z  node: v24.22.1
 scripts/adapters/contract-g3.test.js: base 0 head 10 (10)
 scripts/adapters/endpoint-sync.test.js: base 0 head 2 (2)
 scripts/adapters/failure-messages.test.js: base 0 head 14 (14)
@@ -27,5 +27,5 @@ scripts/untrusted/poisoned-memory.test.js: base 24 head 29 (5)
 scripts/untrusted/wrong-customer.test.js: base 17 head 18 (1)
 files: 52; tests added 249; tests removed 0
 whole run: base 1045, head 1294
-# exit: 0  finished: 2026-10-28T12:54:58Z
+# exit: 0  finished: 2026-10-28T13:23:21Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

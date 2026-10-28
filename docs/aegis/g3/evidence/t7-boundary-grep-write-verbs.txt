@@ -1,10 +1,10 @@
 # command: bash -c git ls-files '*.js' '*.mjs' | grep -v '\.test\.js$' | xargs grep -nE "'(POST|PUT|PATCH|DELETE)'" | grep -v '^shared/'
-# commit: a237fac  started: 2026-10-28T12:43:45Z  node: v24.22.1
+# commit: ae88348  started: 2026-10-28T13:12:12Z  node: v24.22.1
 scripts/adapters/readonly-contract.js:404:  if (method === 'POST' && spec.graphql && request.path === spec.graphql.path) {
 scripts/adapters/readonly-contract.js:408:    return { kind: 'read', method: 'POST', host: gqlHost, path: spec.graphql.path, body, document: name };
 scripts/adapters/readonly-contract.js:675:    const r = await attempt({ hostname: host, path: spec.tokenExchange.path, method: 'POST', headers, body });
 scripts/adapters/readonly-contract.js:810:      return perform(checkRequest(spec, env, { method: 'POST', path: spec.graphql.path, body }));
 scripts/adapters/readonly-contract.js:826:        const checked = checkRequest(spec, env, { method: 'POST', path: spec.graphql.path, body });
 scripts/adapters/readonly-contract.js:827:        return { state: STATES.OK, ok: true, method: 'POST', host: checked.host, path: checked.path, document: name, variables, note: 'dry run: no credentials read, no network' };
-# exit: 0  finished: 2026-10-28T12:43:45Z
+# exit: 0  finished: 2026-10-28T13:12:12Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

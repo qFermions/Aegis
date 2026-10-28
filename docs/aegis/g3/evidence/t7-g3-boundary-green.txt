@@ -1,15 +1,15 @@
 # command: node --test scripts/g3-boundary.test.js
-# commit: a237fac  started: 2026-10-28T12:43:44Z  node: v24.22.1
-✔ github: every connector command sends reads only, and nothing without --execute (27.290737ms)
-✔ github: the spec defines GET routes only and the source opens no connection and writes no file (1.011017ms)
-✔ msgraph: every connector command sends reads only, and nothing without --execute (34.789858ms)
-✔ msgraph: the spec defines GET routes only and the source opens no connection and writes no file (0.615995ms)
-✔ okta: every connector command sends reads only, and nothing without --execute (38.030984ms)
-✔ okta: the spec defines GET routes only and the source opens no connection and writes no file (0.746778ms)
-✔ no G3 module opens a connection of its own (2.049142ms)
-✔ the intake sends at most one read and writes only the case state.json, only in saveCase (18.773932ms)
-✔ every G3 connector command a runbook or README tells an operator to run is exercised above (12.840198ms)
-✔ every G3 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (4.405927ms)
+# commit: ae88348  started: 2026-10-28T13:12:12Z  node: v24.22.1
+✔ github: every connector command sends reads only, and nothing without --execute (27.267001ms)
+✔ github: the spec defines GET routes only and the source opens no connection and writes no file (1.003343ms)
+✔ msgraph: every connector command sends reads only, and nothing without --execute (38.571117ms)
+✔ msgraph: the spec defines GET routes only and the source opens no connection and writes no file (1.616481ms)
+✔ okta: every connector command sends reads only, and nothing without --execute (42.582327ms)
+✔ okta: the spec defines GET routes only and the source opens no connection and writes no file (0.689399ms)
+✔ no G3 module opens a connection of its own (2.058358ms)
+✔ the intake sends at most one read and writes only the case state.json, only in saveCase (18.931368ms)
+✔ every G3 connector command a runbook or README tells an operator to run is exercised above (13.689763ms)
+✔ every G3 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (3.719829ms)
 ℹ tests 10
 ℹ suites 0
 ℹ pass 10
@@ -17,6 +17,6 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 358.636576
-# exit: 0  finished: 2026-10-28T12:43:45Z
+ℹ duration_ms 342.937275
+# exit: 0  finished: 2026-10-28T13:12:12Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

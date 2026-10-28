@@ -1,5 +1,5 @@
 # command: bash docs/aegis/g3/evidence/tools/fixtures-and-mocks.sh f185071
-# commit: a237fac  started: 2026-10-28T12:43:46Z  node: v24.22.1
+# commit: ae88348  started: 2026-10-28T13:12:25Z  node: v24.22.1
 --- fixture files added (data read by tests or the corpus scorer):
 scripts/adapters/scope-manifest.json
 scripts/eval/g3-intake/email-1.eml
@@ -25,34 +25,35 @@ scripts/intake/fixtures/email-plain.eml
 scripts/intake/fixtures/github-issue.json
 scripts/intake/fixtures/linear-issue.json
 scripts/intake/fixtures/slack-thread.json
---- test files added or changed: socket tripwire loaded, lines with an injected transport, network modules required:
-scripts/adapters/contract-g3.test.js: tripwire 1, injected transport lines 2, network module requires 0
-scripts/adapters/endpoint-sync.test.js: tripwire 1, injected transport lines 0, network module requires 0
-scripts/adapters/failure-messages.test.js: tripwire 1, injected transport lines 3, network module requires 0
-scripts/adapters/g3-runbooks.test.js: tripwire 1, injected transport lines 1, network module requires 0
-scripts/adapters/github-client.test.js: tripwire 1, injected transport lines 1, network module requires 0
-scripts/adapters/linear-client.test.js: tripwire 1, injected transport lines 1, network module requires 0
-scripts/adapters/msgraph-client.test.js: tripwire 1, injected transport lines 1, network module requires 0
-scripts/adapters/okta-client.test.js: tripwire 2, injected transport lines 3, network module requires 0
-scripts/adapters/scope-preflight.test.js: tripwire 1, injected transport lines 17, network module requires 0
-scripts/audit/audit-log.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/audit/change-record.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/command-safety-gates.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/eval/g3-ticket-eval.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/eval/latency.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/g2-boundary.test.js: tripwire 1, injected transport lines 3, network module requires 0
-scripts/g3-boundary.test.js: tripwire 1, injected transport lines 2, network module requires 0
-scripts/gws-runbooks.test.js: tripwire 1, injected transport lines 0, network module requires 0
-scripts/intake/intake.test.js: tripwire 1, injected transport lines 3, network module requires 0
-scripts/jira-client.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/jira-contract.test.js: tripwire 1, injected transport lines 9, network module requires 0
-scripts/readiness-gate.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/repository-structure.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/risk_tier.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/tier/tier-routing.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/untrusted/instruction-injection.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/untrusted/poisoned-memory.test.js: tripwire 0, injected transport lines 0, network module requires 0
-scripts/untrusted/wrong-customer.test.js: tripwire 0, injected transport lines 0, network module requires 0
+--- test files added or changed: socket tripwire loaded, lines that inject a transport, request or fetch, network modules required
+    (0 and 0: the file injects no transport of its own; the whole suite, child processes included, also passes with the tripwire preloaded, d12-whole-suite-under-tripwire.txt):
+scripts/adapters/contract-g3.test.js: tripwire 1, injected transport, request or fetch lines 2, network module requires 0
+scripts/adapters/endpoint-sync.test.js: tripwire 1, injected transport, request or fetch lines 0, network module requires 0
+scripts/adapters/failure-messages.test.js: tripwire 1, injected transport, request or fetch lines 3, network module requires 0
+scripts/adapters/g3-runbooks.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/github-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/linear-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/msgraph-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/okta-client.test.js: tripwire 2, injected transport, request or fetch lines 3, network module requires 0
+scripts/adapters/scope-preflight.test.js: tripwire 1, injected transport, request or fetch lines 17, network module requires 0
+scripts/audit/audit-log.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/audit/change-record.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/command-safety-gates.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/eval/g3-ticket-eval.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/eval/latency.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/g2-boundary.test.js: tripwire 1, injected transport, request or fetch lines 3, network module requires 0
+scripts/g3-boundary.test.js: tripwire 1, injected transport, request or fetch lines 2, network module requires 0
+scripts/gws-runbooks.test.js: tripwire 1, injected transport, request or fetch lines 0, network module requires 0
+scripts/intake/intake.test.js: tripwire 1, injected transport, request or fetch lines 3, network module requires 0
+scripts/jira-client.test.js: tripwire 0, injected transport, request or fetch lines 15, network module requires 0
+scripts/jira-contract.test.js: tripwire 1, injected transport, request or fetch lines 9, network module requires 0
+scripts/readiness-gate.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/repository-structure.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/risk_tier.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/tier/tier-routing.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/untrusted/instruction-injection.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/untrusted/poisoned-memory.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/untrusted/wrong-customer.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
 --- tenant and host values the added test lines use:
       7 FLEET_URL: 'fleet.example.invalid'
       1 GITHUB_ORG: 'example-org'
@@ -63,5 +64,5 @@ scripts/untrusted/wrong-customer.test.js: tripwire 0, injected transport lines 0
       1 MS_TENANT_ID: '11111111-2222-4333-8444-555555555555'
       2 OKTA_ORG_URL: 'okta.example.invalid'
       1 OKTA_ORG_URL: 'okta.example.org'
-# exit: 0  finished: 2026-10-28T12:43:46Z
+# exit: 0  finished: 2026-10-28T13:12:25Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

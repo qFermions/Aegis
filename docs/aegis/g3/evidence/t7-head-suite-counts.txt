@@ -1,5 +1,5 @@
 # command: bash docs/aegis/g3/evidence/tools/suite-counts.sh
-# commit: a237fac  started: 2026-10-28T12:40:36Z  node: v24.22.1
+# commit: ae88348  started: 2026-10-28T13:08:57Z  node: v24.22.1
 scripts/adapters/github-client.test.js: tests 14 pass 14 fail 0
 scripts/adapters/okta-client.test.js: tests 28 pass 28 fail 0
 scripts/adapters/msgraph-client.test.js: tests 6 pass 6 fail 0
@@ -28,5 +28,5 @@ scripts/jira-client.test.js: tests 65 pass 65 fail 0
 scripts/untrusted/instruction-injection.test.js: tests 21 pass 21 fail 0
 scripts/untrusted/poisoned-memory.test.js: tests 29 pass 29 fail 0
 scripts/untrusted/wrong-customer.test.js: tests 18 pass 18 fail 0
-# exit: 0  finished: 2026-10-28T12:42:33Z
+# exit: 0  finished: 2026-10-28T13:11:00Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

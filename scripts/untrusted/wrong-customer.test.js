@@ -442,3 +442,15 @@ test('C15 a second org name inside the [@Aegion_*] namespace or joined by a dot 
     assert.ok(!g.stdout.includes('Contoso') && !g.stderr.includes('Contoso'), 'the foreign token is never echoed');
   }
 });
+
+test('C16 a chat handle written in lower case is not a second tenant when its last word is a dictionary suffix; the same words with a capital still are', () => {
+  const { hasForeignOrgToken } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+  const handles = ['[@it_voip]', '[@ops-wan]', '[@max_size]', '[@sec_alarm]', '[@web.domain]', '[@noc_isp2]'];
+  for (const text of handles) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is a chat handle`);
+  for (const text of ['[@Contoso_voip]', '[@IT_VOIP]', '[@contosoDomain]', '[@Contoso_domain2]']) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} is a second tenant`);
+
+  for (const handle of ['[@it_voip]', '[@ops-wan]']) {
+    const r = graph(['new', '--ticket-file', writeFile('handle.txt', `Phones down, see the ${handle} thread; the finance site shared by [UPN] will not open for [GUEST_UPN].`)]);
+    assert.equal(r.code, 0, `${handle} is a chat mention: ${short(r)}`);
+  }
+});

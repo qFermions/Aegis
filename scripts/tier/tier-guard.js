@@ -168,6 +168,8 @@ function injectionMarkersIn(text, forms = foldedForms(text)) {
 // dictionary suffix: [@Aegion_Contoso_DOMAIN] names a second org. The body cannot hold
 // "[", so an unclosed token cannot swallow the next one. A chat handle ([@jane_doe],
 // [@bob_site_visit], [@alex_IT]) is not an org token: its suffix is not a dictionary suffix.
+// A body with no capital letter ([@it_voip], [@ops-wan]) is a handle too, because org
+// tokens write their suffix in capitals; the limit is that [@contoso_domain] passes.
 const ORG_TOKEN = /\[@\s*([A-Za-z][A-Za-z0-9_.\s-]{0,79})\]/g;
 const OWN_ORG_NAMESPACE = /^Aegion(?:[\s_]|$)/i;
 const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_SP', 'FINANCE_SERVER', 'GWS_CUSTOMER_ID', 'ISP',
@@ -183,6 +185,7 @@ function isOrgSuffix(suffix) {
   return ORG_TOKEN_SUFFIXES.has(suffix) || ORG_TOKEN_SUFFIXES.has(suffix.replace(/_\d+$/, '')) || /^SITE_\d+$/.test(suffix);
 }
 function isForeignOrgBody(body) {
+  if (!/[A-Z]/.test(body)) return false;
   const words = orgTokenWords(body);
   // own namespace: [@Aegion] or [@Aegion_<suffix>]; a word between them is a second org
   const first = OWN_ORG_NAMESPACE.test(body) ? 2 : 1;

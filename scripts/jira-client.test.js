@@ -738,8 +738,11 @@ test('verify commands without --execute are dry runs with zero credentials and z
       fetch: async () => { fetchCalls += 1; },
       getCredentials: () => { throw new Error('credentials should not load'); },
     });
-    assert.equal(result.code, 0, argv[0]);
+    // batch 1 finding 7, fixed in batch G3: a verify dry run proves nothing, so it exits 4,
+    // never 0 (the code of a passed read-back)
+    assert.equal(result.code, 4, argv[0]);
     assert.match(result.stdout, /DRY RUN - would GET/);
+    assert.match(result.stdout, /NOT VERIFIED/);
     assert.equal(fetchCalls, 0);
     assert.equal(result.credentialCalls, 0);
   }

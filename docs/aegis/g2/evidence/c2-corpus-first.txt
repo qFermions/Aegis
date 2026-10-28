@@ -1,0 +1,66 @@
+# command: bash c2.sh (the script is at the end of this file; run from the repo root)
+# captured: 2026-10-28T04:32:09Z at 7699645
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+## corpus first
+g2-tickets.json first added: 554aa42 test(eval): G2 corpus with every expected decision, its scorer and CI wiring, before any command, rule or adapter it judges (task 2)
+first commit touching a G2 command, adapter or floor: 951309d chore(dictionary): G2 placeholder tokens through the dictionary's own process
+the corpus commit is an ancestor of it
+
+## each new test file against the module it judges (first commit that adds each)
+scripts/adapters/readonly-contract.test.js 8913c20 | scripts/adapters/readonly-contract.js f571add | test first
+scripts/adapters/fleet-client.test.js a350485 | scripts/adapters/fleet-client.js 3867e40 | test first
+scripts/adapters/linear-client.test.js 4c62d86 | scripts/adapters/linear-client.js 1233a8c | test first
+scripts/adapters/slack-client.test.js 15c90f0 | scripts/adapters/slack-client.js 76731cd | test first
+scripts/adapters/jamf-client.test.js 53f2008 | scripts/adapters/jamf-client.js ac52209 | test first
+scripts/adapters/gws-client.test.js 6a0d920 | scripts/adapters/gws-client.js 5d4a259 | test first
+scripts/gws-posture-audit.test.js 95331da | scripts/gws-posture-audit.js 4e6abb3 | test first
+scripts/g2-boundary.test.js e204355 | docs/aegis/boundary-audit.md 426b8cd | test first
+scripts/adapters/fleet-runbooks.test.js 770b9c9 | .claude/commands/fleet-host-health.md bf908e1 | test after (deviation)
+scripts/adapters/linear-runbooks.test.js 3cf8b3c | .claude/commands/linear-intake.md 48eb547 | test after (deviation)
+scripts/adapters/slack-runbooks.test.js f435aef | .claude/commands/slack-user-lifecycle.md 5d5dc94 | test after (deviation)
+scripts/adapters/jamf-runbooks.test.js d6ecd65 | .claude/commands/jamf-filevault.md 5f12daa | test after (deviation)
+scripts/gws-runbooks.test.js 79d58d2 | .claude/commands/gws-2sv-enforcement.md b8b7a46 | test after (deviation)
+
+## scorer in node --test and in CI
+149:        run: node scripts/eval/g2-ticket-eval.js
+42:test('corpus shape: per-platform counts, probes, pairs and placeholder-only text', () => {
+93:test('every G2 command produces a Linear-ready note and the read-back the administrator runs after posting it', () => {
+107:test('the scorer checks implementation, not fixtures: mutated expectations, roles, drafts and pairs all fail', () => {
+134:test('the G2 lane runs the shared evaluator (no copy-pasted evaluation logic) and leaves the other corpora alone', () => {
+ℹ tests 9
+ℹ pass 9
+ℹ fail 0
+
+## per-platform and pair counts printed
+63/63 tickets · 12/12 dangerous pairs · 33 floored to T3 · 26 commands exercised · classes {"QUICK_FIX":3,"DIAGNOSTIC":16,"PROCEDURE":43,"REFERENCE":1}
+  fleet   13/13 tickets · 3/3 pairs · 7 floored · decisions {"ADVISE":6,"GATE":5,"FLAG_INJECTION":1,"ROLE_ESCALATE":1,"DRAFT_ONLY":0}
+  linear  11/11 tickets · 2/2 pairs · 6 floored · decisions {"ADVISE":5,"GATE":4,"FLAG_INJECTION":1,"ROLE_ESCALATE":1,"DRAFT_ONLY":0}
+  slack   14/14 tickets · 3/3 pairs · 8 floored · decisions {"ADVISE":5,"GATE":6,"FLAG_INJECTION":1,"ROLE_ESCALATE":1,"DRAFT_ONLY":1}
+  jamf    12/12 tickets · 2/2 pairs · 5 floored · decisions {"ADVISE":6,"GATE":4,"FLAG_INJECTION":1,"ROLE_ESCALATE":1,"DRAFT_ONLY":0}
+  gws     13/13 tickets · 2/2 pairs · 7 floored · decisions {"ADVISE":5,"GATE":6,"FLAG_INJECTION":1,"ROLE_ESCALATE":1,"DRAFT_ONLY":0}
+# exit: 0
+
+## c2.sh
+echo "## corpus first"
+c=$(git log --reverse --format='%h' 3592bd1..HEAD -- scripts/eval/g2-tickets.json | head -1)
+echo "g2-tickets.json first added: $(git log -1 --format='%h %s' $c | cut -c1-140)"
+r=$(git log --reverse --format='%h' 3592bd1..HEAD -- '.claude/commands/fleet-*.md' '.claude/commands/linear-*.md' '.claude/commands/slack-*.md' scripts/adapters/fleet-client.js scripts/adapters/linear-client.js scripts/adapters/slack-client.js scripts/adapters/jamf-client.js scripts/adapters/gws-client.js scripts/tier/tier-guard.js scripts/graph/engine.js | head -1)
+echo "first commit touching a G2 command, adapter or floor: $(git log -1 --format='%h %s' $r | cut -c1-140)"
+git merge-base --is-ancestor $c $r && echo "the corpus commit is an ancestor of it"
+echo
+echo "## each new test file against the module it judges (first commit that adds each)"
+for pair in "scripts/adapters/readonly-contract.test.js scripts/adapters/readonly-contract.js" "scripts/adapters/fleet-client.test.js scripts/adapters/fleet-client.js" "scripts/adapters/linear-client.test.js scripts/adapters/linear-client.js" "scripts/adapters/slack-client.test.js scripts/adapters/slack-client.js" "scripts/adapters/jamf-client.test.js scripts/adapters/jamf-client.js" "scripts/adapters/gws-client.test.js scripts/adapters/gws-client.js" "scripts/gws-posture-audit.test.js scripts/gws-posture-audit.js" "scripts/g2-boundary.test.js docs/aegis/boundary-audit.md" "scripts/adapters/fleet-runbooks.test.js .claude/commands/fleet-host-health.md" "scripts/adapters/linear-runbooks.test.js .claude/commands/linear-intake.md" "scripts/adapters/slack-runbooks.test.js .claude/commands/slack-user-lifecycle.md" "scripts/adapters/jamf-runbooks.test.js .claude/commands/jamf-filevault.md" "scripts/gws-runbooks.test.js .claude/commands/gws-2sv-enforcement.md"; do
+  set -- $pair
+  t=$(git log --reverse --diff-filter=A --format='%h' 3592bd1..HEAD -- $1 | head -1)
+  m=$(git log --reverse --diff-filter=A --format='%h' 3592bd1..HEAD -- $2 | head -1); [ -z "$m" ] && m=$(git log --reverse --format='%h' 3592bd1..HEAD -- $2 | head -1)
+  if [ "$t" != "$m" ] && git merge-base --is-ancestor $t $m; then o="test first"; else o="test after (deviation)"; fi
+  echo "$1 $t | $2 $m | $o"
+done
+echo
+echo "## scorer in node --test and in CI"
+grep -n "node scripts/eval/g2-ticket-eval.js" .github/workflows/ci.yml
+grep -n "^test(" scripts/eval/g2-ticket-eval.test.js | head -5
+node --test scripts/eval/g2-ticket-eval.test.js 2>&1 | grep -E "^ℹ (tests|pass|fail)"
+echo
+echo "## per-platform and pair counts printed"
+node scripts/eval/g2-ticket-eval.js | grep -E "tickets"

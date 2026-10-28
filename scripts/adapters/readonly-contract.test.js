@@ -468,12 +468,14 @@ function fakeRequest(drive) {
   return { requestFn, made };
 }
 
-test('the HTTPS transport ends a request at its deadline, even while bytes keep trickling in', async () => {
+// a broken deadline fails this test in 2 s instead of hanging the run: the trickle is
+// unref'd and cleared after the test whatever its result (code review round 2, finding 15)
+test('the HTTPS transport ends a request at its deadline, even while bytes keep trickling in', { timeout: 2000 }, async (t) => {
   let timer;
-  const { requestFn, made } = fakeRequest((res) => { timer = setInterval(() => res.emit('data', Buffer.from('x')), 5); });
+  t.after(() => clearInterval(timer));
+  const { requestFn, made } = fakeRequest((res) => { timer = setInterval(() => res.emit('data', Buffer.from('x')), 5); timer.unref(); });
   const transport = contract.makeHttpsTransport(requestFn);
   await assert.rejects(transport({ hostname: 'example.invalid', path: '/api/v1/me', method: 'GET', headers: {}, timeoutMs: 40 }), /timeout/);
-  clearInterval(timer);
   assert.ok(made[0].destroyed, 'the request was destroyed, so no socket outlives the read');
 });
 

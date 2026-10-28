@@ -180,15 +180,17 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (!view.procedure) throw new NotDone('no procedure was issued under this change id');
       const target = log.entries().find((e) => e.seq === seq);
       if (!target || target.kind !== 'verify') throw new NotDone('only a verify-* result can be linked; that audit seq is not one');
-      const earlier = log.entries().find((e) => e.kind === 'change-link' && e.verify_seq === seq);
-      if (earlier && earlier.change !== flags.change) throw new NotDone(`that read-back already proves ${earlier.change}; one read-back proves one change. Nothing was recorded`);
       if (kindOf(target) !== view.procedure.read_back) throw new NotDone(`that read-back is ${kindOf(target)}; this change is proved only by ${view.procedure.read_back}. Nothing was recorded`);
       // one read-back proves one change, so only one that can prove this change is linked
       if (!view.approval || !view.approval.matches) throw new NotDone('this change has no approval of its procedure yet; record the approval first. Nothing was recorded');
       if (target.seq < view.approval.seq) throw new NotDone('that read-back ran before the approval, so it cannot prove the approved change. Nothing was recorded');
       if (target.verified !== true) throw new NotDone('that read-back did not verify the change. Nothing was recorded');
       if (target.change !== null && target.change !== flags.change) throw new NotDone(`that read-back was recorded for ${target.change}. Nothing was recorded`);
-      const r = log.append({ kind: 'change-link', change: flags.change, verify_seq: seq });
+      // checked under the write lock, so two links of one read-back cannot both succeed
+      const r = log.append({ kind: 'change-link', change: flags.change, verify_seq: seq }, { guard: (all) => {
+        const earlier = all.find((e) => e.kind === 'change-link' && e.verify_seq === seq);
+        if (earlier && earlier.change !== flags.change) throw new NotDone(`that read-back already proves ${earlier.change}; one read-back proves one change. Nothing was recorded`);
+      } });
       out(`${JSON.stringify({ ok: true, change: flags.change, verify_seq: seq, audit_seq: r.seq }, null, 2)}\n`);
       return 0;
     }

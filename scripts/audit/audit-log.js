@@ -289,9 +289,12 @@ function openAuditLog({ dir = defaultAuditDir(), now = Date.now } = {}) {
     throw new AuditBroken('the audit head does not match the log; run node scripts/audit/audit-log.js verify');
   }
 
-  function append(entry) {
+  // guard(entries), when given, runs under the write lock on the trail as it is; if it throws,
+  // nothing is written (a check that must not race another writer)
+  function append(entry, { guard } = {}) {
     const fields = checkEntry(entry);
     return withLock(() => {
+      if (guard) guard(entries());
       const before = tail();
       const record = { seq: before.seq + 1, at: new Date(now()).toISOString(), ...fields, prev: before.hash };
       record.hash = entryHash(record);

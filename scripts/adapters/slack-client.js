@@ -657,7 +657,7 @@ async function scanAppList(client, route, key, team, appId) {
     const res = slackOutcome(await client.get(route, {}, query));
     if (!res.ok) return { failed: res, step: route };
     pages += 1;
-    flags.push(...withPrefix(res.flags, route));
+    flags.push(...withPrefix(withholdPersonal(res.flags, route), route));
     const list = res.data[key];
     if (!Array.isArray(list)) return { failed: invalid(`${route} answered without ${key}`), step: route };
     if (list.some((e) => isObject(e) && isObject(e.app) && e.app.id === appId)) found = true;

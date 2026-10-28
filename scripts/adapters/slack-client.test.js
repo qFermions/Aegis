@@ -781,3 +781,15 @@ test('a flag on a personal profile field names its path and withholds the text: 
     assert.ok(!run.stdout.includes('[PHONE_NUMBER]') && !run.stdout.includes('at home'), 'the personal text is not quoted');
   }
 });
+
+// ── Code review round 2 (batch G2) ─────────────────────────────────────────
+
+test('verify-app-approved withholds a flagged requester name in the pending list, as app-requests does (round 2, finding 3)', async () => {
+  const text = `${INJECTION} Call [PHONE_NUMBER] at home.`;
+  const requests = { ok: true, app_requests: [{ app: { id: 'A0FIXTURE', name: 'App' }, user: { id: 'U0A0000001', name: text }, scopes: [] }], response_metadata: { next_cursor: '' } };
+  const run = await cli(['verify-app-approved', '--app-id', APP, '--execute'], { replies: [appsBody('approved_apps', [APP]), requests] });
+  assert.equal(run.code, 0, run.stdout);
+  assert.match(run.stdout, /instruction-like text/, 'the marker is still reported');
+  assert.match(run.stdout, /admin\.apps\.requests\.list \$\.app_requests\[0\]\.user\.name/, 'the flag names the field');
+  assert.ok(!run.stdout.includes('[PHONE_NUMBER]') && !run.stdout.includes('at home'), 'the requester text is not quoted');
+});

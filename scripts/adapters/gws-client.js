@@ -549,9 +549,10 @@ async function readAll(client, paths) {
 
 // A user's personal fields are printed as "set" or "missing", never as values: the
 // runbooks read the account's state (suspension, 2-Step Verification, unit, admin flags,
-// primary address), and names, contact details, IDs and relations are personal data. A
-// field the response leaves out stays out (a runbook records it as missing).
-const PERSONAL_FIELDS = Object.freeze(['recoveryEmail', 'recoveryPhone', 'name', 'phones', 'addresses', 'emails', 'externalIds',
+// primary address), and names, contact details, other addresses (emails, aliases), IDs and
+// relations are personal data. A field the response leaves out stays out (a runbook
+// records it as missing).
+const PERSONAL_FIELDS = Object.freeze(['recoveryEmail', 'recoveryPhone', 'name', 'phones', 'addresses', 'emails', 'aliases', 'nonEditableAliases', 'externalIds',
   'relations', 'organizations', 'locations', 'ims', 'websites', 'keywords', 'posixAccounts', 'sshPublicKeys', 'gender', 'notes',
   'languages', 'thumbnailPhotoUrl']);
 const filled = (v) => (typeof v === 'string' ? v.trim() !== '' : Array.isArray(v) ? v.length > 0 : isObject(v) ? Object.keys(v).length > 0 : v !== null && v !== undefined);

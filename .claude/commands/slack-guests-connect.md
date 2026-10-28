@@ -209,7 +209,7 @@ node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --e
 **Role needed:** the same people who may archive the channel.
 <!-- SAFETY GATE [slack-guests-connect-unarchive-portal] -->
 - **Target:** channel [CHANNEL_NAME] ([CHANNEL_ID])
-- **Effect:** unarchive one channel; nobody is added back by this gate
+- **Effect:** unarchive one channel; this gate adds nobody by hand, and whether Slack restores former members is unsettled (step 2 reads who is in it)
 - **Scope:** one channel; members can post in it again, and who is still in it is read in step 2
 - **Reversibility:** R1: archive it again under the archive gate [slack-guests-connect-archive-portal]
 - **Required confirmation:** Type exactly `UNARCHIVE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
@@ -223,6 +223,10 @@ node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --e
 node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 ```
 
+Before the re-add gate: the list in the ticket was written before the archive, possibly months ago, so check each listed member's account first. For each one, run `node scripts/adapters/slack-client.js user --user [USER_ID] --execute` (read-only) and leave out anyone who now reads `deleted` true, `is_restricted` true or `is_ultra_restricted` true. Write each member left out in the ticket with the reason, then recount the members left: that count is `$memberCount`. A member who became a guest goes back into a channel only through the guest gates of `/slack-user-lifecycle`, never through this gate.
+
+**Stop if:** a listed member now reads as a guest or deactivated and the ticket does not show them left out; the count of members left differs from `$memberCount`.
+
 **Role needed:** a member of `#[CHANNEL_NAME]` who may add people to it, or a Workspace Owner or Workspace Admin [unverified: channel-invite permissions were not in the sources read].
 <!-- SAFETY GATE [slack-guests-connect-readd-members-portal] -->
 - **Target:** channel [CHANNEL_NAME] ([CHANNEL_ID]) and the `$memberCount` members the unarchive read-back found missing
@@ -231,7 +235,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 - **Reversibility:** R1 for one member, R2 for 2 to 10 members, R3 above 10 (a mass operation under SR-2, after the independent out-of-session review): the recorded list is the checkpoint; a person added by mistake comes out again under [slack-user-lifecycle-channel-remove-portal], having already seen the history
 - **Required confirmation:** Render the number of missing members as `$memberCount`, then type exactly `ADD $memberCount RECORDED MEMBERS BACK TO SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [slack-guests-connect-readd-members-portal]:** Only after the unarchive read-back, the missing members and their number in the ticket, for more than 10 members the independent out-of-session review of that list, and the exact match:
+**PORTAL ACTION [slack-guests-connect-readd-members-portal]:** Only after the unarchive read-back, the account read of each listed member with anyone left out written in the ticket, the missing members and their number in the ticket, for more than 10 members the independent out-of-session review of that list, and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → click the channel name in the header → the member list → add each member on the list, one by one (the add control's label was not in the sources read; confirm it on screen). Stop at the first person who is not on the list, and stop if the list no longer has `$memberCount` names.
 2. GUI read-back: the member list of `#[CHANNEL_NAME]` matches the recorded list. The adapter does not read channel membership, so this GUI read-back is the proof.
 

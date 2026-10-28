@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[APP_NAME]` (the app as Slack lists it) · `[APP_ID]` (its Slack app ID) · `[USER_ID]` (the member who requested it; in Phase E, the member who gains or loses app request management) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` / `[NOT_BEFORE]` (the ticket note, its digest, and the time its read-back starts from) · `[ADMIN_NAME]` (the person who decides) · `[@Aegion_SLACK_URL]` (the workspace) · `[@Aegion_SLACK_TEAM_ID]` (the workspace ID the read adapter is bound to) · org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[APP_NAME]` (the app as Slack lists it) · `[APP_ID]` (its Slack app ID) · `[USER_ID]` (the member who requested it) · `[MANAGER_USER_ID]` (in Phase E, the member who gains or loses app request management) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` / `[NOT_BEFORE]` (the ticket note, its digest, and the time its read-back starts from) · `[ADMIN_NAME]` (the person who decides) · `[@Aegion_SLACK_URL]` (the workspace) · `[@Aegion_SLACK_TEAM_ID]` (the workspace ID the read adapter is bound to) · org values from `modules/security/placeholder-dictionary.md`.
 
 ## ⚠️ Admin / safety gate
 
@@ -156,30 +156,30 @@ Read Phase A step 1 first: if **Require approved apps** is already on, skip this
 
 Read Phase A step 1 first: the request managers it recorded are the pre-state. Whether members may request unapproved apps is a separate setting that this runbook records and does not change. The request-management control on App Management Settings was not described in the sources read (a search excerpt says only that Owners can delegate request management); if the page shows no such control, stop.
 
-**Stop if:** for a grant, the sign-off of the request-management approver named in Inputs is not in the ticket (an app sign-off does not count); for a grant, `[USER_ID]` has an app request of their own pending (the requester does not review their own request).
+**Stop if:** the Phase A record already lists `[MANAGER_USER_ID]` among the request managers (grant) or does not list them (removal), so the change would prove nothing; for a grant, the sign-off of the request-management approver named in Inputs is not in the ticket (an app sign-off does not count); for a grant, `[MANAGER_USER_ID]` has an app request of their own pending (the requester does not review their own request).
 
 **Role needed:** Workspace Owner (on Enterprise, an Org Owner).
 <!-- SAFETY GATE [slack-app-approval-request-managers-grant-portal] -->
-- **Target:** [USER_ID]
+- **Target:** [MANAGER_USER_ID]
 - **Effect:** grant one member app request management; from then on that member approves or restricts app requests for the workspace
 - **Scope:** one member's role in one workspace; a privilege grant, because that member's approve and restrict decisions then apply across the workspace
 - **Reversibility:** R2 (a privilege grant): the Phase A list of request managers is the pre-state; take the role back under its own gate [slack-app-approval-request-managers-remove-portal]; apps the member approved while holding it stay approved until each is restricted under [slack-app-approval-restrict-portal]
-- **Required confirmation:** Type exactly `GRANT SLACK APP REQUEST MANAGEMENT TO [USER_ID]`.
+- **Required confirmation:** Type exactly `GRANT SLACK APP REQUEST MANAGEMENT TO [MANAGER_USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-app-approval-request-managers-grant-portal]:** Only after the Phase A record, the sign-off of the request-management approver named in Inputs, and the exact match:
-1. Slack admin → Slack Marketplace → App Management Settings → the request-management setting → add the member whose profile shows member ID `[USER_ID]` → Save. Confirm each label on screen.
+1. Slack admin → Slack Marketplace → App Management Settings → the request-management setting → add the member whose profile shows member ID `[MANAGER_USER_ID]` → Save. Confirm each label on screen.
 2. GUI read-back: App Management Settings lists that member among the request managers, and the other managers match the Phase A record.
 
 **Role needed:** Workspace Owner (on Enterprise, an Org Owner).
 <!-- SAFETY GATE [slack-app-approval-request-managers-remove-portal] -->
-- **Target:** [USER_ID]
+- **Target:** [MANAGER_USER_ID]
 - **Effect:** remove one member from the app request managers
 - **Scope:** one member in one workspace; apps the member already approved or restricted keep that status
 - **Reversibility:** R1: grant it again under its own gate [slack-app-approval-request-managers-grant-portal]
-- **Required confirmation:** Type exactly `REMOVE [USER_ID] FROM SLACK APP REQUEST MANAGERS`.
+- **Required confirmation:** Type exactly `REMOVE [MANAGER_USER_ID] FROM SLACK APP REQUEST MANAGERS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [slack-app-approval-request-managers-remove-portal]:** Only after the exact match:
-1. Slack admin → Slack Marketplace → App Management Settings → the request-management setting → remove the member whose profile shows member ID `[USER_ID]` → Save. Confirm each label on screen.
+1. Slack admin → Slack Marketplace → App Management Settings → the request-management setting → remove the member whose profile shows member ID `[MANAGER_USER_ID]` → Save. Confirm each label on screen.
 2. GUI read-back: App Management Settings no longer lists that member among the request managers.
 
 **Verification checkpoint:** [ ] the request managers on screen match the Phase A record plus the one grant, or minus the one removal · [ ] for a grant, the request-management approver's sign-off is in the ticket.
@@ -218,7 +218,7 @@ node scripts/adapters/slack-client.js apps-approved --execute
 
 Use the completed form only when every read-back above passed; otherwise use the partial-state form.
 
-> **Completed (every read-back passed):** Slack `[@Aegion_SLACK_URL]`, ticket `[ISSUE_ID]`. App `[APP_NAME]` (`[APP_ID]`), requested by `[USER_ID]`. Scopes reviewed: [list, with the stance for each]. Decision: [approved / restricted / developer asked to drop scopes], by `[ADMIN_NAME]` in Slack after the exact phrase[, sign-off recorded from [role]]. [Require approved apps turned on; request policy ([policy]) and request managers ([roles]) unchanged.] [App request management granted to / removed from `[USER_ID]`, after the exact phrase and, for a grant, the request-management approver's sign-off.] Read-back: [verify-app-approved / verify-app-restricted] exit 0 at [time] (Enterprise) / Slack Marketplace shows [status]. Time spent: [X] min.
+> **Completed (every read-back passed):** Slack `[@Aegion_SLACK_URL]`, ticket `[ISSUE_ID]`. App `[APP_NAME]` (`[APP_ID]`), requested by `[USER_ID]`. Scopes reviewed: [list, with the stance for each]. Decision: [approved / restricted / developer asked to drop scopes], by `[ADMIN_NAME]` in Slack after the exact phrase[, sign-off recorded from [role]]. [Require approved apps turned on; request policy ([policy]) and request managers ([roles]) unchanged.] [App request management granted to / removed from `[MANAGER_USER_ID]`, after the exact phrase and, for a grant, the request-management approver's sign-off.] Read-back: [verify-app-approved / verify-app-restricted] exit 0 at [time] (Enterprise) / Slack Marketplace shows [status]. Time spent: [X] min.
 >
 > **Partial state (a read-back failed or is pending):** Verified: [what passed, with the command and time]. Pending: [what has not passed, and when it will be read again]. Next owner: [role]. No further change until the pending read-back passes.
 

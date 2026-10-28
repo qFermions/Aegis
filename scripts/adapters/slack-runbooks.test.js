@@ -145,12 +145,12 @@ test('slack-app-approval: the require gate leaves the request policy and the req
 
   const grant = gates.find((g) => /\bAPP REQUEST MANAGEMENT\b/.test(g.phrase) && /\bGRANT\b/.test(g.phrase));
   assert.ok(grant, 'a gate of its own grants app request management');
-  assert.match(grant.target, /\[USER_ID\]/);
-  assert.ok(grant.phrase.includes('[USER_ID]'));
+  assert.match(grant.target, /\[MANAGER_USER_ID\]/);
+  assert.ok(grant.phrase.includes('[MANAGER_USER_ID]'));
   assert.match(grant.reversibility, /^R2\b/);
   const remove = gates.find((g) => /\bAPP REQUEST MANAGERS\b/.test(g.phrase) && /\bREMOVE\b/.test(g.phrase));
   assert.ok(remove, 'taking request management back has its own gate');
-  assert.ok(remove.phrase.includes('[USER_ID]'));
+  assert.ok(remove.phrase.includes('[MANAGER_USER_ID]'));
   assert.match(remove.reversibility, /^R1\b/);
 });
 
@@ -502,4 +502,28 @@ test('slack-retention-export: a deleted channel\'s failed read counts only when 
   for (const line of phaseF.split('\n').filter((l) => /channel_not_found|channel error code/.test(l))) {
     assert.match(line, /Phase A `channel` read of the same `?\[CHANNEL_ID\]`? succeeded with the same token/, line);
   }
+});
+
+test('round-2 review: the re-add checks each recorded member first, the unarchive Effect does not settle what Slack restores, and Phase E names its member apart from the requester', () => {
+  // The re-add gate reads each listed member's account first and leaves out guests and deactivated accounts.
+  const guests = DOCS.get('slack-guests-connect');
+  const phaseE = sectionLines(guests, guests.lines.find((l) => /^## Phase E:/.test(l))).join('\n');
+  const before = phaseE.slice(0, phaseE.indexOf('<!-- SAFETY GATE [slack-guests-connect-readd-members-portal] -->'));
+  assert.match(before, /`node scripts\/adapters\/slack-client\.js user --user \[USER_ID\] --execute`[^\n]*leave out anyone who now reads `deleted` true, `is_restricted` true or `is_ultra_restricted` true/);
+  assert.match(before, /\*\*Stop if:\*\* a listed member now reads as a guest or deactivated and the ticket does not show them left out/);
+  const readd = GATES.get('slack-guests-connect').find((g) => g.id === 'slack-guests-connect-readd-members-portal');
+  const action = guests.lines.find((l) => l.startsWith('**PORTAL ACTION [slack-guests-connect-readd-members-portal]:**')) || '';
+  assert.match(action, /the account read of each listed member with anyone left out written in the ticket/);
+  assert.ok(readd, 'the re-add gate exists');
+  // Unarchive: Slack's page versions disagree on whether former members return.
+  const unarchive = GATES.get('slack-guests-connect').find((g) => g.id === 'slack-guests-connect-unarchive-portal');
+  assert.match(unarchive.effect, /whether Slack restores former members is unsettled/);
+  assert.doesNotMatch(unarchive.effect, /nobody is added back by this gate/);
+  // Phase E of app-approval: the member gaining request management is [MANAGER_USER_ID], never the requester's [USER_ID].
+  const apps = DOCS.get('slack-app-approval');
+  const appE = sectionLines(apps, apps.lines.find((l) => /^## Phase E:/.test(l))).join('\n');
+  assert.doesNotMatch(appE.slice(0, appE.indexOf('<details>')), /\[USER_ID\]/);
+  assert.match(appE, /\*\*Stop if:\*\* the Phase A record already lists `\[MANAGER_USER_ID\]` among the request managers \(grant\) or does not list them \(removal\)/);
+  const note = apps.lines.find((l) => l.startsWith('> **Completed (every read-back passed):**')) || '';
+  assert.match(note, /granted to \/ removed from `\[MANAGER_USER_ID\]`/);
 });

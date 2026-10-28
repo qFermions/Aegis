@@ -1,0 +1,25 @@
+# command: node --test scripts/command-safety-gates.test.js 2>&1 | grep -E 'linear|^ℹ (tests|pass|fail)'
+# captured: 2026-10-28T01:57:30Z at ce35c1b
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ linear-intake-create-portal: portal gate is action-local and fail-closed (0.128494ms)
+✔ linear-intake-label-priority-portal: portal gate is action-local and fail-closed (0.242737ms)
+✔ linear-ticket-note-post-portal: portal gate is action-local and fail-closed (0.190123ms)
+✔ linear-ticket-note-replace-portal: portal gate is action-local and fail-closed (0.158099ms)
+✔ linear-ticket-note-delete-portal: portal gate is action-local and fail-closed (0.118411ms)
+✔ linear-triage-fields-portal: portal gate is action-local and fail-closed (0.184453ms)
+✔ linear-triage-accept-portal: portal gate is action-local and fail-closed (0.200564ms)
+✔ linear-triage-duplicate-portal: portal gate is action-local and fail-closed (0.269886ms)
+✔ linear-triage-decline-portal: portal gate is action-local and fail-closed (0.219784ms)
+✔ linear-triage-snooze-portal: portal gate is action-local and fail-closed (0.131998ms)
+✔ linear-triage-priority-portal: portal gate is action-local and fail-closed (0.114551ms)
+✔ linear-workspace-admin-delete-portal: portal gate is action-local and fail-closed (0.221299ms)
+✔ linear-workspace-admin-restore-portal: portal gate is action-local and fail-closed (0.180574ms)
+✔ linear-workspace-admin-bulk-move-portal: portal gate is action-local and fail-closed (0.317229ms)
+✔ linear-workspace-admin-bulk-delete-portal: portal gate is action-local and fail-closed (0.220223ms)
+✔ linear-workspace-admin-suspend-portal: portal gate is action-local and fail-closed (0.272786ms)
+✔ linear-workspace-admin-unsuspend-portal: portal gate is action-local and fail-closed (0.198238ms)
+✔ linear-workspace-admin-export-portal: portal gate is action-local and fail-closed (0.14842ms)
+ℹ tests 329
+ℹ pass 329
+ℹ fail 0
+# exit: 0

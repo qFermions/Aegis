@@ -1,0 +1,9 @@
+# command: node --test scripts/tier/tier-routing.test.js 2>&1 | grep -E -i 'fleet|^ℹ (tests|pass|fail)'
+# captured: 2026-10-28T01:53:22Z at b6fb421
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ G2 Fleet ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (2.811771ms)
+✔ G2 Fleet routine: the everyday counterparts stay clean in the guard and the graph engine (0.993357ms)
+ℹ tests 31
+ℹ pass 31
+ℹ fail 0
+# exit: 0

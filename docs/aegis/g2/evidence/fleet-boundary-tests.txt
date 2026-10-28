@@ -1,0 +1,9 @@
+# command: node --test scripts/g2-boundary.test.js 2>&1 | grep -E '^(✔|✖) (fleet|every G2 runbook)' | sort -u; echo '-- runbook findings that name a Fleet file (expected none):'; node --test scripts/g2-boundary.test.js 2>&1 | grep -oE "'\.claude/commands/[a-z0-9-]+\.md: [^']*'" | sort -u | grep fleet || echo none
+# captured: 2026-10-28T01:54:00Z at b6fb421
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ fleet: every documented adapter command sends reads only, and nothing without --execute (16.096873ms)
+✔ fleet: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file (0.886307ms)
+✖ every G2 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (3.567568ms)
+-- runbook findings that name a Fleet file (expected none):
+none
+# exit: 0

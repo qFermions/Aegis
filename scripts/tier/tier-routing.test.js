@@ -437,3 +437,28 @@ g2Suite('Google Workspace', [
   'Turn off automatic forwarding for the Sales organizational unit.',
   'Block less secure apps for every organizational unit.',
 ]);
+
+// Code review round 1 (batch G2): the CLI and product names of Fleet floor too, Slack
+// and Linear offboarding wordings floor, and the G2 deletion and unenroll floors need
+// their platform's anchor, so Microsoft and G1 tickets keep their old routing.
+g2Suite('code review round 1', [
+  [/Fleet host lock/i, 'Run fleetctl mdm lock on [DEVICE_NAME].'],
+  [/Fleet host lock/i, 'fleetctl mdm lock --host [HOST_ID]'],
+  [/Fleet host lock/i, 'Lock host [DEVICE_NAME] in FleetDM right now.'],
+  [/Fleet script/i, 'fleetctl run-script --script-path fix.sh --host [HOST_ID]'],
+  [/Slack or Linear member deactivation/i, 'Deactivate [FIRST_NAME] in Slack today.'],
+  [/Slack or Linear member deactivation/i, 'Deactivate the guest [FIRST_NAME] in Slack.'],
+  [/Slack or Linear member deactivation/i, 'Remove [FIRST_NAME] from the Slack workspace.'],
+  [/Slack or Linear member deactivation/i, 'Suspend [FIRST_NAME] in Linear.'],
+  [/sign-out everywhere/i, 'Sign [FIRST_NAME] out of every Slack session.'],
+  [/sign-out everywhere/i, 'Log [FIRST_NAME] out of Slack everywhere.'],
+  [/Linear issue/i, 'Delete issue [ISSUE_ID] and its sub-issues.'],
+  [/Linear issue/i, 'Delete IT-123, the duplicate issue.'],
+  [/Slack message/i, 'Delete the messages in #[CHANNEL_NAME] from yesterday.'],
+], [
+  'Outlook keeps deleting emails, the issue started today.',
+  'User deleted a Teams chat by accident, can we get it back?',
+  'Delete temporary files on [DEVICE_NAME] to free disk space.',
+  'List the users who are unenrolled from 2-Step Verification.',
+  'Remove [FIRST_NAME] from the #[CHANNEL_NAME] channel in Slack.',
+]);

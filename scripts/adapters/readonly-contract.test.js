@@ -519,11 +519,16 @@ test('--not-before must be a real calendar time: an impossible date is refused b
     ['fleet-client.js', ['verify-deleted', '--identifier', 'C02FIXTURE01', '--not-before', '2026-02-30T09:00:00Z', '--execute'], { FLEET_URL: 'fleet.example.org', FLEET_API_TOKEN: 'sentinel-value-1' }],
     ['linear-client.js', ['verify-comment', '--issue', 'IT-12', '--expect-sha256', '0'.repeat(64), '--not-before', '2026-02-30T09:00:00.000Z', '--execute'], { LINEAR_API_KEY: 'sentinel-value-5', LINEAR_ORG: 'fixture-org' }],
     ['jamf-client.js', ['verify-command', '--management-id', 'a1b2c3d4-0000-4000-8000-000000000001', '--type', 'INSTALL_PROFILE', '--not-before', '2026-02-30T09:00:00Z', '--execute'], { JAMF_URL: 'jamf.example.org', JAMF_CLIENT_ID: 'sentinel-value-2', JAMF_CLIENT_SECRET: 'sentinel-value-3' }],
+    // code review round 2, finding 9: Google Workspace and Slack use the same check
+    ['gws-client.js', ['verify-event', '--app', 'admin', '--event', 'SUSPEND_USER', '--user', 'admin@example.org', '--not-before', '2026-10-27T24:00:00.000Z', '--execute'], { GWS_SA_CLIENT_EMAIL: 'reader@example.org', GWS_SA_PRIVATE_KEY: require('node:crypto').generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }), GWS_ADMIN_SUBJECT: 'admin@example.org', GWS_CUSTOMER_ID: 'C0fixture' }],
+    ['slack-client.js', ['verify-posted', '--channel', 'C0FIXTURE01', '--expect-sha256', '0'.repeat(64), '--not-before', '2026-02-30T09:00:00Z', '--execute'], { SLACK_TOKEN: 'sentinel-value-4', SLACK_TEAM_ID: 'T0FIXTURE' }],
   ];
   for (const [file, argv, env] of cases) {
     const transport = queuedTransport([]);
-    const code = await require(`./${file}`).run(argv, env, { transport, out: () => {}, err: () => {}, sleep: async () => {} });
+    let printed = '';
+    const code = await require(`./${file}`).run(argv, env, { transport, out: (s) => { printed += s; }, err: (s) => { printed += s; }, sleep: async () => {} });
     assert.equal(code, 1, `${file}: an impossible --not-before is bad input`);
+    assert.match(printed, /--not-before/, `${file}: the refusal is about --not-before, not another flag or a credential`);
     assert.equal(transport.calls.length, 0, `${file}: nothing is sent`);
   }
 });

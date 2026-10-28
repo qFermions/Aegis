@@ -84,7 +84,7 @@ const crypto = require('node:crypto');
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep,
+  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime,
 } = require('./readonly-contract.js');
 
 // ── Hosts, token exchange and scopes ─────────────────────────────────────────
@@ -343,7 +343,8 @@ const USAGE = [
 ].join('\n');
 
 const realDate = (date) => DATE.test(date) && new Date(`${date}T00:00:00.000Z`).toISOString().slice(0, 10) === date;
-const realTime = (iso) => ISO_UTC.test(iso) && Number.isFinite(Date.parse(iso)) && realDate(iso.slice(0, 10));
+// the contract's calendar check: Date.parse alone takes 24:00 and rolls 30 February forward
+const realTime = (iso) => ISO_UTC.test(iso) && realCalendarTime(iso);
 
 // Every flag is checked before a client exists, so bad input reads and sends nothing.
 function validate(command, def, args) {

@@ -99,7 +99,7 @@ const path = require('node:path');
 
 const {
   STATES, RefusedError, TRIPWIRE_MESSAGE,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
 
 const HOST = 'slack.com';
@@ -220,24 +220,10 @@ function parseNotBefore(value, nowMs) {
   if (/^[0-9]{13}$/.test(value)) {
     ms = Number(value);
   } else {
-    const m = ISO_TIME.exec(value);
-    if (!m) throw new RefusedError(`--not-before must be ${NOT_BEFORE_RULE}`);
-    const [year, month, day, hour, minute] = [m[1], m[2], m[3], m[4], m[5]].map(Number);
-    const second = m[6] ? Number(m[6]) : 0;
-    const milli = m[7] ? Number(m[7].padEnd(3, '0')) : 0;
-    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-    if (month < 1 || month > 12 || day < 1 || day > lastDay || hour > 23 || minute > 59 || second > 59) {
-      throw new RefusedError(`--not-before is not a real date and time; it must be ${NOT_BEFORE_RULE}`);
-    }
-    let offsetMinutes = 0;
-    if (m[8] !== 'Z') {
-      const sign = m[8][0] === '-' ? -1 : 1;
-      const oh = Number(m[8].slice(1, 3));
-      const om = Number(m[8].slice(4, 6));
-      if (oh > 14 || om > 59) throw new RefusedError(`--not-before has an impossible zone offset; it must be ${NOT_BEFORE_RULE}`);
-      offsetMinutes = sign * (oh * 60 + om);
-    }
-    ms = Date.UTC(year, month - 1, day, hour, minute, second, milli) - offsetMinutes * 60000;
+    if (!ISO_TIME.test(value)) throw new RefusedError(`--not-before must be ${NOT_BEFORE_RULE}`);
+    // the contract's calendar and zone check, shared with the other adapters
+    if (!realCalendarTime(value)) throw new RefusedError(`--not-before is not a real date and time; it must be ${NOT_BEFORE_RULE}`);
+    ms = Date.parse(value);
   }
   if (!Number.isSafeInteger(ms) || ms < 1e12) throw new RefusedError(`--not-before must be ${NOT_BEFORE_RULE}`);
   if (ms > nowMs) throw new RefusedError('--not-before is in the future, so no post can be after it yet');

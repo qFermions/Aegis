@@ -1,0 +1,22 @@
+# command: node --test scripts/g3-boundary.test.js
+# commit: 3926810  started: 2026-10-28T10:31:59Z  node: v24.22.1
+✔ github: every connector command sends reads only, and nothing without --execute (25.918944ms)
+✔ github: the spec defines GET routes only and the source opens no connection and writes no file (0.874469ms)
+✔ msgraph: every connector command sends reads only, and nothing without --execute (36.452786ms)
+✔ msgraph: the spec defines GET routes only and the source opens no connection and writes no file (0.761425ms)
+✔ okta: every connector command sends reads only, and nothing without --execute (44.005836ms)
+✔ okta: the spec defines GET routes only and the source opens no connection and writes no file (0.792863ms)
+✔ no G3 module opens a connection of its own (1.438871ms)
+✔ the intake sends at most one read and writes only the case state.json, only in saveCase (21.338071ms)
+✔ every G3 connector command a runbook or README tells an operator to run is exercised above (13.849608ms)
+✔ every G3 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (4.122108ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 371.166801
+# exit: 0  finished: 2026-10-28T10:32:00Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

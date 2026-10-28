@@ -1,0 +1,30 @@
+# command: node <tmp> <clone>/docs/security/STATE_CHANGE_INVENTORY.json docs/security/STATE_CHANGE_INVENTORY.json
+# commit: 3926810  started: 2026-10-28T10:33:11Z  node: v24.22.1
+{
+ "list": "examples",
+ "before": 676,
+ "after": 727,
+ "added": 51,
+ "addedByMode": {
+  "gated": 41,
+  "preview": 10
+ },
+ "addedByFile": {
+  ".claude/commands/github-branch-protection.md": 12,
+  ".claude/commands/github-offboard-member.md": 5,
+  ".claude/commands/github-org-security.md": 5,
+  ".claude/commands/github-repo-access.md": 8,
+  ".claude/commands/github-security-alerts.md": 7,
+  ".claude/commands/new-user.md": 1,
+  ".claude/commands/okta-group-membership.md": 7,
+  "scripts/replay/fixtures/shared-mailbox-demo.md": 1,
+  "docs/evidence/ticket-eval-samples.md": 4,
+  ".claude/commands/troubleshoot.md": 1
+ },
+ "removed": [],
+ "modeChanged": [],
+ "entriesChangedOtherwise": 45,
+ "topLevelKeysChanged": []
+}
+# exit: 0  finished: 2026-10-28T10:33:11Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

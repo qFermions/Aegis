@@ -86,7 +86,9 @@ ticket before the gate) · `[TICKET_HOST_COUNT]` (the host count a ticket states
 kept apart from the count Fleet reports) · `[PRIORITY_LEVEL]` (a Linear priority:
 Urgent, High, Medium, Low or No priority) · `[DATE_TIME]` (a date and time written in
 UTC as ISO 8601, for example when a Linear snooze ends) · `[COMMENT_ID]` (the ID of one
-ticket comment, as the ticket system's comment read prints it). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
+ticket comment, as the ticket system's comment read prints it) · `[MANAGER_USER_ID]` (the
+member who gains or loses Slack app request management, kept apart from the requester's
+`[USER_ID]`). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
 Jamf Pro. In a Jamf Pro runbook, `[DEVICE_ID]` is either the computer ID or the
 management ID, and the runbook says which. Note templates keep using lowercase or
 single-letter fill-ins (`[X]`, `[N]`, `[timestamp]`) for numbers and times, as the

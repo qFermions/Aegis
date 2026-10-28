@@ -36,6 +36,7 @@ Mixed-state procedural set (validated by `scripts/command-safety-gates.test.js`)
 - Google Workspace / Okta / Jamf / macOS lane (v8.9): `/gws-new-user`, `/gws-offboard`, `/gws-password-reset`, `/gws-2sv-reset`, `/gws-group-membership`, `/gws-ou-move`, `/gws-license-assign`, `/gws-drive-transfer`, `/gws-audit-log`, `/gws-chromeos-device`, `/okta-app-assignment`, `/okta-mfa-reset`, `/okta-user-lifecycle`, `/jamf-enroll-mac`, `/jamf-lock-erase`, `/mac-new-hire-laptop`, `/gws-gmail-delivery`, `/mac-troubleshoot`, `/zoom-room-issue`
 - G2 Fleet lane: `/fleet-device-actions`, `/fleet-host-health`, `/fleet-policy-failures`, `/fleet-vulnerable-software`, `/fleet-osquery-investigation`
 - G2 Linear lane: `/linear-intake`, `/linear-triage`, `/linear-ticket-note`, `/linear-workspace-admin`
+- G2 Slack lane: `/slack-user-lifecycle`, `/slack-guests-connect`, `/slack-app-approval`, `/slack-retention-export`, `/slack-security-settings`, `/slack-incident-comms`
 
 Each listed mixed-state command is operator-only and states an execution boundary: read-only diagnostics remain available, an adjacent action-specific `SAFETY GATE` may authorize only its named mutation, and explicit `PREVIEW ONLY` regions must move to a separately reviewed runbook. This is a tested documentation contract, not a claim that arbitrary prose is rendered technically unexecutable.
 

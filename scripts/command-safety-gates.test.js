@@ -35,6 +35,8 @@ const MIXED_STATE_COMMANDS = [
   'fleet-device-actions', 'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation',
   // G2: Linear
   'linear-intake', 'linear-triage', 'linear-ticket-note', 'linear-workspace-admin',
+  // G2: Slack
+  'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings', 'slack-incident-comms',
 ];
 
 const REFERENCE_BOUNDARIES = [

@@ -7244,6 +7244,729 @@
       ]
     },
     {
+      "id": "slack-app-approval-approve-portal",
+      "file": ".claude/commands/slack-app-approval.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:approve",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-app-approval-request-managers-grant-portal",
+      "file": ".claude/commands/slack-app-approval.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-app-approval-request-managers-remove-portal",
+      "file": ".claude/commands/slack-app-approval.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-app-approval-require-off-preview",
+      "file": ".claude/commands/slack-app-approval.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-app-approval-require-portal",
+      "file": ".claude/commands/slack-app-approval.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:require",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-app-approval-restrict-portal",
+      "file": ".claude/commands/slack-app-approval.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:restrict",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-approve-invitation-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:approve",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-archive-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:archive",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-decline-invitation-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:decline",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-disconnect-org-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:disconnect",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-readd-members-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-remove-org-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-time-limit-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-guests-connect-unarchive-portal",
+      "file": ".claude/commands/slack-guests-connect.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:unarchive",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-incident-comms-delete-post-preview",
+      "file": ".claude/commands/slack-incident-comms.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "slack-incident-comms-resolved-post-portal",
+      "file": ".claude/commands/slack-incident-comms.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:send",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "slack-incident-comms-status-post-portal",
+      "file": ".claude/commands/slack-incident-comms.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:send",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "slack-retention-export-all-conversations-portal",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:export",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-retention-export-delete-channel-portal",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "slack-retention-export-delete-messages-portal",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-retention-export-dm-application-preview",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-retention-export-file-delete-preview",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-retention-export-legal-hold-portal",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:create",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-retention-export-legal-hold-release-preview",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-retention-export-public-export-portal",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:export",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-retention-export-shorten-retention-portal",
+      "file": ".claude/commands/slack-retention-export.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-security-settings-2fa-off-portal",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-2fa-require-portal",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-approved-domains-portal",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-file-sharing-on-preview",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-file-sharing-portal",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-saml-optional-preview",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-saml-require-portal",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-session-duration-portal",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-sms-allow-preview",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-security-settings-sms-block-portal",
+      "file": ".claude/commands/slack-security-settings.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-channel-add-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-channel-remove-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-deactivate-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:deactivate",
+          "count": 3
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-invite-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:send",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-owner-transfer-preview",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-reactivate-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:activate",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-session-reset-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:reset",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-to-member-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-to-multi-guest-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "slack-user-lifecycle-to-single-guest-portal",
+      "file": ".claude/commands/slack-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
       "id": "teams-app-reset-warning",
       "file": ".claude/commands/teams-issue.md",
       "kind": "portal",

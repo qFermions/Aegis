@@ -462,3 +462,17 @@ g2Suite('code review round 1', [
   'List the users who are unenrolled from 2-Step Verification.',
   'Remove [FIRST_NAME] from the #[CHANNEL_NAME] channel in Slack.',
 ]);
+
+// Code review round 2 (batch G2): one suite per finding.
+// Finding 1: the unenroll floor takes the device words of the retire floor
+// ([DEVICE_NAME], tablet, workstation, Intune, the LT- and DT- names), so an Intune
+// unenroll floors as it did before round 1; a course unenroll stays clean.
+g2Suite('code review round 2, unenroll anchors', [
+  [/Fleet host lock/i, 'Unenroll [DEVICE_NAME] from Intune.'],
+  [/Fleet host lock/i, 'Unenroll the work tablet.'],
+  [/Fleet host lock/i, 'Unenroll the shared workstation at the front desk.'],
+  [/Fleet host lock/i, 'Unenroll LT-[FIRST_NAME],[LAST_NAME] today.'],
+], [
+  'List the users who are unenrolled from 2-Step Verification.',
+  'Unenroll [FIRST_NAME] from the security awareness course.',
+]);

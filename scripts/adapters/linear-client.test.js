@@ -866,3 +866,36 @@ test('a network tripwire is never swallowed: run() rejects with it', async () =>
   );
   assert.equal(transport.calls.length, 1);
 });
+
+// Batch G3 (found by the Phase 0 baseline, a clone under the system temporary folder): the
+// note roots are this repo's tasks/ folder and the temporary folder, so a repo checked out
+// inside the temporary folder lost the rule that a repo file outside tasks/ is refused. The
+// repo rule is checked first now, wherever the repo lives.
+test('a repo file outside tasks/ is refused even when the repo sits inside the temporary folder; a note in tasks/ is still read', async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-linear-repo-in-tmp-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const repo = path.join(tmp, 'Aegis');
+  fs.mkdirSync(path.join(repo, 'tasks'), { recursive: true });
+  const readme = path.join(repo, 'README.md');
+  fs.writeFileSync(readme, 'Repository readme text that is not a ticket note.\n');
+  const note = path.join(repo, 'tasks', 'note.md');
+  fs.writeFileSync(note, 'Printer driver reinstalled. Test page printed.\n');
+  const noteRoots = [path.join(repo, 'tasks'), tmp];
+  const transport = queuedTransport([]);
+  const run = (file) => {
+    const out = [];
+    const err = [];
+    return linear.run(['note', '--issue', ISSUE, '--body-file', file], ENV, {
+      transport, now: () => NOW, sleep: noSleep, noteRoots, repoRoot: repo,
+      out: (s) => { out.push(String(s)); }, err: (s) => { err.push(String(s)); },
+    }).then((code) => ({ code, stdout: out.join(''), stderr: err.join('') }));
+  };
+  const refused = await run(readme);
+  assert.equal(refused.code, 1, refused.stdout);
+  assert.match(refused.stderr, /REFUSED/);
+  assert.ok(!(refused.stdout + refused.stderr).includes('Repository readme text'), 'the repo file is never printed');
+  const ok = await run(note);
+  assert.equal(ok.code, 0, ok.stderr);
+  assert.ok(ok.stdout.includes('Printer driver reinstalled. Test page printed.'));
+  assert.equal(transport.calls.length, 0);
+});

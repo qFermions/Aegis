@@ -32,6 +32,8 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\bwipe\b|\bretire\b.*(?:\b(device|devices|phone|laptop|iphone|android|ipad|mac|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|Clear-MobileDevice|Invoke-MgRetireDeviceManagementManagedDevice|Fresh\s*Start/i, label: 'device wipe / retire' },
   { pattern: /\bdelete\b.*\b(user|account|mailbox|group|device|devices)\b|Remove-Mg(User|Group|DeviceManagementManagedDevice)|Remove-Mailbox|Remove-ADUser/i, label: 'account/mailbox/group/device deletion' },
   { pattern: /\bdisable\b.*\b(user|account|mailbox|mailboxes|sign[- ]?in)\b|Disable-ADAccount|Disable-Mailbox|BlockCredential\s*\$true|Set-MgUser\s+.*-AccountEnabled\s*:?\s*\$false/i, label: 'account/mailbox disable / sign-in block' },
+  // batch G2 code review: a message purge across mailboxes (a Purview search-and-purge)
+  { pattern: /\bpurg(?:e|es|ed|ing)\b.*\b(?:messages?|e-?mails?|mail|items?)\b.*\b(?:every|all|each|across)\b.*\b(?:inbox(?:es)?|mailbox(?:es)?|users?)\b|\b(?:compliance|content)\s+search\b.*\bpurg(?:e|es|ed|ing)\b|\bpurg(?:e|es|ed|ing)\b.*\b(?:compliance|content)\s+search\b|New-ComplianceSearchAction\b.*-Purge\b/i, label: 'Exchange / Purview message purge across mailboxes' },
   { pattern: /\bremove\b.*\blicense\b|Set-MgUserLicense\s+.*-RemoveLicenses/i, label: 'license removal' },
   { pattern: /\bremove\b.*\b(from|member).*\bgroup\b|Remove-MgGroupMember/i, label: 'group membership removal' },
   { pattern: /Revoke-MgUserSignInSession|revoke\s+sessions?/i, label: 'session revocation' },

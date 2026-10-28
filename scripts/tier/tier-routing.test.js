@@ -476,3 +476,14 @@ g2Suite('code review round 2, unenroll anchors', [
   'List the users who are unenrolled from 2-Step Verification.',
   'Unenroll [FIRST_NAME] from the security awareness course.',
 ]);
+
+// Finding 2: a message purge across mailboxes floors in its own right. At base and
+// after round 1 only the Slack deletion floor had caught it, by accident.
+g2Suite('code review round 2, Exchange purge', [
+  [/message purge across mailboxes/i, 'Purge the phishing messages from every inbox.'],
+  [/message purge across mailboxes/i, 'Run a compliance search and purge the phishing messages.'],
+  [/message purge across mailboxes/i, 'New-ComplianceSearchAction -SearchName [SEARCH_NAME] -Purge -PurgeType HardDelete'],
+], [
+  'Run a compliance search for the phishing messages and count the hits.',
+  'The user emptied Deleted Items and wants the messages back.',
+]);

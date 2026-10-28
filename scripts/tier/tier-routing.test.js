@@ -607,3 +607,15 @@ g2Suite('security review 2, message delete or purge across mailboxes', [
   'The user deleted an email from their inbox by mistake.',
   'User wants to delete a Teams message for everyone in the chat.',
 ]);
+
+// An Intune or Company Portal unenroll floors on those words again, without a device
+// word; a course or training named after Intune stays clean.
+g2Suite('security review 2, Intune unenroll', [
+  [/Fleet host lock/i, 'Unenroll [FIRST_NAME] from Intune.'],
+  [/Fleet host lock/i, "Unenroll [FIRST_NAME]'s Surface from Intune."],
+  [/Fleet host lock/i, 'Unenroll [FIRST_NAME] from the Company Portal.'],
+], [
+  'Unenroll [FIRST_NAME] from the Intune basics course.',
+  'Unenroll [FIRST_NAME] from the Intune training.',
+  'Unenroll [FIRST_NAME] from the security awareness course.',
+]);

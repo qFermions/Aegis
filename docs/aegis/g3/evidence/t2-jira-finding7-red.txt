@@ -1,0 +1,100 @@
+# command: node --test scripts/jira-client.test.js
+# commit: 5d449e9  started: 2026-10-28T07:46:19Z  node: v24.22.1
+✔ site validation accepts and canonicalizes one Atlassian tenant label (1.379444ms)
+✔ site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls (0.663832ms)
+✔ direct apiRequest validates the destination before invoking the transport (0.390275ms)
+✔ argument parser requires --confirm VALUE while execute/public remain bare booleans (1.246495ms)
+✔ argument parser rejects duplicate, malformed, and unknown flags (0.207366ms)
+✔ issue keys are normalized but paths and placeholder text are rejected (0.378027ms)
+✔ create payload is exact, numeric-id-bound, and deterministically serialized (1.033838ms)
+✔ create confirmation contains a full SHA-256 and changes with every material field (0.624533ms)
+✔ create dry run and missing/wrong confirmations use zero credentials and zero network (1.747238ms)
+✔ the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload (0.979113ms)
+▶ verify-create proves the human-created request by an independent GET and fails closed on any mismatch
+  ✔ match (1.494358ms)
+  ✔ different issue key (0.454822ms)
+  ✔ missing immutable id (0.172354ms)
+  ✔ different request type (0.164829ms)
+  ✔ different service desk (0.563266ms)
+  ✔ drifted summary (0.533913ms)
+  ✔ drifted description (0.268677ms)
+  ✔ an older request with the same text (created before the preview) (0.491034ms)
+  ✔ no creation time (0.20411ms)
+  ✔ read failure (0.20616ms)
+✔ verify-create proves the human-created request by an independent GET and fails closed on any mismatch (5.824458ms)
+✔ invalid create destination fails before credentials/network and is not echoed (0.276113ms)
+✔ comment confirmations bind issue, visibility, site, and full payload digest (0.290629ms)
+✔ comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes (0.540559ms)
+✔ exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose (1.523663ms)
+▶ verify-comment proves the comment id, body and visibility and fails closed on any mismatch
+  ✔ match (0.521283ms)
+  ✔ different id (0.293001ms)
+  ✔ drifted body (0.183012ms)
+  ✔ wrong visibility (0.11082ms)
+  ✔ an older comment with the same body (created before the preview) (0.136955ms)
+  ✔ malformed (0.079319ms)
+  ✔ read failure (0.082246ms)
+  ✔ a non-numeric comment id is an input error before credentials or network (1.782616ms)
+✔ verify-comment proves the comment id, body and visibility and fails closed on any mismatch (4.094844ms)
+✔ transition local preview calls neither credentials nor Jira (0.381537ms)
+✔ transition --execute performs paginated read-only preflight and prints immutable confirmation (0.930855ms)
+✔ any transition --confirm, exact or not, is refused before credentials or network (0.203137ms)
+▶ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+  ✔ duplicate selected names (0.217049ms)
+  ✔ duplicate ids across pages (0.253397ms)
+  ✔ no match (0.105853ms)
+  ✔ non-progressing page (0.072975ms)
+  ✔ wrong page start (0.168779ms)
+  ✔ missing current-state version (1.538082ms)
+✔ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST (2.825016ms)
+✔ the transition preflight prints a HUMAN-RUN procedure bound to the resolved id and sends zero POSTs (1.269162ms)
+✔ a status version that is not a plain timestamp is refused before anything is printed to paste (0.582781ms)
+✔ a status version that does not start with a digit is refused, so the printed verify line always parses (0.54018ms)
+▶ verify-transition proves the same immutable request left the preflight status and fails closed otherwise
+  ✔ moved to the expected status (0.288408ms)
+  ✔ unchanged since the preflight (0.266583ms)
+  ✔ moved, but to another status (an automation, not this transition) (0.174282ms)
+  ✔ different immutable id (0.115613ms)
+  ✔ read failure (0.078481ms)
+  ✔ the printed placeholder status is an input error before credentials or network (0.144654ms)
+✔ verify-transition proves the same immutable request left the preflight status and fails closed otherwise (1.62476ms)
+✔ the transport refuses every method but GET, and any payload, before touching the network (0.265319ms)
+✔ no write command reaches the network with anything but GET, under any flag combination (1.14344ms)
+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.813422ms)
+▶ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed)
+  ✔ PowerShell 7 (529.208143ms)
+  ✔ bash (4.002841ms)
+✔ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed) (534.007434ms)
+✔ verify commands refuse a free-text flag instead of ignoring it, before credentials or network (0.709838ms)
+✖ verify commands without --execute are dry runs with zero credentials and zero network (1.295873ms)
+✔ API failures with bodies fail closed and never disclose response content (0.348672ms)
+✔ apiRequest timeout is finite, destroys the request, and rejects (20.134542ms)
+ℹ tests 64
+ℹ suites 0
+ℹ pass 63
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 686.807278
+
+✖ failing tests:
+
+test at scripts/jira-client.test.js:729:1
+✖ verify commands without --execute are dry runs with zero credentials and zero network (1.295873ms)
+  AssertionError [ERR_ASSERTION]: verify-create
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/jira-client.test.js:743:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:46:19Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

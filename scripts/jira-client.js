@@ -35,7 +35,8 @@
  *
  * Exit codes: 0 preview, read or verified read-back; 1 input error or a refused
  * write; 2 API, preflight or read-back failure (including a read-back that does not
- * prove the human's write).
+ * prove the human's write); 4 a verify-* dry run: nothing was read, so nothing is
+ * verified.
  */
 
 'use strict';
@@ -743,9 +744,14 @@ function requireVerifyFlags(command, args) {
   if (extra.length) throw new InputError(`${command} does not take --${extra[0]}; pass only the values the preview printed (${VERIFY_FLAGS[command].map((f) => `--${f}`).join(' ')}).`);
 }
 
+// A verify-* dry run proves nothing, so it has its own exit code: never 0, the code of a
+// passed read-back (batch 1 finding 7).
+const EXIT_VERIFY_DRY_RUN = 4;
+
 function dryRunRead(runtime, args, apiPath) {
   if (args.execute === true) return false;
   runtime.out(`DRY RUN - would GET ${apiPath}. Add --execute to perform this read.`);
+  runtime.out('NOT VERIFIED: a dry run reads nothing, so it proves nothing (exit 4).');
   return true;
 }
 
@@ -758,7 +764,7 @@ async function cmdVerifyCreate(runtime, args) {
   const expectSha256 = requireDigest(args);
   const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}`;
-  if (dryRunRead(runtime, args, apiPath)) return 0;
+  if (dryRunRead(runtime, args, apiPath)) return EXIT_VERIFY_DRY_RUN;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   const observed = verifyCreatedRequestReadBack(response.json, issueKey, expectSha256);
@@ -780,7 +786,7 @@ async function cmdVerifyComment(runtime, args) {
   const expectSha256 = requireDigest(args);
   const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}/comment/${encodeURIComponent(commentId)}`;
-  if (dryRunRead(runtime, args, apiPath)) return 0;
+  if (dryRunRead(runtime, args, apiPath)) return EXIT_VERIFY_DRY_RUN;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   verifyCommentReadBack(response.json, commentId, expectSha256);
@@ -804,7 +810,7 @@ async function cmdVerifyTransition(runtime, args) {
   if (/^\[.*\]$/.test(toStatus)) throw new InputError('--to-status still holds the placeholder; name the status the transition should leave.');
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}`;
-  if (dryRunRead(runtime, args, apiPath)) return 0;
+  if (dryRunRead(runtime, args, apiPath)) return EXIT_VERIFY_DRY_RUN;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   const after = normalizeCustomerRequest(response.json, issueKey);
@@ -864,6 +870,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  EXIT_VERIFY_DRY_RUN,
   JIRA_SPEC,
   REQUEST_TIMEOUT_MS,
   TRANSITION_PAGE_LIMIT,

@@ -65,7 +65,7 @@ To create on behalf of a reporter, add `--on-behalf-of [USER@DOMAIN.COM]` to the
 - `create` without flags: preview only, zero credentials, zero network, exit 0.
 - `create` with `--execute` or `--confirm`, exact phrase or not: refusal, zero credentials, zero network, exit 1.
 - Invalid `JIRA_SITE`: refusal before credentials or network.
-- `verify-create` without `--execute`: dry run, zero network. With it: one GET; any mismatch in key, immutable ID, service desk, request type, summary, or description, or a request created before the preview (an older request with the same text), is exit 2 and the create is not proven.
+- `verify-create` without `--execute`: dry run, zero network, exit 4 (NOT VERIFIED: a dry run proves nothing). With it: one GET; any mismatch in key, immutable ID, service desk, request type, summary, or description, or a request created before the preview (an older request with the same text), is exit 2 and the create is not proven.
 - API response bodies are withheld from terminal errors.
 
 ## Verification

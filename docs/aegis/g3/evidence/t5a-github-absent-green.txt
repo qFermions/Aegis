@@ -1,0 +1,26 @@
+# command: node --test scripts/adapters/github-client.test.js
+# commit: d075caf (plus uncommitted changes in the working tree)  started: 2026-10-28T09:21:43Z  node: v24.22.1
+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (2.865268ms)
+✔ a non-GET request is refused before the credential is read; no org flag exists (2.33359ms)
+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (13.65647ms)
+✔ issue reads the issue and its comments and prints the {issue, comments} shape the intake imports (1.117587ms)
+✔ a dry run prints the planned GET, reads no credential and sends nothing (0.881565ms)
+✔ bad values are refused before anything is sent (0.885263ms)
+✔ a response that names another organization is TENANT_MISMATCH and nothing is returned (2.19393ms)
+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (1.542128ms)
+✔ verify-collaborator: the role_name must equal the expected role (1.463502ms)
+✔ verify-collaborator-removed: absent from every page of direct collaborators; a list past 10 pages is not proof (15.042004ms)
+✔ verify-offboarded: the org read must succeed first; then no membership, no invitation, not an outside collaborator (3.007267ms)
+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (4.233935ms)
+✔ a failure prints the two-part message for GitHub, with no body and no token (0.494782ms)
+✔ verify-team-member --absent: absence on a list longer than 10 full pages is not proof (11.085023ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 171.660336
+# exit: 0  finished: 2026-10-28T09:21:43Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -260,8 +260,9 @@ async function judge(command, a, client, steps) {
       const r = await readPages(client, steps[0]);
       if (r.failed) return { failed: r.failed };
       const present = loginsOf(r.records).some((l) => same(l, a.user));
-      if (present === !a.absent) return { verified: true, observed: { member: present } };
+      // absence on a list longer than the pages read proves nothing, either way
       if (!present && r.more) return { verified: false, observed: { member: false }, reason: NOT_PROOF };
+      if (present === !a.absent) return { verified: true, observed: { member: present } };
       return { verified: false, observed: { member: present }, reason: present ? `${a.user} is still in ${a.team}` : `${a.user} is not in ${a.team}` };
     }
     case 'verify-protection': {

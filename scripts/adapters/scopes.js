@@ -3,7 +3,7 @@
 //
 // Usage: node scripts/adapters/scopes.js <connector> [--execute]
 //   connectors: fleet, jamf, slack, slack-access-logs, linear, google-workspace, jira, github,
-//   msgraph (its --execute read needs MS_SCOPE_CHECK_USER, a user object ID to read)
+//   msgraph (its --execute read needs MS_SCOPE_CHECK_USER, a user object ID to read), okta
 //
 // Without --execute (the default) it prints the connector's entry in scope-manifest.json:
 // the least-privilege read scopes or role, what is refused, how the vendor exposes a
@@ -34,6 +34,7 @@ const PROBES = Object.freeze({
   jira: { load: () => require('../jira-client.js').JIRA_SPEC, get: 'servicedesk' },
   github: { load: () => require('./github-client.js').SPEC, get: 'org', params: (env) => ({ org: env.GITHUB_ORG }) },
   msgraph: { load: (env) => require('./msgraph-client.js').makeSpec({ tenant: env.MS_TENANT_ID }), get: 'authMethods', params: (env) => ({ user: env.MS_SCOPE_CHECK_USER }) },
+  okta: { load: (env) => require('./okta-client.js').makeSpec({ env }), get: 'groupRules', params: () => ({}) },
 });
 
 function loadManifest(file = MANIFEST_FILE) {

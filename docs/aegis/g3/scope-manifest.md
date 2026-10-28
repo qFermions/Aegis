@@ -25,7 +25,7 @@ transport does not, unless it asks for it.
 | Kind | Connectors | What Aegis does |
 |---|---|---|
 | header | Slack, Slack access logs, GitHub (classic tokens) | Reads `x-oauth-scopes` on the first answer. A write scope: the answer is dropped, the credential is refused for the rest of the run (SCOPE_REFUSED, exit 1). No header: the first result carries a `scope_notice` saying it could not be checked. |
-| token | Google Workspace | Reads `scope` in the token response. A scope that is not `.readonly`: refused before any read. |
+| token | Google Workspace, Okta | Reads `scope` in the token response. A scope that is not `.readonly`: refused before any read. |
 | route | Fleet | Reads `GET /api/v1/fleet/me` before the first read. A role other than observer, global or team: refused before the read. |
 | none | Linear, Jira, Jamf Pro, Microsoft Graph | The vendor does not expose it. The first result carries a `scope_notice` that says so. The credential owner must set it up as below. |
 
@@ -46,6 +46,7 @@ credential owner for one with exactly the scopes on this page.
 | Jira | classic API token of a dedicated account that can only view the service desk project | site or Jira admin; edit, transition or delete rights elsewhere | no: classic tokens carry the account's permissions [A-03, A-06] |
 | GitHub | fine-grained or App installation token with read only: Members, Metadata, Administration (read, for branch protection), Secret scanning alerts, Dependabot alerts, Issues; organization Administration (read) only for the Enterprise Cloud audit log [G-01..G-25] | a classic token with repo, admin:org, security_events or any write:* or admin:* scope | classic tokens: yes, `X-OAuth-Scopes` [G-31]; fine-grained and App tokens: no, so a `scope_notice` [G-32, G-35] |
 | Microsoft Graph | application permissions User.Read.All, UserAuthenticationMethod.Read.All, AuditLog.Read.All, GroupMember.ReadBasic.All, Directory.Read.All (memberOf only), DeviceManagementManagedDevices.Read.All [M-09..M-18] | anything not .Read. or .ReadBasic. (ReadWrite, ReadUpdate, ReadApprove, PrivilegedOperations and the rest) [M-21] | no: tokens are opaque by Microsoft's rule and the token response has no scope [M-03, M-06] |
+| Okta | a service app granted only okta.users.read, okta.groups.read, okta.logs.read and okta.apps.read, and assigned the READ_ONLY_ADMIN role [O-08, O-09, O-12..O-17] | any scope not ending in .read (okta.users.manage and the rest); an app with no admin role or any role beyond READ_ONLY_ADMIN | scopes: yes, the token response `scope` [O-06]; the admin role: not checked (it needs okta.roles.read), confirm it in the Admin Console |
 
 ## What this does not prove
 

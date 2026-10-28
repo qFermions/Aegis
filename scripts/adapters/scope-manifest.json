@@ -474,6 +474,66 @@
           "how": "vendor docs page"
         }
       ]
+    },
+    "okta": {
+      "credential": [
+        "OKTA_CLIENT_ID",
+        "OKTA_PRIVATE_KEY",
+        "OKTA_KEY_ID"
+      ],
+      "least_privilege": [
+        "an OAuth 2.0 service app (client credentials, private_key_jwt) granted only okta.users.read, okta.groups.read, okta.logs.read and okta.apps.read",
+        "the same service app assigned the READ_ONLY_ADMIN standard role (Read-Only Administrator): scopes alone are not the boundary, the admin role also limits the app"
+      ],
+      "refused": [
+        "any scope that does not end in .read, for example okta.users.manage, okta.groups.manage, okta.apps.manage, okta.workflows.invoke.manage",
+        "a service app with no admin role assigned (an org setting can then give it SUPER_ADMIN) or with any admin role beyond READ_ONLY_ADMIN"
+      ],
+      "exposure": {
+        "kind": "token",
+        "how": "Okta returns the granted scopes in the token response's scope field; Aegis checks it before the first read and refuses the token if any granted scope does not end in .read. The admin role is not checked: reading it (GET /oauth2/v1/clients/{clientId}/roles) needs okta.roles.read, which this connector does not request, so confirm READ_ONLY_ADMIN in the Admin Console."
+      },
+      "facts": [
+        "O-01",
+        "O-02",
+        "O-03",
+        "O-04",
+        "O-05",
+        "O-06",
+        "O-07",
+        "O-08",
+        "O-09",
+        "O-10",
+        "O-12",
+        "O-13",
+        "O-14",
+        "O-15",
+        "O-16",
+        "O-17",
+        "O-19"
+      ],
+      "unconfirmed": [
+        "O-11: whether a service app must use DPoP",
+        "O-10 is not used: Aegis does not read the service app's own admin role assignments",
+        "O-30: Okta documents no Retry-After on 429; X-Rate-Limit-Reset is not read"
+      ],
+      "sources": [
+        {
+          "url": "https://developer.okta.com/docs/guides/implement-oauth-for-okta-serviceapp/main/",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/okta/okta-management-openapi-spec/master/dist/current/management-minimal.yaml",
+          "read_on": "2026-10-28",
+          "how": "vendor repo"
+        },
+        {
+          "url": "https://developer.okta.com/docs/api/oauth2/",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
+      ]
     }
   }
 }

@@ -610,10 +610,14 @@ function cmdShow(id) {
 }
 
 // Evidence audit: reports, never gates. A memory whose evidence has left the
-// disk stays verified (truth ≠ file retention) but the loss is visible.
+// disk stays verified (truth ≠ file retention) but the loss is visible. The record
+// goes through the same integrity check as list and show; a record that is not
+// intact prints its id and why, never its stored status or evidence refs.
 function cmdAudit(id) {
   const rec = loadRecord(id);
-  out({ ok: true, id: rec.id, status: rec.status, evidence: auditProvenance(rec) });
+  const integrity = integrityOf(loadIndex().records.find((row) => row.id === id), rec);
+  if (integrity !== 'intact') return out({ ok: true, id, integrity, status: null, evidence: null });
+  out({ ok: true, id: rec.id, integrity, status: rec.status, evidence: auditProvenance(rec) });
 }
 
 // Inventory view: every row is labelled with its integrity, and only an intact
@@ -633,14 +637,22 @@ function cmdList(flags) {
   out({ ok: true, count: rows.length, records: rows });
 }
 
+// Counts only: a row is counted by its status only when it passes the same integrity
+// check as list; any other row is counted as withheld, so changed index text is never
+// printed as a status name.
 function cmdStats() {
   const index = loadIndex();
   const byStatus = {};
   for (const s of store.STATUSES) byStatus[s] = 0;
-  for (const r of index.records) byStatus[r.status] = (byStatus[r.status] || 0) + 1;
+  let withheld = 0;
+  for (const r of index.records) {
+    const id = /^mem-\d{4}$/.test(String(r.id)) ? r.id : null;
+    if (id && integrityOf(r, tryLoadRecord(id)) === 'intact') byStatus[r.status] += 1;
+    else withheld += 1;
+  }
   const events = {};
   for (const e of readLedger()) events[e.event] = (events[e.event] || 0) + 1;
-  out({ ok: true, records: { total: index.records.length, ...byStatus }, ledger: events });
+  out({ ok: true, records: { total: index.records.length, ...byStatus, withheld }, ledger: events });
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────

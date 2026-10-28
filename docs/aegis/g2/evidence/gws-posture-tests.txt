@@ -1,0 +1,24 @@
+# command: node --test scripts/gws-posture-audit.test.js
+# captured: 2026-10-28T02:20:40Z at c1b8f2e
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ each of the 8 checks appears with its Admin console path, GAM read, source and status (3.936385ms)
+✔ the default run prints the preview, writes nothing and exits 0 (153.291604ms)
+✔ a gam print users export counts checks 1 and 2 over active users and never prints an address (61.831167ms)
+✔ a header-only export gives the explicit state "export has no user rows" (62.091205ms)
+✔ a malformed export is refused with a fixed message, exit 2, nothing echoed and no file written (610.98166ms)
+✔ an instruction in an export cell is flagged and quoted, never followed, and nothing else changes (68.204951ms)
+✔ a second export counts gam print admins role assignments without printing an address (118.79845ms)
+✔ the write gate: a wrong or generic phrase writes nothing, the exact phrase writes one report, never an overwrite (591.997827ms)
+✔ a phrase computed for one report does not authorize another (content drift) (135.125529ms)
+✔ a generic name, a path outside the working directory or a Git-trackable target is refused before any write (375.697744ms)
+✔ strict argument parsing rejects missing values, duplicates and detached flags (52.745085ms)
+✔ the generator opens no network connection: no network module, no fetch, no tripwire attempt (8.903879ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2343.172531
+# exit: 0

@@ -32,16 +32,22 @@ const MAX_PROCEDURE_BYTES = 1024 * 1024;
 const { READ_BACK } = audit;
 const kindOf = (e) => `${e.connector}:${e.command}`;
 
-// The read-back must be a verify-* command its connector really has: the connector's file
-// (scripts/adapters/<name>-client.js, or scripts/jira-client.js) names it as a command key.
-// Read as text, never loaded, so this module still opens no network module.
+// The read-back must be a verify-* command its connector really has. A connector is named
+// as its verify entries name it (cli-support.js recordVerdict, jira-client.js), and its file
+// names the command as a key. Read as text, never loaded, so this module opens no network
+// module.
 const ROOT = path.resolve(__dirname, '..', '..');
+const CONNECTOR_FILES = Object.freeze({
+  fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js',
+  'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js',
+  linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js',
+  okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js',
+});
 function checkReadBack(readBack) {
   if (!READ_BACK.test(readBack)) throw new InputError('--read-back names the connector and its verify-* command, such as okta:verify-factor-reset');
   const [connector, command] = readBack.split(':');
-  const file = connector === 'jira' ? path.join(ROOT, 'scripts', 'jira-client.js') : path.join(ROOT, 'scripts', 'adapters', `${connector}-client.js`);
-  let source;
-  try { source = fs.readFileSync(file, 'utf8'); } catch { throw new InputError(`--read-back: no connector named ${connector}`); }
+  if (!Object.prototype.hasOwnProperty.call(CONNECTOR_FILES, connector)) throw new InputError(`--read-back: no connector named ${connector} (one of ${Object.keys(CONNECTOR_FILES).join(', ')})`);
+  const source = fs.readFileSync(path.join(ROOT, CONNECTOR_FILES[connector]), 'utf8');
   if (!source.includes(`'${command}':`)) throw new InputError(`--read-back: no such read-back, ${connector} has no ${command} command`);
 }
 

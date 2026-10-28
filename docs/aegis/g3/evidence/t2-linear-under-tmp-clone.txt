@@ -1,0 +1,6 @@
+# command: copy of scripts/adapters/linear-client.js at this fix into the clone of f185071 that sits under the system temporary folder, then: node --test scripts/adapters/linear-client.test.js (the clone's own, unchanged test file); the clone's file was restored after
+# at: 2026-10-28T07:55:46Z
+ℹ tests 19
+ℹ pass 19
+ℹ fail 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

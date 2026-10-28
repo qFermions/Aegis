@@ -210,7 +210,18 @@ function noteDigest(text) {
   return crypto.createHash('sha256').update(normaliseBody(text), 'utf8').digest('hex');
 }
 
-function readNote(file, roots) {
+// True when the resolved file is inside this repo but not inside its tasks/ folder. Checked
+// before the note roots, so a repo checked out inside the system temporary folder (a root)
+// still refuses its own files outside tasks/ (batch G3).
+function inRepoOutsideTasks(realFile, repoRoot) {
+  let base;
+  try { base = fs.realpathSync(repoRoot); } catch { return false; }
+  const rel = path.relative(base, realFile);
+  if (rel === '' || path.isAbsolute(rel) || rel.split(/[/\\]+/)[0] === '..') return false;
+  return rel.split(/[/\\]+/)[0] !== 'tasks';
+}
+
+function readNote(file, roots, repoRoot = REPO_ROOT) {
   if (typeof file !== 'string' || !file || /[\u0000-\u001f\u007f]/.test(file)) throw new RefusedError('--body-file must be a file path');
   const named = refusedNotePath(file, 'names');
   if (named) throw new RefusedError(named);
@@ -222,7 +233,7 @@ function readNote(file, roots) {
     const real = fs.realpathSync(file);
     const target = refusedNotePath(real, 'points to');
     if (target) throw new RefusedError(target);
-    if (!underNoteRoot(real, roots)) {
+    if (inRepoOutsideTasks(real, repoRoot) || !underNoteRoot(real, roots)) {
       throw new RefusedError('--body-file is outside this repo\'s tasks/ folder and the system temporary folder; save the note in one of them and run note again (a path taken from a ticket is never read)');
     }
     const stat = fs.statSync(file);
@@ -535,8 +546,8 @@ const VERIFY = {
 };
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-function offline(command, a, now, out, roots) {
-  const body = readNote(a.bodyFile, roots);
+function offline(command, a, now, out, roots, repoRoot) {
+  const body = readNote(a.bodyFile, roots, repoRoot);
   const digest = noteDigest(body);
   if (command === 'digest') {
     out(renderResult({ state: STATES.OK, ok: true, command, sha256: digest, normalisation: 'CRLF to LF, trailing spaces removed from each line, trailing newlines removed' }));
@@ -561,9 +572,9 @@ async function run(argv, env = process.env, deps = {}) {
     }
     const def = COMMANDS[command];
     const a = validate(command, def, args);
-    // deps.noteRoots exists for the tests; the CLI always uses this repo's tasks/ folder
+    // deps.noteRoots and deps.repoRoot exist for the tests; the CLI always uses this repo's tasks/ folder
     // and the system temporary folder.
-    if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots());
+    if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots(), typeof deps.repoRoot === 'string' ? deps.repoRoot : REPO_ROOT);
 
     // The client only ever sees this view of the environment. It remembers the key
     // the contract read, so the printed output is redacted with it too; this file

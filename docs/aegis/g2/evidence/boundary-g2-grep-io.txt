@@ -1,6 +1,6 @@
 # command: git ls-files '*.js' '*.mjs' | grep -v '\.test\.js$' | xargs grep -nE "require\(['\"](node:)?(http|https|net|tls|dgram|child_process)['\"]\)|\bfetch\(" | grep -v '^shared/'
-# captured: 2026-10-28T02:26:43Z at 0185bd6
-# note: any U+2014 in the tool output is written as -- (C11)
+# captured: 2026-10-28T04:35:42Z at 7cf42e2
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 modules/automation/scripts/deploy-check.js:24:const { spawnSync } = require('child_process');
 modules/systems/scripts/health-check.js:22:const { execFileSync } = require('child_process');
 scripts/adapters/readonly-contract.js:24:const https = require('node:https');

@@ -66,9 +66,11 @@ lane spec is `docs/aegis/lanes/g2.md`; the corpus is `scripts/eval/g2-tickets.js
 | Jamf Pro | landed whole | `/jamf-config-profiles`, `/jamf-policies-self-service`, `/jamf-patch-management`, `/jamf-filevault`, `/jamf-inventory-groups` | G2 eval: 12/12 tickets, 2/2 pairs; `node --test scripts/adapters/jamf-client.test.js scripts/adapters/jamf-runbooks.test.js`: 33/33 |
 | Google Workspace | landed whole | `/gws-drive-sharing`, `/gws-2sv-enforcement`, `/gws-account-containment`, `/gws-admin-roles`, `/gws-security-posture` | G2 eval: 13/13 tickets, 2/2 pairs; `node --test scripts/adapters/gws-client.test.js scripts/gws-runbooks.test.js`: 36/36; `node --test scripts/gws-posture-audit.test.js`: 12/12 |
 
-- **Battery at `426b8cd`:** `node --test` 998/998 (`docs/aegis/g2/evidence/node-test.txt:1158-1161`); Microsoft 28/28
-  and 6/6, Google 38/38 and 9/9, unchanged; structure lint 102 commands, clean; scanner 0 BLOCK,
-  182 WARN (170 at batch 1); release boundary PASS.
+- **Battery at `cef6cee` (after code review round 3):** `node --test` 1041/1041
+  (`docs/aegis/g2/evidence/node-test.txt:1201-1204`); Microsoft 28/28 and 6/6, Google 38/38 and
+  9/9, unchanged; structure lint 102 commands, clean; scanner 0 BLOCK, 197 WARN (170 at batch 1;
+  the shared injection markers added 15, all fixtures and quoted examples); release boundary PASS.
+  Suite counts at head: `docs/aegis/g2/evidence/head-suite-counts.txt`.
 - **Boundary:** five read-only adapters on one contract (`scripts/adapters/README.md`) and a
   posture audit that writes one local report; `scripts/g2-boundary.test.js` (13 tests) proves no
   adapter command sends a write and every G2 runbook gates or previews each state change

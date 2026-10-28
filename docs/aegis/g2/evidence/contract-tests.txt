@@ -1,28 +1,35 @@
 # command: node --test scripts/adapters/readonly-contract.test.js
-# captured: 2026-10-28T02:26:59Z at 0185bd6
-# note: any U+2014 in the tool output is written as -- (C11)
-✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (6.932332ms)
-✔ every method but GET is refused before credentials are read or the transport is called (2.144244ms)
-✔ a GET outside the allow-list is refused: unknown path, extra query key, bad parameter, traversal, another host (1.702427ms)
-✔ GraphQL: a named query document is sent byte-equal; anything else is refused before the network (2.220848ms)
-✔ GraphQL operation scanner: a mutation or subscription anywhere at the top level is refused; strings and comments do not count (4.549016ms)
-✔ a spec that defines a mutation document, or a non-GET route, fails to build (0.960146ms)
-✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.467294ms)
-✔ missing credentials name the variable, never a value, and nothing is sent (0.898058ms)
-✔ no credential value appears in any result, error, thrown message or printed line (3.904383ms)
-✔ instruction text in a response field is returned quoted with a flag, and nothing acts on it (2.235111ms)
-✔ a response holding a record from another tenant is refused and returns no data (1.149909ms)
-✔ a request that outlives its timeout is TIMEOUT; reads retry a bounded number of times (62.612244ms)
-✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.316395ms)
-✔ invalid or oversized responses are INVALID_RESPONSE, never partial data (22.043569ms)
-✔ the default transport throws the network tripwire in tests; no socket is opened (1.092339ms)
-✔ plan() describes an allowed request with no credentials and no network; a refused one says why (0.575789ms)
-ℹ tests 16
+# captured: 2026-10-28T04:35:42Z at 7cf42e2
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (9.068083ms)
+✔ every method but GET is refused before credentials are read or the transport is called (3.079017ms)
+✔ a GET outside the allow-list is refused: unknown path, extra query key, bad parameter, traversal, another host (2.924173ms)
+✔ GraphQL: a named query document is sent byte-equal; anything else is refused before the network (2.544471ms)
+✔ GraphQL operation scanner: a mutation or subscription anywhere at the top level is refused; strings and comments do not count (1.383608ms)
+✔ a spec that defines a mutation document, or a non-GET route, fails to build (0.765551ms)
+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.450923ms)
+✔ missing credentials name the variable, never a value, and nothing is sent (1.073877ms)
+✔ no credential value appears in any result, error, thrown message or printed line (5.628881ms)
+✔ instruction text in a response field is returned quoted with a flag, and nothing acts on it (1.416669ms)
+✔ a response holding a record from another tenant is refused and returns no data (1.280048ms)
+✔ a request that outlives its timeout is TIMEOUT; reads retry a bounded number of times (63.123573ms)
+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.993705ms)
+✔ invalid or oversized responses are INVALID_RESPONSE, never partial data (23.386521ms)
+✔ the default transport throws the network tripwire in tests; no socket is opened (0.865801ms)
+✔ plan() describes an allowed request with no credentials and no network; a refused one says why (0.393507ms)
+✔ GraphQL scanner: a bare carriage return ends a comment, so a mutation after "# note\r" is refused (0.465848ms)
+✔ a response over the read limit is INVALID_RESPONSE "larger than the read limit", reported once and never retried (0.41194ms)
+✔ the HTTPS transport ends a request at its deadline, even while bytes keep trickling in (41.394871ms)
+✔ the HTTPS transport stops an oversized body with a typed error the client does not retry (0.818703ms)
+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.64862ms)
+✔ a path parameter that needs encoding is allowed through get() and plan(); a raw send() of an encoded, slash or dot segment is refused (0.889443ms)
+✔ --not-before must be a real calendar time: an impossible date is refused by the contract and by every adapter that takes it (49.043365ms)
+ℹ tests 23
 ℹ suites 0
-ℹ pass 16
+ℹ pass 23
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 232.244135
+ℹ duration_ms 342.614669
 # exit: 0

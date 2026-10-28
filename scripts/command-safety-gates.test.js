@@ -41,6 +41,9 @@ const MIXED_STATE_COMMANDS = [
   'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault', 'jamf-inventory-groups',
   // G2: Google Workspace
   'gws-drive-sharing', 'gws-2sv-enforcement', 'gws-account-containment', 'gws-admin-roles', 'gws-security-posture',
+  // G3: GitHub and Okta (batch G3)
+  'github-repo-access', 'github-branch-protection', 'github-org-security', 'github-offboard-member', 'github-security-alerts',
+  'okta-group-membership',
 ];
 
 const REFERENCE_BOUNDARIES = [

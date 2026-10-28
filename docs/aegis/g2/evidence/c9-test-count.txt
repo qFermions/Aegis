@@ -1,0 +1,468 @@
+# C9: node --test count, base 3592bd1 against head (battery capture of 2026-10-28T04:20:35Z at 0a3e006)
+# note: any U+2014 is written as --
+
+base: docs/aegis/g2/baseline/node-test.txt: ℹ tests 588, 556 top-level tests plus 32 subtests
+head: docs/aegis/g2/evidence/node-test.txt: ℹ tests 1041, 1009 top-level tests plus 32 subtests
+
+Top-level test names (spec reporter lines at column 0, duration removed, sorted):
+  in base only (removed or renamed): 0
+  in head only (added by this batch): 453
+  556 + 453 = 1009 top-level; 588 + 453 = 1041 in the ℹ tests line, so the count rose by exactly the 453 tests added
+
+Own-harness suites (each one test in node --test), internal counts base -> head:
+  deploy-check 21 passed -> 21 passed; health-check 19 passed -> 19 passed; graph 33/33 -> 33/33; memory 14/14 -> 14/14; replay 16/16 -> 16/16
+
+## the 453 added tests
+✔ --execute prints the data; user and users print state fields only, never a profile
+✔ --execute prints the vendor data through renderResult
+✔ --execute with a mock transport prints the data; a missing credential is NO_CREDENTIALS (exit 1) and a missing GWS_CUSTOMER_ID is refused (exit 1), with nothing sent
+✔ --execute with a mock transport prints the data; a missing key is NO_CREDENTIALS (exit 1) and nothing is sent
+✔ --not-before must be a real calendar time: an impossible date is refused by the contract and by every adapter that takes it
+✔ C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours
+✔ C16 a bracketed chat handle whose last word is a dictionary suffix reads as a second tenant (fail safe), and the refusal names that case without a rewrite that would pass a real one
+✔ C: scripts/adapters/fleet-client.js is tier C, not scripts/** B
+✔ C: scripts/adapters/gws-client.js is tier C, not scripts/** B
+✔ C: scripts/adapters/jamf-client.js is tier C, not scripts/** B
+✔ C: scripts/adapters/linear-client.js is tier C, not scripts/** B
+✔ C: scripts/adapters/readonly-contract.js is tier C, not scripts/** B
+✔ C: scripts/adapters/slack-client.js is tier C, not scripts/** B
+✔ C: scripts/gws-posture-audit.js is tier C, not scripts/** B
+✔ Fleet host and Slack SCIM deletions warn when curl names the method with --request (G2 lane)
+✔ G2 Fleet ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 Fleet routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 Google Workspace ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 Google Workspace routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 Jamf ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 Jamf routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 Linear ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 Linear routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 Slack ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 Slack routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 breadcrumb roots: Fleet, Slack and Linear count as admin surfaces
+✔ G2 code review round 1 ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 1 routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 code review round 2, Exchange purge ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 2, Exchange purge routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 code review round 2, Linear issue key ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 2, Linear issue key routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 code review round 2, sign-out everywhere ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 2, sign-out everywhere routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 code review round 2, unenroll anchors ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 2, unenroll anchors routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 code review round 3, Linear issue key in either case ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 3, Linear issue key in either case routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 code review round 3, sign-out without phrasal verbs ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 3, sign-out without phrasal verbs routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 code review round 3, unenroll without the Intune word ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised
+✔ G2 code review round 3, unenroll without the Intune word routine: the everyday counterparts stay clean in the guard and the graph engine
+✔ G2 commands are classified: every G2 runbook name has a variant before it is written
+✔ G2 detector: every fleetctl write and every Slack or Linear API write in a shell fence is a sink
+✔ G2 detector: fleetctl reads and API GET reads stay live and are not sinks
+✔ G2 fleetctl: a mutating fleetctl fence must be collapsed, commented and HUMAN-RUN; read-only fleetctl may stay open
+✔ G2 paste-ready-note: a Linear-ready note counts as the one ticket note; two notes still fail
+✔ G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 runbooks; G1 and Microsoft files keep their grammar
+✔ GraphQL operation scanner: a mutation or subscription anywhere at the top level is refused; strings and comments do not count
+✔ GraphQL scanner: a bare carriage return ends a comment, so a mutation after "# note\r" is refused
+✔ GraphQL: a named query document is sent byte-equal; anything else is refused before the network
+✔ Jamf Pro binds no tenant variable: one server per tenant, bound by JAMF_URL; any other host is refused
+✔ Okta deletions and Jamf MDM commands warn when curl names the method with --request
+✔ Okta, Jamf MDM, Fleet host and Slack SCIM sinks warn when PowerShell names the method with -Method
+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs
+✔ a 200 response carrying GraphQL errors returns no data and exits 2, printing only the error type codes
+✔ a GET outside the allow-list is refused: unknown path, extra query key, bad parameter, traversal, another host
+✔ a failed read exits 2 and withholds the body; a network tripwire is never swallowed
+✔ a failed read exits 2: HTTP 404 once, HTTP 503 after the bounded retries
+✔ a flag on a person's name outside the user reads withholds the quote: access-logs username, a message author profile; a message's own text keeps its quote (round 2, finding 4)
+✔ a flag on a personal profile field names its path and withholds the text: user, users, a user read-back and an app requester
+✔ a gam print users export counts checks 1 and 2 over active users and never prints an address
+✔ a gate whose Scope reaches the whole workspace, every member or every channel is R3
+✔ a generic name, a path outside the working directory or a Git-trackable target is refused before any write
+✔ a header-only export gives the explicit state "export has no user rows"
+✔ a malformed export is refused with a fixed message, exit 2, nothing echoed and no file written
+✔ a network tripwire is never swallowed: run() rejects with it
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it
+✔ a path parameter that needs encoding is allowed through get() and plan(); a raw send() of an encoded, slash or dot segment is refused
+✔ a phrase computed for one report does not authorize another (content drift)
+✔ a private key that is not an RSA private key in PEM form is refused before the transport, and is never printed
+✔ a queued script's cancel can be filled and proven: host-upcoming names its execution ID, and the read-back compares every page with the before list
+✔ a remediation script on one host takes its R-class from what it changes, as in /fleet-device-actions E1: a security setting is R3 with the review
+✔ a request that outlives its timeout is TIMEOUT; reads retry a bounded number of times
+✔ a response holding a record from another tenant is refused and returns no data
+✔ a response over the read limit is INVALID_RESPONSE "larger than the read limit", reported once and never retried
+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout
+✔ a reversal over more than 10 issues is its own R3 change: the bulk delete rolls back by a reviewed bulk restore, never by N single R1 restores
+✔ a rollback written as phrasing alone fails: the earlier legal-hold, incident-post and SAML texts each name no gate
+✔ a second export counts gam print admins role assignments without printing an address
+✔ a spec that defines a mutation document, or a non-GET route, fails to build
+✔ a stage that can reach more than 10 Macs carries R3 ceremony: the App Installers rollout, and a large group leaving a profile's Targets
+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s
+✔ a user, member, team or channel record from another workspace, or with no team id, is refused (exit 3) and prints none of its data
+✔ a verify-* read of a user withholds a flagged recovery detail too, as the user read does
+✔ activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit
+✔ allows the Slack, Linear and Fleet placeholder forms the G2 runbooks use
+✔ an HTTP 200 answer with ok:false is a failed read reported with the error code only
+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data
+✔ an instruction in an export cell is flagged and quoted, never followed, and nothing else changes
+✔ bad input is refused with exit 1 before anything is read or sent
+✔ bad input is refused with exit 1 before anything is read or sent
+✔ bad input, unknown or write-shaped commands and misplaced flags exit 1 before anything is read or sent
+✔ blocks a Slack app-level token (xapp-) without printing the value or source line
+✔ blocks a Slack refresh token (xoxe-) without printing the value or source line
+✔ blocks a rotating Slack access token (xoxe.xoxp-) through the existing Slack token rule
+✔ blocks a tenant literal spelled with a zero-width character or a look-alike letter (shared tier-guard folding)
+✔ corpus shape: per-platform counts, probes, pairs and placeholder-only text
+✔ credentials never appear in stdout, stderr or results, also when the transport error or the response echoes them
+✔ deleting a host record is R3 everywhere (SR-2 device delete), with pre-state and rollback path before step 1
+✔ deterministic half passes for fleet: floors, decisions, route lint, first-occurrence MISS, pairs
+✔ deterministic half passes for gws: floors, decisions, route lint, first-occurrence MISS, pairs
+✔ deterministic half passes for jamf: floors, decisions, route lint, first-occurrence MISS, pairs
+✔ deterministic half passes for linear: floors, decisions, route lint, first-occurrence MISS, pairs
+✔ deterministic half passes for slack: floors, decisions, route lint, first-occurrence MISS, pairs
+✔ digest is offline: the SHA-256 of the whitespace-normalised draft, a not-before time and the exact verify-posted line
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0
+✔ each FileVault R3 scope gate names its written rollback and needs the pre-state and that rollback in the ticket before step 1
+✔ each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change
+✔ each lock, wipe and Turn off MDM read-back names a proof that can pass on the platform it covers
+✔ each of the 8 checks appears with its Admin console path, GAM read, source and status
+✔ each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN
+✔ every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect
+✔ every Drive sharing gate that changes who outside can be shared with waits for a named approver
+✔ every G2 command produces a Linear-ready note and the read-back the administrator runs after posting it
+✔ every G2 floor in the guard has the same pattern in the graph engine, with sentence gaps read as line gaps
+✔ every G2 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview
+✔ every Linear-ready note read-back proves who posted it; workspace-admin never passes the member as --author
+✔ every adapter command a Fleet runbook tells the operator to run exists in fleet-client.js, with flags it accepts
+✔ every adapter command a runbook, the lane spec or the adapter README tells an operator to run is exercised above
+✔ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed
+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes
+✔ every console Save in the five runbooks sits inside an action-local SAFETY GATE: no ungated scope change, saved search or group
+✔ every delete is R3: its gate names the written rollback path, the action waits for it, and no line labels a delete lower
+✔ every gate phrase names the value or the comment it changes, and its Target binds the same placeholders
+✔ every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict
+✔ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0)
+✔ every method but GET is refused before credentials are read or the transport is called
+✔ every method but GET is refused on every allow-listed read path
+✔ every pilot gate stops above 10 Macs, in the steps before it and in its Only after line
+✔ every policy read-back proves a property, never mere existence: no trigger ticked after the Self Service create, disabled after the disable
+✔ every profile read-back names the profile by its identifier, so an install or an entry for another profile is never proof
+✔ every read and verify-* sends POST api.linear.app/graphql with its named document byte-equal, and the key only in the Authorization header
+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header
+✔ every read command sends the exact method, host and path, and the credential only in the Authorization header
+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header
+✔ every rollback a Reversibility field points to is a gate or a PREVIEW ONLY marker that exists, named by its id
+✔ every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook
+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header
+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it
+✔ every verify-event whose actor is the administrator carries --target, and the checklists require the target
+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called
+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called
+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called
+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called
+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport
+✔ exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate
+✔ fleet-device-actions-batch-script-portal: portal gate is action-local and fail-closed
+✔ fleet-device-actions-cancel-portal: portal gate is action-local and fail-closed
+✔ fleet-device-actions-delete-portal: portal gate is action-local and fail-closed
+✔ fleet-device-actions-lock-cli: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ fleet-device-actions-lock-portal: portal gate is action-local and fail-closed
+✔ fleet-device-actions-mdm-off-portal: portal gate is action-local and fail-closed
+✔ fleet-device-actions-run-script-cli: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ fleet-device-actions-run-script-portal: portal gate is action-local and fail-closed
+✔ fleet-device-actions-unlock-portal: portal gate is action-local and fail-closed
+✔ fleet-device-actions-wipe-portal: portal gate is action-local and fail-closed
+✔ fleet-host-health-refetch-portal: portal gate is action-local and fail-closed
+✔ fleet-osquery-investigation-add-report-portal: portal gate is action-local and fail-closed
+✔ fleet-osquery-investigation-export-portal: portal gate is action-local and fail-closed
+✔ fleet-osquery-investigation-live-report-portal: portal gate is action-local and fail-closed
+✔ fleet-policy-failures-automation-portal: portal gate is action-local and fail-closed
+✔ fleet-policy-failures-refetch-portal: portal gate is action-local and fail-closed
+✔ fleet-policy-failures-run-script-portal: portal gate is action-local and fail-closed
+✔ fleet-vulnerable-software-add-software-portal: portal gate is action-local and fail-closed
+✔ fleet-vulnerable-software-install-automation-portal: portal gate is action-local and fail-closed
+✔ fleet-vulnerable-software-install-host-portal: portal gate is action-local and fail-closed
+✔ fleet-vulnerable-software-patch-policy-portal: portal gate is action-local and fail-closed
+✔ fleet: every documented adapter command sends reads only, and nothing without --execute
+✔ fleet: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file
+✔ gws-2sv-enforcement-allow-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-allow-rollback-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-end-exemption-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-enforce-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-exception-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-exempt-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-group-reenforce-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-keys-only-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-methods-restore-portal: portal gate is action-local and fail-closed
+✔ gws-2sv-enforcement-off-portal: portal gate is action-local and fail-closed
+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed
+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ gws-account-containment-oauth-portal: portal gate is action-local and fail-closed
+✔ gws-account-containment-oauth: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed
+✔ gws-account-containment-reactivate-portal: portal gate is action-local and fail-closed
+✔ gws-account-containment-suspend-portal: portal gate is action-local and fail-closed
+✔ gws-admin-roles-assign-portal: portal gate is action-local and fail-closed
+✔ gws-admin-roles-recovery-allow-portal: portal gate is action-local and fail-closed
+✔ gws-admin-roles-recovery-off-portal: portal gate is action-local and fail-closed
+✔ gws-admin-roles-remove-role-portal: portal gate is action-local and fail-closed
+✔ gws-admin-roles-remove-super-admin-portal: portal gate is action-local and fail-closed
+✔ gws-drive-sharing-allow-portal: portal gate is action-local and fail-closed
+✔ gws-drive-sharing-allowlist-add-portal: portal gate is action-local and fail-closed
+✔ gws-drive-sharing-allowlist-remove-portal: portal gate is action-local and fail-closed
+✔ gws-drive-sharing-gam-bulk-preview: preview region contains no executable mutation
+✔ gws-drive-sharing-remove-access-portal: portal gate is action-local and fail-closed
+✔ gws-drive-sharing-restrict-portal: portal gate is action-local and fail-closed
+✔ gws-drive-sharing-turn-off-portal: portal gate is action-local and fail-closed
+✔ gws-security-posture-admins-export: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ gws-security-posture-app-block-portal: portal gate is action-local and fail-closed
+✔ gws-security-posture-forwarding-allow-portal: portal gate is action-local and fail-closed
+✔ gws-security-posture-forwarding-off-portal: portal gate is action-local and fail-closed
+✔ gws-security-posture-users-export: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ gws: every documented adapter command sends reads only, and nothing without --execute
+✔ gws: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file
+✔ help prints the commands; run directly, the CLI exits with run()'s code
+✔ host-upcoming reads one host's queued items (an Observer read) and nothing else: no deeper path, no order or filter keys, no write
+✔ input errors exit 1 before any credential or network: unknown command, missing or extra flags, bad values
+✔ input validation runs before any credential or network: IDs, limits and cursors outside their patterns are refused
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it
+✔ instruction text in a response field is returned quoted with a flag, and nothing acts on it
+✔ invalid or oversized responses are INVALID_RESPONSE, never partial data
+✔ jamf-config-profiles-all-computers-portal: portal gate is action-local and fail-closed
+✔ jamf-config-profiles-distribute-all-portal: portal gate is action-local and fail-closed
+✔ jamf-config-profiles-exclude-portal: portal gate is action-local and fail-closed
+✔ jamf-config-profiles-pilot-scope-portal: portal gate is action-local and fail-closed
+✔ jamf-config-profiles-remove-all-computers-portal: portal gate is action-local and fail-closed
+✔ jamf-config-profiles-remove-group-portal: portal gate is action-local and fail-closed
+✔ jamf-config-profiles-remove-pilot-portal: portal gate is action-local and fail-closed
+✔ jamf-config-profiles-unexclude-portal: portal gate is action-local and fail-closed
+✔ jamf-filevault-new-key-portal: portal gate is action-local and fail-closed
+✔ jamf-filevault-one-mac-scope-portal: portal gate is action-local and fail-closed
+✔ jamf-filevault-pilot-profile-portal: portal gate is action-local and fail-closed
+✔ jamf-filevault-show-key-portal: portal gate is action-local and fail-closed
+✔ jamf-filevault-widen-profile-portal: portal gate is action-local and fail-closed
+✔ jamf-inventory-groups-delete-portal: portal gate is action-local and fail-closed
+✔ jamf-inventory-groups-recon: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ jamf-inventory-groups-saved-search-portal: portal gate is action-local and fail-closed
+✔ jamf-inventory-groups-smart-create-portal: portal gate is action-local and fail-closed
+✔ jamf-inventory-groups-smart-criteria-portal: portal gate is action-local and fail-closed
+✔ jamf-inventory-groups-static-members-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-add-title-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-app-installer-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-app-installer-rollout-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-fleet-plan-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-pilot-plan-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-pilot-policy-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-stop-policy-portal: portal gate is action-local and fail-closed
+✔ jamf-patch-management-widen-policy-portal: portal gate is action-local and fail-closed
+✔ jamf-policies-self-service-change-portal: portal gate is action-local and fail-closed
+✔ jamf-policies-self-service-create-portal: portal gate is action-local and fail-closed
+✔ jamf-policies-self-service-disable-portal: portal gate is action-local and fail-closed
+✔ jamf-policies-self-service-flush-all-portal: portal gate is action-local and fail-closed
+✔ jamf-policies-self-service-flush-one-portal: portal gate is action-local and fail-closed
+✔ jamf-policies-self-service-test-install-portal: portal gate is action-local and fail-closed
+✔ jamf: every documented adapter command sends reads only, and nothing without --execute
+✔ jamf: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file
+✔ key-like fields are stripped from every response before it is printed, and the instruction scan runs on what is left
+✔ linear-intake-create-portal: portal gate is action-local and fail-closed
+✔ linear-intake-label-priority-portal: portal gate is action-local and fail-closed
+✔ linear-ticket-note-delete-portal: portal gate is action-local and fail-closed
+✔ linear-ticket-note-post-portal: portal gate is action-local and fail-closed
+✔ linear-ticket-note-replace-portal: portal gate is action-local and fail-closed
+✔ linear-triage-accept-portal: portal gate is action-local and fail-closed
+✔ linear-triage-decline-portal: portal gate is action-local and fail-closed
+✔ linear-triage-duplicate-portal: portal gate is action-local and fail-closed
+✔ linear-triage-fields-portal: portal gate is action-local and fail-closed
+✔ linear-triage-priority-portal: portal gate is action-local and fail-closed
+✔ linear-triage-snooze-portal: portal gate is action-local and fail-closed
+✔ linear-workspace-admin-bulk-delete-portal: portal gate is action-local and fail-closed
+✔ linear-workspace-admin-bulk-move-portal: portal gate is action-local and fail-closed
+✔ linear-workspace-admin-delete-portal: portal gate is action-local and fail-closed
+✔ linear-workspace-admin-export-portal: portal gate is action-local and fail-closed
+✔ linear-workspace-admin-restore-portal: portal gate is action-local and fail-closed
+✔ linear-workspace-admin-suspend-portal: portal gate is action-local and fail-closed
+✔ linear-workspace-admin-unsuspend-portal: portal gate is action-local and fail-closed
+✔ linear: every documented adapter command sends reads only, and nothing without --execute
+✔ linear: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file
+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing
+✔ missing credentials exit 1 and name the variable, never a value; nothing is sent
+✔ missing credentials name the variable, never a value, and nothing is sent
+✔ more than 10 hosts already failing a policy go to the R3 batch gate in /fleet-device-actions, never to Phase 5, which does not reach them
+✔ nits: the batch phrase binds the host count, the osquery storage read cancels its edit forms, the lane spec names only verify-wipe on GET /commands
+✔ no Mac gets a second FileVault profile: Phase A reads each Mac's profiles, and every FileVault scope gate waits for that read
+✔ no PORTAL ACTION step and no Before line of a gated phase leaves a second setting to the operator
+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it
+✔ no credential value appears in any result, error, thrown message or printed line
+✔ no credential value appears in stdout, stderr or a result, also when the transport or the vendor echoes it
+✔ no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof
+✔ no runbook treats exit 2 from a verify-* read as an expected result
+✔ no two gates in a Slack runbook share a confirmation phrase
+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed
+✔ note and digest read only a .md or .txt note outside key and settings folders, and refuse a body the commit scanner blocks; a refused file is never printed
+✔ note and digest refuse a line carrying the tenant's own domain or name (SR-8), read from the same environment names the commit scanner reads, and never print it
+✔ note is offline: it prints the exact body, its SHA-256 over the normalised body, a not-before time, the HUMAN-RUN posting steps and the exact verify-comment line
+✔ one script on one host asks for the same R2 and R3 ceremony in all three gates: checkpoint for R2 and R3, rollback path and review for R3
+✔ only the bare --execute flag performs a read
+✔ only the bare --execute flag performs the read; any other spelling is refused and nothing is sent
+✔ outside the user reads a flag keeps its quote only on a field that read exists to show: attachment authors and other unlisted fields are withheld (round 3, finding 8)
+✔ plan() describes an allowed request with no credentials and no network; a refused one says why
+✔ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier
+✔ prompt-injection markers use the shared tier-guard list: a mode-override claim and a homoglyph or zero-width spelling warn
+✔ read-only Fleet, Slack, Linear, Jamf and Google Workspace diagnostics do not warn (G2 lane)
+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy
+✔ redacts a displayed path holding a tenant literal spelled with a look-alike letter or a zero-width character (round 3, finding 4)
+✔ round-1 nits: the R3 rule cites a CLAUDE.md section that exists, group names are quoted, member IDs map to serials, the stripped validation field is named, and widening keeps the pilot group
+✔ round-2 nits: the Android lock in the fast path and the fleetctl block, paged MDM command reads, and a Linux wipe with no exit code
+✔ round-2 review: the re-add checks each recorded member first, the unarchive Effect does not settle what Slack restores, and Phase E names its member apart from the requester
+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes
+✔ single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing
+✔ slack-app-approval-approve-portal: portal gate is action-local and fail-closed
+✔ slack-app-approval-request-managers-grant-portal: portal gate is action-local and fail-closed
+✔ slack-app-approval-request-managers-remove-portal: portal gate is action-local and fail-closed
+✔ slack-app-approval-require-portal: portal gate is action-local and fail-closed
+✔ slack-app-approval-restrict-portal: portal gate is action-local and fail-closed
+✔ slack-app-approval: granting app request management waits for the request-management approver named in Inputs, not the app sign-off
+✔ slack-app-approval: the require gate leaves the request policy and the request managers as recorded; granting request management has its own R2 gate and its R1 removal
+✔ slack-guests-connect-approve-invitation-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect-archive-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect-decline-invitation-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect-disconnect-org-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect-readd-members-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect-remove-org-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect-time-limit-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect-unarchive-portal: portal gate is action-local and fail-closed
+✔ slack-guests-connect: a declined invitation expects is_pending_ext_shared false and is_ext_shared unchanged from Phase A
+✔ slack-incident-comms-resolved-post-portal: portal gate is action-local and fail-closed
+✔ slack-incident-comms-status-post-portal: portal gate is action-local and fail-closed
+✔ slack-incident-comms: Phase A stops on a channel pending a share with another organization, and the not-before format is stated
+✔ slack-retention-export-all-conversations-portal: portal gate is action-local and fail-closed
+✔ slack-retention-export-delete-channel-portal: portal gate is action-local and fail-closed
+✔ slack-retention-export-delete-messages-portal: portal gate is action-local and fail-closed
+✔ slack-retention-export-legal-hold-portal: portal gate is action-local and fail-closed
+✔ slack-retention-export-public-export-portal: portal gate is action-local and fail-closed
+✔ slack-retention-export-shorten-retention-portal: portal gate is action-local and fail-closed
+✔ slack-retention-export: a deleted channel's failed read counts only when Phase A read the same channel with the same token
+✔ slack-security-settings-2fa-off-portal: portal gate is action-local and fail-closed
+✔ slack-security-settings-2fa-require-portal: portal gate is action-local and fail-closed
+✔ slack-security-settings-approved-domains-portal: portal gate is action-local and fail-closed
+✔ slack-security-settings-file-sharing-portal: portal gate is action-local and fail-closed
+✔ slack-security-settings-saml-require-portal: portal gate is action-local and fail-closed
+✔ slack-security-settings-session-duration-portal: portal gate is action-local and fail-closed
+✔ slack-security-settings-sms-block-portal: portal gate is action-local and fail-closed
+✔ slack-security-settings: blocking SMS is its own R3 gate with the Phase A value as rollback, and the two-factor requirement leaves the methods as recorded
+✔ slack-security-settings: the SMS block waits out a recorded notice period, stops when the person making the change or the recovery Owner uses SMS codes, and sends a locked-out member to a named org gap
+✔ slack-security-settings: the header says every gate has its rollback written in the gate, so every gate names one by id
+✔ slack-user-lifecycle-channel-add-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-channel-remove-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-invite-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-reactivate-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-session-reset-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-to-member-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-to-multi-guest-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle-to-single-guest-portal: portal gate is action-local and fail-closed
+✔ slack-user-lifecycle: each account-type change has its own gate whose phrase names the destination, and Phase F stops on an Owner or Admin
+✔ slack-user-lifecycle: every phase proved by a verify-* user read binds [USER_ID] to the GUI record and stops when the account already had the end state
+✔ slack: every documented adapter command sends reads only, and nothing without --execute
+✔ slack: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file
+✔ strict argument parsing rejects missing values, duplicates and detached flags
+✔ tenant: Fleet binds no tenant id; the configured FLEET_URL is the only host a request can reach
+✔ tenant: LINEAR_ORG is required before any read, and a record from another workspace exits 3 with no data
+✔ tenant: a record whose customerId names another customer exits 3 with no data; a user record with no customerId returns no data
+✔ the "N changes, N gates, N phrases" header, the phase headings and the fast path name the classes the gates declare
+✔ the CLI dry run prints the exact planned request, reads no credential and calls no transport
+✔ the CLI dry run prints the exact planned requests, reads no credential and calls no transport
+✔ the G2 lane runs the shared evaluator (no copy-pasted evaluation logic) and leaves the other corpora alone
+✔ the GAM export gates stop before replacing an existing file (bash, mocked gam)
+✔ the HTTPS transport ends a request at its deadline, even while bytes keep trickling in
+✔ the HTTPS transport stops an oversized body with a typed error the client does not retry
+✔ the R1 gates that say "installs nothing" keep every path that could install out of them
+✔ the adapter has no file, socket or console access of its own, and runs as a CLI (dry run and refusal only)
+✔ the adapter source reads no file, never logs, and asks for no write scope
+✔ the allow-list holds exactly the lane spec's Jamf Pro reads, each a GET, on JAMF_URL, with no tenant variable
+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange
+✔ the cancel gate names the one queued item it stops, in its target, its phrase and its read-back (SR-2: name the object)
+✔ the containment suspend gate waits for a user read in the ticket, also on the urgent path
+✔ the default run prints the preview, writes nothing and exits 0
+✔ the default transport is the contract's, and the tripwire stops it in tests
+✔ the default transport throws the network tripwire in tests; no socket is opened
+✔ the dry run prints the exact planned request, reads no credential and calls no transport
+✔ the exposure check compares against the ticket's own count, not the F04 corpus number
+✔ the file run directly exits with the code run() returns, and its dry run reads nothing and opens no socket
+✔ the fleetctl gates carry the prerequisites their portal counterparts carry, and every script gate asks for the pre-state
+✔ the four runbooks carry the gates this file judges
+✔ the generator opens no network connection: no network module, no fetch, no tripwire attempt
+✔ the inventory update gate states its downstream effect and records the Mac's groups before and after
+✔ the key never appears in stdout, stderr or results, also when the transport error or the response echoes it
+✔ the lane spec's Fleet table lists every route on the allow-list, with its method and path
+✔ the method-keyed sinks warn on a shortened PowerShell -Method name and on a one-line splatted Method key (round 3, finding 9)
+✔ the parser finds every gate in the six Slack runbooks, each with its fields and a PORTAL ACTION step
+✔ the parser reads every gate in the five runbooks with all six fields, a phrase and an R-class
+✔ the policy, static-group and profile gate phrases bind the values they set, and an existing profile changes only its scope there
+✔ the posture audit generator loads no network module
+✔ the public-channel export is R3 and runs only after the independent review
+✔ the purge floor stays fast on a long line that never names a mailbox (guard and engine)
+✔ the reviewed rollbacks exist: a channel-removal gate in the user lifecycle, and planning-only previews for turning Require approved apps off and public file sharing back on
+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer
+✔ the rollbacks that were phrasing are previews now: releasing a legal hold, deleting an incident post, and making SSO optional again
+✔ the scopes are exactly the seven read-only scopes; admin.directory.user.security and every other scope is refused
+✔ the scorer checks implementation, not fixtures: mutated expectations, roles, drafts and pairs all fail
+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable
+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant
+✔ the spec: seven named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation
+✔ the tier guard and the graph engine use no inline regex modifier group, so they load on Node 22
+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried
+✔ the token exchange is never retried, and one token serves every read of a run
+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment
+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it
+✔ the vulnerable-title read that yields [SOFTWARE_TITLE_ID] pages, so a long list can be read to the end
+✔ the workspace-admin Phase A stop depends on the person who makes the change, never on the key
+✔ the write gate: a wrong or generic phrase writes nothing, the exact phrase writes one report, never an overwrite
+✔ ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key
+✔ ticket-note stops when the comment it needs is past the 50-comment page or the 20-entry list
+✔ ticket-note: a digest that still differs after one replace is a stop with a partial-state note, not another edit
+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read
+✔ triage Phase E corrects a wrong priority under a gate that changes the priority and nothing else
+✔ triage compares a snooze time in UTC, the form verify-snoozed prints
+✔ unarchive and the re-add of recorded members are separate gates; the re-add phrase carries the member count and the class follows it
+✔ user and users print aliases and nonEditableAliases as set or missing, like the other addresses, and a flag on one withholds its text (round 2, finding 6)
+✔ user and users print every personal field as set or missing (names, phones, addresses, other emails, IDs, relations, organizations, locations), and a flag on one withholds its text
+✔ user and users print recoveryEmail and recoveryPhone as set or missing, never their values
+✔ verify-2sv-not-enforced: exit 0 only on a successful read of the named user whose isEnforcedIn2Sv is exactly false; a failed read, a missing field or another user is never proof
+✔ verify-admin-role-removed: reads the user, then its role assignments; proof only when no direct assignment of the role is listed and no page follows
+✔ verify-app-approved needs the app in the approved list and out of the pending requests; verify-app-restricted needs it in the restricted list
+✔ verify-app-approved withholds a flagged requester name in the pending list, as app-requests does (round 2, finding 3)
+✔ verify-archived passes only when the channel read is the one asked for and is archived
+✔ verify-command reads further pages while a page is full, and stops after ten pages without proof
+✔ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not
+✔ verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2)
+✔ verify-deactivated, verify-reactivated and verify-guest pass only on the matching user state
+✔ verify-deleted says whether --not-before is malformed or an impossible date (round 2, finding 14)
+✔ verify-deleted: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolving to that host, is verified
+✔ verify-event --target: the matched event must name the target in a parameter value; the same admin acting on another account is never proof
+✔ verify-event: an event of that name, in that application, by that user, at or after --not-before
+✔ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed
+✔ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof
+✔ verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check
+✔ verify-lock: locked with nothing pending is verified (exit 0); locking, or locked with an unlock pending, is not (exit 2)
+✔ verify-mdm-off: an empty MDM read and an enrollment that no longer reads On is verified; On is not
+✔ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused
+✔ verify-posted passes only on a plain message after --not-before whose normalised text has the expected digest
+✔ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof
+✔ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not
+✔ verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not
+✔ verify-snoozed: the issue read carries snoozedUntilAt, and a time later than the read proves the snooze (exit 0); empty, past, now, unreadable or another issue is not proof (exit 2)
+✔ verify-state, verify-labels and verify-trashed print verified, observed and expected values; exit 0 when the read proves the write, 2 when it does not
+✔ verify-suspended, verify-2sv-enforced and verify-ou: verified true exits 0, false exits 2, and a record for another user is never proof
+✔ verify-suspended: the member's active is false (exit 0); active, or not found on any page, is not proof (exit 2)
+✔ verify-unlock: unlocked with nothing pending is verified; still locked is not
+✔ verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script
+✔ verify-wipe on Windows reads the host's commands and needs a doWipe command with status 200; Linux cannot be proven by this read
+✔ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command or no wipe status is not
+✔ vulnerability: HTTP 204 means Fleet knows the CVE and nothing is affected (exit 0, no data)
+✔ warns on Fleet, Slack, Linear, Jamf and Google Workspace destructive sinks (G2 lane)
+✔ without an injected transport the default one throws the network tripwire; no socket is opened
+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token

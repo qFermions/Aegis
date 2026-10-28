@@ -1,5 +1,5 @@
 # command: node scripts/lint/command-structure.js
-# captured: 2026-10-28T03:57:08Z at 5732ffd
+# captured: 2026-10-28T04:21:58Z at 0a3e006
 # note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 command-structure lint -- 102 commands (B:23 E:6 D:3 C:11 A:57 ALIAS:2)
 

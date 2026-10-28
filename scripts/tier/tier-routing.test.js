@@ -591,3 +591,19 @@ test('every G2 floor in the guard has the same pattern in the graph engine, with
     assert.equal(part(engineSource, engineName), asLine(part(guardSource, guardName)), `${engineName} mirrors ${guardName}`);
   }
 });
+
+// Security review 2 (batch G2, range 35b0415..2b35aa1), below the security bar but a
+// gap in two code review fixes. A message hard delete across mailboxes floors whether
+// the ticket says delete or purge, plural inboxes, everyone's inbox or company-wide;
+// one person's own inbox clean-up stays clean.
+g2Suite('security review 2, message delete or purge across mailboxes', [
+  [/message purge across mailboxes/i, 'Delete the phishing message from all inboxes.'],
+  [/message purge across mailboxes/i, "Purge the phishing message from everyone's inbox."],
+  [/message purge across mailboxes/i, 'Hard-delete the spoofed invoice email from every mailbox.'],
+  [/message purge across mailboxes/i, 'Delete the phishing email from the finance mailboxes.'],
+  [/message purge across mailboxes/i, 'Delete the phishing email company-wide.'],
+], [
+  'Delete all the spam emails in my inbox.',
+  'The user deleted an email from their inbox by mistake.',
+  'User wants to delete a Teams message for everyone in the chat.',
+]);

@@ -29,6 +29,8 @@
 //     verify-policy      --id [POLICY_ID] and at least one of [--trigger T] [--frequency F]
 //                        [--enabled true|false] [--no-triggers] (a policy that merely exists
 //                        proves no change, so the bare form is refused)
+//     verify-checked-in  --serial [SERIAL_NUMBER] --not-before [NOT_BEFORE] (general.lastContactTime
+//                        at or after the time; Jamf Pro defines no last MDM check-in field)
 //
 // Environment, read only after a request is allowed (the host for a dry run too, the
 // credentials only under --execute):
@@ -296,6 +298,13 @@ const COMMANDS = Object.freeze({
     plans: (a) => [['inventory', {}, inventoryQuery(a.serial, 'HARDWARE')], ['inventory', {}, inventoryQuery(a.serial, 'DISK_ENCRYPTION')]],
     expected: (a) => ({ serial: a.serial, fileVaultState: 'ENCRYPTED', keyValidation: 'VALID' }),
   },
+  // batch G3 (task 5d): Jamf Pro defines no "last MDM check-in" field (vendor fact J-07);
+  // general.lastContactTime is the closest, and the output names it
+  'verify-checked-in': {
+    kind: 'verify', flags: ['serial', 'not-before'],
+    plans: (a) => [['inventory', {}, inventoryQuery(a.serial, 'HARDWARE')], ['inventory', {}, inventoryQuery(a.serial, 'GENERAL')]],
+    expected: (a) => ({ serial: a.serial, lastContactTime: `at or after ${a.notBefore}`, field: 'general.lastContactTime (Jamf Pro defines no last MDM check-in field)' }),
+  },
   'verify-policy': {
     kind: 'verify', flags: ['id'], optional: ['trigger', 'frequency', 'enabled', 'no-triggers'],
     plans: (a) => [['policy', { id: a.id }, {}]],
@@ -315,6 +324,7 @@ const USAGE = [
   '          verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] [--absent]',
   '          verify-group-count --id N --expect N | verify-filevault --serial [SERIAL_NUMBER]',
   '          verify-policy --id [POLICY_ID] with one or more of --trigger T, --frequency F, --enabled true|false, --no-triggers',
+  '          verify-checked-in --serial [SERIAL_NUMBER] --not-before [NOT_BEFORE]',
   'Every command is a dry run unless the bare --execute flag is given. No command writes to Jamf Pro.',
   '',
 ].join('\n');
@@ -528,6 +538,23 @@ async function verifyFileVault(client, a) {
   return verdict(command, enabled && valid, expected, observed, reason, flags);
 }
 
+async function verifyCheckedIn(client, a) {
+  const command = 'verify-checked-in';
+  const expected = COMMANDS[command].expected(a);
+  const observed = { serial: null, computerId: null, lastContactTime: null, reportDate: null, mdmCapable: null };
+  const flags = [];
+  const mac = await readMac(client, command, a.serial, 'GENERAL', observed, flags);
+  if (mac.failure) return mac.failure;
+  if (mac.reason) return verdict(command, false, expected, observed, mac.reason, flags);
+  const g = mac.record.general;
+  if (!isObject(g)) return verdict(command, false, expected, observed, 'the record holds no general section', flags);
+  const time = (v) => (typeof v === 'string' && Number.isFinite(Date.parse(v)) ? v : null);
+  Object.assign(observed, { lastContactTime: time(g.lastContactTime), reportDate: time(g.reportDate), mdmCapable: isObject(g.mdmCapable) && typeof g.mdmCapable.capable === 'boolean' ? g.mdmCapable.capable : null });
+  if (!observed.lastContactTime) return verdict(command, false, expected, observed, 'the record shows no lastContactTime', flags);
+  const ok = Date.parse(observed.lastContactTime) >= Date.parse(a.notBefore);
+  return verdict(command, ok, expected, observed, `the last contact is not at or after ${a.notBefore}; ask the person to open the Mac and run a check-in, then read again`, flags);
+}
+
 async function verifyCommand(client, a) {
   const command = 'verify-command';
   const expected = COMMANDS[command].expected(a);
@@ -658,6 +685,7 @@ const VERIFY = Object.freeze({
   'verify-group-count': verifyGroupCount,
   'verify-filevault': verifyFileVault,
   'verify-policy': verifyPolicy,
+  'verify-checked-in': verifyCheckedIn,
 });
 
 // ── CLI ──────────────────────────────────────────────────────────────────────

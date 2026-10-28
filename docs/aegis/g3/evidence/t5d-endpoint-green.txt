@@ -1,0 +1,14 @@
+# command: node --test scripts/adapters/endpoint-sync.test.js
+# commit: 21b2ac7 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:26:32Z  node: v24.22.1
+✔ Fleet verify-checked-in: the MDM check-in after --not-before passes; an older one, MDM off, or another host does not (13.644025ms)
+✔ Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and the output names the field it used (7.444554ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 146.551076
+# exit: 0  finished: 2026-10-28T09:26:32Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

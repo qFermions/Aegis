@@ -3248,6 +3248,337 @@
       ]
     },
     {
+      "id": "linear-intake-channels-preview",
+      "file": ".claude/commands/linear-intake.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-intake-create-portal",
+      "file": ".claude/commands/linear-intake.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "linear-intake-label-priority-portal",
+      "file": ".claude/commands/linear-intake.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "linear-ticket-note-delete-portal",
+      "file": ".claude/commands/linear-ticket-note.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "linear-ticket-note-post-portal",
+      "file": ".claude/commands/linear-ticket-note.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "linear-ticket-note-replace-portal",
+      "file": ".claude/commands/linear-ticket-note.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "linear-triage-accept-portal",
+      "file": ".claude/commands/linear-triage.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:accept",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-triage-api-preview",
+      "file": ".claude/commands/linear-triage.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "linear-triage-decline-portal",
+      "file": ".claude/commands/linear-triage.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:decline",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-triage-duplicate-portal",
+      "file": ".claude/commands/linear-triage.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-triage-fields-portal",
+      "file": ".claude/commands/linear-triage.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-triage-priority-portal",
+      "file": ".claude/commands/linear-triage.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-triage-snooze-portal",
+      "file": ".claude/commands/linear-triage.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-api-preview",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-bulk-delete-portal",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-bulk-move-portal",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-delete-portal",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-export-portal",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:export",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-purge-preview",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-restore-portal",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:restore",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-sso-preview",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-suspend-portal",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:suspend",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "linear-workspace-admin-unsuspend-portal",
+      "file": ".claude/commands/linear-workspace-admin.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:unsuspend",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
       "id": "mac-new-hire-laptop-assign-portal",
       "file": ".claude/commands/mac-new-hire-laptop.md",
       "kind": "portal",

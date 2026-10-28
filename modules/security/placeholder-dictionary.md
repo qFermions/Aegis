@@ -83,7 +83,10 @@ numeric ID) · `[PENDING_ACTION]` / `[PENDING_ACTION_ID]` (one queued Fleet item
 lock, wipe, MDM command or script, and its command UUID or script execution ID) ·
 `[HOST_COUNT]` (the number of Fleet hosts a batch action selects, written in the
 ticket before the gate) · `[TICKET_HOST_COUNT]` (the host count a ticket states,
-kept apart from the count Fleet reports). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
+kept apart from the count Fleet reports) · `[PRIORITY_LEVEL]` (a Linear priority:
+Urgent, High, Medium, Low or No priority) · `[DATE_TIME]` (a date and time written in
+UTC as ISO 8601, for example when a Linear snooze ends) · `[COMMENT_ID]` (the ID of one
+ticket comment, as the ticket system's comment read prints it). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
 Jamf Pro. In a Jamf Pro runbook, `[DEVICE_ID]` is either the computer ID or the
 management ID, and the runbook says which. Note templates keep using lowercase or
 single-letter fill-ins (`[X]`, `[N]`, `[timestamp]`) for numbers and times, as the

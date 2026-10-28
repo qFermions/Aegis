@@ -33,6 +33,8 @@ const MIXED_STATE_COMMANDS = [
   'mac-new-hire-laptop', 'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue',
   // G2: Fleet
   'fleet-device-actions', 'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation',
+  // G2: Linear
+  'linear-intake', 'linear-triage', 'linear-ticket-note', 'linear-workspace-admin',
 ];
 
 const REFERENCE_BOUNDARIES = [

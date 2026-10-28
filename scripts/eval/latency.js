@@ -19,9 +19,9 @@ const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const CORPORA = ['ms', 'gws', 'g2', 'g3'];
-// Set from the batch G3 measurement on the build container (three runs over 175 tickets,
-// docs/aegis/g3/evidence/t6c-latency-runs.txt, re-run at ebb8cc1: p50 0.24 to 0.33 ms, p95 0.52 to
-// 0.85 ms, max 0.70 to 1.16 ms, one Node process start 35 to 43 ms).
+// Set from the batch G3 measurements on the build container (three runs over 175 tickets each,
+// the latest in docs/aegis/g3/evidence/t6c-latency-runs.txt): p95 under 1 ms per ticket and one
+// Node process start of 30 to 45 ms in every run.
 // 50 ms leaves room for a slower CI runner and garbage-collection pauses, and is far under
 // the charter's 1,000 ms per ticket.
 const BUDGET_P95_MS = 50;

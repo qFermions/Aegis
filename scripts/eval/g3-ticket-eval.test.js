@@ -101,3 +101,10 @@ test('CI runs the G3 eval beside the other ticket evals', () => {
   const ci = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
   assert.match(ci, /run: node scripts\/eval\/g3-ticket-eval\.js/);
 });
+
+// Batch G3: the report's title names every platform group the corpus scores, GitHub
+// included (it read "Okta, Microsoft 365, ambiguous, intake sources" after GitHub landed).
+test('the report title names GitHub, Okta, Microsoft 365, the ambiguous tickets and the intake sources', () => {
+  const title = g3.render(g3.evaluate(corpus)).split('\n').find((l) => /^G3 ticket eval/.test(l));
+  assert.match(title, /^G3 ticket eval \(GitHub, Okta, Microsoft 365, ambiguous, intake sources\)/);
+});

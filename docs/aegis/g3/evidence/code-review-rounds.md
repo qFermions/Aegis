@@ -27,3 +27,25 @@ Round 1: 15 found, 15 fixed, 0 closed.
 ## CI failure handled during the rounds
 
 Release Gate windows-latest failed at `96564ea` (job 122725205776): in the audit trail's concurrent-writer test a writer died with `EPERM` opening `audit.lock`, which Windows reports while another writer is deleting the file. Later heads passed by timing; the race was real. Fixed test first: `bc351a8` (red: EPERM and EACCES on the lock open mean wait, on Windows), `ebb8cc1`.
+
+## Round 2 (`c1e60ec..97deaac`, the diff after round 1): 15 found
+
+| # | file:line (as reported) | finding | outcome | commit(s) |
+|---|---|---|---|---|
+| 1 | `scripts/audit/change-record.js:101` | a change opened before `read_back` existed could never be linked or reported done | closed: the change-record module was added on this branch and never released; no audit trail outside the tests holds a procedure entry without `read_back` | none |
+| 2 | `docs/aegis/g3/evidence/tools/floor-diff.js:35` | the seeded generator lost bits in floating point and repeated after about 14,000 states (about 38,000 distinct inputs, not 40,000 per floor) | fixed: an integer generator; the tool prints the distinct count (802,288) | `c34a0e4` |
+| 3 | `docs/aegis/g3/evidence/tools/leak-grep.js:11` | `C:\\\\Users` in the JS regex matched two backslashes, never a real Windows path | fixed: one backslash, as `grep -E` reads the charter's pattern; the capture command corrected too | `185faf2` |
+| 4 | `scripts/audit/audit-log.js:198` | on Windows a real permission error spun 15 s and was reported as a busy lock | fixed: after 20 tries in a row with no lock file present the real error is raised | `e0da67c` (red), `5d7b157` |
+| 5 | `scripts/audit/change-record.js:154` | one read-back could be linked to several changes and prove them all | fixed: one read-back proves one change; a second link is refused and one written around the CLI does not count | `68fa48d` (red), `c7516b0` |
+| 6 | `scripts/audit/audit-log.js:404` | the audit CLI wrote a change-linked procedure without a read-back, which could never be proved | fixed: `--change` needs `--read-back`; the usage line names it | `d65d10d` (red), `f86b0e4` |
+| 7 | `scripts/audit/change-record.js:122` | `open` accepted a read-back that does not exist (a typo) | fixed: the read-back must be a command key in its connector's source | `40d13b1` (red), `ff2039f` |
+| 8 | `scripts/audit/change-record.js:107` | with no approval, status said the read-back ran before the approval | fixed | `ca37a3c` (red), `1fecf54` |
+| 9 | `docs/aegis/g3/evidence/tools/suite-counts.sh:4` | the list left out `scripts/jira-contract.test.js`, which this batch added | fixed | `78f8580` |
+| 10 | `checks.md:63` | the eval-title row cited the change-record line of the capture | fixed | `a14d1d3` |
+| 11 | `docs/aegis/capability-map.md:91` | the timing wording did not match the 20 KB capture (twelve vs eleven measured, 13 to 16 vs 13 to 17, half an hour vs 25 to 40 minutes, "twelve shipped") | fixed | `8c83dc8` |
+| 12 | `docs/aegis/g3/evidence/tools/floor-times.js:5` | the tool header kept the old figure and the README lacked the 20kb mode | fixed (one commit with finding 13, the same file) | `11d8060` |
+| 13 | `docs/aegis/g3/evidence/tools/floor-times.js:36` | a case not found was skipped silently, and floor lists of different lengths were not checked | fixed | `11d8060` |
+| 14 | `scripts/audit/change-record.js:31` | the read-back pattern was a copy of the trail's | fixed: imported from `audit-log.js` | `f4a8c67` |
+| 15 | `scripts/audit/change-record.js:32` | altitude: bind a read-back to its change when it is recorded, not by kind at link time | closed: the verify-* CLIs of nine connectors would each need a `--change` flag carried into the trail, a cross-connector change beyond this batch; findings 5 and 7 close the reuse and typo paths, and which object a read-back read stays the operator's link (`docs/aegis/boundary-audit.md` row 37); proposed to the owner in the PR body | none |
+
+Round 2: 15 found, 13 fixed, 2 closed.

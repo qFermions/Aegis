@@ -537,3 +537,15 @@ g2Suite('code review round 3, unenroll without the Intune word', [
 ], [
   'Unenroll [FIRST_NAME] from the Intune basics course.',
 ]);
+
+// Finding 5: sign-out everywhere does not read "log in ... out" or a clause joined by
+// and, but, or, then or to as a person signed out.
+g2Suite('code review round 3, sign-out without phrasal verbs', [
+  [/sign-out everywhere/i, 'Sign the user out of every session in Slack.'],
+  [/sign-out everywhere/i, 'Log [FIRST_NAME] [LAST_NAME] out of all their sessions'],
+  [/sign-out everywhere/i, 'Sign [FIRST_NAME] out of every Slack session.'],
+], [
+  'User can log in but gets kicked out of all sessions after an hour.',
+  'Log in and check out the sessions page.',
+  'Sign up and then try out every session type in the training portal.',
+]);

@@ -18,3 +18,7 @@ Candidates considered and why each fell below the bar:
 - Test files and markdown are excluded by the review rules.
 
 No file was edited, nothing was committed, and no network service was called by the reviewer.
+
+## Addendum: `a237fac..ae88348`
+
+The code and tool changes made after this review (the evidence review's fixes): `scripts/readiness-gate.test.js` (a test), `scripts/eval/latency.js` (a comment), and the evidence tools `leak-grep.js`, `head-checks.sh` (new) and `fixtures-and-mocks.sh`. Same method, one reviewer sub-task at high effort, read-only. **No findings at the bar.** The base argument is checked (`^[0-9a-f]{7,40}$` in `leak-grep.js`, `git rev-parse --verify` in `head-checks.sh`); git runs through `execFileSync` with an argument list or with quoted shell arguments; nothing printed is run; an `xargs grep` over committed file names could at worst miscount if a file named like an option were committed first. No change adds a network call, a write outside the repository or a connector write path. Commits after `ae88348` change docs and captures only.

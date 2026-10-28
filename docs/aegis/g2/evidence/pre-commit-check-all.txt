@@ -1,7 +1,7 @@
 # command: node scripts/pre-commit-check.js --all
-# captured: 2026-10-28T02:29:22Z at 426b8cd
-# note: any U+2014 in the tool output is written as -- (C11)
-pre-commit-check: --all mode -- scanning 464 tracked and non-ignored files.
+# captured: 2026-10-28T03:26:06Z at e050d78
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+pre-commit-check: --all mode -- scanning 468 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped -- configure tenant literals to enable.
 
 ╔══════════════════════════════════════════════╗
@@ -240,6 +240,10 @@ pre-commit-check: ℹ tenant-literal check skipped -- configure tenant literals 
     ⚠️  WARN  Line 57: Remove-PnPGroupMember -- SharePoint access revocation
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
+  File: .claude/commands/slack-user-lifecycle.md
+    ⚠️  WARN  Line 269: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
   File: .claude/commands/teams-issue.md
     ⚠️  WARN  Line 92: Install-Module -- PowerShell module installation
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
@@ -464,14 +468,28 @@ pre-commit-check: ℹ tenant-literal check skipped -- configure tenant literals 
     ⚠️  WARN  Line 67: Start-ADSyncSyncCycle -- directory synchronization trigger
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
+  File: scripts/adapters/fleet-client.test.js
+    ⚠️  WARN  Line 591: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/adapters/linear-client.test.js
+    ⚠️  WARN  Line 411: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 822: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
   File: scripts/adapters/readonly-contract.test.js
     ⚠️  WARN  Line 326: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 326: Prompt-injection marker (mode-override claim)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: scripts/eval/g2-tickets.json
     ⚠️  WARN  Line 131: Prompt-injection marker (ignore-previous-instructions)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
     ⚠️  WARN  Line 289: Prompt-injection marker (disregard-rules)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 456: Prompt-injection marker (mode-override claim)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
     ⚠️  WARN  Line 610: Prompt-injection marker (ignore-previous-instructions)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
@@ -482,7 +500,29 @@ pre-commit-check: ℹ tenant-literal check skipped -- configure tenant literals 
     ⚠️  WARN  Line 407: Prompt-injection marker (ignore-previous-instructions)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
-⚠️  182 warning(s) found -- review the flagged lines above.
+  File: scripts/untrusted/instruction-injection.test.js
+    ⚠️  WARN  Line 171: Prompt-injection marker (disregard-rules)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 172: Prompt-injection marker (system-prompt override)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 173: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 174: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 175: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 176: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 177: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/untrusted/poisoned-memory.test.js
+    ⚠️  WARN  Line 149: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 150: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+⚠️  197 warning(s) found -- review the flagged lines above.
    These are dangerous cmdlets in scripts. Confirm they are intentional.
    Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
 

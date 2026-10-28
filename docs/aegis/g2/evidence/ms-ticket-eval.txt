@@ -1,6 +1,6 @@
 # command: node scripts/eval/ms-ticket-eval.js
-# captured: 2026-10-28T02:29:14Z at 426b8cd
-# note: any U+2014 in the tool output is written as -- (C11)
+# captured: 2026-10-28T03:23:55Z at 540ff8c
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 Microsoft ticket eval -- deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot

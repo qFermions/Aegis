@@ -1,6 +1,6 @@
 # command: node scripts/eval/gws-ticket-eval.js
-# captured: 2026-10-28T02:29:15Z at 426b8cd
-# note: any U+2014 in the tool output is written as -- (C11)
+# captured: 2026-10-28T03:23:57Z at 540ff8c
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 Google Workspace / Okta / Jamf ticket eval -- deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  G01-new-user-ou-groups               PROCEDURE   floor=none → /gws-new-user

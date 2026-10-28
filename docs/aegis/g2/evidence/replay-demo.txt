@@ -1,7 +1,7 @@
 # command: node scripts/replay/replay-demo.js
-# captured: 2026-10-28T02:29:22Z at 426b8cd
-# note: any U+2014 in the tool output is written as -- (C11)
-Aegis replay demo -- sandboxed store: /tmp/aegis-replay-demo-sXaF8C/store
+# captured: 2026-10-28T03:24:04Z at 540ff8c
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+Aegis replay demo -- sandboxed store: /tmp/aegis-replay-demo-pwBaI0/store
 
  1. first occurrence → MISS, routed to the adaptive (model) path
     exit 0 → {"result":"MISS","route":"adaptive"}
@@ -34,10 +34,10 @@ Aegis replay demo -- sandboxed store: /tmp/aegis-replay-demo-sXaF8C/store
 15. a real email address cannot enter the store either (SR-1)
     exit 4 → {"ok":false,"error":"sanitization BLOCK -- refused to persist: real email address (use [USER@DOMAIN.COM] / [UPN])"}
 16. authority file changed → STALE (fingerprint, not a clock); history preserved
-    exit 0 → {"result":"STALE","changed":[{"path":"/tmp/aegis-replay-demo-sXaF8C/authority.md","reason":"content changed"}]}
+    exit 0 → {"result":"STALE","changed":[{"path":"/tmp/aegis-replay-demo-pwBaI0/authority.md","reason":"content changed"}]}
 17. render refuses a stale case unless --historical is passed
-    exit 3 → {"ok":false,"error":"render refused: case is STALE (authority changed: [{\"path\":\"/tmp/aegis-replay-demo-sXaF8C/authority.md\",\"reason\":\"content changed\"}]) -- pass --historical to view as historical evidence"}
+    exit 3 → {"ok":false,"error":"render refused: case is STALE (authority changed: [{\"path\":\"/tmp/aegis-replay-demo-pwBaI0/authority.md\",\"reason\":\"content changed\"}]) -- pass --historical to view as historical evidence"}
 
 Done. Every step above was a child-process invocation of the CLI with no model, agent, loop, graph, or network involved.
-Sandbox left at /tmp/aegis-replay-demo-sXaF8C -- delete it when you are done.
+Sandbox left at /tmp/aegis-replay-demo-pwBaI0 -- delete it when you are done.
 # exit: 0

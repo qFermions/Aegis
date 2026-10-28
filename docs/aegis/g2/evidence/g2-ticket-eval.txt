@@ -1,6 +1,6 @@
 # command: node scripts/eval/g2-ticket-eval.js
-# captured: 2026-10-28T02:29:18Z at 426b8cd
-# note: any U+2014 in the tool output is written as -- (C11)
+# captured: 2026-10-28T03:23:59Z at 540ff8c
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 G2 ticket eval (Google Workspace, Fleet, Jamf, Slack, Linear) -- deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  F01-fleet-host-offline               DIAGNOSTIC  floor=none → /fleet-host-health

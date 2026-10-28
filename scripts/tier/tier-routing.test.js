@@ -573,7 +573,10 @@ test('the purge floor stays fast on a long line that never names a mailbox (guar
 // still fires on its short example through assess and the engine scan.
 // A floor's pattern by the start of its label: the guard's from ESCALATION_PATTERNS, the
 // engine's from its source line (SR2_TRIGGER_PATTERNS is not exported), null when absent.
-const guardFloor = (label) => require('./tier-guard.js').ESCALATION_PATTERNS.find((p) => p.label.startsWith(label)).pattern;
+const guardFloor = (label) => {
+  const floor = require('./tier-guard.js').ESCALATION_PATTERNS.find((p) => p.label.startsWith(label));
+  return floor ? floor.pattern : null;
+};
 const engineFloor = (label) => {
   const at = read('scripts/graph/engine.js').split('\n').find((l) => l.includes(`, label: '${label}`));
   if (!at) return null;
@@ -682,6 +685,10 @@ test('no floor in the guard or the engine chains two unbounded gaps in sequence 
 });
 
 test('the twelve floors that chained two gaps stay under 1 s on a 20 KB line that never completes them (guard and engine)', () => {
+  // Every case is timed in the guard and in its engine twin, and a twin that is missing fails
+  // the test. The one exception is named: the engine's plain security-control floor (no
+  // exclude ... from clause) never chained two gaps, so that case is guard only.
+  const GUARD_ONLY = new Set(['security-control change (SR-2)']);
   const cases = [
     ['group membership removal', 'remove member from '], ['security-control change (SR-2)', 'exclude from '],
     ['account / work-profile removal', 'remove account from '], ['security-control change: Google', 'exclude from '],
@@ -692,8 +699,9 @@ test('the twelve floors that chained two gaps stay under 1 s on a 20 KB line tha
   ];
   for (const [label, unit] of cases) {
     const line = unit.repeat(Math.ceil(20000 / unit.length)).slice(0, 20000);
-    for (const [side, re] of [['guard', guardFloor(label)], ['engine', engineFloor(label)]]) {
-      if (!re) continue;
+    const sides = [['guard', guardFloor(label)], ...(GUARD_ONLY.has(label) ? [] : [['engine', engineFloor(label)]])];
+    for (const [side, re] of sides) {
+      assert.ok(re, `${side} has no floor labelled "${label}"`);
       const ms = msFor(re, line);
       assert.ok(ms < 1000, `${side} ${label} on ${JSON.stringify(unit)}: ${ms.toFixed(0)} ms`);
     }

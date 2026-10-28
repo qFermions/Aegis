@@ -565,3 +565,29 @@ test('the purge floor stays fast on a long line that never names a mailbox (guar
   const engineMs = Number(process.hrtime.bigint() - start) / 1e6;
   assert.ok(guardMs < 1000 && engineMs < 1000, `guard ${guardMs.toFixed(0)} ms, engine ${engineMs.toFixed(0)} ms`);
 });
+
+// Finding 15: the engine's G2 floors are the guard's G2 floors with each sentence gap
+// ([^.]* in the guard) read as a line gap (.* in the engine). The check runs on the
+// pattern sources, so the two hand-kept copies cannot drift on a wording no example
+// sentence covers. The Linear deletion floor is a regex pair on each side, checked by name.
+test('every G2 floor in the guard has the same pattern in the graph engine, with sentence gaps read as line gaps', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { ESCALATION_PATTERNS } = require('./tier-guard.js');
+  const engineSource = fs.readFileSync(path.join(__dirname, '..', 'graph', 'engine.js'), 'utf8');
+  const guardSource = fs.readFileSync(path.join(__dirname, 'tier-guard.js'), 'utf8');
+  const asLine = (source) => source.replace(/\[\^\.\]\*/g, '.*').replace(/\[\^\\r\\n\]\*/g, '.*');
+  const first = ESCALATION_PATTERNS.findIndex((p) => /^Fleet host lock/.test(p.label));
+  const end = ESCALATION_PATTERNS.findIndex((p) => /^org-wide/.test(p.label));
+  const g2 = [...ESCALATION_PATTERNS.slice(first, end), ESCALATION_PATTERNS.find((p) => /message purge across mailboxes/.test(p.label))];
+  assert.ok(first > 0 && end > first && g2.length === end - first + 1, 'the G2 block and the purge floor are found');
+  const regexes = g2.filter((p) => p.pattern instanceof RegExp);
+  assert.equal(regexes.length, g2.length - 1, 'only the Linear deletion floor is a regex pair');
+  const missing = regexes.filter((p) => !engineSource.includes(`{ pattern: /${asLine(p.pattern.source)}/${p.pattern.flags},`)).map((p) => p.label);
+  assert.deepEqual(missing, [], 'a G2 floor without its engine twin');
+  const part = (source, name) => (new RegExp(`const ${name} = (/.*?/[a-z]*);\\n`).exec(source) || [])[1];
+  for (const [engineName, guardName] of [['SR2_LINEAR_VERB', 'LINEAR_DELETE_VERB'], ['SR2_LINEAR_ANCHOR', 'LINEAR_ANCHOR'], ['SR2_LINEAR_KEY', 'LINEAR_KEY']]) {
+    assert.ok(part(guardSource, guardName), `${guardName} is defined`);
+    assert.equal(part(engineSource, engineName), asLine(part(guardSource, guardName)), `${engineName} mirrors ${guardName}`);
+  }
+});

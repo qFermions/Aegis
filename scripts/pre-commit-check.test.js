@@ -825,6 +825,25 @@ test('warns on Fleet, Slack, Linear, Jamf and Google Workspace destructive sinks
   assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `g2-scanner-source-${index}`), repo]);
 });
 
+test('Fleet host and Slack SCIM deletions warn when curl names the method with --request (G2 lane)', function (t) {
+  const repo = makeRepo(t);
+  const cases = [
+    ['curl -sS --request DELETE "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]"', /Fleet host deletion or MDM turn-off/],
+    ['curl -sS "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]/mdm" --request "DELETE"', /Fleet host deletion or MDM turn-off/],
+    ['curl -sS --request DELETE "https://api.slack.com/scim/v2/Users/[USER_ID]"', /Slack SCIM deactivation/],
+    ['curl -sS "https://api.slack.com/scim/v2/Users/[USER_ID]" --request \'DELETE\'', /Slack SCIM deactivation/],
+  ];
+  const fixtureLines = cases.map(([line], index) => `${line} # g2-request-source-${index}`);
+  writeFile(repo, 'g2-request.md', `${fixtureLines.join('\n')}\n`);
+  stageAll(repo);
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 0);
+  for (const [, expectedLabel] of cases) assert.match(output, expectedLabel);
+  assert.match(output, new RegExp(`${cases.length} warning\\(s\\) found`));
+  assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `g2-request-source-${index}`), repo]);
+});
+
 test('read-only Fleet, Slack, Linear, Jamf and Google Workspace diagnostics do not warn (G2 lane)', function (t) {
   const repo = makeRepo(t);
   writeFile(repo, 'g2-read-only.md', [

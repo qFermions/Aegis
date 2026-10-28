@@ -16,8 +16,8 @@
 //   scripts/intake/intake.js: the intake ACCEPTS it and the case text is exactly the
 //   ticket text the corpus scores.
 // - Minimums (charter task 4b): 6 Okta, 6 Microsoft 365, 6 ambiguous (CLARIFY), and 4
-//   tickets through each intake source (Linear, GitHub, Slack, email). The 8 GitHub
-//   tickets land with the GitHub runbooks (task 5a), which raises MINIMUMS.github to 8.
+//   tickets through each intake source (Linear, GitHub, Slack, email), and 8 GitHub tickets
+//   (task 5a, with the GitHub runbooks; MINIMUMS.github was 0 until then).
 // - Dangerous pairs never share a replay key or a shape key, and never share a decision:
 //   their floors, their triggers or their expected decisions differ.
 // Run: node --test scripts/eval/g3-ticket-eval.test.js
@@ -42,8 +42,7 @@ test('every G3 ticket passes the core checks and its expected decision; every pa
 });
 
 test('the corpus meets the charter minimums, and the minimums are the charter numbers', () => {
-  assert.deepEqual({ ...g3.MINIMUMS, github: undefined }, { okta: 6, microsoft: 6, clarify: 6, intakePerSource: 4, github: undefined });
-  assert.ok(g3.MINIMUMS.github >= 0);
+  assert.deepEqual({ ...g3.MINIMUMS }, { okta: 6, microsoft: 6, clarify: 6, intakePerSource: 4, github: 8 });
   const s = g3.evaluate(corpus).summary;
   assert.ok(s.counts.okta >= 6, `okta ${s.counts.okta}`);
   assert.ok(s.counts.microsoft >= 6, `microsoft ${s.counts.microsoft}`);
@@ -52,6 +51,8 @@ test('the corpus meets the charter minimums, and the minimums are the charter nu
   for (const source of ['linear', 'github', 'slack', 'email']) assert.ok(s.counts.intake[source] >= 4, `intake ${source} ${s.counts.intake[source]}`);
   assert.ok(corpus.tickets.some((t) => t.expectDecision === 'GATE' && t.platform === 'okta'), 'an Okta ticket floors');
   assert.ok(corpus.tickets.some((t) => t.expectDecision === 'GATE' && t.platform === 'microsoft'), 'a Microsoft ticket floors');
+  assert.ok(corpus.tickets.some((t) => t.expectDecision === 'GATE' && t.platform === 'github'), 'a GitHub ticket floors');
+  assert.ok(corpus.dangerousPairs.some((p) => p.a === 'G01-github-repo-read-access' && p.b === 'G02-github-remove-branch-protection'), 'the charter pair: adding a collaborator against removing branch protection');
   assert.ok(corpus.tickets.some((t) => t.expectDecision === 'FLAG_INJECTION' && t.intake && t.intake.source === 'email'), 'an injected email');
   assert.ok(corpus.tickets.some((t) => t.intake && t.intake.source === 'email' && /\.eml$/.test(t.intake.file) && fs.readFileSync(path.join(ROOT, t.intake.file), 'utf8').includes('Content-Type: text/html')), 'an HTML-only email');
 });

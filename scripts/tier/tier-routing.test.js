@@ -487,3 +487,13 @@ g2Suite('code review round 2, Exchange purge', [
   'Run a compliance search for the phishing messages and count the hits.',
   'The user emptied Deleted Items and wants the messages back.',
 ]);
+
+// Finding 5: the Linear issue-key anchor is case-sensitive inside the /i pattern, so a
+// product name with a number (Office-365, Windows-11) is not an issue key.
+g2Suite('code review round 2, Linear issue key', [
+  [/Linear issue/i, 'Delete ENG-142 and its sub-issues.'],
+  [/Linear issue/i, 'Delete IT-123, the duplicate issue.'],
+], [
+  'User deleted a Teams chat in Office-365 by accident.',
+  'Delete the Windows-11 upgrade project notes.',
+]);

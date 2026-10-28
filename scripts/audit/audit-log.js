@@ -193,7 +193,10 @@ function openAuditLog({ dir = defaultAuditDir(), now = Date.now } = {}) {
         try { fs.writeSync(fd, owner); } finally { fs.closeSync(fd); }
         break;
       } catch (error) {
-        if (error.code !== 'EEXIST') throw error;
+        // Windows reports a lock file that another writer is deleting as EPERM or EACCES
+        // (delete pending), not EEXIST: wait for it the same way.
+        const busy = error.code === 'EEXIST' || (process.platform === 'win32' && (error.code === 'EPERM' || error.code === 'EACCES'));
+        if (!busy) throw error;
       }
       const held = readText(lockFile);
       if (held) stealIfDead(held);

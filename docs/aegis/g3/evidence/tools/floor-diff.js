@@ -31,12 +31,15 @@ for (const f of fs.readdirSync('scripts/eval').filter((x) => /-tickets\.json$/.t
 for (const f of ['scripts/tier/tier-routing.test.js', 'scripts/graph/engine.test.js']) {
   if (fs.existsSync(f)) for (const m of fs.readFileSync(f, 'utf8').matchAll(/'((?:[^'\\]|\\.){8,300})'/g)) corpus.push(m[1]);
 }
+// a 32-bit linear congruential generator in integer arithmetic (Math.imul), so the sequence
+// does not lose bits to floating point and repeat early
 let seed = 7;
-const rnd = (k) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % k; };
+const rnd = (k) => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return (seed >>> 8) % k; };
 const fillers = ['the', 'a', 'please', 'today', 'for', 'and', 'then', 'our', 'it', 'all', 'from', 'on', 'of', '.', ',', 'to', 'in'];
 console.log(`${pairs.length} floors changed between ${before} and ${after}`);
 console.log(`${corpus.length} corpus tickets and test sentences, plus 40000 random sentences per floor`);
 let checked = 0;
+let distinct = 0;
 const differ = [];
 for (const p of pairs) {
   const words = [...new Set(p.old.source.replace(/\\[bdswBDSW]/g, ' ').match(/\[[A-Z_@.]+\]|[a-z][a-z-]{1,}/gi) || [])];
@@ -47,10 +50,11 @@ for (const p of pairs) {
     for (let j = 0; j < n; j += 1) ws.push(rnd(3) ? words[rnd(words.length)] : fillers[rnd(fillers.length)]);
     inputs.push(ws.join(' '));
   }
+  distinct += new Set(inputs).size;
   for (const s of inputs) {
     checked += 1;
     if (p.old.test(s) !== p.now.test(s)) { differ.push(`${p.file} ${p.label}: ${JSON.stringify(s)}`); break; }
   }
 }
-console.log(`${checked} comparisons on ${pairs.length} floors; ${differ.length} disagreements`);
+console.log(`${checked} comparisons on ${pairs.length} floors (${distinct} distinct inputs); ${differ.length} disagreements`);
 differ.forEach((d) => console.log(`  ${d}`));

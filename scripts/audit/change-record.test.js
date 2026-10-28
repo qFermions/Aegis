@@ -189,6 +189,19 @@ test('open needs the read-back that proves the change; link refuses another kind
   assert.equal(st.json.procedure.read_back, 'okta:verify-factor-reset');
 });
 
+// Code review round 2, finding 8: with no matching approval, a verified read-back of the
+// right kind is not "a read-back before the approval"; the reason is the missing approval.
+test('with no approval, status names the missing approval and never says the read-back ran before it', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  const v = verifyEntry(s, true);
+  s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]);
+  const st = s.run(CLI, ['status', '--change', o.json.change]);
+  assert.equal(st.code, 2);
+  assert.ok(st.json.missing.some((m) => /no approval reference/.test(m)), st.stdout);
+  assert.ok(!st.json.missing.some((m) => /before the approval/.test(m)), st.stdout);
+});
+
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
   const source = fs.readFileSync(CLI, 'utf8');
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();

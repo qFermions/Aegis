@@ -730,6 +730,22 @@ const CLIENT_BOUNDARIES = Object.freeze([
     authorization: 'None in the client: the transport sends GET only, and --confirm on transition exits 1 before credentials/network.',
     impactCategories: ['external-system mutation'],
   },
+  // G2: the Google Workspace posture report (a local write through security-audit.js's
+  // writer) and the Linear note, which a person posts; the adapter never writes to Linear.
+  {
+    id: 'gws-posture-audit-report-create', file: 'scripts/gws-posture-audit.js', testFile: 'scripts/gws-posture-audit.test.js',
+    interface: 'local filesystem', mode: 'gated', evidenceGroup: 'gws-posture-audit',
+    effect: 'Create one previously absent Markdown Google Workspace posture report; nothing is read from or written to Google.',
+    authorization: 'Exact normalized target and full content SHA-256 phrase.',
+    impactCategories: ['local filesystem write', 'reversible state change'],
+  },
+  {
+    id: 'linear-note-human-run', file: 'scripts/adapters/linear-client.js', testFile: 'scripts/adapters/linear-client.test.js',
+    interface: 'Linear GraphQL API', mode: 'preview', evidenceGroup: 'linear-note',
+    effect: 'Print the exact note body, its SHA-256 and the HUMAN-RUN posting steps; the administrator posts the comment and verify-comment proves it by a named query.',
+    authorization: 'None in the client: note is offline and refuses --execute, and the adapter sends named GraphQL query documents only.',
+    impactCategories: ['external-system mutation'],
+  },
   {
     id: 'security-audit-report-create', file: 'scripts/security-audit.js', testFile: 'scripts/security-audit.test.js',
     interface: 'local filesystem', mode: 'gated', evidenceGroup: 'security-audit',
@@ -740,6 +756,29 @@ const CLIENT_BOUNDARIES = Object.freeze([
 ].map((entry) => Object.freeze({ ...entry, impactCategories: Object.freeze(entry.impactCategories) })));
 
 const CLIENT_EVIDENCE = Object.freeze({
+  'gws-posture-audit': {
+    sourceFile: 'scripts/gws-posture-audit.js', testFile: 'scripts/gws-posture-audit.test.js',
+    sourcePatterns: [
+      /const \{ assertSafeReportTarget, writeReportExclusive \} = require\('\.\/security-audit\.js'\);/,
+      /assertSafeReportTarget\(cwd, requested, options\)/, /writeReportExclusive\(plan, report, cwd, dependencies/,
+    ],
+    testPatterns: [
+      /the write gate: a wrong or generic phrase writes nothing, the exact phrase writes one report, never an overwrite/,
+      /a phrase computed for one report does not authorize another \(content drift\)/,
+      /a generic name, a path outside the working directory or a Git-trackable target is refused before any write/,
+      /the generator opens no network connection: no network module, no fetch, no tripwire attempt/,
+    ],
+  },
+  'linear-note': {
+    sourceFile: 'scripts/adapters/linear-client.js', testFile: 'scripts/adapters/linear-client.test.js',
+    sourcePatterns: [
+      /function noteDigest\(text\)/, /is offline and never posts: Aegis does not write to Linear/, /async function verifyComment\(client, a\)/,
+    ],
+    testPatterns: [
+      /note is offline: it prints the exact body, its SHA-256 over the normalised body, a not-before time, the HUMAN-RUN posting steps/,
+      /verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies/,
+    ],
+  },
   jira: {
     sourceFile: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
     sourcePatterns: [

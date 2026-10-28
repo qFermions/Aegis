@@ -10131,6 +10131,20 @@
   ],
   "clientBoundaries": [
     {
+      "id": "gws-posture-audit-report-create",
+      "file": "scripts/gws-posture-audit.js",
+      "testFile": "scripts/gws-posture-audit.test.js",
+      "interface": "local filesystem",
+      "mode": "gated",
+      "evidenceGroup": "gws-posture-audit",
+      "effect": "Create one previously absent Markdown Google Workspace posture report; nothing is read from or written to Google.",
+      "authorization": "Exact normalized target and full content SHA-256 phrase.",
+      "impactCategories": [
+        "local filesystem write",
+        "reversible state change"
+      ]
+    },
+    {
       "id": "init-memory-force-replace",
       "file": "scripts/init-memory.js",
       "testFile": "scripts/init-memory.test.js",
@@ -10209,6 +10223,19 @@
       "evidenceGroup": "jira",
       "effect": "Read-only preflight, then a HUMAN-RUN procedure bound to the resolved transition; the administrator applies it and verify-transition proves it by GET.",
       "authorization": "None in the client: the transport sends GET only, and --confirm on transition exits 1 before credentials/network.",
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "linear-note-human-run",
+      "file": "scripts/adapters/linear-client.js",
+      "testFile": "scripts/adapters/linear-client.test.js",
+      "interface": "Linear GraphQL API",
+      "mode": "preview",
+      "evidenceGroup": "linear-note",
+      "effect": "Print the exact note body, its SHA-256 and the HUMAN-RUN posting steps; the administrator posts the comment and verify-comment proves it by a named query.",
+      "authorization": "None in the client: note is offline and refuses --execute, and the adapter sends named GraphQL query documents only.",
       "impactCategories": [
         "external-system mutation"
       ]

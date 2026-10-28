@@ -627,7 +627,9 @@ function portalMutationCandidates(document) {
     const match = line.match(navigationListMutation) ||
       ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
       ((cue || inPortalRegion || g1LaneDocument) ? line.match(imperativeMutation) : null) ||
-      (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
+      // batch G3: this clause once held a regex literal written with doubled backslashes, which
+      // matched a literal backslash and never fired; it uses the list-item rule above now.
+      (portalCue.test(line) && listItem.test(line) ? line.match(arrowMutation) : null) ||
       ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g2LaneDocument ? g2ArrowMutation : g1ArrowMutation) : null) ||
       (g2LaneDocument && listItem.test(line) ? line.match(g2ArrowMutation) : null);
     if (match) {

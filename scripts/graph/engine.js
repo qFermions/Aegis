@@ -91,6 +91,15 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|permit(?:s|ted|ting)?)\b.*\bauto(?:matic)?[- ]?forward/i, label: 'Gmail automatic forwarding allowed' },
   { pattern: /\b(?:remove[sd]?|removing|revok(?:e|es|ed|ing)|unassign\w*|demot\w*|strip\w*)\b.*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:roles?|rights|privileges?|access))/i, label: 'admin-role removal' },
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|trust(?:s|ed|ing)?)\b.*\b(?:less secure apps?|legacy (?:access|auth\w*|protocols?)|unconfigured third-party apps|all third-party apps|unrestricted (?:api|app) access)/i, label: 'legacy or third-party app access opened' },
+  // G3: GitHub (batch G3, task 5a), twins of the tier guard rules
+  // (?=(.*?X))\1 takes the text up to the first X and never gives it back (an atomic
+  // group), so a floor with two gaps reads each gap once: linear per verb on a long line
+  // that never completes the match, not cubic (about 20 s on 20 KB before: evidence t5a-github-floor-speed).
+  { pattern: /\b(?:remov\w*|delet\w*|disabl\w*|turn(?:s|ed|ing)?\s+off|weaken\w*|drop\w*|bypass\w*|lift\w*|relax\w*)\b.*\b(?:branch protections?|protection rules?|protected branch(?:es)?|rulesets?|required (?:reviews?|status checks?))\b|\b(?:branch protections?|rulesets?)\b.*\b(?:remov\w*|delet\w*|disabl\w*|turn(?:s|ed|ing)?\s+off|weaken\w*|bypass\w*)\b|\ballow\w*\b.*\bforce[- ]?push\w*\b/i, label: 'GitHub branch protection or ruleset weakening' },
+  { pattern: /\b(?:remov\w*|kick\w*)\b(?=(.*?(?:\[GITHUB_USER\]|\[FIRST_NAME\]|\[UPN\]|\b(?:them|him|her|users?|members?|collaborators?|contractors?|people|person)\b)))\1(?=(.*?\bfrom\b))\2.*(?:\bgithub\b|\borgani[sz]ation\b|\bthe org\b|\[@Aegion_GITHUB_ORG\]|\brepositor(?:y|ies)\b|\[REPO_NAME\])|\bconvert\w*\b.*\boutside collaborators?\b/i, label: 'GitHub member or collaborator removal' },
+  { pattern: /\b(?:dismiss\w*|clos(?:e|es|ed|ing)|resolv\w*)\b(?=(.*?\b(?:all|every|1[1-9]|[2-9]\d|\d{3,})\b))\1.*\balerts?\b|\b(?:all|every)\b(?=(.*?\balerts?\b))\2.*\b(?:dismiss\w*|clos(?:e|es|ed|ing))\b/i, label: 'security alert bulk dismissal (mass, hides risk)' },
+  { pattern: /\b(?:require|enforc\w*|turn(?:s|ed|ing)?\s+on|enabl\w*)\b(?=(.*?\b(?:two[- ]factor|2fa)\b))\1.*\b(?:organi[sz]ation|org|everyone|all members)\b/i, label: 'GitHub organization two-factor requirement (removes members without it)' },
+  { pattern: /\b(?:add|make|promot|grant|give|invit)\w*\b.*\b(?:org(?:anization)? owners?|owner role|as (?:an? )?owner)\b/i, label: 'GitHub organization owner grant (privilege change)' },
 ];
 const SR2_MASS_THRESHOLD = 10; // > 10 objects = mass operation (SR-2)
 

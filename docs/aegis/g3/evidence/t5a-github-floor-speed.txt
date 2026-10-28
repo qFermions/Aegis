@@ -1,0 +1,15 @@
+# command: bash -c echo '--- the script run below:'; cat <tmp> echo '--- its output:'; node <tmp>
+# commit: b9566e4 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:58:04Z  node: v24.22.1
+--- the script run below:
+// The GitHub member removal floor as first written (never committed): three [^.]* gaps.
+const old = /\b(?:remov\w*|kick\w*)\b[^.]*(?:\[GITHUB_USER\]|\[FIRST_NAME\]|\[UPN\]|\b(?:them|him|her|users?|members?|collaborators?|contractors?|people|person)\b)[^.]*\bfrom\b[^.]*(?:\bgithub\b|\borgani[sz]ation\b|\bthe org\b|\[@Aegion_GITHUB_ORG\]|\brepositor(?:y|ies)\b|\[REPO_NAME\])|\bconvert\w*\b[^.]*\boutside collaborators?\b/i;
+const now = require('<repo>/scripts/tier/tier-guard.js').ESCALATION_PATTERNS.find((p) => p.label.startsWith('GitHub member or collaborator removal')).pattern;
+const hostile = 'remove them '.repeat(1700);
+for (const [name, re] of [['as first written', old], ['as committed', now]]) {
+  const t = process.hrtime.bigint(); re.test(hostile); console.log(`${name}: ${(Number(process.hrtime.bigint() - t) / 1e6).toFixed(0)} ms on ${hostile.length} chars`);
+}
+--- its output:
+as first written: 21430 ms on 20400 chars
+as committed: 13 ms on 20400 chars
+# exit: 0  finished: 2026-10-28T09:58:25Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

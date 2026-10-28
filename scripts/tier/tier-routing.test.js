@@ -507,3 +507,24 @@ g2Suite('code review round 2, sign-out everywhere', [
   'Users get logged out of Slack every hour.',
   'Sign in to the portal and read the sign-in log for the last session.',
 ]);
+
+// Code review round 3 (batch G2): one suite per finding class.
+// Findings 1 and 6: a Linear issue key in one case throughout (ENG-142, eng-142, or
+// small capitals that fold to it) floors; a product name with a number in mixed case
+// (Office-365, Windows-11) does not; and the guard and the engine load on Node 22,
+// which has no inline regex modifier groups.
+g2Suite('code review round 3, Linear issue key in either case', [
+  [/Linear issue/i, 'Delete eng-142 and its sub-issues.'],
+  [/Linear issue/i, 'Delete it-123, the duplicate issue.'],
+  [/Linear issue/i, 'Delete ᴇɴɢ-142 and its sub-issues.'],
+  [/Linear issue/i, 'Delete ENG-142 and its sub-issues.'],
+], [
+  'User deleted a Teams chat in Office-365 by accident.',
+  'Delete the Windows-11 upgrade project notes.',
+]);
+test('the tier guard and the graph engine use no inline regex modifier group, so they load on Node 22', () => {
+  for (const file of ['scripts/tier/tier-guard.js', 'scripts/graph/engine.js']) {
+    const source = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', '..', file), 'utf8');
+    assert.ok(!/\(\?[a-z]*-?[a-z]*:/.test(source.replace(/\(\?(?:<?[=!]|:)/g, '')), `${file} has an inline modifier group such as (?-i:...)`);
+  }
+});

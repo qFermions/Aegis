@@ -42,6 +42,18 @@ function foldConfusables(text) {
     .replace(/[^\x00-\x7F]/g, (ch) => CONFUSABLES[ch] || ch);
 }
 
+// Linear issue deletion. The verb and the object are read without case; the anchor is
+// Linear, [ISSUE_ID] or an issue key written in one case throughout (ENG-142, eng-142),
+// so a product name with a number in mixed case (Office-365, Windows-11) is not a key.
+// The key needs case, so it is a second regex without the i flag, tried on the same
+// sentence; an inline modifier group would need Node 23 and stop a Node 22 hook loading.
+const LINEAR_DELETE_VERB = /\b(?:delete[sd]?|deleting|trash(?:es|ed|ing)?|purge[sd]?|purging)\b(?=[^.]*\b(?:issues?|projects?|cycles?|labels?|workflow states?|initiatives?|teams?)\b)/i;
+const LINEAR_ANCHOR = /\blinear\b|\[ISSUE_ID\]/i;
+const LINEAR_KEY = /\b(?:[A-Z][A-Z0-9]{1,9}|[a-z][a-z0-9]{1,9})-[0-9]{1,6}\b/;
+const LINEAR_DELETION = {
+  test: (text) => String(text).split('.').some((s) => LINEAR_DELETE_VERB.test(s) && (LINEAR_ANCHOR.test(s) || LINEAR_KEY.test(s))),
+};
+
 const ESCALATION_PATTERNS = [
   // SR-2 destructive class — gated regardless of how routine the wording sounds
   { pattern: /\bwipe\b|\bretire\b[^.]*(?:\b(device|devices|phone|phones|laptop|laptops|iphone|android|ipad|mac|workstation|tablet|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|Clear-MobileDevice|Invoke-MgRetireDeviceManagementManagedDevice|Fresh\s*Start|factory[- ]reset/i, label: 'device wipe / retire / factory reset (SR-2)' },
@@ -80,9 +92,9 @@ const ESCALATION_PATTERNS = [
   { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b[^.]*\bscripts?\b[^.]*\bfleet(?:ctl|dm)?\b|\bfleet(?:ctl|dm)?\b[^.]*\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b[^.]*\bscripts?\b/i, label: 'Fleet script run on hosts (code runs on endpoints, SR-2 extended-gate class)' },
   { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b[^.]*(?:\b(?:all|every|entire)\b[^.]*\bhosts?\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
   // G2: Linear (the IT ticket system)
-  // needs a Linear anchor (Linear, [ISSUE_ID] or an upper-case issue key such as ENG-142) in the same sentence, so
+  // needs a Linear anchor (Linear, [ISSUE_ID] or an issue key) in the same sentence, so
   // "Outlook keeps deleting emails, the issue started" and "deleted a Teams chat" stay clean
-  { pattern: /\b(?:delete[sd]?|deleting|trash(?:es|ed|ing)?|purge[sd]?|purging)\b(?=[^.]*\b(?:issues?|projects?|cycles?|labels?|workflow states?|initiatives?|teams?)\b)(?:(?=[^.]*(?:\blinear\b|\[ISSUE_ID\]|(?-i:\b[A-Z][A-Z0-9]{1,9}-[0-9]{1,6}\b)))|(?<=(?:\blinear\b|\[ISSUE_ID\]|(?-i:\b[A-Z][A-Z0-9]{1,9}-[0-9]{1,6}\b))[^.]*))/i, label: 'Linear issue / project / label / team deletion (SR-2)' },
+  { pattern: LINEAR_DELETION, label: 'Linear issue / project / label / team deletion (SR-2)' },
   { pattern: /\b(?:bulk|mass)\b[^.]*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b[^.]*(?:\b(?:all|every)\b[^.]*\b(?:issues?|tickets?|requests?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
   { pattern: /\b(?:suspend|deactivate|remove|kick)\w*\b[^.]*\bmembers?\b/i, label: 'workspace member suspension or removal (SR-2)' },
   { pattern: /\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b[^.]*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)[^.]*\b(?:slack|linear)\b|\b(?:slack|linear)\b[^.]*\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b[^.]*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)|\bremov\w*\b[^.]*\bfrom\b(?:\s+the)?\s+(?:slack|linear)\b/i, label: 'Slack or Linear member deactivation, suspension or removal (SR-2)' },

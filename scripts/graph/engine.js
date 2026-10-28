@@ -28,6 +28,16 @@ const NODE_RETRY_MAX = 1; // one retry per node (Error Recovery Protocol), then 
 
 // SR-2 trigger scan — deterministic destructive-intent patterns over plan text.
 // A model can under-classify; these force-raise effective risk to R3.
+// Linear issue deletion, in this file's `.*` style (a line, not a sentence): the verb and
+// object without case, the anchor Linear, [ISSUE_ID] or an issue key in one case
+// throughout (ENG-142, eng-142; not Office-365). No inline modifier group (Node 22 loads it).
+const SR2_LINEAR_VERB = /\b(?:delete[sd]?|deleting|trash(?:es|ed|ing)?|purge[sd]?|purging)\b(?=.*\b(?:issues?|projects?|cycles?|labels?|workflow states?|initiatives?|teams?)\b)/i;
+const SR2_LINEAR_ANCHOR = /\blinear\b|\[ISSUE_ID\]/i;
+const SR2_LINEAR_KEY = /\b(?:[A-Z][A-Z0-9]{1,9}|[a-z][a-z0-9]{1,9})-[0-9]{1,6}\b/;
+const SR2_LINEAR_DELETION = {
+  test: (text) => String(text).split('\n').some((l) => SR2_LINEAR_VERB.test(l) && (SR2_LINEAR_ANCHOR.test(l) || SR2_LINEAR_KEY.test(l))),
+};
+
 const SR2_TRIGGER_PATTERNS = [
   { pattern: /\bwipe\b|\bretire\b.*(?:\b(device|devices|phone|laptop|iphone|android|ipad|mac|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|Clear-MobileDevice|Invoke-MgRetireDeviceManagementManagedDevice|Fresh\s*Start/i, label: 'device wipe / retire' },
   { pattern: /\bdelete\b.*\b(user|account|mailbox|group|device|devices)\b|Remove-Mg(User|Group|DeviceManagementManagedDevice)|Remove-Mailbox|Remove-ADUser/i, label: 'account/mailbox/group/device deletion' },
@@ -57,7 +67,7 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\bfleet(?:ctl|dm)?\b.*\block(?:s|ed|ing)?\b|\block(?:s|ed|ing)?\b.*\bfleet(?:ctl|dm)?\b|\bturn(?:s|ed|ing)?\s*off\b.*\bmdm\b|\bun-?enroll(?:s|ed|ing|ment)?\b.*(?:\b(?:fleet(?:ctl|dm)?|mdm|hosts?|devices?|iphones?|ipads?|android|phones?|macs?|macbooks?|laptops?|computers?|chromebooks?|tablets?|workstations?|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|(?:\b(?:fleet(?:ctl|dm)?|mdm|hosts?|devices?|iphones?|ipads?|android|phones?|macs?|macbooks?|laptops?|computers?|chromebooks?|tablets?|workstations?|intune)\b|\[DEVICE_NAME\]|\b[DL]T-).*\bun-?enroll(?:s|ed|ing|ment)?\b|\b(?:delete|remove)\b.*\bhosts?\b(?![- ]file)/i, label: 'Fleet host lock, MDM turn-off / unenroll, or host deletion' },
   { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b.*\bscripts?\b.*\bfleet(?:ctl|dm)?\b|\bfleet(?:ctl|dm)?\b.*\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b.*\bscripts?\b/i, label: 'Fleet script run on hosts' },
   { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b.*(?:\b(?:all|every|entire)\b.*\bhosts?\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
-  { pattern: /\b(?:delete[sd]?|deleting|trash(?:es|ed|ing)?|purge[sd]?|purging)\b(?=.*\b(?:issues?|projects?|cycles?|labels?|workflow states?|initiatives?|teams?)\b)(?:(?=.*(?:\blinear\b|\[ISSUE_ID\]|(?-i:\b[A-Z][A-Z0-9]{1,9}-[0-9]{1,6}\b)))|(?<=(?:\blinear\b|\[ISSUE_ID\]|(?-i:\b[A-Z][A-Z0-9]{1,9}-[0-9]{1,6}\b)).*))/i, label: 'Linear issue / project / label / team deletion' },
+  { pattern: SR2_LINEAR_DELETION, label: 'Linear issue / project / label / team deletion' },
   { pattern: /\b(?:bulk|mass)\b.*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b.*(?:\b(?:all|every)\b.*\b(?:issues?|tickets?|requests?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
   { pattern: /\b(?:suspend|deactivate|remove|kick)\w*\b.*\bmembers?\b/i, label: 'workspace member suspension or removal' },
   { pattern: /\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b.*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b).*\b(?:slack|linear)\b|\b(?:slack|linear)\b.*\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b.*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)|\bremov\w*\b.*\bfrom\b(?:\s+the)?\s+(?:slack|linear)\b/i, label: 'Slack or Linear member deactivation, suspension or removal' },
@@ -202,7 +212,7 @@ function scanSr2Triggers(plan) {
 const SR2_CONFUSABLES = {
   'ı': 'i', 'ſ': 's', 'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x', 'у': 'y', 'і': 'i', 'ѕ': 's', 'һ': 'h', 'ԁ': 'd', 'ԝ': 'w',
   'ο': 'o', 'ν': 'v', 'ρ': 'p', 'α': 'a', 'ε': 'e', 'ι': 'i', 'κ': 'k', 'τ': 't', 'υ': 'u', 'χ': 'x',
-  'ᴀ': 'a', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ɪ': 'i', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u', 'ᴠ': 'v', 'ᴡ': 'w',
+  'ᴀ': 'a', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ɢ': 'g', 'ɪ': 'i', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u', 'ᴠ': 'v', 'ᴡ': 'w',
 };
 
 function recomputeRisk(state) {

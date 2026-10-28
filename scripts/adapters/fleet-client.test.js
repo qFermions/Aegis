@@ -708,3 +708,15 @@ test('help prints the commands; run directly, the CLI exits with run()\'s code',
   const none = spawnSync(process.execPath, [ADAPTER], { env, encoding: 'utf8' });
   assert.equal(none.status, 1);
 });
+
+// ── Code review round 2 (batch G2) ─────────────────────────────────────────
+
+test('verify-deleted says whether --not-before is malformed or an impossible date (round 2, finding 14)', async () => {
+  const wrongForm = await cli(['verify-deleted', '--identifier', SERIAL, '--not-before', 'yesterday', '--execute']);
+  assert.equal(wrongForm.code, 1);
+  assert.match(wrongForm.stdout + wrongForm.stderr, /must be an ISO 8601 time with a zone/);
+  const impossible = await cli(['verify-deleted', '--identifier', SERIAL, '--not-before', '2026-02-30T09:00:00Z', '--execute']);
+  assert.equal(impossible.code, 1);
+  assert.match(impossible.stdout + impossible.stderr, /--not-before is not a real date and time/);
+  assert.equal(impossible.transport.calls.length, 0, 'nothing is sent');
+});

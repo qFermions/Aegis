@@ -462,9 +462,9 @@ const VERIFIES = {
     values: ['identifier', 'not-before'],
     required: ['identifier', 'not-before'],
     check: (a, now) => {
-      const t = Date.parse(a['not-before']);
-      if (!TIMESTAMP.test(a['not-before']) || !Number.isFinite(t) || !realCalendarTime(a['not-before'])) throw new RefusedError('--not-before must be an ISO 8601 time with a zone, for example 2026-10-27T09:00:00Z');
-      if (t > now()) throw new RefusedError('--not-before is in the future');
+      if (!TIMESTAMP.test(a['not-before'])) throw new RefusedError('--not-before must be an ISO 8601 time with a zone, for example 2026-10-27T09:00:00Z');
+      if (!realCalendarTime(a['not-before'])) throw new RefusedError('--not-before is not a real date and time');
+      if (Date.parse(a['not-before']) > now()) throw new RefusedError('--not-before is in the future');
     },
     requests: (a) => [['activities', {}, { page: '0', per_page: DELETED_PER_PAGE }], ['hostByIdentifier', { identifier: a.identifier }]],
     then: 'more activity pages (newest first, at most 10 of 100) until an activity older than --not-before; the identifier lookup runs only after a manual deleted_host activity is found',

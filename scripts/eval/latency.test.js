@@ -12,9 +12,10 @@
 // - It reports the ticket count, p50, p95 and max in milliseconds, and the start time of
 //   one Node process (each CLI a session runs adds about that much). Model answer time is
 //   not measured: it is outside this repository.
-// - The budget BUDGET_P95_MS is set from the measurement (batch G3: measured p95 times
-//   about 20, for a slower CI runner), and is at most 1,000 ms per ticket. This test fails
-//   when the measured p95 is over it.
+// - The budget BUDGET_P95_MS is set from the measurement (batch G3: a measured p95 under
+//   1 ms on the build container, so the budget is set well above it for a slower CI
+//   runner), and is at most 1,000 ms per ticket. This test fails when the measured p95 is
+//   over it.
 // Run: node --test scripts/eval/latency.test.js
 
 const assert = require('node:assert/strict');

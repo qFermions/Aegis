@@ -628,6 +628,8 @@ function main() {
   }
 }
 
-module.exports = { normalize, keyOf, shapeOf, shapeIndexKey, sanitizationHits, slotClass, resolveClass, IDENTITY_PLACEHOLDERS, OBJECT_CLASSES, SLOT };
+// loadIndex and resolveCase are read-only (no lock, no write); scripts/eval/latency.js times
+// the lookup with them in-process (batch G3, task 6c)
+module.exports = { normalize, keyOf, shapeOf, shapeIndexKey, sanitizationHits, slotClass, resolveClass, loadIndex, resolveCase, IDENTITY_PLACEHOLDERS, OBJECT_CLASSES, SLOT };
 
 if (require.main === module) main();

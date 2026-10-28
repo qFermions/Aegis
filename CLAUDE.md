@@ -118,6 +118,7 @@ Moved out of this file in batch 1 so it stays under 20,000 bytes (a test checks 
 - `docs/aegis/operating-rules.md`: identity, teaching rules 13 to 17, training mode, tone.
 - `docs/aegis/operator-context.md`: site migration status, the MFA reset gotcha, physical security, Jira fields, active projects.
 - `PRODUCT_CONTRACT.md` (scope and boundary) · `docs/harness.md` (routing doctrine) · `docs/aegis/capability-map.md`, `docs/aegis/boundary-audit.md` · `PROJECT_STATE.md`.
+- `docs/aegis/lanes/g2.md`: the Fleet, Linear, Slack, Jamf Pro and Google Workspace lane (G2); its read-only adapters are in `scripts/adapters/` (README there).
 - Repo stack: Node 24 (`.nvmrc`), PowerShell 7 for the tests, no package manifest; checks in `EVALUATE.md` Part A and `.github/workflows/ci.yml`.
 
 ---

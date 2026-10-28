@@ -9,14 +9,14 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's Jamf Pro computer ID, the `id` the inventory read returns) · `[SMART_GROUP]` / `[SMART_GROUP_ID]` (a smart or static computer group and its ID) · `[MEMBER_COUNT]` (the member count you predict before a change) · `[PROFILE_NAME]` / `[PROFILE_ID]` and `[POLICY_NAME]` / `[POLICY_ID]` (a profile or policy whose scope names the group) · `[NOT_BEFORE]` (the time the change was made; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's Jamf Pro computer ID, the `id` the inventory read returns) · `[SMART_GROUP]` / `[SMART_GROUP_ID]` (a smart or static computer group and its ID) · `[MEMBER_COUNT]` (the member count you predict before a change) · `[ADD_COUNT]` / `[REMOVE_COUNT]` (the number of Macs a static group change adds and removes, each Mac named by serial in the change record) · `[PROFILE_NAME]` / `[PROFILE_ID]` and `[POLICY_NAME]` / `[POLICY_ID]` (a profile or policy whose scope names the group) · `[NOT_BEFORE]` (the time the change was made; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
 ## ⚠️ Admin / safety gate
 
 - **Groups are scope.** A group that a profile or policy targets, limits or excludes is a live switch: change its criteria or members and Macs join or leave, and every profile and policy that names it installs, removes or runs at each Mac's next check-in. Read where a group is used before changing it.
 - Five changes carry their own exact-phrase gates: one inventory update from one Mac (R1, Terminal), create a smart group (R1, nothing scoped to it yet), change a smart group's criteria (R2 when nothing names the group and it holds 10 Macs or fewer, R3 otherwise), change a static group's members (R2 up to 10 Macs, R3 above), and delete a smart group (R3, after independent review).
 - Changing an extension attribute's script, and sending Update Inventory to a whole group, are not in this runbook (previews in Phase B): a script attribute runs on every Mac at every inventory update.
-- Every R3 change needs, before its step 1: the group's criteria and members in the ticket (the pre-state), the list of every profile and policy that names it, a written rollback and an independent out-of-session review (CLAUDE.md §6).
+- Every R3 change needs, before its step 1: the group's criteria and members in the ticket (the pre-state), the list of every profile and policy that names it, a written rollback and an independent out-of-session review (CLAUDE.md, Risk-Classified Execution Policy, R3 row).
 - Not done until the read-backs pass: `verify-group-count` for a smart group, the Mac's group memberships for a static group, and the inventory read for an attribute.
 
 ## Inputs needed
@@ -172,7 +172,7 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 ```bash
 # HUMAN-RUN - read-only
 # the group by name with its ID and criteria - copy the criteria into the ticket
-node scripts/adapters/jamf-client.js smart-groups --name [SMART_GROUP] --execute
+node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
 # the current members of the group
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
 # the scope of one profile that may name the group
@@ -203,7 +203,7 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 ```bash
 # HUMAN-RUN - read-only
 # the new group and its ID
-node scripts/adapters/jamf-client.js smart-groups --name [SMART_GROUP] --execute
+node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
 # proves the group holds exactly the predicted number of Macs
 node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --execute
 ```
@@ -243,16 +243,16 @@ node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execu
 
 1. Jamf Pro → Computers → Static Computer Groups → `[SMART_GROUP]` → read the member list and copy it into the ticket (the pre-state).
 2. Find every use as in Phase C step 2.
-3. Count the Macs you add or remove: more than 10, or a group that a security profile names, is R3 and needs the independent review first.
+3. Count the Macs you add and remove, and write them in the ticket by serial, as `[ADD_COUNT]` and `[REMOVE_COUNT]`, with the member count after the change as `[MEMBER_COUNT]`: the phrase below binds all three. More than 10 changed, or a group that a security profile names, is R3 and needs the independent review first.
 
 **Role needed:** a Jamf Pro account with the Administrator privilege set, or a Custom privilege set with read and update for static computer groups (privilege names follow Jamf's object-plus-verb pattern and were not confirmed on an opened page).
 
 <!-- SAFETY GATE [jamf-inventory-groups-static-members-portal] -->
-- **Target:** [SMART_GROUP] members (a static group)
+- **Target:** [SMART_GROUP] members (a static group): [ADD_COUNT] Macs added and [REMOVE_COUNT] removed, each named by serial in the change record
 - **Effect:** add or remove Macs in one static computer group, so every profile and policy that names the group follows at each Mac's next check-in
-- **Scope:** only the Macs added or removed, plus the objects step 2 found
+- **Scope:** only the [ADD_COUNT] Macs added and the [REMOVE_COUNT] removed, plus the objects step 2 found
 - **Reversibility:** R2 up to 10 Macs, R3 above: restore the member list from the ticket under a fresh run of this gate; what a profile or policy already did on a Mac is not undone by restoring the list
-- **Required confirmation:** Type exactly `ADD OR REMOVE MACS IN STATIC GROUP [SMART_GROUP]`.
+- **Required confirmation:** Type exactly `ADD [ADD_COUNT] AND REMOVE [REMOVE_COUNT] MACS IN STATIC GROUP [SMART_GROUP] TO REACH [MEMBER_COUNT] MACS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [jamf-inventory-groups-static-members-portal]:** Only after the pre-state, the count, (for R3) the independent review, and the exact match:
 1. Jamf Pro → Computers → Static Computer Groups → `[SMART_GROUP]` → **Edit** → Assignments → tick or untick exactly the Macs the change record names → **Save**. Write the save time as `[NOT_BEFORE]`.
@@ -308,7 +308,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 ```bash
 # HUMAN-RUN - read-only
 # proves no group of that name is left - the read returns no match
-node scripts/adapters/jamf-client.js smart-groups --name [SMART_GROUP] --execute
+node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
 # each former user of the group shows no reference to it in its scope
 node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 # the same for each former policy

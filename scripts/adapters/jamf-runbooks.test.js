@@ -256,3 +256,25 @@ test('the inventory update gate states its downstream effect and records the Mac
   assert.ok(reads.some((i) => i > recon), 'and again after it');
   assert.match(phaseB, /its group memberships before and after are in the ticket, with any change named/);
 });
+
+test('the policy, static-group and profile gate phrases bind the values they set, and an existing profile changes only its scope there', () => {
+  const policy = gate(POLICIES, 'jamf-policies-self-service-change-portal');
+  assert.equal(policy.phrase, 'CHANGE POLICY [POLICY_NAME] TO [TRIGGERS] [FREQUENCY] AND ADD OR REMOVE TARGETS TO LEAVE [SMART_GROUP] REACHING [MEMBER_COUNT] MACS');
+  assert.doesNotMatch(policy.phrase, /SET TRIGGERS AND FREQUENCY, ADD OR REMOVE SCOPE TARGETS/, 'the old phrase named no value');
+  const statics = gate(GROUPS, 'jamf-inventory-groups-static-members-portal');
+  assert.equal(statics.phrase, 'ADD [ADD_COUNT] AND REMOVE [REMOVE_COUNT] MACS IN STATIC GROUP [SMART_GROUP] TO REACH [MEMBER_COUNT] MACS');
+  assert.match(section(GROUPS, 'Phase D') + section(GROUPS, 'Phase E') + GROUPS, /write them in the ticket by serial, as `\[ADD_COUNT\]` and `\[REMOVE_COUNT\]`/);
+  assert.match(PROFILES, /^2\. An existing profile: open `\[PROFILE_NAME\]` → \*\*Edit\*\* and go straight to Scope\. Change no payload or setting here/m);
+});
+
+test('round-1 nits: the R3 rule cites a CLAUDE.md section that exists, group names are quoted, member IDs map to serials, the stripped validation field is named, and widening keeps the pilot group', () => {
+  for (const [name, text] of Object.entries(ALL)) {
+    assert.doesNotMatch(text, /CLAUDE\.md §6/, `${name}: CLAUDE.md has no numbered sections`);
+    assert.doesNotMatch(text, /--name \[SMART_GROUP\]/, `${name}: an unquoted group name splits on a space`);
+  }
+  for (const name of ['jamf-config-profiles', 'jamf-inventory-groups', 'jamf-policies-self-service']) assert.match(ALL[name], /\(CLAUDE\.md, Risk-Classified Execution Policy, R3 row\)/);
+  assert.match(PROFILES, /the group-members read returns computer IDs, so map each ID to its serial with the computer-detail --id read first/);
+  assert.match(FILEVAULT, /the stripping also hides the Personal Recovery Key Validation field, so verify-filevault below is the read that shows it/);
+  const widen = gate(FILEVAULT, 'jamf-filevault-widen-profile-portal');
+  assert.match(widen.region, /`\[SMART_GROUP\]` \(the rollout group\) beside the pilot group, which stays in Targets → Save/);
+});

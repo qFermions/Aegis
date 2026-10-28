@@ -67,12 +67,12 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ```bash
 # HUMAN-RUN, read-only, nothing here changes anything, and no read returns a key
-# reads the Disk Encryption section of one Mac with key-like fields stripped by the adapter
+# reads the Disk Encryption section of one Mac with key-like fields stripped by the adapter; the stripping also hides the Personal Recovery Key Validation field, so verify-filevault below is the read that shows it
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section DISK_ENCRYPTION --execute
 # proves FileVault is enabled and the personal recovery key is Valid; exit 2 means it is not
 node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --execute
 # finds a smart group by name and prints its ID, for a group-wide read
-node scripts/adapters/jamf-client.js smart-groups --name [SMART_GROUP] --execute
+node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
 # lists the members of that group, so each one can be checked with verify-filevault
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
 # lists the configuration profiles one Mac holds - run it on each Mac Phase B will reach; a FileVault or escrow profile already listed is a stop
@@ -137,7 +137,7 @@ Rollout stage, after the pilot read-back passed for every pilot Mac and an indep
 - **Required confirmation:** Type exactly `SCOPE AND DISTRIBUTE FILEVAULT PROFILE [PROFILE_NAME] TO [SMART_GROUP] TO TURN ON FILEVAULT`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [jamf-filevault-widen-profile-portal]:** Only after the pilot read-back, the profile's current scope in the ticket and the rollback gate named, the independent review, `verify-group-count` on the rollout group and the exact match:
-1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → Edit → Scope → Targets → `[SMART_GROUP]` → Save.
+1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → Edit → Scope → Targets → `[SMART_GROUP]` (the rollout group) beside the pilot group, which stays in Targets → Save. Replacing the pilot group would remove the profile from pilot Macs outside the rollout group.
 2. When Jamf Pro asks how to distribute the change, choose **Distribute to Newly Assigned Devices Only**. The other choice sends a remove command and then reinstalls the profile on every Mac that already has it.
 
 **WAIT UNTIL** the new members have checked in and submitted inventory; then the status counts read Remaining 0 and Failed 0, and the pilot read-back fence above (`verify-profile`, then `verify-filevault`) passes on a sample of serials.

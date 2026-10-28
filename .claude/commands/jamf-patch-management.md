@@ -67,7 +67,7 @@ node scripts/adapters/jamf-client.js update-plans --execute
 # reads the macOS version of one Mac
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section OPERATING_SYSTEM --execute
 # finds the pilot smart group by name and prints its ID
-node scripts/adapters/jamf-client.js smart-groups --name [SMART_GROUP] --execute
+node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
 # lists the members of that group
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
 # proves the group holds exactly the count recorded in the ticket; exit 2 means stop

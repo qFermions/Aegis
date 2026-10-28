@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[CVE_ID]` (the CVE in the ticket) · `[APP_NAME]` (the vulnerable software title, for example the browser) · `[SOFTWARE_TITLE_ID]` (that title's numeric ID in Fleet, returned by the `software --vulnerable` read) · `[FLEET_NAME]` / `[FLEET_ID]` (the fleet the hosts belong to, formerly a team; `[FLEET_ID]` is its numeric ID, listed by the `me` read) · `[HOST_ID]` (one exposed host's Fleet ID) · `[SERIAL_NUMBER]` (the same host's serial, which Fleet's host search accepts) · `[POLICY_NAME]` / `[POLICY_ID]` (the policy that fails on hosts with an old version) · `[N]` (the exposed host count the ticket states) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` (the drafted ticket note and its digest) · `[NOT_BEFORE]` (the time a read-back must start from) · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server; the adapter reads it from `FLEET_URL`) · org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[CVE_ID]` (the CVE in the ticket) · `[APP_NAME]` (the vulnerable software title, for example the browser) · `[SOFTWARE_TITLE_ID]` (that title's numeric ID in Fleet, returned by the `software --vulnerable` read) · `[FLEET_NAME]` / `[FLEET_ID]` (the fleet the hosts belong to, formerly a team; `[FLEET_ID]` is its numeric ID, listed by the `me` read) · `[HOST_ID]` (one exposed host's Fleet ID) · `[SERIAL_NUMBER]` (the same host's serial, which Fleet's host search accepts) · `[POLICY_NAME]` / `[POLICY_ID]` (the policy that fails on hosts with an old version) · `[TICKET_HOST_COUNT]` (the exposed host count the ticket states; the completed note's `[N]` is Fleet's own count, read in Phase 1) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` (the drafted ticket note and its digest) · `[NOT_BEFORE]` (the time a read-back must start from) · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server; the adapter reads it from `FLEET_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
 ## Verdict
 
@@ -42,7 +42,7 @@ CVSS scores, EPSS and the known-exploited flag are Fleet Premium. A fixed false 
 
 1. Read the CVE (check 2) and note the fixed version for `[APP_NAME]`.
 2. Read the title's host list (check 3), page by page, and confirm the vulnerable version on two hosts with `host-software --vulnerable`.
-3. Compare the count with the count in the ticket (`[N]`). The title list carries `counts_updated_at`; a count taken before the last inventory can be off.
+3. Compare the count with the count in the ticket (`[TICKET_HOST_COUNT]`). The title list carries `counts_updated_at`; a count taken before the last inventory can be off.
 4. Mark offline hosts: they wait for their next check-in whatever you do.
 
 **Verification checkpoint:** [ ] the ticket lists the exposed host IDs, the fixed version and the offline hosts.

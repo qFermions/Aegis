@@ -39,7 +39,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## Fast path
 
 1. Phase A: read the host, its pending actions and the clicking admin's role (R0). Save the read as the pre-state.
-2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked.
+2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).
 3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.
 4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.
 5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.
@@ -68,7 +68,7 @@ node scripts/adapters/fleet-client.js host-mdm --id [HOST_ID] --execute   # MDM 
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute   # past activity on this host, including ran_script entries with their script_execution_id
 node scripts/adapters/fleet-client.js host-upcoming --id [HOST_ID] --execute   # items still queued for this host (a queued script carries its execution id); read every page while meta.has_next_results is true
 node scripts/adapters/fleet-client.js script-result --execution-id [EXECUTION_ID] --execute   # exit_code, output and host_timeout of a script that already ran
-node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute   # MDM commands still waiting for this host
+node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --per-page 100 --execute   # MDM commands still waiting for this host; read every page while meta.has_next_results is true
 ```
 </details>
 
@@ -150,11 +150,11 @@ Before the gate: the independent out-of-session review has the Phase A pre-state
 
 - Mac, iPhone, iPad and Windows: `node scripts/adapters/fleet-client.js verify-wipe --id [HOST_ID] --execute` passes on `wiping` or `wiped` with the EraseDevice or doWipe command acknowledged; for an Apple device, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` shows the command's status.
 - Company-owned Android: `verify-wipe` cannot pass here, because it proves only an Apple EraseDevice or a Windows doWipe command. The proof is `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` showing `mdm.device_status` `wiping` and then `wiped`, plus the wiped_host entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute`.
-- Linux: `verify-wipe` cannot pass here either (the guides do not say whether a Linux host ever reports `wiped`; unverified). The proof is the wiped_host entry plus the wipe script's result under Host details → Activity → Past; `verify-script --execution-id [EXECUTION_ID]` reads that result when the same `host-activities` read lists the run's execution ID (whether it does is not in the sources read; unverified).
+- Linux: `verify-wipe` cannot pass here either (the guides do not say whether a Linux host ever reports `wiped`; unverified). The proof is the wiped_host entry plus the wipe script's result under Host details → Activity → Past; `verify-script --execution-id [EXECUTION_ID]` reads that result when the same `host-activities` read lists the run's execution ID (whether it does is not in the sources read; unverified), and while the wipe is still queued, `host-upcoming --id [HOST_ID]` lists the wipe script with its execution ID (Phase G step 2). The wipe halts the host, and the sources do not say whether its result reaches Fleet before the halt (unverified): if no exit code arrives, the ticket records the Linux wipe as sent and not proven, with the wiped_host entry, and uses the partial-state note.
 
 Do not delete the host until it reads wiped: deleting removes Fleet's record of the commands it sent.
 
-**Verification checkpoint**: [ ] the badge reads Wiped (or, on Linux, the wipe script result and activity are in the ticket) · [ ] the read-back for the platform passed: `verify-wipe` (Mac, iPhone, iPad, Windows), `wiped` plus wiped_host (Android), the wipe script's exit code 0 plus wiped_host (Linux) · [ ] the record still exists.
+**Verification checkpoint**: [ ] the badge reads Wiped (or, on Linux, the wipe script result and activity are in the ticket) · [ ] the read-back for the platform passed: `verify-wipe` (Mac, iPhone, iPad, Windows), `wiped` plus wiped_host (Android), the wipe script's exit code 0 plus wiped_host (Linux; with no exit code, the partial-state note records the wipe as sent and not proven, with the wiped_host entry) · [ ] the record still exists.
 
 ## Phase E: Run a script (R1 to R3, set by what the script does)
 
@@ -260,7 +260,7 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 
 Before the gate, name the one item. A host can hold several queued items (a wipe and a script, say), so read Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming and write in the ticket the item to cancel (`[PENDING_ACTION]`) and its ID (`[PENDING_ACTION_ID]`):
 
-1. A lock, Lost Mode or wipe sent to a Mac, iPhone or iPad is an MDM command: `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute` lists each pending command with its request type (DeviceLock, EnableLostMode, EraseDevice) and its command UUID, which is `[PENDING_ACTION_ID]`.
+1. A lock, Lost Mode or wipe sent to a Mac, iPhone or iPad is an MDM command: `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --per-page 100 --execute` lists each pending command with its request type (DeviceLock, EnableLostMode, EraseDevice) and its command UUID, which is `[PENDING_ACTION_ID]`. Fleet's default page is 10 commands, so the read asks for 100 and is read to the end: while `meta.has_next_results` is true, read the next with `--page 1` and so on.
 2. A queued script (a saved script, a Windows or Linux lock script, the Linux wipe script) is identified by its execution ID: `node scripts/adapters/fleet-client.js host-upcoming --id [HOST_ID] --execute` reads the host's upcoming activities (GET `/api/v1/fleet/hosts/:id/activities/upcoming`, an Observer read) and lists each queued item with its type and, for a script, `details.script_execution_id`, which is `[PENDING_ACTION_ID]`. Read every page: while `meta.has_next_results` is true, read the next with `--page 1`, `--page 2` and so on. The sources name those fields for the per-host activity reads and document the upcoming read beside them, not on its own (unverified), and they do not say where the console shows the ID or whether this list also carries the MDM commands of step 1 (unverified): so this read is the source of a script's ID, MDM commands come from step 1, and a queued script this read lists without an execution ID is an ID you cannot read (step 4).
 3. Write the before list in the ticket: every item steps 1 and 2 returned, every page. The read-back compares against it.
 4. Two items you cannot tell apart, or an ID you cannot read: stop and cancel nothing. Hand the ticket, with the before list, to a Fleet Maintainer or Admin, who runs the same two reads (`commands` and `host-upcoming`) again, decides which item goes and writes its ID in the ticket before running this gate, rather than cancel the wrong item.
@@ -275,7 +275,7 @@ Before the gate, name the one item. A host can hold several queued items (a wipe
 **PORTAL ACTION [fleet-device-actions-cancel-portal]:** Only after the item and its ID are written in the ticket, the before list from steps 1 to 3 is in the ticket, and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming → **Cancel** on `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`) only.
 
-**Read-back:** Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), and every other item it listed before is still there. Run the step 1 and step 2 reads again, every page, and compare them with the before list. For a script, `node scripts/adapters/fleet-client.js host-upcoming --id [HOST_ID] --execute` no longer lists `[PENDING_ACTION_ID]` and still lists every other queued item from the before list, and `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows canceled_run_script. For an MDM command, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --command-status pending --execute` no longer lists `[PENDING_ACTION_ID]` and still lists the other pending commands from the before list, the `host-upcoming` read still lists every queued item from the before list, and the same `host-activities` read shows canceled_mdm_command. An item from the before list that ran in the meantime shows under Past in `host-activities`; any other missing item means more than the one item was cancelled: write which items changed in the ticket and use the partial-state note. When the cancelled item was the host's only lock or wipe, `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` shows `mdm.pending_action` empty.
+**Read-back:** Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), and every other item it listed before is still there. Run the step 1 and step 2 reads again, every page, and compare them with the before list. For a script, `node scripts/adapters/fleet-client.js host-upcoming --id [HOST_ID] --execute` no longer lists `[PENDING_ACTION_ID]` and still lists every other queued item from the before list, and `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows canceled_run_script. For an MDM command, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type [DeviceLock|EnableLostMode|EraseDevice] --command-status pending --per-page 100 --execute`, with the request type of `[PENDING_ACTION]`, read until `meta.has_next_results` is false, no longer lists `[PENDING_ACTION_ID]`; the step 1 read, every page, still lists the other pending commands from the before list; the `host-upcoming` read still lists every queued item from the before list; and the same `host-activities` read shows canceled_mdm_command. An item from the before list that ran in the meantime shows under Past in `host-activities`; any other missing item means more than the one item was cancelled: write which items changed in the ticket and use the partial-state note. When the cancelled item was the host's only lock or wipe, `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` shows `mdm.pending_action` empty.
 
 <details>
 <summary>fleetctl: the scale version for lock and one script (HUMAN-RUN; wipe, Turn off MDM and delete stay console-only here)</summary>
@@ -308,6 +308,8 @@ else
 fi
 # read-back: passes only when the host reads locked with nothing pending
 node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute
+# on Android verify-lock cannot pass, because Fleet never shows Locked there: the proof is the locked_host entry in the read below plus a person who confirms the lock on the device, as in Phase B
+node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
 ```
 
 ```bash
@@ -356,7 +358,7 @@ node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID
 
 - [ ] Lock: Fleet → Hosts → `[HOST_ID]` → Host details shows the Locked badge; `verify-lock` passed; Activity shows the request with the admin and the time. Android: no Locked badge and `verify-lock` cannot pass; the locked_host entry and a person's confirmation on the device are in the ticket instead.
 - [ ] Unlock: `verify-unlock` passed; the PIN appears nowhere in the ticket.
-- [ ] Wipe: Host details shows Wiped (Linux: the wipe script result and activity are in the ticket); `verify-wipe` passed (Mac, iPhone, iPad, Windows), or `mdm.device_status` `wiped` plus wiped_host (Android), or the wipe script's exit code 0 plus wiped_host (Linux); the record still exists.
+- [ ] Wipe: Host details shows Wiped (Linux: the wipe script result and activity are in the ticket); `verify-wipe` passed (Mac, iPhone, iPad, Windows), or `mdm.device_status` `wiped` plus wiped_host (Android), or the wipe script's exit code 0 plus wiped_host (Linux; with no exit code, the partial-state note records the wipe as sent and not proven, with the wiped_host entry); the record still exists.
 - [ ] Script: `verify-script` passed for `[EXECUTION_ID]` (and for every checked host in a batch, or the failures are listed).
 - [ ] Turn off MDM: `verify-mdm-off` passed (Mac), or mdm_unenrolled plus enrollment Off (iPhone, iPad, Android). Delete: `verify-deleted` passed for `[SERIAL_NUMBER]` after `[NOT_BEFORE]`.
 - [ ] Cancel: Upcoming no longer lists `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`), the other queued items are still there (the `host-upcoming` and `commands` reads, every page, compared with the before list), and the cancellation activity names the admin.

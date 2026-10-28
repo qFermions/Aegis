@@ -116,7 +116,7 @@ test('the cancel gate names the one queued item it stops, in its target, its phr
   assert.match(cancel.portal, /the item and its ID are written in the ticket/);
   assert.match(cancel.region, /\*\*Cancel\*\* on `\[PENDING_ACTION\]` \(`\[PENDING_ACTION_ID\]`\) only\./);
   assert.match(cancel.region, /\*\*Read-back:\*\* Upcoming no longer lists `\[PENDING_ACTION\]` \(`\[PENDING_ACTION_ID\]`\), and every other item it listed before is still there/);
-  assert.match(cancel.region, /--command-status pending --execute` no longer lists `\[PENDING_ACTION_ID\]`/);
+  assert.match(cancel.region, /`node scripts\/adapters\/fleet-client\.js commands --host-identifier \[SERIAL_NUMBER\] --request-type \[DeviceLock\|EnableLostMode\|EraseDevice\] --command-status pending --per-page 100 --execute`, with the request type of `\[PENDING_ACTION\]`, read until `meta\.has_next_results` is false, no longer lists `\[PENDING_ACTION_ID\]`/);
   const phaseG = section(DEVICE, 'Phase G');
   assert.match(phaseG, /lists each pending command with its request type \(DeviceLock, EnableLostMode, EraseDevice\) and its command UUID/, 'where the operator reads an MDM command ID');
   assert.match(phaseG, /Two items you cannot tell apart, or an ID you cannot read: stop/, 'the stop when the item cannot be named');
@@ -279,14 +279,44 @@ test('one script on one host asks for the same R2 and R3 ceremony in all three g
   assert.match(r3, /a script on one host that deletes data or changes a security setting \(Phase E step 1\) are R3: save the pre-state to `tasks\/checkpoints\/`, write the rollback path, and get an independent out-of-session review before the gate runs/);
 });
 
+test('round-2 nits: the Android lock in the fast path and the fleetctl block, paged MDM command reads, and a Linux wipe with no exit code', () => {
+  // Nit 3: no wait or read-back hangs on a Locked badge Android never shows.
+  const fast = DEVICE.split('\n').find((l) => l.startsWith('2. Phase B, left somewhere:')) || '';
+  assert.match(fast, /\*\*WAIT UNTIL\*\* the badge reads Locked \(Android: until Lock pending is gone, then the Android read-back in Phase B\)\./);
+  const lines = DEVICE.split('\n');
+  const lockCli = lines.findIndex((l) => l.trim() === '# SAFETY GATE [fleet-device-actions-lock-cli]');
+  const fenceEnd = lines.findIndex((l, i) => i > lockCli && l.trim() === '```');
+  const lockBlock = lines.slice(lockCli, fenceEnd).join('\n');
+  assert.match(lockBlock, /^# on Android verify-lock cannot pass, because Fleet never shows Locked there: the proof is the locked_host entry in the read below plus a person who confirms the lock on the device, as in Phase B\nnode scripts\/adapters\/fleet-client\.js host-activities --id \[HOST_ID\] --execute$/m);
+
+  // Nit 4: Fleet's default page is 10 commands; every pending-command read asks for 100.
+  const pendingReads = DEVICE.split('\n').flatMap((l) => [...l.matchAll(/fleet-client\.js commands [^`#\n]*--command-status pending[^`#\n]*/g)].map((m) => m[0]));
+  assert.ok(pendingReads.length >= 3, `expected the Phase A, step 1 and read-back reads, found ${pendingReads.length}`);
+  for (const r of pendingReads) assert.match(r, /--per-page 100 --execute/, `unpaged pending-command read: ${r}`);
+  const step1 = section(DEVICE, 'Phase G').split('\n').find((l) => l.startsWith('1. A lock, Lost Mode or wipe')) || '';
+  assert.match(step1, /while `meta\.has_next_results` is true, read the next/);
+
+  // Nit 6: a Linux wipe that never reports an exit code is recorded as sent, not proven.
+  const linux = section(DEVICE, 'Phase D').split('\n').find((l) => l.startsWith('- Linux: ')) || '';
+  assert.match(linux, /if no exit code arrives, the ticket records the Linux wipe as sent and not proven, with the wiped_host entry, and uses the partial-state note/);
+  assert.match(linux, /whether its result reaches Fleet before the halt \(unverified\)/);
+  const fallback = /\(Linux; with no exit code, the partial-state note records the wipe as sent and not proven, with the wiped_host entry\)/;
+  assert.match(section(DEVICE, 'Phase D'), fallback, 'the Phase D checkpoint');
+  assert.match(section(DEVICE, '✅ Verification checklist'), fallback, 'the checklist');
+});
+
 test('the exposure check compares against the ticket\'s own count, not the F04 corpus number', () => {
   const phase1 = section(VULN, 'Phase 1');
-  assert.match(phase1, /^3\. Compare the count with the count in the ticket \(`\[N\]`\)\./m);
+  assert.match(phase1, /^3\. Compare the count with the count in the ticket \(`\[TICKET_HOST_COUNT\]`\)\./m);
   assert.doesNotMatch(VULN, /ticket's 30\b/);
   // 30 hosts appears only inside the quoted example ticket.
   for (const line of VULN.split('\n').filter((l) => /\b30 hosts\b/.test(l))) assert.match(line, /"[^"]*\b30 hosts\b[^"]*"/, `unquoted ticket number: ${line.slice(0, 80)}`);
   const placeholders = VULN.split('\n').find((l) => l.startsWith('**Placeholders:**'));
-  assert.match(placeholders, /`\[N\]` \(the exposed host count the ticket states\)/);
+  assert.match(placeholders, /`\[TICKET_HOST_COUNT\]` \(the exposed host count the ticket states; the completed note's `\[N\]` is Fleet's own count, read in Phase 1\)/);
+  // [N] stays Fleet's count in the completed note, so it never names the ticket's number.
+  assert.doesNotMatch(VULN, /`\[N\]` \(the exposed host count the ticket states/);
+  assert.doesNotMatch(phase1, /`\[N\]`/);
+  assert.match(section(VULN, '📝 Linear-ready note'), /: \[N\] hosts exposed in fleet `\[FLEET_NAME\]` per Fleet at \[timestamp\]/);
 });
 
 test('the vulnerable-title read that yields [SOFTWARE_TITLE_ID] pages, so a long list can be read to the end', () => {

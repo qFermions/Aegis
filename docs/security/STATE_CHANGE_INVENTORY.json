@@ -1037,6 +1037,409 @@
       ]
     },
     {
+      "id": "fleet-device-actions-batch-script-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:run",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-cancel-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-delete-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-handover-preview",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-lock-cli",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "fleetctl-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-lock-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:lock",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-mdm-off-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:unenroll",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-run-script-cli",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "fleetctl-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-run-script-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:run",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-unlock-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:unlock",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-device-actions-wipe-portal",
+      "file": ".claude/commands/fleet-device-actions.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:wipe",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-host-health-enforcement-preview",
+      "file": ".claude/commands/fleet-host-health.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-host-health-refetch-portal",
+      "file": ".claude/commands/fleet-host-health.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-osquery-investigation-add-report-portal",
+      "file": ".claude/commands/fleet-osquery-investigation.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-osquery-investigation-cleanup-preview",
+      "file": ".claude/commands/fleet-osquery-investigation.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-osquery-investigation-export-portal",
+      "file": ".claude/commands/fleet-osquery-investigation.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:export",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "fleet-osquery-investigation-live-report-portal",
+      "file": ".claude/commands/fleet-osquery-investigation.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:run",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-osquery-investigation-store-preview",
+      "file": ".claude/commands/fleet-osquery-investigation.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-policy-failures-automation-portal",
+      "file": ".claude/commands/fleet-policy-failures.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:run",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "fleet-policy-failures-bulk-preview",
+      "file": ".claude/commands/fleet-policy-failures.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-policy-failures-edit-query-preview",
+      "file": ".claude/commands/fleet-policy-failures.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-policy-failures-refetch-portal",
+      "file": ".claude/commands/fleet-policy-failures.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-policy-failures-run-script-portal",
+      "file": ".claude/commands/fleet-policy-failures.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:run",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-vulnerable-software-add-software-portal",
+      "file": ".claude/commands/fleet-vulnerable-software.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-vulnerable-software-install-automation-portal",
+      "file": ".claude/commands/fleet-vulnerable-software.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:install",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-vulnerable-software-install-host-portal",
+      "file": ".claude/commands/fleet-vulnerable-software.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:install",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "fleet-vulnerable-software-patch-policy-portal",
+      "file": ".claude/commands/fleet-vulnerable-software.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "fleet-vulnerable-software-reset-preview",
+      "file": ".claude/commands/fleet-vulnerable-software.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
       "id": "group-dynamic-rule-reference",
       "file": ".claude/commands/group-membership-audit.md",
       "kind": "portal",

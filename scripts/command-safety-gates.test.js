@@ -31,6 +31,8 @@ const MIXED_STATE_COMMANDS = [
   'gws-ou-move', 'gws-license-assign', 'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device',
   'okta-app-assignment', 'okta-mfa-reset', 'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase',
   'mac-new-hire-laptop', 'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue',
+  // G2: Fleet
+  'fleet-device-actions', 'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation',
 ];
 
 const REFERENCE_BOUNDARIES = [

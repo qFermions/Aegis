@@ -79,7 +79,11 @@ points to) · `[SMART_GROUP_ID]` (a Jamf Pro smart or static group's numeric ID)
 `[MEMBER_COUNT]` (a group's member count, recorded or predicted before a change) ·
 `[PATCH_TITLE_ID]` (a Jamf Pro patch software title configuration ID) · `[PLAN_UUID]`
 (a Jamf Pro Managed Software Update plan ID) · `[ROLE_ID]` (a Google admin role's
-numeric ID). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
+numeric ID) · `[PENDING_ACTION]` / `[PENDING_ACTION_ID]` (one queued Fleet item, a
+lock, wipe, MDM command or script, and its command UUID or script execution ID) ·
+`[HOST_COUNT]` (the number of Fleet hosts a batch action selects, written in the
+ticket before the gate) · `[TICKET_HOST_COUNT]` (the host count a ticket states,
+kept apart from the count Fleet reports). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
 Jamf Pro. In a Jamf Pro runbook, `[DEVICE_ID]` is either the computer ID or the
 management ID, and the runbook says which. Note templates keep using lowercase or
 single-letter fill-ins (`[X]`, `[N]`, `[timestamp]`) for numbers and times, as the

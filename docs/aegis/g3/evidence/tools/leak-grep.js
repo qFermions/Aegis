@@ -1,7 +1,8 @@
 'use strict';
 // leak-grep.js <base>: the charter's D10 grep over `git log -p <base>..HEAD`, grouped by
 // file and keyword so every hit can be explained, then a second pass over added lines for
-// real credential shapes. Run from the repository root: node docs/aegis/g3/evidence/tools/leak-grep.js f185071
+// real credential shapes, and a list of every URL host and mail domain added lines name.
+// Run from the repository root: node docs/aegis/g3/evidence/tools/leak-grep.js f185071
 const { execFileSync } = require('node:child_process');
 
 const base = process.argv[2];
@@ -30,6 +31,9 @@ const byFile = new Map();
 const keywords = {};
 const shapeHits = [];
 const personalHits = [];
+const hosts = new Map(); // URL host -> added lines naming it
+const mailDomains = new Map(); // mail domain -> added lines naming it
+const bump = (map, key) => map.set(key, (map.get(key) || 0) + 1);
 for (const line of log.split('\n')) {
   n += 1;
   const d = line.match(/^diff --git a\/(\S+)/);
@@ -44,6 +48,10 @@ for (const line of log.split('\n')) {
   }
   if (personal.test(line)) personalHits.push(`${n}: ${file}: ${line.slice(0, 160)}`);
   if (line.startsWith('+')) for (const [name, re] of shapes) if (re.test(line)) shapeHits.push(`${n}: ${name}: ${file}: ${line.trim().slice(0, 140)}`);
+  if (line.startsWith('+') && !line.startsWith('+++')) {
+    for (const m of line.matchAll(/https?:\/\/([^/\s"'`)>,;]+)/g)) bump(hosts, m[1]);
+    for (const m of line.matchAll(/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/g)) bump(mailDomains, m[1].toLowerCase());
+  }
 }
 const total = Object.values(keywords).reduce((a, b) => a + b, 0);
 console.log(`charter grep: ${total} hit lines (case-insensitive) in ${byFile.size} files; by keyword: ${JSON.stringify(keywords)}`);
@@ -53,3 +61,9 @@ console.log('hits by file (path: lines):');
 [...byFile.entries()].sort((a, b) => b[1] - a[1]).forEach(([f, c]) => console.log(`  ${f}: ${c}`));
 console.log(`credential-shape pass over added lines: ${shapeHits.length} hit(s)`);
 shapeHits.forEach((h) => console.log(`  ${h}`));
+// every URL host and mail domain an added line names, so each can be explained (a vendor's
+// public host, a placeholder, an example or test domain): the charter grep alone does not look
+// for internal hostnames or private mail
+const list = (map) => [...map.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).map(([k, c]) => `${k} ${c}`).join(', ');
+console.log(`URL hosts in added lines (${hosts.size}): ${list(hosts)}`);
+console.log(`mail domains in added lines (${mailDomains.size}): ${list(mailDomains)}`);

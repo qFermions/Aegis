@@ -2,7 +2,7 @@
 // floor-times.js <before> <after>: the floors that chained two unbounded gaps, timed in the
 // tier guard and the graph engine as they stood at two commits, on lines built to never
 // complete them: 5 KB at both commits, and 20 KB at <after> (at <before> a 20 KB line takes
-// 11 s to about 40 minutes per floor). Patterns are read with `git show`, never executed as
+// 9 to 48 s per two-gap floor, the `20kb` mode below). Patterns are read with `git show`, never executed as
 // code. Run from the repository root:
 //   node docs/aegis/g3/evidence/tools/floor-times.js 9a636aa^ 9a636aa
 // With a third argument `20kb` it times only <before> on a 20 KB line instead (minutes), and
@@ -20,7 +20,7 @@ function floors(ref, file) {
 }
 const cases = [
   ['group membership removal', 'remove member from '], ['security-control change (SR-2)', 'exclude from '],
-  ['account / work-profile removal', 'remove account from '], ['security-control change \u2014 Google', 'exclude from '],
+  ['account / work-profile removal', 'remove account from '], [/^security-control change\W+Google/, 'exclude from '],
   ['Slack or Linear member', 'kick user '], ['Slack or Linear member', 'slack kick '], ['Okta lifecycle change', 'reset all '],
   ['Okta app unassignment', 'okta remove '], ['Okta app unassignment', 'remove app '], ['Fleet script run', 'run script '],
   ['Fleet script run', 'fleet run '], ['fleet-wide host operation', 'lock all '], ['Linear bulk issue operation', 'delete all '],
@@ -31,10 +31,16 @@ const ms = (re, text) => { const t = process.hrtime.bigint(); re.test(text); ret
 for (const [side, file] of [['guard', 'scripts/tier/tier-guard.js'], ['engine', 'scripts/graph/engine.js']]) {
   const a = floors(before, file);
   const b = floors(after, file);
+  if (a.length !== b.length) throw new Error(`${file}: ${a.length} floors at ${before}, ${b.length} at ${after}`);
   for (const [prefix, unit] of cases) {
-    const i = a.findIndex((p) => p.label.startsWith(prefix));
-    if (i < 0 || a[i].re.source === b[i].re.source) continue;
-    const name = `${side.padEnd(6)} ${prefix.replace('\u2014', '--').padEnd(32)} ${JSON.stringify(unit).padEnd(22)}`;
+    const matches = (p) => (prefix instanceof RegExp ? prefix.test(p.label) : p.label.startsWith(prefix));
+    const i = a.findIndex(matches);
+    // the guard-only case has no engine twin; any other case missing is an error, never a skip
+    if (i < 0 && side === 'engine' && prefix === 'security-control change (SR-2)') continue;
+    if (i < 0) throw new Error(`${side}: no floor matching ${prefix} at ${before}`);
+    if (a[i].re.source === b[i].re.source) continue;
+    const shown = prefix instanceof RegExp ? 'security-control change -- Google' : prefix;
+    const name = `${side.padEnd(6)} ${shown.padEnd(32)} ${JSON.stringify(unit).padEnd(22)}`;
     if (mode === '20kb') {
       const five = Number(ms(a[i].re, line(unit, 5000)));
       if (five > 2000) console.log(`${name} before: 1 KB ${ms(a[i].re, line(unit, 1000))} ms, 2 KB ${ms(a[i].re, line(unit, 2000))} ms, 4 KB ${ms(a[i].re, line(unit, 4000))} ms (20 KB not run)`);

@@ -186,6 +186,30 @@ test('slack-security-settings: blocking SMS is its own R3 gate with the Phase A 
   assert.match(phaseA, /\bSMS\b/, 'Phase A records whether SMS is allowed');
 });
 
+test('slack-security-settings: the SMS block waits out a recorded notice period, stops when the person making the change or the recovery Owner uses SMS codes, and sends a locked-out member to a named org gap', () => {
+  const doc = DOCS.get('slack-security-settings');
+  const phaseH = sectionLines(doc, doc.lines.find((l) => /^## Phase H:/.test(l)));
+  const stop = phaseH.find((l) => l.startsWith('**Stop if:**')) || '';
+  assert.match(stop, /\bnotice period recorded in the ticket has not passed\b/, 'Stop-if: the notice period');
+  assert.match(stop, /\bthe person making the change\b[^\n]*\bthe Owner kept able to sign in\b[^\n]*\bSMS codes\b/, 'Stop-if: the people who must not be locked out');
+  assert.match(stop, /\bPhase B does not read required\b/, 'Stop-if: Phase B');
+  const marker = phaseH.indexOf('<!-- SAFETY GATE [slack-security-settings-sms-block-portal] -->');
+  const wait = phaseH.findIndex((l) => /^\*\*WAIT UNTIL\*\* [^\n]*\bnotice period\b/.test(l));
+  assert.ok(marker > 0 && wait >= 0 && wait < marker, 'a WAIT UNTIL for the notice period comes before the gate');
+  const action = phaseH.find((l) => l.startsWith('**PORTAL ACTION [slack-security-settings-sms-block-portal]:**')) || '';
+  assert.match(action, /\bnotice period\b/, 'the action runs only after the notice period');
+  const fast = sectionLines(doc, '## Fast path').find((l) => /^\d+\. Phase H\b/.test(l)) || '';
+  assert.match(fast, /\bnotice period\b/, 'the fast path names the notice period');
+  assert.doesNotMatch(fast, /\bmembers who use SMS codes have another method\b/, 'the fast path no longer promises what nobody can check');
+  const GAP = '[org gap: who restores a member locked out of two-factor]';
+  const gate = GATES.get('slack-security-settings').find((g) => g.id === 'slack-security-settings-sms-block-portal');
+  assert.ok(gate.reversibility.includes(GAP), 'the locked-out member goes to a named org gap');
+  assert.doesNotMatch(gate.reversibility, /Phase C step 2/, 'Phase C step 2 holds no recovery procedure');
+  const phaseC = sectionLines(doc, doc.lines.find((l) => /^## Phase C:/.test(l)));
+  assert.ok(phaseC.some((l) => /^2\. /.test(l) && l.includes(GAP)), 'Phase C step 2 names the same org gap');
+  assert.ok(sectionLines(doc, '## Inputs needed').some((l) => /\bnotice period\b/.test(l) && /\[org gap/.test(l)), 'Inputs ask for the notice period');
+});
+
 // ── 2. The R-class follows the R0-R3 table ─────────────────────────────────────────
 // The classes a gate declares: every R-token before the first colon of its Reversibility
 // ("R3 (security control): ..." gives R3; "R1 for one member, R2 for 2 to 10, R3 above 10

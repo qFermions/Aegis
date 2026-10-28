@@ -499,8 +499,10 @@ function createClient(spec, deps = {}) {
     if (!parsed || !plainString(parsed.token) || !parsed.token) return { failed: result(STATES.INVALID_RESPONSE, { error: 'token exchange returned no token' }) };
     token = parsed.token;
     if (!secrets.includes(token)) secrets.push(token);
-    const life = Number.isFinite(parsed.expiresInSeconds) && parsed.expiresInSeconds > 60 ? parsed.expiresInSeconds : 300;
-    tokenExpiresAt = now() + (life - 60) * 1000;
+    // Refresh before the vendor's own expiry: a quarter of the lifetime early, at most
+    // 60 s early; a lifetime the response does not state is taken as 300 s.
+    const life = Number.isFinite(parsed.expiresInSeconds) && parsed.expiresInSeconds > 0 ? parsed.expiresInSeconds : 300;
+    tokenExpiresAt = now() + (life - Math.min(60, life / 4)) * 1000;
     return token;
   }
 

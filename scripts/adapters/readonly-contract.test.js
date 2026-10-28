@@ -483,3 +483,14 @@ test('the HTTPS transport stops an oversized body with a typed error the client 
   await assert.rejects(transport({ hostname: 'example.invalid', path: '/api/v1/me', method: 'GET', headers: {}, timeoutMs: 1000 }), (error) => error.code === 'AEGIS_RESPONSE_TOO_LARGE');
   assert.ok(made[0].destroyed);
 });
+
+test('a token with a short lifetime is refreshed before it expires, not kept for 300 s', async () => {
+  let t = 0;
+  const shortToken = { status: 200, body: { access_token: SECRET, expires_in: 60 } };
+  const { c, transport } = client(exampleSpec(), [shortToken, { status: 200, body: { ok: 1 } }, shortToken, { status: 200, body: { ok: 2 } }], { now: () => t });
+  assert.equal((await c.get('me')).state, STATES.OK);
+  t = 50_000;
+  assert.equal((await c.get('me')).state, STATES.OK);
+  const exchanges = transport.calls.filter((r) => r.path === '/api/oauth/token').length;
+  assert.equal(exchanges, 2, 'a 60 s token is exchanged again 50 s later');
+});

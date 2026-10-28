@@ -418,9 +418,12 @@ function checkFile(filePath, content, tenantLiterals) {
   // A literal inside a bracketed line is still a literal; nothing skips this check.
   // The line is also read folded (tier-guard), so a zero-width character or a
   // look-alike letter inside the literal does not get it past the gate.
+  // Each line is folded once and the forms are shared with the injection scan below.
+  const lineForms = [];
+  const formsOf = (i) => lineForms[i] || (lineForms[i] = foldedForms(lines[i]));
   if (tenantLiterals.length > 0) {
     lines.forEach((line, i) => {
-      const forms = foldedForms(line);
+      const forms = formsOf(i);
       const lowerForms = forms.map((form) => form.toLowerCase());
       for (const literal of tenantLiterals) {
         if (containsLiteral(line, literal, forms, lowerForms)) {
@@ -436,7 +439,7 @@ function checkFile(filePath, content, tenantLiterals) {
   const isSecurityDoc = /threat_detection\.md$|threat_model\.md$|security_model\.md$|pre-commit-check\.js$/i.test(filePath);
   if (!isDocFile && !isSecurityDoc) {
     lines.forEach((line, i) => {
-      for (const marker of injectionMarkersIn(line)) {
+      for (const marker of injectionMarkersIn(line, formsOf(i))) {
         issues.push({ severity: 'WARN', line: i + 1, label: INJECTION_MARKER_LABELS[marker] || `Prompt-injection marker (${marker})` });
       }
     });

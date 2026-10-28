@@ -386,7 +386,7 @@ function httpsTransport(request) {
       let size = 0;
       res.on('data', (chunk) => {
         size += chunk.length;
-        if (size > MAX_RESPONSE_BYTES + 1) { req.destroy(new Error('response too large')); return; }
+        if (size > MAX_RESPONSE_BYTES + 1) { req.destroy(Object.assign(new Error('response larger than the read limit'), { code: 'AEGIS_RESPONSE_TOO_LARGE' })); return; }
         chunks.push(chunk);
       });
       res.on('error', reject);
@@ -453,6 +453,7 @@ function createClient(spec, deps = {}) {
       outcome = await withTimeout(() => transport({ ...request, timeoutMs }), timeoutMs);
     } catch (error) {
       if (error instanceof TripwireError || (error && error.message === TRIPWIRE_MESSAGE)) throw new TripwireError();
+      if (error && error.code === 'AEGIS_RESPONSE_TOO_LARGE') return result(STATES.INVALID_RESPONSE, { error: 'response larger than the read limit' });
       return result(STATES.NETWORK_ERROR, { error: 'network error (details withheld)' });
     }
     if (outcome.timedOut) return result(STATES.TIMEOUT, { error: `no response within ${timeoutMs} ms` });

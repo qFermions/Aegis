@@ -440,3 +440,12 @@ test('GraphQL scanner: a bare carriage return ends a comment, so a mutation afte
   assert.throws(() => contract.assertQueryOnly('query Q { a } # note\r\nmutation M { b }'), /mutation|subscription/i);
   assert.equal(contract.assertQueryOnly('query Q { a } # a comment that says mutation\n'), true);
 });
+
+test('a response over the read limit is INVALID_RESPONSE "larger than the read limit", reported once and never retried', async () => {
+  const tooLarge = Object.assign(new Error('response too large'), { code: 'AEGIS_RESPONSE_TOO_LARGE' });
+  const { c, transport } = client(exampleSpec(), [tokenReply, tooLarge, tooLarge, tooLarge]);
+  const res = await c.get('me');
+  assert.equal(res.state, STATES.INVALID_RESPONSE);
+  assert.match(res.error, /larger than the read limit/);
+  assert.equal(transport.calls.length, 2, 'the token exchange and one read, no retry');
+});

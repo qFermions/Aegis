@@ -32,6 +32,19 @@ const MAX_PROCEDURE_BYTES = 1024 * 1024;
 const { READ_BACK } = audit;
 const kindOf = (e) => `${e.connector}:${e.command}`;
 
+// The read-back must be a verify-* command its connector really has: the connector's file
+// (scripts/adapters/<name>-client.js, or scripts/jira-client.js) names it as a command key.
+// Read as text, never loaded, so this module still opens no network module.
+const ROOT = path.resolve(__dirname, '..', '..');
+function checkReadBack(readBack) {
+  if (!READ_BACK.test(readBack)) throw new InputError('--read-back names the connector and its verify-* command, such as okta:verify-factor-reset');
+  const [connector, command] = readBack.split(':');
+  const file = connector === 'jira' ? path.join(ROOT, 'scripts', 'jira-client.js') : path.join(ROOT, 'scripts', 'adapters', `${connector}-client.js`);
+  let source;
+  try { source = fs.readFileSync(file, 'utf8'); } catch { throw new InputError(`--read-back: no connector named ${connector}`); }
+  if (!source.includes(`'${command}':`)) throw new InputError(`--read-back: no such read-back, ${connector} has no ${command} command`);
+}
+
 class InputError extends Error {}
 class NotDone extends Error {}
 
@@ -126,7 +139,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
     if (command === 'open') {
       need(flags, ['command', 'gate', 'r-class', 'target', 'read-back', 'procedure-file']);
       if (flags['r-class'] !== 'R2' && flags['r-class'] !== 'R3') throw new InputError('a change record is for an R2 or R3 procedure; R0 and R1 need none');
-      if (!READ_BACK.test(flags['read-back'])) throw new InputError('--read-back names the connector and its verify-* command, such as okta:verify-factor-reset');
+      checkReadBack(flags['read-back']);
       const digest = procedureDigest(readProcedure(flags['procedure-file']));
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;
       const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: flags['read-back'], procedure_sha256: digest, change });

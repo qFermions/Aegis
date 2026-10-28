@@ -315,12 +315,14 @@ function containsOperationalMetadata(value) {
 }
 
 function safeDisplayPath(filePath, tenantLiterals) {
-  const lower = filePath.toLowerCase();
+  // the path is read folded too, as the content scan reads each line (tier-guard)
+  const forms = foldedForms(filePath);
+  const lowerForms = forms.map((form) => form.toLowerCase());
   const sensitive = /[\x00-\x1f\x7f]/.test(filePath)
     || hasUnsafeEmail(filePath)
     || PHONE_PATTERN.test(filePath)
     || CREDENTIAL_PATTERNS.some(function ({ pattern }) { return pattern.test(filePath); })
-    || tenantLiterals.some(function (literal) { return lower.includes(literal); })
+    || tenantLiterals.some(function (literal) { return containsLiteral(filePath, literal, forms, lowerForms); })
     || containsOperationalMetadata(filePath);
   return sensitive ? '[REDACTED_FILE_PATH]' : filePath;
 }

@@ -141,6 +141,14 @@ test('redacts every C0 and DEL control character from displayed paths', function
   assert.equal(safeDisplayPath('safe-visible-path.md', []), 'safe-visible-path.md');
 });
 
+test('redacts a displayed path holding a tenant literal spelled with a look-alike letter or a zero-width character (round 3, finding 4)', function () {
+  const literal = ['tenant', 'internal', 'test'].join('.');
+  for (const disguised of ['notes/ten\u0430nt.internal.test.md', 'notes/ten\u200Bant.internal.test.md', `notes/${literal}.md`]) {
+    assert.equal(safeDisplayPath(disguised, [literal]), '[REDACTED_FILE_PATH]', JSON.stringify(disguised));
+  }
+  assert.equal(safeDisplayPath('notes/other-host.md', [literal]), 'notes/other-host.md');
+});
+
 test('detects binary content from bytes rather than the filename suffix', function () {
   assert.equal(decodeTextContent(Buffer.from([0x89, 0x50, 0x00, 0x47])), null);
   assert.equal(decodeTextContent(Buffer.from([0xc3, 0x28])), null);

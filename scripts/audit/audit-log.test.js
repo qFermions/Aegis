@@ -278,6 +278,21 @@ test('the CLI refuses a procedure under a change id without --read-back, and rec
   assert.equal(audit.openAuditLog({ dir }).entries()[0].read_back, 'okta:verify-factor-reset');
 });
 
+// Code review round 3, finding 4: a check that must see the trail as it is when the entry
+// is written (one read-back proves one change) runs as a guard under the write lock; a
+// guard that throws writes nothing.
+test('append runs its guard on the entries under the write lock; a guard that throws writes nothing', (t) => {
+  const dir = freshDir(t);
+  const log = audit.openAuditLog({ dir });
+  log.append(CALL);
+  let seen = null;
+  log.append(CALL, { guard: (entries) => { seen = entries.length; assert.ok(fs.existsSync(path.join(dir, 'audit.lock')), 'under the lock'); } });
+  assert.equal(seen, 1);
+  assert.throws(() => log.append(CALL, { guard: () => { throw new Error('already linked'); } }), /already linked/);
+  assert.equal(log.entries().length, 2, 'nothing written by the refused append');
+  assert.equal(log.verify().ok, true);
+});
+
 test('the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR overrides it, and the README says what the chain cannot prove', () => {
   const root = path.resolve(__dirname, '..', '..');
   assert.equal(audit.defaultAuditDir({}), path.join(root, '.aegis-state', 'audit'));

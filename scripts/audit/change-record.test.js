@@ -237,6 +237,17 @@ test('open refuses a read-back the connector does not have (a typo or an unknown
   for (const good of ['okta:verify-factor-reset', 'github:verify-collaborator', 'jamf:verify-checked-in', 'jira:verify-comment']) assert.equal(open(good).code, 0, good);
 });
 
+// Code review round 3, finding 1: a read-back is named as the trail records it, by the
+// connector name its verify entries carry (google-workspace, not the file name gws).
+test('open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name', (t) => {
+  const s = setup(t);
+  const open = (readBack) => s.run(CLI, ['open', '--command', 'gws-account-containment', '--gate', 'gws-account-containment-suspend-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure]);
+  assert.equal(open('google-workspace:verify-suspended').code, 0);
+  const byFile = open('gws:verify-suspended');
+  assert.equal(byFile.code, 1);
+  assert.match(byFile.stderr, /no connector named gws/);
+});
+
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
   const source = fs.readFileSync(CLI, 'utf8');
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();

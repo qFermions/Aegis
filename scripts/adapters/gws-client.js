@@ -573,11 +573,13 @@ function readOutput(command, res) {
       ? 'more users: repeat the read with --page-token set to data.nextPageToken'
       : 'more records exist: the lane allow-list reads the first page only, so narrow the read or check the rest in the Admin console';
   }
-  if (res.flags && res.flags.length) {
-    // a flagged recovery detail is reported by path only, so its value is never printed
-    out.flags = res.flags.map((f) => (/\.recovery(?:Email|Phone)$/.test(String(f.path)) ? { ...f, quote: '(recovery detail withheld)' } : f));
-  }
+  if (res.flags && res.flags.length) out.flags = res.flags.map(withholdRecovery);
   return out;
+}
+
+// a flagged recovery detail is reported by path only, so its value is never printed
+function withholdRecovery(f) {
+  return /\.recovery(?:Email|Phone)$/.test(String(f.path)) ? { ...f, quote: '(recovery detail withheld)' } : f;
 }
 
 function verdictOutput(command, def, a, results, ctx) {
@@ -590,7 +592,7 @@ function verdictOutput(command, def, a, results, ctx) {
   }
   const flags = [];
   results.forEach((r, i) => {
-    for (const f of r.flags || []) flags.push(results.length > 1 ? { ...f, path: `read ${i + 1} ${f.path}` } : f);
+    for (const f of (r.flags || []).map(withholdRecovery)) flags.push(results.length > 1 ? { ...f, path: `read ${i + 1} ${f.path}` } : f);
   });
   if (flags.length) out.flags = flags;
   return out;

@@ -528,3 +528,12 @@ test('the tier guard and the graph engine use no inline regex modifier group, so
     assert.ok(!/\(\?[a-z]*-?[a-z]*:/.test(source.replace(/\(\?(?:<?[=!]|:)/g, '')), `${file} has an inline modifier group such as (?-i:...)`);
   }
 });
+
+// Finding 10: the unenroll floor anchors on the device, not on the word Intune, so a
+// course named after Intune stays clean while an Intune device unenroll still floors.
+g2Suite('code review round 3, unenroll without the Intune word', [
+  [/Fleet host lock/i, 'Unenroll [DEVICE_NAME] from Intune.'],
+  [/Fleet host lock/i, 'Unenroll the device from Intune today.'],
+], [
+  'Unenroll [FIRST_NAME] from the Intune basics course.',
+]);

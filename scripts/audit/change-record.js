@@ -27,8 +27,9 @@ const audit = require('./audit-log.js');
 const MAX_PROCEDURE_BYTES = 1024 * 1024;
 // The read-back that proves the change, named at open: a connector and its verify-* command
 // (okta:verify-factor-reset). The audit entries hold no target value, only placeholders, so
-// the kind of read-back is what binds it; which object it read is the operator's link.
-const READ_BACK = /^[a-z][a-z0-9-]{1,30}:verify-[a-z0-9-]{1,48}$/;
+// the kind of read-back is what binds it; which object it read is the operator's link. The
+// form is the trail's own (audit-log.js READ_BACK).
+const { READ_BACK } = audit;
 const kindOf = (e) => `${e.connector}:${e.command}`;
 
 class InputError extends Error {}

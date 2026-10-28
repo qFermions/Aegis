@@ -1,6 +1,6 @@
 # Code review rounds (batch G3, `/code-review xhigh`, tier C)
 
-REVIEW.md was read before each round. Round 1 reviewed the branch against `main` (`f185071..c1e60ec`); rounds 2 and 3 review only the diff added after the round before. Each finding is fixed in its own commit (a red test first where code changes) or closed with a one-line reason here and in `checks.md`.
+REVIEW.md was read before each round. Round 1 reviewed the branch against `main` (`f185071..c1e60ec`); rounds 2 (`c1e60ec..97deaac`) and 3 (`97deaac..f034942`) reviewed only the diff added after the round before. Each finding is fixed in its own commit (a red test first where code changes) or closed with a one-line reason here and in `checks.md`.
 
 ## Round 1 (`f185071..c1e60ec`): 15 found
 
@@ -49,3 +49,33 @@ Release Gate windows-latest failed at `96564ea` (job 122725205776): in the audit
 | 15 | `scripts/audit/change-record.js:32` | altitude: bind a read-back to its change when it is recorded, not by kind at link time | closed: the verify-* CLIs of nine connectors would each need a `--change` flag carried into the trail, a cross-connector change beyond this batch; findings 5 and 7 close the reuse and typo paths, and which object a read-back read stays the operator's link (`docs/aegis/boundary-audit.md` row 37); proposed to the owner in the PR body | none |
 
 Round 2: 15 found, 13 fixed, 2 closed.
+
+## Round 3 (`97deaac..f034942`, the diff after round 2): 15 found
+
+Round 3 is the last round REVIEW.md allows; no round 4 was run.
+
+| # | file:line (as reported) | finding | outcome | commit(s) |
+|---|---|---|---|---|
+| 1 | `scripts/audit/change-record.js:42` | a Google Workspace change could never be proved: verify entries say `google-workspace`, the file is `gws-client.js` | fixed: one registry of the nine connectors maps each recorded name to its file | `c3313ca` (red), `79f0b63` |
+| 2 | `scripts/audit/audit-log.js:415` | the audit CLI was a second way to write a change-linked procedure, without the read-back, digest, gate and class checks | fixed: the CLI refuses `--change`, and the trail refuses a change-linked procedure without read-back, digest and gate or outside R2 and R3, whoever writes it | `15c00f0` (red), `e82607b` |
+| 3 | `scripts/audit/audit-log.js:205` | on Windows a lock pending deletion is unreadable too, so 20 tries (about 0.2 s) were all that told it from a real permission error | fixed: the folder decides: if it takes a new probe file the lock is busy and the writer waits, if not the real error is raised | `1aa54fc` (red), `3f76e5e` |
+| 4 | `scripts/audit/change-record.js:174` | `link` checked "not linked yet" outside the write lock, so two links of one read-back at once could both succeed | fixed: `append` takes a guard that runs under the lock; `link` checks there | `21fc69f` (red), `cffefd0` |
+| 5 | `scripts/audit/change-record.js:176` | `link` recorded a read-back that could not prove the change (no approval, ran before it, not verified, another change's), taking it from the change it proves | fixed: `link` refuses each case | `c7111a6` (red), `4ee3e73` |
+| 6 | `scripts/audit/change-record.js:45` | the command check searched the whole file, so a mention in a comment or string passed | fixed: only a key line of the command table counts | `57f1feb` (red), `ce7f30f` |
+| 7 | `checks.md:59` | "twelve shipped" floors: eleven were on `main`, one pair was added in this batch | fixed (also progress.md and PROJECT_STATE.md) | `c16440b` |
+| 8 | `docs/review/incidents.md:9` | the extrapolation (25 to 40 minutes) did not follow from its own figures (about 28 to 52) | fixed in the incidents row, checks.md and the explainer | `04a542d` |
+| 9 | `docs/aegis/g3/evidence/tools/suite-counts.sh:2` | six test files this batch changed were not counted | fixed: appended at the end; header and README say added or changed | `bd9dfd8` |
+| 10 | `docs/aegis/g3/evidence/tools/leak-grep.js:11` | the personal pass missed `C:\\Users` as a JS string holds it and `c:\users`; the tool skipped diff headers, so its count was one under the charter grep | fixed: every line searched (1537 = 1537), personal pass over every line in any case with one or two backslashes | `0e3edaf` |
+| 11 | `docs/aegis/g3/evidence/tools/floor-times.js:41` | the after floor was paired by position, not label | fixed: each side looked up by label | `19522d3` |
+| 12 | `docs/aegis/capability-map.md:86` | citations still gave the `ebb8cc1` counts (audit 10/10, change records 7/7, latency) after round 2 added tests | fixed: every cited capture re-run at `a237fac` and the citations updated | `d0757cd`, `934679c` |
+| 13 | `progress.md:8` | progress.md was not rewritten after round 2 | fixed: rewritten | `c03d823` |
+| 14 | `docs/aegis/g3/evidence/code-review-rounds.md:46` | round 2 findings 12 and 13 share one commit; the reasons for closed findings 1 and 15 were not in checks.md | fixed: checks.md carries both closed reasons and the shared commit as a deviation (the two findings changed the same lines of one file; history on a pushed branch is not rewritten) | this commit |
+| 15 | `scripts/audit/change-record.js:172` | `link` read and parsed the whole trail four times; `withLock` read the lock twice per denied retry | fixed: `link` reads it once and passes it on (`a2415f7`); the double read went with finding 3's rewrite (`3f76e5e`) | `a2415f7` |
+
+Round 3: 15 found, 15 fixed, 0 closed.
+
+## Totals over the three rounds
+
+45 found: 43 fixed, 2 closed with a reason (round 2 findings 1 and 15). Fixed plus closed equals found.
+
+Found while fixing round 3, outside its findings: `leak-grep.js` counted a commit message under the last file of the commit before it (`0535cb3`); the capture check left the evidence tools out of "uncommitted changes" (the session's capture script now leaves out only the files directly in `docs/aegis/g3/evidence/`; the tools README says so, `a237fac`); the latency budget's comment copied one run's figures, then a bound one run missed (`970e0bd`, `1fd018c`).

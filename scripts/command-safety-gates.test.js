@@ -581,8 +581,9 @@ function nextMarkerLine(marker) {
 }
 
 // G2 lane documents: the 25 runbooks this lane adds (Fleet, Slack and Linear by prefix,
-// the new Jamf Pro and Google Workspace runbooks by name).
-const G2_LANE_DOCUMENT = /^\.claude\/commands\/(?:(?:fleet|slack|linear)-[\w-]+|jamf-(?:config-profiles|policies-self-service|patch-management|filevault|inventory-groups)|gws-(?:drive-sharing|2sv-enforcement|account-containment|admin-roles|security-posture))\.md$/;
+// the new Jamf Pro and Google Workspace runbooks by name). Batch G3: the GitHub runbooks
+// join by prefix, so their close, require and turn-off steps are candidates too.
+const G2_LANE_DOCUMENT = /^\.claude\/commands\/(?:(?:fleet|slack|linear|github)-[\w-]+|jamf-(?:config-profiles|policies-self-service|patch-management|filevault|inventory-groups)|gws-(?:drive-sharing|2sv-enforcement|account-containment|admin-roles|security-posture))\.md$/;
 const G2_PORTAL_ACTIONS = 'Archive|Unarchive|Export|Approve|Disconnect|Flush|Distribute|Redeploy|Uninstall|Trash|Rotate|Post|Accept|Decline|Show(?=\\s+(?:disk encryption\\s+)?key\\b)';
 
 function portalMutationCandidates(document) {

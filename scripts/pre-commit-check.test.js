@@ -719,6 +719,25 @@ test('warns on Google Workspace, Okta, Jamf and macOS destructive sinks (G1 lane
   assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `g1-scanner-source-${index}`), repo]);
 });
 
+test('Okta deletions and Jamf MDM commands warn when curl names the method with --request', function (t) {
+  const repo = makeRepo(t);
+  const cases = [
+    ['curl -sS --request DELETE "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/sessions"', /Okta session or user deletion/],
+    ['curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" --request DELETE', /Okta session or user deletion/],
+    ['curl -sS --request POST "https://[@Aegion_JAMF_URL]/JSSResource/computercommands/command/DeviceLock/id/[DEVICE_ID]"', /Jamf MDM command/],
+    ['curl -sS "https://[@Aegion_JAMF_URL]/JSSResource/computercommands/command/DeviceLock/id/[DEVICE_ID]" --request "POST"', /Jamf MDM command/],
+  ];
+  const fixtureLines = cases.map(([line], index) => `${line} # g1-request-source-${index}`);
+  writeFile(repo, 'g1-request.md', `${fixtureLines.join('\n')}\n`);
+  stageAll(repo);
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 0);
+  for (const [, expectedLabel] of cases) assert.match(output, expectedLabel);
+  assert.match(output, new RegExp(`${cases.length} warning\\(s\\) found`));
+  assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `g1-request-source-${index}`), repo]);
+});
+
 test('read-only Google, Okta, Jamf and macOS diagnostics do not warn', function (t) {
   const repo = makeRepo(t);
   writeFile(repo, 'g1-read-only.md', [

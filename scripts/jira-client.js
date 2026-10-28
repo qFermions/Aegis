@@ -13,6 +13,13 @@
  * for a read. --execute or --confirm on a write is refused before credentials or
  * network.
  *
+ * Every read goes through the shared read-only contract
+ * (scripts/adapters/readonly-contract.js, batch G3): JIRA_SPEC below is the allow-list of
+ * GET routes; the contract refuses any other path or method before a credential is read,
+ * retries a read a bounded number of times, redacts the credentials from what it returns,
+ * flags instruction text in an answer as data, and reports one of its named states. Its
+ * transport is this file's GET-only apiRequest, which also honours the network tripwire.
+ *
  * Configuration (environment only):
  *   JIRA_SITE             bare <tenant>.atlassian.net hostname
  *   JIRA_EMAIL            API-token owner email
@@ -35,6 +42,8 @@
 
 const crypto = require('node:crypto');
 const https = require('node:https');
+
+const { STATES, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TRANSITION_PAGE_LIMIT = 50;
@@ -66,9 +75,12 @@ const KNOWN_FLAGS = new Set([...BOOLEAN_FLAGS, ...VALUE_FLAGS]);
 
 class InputError extends Error {}
 class ApiError extends Error {
-  constructor(status = null) {
+  // result: the contract's failure result (state, status, attempts), when the read went
+  // through the contract; it carries no body and no credential.
+  constructor(status = null, result = null) {
     super('Jira API request failed');
     this.status = Number.isInteger(status) ? status : null;
+    this.result = result;
   }
 }
 class ContractError extends Error {}
@@ -161,6 +173,29 @@ function loadCredentials(env = process.env) {
   return { email: String(env.JIRA_EMAIL), token: String(env.JIRA_API_TOKEN) };
 }
 
+// The Jira reads as a contract spec: every request the client sends must match one of
+// these GET routes, with an issue key, a numeric id and bounded paging values.
+const ISSUE_KEY_PATTERN = /^[A-Z][A-Z0-9_]{0,19}-[1-9][0-9]*$/;
+const NUMERIC_ID_PATTERN = /^[1-9][0-9]{0,18}$/;
+const JIRA_SPEC = defineAdapter({
+  platform: 'jira',
+  host: { env: 'JIRA_SITE' },
+  credentials: ['JIRA_EMAIL', 'JIRA_API_TOKEN'],
+  auth: (creds) => ({ Authorization: `Basic ${Buffer.from(`${creds.JIRA_EMAIL}:${creds.JIRA_API_TOKEN}`, 'utf8').toString('base64')}` }),
+  routes: {
+    servicedesk: { method: 'GET', path: '/rest/servicedeskapi/servicedesk' },
+    requesttype: { method: 'GET', path: '/rest/servicedeskapi/servicedesk/:desk/requesttype', params: { desk: NUMERIC_ID_PATTERN } },
+    request: { method: 'GET', path: '/rest/servicedeskapi/request/:issue', params: { issue: ISSUE_KEY_PATTERN } },
+    transitions: {
+      method: 'GET',
+      path: '/rest/servicedeskapi/request/:issue/transition',
+      params: { issue: ISSUE_KEY_PATTERN },
+      query: { start: /^(?:0|[1-9][0-9]{0,5})$/, limit: /^[1-9][0-9]{0,2}$/ },
+    },
+    comment: { method: 'GET', path: '/rest/servicedeskapi/request/:issue/comment/:comment', params: { issue: ISSUE_KEY_PATTERN, comment: NUMERIC_ID_PATTERN } },
+  },
+});
+
 function normalizeCredentials(credentials) {
   if (!credentials || typeof credentials.email !== 'string' || credentials.email.length === 0 ||
       typeof credentials.token !== 'string' || credentials.token.length === 0) {
@@ -247,6 +282,8 @@ function apiRequest(cfg, method, apiPath, payload = null, options = {}) {
     throw new InputError('Jira API path must be a local /rest/servicedeskapi/ path without controls.');
   }
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new InputError('Request timeout must be positive.');
+  // the same tripwire as the contract's own transport: no test reaches a real Jira site
+  if (!options.request && process.env.AEGIS_NETWORK_TRIPWIRE === '1') throw new TripwireError();
 
   return new Promise((resolve, reject) => {
     const auth = Buffer.from(`${credentials.email}:${credentials.token}`, 'utf8').toString('base64');
@@ -278,7 +315,7 @@ function apiRequest(cfg, method, apiPath, payload = null, options = {}) {
         clearTimeout(timer);
         let json = null;
         try { json = raw.length ? JSON.parse(raw) : null; } catch { /* response bodies are never echoed */ }
-        resolve({ status: response.statusCode, body: raw, json });
+        resolve({ status: response.statusCode, headers: response.headers || {}, body: raw, json });
       });
     });
     request.on('error', finishError);
@@ -292,10 +329,30 @@ function apiRequest(cfg, method, apiPath, payload = null, options = {}) {
   });
 }
 
+// The default fetch: one Jira read through the shared contract. A 2xx returns the JSON with
+// the credentials redacted and any instruction-like text flagged; a non-2xx returns its
+// status with the body withheld; a refused request is an input error; every other failure
+// (timeout, network, an answer that is not JSON) is an API failure carrying the contract's
+// result for the operator message.
+async function contractFetch(cfg, method, apiPath, deps = {}) {
+  const site = normalizeSite(cfg && cfg.site);
+  const credentials = normalizeCredentials(cfg);
+  const env = { JIRA_SITE: site, JIRA_EMAIL: credentials.email, JIRA_API_TOKEN: credentials.token };
+  const transport = deps.transport ||
+    ((request) => apiRequest({ site, ...credentials }, request.method, request.path, null, { timeoutMs: request.timeoutMs }));
+  const client = createClient(JIRA_SPEC, { env, transport, sleep: deps.sleep, random: deps.random, audit: deps.audit });
+  const res = await client.send({ method, path: apiPath });
+  if (res.state === STATES.OK) return { status: res.status, json: res.data, flags: res.flags, result: res };
+  if (res.state === STATES.HTTP_ERROR) return { status: res.status, json: null, result: res };
+  if (res.state === STATES.REFUSED) throw new InputError(`Refused by the read-only contract: ${res.error}`);
+  throw new ApiError(null, res);
+}
+
 function createRuntime(env, dependencies = {}) {
+  const contractDeps = { transport: dependencies.transport, sleep: dependencies.sleep, random: dependencies.random, audit: dependencies.audit };
   return {
     env,
-    fetch: dependencies.fetch || apiRequest,
+    fetch: dependencies.fetch || ((cfg, method, apiPath) => contractFetch(cfg, method, apiPath, contractDeps)),
     getCredentials: dependencies.getCredentials || loadCredentials,
     now: dependencies.now || Date.now,
     out: dependencies.out || defaultOut,
@@ -313,15 +370,16 @@ async function fetchResponse(runtime, cfg, method, apiPath) {
   let response;
   try {
     response = await runtime.fetch(cfg, method, apiPath);
-  } catch {
-    throw new ApiError();
+  } catch (error) {
+    if (error instanceof InputError) throw error;
+    throw new ApiError(null, error instanceof ApiError ? error.result : null);
   }
   if (!response || !Number.isInteger(response.status)) throw new ApiError();
   return response;
 }
 
 function requireSuccess(response) {
-  if (!isSuccessfulStatus(response.status)) throw new ApiError(response.status);
+  if (!isSuccessfulStatus(response.status)) throw new ApiError(response.status, response.result || null);
   return response;
 }
 
@@ -806,6 +864,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  JIRA_SPEC,
   REQUEST_TIMEOUT_MS,
   TRANSITION_PAGE_LIMIT,
   apiRequest,
@@ -814,6 +873,7 @@ module.exports = {
   buildCreateConfirmation,
   buildCreatePayload,
   buildTransitionConfirmation,
+  contractFetch,
   createDigest,
   fetchAllTransitions,
   loadCredentials,

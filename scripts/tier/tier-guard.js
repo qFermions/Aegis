@@ -60,8 +60,10 @@ const ESCALATION_PATTERNS = [
   { pattern: /\b(delete|remove|purge)\b[^.]*\b(user|users|account|accounts|mailbox|mailboxes|group|groups|ou|org(anizational)? unit|device|devices|device record)\b/i, label: 'account/mailbox/group/OU/device deletion (SR-2)' },
   { pattern: /\b(disable|suspend|block|deactivate)\b[^.]*\b(user|users|account|accounts|mailbox|mailboxes|sign[- ]?in|login|credential)\b/i, label: 'account/mailbox disable / sign-in block (SR-2)' },
   // batch G2 code review: a message purge across mailboxes (a Purview search-and-purge);
-  // the three words are separate lookaheads from the verb, so a miss costs linear time
-  { pattern: /\bpurg(?:e|es|ed|ing)\b(?=[^.]*\b(?:messages?|e-?mails?|mail|items?)\b)(?=[^.]*\b(?:every|all|each|across)\b)(?=[^.]*\b(?:inbox(?:es)?|mailbox(?:es)?|users?)\b)|\b(?:compliance|content)\s+search\b[^.]*\bpurg(?:e|es|ed|ing)\b|\bpurg(?:e|es|ed|ing)\b[^.]*\b(?:compliance|content)\s+search\b|New-ComplianceSearchAction\b[^\r\n]*-Purge\b/i, label: 'Exchange / Purview message purge across mailboxes (SR-2, hard delete)' },
+  // the three words are separate lookaheads from the verb, so a miss costs linear time;
+  // security review 2: delete or purge with the mailboxes named as many (plural inboxes,
+  // every or all next to inbox, everyone's inbox, company-wide), not one person's inbox
+  { pattern: /\bpurg(?:e|es|ed|ing)\b(?=[^.]*\b(?:messages?|e-?mails?|mail|items?)\b)(?=[^.]*\b(?:every|all|each|across)\b)(?=[^.]*\b(?:inbox(?:es)?|mailbox(?:es)?|users?)\b)|\b(?:delet(?:e|es|ed|ing)|purg(?:e|es|ed|ing))\b(?=[^.]*\b(?:messages?|e-?mails?|mail|items?)\b)(?=[^.]*(?:\b(?:inboxes|mailboxes)\b|\b(?:every|all|each|across)\s+(?:[\w'-]+\s+){0,2}(?:inbox(?:es)?|mailbox(?:es)?|users?)\b|\beveryone\W?s\s+(?:inbox|mailbox)(?:es)?\b|\b(?:org|company|tenant|domain)[- ]?wide\b|\bentire\s+(?:company|org(?:ani[sz]ation)?|tenant|domain)\b))|\b(?:compliance|content)\s+search\b[^.]*\bpurg(?:e|es|ed|ing)\b|\bpurg(?:e|es|ed|ing)\b[^.]*\b(?:compliance|content)\s+search\b|New-ComplianceSearchAction\b[^\r\n]*-Purge\b/i, label: 'Exchange / Purview message purge across mailboxes (SR-2, hard delete)' },
   { pattern: /\b(remove|revoke|reclaim|unassign)\b[^.]*\blicen[cs]e/i, label: 'license removal (SR-2)' },
   { pattern: /\b(remove|revoke)\b[^.]*\b(from|member)[^.]*\bgroup\b/i, label: 'group membership removal (SR-2)' },
   { pattern: /revoke[^.]*\bsession|sign[- ]?out[^.]*\b(all|every)\b|Revoke-MgUserSignInSession/i, label: 'session revocation (SR-2)' },

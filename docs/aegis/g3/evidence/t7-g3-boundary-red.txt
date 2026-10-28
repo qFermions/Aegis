@@ -1,0 +1,72 @@
+# command: node --test scripts/g3-boundary.test.js
+# commit: b478fe6 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:34:22Z  node: v24.22.1
+✔ github: every connector command sends reads only, and nothing without --execute (25.799915ms)
+✔ github: the spec defines GET routes only and the source opens no connection and writes no file (0.728621ms)
+✔ msgraph: every connector command sends reads only, and nothing without --execute (30.248861ms)
+✔ msgraph: the spec defines GET routes only and the source opens no connection and writes no file (0.606876ms)
+✔ okta: every connector command sends reads only, and nothing without --execute (32.222857ms)
+✔ okta: the spec defines GET routes only and the source opens no connection and writes no file (0.560981ms)
+✔ no G3 module opens a connection of its own (1.988479ms)
+✔ the intake sends at most one read and writes only the case state.json, only in saveCase (17.597962ms)
+✖ every G3 connector command a runbook or README tells an operator to run is exercised above (12.697232ms)
+✖ every G3 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (3.13693ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 8
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 377.797764
+
+✖ failing tests:
+
+test at scripts/g3-boundary.test.js:165:1
+✖ every G3 connector command a runbook or README tells an operator to run is exercised above (12.697232ms)
+  AssertionError [ERR_ASSERTION]: the scan found the documented commands (5)
+      at TestContext.<anonymous> (<repo>/scripts/g3-boundary.test.js:173:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/g3-boundary.test.js:177:1
+✖ every G3 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (3.13693ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   '.claude/commands/github-repo-access.md: missing',
+  +   '.claude/commands/github-branch-protection.md: missing',
+  +   '.claude/commands/github-org-security.md: missing',
+  +   '.claude/commands/github-offboard-member.md: missing',
+  +   '.claude/commands/github-security-alerts.md: missing',
+  +   '.claude/commands/okta-group-membership.md: missing'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/g3-boundary.test.js:191:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '.claude/commands/github-repo-access.md: missing', '.claude/commands/github-branch-protection.md: missing', '.claude/commands/github-org-security.md: missing', '.claude/commands/github-offboard-member.md: missing', '.claude/commands/github-security-alerts.md: missing', '.claude/commands/okta-group-membership.md: missing' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:34:22Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

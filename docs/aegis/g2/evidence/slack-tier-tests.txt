@@ -1,0 +1,9 @@
+# command: node --test scripts/tier/tier-routing.test.js 2>&1 | grep -E 'Slack|^ℹ (tests|pass|fail)'
+# captured: 2026-10-28T02:08:40Z at 39f578b
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ G2 Slack ESCALATION: every consequential wording floors in the guard and the graph engine, also disguised (2.59325ms)
+✔ G2 Slack routine: the everyday counterparts stay clean in the guard and the graph engine (0.592643ms)
+ℹ tests 31
+ℹ pass 31
+ℹ fail 0
+# exit: 0

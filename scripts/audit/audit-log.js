@@ -26,7 +26,8 @@
 // CLI:
 //   node scripts/audit/audit-log.js verify                  exit 0 intact, 2 broken
 //   node scripts/audit/audit-log.js status [--since 24h]    failures by connector and state
-//   node scripts/audit/audit-log.js procedure --command C --gate G --r-class R2 --target [UPN] [--procedure-sha256 H] [--change chg-... --read-back CONNECTOR:verify-...]
+//   node scripts/audit/audit-log.js procedure --command C --gate G --r-class R2 --target [UPN] [--procedure-sha256 H]
+//     (a change record is opened with change-record.js open instead)
 //   node scripts/audit/audit-log.js approval --ref IT-123 --gate G --procedure-sha256 H --change chg-...
 // Exit codes: 0 ok; 1 input error or a refused entry; 2 the chain is broken or unreadable.
 
@@ -121,6 +122,13 @@ function checkEntry(entry) {
     const value = Object.prototype.hasOwnProperty.call(entry, key) ? entry[key] : null;
     if (!check(value)) throw new AuditRefused(`field ${key} of ${kind} is missing or not in its allowed form`);
     fields[key] = value;
+  }
+  // a procedure under a change id is a change record (change-record.js): it names the
+  // read-back that proves it, the issued digest and the gate, and it is R2 or R3
+  if (kind === 'procedure' && fields.change !== null) {
+    if (fields.read_back === null || fields.procedure_sha256 === null || fields.gate === null || (fields.r_class !== 'R2' && fields.r_class !== 'R3')) {
+      throw new AuditRefused('a procedure under a change id needs its read-back, digest and gate, and an R2 or R3 class');
+    }
   }
   return fields;
 }
@@ -416,8 +424,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
     }
     if (command === 'procedure') {
       only(flags, ['command', 'gate', 'r-class', 'target', 'read-back', 'procedure-sha256', 'change']);
-      // a procedure under a change id names the read-back that proves it (change-record.js)
-      if (flags.change !== undefined && flags['read-back'] === undefined) throw new AuditRefused('a procedure under --change needs --read-back CONNECTOR:verify-..., the read-back that proves it');
+      // a change record is opened with change-record.js open, which checks its read-back
+      if (flags.change !== undefined) throw new AuditRefused('a procedure under a change id is opened with node scripts/audit/change-record.js open, which checks its read-back; this command records procedures without one');
       const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate ?? null, r_class: flags['r-class'], target: flags.target, read_back: flags['read-back'] ?? null, procedure_sha256: flags['procedure-sha256'] ?? null, change: flags.change ?? null });
       out(`recorded procedure as audit entry ${r.seq}\n`);
       return 0;

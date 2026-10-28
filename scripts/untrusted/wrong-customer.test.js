@@ -432,7 +432,7 @@ test('C15 a second org name inside the [@Aegion_*] namespace or joined by a dot 
   const foreign = ['[@Aegion_Contoso_DOMAIN]', '[@Aegion_Contoso_SITE_2]', '[@Aegion Contoso VoipUrl]', '[@Contoso.DOMAIN]', '[@Contoso.SiteCount]', '[@Aegion.Contoso_DOMAIN]'];
   for (const text of foreign) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} is a second tenant`);
   for (const suffix of ORG_TOKEN_SUFFIXES) assert.equal(hasForeignOrgToken(`[@Aegion_${suffix}]`), false, `[@Aegion_${suffix}] is ours`);
-  for (const text of ['[@Aegion]', '[@Aegion_SITE_5]', '[@Aegion_DomainShort]', '[@first.last]']) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is not a second tenant`);
+  for (const text of ['[@Aegion]', '[@Aegion SITE_5]', '[@Aegion_DomainShort]', '[@first.last]']) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is not a second tenant`);
 
   for (const token of ['[@Aegion_Contoso_DOMAIN]', '[@Contoso.DOMAIN]']) {
     const before = runDirs();

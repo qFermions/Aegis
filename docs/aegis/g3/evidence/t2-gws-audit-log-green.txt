@@ -1,0 +1,27 @@
+# command: node --test scripts/gws-runbooks.test.js
+# commit: c1487e9 (plus uncommitted changes in the working tree)  started: 2026-10-28T07:29:22Z  node: v24.22.1
+✔ the parser reads every gate in the five runbooks with all six fields, a phrase and an R-class (5.660596ms)
+✔ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0) (17.141516ms)
+✔ no runbook treats exit 2 from a verify-* read as an expected result (5.423767ms)
+✔ exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate (4.838022ms)
+✔ every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect (4.156603ms)
+✔ every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict (2.670792ms)
+✔ each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change (12.095194ms)
+✔ every verify-event whose actor is the administrator carries --target, and the checklists require the target (3.066631ms)
+✔ no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof (6.025077ms)
+✔ every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook (9.345165ms)
+✔ the containment suspend gate waits for a user read in the ticket, also on the urgent path (3.173179ms)
+✔ every Drive sharing gate that changes who outside can be shared with waits for a named approver (10.222936ms)
+✔ single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing (20.890611ms)
+✔ the GAM export gates stop before replacing an existing file (bash, mocked gam) (35.376582ms)
+✔ /gws-audit-log hands Google containment to /gws-account-containment, never to the Microsoft-only triage runbook (0.675013ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 255.646985
+# exit: 0  finished: 2026-10-28T07:29:23Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

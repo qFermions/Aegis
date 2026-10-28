@@ -7,9 +7,9 @@ const { execFileSync } = require('node:child_process');
 const base = process.argv[2];
 if (!/^[0-9a-f]{7,40}$/.test(base || '')) { console.error('usage: leak-grep.js <base commit>'); process.exit(1); }
 const log = execFileSync('git', ['log', '-p', '--no-color', `${base}..HEAD`], { maxBuffer: 1 << 30, encoding: 'utf8' });
-// the charter's expression: api[_-]?key|secret|token|password|/Users/|C:\\Users|@gmail, case-insensitive
-const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\\\Users|@gmail/i;
-const personal = /\/Users\/|C:\\\\Users|@gmail/; // case-sensitive: a personal path or mail
+// the charter's expression (as grep -E receives it: C:\\Users is one backslash), case-insensitive
+const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\Users|@gmail/i;
+const personal = /\/Users\/|C:\\Users|@gmail/; // case-sensitive: a personal path or mail
 const shapes = [
   ['GitHub token', /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})/],
   ['Okta SSWS token', /\b00[A-Za-z0-9_-]{40}\b/],

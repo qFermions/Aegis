@@ -53,6 +53,21 @@ const CONNECTORS = {
       'github-security-alerts': ['verify-secret-alert', 'verify-dependabot-alert'],
     },
   },
+  // task 5b: the Okta runbooks' read-backs and the group membership runbook
+  okta: {
+    client: () => require('./okta-client.js'),
+    env: { OKTA_ORG_URL: 'okta.example.invalid' },
+    values: {
+      '[OKTA_USER_ID]': '00u1abcd2EFGH3ijk4x7', '[OKTA_GROUP_ID]': '00g1abcd2EFGH3ijk4x7', '[APP_ID]': '0oa1abcd2EFGH3ijk4x7',
+      '[NOT_BEFORE]': '2026-10-28T09:00:00Z',
+    },
+    runbooks: {
+      'okta-user-lifecycle': ['verify-password-reset', 'verify-sessions-cleared', 'verify-status'],
+      'okta-mfa-reset': ['verify-factor-reset', 'verify-factors-reset-all'],
+      'okta-app-assignment': ['verify-app-assigned'],
+      'okta-group-membership': ['verify-group-member'],
+    },
+  },
   // task 5d: the device-status and MDM-sync read-backs in the troubleshooting runbooks
   fleet: {
     client: () => require('./fleet-client.js'),

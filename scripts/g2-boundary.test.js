@@ -24,6 +24,7 @@ require('./adapters/socket-tripwire.js');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
@@ -42,8 +43,16 @@ const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 }
 const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });
 const SHA = '0'.repeat(64);
 const NOT_BEFORE = '2026-10-27T00:00:00Z';
+// A drafted note for the offline commands (Linear note, Slack digest); the system temporary
+// folder is one of the two places those commands read a note from. Removed after the tests.
+const NOTE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-g2-boundary-'));
+const NOTE_FILE = path.join(NOTE_DIR, 'note.md');
+fs.writeFileSync(NOTE_FILE, 'Resolved. Fixture note for the boundary test.\n');
+test.after(() => fs.rmSync(NOTE_DIR, { recursive: true, force: true }));
 
-// Every CLI command each adapter documents (docs/aegis/lanes/g2.md, scripts/adapters/README.md).
+// Every CLI command each adapter documents (docs/aegis/lanes/g2.md, scripts/adapters/README.md,
+// the runbooks). `offline` commands must send nothing even with --execute; the coverage test
+// below fails when a runbook, the lane spec or the README names a command missing here.
 const ADAPTERS = {
   fleet: {
     file: 'fleet-client.js',
@@ -54,7 +63,7 @@ const ADAPTERS = {
       ['script-result', '--execution-id', 'e1a2b3c4-0000-4000-8000-000000000001'], ['commands', '--host-identifier', 'C02FIXTURE01'], ['activities'],
       ['report-results', '--id', '4'], ['verify-lock', '--id', '7'], ['verify-unlock', '--id', '7'], ['verify-wipe', '--id', '7'],
       ['verify-script', '--execution-id', 'e1a2b3c4-0000-4000-8000-000000000001'], ['verify-mdm-off', '--id', '7'],
-      ['verify-deleted', '--identifier', 'C02FIXTURE01', '--not-before', NOT_BEFORE]],
+      ['verify-deleted', '--identifier', 'C02FIXTURE01', '--not-before', NOT_BEFORE], ['host-upcoming', '--id', '7']],
   },
   jamf: {
     file: 'jamf-client.js',
@@ -76,13 +85,16 @@ const ADAPTERS = {
       ['verify-guest', '--user', 'U0FIXTURE', '--type', 'single'], ['verify-archived', '--channel', 'C0FIXTURE'],
       ['verify-posted', '--channel', 'C0FIXTURE', '--expect-sha256', SHA, '--not-before', NOT_BEFORE], ['verify-app-approved', '--app-id', 'A0FIXTURE'],
       ['verify-app-restricted', '--app-id', 'A0FIXTURE']],
+    offline: [['digest', '--file', NOTE_FILE]],
   },
   linear: {
     file: 'linear-client.js',
     env: { LINEAR_API_KEY: sentinel(5), LINEAR_ORG: 'fixture-org' },
     commands: [['viewer'], ['issue', '--issue', 'IT-12'], ['comments', '--issue', 'IT-12'], ['states', '--team', 'IT'], ['labels'], ['triage'], ['members'],
       ['verify-comment', '--issue', 'IT-12', '--expect-sha256', SHA, '--not-before', NOT_BEFORE], ['verify-state', '--issue', 'IT-12', '--state', 'Done'],
-      ['verify-labels', '--issue', 'IT-12', '--has', 'hardware'], ['verify-trashed', '--issue', 'IT-12'], ['verify-suspended', '--user', 'u-fixture-1']],
+      ['verify-labels', '--issue', 'IT-12', '--has', 'hardware'], ['verify-trashed', '--issue', 'IT-12'], ['verify-suspended', '--user', 'u-fixture-1'],
+      ['verify-snoozed', '--issue', 'IT-12']],
+    offline: [['note', '--issue', 'IT-12', '--body-file', NOTE_FILE]],
   },
   gws: {
     file: 'gws-client.js',
@@ -93,7 +105,8 @@ const ADAPTERS = {
       ['chromeos-devices'], ['activities', '--app', 'drive', '--user', 'all'], ['usage', '--date', '2026-10-20', '--parameters', 'accounts:num_users_2sv_enrolled'],
       ['verify-suspended', '--user', 'person@example.org'], ['verify-2sv-enforced', '--user', 'person@example.org'],
       ['verify-ou', '--user', 'person@example.org', '--ou', '/Staff'], ['verify-admin-role-removed', '--user', 'person@example.org', '--role-id', '42'],
-      ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', 'person@example.org', '--not-before', NOT_BEFORE]],
+      ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', 'person@example.org', '--not-before', NOT_BEFORE],
+      ['verify-2sv-not-enforced', '--user', 'person@example.org']],
   },
 };
 
@@ -143,6 +156,13 @@ for (const [platform, adapter] of Object.entries(ADAPTERS)) {
         else writes.push(`${argv.join(' ')} → ${request.method} ${request.path}`);
       }
     }
+    for (const argv of adapter.offline || []) {
+      for (const run of [argv, [...argv, '--execute']]) {
+        const offline = recordingTransport(platform);
+        await mod.run(run, adapter.env, { transport: offline, out: () => {}, err: () => {}, sleep: async () => {} });
+        assert.equal(offline.calls.length, 0, `${platform} ${run.join(' ')}: an offline command sends nothing`);
+      }
+    }
     assert.deepEqual(writes, [], `${platform}: an adapter command sent a write`);
     assert.ok(reads >= adapter.commands.length, `${platform}: the commands were exercised (${reads} reads)`);
   });
@@ -157,6 +177,18 @@ for (const [platform, adapter] of Object.entries(ADAPTERS)) {
     assert.ok(!/\b(?:writeFile|writeFileSync|appendFile|appendFileSync|createWriteStream|unlink|unlinkSync|rmSync|mkdirSync|renameSync)\b/.test(source), `${adapter.file} writes no file`);
   });
 }
+
+test('every adapter command a runbook, the lane spec or the adapter README tells an operator to run is exercised above', () => {
+  const sources = [...fs.readdirSync(path.join(ROOT, '.claude', 'commands')).filter((f) => f.endsWith('.md')).map((f) => path.join(ROOT, '.claude', 'commands', f)),
+    path.join(ROOT, 'docs', 'aegis', 'lanes', 'g2.md'), path.join(__dirname, 'adapters', 'README.md')];
+  const documented = new Set();
+  for (const file of sources) {
+    for (const m of fs.readFileSync(file, 'utf8').matchAll(/node scripts\/adapters\/(fleet|linear|slack|jamf|gws)-client\.js ([a-z][a-z0-9-]*)/g)) documented.add(`${m[1]} ${m[2]}`);
+  }
+  const exercised = new Set(Object.entries(ADAPTERS).flatMap(([platform, a]) => [...a.commands, ...(a.offline || [])].map((argv) => `${platform} ${argv[0]}`)));
+  assert.ok(documented.size >= 50, `the scan found the documented commands (${documented.size})`);
+  assert.deepEqual([...documented].filter((c) => !exercised.has(c)).sort(), [], 'a documented adapter command is not exercised by this test');
+});
 
 test('the posture audit generator loads no network module', () => {
   const source = fs.readFileSync(path.join(__dirname, 'gws-posture-audit.js'), 'utf8');

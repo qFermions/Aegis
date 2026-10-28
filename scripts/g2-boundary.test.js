@@ -74,8 +74,8 @@ const ADAPTERS = {
       ['group-members', '--id', '5'], ['profile', '--id', '9'], ['policy', '--id', '21'], ['history', '--id', '12', '--subset', 'PolicyLogs'],
       ['patch-titles'], ['patch-report', '--id', '3'], ['update-plans'], ['update-plan-events', '--id', 'a1b2c3d4-0000-4000-8000-000000000002'],
       ['verify-command', '--management-id', 'a1b2c3d4-0000-4000-8000-000000000001', '--type', 'DEVICE_LOCK', '--not-before', NOT_BEFORE],
-      ['verify-profile', '--serial', 'C02FIXTURE01', '--profile-id', '9'], ['verify-group-count', '--id', '5', '--expect', '3'],
-      ['verify-filevault', '--serial', 'C02FIXTURE01'], ['verify-policy', '--id', '21']],
+      ['verify-profile', '--serial', 'C02FIXTURE01', '--profile-id', '9', '--profile-identifier', 'com.example.fixture.wifi'], ['verify-group-count', '--id', '5', '--expect', '3'],
+      ['verify-filevault', '--serial', 'C02FIXTURE01'], ['verify-policy', '--id', '21', '--enabled', 'true']],
   },
   slack: {
     file: 'slack-client.js',
@@ -144,6 +144,7 @@ for (const [platform, adapter] of Object.entries(ADAPTERS)) {
     const mod = require(path.join(__dirname, 'adapters', adapter.file));
     assert.equal(typeof mod.run, 'function', `${adapter.file} exports run(argv, env, deps)`);
     const writes = [];
+    const unexercised = [];
     let reads = 0;
     for (const argv of adapter.commands) {
       const dry = recordingTransport(platform);
@@ -151,6 +152,8 @@ for (const [platform, adapter] of Object.entries(ADAPTERS)) {
       assert.equal(dry.calls.length, 0, `${platform} ${argv.join(' ')}: a dry run sends nothing`);
       const live = recordingTransport(platform);
       await mod.run([...argv, '--execute'], adapter.env, { transport: live, out: () => {}, err: () => {}, sleep: async () => {} });
+      // each command must reach its read: a fixture refused by input checks proves nothing
+      if (!live.calls.some((request) => isRead(platform, request) && !(adapter.token && request.path === adapter.token.path))) unexercised.push(argv.join(' '));
       for (const request of live.calls) {
         if (isRead(platform, request)) reads += 1;
         else writes.push(`${argv.join(' ')} → ${request.method} ${request.path}`);
@@ -164,6 +167,7 @@ for (const [platform, adapter] of Object.entries(ADAPTERS)) {
       }
     }
     assert.deepEqual(writes, [], `${platform}: an adapter command sent a write`);
+    assert.deepEqual(unexercised, [], `${platform}: a fixture sent no read with --execute`);
     assert.ok(reads >= adapter.commands.length, `${platform}: the commands were exercised (${reads} reads)`);
   });
 

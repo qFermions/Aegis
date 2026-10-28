@@ -547,21 +547,25 @@ async function readAll(client, paths) {
   return { results };
 }
 
-// A user's recovery email and phone are printed as "set" or "missing", never as values:
-// the runbooks record only whether each is set, and the values are personal contact
-// details. A field the response leaves out stays out (a runbook records it as missing).
-const RECOVERY_FIELDS = Object.freeze(['recoveryEmail', 'recoveryPhone']);
-function maskRecovery(record) {
+// A user's personal fields are printed as "set" or "missing", never as values: the
+// runbooks read the account's state (suspension, 2-Step Verification, unit, admin flags,
+// primary address), and names, contact details, IDs and relations are personal data. A
+// field the response leaves out stays out (a runbook records it as missing).
+const PERSONAL_FIELDS = Object.freeze(['recoveryEmail', 'recoveryPhone', 'name', 'phones', 'addresses', 'emails', 'externalIds',
+  'relations', 'organizations', 'locations', 'ims', 'websites', 'keywords', 'posixAccounts', 'sshPublicKeys', 'gender', 'notes',
+  'languages', 'thumbnailPhotoUrl']);
+const filled = (v) => (typeof v === 'string' ? v.trim() !== '' : Array.isArray(v) ? v.length > 0 : isObject(v) ? Object.keys(v).length > 0 : v !== null && v !== undefined);
+function maskPersonal(record) {
   if (!isObject(record)) return record;
-  const present = RECOVERY_FIELDS.filter((f) => Object.prototype.hasOwnProperty.call(record, f));
+  const present = PERSONAL_FIELDS.filter((f) => Object.prototype.hasOwnProperty.call(record, f));
   if (!present.length) return record;
   const masked = { ...record };
-  for (const f of present) masked[f] = typeof record[f] === 'string' && record[f].trim() !== '' ? 'set' : 'missing';
+  for (const f of present) masked[f] = filled(record[f]) ? 'set' : 'missing';
   return masked;
 }
 function maskUserData(command, data) {
-  if (command === 'user') return maskRecovery(data);
-  if (command === 'users' && isObject(data) && Array.isArray(data.users)) return { ...data, users: data.users.map(maskRecovery) };
+  if (command === 'user') return maskPersonal(data);
+  if (command === 'users' && isObject(data) && Array.isArray(data.users)) return { ...data, users: data.users.map(maskPersonal) };
   return data;
 }
 
@@ -577,9 +581,11 @@ function readOutput(command, res) {
   return out;
 }
 
-// a flagged recovery detail is reported by path only, so its value is never printed
+// a flag on a user record's personal field is reported by path only, so its value is
+// never printed; flags elsewhere (an event, a role) keep their quote
+const PERSONAL_PATH = new RegExp(`^\\$(?:\\.users\\[[0-9]+\\])?\\.(?:${PERSONAL_FIELDS.join('|')})(?:[.[]|$)`);
 function withholdRecovery(f) {
-  return /\.recovery(?:Email|Phone)$/.test(String(f.path)) ? { ...f, quote: '(recovery detail withheld)' } : f;
+  return PERSONAL_PATH.test(String(f.path)) ? { ...f, quote: '(personal detail withheld)' } : f;
 }
 
 function verdictOutput(command, def, a, results, ctx) {

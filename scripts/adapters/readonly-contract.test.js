@@ -432,3 +432,11 @@ test('plan() describes an allowed request with no credentials and no network; a 
   assert.equal(transport.calls.length, 0);
   assert.deepEqual(reads.filter((n) => /CLIENT/.test(n)), []);
 });
+
+// ── Code review round 1 (batch G2) ─────────────────────────────────────────────
+
+test('GraphQL scanner: a bare carriage return ends a comment, so a mutation after "# note\\r" is refused', () => {
+  assert.throws(() => contract.assertQueryOnly('query Q { a } # note\rmutation M { b }'), /mutation|subscription/i);
+  assert.throws(() => contract.assertQueryOnly('query Q { a } # note\r\nmutation M { b }'), /mutation|subscription/i);
+  assert.equal(contract.assertQueryOnly('query Q { a } # a comment that says mutation\n'), true);
+});

@@ -131,13 +131,15 @@ function stripGraphQL(doc) {
       i = end + 3;
     } else if (ch === '"') {
       let j = i + 1;
-      while (j < doc.length && doc[j] !== '"' && doc[j] !== '\n') j += doc[j] === '\\' ? 2 : 1;
+      while (j < doc.length && doc[j] !== '"' && doc[j] !== '\n' && doc[j] !== '\r') j += doc[j] === '\\' ? 2 : 1;
       if (doc[j] !== '"') throw new RefusedError('GraphQL document has an unterminated string');
       out += ' ';
       i = j + 1;
     } else if (ch === '#') {
-      const end = doc.indexOf('\n', i);
-      i = end < 0 ? doc.length : end;
+      // a comment ends at a line terminator: \n, \r or \r\n (GraphQL LineTerminator)
+      let end = i + 1;
+      while (end < doc.length && doc[end] !== '\n' && doc[end] !== '\r') end += 1;
+      i = end;
     } else {
       out += ch;
       i += 1;

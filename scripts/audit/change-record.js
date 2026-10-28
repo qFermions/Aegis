@@ -43,12 +43,15 @@ const CONNECTOR_FILES = Object.freeze({
   linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js',
   okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js',
 });
+// A command is a key line of a command table: two spaces, the quoted name, a colon.
+const hasCommandKey = (source, command) => new RegExp(`^  '${command}': `, 'm').test(source);
+
 function checkReadBack(readBack) {
   if (!READ_BACK.test(readBack)) throw new InputError('--read-back names the connector and its verify-* command, such as okta:verify-factor-reset');
   const [connector, command] = readBack.split(':');
   if (!Object.prototype.hasOwnProperty.call(CONNECTOR_FILES, connector)) throw new InputError(`--read-back: no connector named ${connector} (one of ${Object.keys(CONNECTOR_FILES).join(', ')})`);
   const source = fs.readFileSync(path.join(ROOT, CONNECTOR_FILES[connector]), 'utf8');
-  if (!source.includes(`'${command}':`)) throw new InputError(`--read-back: no such read-back, ${connector} has no ${command} command`);
+  if (!hasCommandKey(source, command)) throw new InputError(`--read-back: no such read-back, ${connector} has no ${command} command`);
 }
 
 class InputError extends Error {}
@@ -199,6 +202,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, main };
+module.exports = { procedureDigest, changeView, hasCommandKey, main };
 
 if (require.main === module) process.exitCode = main();

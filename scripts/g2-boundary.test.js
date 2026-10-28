@@ -86,14 +86,14 @@ const ADAPTERS = {
   },
   gws: {
     file: 'gws-client.js',
-    env: { GWS_SA_CLIENT_EMAIL: 'reader@fixture.example.org', GWS_SA_PRIVATE_KEY: PEM, GWS_ADMIN_SUBJECT: 'admin@fixture.example.org', GWS_CUSTOMER_ID: 'C0fixture' },
+    env: { GWS_SA_CLIENT_EMAIL: 'reader@example.org', GWS_SA_PRIVATE_KEY: PEM, GWS_ADMIN_SUBJECT: 'admin@example.org', GWS_CUSTOMER_ID: 'C0fixture' },
     token: { path: '/token', fields: ['assertion', 'grant_type'] },
-    commands: [['user', '--user', 'person@fixture.example.org'], ['users', '--query', 'isEnrolledIn2Sv=false'], ['roles'],
-      ['role-assignments', '--user', 'person@fixture.example.org'], ['group-members', '--group', 'team@fixture.example.org'], ['mobile-devices'],
+    commands: [['user', '--user', 'person@example.org'], ['users', '--query', 'isEnrolledIn2Sv=false'], ['roles'],
+      ['role-assignments', '--user', 'person@example.org'], ['group-members', '--group', 'team@example.org'], ['mobile-devices'],
       ['chromeos-devices'], ['activities', '--app', 'drive', '--user', 'all'], ['usage', '--date', '2026-10-20', '--parameters', 'accounts:num_users_2sv_enrolled'],
-      ['verify-suspended', '--user', 'person@fixture.example.org'], ['verify-2sv-enforced', '--user', 'person@fixture.example.org'],
-      ['verify-ou', '--user', 'person@fixture.example.org', '--ou', '/Staff'], ['verify-admin-role-removed', '--user', 'person@fixture.example.org', '--role-id', '42'],
-      ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', 'person@fixture.example.org', '--not-before', NOT_BEFORE]],
+      ['verify-suspended', '--user', 'person@example.org'], ['verify-2sv-enforced', '--user', 'person@example.org'],
+      ['verify-ou', '--user', 'person@example.org', '--ou', '/Staff'], ['verify-admin-role-removed', '--user', 'person@example.org', '--role-id', '42'],
+      ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', 'person@example.org', '--not-before', NOT_BEFORE]],
   },
 };
 

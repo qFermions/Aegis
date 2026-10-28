@@ -467,3 +467,36 @@ test('A11 lookup and render print no edited verifiedAt or dependency path; a cle
     assert.ok(!(render.stdout + render.stderr).includes('disable sign-in'), `render must not print edited text: ${short(render)}`);
   }
 });
+
+// Batch G3 (found while fixing batch 1 finding 2): lookup returned CACHE_HIT for any status
+// other than candidate or stale, while render refuses anything but a verified case with
+// evidence. A case file edited on disk to another status, or to "verified" with no
+// evidence, must be a MISS at lookup too.
+test('A12 lookup returns CACHE_HIT only for a verified case with evidence, like render', () => {
+  const store = path.join(WORK, 'replay-store-a12');
+  const solution = path.join(FIXTURES, 'injection-replay-solution.md');
+  const env = { ...ENV, AEGIS_REPLAY_DIR: store };
+  const ticket = 'Re-register the Authenticator app for [UPN] on a replacement phone.';
+  assert.equal(run(REPLAY_CLI, ['record', '--ticket', ticket, '--solution-file', solution], env).code, 0);
+  assert.equal(run(REPLAY_CLI, ['verify', 'case-0001', '--evidence', 'synthetic fixture: methods blade read back after re-registration', '--no-deps'], env).code, 0);
+  const casePath = path.join(store, 'case-0001.json');
+  const clean = JSON.parse(fs.readFileSync(casePath, 'utf8'));
+  assert.equal(run(REPLAY_CLI, ['lookup', '--ticket', ticket], env).json.result, 'CACHE_HIT', 'control: the verified case hits');
+  for (const edited of [{ ...clean, status: 'approved' }, { ...clean, status: 'verified', provenance: { ...clean.provenance, evidence: null } }]) {
+    fs.writeFileSync(casePath, JSON.stringify(edited, null, 2));
+    const look = run(REPLAY_CLI, ['lookup', '--ticket', ticket], env);
+    assert.equal(look.code, 0, short(look));
+    assert.equal(look.json.result, 'MISS', `status ${edited.status}, evidence ${edited.provenance.evidence}: ${short(look)}`);
+  }
+});
+
+// Batch G3: record stored --deps paths without a scan, so instruction text in a path was
+// only caught at read time. It is refused at record now, like the ticket and solution.
+test('A13 record refuses a dependency path that carries instruction text', () => {
+  const store = path.join(WORK, 'replay-store-a13');
+  const solution = path.join(FIXTURES, 'injection-replay-solution.md');
+  const env = { ...ENV, AEGIS_REPLAY_DIR: store };
+  const r = run(REPLAY_CLI, ['record', '--ticket', 'Map the shared drive for [UPN] on [DEVICE_NAME].', '--solution-file', solution, '--deps', `docs/${MARKER.ignore.replace(/ /g, '-')}.md`], env);
+  assert.equal(r.code, 4, `a dependency path with an injection marker is a sanitization BLOCK: ${short(r)}`);
+  assert.ok(!fs.existsSync(path.join(store, 'case-0001.json')), 'nothing is stored');
+});

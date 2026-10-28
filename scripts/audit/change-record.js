@@ -97,22 +97,24 @@ function need(flags, names) {
 }
 
 // Everything the trail says about one change, read from an intact chain only.
-function changeView(log, change) {
+// entries: the trail already read by the caller, so a command reads it once (plus verify)
+function changeView(log, change, entries = null) {
   const check = log.verify();
   const view = { change, done: false, chain: check.ok ? 'intact' : 'broken', procedure: null, approval: null, readBack: null, missing: [] };
   if (!check.ok) {
     view.missing.push(`the audit trail is broken at line ${check.firstBroken.line} (${check.firstBroken.reason}); run node scripts/audit/audit-log.js verify`);
     return view;
   }
-  const entries = log.entries();
-  const bySeq = new Map(entries.map((e) => [e.seq, e]));
-  const procedure = entries.find((e) => e.kind === 'procedure' && e.change === change);
+  const all = entries || log.entries();
+  // below, all is the trail
+  const bySeq = new Map(all.map((e) => [e.seq, e]));
+  const procedure = all.find((e) => e.kind === 'procedure' && e.change === change);
   if (!procedure) {
     view.missing.push('no procedure was issued under this change id');
     return view;
   }
   view.procedure = { seq: procedure.seq, command: procedure.command, gate: procedure.gate, r_class: procedure.r_class, target: procedure.target, read_back: procedure.read_back, procedure_sha256: procedure.procedure_sha256 };
-  const approvals = entries.filter((e) => e.kind === 'approval' && e.change === change && e.seq > procedure.seq);
+  const approvals = all.filter((e) => e.kind === 'approval' && e.change === change && e.seq > procedure.seq);
   const approval = approvals.find((e) => e.procedure_sha256 === procedure.procedure_sha256);
   if (approval) view.approval = { seq: approval.seq, ref: approval.ref, matches: true };
   else if (approvals.length) {
@@ -121,8 +123,8 @@ function changeView(log, change) {
   } else view.missing.push('no approval reference was recorded for this change');
   // one verify-* result proves one change: the first link of a read-back owns it
   const owner = new Map();
-  for (const e of entries) if (e.kind === 'change-link' && !owner.has(e.verify_seq)) owner.set(e.verify_seq, e.change);
-  const links = entries.filter((e) => e.kind === 'change-link' && e.change === change);
+  for (const e of all) if (e.kind === 'change-link' && !owner.has(e.verify_seq)) owner.set(e.verify_seq, e.change);
+  const links = all.filter((e) => e.kind === 'change-link' && e.change === change);
   const taken = links.filter((l) => owner.get(l.verify_seq) !== change);
   const linked = links.filter((l) => owner.get(l.verify_seq) === change).map((l) => bySeq.get(l.verify_seq)).filter((e) => e && e.kind === 'verify');
   const readBacks = linked.filter((e) => kindOf(e) === procedure.read_back);
@@ -175,10 +177,11 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       need(flags, ['change', 'verify-seq']);
       if (!/^[1-9][0-9]{0,15}$/.test(flags['verify-seq'])) throw new InputError('--verify-seq is the audit seq of a verify-* result');
       const seq = Number(flags['verify-seq']);
-      const view = changeView(log, flags.change);
+      const all = log.entries();
+      const view = changeView(log, flags.change, all);
       if (view.chain !== 'intact') throw new NotDone(view.missing[0]);
       if (!view.procedure) throw new NotDone('no procedure was issued under this change id');
-      const target = log.entries().find((e) => e.seq === seq);
+      const target = all.find((e) => e.seq === seq);
       if (!target || target.kind !== 'verify') throw new NotDone('only a verify-* result can be linked; that audit seq is not one');
       if (kindOf(target) !== view.procedure.read_back) throw new NotDone(`that read-back is ${kindOf(target)}; this change is proved only by ${view.procedure.read_back}. Nothing was recorded`);
       // one read-back proves one change, so only one that can prove this change is linked

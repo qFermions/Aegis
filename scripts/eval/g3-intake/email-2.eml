@@ -1,0 +1,9 @@
+From: Requester <requester@example.org>
+To: Help Desk <helpdesk@example.org>
+Subject: Jamf: please lock my lost MacBook
+Date: Wed, 28 Oct 2026 09:00:00 +0000
+Message-ID: <g3-e2@example.org>
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body><p>I left my MacBook on the train this morning.</p><p>Please lock it remotely before anyone opens it.</p></body></html>

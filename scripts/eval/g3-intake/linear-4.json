@@ -1,0 +1,22 @@
+{
+  "data": {
+    "issue": {
+      "identifier": "IT-204",
+      "title": "Okta: [FIRST_NAME] cannot see the [APP_NAME] tile",
+      "description": "They started this week and the app is missing from their Okta dashboard.",
+      "comments": {
+        "nodes": [
+          {
+            "body": "Their manager confirms they need it for onboarding."
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": false
+        }
+      }
+    },
+    "organization": {
+      "urlKey": "org-a"
+    }
+  }
+}

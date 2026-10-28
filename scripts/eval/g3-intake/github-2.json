@@ -1,0 +1,14 @@
+{
+  "issue": {
+    "number": 32,
+    "title": "Google Drive: transfer a leaver's files",
+    "body": "[FIRST_NAME] [LAST_NAME] left on Friday. Please transfer their Drive files to @their-manager before the account is deleted.",
+    "state": "open",
+    "html_url": "https://github.com/org-a/helpdesk/issues/32",
+    "repository_url": "https://api.github.com/repos/org-a/helpdesk",
+    "user": {
+      "login": "requester-login"
+    }
+  },
+  "comments": []
+}

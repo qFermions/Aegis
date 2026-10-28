@@ -1,0 +1,14 @@
+{
+  "issue": {
+    "number": 31,
+    "title": "Printer on floor 3 prints blank pages",
+    "body": "The shared printer on floor 3 feeds paper, but every page comes out blank since the toner was replaced.",
+    "state": "open",
+    "html_url": "https://github.com/org-a/helpdesk/issues/31",
+    "repository_url": "https://api.github.com/repos/org-a/helpdesk",
+    "user": {
+      "login": "requester-login"
+    }
+  },
+  "comments": []
+}

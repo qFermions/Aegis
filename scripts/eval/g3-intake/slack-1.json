@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "user": "U0AAA00001",
+      "team": "T0OURS0001",
+      "ts": "1761600100.000100",
+      "thread_ts": "1761600100.000100",
+      "text": "The Zoom Room in the boardroom shows offline on the controller."
+    },
+    {
+      "type": "message",
+      "user": "U0AAA00002",
+      "team": "T0OURS0001",
+      "ts": "1761600100.000101",
+      "thread_ts": "1761600100.000100",
+      "text": "Rebooted the controller, still offline."
+    }
+  ]
+}

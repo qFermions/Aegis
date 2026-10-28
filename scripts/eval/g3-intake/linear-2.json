@@ -1,0 +1,18 @@
+{
+  "data": {
+    "issue": {
+      "identifier": "IT-202",
+      "title": "Slack: add a guest to one more channel",
+      "description": "Please add the guest [GUEST_UPN] from [EXTERNAL_DOMAIN] to #[CHANNEL_NAME]; the project lead approved it in this issue.",
+      "comments": {
+        "nodes": [],
+        "pageInfo": {
+          "hasNextPage": false
+        }
+      }
+    },
+    "organization": {
+      "urlKey": "org-a"
+    }
+  }
+}

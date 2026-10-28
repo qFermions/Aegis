@@ -254,7 +254,8 @@ function saveCase(c) { atomicWrite(casePath(c.caseId), JSON.stringify(c, null, 2
 // tenant domain, never the literal (SR-8). Every command then refuses (exit 6)
 // when the runtime tenant differs or is unset. An unbound store (created before
 // this rule, or only written with AEGION_DOMAIN unset) carries no evidence of
-// whose it is: it stays readable, and its first write under a tenant binds it.
+// whose it is: it stays readable, and its first write under a tenant binds it (a
+// lookup that marks a case stale is a read and never binds).
 // Same rule as scripts/memory/memory-cli.js (inline: R4 pins this file's deps).
 const tenantFingerprint = (domain) => sha256('aegis.tenant.v1\n' + domain.trim().toLowerCase());
 function runtimeTenant() {
@@ -276,14 +277,17 @@ function assertTenant() {
   if (!current) fail(6, 'store is bound to a tenant but AEGION_DOMAIN is not set: this case cannot be shown to belong to it; nothing read or written');
   if (current !== bound) fail(6, `store belongs to another tenant (binding ${bound.slice(0, 12)}, runtime ${current.slice(0, 12)}): one store, one tenant; nothing read or written`);
 }
+// A read that writes (lookup marking a case stale) never claims the store: withLock
+// clears this for it, so only an operator's write binds an unbound store.
+let lockBinds = true;
 function bindTenantIfUnbound() {
   const current = runtimeTenant();
-  if (!current || fs.existsSync(TENANT)) return;
+  if (!lockBinds || !current || fs.existsSync(TENANT)) return;
   atomicWrite(TENANT, JSON.stringify({ schema: 'aegis.tenant-binding.v1', tenant: current, boundAt: new Date().toISOString() }, null, 2));
 }
 
 let lockHeld = false;
-function withLock(fn) {
+function withLock(fn, { binds = true } = {}) {
   // R8 guard: a write store inside the repo must stay under the git-ignored
   // memory/ area — a redirected in-tree store could otherwise be committed.
   const rel = path.relative(ROOT, STORE);
@@ -296,10 +300,11 @@ function withLock(fn) {
     fail(5, 'store is locked by another writer — retry after it completes (stale lock: remove ' + LOCK + ')');
   }
   lockHeld = true;
+  lockBinds = binds;
   // Re-checked under the lock (another writer may have bound the store since
   // main() checked it); bound only after fn() returns, so a refused write never
   // claims the store. Same rule as scripts/memory/memory-cli.js.
-  try { assertTenant(); const result = fn(); bindTenantIfUnbound(); return result; } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
+  try { assertTenant(); const result = fn(); bindTenantIfUnbound(); return result; } finally { lockHeld = false; lockBinds = true; try { fs.rmdirSync(LOCK); } catch {} }
 }
 
 function fingerprint(deps) {
@@ -488,7 +493,7 @@ function main() {
               cc.history.push({ at: new Date().toISOString(), event: 'marked stale at lookup', changed: drift });
               saveCase(cc);
             }
-          });
+          }, { binds: false }); // a read's side effect: never binds an unbound store
         }
         out({ ok: true, result: 'STALE', caseId: r.caseId, via: r.via, changed: drift.length ? drift : 'previously detected (status shows the checked history)', route: 'adaptive', note: 'authority basis changed; preserved as historical, not current' });
         break;

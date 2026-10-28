@@ -1,0 +1,12 @@
+node --test --test-name-pattern=C17 scripts/untrusted/wrong-customer.test.js
+✔ C17 a lookup that marks a case stale never binds an unbound replay store to the reader's tenant (248.273324ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 330.918426
+exit code: 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

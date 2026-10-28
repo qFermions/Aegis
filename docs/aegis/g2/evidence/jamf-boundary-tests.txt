@@ -1,0 +1,9 @@
+# command: node --test scripts/g2-boundary.test.js 2>&1 | grep -E '^(✔|✖) (jamf|every G2 runbook)' | sort -u; echo '-- runbook findings that name a G2 Jamf file (expected none):'; node --test scripts/g2-boundary.test.js 2>&1 | grep -oE "'\.claude/commands/[a-z0-9-]+\.md: [^']*'" | sort -u | grep jamf || echo none
+# captured: 2026-10-28T02:15:03Z at 3c8d162
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ jamf: every documented adapter command sends reads only, and nothing without --execute (11.596973ms)
+✔ jamf: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file (0.772843ms)
+✖ every G2 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (5.553428ms)
+-- runbook findings that name a G2 Jamf file (expected none):
+none
+# exit: 0

@@ -26,7 +26,7 @@ For the owner. One page. Details: `docs/aegis/production-readiness.md`, `PROJECT
 
 ## A bug found on the way
 
-Eleven tier floors already on main, and one added earlier in this batch, took cubic or worse time on a long line that never completes them: 9 to 48 seconds each for one 20 KB pasted line, and for the one with three gaps an estimated 25 to 40 minutes. They are rewritten with the same matches (0 disagreements in 896,280 comparisons), and a test now rejects that shape in any floor (`docs/review/incidents.md`).
+Eleven tier floors already on main, and one added earlier in this batch, took cubic or worse time on a long line that never completes them: 9 to 48 seconds each for one 20 KB pasted line, and for the one with three gaps an estimated 28 to 52 minutes. They are rewritten with the same matches (0 disagreements in 896,280 comparisons), and a test now rejects that shape in any floor (`docs/review/incidents.md`).
 
 ## Decisions for you
 

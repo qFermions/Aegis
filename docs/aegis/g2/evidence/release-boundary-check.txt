@@ -1,0 +1,5 @@
+# command: node scripts/harness/release-boundary-check.js
+# captured: 2026-10-28T02:29:22Z at 426b8cd
+# note: any U+2014 in the tool output is written as -- (C11)
+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+# exit: 0

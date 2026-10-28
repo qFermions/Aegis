@@ -40,6 +40,8 @@ const INTAKE_SOURCES = ['linear', 'github', 'slack', 'email'];
 const INTAKE_DIR = path.join(ROOT, 'scripts', 'eval', 'g3-intake');
 // The charter's minimums (task 4b). github rises to 8 with the GitHub runbooks (task 5a).
 const MINIMUMS = Object.freeze({ okta: 6, microsoft: 6, clarify: 6, intakePerSource: 4, github: 8 });
+// The report title names each group the minimums score, in this order (one name per minimum).
+const GROUP_NAMES = Object.freeze({ github: 'GitHub', okta: 'Okta', microsoft: 'Microsoft 365', clarify: 'ambiguous', intakePerSource: 'intake sources' });
 // The deployment the intake fixtures belong to, and a fixed receive time.
 const INTAKE_ENV = Object.freeze({ LINEAR_ORG: 'org-a', GITHUB_ORG: 'org-a', SLACK_TEAM_ID: 'T0OURS0001', AEGION_DOMAIN: 'example.org' });
 const INTAKE_NOW = () => Date.parse('2026-10-28T00:00:00Z');
@@ -149,7 +151,7 @@ function evaluate(corpus = CORPUS) {
 }
 
 function render(res) {
-  const out = [core.render(res, 'G3 ticket eval (GitHub, Okta, Microsoft 365, ambiguous, intake sources)').split('\nModel-judged half')[0].trimEnd(), '', 'Per platform:'];
+  const out = [core.render(res, `G3 ticket eval (${Object.values(GROUP_NAMES).join(', ')})`).split('\nModel-judged half')[0].trimEnd(), '', 'Per platform:'];
   for (const [p, s] of Object.entries(res.summary.perPlatform)) {
     out.push(`  ${p.padEnd(9)} ${s.ticketsPassed}/${s.tickets} tickets · ${s.floored} floored · decisions ${JSON.stringify(s.decisions)}`);
   }
@@ -159,7 +161,7 @@ function render(res) {
   return out.join('\n');
 }
 
-module.exports = { evaluate, render, CORPUS, PLATFORMS, DECISIONS, MINIMUMS, INTAKE_ENV };
+module.exports = { evaluate, render, CORPUS, PLATFORMS, DECISIONS, MINIMUMS, GROUP_NAMES, INTAKE_ENV };
 
 if (require.main === module) {
   const res = evaluate();

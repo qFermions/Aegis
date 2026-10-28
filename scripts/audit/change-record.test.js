@@ -223,6 +223,20 @@ test('one read-back proves one change: a second link is refused, and one written
   assert.ok(st.json.missing.some((m) => /already proves/.test(m)), st.stdout);
 });
 
+// Code review round 2, finding 7: the read-back named at open is a verify-* command the
+// connector really has, so a typo is refused before anyone approves or runs the procedure.
+test('open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted', (t) => {
+  const s = setup(t);
+  const open = (readBack) => s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure]);
+  for (const bad of ['okta:verify-factor-rest', 'oktaa:verify-factor-reset', 'github:verify-factor-reset']) {
+    const r = open(bad);
+    assert.equal(r.code, 1, bad);
+    assert.match(r.stderr, /no such read-back|no connector/, bad);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  for (const good of ['okta:verify-factor-reset', 'github:verify-collaborator', 'jamf:verify-checked-in', 'jira:verify-comment']) assert.equal(open(good).code, 0, good);
+});
+
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
   const source = fs.readFileSync(CLI, 'utf8');
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();

@@ -24,9 +24,9 @@
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-// The injection markers and their homoglyph and zero-width folding are shared with the
-// graph sanitizer and the replay cache (pure module, no I/O).
-const { injectionMarkersIn } = require('./tier/tier-guard.js');
+// The injection markers, the tenant-literal match and their homoglyph and zero-width
+// folding are shared with the graph sanitizer and the replay cache (pure module, no I/O).
+const { injectionMarkersIn, foldedForms, containsLiteral } = require('./tier/tier-guard.js');
 
 const EXIT_OK = 0;
 const EXIT_FINDINGS = 1;
@@ -413,11 +413,14 @@ function checkFile(filePath, content, tenantLiterals) {
 
   // Tenant-literal scan (SR-8) — every text file, NO placeholder-line exemption.
   // A literal inside a bracketed line is still a literal; nothing skips this check.
+  // The line is also read folded (tier-guard), so a zero-width character or a
+  // look-alike letter inside the literal does not get it past the gate.
   if (tenantLiterals.length > 0) {
     lines.forEach((line, i) => {
-      const lower = line.toLowerCase();
+      const forms = foldedForms(line);
+      const lowerForms = forms.map((form) => form.toLowerCase());
       for (const literal of tenantLiterals) {
-        if (lower.includes(literal)) {
+        if (containsLiteral(line, literal, forms, lowerForms)) {
           issues.push({ severity: 'BLOCK', line: i + 1, label: 'Tenant/org literal (SR-8) — use the [@Aegion_*] token' });
           break;
         }

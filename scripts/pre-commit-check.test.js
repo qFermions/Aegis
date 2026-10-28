@@ -483,6 +483,23 @@ test('blocks configured tenant literals without printing the host or source line
   assertRedacted(output, [host, sourceLine, 'tenant-source-marker', repo]);
 });
 
+test('blocks a tenant literal spelled with a zero-width character or a look-alike letter (shared tier-guard folding)', function (t) {
+  const repo = makeRepo(t);
+  const host = ['tenant', 'internal', 'test'].join('.');
+  const disguised = [
+    `endpoint=ten\u200Bant.internal.test`,  // zero-width space inside the literal
+    `endpoint=ten\u0430nt.internal.test`,  // Cyrillic a
+  ];
+  writeFile(repo, 'tenant-disguised.md', `${disguised.join('\n')}\n`);
+  stageAll(repo);
+
+  const result = runScanner(repo, [], scannerEnvironment({ AEGION_DOMAIN: host }));
+  const output = combinedOutput(result);
+  assertExit(result, 1);
+  assert.equal((output.match(/Tenant\/org literal/g) || []).length, 2, output);
+  assertRedacted(output, [host, ...disguised, repo]);
+});
+
 test('warning-only findings exit zero and keep the source line redacted', function (t) {
   const repo = makeRepo(t);
   const sourceMarker = 'warning-source-marker';

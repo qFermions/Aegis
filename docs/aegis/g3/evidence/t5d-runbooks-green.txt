@@ -1,0 +1,17 @@
+# command: node --test scripts/adapters/g3-runbooks.test.js
+# commit: a2c448a (plus uncommitted changes in the working tree)  started: 2026-10-28T09:29:07Z  node: v24.22.1
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (19.161346ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.739689ms)
+✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.939282ms)
+✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (5.119081ms)
+✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (5.566789ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 165.858597
+# exit: 0  finished: 2026-10-28T09:29:07Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

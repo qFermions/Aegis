@@ -62,6 +62,12 @@ Fleet reports what a host last told it, so most "Fleet says this host is wrong" 
 1. Fleet → Hosts → `[HOST_ID]` → Host details → read MDM status; the adapter's `host-mdm --id [HOST_ID]` returns the enrollment for macOS and Windows and is empty when the host is not enrolled.
 2. Off on a company Mac or Windows laptop: Fleet cannot send it MDM commands. Check first whether another MDM manages it (a Mac in Jamf Pro belongs to `/mac-troubleshoot` and `/jamf-lock-erase`). Re-enrolling the device in Fleet is its own procedure (the per-OS steps were not in the guides read; unverified).
 3. Pending on a host from Apple Business: a host that was deleted from Fleet comes back as Pending at once until enrollment completes; read Host details → Activity for the delete before assuming a fault.
+4. MDM On, but profiles or commands do not arrive: ask the person to unlock the device and keep it on the network, write the time as `[NOT_BEFORE]`, then prove a fresh MDM check-in with the read-back below (batch G3). Done when: it passes.
+
+```bash
+# HUMAN-RUN read-only read-back: passes only when MDM enrollment reads On and last_mdm_checked_in_at is at or after [NOT_BEFORE]
+node scripts/adapters/fleet-client.js verify-checked-in --id [HOST_ID] --not-before [NOT_BEFORE] --execute
+```
 
 ### Refetch: the one write in this runbook
 
@@ -109,7 +115,7 @@ node scripts/adapters/fleet-client.js hosts --status mia --page 0 --per-page 50 
 
 - [ ] Branch A: Fleet → Hosts → `[HOST_ID]` → Host details reads online with a current last seen; the ticket names the live `[HOST_ID]` and any stale record.
 - [ ] Branch B: the adapter's `host --id [HOST_ID]` shows `disk_encryption_enabled` true and `mdm.os_settings.disk_encryption.status` verified, or the ticket holds the escalation with status, OS version and time.
-- [ ] Branch C: Host details reads MDM On (manual) or On (automatic), and `host-mdm --id [HOST_ID]` returns the enrollment, or the ticket names the other MDM.
+- [ ] Branch C: Host details reads MDM On (manual) or On (automatic), and `host-mdm --id [HOST_ID]` returns the enrollment, or the ticket names the other MDM; when profiles or commands were stuck, `verify-checked-in` passes.
 - [ ] Refetch (if sent): `detail_updated_at` is later than `[NOT_BEFORE]`.
 
 ## 📝 Linear-ready note

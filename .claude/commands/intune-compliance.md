@@ -25,6 +25,12 @@ disable-model-invocation: true
    - **Not encrypted within grace period** → complete encryption, then **Sync**.
 3. Force a check-in: device → **Sync** (or Company Portal → Settings → Sync) and wait for re-evaluation.
 4. If the policy itself is wrong (too strict / wrong scope) → Devices → Compliance policies → fix the policy (test on a pilot group first).
+5. Read-back (R0): write the time of the Sync as `[NOT_BEFORE]` and the Intune device ID as `[DEVICE_ID]`, then prove the device synced (batch G3, read-only Microsoft Graph connector).
+
+```bash
+# HUMAN-RUN read-only read-back: passes only when Intune's lastSyncDateTime for the device is at or after [NOT_BEFORE]
+node scripts/adapters/msgraph-client.js verify-device-synced --device [DEVICE_ID] --not-before [NOT_BEFORE] --execute
+```
 
 <details>
 <summary>PowerShell — for reference only</summary>
@@ -42,7 +48,7 @@ $d | Select DeviceName,ComplianceState,OperatingSystem,OsVersion,LastSyncDateTim
 
 ## ✅ Verification checklist
 - [ ] The specific failed setting now passes
-- [ ] Device shows **Compliant** after Sync (allow a few min to re-evaluate)
+- [ ] Device shows **Compliant** after Sync (allow a few min to re-evaluate); `verify-device-synced` passes
 - [ ] User regained access (if CA was blocking)
 - [ ] No other devices regressed (if a policy was changed)
 

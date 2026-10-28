@@ -163,10 +163,12 @@ function injectionMarkersIn(text, forms = foldedForms(text)) {
 // namespace with its own underscores (Other_Org_DOMAIN) is found, and a numbered
 // variant of a dictionary suffix (SITE_5, domain2) counts as that suffix. Any namespace but
 // Aegion is a second tenant; the own namespace is Aegion followed by "_" or a space,
-// so AegionCo or Aegion-Co is another org. The body cannot hold "[", so an unclosed
-// token cannot swallow the next one. A chat handle ([@jane_doe], [@bob_site_visit], [@alex_IT])
-// is not an org token: its suffix is not a dictionary suffix.
-const ORG_TOKEN = /\[@\s*([A-Za-z][A-Za-z0-9_\s-]{0,79})\]/g;
+// so AegionCo or Aegion-Co is another org. A dot separates words like a hyphen, so
+// [@Contoso.DOMAIN] is found too. Inside the own namespace the rest must be exactly one
+// dictionary suffix: [@Aegion_Contoso_DOMAIN] names a second org. The body cannot hold
+// "[", so an unclosed token cannot swallow the next one. A chat handle ([@jane_doe],
+// [@bob_site_visit], [@alex_IT]) is not an org token: its suffix is not a dictionary suffix.
+const ORG_TOKEN = /\[@\s*([A-Za-z][A-Za-z0-9_.\s-]{0,79})\]/g;
 const OWN_ORG_NAMESPACE = /^Aegion(?:[\s_]|$)/i;
 const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_SP', 'FINANCE_SERVER', 'GWS_CUSTOMER_ID', 'ISP',
   'JAMF_URL', 'JIRA_SPACE', 'JIRA_URL', 'NETPARTNER', 'OKTA_ORG_URL', 'REMOTE_ACCESS', 'SITE_2', 'SITE_3', 'SITE_4',
@@ -175,14 +177,18 @@ const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_S
   'FLEET_URL', 'SLACK_URL', 'SLACK_TEAM_ID', 'LINEAR_ORG', 'LINEAR_TEAM']);
 function orgTokenWords(body) {
   return body.replace(/([a-z])([A-Z])/g, '$1_$2').replace(/([A-Za-z])(\d)/g, '$1_$2').replace(/(\d)([A-Za-z])/g, '$1_$2')
-    .toUpperCase().split(/[\s_-]+/).filter(Boolean);
+    .toUpperCase().split(/[\s_.-]+/).filter(Boolean);
+}
+function isOrgSuffix(suffix) {
+  return ORG_TOKEN_SUFFIXES.has(suffix) || ORG_TOKEN_SUFFIXES.has(suffix.replace(/_\d+$/, '')) || /^SITE_\d+$/.test(suffix);
 }
 function isForeignOrgBody(body) {
-  if (OWN_ORG_NAMESPACE.test(body)) return false;
   const words = orgTokenWords(body);
-  for (let k = 1; k < words.length; k += 1) {
-    const suffix = words.slice(k).join('_');
-    if (ORG_TOKEN_SUFFIXES.has(suffix) || ORG_TOKEN_SUFFIXES.has(suffix.replace(/_\d+$/, '')) || /^SITE_\d+$/.test(suffix)) return true;
+  // own namespace: [@Aegion] or [@Aegion_<suffix>]; a word between them is a second org
+  const first = OWN_ORG_NAMESPACE.test(body) ? 2 : 1;
+  if (first === 2 && (words.length === 1 || isOrgSuffix(words.slice(1).join('_')))) return false;
+  for (let k = first; k < words.length; k += 1) {
+    if (isOrgSuffix(words.slice(k).join('_'))) return true;
   }
   return false;
 }

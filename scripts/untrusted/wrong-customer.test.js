@@ -424,3 +424,21 @@ test('C14 the org-token suffix list equals the placeholder dictionary\'s [@Aegio
   assert.ok(suffixes.size > 0, 'the dictionary lists [@Aegion_*] tokens');
   assert.deepEqual([...ORG_TOKEN_SUFFIXES].sort(), [...suffixes].sort(), 'add a dictionary token here when the dictionary gains one');
 });
+
+// ── batch G2 code review: a second org's name inside the own namespace, or joined by a dot ──
+
+test('C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours', () => {
+  const { hasForeignOrgToken, ORG_TOKEN_SUFFIXES } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+  const foreign = ['[@Aegion_Contoso_DOMAIN]', '[@Aegion_Contoso_SITE_2]', '[@Aegion Contoso VoipUrl]', '[@Contoso.DOMAIN]', '[@Contoso.SiteCount]', '[@Aegion.Contoso_DOMAIN]'];
+  for (const text of foreign) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} is a second tenant`);
+  for (const suffix of ORG_TOKEN_SUFFIXES) assert.equal(hasForeignOrgToken(`[@Aegion_${suffix}]`), false, `[@Aegion_${suffix}] is ours`);
+  for (const text of ['[@Aegion]', '[@Aegion_SITE_5]', '[@Aegion_DomainShort]', '[@first.last]']) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is not a second tenant`);
+
+  for (const token of ['[@Aegion_Contoso_DOMAIN]', '[@Contoso.DOMAIN]']) {
+    const before = runDirs();
+    const g = graph(['new', '--ticket-file', writeFile('ticket.txt', `Guest [GUEST_UPN] from ${token} cannot open the finance site shared by [UPN].`)]);
+    assert.equal(g.code, 3, `${token} at graph intake: ${short(g)}`);
+    assert.deepEqual(runDirs(), before);
+    assert.ok(!g.stdout.includes('Contoso') && !g.stderr.includes('Contoso'), 'the foreign token is never echoed');
+  }
+});

@@ -566,6 +566,40 @@ test('the purge floor stays fast on a long line that never names a mailbox (guar
   assert.ok(guardMs < 1000 && engineMs < 1000, `guard ${guardMs.toFixed(0)} ms, engine ${engineMs.toFixed(0)} ms`);
 });
 
+// Batch G3: the GitHub floors with two gaps (member removal, bulk alert dismissal, the
+// organization 2FA requirement) read each gap once, so a 20 KB line that never completes
+// the match fails fast, in the guard and in its engine twin (the member removal floor took
+// about 20 s on such a line before it was written that way; it never shipped). Each floor
+// still fires on its short example through assess and the engine scan.
+const floorPattern = (label) => ({
+  guard: require('./tier-guard.js').ESCALATION_PATTERNS.find((p) => p.label.startsWith(label)).pattern,
+  engine: (() => {
+    const at = read('scripts/graph/engine.js').split('\n').find((l) => l.includes(`, label: '${label}`));
+    const literal = at.slice(at.indexOf('/'), at.indexOf(', label: '));
+    return new RegExp(literal.slice(1, literal.lastIndexOf('/')), literal.slice(literal.lastIndexOf('/') + 1));
+  })(),
+});
+const msFor = (re, text) => { const start = process.hrtime.bigint(); re.test(text); return Number(process.hrtime.bigint() - start) / 1e6; };
+
+test('the GitHub floors fire on their example and each stays fast on a 20 KB line that never completes it (guard and engine)', () => {
+  const engine = require('../graph/engine.js');
+  const scan = (text) => engine.scanSr2Triggers({ steps: [{ id: 's1', action: text, undo: '', verify: '' }], powershell: '' });
+  const cases = [
+    ['GitHub member or collaborator removal', 'Remove [GITHUB_USER] from the GitHub organization.', 'remove them '.repeat(1700)],
+    ['GitHub member or collaborator removal', 'Kick the contractor from the [REPO_NAME] repository.', 'remove member from '.repeat(1100)],
+    ['security alert bulk dismissal', 'Dismiss all 40 Dependabot alerts in [REPO_NAME].', 'dismiss all '.repeat(1700)],
+    ['GitHub organization two-factor requirement', 'Require 2FA for everyone in the organization.', 'require 2fa '.repeat(1700)],
+  ];
+  for (const [label, example, hostile] of cases) {
+    assert.ok(assess(example).triggers.some((t) => t.startsWith(label)), `guard: ${example}`);
+    assert.ok(scan(example).some((t) => t.startsWith(label)), `engine: ${example}`);
+    const { guard, engine: twin } = floorPattern(label);
+    const guardMs = msFor(guard, hostile);
+    const engineMs = msFor(twin, hostile);
+    assert.ok(guardMs < 1000 && engineMs < 1000, `${label}: guard ${guardMs.toFixed(0)} ms, engine ${engineMs.toFixed(0)} ms`);
+  }
+});
+
 // Finding 15: the engine's G2 floors are the guard's G2 floors with each sentence gap
 // ([^.]* in the guard) read as a line gap (.* in the engine). The check runs on the
 // pattern sources, so the two hand-kept copies cannot drift on a wording no example

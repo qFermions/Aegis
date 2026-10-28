@@ -782,6 +782,25 @@ test('Okta, Jamf MDM, Fleet host and Slack SCIM sinks warn when PowerShell names
   assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `ps-method-source-${index}`), repo]);
 });
 
+test('the method-keyed sinks warn on a shortened PowerShell -Method name and on a one-line splatted Method key (round 3, finding 9)', function (t) {
+  const repo = makeRepo(t);
+  const cases = [
+    ['Invoke-RestMethod -Meth Delete -Uri "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]"', /Okta session or user deletion/],
+    ['Invoke-RestMethod -Uri "https://[@Aegion_JAMF_URL]/JSSResource/computercommands/command/DeviceLock/id/[DEVICE_ID]" -Me Post', /Jamf MDM command/],
+    ['$p = @{ Method = "DELETE"; Uri = "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]" }; Invoke-RestMethod @p', /Fleet host deletion or MDM turn-off/],
+    ['$p = @{ Uri = "https://api.slack.com/scim/v2/Users/[USER_ID]"; Method = \'Delete\' }; Invoke-RestMethod @p', /Slack SCIM deactivation/],
+  ];
+  const fixtureLines = cases.map(([line], index) => `${line} # ps-short-source-${index}`);
+  writeFile(repo, 'ps-short.md', `${fixtureLines.join('\n')}\n`);
+  stageAll(repo);
+  const result = runScanner(repo);
+  const output = combinedOutput(result);
+  assertExit(result, 0);
+  for (const [, expectedLabel] of cases) assert.match(output, expectedLabel);
+  assert.match(output, new RegExp(`${cases.length} warning\\(s\\) found`));
+  assertRedacted(output, [...fixtureLines, ...fixtureLines.map((_, index) => `ps-short-source-${index}`), repo]);
+});
+
 test('Okta deletions and Jamf MDM commands warn when curl names the method with --request', function (t) {
   const repo = makeRepo(t);
   const cases = [

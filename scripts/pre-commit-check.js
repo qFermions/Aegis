@@ -42,9 +42,11 @@ class ScannerError extends Error {
 }
 
 // ── Dangerous PowerShell patterns ────────────────────────────────────────────
-// An HTTP method flag as curl (-X, --request) and PowerShell (-Method) write it: one
-// source for every method-keyed sink in the table below (Okta, Jamf, Fleet, Slack SCIM).
-const METHOD_FLAG = String.raw`(?:-X\s*|--request\s+|-Method[\s:]+)["']?`;
+// An HTTP method flag as curl (-X, --request) and PowerShell write it: -Method or any
+// prefix PowerShell accepts for it (-Me to -Method), or a Method key in a splatted
+// hashtable on the same line. One source for every method-keyed sink in the table
+// below (Okta, Jamf, Fleet, Slack SCIM); a splat built over several lines is not seen.
+const METHOD_FLAG = String.raw`(?:-X\s*|--request\s+|-Me(?:t(?:h(?:od?)?)?)?[\s:]+|\bMethod\s*=\s*)["']?`;
 
 const DANGEROUS_PS_PATTERNS = [
   { pattern: /Remove-Item\s+.*-Recurse\s+.*-Force|Remove-Item\s+.*-Force\s+.*-Recurse/i, label: 'Remove-Item -Recurse -Force — mass file deletion' },

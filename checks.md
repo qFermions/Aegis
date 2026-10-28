@@ -60,6 +60,6 @@ Evidence paths are under `docs/aegis/g3/evidence/` unless written in full. The `
 | GitHub `verify-team-member --absent` declared a person absent from a team list longer than the pages it read | `d075caf` | `de0d312` | `scripts/adapters/github-client.test.js` (14/14, `t7-head-suite-counts.txt:3`) |
 | the audit lock died with `EPERM` on Windows while another writer deleted it (Release Gate windows-latest at `96564ea`) | `bc351a8` | `ebb8cc1` | `scripts/audit/audit-log.test.js` (10/10, `t7-head-suite-counts.txt:13`); CI green at `ebb8cc1` |
 | a scope refusal of the token and route kinds was not recorded in the audit trail | `d637281` | `2b402b9` | `t3a-scope-green.txt:10` |
-| the G3 eval report's title left out GitHub, then was a hand-kept list | `af24d58`, `d5986ff` | `d28fcc5`, `12c30d6` | `scripts/eval/g3-ticket-eval.test.js` (7/7, `t7-head-suite-counts.txt:14`) |
+| the G3 eval report's title left out GitHub, then was a hand-kept list | `af24d58`, `d5986ff` | `d28fcc5`, `12c30d6` | `scripts/eval/g3-ticket-eval.test.js` (7/7, `t7-head-suite-counts.txt:15`) |
 
 Pre-existing in files this batch did not edit (reported, not fixed): none found beyond the residual rows 4, 5 and 12 of `docs/aegis/boundary-audit.md`.

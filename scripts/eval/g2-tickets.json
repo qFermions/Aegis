@@ -314,6 +314,32 @@
       "requiredRole": "Admin"
     },
     {
+      "id": "L12-linear-sla-breached-wording",
+      "platform": "linear",
+      "class": "DIAGNOSTIC",
+      "text": "Linear shows IT issue [ISSUE_ID] breached its SLA overnight and the SLA breached flag is red; who picks it up and what do we update?",
+      "expectFloor": "none",
+      "expectDecision": "ADVISE",
+      "route": [
+        "linear-triage"
+      ],
+      "probe": "batch G3: an SLA breach is a missed deadline, not a compromise; the word breached must not floor it"
+    },
+    {
+      "id": "L13-linear-account-breached",
+      "platform": "linear",
+      "class": "PROCEDURE",
+      "text": "[FIRST_NAME]'s Linear account was breached overnight: an unknown session closed IT issues. Cut the account's access now.",
+      "expectFloor": "T3",
+      "expectTriggers": [
+        "compromise"
+      ],
+      "expectDecision": "GATE",
+      "route": [
+        "linear-workspace-admin"
+      ]
+    },
+    {
       "id": "S01-slack-new-member-okta",
       "platform": "slack",
       "class": "PROCEDURE",
@@ -887,6 +913,12 @@
       "why": "gws: turning 2-Step Verification enforcement on adds a security control, turning it off removes one",
       "a": "W04-gws-2sv-enforce-on",
       "b": "W05-gws-2sv-enforce-off",
+      "floorsMustDiffer": true
+    },
+    {
+      "why": "linear: breached about an SLA is a missed deadline to triage; breached about an account is a compromise that floors to the suspend gate (batch G3)",
+      "a": "L12-linear-sla-breached-wording",
+      "b": "L13-linear-account-breached",
       "floorsMustDiffer": true
     }
   ]

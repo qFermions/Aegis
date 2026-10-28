@@ -6785,6 +6785,131 @@
       ]
     },
     {
+      "id": "okta-group-membership-add-person-portal",
+      "file": ".claude/commands/okta-group-membership.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:assign",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "okta-group-membership-bulk-add-portal",
+      "file": ".claude/commands/okta-group-membership.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:assign",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "okta-group-membership-bulk-remove-portal",
+      "file": ".claude/commands/okta-group-membership.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "okta-group-membership-remove-person-portal",
+      "file": ".claude/commands/okta-group-membership.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "okta-group-membership-rule-change-portal",
+      "file": ".claude/commands/okta-group-membership.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:update",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "okta-group-membership-rule-create-portal",
+      "file": ".claude/commands/okta-group-membership.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "okta-group-membership-rule-deactivate-portal",
+      "file": ".claude/commands/okta-group-membership.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:deactivate",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
       "id": "okta-mfa-reset-all",
       "file": ".claude/commands/okta-mfa-reset.md",
       "kind": "shell",

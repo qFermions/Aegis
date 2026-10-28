@@ -33,6 +33,8 @@ const personalHits = [];
 for (const line of log.split('\n')) {
   n += 1;
   const d = line.match(/^diff --git a\/(\S+)/);
+  // a commit's header and message belong to no file until its first diff header
+  if (/^commit [0-9a-f]{40}\b/.test(line)) file = `(commit ${line.slice(7, 14)} header and message)`;
   if (d) file = d[1]; // the header line is still searched, as the charter grep searches it
   const m = line.match(charter);
   if (m) {

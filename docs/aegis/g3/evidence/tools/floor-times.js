@@ -34,11 +34,15 @@ for (const [side, file] of [['guard', 'scripts/tier/tier-guard.js'], ['engine', 
   if (a.length !== b.length) throw new Error(`${file}: ${a.length} floors at ${before}, ${b.length} at ${after}`);
   for (const [prefix, unit] of cases) {
     const matches = (p) => (prefix instanceof RegExp ? prefix.test(p.label) : p.label.startsWith(prefix));
+    // each side is looked up by label, so a floor added, removed or moved between the two
+    // commits cannot pair one floor before with another after
     const i = a.findIndex(matches);
+    const j = b.findIndex(matches);
     // the guard-only case has no engine twin; any other case missing is an error, never a skip
     if (i < 0 && side === 'engine' && prefix === 'security-control change (SR-2)') continue;
     if (i < 0) throw new Error(`${side}: no floor matching ${prefix} at ${before}`);
-    if (a[i].re.source === b[i].re.source) continue;
+    if (j < 0) throw new Error(`${side}: no floor matching ${prefix} at ${after}`);
+    if (a[i].re.source === b[j].re.source) continue;
     const shown = prefix instanceof RegExp ? 'security-control change -- Google' : prefix;
     const name = `${side.padEnd(6)} ${shown.padEnd(32)} ${JSON.stringify(unit).padEnd(22)}`;
     if (mode === '20kb') {
@@ -47,6 +51,6 @@ for (const [side, file] of [['guard', 'scripts/tier/tier-guard.js'], ['engine', 
       else console.log(`${name} before: 20 KB ${ms(a[i].re, line(unit, 20000))} ms`);
       continue;
     }
-    console.log(`${name} 5 KB before ${ms(a[i].re, line(unit, 5000)).padStart(5)} ms, after ${ms(b[i].re, line(unit, 5000)).padStart(3)} ms; 20 KB after ${ms(b[i].re, line(unit, 20000)).padStart(3)} ms`);
+    console.log(`${name} 5 KB before ${ms(a[i].re, line(unit, 5000)).padStart(5)} ms, after ${ms(b[j].re, line(unit, 5000)).padStart(3)} ms; 20 KB after ${ms(b[j].re, line(unit, 20000)).padStart(3)} ms`);
   }
 }

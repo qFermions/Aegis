@@ -10,7 +10,7 @@
 // stack or a credential is ever placed in either.
 
 const NAMES = Object.freeze({
-  fleet: 'Fleet', jamf: 'Jamf Pro', slack: 'Slack', linear: 'Linear', gws: 'Google Workspace', jira: 'Jira',
+  fleet: 'Fleet', jamf: 'Jamf Pro', slack: 'Slack', linear: 'Linear', gws: 'Google Workspace', 'google-workspace': 'Google Workspace', jira: 'Jira',
   github: 'GitHub', okta: 'Okta', msgraph: 'Microsoft Graph',
 });
 

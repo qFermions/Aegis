@@ -33,6 +33,12 @@
  *   node scripts/jira-client.js comment --issue HELP-123 --body "..."
  *   node scripts/jira-client.js transition --issue HELP-123 --to Resolved --execute
  *
+ * Every failure also prints two lines on stderr (batch G3): "Aegis: " and a plain message
+ * (what happened, what was not done, the next step), and "admin detail: " with the platform,
+ * operation, state, status, attempts, request id and handoff. A person running the CLI gets
+ * the audit trail (scripts/audit/): each read, each verify-* verdict and each printed
+ * HUMAN-RUN procedure is recorded first.
+ *
  * Exit codes: 0 preview, read or verified read-back; 1 input error or a refused
  * write; 2 API, preflight or read-back failure (including a read-back that does not
  * prove the human's write); 4 a verify-* dry run: nothing was read, so nothing is
@@ -45,6 +51,8 @@ const crypto = require('node:crypto');
 const https = require('node:https');
 
 const { STATES, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
+const { operatorMessage } = require('./adapters/operator-message.js');
+const { auditSink, defaultAuditDir } = require('./audit/audit-log.js');
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TRANSITION_PAGE_LIMIT = 50;
@@ -75,6 +83,10 @@ const VALUE_FLAGS = new Set([
 const KNOWN_FLAGS = new Set([...BOOLEAN_FLAGS, ...VALUE_FLAGS]);
 
 class InputError extends Error {}
+// batch G3: missing credentials are their own input error, so the operator message names them
+class CredentialsError extends InputError {}
+// batch G3: the audit trail could not record a read, a verdict or a printed procedure
+class AuditError extends Error {}
 class ApiError extends Error {
   // result: the contract's failure result (state, status, attempts), when the read went
   // through the contract; it carries no body and no credential.
@@ -170,7 +182,7 @@ function loadCredentials(env = process.env) {
   const missing = [];
   if (!env.JIRA_EMAIL) missing.push('JIRA_EMAIL');
   if (!env.JIRA_API_TOKEN) missing.push('JIRA_API_TOKEN');
-  if (missing.length) throw new InputError(`Missing required env vars: ${missing.join(', ')}.`);
+  if (missing.length) throw new CredentialsError(`Missing required env vars: ${missing.join(', ')}.`);
   return { email: String(env.JIRA_EMAIL), token: String(env.JIRA_API_TOKEN) };
 }
 
@@ -200,7 +212,7 @@ const JIRA_SPEC = defineAdapter({
 function normalizeCredentials(credentials) {
   if (!credentials || typeof credentials.email !== 'string' || credentials.email.length === 0 ||
       typeof credentials.token !== 'string' || credentials.token.length === 0) {
-    throw new InputError('Credential provider must return non-empty email and token values.');
+    throw new CredentialsError('Credential provider must return non-empty email and token values.');
   }
   return { email: credentials.email, token: credentials.token };
 }
@@ -360,7 +372,7 @@ async function contractFetch(cfg, method, apiPath, deps = {}) {
   const env = { JIRA_SITE: site, JIRA_EMAIL: credentials.email, JIRA_API_TOKEN: credentials.token };
   const transport = deps.transport ||
     ((request) => apiRequest({ site, ...credentials }, request.method, request.path, null, { timeoutMs: request.timeoutMs }));
-  const client = createClient(JIRA_SPEC, { env, transport, sleep: deps.sleep, random: deps.random, audit: deps.audit });
+  const client = createClient(JIRA_SPEC, { env, transport, sleep: deps.sleep, random: deps.random, timeoutMs: deps.timeoutMs, audit: deps.audit });
   const res = await client.send({ method, path: apiPath });
   if (res.state === STATES.OK) return { status: res.status, json: res.data, flags: res.flags, result: res };
   if (res.state === STATES.HTTP_ERROR) return { status: res.status, json: null, result: res };
@@ -369,9 +381,16 @@ async function contractFetch(cfg, method, apiPath, deps = {}) {
 }
 
 function createRuntime(env, dependencies = {}) {
-  const contractDeps = { transport: dependencies.transport, sleep: dependencies.sleep, random: dependencies.random, audit: dependencies.audit };
+  // batch G3: a person running the CLI gets the audit sink; a test that injects a fetch or a
+  // transport gets none unless it passes one
+  const injected = typeof dependencies.fetch === 'function' || typeof dependencies.transport === 'function';
+  let audit = null;
+  if (dependencies.audit !== undefined) audit = typeof dependencies.audit === 'function' ? dependencies.audit : null;
+  else if (!injected) audit = auditSink({ AEGIS_AUDIT_DIR: defaultAuditDir(env && env.AEGIS_AUDIT_DIR ? env : process.env) });
+  const contractDeps = { transport: dependencies.transport, sleep: dependencies.sleep, random: dependencies.random, timeoutMs: dependencies.timeoutMs, audit };
   return {
     env,
+    audit,
     fetch: dependencies.fetch || ((cfg, method, apiPath) => contractFetch(cfg, method, apiPath, contractDeps)),
     getCredentials: dependencies.getCredentials || loadCredentials,
     now: dependencies.now || Date.now,
@@ -409,7 +428,37 @@ function refuseWrite(runtime, next) {
   runtime.err(WRITE_REFUSAL);
   runtime.err(next);
   runtime.err('No credentials were read and no network call was made.');
+  printFailure(runtime, 'REFUSED', {}, null);
   return 1;
+}
+
+// batch G3: the two-part failure message (scripts/adapters/operator-message.js), as two
+// stderr lines after the client's own line.
+function printFailure(runtime, state, extra, command) {
+  const m = operatorMessage({ state, ok: false, ...extra }, { platform: 'jira', operation: command || null });
+  runtime.err(`Aegis: ${m.operator}`);
+  runtime.err(`admin detail: ${m.admin}`);
+}
+
+// batch G3: each HUMAN-RUN procedure the client prints is recorded in the audit trail
+// first (command, R class, a placeholder target and the payload digest); if it cannot be
+// recorded, nothing is printed.
+function recordProcedure(runtime, command, digest) {
+  if (!runtime.audit) return;
+  try {
+    runtime.audit({ kind: 'procedure', command, gate: null, r_class: 'R1', target: '[JIRA-###]', procedure_sha256: digest, change: null });
+  } catch {
+    throw new AuditError('the audit trail could not record the procedure, so it was not printed');
+  }
+}
+
+function recordJiraVerdict(runtime, command, verified) {
+  if (!runtime.audit) return;
+  try {
+    runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: null });
+  } catch {
+    throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
+  }
 }
 
 function previewNotBefore(runtime) {
@@ -667,6 +716,7 @@ function createPayloadFromArgs(runtime, args) {
 async function cmdCreate(runtime, args) {
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const payload = createPayloadFromArgs(runtime, args);
+  recordProcedure(runtime, 'jira-create', sha256Hex(serializePayload(payload)));
   runtime.out(`PREVIEW - exact create payload: ${serializePayload(payload)}`);
   runtime.out(`Payload binding: ${buildCreateConfirmation(site, payload)}`);
   printProcedure(runtime, [
@@ -689,6 +739,7 @@ async function cmdComment(runtime, args) {
   const payload = buildCommentPayload({ body: args.body, isPublic: args.public });
   const visibility = payload.public ? 'PUBLIC' : 'INTERNAL';
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}/comment`;
+  recordProcedure(runtime, 'jira-comment', commentDigest(payload));
   runtime.out(`PREVIEW - exact comment payload: ${serializePayload(payload)}`);
   runtime.out(`Visibility: ${visibility}${payload.public ? ' (the reporter can read it)' : ' (agents only)'}`);
   runtime.out(`Payload binding: ${buildCommentConfirmation(site, issueKey, payload)}`);
@@ -736,6 +787,7 @@ async function cmdTransition(runtime, args) {
   const cfg = await networkConfig(runtime, site);
   const preflight = await preflightTransition(runtime, cfg, issueKey, selector);
   const { snapshot, transition } = preflight;
+  recordProcedure(runtime, 'jira-transition', sha256Hex(preflight.confirmation));
   runtime.out(`Preflight target: ${snapshot.issueKey} ID ${snapshot.issueId}; current status=${snapshot.currentStatus}.`);
   runtime.out(`Resolved transition: ID ${transition.id} name=${transition.name}.`);
   runtime.out(`Transition binding: ${preflight.confirmation}`);
@@ -864,22 +916,50 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
       throw new InputError('Usage: node scripts/jira-client.js ' +
         '<list-desks|list-types|create|comment|get|transition|verify-create|verify-comment|verify-transition> [flags]');
     }
-    return await COMMANDS[command](runtime, args);
+    const code = await COMMANDS[command](runtime, args);
+    if (code === 0 && /^verify-/.test(command)) recordJiraVerdict(runtime, command, true);
+    return code;
   } catch (error) {
+    const command = args && args._ ? args._[0] : null;
+    const op = typeof command === 'string' && COMMANDS[command] ? command : null;
     if (error instanceof InputError) {
       runtime.err(`Input error: ${error.message}`);
+      printFailure(runtime, error instanceof CredentialsError ? 'NO_CREDENTIALS' : 'REFUSED', {}, op);
       return 1;
+    }
+    if (error instanceof AuditError) {
+      runtime.err(`Jira operation stopped: ${error.message}.`);
+      printFailure(runtime, 'AUDIT_FAILED', {}, op);
+      return 2;
+    }
+    // a read-back that ran and did not prove the write is a verdict, recorded as such
+    if (op && /^verify-/.test(op) && (error instanceof ContractError || error instanceof ApiError)) {
+      try { recordJiraVerdict(runtime, op, false); } catch {
+        runtime.err('Jira operation stopped: the audit trail could not record this read-back, so its verdict is withheld.');
+        printFailure(runtime, 'AUDIT_FAILED', {}, op);
+        return 2;
+      }
     }
     if (error instanceof ApiError) {
       const suffix = error.status === null ? '' : ` (HTTP ${error.status})`;
       runtime.err(`Jira API request failed${suffix}; response body withheld.`);
+      const r = error.result;
+      if (r && typeof r.state === 'string') {
+        printFailure(runtime, r.state, { status: r.status, attempts: r.attempts, request_id: r.request_id, handoff: r.handoff }, op);
+      } else {
+        printFailure(runtime, error.status === null ? 'NETWORK_ERROR' : 'HTTP_ERROR', { status: error.status === null ? undefined : error.status }, op);
+      }
       return 2;
     }
     if (error instanceof ContractError) {
       runtime.err(`Jira preflight/read-back contract failed: ${error.message} This client sends no writes.`);
+      // a verify-* that read and did not match is a read-back that did not prove the write
+      if (op && /^verify-/.test(op)) printFailure(runtime, 'OK', { verified: false }, op);
+      else printFailure(runtime, 'INVALID_RESPONSE', {}, op);
       return 2;
     }
     runtime.err('Jira operation failed safely; details withheld.');
+    printFailure(runtime, 'INVALID_RESPONSE', {}, op);
     return 2;
   }
 }

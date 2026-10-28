@@ -73,7 +73,7 @@ const CONNECTORS = [
     tenantBody: { data: { viewer: { id: 'u1', admin: false, guest: false, owner: false, organization: { urlKey: 'other-org' } }, organization: { urlKey: 'other-org' } } },
   },
   {
-    name: 'gws', mod: require('./gws-client.js'),
+    name: 'google-workspace', mod: require('./gws-client.js'),
     env: { GWS_SA_CLIENT_EMAIL: at('svc', 'project.iam.gserviceaccount.com'), GWS_SA_PRIVATE_KEY: PEM, GWS_ADMIN_SUBJECT: at('admin', 'example.com'), GWS_CUSTOMER_ID: 'C0test1' },
     creds: ['GWS_SA_CLIENT_EMAIL', 'GWS_SA_PRIVATE_KEY', 'GWS_ADMIN_SUBJECT'],
     argv: ['users', '--execute'], pre: [ok({ access_token: 'issued-access', expires_in: 3599, token_type: 'Bearer' })],

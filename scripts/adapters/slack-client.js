@@ -101,6 +101,7 @@ const {
   STATES, RefusedError, TRIPWIRE_MESSAGE,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
+const { cliDeps, recordVerdict } = require('./cli-support.js');
 
 const HOST = 'slack.com';
 const HISTORY_LIMIT = '50';
@@ -752,7 +753,7 @@ async function run(argv, env, deps = {}) {
   const err = typeof deps.err === 'function' ? deps.err : (s) => process.stderr.write(s);
   const now = typeof deps.now === 'function' ? deps.now : Date.now;
   const emit = (res, secrets = []) => {
-    out(renderResult(res, { secrets }));
+    out(renderResult(res, { secrets, platform: 'slack' }));
     return exitCodeFor(res);
   };
   const refuse = (command, error) => {
@@ -766,6 +767,7 @@ async function run(argv, env, deps = {}) {
   const ctx = {};
   let steps;
   let client;
+  let cli = null;
   try {
     ({ command, def, args } = parseCommand(argv));
     if (def.kind === 'offline') {
@@ -780,7 +782,9 @@ async function run(argv, env, deps = {}) {
       ctx.oldest = oldestFromMs(ctx.notBeforeMs);
     }
     steps = def.steps(args, ctx);
-    client = createClient(def.spec || SPEC, { env: environment, transport: deps.transport, sleep: deps.sleep, now: deps.now });
+    // batch G3: the audit sink (and the test seams) come from cliDeps
+    cli = cliDeps(deps, environment);
+    client = createClient(def.spec || SPEC, { env: environment, ...cli });
     const planned = steps.map((s) => client.plan(s.route, {}, s.query));
     const refusedPlan = planned.find((p) => p.state !== STATES.OK);
     if (refusedPlan) throw new RefusedError(refusedPlan.error);
@@ -803,7 +807,7 @@ async function run(argv, env, deps = {}) {
   }
 
   const res = def.kind === 'verify'
-    ? await def.verify(command, args, ctx, client, steps)
+    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps))
     : await runRead(command, def, steps, client);
   // Only the variable this command's spec names is read, and only after the request
   // was allowed; that value is redacted from everything printed.

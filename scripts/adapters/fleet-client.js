@@ -31,6 +31,7 @@
 const {
   STATES, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
+const { cliDeps, recordVerdict } = require('./cli-support.js');
 
 // ── Validators ───────────────────────────────────────────────────────────────
 const ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software title ids
@@ -501,7 +502,7 @@ function helpText() {
 
 function emit(output, { out, err, secrets = [] }) {
   const code = exitCodeFor(output);
-  (code === 1 ? err : out)(renderResult(output, { secrets }));
+  (code === 1 ? err : out)(renderResult(output, { secrets, platform: 'fleet' }));
   return code;
 }
 
@@ -533,7 +534,9 @@ async function run(argv, env = process.env, deps = {}) {
     return emit({ command: name, state: STATES.REFUSED, ok: false, error: error.message }, { out, err });
   }
 
-  const client = createClient(SPEC, { env, transport: deps.transport, sleep: deps.sleep, now: deps.now });
+  // batch G3: the audit sink (and the test seams) come from cliDeps
+  const cli = cliDeps(deps, env);
+  const client = createClient(SPEC, { env, ...cli });
 
   // Every request known before the read is checked here, with no credential read.
   const planned = [];
@@ -577,7 +580,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (outcome.note) output.note = outcome.note;
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
-  return emit(output, { out, err, secrets });
+  return emit(recordVerdict(cli.audit, 'fleet', output), { out, err, secrets });
 }
 
 // Read only after the client has used it, so printed output can be redacted

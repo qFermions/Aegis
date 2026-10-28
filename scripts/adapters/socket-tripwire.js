@@ -35,6 +35,16 @@ function trip(kind) {
 }
 
 process.env.AEGIS_NETWORK_TRIPWIRE = '1';
+// Batch G3: a CLI run in a test without an injected transport writes its audit entries to a
+// temporary folder, never to the operator's real trail.
+if (!process.env.AEGIS_AUDIT_DIR) {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-audit-tripwire-'));
+  process.env.AEGIS_AUDIT_DIR = dir;
+  process.on('exit', () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* best effort */ } });
+}
 net.Socket.prototype.connect = trip('net.Socket.connect');
 net.connect = trip('net.connect');
 net.createConnection = trip('net.createConnection');

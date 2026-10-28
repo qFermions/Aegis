@@ -810,3 +810,14 @@ test('a flag on a person\'s name outside the user reads withholds the quote: acc
   const own = await cli(['verify-posted', '--channel', CHANNEL, '--expect-sha256', sha256('x'), '--not-before', NOT_BEFORE_ISO, '--execute'], { replies: [authBody(), historyBody([message(text)])] });
   assert.ok(own.stdout.includes('at home'), 'a message\'s own text is the thing being read, so its quote stays');
 });
+
+test('outside the user reads a flag keeps its quote only on a field that read exists to show: attachment authors and other unlisted fields are withheld (round 3, finding 8)', async () => {
+  const text = `${INJECTION} Call [PHONE_NUMBER] at home.`;
+  const attached = message('plain text', TS_AFTER, { attachments: [{ author_name: text, author_subname: text, title: text }], files: [{ title: text }] });
+  const run = await cli(['verify-posted', '--channel', CHANNEL, '--expect-sha256', sha256('x'), '--not-before', NOT_BEFORE_ISO, '--execute'], { replies: [authBody(), historyBody([attached])] });
+  assert.match(run.stdout, /instruction-like text/, 'the marker is still reported');
+  assert.match(run.stdout, /attachments\[0\]\.author_name/, 'the flag names the field');
+  assert.ok(!run.stdout.includes('at home'), 'no unlisted field is quoted');
+  const purpose = await cli(['channel', '--channel', CHANNEL, '--execute'], { replies: [channelBody({ purpose: { value: text } })] });
+  assert.ok(purpose.stdout.includes('at home'), 'a channel purpose is what the channel read shows, so its quote stays');
+});

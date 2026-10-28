@@ -486,22 +486,33 @@ function invalid(message) {
   return { state: STATES.INVALID_RESPONSE, ok: false, error: message };
 }
 
-// A flag on a person's own text (a profile field, a name, a requester) names its path
-// and withholds the quote, because those reads print state fields only. On every other
-// route a field under user, user_profile or profile (but its id), and a username, a real
-// or display name, an email or a phone, is a person's text too (access-logs and a
-// message author). Flags on other fields (a channel purpose, a message) keep their quote.
-// Every Slack flag passes through here: readSteps and scanAppList.
+// A flag always names its path, but it quotes the text only on a field the read exists
+// to show: on users.info and users.list the printed state fields; on every other route
+// the fields listed in QUOTED_FIELDS (a channel's name, purpose and topic, a message's
+// own text, an app's own fields, a login's agent and place). Anything else, such as a
+// person's name, a requester, an attachment author or a file title, is withheld: an
+// allow-list, so a field Slack adds later is withheld too. Every Slack flag passes
+// through here: readSteps and scanAppList.
 const PERSON_ROUTES = new Set(['users.info', 'users.list']);
-const PERSONAL_KEYS = new Set(['username', 'real_name', 'real_name_normalized', 'display_name', 'display_name_normalized', 'email', 'phone', 'first_name', 'last_name']);
+const APP_FIELDS = /^\$\.(?:approved_apps|restricted_apps|app_requests)\[[0-9]+\]\.(?:app\.(?:name|description|help_url|privacy_policy_url|app_homepage_url|app_directory_url|additional_info)|scopes\[[0-9]+\]\.(?:name|description))$/;
+const QUOTED_FIELDS = Object.freeze({
+  'auth.test': /^\$\.(?:team|url)$/,
+  'team.info': /^\$\.team\.(?:name|domain|email_domain|enterprise_name)$/,
+  'conversations.info': /^\$\.channel\.(?:name|name_normalized|purpose\.value|topic\.value)$/,
+  'conversations.history': /^\$\.messages\[[0-9]+\]\.text$/,
+  'admin.apps.approved.list': APP_FIELDS,
+  'admin.apps.restricted.list': APP_FIELDS,
+  'admin.apps.requests.list': APP_FIELDS,
+  'team.accessLogs': /^\$\.logins\[[0-9]+\]\.(?:user_agent|isp|country|region)$/,
+});
 function withholdPersonal(flags, route) {
   return (flags || []).map((f) => {
     const path = String(f.path);
     const lastKey = path.replace(/\[[0-9]+\]/g, '').split('.').pop();
-    const personal = PERSON_ROUTES.has(route)
-      ? !USER_STATE_FIELDS.includes(lastKey)
-      : /\.(?:user|user_profile|profile)\.(?!id$)/.test(path) || PERSONAL_KEYS.has(lastKey);
-    return personal ? { ...f, quote: '(personal text withheld)' } : f;
+    const shown = PERSON_ROUTES.has(route)
+      ? USER_STATE_FIELDS.includes(lastKey)
+      : Boolean(QUOTED_FIELDS[route] && QUOTED_FIELDS[route].test(path));
+    return shown ? f : { ...f, quote: '(text withheld: not a field this read shows)' };
   });
 }
 

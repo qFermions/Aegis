@@ -156,8 +156,8 @@ automated runner for the model-judged eval half (the rubric is a document only).
 
 ## Current work
 
-Batch 1's draft pull request (#4) and batch G2's draft pull request (#5), stacked on it; batch G3's
-draft pull request (#6) against `main`.
+Batch 1's pull request (#4) and batch G2's (#5) were merged into `main` on 2026-10-28 (`f185071`,
+read from the GitHub pull request API); batch G3's draft pull request (#6) is open against `main`.
 `node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
 (`docs/aegis/evidence/claim-list.txt`).
 

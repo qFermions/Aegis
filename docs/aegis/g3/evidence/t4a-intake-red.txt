@@ -1,0 +1,41 @@
+# command: node --test scripts/intake/intake.test.js
+# commit: 2b402b9 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:31:48Z  node: v24.22.1
+node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module './intake.js'
+Require stack:
+- <repo>/scripts/intake/intake.test.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    at Module._load (node:internal/modules/cjs/loader:1341:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12)
+    at require (node:internal/modules/helpers:157:16)
+    at Object.<anonymous> (<repo>/scripts/intake/intake.test.js:43:16)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '<repo>/scripts/intake/intake.test.js' ]
+}
+
+Node.js v24.22.1
+✖ scripts/intake/intake.test.js (81.43625ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.681827
+
+✖ failing tests:
+
+test at scripts/intake/intake.test.js:1:1
+✖ scripts/intake/intake.test.js (81.43625ms)
+  'test failed'
+# exit: 1  finished: 2026-10-28T08:31:49Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

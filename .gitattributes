@@ -12,3 +12,6 @@
 *.jpg binary
 *.ico binary
 *.zip binary
+
+# Email fixtures keep CRLF line endings, as real .eml files have (batch G3 intake tests)
+scripts/intake/fixtures/*.eml -text

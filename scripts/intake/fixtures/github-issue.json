@@ -1,0 +1,15 @@
+{
+  "issue": {
+    "number": 7,
+    "title": "Request read access to the docs repository",
+    "body": "Please give @new-starter read access to the docs repository so they can review drafts. Their manager approved it in [JIRA-###].",
+    "state": "open",
+    "html_url": "https://github.com/org-a/helpdesk/issues/7",
+    "repository_url": "https://api.github.com/repos/org-a/helpdesk",
+    "user": { "login": "requester-login" },
+    "labels": [{ "name": "access" }]
+  },
+  "comments": [
+    { "body": "Read only is enough; they do not need to push.", "user": { "login": "manager-login" } }
+  ]
+}

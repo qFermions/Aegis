@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "messages": [
+    { "type": "message", "user": "U0AAA00001", "team": "T0OURS0001", "ts": "1761600000.000100", "thread_ts": "1761600000.000100", "text": "Outlook keeps asking for my password since this morning, and Teams signed me out too. Contact me at <mailto:someone@example.org|someone@example.org> if needed." },
+    { "type": "message", "user": "U0AAA00002", "team": "T0OURS0001", "ts": "1761600060.000200", "thread_ts": "1761600000.000100", "text": "<@U0AAA00001> did you change your password recently?" },
+    { "type": "message", "user": "U0AAA00001", "team": "T0OURS0001", "ts": "1761600120.000300", "thread_ts": "1761600000.000100", "text": "Yes, yesterday afternoon." }
+  ]
+}

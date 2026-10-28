@@ -225,6 +225,25 @@ function buildCommentPayload({ body, isPublic }) {
   return { body: requireText(body, 'comment body'), public: isPublic === true };
 }
 
+// The Jira editor may store a pasted note with CRLF line ends, trailing spaces or
+// non-breaking spaces (batch 1 finding 10). The comment digest is taken over the body with
+// those normalised: CR LF and CR to LF, U+00A0 to a space, trailing spaces and tabs removed
+// from each line, trailing newlines removed. Any other change, a word or markup the editor
+// converted, changes the digest, so a converted note fails closed.
+function normaliseCommentBody(text) {
+  return String(text)
+    .replace(/\r\n?/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+$/, ''))
+    .join('\n')
+    .replace(/\n+$/, '');
+}
+
+function commentDigest({ body, public: isPublic }) {
+  return sha256Hex(serializePayload({ body: normaliseCommentBody(body), public: isPublic === true }));
+}
+
 // The build*Confirmation helpers produce the binding line printed with every HUMAN-RUN
 // procedure: site, target and full payload SHA-256 in one phrase, so the administrator
 // can see exactly what they are about to send and notice any drift between two previews.
@@ -510,7 +529,7 @@ function verifyCommentReadBack(json, commentId, expectSha256) {
   if (!json || typeof json !== 'object') throw new ContractError('Malformed comment read-back.');
   const id = String(json.id === undefined ? '' : json.id);
   if (id !== commentId || typeof json.body !== 'string' || typeof json.public !== 'boolean' ||
-      sha256Hex(serializePayload({ body: json.body, public: json.public })) !== expectSha256) {
+      commentDigest({ body: json.body, public: json.public }) !== expectSha256) {
     throw new ContractError('Comment read-back did not prove the approved id, body, and visibility.');
   }
   return { id };
@@ -674,10 +693,10 @@ async function cmdComment(runtime, args) {
   runtime.out(`Visibility: ${visibility}${payload.public ? ' (the reporter can read it)' : ' (agents only)'}`);
   runtime.out(`Payload binding: ${buildCommentConfirmation(site, issueKey, payload)}`);
   printProcedure(runtime, [
-    `  1. Portal: open ${issueKey} -> ${payload.public ? 'Reply to customer' : 'Add internal note'} -> paste the body from the payload above, unedited -> Save.`,
+    `  1. Portal: open ${issueKey} -> ${payload.public ? 'Reply to customer' : 'Add internal note'} -> paste the body from the payload above, unedited, in the plain-text editor (the rich-text editor may convert markup and the read-back would then fail closed) -> Save.`,
     ...apiLines(site, apiPath, payload),
     '  3. Prove it with a read-back, using the comment id Jira returned:',
-    `     node scripts/jira-client.js verify-comment --issue ${issueKey} --comment-id [COMMENT_ID] --expect-sha256 ${sha256Hex(serializePayload(payload))}` +
+    `     node scripts/jira-client.js verify-comment --issue ${issueKey} --comment-id [COMMENT_ID] --expect-sha256 ${commentDigest(payload)}` +
       ` --not-before ${previewNotBefore(runtime)} --execute`,
   ]);
   if (args.execute === true || args.confirm !== undefined) {
@@ -880,12 +899,14 @@ module.exports = {
   buildCreateConfirmation,
   buildCreatePayload,
   buildTransitionConfirmation,
+  commentDigest,
   contractFetch,
   createDigest,
   fetchAllTransitions,
   loadCredentials,
   normalizeIssueKey,
   normalizeSite,
+  normaliseCommentBody,
   normalizeWriteReceipt,
   parseArgs,
   preflightTransition,

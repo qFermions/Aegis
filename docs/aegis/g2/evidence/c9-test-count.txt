@@ -1,4 +1,4 @@
-# C9: node --test count, base 3592bd1 against head (battery capture of 2026-10-28T04:20:35Z at 0a3e006)
+# C9: node --test count, base 3592bd1 against head (battery capture of 2026-10-28T04:29:17Z at cef6cee)
 # note: any U+2014 is written as --
 
 base: docs/aegis/g2/baseline/node-test.txt: ℹ tests 588, 556 top-level tests plus 32 subtests

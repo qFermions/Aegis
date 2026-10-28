@@ -167,7 +167,7 @@ function sanitizationHits(text) {
   }
   if (PHONE_LITERAL.test(unbracketed)) hits.push('phone number pattern (use [PHONE_NUMBER])');
   hits.push(...injectionHits(text, forms));
-  if (hasForeignOrgToken(text, forms)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant; a bracketed chat handle ending in a dictionary word reads as one too)');
+  if (hasForeignOrgToken(text, forms)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
   return hits;
 }
 

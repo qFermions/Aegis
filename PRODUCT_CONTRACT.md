@@ -186,11 +186,12 @@ Batch G3 (2026-10-28, branch `feat/g3-production-hardening`, base `main` at
 - Changed, "What Aegis is", scope: "Linear (an IT ticket system beside Jira), Zoom
   Rooms," became "Linear (an IT ticket system beside Jira), GitHub (organization
   access and security), Zoom Rooms,". Reason: the batch ships 5 GitHub runbooks with
-  10 corpus tickets and a read-only connector (`docs/aegis/capability-map.md`).
+  10 corpus tickets and a read-only connector (`docs/aegis/capability-map.md`, rows
+  63 to 67).
 - Added, "Where code enforces it": the batch G3 bullet. Reason: three connectors, an
   intake and an audit trail now exist, and the boundary audit
-  (`docs/aegis/boundary-audit.md`) records that none of them can write to a vendor
-  system.
+  (`docs/aegis/boundary-audit.md`, rows 29 to 40) records that none of them can write
+  to a vendor system.
 - Not changed: an approval (typed, or a Linear or Jira approval) still authorizes a
   human's procedure only. The change record (`scripts/audit/change-record.js`) links
   the approval, the issued procedure's digest and the read-back; it never runs the

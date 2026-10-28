@@ -9,7 +9,10 @@ if (!/^[0-9a-f]{7,40}$/.test(base || '')) { console.error('usage: leak-grep.js <
 const log = execFileSync('git', ['log', '-p', '--no-color', `${base}..HEAD`], { maxBuffer: 1 << 30, encoding: 'utf8' });
 // the charter's expression (as grep -E receives it: C:\\Users is one backslash), case-insensitive
 const charter = /api[_-]?key|secret|token|password|\/Users\/|C:\\Users|@gmail/i;
-const personal = /\/Users\/|C:\\Users|@gmail/; // case-sensitive: a personal path or mail
+// a personal path or mail, over every line: /Users/ case-sensitive (so the API path /users/ is not
+// one); a Windows home path in any case, with one backslash or the two a JS or JSON string holds;
+// @gmail in any case
+const personal = /\/Users\/|[Cc]:\\{1,2}[Uu][Ss][Ee][Rr][Ss]|@[Gg][Mm][Aa][Ii][Ll]/;
 const shapes = [
   ['GitHub token', /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})/],
   ['Okta SSWS token', /\b00[A-Za-z0-9_-]{40}\b/],
@@ -30,19 +33,19 @@ const personalHits = [];
 for (const line of log.split('\n')) {
   n += 1;
   const d = line.match(/^diff --git a\/(\S+)/);
-  if (d) { file = d[1]; continue; }
+  if (d) file = d[1]; // the header line is still searched, as the charter grep searches it
   const m = line.match(charter);
   if (m) {
     const k = m[0].toLowerCase();
     keywords[k] = (keywords[k] || 0) + 1;
     byFile.set(file, (byFile.get(file) || 0) + 1);
-    if (personal.test(line)) personalHits.push(`${n}: ${file}: ${line.slice(0, 160)}`);
   }
+  if (personal.test(line)) personalHits.push(`${n}: ${file}: ${line.slice(0, 160)}`);
   if (line.startsWith('+')) for (const [name, re] of shapes) if (re.test(line)) shapeHits.push(`${n}: ${name}: ${file}: ${line.trim().slice(0, 140)}`);
 }
 const total = Object.values(keywords).reduce((a, b) => a + b, 0);
 console.log(`charter grep: ${total} hit lines (case-insensitive) in ${byFile.size} files; by keyword: ${JSON.stringify(keywords)}`);
-console.log(`case-sensitive /Users/, C:\\Users or @gmail (a personal path or mail): ${personalHits.length}`);
+console.log(`a personal path or mail on any line (/Users/; C:\\Users or C:\\\\Users in any case; @gmail): ${personalHits.length}`);
 personalHits.forEach((p) => console.log(`  ${p}`));
 console.log('hits by file (path: lines):');
 [...byFile.entries()].sort((a, b) => b[1] - a[1]).forEach(([f, c]) => console.log(`  ${f}: ${c}`));

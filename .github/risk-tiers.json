@@ -17,6 +17,8 @@
     "scripts/replay/**",
     "scripts/tier/**",
     "scripts/graph/**",
+    "scripts/audit/**",
+    "scripts/intake/**",
     "modules/automation/scripts/deploy-check.js",
     "scripts/adapters/**",
     "scripts/gws-posture-audit.js",

@@ -1,0 +1,39 @@
+# command: node --test scripts/risk_tier.test.js
+# commit: 1f71b28 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:34:53Z  node: v24.22.1
+✔ A: a docs-only change is tier A and lists no path (123.734242ms)
+✔ B: evaluation code is tier B and only the B paths are listed (136.916322ms)
+✔ C: a CI workflow change is tier C (135.759134ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (133.119983ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (126.350609ms)
+✔ C: scripts/audit/** (the hash-chained audit trail and change records) is tier C, not scripts/** B (145.522207ms)
+✔ C: scripts/intake/** (outside content into a graph case, with tenant binding) is tier C, not scripts/** B (123.460913ms)
+✔ C: the batch G3 connector scripts/adapters/github-client.js is tier C (135.072122ms)
+✔ C: the batch G3 connector scripts/adapters/okta-client.js is tier C (135.397987ms)
+✔ C: the batch G3 connector scripts/adapters/msgraph-client.js is tier C (129.881261ms)
+✔ one C path wins over many B paths, and only the C path is listed (142.365587ms)
+✔ ** matches nested paths at any depth (146.750858ms)
+✔ uncommitted and untracked changes count toward the tier (141.303211ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (235.082695ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (116.78217ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (3.430028ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (122.06457ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (176.274349ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (490.237126ms)
+✔ the CLI runs when invoked through a symlinked path (118.990791ms)
+✔ C: scripts/adapters/readonly-contract.js is tier C, not scripts/** B (123.438595ms)
+✔ C: scripts/adapters/fleet-client.js is tier C, not scripts/** B (134.791696ms)
+✔ C: scripts/adapters/jamf-client.js is tier C, not scripts/** B (135.23061ms)
+✔ C: scripts/adapters/slack-client.js is tier C, not scripts/** B (120.86483ms)
+✔ C: scripts/adapters/linear-client.js is tier C, not scripts/** B (127.334517ms)
+✔ C: scripts/adapters/gws-client.js is tier C, not scripts/** B (130.084206ms)
+✔ C: scripts/gws-posture-audit.js is tier C, not scripts/** B (137.665754ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4168.072114
+# exit: 0  finished: 2026-10-28T09:34:57Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

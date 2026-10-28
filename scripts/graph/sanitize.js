@@ -112,7 +112,7 @@ function scanText(text, opts = {}) {
       if (pattern.test(unmasked)) result.piiWarnings.push({ line: n, label });
     }
     if (hasForeignOrgToken(line, forms)) {
-      result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });
+      result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case; a chat handle ending in a dictionary word reads as one: write it without the brackets)', text: '[REDACTED: foreign org token on this line]' });
     }
     for (const marker of injectionMarkersIn(line, forms)) {
       result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });

@@ -443,14 +443,21 @@ test('C15 a second org name inside the [@Aegion_*] namespace or joined by a dot 
   }
 });
 
-test('C16 a chat handle written in lower case is not a second tenant when its last word is a dictionary suffix; the same words with a capital still are', () => {
+test('C16 a bracketed chat handle whose last word is a dictionary suffix reads as a second tenant (fail safe), and the refusal says how to write a handle', () => {
   const { hasForeignOrgToken } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
-  const handles = ['[@it_voip]', '[@ops-wan]', '[@max_size]', '[@sec_alarm]', '[@web.domain]', '[@noc_isp2]'];
-  for (const text of handles) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is a chat handle`);
-  for (const text of ['[@Contoso_voip]', '[@IT_VOIP]', '[@contosoDomain]', '[@Contoso_domain2]']) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} is a second tenant`);
+  const lookalikes = ['[@it_voip]', '[@ops-wan]', '[@max_size]', '[@globex_domain]', '[@globex_site_2]', '[@Contoso_voip]', '[@IT_VOIP]', '[@contosoDomain]'];
+  for (const text of lookalikes) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} reads as a second tenant`);
 
-  for (const handle of ['[@it_voip]', '[@ops-wan]']) {
-    const r = graph(['new', '--ticket-file', writeFile('handle.txt', `Phones down, see the ${handle} thread; the finance site shared by [UPN] will not open for [GUEST_UPN].`)]);
-    assert.equal(r.code, 0, `${handle} is a chat mention: ${short(r)}`);
+  const dep = writeFile('authority.md', 'authority doctrine v1 for guest access\n');
+  for (const handle of ['[@it_voip]', '[@globex_domain]']) {
+    const ticket = `Phones down, see the ${handle} thread; the finance site shared by [UPN] will not open for [GUEST_UPN].`;
+    const before = runDirs();
+    const g = graph(['new', '--ticket-file', writeFile('handle.txt', ticket)]);
+    assert.equal(g.code, 3, `${handle} at graph intake: ${short(g)}`);
+    assert.deepEqual(runDirs(), before);
+    assert.match(g.stdout + g.stderr, /a chat handle ending in a dictionary word reads as one: write it without the brackets/, 'the refusal says how to write a handle');
+    const r = replayAs(TENANT_A, path.join(freshDir('c16-replay'), 'store'))(['record', '--ticket', ticket, '--solution-file', writeFile('solution.md', fixture('tenant-solution.md')), '--deps', dep]);
+    assert.equal(r.code, 4, `${handle} at replay record: ${short(r)}`);
+    assert.match(r.stdout + r.stderr, /a chat handle ending in a dictionary word reads as one: write it without the brackets/, 'the replay refusal says the same');
   }
 });

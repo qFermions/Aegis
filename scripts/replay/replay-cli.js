@@ -498,6 +498,12 @@ function main() {
         out({ ok: true, result: 'STALE', caseId: r.caseId, via: r.via, changed: drift.length ? drift : 'previously detected (status shows the checked history)', route: 'adaptive', note: 'authority basis changed; preserved as historical, not current' });
         break;
       }
+      // the same rule as render: only a verified case with evidence replays; any other
+      // status (a case file edited on disk) is a MISS, never a CACHE_HIT (batch G3)
+      if (c.status !== 'verified' || !c.provenance || !c.provenance.evidence) {
+        out({ ok: true, result: 'MISS', key: r.key, caseId: r.caseId, route: 'adaptive', note: 'case is not in a verified state (unknown status or no evidence); work the ticket fresh' });
+        break;
+      }
       const hit = { ok: true, result: 'CACHE_HIT', caseId: r.caseId, via: r.via, verifiedAt: c.provenance.verifiedAt, deps: c.deps.length, render: `node scripts/replay/replay-cli.js render ${r.caseId}` };
       if (r.via === 'shape') {
         hit.objectClass = r.objectClass; hit.anchor = r.anchor;

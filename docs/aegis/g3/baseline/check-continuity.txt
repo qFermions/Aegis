@@ -1,0 +1,16 @@
+# command: node scripts/harness/check-continuity.js
+# commit: f185071  started: 2026-10-28T07:23:34Z  node: v24.22.1  pwsh: PowerShell 7.6.9
+PASS  snapshot readable (3328 bytes)
+PASS  section present: ## Identity
+PASS  section present: ## Repo ground truth
+PASS  section present: ## Component state
+PASS  section present: ## Active work
+PASS  section present: ## Next actions
+PASS  section present: ## Verification
+STALE HEAD in snapshot b9acd99 != live f185071 -- refresh the snapshot
+PASS  Snapshot-Date present
+PASS  all 20 referenced repo paths exist
+
+RESULT: STALE -- structure OK but HEAD moved; refresh the snapshot (0 warning(s))
+# exit: 2  finished: 2026-10-28T07:23:34Z
+# capture edited after the run: U+2014 written as "--" (2), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

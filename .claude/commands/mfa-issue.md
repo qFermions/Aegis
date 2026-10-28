@@ -75,12 +75,25 @@ if ($confirmation -ceq $requiredConfirmation) {
 ```
 </details>
 
+## 🔎 Read-back (read-only, after the person finishes)
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`) proves each step. Use the user's object ID as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
+
+```bash
+# HUMAN-RUN read-only read-back after "Require re-register MFA": passes only when no phone, Authenticator or software OATH method is left
+node scripts/adapters/msgraph-client.js verify-mfa-cleared --user [USER_ID] --execute
+# HUMAN-RUN read-only read-back after the user registers on the new phone: passes only when an Authenticator method is registered
+node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+# HUMAN-RUN read-only read-back: passes only when the sign-in logs show a successful sign-in at or after [NOT_BEFORE] (Entra ID P1 or P2)
+node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```
+
 ## ⚠️ Risk warning
 - **Never disable MFA org-wide** as a "fix." Per-user temporary exclusion only, time-boxed, documented, reverted.
 - The CA exclusion is a real security gap while open — re-add the user immediately after registration. Route through independent plan review if it touches a broad policy.
 
 ## ✅ Verification checklist
 - [ ] User completed registration at aka.ms/mfasetup (new method shows in Authentication methods)
+- [ ] `verify-mfa-cleared` passed after the re-register step, and `verify-mfa-method` and `verify-signin` pass after the new registration
 - [ ] Test sign-in prompts for MFA and succeeds
 - [ ] Any CA exclusion has been **removed** (no lingering bypass)
 - [ ] Sign-in logs show successful MFA

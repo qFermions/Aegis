@@ -70,7 +70,7 @@ const ADAPTERS = {
   },
   slack: {
     file: 'slack-client.js',
-    env: { SLACK_TOKEN: sentinel(4), SLACK_TEAM_ID: 'T0FIXTURE' },
+    env: { SLACK_TOKEN: sentinel(4), SLACK_ACCESS_LOGS_TOKEN: sentinel(6), SLACK_TEAM_ID: 'T0FIXTURE' },
     commands: [['whoami'], ['user', '--user', 'U0FIXTURE'], ['users'], ['team'], ['channel', '--channel', 'C0FIXTURE'], ['app-requests'],
       ['apps-approved'], ['apps-restricted'], ['access-logs'], ['verify-deactivated', '--user', 'U0FIXTURE'], ['verify-reactivated', '--user', 'U0FIXTURE'],
       ['verify-guest', '--user', 'U0FIXTURE', '--type', 'single'], ['verify-archived', '--channel', 'C0FIXTURE'],

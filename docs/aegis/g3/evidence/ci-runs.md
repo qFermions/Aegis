@@ -16,4 +16,4 @@ Every run of the two workflows on `feat/g3-production-hardening`, read back with
 | `19522d3` | 40687888589 | success | 2.6 | 40687888558 | success | 5.2 |
 | `d0f2b3b` | 40692316423 | success | 2.4 | 40692316513 | success | 5.3 |
 
-11 heads, 22 runs: 21 success, 1 failure (Release Gate at `96564ea`). Total wall minutes: CI 25.1, Release Gate 53.0. Runs at later heads are added to this file as they finish.
+11 heads, 22 runs: 21 success, 1 failure (Release Gate at `96564ea`). Total wall minutes: CI 25.1, Release Gate 53.0. Runs at later heads, the last one included, are listed in the pull request body: adding them here would itself move the head.

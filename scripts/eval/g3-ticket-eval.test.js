@@ -104,7 +104,11 @@ test('CI runs the G3 eval beside the other ticket evals', () => {
 
 // Batch G3: the report's title names every platform group the corpus scores, GitHub
 // included (it read "Okta, Microsoft 365, ambiguous, intake sources" after GitHub landed).
-test('the report title names GitHub, Okta, Microsoft 365, the ambiguous tickets and the intake sources', () => {
+// Code review round 1 (finding 12): the title is built from the minimums, so a group added
+// to MINIMUMS without a name in GROUP_NAMES fails here instead of leaving the title stale.
+test('the report title names every group the minimums score, built from MINIMUMS', () => {
   const title = g3.render(g3.evaluate(corpus)).split('\n').find((l) => /^G3 ticket eval/.test(l));
   assert.match(title, /^G3 ticket eval \(GitHub, Okta, Microsoft 365, ambiguous, intake sources\)/);
+  assert.deepEqual(Object.keys(g3.GROUP_NAMES).sort(), Object.keys(g3.MINIMUMS).sort(), 'one name per minimum');
+  for (const name of Object.values(g3.GROUP_NAMES)) assert.ok(title.includes(name), name);
 });

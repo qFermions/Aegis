@@ -1,0 +1,12 @@
+node --test --test-name-pattern=B17 scripts/untrusted/poisoned-memory.test.js
+✔ B17 an instruction marker split across a line break is flagged at the edge, refused at memory propose, and withheld at memory read (370.908242ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 479.009489
+exit code: 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -119,7 +119,37 @@ function scanText(text, opts = {}) {
     }
   });
 
+  // A marker split across a line break ("ignore previous" on one line, "instructions" on
+  // the next) is one instruction to a model. The whole text is read again with each line
+  // break as a space, through the same shared rule, as the replay cache does. A marker
+  // found only that way is flagged at the line where it starts, quoting the lines it spans.
+  if (lines.length > 1) {
+    const flagged = new Set(result.injectionFlags.map((f) => f.marker));
+    const last = lines.length - 1;
+    const span = (from, to) => lines.slice(from, to + 1).join(' ');
+    for (const marker of injectionMarkersIn(span(0, last))) {
+      if (flagged.has(marker)) continue;
+      // A span that holds the marker still holds it with more lines around it, so the
+      // start and end lines are found by binary search, not by trying every pair.
+      const holds = (from, to) => injectionMarkersIn(span(from, to)).includes(marker);
+      const start = lastWhere(0, last, (k) => holds(k, last));
+      const end = firstWhere(start, last, (j) => holds(start, j));
+      result.injectionFlags.push({ line: start + 1, marker, quote: lines.slice(start, end + 1).map((l) => l.trim()).join(' ').slice(0, 160) });
+    }
+  }
+
   return result;
+}
+
+// Binary search over line numbers: the last index in [lo, hi] where ok holds (ok is true
+// up to some index and false after it), and the first one (false, then true).
+function lastWhere(lo, hi, ok) {
+  while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (ok(mid)) lo = mid; else hi = mid - 1; }
+  return lo;
+}
+function firstWhere(lo, hi, ok) {
+  while (lo < hi) { const mid = Math.floor((lo + hi) / 2); if (ok(mid)) hi = mid; else lo = mid + 1; }
+  return lo;
 }
 
 /** Collect every string leaf of a JSON value with its path (for artifact scans). */

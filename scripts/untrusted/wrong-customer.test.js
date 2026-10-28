@@ -424,3 +424,41 @@ test('C14 the org-token suffix list equals the placeholder dictionary\'s [@Aegio
   assert.ok(suffixes.size > 0, 'the dictionary lists [@Aegion_*] tokens');
   assert.deepEqual([...ORG_TOKEN_SUFFIXES].sort(), [...suffixes].sort(), 'add a dictionary token here when the dictionary gains one');
 });
+
+// ── batch G2 code review: a second org's name inside the own namespace, or joined by a dot ──
+
+test('C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours', () => {
+  const { hasForeignOrgToken, ORG_TOKEN_SUFFIXES } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+  const foreign = ['[@Aegion_Contoso_DOMAIN]', '[@Aegion_Contoso_SITE_2]', '[@Aegion Contoso VoipUrl]', '[@Contoso.DOMAIN]', '[@Contoso.SiteCount]', '[@Aegion.Contoso_DOMAIN]'];
+  for (const text of foreign) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} is a second tenant`);
+  for (const suffix of ORG_TOKEN_SUFFIXES) assert.equal(hasForeignOrgToken(`[@Aegion_${suffix}]`), false, `[@Aegion_${suffix}] is ours`);
+  for (const text of ['[@Aegion]', '[@Aegion SITE_5]', '[@Aegion_DomainShort]', '[@first.last]']) assert.equal(hasForeignOrgToken(text), false, `${JSON.stringify(text)} is not a second tenant`);
+
+  for (const token of ['[@Aegion_Contoso_DOMAIN]', '[@Contoso.DOMAIN]']) {
+    const before = runDirs();
+    const g = graph(['new', '--ticket-file', writeFile('ticket.txt', `Guest [GUEST_UPN] from ${token} cannot open the finance site shared by [UPN].`)]);
+    assert.equal(g.code, 3, `${token} at graph intake: ${short(g)}`);
+    assert.deepEqual(runDirs(), before);
+    assert.ok(!g.stdout.includes('Contoso') && !g.stderr.includes('Contoso'), 'the foreign token is never echoed');
+  }
+});
+
+test('C16 a bracketed chat handle whose last word is a dictionary suffix reads as a second tenant (fail safe); the graph refusal names that case, and no refusal offers a rewrite that would pass a real one', () => {
+  const { hasForeignOrgToken } = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
+  const lookalikes = ['[@it_voip]', '[@ops-wan]', '[@max_size]', '[@globex_domain]', '[@globex_site_2]', '[@Contoso_voip]', '[@IT_VOIP]', '[@contosoDomain]'];
+  for (const text of lookalikes) assert.equal(hasForeignOrgToken(text), true, `${JSON.stringify(text)} reads as a second tenant`);
+
+  const dep = writeFile('authority.md', 'authority doctrine v1 for guest access\n');
+  for (const handle of ['[@it_voip]', '[@globex_domain]']) {
+    const ticket = `Phones down, see the ${handle} thread; the finance site shared by [UPN] will not open for [GUEST_UPN].`;
+    const before = runDirs();
+    const g = graph(['new', '--ticket-file', writeFile('handle.txt', ticket)]);
+    assert.equal(g.code, 3, `${handle} at graph intake: ${short(g)}`);
+    assert.deepEqual(runDirs(), before);
+    assert.match(g.stdout + g.stderr, /a bracketed chat handle ending in a dictionary word reads as a second org's token too/, 'the refusal names the handle case');
+    assert.doesNotMatch(g.stdout + g.stderr, /without the brackets|drop the brackets|remove the brackets/i, 'the refusal gives no rewrite that would also pass a real second tenant (round 3, finding 2)');
+    const r = replayAs(TENANT_A, path.join(freshDir('c16-replay'), 'store'))(['record', '--ticket', ticket, '--solution-file', writeFile('solution.md', fixture('tenant-solution.md')), '--deps', dep]);
+    assert.equal(r.code, 4, `${handle} at replay record: ${short(r)}`);
+    assert.doesNotMatch(r.stdout + r.stderr, /without the brackets|drop the brackets|remove the brackets/i, 'the replay refusal gives no rewrite either');
+  }
+});

@@ -1,0 +1,18 @@
+# command: diff of the WARN lines of node scripts/pre-commit-check.js --all at 0995f92 (old marker list) and 5629f57 (tier-guard markers)
+# captured: 2026-10-28T03:26:33Z at e050d78
+# note: any U+2014 is written as --; '>' lines are WARNs only the new marker scan reports (15); no line was removed
+> .claude/commands/slack-user-lifecycle.md ⚠️ WARN Line 269: Prompt-injection marker (mode-override claim)
+> scripts/adapters/fleet-client.test.js ⚠️ WARN Line 591: Prompt-injection marker (mode-override claim)
+> scripts/adapters/linear-client.test.js ⚠️ WARN Line 411: Prompt-injection marker (mode-override claim)
+> scripts/adapters/linear-client.test.js ⚠️ WARN Line 822: Prompt-injection marker (mode-override claim)
+> scripts/adapters/readonly-contract.test.js ⚠️ WARN Line 326: Prompt-injection marker (mode-override claim)
+> scripts/eval/g2-tickets.json ⚠️ WARN Line 456: Prompt-injection marker (mode-override claim)
+> scripts/untrusted/instruction-injection.test.js ⚠️ WARN Line 171: Prompt-injection marker (disregard-rules)
+> scripts/untrusted/instruction-injection.test.js ⚠️ WARN Line 172: Prompt-injection marker (system-prompt override)
+> scripts/untrusted/instruction-injection.test.js ⚠️ WARN Line 173: Prompt-injection marker (ignore-previous-instructions)
+> scripts/untrusted/instruction-injection.test.js ⚠️ WARN Line 174: Prompt-injection marker (ignore-previous-instructions)
+> scripts/untrusted/instruction-injection.test.js ⚠️ WARN Line 175: Prompt-injection marker (mode-override claim)
+> scripts/untrusted/instruction-injection.test.js ⚠️ WARN Line 176: Prompt-injection marker (ignore-previous-instructions)
+> scripts/untrusted/instruction-injection.test.js ⚠️ WARN Line 177: Prompt-injection marker (ignore-previous-instructions)
+> scripts/untrusted/poisoned-memory.test.js ⚠️ WARN Line 149: Prompt-injection marker (ignore-previous-instructions)
+> scripts/untrusted/poisoned-memory.test.js ⚠️ WARN Line 150: Prompt-injection marker (ignore-previous-instructions)

@@ -117,7 +117,7 @@ jobs:
       - name: Probe for the eval scripts
         id: probe
         run: |
-          if [ -f scripts/eval/ms-ticket-eval.js ] && [ -f scripts/eval/gws-ticket-eval.js ] && [ -f scripts/replay/replay-demo.js ]; then
+          if [ -f scripts/eval/ms-ticket-eval.js ] && [ -f scripts/eval/gws-ticket-eval.js ] && [ -f scripts/eval/g2-ticket-eval.js ] && [ -f scripts/replay/replay-demo.js ]; then
             echo "has_evals=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_evals=false" >> "$GITHUB_OUTPUT"
@@ -144,6 +144,9 @@ jobs:
 
       - name: Google Workspace / Okta / Jamf ticket eval
         run: node scripts/eval/gws-ticket-eval.js
+
+      - name: G2 ticket eval (Google Workspace, Fleet, Jamf, Slack, Linear; counts per platform)
+        run: node scripts/eval/g2-ticket-eval.js
 
       - name: Replay lifecycle demo
         run: node scripts/replay/replay-demo.js

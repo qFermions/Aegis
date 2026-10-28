@@ -1,136 +1,52 @@
-# checks: batch 1, baseline and boundary
+# checks: batch G2, Google Workspace, Fleet, Jamf, Slack and Linear
 
-Branch `chore/baseline-and-boundary` on qFermions/Aegis, base `main` at `d5fc8c0` (the merge of PR #3). Evidence files: `docs/baseline/` (Phase 0, fresh clone) and `docs/baseline/branch/` (the battery on the branch). Verdicts: pass, fail, unresolved. The previous batch's table is kept at `docs/review/batches/review-layers-checks.md`.
+Branch `feat/g2-gws-fleet-jamf-slack-linear` on qFermions/Aegis, stacked on draft PR #4 (`chore/baseline-and-boundary`, head `3592bd1`; PR #4 was not merged when this batch started: `git merge-base --is-ancestor 3592bd1 origin/main` exit 1). Evidence files: `docs/aegis/g2/baseline/` (Phase 0, fresh clone of `3592bd1`) and `docs/aegis/g2/` (captures on the branch). Verdicts: pass, fail, unresolved. The previous batch's table is kept at `docs/review/batches/batch1-checks.md`.
 
-## Baseline (Phase 0, fresh clone of d5fc8c0, node v24.22.1, pwsh 7.5.4)
+## Baseline (Phase 0, fresh clone of 3592bd1, node v24.22.1, pwsh 7.6.9)
 
 | check | command | result | evidence |
 |---|---|---|---|
-| clone | `git clone --depth 1 https://github.com/qFermions/Aegis /tmp/fresh` | exit 0, HEAD `d5fc8c0`; no `package.json`, no lockfile, nothing to install | `docs/baseline/clone.txt` |
-| tests | `node --test` | 505 tests, 505 pass, 0 fail, exit 0 | `docs/baseline/node-test.txt` (tail) |
-| Microsoft eval | `node scripts/eval/ms-ticket-eval.js` | 28/28 tickets, 6/6 dangerous pairs, exit 0 | `docs/baseline/ms-ticket-eval.txt` |
-| Google eval | `node scripts/eval/gws-ticket-eval.js` | 38/38 tickets, 9/9 dangerous pairs, exit 0 | `docs/baseline/gws-ticket-eval.txt` |
-| structure lint | `node scripts/lint/command-structure.js` | 77 commands, clean, exit 0 | `docs/baseline/command-structure-lint.txt` |
-| replay demo | `node scripts/replay/replay-demo.js` | 17 steps, exit 0 | `docs/baseline/replay-demo.txt` |
-| scanner | `node scripts/pre-commit-check.js --all` | 276 files, 0 BLOCK, 170 WARN, exit 0 | `docs/baseline/pre-commit-check-all.txt` |
-| release boundary | `node scripts/harness/release-boundary-check.js` | PASS, exit 0 | `docs/baseline/release-boundary-check.txt` |
-| continuity (session-start gate, not in CI) | `node scripts/harness/check-continuity.js` | STALE, exit 2 (snapshot HEAD `b9acd99`, live `d5fc8c0`) | `docs/baseline/check-continuity.txt` |
+| clone | `git clone https://github.com/qFermions/Aegis fresh`, then `git checkout --detach 3592bd1` | exit 0, HEAD `3592bd1`; no `package.json`, no lockfile, nothing to install | `docs/aegis/g2/baseline/clone.txt` |
+| tests | `node --test` | 588 tests, 588 pass, 0 fail, exit 0 | `docs/aegis/g2/baseline/node-test.txt:747-750` |
+| own-harness suites inside `node --test` (each counts as 1 test there) | same run | deploy-check 21 passed (`:25`), health-check 19 passed (`:47`), graph 33/33 (`:391`), memory 14/14 (`:519`), replay 16/16 (`:616`) | `docs/aegis/g2/baseline/node-test.txt` |
+| Microsoft eval | `node scripts/eval/ms-ticket-eval.js` | 28/28 tickets, 6/6 dangerous pairs, 7 floored, exit 0 | `docs/aegis/g2/baseline/ms-ticket-eval.txt` |
+| Google eval | `node scripts/eval/gws-ticket-eval.js` | 38/38 tickets, 9/9 dangerous pairs, 16 floored, exit 0 | `docs/aegis/g2/baseline/gws-ticket-eval.txt` |
+| structure lint | `node scripts/lint/command-structure.js` | 77 commands (A 36, B 19, C 11, D 3, E 6, alias 2), clean, exit 0 | `docs/aegis/g2/baseline/command-structure-lint.txt` |
+| replay demo | `node scripts/replay/replay-demo.js` | 17 steps, exit 0 | `docs/aegis/g2/baseline/replay-demo.txt` |
+| scanner | `node scripts/pre-commit-check.js --all` | 360 files, 0 BLOCK, 170 WARN, exit 0 | `docs/aegis/g2/baseline/pre-commit-check-all.txt` |
+| release boundary | `node scripts/harness/release-boundary-check.js` | PASS, exit 0 | `docs/aegis/g2/baseline/release-boundary-check.txt` |
+| continuity (session-start gate, not in CI) | `node scripts/harness/check-continuity.js` | STALE, exit 2 (snapshot HEAD `b9acd99`, live `3592bd1`) | `docs/aegis/g2/baseline/check-continuity.txt` |
+| CLAUDE.md size | `wc -c CLAUDE.md` | 19041 bytes | this session, at `3592bd1` |
 
-Floors from PR #3's head match on every row: 505 tests, 28/28 and 6/6, 38/38 and 9/9, 77 clean, 0 BLOCK, PASS. No gap.
+Floors from PR #4's head match on every row: 588 tests, 28/28 and 6/6, 38/38 and 9/9, 77 clean, 0 BLOCK, PASS. No gap. Captures carry U+2014 from tool output as "--" and say so on their last line.
 
 ## Acceptance checks
 
 | requirement | verdict | evidence | correction |
 |---|---|---|---|
-| A1 capability map rows carry evidence; "verified now" cites this session | pass | `docs/aegis/evidence/a1-capability-evidence.txt` (at `fbf6a15`): 36 rows, 0 failing, 0 rows whose platform is "Microsoft and Google"; status counts 18 verified now, 1 implemented but unverified, 13 partial, 4 missing; every "verified now" row cites `docs/baseline/` or `docs/aegis/evidence/` (captured 2026-10-27). Drift section: `docs/aegis/capability-map.md`, "## Drift", 20 bullets, 5 gaps resolved and 13 open | Evidence review: row 22 merged Microsoft and Google; split into rows 22 (Microsoft) and 36 (Google, Okta, Jamf), and the header states the platform rule (`fbf6a15`) |
-| A2 boundary audit: no gate "none" left unnamed; every fix has its own commit and test | pass | `docs/aegis/boundary-audit.md` rows 1 to 19 and "Result": 1 violation (rows 1 and 2), fixed in `519db17` with `scripts/jira-client.test.js` and `scripts/command-safety-gates.test.js` cases; rows 4, 5 and 12 keep no code gate and are named with their reason (owner decisions). Every production-mutating path is in the C list of `.github/risk-tiers.json`; `scripts/risk_tier.test.js` 15/15 | Tier C list gained `modules/automation/scripts/deploy-check.js` and `scripts/init-memory.js`, one test case each |
-| A3 three untrusted-data tests exist, run, pass; expected decision committed first | pass | `docs/aegis/evidence/a3-expected-decision-first.txt`: all three files added in `109387c` with an EXPECTED DECISION header and 0 tests; the test bodies follow in `717b585`, `e996f3d`, `1b7500c`, the fixes after them. Run: `docs/baseline/branch/node-test.txt:689-745`, 57 tests, all pass | |
-| A4 harness and review layers present | pass | `docs/aegis/evidence/a4-harness-files.txt` (12 files plus `release-gate.yml`; REVIEW.md 6 headings), `docs/aegis/evidence/a4-plugin-validate.txt` (`claude plugin validate .claude/agents`: passed, exit 0), both at `dfc9da3`; at `fbf6a15`, `docs/aegis/evidence/final-head-checks.txt`: `grep -c "^## Harness$" CLAUDE.md` 1, `grep -c "^## Review$" CLAUDE.md` 1, evidence-reviewer frontmatter with tools, model, effort, and `.claude/settings.json` absent (left absent) | Head greps saved after the evidence review |
-| A5 PRODUCT_CONTRACT.md changes readable line by line | pass | `PRODUCT_CONTRACT.md:125` "## Changes in this batch": each added or changed passage named with its reason, and "Nothing was removed"; `docs/aegis/evidence/final-head-checks.txt`: `git diff --numstat d5fc8c0...HEAD -- PRODUCT_CONTRACT.md` 73 added, 1 removed, the one removed line being the scope sentence the section names as changed (`2a3e11d`) | Numstat saved after the evidence review |
-| A5b CLAUDE.md under 20000 bytes, moves traceable | pass | `docs/aegis/evidence/final-head-checks.txt` (at `fbf6a15`): `wc -c CLAUDE.md` 19041 (39948 at `d5fc8c0`); 18,824 characters by the repo's own measure (39,360 at `d5fc8c0`); Harness 1, Review 1; numstat 9 added, 262 removed; the boundary sentence and the Harness and Review sections identical to `d5fc8c0`. `docs/aegis/evidence/a5b-moved-lines.txt`: 139 of 143 moved non-blank lines found whole in the destination named by the move map, the other 4 are this batch's named edits. The PR body lists all 262 removed lines and the move map. Test `scripts/repository-structure.test.js` fails at 20,000 bytes | Title stays v8.7: `CHANGELOG.md`'s latest version entry is v8.9, not v8.8 (reported). The character count was first written as 18,821 (Python code points); the repo's measure (JS string length) is 18,824, corrected |
-| A6 PROJECT_STATE.md verified claims point to this session | pass | `PROJECT_STATE.md` "Verified now" table: each row names the command and its capture in `docs/baseline/branch/` (clean clone at `5cc5d69`); the paragraph after it and the roadmap skeleton name the capability-map rows behind every "verified" and point to `docs/baseline/branch/node-test.txt:746-749` | Evidence review: the paragraph and the roadmap lines pointed to no capture; row numbers and capture pointers added (`fbf6a15`); counts refreshed in `38ef188` and `604cc3c` |
-| A7 CI and Release Gate green on the pull request | pass | Draft PR https://github.com/qFermions/Aegis/pull/4. At `194379d`: CI run 40479052507 success, jobs verify (1 min 20 s; log: 588 tests, 588 pass, 0 fail), evals, detect, risk-tier; Release Gate run 40479052497 success, "Tests and full-tree scan" on ubuntu-latest (1 min 58 s) and windows-latest (4 min 21 s). Earlier at `604cc3c`: CI 40478557555 and Release Gate 40478557631, all green. Test count 505 to 588 equals the 83 tests this batch added | The commits after `194379d` change docs and captures only; their CI run is recorded in the PR body and the report |
-| A8 no finding open; refs unchanged | pass | "Review rounds" below: 45 found, 42 fixed, 3 closed, 0 open. `docs/baseline/refs-after.txt` (09:08:47Z): every ref in `refs-before.txt` unchanged; created by this batch: `refs/heads/chore/baseline-and-boundary`, `refs/pull/4/head`, `refs/pull/4/merge` | |
-| A9 baseline floors hold | pass | `docs/baseline/branch/` at `5cc5d69`: 588/588 tests (floor 505), ms 28/28 and 6/6, gws 38/38 and 9/9, lint 77 clean, scanner 0 BLOCK (170 WARN, same as Phase 0), release boundary PASS; CI at `194379d` repeats them (A7) | |
-| A10 no secret, token, personal path or private email in the diff | pass | `docs/aegis/evidence/a10-diff-grep.txt` (at `fbf6a15`): the charter grep's hits are words in prose, code or test names ("org token", "API token" prompts, "secret" in scanner labels), copies of the grep command, and the capture's own earlier copy (counted per file); a second pass for real credential shapes in added lines finds 0; no `/Users/`, `C:\Users` or `@gmail` outside the quoted grep command | Evidence review: the capture named no commit and carried two U+2014 from tool output; regenerated with its commit, time and the A11 note |
-| A11 no em-dash in files this batch wrote | pass | `docs/aegis/evidence/a11-long-dash.txt` (the batch diff including this commit's files): every added file and the added lines of every changed file, 0 U+2014 | 3 inherited dashes on edited lines removed (`6c988fe`); the A10 capture's 2 dashes found by the evidence review replaced with "--" and noted; tool output captures write U+2014 as "--" and say so on their last line |
-| A12 dependencies and tools added | pass | `docs/baseline/dependencies.md:21-24`: Node.js 24.22.1 (MIT, nvm) and PowerShell 7.5.4 (MIT, release tarball with its sha256); nothing installed from the repo (no manifest) | |
-| A13 no real tenant, device, ticket system, scheduler, mailbox or payment call | pass | Fixtures: `scripts/untrusted/fixtures/` (12 files: injection-pasted-ticket.txt, injection-replay-solution.md, injection-wipe-artifacts.json, injection-wipe-preapproved.txt, poison-kb-solution.md, poison-proposals.json, tenant-artifacts.json, tenant-b2b-guest-ticket.txt, tenant-foreign-ticket.txt, tenant-mixed-ticket.txt, tenant-proposal.json, tenant-solution.md); tenants are RFC example domains set per child process; Jira tests pass an in-memory `fetch` queue (`scripts/jira-client.test.js` `queuedFetch`) and the default fetch throws "Network tripwire fired"; `docs/aegis/evidence/boundary-grep-io.txt`: the only HTTPS client in code is the Jira client | |
+| C1 lane spec | pass | `docs/aegis/g2/evidence/c1-lane-spec-check.txt` (script inside): Fleet 6 jobs, Linear 8, Slack 8, Jamf 7, Google 10, each naming file:line or a gap, none naming another platform's command in its "This batch" column; dated vendor sources Fleet 9, Linear 3, Slack 4, Jamf 4, Google 6; read-only API surface per platform at `docs/aegis/lanes/g2.md:47`, `:99`, `:143`, `:200`, `:252` | Evidence review: the check reads only the "This batch" column; a "Today in the repo" citation of another platform's file (the Fleet rows cite `jamf-lock-erase.md:35` as current-state evidence) is evidence, not a shared row |
+| C2 corpus first, scorer in `node --test` and CI | pass | `docs/aegis/g2/evidence/c2-corpus-first.txt`: `g2-tickets.json` lands in `554aa42`, an ancestor of the first commit touching any of the 25 commands, the contract, an adapter, the posture audit or a floor (`951309d`); the only other corpus commit `ce7d6d7` adds a final newline (0 fields changed, 12 pairs unchanged since `554aa42`); 0/63 before implementation (`c2-scorer-red-before-implementation.txt`); scorer 9/9 in `node --test`, `.github/workflows/ci.yml:149`; per-platform and pair counts printed | Deviation: the five runbook test files (`*-runbooks.test.js`) landed after their runbooks; every adapter, contract, posture and boundary test file landed first (same capture) |
+| C3 shared read-only adapter contract | pass | `docs/aegis/g2/evidence/contract-tests.txt` (23/23 at `7cf42e2`); red first: `c3-contract-tests-before-module.txt`. Rule to test in `scripts/adapters/readonly-contract.test.js`: every non-GET method `:143`; a mutation hidden after a query `:218`, `:438`; a token exchange with a business payload `:251`; a credential in an error `:292`; an injected instruction in a response field `:325`; a mixed-tenant response `:342`; a timeout `:364`, `:473`; a retry never repeats a non-read `:397` | |
+| C4 per platform (Fleet, Linear, Slack, Jamf, Google Workspace) | pass | Lint 102 commands clean, 25 new (Fleet 5, Linear 4, Slack 6, Jamf 5, Google 5): `command-structure-lint.txt`; safety gates 433/433 cover the new commands, 177 G2 inventory entries, 142 gated and 35 preview (`c6-inventory-modes.txt`); adapter and runbook tests with the socket tripwire: Fleet 44/44, Linear 33/33, Slack 46/46, Jamf 33/33, Google 39/39 (`head-suite-counts.txt`; landing captures `*-adapter-tests.txt`); corpus per platform with floors and pairs: `c14-platform-rows.txt`, `g2-eval-after-*.txt` | Evidence review: the 142/35 split had no capture; added `c6-inventory-modes.txt` |
+| C5 Google Workspace posture audit | pass | `scripts/gws-posture-audit.test.js` 12/12 (`gws-posture-tests.txt`, `head-suite-counts.txt`): each check's output `:180`, an empty export `:300` (and 0-byte or blank files refused, `:322-323`), a malformed export `:316`, an injected instruction `:373` | |
+| C6 boundary audit and tiers | pass | `docs/aegis/g2/evidence/c6-inventory-modes.txt`: the inventory has only the modes gated and preview; 177 G2 entries, 0 outside those two; boundary-audit rows 20 to 27 each name the gate (`docs/aegis/boundary-audit.md:45-52`); risk-tier tests 22/22 (`risk-tier-tests.txt`); no-autonomous-write test 13/13 (`boundary-g2-tests.txt`) | |
+| C7 state, contract and explainer | pass | Each "verified" G2 row and statement cites a capture taken in this session under `docs/aegis/g2/evidence/`; head counts in `head-suite-counts.txt`; `wc -c CLAUDE.md` 19202 (19041 at base; one pointer line added): `c7-claude-md-size.txt` | Evidence review: `PROJECT_STATE.md` kept batch 1's "verified now" heading, "18 of 36 rows", a moved review table and roadmap lines saying rows 12 and 14 were missing; now labelled as batch 1 history with current counts (62 rows, 39 verified), G2 head counts, and rows 12, 14 and 59 as they stand. Stale code citations fixed after the review rounds: `7529981`, `4c8936e`, `8d927b0`, `f5c9241`; three map rows re-pointed from landing boundary captures (which show that test red by design) to `boundary-g2-tests.txt:16` |
+| C8 review rounds, CI, refs | pass | No finding open: `docs/aegis/g2/evidence/code-review-rounds.md`, `security-review.md`. CI (detect, risk-tier, verify, evals) and Release Gate (ubuntu-latest, windows-latest) green at `36d5192`, 0.1 to 4.9 minutes per job (`c8-ci-and-refs.txt`); `git ls-remote origin` against `refs-before.txt`: only this session's branch and the PR #5 refs differ (same file, `refs-after.txt`) | Windows Release Gate failed through `701af65` on one test, fixed in `8d22179`; `8d22179` failed on the inventory tests after `88d057f`, fixed in `36d5192`. Later commits change docs and evidence only; the final head's CI is in the PR body |
+| C9 floors | pass | `c9-test-count.txt`: `node --test` 1041/1041 = 588 + 453 added, 0 base tests removed or renamed (after security review 2: 1045/1045 at `9b35dd7`, the 4 added tests in `security-review-2.md`); own-harness suites unchanged (deploy-check 21, health-check 19, graph 33/33, memory 14/14, replay 16/16); ms 28/28 6/6 and gws 38/38 9/9 unchanged (`ms-ticket-eval.txt`, `gws-ticket-eval.txt`); G2 63/63 12/12; lint 102 clean; scanner 0 BLOCK; release boundary PASS; replay demo exit 0 (battery at `cef6cee`; the full `node --test` ran again at `36d5192`, 1041/1041) | Scanner WARN 170 at base, 197 at head: G2 runbooks, tests and corpus add 12; the shared injection markers (`5629f57`) add 15, 14 in tests and the corpus and 1 a quoted example in `/slack-user-lifecycle` (`scanner-marker-warn-diff.txt`). A WARN count is not a pass count, so no floor regressed |
+| C10 no secret, token, personal path, real name or private email | pass | `docs/aegis/g2/evidence/c10-leak-grep.txt`, every pass over `git log -p 3592bd1..HEAD` (each commit's patch): the charter grep's lines grouped by class; 0 real credential shapes in any added line (Slack xox and xapp, Linear lin_api and lin_oauth, Google key, AIza and ya29, GitHub, AWS, JWT, bearer); no private address, internal host, workspace or tenant subdomain; the only personal-path lines are the container path `/home/user/Aegis` in the posture preview at `c1b8f2e`, removed by `0e84dfd` and still in history | Evidence review: the earlier capture covered only the final tree and no names or hosts; rerun over every commit with a names, hosts and paths pass. The path in history is a decision for the owner (a rewrite of pushed commits was ruled out; a squash merge drops it) |
+| C11 no em-dash in files this batch wrote | pass | `docs/aegis/g2/evidence/c11-em-dash.txt` (script inside, rerunnable): 0 added lines with U+2014 since `3592bd1`; 0 of 121 new files hold one; 62 of 64 captures say they write it as "--" and the other 2 hold none | `ab89a1b`: the intake refusal line kept exactly as at base, so no added line carries its U+2014 |
+| C12 no real customer system called, no socket in tests | pass | `docs/aegis/g2/evidence/c12-network.txt`: network modules in non-test code are the contract transport and `scripts/jira-client.js`; every adapter, runbook, boundary and posture test file loads `scripts/adapters/socket-tripwire.js`; `scripts/eval/g2-ticket-eval.test.js` does not, and loads no network module; mocks `queuedTransport`, `recordingTransport`, `fakeRequest`; fixtures `scripts/eval/g2-tickets.json`, the GAM exports in `scripts/gws-posture-audit.test.js`, a temporary note file, a key generated by `node:crypto`; tripwire tests 10/10. No Google, Fleet, Jamf, Slack or Linear system was called; the refused fetches recorded at `docs/aegis/lanes/g2.md:11` were unauthenticated documentation and schema reads | Evidence review: "every G2 test file" was too broad; narrowed |
+| C13 dependencies and tools added | pass | `docs/aegis/g2/evidence/c13-dependencies.txt` (script inside): no manifest, lockfile or package added; no `require()` beyond Node built-ins and repo files (anchored match); tools installed in this session for the batch, nothing in the repo: Node.js v24.22.1 (MIT, nodejs.org tarball checked against its SHA-256) and PowerShell 7.6.9 (MIT, apt from packages.microsoft.com) (`docs/aegis/g2/baseline/dependencies.md`) | Evidence review: the row had said "already installed" |
+| C14 platforms proven separately | pass | `docs/aegis/g2/evidence/c14-platform-rows.txt` at the head: the 28 rows added or changed for G2 (12, 14, 37 to 62) each name one platform and none names two; row 23 (platform-neutral, the graph engine) changed only in its two line citations (word diff in the capture), which the counts line now says; per-platform corpus lines; the report lists each platform on its own line | Deviation: row 23 names no platform; its change is a citation move, not a capability change |
 
 ## Review rounds
 
-Each round ran `/security-review` on the branch, then `/code-review xhigh` (tier C; REVIEW.md read first). Round 1 covered the whole branch against `main`; rounds 2 and 3 covered only the diff since the previous round's fixes. Finding ids are round.number in the order the reviewer returned them; the raw findings are in this session's transcript.
-
-| round | security review | code review found | fixed | closed | fixed + closed = found |
-|---|---|---|---|---|---|
-| 1 (branch) | 0 findings | 15 | 14 | 1 | yes |
-| 2 (diff since `281f5d1`) | 0 findings | 15 | 13 | 2 | yes |
-| 3 (diff since `f74c575`) | 0 findings | 15 | 15 | 0 | yes |
-
-### Round 1
-
-| id | file:line | finding | outcome | commit or reason |
+| round | scope | findings | outcome | evidence |
 |---|---|---|---|---|
-| 1.1 | scripts/memory/memory-cli.js:107 | verify, merge, mark-stale and promote re-seal a record changed on disk | fixed | `0e94ad9` (B9) |
-| 1.2 | scripts/replay/replay-cli.js:505 | lookup and render serve a stored solution with no read-time check | fixed | `e27552d` (A6) |
-| 1.3 | CLAUDE.md:118 | the diet moved always-on script gates out of CLAUDE.md | fixed | `fa6e0e4` (repository-structure case) |
-| 1.4 | scripts/jira-client.js:671 | verify-transition passes on any status other than the old one | fixed | `fb7146c` ("verify-transition proves the same immutable request left the preflight status and fails closed otherwise", `scripts/jira-client.test.js`) |
-| 1.5 | scripts/graph/sanitize.js:155 | PII patterns carry /g with .test(), so lastIndex skips hits | fixed | `ae3ea89` (B8) |
-| 1.6 | scripts/memory/memory-cli.js:222 | tenant check runs before the lock (race) | fixed | `7864929` (C10) |
-| 1.7 | scripts/memory/memory-store.js:141 | problem text names attacker-chosen key names | fixed | `0e94ad9` (B10) |
-| 1.8 | scripts/memory/memory-cli.js:561 | list prints index summaries with no integrity check | fixed | `0e94ad9` (B11) |
-| 1.9 | scripts/jira-client.js:339 | printed procedures work only in POSIX shells | fixed | `59f86c5` (pwsh and bash run test) |
-| 1.10 | scripts/graph/sanitize.js:143 | tenant-literal BLOCK matches only the raw line | fixed | `ae3ea89` (C9) |
-| 1.11 | scripts/jira-client.js:637 | verify-create identity check is tautological | fixed | `fb7146c` ("verify-create proves the human-created request by an independent GET and fails closed on any mismatch": an older request with the same text fails `--not-before`) |
-| 1.12 | scripts/memory/memory-cli.js:537 | withheld hits take top-K slots and are not back-filled | closed | Bounded retrieval by design: a withheld row costs one slot (availability) and serves no text (integrity holds); back-filling would let a poisoned row steer which records surface. |
-| 1.13 | scripts/memory/memory-cli.js:246 | withLock binds the store before the write, so a refused write binds it | fixed | `7864929` (C10) |
-| 1.14 | scripts/graph/sanitize.js:100 | org-token rule misses mixed-case and multi-segment names | fixed | `ae3ea89` (C8) |
-| 1.15 | scripts/graph/sanitize.js:75 | confusable folding re-implemented instead of reused | fixed | `ae3ea89` (refactor, no new test: the A2 and B1 obfuscation cases pin the behavior) |
-
-### Round 2
-
-| id | file:line | finding | outcome | commit or reason |
-|---|---|---|---|---|
-| 2.1 | scripts/memory/memory-cli.js:115 | refuseIfChangedOnDisk skips a row with no seal | closed | An unsealed row is the documented migration path for pre-seal stores (README residual); retrieve still withholds it, and verify still runs every persist gate before sealing. |
-| 2.2 | scripts/jira-client.js:665 | --from-version is printed unquoted from Jira's iso8601 text | fixed | `e9aeceb` ("a status version that is not a plain timestamp is refused before anything is printed to paste") |
-| 2.3 | scripts/memory/memory-cli.js:591 | list still prints type, status, scope of a changed row | fixed | `2b02e36` (B13) |
-| 2.4 | scripts/memory/memory-store.js:161 | sanitizer problem paths name nested keys | fixed | `2b02e36` (B13) |
-| 2.5 | scripts/replay/replay-cli.js:578 | status and list print stored text unchecked | fixed | `41347c3` (A7) |
-| 2.6 | scripts/graph/sanitize.js:110 | any bracket token exempts the whole line from the PII scan | fixed | `26ecaab` (B12) |
-| 2.7 | scripts/tier/tier-guard.js:132 | chat handles read as a second tenant | fixed | `99cb18d` (C11) |
-| 2.8 | scripts/tier/tier-guard.js:132 | a space inside the brackets hides a foreign token | fixed | `99cb18d` (C11) |
-| 2.9 | scripts/tier/tier-guard.js:141 | containsLiteral folds the text but not the literal | fixed | `99cb18d` (C12) |
-| 2.10 | scripts/jira-client.js:376 | PowerShell line sends JSON with no charset | fixed | `e9aeceb` (charset assertion in "printed procedures never carry the token, make curl prompt for it, and quote text for the shell", `scripts/jira-client.test.js:679`) |
-| 2.11 | scripts/memory/memory-cli.js:260 | the lock is released twice (finally and exit) | fixed | `766e23c` (B14) |
-| 2.12 | scripts/jira-client.js:25 | header example shows a verify form that now fails | fixed | `70fc82a` ("verify commands refuse a free-text flag instead of ignoring it, before credentials or network") |
-| 2.13 | scripts/replay/replay-cli.js:209 | replay re-runs pattern gates instead of sealing case files | closed | Sealing would withhold every existing verified case until re-verified: an owner decision, put to the owner in the report; the read-time gates stay and the residual is in the README. |
-| 2.14 | scripts/graph/sanitize.js:116 | each line is folded once per check | fixed | `99cb18d` (efficiency, no new test; C9, C11 and C12 pin the behavior) |
-| 2.15 | progress.md:1 | progress.md stale after round 1 | fixed | `f74c575` (docs, no test) |
-
-### Round 3
-
-| id | file:line | finding | outcome | commit or reason |
-|---|---|---|---|---|
-| 3.1 | scripts/tier/tier-guard.js:132 | an unclosed [@Aegion_ swallows the next foreign token | fixed | `4a22024` (C13) |
-| 3.2 | scripts/tier/tier-guard.js:136 | camelCase and digit spellings pass; word list is a hand copy | fixed | `4a22024` (C13, C14) |
-| 3.3 | scripts/replay/replay-cli.js:571 | status and list print caseId, status, deps and provenance unchecked | fixed | `bd6b358` (A9) |
-| 3.4 | scripts/replay/replay-cli.js:204 | history scanned as JSON, so a newline-split marker passes | fixed | `bd6b358` (A9) |
-| 3.5 | scripts/replay/replay-cli.js:474 | lookup STALE echoes stored history and crashes on an empty one | fixed | `b8511a4` (A10) |
-| 3.6 | scripts/tier/tier-guard.js:161 | an upper-case bracket hides a real phone number from PII gates | fixed | `585f788` (B15) |
-| 3.7 | scripts/tier/tier-guard.js:130 | a space after "@" or before "_" hides a foreign token | fixed | `4a22024` (C13) |
-| 3.8 | scripts/tier/tier-guard.js:136 | handles with a common word ([@bob_site_visit]) hard-block a ticket | fixed | `4a22024` (C13) |
-| 3.9 | scripts/memory/memory-cli.js:263 | the lock flag is process-local; stealers delete each other's lock | fixed | `fe05385` (B16) |
-| 3.10 | scripts/jira-client.js:476 | a status version like "--execute" prints a line that never parses | fixed | `ad1b7f8` ("a status version that does not start with a digit is refused, so the printed verify line always parses") |
-| 3.11 | checks.md:1 | checks.md has no per-finding record of the rounds | fixed | `5cc5d69`, which added this table (docs, no test) |
-| 3.12 | scripts/graph/README.md:158 | unbalanced parentheses garble the org-token sentence | fixed | `51efa48` (docs, no test) |
-| 3.13 | scripts/graph/sanitize.js:40 | header still says placeholders exempt the line | fixed | `11501b9` (comment, no test) |
-| 3.14 | scripts/tier/tier-guard.js:149 | the literal is re-folded on every call | fixed | `c13680f` (efficiency, no new test; C9 and C12 pin the behavior) |
-| 3.15 | scripts/graph/sanitize.js:116 | scanText copies the marker loop instead of injectionMarkersIn | fixed | `092ca47` (A8) |
-
-Deviation (one commit per finding): nine commits carry two to four findings each: `ae3ea89` (1.5, 1.10, 1.14, 1.15), `0e94ad9` (1.1, 1.7, 1.8), `7864929` (1.6, 1.13), `fb7146c` (1.4, 1.11), `99cb18d` (2.7, 2.8, 2.9, 2.14), `2b02e36` (2.3, 2.4), `e9aeceb` (2.2, 2.10), `4a22024` (3.1, 3.2, 3.7, 3.8), `bd6b358` (3.3, 3.4). In each, the findings sit in the same function or the same lines and one change fixes them together; the batch instruction asks to "group findings by class so one fix covers every instance", while `CLAUDE.md`'s Review section asks for one commit per finding, so this is recorded as a deviation. Every finding names its commit above. 35 of the 42 fixes carry a test that fails before the fix and passes after it; the other 7 are docs, comment, efficiency or refactor fixes (1.15, 2.14, 2.15, 3.11, 3.12, 3.13, 3.14) whose behavior, where there is any, the existing tests named in their rows pin.
-
-## Evidence review
-
-One run of the evidence-reviewer agent (read-only; given checks.md, the acceptance checks, and the saved outputs) on the branch at `194379d`. Its verdicts: 18 rows, 12 pass, 4 fail (A1, A6, A11, progress.md), 2 unresolved (A5b, A7); 17 factual errors (12 important, 5 nits). Every error was corrected or answered; the rows above carry the verdicts after the corrections.
-
-| # | error | correction |
-|---|---|---|
-| 1 | progress.md stale (said not pushed, no PR, no CI) | rewritten in the commit that adds this section |
-| 2 | "fixed with a test each" is false for 13 findings | 35 of 42 fixes have a test; every row now names its test or says why there is none; PROJECT_STATE.md, the explainer and the deviation note say so (`fbf6a15`) |
-| 3 | the grouped-commit note read as a REVIEW.md quote | the quote is attributed to the batch instruction and CLAUDE.md's one-commit rule is named (`fbf6a15`) |
-| 4 | A11 said 0 dashes; the A10 capture had 2 | capture regenerated with "--" and a note; A11 re-run over the batch diff including this commit |
-| 5 | Jira line citations stale at the head | capability-map row 32 and boundary-audit row 1 cite the head lines (`fbf6a15`) |
-| 6 | row 3's procedure modules are not all tier C | boundary audit states the exception: modules outside `modules/security/` are tier B, text a human runs (`fbf6a15`) |
-| 7 | drift tally stale | release status and Okta/Jamf/macOS/Zoom scope marked resolved; 5 resolved, 13 open (`fbf6a15`) |
-| 8 | "every dangerous pair floored" is false | explainer: "kept apart" (`fbf6a15`) |
-| 9 | runbook gates backed by the lint | explainer cites the 287 safety-gate tests (`fbf6a15`) |
-| 10 | "Microsoft and Google kept apart" not true of row 22 | row 22 split into rows 22 and 36; the map header states the platform rule; row 11 no longer names Okta (`fbf6a15`) |
-| 11 | the map's description of its captures was wrong | header names the commit each capture set ran at; the acceptance captures carry commit and time |
-| 12 | several claims had no saved output | `docs/aegis/evidence/final-head-checks.txt` (bytes, characters, headings, numstats, boundary sentence and sections unchanged, settings files absent, agent frontmatter, inventory counts); CI run IDs and durations in A7 |
-| 13 | PROJECT_STATE.md "Partial" incomplete | names all 13 partial rows and row 5 (`fbf6a15`) |
-| 14 | finding 3.11 named no commit | `5cc5d69` (`fbf6a15`) |
-| 15 | A6 credited the wrong commit | `38ef188` (line citations) and `604cc3c` (counts) |
-| 16 | row 31 citation range missed Okta and macOS | `:121-157`, `:159-163`, `:190-201` (`fbf6a15`) |
-| 17 | CHANGELOG "Tests" omitted the script-gates test | added (`fbf6a15`) |
-
-Found while saving the captures for error 12: the character count 18,821 was a Python code-point count; the repo's own measure is 18,824 (corrected in checks.md, CHANGELOG.md and the PR body).
+| /security-review | branch at `35b0415` against `3592bd1` | 0 (one below-bar observation) | observation fixed: `b497ce7` (red), `a7fab15`. The code review rounds' fixes had their own pass in security review 2 (last row) | `docs/aegis/g2/evidence/security-review.md` |
+| /code-review 1 (xhigh) | PR #5 at `35b0415` | 15 | 15 fixed (the multi-line part of 13 closed: the scanner reads one line at a time); findings 1, 2 and 7 in one commit (deviation) | `docs/aegis/g2/evidence/code-review-rounds.md` |
+| batch 1 findings (misdirected first run on PR #4's diff) | files this batch edits | 15 | 4 fixed (`8575df0`, `0995f92` then `47425c3`, `540ff8c`, `5629f57`); 11 in files this batch does not edit, each listed with a proposed fix | same file, "Batch 1 findings" |
+| /code-review 2 (xhigh) | `35b0415..ada5339` | 15 | 13 fixed; 2 closed: 12 (altitude: one quoting rule per adapter covers the class), 13 (the shared round 1 commit is pushed and is not rewritten) | same file |
+| /code-review 3 (xhigh, last) | `ada5339..44031dc` | 15 | 14 fixed (1 and 6 in one commit, one class; 11 by the progress.md rewrite); 15 fixed in part by `2e80705` and the rest closed: one shared source module is ruled out because the engine keeps its own copy on purpose | same file |
+| evidence-reviewer | checks.md and every capture, at `701af65` | 10 (5 important, 5 nits): C7 and C14 fail; C8, C10 and the batch 1 row unresolved | every correction applied in the commits after `36d5192`; C7, C8, C10, C14 and the batch 1 row now pass | this table, the corrections column |
+| /security-review 2 | `35b0415..2b35aa1` (72 commits after round 1; 10 code files) | 0 (one candidate: finder 0.7, filter 2 of 10, below the bar of 8) | the candidate is a gap in two of this batch's review fixes (purge and Intune unenroll floors narrower than their commits claimed), fixed test first: `cafd3c3` red, `83d1318`; `77392d4` red, `9b35dd7`; `node --test` 1045/1045 after, evals, lint, scanner and release boundary unchanged | `docs/aegis/g2/evidence/security-review-2.md` |

@@ -1,0 +1,48 @@
+# command: node --test scripts/adapters/gws-client.test.js scripts/gws-runbooks.test.js
+# captured: 2026-10-28T02:20:39Z at c1b8f2e
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (2.265951ms)
+✔ the scopes are exactly the seven read-only scopes; admin.directory.user.security and every other scope is refused (0.847014ms)
+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (54.719333ms)
+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (3.947547ms)
+✔ the token exchange is never retried, and one token serves every read of a run (6.375717ms)
+✔ a private key that is not an RSA private key in PEM form is refused before the transport, and is never printed (1.930215ms)
+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (3.235082ms)
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0 (3.430551ms)
+✔ --execute with a mock transport prints the data; a missing credential is NO_CREDENTIALS (exit 1) and a missing GWS_CUSTOMER_ID is refused (exit 1), with nothing sent (4.278398ms)
+✔ tenant: a record whose customerId names another customer exits 3 with no data; a user record with no customerId returns no data (12.170813ms)
+✔ verify-suspended, verify-2sv-enforced and verify-ou: verified true exits 0, false exits 2, and a record for another user is never proof (24.87811ms)
+✔ verify-2sv-not-enforced: exit 0 only on a successful read of the named user whose isEnforcedIn2Sv is exactly false; a failed read, a missing field or another user is never proof (15.981426ms)
+✔ user and users print recoveryEmail and recoveryPhone as set or missing, never their values (9.869672ms)
+✔ verify-admin-role-removed: reads the user, then its role assignments; proof only when no direct assignment of the role is listed and no page follows (10.046961ms)
+✔ verify-event: an event of that name, in that application, by that user, at or after --not-before (17.935752ms)
+✔ verify-event --target: the matched event must name the target in a parameter value; the same admin acting on another account is never proof (14.884537ms)
+✔ credentials never appear in stdout, stderr or results, also when the transport error or the response echoes them (11.246873ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it (3.390198ms)
+✔ bad input is refused with exit 1 before anything is read or sent (1.753592ms)
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it (1.913358ms)
+✔ the file run directly exits with the code run() returns, and its dry run reads nothing and opens no socket (166.550858ms)
+✔ the adapter source reads no file, never logs, and asks for no write scope (0.855987ms)
+✔ the parser reads every gate in the five runbooks with all six fields, a phrase and an R-class (4.107171ms)
+✔ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0) (15.570236ms)
+✔ no runbook treats exit 2 from a verify-* read as an expected result (2.077983ms)
+✔ exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate (4.58267ms)
+✔ every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect (4.018585ms)
+✔ every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict (2.06335ms)
+✔ each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change (7.222952ms)
+✔ every verify-event whose actor is the administrator carries --target, and the checklists require the target (2.172407ms)
+✔ no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof (2.708516ms)
+✔ every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook (9.362292ms)
+✔ the containment suspend gate waits for a user read in the ticket, also on the urgent path (1.891384ms)
+✔ every Drive sharing gate that changes who outside can be shared with waits for a named approver (7.20297ms)
+✔ single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing (13.130743ms)
+✔ the GAM export gates stop before replacing an existing file (bash, mocked gam) (28.925888ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 569.537361
+# exit: 0

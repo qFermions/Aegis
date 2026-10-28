@@ -1,0 +1,54 @@
+# command: node --test scripts/adapters/slack-client.test.js scripts/adapters/slack-runbooks.test.js
+# captured: 2026-10-28T02:07:30Z at 39f578b
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (2.075414ms)
+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (21.372175ms)
+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (11.891242ms)
+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (6.601109ms)
+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (3.970671ms)
+✔ the CLI dry run prints the exact planned requests, reads no credential and calls no transport (1.799478ms)
+✔ only the bare --execute flag performs the read; any other spelling is refused and nothing is sent (1.340256ms)
+✔ digest is offline: the SHA-256 of the whitespace-normalised draft, a not-before time and the exact verify-posted line (3.415526ms)
+✔ --execute prints the data; user and users print state fields only, never a profile (1.433729ms)
+✔ an HTTP 200 answer with ok:false is a failed read reported with the error code only (2.0301ms)
+✔ verify-deactivated, verify-reactivated and verify-guest pass only on the matching user state (2.440152ms)
+✔ verify-archived passes only when the channel read is the one asked for and is archived (0.819353ms)
+✔ verify-posted passes only on a plain message after --not-before whose normalised text has the expected digest (4.555502ms)
+✔ verify-app-approved needs the app in the approved list and out of the pending requests; verify-app-restricted needs it in the restricted list (3.184797ms)
+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (3.484608ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it (0.856679ms)
+✔ a user, member, team or channel record from another workspace, or with no team id, is refused (exit 3) and prints none of its data (1.624682ms)
+✔ input validation runs before any credential or network: IDs, limits and cursors outside their patterns are refused (0.861814ms)
+✔ without an injected transport the default one throws the network tripwire; no socket is opened (0.720237ms)
+✔ the parser finds every gate in the six Slack runbooks, each with its fields and a PORTAL ACTION step (1.89161ms)
+✔ no PORTAL ACTION step and no Before line of a gated phase leaves a second setting to the operator (1.73148ms)
+✔ slack-app-approval: the require gate leaves the request policy and the request managers as recorded; granting request management has its own R2 gate and its R1 removal (0.785756ms)
+✔ slack-app-approval: granting app request management waits for the request-management approver named in Inputs, not the app sign-off (1.619277ms)
+✔ slack-security-settings: blocking SMS is its own R3 gate with the Phase A value as rollback, and the two-factor requirement leaves the methods as recorded (0.409452ms)
+✔ slack-security-settings: the SMS block waits out a recorded notice period, stops when the person making the change or the recovery Owner uses SMS codes, and sends a locked-out member to a named org gap (0.865535ms)
+✔ a gate whose Scope reaches the whole workspace, every member or every channel is R3 (0.409959ms)
+✔ unarchive and the re-add of recorded members are separate gates; the re-add phrase carries the member count and the class follows it (0.806182ms)
+✔ the public-channel export is R3 and runs only after the independent review (0.359253ms)
+✔ the "N changes, N gates, N phrases" header, the phase headings and the fast path name the classes the gates declare (1.676343ms)
+✔ each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN (1.239941ms)
+✔ no two gates in a Slack runbook share a confirmation phrase (0.28451ms)
+✔ slack-user-lifecycle: each account-type change has its own gate whose phrase names the destination, and Phase F stops on an Owner or Admin (0.849007ms)
+✔ slack-user-lifecycle: every phase proved by a verify-* user read binds [USER_ID] to the GUI record and stops when the account already had the end state (0.726508ms)
+✔ every rollback a Reversibility field points to is a gate or a PREVIEW ONLY marker that exists, named by its id (1.437348ms)
+✔ a rollback written as phrasing alone fails: the earlier legal-hold, incident-post and SAML texts each name no gate (3.303235ms)
+✔ slack-security-settings: the header says every gate has its rollback written in the gate, so every gate names one by id (0.284057ms)
+✔ the reviewed rollbacks exist: a channel-removal gate in the user lifecycle, and planning-only previews for turning Require approved apps off and public file sharing back on (0.232671ms)
+✔ the rollbacks that were phrasing are previews now: releasing a legal hold, deleting an incident post, and making SSO optional again (0.503421ms)
+✔ slack-incident-comms: Phase A stops on a channel pending a share with another organization, and the not-before format is stated (0.396039ms)
+✔ slack-guests-connect: a declined invitation expects is_pending_ext_shared false and is_ext_shared unchanged from Phase A (0.152388ms)
+✔ slack-retention-export: a deleted channel's failed read counts only when Phase A read the same channel with the same token (0.358488ms)
+✔ round-2 review: the re-add checks each recorded member first, the unarchive Effect does not settle what Slack restores, and Phase E names its member apart from the requester (0.365318ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 171.710695
+# exit: 0

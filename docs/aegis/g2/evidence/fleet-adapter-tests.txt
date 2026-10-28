@@ -1,0 +1,55 @@
+# command: node --test scripts/adapters/fleet-client.test.js scripts/adapters/fleet-runbooks.test.js
+# captured: 2026-10-28T01:52:08Z at b6fb421
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (2.351207ms)
+✔ every read command sends the exact method, host and path, and the credential only in the Authorization header (13.596672ms)
+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (1.316075ms)
+✔ every method but GET is refused on every allow-listed read path (4.116944ms)
+✔ the dry run prints the exact planned request, reads no credential and calls no transport (4.720495ms)
+✔ only the bare --execute flag performs a read (0.587512ms)
+✔ --execute prints the vendor data through renderResult (2.082679ms)
+✔ input errors exit 1 before any credential or network: unknown command, missing or extra flags, bad values (4.512142ms)
+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (0.961819ms)
+✔ a failed read exits 2: HTTP 404 once, HTTP 503 after the bounded retries (0.868239ms)
+✔ verify-lock: locked with nothing pending is verified (exit 0); locking, or locked with an unlock pending, is not (exit 2) (2.301905ms)
+✔ verify-unlock: unlocked with nothing pending is verified; still locked is not (0.747341ms)
+✔ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command or no wipe status is not (2.840957ms)
+✔ verify-wipe on Windows reads the host's commands and needs a doWipe command with status 200; Linux cannot be proven by this read (5.197646ms)
+✔ verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script (0.621799ms)
+✔ verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check (0.683853ms)
+✔ verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not (1.4568ms)
+✔ verify-mdm-off: an empty MDM read and an enrollment that no longer reads On is verified; On is not (3.442613ms)
+✔ verify-deleted: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolving to that host, is verified (9.780185ms)
+✔ no credential value appears in stdout, stderr or a result, also when the transport or the vendor echoes it (4.666054ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (1.867528ms)
+✔ tenant: Fleet binds no tenant id; the configured FLEET_URL is the only host a request can reach (3.364318ms)
+✔ host-upcoming reads one host's queued items (an Observer read) and nothing else: no deeper path, no order or filter keys, no write (1.883846ms)
+✔ the lane spec's Fleet table lists every route on the allow-list, with its method and path (1.651373ms)
+✔ activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit (2.891941ms)
+✔ vulnerability: HTTP 204 means Fleet knows the CVE and nothing is affected (exit 0, no data) (1.015376ms)
+✔ the default transport is the contract's, and the tripwire stops it in tests (1.527397ms)
+✔ help prints the commands; run directly, the CLI exits with run()'s code (276.379907ms)
+✔ deleting a host record is R3 everywhere (SR-2 device delete), with pre-state and rollback path before step 1 (2.842322ms)
+✔ each lock, wipe and Turn off MDM read-back names a proof that can pass on the platform it covers (1.002111ms)
+✔ the cancel gate names the one queued item it stops, in its target, its phrase and its read-back (SR-2: name the object) (0.89361ms)
+✔ a queued script's cancel can be filled and proven: host-upcoming names its execution ID, and the read-back compares every page with the before list (1.508824ms)
+✔ every adapter command a Fleet runbook tells the operator to run exists in fleet-client.js, with flags it accepts (1.139081ms)
+✔ a remediation script on one host takes its R-class from what it changes, as in /fleet-device-actions E1: a security setting is R3 with the review (0.604783ms)
+✔ more than 10 hosts already failing a policy go to the R3 batch gate in /fleet-device-actions, never to Phase 5, which does not reach them (0.638478ms)
+✔ the R1 gates that say "installs nothing" keep every path that could install out of them (0.773459ms)
+✔ nits: the batch phrase binds the host count, the osquery storage read cancels its edit forms, the lane spec names only verify-wipe on GET /commands (2.238306ms)
+✔ the fleetctl gates carry the prerequisites their portal counterparts carry, and every script gate asks for the pre-state (1.234623ms)
+✔ one script on one host asks for the same R2 and R3 ceremony in all three gates: checkpoint for R2 and R3, rollback path and review for R3 (1.320016ms)
+✔ round-2 nits: the Android lock in the fast path and the fleetctl block, paged MDM command reads, and a Linux wipe with no exit code (1.349875ms)
+✔ the exposure check compares against the ticket's own count, not the F04 corpus number (1.482975ms)
+✔ the vulnerable-title read that yields [SOFTWARE_TITLE_ID] pages, so a long list can be read to the end (0.218791ms)
+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.554993ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 478.773631
+# exit: 0

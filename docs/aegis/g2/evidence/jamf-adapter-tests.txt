@@ -1,0 +1,45 @@
+# command: node --test scripts/adapters/jamf-client.test.js scripts/adapters/jamf-runbooks.test.js
+# captured: 2026-10-28T02:13:49Z at 3c8d162
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ the allow-list holds exactly the lane spec's Jamf Pro reads, each a GET, on JAMF_URL, with no tenant variable (4.191469ms)
+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (18.03079ms)
+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (21.729756ms)
+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (2.421048ms)
+✔ the CLI dry run prints the exact planned request, reads no credential and calls no transport (4.471736ms)
+✔ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (4.762746ms)
+✔ verify-command reads further pages while a page is full, and stops after ten pages without proof (56.071518ms)
+✔ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not (3.57485ms)
+✔ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof (2.632647ms)
+✔ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier (2.795206ms)
+✔ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof (1.786413ms)
+✔ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed (3.497573ms)
+✔ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused (8.117784ms)
+✔ key-like fields are stripped from every response before it is printed, and the instruction scan runs on what is left (1.7418ms)
+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (3.750953ms)
+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (2.372832ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (0.75381ms)
+✔ Jamf Pro binds no tenant variable: one server per tenant, bound by JAMF_URL; any other host is refused (0.449989ms)
+✔ bad input, unknown or write-shaped commands and misplaced flags exit 1 before anything is read or sent (1.37306ms)
+✔ missing credentials exit 1 and name the variable, never a value; nothing is sent (0.317469ms)
+✔ a failed read exits 2 and withholds the body; a network tripwire is never swallowed (0.925526ms)
+✔ the adapter has no file, socket or console access of its own, and runs as a CLI (dry run and refusal only) (167.905707ms)
+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (3.789984ms)
+✔ every profile read-back names the profile by its identifier, so an install or an entry for another profile is never proof (2.165236ms)
+✔ every policy read-back proves a property, never mere existence: no trigger ticked after the Self Service create, disabled after the disable (1.714436ms)
+✔ a stage that can reach more than 10 Macs carries R3 ceremony: the App Installers rollout, and a large group leaving a profile's Targets (5.274866ms)
+✔ every console Save in the five runbooks sits inside an action-local SAFETY GATE: no ungated scope change, saved search or group (4.120116ms)
+✔ no Mac gets a second FileVault profile: Phase A reads each Mac's profiles, and every FileVault scope gate waits for that read (0.990999ms)
+✔ every pilot gate stops above 10 Macs, in the steps before it and in its Only after line (2.158745ms)
+✔ each FileVault R3 scope gate names its written rollback and needs the pre-state and that rollback in the ticket before step 1 (1.094914ms)
+✔ the inventory update gate states its downstream effect and records the Mac's groups before and after (2.162295ms)
+✔ the policy, static-group and profile gate phrases bind the values they set, and an existing profile changes only its scope there (1.101645ms)
+✔ round-1 nits: the R3 rule cites a CLAUDE.md section that exists, group names are quoted, member IDs map to serials, the stripped validation field is named, and widening keeps the pilot group (0.678609ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 419.021315
+# exit: 0

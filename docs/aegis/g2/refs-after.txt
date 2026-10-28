@@ -1,0 +1,16 @@
+# git ls-remote origin, captured 2026-10-28T04:52:23Z (UTC), after the push of 701af65
+# against refs-before.txt: the only new refs are this session's branch and refs/pull/5/head and /merge (PR #5); every other ref is unchanged. Later pushes move only this branch and the two PR refs.
+d5fc8c0183b3e8c2967e06f868dcc5e842febe49	HEAD
+3592bd1a4603b9ca9cb8dd9ff0a5193c89d68c23	refs/heads/chore/baseline-and-boundary
+daf222f3100d3d3e4d112f508099e992cec612d4	refs/heads/chore/review-layers
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/heads/claude/aegis-google-okta-jamf-wibzp6
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/heads/codex/public-safety-repair
+701af6534395080a8a5dd41e284e3915bcc9941d	refs/heads/feat/g2-gws-fleet-jamf-slack-linear
+d5fc8c0183b3e8c2967e06f868dcc5e842febe49	refs/heads/main
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/pull/1/head
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/pull/2/head
+daf222f3100d3d3e4d112f508099e992cec612d4	refs/pull/3/head
+3592bd1a4603b9ca9cb8dd9ff0a5193c89d68c23	refs/pull/4/head
+7dd69c9e55d67dc24c98512421cfcb3300c825b9	refs/pull/4/merge
+701af6534395080a8a5dd41e284e3915bcc9941d	refs/pull/5/head
+355086d44a29b1dd33a3e164361e0b79f93aa15b	refs/pull/5/merge

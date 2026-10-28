@@ -24,6 +24,9 @@
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+// The injection markers, the tenant-literal match and their homoglyph and zero-width
+// folding are shared with the graph sanitizer and the replay cache (pure module, no I/O).
+const { injectionMarkersIn, foldedForms, containsLiteral } = require('./tier/tier-guard.js');
 
 const EXIT_OK = 0;
 const EXIT_FINDINGS = 1;
@@ -39,6 +42,12 @@ class ScannerError extends Error {
 }
 
 // ── Dangerous PowerShell patterns ────────────────────────────────────────────
+// An HTTP method flag as curl (-X, --request) and PowerShell write it: -Method or any
+// prefix PowerShell accepts for it (-Me to -Method), or a Method key in a splatted
+// hashtable on the same line. One source for every method-keyed sink in the table
+// below (Okta, Jamf, Fleet, Slack SCIM); a splat built over several lines is not seen.
+const METHOD_FLAG = String.raw`(?:-X\s*|--request\s+|-Me(?:t(?:h(?:od?)?)?)?[\s:]+|\bMethod\s*=\s*)["']?`;
+
 const DANGEROUS_PS_PATTERNS = [
   { pattern: /Remove-Item\s+.*-Recurse\s+.*-Force|Remove-Item\s+.*-Force\s+.*-Recurse/i, label: 'Remove-Item -Recurse -Force — mass file deletion' },
   { pattern: /Remove-Item\b(?![^\r\n]*-Recurse)(?=[^\r\n]*-Force)/i, label: 'Remove-Item -Force — forced file deletion' },
@@ -101,14 +110,28 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /\bgam\s[^\r\n]*(?<![\w/-])deprovision(?![\w-])/i, label: 'GAM deprovision (tokens, app passwords, backup codes)' },
   { pattern: /\bgam\b[^\r\n]*\b(?:delete|remove)\s+licen[cs]es?\b/i, label: 'GAM licence removal' },
   { pattern: /\/api\/v1\/users\/[^\s"']+\/lifecycle\/(?:deactivate|suspend|reset_factors|reset_password|expire_password)\b/i, label: 'Okta lifecycle change (deactivate / suspend / reset)' },
-  { pattern: /-X\s*["']?DELETE\b[^\r\n]*\/api\/v1\/users\b|\/api\/v1\/users\b[^\r\n]*-X\s*["']?DELETE\b/i, label: 'Okta session or user deletion (DELETE /api/v1/users…)' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}DELETE\b[^\r\n]*\/api\/v1\/users\b|\/api\/v1\/users\b[^\r\n]*${METHOD_FLAG}DELETE\b`, 'i'), label: 'Okta session or user deletion (DELETE /api/v1/users…)' },
   // A Jamf MDM command is a write (POST, or a request body); a GET of the same path only
   // reads command status and stays quiet.
-  { pattern: /-X\s*["']?(?:POST|PUT|PATCH|DELETE)\b[^\r\n]*\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b|\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b[^\r\n]*(?:-X\s*["']?(?:POST|PUT|PATCH|DELETE)\b|--data\b|--json\b|\s-d\s)/i, label: 'Jamf MDM command (lock / wipe)' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}(?:POST|PUT|PATCH|DELETE)\b[^\r\n]*\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b|\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b[^\r\n]*(?:${METHOD_FLAG}(?:POST|PUT|PATCH|DELETE)\b|--data\b|--json\b|\s-d\s)`, 'i'), label: 'Jamf MDM command (lock / wipe)' },
   { pattern: /\bjamf\s+removeFramework\b/i,        label: 'Jamf framework removal (unmanage)' },
   { pattern: /\bprofiles\s+(?:remove\b|-R\b|-D\b)/, label: 'profiles removal (configuration / MDM profile)' },
   { pattern: /\bfdesetup\s+(?:disable|remove|changerecovery|removerecovery)\b/i, label: 'FileVault change (fdesetup)' },
   { pattern: /\bdiskutil\s+(?:erase\w*|secureErase|zeroDisk|apfs\s+delete\w*)\b/i, label: 'disk erase (diskutil)' },
+  // Fleet, Slack, Linear, Jamf Pro and Google Workspace sinks (G2). A GET of the same
+  // paths reads state and stays quiet; the write needs its verb, method or mutation. A
+  // method is matched as curl writes it (-X, --request) or as PowerShell does (-Method).
+  { pattern: /\bfleetctl\s+(?:[^\r\n]*\s)?mdm\s+(?:lock|unlock|wipe)\b/i, label: 'Fleet MDM lock / unlock / wipe (fleetctl)' },
+  { pattern: /\bfleetctl\s+(?:[^\r\n]*\s)?run-script\b|\/api\/(?:v1|latest)\/fleet\/scripts\/run(?:\/batch)?\b/i, label: 'Fleet script run on hosts' },
+  { pattern: /\/api\/(?:v1|latest)\/fleet\/hosts\/[^\s"'\/]+\/(?:lock|unlock|wipe|clear_passcode)\b/i, label: 'Fleet host lock, unlock or wipe (REST)' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}DELETE\b[^\r\n]*\/api\/(?:v1|latest)\/fleet\/hosts\b|\/api\/(?:v1|latest)\/fleet\/hosts\/[^\s"']*[^\r\n]*${METHOD_FLAG}DELETE\b|\bfleetctl\s+(?:[^\r\n]*\s)?delete\b`, 'i'), label: 'Fleet host deletion or MDM turn-off' },
+  { pattern: /slack\.com\/api\/(?:admin\.users\.(?:remove|session\.reset\w*|setAdmin|setOwner|setRegular|setExpiration|invite|assign)|admin\.conversations\.(?:delete|archive|disconnectShared|convertToPrivate|setTeams)|admin\.apps\.(?:approve|restrict|uninstall)|users\.admin\.setInactive)\b/i, label: 'Slack admin write (user removal, session reset, conversation or app change)' },
+  { pattern: /slack\.com\/api\/(?:chat\.(?:postMessage|postEphemeral|scheduleMessage|update|delete|meMessage)|files\.delete|conversations\.(?:archive|kick|invite|create|rename))\b/i, label: 'Slack message post or delete, or channel change (Web API)' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}DELETE\b[^\r\n]*\/scim\/v\d\/Users\b|\/scim\/v\d\/Users\/[^\s"']*[^\r\n]*${METHOD_FLAG}DELETE\b`, 'i'), label: 'Slack SCIM deactivation (DELETE /Users)' },
+  { pattern: /\bmutation\b[^\r\n]*\b(?:issue(?:Create|Update|Delete|Archive|BatchUpdate|BatchCreate|AddLabel|RemoveLabel)|comment(?:Create|Update|Delete)|user(?:Suspend|Unsuspend|ChangeRole|RevokeAllSessions|RevokeSession)|organization(?:Update|Delete)|team(?:Delete|Update)|workflowState(?:Archive|Update))\b/, label: 'Linear GraphQL mutation (issue, comment, member or workspace write)' },
+  { pattern: /\/api\/v\d\/computers-inventory(?:\/[^\s"'\/]+)?\/(?:filevault|view-recovery-lock-password|view-device-lock-pin)\b|\/api\/v\d\/local-admin-password\/[^\s"']+\/password\b/i, label: 'Jamf secret disclosure (FileVault key, Recovery Lock, device PIN, LAPS)' },
+  { pattern: /\bgam\b[^\r\n]*\bdelete\s+(?:drivefileacls?|acls?|permissions?)\b/i, label: 'GAM Drive permission removal' },
+  { pattern: /\bgam\s+(?:create|add|delete|del)\s+admin\b/i, label: 'GAM admin-role change (grant or removal)' },
 ];
 
 // ── PII patterns ──────────────────────────────────────────────────────────────
@@ -160,6 +183,9 @@ const CREDENTIAL_PATTERNS = [
   { pattern: /-----BEGIN [A-Z ]*PRIVATE KEY-----/,                                label: 'Private key block' },
   { pattern: /\bsk-[A-Za-z0-9_-]{20,}\b/,                                         label: 'API secret key (sk-…)' },
   { pattern: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/,                                  label: 'Slack token' },
+  // G2: Slack documents xoxe- refresh tokens (token rotation, configuration tokens) and
+  // xapp- app-level tokens; a rotating xoxe.xoxp-/xoxe.xoxb- access token is caught above.
+  { pattern: /\bxoxe-[A-Za-z0-9-]{10,}|\bxapp-[A-Za-z0-9-]{10,}/,                    label: 'Slack refresh or app-level token (xoxe- / xapp-)' },
   { pattern: /AccountKey=[A-Za-z0-9+/=]{40,}/,                                    label: 'Azure storage account key' },
   { pattern: /SharedAccessSignature\s*=/i,                                        label: 'Azure SAS token assignment' },
   // Google / Okta / Jamf secret formats — exact prefixes or line-level markers
@@ -200,12 +226,14 @@ function loadTenantLiterals() {
 // ── Prompt-injection markers ──────────────────────────────────────────────────
 // Flags injected-instruction text that landed in a staged file (e.g. a saved
 // ticket export). WARN only — security docs that DOCUMENT these patterns are
-// excluded via isSecurityDoc below.
-const INJECTION_MARKERS = [
-  { pattern: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i,          label: 'Prompt-injection marker (ignore-previous-instructions)' },
-  { pattern: /disregard\s+(your|all|previous)\s+(rules|instructions|guidelines)/i, label: 'Prompt-injection marker (disregard-rules)' },
-  { pattern: /\bnew\s+system\s+prompt\b/i,                                        label: 'Prompt-injection marker (system-prompt override)' },
-];
+// excluded via isSecurityDoc below. The patterns are tier-guard's INJECTION_MARKERS,
+// matched on the line as written and folded; this table only names each marker.
+const INJECTION_MARKER_LABELS = {
+  'ignore-previous-instructions': 'Prompt-injection marker (ignore-previous-instructions)',
+  'disregard-rules': 'Prompt-injection marker (disregard-rules)',
+  'system-prompt-override': 'Prompt-injection marker (system-prompt override)',
+  'mode-override-claim': 'Prompt-injection marker (mode-override claim)',
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -293,12 +321,14 @@ function containsOperationalMetadata(value) {
 }
 
 function safeDisplayPath(filePath, tenantLiterals) {
-  const lower = filePath.toLowerCase();
+  // the path is read folded too, as the content scan reads each line (tier-guard)
+  const forms = foldedForms(filePath);
+  const lowerForms = forms.map((form) => form.toLowerCase());
   const sensitive = /[\x00-\x1f\x7f]/.test(filePath)
     || hasUnsafeEmail(filePath)
     || PHONE_PATTERN.test(filePath)
     || CREDENTIAL_PATTERNS.some(function ({ pattern }) { return pattern.test(filePath); })
-    || tenantLiterals.some(function (literal) { return lower.includes(literal); })
+    || tenantLiterals.some(function (literal) { return containsLiteral(filePath, literal, forms, lowerForms); })
     || containsOperationalMetadata(filePath);
   return sensitive ? '[REDACTED_FILE_PATH]' : filePath;
 }
@@ -392,11 +422,17 @@ function checkFile(filePath, content, tenantLiterals) {
 
   // Tenant-literal scan (SR-8) — every text file, NO placeholder-line exemption.
   // A literal inside a bracketed line is still a literal; nothing skips this check.
+  // The line is also read folded (tier-guard), so a zero-width character or a
+  // look-alike letter inside the literal does not get it past the gate.
+  // Each line is folded once and the forms are shared with the injection scan below.
+  const lineForms = [];
+  const formsOf = (i) => lineForms[i] || (lineForms[i] = foldedForms(lines[i]));
   if (tenantLiterals.length > 0) {
     lines.forEach((line, i) => {
-      const lower = line.toLowerCase();
+      const forms = formsOf(i);
+      const lowerForms = forms.map((form) => form.toLowerCase());
       for (const literal of tenantLiterals) {
-        if (lower.includes(literal)) {
+        if (containsLiteral(line, literal, forms, lowerForms)) {
           issues.push({ severity: 'BLOCK', line: i + 1, label: 'Tenant/org literal (SR-8) — use the [@Aegion_*] token' });
           break;
         }
@@ -409,10 +445,8 @@ function checkFile(filePath, content, tenantLiterals) {
   const isSecurityDoc = /threat_detection\.md$|threat_model\.md$|security_model\.md$|pre-commit-check\.js$/i.test(filePath);
   if (!isDocFile && !isSecurityDoc) {
     lines.forEach((line, i) => {
-      for (const { pattern, label } of INJECTION_MARKERS) {
-        if (pattern.test(line)) {
-          issues.push({ severity: 'WARN', line: i + 1, label });
-        }
+      for (const marker of injectionMarkersIn(line, formsOf(i))) {
+        issues.push({ severity: 'WARN', line: i + 1, label: INJECTION_MARKER_LABELS[marker] || `Prompt-injection marker (${marker})` });
       }
     });
   }

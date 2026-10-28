@@ -1,0 +1,45 @@
+# command: node --test scripts/adapters/linear-client.test.js scripts/adapters/linear-runbooks.test.js
+# captured: 2026-10-28T01:57:30Z at ce35c1b
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ the spec: seven named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (3.482827ms)
+✔ every read and verify-* sends POST api.linear.app/graphql with its named document byte-equal, and the key only in the Authorization header (16.219274ms)
+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (3.422189ms)
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0 (2.075425ms)
+✔ --execute with a mock transport prints the data; a missing key is NO_CREDENTIALS (exit 1) and nothing is sent (1.069561ms)
+✔ tenant: LINEAR_ORG is required before any read, and a record from another workspace exits 3 with no data (1.646545ms)
+✔ note is offline: it prints the exact body, its SHA-256 over the normalised body, a not-before time, the HUMAN-RUN posting steps and the exact verify-comment line (14.12084ms)
+✔ note and digest read only a .md or .txt note outside key and settings folders, and refuse a body the commit scanner blocks; a refused file is never printed (7.816394ms)
+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (3.531749ms)
+✔ note and digest refuse a line carrying the tenant's own domain or name (SR-8), read from the same environment names the commit scanner reads, and never print it (3.084625ms)
+✔ verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2) (4.948593ms)
+✔ verify-state, verify-labels and verify-trashed print verified, observed and expected values; exit 0 when the read proves the write, 2 when it does not (3.808566ms)
+✔ verify-snoozed: the issue read carries snoozedUntilAt, and a time later than the read proves the snooze (exit 0); empty, past, now, unreadable or another issue is not proof (exit 2) (3.89633ms)
+✔ verify-suspended: the member's active is false (exit 0); active, or not found on any page, is not proof (exit 2) (1.6083ms)
+✔ the key never appears in stdout, stderr or results, also when the transport error or the response echoes it (2.822363ms)
+✔ a 200 response carrying GraphQL errors returns no data and exits 2, printing only the error type codes (0.724277ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it (1.366228ms)
+✔ bad input is refused with exit 1 before anything is read or sent (0.915811ms)
+✔ a network tripwire is never swallowed: run() rejects with it (0.463156ms)
+✔ the four runbooks carry the gates this file judges (1.525452ms)
+✔ every delete is R3: its gate names the written rollback path, the action waits for it, and no line labels a delete lower (2.224994ms)
+✔ every gate phrase names the value or the comment it changes, and its Target binds the same placeholders (0.880936ms)
+✔ triage Phase E corrects a wrong priority under a gate that changes the priority and nothing else (0.534992ms)
+✔ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed (21.637639ms)
+✔ the workspace-admin Phase A stop depends on the person who makes the change, never on the key (0.415283ms)
+✔ ticket-note: a digest that still differs after one replace is a stop with a partial-state note, not another edit (0.46232ms)
+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (2.588875ms)
+✔ a reversal over more than 10 issues is its own R3 change: the bulk delete rolls back by a reviewed bulk restore, never by N single R1 restores (1.542144ms)
+✔ every Linear-ready note read-back proves who posted it; workspace-admin never passes the member as --author (0.73636ms)
+✔ ticket-note stops when the comment it needs is past the 50-comment page or the 20-entry list (0.468883ms)
+✔ triage compares a snooze time in UTC, the form verify-snoozed prints (0.635354ms)
+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.496998ms)
+✔ ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key (0.446079ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 180.400612
+# exit: 0

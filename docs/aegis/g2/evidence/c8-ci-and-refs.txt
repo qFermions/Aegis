@@ -1,0 +1,26 @@
+# C8: CI and Release Gate on PR #5, and the remote refs against refs-before.txt
+# captured: 2026-10-28T05:15:23Z at 36d5192; CI results read from the GitHub check runs of PR #5 (GitHub API through the session's GitHub tools), not a shell command
+# note: any U+2014 is written as --
+
+## CI and Release Gate at 36d5192 (the last commit that changes a test or anything the tests read; later commits change docs and evidence only)
+| check | workflow run | result | started (UTC) | finished (UTC) | minutes |
+|---|---|---|---|---|---|
+| detect | CI 40636216353 | success | 05:08:17 | 05:08:22 | 0.1 |
+| risk-tier | CI 40636216353 | success | 05:08:17 | 05:08:25 | 0.1 |
+| verify | CI 40636216353 | success | 05:08:17 | 05:10:02 | 1.8 |
+| evals | CI 40636216353 | success | 05:10:04 | 05:10:18 | 0.2 |
+| Tests and full-tree scan (ubuntu-latest) | Release Gate 40636216369 | success | 05:08:17 | 05:10:16 | 2.0 |
+| Tests and full-tree scan (windows-latest) | Release Gate 40636216369 | success | 05:08:17 | 05:13:10 | 4.9 |
+
+## Earlier heads, for the record
+- 701af65: CI success; Release Gate windows-latest failure on scripts/gws-runbooks.test.js:426 (the bash fence test spawned bash with a ':'-joined PATH of /usr/bin and /bin, so on Windows no bash was found and the status was null). Also failing at ada5339 and 44031dc (same test). Fixed in 8d22179.
+- 8d22179: CI verify and both Release Gate jobs failed on the state-change inventory tests: 88d057f had added docs/aegis/g2/vendor-facts-to-check.md, which copied two PREVIEW ONLY markers from the runbooks. Fixed in 36d5192. The full node --test was not run before pushing 88d057f; it was run before 36d5192 (1041/1041).
+- Runs before 719ce7c (all five platforms landed) were red by design: the G2 eval and the boundary test stayed red until every platform landed.
+
+## Remote refs: git ls-remote origin now, against docs/aegis/g2/refs-before.txt (lines only on the right are new, on the left removed)
+5a6
+> 36d5192b859e4be5d9168b10a87147ffa50b3517	refs/heads/feat/g2-gws-fleet-jamf-slack-linear
+11a13,14
+> 36d5192b859e4be5d9168b10a87147ffa50b3517	refs/pull/5/head
+> bed69f429ded1857e1ee174c2f66b9d09fcd7933	refs/pull/5/merge
+Only this session's branch and the two PR #5 refs GitHub made for it differ; every ref this session did not create is unchanged. refs/pull/4/merge is computed by GitHub and can move with no action by this session; it is unchanged here.

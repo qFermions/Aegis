@@ -1,9 +1,10 @@
-# command: echo '## platform column of every capability-map row this batch added or changed (git diff 3592bd1..HEAD)'; git diff 3592bd1..HEAD -U0 -- docs/aegis/capability-map.md | grep '^+|' | awk -F'|' '{print "row"$2"|"$4}'; echo; echo '## rows whose platform column names more than one platform (expect none)'; git diff 3592bd1..HEAD -U0 -- docs/aegis/capability-map.md | grep '^+|' | awk -F'|' '{print $4}' | grep -i -E '(google|fleet|jamf|slack|linear|okta|microsoft).*(and|,|/|\+).*(google|fleet|jamf|slack|linear|okta|microsoft)'; echo '(end of list)'; echo; echo '## per-platform corpus counts (G2 eval)'; node scripts/eval/g2-ticket-eval.js | grep -E '^  (fleet|linear|slack|jamf|gws) '
-# captured: 2026-10-28T04:28:05Z at 29abe7c
+# command: echo '## platform column of every capability-map row this batch added or changed (git diff 3592bd1..HEAD)'; git diff 3592bd1..HEAD -U0 -- docs/aegis/capability-map.md | grep '^+|' | awk -F'|' '{print "row"$2"|"$4}'; echo; echo '## rows naming more than one platform (expect none)'; git diff 3592bd1..HEAD -U0 -- docs/aegis/capability-map.md | grep '^+|' | awk -F'|' '{print $4}' | grep -i -E '(google|fleet|jamf|slack|linear|okta|microsoft).*(and|,|/|\+).*(google|fleet|jamf|slack|linear|okta|microsoft)'; echo '(end of list)'; echo; echo '## rows naming no platform: platform-neutral rows whose only change is a line citation (expect row 23 only)'; git diff 3592bd1..HEAD -U0 -- docs/aegis/capability-map.md | grep '^+|' | awk -F'|' 'tolower($4) ~ /neutral/ {print "row"$2"|"$4}'; git diff 3592bd1..HEAD -U0 -- docs/aegis/capability-map.md | grep -E '^[-+]\| 23 ' | sed -E 's/(engine\.js:[0-9]+)/[\1]/g' | grep -o '\[engine\.js:[0-9]*\]\|^[-+]' | tr '\n' ' '; echo; echo; echo '## per-platform corpus counts (G2 eval)'; node scripts/eval/g2-ticket-eval.js | grep -E '^  (fleet|linear|slack|jamf|gws) '
+# captured: 2026-10-28T05:11:23Z at 36d5192
 # note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 ## platform column of every capability-map row this batch added or changed (git diff 3592bd1..HEAD)
 row 12 | Okta 
 row 14 | Google Workspace 
+row 23 | Platform-neutral 
 row 37 | Fleet 
 row 38 | Fleet 
 row 39 | Fleet 
@@ -31,8 +32,12 @@ row 60 | Google Workspace (G2 runbooks)
 row 61 | Google Workspace 
 row 62 | Google Workspace 
 
-## rows whose platform column names more than one platform (expect none)
+## rows naming more than one platform (expect none)
 (end of list)
+
+## rows naming no platform: platform-neutral rows whose only change is a line citation (expect row 23 only)
+row 23 | Platform-neutral 
+row 23's whole change, written in by hand after the capture from git diff 3592bd1..HEAD --word-diff=plain -U0 -- docs/aegis/capability-map.md: [-(`scripts/graph/engine.js:101`, `:388`).-]{+(`scripts/graph/engine.js:139`, `:430`).+}
 
 ## per-platform corpus counts (G2 eval)
   fleet   13/13 tickets · 3/3 pairs · 7 floored · decisions {"ADVISE":6,"GATE":5,"FLAG_INJECTION":1,"ROLE_ESCALATE":1,"DRAFT_ONLY":0}

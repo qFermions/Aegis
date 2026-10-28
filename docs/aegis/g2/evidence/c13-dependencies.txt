@@ -1,11 +1,23 @@
-# command: echo '## manifest, lockfile or vendored package added by this batch (expect none)'; git diff --name-only 3592bd1..HEAD | grep -E '(^|/)(package(-lock)?\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|node_modules/)' ; echo '(end of list)'; echo '## require() of anything but Node built-ins and repo files in code this batch added or changed (expect none)'; git diff --name-only --diff-filter=AM 3592bd1..HEAD -- '*.js' '*.mjs' | xargs grep -h -o -E "require\(['\"][^'\"]+['\"]\)" | sort -u | grep -v -E "require\(['\"](node:|\.|fs|path|os|crypto|child_process|assert|util|events|https|http|net|tls|vm|url|zlib|stream)" ; echo '(end of list)'; echo '## tools used'; node --version; pwsh --version 2>/dev/null || echo 'pwsh not on PATH'
-# captured: 2026-10-28T04:50:32Z at f5c9241
+# command: bash c13.sh (the script is at the end of this file; run from the repo root)
+# captured: 2026-10-28T05:14:04Z at 36d5192
 # note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 ## manifest, lockfile or vendored package added by this batch (expect none)
 (end of list)
-## require() of anything but Node built-ins and repo files in code this batch added or changed (expect none)
+## require() targets in code this batch added or changed that are neither a Node built-in nor a repo file (expect none)
 (end of list)
-## tools used
+## the tools this batch used, installed in this session (docs/aegis/g2/baseline/dependencies.md)
 v24.22.1
 PowerShell 7.6.9
 # exit: 0
+
+## c13.sh
+echo '## manifest, lockfile or vendored package added by this batch (expect none)'
+git diff --name-only 3592bd1..HEAD | grep -E '(^|/)(package(-lock)?\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|node_modules/)'
+echo '(end of list)'
+echo '## require() targets in code this batch added or changed that are neither a Node built-in nor a repo file (expect none)'
+git diff --name-only --diff-filter=AM 3592bd1..HEAD -- '*.js' '*.mjs' | xargs grep -h -o -E "require\(['\"][^'\"]+['\"]\)" | sort -u \
+  | grep -v -E "^require\(['\"](node:[a-z_/]+|\.{1,2}/[^'\"]+|(fs|path|os|crypto|child_process|assert|util|events|https|http|net|tls|dns|vm|url|zlib|stream|readline)(/[a-z]+)?)['\"]\)$"
+echo '(end of list)'
+echo '## the tools this batch used, installed in this session (docs/aegis/g2/baseline/dependencies.md)'
+node --version
+pwsh --version

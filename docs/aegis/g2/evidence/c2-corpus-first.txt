@@ -1,10 +1,16 @@
 # command: bash c2.sh (the script is at the end of this file; run from the repo root)
-# captured: 2026-10-28T04:32:09Z at 7699645
+# captured: 2026-10-28T05:12:58Z at 36d5192
 # note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 ## corpus first
 g2-tickets.json first added: 554aa42 test(eval): G2 corpus with every expected decision, its scorer and CI wiring, before any command, rule or adapter it judges (task 2)
-first commit touching a G2 command, adapter or floor: 951309d chore(dictionary): G2 placeholder tokens through the dictionary's own process
+first commit touching any of the 25 G2 commands, the contract, an adapter, the posture audit or a floor: 951309d chore(dictionary): G2 placeholder tokens through the dictionary's own process
 the corpus commit is an ancestor of it
+
+## every commit that touches the corpus
+ce7d6d7 fix(eval): g2-tickets.json ends with a newline (repository-structure test); no expectation changes
+554aa42 test(eval): G2 corpus with every expected decision, its scorer and CI wiring, before any command, rule or adapter it judges (task 2)
+## expectations changed since 554aa42 (every field of every ticket, and the dangerous pairs)
+tickets 63 -> 63 ; changed fields: 0 ; pairs 12 -> 12 unchanged
 
 ## each new test file against the module it judges (first commit that adds each)
 scripts/adapters/readonly-contract.test.js 8913c20 | scripts/adapters/readonly-contract.js f571add | test first
@@ -44,9 +50,14 @@ scripts/gws-runbooks.test.js 79d58d2 | .claude/commands/gws-2sv-enforcement.md b
 echo "## corpus first"
 c=$(git log --reverse --format='%h' 3592bd1..HEAD -- scripts/eval/g2-tickets.json | head -1)
 echo "g2-tickets.json first added: $(git log -1 --format='%h %s' $c | cut -c1-140)"
-r=$(git log --reverse --format='%h' 3592bd1..HEAD -- '.claude/commands/fleet-*.md' '.claude/commands/linear-*.md' '.claude/commands/slack-*.md' scripts/adapters/fleet-client.js scripts/adapters/linear-client.js scripts/adapters/slack-client.js scripts/adapters/jamf-client.js scripts/adapters/gws-client.js scripts/tier/tier-guard.js scripts/graph/engine.js | head -1)
-echo "first commit touching a G2 command, adapter or floor: $(git log -1 --format='%h %s' $r | cut -c1-140)"
+r=$(git log --reverse --format='%h' 3592bd1..HEAD -- '.claude/commands/fleet-*.md' '.claude/commands/linear-*.md' '.claude/commands/slack-*.md' .claude/commands/jamf-config-profiles.md .claude/commands/jamf-filevault.md .claude/commands/jamf-inventory-groups.md .claude/commands/jamf-patch-management.md .claude/commands/jamf-policies-self-service.md .claude/commands/gws-2sv-enforcement.md .claude/commands/gws-account-containment.md .claude/commands/gws-admin-roles.md .claude/commands/gws-drive-sharing.md .claude/commands/gws-security-posture.md scripts/adapters/readonly-contract.js scripts/adapters/fleet-client.js scripts/adapters/linear-client.js scripts/adapters/slack-client.js scripts/adapters/jamf-client.js scripts/adapters/gws-client.js scripts/gws-posture-audit.js scripts/tier/tier-guard.js scripts/graph/engine.js | head -1)
+echo "first commit touching any of the 25 G2 commands, the contract, an adapter, the posture audit or a floor: $(git log -1 --format='%h %s' $r | cut -c1-140)"
 git merge-base --is-ancestor $c $r && echo "the corpus commit is an ancestor of it"
+echo
+echo "## every commit that touches the corpus"
+git log --oneline 3592bd1..HEAD -- scripts/eval/g2-tickets.json | cut -c1-140
+echo "## expectations changed since $c (every field of every ticket, and the dangerous pairs)"
+node -e 'const {execSync}=require("child_process"); const a=JSON.parse(execSync("git show '$c':scripts/eval/g2-tickets.json",{encoding:"utf8",maxBuffer:1e8})), b=require(process.cwd()+"/scripts/eval/g2-tickets.json"); const A=a.tickets||a, B=b.tickets||b; let n=0; for (const t of B){const o=A.find(x=>x.id===t.id); if(!o){n++;continue} for(const k of Object.keys(t)) if(JSON.stringify(t[k])!==JSON.stringify(o[k])) n++} console.log("tickets", A.length, "->", B.length, "; changed fields:", n, "; pairs", a.dangerousPairs.length, "->", b.dangerousPairs.length, JSON.stringify(a.dangerousPairs)===JSON.stringify(b.dangerousPairs) ? "unchanged" : "changed")'
 echo
 echo "## each new test file against the module it judges (first commit that adds each)"
 for pair in "scripts/adapters/readonly-contract.test.js scripts/adapters/readonly-contract.js" "scripts/adapters/fleet-client.test.js scripts/adapters/fleet-client.js" "scripts/adapters/linear-client.test.js scripts/adapters/linear-client.js" "scripts/adapters/slack-client.test.js scripts/adapters/slack-client.js" "scripts/adapters/jamf-client.test.js scripts/adapters/jamf-client.js" "scripts/adapters/gws-client.test.js scripts/adapters/gws-client.js" "scripts/gws-posture-audit.test.js scripts/gws-posture-audit.js" "scripts/g2-boundary.test.js docs/aegis/boundary-audit.md" "scripts/adapters/fleet-runbooks.test.js .claude/commands/fleet-host-health.md" "scripts/adapters/linear-runbooks.test.js .claude/commands/linear-intake.md" "scripts/adapters/slack-runbooks.test.js .claude/commands/slack-user-lifecycle.md" "scripts/adapters/jamf-runbooks.test.js .claude/commands/jamf-filevault.md" "scripts/gws-runbooks.test.js .claude/commands/gws-2sv-enforcement.md"; do

@@ -24,7 +24,21 @@ Each finding with what closed it: the commit that fixed it (each carries a test 
 
 ## Batch 1 findings from the misdirected first run (PR #4's diff, 15 findings)
 
-Fixed because this batch edits the file: 5 (`tier-guard.js:138`, a second org name inside the own namespace or after a dot) `8575df0`, `e050d78`; 9 (`tier-guard.js:146`, chat handles read as a second tenant) `0995f92`, reversed to fail safe by `47425c3`, refusal note `80ef80d`, `ab89a1b`; 13 (`docs/aegis/capability-map.md:69`, stale CLAUDE.md citations) `540ff8c`; 15 (`scripts/pre-commit-check.js:204`, own marker list) `5629f57`. The other 11 are in files this batch does not edit (`scripts/graph/sanitize.js`, `scripts/replay/replay-cli.js`, `scripts/memory/memory-cli.js`, `scripts/jira-client.js`, `docs/review/incidents.md`) and are listed in the report with a proposed fix.
+Fixed because this batch edits the file: 5 (`tier-guard.js:138`, a second org name inside the own namespace or after a dot) `8575df0`, `e050d78`; 9 (`tier-guard.js:146`, chat handles read as a second tenant) `0995f92`, reversed to fail safe by `47425c3`, refusal note `80ef80d`, `ab89a1b`; 13 (`docs/aegis/capability-map.md:69`, stale CLAUDE.md citations) `540ff8c`; 15 (`scripts/pre-commit-check.js:204`, own marker list) `5629f57`. The other 11 are in files this batch does not edit (its brief edits to `scripts/graph/sanitize.js` and `scripts/replay/replay-cli.js` were returned to base in `80ef80d`), so they stay open for a later batch:
+
+| # | Finding (file:line) | Proposed fix |
+|---|---|---|
+| 1 | Injection markers are checked one line at a time, so a marker split across a newline gets past the memory store's save and read checks (`scripts/graph/sanitize.js:117`) | Also scan the whole text with line breaks read as spaces, as the replay status check already does (`scripts/untrusted/instruction-injection.test.js` A9) |
+| 2 | `lookup` and `render` print `provenance.verifiedAt` and `deps[].path` without the read-time check (`scripts/replay/replay-cli.js:490`) | Check `verifiedAt` against the ISO time form and each `deps[].path` against the repo-relative path form before printing, or run the read-time scan over them |
+| 3 | The memory store's personal-data patterns are narrower than the replay cache's (`scripts/graph/sanitize.js:41`) | Move the replay cache's patterns into `scripts/tier/tier-guard.js` beside the shared markers and use them in both |
+| 4 | A stale-lock takeover that finds the lock directory already gone still removes it, so it can delete a lock another writer just took (`scripts/memory/memory-cli.js:282`) | Skip the removal when the second read finds no lock, then retry the create |
+| 6 | `stats` and `audit` print index and record text with no integrity check (`scripts/memory/memory-cli.js:638`) | Send both through the same record check `list` and `show` use |
+| 7 | `verify-*` without `--execute` prints DRY RUN and exits 0, the code of a passed read-back (`scripts/jira-client.js:688`) | Exit with a distinct code for "not verified: dry run" |
+| 8 | A read (`lookup` marking a case stale) binds an unbound replay store to the reader's tenant (`scripts/replay/replay-cli.js:478`) | Bind only on `record` and `verify`, never as a side effect of `lookup` |
+| 10 | A note pasted in Jira's rich-text editor may be stored as converted markup, so the byte-equal read-back may never pass (`scripts/jira-client.js:618`) | Tell the administrator to post through the plain-text editor or normalize whitespace and markup before hashing; check against a real Jira first |
+| 11 | A record changed on disk is refused with exit 3, the code for a sanitizer block (`scripts/memory/memory-cli.js:120`) | Give integrity failures their own exit code |
+| 12 | `docs/review/incidents.md` has no row for batch 1's boundary crossing (the Jira client could post writes) (`docs/review/incidents.md:5`) | Add the row and its one system change (the GET-only client, `519db17`) |
+| 14 | `list` now opens every record and runs the full sanitizer on each (`scripts/memory/memory-cli.js:619`) | Store each record's checked hash in the index and re-check only rows whose file changed |
 
 ## Round 2 (15 findings)
 
@@ -64,6 +78,6 @@ Fixed because this batch edits the file: 5 (`tier-guard.js:138`, a second org na
 | 12 | Each line is folded twice (`pre-commit-check.js:437`) | `5a1c13f` |
 | 13 | The method fragment is copied eight times (`pre-commit-check.js:110`) | `773ed6e` |
 | 14 | Dead capture groups in Slack ISO_TIME (`slack-client.js:215`) | `0a3e006` (the 1 to 3 fraction digits are kept on purpose) |
-| 15 | Altitude: the guard and engine floors are hand-mirrored (`scripts/graph/engine.js:36`) | `2e80705`: a test pins every G2 pair by pattern source. A shared source module is closed: the engine keeps its own copy on purpose ("the fortress never imports the lane", `engine.js` comment). |
+| 15 | Altitude: the guard and engine floors are hand-mirrored (`scripts/graph/engine.js:36`) | Fixed in part by `2e80705` (a test pins every G2 pair by pattern source); the rest, one shared source module, is closed with a reason: the engine keeps its own copy on purpose ("the fortress never imports the lane", `engine.js` comment). |
 
-No finding is open. The round 3 fixes had no fourth review round (the charter allows three); each rests on its own test and on the battery at `cef6cee` (`node-test.txt`, `head-suite-counts.txt`).
+No finding is open. The round 3 fixes had no fourth review round (the charter allows three); each rests on its own test, on the battery at `cef6cee` (`node-test.txt`) and on the suite counts at `7cf42e2` (`head-suite-counts.txt`); every commit after the last code change `ab89a1b` touches docs, evidence or one test only (`8d22179`, the Windows fix).

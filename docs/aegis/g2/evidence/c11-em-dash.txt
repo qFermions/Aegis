@@ -1,12 +1,28 @@
-# command: echo '## added lines with U+2014 since the base (expect 0)'; git diff 3592bd1..HEAD -U0 | grep '^+' | grep -v '^+++' | grep -c $'--'; echo '## new files this batch wrote, and how many hold U+2014 (expect 0)'; git diff --name-only --diff-filter=A 3592bd1..HEAD | wc -l; git diff --name-only --diff-filter=A 3592bd1..HEAD | xargs grep -l $'--' | wc -l; echo '## captures say how they write U+2014'; grep -l 'written as --\|written here as "--"' docs/aegis/g2/evidence/*.txt docs/aegis/g2/baseline/*.txt | wc -l; ls docs/aegis/g2/evidence/*.txt docs/aegis/g2/baseline/*.txt | wc -l
-# captured: 2026-10-28T04:50:11Z at f5c9241
+# command: bash c11.sh (the script is at the end of this file; run from the repo root)
+# captured: 2026-10-28T05:13:45Z at 36d5192
 # note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 ## added lines with U+2014 since the base (expect 0)
 0
 ## new files this batch wrote, and how many hold U+2014 (expect 0)
-116
+121
 0
-## captures say how they write U+2014
-57
-59
+## captures that say how they write U+2014, of all captures
+62
+64
+## captures without that note, and their U+2014 count (expect 0 each)
+docs/aegis/g2/evidence/c3-contract-tests-before-module.txt 0
+docs/aegis/g2/baseline/clone.txt 0
 # exit: 0
+
+## c11.sh
+D=$'\xe2\x80\x94'   # U+2014, written as its UTF-8 bytes so this script holds none
+echo '## added lines with U+2014 since the base (expect 0)'
+git diff 3592bd1..HEAD -U0 | grep '^+' | grep -v '^+++' | grep -c "$D"
+echo '## new files this batch wrote, and how many hold U+2014 (expect 0)'
+git diff --name-only --diff-filter=A 3592bd1..HEAD | wc -l
+git diff --name-only --diff-filter=A 3592bd1..HEAD | xargs grep -l "$D" | wc -l
+echo '## captures that say how they write U+2014, of all captures'
+grep -l 'written as --\|written here as "--"' docs/aegis/g2/evidence/*.txt docs/aegis/g2/baseline/*.txt | wc -l
+ls docs/aegis/g2/evidence/*.txt docs/aegis/g2/baseline/*.txt | wc -l
+echo '## captures without that note, and their U+2014 count (expect 0 each)'
+for f in docs/aegis/g2/evidence/*.txt docs/aegis/g2/baseline/*.txt; do grep -q 'written as --\|written here as "--"' "$f" || echo "$f $(grep -c "$D" "$f")"; done

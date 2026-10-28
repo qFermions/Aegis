@@ -264,6 +264,28 @@ test('a read-back command counts only as a command-table key, never as a mention
   for (const c of ['verify-ghost', 'verify-usage', 'verify-error']) assert.equal(changes.hasCommandKey(src, c), false, c);
 });
 
+// Code review round 3, finding 5: since one read-back proves one change, link refuses one
+// that cannot prove this change (no approval yet, ran before the approval, did not verify,
+// or recorded for another change), so a mistaken link cannot take it from the right change.
+test('link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change', (t) => {
+  const s = setup(t);
+  const a = openChange(s);
+  const early = verifyEntry(s, true);
+  const unapproved = s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(early.seq)]);
+  assert.equal(unapproved.code, 2, 'no approval yet');
+  assert.match(unapproved.stderr, /approv/);
+  s.run(CLI, ['approve', '--change', a.json.change, '--ref', 'IT-123', '--procedure-sha256', a.json.procedure_sha256]);
+  const before = s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(early.seq)]);
+  assert.equal(before.code, 2, 'ran before the approval');
+  const failed = verifyEntry(s, false);
+  assert.equal(s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(failed.seq)]).code, 2, 'did not verify');
+  const other = verifyEntry(s, true, 'chg-0123456789ab');
+  assert.equal(s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(other.seq)]).code, 2, 'recorded for another change');
+  assert.equal(s.log.entries().filter((e) => e.kind === 'change-link').length, 0, 'nothing linked');
+  const good = verifyEntry(s, true);
+  assert.equal(s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(good.seq)]).code, 0);
+});
+
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
   const source = fs.readFileSync(CLI, 'utf8');
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();

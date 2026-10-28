@@ -698,7 +698,11 @@ function createClient(spec, deps = {}) {
     const expectedTenant = tenantExpected();
     if (scopeVerdict && scopeVerdict.refused) return scopeVerdict.refused;
     const { creds, missing } = loadCredentials();
-    if (missing.length) return result(STATES.NO_CREDENTIALS, { error: `missing credential environment variable(s): ${missing.join(', ')}` });
+    if (missing.length) {
+      // batch G3 (task 6b): a failure that never reaches the network is on the trail too
+      const res = result(STATES.NO_CREDENTIALS, { error: `missing credential environment variable(s): ${missing.join(', ')}` });
+      return record(checked.route || checked.document || 'read', res, 0, now()) || res;
+    }
     if (scopePreflight && spec.scopes && !scopeVerdict && !inPreflight) {
       if (spec.scopes.kind === 'none') scopeVerdict = { ok: true, notice: notExposedNotice() };
       if (spec.scopes.kind === 'route') {
@@ -777,7 +781,11 @@ function createClient(spec, deps = {}) {
       return await fn();
     } catch (error) {
       if (error instanceof TripwireError) throw error;
-      if (error instanceof RefusedError) return result(STATES.REFUSED, { error: redactString(error.message, secrets) });
+      if (error instanceof RefusedError) {
+        // recorded under a fixed operation name, so refused input never enters the trail
+        const res = result(STATES.REFUSED, { error: redactString(error.message, secrets) });
+        return record('refused-request', res, 0, now()) || res;
+      }
       return result(STATES.INVALID_RESPONSE, { error: 'unexpected adapter error (details withheld)' });
     }
   }

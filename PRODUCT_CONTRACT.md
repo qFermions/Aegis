@@ -16,8 +16,8 @@ rollback where warranted, and a Jira-ready or Linear-ready note.
 Intune, Windows endpoints, Teams, OneDrive, SharePoint) and Google (Workspace,
 Admin Console, Gmail, Drive, Groups, Chrome Enterprise, ChromeOS, users/OUs),
 plus Okta, Jamf Pro and macOS, Fleet, Slack, Linear (an IT ticket system beside
-Jira), Zoom Rooms, and the network/VoIP/endpoint domains already in the command
-surface. Lists are
+Jira), GitHub (organization access and security), Zoom Rooms, and the
+network/VoIP/endpoint domains already in the command surface. Lists are
 examples, not limits; useful supported domains are not removed by omission.
 Where each capability stands today, with evidence: `docs/aegis/capability-map.md`.
 
@@ -62,6 +62,15 @@ human-executed step is a project failure.
   `verify-comment` proves the post by a read. The Google Workspace posture audit
   (`scripts/gws-posture-audit.js`) reads an export and writes one local report
   behind an exact phrase.
+- Added in batch G3: the GitHub, Okta and Microsoft Graph connectors send
+  allow-listed GET reads and, for Okta and Microsoft Graph, their token exchange
+  only (`scripts/g3-boundary.test.js`); where the vendor exposes a credential's
+  scopes, a write-capable credential is refused before its answer is used
+  (`scripts/adapters/scope-manifest.json`). The intake (`scripts/intake/intake.js`)
+  turns a Linear issue, a GitHub issue, a Slack thread export or an email file into
+  a graph case and writes nothing but that case's local state, under `--save`. The
+  audit trail (`scripts/audit/`) writes only its own local, gitignored files; an
+  approval recorded there authorizes a person's procedure and triggers no write.
 - Not enforced in code: agents that hold a shell (`tier1-support`, `tier2-support`
   and the development plane) are bound by their cards and the operator's Claude
   Code permission mode only. The full audit: `docs/aegis/boundary-audit.md`.
@@ -170,3 +179,19 @@ batch 1 at `3592bd1`). Nothing was removed.
 - Added, "Where code enforces it": the vendor-read bullet. Reason: five adapters now
   reach vendor APIs, and the boundary audit (`docs/aegis/boundary-audit.md`, rows 20
   to 28) records that none of them can write.
+
+Batch G3 (2026-10-28, branch `feat/g3-production-hardening`, base `main` at
+`f185071`). Nothing was removed; the boundary paragraph and every gate are unchanged.
+
+- Changed, "What Aegis is", scope: "Linear (an IT ticket system beside Jira), Zoom
+  Rooms," became "Linear (an IT ticket system beside Jira), GitHub (organization
+  access and security), Zoom Rooms,". Reason: the batch ships 5 GitHub runbooks with
+  10 corpus tickets and a read-only connector (`docs/aegis/capability-map.md`).
+- Added, "Where code enforces it": the batch G3 bullet. Reason: three connectors, an
+  intake and an audit trail now exist, and the boundary audit
+  (`docs/aegis/boundary-audit.md`) records that none of them can write to a vendor
+  system.
+- Not changed: an approval (typed, or a Linear or Jira approval) still authorizes a
+  human's procedure only. The change record (`scripts/audit/change-record.js`) links
+  the approval, the issued procedure's digest and the read-back; it never runs the
+  procedure. What production readiness still needs: `docs/aegis/production-readiness.md`.

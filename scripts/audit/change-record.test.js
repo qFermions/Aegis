@@ -248,6 +248,22 @@ test('open names a read-back by the connector name its verify entries carry (goo
   assert.match(byFile.stderr, /no connector named gws/);
 });
 
+// Code review round 3, finding 6: only a command key counts, a line that starts with the
+// quoted name and a colon inside a command table; a comment, a usage line or an error text
+// that mentions the same words does not.
+test('a read-back command counts only as a command-table key, never as a mention in a comment or a string', () => {
+  const src = [
+    '// a comment that says \'verify-ghost\': here',
+    'const USAGE = "verify-usage --id N";',
+    'throw new Error("\'verify-error\': not a command");',
+    'const COMMANDS = Object.freeze({',
+    '  \'verify-real\': { kind: \'verify\' },',
+    '});',
+  ].join('\n');
+  assert.equal(changes.hasCommandKey(src, 'verify-real'), true);
+  for (const c of ['verify-ghost', 'verify-usage', 'verify-error']) assert.equal(changes.hasCommandKey(src, c), false, c);
+});
+
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
   const source = fs.readFileSync(CLI, 'utf8');
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();

@@ -2628,7 +2628,9 @@ test('G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action
   ].join('\n');
   const candidates = portalMutationCandidates(parseFences('fixture/g1-portal.md', source));
   const byLine = Object.fromEntries(candidates.map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
-  assert.deepEqual(byLine, { 3: 'suspend', 4: 'deprovision', 5: 'deactivate', 6: 'lock', 7: 'erase', 8: 'transfer', 9: 'powerwash', 10: 'unsuspend' });
+  // Line 12 is the Microsoft arrow grammar (an Intune cue, a list item, an arrow and an action);
+  // it was missed while that clause was dead (batch G3), and "fleet-wide" still is not a Fleet cue.
+  assert.deepEqual(byLine, { 3: 'suspend', 4: 'deprovision', 5: 'deactivate', 6: 'lock', 7: 'erase', 8: 'transfer', 9: 'powerwash', 10: 'unsuspend', 12: 'run' });
   for (const action of ['suspend', 'deprovision', 'deactivate', 'lock', 'erase', 'transfer', 'powerwash', 'unsuspend']) {
     assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
   }
@@ -2746,7 +2748,9 @@ test('G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 ru
   // A G1 runbook and a Microsoft runbook keep their grammar: the existing cues (Fleet, a
   // generic Settings) find the existing verbs, and no G2 verb becomes a candidate there.
   assert.deepEqual(actionsByLine('.claude/commands/okta-fixture.md'), { 3: 'wipe', 5: 'suspend' });
-  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'wipe' });
+  // In a Microsoft runbook the generic Settings cue and the arrow grammar find the Microsoft verb
+  // suspend on line 5 (missed while that clause was dead, batch G3); no G2 verb is a candidate there.
+  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'wipe', 5: 'suspend' });
   for (const action of ['archive', 'export', 'flush', 'approve', 'disconnect', 'show', 'uninstall', 'unarchive', 'trash', 'rotate', 'post', 'accept', 'decline', 'distribute', 'redeploy']) {
     assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
   }

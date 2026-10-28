@@ -57,7 +57,7 @@ function queued(replies) {
 const ok = (body, headers = {}) => ({ status: 200, headers, body });
 
 test('the manifest names every connector: least-privilege reads, how scopes are exposed, and dated vendor sources', () => {
-  for (const name of ['fleet', 'jamf', 'slack', 'slack-access-logs', 'linear', 'google-workspace', 'jira', 'github']) {
+  for (const name of ['fleet', 'jamf', 'slack', 'slack-access-logs', 'linear', 'google-workspace', 'jira', 'github', 'msgraph']) {
     const entry = MANIFEST.connectors[name];
     assert.ok(entry, `${name}: manifest entry`);
     assert.ok(Array.isArray(entry.least_privilege) && entry.least_privilege.length > 0, `${name}: least privilege`);
@@ -70,7 +70,7 @@ test('the manifest names every connector: least-privilege reads, how scopes are 
       assert.ok(['vendor docs page', 'vendor repo', 'search excerpt'].includes(s.how), `${name}: how read`);
     }
   }
-  const specs = { fleet: fleet.SPEC, slack: slack.SPEC, 'slack-access-logs': slack.ACCESS_LOGS_SPEC, linear: linear.SPEC, 'google-workspace': gws.SPEC, jamf: jamf.SPEC, jira: jira.JIRA_SPEC, github: require('./github-client.js').SPEC };
+  const specs = { fleet: fleet.SPEC, slack: slack.SPEC, 'slack-access-logs': slack.ACCESS_LOGS_SPEC, linear: linear.SPEC, 'google-workspace': gws.SPEC, jamf: jamf.SPEC, jira: jira.JIRA_SPEC, github: require('./github-client.js').SPEC, msgraph: require('./msgraph-client.js').makeSpec({ tenant: '11111111-2222-4333-8444-555555555555' }) };
   for (const [name, spec] of Object.entries(specs)) {
     assert.ok(spec.scopes, `${name}: the spec has a scopes block`);
     assert.equal(spec.scopes.manifest, name, `${name}: points at its manifest entry`);

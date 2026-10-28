@@ -1,0 +1,65 @@
+# command: node --test scripts/adapters/msgraph-client.test.js scripts/adapters/scope-preflight.test.js
+# commit: 3a0c860 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:19:33Z  node: v24.22.1
+node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module './msgraph-client.js'
+Require stack:
+- <repo>/scripts/adapters/msgraph-client.test.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    at Module._load (node:internal/modules/cjs/loader:1341:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12)
+    at require (node:internal/modules/helpers:157:16)
+    at Object.<anonymous> (<repo>/scripts/adapters/msgraph-client.test.js:33:12)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '<repo>/scripts/adapters/msgraph-client.test.js' ]
+}
+
+Node.js v24.22.1
+✖ scripts/adapters/msgraph-client.test.js (56.40113ms)
+✖ the manifest names every connector: least-privilege reads, how scopes are exposed, and dated vendor sources (1.739602ms)
+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (5.767231ms)
+✔ Google Workspace: a token response that grants a write scope is refused before any read (47.175853ms)
+✔ Fleet: the API user's role is read from /me first; any role beyond observer is refused, and observer reads proceed (2.84216ms)
+✔ Linear, Jira and Jamf Pro do not expose a credential's scopes: the first result says so and no extra request is made (1.698568ms)
+✔ the preflight is on by default for a person running a CLI and off for an injected test transport unless asked (1.780429ms)
+✔ scopes.js prints a connector's manifest entry and refuses an unknown connector (95.074948ms)
+✔ every scope refusal is on the audit trail as SCOPE_REFUSED, whichever way the vendor exposed the scopes (53.811635ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 7
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 318.516046
+
+✖ failing tests:
+
+test at scripts/adapters/msgraph-client.test.js:1:1
+✖ scripts/adapters/msgraph-client.test.js (56.40113ms)
+  'test failed'
+
+test at scripts/adapters/scope-preflight.test.js:59:1
+✖ the manifest names every connector: least-privilege reads, how scopes are exposed, and dated vendor sources (1.739602ms)
+  AssertionError [ERR_ASSERTION]: msgraph: manifest entry
+      at TestContext.<anonymous> (<repo>/scripts/adapters/scope-preflight.test.js:62:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:19:33Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

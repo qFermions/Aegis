@@ -501,14 +501,20 @@ function invalid(message) {
 }
 
 // A flag on a person's own text (a profile field, a name, a requester) names its path
-// and withholds the quote, because those reads print state fields only. Flags on other
-// fields (a channel purpose, a message) keep their quote.
+// and withholds the quote, because those reads print state fields only. On every other
+// route a field under user, user_profile or profile (but its id), and a username, a real
+// or display name, an email or a phone, is a person's text too (access-logs and a
+// message author). Flags on other fields (a channel purpose, a message) keep their quote.
+// Every Slack flag passes through here: readSteps and scanAppList.
 const PERSON_ROUTES = new Set(['users.info', 'users.list']);
+const PERSONAL_KEYS = new Set(['username', 'real_name', 'real_name_normalized', 'display_name', 'display_name_normalized', 'email', 'phone', 'first_name', 'last_name']);
 function withholdPersonal(flags, route) {
   return (flags || []).map((f) => {
     const path = String(f.path);
     const lastKey = path.replace(/\[[0-9]+\]/g, '').split('.').pop();
-    const personal = PERSON_ROUTES.has(route) ? !USER_STATE_FIELDS.includes(lastKey) : /\.user\.(?!id$)/.test(path);
+    const personal = PERSON_ROUTES.has(route)
+      ? !USER_STATE_FIELDS.includes(lastKey)
+      : /\.(?:user|user_profile|profile)\.(?!id$)/.test(path) || PERSONAL_KEYS.has(lastKey);
     return personal ? { ...f, quote: '(personal text withheld)' } : f;
   });
 }

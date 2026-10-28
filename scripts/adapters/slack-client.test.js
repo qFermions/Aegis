@@ -793,3 +793,20 @@ test('verify-app-approved withholds a flagged requester name in the pending list
   assert.match(run.stdout, /admin\.apps\.requests\.list \$\.app_requests\[0\]\.user\.name/, 'the flag names the field');
   assert.ok(!run.stdout.includes('[PHONE_NUMBER]') && !run.stdout.includes('at home'), 'the requester text is not quoted');
 });
+
+test('a flag on a person\'s name outside the user reads withholds the quote: access-logs username, a message author profile; a message\'s own text keeps its quote (round 2, finding 4)', async () => {
+  const text = `${INJECTION} Call [PHONE_NUMBER] at home.`;
+  const logs = { ok: true, logins: [{ user_id: USER, username: text, ip: '192.0.2.10', user_agent: 'agent', date_first: 1793125900, date_last: 1793125900 }], paging: { count: 100, total: 1, page: 1, pages: 1 } };
+  const runs = [
+    [await cli(['access-logs', '--execute'], { replies: [authBody(), logs] }), /logins\[0\]\.username/],
+    [await cli(['verify-posted', '--channel', CHANNEL, '--expect-sha256', sha256('x'), '--not-before', NOT_BEFORE_ISO, '--execute'],
+      { replies: [authBody(), historyBody([message('plain text', TS_AFTER, { user_profile: { real_name: text, display_name: text } })])] }), /user_profile\.(?:real_name|display_name)/],
+  ];
+  for (const [run, field] of runs) {
+    assert.match(run.stdout, /instruction-like text/, 'the marker is still reported');
+    assert.match(run.stdout, field, 'the flag names the field');
+    assert.ok(!run.stdout.includes('[PHONE_NUMBER]') && !run.stdout.includes('at home'), 'the personal text is not quoted');
+  }
+  const own = await cli(['verify-posted', '--channel', CHANNEL, '--expect-sha256', sha256('x'), '--not-before', NOT_BEFORE_ISO, '--execute'], { replies: [authBody(), historyBody([message(text)])] });
+  assert.ok(own.stdout.includes('at home'), 'a message\'s own text is the thing being read, so its quote stays');
+});

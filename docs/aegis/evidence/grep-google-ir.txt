@@ -1,0 +1,8 @@
+$ grep -ciE google\|workspace\|okta\|2-step\|gam\  .claude/commands/security-alert-triage.md .claude/commands/incident-report.md modules/security/incident_response.md scripts/security-audit.js .claude/commands/gws-audit-log.md 
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T07:01:41Z
+.claude/commands/security-alert-triage.md:0
+.claude/commands/incident-report.md:0
+modules/security/incident_response.md:0
+scripts/security-audit.js:0
+.claude/commands/gws-audit-log.md:15
+# exit: 0, finished 2026-10-27T07:01:41Z

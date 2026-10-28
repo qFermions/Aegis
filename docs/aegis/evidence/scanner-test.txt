@@ -1,0 +1,55 @@
+$ node --test scripts/pre-commit-check.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:54:59Z
+✔ blocks a staged synthetic secret without printing the value or source line (120.916996ms)
+✔ handles spaces, brackets, quotes, Unicode, and a leading dash in staged filenames (106.161449ms)
+✔ redacts every C0 and DEL control character from displayed paths (2.041274ms)
+✔ detects binary content from bytes rather than the filename suffix (0.397914ms)
+✔ fails closed when NUL or invalid UTF-8 bytes precede credential-shaped text (82.732059ms)
+✔ scans text content even when the filename has a binary-looking suffix (78.143822ms)
+✔ force-staged backups and snapshots receive the same PII scan as other text (83.615878ms)
+✔ uses argument-array Git execution and NUL-delimited filename lists (0.529697ms)
+✔ the scanner integration test source is itself scanner-clean (65.104232ms)
+✔ does not let bracket metadata hide a real email address (66.413939ms)
+✔ blocks an email address on a subdomain (66.846363ms)
+✔ only exempts the exact canonical email placeholder (79.717213ms)
+✔ allows canonical placeholders (74.783728ms)
+✔ allows precise operational metadata email patterns (70.708981ms)
+✔ blocks registered-looking domains that are not IANA example domains (69.199982ms)
+✔ blocks operational accounts, hosts, and privileged paths without printing them (79.366526ms)
+✔ redacts a sensitive filename while retaining a deterministic file index (82.211849ms)
+✔ blocks a real phone number while keeping it and its source line redacted (80.400948ms)
+✔ distinguishes an empty staged set from a Git failure outside a repository (98.05719ms)
+✔ fails closed with sanitized output when Git cannot be executed (54.056477ms)
+✔ --all scans tracked working-tree content that is not staged (196.933673ms)
+✔ --all scans a non-ignored untracked repair file (129.372559ms)
+✔ --all fails closed when a tracked text file cannot be read (157.607422ms)
+✔ --all treats a readable empty tracked file as success (171.116346ms)
+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (167.689922ms)
+✔ blocks configured tenant literals without printing the host or source line (65.671196ms)
+✔ warning-only findings exit zero and keep the source line redacted (70.513758ms)
+✔ warns on high-impact operational sinks that the legacy matcher missed (65.896555ms)
+✔ does not warn on output formatting cmdlets or Revoke-prefixed prose (75.047674ms)
+✔ classifies mailbox permission removal as access revocation, not mailbox deletion (66.24524ms)
+✔ blocks a Google API key without printing the value or source line (67.98622ms)
+✔ blocks a Google OAuth client secret without printing the value or source line (70.469695ms)
+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (69.876657ms)
+✔ blocks a Google service-account key JSON type marker without printing the source line (77.051754ms)
+✔ blocks a Google service-account key JSON private_key_id without printing the value (69.409937ms)
+✔ blocks an Okta SSWS API token header without printing the value or source line (83.837604ms)
+✔ blocks a bare Okta API token without printing the value or source line (68.039056ms)
+✔ blocks a Bearer credential in an Authorization header without printing the value (71.533318ms)
+✔ blocks a Basic credential in an Authorization header without printing the value (79.936287ms)
+✔ allows Google, Okta, and Jamf placeholder forms (71.673423ms)
+✔ rejects unknown arguments with deterministic exit 2 (80.851324ms)
+✔ warns on Google Workspace, Okta, Jamf and macOS destructive sinks (G1 lane) (73.40233ms)
+✔ read-only Google, Okta, Jamf and macOS diagnostics do not warn (76.989997ms)
+✔ a Sources line citing GAM wiki page names does not warn; the command it names still does (125.734287ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3692.877901
+# exit: 0, finished 2026-10-27T06:55:03Z

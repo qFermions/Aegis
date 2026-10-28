@@ -1,0 +1,20 @@
+$ node --test scripts/dev/claim.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:54:58Z
+{"ok":false,"error":"SCOPE COLLISION -- another active task owns overlapping files; wait or hand off explicitly, never overwrite","collisions":[{"task":"rework-tier-guard","owner":"session-A","theirs":"scripts/tier","mine":"scripts/tier/tier-guard.js"}]}
+{"ok":false,"error":"task \"same-id\" is already claimed -- pick another id or coordinate with its owner"}
+✔ K: two sessions with non-overlapping scopes both claim, see each other, and complete (261.282563ms)
+✔ L: a second session claiming an overlapping scope is REFUSED and told who owns it (203.036134ms)
+✔ L2: duplicate task id is an atomic refusal (O_EXCL), never an overwrite (70.091945ms)
+✔ documentation files in tasks/active are never reported as claims (README regression) (114.546316ms)
+✔ check is report-only and directional overlap works both ways (112.529167ms)
+✔ bootstrap canon exists for fresh sessions (contract, state, team, dev roles) (0.885916ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 849.100255
+# exit: 0, finished 2026-10-27T06:54:59Z
+# post-processed after capture: each U+2014 dash in the tool output was replaced by two hyphens (repository style rule); no other change

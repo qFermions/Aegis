@@ -1,0 +1,24 @@
+# command: bash head-counts.sh (the script is at the end of this file; run from the repo root)
+# captured: 2026-10-28T04:43:58Z at 7cf42e2
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+contract (scripts/adapters/readonly-contract.test.js): tests 23 pass 23 fail 0 
+fleet adapter and runbooks (scripts/adapters/fleet-client.test.js scripts/adapters/fleet-runbooks.test.js): tests 44 pass 44 fail 0 
+linear adapter and runbooks (scripts/adapters/linear-client.test.js scripts/adapters/linear-runbooks.test.js): tests 33 pass 33 fail 0 
+slack adapter and runbooks (scripts/adapters/slack-client.test.js scripts/adapters/slack-runbooks.test.js): tests 46 pass 46 fail 0 
+jamf adapter and runbooks (scripts/adapters/jamf-client.test.js scripts/adapters/jamf-runbooks.test.js): tests 33 pass 33 fail 0 
+gws adapter and runbooks (scripts/adapters/gws-client.test.js scripts/gws-runbooks.test.js): tests 39 pass 39 fail 0 
+gws posture audit (scripts/gws-posture-audit.test.js): tests 12 pass 12 fail 0 
+boundary (no autonomous write) (scripts/g2-boundary.test.js): tests 13 pass 13 fail 0 
+safety gates (all commands) (scripts/command-safety-gates.test.js): tests 433 pass 433 fail 0 
+tier routing (scripts/tier/tier-routing.test.js): tests 50 pass 50 fail 0 
+risk tier (scripts/risk_tier.test.js): tests 22 pass 22 fail 0 
+G2 eval wiring (scripts/eval/g2-ticket-eval.test.js): tests 9 pass 9 fail 0 
+untrusted (wrong customer) (scripts/untrusted/wrong-customer.test.js): tests 17 pass 17 fail 0 
+scanner (scripts/pre-commit-check.test.js): tests 57 pass 57 fail 0 
+# exit: 0
+
+## head-counts.sh
+for pair in "contract:scripts/adapters/readonly-contract.test.js" "fleet adapter and runbooks:scripts/adapters/fleet-client.test.js scripts/adapters/fleet-runbooks.test.js" "linear adapter and runbooks:scripts/adapters/linear-client.test.js scripts/adapters/linear-runbooks.test.js" "slack adapter and runbooks:scripts/adapters/slack-client.test.js scripts/adapters/slack-runbooks.test.js" "jamf adapter and runbooks:scripts/adapters/jamf-client.test.js scripts/adapters/jamf-runbooks.test.js" "gws adapter and runbooks:scripts/adapters/gws-client.test.js scripts/gws-runbooks.test.js" "gws posture audit:scripts/gws-posture-audit.test.js" "boundary (no autonomous write):scripts/g2-boundary.test.js" "safety gates (all commands):scripts/command-safety-gates.test.js" "tier routing:scripts/tier/tier-routing.test.js" "risk tier:scripts/risk_tier.test.js" "G2 eval wiring:scripts/eval/g2-ticket-eval.test.js" "untrusted (wrong customer):scripts/untrusted/wrong-customer.test.js" "scanner:scripts/pre-commit-check.test.js"; do
+  name=${pair%%:*}; files=${pair#*:}
+  echo "$name ($files): $(node --test $files 2>&1 | grep -E '^ℹ (tests|pass|fail)' | sed 's/ℹ //' | tr '\n' ' ')"
+done

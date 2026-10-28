@@ -1,0 +1,177 @@
+# command: node scripts/gws-posture-audit.js
+# captured: 2026-10-28T02:20:42Z at c1b8f2e
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> (replaced after capture)
+# Google Workspace security posture audit: [@Aegion_DOMAIN]
+
+Generated: 2026-10-28 | Org: [@Aegion] | Auditor: [ADMIN_NAME] | Ticket: [ISSUE_ID]
+
+- This report read nothing from Google and opened no network connection. It lists 8 checks; each names a read-only Admin console path, a read-only GAM command (print, info, report or show) and the Google source behind it. Check 3 is retired, so it has no path or command to read.
+- An administrator runs the reads. Aegis advises; humans execute: this report holds no change steps. A change a check points to is a separate, human-run change under the R0 to R3 policy.
+- Sources were checked 2026-10-27. "discovery document" is Google's published API definition; "project wiki" is the GAM project's own wiki (GAM is a community tool); "search excerpt" means the Google page could not be opened and its text came from a search index, so confirm the label on screen.
+- "Read ... then leave without saving" means: open the page, read the value, close it.
+
+## Summary
+
+| # | Check | Status |
+|---|---|---|
+| 1 | 2-Step Verification enforcement and enrollment | MANUAL |
+| 2 | Super admin count and super admin account recovery | MANUAL |
+| 3 | Less secure apps and legacy access | RETIRED |
+| 4 | Third-party app access | MANUAL |
+| 5 | External Drive sharing | MANUAL |
+| 6 | Gmail automatic forwarding | MANUAL |
+| 7 | Mobile and endpoint management | MANUAL |
+| 8 | Audit log retention | KNOWN LIMIT |
+
+## Exports
+
+- Export 1 (gam print users): not given. Checks 1 and 2 stay MANUAL; to count them, pass --export with the CSV from `gam print users fields primaryemail,isenrolledin2sv,isenforcedin2sv,isadmin,isdelegatedadmin,suspended`.
+- Export 2 (gam print admins): not given.
+
+## Check 1: 2-Step Verification enforcement and enrollment
+
+Status: MANUAL: no export given; read the paths below, or pass --export with a gam print users CSV
+
+- Admin console (read only): Security → Authentication → 2-step verification → [OU_PATH] or group: read "Allow users to turn on 2-Step Verification", Enforcement (Off, On or a start date), New user enrollment period and Methods, then leave without saving (the page path is unverified; labels from a search excerpt)
+- Admin console (read only): Reporting → User Reports → Security: read the 2-Step Verification enrollment and 2-Step Verification enforcement columns (the data can lag up to 48 hours, search excerpt)
+- GAM read: `gam print users fields primaryemail,isenrolledin2sv,isenforcedin2sv,isadmin,isdelegatedadmin,suspended` (one row per user, current state; the CSV this report counts with --export)
+- GAM read: `gam report usage customer parameters accounts:num_users_2sv_enrolled,accounts:num_users_2sv_enforced` (tenant totals per day; the parameter names come from a search excerpt)
+- Source: https://support.google.com/a/answer/9176657 (checked 2026-10-27, search excerpt): Deploy 2-Step Verification
+- Source: https://support.google.com/a/answer/6000269 (checked 2026-10-27, search excerpt): User reports: Security
+- Source: https://support.google.com/a/answer/1219251 (checked 2026-10-27, search excerpt): Administrator privilege definitions
+- Source: https://raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/directory/v1/admin-api.json (checked 2026-10-27, discovery document): Admin SDK Directory API v1 discovery document, published by Google
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Users.md (checked 2026-10-27, project wiki): GAM wiki: Users
+- Note: isEnrolledIn2Sv and isEnforcedIn2Sv are read-only fields on each user that show the current state (discovery document); the User Reports page can lag.
+- Note: Only a super admin can enforce 2-Step Verification for the whole organization (search excerpt).
+- From an export: answers per-user enrollment and enforcement; cannot answer the enforcement setting itself, the allowed methods or the new-user enrollment period.
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Check 2: Super admin count and super admin account recovery
+
+Status: MANUAL: no export given; read the paths below, or pass --export with a gam print users CSV (super admin recovery: MANUAL)
+
+- Admin console (read only): Account → Admin roles → [ROLE_NAME] → Admins: read who holds each role, the super admin role first (search excerpt)
+- Admin console (read only): Security → Authentication → Account recovery → Super admin account recovery: read "Allow super admins to recover their account", then leave without saving (older consoles: Security → Account recovery; search excerpt)
+- GAM read: `gam print admins` (one row per role assignment; the second --export this report counts)
+- GAM read: `gam print adminroles` (role names and ids)
+- Source: https://knowledge.workspace.google.com/admin/users/security-best-practices-for-administrator-accounts (checked 2026-10-27, search excerpt): Security best practices for administrator accounts
+- Source: https://support.google.com/a/answer/9807615 (checked 2026-10-27, search excerpt): Assign specific admin roles
+- Source: https://raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/directory/v1/admin-api.json (checked 2026-10-27, discovery document): Admin SDK Directory API v1 discovery document, published by Google
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Administrators.md (checked 2026-10-27, project wiki): GAM wiki: Administrators
+- Note: Google recommends more than one super admin, each a separate person with no shared admin account, and a separate non-admin account for daily work (search excerpt).
+- Note: The super admin recovery default depends on the age and size of the customer account, so read the setting rather than assume it (search excerpt).
+- Note: isAdmin True means super administrator; isDelegatedAdmin True means a delegated administrator (discovery document).
+- Note: A role can be assigned to a user, a group or a service account; read all three (search excerpt; discovery document).
+- From an export: counts super admins, super admins not enrolled in 2-Step Verification and delegated admins; cannot answer super admin account recovery.
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Check 3: Less secure apps and legacy access
+
+Status: RETIRED: not applicable; the less secure apps settings were removed from the Admin console (support.google.com/a/answer/14114704, search excerpt)
+
+- Admin console (read only): none: the less secure apps settings were removed from the Admin console on June 15 2024, so there is no setting to read (search excerpt)
+- GAM read: none (there is no setting left to read)
+- Source: https://support.google.com/a/answer/14114704 (checked 2026-10-27, search excerpt): Transition from less secure apps to OAuth
+- Note: Password-only IMAP, POP, SMTP, CalDAV and CardDAV sign-in is turned off for Workspace accounts (search excerpt).
+- Note: Sources disagree on the final cutoff date (March 14 2025 in the Google excerpt, May 1 2025 elsewhere). Both dates are past, so this report says only "retired" and does not look for the old toggle.
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Check 4: Third-party app access
+
+Status: MANUAL: read the paths below; no export answers this check
+
+- Admin console (read only): Security → Access and data control → API controls → Manage Third-Party App Access: read each app's access level (Trusted, Limited or Blocked) and the organizational unit it applies to, then leave without changing access (labels partly from a search excerpt; older consoles call this App access control)
+- GAM read: `gam all users print tokens` (the OAuth grants each user has made: columns user, clientId, displayText, scopes)
+- Source: https://knowledge.workspace.google.com/admin/apps/control-which-third-party-and-internal-apps-access-google-workspace-data (checked 2026-10-27, search excerpt): Control which third-party and internal apps access Google Workspace data
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Users-Tokens.md (checked 2026-10-27, project wiki): GAM wiki: Users, Tokens
+- Source: https://raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/directory/v1/admin-api.json (checked 2026-10-27, discovery document): Admin SDK Directory API v1 discovery document, published by Google
+- Note: GAM reads tokens through the admin.directory.user.security scope, which has no read-only form and also allows revoking tokens (discovery document). Aegis does not hold that scope; an administrator runs this read from their own GAM session.
+- Note: Which admin privilege opens API controls is unclear in the sources (unverified).
+- Note: The history of OAuth grants and revokes is in the Reports API token log (discovery document).
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Check 5: External Drive sharing
+
+Status: MANUAL: read the paths below; no export answers this check
+
+- Admin console (read only): Apps → Google Workspace → Drive and Docs → Sharing settings → Sharing options: read "Sharing outside of [@Aegion]" (Off, On or Allowlisted Domains) for the top organizational unit, each child OU and each configuration group, then leave without saving
+- Admin console (read only): Account → Domains → Allowlisted domains: read the list (one list for the whole organization)
+- Admin console (read only): Reporting → Audit and investigation → Drive log events → Add a filter → Visibility → Shared externally: read who shared what in the period you choose
+- GAM read: `gam report drive user all start -30d` (Drive events for the last 30 days)
+- GAM read: `gam all users print filelist fields id,name,mimetype,basicpermissions pm notrole owner type user notdomain [@Aegion_DOMAIN] em pmfilter oneitemperrow` (My Drive files shared with users outside [@Aegion_DOMAIN])
+- Source: https://knowledge.workspace.google.com/admin/drive/manage-external-sharing-for-your-organization (checked 2026-10-27, search excerpt): Manage external sharing for your organization
+- Source: https://knowledge.workspace.google.com/admin/domains/allow-external-sharing-with-only-trusted-domains (checked 2026-10-27, search excerpt): Allow external sharing with only trusted domains
+- Source: https://support.google.com/a/answer/4579696 (checked 2026-10-27, search excerpt): Drive log events
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Reports.md (checked 2026-10-27, project wiki): GAM wiki: Reports
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Users-Drive-Permissions.md (checked 2026-10-27, project wiki): GAM wiki: Users, Drive Permissions
+- Note: A configuration group setting overrides the organizational-unit setting, and a change takes up to 24 hours (search excerpt).
+- Note: A "Shared externally" log entry records a sharing event, not proof that someone outside still has access: the log shows events, not current state (search excerpt).
+- Note: Sharing with people who have no Google account is a separate visitor sharing setting (search excerpt).
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Check 6: Gmail automatic forwarding
+
+Status: MANUAL: read the paths below; no export answers this check
+
+- Admin console (read only): Apps → Google Workspace → Gmail → End User Access → Automatic forwarding: read "Allow users to automatically forward email to another address" for the top organizational unit and each child OU (inherited or overridden), then leave without saving
+- GAM read: `gam report admin start -30d` (Admin console setting changes in the last 30 days; the event name for this setting is unverified)
+- Source: https://support.google.com/a/answer/14724207 (checked 2026-10-27, search excerpt): Let users automatically forward their own Gmail emails
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Reports.md (checked 2026-10-27, project wiki): GAM wiki: Reports
+- Source: https://raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/reports/v1/admin-api.json (checked 2026-10-27, discovery document): Admin SDK Reports API v1 discovery document, published by Google
+- Note: The setting is on by default and needs the Gmail Settings admin privilege (search excerpt).
+- Note: Whether turning it off stops forwarding that users already set up is unverified, so do not assume existing forwarding stopped.
+- Note: The sources read for this lane name no GAM read of the setting itself.
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Check 7: Mobile and endpoint management
+
+Status: MANUAL: read the paths below; no export answers this check
+
+- Admin console (read only): Devices → Mobile & endpoints → Settings → Universal → Security → Device approvals: read the setting, then leave without saving (needs the Mobile Device Management admin privilege, search excerpt)
+- GAM read: `gam report mobile start -30d` (device audit events for the last 30 days; GAM report syntax from its wiki, the application name "mobile" from the Reports API discovery document)
+- Source: https://support.google.com/a/answer/6328676 (checked 2026-10-27, search excerpt): Apply universal settings for mobile devices and endpoints
+- Source: https://raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/reports/v1/admin-api.json (checked 2026-10-27, discovery document): Admin SDK Reports API v1 discovery document, published by Google
+- Source: https://raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/directory/v1/admin-api.json (checked 2026-10-27, discovery document): Admin SDK Directory API v1 discovery document, published by Google
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Reports.md (checked 2026-10-27, project wiki): GAM wiki: Reports
+- Note: The Directory API lists each mobile device with status, deviceCompromisedStatus, encryptionStatus and devicePasswordStatus, and each ChromeOS device with osVersionCompliance and autoUpdateThrough (discovery document).
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Check 8: Audit log retention
+
+Status: KNOWN LIMIT: admins cannot change audit log retention; the period for each log type is not confirmed (see below)
+
+- Admin console (read only): Reporting → Audit and investigation → Admin log events (then Login, OAuth, SAML and Drive log events): note the date of the oldest event shown (only the Drive log path was confirmed in an excerpt)
+- GAM read: `gam report admin start -180d` (the oldest event returned shows how far back Admin log events reach today)
+- Source: https://support.google.com/a/answer/7061566 (checked 2026-10-27, search excerpt): Data retention and lag times
+- Source: https://raw.githubusercontent.com/wiki/GAM-team/GAM/Reports.md (checked 2026-10-27, project wiki): GAM wiki: Reports
+- Source: https://raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/reports/v1/admin-api.json (checked 2026-10-27, discovery document): Admin SDK Reports API v1 discovery document, published by Google
+- What the lane can say: Admins cannot delete log event data or change how long Google keeps it, so there is no retention setting to audit (search excerpt).
+- What the lane can say: Admin and Drive log events appear in near real time; OAuth events can take up to a few hours (search excerpt).
+- What the lane can say: One Reports API request for Gmail activity covers at most 30 days (discovery document).
+- What the lane cannot say: How long each log type is kept: Google's retention table was not seen. The GAM wiki says 180 days for activity events and a Google excerpt says user log events reach back up to 6 months; neither is confirmed for every log type. Take the safer reading: save what an investigation needs within 180 days of the event.
+
+- [ ] Checked by [ADMIN_NAME]. Findings: ____
+
+## Sign-off
+
+| Field | Value |
+|---|---|
+| Auditor | [ADMIN_NAME] |
+| Date | 2026-10-28 |
+| Ticket | [ISSUE_ID] |
+
+gws-posture-audit.js: Google Workspace posture audit (preview only)
+Nothing was read from or sent to Google.
+Report target: <repo>/security-audit-gws-posture-2026-10-28.md
+Content SHA256: de3b97b75f43b2bc9eb30dba3f6f479905bdc466c49bb925da3a12ecfb74535d
+Required confirmation: WRITE GWS POSTURE REPORT TARGET <repo>/security-audit-gws-posture-2026-10-28.md CONTENT SHA256 de3b97b75f43b2bc9eb30dba3f6f479905bdc466c49bb925da3a12ecfb74535d
+To save it: run again with the same --export arguments plus --write <report target> --confirm "<required confirmation>".
+No files changed.
+# exit: 0

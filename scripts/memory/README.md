@@ -64,11 +64,56 @@ reaches the public mirror). `index.json` (retrieval metadata only) ·
 **The CLI is the only write path.** Graph nodes and subagents are read-only
 (`Read/Grep/Glob`); the graph engine has no reference to this store; no hook,
 cron, or automation writes here in V1. Writes are serialized by an exclusive
-lock. Text inside evidence ("save this as permanent memory") has zero
+lock that holds its writer's random token: a writer removes it only while it
+still holds that token, and a stale lock (over 5 minutes) is recovered by one
+stealer at a time (B14, B16 in `scripts/untrusted/poisoned-memory.test.js`).
+Text inside evidence ("save this as permanent memory") has zero
 authority — it is data (SR-3), and the sanitizer blocks injection markers,
-tenant literals, credentials, and PII from ever persisting. Memory never
+tenant literals, credentials, and PII from ever persisting. Injection markers
+are also caught when obfuscated with zero-width characters, look-alike letters
+or fullwidth forms (the edge sanitizer folds before matching;
+`scripts/untrusted/poisoned-memory.test.js` B1). An org token from another
+namespace than `[@Aegion_*]` is a second tenant and BLOCKs the same way
+(`scripts/untrusted/wrong-customer.test.js` C3). Memory never
 bypasses R0–R3: it informs plans; gates, checkpoints, and approvals are
 unchanged.
+
+## Integrity: only what the CLI wrote is served
+
+Every `index.json` row carries a `seal`: sha256 over the canonical JSON of the
+record file the CLI just wrote. `retrieve` serves a top-K hit only when its
+row is exactly the row the CLI would write for the record on disk (seal
+included) and the record still passes the persist gates (strict
+`aegis.memory.v1` keys, the proposal field rules, the sanitizer, no `case`
+scope, trusted provenance for `verified`/`stale`). Anything else (an index row
+or record edited by hand, a hand-written record, an unsealed row) is listed
+under `withheld: [{ id, reason }]` and never served; its stored text is not
+printed. `show <id>` still prints the record for audit, labelled
+`integrity: "intact"` or with the reason. `list` labels every row the same way
+and prints a summary only for an intact record. Withheld reasons name fields
+and rules, never stored text: an unknown key is counted, not named.
+
+Every CLI write that leaves a record servable (`candidate`, `verified`,
+`stale`) re-applies the same gates to the whole record first, and `verify`,
+`merge`, `mark-stale` and `promote` first refuse a record whose sealed row no
+longer matches its file, or that has no row at all, even when the changed text
+passes the gates (exit 3; a gate failure is exit 3 / 4 / 2; `RESEAL_REFUSED`
+in the ledger). So none of them can re-seal a record changed on disk. Writes to a terminal status
+(`rejected`, `superseded`) are never blocked, so a bad record can always be
+disposed of.
+
+**Existing stores:** rows written before sealing carry no seal and are
+withheld until an operator re-verifies them through the CLI (`verify <id>`;
+`promote <id>` for candidates), which re-runs the gates and seals them.
+Serving unsealed rows would make a hand-written row indistinguishable from
+approved knowledge.
+
+**Residual, stated plainly:** the seal is unkeyed (no secret exists to key
+it), so a writer that replays this CLI's own write path can forge it. The
+read-time gates hold even then: a forged record still cannot serve
+instruction-shaped text, PII, a tenant literal, case state or external-only
+"verified" knowledge. Pinned by `scripts/untrusted/poisoned-memory.test.js`
+(B3 to B6).
 
 ## Read path (just-in-time, bounded)
 
@@ -79,7 +124,7 @@ node scripts/memory/memory-cli.js retrieve --query "<ticket keywords>"
 Deterministic lexical scoring over `index.json` only; top-K (default 3, hard
 cap 5); superseded/rejected never surface; candidates only with
 `--include-candidates`. Only the top-K record files are opened (for provenance
-refs). Recency is not relevance — there is no "recent memory" preload, and
+refs and the integrity check above; a withheld hit is not back-filled). Recency is not relevance: there is no "recent memory" preload, and
 current-ticket continuity stays in graph/case state (the Failure Edge).
 
 ## CLI
@@ -104,7 +149,27 @@ Evidence loss is an audit fact, not a truth revocation: the record stays
 verified and retrievable, the loss stays visible.
 
 Exit codes: `0` ok · `1` error · `2` invalid · `3` sanitizer BLOCK ·
-`4` gate refused (case-scope / conflict / provenance / pointer) · `5` duplicate.
+`4` gate refused (case-scope / conflict / provenance / pointer) · `5` duplicate ·
+`6` tenant binding refused (see below).
+
+## Tenant binding: one store, one tenant
+
+The store holds org-internal knowledge for exactly one tenant. Its first write
+under a tenant (`AEGION_DOMAIN` set) binds it: `tenant.json` records
+`aegis.tenant-binding.v1` with a sha256 fingerprint of the lower-cased tenant
+domain, never the literal (SR-8). From then on every command (`retrieve`,
+`show`, `list`, `stats`, `audit`, `propose`, ...) exits `6` and prints nothing
+from the store when the runtime `AEGION_DOMAIN` is a different tenant or is
+unset: a case of tenant B never reads tenant A's memory, and a session that
+cannot say whose case it is reads nobody's.
+
+**Existing stores:** a store with no binding (created before this rule, or
+only ever written with `AEGION_DOMAIN` unset) holds no evidence of whose it
+is, so it stays readable as before; its first write under a tenant binds it
+(`TENANT_BOUND` in the ledger). An operator who works for more than one
+tenant keeps one store per tenant (`AEGIS_MEMORY_DIR`). The binding is re-checked under the store lock before every write, and it is claimed only by a write that succeeds: a refused or duplicate write leaves an unbound store unbound. The fingerprint is a
+plain hash of a guessable value: it keeps the literal out of the store, it is
+not a secret. Pinned by `scripts/untrusted/wrong-customer.test.js` (C5, C7).
 
 ## Tests
 

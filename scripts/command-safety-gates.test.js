@@ -31,6 +31,16 @@ const MIXED_STATE_COMMANDS = [
   'gws-ou-move', 'gws-license-assign', 'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device',
   'okta-app-assignment', 'okta-mfa-reset', 'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase',
   'mac-new-hire-laptop', 'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue',
+  // G2: Fleet
+  'fleet-device-actions', 'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation',
+  // G2: Linear
+  'linear-intake', 'linear-triage', 'linear-ticket-note', 'linear-workspace-admin',
+  // G2: Slack
+  'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings', 'slack-incident-comms',
+  // G2: Jamf Pro
+  'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault', 'jamf-inventory-groups',
+  // G2: Google Workspace
+  'gws-drive-sharing', 'gws-2sv-enforcement', 'gws-account-containment', 'gws-admin-roles', 'gws-security-posture',
 ];
 
 const REFERENCE_BOUNDARIES = [
@@ -267,6 +277,16 @@ const FDESETUP_READ_ONLY = new Set(['status', 'list', 'isactive', 'haspersonalre
 const DISKUTIL_READ_ONLY = new Set(['list', 'info', 'information', 'activity', 'listfilesystems', 'verifyvolume', 'verifydisk', 'help']);
 const DISKUTIL_APFS_READ_ONLY = new Set(['list', 'listcryptousers', 'listsnapshots', 'listvolumegroups', 'listusers']);
 const DEFAULTS_READ_ONLY = new Set(['read', 'read-type', 'domains', 'find', 'help']);
+// G2: fleetctl reads (get, a live osquery read, version, help); any other verb, or none, is a write.
+const FLEETCTL_READ_ONLY = new Set(['get', 'query', 'version', 'help']);
+const FLEETCTL_MUTATING = new Set(['run-script', 'mdm', 'delete', 'apply', 'gitops', 'hosts', 'login', 'logout', 'user', 'trigger',
+  'generate', 'generate-gitops', 'package', 'convert', 'setup', 'upgrade-packs', 'debug', 'config', 'preview']);
+function fleetctlWrites(args) {
+  const tokens = cliTokens(args);
+  const positional = tokens.filter((token) => !token.startsWith('-'));
+  if (!positional.length) return !tokens.length || !tokens.every((token) => /^--?(?:version|help|h)$/i.test(token));
+  return firstListedVerb(positional, FLEETCTL_READ_ONLY, FLEETCTL_MUTATING) !== 'read';
+}
 const LAUNCHCTL_READ_ONLY = new Set(['list', 'print', 'print-cache', 'print-disabled', 'blame', 'help', 'version', 'procinfo',
   'hostinfo', 'examine', 'dumpstate', 'managerpid', 'manageruid', 'managername', 'getenv', 'error', 'variant']);
 
@@ -311,6 +331,8 @@ const G1_CLI_SINKS = [
   }],
   ['launchctl-write', 'launchctl', (args) => !LAUNCHCTL_READ_ONLY.has((cliTokens(args)[0] || '').toLowerCase())],
   ['kickstart-write', 'kickstart', () => true],
+  // G2
+  ['fleetctl-write', 'fleetctl', fleetctlWrites],
 ];
 
 function g1CliHits(statement) {
@@ -440,7 +462,7 @@ function classifyImpact(command, text) {
   }
   return [...categories];
 }
-const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write', 'indirect-exec']);
+const G1_REMOTE_SINKS = new Set(['gam-write', 'gcloud-write', 'http-write', 'jamf-write', 'indirect-exec', 'fleetctl-write']);
 const G1_DEVICE_SINKS = new Set(['profiles-write', 'dscl-write', 'fdesetup-write', 'diskutil-write', 'softwareupdate-write',
   'networksetup-write', 'systemsetup-write', 'defaults-write', 'launchctl-write', 'kickstart-write']);
 
@@ -487,11 +509,44 @@ const EFFECT_FAMILIES = [
   [/^restart(?:s|ed|ing)?\b/i, /\bRESTART\b/],
 ];
 
-function assertEffectCorrespondence(effect, expected, context) {
+// G2: Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace action families. They
+// apply to gates in G2 lane documents only, so every existing Microsoft and G1 gate is judged
+// exactly as before (a clause such as "shows your message" or "Trash is skipped" in a G1
+// runbook keeps its old reading).
+const G2_EFFECT_FAMILIES = [
+  [/^archive(?:s|d|ing)?\b/i, /\bARCHIVE\b/],
+  [/^unarchive(?:s|d|ing)?\b/i, /\b(?:UNARCHIVE|RESTORE)\b/],
+  [/^approve(?:s|d|ing)?\b/i, /\bAPPROVE\b/],
+  [/^disconnect(?:s|ed|ing)?\b/i, /\bDISCONNECT\b/],
+  [/^flush(?:es|ed|ing)?\b/i, /\bFLUSH\b/],
+  [/^(?:distribute|redistribute|redeploy)(?:s|d|ed|ing)?\b/i, /\b(?:DISTRIBUTE|REDEPLOY)\b/],
+  [/^uninstall(?:s|ed|ing)?\b/i, /\b(?:UNINSTALL|REMOVE)\b/],
+  [/^trash(?:es|ed|ing)?\b/i, /\b(?:TRASH|DELETE)\b/],
+  [/^(?:rotate|reissue)(?:s|d|ing)?\b/i, /\b(?:ROTATE|ISSUE)\b/],
+  [/^(?:post|publish|announce)(?:s|ed|ing)?\b/i, /\b(?:POST|SEND|PUBLISH)\b/],
+  [/^accept(?:s|ed|ing)?\b/i, /\bACCEPT\b/],
+  [/^decline(?:s|d|ing)?\b/i, /\bDECLINE\b/],
+  [/^(?:reveal|show|view)(?:s|ed|ing|n)?\b/i, /\b(?:REVEAL|SHOW|VIEW)\b/],
+  [/^(?:run|execute)(?:s|ning|d)?\b/i, /\b(?:RUN|EXECUTE)\b/],
+  [/^ran\b/i, /\b(?:RUN|EXECUTE)\b/],
+  [/^turn(?:s|ed|ing)?\s+off\b/i, /\b(?:TURN OFF|DISABLE|REMOVE)\b/],
+  [/^turn(?:s|ed|ing)?\s+on\b/i, /\b(?:TURN ON|ENABLE)\b/],
+  [/^(?:shorten|lengthen|extend|set)(?:s|ed|ing|ting)?\b/i, /\b(?:SET|SHORTEN|EXTEND|CHANGE)\b/],
+  [/^(?:scope|rescope)(?:s|d|ing)?\b/i, /\bSCOPE\b/],
+  [/^exclude(?:s|d|ing)?\b/i, /\bEXCLUDE\b/],
+  [/^(?:require|enforce)(?:s|d|ing)?\b/i, /\b(?:REQUIRE|ENFORCE|ENABLE)\b/],
+  [/^(?:close|resolve)(?:s|d|ing)?\b/i, /\b(?:CLOSE|RESOLVE)\b/],
+  [/^mark(?:s|ed|ing)?\b/i, /\b(?:MARK|CLOSE)\b/],
+  [/^restrict(?:s|ed|ing)?\b/i, /\b(?:RESTRICT|BLOCK)\b/],
+  [/^(?:invite|send)(?:s|d|ing)?\b/i, /\b(?:INVITE|SEND)\b/],
+];
+
+function assertEffectCorrespondence(effect, expected, context, file = '') {
   const clauses = effect.split(/\s*(?:;|,\s*(?:and\s+)?|\band\b)\s*/i)
     .map((clause) => clause.replace(/^(?:only|exactly|permanently|automatically)\s+/i, '').trim())
     .filter(Boolean);
-  const applicable = clauses.map((clause) => EFFECT_FAMILIES.find(([effectPattern]) => effectPattern.test(clause)))
+  const families = G2_LANE_DOCUMENT.test(file) ? [...EFFECT_FAMILIES, ...G2_EFFECT_FAMILIES] : EFFECT_FAMILIES;
+  const applicable = clauses.map((clause) => families.find(([effectPattern]) => effectPattern.test(clause)))
     .filter(Boolean);
   assert.ok(applicable.length > 0, `${context}: Effect is not mapped to a known action family`);
   const missing = applicable.filter(([, confirmationPattern]) => !confirmationPattern.test(expected));
@@ -525,6 +580,11 @@ function nextMarkerLine(marker) {
   return Math.min(nextMarker, structuralBoundary);
 }
 
+// G2 lane documents: the 25 runbooks this lane adds (Fleet, Slack and Linear by prefix,
+// the new Jamf Pro and Google Workspace runbooks by name).
+const G2_LANE_DOCUMENT = /^\.claude\/commands\/(?:(?:fleet|slack|linear)-[\w-]+|jamf-(?:config-profiles|policies-self-service|patch-management|filevault|inventory-groups)|gws-(?:drive-sharing|2sv-enforcement|account-containment|admin-roles|security-posture))\.md$/;
+const G2_PORTAL_ACTIONS = 'Archive|Unarchive|Export|Approve|Disconnect|Flush|Distribute|Redeploy|Uninstall|Trash|Rotate|Post|Accept|Decline|Show(?=\\s+(?:disk encryption\\s+)?key\\b)';
+
 function portalMutationCandidates(document) {
   const candidates = [];
   const action = '(?:Add|Allow|Assign|Block|Calendar|Clear|Convert|Coordinate|Create|Deactivate|Delete|Disable|Enable|Fix|Grant|Install|Isolate|Log|Move|Purge|Reclaim|Reimage|Release|Remove|Rename|Replace|Require|Reset|Restore|Restrict|Retire|Revoke|Run|Schedule|Send|Set|Start|Stop|Submit|Transfer|Uncheck|Update|Wipe|Activate|Deprovision|Enroll|Erase|Lock|Powerwash|Reactivate|Suspend|Unassign|Undelete|Unenroll|Unlock|Unmanage|Unsuspend)';
@@ -547,7 +607,12 @@ function portalMutationCandidates(document) {
   // Inside a G1 lane document (the 19 runbooks and the two G1 knowledge docs) the click
   // grammar applies to any portal-cued list item, so a control named without the product
   // ("At the top, click **Disable selected devices**") is still a candidate.
-  const g1LaneDocument = /^\.claude\/commands\/(?:gws|okta|jamf|mac)-[\w-]+\.md$|^\.claude\/commands\/zoom-room-issue\.md$|^docs\/(?:portal-nav-google-2026|gws-reversibility)\.md$/.test(document.file);
+  const g2LaneDocument = G2_LANE_DOCUMENT.test(document.file);
+  const g1LaneDocument = g2LaneDocument || /^\.claude\/commands\/(?:gws|okta|jamf|mac)-[\w-]+\.md$|^\.claude\/commands\/zoom-room-issue\.md$|^docs\/(?:portal-nav-google-2026|gws-reversibility)\.md$/.test(document.file);
+  // Inside a G2 lane document the click grammar also knows the G2 vocabulary (archive,
+  // export, approve, disconnect, flush, show a key …). It stays out of G1 and Microsoft
+  // documents so their candidates do not change.
+  const g2ArrowMutation = new RegExp(`(?:→\\s*|\\b(?:Click|Select|Choose|Tap)\\s+)(?:\\*{0,2}|\`)?(${actionBody}|Re-enable|${G2_PORTAL_ACTIONS})\\b`, 'i');
   const navReference = document.file === 'docs/portal-nav-2026.md' || document.file === 'docs/portal-nav-google-2026.md';
   const frontmatterEnd = document.lines[0] === '---' ? document.lines.indexOf('---', 1) : -1;
   document.lines.forEach((line, index) => {
@@ -563,7 +628,8 @@ function portalMutationCandidates(document) {
       ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
       ((cue || inPortalRegion || g1LaneDocument) ? line.match(imperativeMutation) : null) ||
       (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
-      ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g1ArrowMutation) : null);
+      ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g2LaneDocument ? g2ArrowMutation : g1ArrowMutation) : null) ||
+      (g2LaneDocument && listItem.test(line) ? line.match(g2ArrowMutation) : null);
     if (match) {
       const actionWord = match[1];
       candidates.push({ file: document.file, line: lineNumber, statement: line.trim(), actionWord });
@@ -604,6 +670,12 @@ const PORTAL_CONFIRMATION_BY_ACTION = new Map([
   ['unenroll', /\b(?:UNENROLL|REMOVE)\b/], ['unlock', /\bUNLOCK\b/],
   ['unmanage', /\bUNMANAGE\b/], ['unsuspend', /\b(?:UNSUSPEND|RESTORE|REACTIVATE)\b/],
   ['re-enable', /\b(?:RE-ENABLE|ENABLE|REACTIVATE)\b/],
+  // G2: Fleet, Slack, Linear, and the new Jamf Pro and Google Workspace runbooks
+  ['archive', /\bARCHIVE\b/], ['unarchive', /\b(?:UNARCHIVE|RESTORE)\b/], ['approve', /\bAPPROVE\b/], ['export', /\b(?:EXPORT|DOWNLOAD)\b/],
+  ['disconnect', /\bDISCONNECT\b/], ['flush', /\bFLUSH\b/], ['distribute', /\b(?:DISTRIBUTE|REDEPLOY)\b/],
+  ['redeploy', /\b(?:REDEPLOY|DISTRIBUTE)\b/], ['uninstall', /\b(?:UNINSTALL|REMOVE)\b/], ['trash', /\b(?:TRASH|DELETE)\b/],
+  ['rotate', /\b(?:ROTATE|ISSUE)\b/], ['post', /\b(?:POST|SEND|PUBLISH)\b/], ['accept', /\bACCEPT\b/],
+  ['decline', /\bDECLINE\b/], ['show', /\b(?:SHOW|VIEW|REVEAL)\b/],
 ]);
 
 const portalCandidates = [...documents.values()].flatMap(portalMutationCandidates);
@@ -631,31 +703,47 @@ const CLIENT_BOUNDARIES = Object.freeze([
     impactCategories: ['local filesystem write', 'reversible state change'],
   },
   {
-    id: 'jira-comment-internal-api-write', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
-    interface: 'Jira Service Management API', mode: 'gated', evidenceGroup: 'jira',
-    effect: 'Post one internal comment to one normalized issue key.',
-    authorization: 'Exact site, issue, INTERNAL visibility, and full payload SHA-256 phrase before credentials/network.',
+    id: 'jira-comment-internal-human-run', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
+    interface: 'Jira Service Management API', mode: 'preview', evidenceGroup: 'jira',
+    effect: 'Print the exact internal-comment payload and a HUMAN-RUN procedure; the administrator posts it and verify-comment proves it by GET.',
+    authorization: 'None in the client: the transport sends GET only, and --execute or --confirm on comment exits 1 before credentials/network.',
     impactCategories: ['external-system mutation'],
   },
   {
-    id: 'jira-comment-public-api-write', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
-    interface: 'Jira Service Management API', mode: 'gated', evidenceGroup: 'jira',
-    effect: 'Post one reporter-visible public comment to one normalized issue key.',
-    authorization: 'Exact site, issue, PUBLIC visibility, and full payload SHA-256 phrase before credentials/network.',
+    id: 'jira-comment-public-human-run', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
+    interface: 'Jira Service Management API', mode: 'preview', evidenceGroup: 'jira',
+    effect: 'Print the exact reporter-visible comment payload and a HUMAN-RUN procedure; the administrator posts it and verify-comment proves it by GET.',
+    authorization: 'None in the client: the transport sends GET only, and --execute or --confirm on comment exits 1 before credentials/network.',
     impactCategories: ['external-system mutation', 'information disclosure'],
   },
   {
-    id: 'jira-create-api-write', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
-    interface: 'Jira Service Management API', mode: 'gated', evidenceGroup: 'jira',
-    effect: 'Create one service request in one service desk and request type.',
-    authorization: 'Exact site, desk, request type, and full payload SHA-256 phrase before credentials/network.',
+    id: 'jira-create-human-run', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
+    interface: 'Jira Service Management API', mode: 'preview', evidenceGroup: 'jira',
+    effect: 'Print the exact service-request payload and a HUMAN-RUN procedure; the administrator creates it and verify-create proves it by GET.',
+    authorization: 'None in the client: the transport sends GET only, and --execute or --confirm on create exits 1 before credentials/network.',
     impactCategories: ['external-system mutation'],
   },
   {
-    id: 'jira-transition-api-write', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
-    interface: 'Jira Service Management API', mode: 'gated', evidenceGroup: 'jira',
-    effect: 'Apply one transition to one issue after a repeated live preflight.',
-    authorization: 'Exact issue key/immutable ID, current-state hash, transition ID/hash phrase; drift causes zero POST.',
+    id: 'jira-transition-human-run', file: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
+    interface: 'Jira Service Management API', mode: 'preview', evidenceGroup: 'jira',
+    effect: 'Read-only preflight, then a HUMAN-RUN procedure bound to the resolved transition; the administrator applies it and verify-transition proves it by GET.',
+    authorization: 'None in the client: the transport sends GET only, and --confirm on transition exits 1 before credentials/network.',
+    impactCategories: ['external-system mutation'],
+  },
+  // G2: the Google Workspace posture report (a local write through security-audit.js's
+  // writer) and the Linear note, which a person posts; the adapter never writes to Linear.
+  {
+    id: 'gws-posture-audit-report-create', file: 'scripts/gws-posture-audit.js', testFile: 'scripts/gws-posture-audit.test.js',
+    interface: 'local filesystem', mode: 'gated', evidenceGroup: 'gws-posture-audit',
+    effect: 'Create one previously absent Markdown Google Workspace posture report; nothing is read from or written to Google.',
+    authorization: 'Exact normalized target and full content SHA-256 phrase.',
+    impactCategories: ['local filesystem write', 'reversible state change'],
+  },
+  {
+    id: 'linear-note-human-run', file: 'scripts/adapters/linear-client.js', testFile: 'scripts/adapters/linear-client.test.js',
+    interface: 'Linear GraphQL API', mode: 'preview', evidenceGroup: 'linear-note',
+    effect: 'Print the exact note body, its SHA-256 and the HUMAN-RUN posting steps; the administrator posts the comment and verify-comment proves it by a named query.',
+    authorization: 'None in the client: note is offline and refuses --execute, and the adapter sends named GraphQL query documents only.',
     impactCategories: ['external-system mutation'],
   },
   {
@@ -668,20 +756,49 @@ const CLIENT_BOUNDARIES = Object.freeze([
 ].map((entry) => Object.freeze({ ...entry, impactCategories: Object.freeze(entry.impactCategories) })));
 
 const CLIENT_EVIDENCE = Object.freeze({
+  'gws-posture-audit': {
+    sourceFile: 'scripts/gws-posture-audit.js', testFile: 'scripts/gws-posture-audit.test.js',
+    sourcePatterns: [
+      /const \{ assertSafeReportTarget, writeReportExclusive \} = require\('\.\/security-audit\.js'\);/,
+      /assertSafeReportTarget\(cwd, requested, options\)/, /writeReportExclusive\(plan, report, cwd, dependencies/,
+    ],
+    testPatterns: [
+      /the write gate: a wrong or generic phrase writes nothing, the exact phrase writes one report, never an overwrite/,
+      /a phrase computed for one report does not authorize another \(content drift\)/,
+      /a generic name, a path outside the working directory or a Git-trackable target is refused before any write/,
+      /the generator opens no network connection: no network module, no fetch, no tripwire attempt/,
+    ],
+  },
+  'linear-note': {
+    sourceFile: 'scripts/adapters/linear-client.js', testFile: 'scripts/adapters/linear-client.test.js',
+    sourcePatterns: [
+      /function noteDigest\(text\)/, /is offline and never posts: Aegis does not write to Linear/, /async function verifyComment\(client, a\)/,
+    ],
+    testPatterns: [
+      /note is offline: it prints the exact body, its SHA-256 over the normalised body, a not-before time, the HUMAN-RUN posting steps/,
+      /verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies/,
+    ],
+  },
   jira: {
     sourceFile: 'scripts/jira-client.js', testFile: 'scripts/jira-client.test.js',
     sourcePatterns: [
       /function buildCreateConfirmation/, /function buildCommentConfirmation/, /function buildTransitionConfirmation/,
-      /async function cmdCreate/, /async function cmdComment/, /async function cmdTransition/, /EXIT_PARTIAL_UNKNOWN/,
-      /function verifyCreatedRequestReadBack/, /function verifyCommentReadBack/,
+      /async function cmdCreate/, /async function cmdComment/, /async function cmdTransition/,
+      /if \(upperMethod !== 'GET'\) throw new InputError\('This client sends GET requests only; Jira writes are human-run\.'\);/,
+      /function refuseWrite/, /function verifyCreatedRequestReadBack/, /function verifyCommentReadBack/,
+      /async function cmdVerifyTransition/,
     ],
     testPatterns: [
       /create dry run and missing\/wrong confirmations use zero credentials and zero network/,
-      /create receipt\/read-back failure or mismatch is partial\/unknown and is never retried/,
+      /the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload/,
       /comment missing\/wrong confirmation is inert for both INTERNAL and PUBLIC modes/,
-      /comment receipt\/read-back failure or mismatch is partial\/unknown and is never retried/,
-      /state drift between repeated preflights invalidates an otherwise exact phrase and makes zero POSTs/,
-      /POST transport ambiguity and read-back failure both report partial\/unknown without retry/,
+      /exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose/,
+      /any transition --confirm, exact or not, is refused before credentials or network/,
+      /the transport refuses every method but GET, and any payload, before touching the network/,
+      /no write command reaches the network with anything but GET, under any flag combination/,
+      /verify-create proves the human-created request by an independent GET and fails closed on any mismatch/,
+      /verify-comment proves the comment id, body and visibility and fails closed on any mismatch/,
+      /verify-transition proves the same immutable request left the preflight status and fails closed otherwise/,
     ],
   },
   memory: {
@@ -758,7 +875,7 @@ function currentStateChangeInventory() {
     },
     scope: {
       discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native (including gam, gcloud, HTTP-API, jamf, and macOS administration tools, with plain-text shell gates), and portal mutation grammar.',
-      clientBoundaries: 'State-changing or disclosure-capable Jira, memory, and security-audit implementations outside Markdown fence discovery.',
+      clientBoundaries: 'State-changing or disclosure-capable memory and security-audit implementations, and the read-only Jira client whose writes are human-run procedures, outside Markdown fence discovery.',
       limitation: 'Novel syntax and prose still require semantic review and grammar extension.',
     },
     directR1: DIRECT_R1_INVENTORY,
@@ -1414,7 +1531,7 @@ for (const marker of markers.filter((item) => item.kind === 'powershell' && item
       assert.ok(expected.includes(binding), `${marker.id}: exact confirmation does not bind target token ${binding}`);
     }
     const effect = gateSource.match(/^\s*# Effect:\s*([^\n]+)/im)?.[1] || '';
-    assertEffectCorrespondence(effect, expected, marker.id);
+    assertEffectCorrespondence(effect, expected, marker.id, marker.file);
     for (const engine of POWER_SHELL_ENGINES) executeSourceGateHarness(analysis, marker.id, engine);
   });
 }
@@ -1452,7 +1569,7 @@ for (const marker of markers.filter((item) => item.kind === 'portal' && item.mod
     }
 
     const effect = region.match(/\*\*Effect:\*\*\s*([^\n]+)/i)?.[1] || '';
-    assertEffectCorrespondence(effect, expected, marker.id);
+    assertEffectCorrespondence(effect, expected, marker.id, marker.file);
   });
 }
 
@@ -2396,7 +2513,7 @@ for (const marker of markers.filter((item) => item.kind === 'shell' && item.mode
     for (const binding of extractTargetBindings(analysis.fields.Target || '')) {
       assert.ok(analysis.expected.includes(binding), `${marker.id}: exact confirmation does not bind target token ${binding}`);
     }
-    assertEffectCorrespondence(analysis.fields.Effect || '', analysis.expected, marker.id);
+    assertEffectCorrespondence(analysis.fields.Effect || '', analysis.expected, marker.id, marker.file);
     assertShellGateFailClosed(analysis, marker.id);
   });
 }
@@ -2543,4 +2660,99 @@ test('G1 portal grammar: the current Apple Business name and the selected-device
   assert.deepEqual(bareActions('.claude/commands/okta-fixture.md'), ['delete']);
   assert.deepEqual(bareActions('.claude/commands/ms-fixture.md'), []);
   assert.match('RE-ENABLE CHROMEBOOK [DEVICE_ID]', PORTAL_CONFIRMATION_BY_ACTION.get('re-enable'));
+});
+
+// ── G2: Fleet, Slack and Linear, plus the new Jamf Pro and Google Workspace runbooks ──
+// fleetctl is a shell sink like gam: reads (get, a live osquery read, version, help)
+// stay live and every other verb is a write (fail-closed). A Linear GraphQL call made
+// with curl is a POST with a body, so it is a write even when it only reads: the
+// runbooks read Linear through scripts/adapters/linear-client.js instead.
+const G2_SHELL_MUTATIONS = [
+  ['fleetctl run-script --script-path ./fix.sh --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl mdm lock --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl mdm unlock --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl mdm wipe --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl delete host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl apply -f [FILE_NAME]', 'fleetctl-write'],
+  ['fleetctl gitops -f [FILE_NAME]', 'fleetctl-write'],
+  ['fleetctl hosts transfer --fleet [FLEET_NAME] --hosts [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl login --email [USER@DOMAIN.COM]', 'fleetctl-write'],
+  ['fleetctl --config ./fleet.yml mdm lock --host [HOST_ID]', 'fleetctl-write'],
+  ['sudo -u [ADMIN_NAME] fleetctl mdm wipe --host [HOST_ID]', 'fleetctl-write'],
+  ['"$HOME/bin/fleetctl" mdm lock --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl.exe run-script --script-path fix.ps1 --host [HOST_ID]', 'fleetctl-write'],
+  ['\\fleetctl mdm wipe --host [HOST_ID]', 'fleetctl-write'],
+  ['fleetctl', 'fleetctl-write'],
+  ['curl -sS -X POST "https://api.linear.app/graphql" -H "Authorization: ${LINEAR_API_KEY}" --json \'{"query":"{ viewer { id } }"}\'', 'http-write'],
+  ['curl -sS -X POST "https://slack.com/api/chat.postMessage" -H "Authorization: Bearer ${SLACK_TOKEN}" --data "channel=[CHANNEL_ID]"', 'http-write'],
+  ['curl -sS "https://slack.com/api/admin.users.remove" -H "Authorization: Bearer ${SLACK_TOKEN}" -d "user_id=[USER_ID]"', 'http-write'],
+];
+const G2_SHELL_READ_ONLY = [
+  'fleetctl get hosts',
+  'fleetctl get host [HOST_ID] --json',
+  'fleetctl get software --json',
+  'fleetctl query --hosts [HOST_ID] --query "SELECT version FROM os_version"',
+  'fleetctl --version',
+  'fleetctl --help',
+  'curl -sS "https://[@Aegion_FLEET_URL]/api/v1/fleet/hosts/[HOST_ID]" -H "Authorization: Bearer ${FLEET_API_TOKEN}"',
+  'curl -sS "https://slack.com/api/users.info?user=[USER_ID]" -H "Authorization: Bearer ${SLACK_TOKEN}"',
+  'node scripts/adapters/linear-client.js issue --issue [ISSUE_ID] --execute',
+];
+
+test('G2 detector: every fleetctl write and every Slack or Linear API write in a shell fence is a sink', () => {
+  const missed = [];
+  for (const [line, label] of G2_SHELL_MUTATIONS) {
+    for (const language of ['bash', 'zsh', 'sh', 'shell', '']) {
+      const hits = commandsIn(line, language);
+      if (!hits.includes(label)) missed.push(`${language || '(untagged)'}: ${line} → [${hits.join(', ')}]`);
+    }
+  }
+  assert.deepEqual(missed, []);
+});
+
+test('G2 detector: fleetctl reads and API GET reads stay live and are not sinks', () => {
+  const flagged = [];
+  for (const line of G2_SHELL_READ_ONLY) {
+    const hits = commandsIn(line, 'bash');
+    if (hits.length) flagged.push(`${line} → [${hits.join(', ')}]`);
+  }
+  assert.deepEqual(flagged, []);
+});
+
+test('G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 runbooks; G1 and Microsoft files keep their grammar', () => {
+  const lines = [
+    '# fixture',
+    '',
+    '1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Wipe**',
+    '2. Slack → `#[CHANNEL_NAME]` → channel name → Settings → **Archive channel**',
+    '3. Linear → Settings → Administration → Members → `[USER_ID]` → **Suspend**',
+    '4. Slack admin → Workspace settings → Import/Export Data → Click **Export**',
+    '5. Jamf Pro → Computers → Policies → `[POLICY_NAME]` → Logs → **Flush All**',
+    '6. Slack → `[APP_NAME]` → Click **Approve**',
+    '7. Slack → Workspace settings → Slack Connect connections → `[EXTERNAL_DOMAIN]` → **Disconnect**',
+    '8. Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]` → Disk Encryption → **Show Key**',
+    '9. Linear → `[ISSUE_ID]` → Leave a comment → read the thread',
+    '10. Fleet → Software → `[APP_NAME]` → Actions → **Uninstall**',
+    '',
+  ];
+  const source = lines.join('\n');
+  const actionsByLine = (file) => Object.fromEntries(portalMutationCandidates(parseFences(file, source))
+    .map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
+  assert.deepEqual(actionsByLine('.claude/commands/slack-fixture.md'),
+    { 3: 'wipe', 4: 'archive', 5: 'suspend', 6: 'export', 7: 'flush', 8: 'approve', 9: 'disconnect', 10: 'show', 12: 'uninstall' });
+  assert.deepEqual(actionsByLine('.claude/commands/gws-account-containment.md'), actionsByLine('.claude/commands/slack-fixture.md'), 'a named new Google runbook is a G2 document');
+  // A G1 runbook and a Microsoft runbook keep their grammar: the existing cues (Fleet, a
+  // generic Settings) find the existing verbs, and no G2 verb becomes a candidate there.
+  assert.deepEqual(actionsByLine('.claude/commands/okta-fixture.md'), { 3: 'wipe', 5: 'suspend' });
+  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'wipe' });
+  for (const action of ['archive', 'export', 'flush', 'approve', 'disconnect', 'show', 'uninstall', 'unarchive', 'trash', 'rotate', 'post', 'accept', 'decline', 'distribute', 'redeploy']) {
+    assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
+  }
+  assert.doesNotThrow(() => assertEffectCorrespondence('archive one Slack channel', 'ARCHIVE SLACK CHANNEL [CHANNEL_NAME]', 'g2-archive', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('run one saved script on one host', 'RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID]', 'g2-run', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('reveal the FileVault recovery key of one Mac', 'SHOW FILEVAULT KEY FOR [SERIAL_NUMBER]', 'g2-reveal', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('turn off MDM for one host', 'TURN OFF MDM FOR HOST [HOST_ID]', 'g2-turn-off', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('shorten message retention for the workspace', 'SET SLACK RETENTION TO [DAYS] DAYS', 'g2-shorten', '.claude/commands/slack-fixture.md'));
+  assert.doesNotThrow(() => assertEffectCorrespondence('post one incident update to one channel', 'POST INCIDENT UPDATE TO [CHANNEL_NAME]', 'g2-post', '.claude/commands/slack-fixture.md'));
+  assert.throws(() => assertEffectCorrespondence('disconnect one external organization', 'ARCHIVE [EXTERNAL_DOMAIN]', 'g2-mismatch', '.claude/commands/slack-fixture.md'));
 });

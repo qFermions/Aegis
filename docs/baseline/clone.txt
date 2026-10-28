@@ -1,0 +1,10 @@
+$ git clone --depth 1 https://github.com/qFermions/Aegis /tmp/fresh
+# started 2026-10-27T06:47:48Z
+Cloning into '/tmp/fresh'...
+# exit: 0
+$ git -C /tmp/fresh rev-parse HEAD
+d5fc8c0183b3e8c2967e06f868dcc5e842febe49
+$ ls /tmp/fresh/package.json /tmp/fresh/package-lock.json
+ls: cannot access '/tmp/fresh/package.json': No such file or directory
+ls: cannot access '/tmp/fresh/package-lock.json': No such file or directory
+# no package manifest and no lockfile: nothing to install from the repo

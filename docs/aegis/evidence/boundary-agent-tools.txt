@@ -1,0 +1,19 @@
+$ git grep -n -E '^tools:' -- .claude/agents .claude/plugins; ls .claude/settings.json .claude/settings.local.json
+# at 62eff38 on chore/baseline-and-boundary, 2026-10-27T07:06:45Z
+.claude/agents/atlas.md:4:tools: Read, Grep, Glob, Bash
+.claude/agents/evidence-reviewer.md:4:tools: Read, Grep, Glob, WebSearch, WebFetch
+.claude/agents/forge.md:4:tools: Read, Edit, Write, Grep, Glob, Bash
+.claude/agents/graph-builder.md:4:tools: Read, Grep, Glob
+.claude/agents/graph-reviewer.md:4:tools: Read, Grep, Glob
+.claude/agents/graph-risk-finalizer.md:4:tools: Read, Grep, Glob
+.claude/agents/graph-router.md:4:tools: Read, Grep, Glob
+.claude/agents/graph-scribe.md:4:tools: Read, Grep, Glob
+.claude/agents/graph-specialist.md:4:tools: Read, Grep, Glob
+.claude/agents/graph-verifier.md:4:tools: Read, Grep, Glob
+.claude/agents/tier1-support.md:4:tools: Read, Grep, Glob, Bash
+.claude/agents/tier2-support.md:4:tools: Read, Grep, Glob, Bash
+.claude/agents/warden.md:4:tools: Read, Grep, Glob, Bash
+.claude/agents/zac.md:4:tools: *
+ls: cannot access '.claude/settings.json': No such file or directory
+ls: cannot access '.claude/settings.local.json': No such file or directory
+# exit: 2

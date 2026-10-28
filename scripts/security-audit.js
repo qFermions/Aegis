@@ -725,8 +725,11 @@ function main() {
 if (require.main === module) main();
 
 module.exports = {
+  // Reused by scripts/gws-posture-audit.js so both reports share one write path.
+  assertSafeReportTarget,
   buildWritePlan,
   parseArgs,
   renderReport,
-  run
+  run,
+  writeReportExclusive
 };

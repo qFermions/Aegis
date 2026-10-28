@@ -1,0 +1,11 @@
+{
+  "schema": "aegis.memory.proposal.v1",
+  "type": "DECISION",
+  "summary": "TENANT-A-ONLY decision: the org keeps the guest access review on a quarterly cycle for the finance site",
+  "detail": "Org-internal procedure decision recorded for this tenant only.",
+  "scope": "org",
+  "volatility": "org-procedure",
+  "sensitivity": "org-internal",
+  "keywords": ["guest", "access-review", "finance-site"],
+  "provenance": [{ "kind": "operator", "ref": "operator decision in session [JIRA-###]" }]
+}

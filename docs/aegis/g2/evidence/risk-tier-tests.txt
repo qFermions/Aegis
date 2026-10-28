@@ -1,0 +1,34 @@
+# command: node --test scripts/risk_tier.test.js
+# captured: 2026-10-28T04:35:42Z at 7cf42e2
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+✔ A: a docs-only change is tier A and lists no path (133.86032ms)
+✔ B: evaluation code is tier B and only the B paths are listed (121.961699ms)
+✔ C: a CI workflow change is tier C (116.742726ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (130.35063ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (130.41242ms)
+✔ one C path wins over many B paths, and only the C path is listed (169.379398ms)
+✔ ** matches nested paths at any depth (169.968941ms)
+✔ uncommitted and untracked changes count toward the tier (149.171266ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (268.326821ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (130.603168ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (5.319685ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (159.45831ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (184.11499ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (484.77556ms)
+✔ the CLI runs when invoked through a symlinked path (128.857169ms)
+✔ C: scripts/adapters/readonly-contract.js is tier C, not scripts/** B (160.861278ms)
+✔ C: scripts/adapters/fleet-client.js is tier C, not scripts/** B (139.930563ms)
+✔ C: scripts/adapters/jamf-client.js is tier C, not scripts/** B (130.98373ms)
+✔ C: scripts/adapters/slack-client.js is tier C, not scripts/** B (126.413694ms)
+✔ C: scripts/adapters/linear-client.js is tier C, not scripts/** B (132.651465ms)
+✔ C: scripts/adapters/gws-client.js is tier C, not scripts/** B (133.549916ms)
+✔ C: scripts/gws-posture-audit.js is tier C, not scripts/** B (125.886259ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3639.894288
+# exit: 0

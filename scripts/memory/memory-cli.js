@@ -20,6 +20,8 @@
  *             4 promotion gate refused (case-scope, conflict unresolved,
  *               external-only provenance, missing canonical pointer)
  *             5 duplicate (merge into the match instead)
+ *             6 tenant binding refused (the store belongs to another tenant,
+ *               or it is bound and AEGION_DOMAIN is unset)
  *
  * Usage:
  *   node scripts/memory/memory-cli.js propose    --file p.json [--as-of YYYY-MM-DD]
@@ -47,6 +49,7 @@ const MEM_DIR = process.env.AEGIS_MEMORY_DIR || path.join(REPO_ROOT, 'memory');
 const INDEX_PATH = path.join(MEM_DIR, 'index.json');
 const LEDGER_PATH = path.join(MEM_DIR, 'ledger.jsonl');
 const LOCK_PATH = path.join(MEM_DIR, '.lock');
+const TENANT_PATH = path.join(MEM_DIR, 'tenant.json');
 const LOCK_STALE_MS = 5 * 60 * 1000;
 
 function out(obj) { console.log(JSON.stringify(obj, null, 2)); }
@@ -87,13 +90,52 @@ function loadRecord(id) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
+// Every CLI write that leaves a record servable (candidate, verified, stale)
+// re-applies the persist gates to the WHOLE record first: a record changed on
+// disk outside this CLI cannot be laundered into a fresh seal by a later
+// verify, merge or mark-stale. Terminal statuses (rejected, superseded) never
+// serve, so disposing of a bad record is never blocked.
+const SERVABLE = ['candidate', 'verified', 'stale'];
+function refuseUnlessGatesPass(rec) {
+  const problems = store.storedRecordProblems(rec);
+  if (!problems.length) return;
+  ledger('RESEAL_REFUSED', { id: rec.id, problems: problems.slice(0, 5).map((p) => p.problem) });
+  const code = problems.some((p) => p.code === 3) ? 3 : problems.some((p) => p.code === 4) ? 4 : 2;
+  fail(code, `refused: ${rec.id} does not pass the persist gates as stored on disk (changed outside memory-cli.js?); nothing written`, problems.map((p) => p.problem));
+}
+// A sealed index row that no longer matches its record file means the record was
+// changed on disk outside this CLI, and a record with no index row was written by
+// hand: no verify, merge, mark-stale or promote may write a fresh seal over either,
+// even when the changed text passes the persist gates. An unsealed row from before
+// sealing is the documented migration path: an operator re-verifies it.
+function refuseIfChangedOnDisk(index, rec) {
+  const row = index.records.find((r) => r.id === rec.id);
+  let reason = null;
+  if (!row) reason = 'no index row for this record (written outside memory-cli.js)';
+  else if (row.seal && store.canonicalJson(row) !== store.canonicalJson(indexRow(rec))) {
+    reason = 'index row and record disagree (seal mismatch): changed on disk outside memory-cli.js';
+  }
+  if (!reason) return;
+  ledger('RESEAL_REFUSED', { id: rec.id, problems: [reason] });
+  fail(3, `refused: ${rec.id}: ${reason}; nothing written`);
+}
 function saveRecord(rec) {
+  if (SERVABLE.includes(rec.status)) refuseUnlessGatesPass(rec);
   fs.mkdirSync(MEM_DIR, { recursive: true });
   atomicWrite(recordPath(rec.id), JSON.stringify(rec, null, 2) + '\n');
 }
 
+// The seal binds an index row to the exact record content this CLI wrote. It
+// is unkeyed (no secret exists to key it with): it makes an edit to either
+// file, a hand-written record and a stripped seal visible, not impossible to
+// forge for a writer that replays this CLI's own write path.
+function sealOf(rec) {
+  return crypto.createHash('sha256').update('aegis.memory.seal.v1\n' + store.canonicalJson(rec)).digest('hex');
+}
+
 function indexRow(rec) {
   return {
+    seal: sealOf(rec),
     id: rec.id,
     type: rec.type,
     status: rec.status,
@@ -116,6 +158,29 @@ function upsertIndex(index, rec) {
   if (i >= 0) index.records[i] = row; else index.records.push(row);
 }
 
+function tryLoadRecord(id) {
+  const p = recordPath(id);
+  if (!/^mem-\d{4}$/.test(String(id)) || !fs.existsSync(p)) return null;
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return null; }
+}
+
+/**
+ * Read-path integrity: a record is served only when its index row is exactly
+ * the row this CLI would write for the record on disk (seal included) and the
+ * record still passes the persist gates. Anything else was changed outside
+ * memory-cli.js, written by hand, or predates sealing: withheld, never served.
+ * Returns "intact" or the reason (field and rule names only, no content).
+ */
+function integrityOf(row, rec) {
+  if (!rec) return 'withheld: record file missing or unreadable';
+  if (!row) return 'withheld: no index row for this record (written outside memory-cli.js)';
+  if (!row.seal) return 'withheld: unsealed index row (written outside memory-cli.js, or before sealing); re-verify through the CLI to seal it';
+  if (store.canonicalJson(row) !== store.canonicalJson(indexRow(rec))) return 'withheld: index row and record disagree (seal mismatch): changed on disk outside memory-cli.js';
+  const problems = store.storedRecordProblems(rec);
+  if (problems.length) return `withheld: fails the persist gates as stored (${problems[0].problem})`;
+  return 'intact';
+}
+
 // Ledger: the write path must be able to answer "how many candidates were
 // considered / promoted / deduplicated / rejected, and on what evidence" —
 // one appended line per decision, best-effort, never blocks the operation.
@@ -131,26 +196,111 @@ function readLedger() {
   return fs.readFileSync(LEDGER_PATH, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 }
 
+// ── tenant binding (one store, one tenant) ───────────────────────────────────
+// The store holds org-internal knowledge for exactly one tenant. Its first
+// write under a tenant (AEGION_DOMAIN) binds it: tenant.json records a
+// fingerprint of the tenant domain, never the literal (SR-8). From then on
+// every command refuses (exit 6) when the runtime tenant differs or is unset.
+// A store with no binding (created before this rule, or only ever written with
+// AEGION_DOMAIN unset) holds no evidence of whose it is: it stays readable,
+// and its first write under a tenant binds it.
+
+function tenantFingerprint(domain) {
+  return crypto.createHash('sha256').update('aegis.tenant.v1\n' + domain.trim().toLowerCase()).digest('hex');
+}
+
+function runtimeTenant() {
+  const d = process.env.AEGION_DOMAIN;
+  return d && d.trim() ? tenantFingerprint(d) : null;
+}
+
+function boundTenant() {
+  if (!fs.existsSync(TENANT_PATH)) return null;
+  try {
+    const b = JSON.parse(fs.readFileSync(TENANT_PATH, 'utf8'));
+    if (b && b.schema === 'aegis.tenant-binding.v1' && /^[0-9a-f]{64}$/.test(b.tenant)) return b.tenant;
+  } catch (e) { /* unreadable binding: refused below */ }
+  return fail(6, 'tenant binding unreadable: the owner of this store cannot be established; nothing read or written');
+}
+
+function assertTenant() {
+  const bound = boundTenant();
+  if (!bound) return;
+  const current = runtimeTenant();
+  if (!current) fail(6, 'store is bound to a tenant but AEGION_DOMAIN is not set: this case cannot be shown to belong to it; nothing read or written');
+  if (current !== bound) {
+    fail(6, `store belongs to another tenant (binding ${bound.slice(0, 12)}, runtime ${current.slice(0, 12)}): one store, one tenant; nothing read or written`);
+  }
+}
+
+function bindTenantIfUnbound() {
+  const current = runtimeTenant();
+  if (!current || fs.existsSync(TENANT_PATH)) return;
+  atomicWrite(TENANT_PATH, JSON.stringify({ schema: 'aegis.tenant-binding.v1', tenant: current, boundAt: new Date().toISOString() }, null, 2) + '\n');
+  ledger('TENANT_BOUND', { tenant: current.slice(0, 12) });
+}
+
 // ── write serialization (one controlled promotion path, no last-writer-wins) ─
 
-function releaseLock() {
+// The lock belongs to the writer whose random token is in its owner file. A writer
+// removes the lock only while that file still holds its own token, so a writer that
+// outlived LOCK_STALE_MS never removes the lock of the writer that stole it, and the
+// exit-time release after `finally` is a no-op. Stealing a stale lock is serialized by
+// a second mkdir lock (.lock.steal): under it the stealer re-checks that the lock is
+// still the stale one it saw, so two stealers never both proceed.
+const LOCK_OWNER = path.join(LOCK_PATH, 'owner');
+const STEAL_PATH = LOCK_PATH + '.steal';
+let lockToken = null;
+const lockOwner = () => { try { return fs.readFileSync(LOCK_OWNER, 'utf8'); } catch (e) { return null; } };
+const lockAge = (p) => { try { return Date.now() - fs.statSync(p).mtimeMs; } catch (e) { return null; } };
+function removeLockDir() {
+  try { fs.unlinkSync(LOCK_OWNER); } catch (e) { /* no owner file */ }
   try { fs.rmdirSync(LOCK_PATH); } catch (e) { /* already released */ }
+}
+function takeLock() {
+  fs.mkdirSync(LOCK_PATH); // EEXIST while another writer holds it
+  const token = crypto.randomBytes(16).toString('hex');
+  fs.writeFileSync(LOCK_OWNER, token);
+  lockToken = token;
+}
+function releaseLock() {
+  if (!lockToken) return;
+  const mine = lockOwner() === lockToken;
+  lockToken = null;
+  if (mine) removeLockDir();
+}
+function acquireLock() {
+  try { return takeLock(); } catch (e) { if (e.code !== 'EEXIST') throw e; }
+  const seen = lockOwner();
+  const age = lockAge(LOCK_PATH);
+  if (age !== null && age < LOCK_STALE_MS) fail(1, 'memory store is locked by another writer; retry after it finishes');
+  try { fs.mkdirSync(STEAL_PATH); } catch (e) {
+    if ((lockAge(STEAL_PATH) || 0) >= LOCK_STALE_MS) { try { fs.rmdirSync(STEAL_PATH); } catch (e2) { /* gone */ } } // a stealer crashed mid-steal
+    fail(1, 'memory store lock is being recovered by another writer; retry');
+  }
+  let stole = false;
+  const again = lockAge(LOCK_PATH);
+  if (again === null || (again >= LOCK_STALE_MS && lockOwner() === seen)) { // still the stale lock (crashed writer)
+    removeLockDir();
+    try { takeLock(); stole = true; } catch (e) { if (e.code !== 'EEXIST') { fs.rmdirSync(STEAL_PATH); throw e; } }
+  }
+  fs.rmdirSync(STEAL_PATH);
+  if (!stole) fail(1, 'memory store is locked by another writer; retry after it finishes');
 }
 
 function withLock(fn) {
   fs.mkdirSync(MEM_DIR, { recursive: true });
-  try {
-    fs.mkdirSync(LOCK_PATH);
-  } catch (e) {
-    const age = fs.existsSync(LOCK_PATH) ? Date.now() - fs.statSync(LOCK_PATH).mtimeMs : 0;
-    if (age < LOCK_STALE_MS) fail(1, 'memory store is locked by another writer — retry after it finishes');
-    fs.rmdirSync(LOCK_PATH); // stale lock (crashed writer) — steal it
-    fs.mkdirSync(LOCK_PATH);
-  }
+  acquireLock();
   // fail() exits the process from inside fn — release on exit, not just finally.
   process.on('exit', releaseLock);
   try {
-    return fn();
+    // Re-checked under the lock: another writer may have bound this store since
+    // main() checked it. Bound only after fn() returns: a refused or duplicate
+    // write exits inside fn() and never claims the store for this tenant.
+    assertTenant();
+    const result = fn();
+    bindTenantIfUnbound();
+    return result;
   } finally {
     releaseLock();
   }
@@ -281,6 +431,7 @@ function cmdMerge(id, flags) {
   return withLock(() => {
     const rec = loadRecord(id);
     if (rec.status === 'rejected' || rec.status === 'superseded') fail(2, `cannot merge into a ${rec.status} record`);
+    refuseIfChangedOnDisk(loadIndex(), rec);
     const entry = { kind: flags.kind, ref: String(flags.ref) };
     if (flags.note) entry.note = String(flags.note);
     const scan = store.sanitizeGate({ p: [entry.ref, entry.note || ''] });
@@ -289,6 +440,9 @@ function cmdMerge(id, flags) {
     fingerprintProvenance(rec);
     history(rec, 'provenance-merged', `${flags.kind}:${flags.ref}`);
     saveRecord(rec);
+    const index = loadIndex(); // the row's seal must follow the record it describes
+    upsertIndex(index, rec);
+    saveIndex(index);
     ledger('MERGED', { id, evidence: [`${flags.kind}:${flags.ref}`] });
     out({ ok: true, id, provenanceCount: rec.provenance.length });
   });
@@ -299,6 +453,10 @@ function cmdPromote(id, flags) {
     const rec = loadRecord(id);
     const index = loadIndex();
     if (rec.status !== 'candidate') fail(2, `promote requires status candidate (found: ${rec.status})`);
+    // Gate the candidate as stored BEFORE any write: a refused promote must
+    // not have already superseded the record it was meant to replace.
+    refuseIfChangedOnDisk(index, rec);
+    refuseUnlessGatesPass(rec);
 
     // Raw/external content can support, never solely justify (SR-3).
     if (!rec.provenance.some((p) => store.TRUSTED_PROVENANCE.includes(p.kind))) {
@@ -379,6 +537,7 @@ function cmdVerify(id, flags) {
   return withLock(() => {
     const rec = loadRecord(id);
     if (rec.status !== 'verified' && rec.status !== 'stale') fail(2, `verify requires status verified|stale (found: ${rec.status})`);
+    refuseIfChangedOnDisk(loadIndex(), rec);
     const date = asOf(flags);
     rec.status = 'verified';
     rec.lastVerified = date;
@@ -397,6 +556,7 @@ function cmdMarkStale(id, flags) {
   return withLock(() => {
     const rec = loadRecord(id);
     if (rec.status !== 'verified') fail(2, `mark-stale requires status verified (found: ${rec.status})`);
+    refuseIfChangedOnDisk(loadIndex(), rec);
     rec.status = 'stale';
     history(rec, 'marked-stale', String(flags.reason || 'dependency changed'));
     saveRecord(rec);
@@ -426,16 +586,25 @@ function cmdRetrieve(flags) {
     limit: flags.limit ? parseInt(flags.limit, 10) : undefined,
     includeCandidates: Boolean(flags['include-candidates']),
   });
-  // Bounded read path: top-K records opened only for their provenance refs.
+  // Bounded read path: top-K records opened for their provenance refs and the
+  // integrity check. A record that fails it is withheld and named, never
+  // served (its stored text is not printed).
+  const served = [];
+  const withheld = [];
   for (const r of results) {
-    const rec = loadRecord(r.id);
+    const rec = tryLoadRecord(r.id);
+    const integrity = integrityOf(index.records.find((row) => row.id === r.id), rec);
+    if (integrity !== 'intact') { withheld.push({ id: r.id, reason: integrity }); continue; }
     r.provenance = rec.provenance.map((p) => `${p.kind}:${p.ref}`);
+    served.push(r);
   }
-  out({ ok: true, query: flags.query, count: results.length, results });
+  out({ ok: true, query: flags.query, count: served.length, results: served, ...(withheld.length ? { withheld } : {}) });
 }
 
+// Audit view: always prints the record, labelled with its integrity.
 function cmdShow(id) {
-  out({ ok: true, record: loadRecord(id) });
+  const rec = loadRecord(id);
+  out({ ok: true, integrity: integrityOf(loadIndex().records.find((row) => row.id === id), rec), record: rec });
 }
 
 // Evidence audit: reports, never gates. A memory whose evidence has left the
@@ -445,11 +614,20 @@ function cmdAudit(id) {
   out({ ok: true, id: rec.id, status: rec.status, evidence: auditProvenance(rec) });
 }
 
+// Inventory view: every row is labelled with its integrity, and only an intact
+// record's summary is printed (index text changed on disk is stored content).
 function cmdList(flags) {
   const index = loadIndex();
   const rows = index.records
     .filter((r) => !flags.status || r.status === flags.status)
-    .map((r) => ({ id: r.id, type: r.type, status: r.status, scope: r.scope, volatility: r.volatility, summary: r.summary.slice(0, 100) }));
+    .map((r) => {
+      const id = /^mem-\d{4}$/.test(String(r.id)) ? r.id : null;
+      const integrity = id ? integrityOf(r, tryLoadRecord(id)) : 'withheld: index row carries no valid id';
+      // A row that is not intact is changed index text in every field: print its id and
+      // why, nothing else.
+      if (integrity !== 'intact') return { id, integrity, type: null, status: null, scope: null, volatility: null, summary: null };
+      return { id, integrity, type: r.type, status: r.status, scope: r.scope, volatility: r.volatility, summary: String(r.summary).slice(0, 100) };
+    });
   out({ ok: true, count: rows.length, records: rows });
 }
 
@@ -479,6 +657,7 @@ function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const id = rest.length > 0 && !rest[0].startsWith('--') ? rest[0] : null;
   const flags = parseFlags(rest);
+  assertTenant(); // every command reads or writes the store
 
   switch (cmd) {
     case 'propose': return cmdPropose(flags);

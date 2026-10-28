@@ -459,5 +459,14 @@ test('R15 wrong-object-type replay is impossible: class must be established on b
   assert.deepStrictEqual(replay.slotClass('Add x@example.org to the team'), { objectClass: 'unknown', anchor: 'none' });
 });
 
+test('R16 the secret-key pattern needs a word boundary: a word ending in "sk-" is prose, an sk- key is still refused', () => {
+  const replay = require(CLI);
+  assert.deepStrictEqual(replay.sanitizationHits('Run the disk-cleanup-maintenance-window task on [DEVICE_NAME] after hours.'), []);
+  assert.deepStrictEqual(replay.sanitizationHits('Schedule the task-scheduler-maintenance-window review with [UPN].'), []);
+  const key = ['sk', 'abcdefghijklmnopqrstuvwxyz0123'].join('-');
+  assert.ok(replay.sanitizationHits(`key ${key} pasted`).includes('API secret key'), 'a real-shaped key is still refused');
+  assert.ok(replay.sanitizationHits(`(${key})`).includes('API secret key'), 'after punctuation too');
+});
+
 console.log(`\n${passed}/${passed + failed} passed`);
 process.exit(failed ? 1 : 0);

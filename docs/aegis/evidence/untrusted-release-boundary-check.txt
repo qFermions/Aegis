@@ -1,0 +1,5 @@
+$ node scripts/harness/release-boundary-check.js
+# exit: 0
+# cwd: (repo root) at 1634a6c, node v24.22.1, pwsh 7.5.4, started 2026-10-27T07:25:21Z, finished 2026-10-27T07:25:21Z
+# note: U+2014 (em dash) in the captured output is written as "--"; nothing else is altered.
+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free

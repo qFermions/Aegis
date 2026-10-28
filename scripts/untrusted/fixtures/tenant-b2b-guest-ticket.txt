@@ -1,0 +1,3 @@
+Guest access ticket [JIRA-###]: B2B guest [GUEST_UPN] (listed in Entra as
+guest.user_example.org#EXT#@[@Aegion_DOMAIN]) cannot open the [@Aegion_DOMAIN_SP] site that
+[UPN] shared with them. Check the guest's redemption status and the site sharing settings.

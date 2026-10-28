@@ -61,12 +61,20 @@ const VARIANTS = {
     // G1 — Google Workspace / Okta / Jamf / macOS lane
     'gws-new-user', 'gws-offboard', 'gws-password-reset', 'gws-2sv-reset', 'gws-group-membership', 'gws-ou-move',
     'gws-license-assign', 'gws-drive-transfer', 'gws-audit-log', 'gws-chromeos-device', 'okta-app-assignment', 'okta-mfa-reset',
-    'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase', 'mac-new-hire-laptop'],
+    'okta-user-lifecycle', 'jamf-enroll-mac', 'jamf-lock-erase', 'mac-new-hire-laptop',
+    // G2: Google Workspace, Fleet, Jamf, Slack and Linear lane (docs/aegis/lanes/g2.md)
+    'fleet-device-actions', 'linear-intake', 'linear-triage', 'linear-ticket-note', 'linear-workspace-admin',
+    'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings',
+    'slack-incident-comms', 'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault',
+    'jamf-inventory-groups', 'gws-drive-sharing', 'gws-2sv-enforcement', 'gws-account-containment', 'gws-admin-roles',
+    'gws-security-posture'],
   B: ['troubleshoot', 'mfa-issue', 'printer-issue', 'wifi-issue', 'lan-wan', 'vpn-check', 'ad-connect', 'teams-issue',
     'outlook-issue', 'onedrive-issue', 'email-to-spam', 'intune-compliance', 'meraki-health', 'meraki-vpn-status',
     'sip-trunk-status', 'security-alert-triage',
     // G1
-    'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue'],
+    'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue',
+    // G2
+    'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation'],
   C: ['write-sop', 'runbook', 'incident-report', 'board-report', 'vendor-email', 'escalation-note', 'ticket-response',
     'draft-email', 'daily-start', 'daily-wrap', 'vent'],
   D: ['cloud-lab', 'devops-drill', 'ai-engineer-drill'],
@@ -76,9 +84,10 @@ const VARIANTS = {
 const VARIANT_OF = {};
 for (const [v, names] of Object.entries(VARIANTS)) for (const n of names) VARIANT_OF[n] = v;
 
-// Commands whose whole job is state-changing integration: their output contract
-// is the direct-integration policy (scripts/command-policy.test.js), not the
-// runbook shape, so the GUI/checklist/note rules do not apply.
+// Commands whose whole job is the Jira client integration (reads, payload previews,
+// HUMAN-RUN write procedures, read-back verification): their output contract is the
+// direct-integration policy (scripts/command-policy.test.js), not the runbook shape,
+// so the GUI/checklist/note rules do not apply.
 const INTEGRATION_ONLY = new Set(['jira-create', 'jira-update']);
 
 // ── Pattern sets ──────────────────────────────────────────────────────────────
@@ -87,10 +96,14 @@ const BREADCRUMB_ROOT_MS = /(admin center|admin\.microsoft\.com|entra\.microsoft
 // G1 roots — an explicit, auditable allowlist for the Google Workspace / Okta /
 // Jamf / macOS lane (Apple Business Manager is now "Apple Business"; both count).
 const BREADCRUMB_ROOT_G1 = /(admin\.google\.com|Admin console|Okta Admin Console|\bOkta\b|Jamf Pro|\bJamf\b|Apple Business Manager|Apple Business|\bFleet\b|System Settings|Self Service|\bFinder\b|\bTerminal\b|Zoom Rooms|Zoom admin)/;
-const BREADCRUMB_ROOT = { test: (line) => BREADCRUMB_ROOT_MS.test(line) || BREADCRUMB_ROOT_G1.test(line) };
+// G2 roots: Slack and Linear join Fleet (already a G1 root). Product names, so the
+// match is case-sensitive: a "linear" search or a "slack" adjective is not a portal.
+const BREADCRUMB_ROOT_G2 = /(\bSlack\b|Slack admin|\bLinear\b)/;
+const BREADCRUMB_ROOT = { test: (line) => BREADCRUMB_ROOT_MS.test(line) || BREADCRUMB_ROOT_G1.test(line) || BREADCRUMB_ROOT_G2.test(line) };
 
 const CHECKLIST_HEADING = /^## (✅ Verification checklist|✅ Completion checklist|Final verification checklist)\s*$/;
-const NOTE_HEADING = /^## (📝 Jira-ready note|Paste-ready ticket note)\s*$/;
+// G2: Linear is the IT ticket system of the G2 lane; its note is the one ticket note there.
+const NOTE_HEADING = /^## (📝 Jira-ready note|📝 Linear-ready note|Paste-ready ticket note)\s*$/;
 const RISK_HEADING = /^## ⚠️ Risk warning\s*$/;
 const FENCE_OPEN = /^```([A-Za-z0-9_-]*)\s*$/;
 
@@ -166,7 +179,8 @@ function commandNames(dir = COMMANDS_DIR) {
 
 // ── G1 CLI fences ─────────────────────────────────────────────────────────────
 const SHELL_FENCES = new Set(['bash', 'sh', 'shell', 'zsh']);
-const CLI_TOOLS = 'gam|gcloud|curl|wget|https?|jamf|profiles|dscl|fdesetup|diskutil|softwareupdate|networksetup|systemsetup|defaults|launchctl|kickstart';
+// fleetctl joins in G2 (Fleet's own CLI); the safety-gate detector knows the same verbs.
+const CLI_TOOLS = 'gam|gcloud|curl|wget|https?|jamf|profiles|dscl|fdesetup|diskutil|softwareupdate|networksetup|systemsetup|defaults|launchctl|kickstart|fleetctl';
 // Mirrors the safety-gate detector (scripts/command-safety-gates.test.js): wrappers
 // that run the next word (sudo with options or --, doas, timeout, command, env,
 // VAR=value, nohup, time, nice, caffeinate, exec, script, xargs) are transparent, a
@@ -205,6 +219,8 @@ const READ_ONLY_CLI = [
   /^defaults\s+read\b/i,
   /^(?:sudo\s+)?launchctl\s+(?:list|print)\b/i,
   /^(?:sudo\s+)?(?:[\w.~-]*\/)*jamf\s+(?:version|checkJSSConnection|help|about)\b/i,
+  // G2: fleetctl reads (get, a live osquery read, version, help)
+  /^(?:[\w.~-]*\/)*fleetctl\s+(?:get|query|version|help|--version|--help)\b/i,
 ];
 function shellCode(line) {
   if (/^\s*#/.test(line)) return '';
@@ -375,6 +391,8 @@ const FRESHNESS_DOCS = ['docs/portal-nav-2026.md', 'docs/ticket-examples.md', 'd
   'modules/security/compliance_checks.md', 'modules/security/incident_response.md', 'modules/security/vulnerability_scan.md',
   'modules/security/threat_detection.md', 'modules/systems/health_checks.md', 'modules/systems/infrastructure.md',
   'modules/systems/network_ops.md', 'modules/automation/powershell/examples.md', '.claude/plugins/enterprise-it-ops/skills/it-ops.md', 'CLAUDE.md',
+  // Batch 1: the passages that moved out of CLAUDE.md keep the same freshness check
+  'docs/aegis/operating-rules.md', 'docs/aegis/workflow.md', 'docs/aegis/operator-context.md',
   // G1 — Google Workspace / Okta / Jamf / macOS knowledge docs
   'docs/portal-nav-google-2026.md', 'docs/gws-reversibility.md', 'docs/evidence/gws/README.md'];
 

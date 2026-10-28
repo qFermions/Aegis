@@ -1,0 +1,21 @@
+# command: node c6.js (the script is at the end of this file; run from the repo root)
+# captured: 2026-10-28T05:02:58Z at 8d22179
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+modes in the whole file: ["preview","gated"]
+all entries: 676 {"preview":347,"gated":329}
+G2 runbook entries: 177 {"gated":142,"preview":35} from 25 runbooks
+G2 client boundaries: gws-posture-audit-report-create gated, linear-note-human-run preview
+G2 entries with a mode other than gated or preview: 0
+# exit: 0
+
+## c6.js
+// C6: modes of the state-change inventory, for every entry and for the 25 G2 runbooks
+const inv = require(process.cwd() + '/docs/security/STATE_CHANGE_INVENTORY.json');
+const G2 = /^\.claude\/commands\/(?:fleet-|linear-|slack-|jamf-(?:config-profiles|filevault|inventory-groups|patch-management|policies-self-service)\.md|gws-(?:2sv-enforcement|account-containment|admin-roles|drive-sharing|security-posture)\.md)/;
+const count = (list) => list.reduce((m, e) => ({ ...m, [e.mode]: (m[e.mode] || 0) + 1 }), {});
+const g2 = inv.examples.filter((e) => G2.test(e.file));
+console.log('modes in the whole file:', JSON.stringify([...new Set(inv.examples.map((e) => e.mode))]));
+console.log('all entries:', inv.examples.length, JSON.stringify(count(inv.examples)));
+console.log('G2 runbook entries:', g2.length, JSON.stringify(count(g2)), 'from', new Set(g2.map((e) => e.file)).size, 'runbooks');
+console.log('G2 client boundaries:', inv.clientBoundaries.filter((c) => /gws-posture|linear-note/.test(c.id)).map((c) => `${c.id} ${c.mode}`).join(', '));
+console.log('G2 entries with a mode other than gated or preview:', g2.filter((e) => !['gated', 'preview'].includes(e.mode)).length);

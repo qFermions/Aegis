@@ -1,0 +1,2 @@
+Ticket [JIRA-###]: user [UPN] at [@Otherorg_DOMAIN] cannot sign in to Teams on [DEVICE_NAME].
+Please work it here and keep the notes with our other tickets.

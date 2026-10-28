@@ -1,0 +1,68 @@
+$ node --test scripts/jira-client.test.js
+# at 62eff38 on chore/baseline-and-boundary, 2026-10-27T07:06:45Z
+✔ site validation accepts and canonicalizes one Atlassian tenant label (1.453312ms)
+✔ site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls (0.594644ms)
+✔ direct apiRequest validates the destination before invoking the transport (0.278399ms)
+✔ argument parser requires --confirm VALUE while execute/public remain bare booleans (0.467925ms)
+✔ argument parser rejects duplicate, malformed, and unknown flags (0.232108ms)
+✔ issue keys are normalized but paths and placeholder text are rejected (0.337869ms)
+✔ create payload is exact, numeric-id-bound, and deterministically serialized (1.171484ms)
+✔ create confirmation contains a full SHA-256 and changes with every material field (0.982408ms)
+✔ create dry run and missing/wrong confirmations use zero credentials and zero network (1.333276ms)
+✔ the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload (0.623507ms)
+▶ verify-create proves the human-created request by an independent GET and fails closed on any mismatch
+  ✔ match (0.839265ms)
+  ✔ different issue key (0.276714ms)
+  ✔ missing immutable id (0.1816ms)
+  ✔ different request type (0.170522ms)
+  ✔ different service desk (0.1451ms)
+  ✔ drifted summary (0.153408ms)
+  ✔ drifted description (0.121213ms)
+  ✔ read failure (0.153521ms)
+✔ verify-create proves the human-created request by an independent GET and fails closed on any mismatch (2.93718ms)
+✔ invalid create destination fails before credentials/network and is not echoed (0.235462ms)
+✔ comment confirmations bind issue, visibility, site, and full payload digest (0.344021ms)
+✔ comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes (0.460951ms)
+✔ exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose (0.490475ms)
+▶ verify-comment proves the comment id, body and visibility and fails closed on any mismatch
+  ✔ match (0.44011ms)
+  ✔ different id (0.316407ms)
+  ✔ drifted body (0.246522ms)
+  ✔ wrong visibility (0.102671ms)
+  ✔ malformed (0.10964ms)
+  ✔ read failure (0.101723ms)
+  ✔ a non-numeric comment id is an input error before credentials or network (0.162476ms)
+✔ verify-comment proves the comment id, body and visibility and fails closed on any mismatch (2.138199ms)
+✔ transition local preview calls neither credentials nor Jira (0.280214ms)
+✔ transition --execute performs paginated read-only preflight and prints immutable confirmation (1.067127ms)
+✔ any transition --confirm, exact or not, is refused before credentials or network (0.914004ms)
+▶ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+  ✔ duplicate selected names (0.256926ms)
+  ✔ duplicate ids across pages (0.118539ms)
+  ✔ no match (0.121215ms)
+  ✔ non-progressing page (0.104174ms)
+  ✔ wrong page start (0.234016ms)
+  ✔ missing current-state version (0.112183ms)
+✔ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST (1.627295ms)
+✔ the transition preflight prints a HUMAN-RUN procedure bound to the resolved id and sends zero POSTs (5.012945ms)
+▶ verify-transition proves the same immutable request left the preflight status and fails closed otherwise
+  ✔ moved (0.360967ms)
+  ✔ unchanged status (0.195342ms)
+  ✔ different immutable id (0.090009ms)
+  ✔ read failure (0.067626ms)
+✔ verify-transition proves the same immutable request left the preflight status and fails closed otherwise (1.197218ms)
+✔ the transport refuses every method but GET, and any payload, before touching the network (0.343058ms)
+✔ no write command reaches the network with anything but GET, under any flag combination (0.969359ms)
+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.292725ms)
+✔ verify commands without --execute are dry runs with zero credentials and zero network (0.28087ms)
+✔ API failures with bodies fail closed and never disclose response content (0.222021ms)
+✔ apiRequest timeout is finite, destroys the request, and rejects (19.918508ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.045625
+# exit: 0

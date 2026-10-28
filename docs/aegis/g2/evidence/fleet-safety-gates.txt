@@ -1,0 +1,30 @@
+# command: node --test scripts/command-safety-gates.test.js 2>&1 | grep -E 'fleet|^ℹ (tests|pass|fail)'
+# captured: 2026-10-28T01:52:08Z at b6fb421
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ fleet-device-actions-lock-portal: portal gate is action-local and fail-closed (2.093069ms)
+✔ fleet-device-actions-unlock-portal: portal gate is action-local and fail-closed (0.713034ms)
+✔ fleet-device-actions-wipe-portal: portal gate is action-local and fail-closed (0.269159ms)
+✔ fleet-device-actions-run-script-portal: portal gate is action-local and fail-closed (0.203255ms)
+✔ fleet-device-actions-batch-script-portal: portal gate is action-local and fail-closed (0.978792ms)
+✔ fleet-device-actions-mdm-off-portal: portal gate is action-local and fail-closed (0.245246ms)
+✔ fleet-device-actions-delete-portal: portal gate is action-local and fail-closed (0.257588ms)
+✔ fleet-device-actions-cancel-portal: portal gate is action-local and fail-closed (0.272044ms)
+✔ fleet-host-health-refetch-portal: portal gate is action-local and fail-closed (0.19197ms)
+✔ fleet-osquery-investigation-add-report-portal: portal gate is action-local and fail-closed (0.17422ms)
+✔ fleet-osquery-investigation-live-report-portal: portal gate is action-local and fail-closed (0.13581ms)
+✔ fleet-osquery-investigation-export-portal: portal gate is action-local and fail-closed (0.137687ms)
+✔ fleet-policy-failures-run-script-portal: portal gate is action-local and fail-closed (0.201783ms)
+✔ fleet-policy-failures-refetch-portal: portal gate is action-local and fail-closed (0.176598ms)
+✔ fleet-policy-failures-automation-portal: portal gate is action-local and fail-closed (0.163476ms)
+✔ fleet-vulnerable-software-add-software-portal: portal gate is action-local and fail-closed (0.148444ms)
+✔ fleet-vulnerable-software-install-host-portal: portal gate is action-local and fail-closed (0.213475ms)
+✔ fleet-vulnerable-software-patch-policy-portal: portal gate is action-local and fail-closed (0.22633ms)
+✔ fleet-vulnerable-software-install-automation-portal: portal gate is action-local and fail-closed (0.174287ms)
+✔ fleet-device-actions-lock-cli: shell gate is explicit, dominates its sinks, and is fail-closed (211.13259ms)
+✔ fleet-device-actions-run-script-cli: shell gate is explicit, dominates its sinks, and is fail-closed (183.998409ms)
+✔ G2 detector: every fleetctl write and every Slack or Linear API write in a shell fence is a sink (25.245736ms)
+✔ G2 detector: fleetctl reads and API GET reads stay live and are not sinks (2.907117ms)
+ℹ tests 311
+ℹ pass 311
+ℹ fail 0
+# exit: 0

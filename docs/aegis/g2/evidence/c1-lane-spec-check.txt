@@ -1,0 +1,35 @@
+# C1 check on docs/aegis/lanes/g2.md, run as: node c1.js (the script is below the output; run from the repo root)
+# captured: 2026-10-28T04:31:18Z at 9019062
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+Fleet: 6 jobs, 0 without file:line or gap, 0 naming another platform's command; 9 dated vendor sources
+Linear: 8 jobs, 0 without file:line or gap, 0 naming another platform's command; 3 dated vendor sources
+Slack: 8 jobs, 0 without file:line or gap, 0 naming another platform's command; 4 dated vendor sources
+Jamf Pro: 7 jobs, 0 without file:line or gap, 0 naming another platform's command; 4 dated vendor sources
+Google Workspace: 10 jobs, 0 without file:line or gap, 0 naming another platform's command; 6 dated vendor sources
+C1: pass
+# exit: 0
+
+## c1.js
+// C1 check on docs/aegis/lanes/g2.md: per platform, every Jobs row names file:line or
+// a gap; the Vendor sources table has at least one row with a date; no job row names
+// two G2 platforms' commands.
+const fs = require('fs');
+const text = fs.readFileSync('docs/aegis/lanes/g2.md', 'utf8');
+const platforms = ['Fleet', 'Linear', 'Slack', 'Jamf Pro', 'Google Workspace'];
+const prefix = { Fleet: 'fleet', Linear: 'linear', Slack: 'slack', 'Jamf Pro': 'jamf', 'Google Workspace': 'gws' };
+let bad = 0;
+for (const p of platforms) {
+  const start = text.indexOf(`\n## ${p}\n`);
+  const end = text.indexOf('\n## ', start + 4);
+  const sec = text.slice(start, end);
+  const jobs = sec.slice(sec.indexOf('### Jobs'), sec.indexOf('### Vendor sources'));
+  const rows = jobs.split('\n').filter((l) => l.startsWith('| ') && !l.startsWith('| Job') && !l.startsWith('|---'));
+  const noRef = rows.filter((r) => { const c = r.split('|')[2] || ''; return !/`[^`]+:\d+(?:-\d+)?`|\bgap\b|\bpartial\b/.test(c); });
+  const others = rows.filter((r) => platforms.filter((q) => q !== p).some((q) => new RegExp(`/${prefix[q]}-`).test(r.split('|')[3] || '')));
+  const src = sec.slice(sec.indexOf('### Vendor sources'), sec.indexOf('### Read-only'));
+  const dated = src.split('\n').filter((l) => l.startsWith('| ') && /20\d\d-\d\d-\d\d/.test(l)).length;
+  console.log(`${p}: ${rows.length} jobs, ${noRef.length} without file:line or gap, ${others.length} naming another platform's command; ${dated} dated vendor sources`);
+  bad += noRef.length + others.length + (dated ? 0 : 1);
+}
+console.log(bad === 0 ? 'C1: pass' : `C1: ${bad} problems`);
+process.exit(bad ? 1 : 0);

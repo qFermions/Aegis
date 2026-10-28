@@ -1,0 +1,5 @@
+$ (python) grep for U+2014 in every file this batch added, and in the added lines of every file it changed: git diff --cached d5fc8c0 (the branch plus the staged commit that adds this file)
+# at fbf6a15 plus the staged commit, 2026-10-27T09:27:17Z
+# files added: 84; files changed: 28
+# 0 hits
+# exit: 0

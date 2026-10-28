@@ -1,0 +1,26 @@
+$ node --test scripts/risk_tier.test.js
+# at 62eff38 on chore/baseline-and-boundary, 2026-10-27T07:07:49Z
+✔ A: a docs-only change is tier A and lists no path (124.800845ms)
+✔ B: evaluation code is tier B and only the B paths are listed (118.201698ms)
+✔ C: a CI workflow change is tier C (138.465271ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (120.144294ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (119.562337ms)
+✔ one C path wins over many B paths, and only the C path is listed (113.354036ms)
+✔ ** matches nested paths at any depth (107.509201ms)
+✔ uncommitted and untracked changes count toward the tier (136.139198ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (213.324771ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (98.876069ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (3.015975ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (109.329855ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (144.137006ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (480.358709ms)
+✔ the CLI runs when invoked through a symlinked path (110.981656ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2300.197787
+# exit: 0

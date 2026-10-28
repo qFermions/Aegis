@@ -1,0 +1,25 @@
+{
+  "ROUTER": {
+    "schema": "router.v1",
+    "lane": "collab",
+    "reason": "B2B guest cannot open a shared SharePoint site",
+    "specialistCommands": ["/sharepoint-access"],
+    "riskGuess": "R0"
+  },
+  "SPECIALIST_FOREIGN": {
+    "schema": "evidence.v1",
+    "rankedCauses": [
+      { "rank": 1, "cause": "Guest redemption pending", "discriminatedBy": "E1" }
+    ],
+    "evidence": [
+      {
+        "id": "E1",
+        "kind": "config",
+        "summary": "External sharing settings compared with the [@Otherorg_DOMAIN] tenant",
+        "command": "SharePoint admin center > Policies > Sharing",
+        "output": "[@Otherorg_DOMAIN] allows new and existing guests; [@Aegion_DOMAIN] allows existing guests only",
+        "provenance": "agent_derived"
+      }
+    ]
+  }
+}

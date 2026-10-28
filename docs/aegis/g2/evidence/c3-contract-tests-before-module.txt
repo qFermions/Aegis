@@ -1,0 +1,10 @@
+# command: node --test scripts/adapters/readonly-contract.test.js
+# at commit 8913c20 (the test commit, before the module commit f571add), clean worktree, 2026-10-27T19:11:34Z
+Error: Cannot find module './readonly-contract.js'
+✖ scripts/adapters/readonly-contract.test.js (99.266297ms)
+ℹ tests 1
+ℹ pass 0
+ℹ fail 1
+✖ failing tests:
+✖ scripts/adapters/readonly-contract.test.js (99.266297ms)
+# then at f571add: 16 tests, 16 pass (this session)

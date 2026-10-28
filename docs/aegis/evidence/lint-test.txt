@@ -1,0 +1,40 @@
+$ node --test scripts/lint/command-structure.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:54:35Z
+✔ live command surface: every operational/troubleshooting command satisfies the GUI-first structural contract (121.71886ms)
+✔ live docs carrying portal paths are fresh and uncorrupted (19.831535ms)
+✔ a compliant synthetic command passes every rule (the lint is not vacuously strict) (0.61927ms)
+✔ an unclassified command is a finding -- new commands must be classified (0.589966ms)
+✔ gui-before-powershell: a PowerShell fence ahead of the first breadcrumb fails (0.908758ms)
+✔ powershell-collapsed / powershell-commented: uncollapsed or uncommented PowerShell fails (0.623968ms)
+✔ one-final-checklist / paste-ready-note / checklist-before-note (0.693339ms)
+✔ gui-steps-present: a command with no exact breadcrumb fails; a docs/comms command is exempt (0.708332ms)
+✔ risk-warning-present applies to troubleshooting commands only (0.734848ms)
+✔ slash-refs-exist: a dangling command reference fails; app switches are allowlisted (0.893617ms)
+✔ no-corrupted-chars: a stray combining mark fails (0.523667ms)
+✔ fresh-portal-paths: a retired Entra breadcrumb fails, in prose or inside a fence (1.009392ms)
+✔ fresh-portal-paths: Markdown emphasis, links, or HTML cannot hide a retired breadcrumb (review finding) (2.130036ms)
+✔ gui-before-powershell: a frontmatter description arrow is not a breadcrumb (review finding) (0.617197ms)
+✔ CLI exits 0 on the live tree (178.805773ms)
+✔ G1: a compliant Google/Okta/Jamf command passes every rule (read-only fence may stay open) (0.975821ms)
+✔ G1 breadcrumb roots: Admin console, Okta, Jamf Pro, Apple Business, Fleet, System Settings, Self Service, Finder, Terminal and Zoom Rooms count; an unknown root does not (2.686956ms)
+✔ G1 cli-collapsed: a mutating gam/jamf/curl/profiles fence outside <details> fails; read-only diagnostics may stay open (2.360123ms)
+✔ G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript) (5.102968ms)
+✔ G1 read-only allowlist judges every command on a line (a chained mutation is not read-only) (0.872368ms)
+✔ G1 lint: a backslash-continued HTTP write in an open fence still fails cli-collapsed (0.388402ms)
+✔ G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above) (0.896281ms)
+✔ G1 gui-before-cli: a CLI fence ahead of the first portal breadcrumb fails (0.266043ms)
+✔ G1 cli-human-run: a mutating CLI fence must say HUMAN-RUN (0.28294ms)
+✔ G1 cli-in-shell-fence: Google/Okta/Jamf/macOS CLI inside a PowerShell or untagged fence fails (the gate grammar would not see it) (2.84942ms)
+✔ G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; the current wording passes; every entry cites a vendor page and a check date (3.39758ms)
+✔ G1 commands are classified: every Phase-3 runbook name has a variant (0.182188ms)
+✔ G1 knowledge docs are on the freshness list (retired vendor wording can never come back there) (0.665548ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 458.390356
+# exit: 0, finished 2026-10-27T06:54:35Z
+# post-processed after capture: each U+2014 dash in the tool output was replaced by two hyphens (repository style rule); no other change

@@ -6,15 +6,15 @@
 
 **Describe an IT problem in plain English. Aegis decides how deeply to think — verified replay, lightweight Tier 1/2 handlers, or Fable-powered Tier-3 analysis with bounded agent graphs — and produces the safest technically useful procedure for a HUMAN administrator to execute, under R0–R3 risk classification with controlled memory. Aegis recommends; humans execute.**
 
-*Scope note: 77 runbooks — 58 for Microsoft (hybrid AD, Entra ID, M365, Exchange Online, Intune, Teams, OneDrive, SharePoint) plus Meraki/VoIP, and 19 for Google Workspace, Okta, Jamf Pro, macOS and Zoom Rooms. Both lanes have a sanitized ticket corpus run by the same deterministic evaluator, and the same structure lint and safety-gate suite. What is still pending for the Google lane: the operator's lab evidence and a fresh-context rubric run of the rendered answers (`docs/evidence/claim-ledger.md`).*
+*Scope note: 102 runbooks: 58 for Microsoft (hybrid AD, Entra ID, M365, Exchange Online, Intune, Teams, OneDrive, SharePoint) plus Meraki/VoIP, 19 for Google Workspace, Okta, Jamf Pro, macOS and Zoom Rooms, and 25 for the G2 lane (Fleet, Linear, Slack, and more Jamf Pro and Google Workspace), each G2 platform with a read-only adapter. All three lanes have a sanitized ticket corpus run by the same deterministic evaluator, and the same structure lint and safety-gate suite. What is still pending for the Google lane: the operator's lab evidence and a fresh-context rubric run of the rendered answers (`docs/evidence/claim-ledger.md`).*
 
 <br>
 
 [![Release Gate](https://github.com/qFermions/Aegis/actions/workflows/release-gate.yml/badge.svg)](https://github.com/qFermions/Aegis/actions/workflows/release-gate.yml)
 [![Architecture](https://img.shields.io/badge/Authorization-R0--R3_blast--radius-0078D4?style=flat-square)](#-the-safety-model)
 [![Probes](https://img.shields.io/badge/Security-T1--T10_probe_suite-2EA44F?style=flat-square)](#-the-safety-model)
-[![Commands](https://img.shields.io/badge/Runbooks-77_slash_commands-8A2BE2?style=flat-square)](#-whats-inside)
-[![Tests](https://img.shields.io/badge/Suites-graph_33_·_memory_14_·_replay_15_·_ticket_eval_28+38_·_lint_77-informational?style=flat-square)](#-run-the-evidence)
+[![Commands](https://img.shields.io/badge/Runbooks-102_slash_commands-8A2BE2?style=flat-square)](#-whats-inside)
+[![Tests](https://img.shields.io/badge/Suites-graph_33_·_memory_14_·_replay_15_·_ticket_eval_28+38+63_·_lint_102-informational?style=flat-square)](#-run-the-evidence)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
 [🧭 How it works](#-how-it-works) · [🚀 Try it](#-try-it--5-minutes) · [🔐 Safety model](#-the-safety-model) · [🧪 Evidence](#-run-the-evidence) · [📦 What's inside](#-whats-inside) · [🧩 Adapt it](#-adapting-it-to-your-environment)
@@ -106,7 +106,8 @@ Every load-bearing claim above maps to a runnable check, and [`docs/evidence/cla
 node --test                                    # the whole battery (graph, memory, replay, tier, lint, eval, scanner, structure …)
 node scripts/eval/ms-ticket-eval.js            # 28 sanitized Microsoft tickets: risk floor, routed-runbook structure, replay MISS, 6 dangerous pairs
 node scripts/eval/gws-ticket-eval.js           # 38 sanitized Google Workspace / Okta / Jamf / macOS tickets, 9 dangerous pairs — same evaluator
-node scripts/lint/command-structure.js         # 77 commands: exact portal breadcrumbs, GUI before PowerShell/CLI, CLI collapsed + commented + HUMAN-RUN, one checklist + one Jira note, fresh Entra / Admin console / Okta / Jamf paths
+node scripts/eval/g2-ticket-eval.js            # 63 sanitized Fleet, Linear, Slack, Jamf Pro and Google Workspace tickets, 12 dangerous pairs, same evaluator
+node scripts/lint/command-structure.js         # 102 commands: exact portal breadcrumbs, GUI before PowerShell/CLI, CLI collapsed + commented + HUMAN-RUN, one checklist + one Jira note, fresh Entra / Admin console / Okta / Jamf paths
 node scripts/replay/replay-demo.js             # replay lifecycle in a sandbox: MISS → verify → HIT → class-bound identity-variant HIT → guest/raw-literal/two-user MISS → STALE
 node scripts/replay/replay.test.js             # 15 — verified-only, fingerprint invalidation, PII boundary, object-class binding, zero-model path proven under a runtime tripwire
 node scripts/graph/graph.test.js               # 33 — graph engine: gates, hash-bound approval, review ceiling
@@ -123,7 +124,7 @@ What a script cannot prove — that the model leads with the most useful action,
 CLAUDE.md                    # The harness contract — mission, environment, rules, orchestration
 modules/security/            # Native governance: security-doctrine (SR-1…SR-8), placeholder
                              # dictionary, threat model (T1–T10), IR playbooks + scripts
-.claude/commands/            # 77 runbook slash commands — onboarding/offboarding, MFA, Intune,
+.claude/commands/            # 102 runbook slash commands: onboarding/offboarding, MFA, Intune,
                              # Meraki, VoIP, Exchange, Jira, troubleshooting trees, and the
                              # Google Workspace / Okta / Jamf / macOS lane (gws-*, okta-*, jamf-*, mac-*)
 scripts/
@@ -135,7 +136,7 @@ scripts/
 ├── eval/                    # Microsoft and Google ticket corpora + one shared deterministic evaluator + judging rubric
 ├── harness/                 # Continuity checker + release-boundary guard
 ├── dev/                     # Multi-session task claims (atomic, scope-overlap refusal)
-├── jira-client.js           # JSM REST client — dry-run-first, env-var auth (+ 14-case suite)
+├── jira-client.js           # JSM client: GET-only; writes print as HUMAN-RUN procedures, verify-* read-backs
 └── pre-commit-check.js      # The commit/CI safety scanner
 docs/                        # Architecture, ADRs, security model, worked ticket examples,
                              # evidence/ (claim ledger, captured handler samples)

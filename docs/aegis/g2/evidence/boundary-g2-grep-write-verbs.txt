@@ -1,0 +1,10 @@
+# command: git ls-files '*.js' '*.mjs' | grep -v '\.test\.js$' | xargs grep -nE "'(POST|PUT|PATCH|DELETE)'" | grep -v '^shared/'
+# captured: 2026-10-28T04:35:42Z at 7cf42e2
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+scripts/adapters/readonly-contract.js:363:  if (method === 'POST' && spec.graphql && request.path === spec.graphql.path) {
+scripts/adapters/readonly-contract.js:367:    return { kind: 'read', method: 'POST', host: gqlHost, path: spec.graphql.path, body, document: name };
+scripts/adapters/readonly-contract.js:509:    const r = await attempt({ hostname: host, path: spec.tokenExchange.path, method: 'POST', headers, body });
+scripts/adapters/readonly-contract.js:579:      return perform(checkRequest(spec, env, { method: 'POST', path: spec.graphql.path, body }));
+scripts/adapters/readonly-contract.js:595:        const checked = checkRequest(spec, env, { method: 'POST', path: spec.graphql.path, body });
+scripts/adapters/readonly-contract.js:596:        return { state: STATES.OK, ok: true, method: 'POST', host: checked.host, path: checked.path, document: name, variables, note: 'dry run: no credentials read, no network' };
+# exit: 0

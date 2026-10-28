@@ -40,6 +40,44 @@ record (candidate) ──verify --evidence [--identity-variants]──▶ verifi
   `[JIRA-###]`, the `[@Aegion_*]` family, and RFC `example.*` domains. The
   pattern set is explicit and finite — a boundary against the shapes it lists,
   not a PII classifier.
+- **Instruction-shaped text is refused at the same boundary (SR-3, exit 4).**
+  A verified solution renders verbatim with zero new reasoning, so a ticket,
+  solution, evidence, alias or reason carrying one of the graph edge
+  sanitizer's injection markers (`scripts/graph/sanitize.js`) never enters the
+  store. Markers are matched as written and confusable-folded (zero-width and
+  other format characters, fullwidth forms, combining marks, Latin
+  look-alikes). Pinned by `scripts/untrusted/poisoned-memory.test.js` B7.
+- **A second tenant is refused at the same boundary (exit 4).** `[@Aegion_*]`
+  is this deployment's org. An org environment token of any other namespace in
+  a ticket, solution, evidence, alias or reason means the case mixes two
+  tenants, so it never enters the store (same rule as the graph edge
+  sanitizer). A token is an org token when its suffix is one of the placeholder
+  dictionary's own suffixes, or a numbered variant of one, in any case and any
+  spelling: `[@Contoso_DOMAIN]`, `[@Contoso_SiteCount]`, `[@Contoso _DOMAIN]`.
+  A chat handle such as `[@jane_doe]`, `[@bob_site_visit]` or `[@JOHN_SMITH]`
+  is not one. Pinned by `scripts/untrusted/wrong-customer.test.js` C4, C13 and
+  C14 (the suffix list equals the dictionary).
+- **Re-checked at read time.** `lookup` and `render` run the same persistence
+  boundary over the stored ticket and solution before they serve a case;
+  `status` and `list` print every field, so they check every string and key
+  name of the case one by one and require a `case-NNNN` id and a known status,
+  and print only the case id (or null) and labels for a case that fails
+  (A7, A9 in `scripts/untrusted/instruction-injection.test.js`). A case
+  changed on disk outside the CLI so that it carries instruction-shaped text, a
+  secret, a real address, the tenant literal or a second org namespace is a
+  `MISS` with a `withheld` list of labels (lookup) or exit 4 (render); its text is
+  never printed. Residual: a gate-clean edit to a case file is not detected,
+  because case files carry no seal (the memory store has one).
+- **One store, one tenant (exit 6).** The store's first write under a tenant
+  (`AEGION_DOMAIN` set) binds it: `tenant.json` records a sha256 fingerprint
+  of the lower-cased tenant domain, never the literal (SR-8). Every command
+  (`lookup`, `render`, `list`, `status`, `explain`, `record`, ...) then exits
+  `6` and prints nothing from the store when the runtime tenant differs or is
+  unset, so tenant A's verified solutions never render in tenant B's case. A
+  store with no binding (created before this rule, or only written with
+  `AEGION_DOMAIN` unset) carries no evidence of whose it is: it stays readable
+  and its first write under a tenant binds it. Same rule as the memory store. The binding is re-checked under the store lock before every write, and it is claimed only by a write that succeeds: a refused or duplicate write leaves an unbound store unbound.
+  Pinned by `scripts/untrusted/wrong-customer.test.js` C6, C7.
 - **Writes are serialized** by a directory lock: a second writer is refused with
   exit 5 and leaves no partial case; reads never need the lock; parallel writers
   never corrupt the index (R13, R14).

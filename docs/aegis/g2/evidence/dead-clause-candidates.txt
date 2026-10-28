@@ -1,0 +1,15 @@
+# command: a temporary copy of scripts/command-safety-gates.test.js with the clause at :630 written /^\s*(?:>\s*)?(?:\d+[.)]|[-*])\s+/ (one backslash, as intended) instead of /^\\s*.../, run with node --test and removed after
+# captured: 2026-10-28T05:09:52Z at 36d5192
+# note: any U+2014 is written as --; the clause as committed matches a literal backslash, so it never fires; fixed, it reports these 9 unowned candidates, none in a G2 file (the file and the clause are batch 1's; G2 edited only :631-632)
+ℹ tests 433
+ℹ pass 429
+ℹ fail 4
+'.claude/commands/new-user.md:367: unowned manual mutation candidate (- [ ] Windows device enrolled, named, compliant, KFM on · mobile set up (corp: user prereq groups → enroll → WAIT for Intune object → device gr
+".claude/commands/troubleshoot.md:20: unowned manual mutation candidate (- If a provider outage explains it → log it, notify users, wait/escalate. Don't troubleshoot their cloud.)",
+`docs/evidence/ticket-eval-samples.md:50: unowned manual mutation candidate (- Turn 2's EAC button labels ("Read and manage → Edit → Add members") are close to)`,
+"docs/evidence/ticket-eval-samples.md:132: unowned manual mutation candidate (- If it hasn't appeared after an hour: Outlook → File → Account Settings → Account Settings → [UPN] → Change → More Settings → A
+'docs/evidence/ticket-eval-samples.md:292: unowned manual mutation candidate (5. **Which Outlook?** File → Office Account (classic) vs the "New Outlook" toggle. Branch A steps below are for classic; new Outlook fixes v
+"docs/evidence/ticket-eval-samples.md:300: unowned manual mutation candidate (3. **Clear cached Office credentials:** Control Panel → User Accounts → Credential Manager → Windows Credentials → Remove every entry 
+'docs/evidence/ticket-eval-samples.md:303: unowned manual mutation candidate (6. **Still looping?** File → Account Settings → Account Settings → Email tab → select the account → Remove → New → [USER@DOMAIN.
+'scripts/replay/fixtures/shared-mailbox-demo.md:10: unowned manual mutation candidate (1. Exchange admin center (admin.exchange.microsoft.com) → Recipients → Mailboxes → `[SHARED_MAILBOX]` → **Delegation** → **
+'scripts/replay/fixtures/shared-mailbox-demo.md:12: unowned manual mutation candidate (3. Tell the user to restart Outlook; if the mailbox has not appeared after 60 minutes, add it manually: Outlook → File → Account 

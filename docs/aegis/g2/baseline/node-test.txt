@@ -1,0 +1,756 @@
+# command: node --test
+# cwd: clone of 3592bd1 (Phase 0 fresh clone), node v24.22.1, pwsh 7.6.9, started 2026-10-27T18:20:46Z
+  ok  command: silent nonzero exit is FAIL
+  ok  command: missing executable is FAIL, never PASS or SKIPPED
+  ok  command: executable and arguments are passed without a shell
+  ok  hook: absent active hook is FAIL
+  ok  hook: installed Windows hook must invoke the scanner
+  ok  hook: installed hook behavior failure is FAIL even when silent
+  ok  hook: Unix hook without executable mode is FAIL
+  ok  hook: a commented scanner command does not count as active behavior
+  ok  hook: an early successful exit cannot mask an unreachable scanner
+  ok  hook: a shell success mask cannot hide scanner failure
+  ok  hook: a scanner path in a trailing comment is not behavior
+  ok  hook: Git active-hook lookup uses argument arrays without a shell
+  ok  scanner: default checklist requires --all mode
+  ok  scanner: validator executes the full-tree mode with the active Node runtime
+  ok  scanner: missing --all is FAIL before execution
+  ok  tracked text: Node inspection replaces Unix redirection and true
+  ok  tracked text: a forbidden marker is FAIL
+  ok  checklist: contains no Unix shell control or redirection snippets
+  ok  summary: READY requires every required check to PASS
+  ok  summary: optional UNKNOWN is DEGRADED, not READY
+  ok  summary: an invalid optional status is normalized to UNKNOWN and DEGRADED
+
+21 passed, 0 failed
+✔ modules/automation/scripts/deploy-check.test.js (83.686352ms)
+  ok  provider failure: Windows CPU and disk remain UNKNOWN
+  ok  provider failure: UNKNOWN produces distinct degraded exit 2
+  ok  provider failure: CLI main returns degraded exit 2
+  ok  Windows CPU: invalid WMIC output falls back to PowerShell
+  ok  Windows CPU: multiple processor values are averaged
+  ok  Windows disk: fixed-drive WMIC data parses without shell syntax
+  ok  Windows disk: PowerShell fallback parses fixed drives when WMIC is unavailable
+  ok  Windows disk: a malformed drive row remains UNKNOWN when fallback fails
+  ok  Windows disk: a clean fallback subset cannot erase an UNKNOWN drive
+  ok  Windows disk: a later healthy fallback cannot erase an earlier critical drive
+  ok  Linux confidence: zero load is valid 0% rather than a Windows fallback
+  ok  Linux confidence: disk uses df argument array with no pipe or tail
+  ok  Linux provider parse failure is UNKNOWN, not 0% OK
+  ok  memory: invalid provider data is UNKNOWN
+  ok  Node OS provider exceptions remain UNKNOWN and produce DEGRADED
+  ok  summary: CRITICAL takes precedence while UNKNOWN stays counted
+  ok  summary: zero collected checks is DEGRADED, never HEALTHY
+  ok  POSIX parser: portable df output is accepted deterministically
+  ok  POSIX parser: impossible free-space totals are rejected
+
+19 passed, 0 failed
+✔ modules/systems/scripts/health-check.test.js (80.613004ms)
+✔ credential-sensitive and direct-write commands are manual and risk classified (3.435388ms)
+✔ public claims distinguish behavioral policy from deterministic controls (1.25992ms)
+✔ tracked tip contains no privileged host/path examples or fixed development path (99.104864ms)
+✔ all Markdown fences are balanced and files end with a newline (6.176741ms)
+✔ every discovered safety/preview marker ID is globally unique (0.865017ms)
+✔ checked-in state-change inventory exactly matches discovery and client boundaries (748.145857ms)
+✔ every non-Markdown client boundary retains implementation and adversarial-test evidence (2.199202ms)
+✔ every executable mutation has exactly one same-fence owner (1.689934ms)
+✔ every commented mutation is owned by the nearest PREVIEW ONLY marker (1.158607ms)
+✔ every discovered manual portal mutation has one action-local gate or preview owner (5.26436ms)
+✔ install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed (1737.901288ms)
+✔ device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed (1650.1631ms)
+✔ install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed (1586.705758ms)
+✔ quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed (1832.282131ms)
+✔ quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed (1577.736823ms)
+✔ quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed (1564.978463ms)
+✔ install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed (1678.852905ms)
+✔ restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed (1516.73987ms)
+✔ install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed (1571.508922ms)
+✔ mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed (1515.730397ms)
+✔ mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1540.342005ms)
+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1654.935448ms)
+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1573.345535ms)
+✔ print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed (1661.712119ms)
+✔ security-account-block: actual source gate is AST-dominated, explicit, and fail-closed (1510.373608ms)
+✔ security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed (1622.238953ms)
+✔ security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed (1457.298172ms)
+✔ security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1485.615674ms)
+✔ sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1611.662716ms)
+✔ install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed (1624.503833ms)
+✔ automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1791.323684ms)
+✔ automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed (1792.099574ms)
+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1559.855422ms)
+✔ automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (2005.626348ms)
+✔ automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed (2093.020694ms)
+✔ rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1979.904699ms)
+✔ rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (2000.377742ms)
+✔ rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed (1856.88135ms)
+✔ rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1966.620727ms)
+✔ rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed (1697.237098ms)
+✔ rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1907.067597ms)
+✔ safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed (1591.936267ms)
+✔ safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1741.894663ms)
+✔ safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed (1612.195148ms)
+✔ safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1709.721234ms)
+✔ safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1733.076223ms)
+✔ safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed (1564.749714ms)
+✔ ad-connect-delta: preview region contains no executable mutation (0.553802ms)
+✔ ad-connect-initial: preview region contains no executable mutation (0.130828ms)
+✔ ad-connect-password-hash: preview region contains no executable mutation (0.124837ms)
+✔ device-retire: preview region contains no executable mutation (0.125985ms)
+✔ distribution-create: preview region contains no executable mutation (0.155559ms)
+✔ distribution-member-add: preview region contains no executable mutation (0.116946ms)
+✔ distribution-external-senders: preview region contains no executable mutation (0.217517ms)
+✔ email-allow-sender: preview region contains no executable mutation (0.579027ms)
+✔ email-allow-domain: preview region contains no executable mutation (0.195636ms)
+✔ email-mailbox-safe-sender: preview region contains no executable mutation (0.153185ms)
+✔ mailbox-full-access-grant: preview region contains no executable mutation (0.197118ms)
+✔ mailbox-send-as-grant: preview region contains no executable mutation (0.319835ms)
+✔ device-rename-restart: preview region contains no executable mutation (0.145366ms)
+✔ new-user-ad-create: preview region contains no executable mutation (0.110994ms)
+✔ new-user-delta-sync: preview region contains no executable mutation (0.1767ms)
+✔ offboard-ad-disable-ps: preview region contains no executable mutation (0.17987ms)
+✔ offboard-delta-sync-ps: preview region contains no executable mutation (0.120982ms)
+✔ offboard-cloud-block-ps: preview region contains no executable mutation (0.185517ms)
+✔ offboard-mailbox-convert-ps: preview region contains no executable mutation (0.126818ms)
+✔ offboard-mailbox-delegate-ps: preview region contains no executable mutation (0.102138ms)
+✔ offboard-group-removal: preview region contains no executable mutation (0.180066ms)
+✔ onedrive-client-reset: preview region contains no executable mutation (0.116126ms)
+✔ onedrive-client-restart: preview region contains no executable mutation (0.10362ms)
+✔ onedrive-sharepoint-module-install: preview region contains no executable mutation (0.136229ms)
+✔ onedrive-quota-change: preview region contains no executable mutation (0.161572ms)
+✔ onedrive-manager-admin: preview region contains no executable mutation (0.147991ms)
+✔ outlook-auto-reply: preview region contains no executable mutation (0.151373ms)
+✔ password-reset-delta-sync: preview region contains no executable mutation (0.191422ms)
+✔ shared-mailbox-create: preview region contains no executable mutation (0.137482ms)
+✔ shared-mailbox-full-access: preview region contains no executable mutation (0.099454ms)
+✔ shared-mailbox-send-as: preview region contains no executable mutation (0.091399ms)
+✔ shared-mailbox-send-on-behalf: preview region contains no executable mutation (0.123521ms)
+✔ shared-mailbox-convert: preview region contains no executable mutation (0.111071ms)
+✔ sharepoint-member-grant: preview region contains no executable mutation (0.099793ms)
+✔ sharepoint-item-grant: preview region contains no executable mutation (0.071846ms)
+✔ teams-policy-grant: preview region contains no executable mutation (0.082581ms)
+✔ evaluate-repo-clone: preview region contains no executable mutation (0.079303ms)
+✔ readme-repo-clone: preview region contains no executable mutation (0.071127ms)
+✔ readme-hook-install: preview region contains no executable mutation (0.069026ms)
+✔ sample-t09-mailbox-grant: preview region contains no executable mutation (0.107488ms)
+✔ sample-t09-mailbox-undo: preview region contains no executable mutation (0.10773ms)
+✔ sample-t06-delta-sync: preview region contains no executable mutation (0.114869ms)
+✔ example-commit-attempt-stage: preview region contains no executable mutation (0.077999ms)
+✔ example-commit-attempt-create: preview region contains no executable mutation (0.074531ms)
+✔ example-recommit-stage: preview region contains no executable mutation (0.082673ms)
+✔ example-recommit-create: preview region contains no executable mutation (0.089263ms)
+✔ ticket-delta-sync-ps: preview region contains no executable mutation (0.148893ms)
+✔ ticket-mfa-method-remove-ps: preview region contains no executable mutation (0.131442ms)
+✔ ticket-license-remove-ps: preview region contains no executable mutation (0.104018ms)
+✔ automation-no-mfa-report: preview region contains no executable mutation (0.094926ms)
+✔ automation-group-members-report: preview region contains no executable mutation (0.092959ms)
+✔ automation-inactive-users-report: preview region contains no executable mutation (0.264889ms)
+✔ safety-group-poststate-export: preview region contains no executable mutation (0.09589ms)
+✔ safety-bulk-license-route: preview region contains no executable mutation (0.194839ms)
+✔ safety-cryptic-bulk-mutation: preview region contains no executable mutation (0.093139ms)
+✔ safety-readable-bulk-mutation: preview region contains no executable mutation (0.145909ms)
+✔ hook-install-copy: preview region contains no executable mutation (0.084334ms)
+✔ hook-install-mode: preview region contains no executable mutation (0.107585ms)
+✔ workflow-user-create: preview region contains no executable mutation (0.16171ms)
+✔ workflow-delta-sync: preview region contains no executable mutation (0.107744ms)
+✔ compliance-guest-report-write: preview region contains no executable mutation (0.102186ms)
+✔ health-delta-sync: preview region contains no executable mutation (0.084678ms)
+✔ health-force-replication: preview region contains no executable mutation (0.082244ms)
+✔ infrastructure-delta-sync: preview region contains no executable mutation (0.141621ms)
+✔ infrastructure-gpo-refresh: preview region contains no executable mutation (0.089664ms)
+✔ infrastructure-local-gpo-refresh: preview region contains no executable mutation (0.079405ms)
+✔ infrastructure-force-replication: preview region contains no executable mutation (0.093934ms)
+✔ conditional-access-enable-portal: portal gate is action-local and fail-closed (1.192162ms)
+✔ device-full-wipe-portal: portal gate is action-local and fail-closed (0.715319ms)
+✔ distribution-external-senders-portal: portal gate is action-local and fail-closed (0.363159ms)
+✔ quarantine-release-all-portal: portal gate is action-local and fail-closed (0.42376ms)
+✔ quarantine-release-one-portal: portal gate is action-local and fail-closed (0.251571ms)
+✔ quarantine-delete-portal: portal gate is action-local and fail-closed (0.341212ms)
+✔ restricted-entity-unblock-portal: portal gate is action-local and fail-closed (0.308536ms)
+✔ gws-2sv-reset-backup-codes-portal: portal gate is action-local and fail-closed (0.367951ms)
+✔ gws-2sv-reset-key-remove-portal: portal gate is action-local and fail-closed (0.340295ms)
+✔ gws-2sv-reset-challenge-portal: portal gate is action-local and fail-closed (0.296636ms)
+✔ gws-2sv-reset-turn-off-portal: portal gate is action-local and fail-closed (0.265357ms)
+✔ gws-chromeos-device-reenable-portal: portal gate is action-local and fail-closed (0.512253ms)
+✔ gws-chromeos-device-disable-portal: portal gate is action-local and fail-closed (1.469334ms)
+✔ gws-chromeos-device-clear-profiles-portal: portal gate is action-local and fail-closed (0.311826ms)
+✔ gws-chromeos-device-powerwash-portal: portal gate is action-local and fail-closed (0.31939ms)
+✔ gws-chromeos-device-deprovision-portal: portal gate is action-local and fail-closed (0.305673ms)
+✔ gws-drive-transfer-drive-portal: portal gate is action-local and fail-closed (0.293086ms)
+✔ gws-drive-transfer-calendar-portal: portal gate is action-local and fail-closed (0.315325ms)
+✔ gws-gmail-delivery-mx-change-portal: portal gate is action-local and fail-closed (0.365874ms)
+✔ gws-gmail-delivery-spf-change-portal: portal gate is action-local and fail-closed (0.256649ms)
+✔ gws-gmail-delivery-dkim-generate-portal: portal gate is action-local and fail-closed (0.420475ms)
+✔ gws-gmail-delivery-dkim-dns-portal: portal gate is action-local and fail-closed (0.282508ms)
+✔ gws-gmail-delivery-dkim-start-portal: portal gate is action-local and fail-closed (0.283339ms)
+✔ gws-gmail-delivery-dmarc-add-portal: portal gate is action-local and fail-closed (0.361314ms)
+✔ gws-group-membership-add-portal: portal gate is action-local and fail-closed (0.274802ms)
+✔ gws-group-membership-remove-portal: portal gate is action-local and fail-closed (0.226365ms)
+✔ gws-license-assign-assign-portal: portal gate is action-local and fail-closed (0.279824ms)
+✔ gws-license-assign-remove-portal: portal gate is action-local and fail-closed (0.303064ms)
+✔ gws-new-user-create-portal: portal gate is action-local and fail-closed (0.319854ms)
+✔ gws-new-user-group-add-portal: portal gate is action-local and fail-closed (0.224261ms)
+✔ gws-offboard-okta-deactivate-portal: portal gate is action-local and fail-closed (0.404617ms)
+✔ gws-offboard-suspend-portal: portal gate is action-local and fail-closed (0.245517ms)
+✔ gws-offboard-drive-transfer-portal: portal gate is action-local and fail-closed (0.220016ms)
+✔ gws-offboard-calendar-transfer-portal: portal gate is action-local and fail-closed (0.298225ms)
+✔ gws-offboard-delete-portal: portal gate is action-local and fail-closed (0.220251ms)
+✔ gws-ou-move-user-portal: portal gate is action-local and fail-closed (0.639623ms)
+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.274651ms)
+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.23964ms)
+✔ jamf-enroll-mac-assign-portal: portal gate is action-local and fail-closed (0.230597ms)
+✔ jamf-enroll-mac-prestage-portal: portal gate is action-local and fail-closed (0.279005ms)
+✔ jamf-lock-erase-lock-portal: portal gate is action-local and fail-closed (0.315289ms)
+✔ jamf-lock-erase-wipe-portal: portal gate is action-local and fail-closed (0.263045ms)
+✔ jamf-lock-erase-remove-mdm-portal: portal gate is action-local and fail-closed (0.258051ms)
+✔ jamf-lock-erase-lost-mode-portal: portal gate is action-local and fail-closed (0.258311ms)
+✔ license-remove-portal: portal gate is action-local and fail-closed (0.276087ms)
+✔ mac-new-hire-laptop-assign-portal: portal gate is action-local and fail-closed (0.331881ms)
+✔ mac-new-hire-laptop-prestage-scope-portal: portal gate is action-local and fail-closed (0.241777ms)
+✔ mac-troubleshoot-filevault-enable-portal: portal gate is action-local and fail-closed (0.216457ms)
+✔ mac-troubleshoot-wifi-forget-portal: portal gate is action-local and fail-closed (0.274365ms)
+✔ mac-troubleshoot-blank-push-portal: portal gate is action-local and fail-closed (0.350409ms)
+✔ mailbox-permission-remove-portal: portal gate is action-local and fail-closed (0.262177ms)
+✔ mfa-session-revoke-portal: portal gate is action-local and fail-closed (0.440039ms)
+✔ mfa-method-delete-portal: portal gate is action-local and fail-closed (0.258928ms)
+✔ offboard-ad-disable-portal: portal gate is action-local and fail-closed (0.3729ms)
+✔ offboard-cloud-block-portal: portal gate is action-local and fail-closed (0.202269ms)
+✔ offboard-revoke-sessions-portal: portal gate is action-local and fail-closed (0.216217ms)
+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.207617ms)
+✔ offboard-clear-mfa-portal: portal gate is action-local and fail-closed (0.246754ms)
+✔ offboard-mailbox-convert-portal: portal gate is action-local and fail-closed (0.379874ms)
+✔ offboard-mailbox-delegate-portal: portal gate is action-local and fail-closed (0.365138ms)
+✔ offboard-onedrive-portal: portal gate is action-local and fail-closed (1.506008ms)
+✔ offboard-license-remove-portal: portal gate is action-local and fail-closed (0.25583ms)
+✔ offboard-group-strip-portal: portal gate is action-local and fail-closed (0.319929ms)
+✔ offboard-dl-strip-portal: portal gate is action-local and fail-closed (0.215081ms)
+✔ offboard-mailbox-delegation-strip-portal: portal gate is action-local and fail-closed (0.208613ms)
+✔ offboard-device-wipe-portal: portal gate is action-local and fail-closed (0.188119ms)
+✔ offboard-work-phone-wipe-portal: portal gate is action-local and fail-closed (0.260853ms)
+✔ offboard-work-phone-group-remove-portal: portal gate is action-local and fail-closed (0.204804ms)
+✔ offboard-voip-deactivate-portal: portal gate is action-local and fail-closed (0.198577ms)
+✔ offboard-voip-reclaim-extension-portal: portal gate is action-local and fail-closed (0.217354ms)
+✔ offboard-voicemail-clear-portal: portal gate is action-local and fail-closed (0.285223ms)
+✔ offboard-zoom-portal: portal gate is action-local and fail-closed (0.226124ms)
+✔ offboard-adobe-portal: portal gate is action-local and fail-closed (0.204089ms)
+✔ offboard-vpn-portal: portal gate is action-local and fail-closed (0.396394ms)
+✔ offboard-physical-portal: portal gate is action-local and fail-closed (0.311017ms)
+✔ offboard-disabled-ou-portal: portal gate is action-local and fail-closed (0.24524ms)
+✔ okta-app-assignment-assign-person-portal: portal gate is action-local and fail-closed (0.392371ms)
+✔ okta-app-assignment-assign-group-portal: portal gate is action-local and fail-closed (0.229758ms)
+✔ okta-app-assignment-unassign-person-portal: portal gate is action-local and fail-closed (0.304893ms)
+✔ okta-mfa-reset-selected-portal: portal gate is action-local and fail-closed (0.370316ms)
+✔ okta-mfa-reset-all-portal: portal gate is action-local and fail-closed (0.254023ms)
+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.254771ms)
+✔ okta-user-lifecycle-clear-sessions-portal: portal gate is action-local and fail-closed (0.288038ms)
+✔ okta-user-lifecycle-suspend-portal: portal gate is action-local and fail-closed (0.229087ms)
+✔ okta-user-lifecycle-unsuspend-portal: portal gate is action-local and fail-closed (0.357622ms)
+✔ okta-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed (0.305988ms)
+✔ okta-user-lifecycle-activate-portal: portal gate is action-local and fail-closed (0.324396ms)
+✔ okta-user-lifecycle-delete-portal: portal gate is action-local and fail-closed (0.247062ms)
+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.357046ms)
+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.254487ms)
+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.237406ms)
+✔ print-queue-delete-portal: portal gate is action-local and fail-closed (0.389477ms)
+✔ security-session-revoke-portal: portal gate is action-local and fail-closed (0.343143ms)
+✔ shared-mailbox-convert-portal: portal gate is action-local and fail-closed (0.323761ms)
+✔ sharepoint-access-revoke-portal: portal gate is action-local and fail-closed (0.453021ms)
+✔ zoom-room-restart-app-portal: portal gate is action-local and fail-closed (0.306299ms)
+✔ zoom-room-restart-computer-portal: portal gate is action-local and fail-closed (0.352213ms)
+✔ ir-session-revoke: portal gate is action-local and fail-closed (0.21542ms)
+✔ ir-clear-mfa: portal gate is action-local and fail-closed (0.226643ms)
+✔ ir-phish-quarantine: portal gate is action-local and fail-closed (0.326966ms)
+✔ ir-sender-domain-block: portal gate is action-local and fail-closed (0.223964ms)
+✔ ir-work-device-wipe: portal gate is action-local and fail-closed (0.210354ms)
+✔ ir-intune-device-delete: portal gate is action-local and fail-closed (0.197105ms)
+✔ ir-byod-retire: portal gate is action-local and fail-closed (0.29165ms)
+✔ ir-endpoint-isolate: portal gate is action-local and fail-closed (0.28332ms)
+✔ ir-device-reimage: portal gate is action-local and fail-closed (0.225876ms)
+✔ ir-admin-role-remove: portal gate is action-local and fail-closed (0.276732ms)
+✔ ir-ca-restore: portal gate is action-local and fail-closed (1.445367ms)
+✔ PowerShell AST analyzer rejects bypass-shaped control flow (8672.62162ms)
+✔ effect and target assertions reject omitted composite families and bindings (1.200569ms)
+✔ WhatIf exemption is command-local and cannot hide a later mutation (0.339473ms)
+✔ printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail (739.279814ms)
+✔ group rollback distinguishes verified recovery, unresolved recovery, and successful forward state (1864.606831ms)
+✔ checkpointed Graph mutations bind and revalidate the exact checkpoint before the first remote sink (1.509361ms)
+✔ actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID (4895.864729ms)
+✔ every PORTAL ACTION maps one-to-one to a discovered portal safety marker (3.072046ms)
+✔ manual PREVIEW ONLY regions cannot masquerade as gated portal actions (5.382486ms)
+✔ direct R1 inventory is exact and remains operator-only (0.517341ms)
+✔ mixed-state commands and aliases remain operator-only with an execution boundary (0.568317ms)
+✔ reference surfaces state a non-executing boundary (0.318927ms)
+✔ safe read-only diagnostics remain live and available (0.262907ms)
+✔ provider lookups escape OData literals and bind mutations to exact returned names and immutable IDs (0.357411ms)
+✔ completion-note templates require cited read-backs or an explicit partial-state open note (0.59236ms)
+✔ inventory includes the named audit hot spots (0.296655ms)
+✔ G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink (417.097999ms)
+✔ G1 detector: read-only diagnostics stay live and are not sinks (23.515895ms)
+✔ G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes (251.366142ms)
+✔ G1 shell gate analyzer rejects bypass-shaped control flow (533.452445ms)
+✔ G1 shell gate harness executes the fence's own lines up to the comparison (388.25924ms)
+✔ gws-2sv-reset-backup-codes: shell gate is explicit, dominates its sinks, and is fail-closed (257.058846ms)
+✔ gws-2sv-reset-turn-off: shell gate is explicit, dominates its sinks, and is fail-closed (222.158819ms)
+✔ gws-chromeos-device-reenable: shell gate is explicit, dominates its sinks, and is fail-closed (224.485215ms)
+✔ gws-chromeos-device-disable: shell gate is explicit, dominates its sinks, and is fail-closed (219.145621ms)
+✔ gws-chromeos-device-wipe-users: shell gate is explicit, dominates its sinks, and is fail-closed (246.894604ms)
+✔ gws-chromeos-device-powerwash: shell gate is explicit, dominates its sinks, and is fail-closed (239.415013ms)
+✔ gws-chromeos-device-deprovision: shell gate is explicit, dominates its sinks, and is fail-closed (232.822621ms)
+✔ gws-drive-transfer-drive: shell gate is explicit, dominates its sinks, and is fail-closed (248.979642ms)
+✔ gws-drive-transfer-datatransfer: shell gate is explicit, dominates its sinks, and is fail-closed (244.21081ms)
+✔ gws-drive-transfer-calendar: shell gate is explicit, dominates its sinks, and is fail-closed (260.109793ms)
+✔ gws-group-membership-add: shell gate is explicit, dominates its sinks, and is fail-closed (260.781553ms)
+✔ gws-group-membership-remove: shell gate is explicit, dominates its sinks, and is fail-closed (233.36153ms)
+✔ gws-license-assign-assign: shell gate is explicit, dominates its sinks, and is fail-closed (229.296338ms)
+✔ gws-license-assign-remove: shell gate is explicit, dominates its sinks, and is fail-closed (242.372168ms)
+✔ gws-new-user-create: shell gate is explicit, dominates its sinks, and is fail-closed (217.114507ms)
+✔ gws-new-user-group-add: shell gate is explicit, dominates its sinks, and is fail-closed (233.827795ms)
+✔ gws-offboard-okta-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed (265.942134ms)
+✔ gws-offboard-suspend: shell gate is explicit, dominates its sinks, and is fail-closed (232.7547ms)
+✔ gws-offboard-data-transfer: shell gate is explicit, dominates its sinks, and is fail-closed (206.921929ms)
+✔ gws-offboard-delete: shell gate is explicit, dominates its sinks, and is fail-closed (216.304819ms)
+✔ gws-ou-move-user: shell gate is explicit, dominates its sinks, and is fail-closed (224.48111ms)
+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (257.86264ms)
+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (253.252444ms)
+✔ jamf-enroll-mac-renew: shell gate is explicit, dominates its sinks, and is fail-closed (251.802112ms)
+✔ jamf-enroll-mac-checkin: shell gate is explicit, dominates its sinks, and is fail-closed (203.663859ms)
+✔ jamf-lock-erase-unmanage: shell gate is explicit, dominates its sinks, and is fail-closed (254.813884ms)
+✔ jamf-lock-erase-lock-api: shell gate is explicit, dominates its sinks, and is fail-closed (217.40631ms)
+✔ jamf-lock-erase-wipe-api: shell gate is explicit, dominates its sinks, and is fail-closed (223.601158ms)
+✔ mac-troubleshoot-prk-replace: shell gate is explicit, dominates its sinks, and is fail-closed (256.308588ms)
+✔ mac-troubleshoot-jamf-checkin: shell gate is explicit, dominates its sinks, and is fail-closed (281.918868ms)
+✔ okta-app-assignment-assign-person: shell gate is explicit, dominates its sinks, and is fail-closed (258.153016ms)
+✔ okta-app-assignment-assign-group: shell gate is explicit, dominates its sinks, and is fail-closed (213.783364ms)
+✔ okta-app-assignment-unassign-person: shell gate is explicit, dominates its sinks, and is fail-closed (223.4842ms)
+✔ okta-mfa-reset-factor: shell gate is explicit, dominates its sinks, and is fail-closed (256.177942ms)
+✔ okta-mfa-reset-all: shell gate is explicit, dominates its sinks, and is fail-closed (252.823305ms)
+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (251.897784ms)
+✔ okta-user-lifecycle-clear-sessions: shell gate is explicit, dominates its sinks, and is fail-closed (220.768919ms)
+✔ okta-user-lifecycle-suspend: shell gate is explicit, dominates its sinks, and is fail-closed (230.532127ms)
+✔ okta-user-lifecycle-unsuspend: shell gate is explicit, dominates its sinks, and is fail-closed (193.300574ms)
+✔ okta-user-lifecycle-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed (195.962636ms)
+✔ okta-user-lifecycle-activate: shell gate is explicit, dominates its sinks, and is fail-closed (202.823822ms)
+✔ okta-user-lifecycle-delete: shell gate is explicit, dominates its sinks, and is fail-closed (198.715714ms)
+✔ G1 statements: a glued # is not a comment, continued lines are one statement, gate variables stay in their gated fence (637.477293ms)
+✔ every document with a gated shell fence keeps its gate variables inside gated fences (3.556456ms)
+✔ no shell fence beside a gated shell fence shadows read, [ or the shell (6.375235ms)
+✔ G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates (1.884479ms)
+✔ G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar (1.417638ms)
+{"ok":false,"error":"SCOPE COLLISION -- another active task owns overlapping files; wait or hand off explicitly, never overwrite","collisions":[{"task":"rework-tier-guard","owner":"session-A","theirs":"scripts/tier","mine":"scripts/tier/tier-guard.js"}]}
+{"ok":false,"error":"task \"same-id\" is already claimed -- pick another id or coordinate with its owner"}
+✔ K: two sessions with non-overlapping scopes both claim, see each other, and complete (455.963961ms)
+✔ L: a second session claiming an overlapping scope is REFUSED and told who owns it (324.191957ms)
+✔ L2: duplicate task id is an atomic refusal (O_EXCL), never an overwrite (127.428607ms)
+✔ documentation files in tasks/active are never reported as claims (README regression) (180.611771ms)
+✔ check is report-only and directional overlap works both ways (165.131156ms)
+✔ bootstrap canon exists for fresh sessions (contract, state, team, dev roles) (1.278947ms)
+✔ corpus covers the representative Google Workspace / Okta / Jamf / macOS ticket classes and duties (8.666342ms)
+✔ deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs (3257.641948ms)
+✔ the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail (6845.328676ms)
+✔ both lanes run one shared evaluator (no copy-pasted evaluation logic) (4604.042529ms)
+✔ the evaluator removes its temporary replay store (no /tmp residue per run) (2875.764034ms)
+✔ corpus covers the representative Microsoft ticket classes and workloads (6.610275ms)
+✔ deterministic half passes: floors, route lint, first-occurrence MISS, dangerous pairs (2346.759041ms)
+✔ the eval checks implementation, not fixtures: a mutated expectation, a dangling route, and a colliding pair all fail (5353.442554ms)
+graph.test.js: runs dir /tmp/atg-test-g9vuQE/runs
+
+PASS A1 dry-run R0 info ticket: resolves; EXECUTOR never runs; humanRequired false
+PASS A2 dry-run R1 MFA re-register: resolves with non-empty undo on the mutating step
+PASS A3 endpoint ticket routes lane=endpoint and resolves
+PASS A3 network ticket routes lane=network and resolves
+PASS A3 automation ticket routes lane=automation and resolves
+PASS B4 R2 sim: EXECUTOR refused exit 4 without checkpoint on disk, proceeds once captured
+PASS B5 R3 sim: awaiting_human; pending submits refused; wrong hash exit 5; correct hash runs EXECUTOR to VERIFIER
+PASS B6 human rejection: terminal rejected state refuses further submits
+PASS B7 approval replay after consumption refused exit 5 (T8); post-approval plan resubmit refused
+PASS B7b plan resubmission cannot ride an existing pending approval (T8)
+PASS B8 hallucinated approval fields in artifact are ignored; gate state unchanged
+PASS B9 mass op (targetCount 500) force-raised to R3 by the SR-2 trigger scan; humanRequired
+PASS B10 risk downgrade attempt (builder R3, finalizer R1): effective stays R3
+PASS C11 reviewer FAIL loops to BUILDER with round increment and findings in the next-envelope
+PASS C12 three reviewer FAILs: terminal DEADLOCK; further submits refused
+PASS D13 injection marker in ticket: flagged and quoted as data, run continues (T1/SR-3)
+PASS D14 unsafe PowerShell in plan: WARN recorded, reviewer FAIL path exercised (T4)
+PASS D15a tenant literal in ticket text: new is blocked with exit 3 (SR-8)
+PASS D15b tenant literal in artifact: submit blocked exit 3, state unmoved, clean resubmit OK
+PASS D16 invalid artifact: exit 2, one retry, second invalid -> run BLOCKED
+PASS D17 sim executor step failure: BLOCKED with partialChanges + rollbackNeeded report (T7)
+PASS D18 verification failure after successful execution: BLOCKED with a rollback note
+PASS D19 verification result without output evidence rejected exit 2 (SR-6)
+PASS D20 mutating step with empty undo rejected exit 2
+PASS E21 out-of-order submit (BUILDER artifact at ROUTER): exit 2, state unmoved
+PASS E22 submits to an aborted (terminal) run are refused
+PASS E23 cross-run approval replay: run A hash refused on run B with exit 5
+PASS F1 review verdict for package A cannot authorize package B (packageId cross-check)
+PASS F2 approval refuses when plan.powershell drifted after the gate armed (full-plan hash)
+PASS F3 executor time-of-use recheck refuses a plan tampered during the checkpoint window
+PASS F4 undo:null legal on non-mutating steps only (live-fire contract resolution)
+PASS CLI status of an unknown runId exits 1
+PASS CLI list exits 0 and includes a created runId
+
+33/33 passed
+✔ scripts/graph/graph.test.js (33533.425493ms)
+✔ default mode previews every target and performs no filesystem write (103.701162ms)
+✔ missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes (464.231507ms)
+✔ the exact initial-create phrase installs the target set once (240.159145ms)
+✔ existing and partial memory remain read-only until a force plan is exactly authorized (141.878628ms)
+✔ force replacement requires its own exact plan and creates a verified checkpoint (465.975682ms)
+✔ an injected install failure rolls back installed targets and reports partial state (241.327193ms)
+✔ a concurrent create is preserved and causes rollback instead of clobber (16.5449ms)
+✔ force execution detects drift after backup and never installs over the changed target (178.872343ms)
+✔ symbolic-link or junction memory paths are rejected without touching the referent (69.90811ms)
+✔ repository-derived keys include the full stable path (0.833644ms)
+✔ PROJECT_KEY accepts only a bounded slug and cannot escape the project root (0.679238ms)
+✔ strict argument parsing rejects value-smuggling, duplicates, and detached confirmations (0.510142ms)
+✔ site validation accepts and canonicalizes one Atlassian tenant label (1.755263ms)
+✔ site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls (0.957831ms)
+✔ direct apiRequest validates the destination before invoking the transport (0.499662ms)
+✔ argument parser requires --confirm VALUE while execute/public remain bare booleans (0.63668ms)
+✔ argument parser rejects duplicate, malformed, and unknown flags (0.268106ms)
+✔ issue keys are normalized but paths and placeholder text are rejected (0.36702ms)
+✔ create payload is exact, numeric-id-bound, and deterministically serialized (1.315254ms)
+✔ create confirmation contains a full SHA-256 and changes with every material field (0.682349ms)
+✔ create dry run and missing/wrong confirmations use zero credentials and zero network (1.870543ms)
+✔ the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload (0.863937ms)
+▶ verify-create proves the human-created request by an independent GET and fails closed on any mismatch
+  ✔ match (1.699116ms)
+  ✔ different issue key (0.712154ms)
+  ✔ missing immutable id (0.396816ms)
+  ✔ different request type (0.305387ms)
+  ✔ different service desk (0.347175ms)
+  ✔ drifted summary (0.194123ms)
+  ✔ drifted description (0.246396ms)
+  ✔ an older request with the same text (created before the preview) (0.248746ms)
+  ✔ no creation time (0.20111ms)
+  ✔ read failure (0.251958ms)
+✔ verify-create proves the human-created request by an independent GET and fails closed on any mismatch (6.524574ms)
+✔ invalid create destination fails before credentials/network and is not echoed (0.382609ms)
+✔ comment confirmations bind issue, visibility, site, and full payload digest (0.380244ms)
+✔ comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes (1.022519ms)
+✔ exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose (0.584301ms)
+▶ verify-comment proves the comment id, body and visibility and fails closed on any mismatch
+  ✔ match (3.239296ms)
+  ✔ different id (0.290304ms)
+  ✔ drifted body (0.397121ms)
+  ✔ wrong visibility (0.19056ms)
+  ✔ an older comment with the same body (created before the preview) (0.241021ms)
+  ✔ malformed (0.13042ms)
+  ✔ read failure (0.173142ms)
+  ✔ a non-numeric comment id is an input error before credentials or network (0.826314ms)
+✔ verify-comment proves the comment id, body and visibility and fails closed on any mismatch (6.808705ms)
+✔ transition local preview calls neither credentials nor Jira (0.608199ms)
+✔ transition --execute performs paginated read-only preflight and prints immutable confirmation (1.374798ms)
+✔ any transition --confirm, exact or not, is refused before credentials or network (0.29526ms)
+▶ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+  ✔ duplicate selected names (1.833445ms)
+  ✔ duplicate ids across pages (1.522152ms)
+  ✔ no match (0.289397ms)
+  ✔ non-progressing page (0.236119ms)
+  ✔ wrong page start (0.184893ms)
+  ✔ missing current-state version (0.22873ms)
+✔ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST (5.257881ms)
+✔ the transition preflight prints a HUMAN-RUN procedure bound to the resolved id and sends zero POSTs (0.666595ms)
+✔ a status version that is not a plain timestamp is refused before anything is printed to paste (0.619476ms)
+✔ a status version that does not start with a digit is refused, so the printed verify line always parses (0.846184ms)
+▶ verify-transition proves the same immutable request left the preflight status and fails closed otherwise
+  ✔ moved to the expected status (0.288604ms)
+  ✔ unchanged since the preflight (0.284632ms)
+  ✔ moved, but to another status (an automation, not this transition) (0.121713ms)
+  ✔ different immutable id (0.103206ms)
+  ✔ read failure (0.101575ms)
+  ✔ the printed placeholder status is an input error before credentials or network (0.167917ms)
+✔ verify-transition proves the same immutable request left the preflight status and fails closed otherwise (1.724778ms)
+✔ the transport refuses every method but GET, and any payload, before touching the network (0.378268ms)
+✔ no write command reaches the network with anything but GET, under any flag combination (1.829608ms)
+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.551038ms)
+▶ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed)
+  ✔ PowerShell 7 (853.907123ms)
+  ✔ bash (5.337824ms)
+✔ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed) (860.007582ms)
+✔ verify commands refuse a free-text flag instead of ignoring it, before credentials or network (0.996368ms)
+✔ verify commands without --execute are dry runs with zero credentials and zero network (0.363116ms)
+✔ API failures with bodies fail closed and never disclose response content (0.418273ms)
+✔ apiRequest timeout is finite, destroys the request, and rejects (82.863767ms)
+✔ live command surface: every operational/troubleshooting command satisfies the GUI-first structural contract (102.256346ms)
+✔ live docs carrying portal paths are fresh and uncorrupted (29.05426ms)
+✔ a compliant synthetic command passes every rule (the lint is not vacuously strict) (0.708009ms)
+✔ an unclassified command is a finding -- new commands must be classified (0.515172ms)
+✔ gui-before-powershell: a PowerShell fence ahead of the first breadcrumb fails (0.587143ms)
+✔ powershell-collapsed / powershell-commented: uncollapsed or uncommented PowerShell fails (0.510728ms)
+✔ one-final-checklist / paste-ready-note / checklist-before-note (0.714849ms)
+✔ gui-steps-present: a command with no exact breadcrumb fails; a docs/comms command is exempt (0.601462ms)
+✔ risk-warning-present applies to troubleshooting commands only (0.615257ms)
+✔ slash-refs-exist: a dangling command reference fails; app switches are allowlisted (0.634883ms)
+✔ no-corrupted-chars: a stray combining mark fails (1.317889ms)
+✔ fresh-portal-paths: a retired Entra breadcrumb fails, in prose or inside a fence (1.547474ms)
+✔ fresh-portal-paths: Markdown emphasis, links, or HTML cannot hide a retired breadcrumb (review finding) (1.424797ms)
+✔ gui-before-powershell: a frontmatter description arrow is not a breadcrumb (review finding) (0.603241ms)
+✔ CLI exits 0 on the live tree (219.886298ms)
+✔ G1: a compliant Google/Okta/Jamf command passes every rule (read-only fence may stay open) (1.891272ms)
+✔ G1 breadcrumb roots: Admin console, Okta, Jamf Pro, Apple Business, Fleet, System Settings, Self Service, Finder, Terminal and Zoom Rooms count; an unknown root does not (6.568217ms)
+✔ G1 cli-collapsed: a mutating gam/jamf/curl/profiles fence outside <details> fails; read-only diagnostics may stay open (4.743741ms)
+✔ G1 CLI rules see wrapped and indirect invocations (sudo -u, command, env, quoted path, $VAR, ssh, sh -c, osascript) (9.045676ms)
+✔ G1 read-only allowlist judges every command on a line (a chained mutation is not read-only) (1.179025ms)
+✔ G1 lint: a backslash-continued HTTP write in an open fence still fails cli-collapsed (0.971393ms)
+✔ G1 cli-commented: every CLI invocation carries a plain-English comment (trailing or on the line above) (0.736605ms)
+✔ G1 gui-before-cli: a CLI fence ahead of the first portal breadcrumb fails (0.341149ms)
+✔ G1 cli-human-run: a mutating CLI fence must say HUMAN-RUN (0.272074ms)
+✔ G1 cli-in-shell-fence: Google/Okta/Jamf/macOS CLI inside a PowerShell or untagged fence fails (the gate grammar would not see it) (0.6943ms)
+✔ G1 fresh-portal-paths: retired Google, Okta, Jamf and Apple paths fail; the current wording passes; every entry cites a vendor page and a check date (3.562213ms)
+✔ G1 commands are classified: every Phase-3 runbook name has a variant (0.297306ms)
+✔ G1 knowledge docs are on the freshness list (retired vendor wording can never come back there) (0.824454ms)
+✔ relative Markdown file links resolve inside the repository (63.439244ms)
+✔ PowerShell casts and invocations inside fenced code are not parsed as Markdown links (0.450289ms)
+PASS M1 reusable lesson: candidate with provenance promotes and a later relevant query retrieves it
+PASS M2 raw content is not truth: injected instruction blocks at propose; external-only provenance cannot promote
+PASS M3 duplicate lesson via two runs: one record with merged provenance, never two competing pages
+PASS M4 contradiction: promoting not-X over verified X refuses without explicit resolution; --supersede is deliberate and audited
+PASS M5 stale vendor fact surfaces only as REVIEW-REQUIRED; verified supersession restores a current answer
+PASS M6 case-scoped state is refused at the boundary and nothing persists
+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+PASS M8 a failed attempt stays run-local case state; the memory store takes none of it
+PASS M9 canonical runbook is pointed to, never duplicated; dead pointers refuse; retrieval returns the pointer not steps
+PASS M10 retrieval stays bounded (top-K ≤ 5, compact output) no matter how many memories exist
+PASS M11 superseded memory: retrieval uses the current version; audit still shows why the prior one existed
+PASS M12 a mundane run writes ZERO memories: decline is auditable, trivia is refused, and no auto-write path exists
+PASS M13 graph-run evidence must exist to promote; fingerprints preserve "once had evidence" after the artifact is gone
+PASS M14 a held lock refuses a second writer deterministically and is released after completion
+
+14/14 passed
+✔ scripts/memory/memory.test.js (12936.26346ms)
+✔ blocks a staged synthetic secret without printing the value or source line (222.71579ms)
+✔ handles spaces, brackets, quotes, Unicode, and a leading dash in staged filenames (145.974114ms)
+✔ redacts every C0 and DEL control character from displayed paths (1.807922ms)
+✔ detects binary content from bytes rather than the filename suffix (0.405831ms)
+✔ fails closed when NUL or invalid UTF-8 bytes precede credential-shaped text (108.273015ms)
+✔ scans text content even when the filename has a binary-looking suffix (120.746497ms)
+✔ force-staged backups and snapshots receive the same PII scan as other text (145.667464ms)
+✔ uses argument-array Git execution and NUL-delimited filename lists (0.859564ms)
+✔ the scanner integration test source is itself scanner-clean (107.722359ms)
+✔ does not let bracket metadata hide a real email address (125.872036ms)
+✔ blocks an email address on a subdomain (129.865373ms)
+✔ only exempts the exact canonical email placeholder (110.870185ms)
+✔ allows canonical placeholders (92.295207ms)
+✔ allows precise operational metadata email patterns (123.230748ms)
+✔ blocks registered-looking domains that are not IANA example domains (124.577947ms)
+✔ blocks operational accounts, hosts, and privileged paths without printing them (108.306099ms)
+✔ redacts a sensitive filename while retaining a deterministic file index (111.824871ms)
+✔ blocks a real phone number while keeping it and its source line redacted (116.361807ms)
+✔ distinguishes an empty staged set from a Git failure outside a repository (168.76191ms)
+✔ fails closed with sanitized output when Git cannot be executed (78.397644ms)
+✔ --all scans tracked working-tree content that is not staged (327.500291ms)
+✔ --all scans a non-ignored untracked repair file (181.199986ms)
+✔ --all fails closed when a tracked text file cannot be read (228.888503ms)
+✔ --all treats a readable empty tracked file as success (212.660269ms)
+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (306.67464ms)
+✔ blocks configured tenant literals without printing the host or source line (153.288696ms)
+✔ warning-only findings exit zero and keep the source line redacted (137.991462ms)
+✔ warns on high-impact operational sinks that the legacy matcher missed (106.753326ms)
+✔ does not warn on output formatting cmdlets or Revoke-prefixed prose (115.998811ms)
+✔ classifies mailbox permission removal as access revocation, not mailbox deletion (128.135578ms)
+✔ blocks a Google API key without printing the value or source line (126.134015ms)
+✔ blocks a Google OAuth client secret without printing the value or source line (160.75516ms)
+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (107.568043ms)
+✔ blocks a Google service-account key JSON type marker without printing the source line (99.727985ms)
+✔ blocks a Google service-account key JSON private_key_id without printing the value (94.425442ms)
+✔ blocks an Okta SSWS API token header without printing the value or source line (146.158967ms)
+✔ blocks a bare Okta API token without printing the value or source line (121.750313ms)
+✔ blocks a Bearer credential in an Authorization header without printing the value (126.434369ms)
+✔ blocks a Basic credential in an Authorization header without printing the value (103.828462ms)
+✔ allows Google, Okta, and Jamf placeholder forms (111.117503ms)
+✔ rejects unknown arguments with deterministic exit 2 (136.418592ms)
+✔ warns on Google Workspace, Okta, Jamf and macOS destructive sinks (G1 lane) (109.892832ms)
+✔ read-only Google, Okta, Jamf and macOS diagnostics do not warn (122.533462ms)
+✔ a Sources line citing GAM wiki page names does not warn; the command it names still does (223.234463ms)
+PASS R1 first occurrence is a MISS routed to adaptive
+{"ok":false,"error":"render refused: case is unverified (candidate) -- only verified solutions replay"}
+{"ok":false,"error":"exact ticket already recorded as case-0001 (use verify/invalidate on it)"}
+PASS R2 recorded-but-unverified candidate never replays; failed write releases the lock
+PASS R3 exact repeat is CACHE_HIT; normalization and alias hit deterministically
+PASS R4 fast path has no network/model/subprocess capability -- static module graph AND runtime tripwire
+{"ok":false,"error":"verification refused: --evidence is required -- unverified output is not authoritative memory"}
+{"ok":false,"error":"verification refused: --evidence is required -- unverified output is not authoritative memory"}
+{"ok":false,"error":"verification refused: no authority dependencies recorded -- a dep-less case can never auto-stale. Re-record with --deps, or acknowledge explicitly with --no-deps"}
+PASS R5 verification demands evidence AND a dependency basis (or explicit --no-deps)
+{"ok":false,"error":"render refused: case is STALE (authority changed: [{\"path\":\"/tmp/aegis-replay-XlPgy8/authority.md\",\"reason\":\"content changed\"}]) -- pass --historical to view as historical evidence"}
+PASS R6 authority-file change invalidates: STALE at lookup, render refuses, history preserved
+PASS R7 unrelated file change leaves the cache hit intact
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: GitHub token"}
+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: real email address (use [USER@DOMAIN.COM] / [UPN])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: phone number pattern (use [PHONE_NUMBER])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: real email address (use [USER@DOMAIN.COM] / [UPN])"}
+{"ok":false,"error":"sanitization BLOCK -- evidence text refused: real email address (use [USER@DOMAIN.COM] / [UPN])"}
+{"ok":false,"error":"sanitization BLOCK -- alias text refused: real email address (use [USER@DOMAIN.COM] / [UPN])"}
+{"ok":false,"error":"sanitization BLOCK -- reason text refused: real email address (use [USER@DOMAIN.COM] / [UPN])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: real email address (use [USER@DOMAIN.COM] / [UPN]), phone number pattern (use [PHONE_NUMBER])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: phone number pattern (use [PHONE_NUMBER])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: phone number pattern (use [PHONE_NUMBER])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: phone number pattern (use [PHONE_NUMBER])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: real email address (use [USER@DOMAIN.COM] / [UPN])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: phone number pattern (use [PHONE_NUMBER])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: phone number pattern (use [PHONE_NUMBER])"}
+{"ok":false,"error":"sanitization BLOCK -- refused to persist: phone number pattern (use [PHONE_NUMBER])"}
+PASS R9 real email / phone number content is refused at record, verify, alias, invalidate; placeholders pass
+{"ok":false,"error":"no matching case"}
+PASS R10 shape: a verified, opted-in, risk-clean case hits for the same wording with a different single user; placeholders and literals key identically
+{"ok":false,"error":"identity-variants refused: the stored ticket trips the tier-guard floor (session revocation (SR-2)) -- consequential work replays on exact keys and aliases only"}
+{"ok":false,"error":"identity-variants refused: the stored ticket carries no identity literal or [UPN]-class placeholder, so there is nothing to slot -- exact key already covers it"}
+{"ok":false,"error":"identity-variants refused: the stored ticket carries 2 identity slots -- with two principals the roles could swap (delegate ↔ owner), so only single-identity tickets may opt in"}
+{"ok":false,"error":"identity-variants refused: the stored ticket trips the tier-guard floor (device wipe / retire / factory reset (SR-2)) -- consequential work replays on exact keys and aliases only"}
+{"ok":false,"error":"identity-variants refused: the stored ticket trips the tier-guard floor (device wipe / retire / factory reset (SR-2)) -- consequential work replays on exact keys and aliases only"}
+{"ok":false,"error":"identity-variants refused: the stored ticket contains non-ASCII letters -- a homoglyph could hide a risk word from the guard, so such tickets replay on exact keys and aliases only"}
+PASS R11 shape never matches across object count, changed wording, a consequential ticket, or a case that did not opt in
+PASS R12 corpus dangerous pairs: no exact-key or shape-key collision, floors differ
+{"ok":false,"error":"store is locked by another writer -- retry after it completes (stale lock: remove /tmp/aegis-replay-dcc3vu/store/.lock)"}
+PASS R13 lock contention: writes fail closed with exit 5 while a lock is held; lookups are unaffected; a failed write leaves no partial case
+PASS R14 parallel records never corrupt the store -- each writer succeeds or is refused, never half-written
+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+{"ok":false,"error":"identity-variants refused: asserted object class \"member-user\" contradicts the deterministic anchor \"guest\" (placeholder)"}
+{"ok":false,"error":"alias refused: tier-guard floor differs (alias T3: device wipe / retire / factory reset (SR-2) vs case none) -- an alias cannot bridge a risk class"}
+{"ok":false,"error":"alias refused: identity object class differs (alias \"guest\" vs case \"member-user\") -- an alias cannot bridge an object class"}
+PASS R15 wrong-object-type replay is impossible: class must be established on both sides and agree
+PASS R16 the secret-key pattern needs a word boundary: a word ending in "sk-" is prose, an sk- key is still refused
+
+16/16 passed
+✔ scripts/replay/replay.test.js (13399.559524ms)
+✔ all command files have valid description frontmatter (15.598241ms)
+✔ the bundled Claude plugin uses the canonical manifest and resolvable command paths (1.318158ms)
+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (14.116413ms)
+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (12.713189ms)
+✔ working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text (39.213792ms)
+✔ Markdown fences are balanced (24.692146ms)
+✔ working-tree text files end with a newline and have no UTF-8 BOM (21.264522ms)
+✔ legacy parallel tenant and operator placeholders are absent (36.164444ms)
+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (37.389173ms)
+✔ CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized) (0.91444ms)
+✔ CLAUDE.md stays under 20,000 bytes so every session loads it whole (batch 1, A5b) (0.495753ms)
+✔ the Extended Confirmation Gate quotes the SR-2 list exactly as the security doctrine states it (1.188685ms)
+✔ CLAUDE.md keeps the always-on script gates every turn needs (review round 1 of batch 1) (0.369179ms)
+✔ A: a docs-only change is tier A and lists no path (223.911328ms)
+✔ B: evaluation code is tier B and only the B paths are listed (227.74102ms)
+✔ C: a CI workflow change is tier C (225.231492ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (186.452198ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (217.001184ms)
+✔ one C path wins over many B paths, and only the C path is listed (225.219433ms)
+✔ ** matches nested paths at any depth (223.223254ms)
+✔ uncommitted and untracked changes count toward the tier (201.708989ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (429.182876ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (208.251172ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (5.153194ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (220.359091ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (258.235339ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (870.796136ms)
+✔ the CLI runs when invoked through a symlinked path (209.934752ms)
+✔ default execution computes a target-bound preview and writes nothing (102.868294ms)
+✔ a non-Git directory requires explicit standalone-private mode (88.885294ms)
+✔ standalone-private cannot bypass a broken Git worktree probe (91.984365ms)
+✔ missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes (465.606541ms)
+✔ the exact target/content phrase creates one verified report and never overwrites it (400.440649ms)
+✔ content drift invalidates an otherwise exact target confirmation before any write (224.838873ms)
+✔ an existing owner file blocks writing even when an earlier exact phrase is replayed (225.412167ms)
+✔ output paths outside the resolved working directory are rejected without writes (92.228247ms)
+✔ non-Markdown and Git-metadata targets are rejected without report writes (155.190417ms)
+✔ symbolic-link or junction output parents are rejected without touching the referent (94.230786ms)
+✔ a target created after temp preparation wins the race and is never clobbered (43.030822ms)
+✔ write, fsync, and close failures clean ignored invocation-owned temps with exact partial state (80.236615ms)
+✔ install failure removes only the identity-bound invocation temp (38.329538ms)
+✔ post-install read-back failure rolls back the identity-bound target (46.946756ms)
+✔ rollback unlink failure preserves the installed report and reports unresolved state (56.582462ms)
+✔ temp cleanup failure preserves the invocation temp and reports its exact unresolved state (25.801038ms)
+✔ a filesystem without a stable nonzero inode fails closed and preserves the unresolved temp (26.062526ms)
+✔ a concurrently replaced temp is preserved when its filesystem identity changes (48.062117ms)
+✔ a concurrently replaced target is preserved even when its content matches the report (62.295373ms)
+✔ a Git worktree rejects trackable report targets and accepts only ignored safe names while requiring the generated temp to be ignored (777.159862ms)
+✔ Git ignore drift before or after installation fails closed without a trackable report (228.52267ms)
+✔ custom trackable-style filenames are rejected before any report write (77.186593ms)
+✔ strict argument parsing rejects boolean values, duplicates, and detached confirmations (1.006292ms)
+✔ T1-A Microsoft: routine single-user ticket has no escalation floor (9.903425ms)
+✔ T1-B Google: routine single-user Workspace/ChromeOS ticket has no escalation floor (0.396621ms)
+✔ T2-A Microsoft: bounded troubleshooting ticket has no escalation floor (2.479779ms)
+✔ T2-B Google: bounded troubleshooting ticket has no escalation floor (0.407111ms)
+✔ ESCALATION: single-account disable floors to the existing path (SR-2, tier never overrides risk) (0.512388ms)
+✔ ESCALATION: mass disable floors with a DISTINCT trigger set from the single case (0.526966ms)
+✔ ESCALATION: wipe, MFA-off, license removal, offboarding, org-wide, extended gate all floor (1.044576ms)
+✔ ESCALATION: a suspected compromise floors even when the wording looks like a routine MFA reset (2.00337ms)
+✔ ESCALATION: SR-2 retire/delete-device/disable-mailbox wordings floor; confusable homoglyphs cannot hide a risk word (15.847551ms)
+✔ guard is report-only: exit 0 for both outcomes via CLI (146.849266ms)
+✔ exactly two lightweight handler agents exist (0.657782ms)
+✔ NEGATIVE EVIDENCE: handler toolsets contain no spawning or orchestration capability (1.101614ms)
+✔ both handlers cover BOTH ecosystems (no per-ecosystem split) (0.36927ms)
+✔ handler models match policy (Fable on all support paths; no haiku/sonnet anywhere in agents) (1.15783ms)
+✔ COLD START wiring: routing doctrine lives in the already-referenced harness doc (0.616174ms)
+✔ REPLAY: a verified T1-class repeat is a deterministic CACHE_HIT before any handler exists in the flow (296.509923ms)
+✔ T3 REGRESSION: the fortress is unaware of the lane (no coupling in either direction) (1.890779ms)
+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.71235ms)
+✔ G1 ESCALATION: every new Google/Okta/Jamf consequential wording floors in the guard and the graph engine (8.869437ms)
+✔ G1 routine: the Google-lane counterparts (backup codes, add to group, move one OU, one licence, enroll one Mac) stay clean (2.738375ms)
+✔ G1 folding: homoglyphs and invisible characters cannot hide a new floor (guard and engine) (4.855912ms)
+✔ A1 pasted ticket: an embedded instruction is flagged and quoted as data; mode, gate, status and node are unchanged (251.386662ms)
+✔ A2 obfuscated marker is flagged like the plain one: zero-width space inside a word (160.236905ms)
+✔ A2 obfuscated marker is flagged like the plain one: zero-width space as the word separator (164.472249ms)
+✔ A2 obfuscated marker is flagged like the plain one: soft hyphen inside a word (198.764822ms)
+✔ A2 obfuscated marker is flagged like the plain one: word joiner inside a word (155.191907ms)
+✔ A2 obfuscated marker is flagged like the plain one: Cyrillic look-alike letter (195.042601ms)
+✔ A2 obfuscated marker is flagged like the plain one: Greek look-alike letter (211.035291ms)
+✔ A2 obfuscated marker is flagged like the plain one: Cyrillic look-alike in a mode claim (162.173798ms)
+✔ A2 obfuscated marker is flagged like the plain one: fullwidth letters (142.878811ms)
+✔ A2 obfuscated marker is flagged like the plain one: combining accent (177.19716ms)
+✔ A3 sim wipe: a "pre-approved" ticket with a quoted hash and an injected log line still parks at the human gate; the quoted hash is refused (880.804361ms)
+✔ A4 tier guard: urgency, prior-approval and "classify as T1" claims around a destructive ask still floor to T3 (222.618564ms)
+✔ A5 replay: a verified ticket plus an appended instruction is a MISS, and naming a case id selects nothing (761.343701ms)
+✔ A6 replay: a verified case whose stored solution was edited on disk to carry an instruction is withheld by lookup and refused by render (645.583288ms)
+✔ A7 replay status and list withhold a case whose stored ticket, evidence or history was edited to carry an instruction, and survive a non-string ticket (894.772308ms)
+✔ A8 the graph edge flags exactly the markers the shared rule finds, and keeps no copy of the marker loop (11.217686ms)
+✔ A9 replay status and list withhold a case with instruction text in any printed field, a newline-split marker, or a malformed caseId or status (1527.168472ms)
+✔ A10 lookup of a stale case prints no stored history text and survives an empty history (372.440784ms)
+✔ B1 memory propose: an obfuscated instruction is a sanitizer BLOCK and nothing persists (zero-width space in detail) (97.37798ms)
+✔ B1 memory propose: an obfuscated instruction is a sanitizer BLOCK and nothing persists (Cyrillic look-alike in summary) (78.931286ms)
+✔ B1 memory propose: an obfuscated instruction is a sanitizer BLOCK and nothing persists (fullwidth letters in detail) (76.193481ms)
+✔ B2 external-content-only candidate: promote refused; hidden from retrieve; labelled candidate when explicitly included (437.163288ms)
+✔ B3 a candidate whose index row was flipped to verified on disk is withheld from retrieve (177.18781ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (index row summary replaced with instruction text) (696.293235ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (index row keywords stuffed for unrelated queries) (608.919897ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (record detail replaced with instruction text) (684.551641ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (record status changed) (577.447029ms)
+✔ B4 a verified record changed outside the CLI is withheld; an untouched one still serves (record keywords changed) (618.59197ms)
+✔ B5 a record file and index row written by hand, never through memory-cli.js, are not served (295.785759ms)
+✔ B6 verify refuses a record whose detail was replaced on disk with instruction text, and it stays withheld (306.927117ms)
+✔ B6 promote --supersede of a candidate changed on disk is refused before any write; the record it targets still serves (563.10332ms)
+✔ B7 replay record refuses a solution document carrying an instruction (plain marker); nothing is cached (149.289438ms)
+✔ B7 replay record refuses a solution document carrying an instruction (zero-width obfuscated marker); nothing is cached (186.973655ms)
+✔ B8 the sanitizer PII scan is stateless: a second address in the same pass, or in the next call, is still flagged (6.916492ms)
+✔ B9 a record changed on disk with gate-clean text is not re-sealed by verify, merge, mark-stale or promote (827.607814ms)
+✔ B10 a forged record carrying an instruction-shaped key name is withheld and the key text is never printed (363.60468ms)
+✔ B11 list labels every row with its integrity and prints no summary for a row changed on disk (466.322289ms)
+✔ B12 a real address next to a canonical placeholder is still flagged at the edge and blocked at memory propose (76.695193ms)
+✔ B13 list prints only the id and the reason for a changed row, and gate problems never name a nested key (598.035427ms)
+✔ B14 a write releases the memory store lock exactly once, so it never removes a lock another writer took after it (98.056208ms)
+✔ B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record (157.107612ms)
+✔ B16 a writer never removes a lock another writer took, two stealers never both proceed, and a crashed writer or stealer is still recovered (457.91812ms)
+✔ C1 graph intake: a ticket mixing two org namespaces, or naming only another org, is refused (exit 3) and creates no run (163.113172ms)
+✔ C1 control: a B2B guest ticket inside the deployment namespace ([GUEST_UPN], #EXT#) is one customer and is accepted (83.283076ms)
+✔ C2 graph submit: evidence that pulls in another org namespace is refused (exit 3); node and evidence are unchanged (313.397975ms)
+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (164.264282ms)
+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (158.497837ms)
+✔ C5 a memory store written under tenant A refuses tenant B and an unset tenant (exit 6) and never prints tenant A text (1049.365163ms)
+✔ C6 a replay store written under tenant A refuses tenant B and an unset tenant (exit 6) and never prints the solution (1220.029582ms)
+✔ C7 a store with no tenant binding stays readable; its first write under a tenant binds it (memory and replay) (1260.93492ms)
+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (1049.962786ms)
+✔ C9 the deployment's own tenant literal hidden by a zero-width character or a look-alike letter is still blocked (graph 3, memory 3, replay 4) (725.910114ms)
+✔ C10 a refused or duplicate write never binds an unbound store, and both CLIs re-check the binding under the store lock (552.961559ms)
+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (371.975052ms)
+✔ C12 an accented tenant literal disguised with a zero-width character is still found (folded on both sides) (6.813887ms)
+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (781.024716ms)
+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (0.870734ms)
+ℹ tests 588
+ℹ suites 0
+ℹ pass 588
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94018.05381
+# exit: 0, finished 2026-10-27T18:22:20Z
+# note: capture copied from the run; 37 line(s) had U+2014 long dashes, written here as "--"; the scratchpad path is written as <scratchpad>; line numbers are unchanged

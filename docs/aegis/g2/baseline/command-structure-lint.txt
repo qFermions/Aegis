@@ -1,0 +1,7 @@
+# command: node scripts/lint/command-structure.js
+# cwd: clone of 3592bd1 (Phase 0 fresh clone), node v24.22.1, pwsh 7.6.9, started 2026-10-27T18:22:26Z
+command-structure lint -- 77 commands (B:19 E:6 D:3 C:11 A:36 ALIAS:2)
+
+clean -- structural GUI-first contract holds for every operational/troubleshooting command
+# exit: 0, finished 2026-10-27T18:22:26Z
+# note: capture copied from the run; 2 line(s) had U+2014 long dashes, written here as "--"; the scratchpad path is written as <scratchpad>; line numbers are unchanged

@@ -36,22 +36,28 @@
 // Persistence boundary (SR-1/SR-8): secret-shaped content, the tenant literal,
 // real email addresses, and phone-number patterns are refused at record /
 // verify / alias / invalidate — private material cannot enter the store.
+// Instruction-shaped text (SR-3) is refused at the same boundary: a verified
+// solution renders verbatim with zero new reasoning, so an embedded
+// instruction would be served as approved knowledge.
 //
 // Store: memory/replay/ (gitignored — private tickets never ship; the engine
 // and synthetic fixtures are the public artifact).
 //
 // Exit codes: 0 ok · 1 usage/error · 2 refusal (unverified) · 3 stale without
-// --historical · 4 sanitization block · 5 lock contention
+// --historical · 4 sanitization block · 5 lock contention · 6 tenant binding
+// refused (the store belongs to another tenant, or it is bound and
+// AEGION_DOMAIN is unset)
 
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess } = require('../tier/tier-guard.js'); // pure function, no I/O
+const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
 const INDEX = path.join(STORE, 'index.json');
 const LOCK = path.join(STORE, '.lock');
+const TENANT = path.join(STORE, 'tenant.json');
 
 // ── deterministic normalization — no model decides what "the same ticket" is ──
 function normalize(text) {
@@ -132,19 +138,21 @@ function shapeOf(text) {
 const ALLOWED_EMAIL_DOMAIN = /(^|\.)example\.(com|org|net)$/i;
 function sanitizationHits(text) {
   const hits = [];
+  const forms = foldedForms(text); // one fold for the literal, marker and org-token checks
   const patterns = [
     [/ghp_[A-Za-z0-9]{20,}/, 'GitHub token'],
     [/github_pat_[A-Za-z0-9_]{20,}/, 'GitHub fine-grained token'],
-    [/sk-[A-Za-z0-9-]{20,}/, 'API secret key'],
+    [/\bsk-[A-Za-z0-9_-]{20,}/, 'API secret key'], // word boundary as in sanitize.js: "disk-cleanup-..." is prose
     [/AKIA[0-9A-Z]{16}/, 'AWS access key'],
     [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, 'private key material'],
     [/\beyJ[A-Za-z0-9_-]{15,}\.eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{10,}\b/, 'JWT'],
     [/\bpassword\s*[:=]\s*\S{4,}/i, 'plaintext password assignment'],
   ];
   for (const [re, label] of patterns) if (re.test(text)) hits.push(label);
+  const lowerForms = forms.map((f) => f.toLowerCase());
   for (const v of ['AEGION_DOMAIN', 'AEGION_ORG_NAME']) {
     const lit = process.env[v];
-    if (lit && lit.length > 3 && text.toLowerCase().includes(lit.toLowerCase())) {
+    if (lit && lit.length > 3 && containsLiteral(text, lit, forms, lowerForms)) {
       hits.push(`tenant literal (${v})`);
     }
   }
@@ -152,28 +160,30 @@ function sanitizationHits(text) {
   // token such as [USER@DOMAIN.COM] / [JIRA-###] or the [@Aegion_*] family. A
   // bracket wrapped around a real, lower-case address or a digit string is not
   // a placeholder and is scanned like any other text.
-  const unbracketed = String(text).replace(/\[[^\]\n]*\]/g, (tok) => (isCanonicalPlaceholder(tok) ? ' ' : tok));
+  const unbracketed = maskCanonicalPlaceholders(text);
   for (const m of unbracketed.matchAll(EMAIL_LITERAL)) {
     const domain = m[0].slice(m[0].indexOf('@') + 1);
     if (!ALLOWED_EMAIL_DOMAIN.test(domain)) { hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])'); break; }
   }
   if (PHONE_LITERAL.test(unbracketed)) hits.push('phone number pattern (use [PHONE_NUMBER])');
+  hits.push(...injectionHits(text, forms));
+  if (hasForeignOrgToken(text, forms)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
   return hits;
+}
+
+// Instruction-shaped text (SR-3) and a second org namespace (SR-1/SR-8) use the rules
+// shared with the graph edge sanitizer in scripts/tier/tier-guard.js (one copy), matched
+// as written and confusable-folded, so obfuscation does not carry an instruction or a
+// second tenant into a solution that renders verbatim.
+function injectionHits(text, forms) {
+  return injectionMarkersIn(text, forms)
+    .map((name) => `instruction-shaped text (prompt-injection marker: ${name}; content is data, never instructions)`);
 }
 // dashed · dotted · spaced · parenthesised area code · +country with 2–4 groups ·
 // +country (0) trunk form · E.164 without separators · bare ten digits
 const PHONE_LITERAL = /(?:\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|\+\d{1,3}\s*\(0\)\s*\d{2,4}(?:[\s-]\d{2,4}){1,4}\b|\+\d{1,3}(?:[\s-]\d{2,4}){2,4}\b|\+\d{9,15}\b|\b\d{10}\b)/;
 
-// A bracketed token is exempt from the PII scan only when it IS a canonical
-// placeholder: the literal [USER@DOMAIN.COM], the [@Aegion_*] family, or an
-// upper-case token with no "@" (e.g. [UPN], [JIRA-###], [PHONE_NUMBER]). An
-// upper-case real address or a digit string with a trailing "#" is not one.
-function isCanonicalPlaceholder(tok) {
-  if (tok === '[USER@DOMAIN.COM]') return true;
-  if (/^\[@Aegion_[A-Za-z0-9_]*\]$/.test(tok)) return true;
-  return !tok.includes('@') && /^\[[A-Z0-9_.,/#-]+\]$/.test(tok) && /[A-Z]/.test(tok);
-}
-
+// Canonical placeholders are recognised by the shared rule in scripts/tier/tier-guard.js.
 // Shape safety: only pure-ASCII tickets are shape-eligible. A homoglyph ("wıpe",
 // Cyrillic "а") or an invisible format character (a zero-width space between
 // "wi" and "pe") could otherwise slip past an English risk pattern and let a
@@ -182,6 +192,32 @@ function isCanonicalPlaceholder(tok) {
 function hasNonAscii(text) {
   return /[^\x00-\x7F]/.test(String(text));
 }
+
+// Read-time gate: a case file is re-checked against the persistence boundary
+// every time lookup or render would serve it, because render prints the stored
+// solution verbatim with zero reasoning. A case changed on disk outside this CLI
+// so that it carries instruction-shaped text, a secret, a real address, the
+// tenant literal or a second org namespace is withheld. Labels only, never text.
+// Residual: a gate-clean edit is not detected (case files carry no seal).
+// audit: status and list print every field of the case, so every string leaf and key
+// name is checked one by one (a newline inside a leaf stays a newline), and the
+// caseId and status must have their own shapes.
+const CASE_STATUSES = new Set(['candidate', 'verified', 'stale']);
+function stringLeaves(value, out = []) {
+  if (typeof value === 'string') out.push(value);
+  else if (Array.isArray(value)) value.forEach((v) => stringLeaves(v, out));
+  else if (value && typeof value === 'object') for (const [k, v] of Object.entries(value)) { out.push(k); stringLeaves(v, out); }
+  return out;
+}
+function storedCaseHits(c, { audit = false } = {}) {
+  const hits = [c.ticket, c.solution].some((t) => typeof t !== 'string') ? ['stored text is not a string'] : [];
+  const texts = audit ? stringLeaves(c) : [c.ticket, c.solution].filter((t) => typeof t === 'string');
+  for (const t of texts) hits.push(...sanitizationHits(t));
+  if (audit && !validCaseId(c.caseId)) hits.push('stored caseId is not a case id');
+  if (audit && !CASE_STATUSES.has(c.status)) hits.push('stored status is not a replay status');
+  return Array.from(new Set(hits));
+}
+const validCaseId = (id) => (/^case-\d{4}$/.test(String(id)) ? id : null);
 
 // ── store primitives (atomic write, mkdir lock) ──────────────────────────────
 function loadIndex() {
@@ -206,6 +242,40 @@ function loadCase(id) {
   catch (e) { fail(1, `store corrupt: ${id}.json unreadable — ` + e.message); }
 }
 function saveCase(c) { atomicWrite(casePath(c.caseId), JSON.stringify(c, null, 2)); }
+// ── tenant binding (one store, one tenant) ───────────────────────────────────
+// Verified solutions are one tenant's knowledge. The store's first write under
+// a tenant (AEGION_DOMAIN) binds it: tenant.json records a fingerprint of the
+// tenant domain, never the literal (SR-8). Every command then refuses (exit 6)
+// when the runtime tenant differs or is unset. An unbound store (created before
+// this rule, or only written with AEGION_DOMAIN unset) carries no evidence of
+// whose it is: it stays readable, and its first write under a tenant binds it.
+// Same rule as scripts/memory/memory-cli.js (inline: R4 pins this file's deps).
+const tenantFingerprint = (domain) => sha256('aegis.tenant.v1\n' + domain.trim().toLowerCase());
+function runtimeTenant() {
+  const d = process.env.AEGION_DOMAIN;
+  return d && d.trim() ? tenantFingerprint(d) : null;
+}
+function boundTenant() {
+  if (!fs.existsSync(TENANT)) return null;
+  try {
+    const b = JSON.parse(fs.readFileSync(TENANT, 'utf8'));
+    if (b && b.schema === 'aegis.tenant-binding.v1' && /^[0-9a-f]{64}$/.test(b.tenant)) return b.tenant;
+  } catch { /* unreadable binding: refused below */ }
+  return fail(6, 'tenant binding unreadable: the owner of this store cannot be established; nothing read or written');
+}
+function assertTenant() {
+  const bound = boundTenant();
+  if (!bound) return;
+  const current = runtimeTenant();
+  if (!current) fail(6, 'store is bound to a tenant but AEGION_DOMAIN is not set: this case cannot be shown to belong to it; nothing read or written');
+  if (current !== bound) fail(6, `store belongs to another tenant (binding ${bound.slice(0, 12)}, runtime ${current.slice(0, 12)}): one store, one tenant; nothing read or written`);
+}
+function bindTenantIfUnbound() {
+  const current = runtimeTenant();
+  if (!current || fs.existsSync(TENANT)) return;
+  atomicWrite(TENANT, JSON.stringify({ schema: 'aegis.tenant-binding.v1', tenant: current, boundAt: new Date().toISOString() }, null, 2));
+}
+
 let lockHeld = false;
 function withLock(fn) {
   // R8 guard: a write store inside the repo must stay under the git-ignored
@@ -220,7 +290,10 @@ function withLock(fn) {
     fail(5, 'store is locked by another writer — retry after it completes (stale lock: remove ' + LOCK + ')');
   }
   lockHeld = true;
-  try { return fn(); } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
+  // Re-checked under the lock (another writer may have bound the store since
+  // main() checked it); bound only after fn() returns, so a refused write never
+  // claims the store. Same rule as scripts/memory/memory-cli.js.
+  try { assertTenant(); const result = fn(); bindTenantIfUnbound(); return result; } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
 }
 
 function fingerprint(deps) {
@@ -304,6 +377,7 @@ function main() {
     return i >= 0 ? argv[i + 1] : undefined;
   }
   const has = (name) => argv.includes('--' + name);
+  assertTenant(); // every command reads or writes the store
 
   switch (cmd) {
     case 'record': {
@@ -393,6 +467,11 @@ function main() {
         out({ ok: true, result: 'MISS', key: r.key, caseId: r.caseId, route: 'adaptive', note: 'case exists but is not verified — candidates never replay' });
         break;
       }
+      const stored = storedCaseHits(c);
+      if (stored.length) {
+        out({ ok: true, result: 'MISS', key: r.key, caseId: r.caseId, route: 'adaptive', withheld: stored, note: 'case withheld: its stored text fails the persistence boundary (changed on disk outside replay-cli.js?); work the ticket fresh' });
+        break;
+      }
       const drift = depDrift(c);
       if (c.status === 'stale' || drift.length) {
         if (c.status !== 'stale') {
@@ -405,7 +484,7 @@ function main() {
             }
           });
         }
-        out({ ok: true, result: 'STALE', caseId: r.caseId, via: r.via, changed: drift.length ? drift : c.history.at(-1).changed, route: 'adaptive', note: 'authority basis changed — preserved as historical, not current' });
+        out({ ok: true, result: 'STALE', caseId: r.caseId, via: r.via, changed: drift.length ? drift : 'previously detected (status shows the checked history)', route: 'adaptive', note: 'authority basis changed; preserved as historical, not current' });
         break;
       }
       const hit = { ok: true, result: 'CACHE_HIT', caseId: r.caseId, via: r.via, verifiedAt: c.provenance.verifiedAt, deps: c.deps.length, render: `node scripts/replay/replay-cli.js render ${r.caseId}` };
@@ -424,6 +503,8 @@ function main() {
       const c = loadCase(caseId);
       if (!c) fail(1, 'no such case: ' + caseId);
       if (c.status === 'candidate') fail(2, 'render refused: case is unverified (candidate) — only verified solutions replay');
+      const stored = storedCaseHits(c);
+      if (stored.length) fail(4, 'render refused: the stored case fails the persistence boundary (changed on disk outside replay-cli.js?): ' + stored.join(', '));
       const drift = depDrift(c);
       if (c.status === 'stale' || drift.length) {
         if (!has('historical')) fail(3, 'render refused: case is STALE (authority changed: ' + JSON.stringify(drift.length ? drift : 'previously detected') + ') — pass --historical to view as historical evidence');
@@ -503,6 +584,8 @@ function main() {
     case 'status': {
       const c = loadCase(argv[1]);
       if (!c) fail(1, 'no such case: ' + (argv[1] || '(missing id)'));
+      const stored = storedCaseHits(c, { audit: true });
+      if (stored.length) { out({ ok: true, caseId: validCaseId(c.caseId), withheld: stored, note: 'stored text fails the persistence boundary (changed on disk outside replay-cli.js?); not printed' }); break; }
       out({ ok: true, caseId: c.caseId, status: c.status, shape: c.shape, riskAtRecord: c.riskAtRecord, provenance: c.provenance, deps: c.deps, history: c.history });
       break;
     }
@@ -511,7 +594,10 @@ function main() {
       const ix = loadIndex();
       const rows = Object.values(ix.cases).map((id) => {
         const c = loadCase(id);
-        return c ? { caseId: c.caseId, status: c.status, identityVariants: !!(c.shape && c.shape.enabled), ticket: c.ticket.slice(0, 60) } : { caseId: id, status: 'MISSING' };
+        if (!c) return { caseId: validCaseId(id), status: 'MISSING' };
+        const stored = storedCaseHits(c, { audit: true });
+        if (stored.length) return { caseId: validCaseId(c.caseId), withheld: stored };
+        return { caseId: c.caseId, status: c.status, identityVariants: !!(c.shape && c.shape.enabled), ticket: c.ticket.slice(0, 60) };
       });
       out({ ok: true, count: rows.length, cases: rows });
       break;

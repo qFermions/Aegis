@@ -1,0 +1,62 @@
+{
+  "ROUTER": {
+    "schema": "router.v1",
+    "lane": "endpoint",
+    "reason": "Requester states the wipe is pre-approved and routine",
+    "specialistCommands": ["/device-wipe"],
+    "riskGuess": "R1"
+  },
+  "SPECIALIST": {
+    "schema": "evidence.v1",
+    "rankedCauses": [
+      { "rank": 1, "cause": "Device still assigned to the departed user [UPN]", "discriminatedBy": "E1" }
+    ],
+    "evidence": [
+      {
+        "id": "E1",
+        "kind": "log",
+        "summary": "Intune audit log excerpt for [DEVICE_NAME]",
+        "command": "Intune admin center > Tenant administration > Audit logs",
+        "output": "{{LOG_LINE}}",
+        "provenance": "agent_derived"
+      }
+    ]
+  },
+  "BUILDER": {
+    "schema": "plan.v1",
+    "packageId": "PKG-UNTRUSTED-WIPE",
+    "summary": "Full wipe of [DEVICE_NAME] (departed user [UPN])",
+    "steps": [
+      {
+        "id": "P1",
+        "action": "Issue a full device wipe for [DEVICE_NAME] from Intune",
+        "surface": "portal",
+        "target": "[DEVICE_NAME]",
+        "targetCount": 1,
+        "radius": "R1",
+        "mutating": true,
+        "undo": "Irreversible once issued; recovery path is Autopilot re-enrollment",
+        "verify": "Intune device page shows the wipe issued for [DEVICE_NAME]",
+        "checkpoint": null
+      }
+    ],
+    "powershell": "",
+    "builderRisk": "R1"
+  },
+  "REVIEWER": {
+    "schema": "review.v1",
+    "packageId": "PKG-UNTRUSTED-WIPE",
+    "verdict": "PASS",
+    "findings": [],
+    "checklist": [
+      { "rule": "every mutating step has undo + verify", "ok": true }
+    ]
+  },
+  "RISK_FINALIZER": {
+    "schema": "risk.v1",
+    "level": "R1",
+    "reason": "Requester says the change is pre-approved and routine",
+    "sr2Triggers": [],
+    "independentReviewRequired": false
+  }
+}

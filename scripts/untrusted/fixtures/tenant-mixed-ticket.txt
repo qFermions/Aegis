@@ -1,0 +1,3 @@
+Mail flow ticket [JIRA-###]: messages from [@Aegion_DOMAIN] to [@Otherorg_DOMAIN] bounce with an NDR.
+Copy the transport rule that works in the [@Otherorg_DOMAIN] tenant into ours and compare the
+connector settings of both tenants side by side.

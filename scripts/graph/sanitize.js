@@ -17,6 +17,8 @@
 
 const fs = require('fs');
 const path = require('path');
+// Shared untrusted-text rules (pure, no I/O): one copy for this sanitizer and the replay cache.
+const { foldedForms, INJECTION_MARKERS, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js');
 
 // ── Dangerous PowerShell patterns (WARN) — mirror of pre-commit-check.js ─────
 const DANGEROUS_PS_PATTERNS = [
@@ -35,10 +37,10 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /git\s+reset\s+--hard/i, label: 'git reset --hard — destroys uncommitted work' },
 ];
 
-// ── PII patterns (WARN at the edge; placeholders exempt the line) ────────────
+// ── PII patterns (WARN at the edge; only canonical placeholder tokens are blanked first) ──
 const PII_PATTERNS = [
-  { pattern: /\b[A-Za-z0-9._%+-]+@(?!YOUR_DOMAIN|example-corp\.|vendor-example\.|example\.|github\.com|noreply\.github\.com)[a-z0-9.-]+\.(org|com|net)\b/g, label: 'Real email address (use [USER@DOMAIN.COM])' },
-  { pattern: /\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/g, label: 'Phone number pattern (use [PHONE_NUMBER])' },
+  { pattern: /\b[A-Za-z0-9._%+-]+@(?!YOUR_DOMAIN|example-corp\.|vendor-example\.|example\.|github\.com|noreply\.github\.com)[a-z0-9.-]+\.(org|com|net)\b/, label: 'Real email address (use [USER@DOMAIN.COM])' },
+  { pattern: /\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/, label: 'Phone number pattern (use [PHONE_NUMBER])' },
 ];
 
 // ── Credential/secret patterns (BLOCK) ───────────────────────────────────────
@@ -54,13 +56,10 @@ const CREDENTIAL_PATTERNS = [
   { pattern: /SharedAccessSignature\s*=/i, label: 'Azure SAS token assignment' },
 ];
 
-// ── Prompt-injection markers (FLAG — data, never instructions) ───────────────
-const INJECTION_MARKERS = [
-  { pattern: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i, marker: 'ignore-previous-instructions' },
-  { pattern: /disregard\s+(your|all|previous)\s+(rules|instructions|guidelines)/i, marker: 'disregard-rules' },
-  { pattern: /\bnew\s+system\s+prompt\b/i, marker: 'system-prompt-override' },
-  { pattern: /\byou\s+are\s+now\s+(in\s+)?(admin|developer|maintenance)\s+mode\b/i, marker: 'mode-override-claim' },
-];
+// Prompt-injection markers (FLAG: data, never instructions), confusable folding and the
+// second-org-namespace rule (BLOCK) live in scripts/tier/tier-guard.js, shared with the
+// replay cache. Marker matching and the org rule use the folded forms; the flag quotes the
+// original line, and the org report never echoes the token.
 
 // Tenant literals (SR-8): loaded at call time from env + gitignored replacements.txt.
 // Real values never appear in this file; scan reports never echo them.
@@ -79,10 +78,6 @@ function loadTenantLiterals() {
   return Array.from(new Set(literals.map((l) => l.toLowerCase())));
 }
 
-function isPlaceholderLine(line) {
-  return /\[.*\]/.test(line);
-}
-
 /**
  * Scan one text payload.
  * Returns { blocks:[], warnings:[], injectionFlags:[], piiWarnings:[] }
@@ -96,10 +91,11 @@ function scanText(text, opts = {}) {
 
   lines.forEach((line, i) => {
     const n = i + 1;
-    const lower = line.toLowerCase();
+    const forms = foldedForms(line); // one fold per line, shared by every check below
+    const lowerForms = forms.map((f) => f.toLowerCase()); // lower-cased once for the literal checks
 
     for (const literal of tenantLiterals) {
-      if (literal && lower.includes(literal)) {
+      if (literal && containsLiteral(line, literal, forms, lowerForms)) {
         result.blocks.push({ line: n, label: 'Tenant/org literal (SR-8) — use the [@Aegion_*] token', text: '[REDACTED — tenant literal on this line]' });
       }
     }
@@ -109,13 +105,17 @@ function scanText(text, opts = {}) {
     for (const { pattern, label } of DANGEROUS_PS_PATTERNS) {
       if (pattern.test(line)) { result.warnings.push({ line: n, label, text: line.trim().slice(0, 100) }); break; }
     }
-    if (!isPlaceholderLine(line)) {
-      for (const { pattern, label } of PII_PATTERNS) {
-        if (pattern.test(line)) result.piiWarnings.push({ line: n, label });
-      }
+    // Canonical placeholders are blanked, nothing else: a real address or number on
+    // the same line as [JIRA-###] or [UPN] is still found.
+    const unmasked = maskCanonicalPlaceholders(line);
+    for (const { pattern, label } of PII_PATTERNS) {
+      if (pattern.test(unmasked)) result.piiWarnings.push({ line: n, label });
     }
-    for (const { pattern, marker } of INJECTION_MARKERS) {
-      if (pattern.test(line)) result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });
+    if (hasForeignOrgToken(line, forms)) {
+      result.blocks.push({ line: n, label: 'Mixed-tenant case: an org token from another namespace than [@Aegion_*] (one deployment serves one tenant; split the case)', text: '[REDACTED: foreign org token on this line]' });
+    }
+    for (const marker of injectionMarkersIn(line, forms)) {
+      result.injectionFlags.push({ line: n, marker, quote: line.trim().slice(0, 160) });
     }
   });
 

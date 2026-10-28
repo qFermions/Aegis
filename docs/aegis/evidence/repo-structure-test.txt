@@ -1,0 +1,39 @@
+$ node --test scripts/repository-structure.test.js scripts/markdown-links.test.js scripts/command-policy.test.js scripts/risk_tier.test.js
+# cwd: (repo root) at d266f6b, node v24.22.1, pwsh 7.5.4, started 2026-10-27T06:56:20Z
+✔ credential-sensitive and direct-write commands are manual and risk classified (2.337964ms)
+✔ public claims distinguish behavioral policy from deterministic controls (1.980233ms)
+✔ tracked tip contains no privileged host/path examples or fixed development path (53.647788ms)
+✔ relative Markdown file links resolve inside the repository (39.424349ms)
+✔ PowerShell casts and invocations inside fenced code are not parsed as Markdown links (0.578157ms)
+✔ all command files have valid description frontmatter (7.997698ms)
+✔ the bundled Claude plugin uses the canonical manifest and resolvable command paths (0.957365ms)
+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (9.248774ms)
+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (6.938915ms)
+✔ working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text (21.32573ms)
+✔ Markdown fences are balanced (23.14319ms)
+✔ working-tree text files end with a newline and have no UTF-8 BOM (9.352993ms)
+✔ legacy parallel tenant and operator placeholders are absent (20.690196ms)
+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (22.341884ms)
+✔ CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized) (0.610993ms)
+✔ A: a docs-only change is tier A and lists no path (108.166517ms)
+✔ B: evaluation code is tier B and only the B paths are listed (102.795908ms)
+✔ C: a CI workflow change is tier C (102.152088ms)
+✔ one C path wins over many B paths, and only the C path is listed (102.960271ms)
+✔ ** matches nested paths at any depth (112.090765ms)
+✔ uncommitted and untracked changes count toward the tier (113.475688ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (226.212191ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (111.580303ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (2.934356ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (97.082044ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (133.354105ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (513.604775ms)
+✔ the CLI runs when invoked through a symlinked path (109.513545ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2075.415512
+# exit: 0, finished 2026-10-27T06:56:22Z

@@ -1,0 +1,9 @@
+# git ls-remote origin, recorded 2026-10-27T06:47:30Z before any push by batch 1
+d5fc8c0183b3e8c2967e06f868dcc5e842febe49	HEAD
+daf222f3100d3d3e4d112f508099e992cec612d4	refs/heads/chore/review-layers
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/heads/claude/aegis-google-okta-jamf-wibzp6
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/heads/codex/public-safety-repair
+d5fc8c0183b3e8c2967e06f868dcc5e842febe49	refs/heads/main
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/pull/1/head
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/pull/2/head
+daf222f3100d3d3e4d112f508099e992cec612d4	refs/pull/3/head

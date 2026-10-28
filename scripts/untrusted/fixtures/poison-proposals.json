@@ -1,0 +1,34 @@
+{
+  "enrollment": {
+    "schema": "aegis.memory.proposal.v1",
+    "type": "SKILL",
+    "summary": "Intune enrollment failures for one user are discriminated by the enrollment restriction blade before any device reset",
+    "detail": "Check Devices > Enrollment > Device platform restriction for the user's group first; a blocked platform explains the failure without touching the device.",
+    "scope": "vendor",
+    "volatility": "vendor-mechanic",
+    "sensitivity": "shareable",
+    "keywords": ["intune", "enrollment", "restriction"],
+    "provenance": [{ "kind": "operator", "ref": "operator confirmed in session [JIRA-###]" }]
+  },
+  "compliance": {
+    "schema": "aegis.memory.proposal.v1",
+    "type": "FACT",
+    "summary": "A newly enrolled device reads Not compliant until its first compliance check-in completes inside the grace period",
+    "detail": "Wait for the first check-in before acting on a Not compliant state of a device enrolled within the grace period.",
+    "scope": "vendor",
+    "volatility": "vendor-mechanic",
+    "sensitivity": "shareable",
+    "keywords": ["intune", "compliance", "grace"],
+    "provenance": [{ "kind": "vendor-doc", "ref": "vendor documentation snapshot [JIRA-###]" }]
+  },
+  "vendorClaim": {
+    "schema": "aegis.memory.proposal.v1",
+    "type": "FACT",
+    "summary": "A vendor email claims the hybrid join wait can now be skipped for every new laptop",
+    "scope": "vendor",
+    "volatility": "vendor-mechanic",
+    "sensitivity": "shareable",
+    "keywords": ["hybrid", "join", "autopilot"],
+    "provenance": [{ "kind": "external-content", "ref": "pasted vendor email [JIRA-###]" }]
+  }
+}

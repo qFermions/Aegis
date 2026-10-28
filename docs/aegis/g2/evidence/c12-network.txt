@@ -1,0 +1,30 @@
+# command: echo '## network modules in non-test code (only the contract transport and jira-client use https; the tripwire wraps http, https, net and tls for tests)'; git ls-files '*.js' '*.mjs' | grep -v '\.test\.js$' | xargs grep -nE "require\(['\"](node:)?(http|https|net|tls|dgram)['\"]\)|\bfetch\(" | grep -v '^shared/'; echo; echo '## G2 test files that do not load the socket tripwire (expect none)'; grep -L 'socket-tripwire' scripts/adapters/*.test.js scripts/g2-boundary.test.js scripts/gws-posture-audit.test.js scripts/gws-runbooks.test.js; echo '(end of list)'; echo; echo '## mocks and fixtures'; grep -n -o -E 'function (queuedTransport|recordingTransport|fakeRequest)' scripts/adapters/*.test.js scripts/g2-boundary.test.js; echo; echo '## the tripwire and the default transport'; node --test --test-name-pattern='tripwire' scripts/adapters/*.test.js 2>&1 | grep -E '^ℹ (tests|pass|fail)'
+# captured: 2026-10-28T04:27:45Z at dc55274
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
+## network modules in non-test code (only the contract transport and jira-client use https; the tripwire wraps http, https, net and tls for tests)
+scripts/adapters/readonly-contract.js:24:const https = require('node:https');
+scripts/adapters/socket-tripwire.js:15:const http = require('node:http');
+scripts/adapters/socket-tripwire.js:16:const https = require('node:https');
+scripts/adapters/socket-tripwire.js:17:const net = require('node:net');
+scripts/adapters/socket-tripwire.js:18:const tls = require('node:tls');
+scripts/jira-client.js:37:const https = require('node:https');
+scripts/jira-client.js:315:    response = await runtime.fetch(cfg, method, apiPath);
+
+## G2 test files that do not load the socket tripwire (expect none)
+(end of list)
+
+## mocks and fixtures
+scripts/adapters/fleet-client.test.js:78:function queuedTransport
+scripts/adapters/gws-client.test.js:146:function queuedTransport
+scripts/adapters/jamf-client.test.js:160:function queuedTransport
+scripts/adapters/linear-client.test.js:121:function queuedTransport
+scripts/adapters/readonly-contract.test.js:104:function queuedTransport
+scripts/adapters/readonly-contract.test.js:455:function fakeRequest
+scripts/adapters/slack-client.test.js:131:function queuedTransport
+scripts/g2-boundary.test.js:113:function recordingTransport
+
+## the tripwire and the default transport
+ℹ tests 10
+ℹ pass 10
+ℹ fail 0
+# exit: 0

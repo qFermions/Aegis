@@ -149,7 +149,7 @@ function evaluate(corpus = CORPUS) {
 }
 
 function render(res) {
-  const out = [core.render(res, 'G3 ticket eval (Okta, Microsoft 365, ambiguous, intake sources)').split('\nModel-judged half')[0].trimEnd(), '', 'Per platform:'];
+  const out = [core.render(res, 'G3 ticket eval (GitHub, Okta, Microsoft 365, ambiguous, intake sources)').split('\nModel-judged half')[0].trimEnd(), '', 'Per platform:'];
   for (const [p, s] of Object.entries(res.summary.perPlatform)) {
     out.push(`  ${p.padEnd(9)} ${s.ticketsPassed}/${s.tickets} tickets · ${s.floored} floored · decisions ${JSON.stringify(s.decisions)}`);
   }

@@ -105,7 +105,8 @@ function changeView(log, change) {
   else if (!readBacks.length && linked.length) view.missing.push(`the linked read-back is not the one this change names (${procedure.read_back})`);
   else if (!readBacks.length) view.missing.push(`no ${procedure.read_back} read-back is linked to this change`);
   else if (!readBacks.some((e) => e.verified === true)) view.missing.push('the linked read-back did not verify the change');
-  else view.missing.push('the linked read-back ran before the approval, so it does not prove the approved change');
+  else if (approval) view.missing.push('the linked read-back ran before the approval, so it does not prove the approved change');
+  // with no matching approval, the missing approval above is the reason; no read-back reason
   view.done = view.missing.length === 0;
   return view;
 }

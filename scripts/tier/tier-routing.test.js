@@ -549,3 +549,19 @@ g2Suite('code review round 3, sign-out without phrasal verbs', [
   'Log in and check out the sessions page.',
   'Sign up and then try out every session type in the training portal.',
 ]);
+
+// Finding 3: the purge floor checks its object, its every/all word and its mailbox
+// word as separate lookaheads from the verb, so a long pasted line with none of the
+// mailbox words fails in linear time per verb instead of cubic time (4.8 s at 10 KB
+// before the fix).
+test('the purge floor stays fast on a long line that never names a mailbox (guard and engine)', () => {
+  const engine = require('../graph/engine.js');
+  const text = 'purge ' + 'messages all '.repeat(800);
+  let start = process.hrtime.bigint();
+  assert.deepEqual(assess(text).triggers.filter((t) => /message purge/i.test(t)), []);
+  const guardMs = Number(process.hrtime.bigint() - start) / 1e6;
+  start = process.hrtime.bigint();
+  engine.scanSr2Triggers({ steps: [{ id: 's1', action: text, undo: '', verify: '' }], powershell: '' });
+  const engineMs = Number(process.hrtime.bigint() - start) / 1e6;
+  assert.ok(guardMs < 1000 && engineMs < 1000, `guard ${guardMs.toFixed(0)} ms, engine ${engineMs.toFixed(0)} ms`);
+});

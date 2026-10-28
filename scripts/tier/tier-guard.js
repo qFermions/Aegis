@@ -59,8 +59,9 @@ const ESCALATION_PATTERNS = [
   { pattern: /\bwipe\b|\bretire\b[^.]*(?:\b(device|devices|phone|phones|laptop|laptops|iphone|android|ipad|mac|workstation|tablet|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|Clear-MobileDevice|Invoke-MgRetireDeviceManagementManagedDevice|Fresh\s*Start|factory[- ]reset/i, label: 'device wipe / retire / factory reset (SR-2)' },
   { pattern: /\b(delete|remove|purge)\b[^.]*\b(user|users|account|accounts|mailbox|mailboxes|group|groups|ou|org(anizational)? unit|device|devices|device record)\b/i, label: 'account/mailbox/group/OU/device deletion (SR-2)' },
   { pattern: /\b(disable|suspend|block|deactivate)\b[^.]*\b(user|users|account|accounts|mailbox|mailboxes|sign[- ]?in|login|credential)\b/i, label: 'account/mailbox disable / sign-in block (SR-2)' },
-  // batch G2 code review: a message purge across mailboxes (a Purview search-and-purge)
-  { pattern: /\bpurg(?:e|es|ed|ing)\b[^.]*\b(?:messages?|e-?mails?|mail|items?)\b[^.]*\b(?:every|all|each|across)\b[^.]*\b(?:inbox(?:es)?|mailbox(?:es)?|users?)\b|\b(?:compliance|content)\s+search\b[^.]*\bpurg(?:e|es|ed|ing)\b|\bpurg(?:e|es|ed|ing)\b[^.]*\b(?:compliance|content)\s+search\b|New-ComplianceSearchAction\b[^\r\n]*-Purge\b/i, label: 'Exchange / Purview message purge across mailboxes (SR-2, hard delete)' },
+  // batch G2 code review: a message purge across mailboxes (a Purview search-and-purge);
+  // the three words are separate lookaheads from the verb, so a miss costs linear time
+  { pattern: /\bpurg(?:e|es|ed|ing)\b(?=[^.]*\b(?:messages?|e-?mails?|mail|items?)\b)(?=[^.]*\b(?:every|all|each|across)\b)(?=[^.]*\b(?:inbox(?:es)?|mailbox(?:es)?|users?)\b)|\b(?:compliance|content)\s+search\b[^.]*\bpurg(?:e|es|ed|ing)\b|\bpurg(?:e|es|ed|ing)\b[^.]*\b(?:compliance|content)\s+search\b|New-ComplianceSearchAction\b[^\r\n]*-Purge\b/i, label: 'Exchange / Purview message purge across mailboxes (SR-2, hard delete)' },
   { pattern: /\b(remove|revoke|reclaim|unassign)\b[^.]*\blicen[cs]e/i, label: 'license removal (SR-2)' },
   { pattern: /\b(remove|revoke)\b[^.]*\b(from|member)[^.]*\bgroup\b/i, label: 'group membership removal (SR-2)' },
   { pattern: /revoke[^.]*\bsession|sign[- ]?out[^.]*\b(all|every)\b|Revoke-MgUserSignInSession/i, label: 'session revocation (SR-2)' },

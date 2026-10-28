@@ -1,0 +1,50 @@
+# command: node --test scripts/adapters/g3-runbooks.test.js
+# commit: 3709976 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:24:34Z  node: v24.22.1
+✖ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (2.537035ms)
+✖ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.536896ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 96.334856
+
+✖ failing tests:
+
+test at scripts/adapters/g3-runbooks.test.js:49:5
+✖ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (2.537035ms)
+  AssertionError [ERR_ASSERTION]: password-reset calls verify-password-changed
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:52:43)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:49:5
+✖ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.536896ms)
+  AssertionError [ERR_ASSERTION]: mfa-issue calls verify-mfa-cleared
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:52:43)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:24:34Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

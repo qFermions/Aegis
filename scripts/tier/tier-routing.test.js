@@ -497,3 +497,13 @@ g2Suite('code review round 2, Linear issue key', [
   'User deleted a Teams chat in Office-365 by accident.',
   'Delete the Windows-11 upgrade project notes.',
 ]);
+
+// Finding 10: sign-out everywhere takes one to four words between sign or log and out.
+g2Suite('code review round 2, sign-out everywhere', [
+  [/sign-out everywhere/i, 'Sign the user out of every session in Slack.'],
+  [/sign-out everywhere/i, 'Sign the guest out of all sessions'],
+  [/sign-out everywhere/i, 'Log [FIRST_NAME] [LAST_NAME] out of all their sessions'],
+], [
+  'Users get logged out of Slack every hour.',
+  'Sign in to the portal and read the sign-in log for the last session.',
+]);

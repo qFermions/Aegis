@@ -281,7 +281,9 @@ function acquireLock() {
   let stole = false;
   const again = lockAge(LOCK_PATH);
   if (again === null || (again >= LOCK_STALE_MS && lockOwner() === seen)) { // still the stale lock (crashed writer)
-    removeLockDir();
+    // A lock already gone is not removed: another writer may have taken it since the
+    // second look, so only the create is retried (EEXIST then means that writer holds it).
+    if (again !== null) removeLockDir();
     try { takeLock(); stole = true; } catch (e) { if (e.code !== 'EEXIST') { fs.rmdirSync(STEAL_PATH); throw e; } }
   }
   fs.rmdirSync(STEAL_PATH);

@@ -187,3 +187,18 @@ test('scopes.js prints a connector\'s manifest entry and refuses an unknown conn
   const bad = spawnSync(process.execPath, [cli, 'not-a-connector'], { encoding: 'utf8' });
   assert.equal(bad.status, 1);
 });
+
+test('every scope refusal is on the audit trail as SCOPE_REFUSED, whichever way the vendor exposed the scopes', async () => {
+  const entries = [];
+  const audit = (e) => { entries.push(e); };
+  const slackEnv = { SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: 'T0OURS0001' };
+  await contract.createClient(slack.SPEC, { env: slackEnv, transport: queued([ok({ ok: true }, { 'x-oauth-scopes': 'chat:write' })]), scopePreflight: true, audit, sleep: async () => {} }).get('team.info');
+  const fleetEnv = { FLEET_URL: 'fleet.example.invalid', FLEET_API_TOKEN: TOKEN };
+  await contract.createClient(fleet.SPEC, { env: fleetEnv, transport: queued([ok({ user: { global_role: 'admin', teams: [] } })]), scopePreflight: true, audit, sleep: async () => {} }).get('version');
+  const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const gwsEnv = { GWS_SA_CLIENT_EMAIL: at('svc', 'project.iam.gserviceaccount.com'), GWS_SA_PRIVATE_KEY: privateKey.export({ type: 'pkcs8', format: 'pem' }), GWS_ADMIN_SUBJECT: at('admin', 'example.com'), GWS_CUSTOMER_ID: 'C0test1' };
+  await contract.createClient(gws.SPEC, { env: gwsEnv, transport: queued([ok({ access_token: 'issued', expires_in: 3599, scope: 'https://www.googleapis.com/auth/admin.directory.user' })]), scopePreflight: true, audit, sleep: async () => {} }).get('users');
+  const refused = entries.filter((e) => e.state === 'SCOPE_REFUSED').map((e) => e.connector);
+  assert.deepEqual(refused, ['slack', 'fleet', 'google-workspace'], JSON.stringify(entries));
+  for (const e of entries) assert.ok(!JSON.stringify(e).includes(TOKEN));
+});

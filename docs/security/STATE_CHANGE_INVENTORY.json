@@ -3001,6 +3001,206 @@
       ]
     },
     {
+      "id": "jamf-config-profiles-all-computers-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:distribute",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-delete-preview",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-distribute-all-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:distribute",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-exclude-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        },
+        {
+          "sink": "portal:distribute",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-limitation-exclusion-preview",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-one-mac-group-preview",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-pilot-scope-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        },
+        {
+          "sink": "portal:distribute",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-remove-all-computers-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-remove-group-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-remove-pilot-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-unexclude-portal",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:distribute",
+          "count": 1
+        },
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-config-profiles-waves-preview",
+      "file": ".claude/commands/jamf-config-profiles.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
       "id": "jamf-enroll-mac-assign-portal",
       "file": ".claude/commands/jamf-enroll-mac.md",
       "kind": "portal",
@@ -3054,6 +3254,233 @@
       "impactCategories": [
         "device configuration change",
         "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-filevault-new-key-portal",
+      "file": ".claude/commands/jamf-filevault.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "jamf-filevault-one-mac-scope-portal",
+      "file": ".claude/commands/jamf-filevault.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        },
+        {
+          "sink": "portal:distribute",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "jamf-filevault-pilot-profile-portal",
+      "file": ".claude/commands/jamf-filevault.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "jamf-filevault-show-key-portal",
+      "file": ".claude/commands/jamf-filevault.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:show",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "jamf-filevault-turn-off-preview",
+      "file": ".claude/commands/jamf-filevault.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "jamf-filevault-widen-profile-portal",
+      "file": ".claude/commands/jamf-filevault.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:distribute",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-delete-portal",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-ea-script-preview",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-limitation-exclusion-preview",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-mass-inventory-preview",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-recon",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "jamf-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-saved-search-portal",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-smart-create-portal",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-smart-criteria-portal",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-inventory-groups-static-members-portal",
+      "file": ".claude/commands/jamf-inventory-groups.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
       ]
     },
     {
@@ -3186,6 +3613,205 @@
         "destructive",
         "external-system mutation",
         "security-sensitive"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-add-title-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-app-installer-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-app-installer-rollout-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-fleet-plan-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-pilot-plan-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-pilot-policy-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-stop-policy-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-patch-management-widen-policy-portal",
+      "file": ".claude/commands/jamf-patch-management.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-policies-self-service-change-portal",
+      "file": ".claude/commands/jamf-policies-self-service.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-policies-self-service-create-portal",
+      "file": ".claude/commands/jamf-policies-self-service.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "jamf-policies-self-service-disable-portal",
+      "file": ".claude/commands/jamf-policies-self-service.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-policies-self-service-flush-all-portal",
+      "file": ".claude/commands/jamf-policies-self-service.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:flush",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-policies-self-service-flush-one-portal",
+      "file": ".claude/commands/jamf-policies-self-service.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:flush",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-policies-self-service-log-flushing-preview",
+      "file": ".claude/commands/jamf-policies-self-service.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "jamf-policies-self-service-test-install-portal",
+      "file": ".claude/commands/jamf-policies-self-service.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:install",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
       ]
     },
     {

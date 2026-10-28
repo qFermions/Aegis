@@ -37,6 +37,7 @@ Mixed-state procedural set (validated by `scripts/command-safety-gates.test.js`)
 - G2 Fleet lane: `/fleet-device-actions`, `/fleet-host-health`, `/fleet-policy-failures`, `/fleet-vulnerable-software`, `/fleet-osquery-investigation`
 - G2 Linear lane: `/linear-intake`, `/linear-triage`, `/linear-ticket-note`, `/linear-workspace-admin`
 - G2 Slack lane: `/slack-user-lifecycle`, `/slack-guests-connect`, `/slack-app-approval`, `/slack-retention-export`, `/slack-security-settings`, `/slack-incident-comms`
+- G2 Jamf Pro lane: `/jamf-config-profiles`, `/jamf-policies-self-service`, `/jamf-patch-management`, `/jamf-filevault`, `/jamf-inventory-groups`
 
 Each listed mixed-state command is operator-only and states an execution boundary: read-only diagnostics remain available, an adjacent action-specific `SAFETY GATE` may authorize only its named mutation, and explicit `PREVIEW ONLY` regions must move to a separately reviewed runbook. This is a tested documentation contract, not a claim that arbitrary prose is rendered technically unexecutable.
 

@@ -37,6 +37,8 @@ const MIXED_STATE_COMMANDS = [
   'linear-intake', 'linear-triage', 'linear-ticket-note', 'linear-workspace-admin',
   // G2: Slack
   'slack-user-lifecycle', 'slack-guests-connect', 'slack-app-approval', 'slack-retention-export', 'slack-security-settings', 'slack-incident-comms',
+  // G2: Jamf Pro
+  'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault', 'jamf-inventory-groups',
 ];
 
 const REFERENCE_BOUNDARIES = [

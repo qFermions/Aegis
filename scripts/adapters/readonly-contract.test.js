@@ -494,3 +494,19 @@ test('a token with a short lifetime is refreshed before it expires, not kept for
   const exchanges = transport.calls.filter((r) => r.path === '/api/oauth/token').length;
   assert.equal(exchanges, 2, 'a 60 s token is exchanged again 50 s later');
 });
+
+test('a path parameter that needs encoding is allowed through get() and plan(); a raw send() of an encoded, slash or dot segment is refused', async () => {
+  const spec = exampleSpec({ routes: { user: { method: 'GET', path: '/api/v1/users/:key', params: { key: /^[A-Za-z0-9.@_+-]{1,100}$/ } } } });
+  const c = contract.createClient(spec, { env: ENV, transport: queuedTransport([]), sleep: async () => {} });
+  const p = c.plan('user', { key: 'person+it@example.org' });
+  assert.equal(p.state, STATES.OK, JSON.stringify(p));
+  assert.equal(p.path, '/api/v1/users/person%2Bit%40example.org');
+  const live = client(spec, [tokenReply, { status: 200, body: { id: 1 } }]);
+  assert.equal((await live.c.get('user', { key: 'person@example.org' })).state, STATES.OK);
+  assert.equal(live.transport.calls[1].path, '/api/v1/users/person%40example.org');
+  // a raw send() stays strict: a value arrives as written and is tested as written
+  assert.equal(contract.checkRequest(spec, ENV, { method: 'GET', path: '/api/v1/users/person@example.org' }).path, '/api/v1/users/person%40example.org');
+  for (const raw of ['/api/v1/users/person%40example.org', '/api/v1/users/a%2Fb', '/api/v1/users/%2e%2e', '/api/v1/users/..', '/api/v1/users/%E0%A4%A']) {
+    assert.throws(() => contract.checkRequest(spec, ENV, { method: 'GET', path: raw }), contract.RefusedError, raw);
+  }
+});

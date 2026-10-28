@@ -545,19 +545,19 @@ function createClient(spec, deps = {}) {
     }
   }
 
-  function routePath(routeName, params, query) {
+  // get() and plan() validate the route's own parameters and build the encoded path
+  // once; they do not send that encoded path back through the raw-path check, which
+  // would test '%40' against a rule written for '@'. A raw send() stays strict.
+  function routeRequest(routeName, params, query) {
     const route = Object.prototype.hasOwnProperty.call(spec.routes, routeName) ? spec.routes[routeName] : null;
     if (!route) throw new RefusedError(`route ${routeName} is not on the allow-list`);
-    return buildRoutePath(route, params, query);
+    return { kind: 'read', method: 'GET', host: resolveHost(spec.host, env), path: buildRoutePath(route, params, query), route: route.name };
   }
 
   return {
     platform: spec.platform,
     send: (request) => run(() => perform(checkRequest(spec, env, request))),
-    get: (routeName, params = {}, query = {}) => run(() => {
-      const p = routePath(routeName, params, query);
-      return perform(checkRequest(spec, env, { method: 'GET', path: p }));
-    }),
+    get: (routeName, params = {}, query = {}) => run(() => perform(routeRequest(routeName, params, query))),
     graphql: (name, variables = {}) => run(() => {
       if (!spec.graphql || !Object.prototype.hasOwnProperty.call(spec.graphql.documents, name)) throw new RefusedError(`GraphQL document ${name} is not defined`);
       checkVariables(variables);
@@ -566,8 +566,7 @@ function createClient(spec, deps = {}) {
     }),
     plan: (routeName, params = {}, query = {}) => {
       try {
-        const p = routePath(routeName, params, query);
-        const checked = checkRequest(spec, env, { method: 'GET', path: p });
+        const checked = routeRequest(routeName, params, query);
         return { state: STATES.OK, ok: true, method: checked.method, host: checked.host, path: checked.path, note: 'dry run: no credentials read, no network' };
       } catch (error) {
         if (error instanceof RefusedError) return result(STATES.REFUSED, { error: error.message });

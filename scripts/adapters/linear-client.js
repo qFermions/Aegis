@@ -139,6 +139,8 @@ const SPEC = defineAdapter({
   routes: {},
   graphql: { path: '/graphql', documents: DOCUMENTS },
   tenant: { env: 'LINEAR_ORG', collect: collectTenant },
+  // batch G3: no query returns a key's own scopes (linear/linear schema, read 2026-10-28)
+  scopes: { manifest: 'linear', kind: 'none', vendor: 'Linear' },
 });
 checkDocuments(SPEC.graphql.documents);
 

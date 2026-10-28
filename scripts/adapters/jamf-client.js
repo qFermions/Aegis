@@ -151,6 +151,10 @@ const SPEC = defineAdapter({
     build: (creds) => ({ grant_type: 'client_credentials', client_id: creds.JAMF_CLIENT_ID, client_secret: creds.JAMF_CLIENT_SECRET }),
     parse: (json) => ({ token: json && json.access_token, expiresInSeconds: json && json.expires_in }),
   },
+  // batch G3: the token response's scope lists API role IDs (api-role:7), not privileges, so
+  // Jamf Pro does not expose whether the client is read-only (developer.jamf.com, read
+  // 2026-10-28); the first result says so
+  scopes: { manifest: 'jamf', kind: 'none', vendor: 'Jamf Pro' },
 });
 checkRoutes(SPEC.routes);
 

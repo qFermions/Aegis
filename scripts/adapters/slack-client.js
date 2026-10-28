@@ -150,6 +150,13 @@ function teamIdsIn(json) {
 }
 
 const appListQuery = { team_id: PATTERNS.team, limit: PATTERNS.limit1000, cursor: PATTERNS.cursor };
+
+// batch G3: the scope preflight (scripts/adapters/scope-manifest.json). Slack returns the
+// token's scopes in the x-oauth-scopes header (docs.slack.dev, legacy OAuth scopes page,
+// read 2026-10-28). Only read scopes pass: names ending in :read, :read.<detail> or
+// :history; admin passes only for the access-logs token, whose one read needs it.
+const SLACK_READ_SCOPE = /^[a-z][a-z0-9_.]*:(?:read(?:\.[a-z0-9_]+)?|history)$/;
+const scopeList = (value) => String(value).split(',').map((s) => s.trim()).filter(Boolean);
 const AUTH_TEST_ROUTE = { method: 'GET', path: '/api/auth.test' };
 
 const SPEC = defineAdapter({
@@ -174,6 +181,7 @@ const SPEC = defineAdapter({
     'admin.apps.restricted.list': { method: 'GET', path: '/api/admin.apps.restricted.list', query: appListQuery },
   },
   tenant: { env: 'SLACK_TEAM_ID', collect: teamIdsIn },
+  scopes: { manifest: 'slack', kind: 'header', vendor: 'Slack', header: 'x-oauth-scopes', granted: scopeList, allowed: (s) => SLACK_READ_SCOPE.test(s) },
 });
 
 // team.accessLogs needs the admin scope, so it has its own spec and its own token
@@ -188,6 +196,7 @@ const ACCESS_LOGS_SPEC = defineAdapter({
     'team.accessLogs': { method: 'GET', path: '/api/team.accessLogs', query: { count: PATTERNS.limit1000, page: PATTERNS.page100 } },
   },
   tenant: { env: 'SLACK_TEAM_ID', collect: teamIdsIn },
+  scopes: { manifest: 'slack-access-logs', kind: 'header', vendor: 'Slack', header: 'x-oauth-scopes', granted: scopeList, allowed: (s) => s === 'admin' || SLACK_READ_SCOPE.test(s) },
 });
 
 for (const spec of [SPEC, ACCESS_LOGS_SPEC]) {

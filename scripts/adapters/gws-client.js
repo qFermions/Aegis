@@ -255,6 +255,13 @@ function makeSpec({ now = Date.now, remember = () => {} } = {}) {
       parse: (json) => ({ token: json && json.access_token, expiresInSeconds: json ? Number(json.expires_in) : NaN }),
     },
     tenant: { env: 'GWS_CUSTOMER_ID', collect: collectTenant },
+    // batch G3: Google returns the granted scopes in the token response's scope field
+    // (developers.google.com, service accounts, read 2026-10-28); only .readonly scopes pass
+    scopes: {
+      manifest: 'google-workspace', kind: 'token', vendor: 'Google Workspace',
+      granted: (json) => (json && typeof json.scope === 'string' ? json.scope.split(/\s+/).filter(Boolean) : null),
+      allowed: (s) => /^https:\/\/www\.googleapis\.com\/auth\/[a-z.]+\.readonly$/.test(s),
+    },
   });
 }
 const SPEC = makeSpec();

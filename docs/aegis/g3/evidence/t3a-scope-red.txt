@@ -1,0 +1,40 @@
+# command: node --test scripts/adapters/scope-preflight.test.js
+# commit: fd967a2  started: 2026-10-28T08:15:31Z  node: v24.22.1
+node:fs:483
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '<repo>/scripts/adapters/scope-manifest.json'
+    at Object.readFileSync (node:fs:483:20)
+    at Object.<anonymous> (<repo>/scripts/adapters/scope-preflight.test.js:42:32)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '<repo>/scripts/adapters/scope-manifest.json'
+}
+
+Node.js v24.22.1
+✖ scripts/adapters/scope-preflight.test.js (82.329175ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 91.55473
+
+✖ failing tests:
+
+test at scripts/adapters/scope-preflight.test.js:1:1
+✖ scripts/adapters/scope-preflight.test.js (82.329175ms)
+  'test failed'
+# exit: 1  finished: 2026-10-28T08:15:31Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

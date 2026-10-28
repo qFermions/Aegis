@@ -272,6 +272,20 @@ function defineAdapter(spec) {
       contentType: t.contentType || 'application/x-www-form-urlencoded',
     });
   }
+  // batch G3: how the vendor exposes the scopes or role a credential holds, and which are
+  // read-only (scripts/adapters/scope-manifest.json, docs/aegis/g3/scope-manifest.md)
+  let scopes = null;
+  if (spec.scopes) {
+    const s = spec.scopes;
+    if (typeof s.manifest !== 'string' || !/^[a-z][a-z0-9-]{1,40}$/.test(s.manifest)) throw new Error('scopes need a manifest entry name');
+    if (!['header', 'token', 'route', 'none'].includes(s.kind)) throw new Error('scopes kind is header, token, route or none');
+    if (typeof s.vendor !== 'string' || !s.vendor) throw new Error('scopes need the vendor name for the notice');
+    if (s.kind !== 'none' && (typeof s.granted !== 'function' || typeof s.allowed !== 'function')) throw new Error('scopes need granted and allowed functions');
+    if (s.kind === 'header' && !/^[a-z][a-z0-9-]{1,60}$/.test(s.header || '')) throw new Error('header scopes need a lower-case header name');
+    if (s.kind === 'route' && !(s.route in routes)) throw new Error('route scopes need a route of this spec');
+    if (s.kind === 'token' && !spec.tokenExchange) throw new Error('token scopes need a token exchange');
+    scopes = Object.freeze({ manifest: s.manifest, kind: s.kind, vendor: s.vendor, header: s.header || null, route: s.route || null, granted: s.granted || null, allowed: s.allowed || null });
+  }
   let tenant = null;
   if (spec.tenant) {
     if (!ENV_NAME.test(spec.tenant.env || '') || typeof spec.tenant.collect !== 'function') throw new Error('tenant binding needs an env name and a collect function');
@@ -286,6 +300,7 @@ function defineAdapter(spec) {
     graphql,
     tokenExchange,
     tenant,
+    scopes,
   });
 }
 
@@ -522,6 +537,12 @@ function createClient(spec, deps = {}) {
   const random = typeof deps.random === 'function' ? deps.random : Math.random;
   const retryBudgetMs = Number.isFinite(deps.retryBudgetMs) && deps.retryBudgetMs > 0 ? deps.retryBudgetMs : DEFAULT_RETRY_BUDGET_MS;
   const audit = typeof deps.audit === 'function' ? deps.audit : null;
+  // batch G3: the scope preflight is on for a person running a CLI (no injected transport)
+  // and for any caller that asks; a test transport turns it off unless the test asks.
+  const scopePreflight = deps.scopePreflight !== undefined ? deps.scopePreflight === true : !deps.transport;
+  let scopeVerdict = null; // null: not checked yet; { ok, notice } or { refused }
+  let noticeShown = false;
+  let inPreflight = false;
   let token = null;
   let tokenExpiresAt = 0;
   const secrets = [];
@@ -563,6 +584,7 @@ function createClient(spec, deps = {}) {
     const meta = {};
     const id = requestIdOf(res.headers);
     if (id !== undefined) meta.request_id = id;
+    if (spec.scopes && spec.scopes.kind === 'header') meta.scopeHeader = headerValue(res.headers, spec.scopes.header);
     if (res.status < 200 || res.status >= 300) {
       const wait = res.status === 429 || res.status === 503 ? retryAfterMs(res.headers, now()) : undefined;
       return result(STATES.HTTP_ERROR, { status: res.status, ...meta, error: `HTTP ${res.status} (body withheld)`, ...(wait !== undefined ? { retryAfterMs: wait } : {}) });
@@ -599,8 +621,43 @@ function createClient(spec, deps = {}) {
 
   // The public shape of a failed attempt: internal timing fields dropped.
   function failure(r, attempts, extra = {}) {
-    const { retryAfterMs: _wait, json: _json, ...rest } = r;
+    const { retryAfterMs: _wait, json: _json, scopeHeader: _scopes, ...rest } = r;
     return { ...rest, attempts, ...extra };
+  }
+
+  // The scope verdict from what the vendor exposed: null or undefined means it exposed
+  // nothing readable (a notice on first use); otherwise every granted scope or role must be
+  // one the manifest allows, or the credential is refused for this client.
+  function judgeScopes(granted, where) {
+    if (granted === null || granted === undefined) {
+      return { ok: true, notice: `${spec.scopes.vendor} did not return the granted scopes ${where}, so Aegis could not check that this credential is read-only; use a credential with exactly the read scopes in docs/aegis/g3/scope-manifest.md` };
+    }
+    const beyond = granted.filter((s) => !spec.scopes.allowed(s));
+    if (!beyond.length) return { ok: true, notice: null };
+    return {
+      refused: result(STATES.SCOPE_REFUSED, {
+        write_scopes: beyond,
+        error: `this credential holds scopes or roles beyond the read-only manifest (${beyond.join(', ')}); Aegis does not use it`,
+      }),
+    };
+  }
+
+  function notExposedNotice() {
+    return `${spec.scopes.vendor} does not expose which scopes or role this credential holds, so Aegis cannot prove it is read-only; use a credential with exactly the read scopes in docs/aegis/g3/scope-manifest.md`;
+  }
+
+  // A refusal judged from the token response or the who-am-I read is its own audit entry
+  // (operation scope-preflight); the call before it was recorded with its own state.
+  function recordRefusal(startedAt) {
+    const refused = { ...scopeVerdict.refused, attempts: 0 };
+    return record('scope-preflight', refused, 0, startedAt) || refused;
+  }
+
+  // Attaches the first-use notice to the first result of this client.
+  function withNotice(res) {
+    if (!scopePreflight || !spec.scopes || noticeShown || !scopeVerdict || !scopeVerdict.notice) return res;
+    noticeShown = true;
+    return { ...res, scope_notice: scopeVerdict.notice };
   }
 
   const retryable = (r) => r.state === STATES.TIMEOUT || r.state === STATES.NETWORK_ERROR || (r.state === STATES.HTTP_ERROR && (r.status === 429 || r.status >= 500));
@@ -622,6 +679,12 @@ function createClient(spec, deps = {}) {
     let parsed;
     try { parsed = spec.tokenExchange.parse(r.json); } catch { parsed = null; }
     if (!parsed || !plainString(parsed.token) || !parsed.token) return { failed: result(STATES.INVALID_RESPONSE, { error: 'token exchange returned no token' }) };
+    if (scopePreflight && spec.scopes && spec.scopes.kind === 'token' && !scopeVerdict) {
+      let granted = null;
+      try { granted = spec.scopes.granted(r.json); } catch { granted = null; }
+      scopeVerdict = judgeScopes(granted, 'in the token response');
+      if (scopeVerdict.refused) return { failed: recordRefusal(startedAt) };
+    }
     token = parsed.token;
     if (!secrets.includes(token)) secrets.push(token);
     // Refresh before the vendor's own expiry: a quarter of the lifetime early, at most
@@ -633,8 +696,24 @@ function createClient(spec, deps = {}) {
 
   async function perform(checked) {
     const expectedTenant = tenantExpected();
+    if (scopeVerdict && scopeVerdict.refused) return scopeVerdict.refused;
     const { creds, missing } = loadCredentials();
     if (missing.length) return result(STATES.NO_CREDENTIALS, { error: `missing credential environment variable(s): ${missing.join(', ')}` });
+    if (scopePreflight && spec.scopes && !scopeVerdict && !inPreflight) {
+      if (spec.scopes.kind === 'none') scopeVerdict = { ok: true, notice: notExposedNotice() };
+      if (spec.scopes.kind === 'route') {
+        // the vendor's own "who am I" read comes first; its answer decides
+        const startedAt = now();
+        inPreflight = true;
+        let pre;
+        try { pre = await perform(routeRequest(spec.scopes.route, {}, {})); } finally { inPreflight = false; }
+        if (!pre.ok) return pre;
+        let granted = null;
+        try { granted = spec.scopes.granted(pre.data); } catch { granted = null; }
+        scopeVerdict = judgeScopes(granted, `from ${spec.scopes.route}`);
+        if (scopeVerdict.refused) return recordRefusal(startedAt);
+      }
+    }
     const tokenOrFail = await ensureToken(creds);
     if (tokenOrFail && tokenOrFail.failed) return tokenOrFail.failed;
     const headers = { Accept: 'application/json', ...spec.auth(creds, tokenOrFail) };
@@ -671,6 +750,15 @@ function createClient(spec, deps = {}) {
       }
       return record(operation, base, attempts, startedAt) || base;
     }
+    if (scopePreflight && spec.scopes && spec.scopes.kind === 'header' && !scopeVerdict && !inPreflight) {
+      let granted = null;
+      try { granted = r.scopeHeader === undefined ? null : spec.scopes.granted(r.scopeHeader); } catch { granted = null; }
+      scopeVerdict = judgeScopes(granted, `in the ${spec.scopes.header} header`);
+      if (scopeVerdict.refused) {
+        const refused = { ...scopeVerdict.refused, attempts, status: r.status };
+        return record(operation, refused, attempts, startedAt) || refused;
+      }
+    }
     const audited = record(operation, r, attempts, startedAt);
     if (audited) return audited;
     let ids = [];
@@ -681,7 +769,7 @@ function createClient(spec, deps = {}) {
       }
     }
     const data = redactDeep(r.json, secrets);
-    return result(STATES.OK, { status: r.status, attempts, ...(r.request_id ? { request_id: r.request_id } : {}), data, flags: scanUntrusted(data) });
+    return withNotice(result(STATES.OK, { status: r.status, attempts, ...(r.request_id ? { request_id: r.request_id } : {}), data, flags: scanUntrusted(data) }));
   }
 
   async function run(fn) {

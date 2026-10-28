@@ -1,0 +1,45 @@
+# command: node scripts/adapters/scopes.js fleet
+# commit: d637281 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:22:34Z  node: v24.22.1
+{
+  "connector": "fleet",
+  "credential": [
+    "FLEET_API_TOKEN"
+  ],
+  "least_privilege": [
+    "an API-only user with the global role observer (or team observer on each team it reads)"
+  ],
+  "refused": [
+    "global or team role admin",
+    "maintainer",
+    "observer_plus (can run live reports on hosts)",
+    "gitops (write-only)",
+    "technician or any role not named observer"
+  ],
+  "exposure": {
+    "kind": "route",
+    "how": "GET /api/v1/fleet/me returns the API user's global_role and its teams and fleets with a role each; Aegis reads it once before the first read and refuses any role but observer."
+  },
+  "facts": [
+    "F-01",
+    "F-02",
+    "F-03",
+    "F-04",
+    "F-05",
+    "F-06"
+  ],
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/fleetdm/fleet/main/docs/REST%20API/rest-api.md",
+      "read_on": "2026-10-28",
+      "how": "vendor repo"
+    },
+    {
+      "url": "https://fleetdm.com/docs/using-fleet/manage-access",
+      "read_on": "2026-10-28",
+      "how": "vendor docs page"
+    }
+  ],
+  "note": "dry run: no credential read, nothing sent; add --execute to check the credential exported in this shell"
+}
+# exit: 0  finished: 2026-10-28T08:22:34Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

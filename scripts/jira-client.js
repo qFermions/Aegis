@@ -207,6 +207,9 @@ const JIRA_SPEC = defineAdapter({
     },
     comment: { method: 'GET', path: '/rest/servicedeskapi/request/:issue/comment/:comment', params: { issue: ISSUE_KEY_PATTERN, comment: NUMERIC_ID_PATTERN } },
   },
+  // batch G3: an API token's scopes cannot be read back (developer.atlassian.com, read
+  // 2026-10-28); the first result says so
+  scopes: { manifest: 'jira', kind: 'none', vendor: 'Jira' },
 });
 
 function normalizeCredentials(credentials) {
@@ -372,7 +375,7 @@ async function contractFetch(cfg, method, apiPath, deps = {}) {
   const env = { JIRA_SITE: site, JIRA_EMAIL: credentials.email, JIRA_API_TOKEN: credentials.token };
   const transport = deps.transport ||
     ((request) => apiRequest({ site, ...credentials }, request.method, request.path, null, { timeoutMs: request.timeoutMs }));
-  const client = createClient(JIRA_SPEC, { env, transport, sleep: deps.sleep, random: deps.random, timeoutMs: deps.timeoutMs, audit: deps.audit });
+  const client = createClient(JIRA_SPEC, { env, transport, sleep: deps.sleep, random: deps.random, timeoutMs: deps.timeoutMs, audit: deps.audit, scopePreflight: deps.scopePreflight === true });
   const res = await client.send({ method, path: apiPath });
   if (res.state === STATES.OK) return { status: res.status, json: res.data, flags: res.flags, result: res };
   if (res.state === STATES.HTTP_ERROR) return { status: res.status, json: null, result: res };
@@ -387,7 +390,8 @@ function createRuntime(env, dependencies = {}) {
   let audit = null;
   if (dependencies.audit !== undefined) audit = typeof dependencies.audit === 'function' ? dependencies.audit : null;
   else if (!injected) audit = auditSink({ AEGIS_AUDIT_DIR: defaultAuditDir(env && env.AEGIS_AUDIT_DIR ? env : process.env) });
-  const contractDeps = { transport: dependencies.transport, sleep: dependencies.sleep, random: dependencies.random, timeoutMs: dependencies.timeoutMs, audit };
+  const scopePreflight = dependencies.scopePreflight !== undefined ? dependencies.scopePreflight === true : !injected;
+  const contractDeps = { transport: dependencies.transport, sleep: dependencies.sleep, random: dependencies.random, timeoutMs: dependencies.timeoutMs, audit, scopePreflight };
   return {
     env,
     audit,

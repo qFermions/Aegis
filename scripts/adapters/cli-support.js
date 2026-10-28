@@ -28,6 +28,8 @@ function cliDeps(deps = {}, env = process.env) {
     maxRetries: deps.maxRetries,
     retryBudgetMs: deps.retryBudgetMs,
     audit,
+    // the scope preflight: on for a person running a CLI, off for a test transport unless asked
+    scopePreflight: deps.scopePreflight !== undefined ? deps.scopePreflight === true : !injected,
   };
 }
 

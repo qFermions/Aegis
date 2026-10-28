@@ -91,6 +91,22 @@ const SPEC = defineAdapter({
     activities: { method: 'GET', path: '/api/v1/fleet/activities', fixedQuery: NEWEST_FIRST, query: { page: PAGE, per_page: PER_PAGE } },
     reportResults: { method: 'GET', path: '/api/v1/fleet/reports/:id/report', params: { id: ID } },
   },
+  // batch G3: the scope preflight reads the API user's roles from /me first (Fleet REST API,
+  // fleetdm/fleet docs, read 2026-10-28); only the observer role passes, globally or per
+  // team (Fleet calls teams fleets too). observer_plus can run live reports on hosts, and
+  // maintainer, admin, technician and gitops can change hosts, so each is refused.
+  scopes: {
+    manifest: 'fleet', kind: 'route', vendor: 'Fleet', route: 'me',
+    granted: (body) => {
+      const user = body && body.user;
+      if (!user || typeof user !== 'object') return null;
+      const roles = new Set();
+      if (typeof user.global_role === 'string' && user.global_role) roles.add(`global:${user.global_role}`);
+      for (const list of [user.teams, user.fleets]) for (const t of Array.isArray(list) ? list : []) if (t && typeof t.role === 'string') roles.add(`team:${t.role}`);
+      return [...roles];
+    },
+    allowed: (role) => role === 'global:observer' || role === 'team:observer',
+  },
 });
 
 // ── Small helpers ────────────────────────────────────────────────────────────

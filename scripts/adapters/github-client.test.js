@@ -278,3 +278,10 @@ test('a failure prints the two-part message for GitHub, with no body and no toke
   assert.equal(missing.code, 1);
   assert.match(missing.json.operator_message, /GitHub credential is not set/);
 });
+
+test('verify-team-member --absent: absence on a list longer than 10 full pages is not proof', async () => {
+  const long = await cli(['verify-team-member', '--team', 'docs', '--user', 'leaver', '--absent', '--execute'], { replies: Array.from({ length: 10 }, (_, i) => fullPage(`t${i}-`)) });
+  assert.equal(long.code, 2, long.text);
+  assert.equal(long.json.verified, false);
+  assert.match(long.json.reason, /not proof/);
+});

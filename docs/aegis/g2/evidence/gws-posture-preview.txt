@@ -1,6 +1,6 @@
 # command: node scripts/gws-posture-audit.js
 # captured: 2026-10-28T02:20:42Z at c1b8f2e
-# note: any U+2014 in the tool output is written as -- (C11)
+# note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> (replaced after capture)
 # Google Workspace security posture audit: [@Aegion_DOMAIN]
 
 Generated: 2026-10-28 | Org: [@Aegion] | Auditor: [ADMIN_NAME] | Ticket: [ISSUE_ID]
@@ -169,9 +169,9 @@ Status: KNOWN LIMIT: admins cannot change audit log retention; the period for ea
 
 gws-posture-audit.js: Google Workspace posture audit (preview only)
 Nothing was read from or sent to Google.
-Report target: /home/user/Aegis/security-audit-gws-posture-2026-10-28.md
+Report target: <repo>/security-audit-gws-posture-2026-10-28.md
 Content SHA256: de3b97b75f43b2bc9eb30dba3f6f479905bdc466c49bb925da3a12ecfb74535d
-Required confirmation: WRITE GWS POSTURE REPORT TARGET /home/user/Aegis/security-audit-gws-posture-2026-10-28.md CONTENT SHA256 de3b97b75f43b2bc9eb30dba3f6f479905bdc466c49bb925da3a12ecfb74535d
+Required confirmation: WRITE GWS POSTURE REPORT TARGET <repo>/security-audit-gws-posture-2026-10-28.md CONTENT SHA256 de3b97b75f43b2bc9eb30dba3f6f479905bdc466c49bb925da3a12ecfb74535d
 To save it: run again with the same --export arguments plus --write <report target> --confirm "<required confirmation>".
 No files changed.
 # exit: 0

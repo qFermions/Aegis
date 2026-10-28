@@ -12,7 +12,7 @@ For the owner. One page. Details: `docs/aegis/lanes/g2.md` (the lane spec and it
 ## The boundary: Aegis advises, a person executes
 
 - Five read-only adapters (`scripts/adapters/`) share one contract: allow-listed GET reads, Linear GraphQL query documents, and each vendor's token exchange. Every other request is refused before a credential is read. Each adapter is a dry run until the bare `--execute`.
-- No code path writes to Google, Fleet, Jamf, Slack or Linear (boundary audit, rows 20 to 28). Every state change in the 25 runbooks is behind an action-local gate the administrator answers, or is an inert preview: 177 inventory entries, 142 gated, 35 preview.
+- No code path writes to Google, Fleet, Jamf, Slack or Linear (boundary audit, rows 20 to 28). Every state change in the 25 runbooks is behind an action-local gate the administrator answers, or is an inert preview: 177 inventory entries, 142 gated, 35 preview (`docs/aegis/g2/evidence/c6-inventory-modes.txt`).
 - Tests never touch a network: every adapter test loads a tripwire that throws on any socket.
 
 ## What is proven, and what is not
@@ -27,4 +27,4 @@ For the owner. One page. Details: `docs/aegis/lanes/g2.md` (the lane spec and it
 - `/gws-audit-log` still sends a Google compromise to the Microsoft-only `/security-alert-triage` (`.claude/commands/gws-audit-log.md:40`, `:73`, `:79`, `:91`, `:123`); pointing it at `/gws-account-containment` is a one-file change this batch did not make.
 - Allow the vendor documentation hosts in the environment's network policy, then re-check the facts marked as search excerpts.
 - "SLA breached" floors through the compromise rule (it fails safe); the corpus words that ticket "missed its SLA".
-- A dead clause in the Microsoft portal grammar (`scripts/command-safety-gates.test.js:630`, the `\\s` in a regex literal) hides 9 Microsoft gate candidates; fixing it changes Microsoft rows.
+- A dead clause in the Microsoft portal grammar (`scripts/command-safety-gates.test.js:630`, the `\\s` in a regex literal) hides 9 Microsoft gate candidates (`docs/aegis/g2/evidence/dead-clause-candidates.txt`); fixing it changes Microsoft rows.

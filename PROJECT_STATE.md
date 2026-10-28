@@ -97,7 +97,7 @@ desk hardening in advisory mode: no new write path; every connector reads only. 
 readiness is **NOT PASSED**: `docs/aegis/production-readiness.md` lists the 12 criteria, which
 rows this batch proves for each platform and which only the owner can run (real tenants,
 held-out cases, operator validation, vendor facts by hand). Captures in `docs/aegis/g3/evidence/`;
-every G3 suite count at `a237fac` (after code review round 3) is in
+every G3 suite count at `ae88348` (after code review round 3 and the evidence review) is in
 `docs/aegis/g3/evidence/t7-head-suite-counts.txt`.
 
 | Platform | Status | Commands | Proof (command and count) |
@@ -114,7 +114,7 @@ every G3 suite count at `a237fac` (after code review round 3) is in
   (`scripts/adapters/scope-manifest.json`, `docs/aegis/g3/scope-manifest.md`); a hash-chained
   local audit trail and change records (`scripts/audit/`); every connector failure ends in a
   named state with a two-part operator message; latency budget p95 50 ms per ticket, measured
-  0.48 to 0.68 ms over three runs (`docs/aegis/g3/evidence/t6c-latency-runs.txt`).
+  0.61 to 0.71 ms over three runs (`docs/aegis/g3/evidence/t6c-latency-runs.txt`).
 - **Shipped bug fixed:** eleven tier floors and nine engine twins on `main`, and one pair this batch
   added, took cubic or worse time on a long line (9 to 48 s on 20 KB, the three-gap one far longer); fixed with the same matches and a test that
   rejects the shape (`docs/review/incidents.md`).

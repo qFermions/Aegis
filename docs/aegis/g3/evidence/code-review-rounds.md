@@ -69,7 +69,7 @@ Round 3 is the last round REVIEW.md allows; no round 4 was run.
 | 11 | `docs/aegis/g3/evidence/tools/floor-times.js:41` | the after floor was paired by position, not label | fixed: each side looked up by label | `19522d3` |
 | 12 | `docs/aegis/capability-map.md:86` | citations still gave the `ebb8cc1` counts (audit 10/10, change records 7/7, latency) after round 2 added tests | fixed: every cited capture re-run at `a237fac` and the citations updated | `d0757cd`, `934679c` |
 | 13 | `progress.md:8` | progress.md was not rewritten after round 2 | fixed: rewritten | `c03d823` |
-| 14 | `docs/aegis/g3/evidence/code-review-rounds.md:46` | round 2 findings 12 and 13 share one commit; the reasons for closed findings 1 and 15 were not in checks.md | fixed: checks.md carries both closed reasons and the shared commit as a deviation (the two findings changed the same lines of one file; history on a pushed branch is not rewritten) | this commit |
+| 14 | `docs/aegis/g3/evidence/code-review-rounds.md:46` | round 2 findings 12 and 13 share one commit; the reasons for closed findings 1 and 15 were not in checks.md | fixed: checks.md carries both closed reasons and the shared commit as a deviation (the two findings changed the same lines of one file; history on a pushed branch is not rewritten) | `d0f2b3b` |
 | 15 | `scripts/audit/change-record.js:172` | `link` read and parsed the whole trail four times; `withLock` read the lock twice per denied retry | fixed: `link` reads it once and passes it on (`a2415f7`); the double read went with finding 3's rewrite (`3f76e5e`) | `a2415f7` |
 
 Round 3: 15 found, 15 fixed, 0 closed.

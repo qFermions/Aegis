@@ -125,7 +125,8 @@ test('each read sends one GET to its path; user and device reads carry a fixed $
     [['managed-device', '--device', D], `/v1.0/deviceManagement/managedDevices/${D}?%24select=id%2CdeviceName%2ClastSyncDateTime%2CcomplianceState%2CoperatingSystem%2CmanagementState`],
   ];
   for (const [argv, path] of cases) {
-    const r = await cli([...argv, '--execute'], { replies: [token(), ok({ value: [] })] });
+    // an injected transport turns the scope preflight off unless the test asks (cli-support.js)
+    const r = await cli([...argv, '--execute'], { replies: [token(), ok({ value: [] })], extra: { scopePreflight: true } });
     assert.equal(r.code, 0, `${argv[0]}: ${r.text}`);
     assert.equal(r.transport.calls.length, 2, argv[0]);
     assert.equal(r.transport.calls[1].path, path, argv[0]);

@@ -17,7 +17,7 @@ For the owner. One page. Details: `docs/aegis/lanes/g2.md` (the lane spec and it
 
 ## What is proven, and what is not
 
-- Proven by deterministic checks: 63/63 G2 corpus tickets and 12/12 dangerous pairs, each platform scored on its own (Fleet 13, Linear 11, Slack 14, Jamf 12, Google 13); the tier floor per platform; the gate grammar; the adapters' read-only behaviour; the posture audit. `node --test`: 1041 tests, 1041 pass after three code review rounds (588 at batch 1; `docs/aegis/g2/evidence/c9-test-count.txt`).
+- Proven by deterministic checks: 63/63 G2 corpus tickets and 12/12 dangerous pairs, each platform scored on its own (Fleet 13, Linear 11, Slack 14, Jamf 12, Google 13); the tier floor per platform; the gate grammar; the adapters' read-only behaviour; the posture audit. `node --test`: 1041 tests, 1041 pass after three code review rounds (588 at batch 1; `docs/aegis/g2/evidence/c9-test-count.txt`), and 1045 after security review 2 (`docs/aegis/g2/evidence/security-review-2.md`).
 - Microsoft and the batch 1 Google corpora are unchanged: 28/28 with 6/6 pairs, 38/38 with 9/9 pairs.
 - Not proven: answer quality (no model-judged run), and vendor facts. This session's network refused the vendor documentation hosts, so every breadcrumb, privilege name and API path rests on a vendor repository (Fleet's docs source, Linear's schema, Slack's SDK and OpenAPI spec, Google's discovery documents) or on a search excerpt (Jamf, Slack help, Linear help, Google help). The runbooks mark each one; the report lists them for a hand check.
 - Never run against a real tenant: mocks and fixtures only, no credentials.

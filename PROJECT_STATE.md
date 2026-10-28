@@ -67,6 +67,10 @@ lane spec is `docs/aegis/lanes/g2.md`; the corpus is `scripts/eval/g2-tickets.js
 | Jamf Pro | landed whole | `/jamf-config-profiles`, `/jamf-policies-self-service`, `/jamf-patch-management`, `/jamf-filevault`, `/jamf-inventory-groups` | G2 eval: 12/12 tickets, 2/2 pairs; `node --test scripts/adapters/jamf-client.test.js scripts/adapters/jamf-runbooks.test.js`: 33/33 |
 | Google Workspace | landed whole | `/gws-drive-sharing`, `/gws-2sv-enforcement`, `/gws-account-containment`, `/gws-admin-roles`, `/gws-security-posture` | G2 eval: 13/13 tickets, 2/2 pairs; `node --test scripts/adapters/gws-client.test.js scripts/gws-runbooks.test.js`: 39/39 at head (36/36 at landing); `node --test scripts/gws-posture-audit.test.js`: 12/12 |
 
+- **Security review 2 (`35b0415..2b35aa1`, the review fixes):** no security finding; one candidate
+  below the bar named two floor gaps in this batch's own review fixes (a delete or purge across
+  mailboxes, an Intune or Company Portal unenroll), fixed test first (`83d1318`, `9b35dd7`);
+  `node --test` 1045/1045 after (`docs/aegis/g2/evidence/security-review-2.md`).
 - **Battery at `cef6cee` (after code review round 3):** `node --test` 1041/1041
   (`docs/aegis/g2/evidence/node-test.txt:1201-1204`); Microsoft 28/28 and 6/6, Google 38/38 and
   9/9, unchanged; structure lint 102 commands, clean; scanner 0 BLOCK, 197 WARN (170 at batch 1;

@@ -143,10 +143,11 @@ function newState({ ticketText, source = 'operator', mode = 'dry-run' }) {
   const scan = sanitize.scanText(ticketText);
   if (scan.blocks.length > 0) {
     // Tenant literals / credentials never enter graph state (SR-8).
-    const details = scan.blocks.map((b) => `${b.label} (line ${b.line})`);
-    // a mixed-tenant block can be a chat handle: say so, without a rewrite that would also carry a real token past
-    if (scan.blocks.some((b) => /^Mixed-tenant case/.test(b.label))) details.push('a bracketed chat handle ending in a dictionary word reads as a second org\'s token too');
-    throw new GraphError(3, 'ticket text blocked by sanitizer — remove tenant literals/credentials and use placeholders', details);
+    // a mixed-tenant block can be a chat handle: say so on its line, without a rewrite
+    // that would also carry a real second tenant's token past the gate
+    const mixed = scan.blocks.find((b) => /^Mixed-tenant case/.test(b.label));
+    if (mixed) scan.blocks.push({ line: mixed.line, label: 'a bracketed chat handle ending in a dictionary word reads as a second org\'s token too' });
+    throw new GraphError(3, 'ticket text blocked by sanitizer — remove tenant literals/credentials and use placeholders', scan.blocks.map((b) => `${b.label} (line ${b.line})`));
   }
 
   const state = {

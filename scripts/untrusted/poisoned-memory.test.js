@@ -595,3 +595,38 @@ test('B18 the edge, the memory store and the replay cache share one personal-dat
   const guard = require(path.join(ROOT, 'scripts', 'tier', 'tier-guard.js'));
   assert.equal(typeof guard.personalDataIn, 'function', 'the rule lives in tier-guard.js beside the shared markers');
 });
+
+// ── batch 1 finding 4: a stale-lock takeover that finds the lock gone removes nothing ──
+
+test('B19 a stealer that finds the stale lock already gone never removes the lock another writer takes in that moment', () => {
+  // A preload answers the stealer's second look at the lock as "gone" and, in that same
+  // moment, lets another writer take the lock (its directory and its owner file).
+  const probe = path.join(WORK, 'lock-gone-probe.js');
+  fs.writeFileSync(probe, [
+    "'use strict';",
+    "const fs = require('fs'); const path = require('path');",
+    'const original = fs.statSync; let looks = 0;',
+    'fs.statSync = function (p, ...rest) {',
+    "  const lock = path.join(process.env.AEGIS_MEMORY_DIR, '.lock');",
+    '  if (String(p) === lock && ++looks === 2) {',
+    '    fs.rmSync(lock, { recursive: true, force: true });',
+    "    fs.mkdirSync(lock); fs.writeFileSync(path.join(lock, 'owner'), 'other-writer-token');",
+    "    const e = new Error('ENOENT: lock gone at the second look'); e.code = 'ENOENT'; throw e;",
+    '  }',
+    '  return original.call(this, p, ...rest);',
+    '};',
+    '',
+  ].join('\n'));
+  const dir = freshDir('b19');
+  const lock = path.join(dir, '.lock');
+  const stale = new Date(Date.now() - 10 * 60 * 1000);
+  fs.mkdirSync(lock); fs.writeFileSync(path.join(lock, 'owner'), 'crashed-writer-token'); fs.utimesSync(lock, stale, stale);
+  const p = path.join(WORK, `proposal-${++seq}.json`);
+  writeJson(p, PROPOSALS.enrollment);
+  const r = spawnSync(process.execPath, ['-r', probe, MEM_CLI, 'propose', '--file', p], { encoding: 'utf8', env: { ...ENV, AEGIS_MEMORY_DIR: dir } });
+  assert.equal(r.status, 1, `the stealer backs off: ${r.stdout}${r.stderr}`);
+  assert.ok(fs.existsSync(lock), 'the other writer\'s lock must survive');
+  assert.equal(fs.readFileSync(path.join(lock, 'owner'), 'utf8'), 'other-writer-token', 'and it still belongs to the other writer');
+  assert.ok(!fs.existsSync(lock + '.steal'), 'the steal lock is released');
+  assert.equal(recordFiles(dir).length, 0, 'nothing is written');
+});

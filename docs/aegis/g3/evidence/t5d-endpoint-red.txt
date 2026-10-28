@@ -1,0 +1,77 @@
+# command: node --test scripts/adapters/endpoint-sync.test.js
+# commit: e40626e (plus uncommitted changes in the working tree)  started: 2026-10-28T09:25:44Z  node: v24.22.1
+✖ Fleet verify-checked-in: the MDM check-in after --not-before passes; an older one, MDM off, or another host does not (6.197576ms)
+✖ Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and the output names the field it used (0.887416ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 108.892187
+
+✖ failing tests:
+
+test at scripts/adapters/endpoint-sync.test.js:51:1
+✖ Fleet verify-checked-in: the MDM check-in after --not-before passes; an older one, MDM off, or another host does not (6.197576ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-checked-in",
+    "state": "REFUSED",
+    "ok": false,
+    "error": "not a read command of this adapter. Every Fleet write is a HUMAN-RUN step in a runbook; run \"help\" for the read and verify-* commands.",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Fleet. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=fleet operation=verify-checked-in state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/endpoint-sync.test.js:53:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/endpoint-sync.test.js:81:1
+✖ Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and the output names the field it used (0.887416ms)
+  AssertionError [ERR_ASSERTION]: Usage: node scripts/adapters/jamf-client.js <command> [flags] [--execute]
+    Reads:  version | computer --serial [SERIAL_NUMBER] [--section SECTION] | computer-detail --id [DEVICE_ID]
+            commands --management-id [DEVICE_ID] | smart-groups --name [SMART_GROUP] | group-members --id N
+            profile --id [PROFILE_ID] | policy --id [POLICY_ID] | history --id N --subset PolicyLogs|Commands
+            patch-titles | patch-report --id N | update-plans | update-plan-events --id [PLAN_UUID]
+            SECTION is one of GENERAL, HARDWARE, OPERATING_SYSTEM, DISK_ENCRYPTION, CONFIGURATION_PROFILES, GROUP_MEMBERSHIPS, APPLICATIONS (default GENERAL)
+    Verify: verify-command --management-id [DEVICE_ID] --type [COMMAND_TYPE] --not-before [NOT_BEFORE]
+              [--profile-identifier [PROFILE_IDENTIFIER]] (required with INSTALL_PROFILE and REMOVE_PROFILE)
+            verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] [--absent]
+            verify-group-count --id N --expect N | verify-filevault --serial [SERIAL_NUMBER]
+            verify-policy --id [POLICY_ID] with one or more of --trigger T, --frequency F, --enabled true|false, --no-triggers
+  Every command is a dry run unless the bare --execute flag is given. No command writes to Jamf Pro.
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown command; no command writes to Jamf Pro",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Jamf Pro. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=jamf operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/endpoint-sync.test.js:83:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:25:45Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

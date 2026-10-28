@@ -42,6 +42,9 @@ const STEAL_DIR = 'audit.lock.steal';
 const GENESIS = '0'.repeat(64);
 const HASH_PREFIX = 'aegis.audit.v1';
 const LOCK_WAIT_MS = 15000;
+// Consecutive EPERM or EACCES on Windows with no lock file present before the error is
+// taken as a permission problem (about 0.2 s at 5 to 15 ms a try).
+const DENIED_RETRIES = 20;
 const STEAL_STALE_MS = 30000;
 
 class AuditRefused extends Error {
@@ -187,6 +190,7 @@ function openAuditLog({ dir = defaultAuditDir(), now = Date.now } = {}) {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     const owner = `${process.pid}:${crypto.randomBytes(8).toString('hex')}`;
     const deadline = Date.now() + LOCK_WAIT_MS;
+    let deniedNoLock = 0;
     for (;;) {
       try {
         const fd = fs.openSync(lockFile, 'wx', 0o600);
@@ -194,9 +198,14 @@ function openAuditLog({ dir = defaultAuditDir(), now = Date.now } = {}) {
         break;
       } catch (error) {
         // Windows reports a lock file that another writer is deleting as EPERM or EACCES
-        // (delete pending), not EEXIST: wait for it the same way.
-        const busy = error.code === 'EEXIST' || (process.platform === 'win32' && (error.code === 'EPERM' || error.code === 'EACCES'));
-        if (!busy) throw error;
+        // (delete pending), not EEXIST: wait for it the same way. That clears in milliseconds;
+        // a denial that lasts with no lock file to read is a real permission error.
+        const denied = process.platform === 'win32' && (error.code === 'EPERM' || error.code === 'EACCES');
+        if (error.code !== 'EEXIST' && !denied) throw error;
+        if (denied && readText(lockFile) === null) {
+          deniedNoLock += 1;
+          if (deniedNoLock > DENIED_RETRIES) throw error;
+        } else deniedNoLock = 0;
       }
       const held = readText(lockFile);
       if (held) stealIfDead(held);

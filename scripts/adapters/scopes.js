@@ -2,7 +2,8 @@
 // scopes.js: the read-only scope manifest, one connector at a time (batch G3, task 3a).
 //
 // Usage: node scripts/adapters/scopes.js <connector> [--execute]
-//   connectors: fleet, jamf, slack, slack-access-logs, linear, google-workspace, jira, github
+//   connectors: fleet, jamf, slack, slack-access-logs, linear, google-workspace, jira, github,
+//   msgraph (its --execute read needs MS_SCOPE_CHECK_USER, a user object ID to read)
 //
 // Without --execute (the default) it prints the connector's entry in scope-manifest.json:
 // the least-privilege read scopes or role, what is refused, how the vendor exposes a
@@ -32,6 +33,7 @@ const PROBES = Object.freeze({
   'google-workspace': { load: () => require('./gws-client.js').SPEC, get: 'roles' },
   jira: { load: () => require('../jira-client.js').JIRA_SPEC, get: 'servicedesk' },
   github: { load: () => require('./github-client.js').SPEC, get: 'org', params: (env) => ({ org: env.GITHUB_ORG }) },
+  msgraph: { load: (env) => require('./msgraph-client.js').makeSpec({ tenant: env.MS_TENANT_ID }), get: 'authMethods', params: (env) => ({ user: env.MS_SCOPE_CHECK_USER }) },
 });
 
 function loadManifest(file = MANIFEST_FILE) {
@@ -59,7 +61,7 @@ async function run(argv, env = process.env, deps = {}) {
     return 0;
   }
   const probe = PROBES[connector];
-  const spec = probe.load();
+  const spec = probe.load(env);
   const client = createClient(spec, { env, ...cliDeps(deps, env), scopePreflight: true });
   const res = probe.graphql ? await client.graphql(probe.graphql) : await client.get(probe.get, probe.params ? probe.params(env) : {});
   const secrets = spec.credentials.map((name) => env[name]).filter((v) => typeof v === 'string' && v.length > 0);

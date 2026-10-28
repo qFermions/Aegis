@@ -401,6 +401,79 @@
           "how": "vendor docs page"
         }
       ]
+    },
+    "msgraph": {
+      "credential": [
+        "MS_CLIENT_ID",
+        "MS_PRIVATE_KEY",
+        "MS_CERT_SHA256"
+      ],
+      "least_privilege": [
+        "User.Read.All",
+        "UserAuthenticationMethod.Read.All",
+        "AuditLog.Read.All (sign-in logs; Entra ID P1 or P2)",
+        "GroupMember.ReadBasic.All",
+        "Directory.Read.All (only for another user's memberOf)",
+        "DeviceManagementManagedDevices.Read.All"
+      ],
+      "refused": [
+        "any application permission that is not .Read. or .ReadBasic.: ReadWrite, ReadWrite.All, ReadUpdate, ReadApprove, Manage, Send, PrivilegedOperations, FullControl, AccessAsUser, EnableDisableAccount, RevokeSessions and the rest (vendor fact M-21)"
+      ],
+      "exposure": {
+        "kind": "none",
+        "how": "Not exposed: Microsoft says clients must treat access tokens as opaque and not read them, and the client-credentials token response has no scope field, so Aegis cannot see the granted application permissions and says so on first use. Grant exactly the permissions above in the app registration, with admin consent, and nothing else."
+      },
+      "facts": [
+        "M-01",
+        "M-03",
+        "M-06",
+        "M-07",
+        "M-08",
+        "M-09",
+        "M-12",
+        "M-13",
+        "M-14",
+        "M-15",
+        "M-16",
+        "M-18",
+        "M-20",
+        "M-21"
+      ],
+      "unconfirmed": [
+        "M-02: whether the legacy SHA-1 x5t header is still needed beside x5t#S256"
+      ],
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-client-creds-grant-flow",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/entra/identity-platform/certificate-credentials#assertion-format",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/entra/identity-platform/access-tokens",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/graph/permissions-reference",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/graph/api/authentication-list-methods?view=graph-rest-1.0",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
+      ]
     }
   }
 }

@@ -1,0 +1,26 @@
+# command: node --test scripts/adapters/msgraph-client.test.js scripts/adapters/scope-preflight.test.js
+# commit: de0d312 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:22:11Z  node: v24.22.1
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (5.674993ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (15.97663ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (11.071002ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (3.313795ms)
+✔ verify read-backs for the password-reset and MFA runbooks (24.087218ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (3.055743ms)
+✔ the manifest names every connector: least-privilege reads, how scopes are exposed, and dated vendor sources (5.370973ms)
+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (7.724667ms)
+✔ Google Workspace: a token response that grants a write scope is refused before any read (50.669953ms)
+✔ Fleet: the API user's role is read from /me first; any role beyond observer is refused, and observer reads proceed (2.245785ms)
+✔ Linear, Jira and Jamf Pro do not expose a credential's scopes: the first result says so and no extra request is made (2.049674ms)
+✔ the preflight is on by default for a person running a CLI and off for an injected test transport unless asked (2.111601ms)
+✔ scopes.js prints a connector's manifest entry and refuses an unknown connector (127.087961ms)
+✔ every scope refusal is on the audit trail as SCOPE_REFUSED, whichever way the vendor exposed the scopes (29.79302ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 350.743942
+# exit: 0  finished: 2026-10-28T09:22:11Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

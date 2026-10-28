@@ -89,6 +89,28 @@ test('C: scripts/init-memory.js, which writes Claude Code memory files, is tier 
   assert.deepEqual(run(cwd, ['main']), ['tier=C', 'scripts/init-memory.js']);
 });
 
+// batch G3, task 7: the paths that write the audit trail, turn outside content into a case,
+// or talk to a vendor are tier C, each beside a B path to show it wins
+test('C: scripts/audit/** (the hash-chained audit trail and change records) is tier C, not scripts/** B', () => {
+  const cwd = sandbox();
+  commit(cwd, ['scripts/audit/audit-log.js', 'scripts/eval/README.md']);
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', 'scripts/audit/audit-log.js']);
+});
+
+test('C: scripts/intake/** (outside content into a graph case, with tenant binding) is tier C, not scripts/** B', () => {
+  const cwd = sandbox();
+  commit(cwd, ['scripts/intake/intake.js', 'scripts/eval/README.md']);
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', 'scripts/intake/intake.js']);
+});
+
+for (const connector of ['github-client.js', 'okta-client.js', 'msgraph-client.js']) {
+  test(`C: the batch G3 connector scripts/adapters/${connector} is tier C`, () => {
+    const cwd = sandbox();
+    commit(cwd, [`scripts/adapters/${connector}`, 'scripts/eval/README.md']);
+    assert.deepEqual(run(cwd, ['main']), ['tier=C', `scripts/adapters/${connector}`]);
+  });
+}
+
 test('one C path wins over many B paths, and only the C path is listed', () => {
   const cwd = sandbox();
   const many = Array.from({ length: 12 }, (_, i) => `scripts/eval/case-${i}.js`);

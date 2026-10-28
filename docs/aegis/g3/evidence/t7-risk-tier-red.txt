@@ -1,0 +1,95 @@
+# command: node --test scripts/risk_tier.test.js
+# commit: 9c3f1cd (plus uncommitted changes in the working tree)  started: 2026-10-28T09:34:48Z  node: v24.22.1
+✔ A: a docs-only change is tier A and lists no path (129.153878ms)
+✔ B: evaluation code is tier B and only the B paths are listed (125.565314ms)
+✔ C: a CI workflow change is tier C (113.598601ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (131.736094ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (126.971891ms)
+✖ C: scripts/audit/** (the hash-chained audit trail and change records) is tier C, not scripts/** B (124.906313ms)
+✖ C: scripts/intake/** (outside content into a graph case, with tenant binding) is tier C, not scripts/** B (152.916234ms)
+✔ C: the batch G3 connector scripts/adapters/github-client.js is tier C (136.820063ms)
+✔ C: the batch G3 connector scripts/adapters/okta-client.js is tier C (127.075285ms)
+✔ C: the batch G3 connector scripts/adapters/msgraph-client.js is tier C (121.616188ms)
+✔ one C path wins over many B paths, and only the C path is listed (136.21865ms)
+✔ ** matches nested paths at any depth (136.439885ms)
+✔ uncommitted and untracked changes count toward the tier (146.803186ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (243.901627ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (137.477286ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (3.323463ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (145.57296ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (151.090117ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (543.551972ms)
+✔ the CLI runs when invoked through a symlinked path (121.570137ms)
+✔ C: scripts/adapters/readonly-contract.js is tier C, not scripts/** B (105.41473ms)
+✔ C: scripts/adapters/fleet-client.js is tier C, not scripts/** B (127.17929ms)
+✔ C: scripts/adapters/jamf-client.js is tier C, not scripts/** B (136.671242ms)
+✔ C: scripts/adapters/slack-client.js is tier C, not scripts/** B (135.268712ms)
+✔ C: scripts/adapters/linear-client.js is tier C, not scripts/** B (116.195532ms)
+✔ C: scripts/adapters/gws-client.js is tier C, not scripts/** B (126.729395ms)
+✔ C: scripts/gws-posture-audit.js is tier C, not scripts/** B (129.590019ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 25
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4133.18052
+
+✖ failing tests:
+
+test at scripts/risk_tier.test.js:94:1
+✖ C: scripts/audit/** (the hash-chained audit trail and change records) is tier C, not scripts/** B (124.906313ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'tier=B',
+  -   'tier=C',
+      'scripts/audit/audit-log.js',
+  +   'scripts/eval/README.md'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/risk_tier.test.js:97:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'tier=B', 'scripts/audit/audit-log.js', 'scripts/eval/README.md' ],
+    expected: [ 'tier=C', 'scripts/audit/audit-log.js' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/risk_tier.test.js:100:1
+✖ C: scripts/intake/** (outside content into a graph case, with tenant binding) is tier C, not scripts/** B (152.916234ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'tier=B',
+  +   'scripts/eval/README.md',
+  -   'tier=C',
+      'scripts/intake/intake.js'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/risk_tier.test.js:103:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'tier=B', 'scripts/eval/README.md', 'scripts/intake/intake.js' ],
+    expected: [ 'tier=C', 'scripts/intake/intake.js' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:34:53Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

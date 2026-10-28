@@ -21,7 +21,7 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const CORPORA = ['ms', 'gws', 'g2', 'g3'];
 // Set from the batch G3 measurements on the build container (three runs over 175 tickets each,
 // the latest in docs/aegis/g3/evidence/t6c-latency-runs.txt): p95 under 1 ms per ticket and one
-// Node process start of 30 to 45 ms in every run.
+// Node process start under 50 ms in every run.
 // 50 ms leaves room for a slower CI runner and garbage-collection pauses, and is far under
 // the charter's 1,000 ms per ticket.
 const BUDGET_P95_MS = 50;

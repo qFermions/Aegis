@@ -202,6 +202,27 @@ test('with no approval, status names the missing approval and never says the rea
   assert.ok(!st.json.missing.some((m) => /before the approval/.test(m)), st.stdout);
 });
 
+// Code review round 2, finding 5: one verify-* result proves one change. A second link of
+// the same read-back is refused, and a second link written around the CLI does not count.
+test('one read-back proves one change: a second link is refused, and one written around the CLI does not count', (t) => {
+  const s = setup(t);
+  const a = openChange(s);
+  const b = openChange(s);
+  for (const o of [a, b]) s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  const v = verifyEntry(s, true);
+  assert.equal(s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(v.seq)]).code, 0);
+  const before = s.log.entries().length;
+  const second = s.run(CLI, ['link', '--change', b.json.change, '--verify-seq', String(v.seq)]);
+  assert.equal(second.code, 2);
+  assert.match(second.stderr, new RegExp(a.json.change));
+  assert.equal(s.log.entries().length, before, 'nothing recorded');
+  s.log.append({ kind: 'change-link', change: b.json.change, verify_seq: v.seq });
+  assert.equal(s.run(CLI, ['status', '--change', a.json.change]).code, 0, 'the first change keeps its proof');
+  const st = s.run(CLI, ['status', '--change', b.json.change]);
+  assert.equal(st.code, 2);
+  assert.ok(st.json.missing.some((m) => /already proves/.test(m)), st.stdout);
+});
+
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
   const source = fs.readFileSync(CLI, 'utf8');
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();

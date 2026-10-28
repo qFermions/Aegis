@@ -107,6 +107,25 @@ Jamf lock is reversible with the PIN and a wipe is not, and Okta-provisioned
 Google accounts start in Okta. Model-judged runs on this corpus are pending
 (`docs/evidence/claim-ledger.md`).
 
+## 2c. Batch G3 half: `node scripts/eval/g3-ticket-eval.js`
+
+Corpus: `g3-tickets.json`, 34 placeholder-only tickets (batch G3, task 4b): 6 new Okta
+(unlock, Okta Verify factor reset, suspend on leave, app unassign, password expired, a
+System Log read), 6 new Microsoft 365 (a sign-in log read, licence removal, Teams calls
+dropping at a site, a sign-in block for a stolen laptop, a password reset, an Intune
+device that stopped checking in), 6 ambiguous tickets whose right first move is one
+question (`scripts/intake/clarify.js`: which system, what the symptom is, or which
+group), and 4 tickets through each intake source (Linear, GitHub, Slack, email), each
+read from its fixture in `g3-intake/` by `scripts/intake/intake.js`. Three dangerous
+pairs. The GitHub tickets and pairs land with the GitHub runbooks (task 5a).
+
+On top of the shared core, each ticket's decision is checked against the code: ADVISE
+(floor none), GATE (floor T3), FLAG_INJECTION (the shared detector flags it) or CLARIFY
+(one question of the expected kind), and no other ticket gets a question first. An
+intake ticket must come out of the intake ACCEPTED with exactly the scored text.
+`g3-ticket-eval.test.js` pins the minimums (6, 6, 6 and 4 per source), the mutation
+cases and the CI step.
+
 ## 3. What this eval deliberately does not do
 
 - It does not hard-code the product to the corpus: the lint and guard rules are

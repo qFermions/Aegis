@@ -24,6 +24,9 @@
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+// The injection markers and their homoglyph and zero-width folding are shared with the
+// graph sanitizer and the replay cache (pure module, no I/O).
+const { injectionMarkersIn } = require('./tier/tier-guard.js');
 
 const EXIT_OK = 0;
 const EXIT_FINDINGS = 1;
@@ -216,12 +219,14 @@ function loadTenantLiterals() {
 // ── Prompt-injection markers ──────────────────────────────────────────────────
 // Flags injected-instruction text that landed in a staged file (e.g. a saved
 // ticket export). WARN only — security docs that DOCUMENT these patterns are
-// excluded via isSecurityDoc below.
-const INJECTION_MARKERS = [
-  { pattern: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i,          label: 'Prompt-injection marker (ignore-previous-instructions)' },
-  { pattern: /disregard\s+(your|all|previous)\s+(rules|instructions|guidelines)/i, label: 'Prompt-injection marker (disregard-rules)' },
-  { pattern: /\bnew\s+system\s+prompt\b/i,                                        label: 'Prompt-injection marker (system-prompt override)' },
-];
+// excluded via isSecurityDoc below. The patterns are tier-guard's INJECTION_MARKERS,
+// matched on the line as written and folded; this table only names each marker.
+const INJECTION_MARKER_LABELS = {
+  'ignore-previous-instructions': 'Prompt-injection marker (ignore-previous-instructions)',
+  'disregard-rules': 'Prompt-injection marker (disregard-rules)',
+  'system-prompt-override': 'Prompt-injection marker (system-prompt override)',
+  'mode-override-claim': 'Prompt-injection marker (mode-override claim)',
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -425,10 +430,8 @@ function checkFile(filePath, content, tenantLiterals) {
   const isSecurityDoc = /threat_detection\.md$|threat_model\.md$|security_model\.md$|pre-commit-check\.js$/i.test(filePath);
   if (!isDocFile && !isSecurityDoc) {
     lines.forEach((line, i) => {
-      for (const { pattern, label } of INJECTION_MARKERS) {
-        if (pattern.test(line)) {
-          issues.push({ severity: 'WARN', line: i + 1, label });
-        }
+      for (const marker of injectionMarkersIn(line)) {
+        issues.push({ severity: 'WARN', line: i + 1, label: INJECTION_MARKER_LABELS[marker] || `Prompt-injection marker (${marker})` });
       }
     });
   }

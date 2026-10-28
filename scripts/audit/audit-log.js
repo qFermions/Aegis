@@ -15,7 +15,7 @@
 // file names the last seq and hash, so a removed tail is found too. verify walks the chain
 // and names the first broken link.
 //
-// What may be written is an allow-list: four kinds, each with a fixed field list, and every
+// What may be written is an allow-list: five kinds, each with a fixed field list, and every
 // value with a fixed shape (a name, a state, a number, a placeholder, an issue key, a
 // digest). Anything else is refused before a byte is written, so a secret, a token, a raw
 // body or a personal value cannot reach the file.
@@ -96,6 +96,10 @@ const KINDS = Object.freeze({
   verify: {
     connector: matches(NAME), command: matches(VERIFY_COMMAND), verified: (v) => typeof v === 'boolean', state: oneOf(STATES),
     change: nullable(matches(CHANGE_ID)),
+  },
+  // joins a verify-* result already in the trail (its seq) to a change record
+  'change-link': {
+    change: matches(CHANGE_ID), verify_seq: isInt(1, Number.MAX_SAFE_INTEGER),
   },
 });
 

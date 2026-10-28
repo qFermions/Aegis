@@ -571,14 +571,16 @@ test('the purge floor stays fast on a long line that never names a mailbox (guar
 // the match fails fast, in the guard and in its engine twin (the member removal floor took
 // about 20 s on such a line before it was written that way; it never shipped). Each floor
 // still fires on its short example through assess and the engine scan.
-const floorPattern = (label) => ({
-  guard: require('./tier-guard.js').ESCALATION_PATTERNS.find((p) => p.label.startsWith(label)).pattern,
-  engine: (() => {
-    const at = read('scripts/graph/engine.js').split('\n').find((l) => l.includes(`, label: '${label}`));
-    const literal = at.slice(at.indexOf('/'), at.indexOf(', label: '));
-    return new RegExp(literal.slice(1, literal.lastIndexOf('/')), literal.slice(literal.lastIndexOf('/') + 1));
-  })(),
-});
+// A floor's pattern by the start of its label: the guard's from ESCALATION_PATTERNS, the
+// engine's from its source line (SR2_TRIGGER_PATTERNS is not exported), null when absent.
+const guardFloor = (label) => require('./tier-guard.js').ESCALATION_PATTERNS.find((p) => p.label.startsWith(label)).pattern;
+const engineFloor = (label) => {
+  const at = read('scripts/graph/engine.js').split('\n').find((l) => l.includes(`, label: '${label}`));
+  if (!at) return null;
+  const literal = at.slice(at.indexOf('/'), at.indexOf(', label: '));
+  return new RegExp(literal.slice(1, literal.lastIndexOf('/')), literal.slice(literal.lastIndexOf('/') + 1));
+};
+const floorPattern = (label) => ({ guard: guardFloor(label), engine: engineFloor(label) });
 const msFor = (re, text) => { const start = process.hrtime.bigint(); re.test(text); return Number(process.hrtime.bigint() - start) / 1e6; };
 
 test('the GitHub floors fire on their example and each stays fast on a 20 KB line that never completes it (guard and engine)', () => {
@@ -597,6 +599,102 @@ test('the GitHub floors fire on their example and each stays fast on a 20 KB lin
     const guardMs = msFor(guard, hostile);
     const engineMs = msFor(twin, hostile);
     assert.ok(guardMs < 1000 && engineMs < 1000, `${label}: guard ${guardMs.toFixed(0)} ms, engine ${engineMs.toFixed(0)} ms`);
+  }
+});
+
+// Batch G3: twelve shipped floors in the guard (and ten engine twins) chained two
+// unbounded gaps (verb ... object ... target). That is cubic on a long line that never
+// completes the match: 11 to 44 s on one 20 KB line, enough to stall a ticket that pastes
+// a long log line (evidence t5a-floor-cubic-before-after). Each gap but the last is now
+// read once through (?=(gap?X))\N, with the same matches as before
+// (t5a-floor-rewrite-differential: 0 disagreements). The rule below keeps the next floor
+// from chaining two gaps.
+//
+// chainedGaps(source): where one match can chain two unbounded gaps ([^.]*, .*,
+// [^\r\n]*, lazy or not) in sequence. A group counts its widest branch (a repeated group
+// that holds a gap counts as two); a lookaround counts nothing in its sequence and is
+// checked on its own, which is why (?=(gap?X))\N is one gap read once.
+function chainedGaps(source) {
+  const found = [];
+  const parse = (i) => {
+    const branches = [[]];
+    while (i < source.length && source[i] !== ')') {
+      const c = source[i];
+      const seq = branches[branches.length - 1];
+      if (c === '|') { branches.push([]); i += 1; continue; }
+      let item;
+      if (c === '\\') { item = { kind: 'atom' }; i += 2; } else if (c === '[') {
+        let j = i + 1;
+        if (source[j] === '^') j += 1;
+        if (source[j] === ']') j += 1;
+        while (source[j] !== ']') j += source[j] === '\\' ? 2 : 1;
+        const cls = source.slice(i, j + 1);
+        item = { kind: cls === '[^.]' || cls === '[^\\r\\n]' ? 'gap' : 'atom' };
+        i = j + 1;
+      } else if (c === '(') {
+        const look = /^\(\?<?[=!]/.test(source.slice(i, i + 4));
+        const named = source.startsWith('(?<', i) && !look;
+        const open = look ? (source[i + 2] === '<' ? 4 : 3) : named ? source.indexOf('>', i) + 1 - i : source[i + 1] === '?' ? 3 : 1;
+        const inner = parse(i + open);
+        item = { kind: look ? 'look' : 'group', branches: inner.branches };
+        i = inner.end + 1;
+      } else { item = { kind: c === '.' ? 'gap' : 'atom' }; i += 1; }
+      let q = '';
+      if ('*+?'.includes(source[i])) { q = source[i]; i += 1; } else if (source[i] === '{') { const j = source.indexOf('}', i); q = source.slice(i, j + 1); i = j + 1; }
+      if (source[i] === '?') i += 1;
+      item.unbounded = q === '*' || q === '+' || /,\}$/.test(q);
+      seq.push(item);
+    }
+    return { branches, end: i };
+  };
+  const count = (seq, where) => {
+    let n = 0;
+    for (const it of seq) {
+      if (it.kind === 'gap' && it.unbounded) n += 1;
+      if (it.kind === 'look') it.branches.forEach((b) => { if (count(b, `${where}, lookaround`) > 1) found.push(`${where}, lookaround`); });
+      if (it.kind === 'group') { const widest = Math.max(...it.branches.map((b) => count(b, where))); n += it.unbounded && widest > 0 ? 2 : widest; }
+    }
+    return n;
+  };
+  parse(0).branches.forEach((b, k) => { if (count(b, `alternative ${k + 1}`) > 1) found.push(`alternative ${k + 1}`); });
+  return found;
+}
+
+test('no floor in the guard or the engine chains two unbounded gaps in sequence (cubic on a long line)', () => {
+  // the rule itself, on the shapes it must tell apart
+  assert.deepEqual(chainedGaps(String.raw`\bremove\b[^.]*\bfrom\b[^.]*\bgroup\b`), ['alternative 1']);
+  assert.deepEqual(chainedGaps(String.raw`\bremove\b.*\bfrom\b.*\bgroup\b`), ['alternative 1']);
+  assert.deepEqual(chainedGaps(String.raw`\ba\b(?=[^.]*\bb\b[^.]*\bc\b)`), ['alternative 1, lookaround']);
+  assert.deepEqual(chainedGaps(String.raw`\ba(?:x[^.]*)+b`), ['alternative 1']);
+  assert.deepEqual(chainedGaps(String.raw`\bremove\b(?=([^.]*?\bfrom\b))\1[^.]*\bgroup\b`), []);
+  assert.deepEqual(chainedGaps(String.raw`\block\b(?:(?=([^.]*?\ball\b))\1[^.]*\bhosts\b|[^.]*\b\d{3,} hosts\b)`), []);
+  assert.deepEqual(chainedGaps(String.raw`\bpurge\b(?=[^.]*\bmail\b)(?=[^.]*\ball\b)|\bcontent search\b[^.]*\bpurge\b`), []);
+  const { ESCALATION_PATTERNS } = require('./tier-guard.js');
+  const engineFloors = [...read('scripts/graph/engine.js').matchAll(/^\s*\{ pattern: \/(.*)\/[a-z]*, label: '((?:[^'\\]|\\.)*)'/gm)];
+  assert.ok(engineFloors.length >= 40, `${engineFloors.length} engine floors read`);
+  const chained = [
+    ...ESCALATION_PATTERNS.filter((p) => p.pattern instanceof RegExp).map((p) => [`guard: ${p.label}`, chainedGaps(p.pattern.source)]),
+    ...engineFloors.map((m) => [`engine: ${m[2]}`, chainedGaps(m[1])]),
+  ].filter(([, where]) => where.length);
+  assert.deepEqual(chained, []);
+});
+
+test('the twelve floors that chained two gaps stay under 1 s on a 20 KB line that never completes them (guard and engine)', () => {
+  const cases = [
+    ['group membership removal', 'remove member from '], ['security-control change (SR-2)', 'exclude from '],
+    ['account / work-profile removal', 'remove account from '], ['security-control change \u2014 Google', 'exclude from '],
+    ['Slack or Linear member', 'kick user '], ['Slack or Linear member', 'slack kick '], ['Okta lifecycle change', 'reset all '],
+    ['Okta app unassignment', 'okta remove '], ['Okta app unassignment', 'remove app '], ['Fleet script run', 'run script '],
+    ['Fleet script run', 'fleet run '], ['fleet-wide host operation', 'lock all '], ['Linear bulk issue operation', 'delete all '],
+    ['retention change', 'change messages '], ['retention change', 'change retention '], ['fleet-wide computer or Mac', 'lock all '],
+  ];
+  for (const [label, unit] of cases) {
+    const line = unit.repeat(Math.ceil(20000 / unit.length)).slice(0, 20000);
+    for (const [side, re] of [['guard', guardFloor(label)], ['engine', engineFloor(label)]]) {
+      if (!re) continue;
+      const ms = msFor(re, line);
+      assert.ok(ms < 1000, `${side} ${label} on ${JSON.stringify(unit)}: ${ms.toFixed(0)} ms`);
+    }
   }
 });
 

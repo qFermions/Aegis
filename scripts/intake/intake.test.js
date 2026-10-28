@@ -281,3 +281,22 @@ test('the CLI: prints the record and the case, exit codes by state, --save write
     fs.rmSync(runs, { recursive: true, force: true });
   }
 });
+
+test('hostile shapes near the 512 KiB limit are handled in linear time: no "@" or ">" for 500,000 characters, unclosed comments and scripts, long space runs', () => {
+  const shapes = {
+    'a run with no @': 'a'.repeat(500000),
+    'a run of <': '<'.repeat(500000),
+    'unclosed comments': '<p>x</p>' + '<!--'.repeat(120000),
+    'unclosed scripts': '<p>x</p>' + '<script>'.repeat(60000),
+    'spaces then a letter': `${' '.repeat(500000)}x`,
+  };
+  for (const [name, body] of Object.entries(shapes)) {
+    for (const source of ['email', 'github']) {
+      const started = process.hrtime.bigint();
+      const r = intake.fromText(source, withBody(source, body), opts());
+      const ms = Number(process.hrtime.bigint() - started) / 1e6;
+      assert.ok(ms < 2000, `${source} ${name}: ${Math.round(ms)} ms`);
+      assert.ok(['ACCEPTED', 'OVERSIZED', 'EMPTY'].includes(r.state), `${source} ${name}: ${r.state}`);
+    }
+  }
+});

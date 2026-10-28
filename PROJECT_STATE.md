@@ -83,7 +83,8 @@ lane spec is `docs/aegis/lanes/g2.md`; the corpus is `scripts/eval/g2-tickets.js
   (`docs/aegis/boundary-audit.md`, rows 20 to 28).
 - **Capability map:** rows 37 to 62 added, one platform each; row 14 (Google posture audit) is
   verified now; row 12 names Okta only and its Google half is row 59 (partial: `/gws-audit-log`
-  still hands Google containment to the Microsoft-only triage runbook).
+  still hands Google containment to the Microsoft-only triage runbook; closed in batch G3, see
+  row 59).
 - **Not verified in this batch:** answer quality for every G2 platform (rows 38, 43, 48, 53, 58),
   and every vendor fact that rests on a search excerpt or a vendor repository because the vendor
   documentation hosts were refused by the session network (`docs/aegis/lanes/g2.md`, Sources).
@@ -117,24 +118,24 @@ every G3 suite count at the batch head is in `docs/aegis/g3/evidence/t7-head-sui
   rejects the shape (`docs/review/incidents.md`).
 - **Boundary:** `docs/aegis/boundary-audit.md` rows 29 to 40; `scripts/g3-boundary.test.js`
   (10 tests) proves no G3 command, connector, intake or audit path can write to a vendor system.
-- **Capability map:** rows 63 to 83 added, one platform each or platform-neutral; 59 verified
-  now, 7 implemented but unverified, 14 partial, 3 missing.
+- **Capability map:** rows 63 to 83 added, one platform each or platform-neutral; row 59 (Google
+  containment) moved from partial to verified now; 60 verified now, 7 implemented but
+  unverified, 13 partial, 3 missing.
 - **Not verified in this batch:** answer quality on every platform (rows 5, 38, 43, 48, 53, 58,
   66), and every UNCONFIRMED vendor fact (`docs/aegis/g3/vendor-facts-to-check.md`).
 
 ## Partial
 
-14 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
+13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
 portal-path currency in `scripts/security-audit.js` (row 3); network, VPN, SIP and VoIP routing
 (row 8, no corpus ticket); Microsoft incident triage and report guidance, structure and gates
-checked but not the containment order (row 10); Okta containment (row 12) and Google containment (row 59: the steps exist, but
-`/gws-audit-log` still routes to a Microsoft-only runbook); the security audit's checklist content (row 13); the log
+checked but not the containment order (row 10); Okta containment (row 12); the security audit's checklist content (row 13); the log
 analyzer and hash checker (row 15, no tests); PowerShell and GAM procedure correctness (rows 16,
 17); strategy selection, loops and review independence (row 24, model behaviour); session
 bootstrap, with a stale continuity snapshot (row 29); injection and wrong-customer cases beyond
 the deterministic edges (rows 34, 35). Implemented but unverified: Google answer quality and
 real-tenant procedure evidence (row 5), and answer quality and vendor-fact currency for each G2
-platform (rows 38, 43, 48, 53, 58).
+platform (rows 38, 43, 48, 53, 58) and for GitHub (row 66, batch G3).
 
 ## Missing
 
@@ -174,8 +175,8 @@ and a row batch G2 added or changed cites a capture run on 2026-10-28 (`docs/aeg
    tickets (row 8).
 2. **Defensive cybersecurity and incident response guidance:** Microsoft and Google compromise
    floors and triage routes verified (rows 9, 11); Okta containment partial (row 12); Google
-   containment partial (row 59: `/gws-audit-log` still routes to the Microsoft-only triage
-   runbook); Google posture audit verified in batch G2 (row 14).
+   containment verified in batch G3 (row 59: `/gws-audit-log` now routes to
+   `/gws-account-containment`); Google posture audit verified in batch G2 (row 14).
 3. **Platform engineering and infrastructure development:** release tooling and health checks
    verified (rows 20, 21); no infrastructure as code (rows 18, 19).
 4. **Agent strategy and workflow design:** tier floor and ticket graph verified (rows 22, 23,

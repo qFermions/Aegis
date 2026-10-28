@@ -31,8 +31,11 @@ Exit codes for every adapter CLI: `0` read or verified; `1` refused, input error
 | `slack-client.js` | Slack Web API read methods | `SLACK_TOKEN`, `SLACK_TEAM_ID`; `SLACK_ACCESS_LOGS_TOKEN` for `access-logs` only | `ok: false` answers are reported as failed reads with the error code only; scopes per command below |
 | `linear-client.js` | Linear GraphQL, named queries only | `LINEAR_API_KEY`, `LINEAR_ORG` | `note` prints the ticket note, its SHA-256 and the HUMAN-RUN posting steps offline; `verify-comment` proves the posted note |
 | `gws-client.js` | Admin SDK Directory and Reports, read scopes | `GWS_SA_CLIENT_EMAIL`, `GWS_SA_PRIVATE_KEY`, `GWS_ADMIN_SUBJECT`, `GWS_CUSTOMER_ID` | service-account JWT bearer exchange at `oauth2.googleapis.com/token` with read-only scopes |
+| `github-client.js` (batch G3) | GitHub REST API, GET routes on `api.github.com` | `GITHUB_TOKEN`, `GITHUB_ORG` | a read-only fine-grained token, or a classic token with `read:*` scopes only (any other `x-oauth-scopes` entry is `SCOPE_REFUSED`); the organization comes from `GITHUB_ORG`, never from input; no token exchange |
+| `okta-client.js` (batch G3) | Okta Management API GETs on the org host | `OKTA_ORG_URL`, `OKTA_CLIENT_ID`, `OKTA_PRIVATE_KEY`, `OKTA_KEY_ID` | private_key_jwt client-credentials exchange at `/oauth2/v1/token` (RS256, never retried); a granted scope that is not `.read` is `SCOPE_REFUSED`; personal fields masked |
+| `msgraph-client.js` (batch G3) | Microsoft Graph v1.0 GETs (six routes; user, group and device reads with a fixed `$select`) | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_PRIVATE_KEY`, `MS_CERT_SHA256` | certificate client-credentials exchange at `login.microsoftonline.com/{tenant}/oauth2/v2.0/token` (PS256 assertion); Graph does not show an app its permissions, so the first use prints a scope notice |
 
-Every adapter runs dry by default: it prints the exact request it would make with no credentials read and no network, and only the bare `--execute` flag performs the read. Each adapter's allow-list, refused paths and `verify-*` reads are listed in `docs/aegis/lanes/g2.md`.
+Every adapter runs dry by default: it prints the exact request it would make with no credentials read and no network, and only the bare `--execute` flag performs the read. Each G2 adapter's allow-list, refused paths and `verify-*` reads are listed in `docs/aegis/lanes/g2.md`; the G3 connectors list theirs in their file headers, and `docs/aegis/g3/scope-manifest.md` gives each connector's least-privilege credential.
 
 ### Slack tokens and scopes
 

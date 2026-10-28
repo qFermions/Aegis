@@ -291,34 +291,28 @@ test('the CLI: verify exits 0 on an intact chain and 2 naming the first broken l
   assert.doesNotMatch(broken.stdout + broken.stderr, /at Object\.|at Module\./, 'no stack trace');
 });
 
-// Code review round 2, finding 6: a procedure written under a change id must name the
-// read-back that proves it, or change-record.js could never report the change done.
-test('the CLI refuses a procedure under a change id without --read-back, and records one with it', (t) => {
+// Code review round 2, finding 6, and round 3, finding 2: a procedure under a change id is
+// written only by change-record.js open, which checks the read-back, the digest, the gate
+// and the R class. The audit CLI refuses --change, and the trail itself refuses a
+// change-linked procedure that misses any of them, whoever writes it.
+test('the audit CLI refuses a procedure under a change id; the trail refuses a change-linked procedure without read-back, digest, gate or an R2/R3 class', (t) => {
   const dir = freshDir(t);
   const env = { ...process.env, AEGIS_AUDIT_DIR: dir };
-  const base = [CLI, 'procedure', '--command', 'okta-mfa-reset', '--r-class', 'R2', '--target', '[UPN]', '--procedure-sha256', 'a'.repeat(64), '--change', 'chg-0123456789ab'];
-  const bare = spawnSync(process.execPath, base, { env, encoding: 'utf8' });
-  assert.equal(bare.status, 1);
-  assert.match(bare.stderr, /--read-back/);
-  assert.equal(audit.openAuditLog({ dir }).entries().length, 0);
-  const ok = spawnSync(process.execPath, [...base, '--read-back', 'okta:verify-factor-reset'], { env, encoding: 'utf8' });
-  assert.equal(ok.status, 0, ok.stderr);
-  assert.equal(audit.openAuditLog({ dir }).entries()[0].read_back, 'okta:verify-factor-reset');
-});
-
-// Code review round 3, finding 4: a check that must see the trail as it is when the entry
-// is written (one read-back proves one change) runs as a guard under the write lock; a
-// guard that throws writes nothing.
-test('append runs its guard on the entries under the write lock; a guard that throws writes nothing', (t) => {
-  const dir = freshDir(t);
+  const base = [CLI, 'procedure', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--procedure-sha256', 'a'.repeat(64), '--change', 'chg-0123456789ab'];
+  for (const extra of [[], ['--read-back', 'okta:verify-factor-reset']]) {
+    const r = spawnSync(process.execPath, [...base, ...extra], { env, encoding: 'utf8' });
+    assert.equal(r.status, 1, extra.join(' '));
+    assert.match(r.stderr, /change-record\.js open/);
+  }
   const log = audit.openAuditLog({ dir });
-  log.append(CALL);
-  let seen = null;
-  log.append(CALL, { guard: (entries) => { seen = entries.length; assert.ok(fs.existsSync(path.join(dir, 'audit.lock')), 'under the lock'); } });
-  assert.equal(seen, 1);
-  assert.throws(() => log.append(CALL, { guard: () => { throw new Error('already linked'); } }), /already linked/);
-  assert.equal(log.entries().length, 2, 'nothing written by the refused append');
-  assert.equal(log.verify().ok, true);
+  assert.equal(log.entries().length, 0);
+  const full = { ...PROCEDURE, change: 'chg-0123456789ab' };
+  for (const broken of [{ read_back: null }, { procedure_sha256: null }, { gate: null }, { r_class: 'R1' }]) {
+    assert.throws(() => log.append({ ...full, ...broken }), audit.AuditRefused, JSON.stringify(broken));
+  }
+  assert.equal(log.entries().length, 0);
+  log.append(full);
+  assert.equal(log.entries().length, 1);
 });
 
 test('the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR overrides it, and the README says what the chain cannot prove', () => {

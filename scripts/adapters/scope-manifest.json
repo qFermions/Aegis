@@ -3,89 +3,247 @@
   "about": "The least-privilege read credential for each connector, how the vendor exposes a credential's granted scopes or role, and the vendor pages read for it. The connectors refuse a credential that holds more than this wherever the vendor exposes it (scripts/adapters/readonly-contract.js, scopes block). Facts and quotes: docs/aegis/g3/vendor-facts.md. Plain-English version: docs/aegis/g3/scope-manifest.md.",
   "connectors": {
     "fleet": {
-      "credential": ["FLEET_API_TOKEN"],
-      "least_privilege": ["an API-only user with the global role observer (or team observer on each team it reads)"],
-      "refused": ["global or team role admin", "maintainer", "observer_plus (can run live reports on hosts)", "gitops (write-only)", "technician or any role not named observer"],
+      "credential": [
+        "FLEET_API_TOKEN"
+      ],
+      "least_privilege": [
+        "an API-only user with the global role observer (or team observer on each team it reads)"
+      ],
+      "refused": [
+        "global or team role admin",
+        "maintainer",
+        "observer_plus (can run live reports on hosts)",
+        "gitops (write-only)",
+        "technician or any role not named observer"
+      ],
       "exposure": {
         "kind": "route",
         "how": "GET /api/v1/fleet/me returns the API user's global_role and its teams and fleets with a role each; Aegis reads it once before the first read and refuses any role but observer."
       },
-      "facts": ["F-01", "F-02", "F-03", "F-04", "F-05", "F-06"],
+      "facts": [
+        "F-01",
+        "F-02",
+        "F-03",
+        "F-04",
+        "F-05",
+        "F-06"
+      ],
       "sources": [
-        { "url": "https://raw.githubusercontent.com/fleetdm/fleet/main/docs/REST%20API/rest-api.md", "read_on": "2026-10-28", "how": "vendor repo" },
-        { "url": "https://fleetdm.com/docs/using-fleet/manage-access", "read_on": "2026-10-28", "how": "vendor docs page" }
+        {
+          "url": "https://raw.githubusercontent.com/fleetdm/fleet/main/docs/REST%20API/rest-api.md",
+          "read_on": "2026-10-28",
+          "how": "vendor repo"
+        },
+        {
+          "url": "https://fleetdm.com/docs/using-fleet/manage-access",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
       ]
     },
     "jamf": {
-      "credential": ["JAMF_CLIENT_ID", "JAMF_CLIENT_SECRET"],
+      "credential": [
+        "JAMF_CLIENT_ID",
+        "JAMF_CLIENT_SECRET"
+      ],
       "least_privilege": [
         "an API client whose API role holds only: Read Computers, Read Smart Computer Groups, Read macOS Configuration Profiles, Read Policies, Read Patch Management Software Titles, Read Managed Software Updates, View MDM command information in Jamf Pro API"
       ],
-      "refused": ["any Create, Update or Delete privilege", "any Send ... Command privilege", "View Disk Encryption Recovery Key", "View Recovery Lock", "View Local Admin Password"],
+      "refused": [
+        "any Create, Update or Delete privilege",
+        "any Send ... Command privilege",
+        "View Disk Encryption Recovery Key",
+        "View Recovery Lock",
+        "View Local Admin Password"
+      ],
       "exposure": {
         "kind": "none",
         "how": "Not exposed: the token response's scope lists API role IDs (api-role:7), not privileges, and whether GET /api/v1/auth lists an API client's privileges is unconfirmed, so Aegis cannot prove the role is read-only and says so on first use."
       },
-      "facts": ["J-01", "J-02", "J-03", "J-04", "J-05", "J-08"],
-      "unconfirmed": ["J-04: whether GET /api/v1/auth lists privileges for an API client token", "J-05: the full list of action privileges", "the exact Jamf Pro names of the patch and managed software update read privileges"],
+      "facts": [
+        "J-01",
+        "J-02",
+        "J-03",
+        "J-04",
+        "J-05",
+        "J-08"
+      ],
+      "unconfirmed": [
+        "J-04: whether GET /api/v1/auth lists privileges for an API client token",
+        "J-05: the full list of action privileges",
+        "the exact Jamf Pro names of the patch and managed software update read privileges"
+      ],
       "sources": [
-        { "url": "https://developer.jamf.com/jamf-pro/reference/postoauthtoken", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://developer.jamf.com/jamf-pro/docs/client-credentials", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://developer.jamf.com/jamf-pro/reference/get_v1-auth", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://developer.jamf.com/jamf-pro/docs/privileges-and-deprecations", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://developer.jamf.com/jamf-pro/reference/get_v2-mdm-commands", "read_on": "2026-10-28", "how": "vendor docs page" }
+        {
+          "url": "https://developer.jamf.com/jamf-pro/reference/postoauthtoken",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developer.jamf.com/jamf-pro/docs/client-credentials",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developer.jamf.com/jamf-pro/reference/get_v1-auth",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developer.jamf.com/jamf-pro/docs/privileges-and-deprecations",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developer.jamf.com/jamf-pro/reference/get_v2-mdm-commands",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
       ]
     },
     "slack": {
-      "credential": ["SLACK_TOKEN"],
-      "least_privilege": ["users:read", "team:read", "channels:read", "groups:read", "channels:history", "groups:history", "admin.apps:read (Enterprise org-level user token, only for the app list reads)"],
-      "refused": ["any scope that does not end in :read, :read.<detail> or :history, for example chat:write, users:write, channels:manage, admin.apps:write, admin, bot, client, commands, incoming-webhook"],
+      "credential": [
+        "SLACK_TOKEN"
+      ],
+      "least_privilege": [
+        "users:read",
+        "team:read",
+        "channels:read",
+        "groups:read",
+        "channels:history",
+        "groups:history",
+        "admin.apps:read (Enterprise org-level user token, only for the app list reads)"
+      ],
+      "refused": [
+        "any scope that does not end in :read, :read.<detail> or :history, for example chat:write, users:write, channels:manage, admin.apps:write, admin, bot, client, commands, incoming-webhook"
+      ],
       "exposure": {
         "kind": "header",
         "how": "Slack returns the token's scopes in the x-oauth-scopes response header; Aegis checks it on the first answer and refuses the token before that answer is used. If the header is missing, the first result says the scopes could not be checked."
       },
-      "facts": ["S-01", "S-02", "S-03", "S-04", "S-05", "S-08", "S-11", "S-12", "S-15"],
-      "unconfirmed": ["S-12: which methods return x-oauth-scopes beyond the documented example", "S-09: admin.apps.requests.list and restricted.list use admin.apps:read"],
+      "facts": [
+        "S-01",
+        "S-02",
+        "S-03",
+        "S-04",
+        "S-05",
+        "S-08",
+        "S-11",
+        "S-12",
+        "S-15"
+      ],
+      "unconfirmed": [
+        "S-12: which methods return x-oauth-scopes beyond the documented example",
+        "S-09: admin.apps.requests.list and restricted.list use admin.apps:read"
+      ],
       "sources": [
-        { "url": "https://docs.slack.dev/legacy/legacy-authentication/legacy-oauth-scopes", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://docs.slack.dev/reference/scopes", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://docs.slack.dev/reference/methods/users.info", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://docs.slack.dev/reference/methods/conversations.history", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://docs.slack.dev/reference/methods/admin.apps.approved.list", "read_on": "2026-10-28", "how": "vendor docs page" }
+        {
+          "url": "https://docs.slack.dev/legacy/legacy-authentication/legacy-oauth-scopes",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.slack.dev/reference/scopes",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.slack.dev/reference/methods/users.info",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.slack.dev/reference/methods/conversations.history",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.slack.dev/reference/methods/admin.apps.approved.list",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
       ]
     },
     "slack-access-logs": {
-      "credential": ["SLACK_ACCESS_LOGS_TOKEN"],
-      "least_privilege": ["admin (a workspace admin's user token, paid plan; Slack has no narrower scope for team.accessLogs)"],
-      "refused": ["any scope other than admin that does not end in :read, :read.<detail> or :history"],
+      "credential": [
+        "SLACK_ACCESS_LOGS_TOKEN"
+      ],
+      "least_privilege": [
+        "admin (a workspace admin's user token, paid plan; Slack has no narrower scope for team.accessLogs)"
+      ],
+      "refused": [
+        "any scope other than admin that does not end in :read, :read.<detail> or :history"
+      ],
       "exposure": {
         "kind": "header",
         "how": "The same x-oauth-scopes header as the main Slack token; admin is allowed here only, because team.accessLogs needs it. The token is exported for the one read and unset right after."
       },
-      "facts": ["S-10", "S-12"],
+      "facts": [
+        "S-10",
+        "S-12"
+      ],
       "sources": [
-        { "url": "https://docs.slack.dev/reference/methods/team.accessLogs", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://docs.slack.dev/legacy/legacy-authentication/legacy-oauth-scopes", "read_on": "2026-10-28", "how": "vendor docs page" }
+        {
+          "url": "https://docs.slack.dev/reference/methods/team.accessLogs",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.slack.dev/legacy/legacy-authentication/legacy-oauth-scopes",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
       ]
     },
     "linear": {
-      "credential": ["LINEAR_API_KEY"],
-      "least_privilege": ["a personal API key restricted to Read (Settings > Account > Security & Access), limited to the teams it reads"],
-      "refused": ["a key with Write, Admin, Create issues or Create comments", "a full-access key"],
+      "credential": [
+        "LINEAR_API_KEY"
+      ],
+      "least_privilege": [
+        "a personal API key restricted to Read (Settings > Account > Security & Access), limited to the teams it reads"
+      ],
+      "refused": [
+        "a key with Write, Admin, Create issues or Create comments",
+        "a full-access key"
+      ],
       "exposure": {
         "kind": "none",
         "how": "Not exposed: no Linear GraphQL query returns the calling key's own permissions, so Aegis cannot prove the key is read-only and says so on first use."
       },
-      "facts": ["L-01", "L-03", "L-04", "L-05", "L-06"],
-      "unconfirmed": ["L-06: the negative (no query returns a key's permissions)"],
+      "facts": [
+        "L-01",
+        "L-03",
+        "L-04",
+        "L-05",
+        "L-06"
+      ],
+      "unconfirmed": [
+        "L-06: the negative (no query returns a key's permissions)"
+      ],
       "sources": [
-        { "url": "https://linear.app/docs/api-and-webhooks", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://linear.app/developers/oauth-2-0-authentication", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://raw.githubusercontent.com/linear/linear/master/packages/sdk/src/schema.graphql", "read_on": "2026-10-28", "how": "vendor repo" }
+        {
+          "url": "https://linear.app/docs/api-and-webhooks",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://linear.app/developers/oauth-2-0-authentication",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/linear/linear/master/packages/sdk/src/schema.graphql",
+          "read_on": "2026-10-28",
+          "how": "vendor repo"
+        }
       ]
     },
     "google-workspace": {
-      "credential": ["GWS_SA_CLIENT_EMAIL", "GWS_SA_PRIVATE_KEY", "GWS_ADMIN_SUBJECT"],
+      "credential": [
+        "GWS_SA_CLIENT_EMAIL",
+        "GWS_SA_PRIVATE_KEY",
+        "GWS_ADMIN_SUBJECT"
+      ],
       "least_privilege": [
         "https://www.googleapis.com/auth/admin.directory.user.readonly",
         "https://www.googleapis.com/auth/admin.directory.group.readonly",
@@ -95,32 +253,153 @@
         "https://www.googleapis.com/auth/admin.reports.audit.readonly",
         "https://www.googleapis.com/auth/admin.reports.usage.readonly"
       ],
-      "refused": ["any scope that does not end in .readonly, for example admin.directory.user, admin.directory.user.security, admin.directory.group"],
+      "refused": [
+        "any scope that does not end in .readonly, for example admin.directory.user, admin.directory.user.security, admin.directory.group"
+      ],
       "exposure": {
         "kind": "token",
         "how": "Google returns the granted scopes in the token response's scope field; Aegis checks it before the first read and refuses the token if any granted scope is not a .readonly Admin SDK scope."
       },
-      "facts": ["W-01", "W-02", "W-03", "W-05"],
-      "unconfirmed": ["W-03: no API lets a service account read its own domain-wide delegation list", "W-05: the error text when a requested scope is not delegated"],
+      "facts": [
+        "W-01",
+        "W-02",
+        "W-03",
+        "W-05"
+      ],
+      "unconfirmed": [
+        "W-03: no API lets a service account read its own domain-wide delegation list",
+        "W-05: the error text when a requested scope is not delegated"
+      ],
       "sources": [
-        { "url": "https://developers.google.com/identity/protocols/oauth2/service-account", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://developers.google.com/workspace/cloud-search/docs/guides/delegation", "read_on": "2026-10-28", "how": "vendor docs page" }
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/service-account",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developers.google.com/workspace/cloud-search/docs/guides/delegation",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
       ]
     },
     "jira": {
-      "credential": ["JIRA_EMAIL", "JIRA_API_TOKEN"],
-      "least_privilege": ["a classic API token of a dedicated Atlassian account that can only view the service desk project's requests (a classic token carries all of its account's permissions, so the account is the limit)"],
-      "refused": ["an account with Jira or site administration", "an account that can edit, transition or delete issues in other projects"],
+      "credential": [
+        "JIRA_EMAIL",
+        "JIRA_API_TOKEN"
+      ],
+      "least_privilege": [
+        "a classic API token of a dedicated Atlassian account that can only view the service desk project's requests (a classic token carries all of its account's permissions, so the account is the limit)"
+      ],
+      "refused": [
+        "an account with Jira or site administration",
+        "an account that can edit, transition or delete issues in other projects"
+      ],
       "exposure": {
         "kind": "none",
         "how": "Not exposed: Atlassian documents no call that returns an API token's scopes, and a classic token carries its account's permissions, so Aegis cannot prove it is read-only and says so on first use. Scoped tokens need the api.atlassian.com gateway, which this client does not use."
       },
-      "facts": ["A-01", "A-02", "A-03", "A-04", "A-05", "A-06"],
-      "unconfirmed": ["A-06: the negative (no call returns a token's scopes)", "the Jira Service Management read scope names for a scoped token"],
+      "facts": [
+        "A-01",
+        "A-02",
+        "A-03",
+        "A-04",
+        "A-05",
+        "A-06"
+      ],
+      "unconfirmed": [
+        "A-06: the negative (no call returns a token's scopes)",
+        "the Jira Service Management read scope names for a scoped token"
+      ],
       "sources": [
-        { "url": "https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/", "read_on": "2026-10-28", "how": "vendor docs page" },
-        { "url": "https://developer.atlassian.com/cloud/jira/platform/swagger-v3.v3.json", "read_on": "2026-10-28", "how": "vendor docs page" }
+        {
+          "url": "https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developer.atlassian.com/cloud/jira/platform/swagger-v3.v3.json",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
+      ]
+    },
+    "github": {
+      "credential": [
+        "GITHUB_TOKEN"
+      ],
+      "least_privilege": [
+        "a fine-grained token (or App installation token) on [@Aegion_GITHUB_ORG] with read only: organization Members (read), repository Metadata (read), repository Administration (read, for branch protection), Secret scanning alerts (read), Dependabot alerts (read), Issues (read)",
+        "organization Administration (read) only where the audit log or SAML authorizations are read (GitHub Enterprise Cloud, an owner)",
+        "a classic token only with read:* scopes (read:org, read:audit_log); the reads that need repo or security_events are left to a fine-grained token"
+      ],
+      "refused": [
+        "a classic token with repo, admin:org, security_events, workflow, delete_repo or any write:* or admin:* scope",
+        "any write permission on a fine-grained token (the connector cannot see it; set it read-only)"
+      ],
+      "exposure": {
+        "kind": "header",
+        "how": "GitHub returns a classic token's scopes in the X-OAuth-Scopes response header; Aegis checks it on the first answer and refuses the token if any scope is not read:*. Fine-grained and App tokens return no scope list (X-Accepted-GitHub-Permissions names what an endpoint needs, not what the token holds), so the first result says the permissions could not be checked."
+      },
+      "facts": [
+        "G-01",
+        "G-03",
+        "G-04",
+        "G-05",
+        "G-07",
+        "G-08",
+        "G-10",
+        "G-11",
+        "G-14",
+        "G-17",
+        "G-19",
+        "G-22",
+        "G-25",
+        "G-31",
+        "G-32",
+        "G-35"
+      ],
+      "unconfirmed": [
+        "G-13: the classic scope for branch protection and ruleset reads",
+        "G-31: whether fine-grained and App tokens return X-OAuth-Scopes",
+        "G-34, G-35: a way for a fine-grained or installation token to read its own permissions"
+      ],
+      "sources": [
+        {
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.github.com/en/rest/orgs/members?apiVersion=2022-11-28",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.github.com/en/rest/branches/branch-protection?apiVersion=2022-11-28",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.github.com/en/rest/secret-scanning/secret-scanning?apiVersion=2022-11-28",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.github.com/en/rest/dependabot/alerts?apiVersion=2022-11-28",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api",
+          "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        }
       ]
     }
   }

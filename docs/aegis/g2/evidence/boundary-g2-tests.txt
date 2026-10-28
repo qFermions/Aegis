@@ -1,0 +1,25 @@
+# command: node --test scripts/g2-boundary.test.js
+# captured: 2026-10-28T02:27:04Z at 0185bd6
+# note: any U+2014 in the tool output is written as -- (C11)
+✔ fleet: every documented adapter command sends reads only, and nothing without --execute (16.928325ms)
+✔ fleet: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file (1.676774ms)
+✔ jamf: every documented adapter command sends reads only, and nothing without --execute (10.660395ms)
+✔ jamf: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file (0.995337ms)
+✔ slack: every documented adapter command sends reads only, and nothing without --execute (13.169066ms)
+✔ slack: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file (0.676313ms)
+✔ linear: every documented adapter command sends reads only, and nothing without --execute (18.59674ms)
+✔ linear: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file (0.721339ms)
+✔ gws: every documented adapter command sends reads only, and nothing without --execute (42.019056ms)
+✔ gws: the adapter spec defines GET routes only and the source opens no connection of its own and writes no file (1.249468ms)
+✔ every adapter command a runbook, the lane spec or the adapter README tells an operator to run is exercised above (15.790416ms)
+✔ the posture audit generator loads no network module (0.79417ms)
+✔ every G2 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (9.287027ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 283.237033
+# exit: 0

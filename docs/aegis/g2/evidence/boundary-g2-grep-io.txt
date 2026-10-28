@@ -1,0 +1,20 @@
+# command: git ls-files '*.js' '*.mjs' | grep -v '\.test\.js$' | xargs grep -nE "require\(['\"](node:)?(http|https|net|tls|dgram|child_process)['\"]\)|\bfetch\(" | grep -v '^shared/'
+# captured: 2026-10-28T02:26:43Z at 0185bd6
+# note: any U+2014 in the tool output is written as -- (C11)
+modules/automation/scripts/deploy-check.js:24:const { spawnSync } = require('child_process');
+modules/systems/scripts/health-check.js:22:const { execFileSync } = require('child_process');
+scripts/adapters/readonly-contract.js:24:const https = require('node:https');
+scripts/adapters/socket-tripwire.js:15:const http = require('node:http');
+scripts/adapters/socket-tripwire.js:16:const https = require('node:https');
+scripts/adapters/socket-tripwire.js:17:const net = require('node:net');
+scripts/adapters/socket-tripwire.js:18:const tls = require('node:tls');
+scripts/eval/ticket-eval-core.js:25:const { execFileSync } = require('child_process');
+scripts/harness/check-continuity.js:22:const { execSync } = require('child_process');
+scripts/harness/release-boundary-check.js:19:const { execFileSync } = require('child_process');
+scripts/init-memory.js:19:const { execFileSync } = require('child_process');
+scripts/jira-client.js:37:const https = require('node:https');
+scripts/jira-client.js:315:    response = await runtime.fetch(cfg, method, apiPath);
+scripts/pre-commit-check.js:24:const { execFileSync } = require('child_process');
+scripts/replay/replay-demo.js:19:const { execFileSync } = require('child_process');
+scripts/security-audit.js:14:const { spawnSync } = require('child_process');
+# exit: 0

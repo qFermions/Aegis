@@ -201,8 +201,11 @@ function hasNonAscii(text) {
 // Residual: a gate-clean edit is not detected (case files carry no seal).
 // audit: status and list print every field of the case, so every string leaf and key
 // name is checked one by one (a newline inside a leaf stays a newline), and the
-// caseId and status must have their own shapes.
+// caseId and status must have their own shapes. Every mode checks that the printed
+// verification time has the ISO form this CLI writes; lookup and render name a changed
+// dependency by its path, so each path is scanned like the text.
 const CASE_STATUSES = new Set(['candidate', 'verified', 'stale']);
+const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 function stringLeaves(value, out = []) {
   if (typeof value === 'string') out.push(value);
   else if (Array.isArray(value)) value.forEach((v) => stringLeaves(v, out));
@@ -213,6 +216,14 @@ function storedCaseHits(c, { audit = false } = {}) {
   const hits = [c.ticket, c.solution].some((t) => typeof t !== 'string') ? ['stored text is not a string'] : [];
   const texts = audit ? stringLeaves(c) : [c.ticket, c.solution].filter((t) => typeof t === 'string');
   for (const t of texts) hits.push(...sanitizationHits(t));
+  const verifiedAt = c.provenance && c.provenance.verifiedAt;
+  if (verifiedAt != null && !(typeof verifiedAt === 'string' && ISO_TIME.test(verifiedAt))) hits.push('stored verifiedAt is not an ISO time');
+  if (!audit) { // audit already scans every string leaf, the paths included
+    for (const d of Array.isArray(c.deps) ? c.deps : []) {
+      if (!d || typeof d.path !== 'string') hits.push('stored dependency path is not a string');
+      else hits.push(...sanitizationHits(d.path));
+    }
+  }
   if (audit && !validCaseId(c.caseId)) hits.push('stored caseId is not a case id');
   if (audit && !CASE_STATUSES.has(c.status)) hits.push('stored status is not a replay status');
   return Array.from(new Set(hits));

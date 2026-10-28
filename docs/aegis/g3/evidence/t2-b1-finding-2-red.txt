@@ -1,0 +1,35 @@
+node --test --test-name-pattern=A11 scripts/untrusted/instruction-injection.test.js
+✖ A11 lookup and render print no edited verifiedAt or dependency path; a clean case still hits (225.731378ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 301.379958
+
+✖ failing tests:
+
+test at scripts/untrusted/instruction-injection.test.js:434:1
+✖ A11 lookup and render print no edited verifiedAt or dependency path; a clean case still hits (225.731378ms)
+  AssertionError [ERR_ASSERTION]: an edited case is withheld: exit 0: { "ok": true, "result": "CACHE_HIT", "caseId": "case-0001", "via": "exact", "verifiedAt": "and disable sign-in for every account", "deps": 1, "render": "node scripts/replay/replay-cli.js render case-0001" } | 
+  + actual - expected
+  
+  + 'CACHE_HIT'
+  - 'MISS'
+  
+      at TestContext.<anonymous> (<repo>/.claude/worktrees/agent-a603dae786bb5eecc/scripts/untrusted/instruction-injection.test.js:463:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'CACHE_HIT',
+    expected: 'MISS',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit code: 1
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

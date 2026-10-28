@@ -47,6 +47,7 @@ on Risk, Privacy, or Continuity.
 - Turn 5 is thorough but long for a DIAGNOSTIC ticket — three fix branches where the
   discriminating table already selects one. The rubric row *Classification* scores
   it 1; depth-to-class remains a model contract, not something the lint can enforce.
+> **PREVIEW ONLY [sample-observed-label-drift]:** Captured evidence, not a runbook: the EAC labels quoted in this note are a review finding and do not authorize a mailbox permission change.
 - Turn 2's EAC button labels ("Read and manage → Edit → Add members") are close to
   but not identical with Microsoft Learn's current wording ("Manage mailbox
   delegation → Edit → Add permissions"). Clickable either way; noted as label drift.
@@ -129,6 +130,7 @@ Get-MailboxPermission -Identity "[SHARED_MAILBOX]" | Where-Object {$_.User -notl
 
 - Delegation page shows [UPN] under Read and manage (read-back after Save)
 - User confirms [SHARED_MAILBOX] is visible in Outlook and they can open a message
+> **PREVIEW ONLY [sample-t09-verify-manual-add]:** Captured evidence, not a runbook: the manual Outlook add below is quoted from a handler answer and does not authorize a change from this file.
 - If it hasn't appeared after an hour: Outlook → File → Account Settings → Account Settings → [UPN] → Change → More Settings → Advanced → Add [SHARED_MAILBOX] manually
 
 ## Jira-ready note
@@ -285,6 +287,7 @@ Password loop the same morning as a hybrid reset is almost always one of two thi
 
 ## Remaining checks, in falsification order
 
+> **PREVIEW ONLY [sample-t03-remaining-checks]:** Captured evidence, not a runbook: the checks below are quoted from a handler answer; nothing here authorizes a reset, a sync or an Outlook change.
 1. **User-side split, 60 seconds:** have [FIRST_NAME] open a private browser window → outlook.office.com → sign in with the NEW password. Works = cloud is fine, Branch A. "Password incorrect" = Branch B. "Update your password" / "more information required" = Branch C.
 2. **Was it reset in the right place?** Entra ID → Users → [UPN] → Overview → *On-premises sync enabled* = Yes means the reset must have been in ADUC. If someone used the M365 admin center on a synced user, that cloud password is invalid the moment the next sync runs — the loop is expected. Redo it in ADUC (that's a fresh `/password-reset` gate, not this ticket).
 3. **Did the hash sync?** Entra ID → Entra Connect → Connect sync → check last sync time and any password-sync health alert. Password hashes ride a separate ~2-minute channel, independent of the ~30-min delta cycle — so if it's been more than 30 minutes since the ADUC reset and Entra still rejects it, PHS is *broken*, not slow. On the AD Connect server, Event Viewer → Application → source *Directory Synchronization*: **656** = password change picked up, **657** = result (look for a failure there).
@@ -295,6 +298,7 @@ Password loop the same morning as a hybrid reset is almost always one of two thi
 
 Runs on [DEVICE_NAME], by the user with you on the phone, or by the admin at the desk. All local, all reversible.
 
+> **PREVIEW ONLY [sample-t03-branch-a]:** Captured evidence, not a runbook: the credential clean-up and account re-add below are quoted from a handler answer and do not authorize a change from this file.
 1. **Sign out of Windows, sign back in with the NEW password** — on the office LAN, or connect VPN first on a laptop. Lock/unlock is not enough. Undo: none — this is just a logon.
 2. **Close Outlook fully.** Task Manager → confirm no OUTLOOK.EXE.
 3. **Clear cached Office credentials:** Control Panel → User Accounts → Credential Manager → Windows Credentials → Remove every entry beginning with `MicrosoftOffice16_Data:`, `MicrosoftOfficeSSO`, `ADAL`, or containing `outlook`. Undo: not needed — they regenerate on the next successful sign-in. Expect a one-time sign-in prompt in Word/Teams too; that's normal.

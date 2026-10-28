@@ -1,0 +1,57 @@
+# command: AEGIS_PRINT_STATE_CHANGE_INVENTORY=1 node scripts/command-safety-gates.test.js > docs/security/STATE_CHANGE_INVENTORY.json, then the node script below compared the inventory at f185071 with the new one by example id
+# at: 2026-10-28T07:38:21Z
+examples 676 -> 683 ; modes {"preview":347,"gated":329} -> {"preview":354,"gated":329}
+removed: 0 ; mode changed: 0
+added new-user-checklist-device-setup preview .claude/commands/new-user.md
+added replay-demo-shared-mailbox-steps preview scripts/replay/fixtures/shared-mailbox-demo.md
+added sample-observed-label-drift preview docs/evidence/ticket-eval-samples.md
+added sample-t03-branch-a preview docs/evidence/ticket-eval-samples.md
+added sample-t03-remaining-checks preview docs/evidence/ticket-eval-samples.md
+added sample-t09-verify-manual-add preview docs/evidence/ticket-eval-samples.md
+added troubleshoot-provider-outage preview .claude/commands/troubleshoot.md
+sinks ca-break-glass [] -> [{"sink":"portal:send","count":1}]
+sinks ca-policy-create [{"sink":"portal:create","count":1}] -> [{"sink":"portal:add","count":1},{"sink":"portal:create","count":1}]
+sinks device-printer-add [] -> [{"sink":"portal:add","count":1}]
+sinks device-record-removal [] -> [{"sink":"portal:delete","count":1}]
+sinks distribution-portal [] -> [{"sink":"portal:add","count":1},{"sink":"portal:assign","count":1}]
+sinks intune-compliance-remediation [] -> [{"sink":"portal:enable","count":1},{"sink":"portal:fix","count":1},{"sink":"portal:run","count":1},{"sink":"portal:start","count":1}]
+sinks ir-admin-role-remove [] -> [{"sink":"portal:remove","count":1}]
+sinks ir-byod-retire [] -> [{"sink":"portal:retire","count":1}]
+sinks ir-clear-mfa [] -> [{"sink":"portal:delete","count":1}]
+sinks ir-endpoint-isolate [] -> [{"sink":"portal:isolate","count":1}]
+sinks ir-intune-device-delete [] -> [{"sink":"portal:delete","count":1}]
+sinks ir-sender-domain-block [] -> [{"sink":"portal:add","count":1}]
+sinks ir-session-revoke [] -> [{"sink":"portal:revoke","count":1}]
+sinks ir-work-device-wipe [] -> [{"sink":"portal:wipe","count":1}]
+sinks license-column-view [] -> [{"sink":"portal:add","count":1}]
+sinks mfa-ca-exclusion [] -> [{"sink":"portal:add","count":1}]
+sinks new-user-step-14 [] -> [{"sink":"portal:rename","count":1}]
+sinks new-user-step-15 [] -> [{"sink":"portal:add","count":1},{"sink":"portal:reset","count":1},{"sink":"portal:set","count":1}]
+sinks onedrive-restore-actions [] -> [{"sink":"portal:create","count":1},{"sink":"portal:restore","count":2}]
+sinks onedrive-storage-remediation [] -> [{"sink":"portal:set","count":1}]
+sinks outlook-credential-remediation [] -> [{"sink":"portal:remove","count":1}]
+sinks outlook-shared-mailbox [] -> [{"sink":"portal:add","count":1}]
+sinks password-reset-cloud-portal [] -> [{"sink":"portal:reset","count":1}]
+sinks portal-nav-defender-reference [] -> [{"sink":"portal:allow","count":1}]
+sinks portal-nav-m365-reference [{"sink":"portal:delete","count":1}] -> [{"sink":"portal:delete","count":1},{"sink":"portal:reset","count":1}]
+sinks printer-driver-update [] -> [{"sink":"portal:run","count":1}]
+sinks printer-network-add-by-ip [] -> [{"sink":"portal:add","count":1}]
+sinks printer-network-add-initial [] -> [{"sink":"portal:add","count":1}]
+sinks slack-retention-export-public-export-portal [{"sink":"portal:export","count":1}] -> [{"sink":"portal:start","count":1}]
+sinks teams-app-reset-warning [] -> [{"sink":"portal:reset","count":1}]
+sinks teams-local-reset [] -> [{"sink":"portal:delete","count":1}]
+sinks ticket-mfa-remediation [] -> [{"sink":"portal:delete","count":1}]
+sinks ticket-signin-remediation [] -> [{"sink":"portal:unlock","count":1}]
+sinks voip-phone-provision [] -> [{"sink":"portal:add","count":1}]
+sinks voip-user-create [] -> [{"sink":"portal:add","count":1}]
+sinks vulnerability-mfa-policy [] -> [{"sink":"portal:enable","count":1}]
+sinks vulnerability-safe-links-policy [] -> [{"sink":"portal:enable","count":1}]
+sinks workflow-group-portal [] -> [{"sink":"portal:add","count":1}]
+sinks workflow-mfa-reset [] -> [{"sink":"portal:add","count":1}]
+sinks workflow-offboard-device [] -> [{"sink":"portal:retire","count":1},{"sink":"portal:wipe","count":1}]
+sinks workflow-offboard-groups [] -> [{"sink":"portal:remove","count":1}]
+sinks workflow-offboard-onedrive [] -> [{"sink":"portal:create","count":1}]
+sinks workflow-offboard-sessions [] -> [{"sink":"portal:revoke","count":1}]
+sinks workflow-password-reset [] -> [{"sink":"portal:reset","count":1}]
+sinks workflow-phone-extension [] -> [{"sink":"portal:add","count":1}]
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -364,6 +364,7 @@ Send to the user's **personal email**: work email `[UPN]`, first sign-in at offi
 - [ ] Security groups · DLs/M365 groups · shared-mailbox delegation [or N/A]
 - [ ] SharePoint/Teams access (mechanism verified, no double-grant)
 - [ ] Signature · [@Aegion_VOIP] `[EXTENSION]` · Zoom · Adobe [or N/A] · per-role apps [or N/A noted]
+> **PREVIEW ONLY [new-user-checklist-device-setup]:** This checklist line records what the device steps above already did; it is not a procedure and does not authorize enrolling, grouping or changing a device. Each of those changes runs from its own gated step.
 - [ ] Windows device enrolled, named, compliant, KFM on · mobile set up (corp: user prereq groups → enroll → WAIT for Intune object → device group → apps + Slack verified / BYOD: Authenticator + Outlook MAM) — never N/A
 - [ ] Drives · printers · Wi-Fi · VPN [role-gated] · alarm code · badge [or N/A]
 - [ ] JSM customer added · asset logged · welcome email + split-channel credentials · manager notified

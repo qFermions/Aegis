@@ -368,7 +368,12 @@
       "file": ".claude/commands/conditional-access.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:send",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -409,6 +414,10 @@
       "kind": "portal",
       "mode": "preview",
       "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        },
         {
           "sink": "portal:create",
           "count": 1
@@ -614,7 +623,12 @@
       "file": ".claude/commands/new-device-setup.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related"
@@ -625,7 +639,12 @@
       "file": ".claude/commands/device-wipe.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -769,7 +788,16 @@
       "file": ".claude/commands/distribution-list.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        },
+        {
+          "sink": "portal:assign",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -3395,7 +3423,24 @@
       "file": ".claude/commands/intune-compliance.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:enable",
+          "count": 1
+        },
+        {
+          "sink": "portal:fix",
+          "count": 1
+        },
+        {
+          "sink": "portal:run",
+          "count": 1
+        },
+        {
+          "sink": "portal:start",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related",
@@ -3431,7 +3476,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -3447,7 +3497,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:retire",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -3475,7 +3530,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -3522,7 +3582,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:isolate",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -3545,7 +3610,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -3606,7 +3676,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -3619,7 +3694,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:revoke",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -3644,7 +3724,12 @@
       "file": "modules/security/incident_response.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:wipe",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -4492,7 +4577,12 @@
       "file": ".claude/commands/license-audit.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related",
@@ -5087,7 +5177,12 @@
       "file": ".claude/commands/mfa-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -5251,6 +5346,24 @@
       "impactCategories": [
         "external-system mutation",
         "identity-related"
+      ]
+    },
+    {
+      "id": "new-user-checklist-device-setup",
+      "file": ".claude/commands/new-user.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:enroll",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
       ]
     },
     {
@@ -5427,7 +5540,12 @@
       "file": ".claude/commands/new-user.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:rename",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related",
@@ -5440,7 +5558,20 @@
       "file": ".claude/commands/new-user.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        },
+        {
+          "sink": "portal:reset",
+          "count": 1
+        },
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -6592,7 +6723,16 @@
       "file": ".claude/commands/onedrive-restore.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:create",
+          "count": 1
+        },
+        {
+          "sink": "portal:restore",
+          "count": 2
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -6635,7 +6775,12 @@
       "file": ".claude/commands/onedrive-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:set",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -6700,7 +6845,12 @@
       "file": ".claude/commands/outlook-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -6749,7 +6899,12 @@
       "file": ".claude/commands/outlook-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related",
@@ -6803,7 +6958,12 @@
       "file": ".claude/commands/password-reset.md",
       "kind": "portal",
       "mode": "gated",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:reset",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -6946,7 +7106,12 @@
       "file": "docs/portal-nav-2026.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:allow",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -7127,6 +7292,10 @@
         {
           "sink": "portal:delete",
           "count": 1
+        },
+        {
+          "sink": "portal:reset",
+          "count": 1
         }
       ],
       "impactCategories": [
@@ -7294,7 +7463,12 @@
       "file": ".claude/commands/printer-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:run",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation"
       ]
@@ -7316,7 +7490,12 @@
       "file": ".claude/commands/printer-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -7328,7 +7507,12 @@
       "file": ".claude/commands/printer-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation"
       ]
@@ -7587,6 +7771,23 @@
       "impactCategories": [
         "external-system mutation",
         "reversible state change"
+      ]
+    },
+    {
+      "id": "replay-demo-shared-mailbox-steps",
+      "file": "scripts/replay/fixtures/shared-mailbox-demo.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
       ]
     },
     {
@@ -8066,6 +8267,62 @@
       ]
     },
     {
+      "id": "sample-observed-label-drift",
+      "file": "docs/evidence/ticket-eval-samples.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "sample-t03-branch-a",
+      "file": "docs/evidence/ticket-eval-samples.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "sample-t03-remaining-checks",
+      "file": "docs/evidence/ticket-eval-samples.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
       "id": "sample-t06-delta-sync",
       "file": "docs/evidence/ticket-eval-samples.md",
       "kind": "powershell",
@@ -8114,6 +8371,22 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
+      ]
+    },
+    {
+      "id": "sample-t09-verify-manual-add",
+      "file": "docs/evidence/ticket-eval-samples.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
       ]
     },
     {
@@ -8928,7 +9201,7 @@
       "mode": "gated",
       "sinks": [
         {
-          "sink": "portal:export",
+          "sink": "portal:start",
           "count": 1
         }
       ],
@@ -9248,7 +9521,12 @@
       "file": ".claude/commands/teams-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:reset",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -9261,7 +9539,12 @@
       "file": ".claude/commands/teams-issue.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -9377,7 +9660,12 @@
       "file": "docs/ticket-examples.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -9416,7 +9704,12 @@
       "file": "docs/ticket-examples.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:unlock",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -9510,6 +9803,22 @@
         "external-system mutation",
         "identity-related",
         "security-sensitive"
+      ]
+    },
+    {
+      "id": "troubleshoot-provider-outage",
+      "file": ".claude/commands/troubleshoot.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "portal:log",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
       ]
     },
     {
@@ -9672,7 +9981,12 @@
       "file": ".claude/commands/unite-extension-create.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -9684,7 +9998,12 @@
       "file": ".claude/commands/unite-extension-create.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related"
@@ -9766,7 +10085,12 @@
       "file": "modules/security/vulnerability_scan.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:enable",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -9792,7 +10116,12 @@
       "file": "modules/security/vulnerability_scan.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:enable",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation"
       ]
@@ -9867,7 +10196,12 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related",
@@ -9903,7 +10237,12 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "data-removal related",
@@ -9956,7 +10295,16 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:retire",
+          "count": 1
+        },
+        {
+          "sink": "portal:wipe",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -9968,7 +10316,12 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "data-removal related",
         "destructive",
@@ -10023,7 +10376,12 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:create",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related",
@@ -10047,7 +10405,12 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:revoke",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -10061,7 +10424,12 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:reset",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "credential-related",
         "external-system mutation",
@@ -10074,7 +10442,12 @@
       "file": "modules/it_support/workflows.md",
       "kind": "portal",
       "mode": "preview",
-      "sinks": [],
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
       "impactCategories": [
         "external-system mutation",
         "identity-related"

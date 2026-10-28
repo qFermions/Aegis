@@ -17,6 +17,7 @@ description: Master IT troubleshooting decision tree — scope → outage check 
 - **M365 health:** admin.microsoft.com → Health → Service health.
 - **Network:** Meraki dashboard (MX uplink, AP/switch status).
 - **ISP:** `[@Aegion_ISP]` status / modem lights.
+> **PREVIEW ONLY [troubleshoot-provider-outage]:** Logging the outage and notifying users are planning notes for the ticket and the communication owner; this router cannot post a ticket update or send a notice. A person posts each one.
 - If a provider outage explains it → log it, notify users, wait/escalate. Don't troubleshoot their cloud.
 
 ### 3. Gather the 3 facts that solve most tickets

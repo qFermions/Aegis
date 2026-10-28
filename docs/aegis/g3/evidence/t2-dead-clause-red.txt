@@ -1,0 +1,1276 @@
+# command: node --test scripts/command-safety-gates.test.js
+# commit: be13fe3  started: 2026-10-28T07:32:39Z  node: v24.22.1
+✔ all Markdown fences are balanced and files end with a newline (7.476016ms)
+✔ every discovered safety/preview marker ID is globally unique (0.704696ms)
+✖ checked-in state-change inventory exactly matches discovery and client boundaries (3592.019666ms)
+✔ every non-Markdown client boundary retains implementation and adversarial-test evidence (2.76536ms)
+✔ every executable mutation has exactly one same-fence owner (7.830229ms)
+✔ every commented mutation is owned by the nearest PREVIEW ONLY marker (1.800179ms)
+✖ every discovered manual portal mutation has one action-local gate or preview owner (16.596863ms)
+✔ install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed (1195.912296ms)
+✔ device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed (1310.783077ms)
+✔ install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed (1438.786111ms)
+✔ quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed (1517.49759ms)
+✔ quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed (1250.463107ms)
+✔ quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed (1189.199265ms)
+✔ install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed (1045.382254ms)
+✔ restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed (1091.108624ms)
+✔ install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed (1181.798321ms)
+✔ mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed (1196.136667ms)
+✔ mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1106.276098ms)
+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1078.02678ms)
+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1172.139179ms)
+✔ print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed (1263.086607ms)
+✔ security-account-block: actual source gate is AST-dominated, explicit, and fail-closed (1193.996507ms)
+✔ security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed (1218.841744ms)
+✔ security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed (1113.813171ms)
+✔ security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1098.187931ms)
+✔ sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1170.737374ms)
+✔ install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed (1093.474248ms)
+✔ automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1173.433892ms)
+✔ automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed (1202.254042ms)
+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1136.559291ms)
+✔ automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1255.693239ms)
+✔ automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed (1342.522574ms)
+✔ rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1172.815781ms)
+✔ rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1229.675403ms)
+✔ rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed (1114.085125ms)
+✔ rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1230.634169ms)
+✔ rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed (1163.059563ms)
+✔ rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1158.109391ms)
+✔ safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed (1159.324533ms)
+✔ safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1262.048686ms)
+✔ safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed (1141.090914ms)
+✔ safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1219.70281ms)
+✔ safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (1229.834577ms)
+✔ safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed (1076.737085ms)
+✔ ad-connect-delta: preview region contains no executable mutation (0.375672ms)
+✔ ad-connect-initial: preview region contains no executable mutation (0.065985ms)
+✔ ad-connect-password-hash: preview region contains no executable mutation (0.052357ms)
+✔ device-retire: preview region contains no executable mutation (1.016184ms)
+✔ distribution-create: preview region contains no executable mutation (0.117899ms)
+✔ distribution-member-add: preview region contains no executable mutation (0.09718ms)
+✔ distribution-external-senders: preview region contains no executable mutation (0.111159ms)
+✔ email-allow-sender: preview region contains no executable mutation (0.088661ms)
+✔ email-allow-domain: preview region contains no executable mutation (0.072084ms)
+✔ email-mailbox-safe-sender: preview region contains no executable mutation (0.058941ms)
+✔ gws-drive-sharing-gam-bulk-preview: preview region contains no executable mutation (0.064219ms)
+✔ mailbox-full-access-grant: preview region contains no executable mutation (0.100812ms)
+✔ mailbox-send-as-grant: preview region contains no executable mutation (0.043673ms)
+✔ device-rename-restart: preview region contains no executable mutation (0.074961ms)
+✔ new-user-ad-create: preview region contains no executable mutation (0.041202ms)
+✔ new-user-delta-sync: preview region contains no executable mutation (0.090323ms)
+✔ offboard-ad-disable-ps: preview region contains no executable mutation (0.051218ms)
+✔ offboard-delta-sync-ps: preview region contains no executable mutation (0.037833ms)
+✔ offboard-cloud-block-ps: preview region contains no executable mutation (0.068871ms)
+✔ offboard-mailbox-convert-ps: preview region contains no executable mutation (0.041245ms)
+✔ offboard-mailbox-delegate-ps: preview region contains no executable mutation (0.03374ms)
+✔ offboard-group-removal: preview region contains no executable mutation (0.034836ms)
+✔ onedrive-client-reset: preview region contains no executable mutation (0.047814ms)
+✔ onedrive-client-restart: preview region contains no executable mutation (0.034488ms)
+✔ onedrive-sharepoint-module-install: preview region contains no executable mutation (0.030247ms)
+✔ onedrive-quota-change: preview region contains no executable mutation (0.032896ms)
+✔ onedrive-manager-admin: preview region contains no executable mutation (0.057543ms)
+✔ outlook-auto-reply: preview region contains no executable mutation (0.043262ms)
+✔ password-reset-delta-sync: preview region contains no executable mutation (0.056346ms)
+✔ shared-mailbox-create: preview region contains no executable mutation (0.044317ms)
+✔ shared-mailbox-full-access: preview region contains no executable mutation (0.099302ms)
+✔ shared-mailbox-send-as: preview region contains no executable mutation (0.085006ms)
+✔ shared-mailbox-send-on-behalf: preview region contains no executable mutation (0.081005ms)
+✔ shared-mailbox-convert: preview region contains no executable mutation (0.047978ms)
+✔ sharepoint-member-grant: preview region contains no executable mutation (0.05098ms)
+✔ sharepoint-item-grant: preview region contains no executable mutation (0.052898ms)
+✔ teams-policy-grant: preview region contains no executable mutation (0.053474ms)
+✔ evaluate-repo-clone: preview region contains no executable mutation (0.055368ms)
+✔ readme-repo-clone: preview region contains no executable mutation (0.074412ms)
+✔ readme-hook-install: preview region contains no executable mutation (0.040203ms)
+✔ sample-t09-mailbox-grant: preview region contains no executable mutation (0.032503ms)
+✔ sample-t09-mailbox-undo: preview region contains no executable mutation (0.047031ms)
+✔ sample-t06-delta-sync: preview region contains no executable mutation (0.031377ms)
+✔ example-commit-attempt-stage: preview region contains no executable mutation (0.032202ms)
+✔ example-commit-attempt-create: preview region contains no executable mutation (0.035732ms)
+✔ example-recommit-stage: preview region contains no executable mutation (0.047924ms)
+✔ example-recommit-create: preview region contains no executable mutation (0.059928ms)
+✔ ticket-delta-sync-ps: preview region contains no executable mutation (0.037092ms)
+✔ ticket-mfa-method-remove-ps: preview region contains no executable mutation (0.030331ms)
+✔ ticket-license-remove-ps: preview region contains no executable mutation (0.03005ms)
+✔ automation-no-mfa-report: preview region contains no executable mutation (0.031362ms)
+✔ automation-group-members-report: preview region contains no executable mutation (0.029158ms)
+✔ automation-inactive-users-report: preview region contains no executable mutation (0.032911ms)
+✔ safety-group-poststate-export: preview region contains no executable mutation (0.036367ms)
+✔ safety-bulk-license-route: preview region contains no executable mutation (0.036399ms)
+✔ safety-cryptic-bulk-mutation: preview region contains no executable mutation (0.029507ms)
+✔ safety-readable-bulk-mutation: preview region contains no executable mutation (0.027764ms)
+✔ hook-install-copy: preview region contains no executable mutation (0.090307ms)
+✔ hook-install-mode: preview region contains no executable mutation (0.041577ms)
+✔ workflow-user-create: preview region contains no executable mutation (0.032531ms)
+✔ workflow-delta-sync: preview region contains no executable mutation (0.029827ms)
+✔ compliance-guest-report-write: preview region contains no executable mutation (0.029883ms)
+✔ health-delta-sync: preview region contains no executable mutation (0.02829ms)
+✔ health-force-replication: preview region contains no executable mutation (0.02826ms)
+✔ infrastructure-delta-sync: preview region contains no executable mutation (0.033689ms)
+✔ infrastructure-gpo-refresh: preview region contains no executable mutation (0.027868ms)
+✔ infrastructure-local-gpo-refresh: preview region contains no executable mutation (0.029712ms)
+✔ infrastructure-force-replication: preview region contains no executable mutation (0.028497ms)
+✔ conditional-access-enable-portal: portal gate is action-local and fail-closed (0.852591ms)
+✔ device-full-wipe-portal: portal gate is action-local and fail-closed (0.39001ms)
+✔ distribution-external-senders-portal: portal gate is action-local and fail-closed (0.20132ms)
+✔ quarantine-release-all-portal: portal gate is action-local and fail-closed (0.222129ms)
+✔ quarantine-release-one-portal: portal gate is action-local and fail-closed (0.140528ms)
+✔ quarantine-delete-portal: portal gate is action-local and fail-closed (0.123446ms)
+✔ restricted-entity-unblock-portal: portal gate is action-local and fail-closed (0.175986ms)
+✔ fleet-device-actions-lock-portal: portal gate is action-local and fail-closed (2.247983ms)
+✔ fleet-device-actions-unlock-portal: portal gate is action-local and fail-closed (0.734982ms)
+✔ fleet-device-actions-wipe-portal: portal gate is action-local and fail-closed (0.243537ms)
+✔ fleet-device-actions-run-script-portal: portal gate is action-local and fail-closed (0.202716ms)
+✔ fleet-device-actions-batch-script-portal: portal gate is action-local and fail-closed (0.180277ms)
+✔ fleet-device-actions-mdm-off-portal: portal gate is action-local and fail-closed (0.211727ms)
+✔ fleet-device-actions-delete-portal: portal gate is action-local and fail-closed (0.806492ms)
+✔ fleet-device-actions-cancel-portal: portal gate is action-local and fail-closed (0.454596ms)
+✔ fleet-host-health-refetch-portal: portal gate is action-local and fail-closed (0.229541ms)
+✔ fleet-osquery-investigation-add-report-portal: portal gate is action-local and fail-closed (0.243902ms)
+✔ fleet-osquery-investigation-live-report-portal: portal gate is action-local and fail-closed (0.267163ms)
+✔ fleet-osquery-investigation-export-portal: portal gate is action-local and fail-closed (0.24064ms)
+✔ fleet-policy-failures-run-script-portal: portal gate is action-local and fail-closed (0.225829ms)
+✔ fleet-policy-failures-refetch-portal: portal gate is action-local and fail-closed (0.187397ms)
+✔ fleet-policy-failures-automation-portal: portal gate is action-local and fail-closed (0.321242ms)
+✔ fleet-vulnerable-software-add-software-portal: portal gate is action-local and fail-closed (0.19952ms)
+✔ fleet-vulnerable-software-install-host-portal: portal gate is action-local and fail-closed (0.170281ms)
+✔ fleet-vulnerable-software-patch-policy-portal: portal gate is action-local and fail-closed (0.173597ms)
+✔ fleet-vulnerable-software-install-automation-portal: portal gate is action-local and fail-closed (0.220898ms)
+✔ gws-2sv-enforcement-allow-portal: portal gate is action-local and fail-closed (0.202287ms)
+✔ gws-2sv-enforcement-allow-rollback-portal: portal gate is action-local and fail-closed (0.368746ms)
+✔ gws-2sv-enforcement-exception-portal: portal gate is action-local and fail-closed (0.194754ms)
+✔ gws-2sv-enforcement-exempt-portal: portal gate is action-local and fail-closed (0.266122ms)
+✔ gws-2sv-enforcement-end-exemption-portal: portal gate is action-local and fail-closed (0.21981ms)
+✔ gws-2sv-enforcement-group-reenforce-portal: portal gate is action-local and fail-closed (0.179789ms)
+✔ gws-2sv-enforcement-enforce-portal: portal gate is action-local and fail-closed (0.766143ms)
+✔ gws-2sv-enforcement-keys-only-portal: portal gate is action-local and fail-closed (0.256141ms)
+✔ gws-2sv-enforcement-methods-restore-portal: portal gate is action-local and fail-closed (0.173857ms)
+✔ gws-2sv-enforcement-off-portal: portal gate is action-local and fail-closed (0.309151ms)
+✔ gws-2sv-reset-backup-codes-portal: portal gate is action-local and fail-closed (0.190665ms)
+✔ gws-2sv-reset-key-remove-portal: portal gate is action-local and fail-closed (0.101458ms)
+✔ gws-2sv-reset-challenge-portal: portal gate is action-local and fail-closed (0.118966ms)
+✔ gws-2sv-reset-turn-off-portal: portal gate is action-local and fail-closed (0.138519ms)
+✔ gws-account-containment-suspend-portal: portal gate is action-local and fail-closed (0.257653ms)
+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.121315ms)
+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.086866ms)
+✔ gws-account-containment-oauth-portal: portal gate is action-local and fail-closed (0.137926ms)
+✔ gws-account-containment-reactivate-portal: portal gate is action-local and fail-closed (0.237126ms)
+✔ gws-admin-roles-recovery-allow-portal: portal gate is action-local and fail-closed (0.367945ms)
+✔ gws-admin-roles-recovery-off-portal: portal gate is action-local and fail-closed (0.163662ms)
+✔ gws-admin-roles-assign-portal: portal gate is action-local and fail-closed (0.154005ms)
+✔ gws-admin-roles-remove-super-admin-portal: portal gate is action-local and fail-closed (0.21168ms)
+✔ gws-admin-roles-remove-role-portal: portal gate is action-local and fail-closed (0.102204ms)
+✔ gws-chromeos-device-reenable-portal: portal gate is action-local and fail-closed (0.209956ms)
+✔ gws-chromeos-device-disable-portal: portal gate is action-local and fail-closed (0.166697ms)
+✔ gws-chromeos-device-clear-profiles-portal: portal gate is action-local and fail-closed (0.161141ms)
+✔ gws-chromeos-device-powerwash-portal: portal gate is action-local and fail-closed (0.153167ms)
+✔ gws-chromeos-device-deprovision-portal: portal gate is action-local and fail-closed (0.128573ms)
+✔ gws-drive-sharing-remove-access-portal: portal gate is action-local and fail-closed (0.18538ms)
+✔ gws-drive-sharing-allowlist-add-portal: portal gate is action-local and fail-closed (0.114075ms)
+✔ gws-drive-sharing-allowlist-remove-portal: portal gate is action-local and fail-closed (0.090138ms)
+✔ gws-drive-sharing-restrict-portal: portal gate is action-local and fail-closed (0.401326ms)
+✔ gws-drive-sharing-turn-off-portal: portal gate is action-local and fail-closed (0.18243ms)
+✔ gws-drive-sharing-allow-portal: portal gate is action-local and fail-closed (0.142218ms)
+✔ gws-drive-transfer-drive-portal: portal gate is action-local and fail-closed (0.150411ms)
+✔ gws-drive-transfer-calendar-portal: portal gate is action-local and fail-closed (0.208842ms)
+✔ gws-gmail-delivery-mx-change-portal: portal gate is action-local and fail-closed (0.159564ms)
+✔ gws-gmail-delivery-spf-change-portal: portal gate is action-local and fail-closed (0.12027ms)
+✔ gws-gmail-delivery-dkim-generate-portal: portal gate is action-local and fail-closed (0.102668ms)
+✔ gws-gmail-delivery-dkim-dns-portal: portal gate is action-local and fail-closed (0.095418ms)
+✔ gws-gmail-delivery-dkim-start-portal: portal gate is action-local and fail-closed (0.085704ms)
+✔ gws-gmail-delivery-dmarc-add-portal: portal gate is action-local and fail-closed (0.093316ms)
+✔ gws-group-membership-add-portal: portal gate is action-local and fail-closed (0.08752ms)
+✔ gws-group-membership-remove-portal: portal gate is action-local and fail-closed (0.081622ms)
+✔ gws-license-assign-assign-portal: portal gate is action-local and fail-closed (0.148803ms)
+✔ gws-license-assign-remove-portal: portal gate is action-local and fail-closed (0.128396ms)
+✔ gws-new-user-create-portal: portal gate is action-local and fail-closed (0.112236ms)
+✔ gws-new-user-group-add-portal: portal gate is action-local and fail-closed (0.107297ms)
+✔ gws-offboard-okta-deactivate-portal: portal gate is action-local and fail-closed (0.09317ms)
+✔ gws-offboard-suspend-portal: portal gate is action-local and fail-closed (0.092473ms)
+✔ gws-offboard-drive-transfer-portal: portal gate is action-local and fail-closed (2.679187ms)
+✔ gws-offboard-calendar-transfer-portal: portal gate is action-local and fail-closed (0.181447ms)
+✔ gws-offboard-delete-portal: portal gate is action-local and fail-closed (0.106111ms)
+✔ gws-ou-move-user-portal: portal gate is action-local and fail-closed (0.179231ms)
+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.220922ms)
+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.145581ms)
+✔ gws-security-posture-forwarding-off-portal: portal gate is action-local and fail-closed (0.123456ms)
+✔ gws-security-posture-forwarding-allow-portal: portal gate is action-local and fail-closed (0.103262ms)
+✔ gws-security-posture-app-block-portal: portal gate is action-local and fail-closed (0.099518ms)
+✔ jamf-config-profiles-pilot-scope-portal: portal gate is action-local and fail-closed (0.157535ms)
+✔ jamf-config-profiles-all-computers-portal: portal gate is action-local and fail-closed (0.229613ms)
+✔ jamf-config-profiles-exclude-portal: portal gate is action-local and fail-closed (0.123273ms)
+✔ jamf-config-profiles-unexclude-portal: portal gate is action-local and fail-closed (0.095946ms)
+✔ jamf-config-profiles-distribute-all-portal: portal gate is action-local and fail-closed (0.107997ms)
+✔ jamf-config-profiles-remove-pilot-portal: portal gate is action-local and fail-closed (0.083093ms)
+✔ jamf-config-profiles-remove-all-computers-portal: portal gate is action-local and fail-closed (0.089768ms)
+✔ jamf-config-profiles-remove-group-portal: portal gate is action-local and fail-closed (0.176629ms)
+✔ jamf-enroll-mac-assign-portal: portal gate is action-local and fail-closed (0.190251ms)
+✔ jamf-enroll-mac-prestage-portal: portal gate is action-local and fail-closed (0.21673ms)
+✔ jamf-filevault-pilot-profile-portal: portal gate is action-local and fail-closed (0.165038ms)
+✔ jamf-filevault-widen-profile-portal: portal gate is action-local and fail-closed (0.674545ms)
+✔ jamf-filevault-one-mac-scope-portal: portal gate is action-local and fail-closed (0.211771ms)
+✔ jamf-filevault-show-key-portal: portal gate is action-local and fail-closed (0.183189ms)
+✔ jamf-filevault-new-key-portal: portal gate is action-local and fail-closed (0.115477ms)
+✔ jamf-inventory-groups-saved-search-portal: portal gate is action-local and fail-closed (0.122815ms)
+✔ jamf-inventory-groups-smart-create-portal: portal gate is action-local and fail-closed (0.155569ms)
+✔ jamf-inventory-groups-smart-criteria-portal: portal gate is action-local and fail-closed (0.117459ms)
+✔ jamf-inventory-groups-static-members-portal: portal gate is action-local and fail-closed (0.099976ms)
+✔ jamf-inventory-groups-delete-portal: portal gate is action-local and fail-closed (0.096732ms)
+✔ jamf-lock-erase-lock-portal: portal gate is action-local and fail-closed (0.112199ms)
+✔ jamf-lock-erase-wipe-portal: portal gate is action-local and fail-closed (0.107642ms)
+✔ jamf-lock-erase-remove-mdm-portal: portal gate is action-local and fail-closed (0.097114ms)
+✔ jamf-lock-erase-lost-mode-portal: portal gate is action-local and fail-closed (0.100884ms)
+✔ jamf-patch-management-add-title-portal: portal gate is action-local and fail-closed (0.154093ms)
+✔ jamf-patch-management-pilot-policy-portal: portal gate is action-local and fail-closed (0.109992ms)
+✔ jamf-patch-management-widen-policy-portal: portal gate is action-local and fail-closed (0.094569ms)
+✔ jamf-patch-management-pilot-plan-portal: portal gate is action-local and fail-closed (0.090277ms)
+✔ jamf-patch-management-fleet-plan-portal: portal gate is action-local and fail-closed (0.100085ms)
+✔ jamf-patch-management-app-installer-portal: portal gate is action-local and fail-closed (0.094064ms)
+✔ jamf-patch-management-app-installer-rollout-portal: portal gate is action-local and fail-closed (0.105974ms)
+✔ jamf-patch-management-stop-policy-portal: portal gate is action-local and fail-closed (0.09ms)
+✔ jamf-policies-self-service-create-portal: portal gate is action-local and fail-closed (0.150375ms)
+✔ jamf-policies-self-service-test-install-portal: portal gate is action-local and fail-closed (0.110783ms)
+✔ jamf-policies-self-service-change-portal: portal gate is action-local and fail-closed (0.113205ms)
+✔ jamf-policies-self-service-disable-portal: portal gate is action-local and fail-closed (0.0965ms)
+✔ jamf-policies-self-service-flush-one-portal: portal gate is action-local and fail-closed (0.097807ms)
+✔ jamf-policies-self-service-flush-all-portal: portal gate is action-local and fail-closed (0.099766ms)
+✔ license-remove-portal: portal gate is action-local and fail-closed (0.081691ms)
+✔ linear-intake-create-portal: portal gate is action-local and fail-closed (0.100523ms)
+✔ linear-intake-label-priority-portal: portal gate is action-local and fail-closed (0.233686ms)
+✔ linear-ticket-note-post-portal: portal gate is action-local and fail-closed (0.204277ms)
+✔ linear-ticket-note-replace-portal: portal gate is action-local and fail-closed (0.153447ms)
+✔ linear-ticket-note-delete-portal: portal gate is action-local and fail-closed (0.104336ms)
+✔ linear-triage-fields-portal: portal gate is action-local and fail-closed (0.185815ms)
+✔ linear-triage-accept-portal: portal gate is action-local and fail-closed (0.174996ms)
+✔ linear-triage-duplicate-portal: portal gate is action-local and fail-closed (0.169829ms)
+✔ linear-triage-decline-portal: portal gate is action-local and fail-closed (0.123663ms)
+✔ linear-triage-snooze-portal: portal gate is action-local and fail-closed (0.1011ms)
+✔ linear-triage-priority-portal: portal gate is action-local and fail-closed (0.093956ms)
+✔ linear-workspace-admin-delete-portal: portal gate is action-local and fail-closed (0.096735ms)
+✔ linear-workspace-admin-restore-portal: portal gate is action-local and fail-closed (0.082035ms)
+✔ linear-workspace-admin-bulk-move-portal: portal gate is action-local and fail-closed (0.139556ms)
+✔ linear-workspace-admin-bulk-delete-portal: portal gate is action-local and fail-closed (0.808125ms)
+✔ linear-workspace-admin-suspend-portal: portal gate is action-local and fail-closed (0.279027ms)
+✔ linear-workspace-admin-unsuspend-portal: portal gate is action-local and fail-closed (0.16844ms)
+✔ linear-workspace-admin-export-portal: portal gate is action-local and fail-closed (0.16009ms)
+✔ mac-new-hire-laptop-assign-portal: portal gate is action-local and fail-closed (0.198652ms)
+✔ mac-new-hire-laptop-prestage-scope-portal: portal gate is action-local and fail-closed (0.23555ms)
+✔ mac-troubleshoot-filevault-enable-portal: portal gate is action-local and fail-closed (0.130938ms)
+✔ mac-troubleshoot-wifi-forget-portal: portal gate is action-local and fail-closed (0.163021ms)
+✔ mac-troubleshoot-blank-push-portal: portal gate is action-local and fail-closed (0.11594ms)
+✔ mailbox-permission-remove-portal: portal gate is action-local and fail-closed (0.078347ms)
+✔ mfa-session-revoke-portal: portal gate is action-local and fail-closed (0.077927ms)
+✔ mfa-method-delete-portal: portal gate is action-local and fail-closed (0.066653ms)
+✔ offboard-ad-disable-portal: portal gate is action-local and fail-closed (0.074573ms)
+✔ offboard-cloud-block-portal: portal gate is action-local and fail-closed (0.066763ms)
+✔ offboard-revoke-sessions-portal: portal gate is action-local and fail-closed (0.131569ms)
+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.087508ms)
+✔ offboard-clear-mfa-portal: portal gate is action-local and fail-closed (0.076408ms)
+✔ offboard-mailbox-convert-portal: portal gate is action-local and fail-closed (0.140709ms)
+✔ offboard-mailbox-delegate-portal: portal gate is action-local and fail-closed (0.099257ms)
+✔ offboard-onedrive-portal: portal gate is action-local and fail-closed (0.105294ms)
+✔ offboard-license-remove-portal: portal gate is action-local and fail-closed (0.100112ms)
+✔ offboard-group-strip-portal: portal gate is action-local and fail-closed (0.08247ms)
+✔ offboard-dl-strip-portal: portal gate is action-local and fail-closed (0.154272ms)
+✔ offboard-mailbox-delegation-strip-portal: portal gate is action-local and fail-closed (0.097913ms)
+✔ offboard-device-wipe-portal: portal gate is action-local and fail-closed (0.084142ms)
+✔ offboard-work-phone-wipe-portal: portal gate is action-local and fail-closed (0.075204ms)
+✔ offboard-work-phone-group-remove-portal: portal gate is action-local and fail-closed (0.069717ms)
+✔ offboard-voip-deactivate-portal: portal gate is action-local and fail-closed (0.071785ms)
+✔ offboard-voip-reclaim-extension-portal: portal gate is action-local and fail-closed (0.073502ms)
+✔ offboard-voicemail-clear-portal: portal gate is action-local and fail-closed (0.097551ms)
+✔ offboard-zoom-portal: portal gate is action-local and fail-closed (0.073064ms)
+✔ offboard-adobe-portal: portal gate is action-local and fail-closed (0.065882ms)
+✔ offboard-vpn-portal: portal gate is action-local and fail-closed (0.085425ms)
+✔ offboard-physical-portal: portal gate is action-local and fail-closed (0.116678ms)
+✔ offboard-disabled-ou-portal: portal gate is action-local and fail-closed (0.076066ms)
+✔ okta-app-assignment-assign-person-portal: portal gate is action-local and fail-closed (0.098457ms)
+✔ okta-app-assignment-assign-group-portal: portal gate is action-local and fail-closed (0.083412ms)
+✔ okta-app-assignment-unassign-person-portal: portal gate is action-local and fail-closed (0.132699ms)
+✔ okta-mfa-reset-selected-portal: portal gate is action-local and fail-closed (0.094581ms)
+✔ okta-mfa-reset-all-portal: portal gate is action-local and fail-closed (0.098408ms)
+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.147726ms)
+✔ okta-user-lifecycle-clear-sessions-portal: portal gate is action-local and fail-closed (0.125096ms)
+✔ okta-user-lifecycle-suspend-portal: portal gate is action-local and fail-closed (0.087433ms)
+✔ okta-user-lifecycle-unsuspend-portal: portal gate is action-local and fail-closed (0.10834ms)
+✔ okta-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed (0.091888ms)
+✔ okta-user-lifecycle-activate-portal: portal gate is action-local and fail-closed (0.136688ms)
+✔ okta-user-lifecycle-delete-portal: portal gate is action-local and fail-closed (0.146202ms)
+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.110426ms)
+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.10486ms)
+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.103244ms)
+✔ print-queue-delete-portal: portal gate is action-local and fail-closed (0.945504ms)
+✔ security-session-revoke-portal: portal gate is action-local and fail-closed (0.198611ms)
+✔ shared-mailbox-convert-portal: portal gate is action-local and fail-closed (0.136677ms)
+✔ sharepoint-access-revoke-portal: portal gate is action-local and fail-closed (0.086221ms)
+✔ slack-app-approval-approve-portal: portal gate is action-local and fail-closed (0.101352ms)
+✔ slack-app-approval-restrict-portal: portal gate is action-local and fail-closed (0.086662ms)
+✔ slack-app-approval-require-portal: portal gate is action-local and fail-closed (0.143127ms)
+✔ slack-app-approval-request-managers-grant-portal: portal gate is action-local and fail-closed (0.18287ms)
+✔ slack-app-approval-request-managers-remove-portal: portal gate is action-local and fail-closed (0.101244ms)
+✔ slack-guests-connect-time-limit-portal: portal gate is action-local and fail-closed (0.11036ms)
+✔ slack-guests-connect-approve-invitation-portal: portal gate is action-local and fail-closed (0.107898ms)
+✔ slack-guests-connect-decline-invitation-portal: portal gate is action-local and fail-closed (0.114867ms)
+✔ slack-guests-connect-remove-org-portal: portal gate is action-local and fail-closed (0.086123ms)
+✔ slack-guests-connect-disconnect-org-portal: portal gate is action-local and fail-closed (0.185829ms)
+✔ slack-guests-connect-archive-portal: portal gate is action-local and fail-closed (0.184044ms)
+✔ slack-guests-connect-unarchive-portal: portal gate is action-local and fail-closed (0.223298ms)
+✔ slack-guests-connect-readd-members-portal: portal gate is action-local and fail-closed (0.159283ms)
+✔ slack-incident-comms-status-post-portal: portal gate is action-local and fail-closed (0.15851ms)
+✔ slack-incident-comms-resolved-post-portal: portal gate is action-local and fail-closed (0.105273ms)
+✔ slack-retention-export-legal-hold-portal: portal gate is action-local and fail-closed (0.186547ms)
+✔ slack-retention-export-public-export-portal: portal gate is action-local and fail-closed (0.158029ms)
+✔ slack-retention-export-all-conversations-portal: portal gate is action-local and fail-closed (0.15785ms)
+✔ slack-retention-export-shorten-retention-portal: portal gate is action-local and fail-closed (0.161737ms)
+✔ slack-retention-export-delete-messages-portal: portal gate is action-local and fail-closed (0.097288ms)
+✔ slack-retention-export-delete-channel-portal: portal gate is action-local and fail-closed (0.087821ms)
+✔ slack-security-settings-2fa-require-portal: portal gate is action-local and fail-closed (0.140248ms)
+✔ slack-security-settings-2fa-off-portal: portal gate is action-local and fail-closed (0.152014ms)
+✔ slack-security-settings-saml-require-portal: portal gate is action-local and fail-closed (0.109973ms)
+✔ slack-security-settings-session-duration-portal: portal gate is action-local and fail-closed (0.090674ms)
+✔ slack-security-settings-approved-domains-portal: portal gate is action-local and fail-closed (0.089986ms)
+✔ slack-security-settings-file-sharing-portal: portal gate is action-local and fail-closed (0.079919ms)
+✔ slack-security-settings-sms-block-portal: portal gate is action-local and fail-closed (0.079887ms)
+✔ slack-user-lifecycle-invite-portal: portal gate is action-local and fail-closed (0.130724ms)
+✔ slack-user-lifecycle-channel-add-portal: portal gate is action-local and fail-closed (0.081403ms)
+✔ slack-user-lifecycle-channel-remove-portal: portal gate is action-local and fail-closed (0.12697ms)
+✔ slack-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed (0.112919ms)
+✔ slack-user-lifecycle-reactivate-portal: portal gate is action-local and fail-closed (0.085351ms)
+✔ slack-user-lifecycle-to-single-guest-portal: portal gate is action-local and fail-closed (0.088448ms)
+✔ slack-user-lifecycle-to-multi-guest-portal: portal gate is action-local and fail-closed (0.083328ms)
+✔ slack-user-lifecycle-to-member-portal: portal gate is action-local and fail-closed (0.076232ms)
+✔ slack-user-lifecycle-session-reset-portal: portal gate is action-local and fail-closed (0.116338ms)
+✔ zoom-room-restart-app-portal: portal gate is action-local and fail-closed (0.171391ms)
+✔ zoom-room-restart-computer-portal: portal gate is action-local and fail-closed (0.170693ms)
+✔ ir-session-revoke: portal gate is action-local and fail-closed (0.090719ms)
+✔ ir-clear-mfa: portal gate is action-local and fail-closed (0.133497ms)
+✔ ir-phish-quarantine: portal gate is action-local and fail-closed (0.118739ms)
+✔ ir-sender-domain-block: portal gate is action-local and fail-closed (0.087184ms)
+✔ ir-work-device-wipe: portal gate is action-local and fail-closed (0.081229ms)
+✔ ir-intune-device-delete: portal gate is action-local and fail-closed (0.076515ms)
+✔ ir-byod-retire: portal gate is action-local and fail-closed (1.061351ms)
+✔ ir-endpoint-isolate: portal gate is action-local and fail-closed (0.343049ms)
+✔ ir-device-reimage: portal gate is action-local and fail-closed (0.1483ms)
+✔ ir-admin-role-remove: portal gate is action-local and fail-closed (0.106026ms)
+✔ ir-ca-restore: portal gate is action-local and fail-closed (0.090253ms)
+✔ PowerShell AST analyzer rejects bypass-shaped control flow (6694.874505ms)
+✔ effect and target assertions reject omitted composite families and bindings (0.787643ms)
+✔ WhatIf exemption is command-local and cannot hide a later mutation (0.203666ms)
+✔ printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail (629.0806ms)
+✔ group rollback distinguishes verified recovery, unresolved recovery, and successful forward state (1497.061124ms)
+✔ checkpointed Graph mutations bind and revalidate the exact checkpoint before the first remote sink (1.535365ms)
+✔ actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID (3673.890686ms)
+✔ every PORTAL ACTION maps one-to-one to a discovered portal safety marker (4.861753ms)
+✔ manual PREVIEW ONLY regions cannot masquerade as gated portal actions (5.618723ms)
+✔ direct R1 inventory is exact and remains operator-only (0.313345ms)
+✔ mixed-state commands and aliases remain operator-only with an execution boundary (0.460218ms)
+✔ reference surfaces state a non-executing boundary (0.374971ms)
+✔ safe read-only diagnostics remain live and available (0.310623ms)
+✔ provider lookups escape OData literals and bind mutations to exact returned names and immutable IDs (0.359533ms)
+✔ completion-note templates require cited read-backs or an explicit partial-state open note (0.542235ms)
+✔ inventory includes the named audit hot spots (0.24648ms)
+✔ G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink (386.50729ms)
+✔ G1 detector: read-only diagnostics stay live and are not sinks (20.014816ms)
+✔ G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes (188.681751ms)
+✔ G1 shell gate analyzer rejects bypass-shaped control flow (509.749866ms)
+✔ G1 shell gate harness executes the fence's own lines up to the comparison (260.346581ms)
+✔ fleet-device-actions-lock-cli: shell gate is explicit, dominates its sinks, and is fail-closed (168.073556ms)
+✔ fleet-device-actions-run-script-cli: shell gate is explicit, dominates its sinks, and is fail-closed (176.633189ms)
+✔ gws-2sv-reset-backup-codes: shell gate is explicit, dominates its sinks, and is fail-closed (181.732529ms)
+✔ gws-2sv-reset-turn-off: shell gate is explicit, dominates its sinks, and is fail-closed (172.456983ms)
+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (155.357026ms)
+✔ gws-account-containment-oauth: shell gate is explicit, dominates its sinks, and is fail-closed (149.00271ms)
+✔ gws-chromeos-device-reenable: shell gate is explicit, dominates its sinks, and is fail-closed (146.524925ms)
+✔ gws-chromeos-device-disable: shell gate is explicit, dominates its sinks, and is fail-closed (160.668676ms)
+✔ gws-chromeos-device-wipe-users: shell gate is explicit, dominates its sinks, and is fail-closed (159.702688ms)
+✔ gws-chromeos-device-powerwash: shell gate is explicit, dominates its sinks, and is fail-closed (155.906821ms)
+✔ gws-chromeos-device-deprovision: shell gate is explicit, dominates its sinks, and is fail-closed (176.171918ms)
+✔ gws-drive-transfer-drive: shell gate is explicit, dominates its sinks, and is fail-closed (160.510974ms)
+✔ gws-drive-transfer-datatransfer: shell gate is explicit, dominates its sinks, and is fail-closed (147.51292ms)
+✔ gws-drive-transfer-calendar: shell gate is explicit, dominates its sinks, and is fail-closed (168.525634ms)
+✔ gws-group-membership-add: shell gate is explicit, dominates its sinks, and is fail-closed (168.339377ms)
+✔ gws-group-membership-remove: shell gate is explicit, dominates its sinks, and is fail-closed (154.566ms)
+✔ gws-license-assign-assign: shell gate is explicit, dominates its sinks, and is fail-closed (166.972985ms)
+✔ gws-license-assign-remove: shell gate is explicit, dominates its sinks, and is fail-closed (154.715788ms)
+✔ gws-new-user-create: shell gate is explicit, dominates its sinks, and is fail-closed (148.42094ms)
+✔ gws-new-user-group-add: shell gate is explicit, dominates its sinks, and is fail-closed (161.402648ms)
+✔ gws-offboard-okta-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed (169.256689ms)
+✔ gws-offboard-suspend: shell gate is explicit, dominates its sinks, and is fail-closed (157.572482ms)
+✔ gws-offboard-data-transfer: shell gate is explicit, dominates its sinks, and is fail-closed (146.402454ms)
+✔ gws-offboard-delete: shell gate is explicit, dominates its sinks, and is fail-closed (146.937663ms)
+✔ gws-ou-move-user: shell gate is explicit, dominates its sinks, and is fail-closed (160.718606ms)
+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (147.67172ms)
+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (171.304669ms)
+✔ gws-security-posture-users-export: shell gate is explicit, dominates its sinks, and is fail-closed (155.198541ms)
+✔ gws-security-posture-admins-export: shell gate is explicit, dominates its sinks, and is fail-closed (160.339869ms)
+✔ jamf-enroll-mac-renew: shell gate is explicit, dominates its sinks, and is fail-closed (146.263766ms)
+✔ jamf-enroll-mac-checkin: shell gate is explicit, dominates its sinks, and is fail-closed (154.389411ms)
+✔ jamf-inventory-groups-recon: shell gate is explicit, dominates its sinks, and is fail-closed (175.064672ms)
+✔ jamf-lock-erase-unmanage: shell gate is explicit, dominates its sinks, and is fail-closed (151.338983ms)
+✔ jamf-lock-erase-lock-api: shell gate is explicit, dominates its sinks, and is fail-closed (145.628013ms)
+✔ jamf-lock-erase-wipe-api: shell gate is explicit, dominates its sinks, and is fail-closed (149.652424ms)
+✔ mac-troubleshoot-prk-replace: shell gate is explicit, dominates its sinks, and is fail-closed (161.19729ms)
+✔ mac-troubleshoot-jamf-checkin: shell gate is explicit, dominates its sinks, and is fail-closed (166.457073ms)
+✔ okta-app-assignment-assign-person: shell gate is explicit, dominates its sinks, and is fail-closed (158.130448ms)
+✔ okta-app-assignment-assign-group: shell gate is explicit, dominates its sinks, and is fail-closed (165.430053ms)
+✔ okta-app-assignment-unassign-person: shell gate is explicit, dominates its sinks, and is fail-closed (146.553017ms)
+✔ okta-mfa-reset-factor: shell gate is explicit, dominates its sinks, and is fail-closed (154.612593ms)
+✔ okta-mfa-reset-all: shell gate is explicit, dominates its sinks, and is fail-closed (161.293129ms)
+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (159.103536ms)
+✔ okta-user-lifecycle-clear-sessions: shell gate is explicit, dominates its sinks, and is fail-closed (165.064383ms)
+✔ okta-user-lifecycle-suspend: shell gate is explicit, dominates its sinks, and is fail-closed (155.554002ms)
+✔ okta-user-lifecycle-unsuspend: shell gate is explicit, dominates its sinks, and is fail-closed (159.696058ms)
+✔ okta-user-lifecycle-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed (166.635397ms)
+✔ okta-user-lifecycle-activate: shell gate is explicit, dominates its sinks, and is fail-closed (163.659514ms)
+✔ okta-user-lifecycle-delete: shell gate is explicit, dominates its sinks, and is fail-closed (145.583926ms)
+✔ G1 statements: a glued # is not a comment, continued lines are one statement, gate variables stay in their gated fence (542.331399ms)
+✔ every document with a gated shell fence keeps its gate variables inside gated fences (4.778228ms)
+✔ no shell fence beside a gated shell fence shadows read, [ or the shell (11.561165ms)
+✖ G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates (5.490263ms)
+✔ G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar (3.298751ms)
+✔ G2 detector: every fleetctl write and every Slack or Linear API write in a shell fence is a sink (41.33427ms)
+✔ G2 detector: fleetctl reads and API GET reads stay live and are not sinks (4.837809ms)
+✖ G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 runbooks; G1 and Microsoft files keep their grammar (3.668366ms)
+ℹ tests 433
+ℹ suites 0
+ℹ pass 429
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 72580.906204
+
+✖ failing tests:
+
+test at scripts/command-safety-gates.test.js:1444:1
+✖ checked-in state-change inventory exactly matches discovery and client boundaries (3592.019666ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      clientBoundaries: [
+        {
+          authorization: 'Exact normalized target and full content SHA-256 phrase.',
+          effect: 'Create one previously absent Markdown Google Workspace posture report; nothing is read from or written to Google.',
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:send'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/conditional-access.md',
+          id: 'ca-policy-compliant-device',
+          impactCategories: [
+  ...
+              count: 1,
+  -           sink: 'portal:add'
+  -         },
+  -         {
+  -           count: 1,
+              sink: 'portal:create'
+            }
+          ]
+        },
+        {
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/device-wipe.md',
+          id: 'device-record-removal',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:delete'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/new-device-setup.md',
+          id: 'device-rename',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:assign'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/email-whitelist.md',
+          id: 'email-allow-domain',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:enable'
+  -         },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:fix'
+  -         },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:run'
+  -         },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:start'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-account-block',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:remove'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-byod-retire',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:retire'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-ca-restore',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:delete'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-defender-remediation',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:isolate'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-file-restore',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:delete'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-onedrive-restore',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-session-revoke',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:revoke'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/incident_response.md',
+          id: 'ir-submit-message-to-microsoft',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:wipe'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/jamf-config-profiles.md',
+          id: 'jamf-config-profiles-all-computers-portal',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/license-audit.md',
+          id: 'license-group-remediation-portal',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/mfa-issue.md',
+          id: 'mfa-method-delete-portal',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:rename'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/new-user.md',
+          id: 'new-user-step-15',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:reset'
+  -         },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:set'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/new-user.md',
+          id: 'new-user-step-16',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:create'
+  -         },
+  -         {
+  -           count: 2,
+  -           sink: 'portal:restore'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/onedrive-issue.md',
+          id: 'onedrive-sharepoint-module-install',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:set'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/onedrive-issue.md',
+          id: 'onedrive-sync-remediation',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:remove'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/outlook-issue.md',
+          id: 'outlook-open-remediation',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/outlook-issue.md',
+          id: 'outlook-sync-remediation',
+          impactCategories: [
+  ...
+          mode: 'gated',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:reset'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/password-reset.md',
+          id: 'password-reset-delta-sync',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:allow'
+  -         }
+  -       ]
+        },
+        {
+          file: 'docs/portal-nav-2026.md',
+          id: 'portal-nav-entra-reference',
+          impactCategories: [
+  ...
+            },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:reset'
+  -         }
+          ]
+        },
+        {
+          file: 'docs/portal-nav-google-2026.md',
+          id: 'portal-nav-macos-reference',
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:run'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/printer-issue.md',
+          id: 'printer-ip-remove-readd',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/printer-issue.md',
+          id: 'printer-network-add-initial',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/printer-issue.md',
+          id: 'printer-offline-toggle',
+          impactCategories: [
+  ...
+              count: 1,
+  +           sink: 'portal:export'
+  -           sink: 'portal:start'
+            }
+          ]
+        },
+        {
+          file: '.claude/commands/slack-retention-export.md',
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:reset'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/teams-issue.md',
+          id: 'teams-local-reset',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:delete'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/teams-issue.md',
+          id: 'teams-policy-change',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:delete'
+  -         }
+  -       ]
+        },
+        {
+          file: 'docs/ticket-examples.md',
+          id: 'ticket-network-remediation',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:unlock'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/troubleshooting.md',
+          id: 'troubleshoot-compliance-sync',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/unite-extension-create.md',
+          id: 'voip-user-create',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/unite-extension-create.md',
+          id: 'voip-voicemail-config',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:enable'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/security/vulnerability_scan.md',
+          id: 'vulnerability-pim-policy',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:enable'
+  -         }
+  -       ]
+        },
+        {
+          file: '.claude/commands/wifi-issue.md',
+          id: 'wifi-client-remediation',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-license-portal',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-new-user-portal',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:retire'
+  -         },
+  -         {
+  -           count: 1,
+  -           sink: 'portal:wipe'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-offboard-groups',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:remove'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-offboard-license',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:create'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-offboard-password',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:revoke'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-password-reset',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:reset'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-phone-extension',
+          impactCategories: [
+  ...
+          mode: 'preview',
+  +       sinks: []
+  -       sinks: [
+  -         {
+  -           count: 1,
+  -           sink: 'portal:add'
+  -         }
+  -       ]
+        },
+        {
+          file: 'modules/it_support/workflows.md',
+          id: 'workflow-sync-portal',
+          impactCategories: [],
+  
+      at TestContext.<anonymous> (<repo>/scripts/command-safety-gates.test.js:1445:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: {
+      schemaVersion: 1,
+      executionClassification: { gated: 'State-changing or disclosure-capable; exact authorization is required before the documented sink.', preview: 'Read-only as authored; mutation vocabulary is inert and describes a separately prohibited or review-routed effect.' },
+      scope: { discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native (including gam, gcloud, HTTP-API, jamf, and macOS administration tools, with plain-text shell gates), and portal mutation grammar.', clientBoundaries: 'State-changing or disclosure-capable memory and security-audit implementations, and the read-only Jira client whose writes are human-run procedures, outside Markdown fence discovery.', limitation: 'Novel syntax and prose still require semantic review and grammar extension.' },
+      directR1: [],
+      examples: [
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object],
+        ... 576 more items
+      ],
+      clientBoundaries: [
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object],
+        [Object]
+      ]
+    },
+    expected: {
+      schemaVersion: 1,
+      executionClassification: { gated: 'State-changing or disclosure-capable; exact authorization is required before the documented sink.', preview: 'Read-only as authored; mutation vocabulary is inert and describes a separately prohibited or review-routed effect.' },
+      scope: { discoveredMarkdown: 'Tracked and nonignored untracked Markdown safety/preview markers plus recognized PowerShell, shell/native (including gam, gcloud, HTTP-API, jamf, and macOS administration tools, with plain-text shell gates), and portal mutation grammar.', clientBoundaries: 'State-changing or disclosure-capable memory and security-audit implementations, and the read-only Jira client whose writes are human-run procedures, outside Markdown fence discovery.', limitation: 'Novel syntax and prose still require semantic review and grammar extension.' },
+      directR1: [],
+      examples: [
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object], [Object], [Object],
+        [Object], [Object], [Object], [Object],
+        ... 576 more items
+      ],
+      clientBoundaries: [
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object],
+        [Object], [Object],
+        [Object]
+      ]
+    },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1500:1
+✖ every discovered manual portal mutation has one action-local gate or preview owner (16.596863ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   '.claude/commands/new-user.md:367: unowned manual mutation candidate (- [ ] Windows device enrolled, named, compliant, KFM on · mobile set up (corp: user prereq groups → enroll → WAIT for Intune object → device group → apps + Slack verified / BYOD: Authenticator + Outlook MAM) -- never N/A)',
+  +   ".claude/commands/troubleshoot.md:20: unowned manual mutation candidate (- If a provider outage explains it → log it, notify users, wait/escalate. Don't troubleshoot their cloud.)",
+  +   `docs/evidence/ticket-eval-samples.md:50: unowned manual mutation candidate (- Turn 2's EAC button labels ("Read and manage → Edit → Add members") are close to)`,
+  +   "docs/evidence/ticket-eval-samples.md:132: unowned manual mutation candidate (- If it hasn't appeared after an hour: Outlook → File → Account Settings → Account Settings → [UPN] → Change → More Settings → Advanced → Add [SHARED_MAILBOX] manually)",
+  +   'docs/evidence/ticket-eval-samples.md:292: unowned manual mutation candidate (5. **Which Outlook?** File → Office Account (classic) vs the "New Outlook" toggle. Branch A steps below are for classic; new Outlook fixes via Settings → Accounts → remove/re-add.)',
+  +   "docs/evidence/ticket-eval-samples.md:300: unowned manual mutation candidate (3. **Clear cached Office credentials:** Control Panel → User Accounts → Credential Manager → Windows Credentials → Remove every entry beginning with `MicrosoftOffice16_Data:`, `MicrosoftOfficeSSO`, `ADAL`, or containing `outlook`. Undo: not needed -- they regenerate on the next successful sign-in. Expect a one-time sign-in prompt in Word/Teams too; that's normal.)",
+  +   'docs/evidence/ticket-eval-samples.md:303: unowned manual mutation candidate (6. **Still looping?** File → Account Settings → Account Settings → Email tab → select the account → Remove → New → [USER@DOMAIN.COM] → let the modern-auth browser popup run. Undo: re-add the same account; the OST rebuilds (30–90 min for a big mailbox, warn the user).)',
+  +   'scripts/replay/fixtures/shared-mailbox-demo.md:10: unowned manual mutation candidate (1. Exchange admin center (admin.exchange.microsoft.com) → Recipients → Mailboxes → `[SHARED_MAILBOX]` → **Delegation** → **Read and manage (Full Access)** → **Edit** → **Add permissions** → `[UPN]` → Save.)',
+  +   'scripts/replay/fixtures/shared-mailbox-demo.md:12: unowned manual mutation candidate (3. Tell the user to restart Outlook; if the mailbox has not appeared after 60 minutes, add it manually: Outlook → File → Account Settings → Account Settings → Email → Change → More Settings → Advanced → Add → `[SHARED_MAILBOX]`.)'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/command-safety-gates.test.js:1514:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '.claude/commands/new-user.md:367: unowned manual mutation candidate (- [ ] Windows device enrolled, named, compliant, KFM on · mobile set up (corp: user prereq groups → enroll → WAIT for Intune object → device group → apps + Slack verified / BYOD: Authenticator + Outlook MAM) -- never N/A)', ".claude/commands/troubleshoot.md:20: unowned manual mutation candidate (- If a provider outage explains it → log it, notify users, wait/escalate. Don't troubleshoot their cloud.)", `docs/evidence/ticket-eval-samples.md:50: unowned manual mutation candidate (- Turn 2's EAC button labels ("Read and manage → Edit → Add members") are close to)`, "docs/evidence/ticket-eval-samples.md:132: unowned manual mutation candidate (- If it hasn't appeared after an hour: Outlook → File → Account Settings → Account Settings → [UPN] → Change → More Settings → Advanced → Add [SHARED_MAILBOX] manually)", 'docs/evidence/ticket-eval-samples.md:292: unowned manual mutation candidate (5. **Which Outlook?** File → Office Account (classic) vs the "New Outlook" toggle. Branch A steps below are for classic; new Outlook fixes via Settings → Accounts → remove/re-add.)', "docs/evidence/ticket-eval-samples.md:300: unowned manual mutation candidate (3. **Clear cached Office credentials:** Control Panel → User Accounts → Credential Manager → Windows Credentials → Remove every entry beginning with `MicrosoftOffice16_Data:`, `MicrosoftOfficeSSO`, `ADAL`, or containing `outlook`. Undo: not needed -- they regenerate on the next successful sign-in. Expect a one-time sign-in prompt in Word/Teams too; that's normal.)", 'docs/evidence/ticket-eval-samples.md:303: unowned manual mutation candidate (6. **Still looping?** File → Account Settings → Account Settings → Email tab → select the account → Remove → New → [USER@DOMAIN.COM] → let the modern-auth browser popup run. Undo: re-add the same account; the OST rebuilds (30–90 min for a big mailbox, warn the user).)', 'scripts/replay/fixtures/shared-mailbox-demo.md:10: unowned manual mutation candidate (1. Exchange admin center (admin.exchange.microsoft.com) → Recipients → Mailboxes → `[SHARED_MAILBOX]` → **Delegation** → **Read and manage (Full Access)** → **Edit** → **Add permissions** → `[UPN]` → Save.)', 'scripts/replay/fixtures/shared-mailbox-demo.md:12: unowned manual mutation candidate (3. Tell the user to restart Outlook; if the mailbox has not appeared after 60 minutes, add it manually: Outlook → File → Account Settings → Account Settings → Email → Change → More Settings → Advanced → Add → `[SHARED_MAILBOX]`.)' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:2613:1
+✖ G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates (5.490263ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      '10': 'unsuspend',
+  +   '12': 'run',
+      '3': 'suspend',
+      '4': 'deprovision',
+      '5': 'deactivate',
+      '6': 'lock',
+      '7': 'erase',
+  
+      at TestContext.<anonymous> (<repo>/scripts/command-safety-gates.test.js:2631:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { '3': 'suspend', '4': 'deprovision', '5': 'deactivate', '6': 'lock', '7': 'erase', '8': 'transfer', '9': 'powerwash', '10': 'unsuspend', '12': 'run' },
+    expected: { '3': 'suspend', '4': 'deprovision', '5': 'deactivate', '6': 'lock', '7': 'erase', '8': 'transfer', '9': 'powerwash', '10': 'unsuspend' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:2724:1
+✖ G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 runbooks; G1 and Microsoft files keep their grammar (3.668366ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      '3': 'wipe',
+  +   '5': 'suspend'
+    }
+  
+      at TestContext.<anonymous> (<repo>/scripts/command-safety-gates.test.js:2749:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { '3': 'wipe', '5': 'suspend' },
+    expected: { '3': 'wipe' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:33:51Z
+# capture edited after the run: U+2014 written as "--" (4), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

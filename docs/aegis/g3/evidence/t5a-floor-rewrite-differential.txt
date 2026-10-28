@@ -1,0 +1,96 @@
+# command: bash -c echo '--- the two scripts run below (gaps2.js, then diff-floors.js):'; cat <tmp> <tmp> echo '--- its output:'; node <tmp> <tmp>
+# commit: 7e5f7b5 (plus uncommitted changes in the working tree)  started: 2026-10-28T10:27:28Z  node: v24.22.1
+--- the two scripts run below (gaps2.js, then diff-floors.js):
+// gapCount(source): how many unbounded gaps ([^.]*, .*, [^\r\n]*) one match can chain in
+// sequence: a group counts its widest alternative, a lookaround counts 0 here and is
+// checked on its own. problems(source) lists every place the count reaches 2.
+function parseGroup(s, i) { // s[i] is just after '(' or at start; returns { alts: [[items]], end }
+  const alts = [[]];
+  while (i < s.length && s[i] !== ')') {
+    const c = s[i];
+    if (c === '|') { alts.push([]); i++; continue; }
+    if (c === '\\') { alts[alts.length - 1].push({ t: 'atom' }); i += 2; continue; }
+    if (c === '[') { let j = i + 1; if (s[j] === '^') j++; if (s[j] === ']') j++; while (s[j] !== ']') { if (s[j] === '\\') j++; j++; } const cls = s.slice(i, j + 1); i = j + 1; alts[alts.length - 1].push(quant(s, i, { t: cls === '[^.]' || cls === '[^\\r\\n]' ? 'gapclass' : 'atom' })); i = alts[alts.length - 1].at(-1).next; continue; }
+    if (c === '(') {
+      const look = /^\(\?<?[=!]/.test(s.slice(i, i + 4));
+      const start = i + (look ? (s[i + 2] === '<' ? 4 : 3) : (s[i + 1] === '?' ? (s[i + 2] === '<' ? s.indexOf('>', i) + 1 - i : 3) : 1));
+      const g = parseGroup(s, start);
+      i = g.end + 1;
+      alts[alts.length - 1].push(quant(s, i, { t: look ? 'look' : 'group', alts: g.alts }));
+      i = alts[alts.length - 1].at(-1).next; continue;
+    }
+    alts[alts.length - 1].push(quant(s, i + 1, { t: c === '.' ? 'gapclass' : 'atom' }));
+    i = alts[alts.length - 1].at(-1).next;
+  }
+  return { alts, end: i };
+}
+function quant(s, i, item) {
+  let q = '';
+  if (s[i] === '*' || s[i] === '+' || s[i] === '?') { q = s[i]; i++; } else if (s[i] === '{') { const j = s.indexOf('}', i); q = s.slice(i, j + 1); i = j + 1; }
+  if (s[i] === '?') i++;
+  return { ...item, q, unbounded: q === '*' || q === '+' || /,\}$/.test(q), next: i };
+}
+function count(items, problems, where) {
+  let n = 0;
+  for (const it of items) {
+    if (it.t === 'gapclass' && it.unbounded) n += 1;
+    else if (it.t === 'look') for (const a of it.alts) { if (count(a, problems, 'lookaround') > 1) problems.push(where + ' > lookaround'); }
+    else if (it.t === 'group') { const inner = Math.max(...it.alts.map((a) => count(a, problems, where))); n += it.unbounded && inner > 0 ? 2 : inner; }
+  }
+  return n;
+}
+function problems(source) {
+  const out = [];
+  const g = parseGroup(source, 0);
+  g.alts.forEach((a, k) => { if (count(a, out, `alternative ${k + 1}`) > 1) out.push(`alternative ${k + 1}`); });
+  return out;
+}
+module.exports = { problems };
+if (require.main === module) {
+  const fs = require('fs');
+  const { ESCALATION_PATTERNS } = require('<repo>/scripts/tier/tier-guard.js');
+  const src = fs.readFileSync('<repo>/scripts/graph/engine.js', 'utf8');
+  const engine = [...src.matchAll(/^\s*\{ pattern: (\/.*\/[a-z]*), label: '([^']*)'/gm)].map((m) => ({ pattern: eval(m[1]), label: m[2] }));
+  // self-check on known shapes
+  const sc = [['a[^.]*b[^.]*c', 1], ['a(?=([^.]*?b))\\1[^.]*c', 0], ['a(?:(?=([^.]*?b))\\1[^.]*c|[^.]*d)', 0], ['a[^.]*(?:b[^.]*c|d)', 1], ['a(?=[^.]*b[^.]*c)', 1], ['a.*b.*c', 1], ['a(?:x[^.]*)*b', 1]];
+  for (const [s, want] of sc) if ((problems(s).length > 0 ? 1 : 0) !== want) console.log('SELF-CHECK FAIL', s, problems(s));
+  for (const [side, list] of [['guard', ESCALATION_PATTERNS], ['engine', engine]]) {
+    let bad = 0;
+    for (const p of list) { if (!(p.pattern instanceof RegExp)) continue; const b = problems(p.pattern.source); if (b.length) { bad++; console.log(side, p.label, b); } }
+    console.log(side, list.length, 'checked,', bad, 'with two gaps in sequence');
+  }
+}
+// Old (HEAD) and new floors must agree on every input: random short sentences built from
+// each pattern's own words and placeholders, plus every corpus ticket and test sentence.
+const fs = require('fs');
+const S = process.argv[2];
+const { problems } = require(S + '/gaps2.js');
+const load = (file) => [...fs.readFileSync(file, 'utf8').matchAll(/^\s*\{ pattern: (\/.*\/[a-z]*), label: '((?:[^'\\]|\\.)*)'/gm)].map((m) => ({ re: eval(m[1]), label: m[2] }));
+const pairs = [];
+for (const [o, n] of [[S + '/head/tier-guard.js', 'scripts/tier/tier-guard.js'], [S + '/head/engine.js', 'scripts/graph/engine.js']]) {
+  const A = load(o), B = load(n);
+  if (A.length !== B.length) throw new Error('count differs ' + n);
+  A.forEach((a, i) => { if (a.re.source !== B[i].re.source) pairs.push({ file: n, label: a.label, old: a.re, now: B[i].re }); });
+}
+console.log(pairs.length, 'changed floors;', pairs.filter((p) => problems(p.old.source).length).length, 'had two gaps in sequence before');
+let seed = 7; const rnd = (k) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % k; };
+const fillers = ['the', 'a', 'please', 'today', 'for', 'and', 'then', 'our', 'it', 'all', 'from', 'on', 'of', '.', ',', 'to', 'in'];
+const corpus = [];
+for (const f of fs.readdirSync('scripts/eval').filter((x) => /-tickets\.json$/.test(x))) { const j = JSON.parse(fs.readFileSync('scripts/eval/' + f, 'utf8')); (j.tickets || j).forEach((t) => corpus.push(String(t.text || t.ticket || t.input || ''))); }
+for (const f of ['scripts/tier/tier-routing.test.js', 'scripts/graph/engine.test.js']) if (fs.existsSync(f)) for (const m of fs.readFileSync(f, 'utf8').matchAll(/'((?:[^'\\]|\\.){8,300})'/g)) corpus.push(m[1]);
+console.log(corpus.length, 'corpus tickets and test sentences, plus 40000 random sentences per floor');
+let checked = 0, differ = [];
+for (const p of pairs) {
+  const words = [...new Set((p.old.source.replace(/\\[bdswBDSW]/g, ' ').match(/\[[A-Z_@.]+\]|[a-z][a-z-]{1,}/gi) || []))];
+  const inputs = [...corpus];
+  for (let k = 0; k < 40000; k++) { const n = 2 + rnd(9); const ws = []; for (let j = 0; j < n; j++) ws.push(rnd(3) ? words[rnd(words.length)] : fillers[rnd(fillers.length)]); inputs.push(ws.join(' ')); }
+  for (const s of inputs) { checked++; if (p.old.test(s) !== p.now.test(s)) { differ.push(`${p.file} ${p.label}: ${JSON.stringify(s)} old=${p.old.test(s)} new=${p.now.test(s)}`); break; } }
+}
+console.log(`${checked} comparisons on ${pairs.length} floors; ${differ.length} disagreements`);
+differ.forEach((d) => console.log('  ' + d));
+--- its output:
+22 changed floors; 22 had two gaps in sequence before
+739 corpus tickets and test sentences, plus 40000 random sentences per floor
+896258 comparisons on 22 floors; 0 disagreements
+# exit: 0  finished: 2026-10-28T10:27:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

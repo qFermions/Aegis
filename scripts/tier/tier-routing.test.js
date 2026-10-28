@@ -602,12 +602,14 @@ test('the GitHub floors fire on their example and each stays fast on a 20 KB lin
   }
 });
 
-// Batch G3: twelve shipped floors in the guard (and ten engine twins) chained two
-// unbounded gaps (verb ... object ... target). That is cubic on a long line that never
-// completes the match: 11 to 44 s on one 20 KB line, enough to stall a ticket that pastes
-// a long log line (evidence t5a-floor-cubic-before-after). Each gap but the last is now
-// read once through (?=(gap?X))\N, with the same matches as before
-// (t5a-floor-rewrite-differential: 0 disagreements). The rule below keeps the next floor
+// Batch G3: twelve floors in the guard and ten engine twins chained two unbounded gaps
+// (verb ... object ... target): eleven and nine of them on main before this batch, one
+// pair added in commit 96564ea. On a long line that never completes the match that is
+// cubic (11 to 44 s on one 20 KB line), and quartic for the one floor with three gaps (3.8 s
+// at 4 KB, about 40 minutes at 20 KB): enough to stall a ticket that pastes a long log line
+// (evidence t5a-floor-cubic-before-after). Each gap but the last is now read once through
+// (?=(gap?X))\N, with the same matches as before (t5a-floor-rewrite-differential: 0
+// disagreements). The rule below keeps the next floor
 // from chaining two gaps.
 //
 // chainedGaps(source): where one match can chain two unbounded gaps ([^.]*, .*,

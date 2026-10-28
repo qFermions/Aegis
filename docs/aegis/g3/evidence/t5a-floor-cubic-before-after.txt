@@ -1,0 +1,57 @@
+# command: bash -c echo '--- the script run below:'; cat <tmp> echo '--- its output:'; node <tmp> <tmp>
+# commit: 7e5f7b5 (plus uncommitted changes in the working tree)  started: 2026-10-28T10:26:57Z  node: v24.22.1
+--- the script run below:
+// The 12 guard floors and 10 engine twins that chained two gaps, each timed on a line
+// built to never complete it: before (HEAD) and after (working tree) on 5 KB, and after
+// on 20 KB (before on 20 KB takes 11 to 44 s per two-gap floor and is skipped here).
+const fs = require('fs');
+const S = process.argv[2];
+const load = (file) => [...fs.readFileSync(file, 'utf8').matchAll(/^\s*\{ pattern: (\/.*\/[a-z]*), label: '((?:[^'\\]|\\.)*)'/gm)].map((m) => ({ re: eval(m[1]), label: m[2] }));
+const cases = [['group membership removal', 'remove member from '], ['security-control change (SR-2)', 'exclude from '], ['account / work-profile removal', 'remove account from '],
+  ['security-control change -- Google', 'exclude from '], ['Slack or Linear member', 'kick user '], ['Slack or Linear member', 'slack kick '], ['Okta lifecycle change', 'reset all '],
+  ['Okta app unassignment', 'okta remove '], ['Okta app unassignment', 'remove app '], ['Fleet script run', 'run script '], ['Fleet script run', 'fleet run '],
+  ['fleet-wide host operation', 'lock all '], ['Linear bulk issue operation', 'delete all '], ['retention change', 'change messages '], ['retention change', 'change retention '],
+  ['fleet-wide computer or Mac', 'lock all ']];
+for (const [name, file] of [['guard', 'scripts/tier/tier-guard.js'], ['engine', 'scripts/graph/engine.js']]) {
+  const before = load(`${S}/head/${file.split('/').pop()}`), after = load(file);
+  for (const [prefix, unit] of cases) {
+    const i = before.findIndex((p) => p.label.startsWith(prefix));
+    if (i < 0 || before[i].re.source === after[i].re.source) continue;
+    const line = (n) => unit.repeat(Math.ceil(n / unit.length)).slice(0, n);
+    const ms = (re, n) => { const s = line(n); const t = process.hrtime.bigint(); re.test(s); return (Number(process.hrtime.bigint() - t) / 1e6).toFixed(0); };
+    console.log(`${name.padEnd(6)} ${prefix.padEnd(32)} ${JSON.stringify(unit).padEnd(22)} 5 KB before ${ms(before[i].re, 5000).padStart(5)} ms, after ${ms(after[i].re, 5000).padStart(3)} ms; 20 KB after ${ms(after[i].re, 20000).padStart(3)} ms`);
+  }
+}
+--- its output:
+guard  group membership removal         "remove member from "  5 KB before   193 ms, after   1 ms; 20 KB after  22 ms
+guard  security-control change (SR-2)   "exclude from "        5 KB before   388 ms, after   4 ms; 20 KB after  62 ms
+guard  account / work-profile removal   "remove account from " 5 KB before  9001 ms, after   3 ms; 20 KB after  38 ms
+guard  security-control change -- Google "exclude from "        5 KB before   271 ms, after   2 ms; 20 KB after  38 ms
+guard  Slack or Linear member           "kick user "           5 KB before   375 ms, after   2 ms; 20 KB after  28 ms
+guard  Slack or Linear member           "slack kick "          5 KB before   533 ms, after   7 ms; 20 KB after  85 ms
+guard  Okta lifecycle change            "reset all "           5 KB before   440 ms, after   3 ms; 20 KB after  34 ms
+guard  Okta app unassignment            "okta remove "         5 KB before   419 ms, after   5 ms; 20 KB after 109 ms
+guard  Okta app unassignment            "remove app "          5 KB before   328 ms, after   3 ms; 20 KB after  42 ms
+guard  Fleet script run                 "run script "          5 KB before   284 ms, after   3 ms; 20 KB after  40 ms
+guard  Fleet script run                 "fleet run "           5 KB before   575 ms, after   3 ms; 20 KB after  46 ms
+guard  fleet-wide host operation        "lock all "            5 KB before   640 ms, after   8 ms; 20 KB after 109 ms
+guard  Linear bulk issue operation      "delete all "          5 KB before   301 ms, after   4 ms; 20 KB after  59 ms
+guard  retention change                 "change messages "     5 KB before   186 ms, after   4 ms; 20 KB after  54 ms
+guard  retention change                 "change retention "    5 KB before   186 ms, after   3 ms; 20 KB after  45 ms
+guard  fleet-wide computer or Mac       "lock all "            5 KB before   587 ms, after   7 ms; 20 KB after 105 ms
+engine group membership removal         "remove member from "  5 KB before   211 ms, after   2 ms; 20 KB after  25 ms
+engine account / work-profile removal   "remove account from " 5 KB before  9175 ms, after   2 ms; 20 KB after  29 ms
+engine Slack or Linear member           "kick user "           5 KB before   423 ms, after   3 ms; 20 KB after  50 ms
+engine Slack or Linear member           "slack kick "          5 KB before   613 ms, after   5 ms; 20 KB after  83 ms
+engine Okta lifecycle change            "reset all "           5 KB before   434 ms, after   4 ms; 20 KB after  66 ms
+engine Okta app unassignment            "okta remove "         5 KB before   393 ms, after   4 ms; 20 KB after  69 ms
+engine Okta app unassignment            "remove app "          5 KB before   276 ms, after   2 ms; 20 KB after  40 ms
+engine Fleet script run                 "run script "          5 KB before   358 ms, after   2 ms; 20 KB after  30 ms
+engine Fleet script run                 "fleet run "           5 KB before   356 ms, after   4 ms; 20 KB after  58 ms
+engine fleet-wide host operation        "lock all "            5 KB before   415 ms, after   4 ms; 20 KB after  75 ms
+engine Linear bulk issue operation      "delete all "          5 KB before   305 ms, after   4 ms; 20 KB after  61 ms
+engine retention change                 "change messages "     5 KB before   183 ms, after   2 ms; 20 KB after  34 ms
+engine retention change                 "change retention "    5 KB before   212 ms, after   3 ms; 20 KB after  57 ms
+engine fleet-wide computer or Mac       "lock all "            5 KB before   782 ms, after   8 ms; 20 KB after 116 ms
+# exit: 0  finished: 2026-10-28T10:27:27Z
+# capture edited after the run: U+2014 written as "--" (2), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

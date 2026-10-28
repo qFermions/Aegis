@@ -42,6 +42,10 @@ class ScannerError extends Error {
 }
 
 // ── Dangerous PowerShell patterns ────────────────────────────────────────────
+// An HTTP method flag as curl (-X, --request) and PowerShell (-Method) write it: one
+// source for every method-keyed sink in the table below (Okta, Jamf, Fleet, Slack SCIM).
+const METHOD_FLAG = String.raw`(?:-X\s*|--request\s+|-Method[\s:]+)["']?`;
+
 const DANGEROUS_PS_PATTERNS = [
   { pattern: /Remove-Item\s+.*-Recurse\s+.*-Force|Remove-Item\s+.*-Force\s+.*-Recurse/i, label: 'Remove-Item -Recurse -Force — mass file deletion' },
   { pattern: /Remove-Item\b(?![^\r\n]*-Recurse)(?=[^\r\n]*-Force)/i, label: 'Remove-Item -Force — forced file deletion' },
@@ -104,10 +108,10 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /\bgam\s[^\r\n]*(?<![\w/-])deprovision(?![\w-])/i, label: 'GAM deprovision (tokens, app passwords, backup codes)' },
   { pattern: /\bgam\b[^\r\n]*\b(?:delete|remove)\s+licen[cs]es?\b/i, label: 'GAM licence removal' },
   { pattern: /\/api\/v1\/users\/[^\s"']+\/lifecycle\/(?:deactivate|suspend|reset_factors|reset_password|expire_password)\b/i, label: 'Okta lifecycle change (deactivate / suspend / reset)' },
-  { pattern: /(?:-X\s*|--request\s+|-Method[\s:]+)["']?DELETE\b[^\r\n]*\/api\/v1\/users\b|\/api\/v1\/users\b[^\r\n]*(?:-X\s*|--request\s+|-Method[\s:]+)["']?DELETE\b/i, label: 'Okta session or user deletion (DELETE /api/v1/users…)' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}DELETE\b[^\r\n]*\/api\/v1\/users\b|\/api\/v1\/users\b[^\r\n]*${METHOD_FLAG}DELETE\b`, 'i'), label: 'Okta session or user deletion (DELETE /api/v1/users…)' },
   // A Jamf MDM command is a write (POST, or a request body); a GET of the same path only
   // reads command status and stays quiet.
-  { pattern: /(?:-X\s*|--request\s+|-Method[\s:]+)["']?(?:POST|PUT|PATCH|DELETE)\b[^\r\n]*\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b|\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b[^\r\n]*(?:(?:-X\s*|--request\s+|-Method[\s:]+)["']?(?:POST|PUT|PATCH|DELETE)\b|--data\b|--json\b|\s-d\s)/i, label: 'Jamf MDM command (lock / wipe)' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}(?:POST|PUT|PATCH|DELETE)\b[^\r\n]*\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b|\/(?:api\/v[12]\/mdm\/commands|JSSResource\/computercommands)\b[^\r\n]*(?:${METHOD_FLAG}(?:POST|PUT|PATCH|DELETE)\b|--data\b|--json\b|\s-d\s)`, 'i'), label: 'Jamf MDM command (lock / wipe)' },
   { pattern: /\bjamf\s+removeFramework\b/i,        label: 'Jamf framework removal (unmanage)' },
   { pattern: /\bprofiles\s+(?:remove\b|-R\b|-D\b)/, label: 'profiles removal (configuration / MDM profile)' },
   { pattern: /\bfdesetup\s+(?:disable|remove|changerecovery|removerecovery)\b/i, label: 'FileVault change (fdesetup)' },
@@ -118,10 +122,10 @@ const DANGEROUS_PS_PATTERNS = [
   { pattern: /\bfleetctl\s+(?:[^\r\n]*\s)?mdm\s+(?:lock|unlock|wipe)\b/i, label: 'Fleet MDM lock / unlock / wipe (fleetctl)' },
   { pattern: /\bfleetctl\s+(?:[^\r\n]*\s)?run-script\b|\/api\/(?:v1|latest)\/fleet\/scripts\/run(?:\/batch)?\b/i, label: 'Fleet script run on hosts' },
   { pattern: /\/api\/(?:v1|latest)\/fleet\/hosts\/[^\s"'\/]+\/(?:lock|unlock|wipe|clear_passcode)\b/i, label: 'Fleet host lock, unlock or wipe (REST)' },
-  { pattern: /(?:-X\s*|--request\s+|-Method[\s:]+)["']?DELETE\b[^\r\n]*\/api\/(?:v1|latest)\/fleet\/hosts\b|\/api\/(?:v1|latest)\/fleet\/hosts\/[^\s"']*[^\r\n]*(?:-X\s*|--request\s+|-Method[\s:]+)["']?DELETE\b|\bfleetctl\s+(?:[^\r\n]*\s)?delete\b/i, label: 'Fleet host deletion or MDM turn-off' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}DELETE\b[^\r\n]*\/api\/(?:v1|latest)\/fleet\/hosts\b|\/api\/(?:v1|latest)\/fleet\/hosts\/[^\s"']*[^\r\n]*${METHOD_FLAG}DELETE\b|\bfleetctl\s+(?:[^\r\n]*\s)?delete\b`, 'i'), label: 'Fleet host deletion or MDM turn-off' },
   { pattern: /slack\.com\/api\/(?:admin\.users\.(?:remove|session\.reset\w*|setAdmin|setOwner|setRegular|setExpiration|invite|assign)|admin\.conversations\.(?:delete|archive|disconnectShared|convertToPrivate|setTeams)|admin\.apps\.(?:approve|restrict|uninstall)|users\.admin\.setInactive)\b/i, label: 'Slack admin write (user removal, session reset, conversation or app change)' },
   { pattern: /slack\.com\/api\/(?:chat\.(?:postMessage|postEphemeral|scheduleMessage|update|delete|meMessage)|files\.delete|conversations\.(?:archive|kick|invite|create|rename))\b/i, label: 'Slack message post or delete, or channel change (Web API)' },
-  { pattern: /(?:-X\s*|--request\s+|-Method[\s:]+)["']?DELETE\b[^\r\n]*\/scim\/v\d\/Users\b|\/scim\/v\d\/Users\/[^\s"']*[^\r\n]*(?:-X\s*|--request\s+|-Method[\s:]+)["']?DELETE\b/i, label: 'Slack SCIM deactivation (DELETE /Users)' },
+  { pattern: new RegExp(String.raw`${METHOD_FLAG}DELETE\b[^\r\n]*\/scim\/v\d\/Users\b|\/scim\/v\d\/Users\/[^\s"']*[^\r\n]*${METHOD_FLAG}DELETE\b`, 'i'), label: 'Slack SCIM deactivation (DELETE /Users)' },
   { pattern: /\bmutation\b[^\r\n]*\b(?:issue(?:Create|Update|Delete|Archive|BatchUpdate|BatchCreate|AddLabel|RemoveLabel)|comment(?:Create|Update|Delete)|user(?:Suspend|Unsuspend|ChangeRole|RevokeAllSessions|RevokeSession)|organization(?:Update|Delete)|team(?:Delete|Update)|workflowState(?:Archive|Update))\b/, label: 'Linear GraphQL mutation (issue, comment, member or workspace write)' },
   { pattern: /\/api\/v\d\/computers-inventory(?:\/[^\s"'\/]+)?\/(?:filevault|view-recovery-lock-password|view-device-lock-pin)\b|\/api\/v\d\/local-admin-password\/[^\s"']+\/password\b/i, label: 'Jamf secret disclosure (FileVault key, Recovery Lock, device PIN, LAPS)' },
   { pattern: /\bgam\b[^\r\n]*\bdelete\s+(?:drivefileacls?|acls?|permissions?)\b/i, label: 'GAM Drive permission removal' },

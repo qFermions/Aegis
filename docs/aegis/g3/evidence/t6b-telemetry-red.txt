@@ -1,0 +1,59 @@
+# command: node --test --test-name-pattern never reaches the network scripts/adapters/contract-g3.test.js
+# commit: c324325 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:15:58Z  node: v24.22.1
+✖ a failure that never reaches the network (no credential, a refused request) is one audit entry, and status counts it (5.249628ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 91.810483
+
+✖ failing tests:
+
+test at scripts/adapters/contract-g3.test.js:259:1
+✖ a failure that never reaches the network (no credential, a refused request) is one audit entry, and status counts it (5.249628ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   [
+  -     'connector-call',
+  -     'example',
+  -     'me',
+  -     'NO_CREDENTIALS',
+  -     0,
+  -     null
+  -   ],
+  -   [
+  -     'connector-call',
+  -     'example',
+  -     'refused-request',
+  -     'REFUSED',
+  -     0,
+  -     null
+  -   ],
+  -   [
+  -     'connector-call',
+  -     'example',
+  -     'refused-request',
+  -     'REFUSED',
+  -     0,
+  -     null
+  -   ]
+  - ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/contract-g3.test.js:267:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ [ 'connector-call', 'example', 'me', 'NO_CREDENTIALS', 0, null ], [ 'connector-call', 'example', 'refused-request', 'REFUSED', 0, null ], [ 'connector-call', 'example', 'refused-request', 'REFUSED', 0, null ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:15:58Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

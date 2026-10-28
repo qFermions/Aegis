@@ -253,3 +253,33 @@ test('renderResult adds a plain operator message and an admin detail line to eve
   assert.match(m.admin, /request_id=r-9/);
   assert.match(m.admin, /operation=branchProtection/);
 });
+
+// Task 6b: a failure that never reaches the network is a structured event on the audit
+// trail too, so the status summary counts every failure a person saw.
+test('a failure that never reaches the network (no credential, a refused request) is one audit entry, and status counts it', async (t) => {
+  const entries = [];
+  const audit = (e) => { entries.push(e); };
+  const noCreds = contract.createClient(spec(), { env: { EXAMPLE_HOST: 'example.invalid' }, transport: queued([]), audit });
+  assert.equal((await noCreds.get('me')).state, STATES.NO_CREDENTIALS);
+  const refusing = contract.createClient(spec(), { env: ENV, transport: queued([]), audit });
+  assert.equal((await refusing.get('not-a-route')).state, STATES.REFUSED);
+  assert.equal((await refusing.send({ method: 'DELETE', path: '/api/me' })).state, STATES.REFUSED);
+  assert.deepEqual(entries.map((e) => [e.kind, e.connector, e.operation, e.state, e.attempts, e.status]), [
+    ['connector-call', 'example', 'me', 'NO_CREDENTIALS', 0, null],
+    ['connector-call', 'example', 'refused-request', 'REFUSED', 0, null],
+    ['connector-call', 'example', 'refused-request', 'REFUSED', 0, null],
+  ]);
+  assert.ok(!JSON.stringify(entries).includes('not-a-route'), 'the refused input is not echoed into the trail');
+
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { openAuditLog } = require('../audit/audit-log.js');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-6b-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const log = openAuditLog({ dir, now: () => Date.parse('2026-10-28T10:00:00Z') });
+  for (const e of entries) log.append(e);
+  const s = log.status({ sinceMs: Date.parse('2026-10-28T09:00:00Z'), nowMs: Date.parse('2026-10-28T10:30:00Z') });
+  assert.equal(s.failures, 3);
+  assert.deepEqual(s.byConnector.example.states, { NO_CREDENTIALS: 1, REFUSED: 2 });
+});

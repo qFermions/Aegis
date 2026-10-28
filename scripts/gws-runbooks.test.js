@@ -431,12 +431,19 @@ test('the GAM export gates stop before replacing an existing file (bash, mocked 
     const bin = path.join(dir, 'bin');
     fs.mkdirSync(bin);
     fs.writeFileSync(path.join(bin, 'gam'), '#!/bin/sh\necho "MOCK,CSV"\n', { mode: 0o755 });
-    const env = { PATH: `${bin}:/usr/bin:/bin`, HOME: dir };
+    // The mock gam comes first on the parent's PATH, joined with the platform's delimiter,
+    // so the same bash the skip check found runs the fence (Git Bash on Windows). Windows
+    // spells the key Path, so every case of it is replaced by one PATH entry.
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => k.toUpperCase() !== 'PATH'));
+    env.PATH = `${bin}${path.delimiter}${process.env.PATH || ''}`;
+    env.HOME = dir;
     for (const f of fences) {
       const phrase = f.body.match(/^required_confirmation="([^"]+)"$/m)[1];
       const target = path.join(dir, `${f.id}.csv`);
-      const script = f.body.split('[FILE_NAME]').join(target);
-      const typed = phrase.split('[FILE_NAME]').join(target);
+      // forward slashes: bash on Windows reads C:/... but not C:\...; Node reads both
+      const shellTarget = target.split(path.sep).join('/');
+      const script = f.body.split('[FILE_NAME]').join(shellTarget);
+      const typed = phrase.split('[FILE_NAME]').join(shellTarget);
       const run = (input) => childProcess.spawnSync('bash', ['-c', script], { input, env, cwd: dir, encoding: 'utf8', timeout: 20000 });
 
       fs.writeFileSync(target, 'ORIGINAL\n');

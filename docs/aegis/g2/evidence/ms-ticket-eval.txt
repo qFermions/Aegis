@@ -1,5 +1,5 @@
 # command: node scripts/eval/ms-ticket-eval.js
-# captured: 2026-10-28T03:23:55Z at 540ff8c
+# captured: 2026-10-28T03:57:00Z at 5732ffd
 # note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
 Microsoft ticket eval -- deterministic half (floor · route lint · replay MISS · dangerous pairs)
 

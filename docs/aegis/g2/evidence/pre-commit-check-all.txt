@@ -1,7 +1,7 @@
 # command: node scripts/pre-commit-check.js --all
-# captured: 2026-10-28T03:26:06Z at e050d78
+# captured: 2026-10-28T03:57:39Z at 0ef9cde
 # note: any U+2014 in the tool output is written as -- (C11); the repository path is written as <repo> and the session scratch path as <scratch>
-pre-commit-check: --all mode -- scanning 468 tracked and non-ignored files.
+pre-commit-check: --all mode -- scanning 469 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped -- configure tenant literals to enable.
 
 ╔══════════════════════════════════════════════╗

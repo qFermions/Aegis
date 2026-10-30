@@ -1,0 +1,12 @@
+# command: bash docs/aegis/g3/evidence/tools/test-counts.sh <clone>
+# commit: 2ba52bc  started: 2026-10-30T09:16:54Z  node: v24.22.2
+scripts/adapters/change-binding.test.js: base 0 head 71 (71)
+scripts/adapters/rate-limit.test.js: base 0 head 26 (26)
+scripts/adapters/verify-dry-run.test.js: base 0 head 20 (20)
+scripts/audit/change-record.test.js: base 13 head 17 (4)
+scripts/env-example.test.js: base 0 head 4 (4)
+scripts/jira-client.test.js: base 65 head 68 (3)
+files: 56; tests added 128; tests removed 0
+whole run: base 1294, head 1422
+# exit: 0  finished: 2026-10-30T09:29:20Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

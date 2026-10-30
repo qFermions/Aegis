@@ -272,8 +272,11 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // the batch script run (R3): its read-back step and its checkpoint (code review round 2, finding 5)
   assert.match(page('fleet-device-actions'), /\*\*Read-back:\*\* [^\n]*`verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\]/);
   assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` unless step 1 set R1\) and, with `--change \[CHANGE_ID\]`, for every checked host/);
-  // a gate whose class is set at run time says when to drop --change
-  assert.equal((page('fleet-device-actions').match(/drop `--change \[CHANGE_ID\]` when step 1 set R1/g) || []).length, 2);
+  // a gate whose class is set at run time says when to drop --change: the portal gate by its
+  // step 1, the fenced fleetctl gate by the class its own precondition writes in the ticket, in
+  // a comment the gated-fence rules allow (code review round 3, finding 8)
+  assert.equal((page('fleet-device-actions').match(/drop `--change \[CHANGE_ID\]` when step 1 set R1/g) || []).length, 1);
+  assert.match(page('fleet-device-actions'), /^# read-back: passes only when that execution reports exit code 0, and drop the --change flag and its id when the ticket gives this script R1, since an R1 run has no change record\nnode scripts\/adapters\/fleet-client\.js verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\] --execute$/m);
 });
 
 // Fixed beyond the task: link needs the verify entry's audit seq (--verify-seq), so a recorded

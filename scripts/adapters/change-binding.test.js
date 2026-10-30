@@ -291,3 +291,16 @@ for (const c of CONNECTORS) {
     assert.equal(printedSeq(c, unbound.text), null, `${c.name}: no seq for a read-back link refuses\n${unbound.text}`);
   });
 }
+
+// Code review round 1, finding 6: --change=chg-... is refused with a message that says the id
+// goes in its own argument, not as an unknown flag.
+for (const c of CONNECTORS) {
+  test(`${c.name}: --change=chg-... is refused before any transport call with a message that names the two-argument form`, async (t) => {
+    const tr = trail(t);
+    const change = tr.open(`${c.name}:${c.verify[0]}`);
+    const r = await run(c, [...c.verify, `--change=${change}`], tr);
+    assert.equal(r.code, 1, r.text);
+    assert.equal(r.calls, 0);
+    assert.match(r.text, /--change takes the change id as the next argument/);
+  });
+}

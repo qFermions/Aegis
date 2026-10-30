@@ -2,7 +2,7 @@
 
 > Dev-facing state file, rewritten by batch 1 on 2026-10-27 to match the repo as it is, and
 > updated by batch G2 and batch G3 on 2026-10-28 (sections "Changed by batch G2" and "Changed by
-> batch G3"). Every "verified" line below names a check that ran in that session and the
+> batch G3") and by the batch G3 close-out on 2026-10-30 ("Changed by the batch G3 close-out"). Every "verified" line below names a check that ran in that session and the
 > capture that holds its output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
 
@@ -126,6 +126,27 @@ every G3 suite count at `ae88348` (after code review round 3 and the evidence re
 - **Not verified in this batch:** answer quality on every platform (rows 5, 38, 43, 48, 53, 58,
   66), and every UNCONFIRMED vendor fact (`docs/aegis/g3/vendor-facts-to-check.md`).
 
+## Changed by the batch G3 close-out
+
+Branch `fix/g3-closeout`, draft PR #7 against `main` (base `01dcb37`, the merge of PR #6). Four
+owner decisions from PR #6's report, each landed test first; captures in
+`docs/aegis/g3-closeout/evidence/`, the acceptance table in `checks.md`.
+
+| Decision | What changed | Proof (command and count) |
+|---|---|---|
+| 1, bind each read-back to its change | every `verify-*` command of the nine connectors takes `--change`, refuses before any read unless the change is open for that connector and command and approved, and records the change id; `change-record.js link` refuses an unbound read-back or one bound to another change; 71 runbook read-backs of R2 and R3 gates pass `--change [CHANGE_ID]` | `node --test scripts/adapters/change-binding.test.js scripts/audit/change-record.test.js` and the runbook line tests: 123/123 at landing (`t1-green.txt`) |
+| 2, a `verify-*` dry run exits 4 | shared `EXIT.VERIFY_DRY_RUN`; every connector prints NOT VERIFIED; plain read dry runs keep 0 | `node --test scripts/adapters/verify-dry-run.test.js` and the 11 changed suites: 213/213 (`t2-green.txt`); the test diff moves only verify-* dry-run expectations (`t2-test-diff.txt`) |
+| 3, GitHub rate-limit 403s | opt-in rate-limit hook in the contract, on for GitHub only; `RATE_LIMITED` handoff with the UTC retry time; a 403 with neither signal is still a permission refusal | `node --test scripts/adapters/rate-limit.test.js`: 20/20 (`t3-green.txt`); vendor facts G-40 and G-41 re-checked on 2026-10-30 |
+| 5, `.env.example` | 28 names added by connector; `[@Aegion_MS_TENANT_ID]` registered | `node --test scripts/env-example.test.js`: 4/4, and it fails naming `GITHUB_ORG` when that line is removed (`t4-green.txt`, `t4-name-removed-fails.txt`) |
+
+- **Fixed beyond the four:** a recorded read-back now prints its audit seq, the number
+  `change-record.js link` takes (`docs/review/incidents.md`, row of 2026-10-30).
+- **Boundary:** unchanged; no write path added (`docs/aegis/boundary-audit.md` rows 35 and 37,
+  `PRODUCT_CONTRACT.md` "Changes in this batch").
+- **Not done here:** binding a read-back to the exact object it read (which user or device);
+  the Microsoft runbooks' gates carry no R class, so their read-backs stay unbound (both are
+  owner decisions in PR #7's body).
+
 ## Partial
 
 13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
@@ -160,7 +181,8 @@ automated runner for the model-judged eval half (the rubric is a document only).
 ## Current work
 
 Batch 1's pull request (#4) and batch G2's (#5) were merged into `main` on 2026-10-28 (`f185071`,
-read from the GitHub pull request API); batch G3's draft pull request (#6) is open against `main`.
+read from the GitHub pull request API); batch G3's (#6) was merged on 2026-10-30 (`01dcb37`); the
+batch G3 close-out's draft pull request (#7) is open against `main`.
 `node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
 (`docs/aegis/evidence/claim-list.txt`).
 

@@ -17,7 +17,7 @@
 //   with both a usable reset and a retry-after, the later time wins (round 2, finding 4).
 // - Secondary limit: retry-after within the cap is waited out; no retry-after (the docs' "at
 //   least one minute" is over the cap) or a longer one ends in RATE_LIMITED; with remaining 0
-//   and a usable reset, the reset is waited for.
+//   and a usable reset, the later of the reset and retry-after is waited for (round 3, finding 1).
 // - A 403 with neither signal stays a permission refusal: HTTP_ERROR 403, one attempt.
 // - The operator message for every rate-limit handoff says in plain words that this is a rate
 //   limit, not a permission problem, and that the token should not be widened.

@@ -43,3 +43,20 @@ Round 1: 13 found, 10 fixed, 3 closed (2, 11, 12); fixed plus closed equals foun
 | 15 | `scripts/adapters/rate-limit.test.js:15` | the rate-limit test header and `takeChange`'s comment were stale | fixed | `e7f0396` |
 
 Round 2: 15 found, 14 fixed, 1 closed (11); fixed plus closed equals found.
+
+## Round 3 (`f6fd359..64bf95c`, the diff after round 2; the last round): 10 found
+
+| # | file:line (as reported) | finding | outcome | commit(s) |
+|---|---|---|---|---|
+| 1 | `scripts/adapters/readonly-contract.js:568` | a secondary limit took its retry-after even when remaining was 0 and the reset was later, so it retried before the reset | fixed: one rule for both limits, the latest time the vendor gave | `b863967` (red), `dbadaca` |
+| 2 | `scripts/adapters/cli-support.js:80` | `changeRefusal` given a change id string instead of `takeChange`'s result passed silently; the guard matched only the function name | fixed: it refuses a `bound` that is not an object; the guard requires `bound` as the third argument | `c77d5e6` (red), `9849a26` |
+| 3 | `.claude/commands/fleet-device-actions.md:204` | the batch run used one `[CHANGE_ID]` for the pilot (E1) and the batch (E2), and `status` reads done once one host's read-back verified | fixed for the runbook: the checkpoint names each id, and the read-back step says status proves one host and the ticket's host list is the batch's record; whether status should require every host is an owner decision (a change record holds no host count) | `03986fa` (red), `c003343` |
+| 4 | `.claude/commands/fleet-device-actions.md:204` | two bound read-backs in prose were fragments without `--execute`, so they dry-ran, exited 4 and recorded nothing to link | fixed: both are whole command lines; the pin test requires that form for any prose read-back with `--change`; 78 bound | `f0a5c52` (red), `d667bac` |
+| 5 | `scripts/adapters/change-binding.test.js:252` | a gate that is R2 by scope in another wording ("R1 for one file (R2 for 2 to 10 files", "R1 when ...; R2 when ...") counted as R1 | fixed: the highest class on the Reversibility line before "separate" (which names another gate); both read-backs bound with a note on when to drop `--change` | `4e5b77d` (red), `8391f5a` |
+| 6 | `scripts/jira-client.js:963` | Jira mapped a failed read-back's state by its own rule, so an answer with no status was recorded NETWORK_ERROR | fixed: one shared `verdictState` in cli-support.js | `50e3e2c` (red), `c8c5243` |
+| 7 | `scripts/audit/change-record.js:183` | open's next step named `audit_seq`, which Jira does not print | fixed: it names Jira's "Recorded as audit entry N" line too | `752182c` (red), `cef2b3c` |
+| 8 | `.claude/commands/fleet-device-actions.md:343` | the fenced fleetctl gate said to drop `--change` "when step 1 set R1", but a local script never runs step 1; the round 2 comment also broke the gated-fence rules (command-safety-gates failed at `64bf95c`) | fixed: the comment keys dropping `--change` to the class the ticket gives the script, in characters a gated fence allows | `5445fdb` (red), `f8763ed` |
+| 9 | `scripts/adapters/linear-client.js:585` | Slack's and Linear's offline commands repeated the first checks of `changeRefusal` | fixed: they call `changeRefusal` | `3246c04` |
+| 10 | `progress.md:6` | progress.md, checks.md E1 and PROJECT_STATE.md gave 71, 72 and 74 as the bound count | fixed: 78 everywhere, with each step's evidence | `a7ce68c` |
+
+Round 3: 10 found, 10 fixed, 0 closed; fixed plus closed equals found. No fourth round runs (the charter allows three); anything still open after this round is listed in the report.

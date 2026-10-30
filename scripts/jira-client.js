@@ -55,7 +55,7 @@ const https = require('node:https');
 const { STATES, EXIT, NOT_VERIFIED_DRY_RUN, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
 const { operatorMessage } = require('./adapters/operator-message.js');
 const { auditSink, defaultAuditDir } = require('./audit/audit-log.js');
-const { takeChange, changeRefusal } = require('./adapters/cli-support.js');
+const { takeChange, changeRefusal, verdictState } = require('./adapters/cli-support.js');
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TRANSITION_PAGE_LIMIT = 50;
@@ -959,9 +959,10 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
     }
     // a read-back that ran and did not prove the write is a verdict, recorded as such
     if (op && /^verify-/.test(op) && (error instanceof ContractError || error instanceof ApiError)) {
-      const r = error instanceof ApiError ? error.result : null;
-      const failed = r && Object.values(STATES).includes(r.state) ? r.state : (error.status === null ? STATES.NETWORK_ERROR : STATES.HTTP_ERROR);
-      try { recordJiraVerdict(runtime, op, false, error instanceof ApiError ? failed : STATES.OK); } catch {
+      // the read's own state (an HTTP status without one is HTTP_ERROR), mapped by the adapters' rule
+      const r = error.result;
+      const failed = error instanceof ApiError ? verdictState(r && r.state ? r.state : (Number.isInteger(error.status) ? STATES.HTTP_ERROR : undefined)) : STATES.OK;
+      try { recordJiraVerdict(runtime, op, false, failed); } catch {
         runtime.err('Jira operation stopped: the audit trail could not record this read-back, so its verdict is withheld.');
         printFailure(runtime, 'AUDIT_FAILED', {}, op);
         return 2;

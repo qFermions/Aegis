@@ -93,10 +93,15 @@ function changeRefusal(connector, command, bound, audit) {
   }
 }
 
+// The state a verify entry records: one the trail accepts, else INVALID_RESPONSE. The Jira
+// client uses it too, so every connector maps a state the same way (code review round 3,
+// finding 6).
+const verdictState = (state) => (AUDITED_STATES.has(state) ? state : 'INVALID_RESPONSE');
+
 function recordVerdict(audit, connector, output, change) {
   if (!audit || !output || typeof output.verified !== 'boolean' || typeof output.command !== 'string' || !VERIFY_COMMAND.test(output.command)) return output;
   try {
-    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: AUDITED_STATES.has(output.state) ? output.state : 'INVALID_RESPONSE', change: typeof change === 'string' ? change : null });
+    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null });
     const linkable = typeof change === 'string' && output.verified === true && written && Number.isInteger(written.seq);
     return linkable ? { ...output, audit_seq: written.seq } : output;
   } catch {
@@ -104,4 +109,4 @@ function recordVerdict(audit, connector, output, change) {
   }
 }
 
-module.exports = { cliDeps, recordVerdict, takeChange, changeRefusal, NOT_A_READ_BACK };
+module.exports = { cliDeps, recordVerdict, takeChange, changeRefusal, verdictState, NOT_A_READ_BACK };

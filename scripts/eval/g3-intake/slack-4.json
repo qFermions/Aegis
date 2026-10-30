@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "user": "U0AAA00001",
+      "team": "T0OURS0001",
+      "ts": "1761600400.000100",
+      "thread_ts": "1761600400.000100",
+      "text": "Please deactivate the Slack account of the contractor who left yesterday, [FIRST_NAME] [LAST_NAME]."
+    }
+  ]
+}

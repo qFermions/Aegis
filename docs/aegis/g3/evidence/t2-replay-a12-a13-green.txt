@@ -1,0 +1,33 @@
+# command: node --test scripts/untrusted/instruction-injection.test.js
+# commit: 9135a39 (plus uncommitted changes in the working tree)  started: 2026-10-28T07:53:07Z  node: v24.22.1
+✔ A1 pasted ticket: an embedded instruction is flagged and quoted as data; mode, gate, status and node are unchanged (168.391177ms)
+✔ A2 obfuscated marker is flagged like the plain one: zero-width space inside a word (115.567228ms)
+✔ A2 obfuscated marker is flagged like the plain one: zero-width space as the word separator (128.300383ms)
+✔ A2 obfuscated marker is flagged like the plain one: soft hyphen inside a word (107.37433ms)
+✔ A2 obfuscated marker is flagged like the plain one: word joiner inside a word (119.026055ms)
+✔ A2 obfuscated marker is flagged like the plain one: Cyrillic look-alike letter (121.741083ms)
+✔ A2 obfuscated marker is flagged like the plain one: Greek look-alike letter (114.330566ms)
+✔ A2 obfuscated marker is flagged like the plain one: Cyrillic look-alike in a mode claim (114.721811ms)
+✔ A2 obfuscated marker is flagged like the plain one: fullwidth letters (99.393956ms)
+✔ A2 obfuscated marker is flagged like the plain one: combining accent (107.044293ms)
+✔ A3 sim wipe: a "pre-approved" ticket with a quoted hash and an injected log line still parks at the human gate; the quoted hash is refused (476.969967ms)
+✔ A4 tier guard: urgency, prior-approval and "classify as T1" claims around a destructive ask still floor to T3 (131.961841ms)
+✔ A5 replay: a verified ticket plus an appended instruction is a MISS, and naming a case id selects nothing (587.563306ms)
+✔ A6 replay: a verified case whose stored solution was edited on disk to carry an instruction is withheld by lookup and refused by render (413.511884ms)
+✔ A7 replay status and list withhold a case whose stored ticket, evidence or history was edited to carry an instruction, and survive a non-string ticket (585.976346ms)
+✔ A8 the graph edge flags exactly the markers the shared rule finds, and keeps no copy of the marker loop (15.161342ms)
+✔ A9 replay status and list withhold a case with instruction text in any printed field, a newline-split marker, or a malformed caseId or status (1213.290388ms)
+✔ A10 lookup of a stale case prints no stored history text and survives an empty history (243.27813ms)
+✔ A11 lookup and render print no edited verifiedAt or dependency path; a clean case still hits (590.382457ms)
+✔ A12 lookup returns CACHE_HIT only for a verified case with evidence, like render (293.035038ms)
+✔ A13 record refuses a dependency path that carries instruction text (55.142369ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5904.815706
+# exit: 0  finished: 2026-10-28T07:53:13Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

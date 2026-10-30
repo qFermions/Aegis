@@ -1,0 +1,31 @@
+# command: node --test --test-name-pattern hostile scripts/intake/intake.test.js
+# commit: cc50848 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:41:56Z  node: v24.22.1
+✖ hostile shapes near the 512 KiB limit are handled in linear time: no "@" or ">" for 500,000 characters, unclosed comments and scripts, long space runs (295373.927273ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 295531.765463
+
+✖ failing tests:
+
+test at scripts/intake/intake.test.js:285:1
+✖ hostile shapes near the 512 KiB limit are handled in linear time: no "@" or ">" for 500,000 characters, unclosed comments and scripts, long space runs (295373.927273ms)
+  AssertionError [ERR_ASSERTION]: email a run with no @: 295371 ms
+      at TestContext.<anonymous> (<repo>/scripts/intake/intake.test.js:298:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T08:46:52Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

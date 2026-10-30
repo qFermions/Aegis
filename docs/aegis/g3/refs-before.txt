@@ -1,0 +1,13 @@
+# git ls-remote origin, captured 2026-10-28T07:48:02Z (UTC), before the first push of batch G3
+f18507189815dbbdb25c238bf64e2f501fd238fc	HEAD
+7969e791991122d529f790c37f926680071e5f6d	refs/heads/chore/baseline-and-boundary
+daf222f3100d3d3e4d112f508099e992cec612d4	refs/heads/chore/review-layers
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/heads/claude/aegis-google-okta-jamf-wibzp6
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/heads/codex/public-safety-repair
+6f579ccd30e6d1e4a884e80e033518da5a924ccf	refs/heads/feat/g2-gws-fleet-jamf-slack-linear
+f18507189815dbbdb25c238bf64e2f501fd238fc	refs/heads/main
+ee7eea6b3cb5e95b49cc6642d08396ccef673afa	refs/pull/1/head
+f99aaab0613e213556030d5c827aa40dceebfa87	refs/pull/2/head
+daf222f3100d3d3e4d112f508099e992cec612d4	refs/pull/3/head
+7969e791991122d529f790c37f926680071e5f6d	refs/pull/4/head
+6f579ccd30e6d1e4a884e80e033518da5a924ccf	refs/pull/5/head

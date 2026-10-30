@@ -31,6 +31,7 @@
 const {
   STATES, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
+const { cliDeps, recordVerdict } = require('./cli-support.js');
 
 // ── Validators ───────────────────────────────────────────────────────────────
 const ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software title ids
@@ -89,6 +90,22 @@ const SPEC = defineAdapter({
     mdmCommands: { method: 'GET', path: '/api/v1/fleet/commands', query: { host_identifier: IDENTIFIER, request_type: REQUEST_TYPE, command_status: COMMAND_STATUS, page: PAGE, per_page: PER_PAGE } },
     activities: { method: 'GET', path: '/api/v1/fleet/activities', fixedQuery: NEWEST_FIRST, query: { page: PAGE, per_page: PER_PAGE } },
     reportResults: { method: 'GET', path: '/api/v1/fleet/reports/:id/report', params: { id: ID } },
+  },
+  // batch G3: the scope preflight reads the API user's roles from /me first (Fleet REST API,
+  // fleetdm/fleet docs, read 2026-10-28); only the observer role passes, globally or per
+  // team (Fleet calls teams fleets too). observer_plus can run live reports on hosts, and
+  // maintainer, admin, technician and gitops can change hosts, so each is refused.
+  scopes: {
+    manifest: 'fleet', kind: 'route', vendor: 'Fleet', route: 'me',
+    granted: (body) => {
+      const user = body && body.user;
+      if (!user || typeof user !== 'object') return null;
+      const roles = new Set();
+      if (typeof user.global_role === 'string' && user.global_role) roles.add(`global:${user.global_role}`);
+      for (const list of [user.teams, user.fleets]) for (const t of Array.isArray(list) ? list : []) if (t && typeof t.role === 'string') roles.add(`team:${t.role}`);
+      return [...roles];
+    },
+    allowed: (role) => role === 'global:observer' || role === 'team:observer',
   },
 });
 
@@ -414,6 +431,30 @@ async function verifyDeleted(read, args) {
   };
 }
 
+// batch G3 (task 5d): the MDM check-in read-back. last_mdm_checked_in_at and
+// mdm.enrollment_status come from GET /hosts/:id (vendor facts F-07, F-08).
+async function verifyCheckedIn(read, args) {
+  const r = await read('host', { id: args.id });
+  if (!r.ok) return { failed: r };
+  const host = hostOf(r.data);
+  const mdm = mdmOf(host);
+  const observed = {
+    'host.id': field(host, 'id'),
+    'host.platform': field(host, 'platform'),
+    'host.status': field(host, 'status'),
+    'host.seen_time': field(host, 'seen_time'),
+    'host.last_mdm_checked_in_at': field(host, 'last_mdm_checked_in_at'),
+    'host.mdm.enrollment_status': field(mdm, 'enrollment_status'),
+  };
+  const expected = { 'host.id': Number(args.id), 'host.mdm.enrollment_status': 'On (...)', 'host.last_mdm_checked_in_at': `at or after ${args['not-before']}` };
+  const enrolled = typeof observed['host.mdm.enrollment_status'] === 'string' && /^On\b/.test(observed['host.mdm.enrollment_status']);
+  const checkedIn = Date.parse(observed['host.last_mdm_checked_in_at']);
+  if (observed['host.id'] !== Number(args.id)) return { verified: false, observed, expected, note: 'the response is not the host asked for' };
+  if (!enrolled) return { verified: false, observed, expected, note: 'the host is not enrolled in MDM, so it has no MDM check-in: read host.seen_time and host.status for the agent instead' };
+  const verified = Number.isFinite(checkedIn) && checkedIn >= Date.parse(args['not-before']);
+  return { verified, observed, expected, note: verified ? undefined : `the last MDM check-in is not at or after ${args['not-before']}; ask the person to open the device and check in, then read again` };
+}
+
 const VERIFIES = {
   'verify-lock': {
     summary: 'prove a human lock: mdm.device_status is locked and nothing is pending',
@@ -455,6 +496,19 @@ const VERIFIES = {
     required: ['id'],
     requests: (a) => [['hostMdm', { id: a.id }], ['host', { id: a.id }]],
     verify: verifyMdmOff,
+  },
+  'verify-checked-in': {
+    summary: 'prove a device checked in: MDM enrollment On and last_mdm_checked_in_at at or after --not-before',
+    usage: '--id [HOST_ID] --not-before [NOT_BEFORE]',
+    values: ['id', 'not-before'],
+    required: ['id', 'not-before'],
+    check: (a, now) => {
+      if (!TIMESTAMP.test(a['not-before'])) throw new RefusedError('--not-before must be an ISO 8601 time with a zone, for example 2026-10-27T09:00:00Z');
+      if (!realCalendarTime(a['not-before'])) throw new RefusedError('--not-before is not a real date and time');
+      if (Date.parse(a['not-before']) > now()) throw new RefusedError('--not-before is in the future');
+    },
+    requests: (a) => [['host', { id: a.id }]],
+    verify: verifyCheckedIn,
   },
   'verify-deleted': {
     summary: 'prove a human host deletion: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolves to that host',
@@ -501,7 +555,7 @@ function helpText() {
 
 function emit(output, { out, err, secrets = [] }) {
   const code = exitCodeFor(output);
-  (code === 1 ? err : out)(renderResult(output, { secrets }));
+  (code === 1 ? err : out)(renderResult(output, { secrets, platform: 'fleet' }));
   return code;
 }
 
@@ -533,7 +587,9 @@ async function run(argv, env = process.env, deps = {}) {
     return emit({ command: name, state: STATES.REFUSED, ok: false, error: error.message }, { out, err });
   }
 
-  const client = createClient(SPEC, { env, transport: deps.transport, sleep: deps.sleep, now: deps.now });
+  // batch G3: the audit sink (and the test seams) come from cliDeps
+  const cli = cliDeps(deps, env);
+  const client = createClient(SPEC, { env, ...cli });
 
   // Every request known before the read is checked here, with no credential read.
   const planned = [];
@@ -577,7 +633,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (outcome.note) output.note = outcome.note;
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
-  return emit(output, { out, err, secrets });
+  return emit(recordVerdict(cli.audit, 'fleet', output), { out, err, secrets });
 }
 
 // Read only after the client has used it, so printed output can be redacted

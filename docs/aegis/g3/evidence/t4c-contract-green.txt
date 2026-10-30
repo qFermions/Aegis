@@ -1,0 +1,44 @@
+# command: node --test scripts/adapters/contract-g3.test.js scripts/adapters/readonly-contract.test.js
+# commit: 42b5362 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:07:22Z  node: v24.22.1
+✔ Retry-After in seconds or as an HTTP date is waited exactly, up to 30 s, then the read succeeds (7.339729ms)
+✔ a Retry-After over 30 s is not waited out: the read stops in RETRY_AFTER_TOO_LONG with when to try again (1.02168ms)
+✔ without Retry-After the backoff doubles from 200 ms to a 2 s cap with jitter inside [base/2, base] (2.973362ms)
+✔ the total retry time is capped: a retry that would pass the budget is not made (RETRY_BUDGET_SPENT) (0.725599ms)
+✔ every exhausted read ends in RETRIES_EXHAUSTED with what failed, what was not done and the next step (153.260642ms)
+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.64698ms)
+✔ a request id of a safe form is kept from the response headers; anything else is dropped (2.640251ms)
+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (3.017627ms)
+✔ renderResult adds a plain operator message and an admin detail line to every failure, and nothing to a success (2.226748ms)
+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (7.740107ms)
+✔ every method but GET is refused before credentials are read or the transport is called (2.023641ms)
+✔ a GET outside the allow-list is refused: unknown path, extra query key, bad parameter, traversal, another host (2.002503ms)
+✔ GraphQL: a named query document is sent byte-equal; anything else is refused before the network (2.311222ms)
+✔ GraphQL operation scanner: a mutation or subscription anywhere at the top level is refused; strings and comments do not count (4.510657ms)
+✔ a spec that defines a mutation document, or a non-GET route, fails to build (0.528641ms)
+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.05808ms)
+✔ missing credentials name the variable, never a value, and nothing is sent (0.824346ms)
+✔ no credential value appears in any result, error, thrown message or printed line (6.807617ms)
+✔ instruction text in a response field is returned quoted with a flag, and nothing acts on it (1.268133ms)
+✔ a response holding a record from another tenant is refused and returns no data (1.091441ms)
+✔ a request that outlives its timeout is TIMEOUT; reads retry a bounded number of times (63.048035ms)
+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.663202ms)
+✔ invalid or oversized responses are INVALID_RESPONSE, never partial data (22.094937ms)
+✔ the default transport throws the network tripwire in tests; no socket is opened (0.939734ms)
+✔ plan() describes an allowed request with no credentials and no network; a refused one says why (0.447929ms)
+✔ GraphQL scanner: a bare carriage return ends a comment, so a mutation after "# note\r" is refused (0.234244ms)
+✔ a response over the read limit is INVALID_RESPONSE "larger than the read limit", reported once and never retried (0.369655ms)
+✔ the HTTPS transport ends a request at its deadline, even while bytes keep trickling in (40.91025ms)
+✔ the HTTPS transport stops an oversized body with a typed error the client does not retry (0.461415ms)
+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.483285ms)
+✔ a path parameter that needs encoding is allowed through get() and plan(); a raw send() of an encoded, slash or dot segment is refused (0.732163ms)
+✔ --not-before must be a real calendar time: an impossible date is refused by the contract and by every adapter that takes it (104.657168ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 388.042172
+# exit: 0  finished: 2026-10-28T08:07:23Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -13,6 +13,13 @@
  * for a read. --execute or --confirm on a write is refused before credentials or
  * network.
  *
+ * Every read goes through the shared read-only contract
+ * (scripts/adapters/readonly-contract.js, batch G3): JIRA_SPEC below is the allow-list of
+ * GET routes; the contract refuses any other path or method before a credential is read,
+ * retries a read a bounded number of times, redacts the credentials from what it returns,
+ * flags instruction text in an answer as data, and reports one of its named states. Its
+ * transport is this file's GET-only apiRequest, which also honours the network tripwire.
+ *
  * Configuration (environment only):
  *   JIRA_SITE             bare <tenant>.atlassian.net hostname
  *   JIRA_EMAIL            API-token owner email
@@ -26,15 +33,26 @@
  *   node scripts/jira-client.js comment --issue HELP-123 --body "..."
  *   node scripts/jira-client.js transition --issue HELP-123 --to Resolved --execute
  *
+ * Every failure also prints two lines on stderr (batch G3): "Aegis: " and a plain message
+ * (what happened, what was not done, the next step), and "admin detail: " with the platform,
+ * operation, state, status, attempts, request id and handoff. A person running the CLI gets
+ * the audit trail (scripts/audit/): each read, each verify-* verdict and each printed
+ * HUMAN-RUN procedure is recorded first.
+ *
  * Exit codes: 0 preview, read or verified read-back; 1 input error or a refused
  * write; 2 API, preflight or read-back failure (including a read-back that does not
- * prove the human's write).
+ * prove the human's write); 4 a verify-* dry run: nothing was read, so nothing is
+ * verified.
  */
 
 'use strict';
 
 const crypto = require('node:crypto');
 const https = require('node:https');
+
+const { STATES, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
+const { operatorMessage } = require('./adapters/operator-message.js');
+const { auditSink, defaultAuditDir } = require('./audit/audit-log.js');
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TRANSITION_PAGE_LIMIT = 50;
@@ -65,10 +83,17 @@ const VALUE_FLAGS = new Set([
 const KNOWN_FLAGS = new Set([...BOOLEAN_FLAGS, ...VALUE_FLAGS]);
 
 class InputError extends Error {}
+// batch G3: missing credentials are their own input error, so the operator message names them
+class CredentialsError extends InputError {}
+// batch G3: the audit trail could not record a read, a verdict or a printed procedure
+class AuditError extends Error {}
 class ApiError extends Error {
-  constructor(status = null) {
+  // result: the contract's failure result (state, status, attempts), when the read went
+  // through the contract; it carries no body and no credential.
+  constructor(status = null, result = null) {
     super('Jira API request failed');
     this.status = Number.isInteger(status) ? status : null;
+    this.result = result;
   }
 }
 class ContractError extends Error {}
@@ -157,14 +182,40 @@ function loadCredentials(env = process.env) {
   const missing = [];
   if (!env.JIRA_EMAIL) missing.push('JIRA_EMAIL');
   if (!env.JIRA_API_TOKEN) missing.push('JIRA_API_TOKEN');
-  if (missing.length) throw new InputError(`Missing required env vars: ${missing.join(', ')}.`);
+  if (missing.length) throw new CredentialsError(`Missing required env vars: ${missing.join(', ')}.`);
   return { email: String(env.JIRA_EMAIL), token: String(env.JIRA_API_TOKEN) };
 }
+
+// The Jira reads as a contract spec: every request the client sends must match one of
+// these GET routes, with an issue key, a numeric id and bounded paging values.
+const ISSUE_KEY_PATTERN = /^[A-Z][A-Z0-9_]{0,19}-[1-9][0-9]*$/;
+const NUMERIC_ID_PATTERN = /^[1-9][0-9]{0,18}$/;
+const JIRA_SPEC = defineAdapter({
+  platform: 'jira',
+  host: { env: 'JIRA_SITE' },
+  credentials: ['JIRA_EMAIL', 'JIRA_API_TOKEN'],
+  auth: (creds) => ({ Authorization: `Basic ${Buffer.from(`${creds.JIRA_EMAIL}:${creds.JIRA_API_TOKEN}`, 'utf8').toString('base64')}` }),
+  routes: {
+    servicedesk: { method: 'GET', path: '/rest/servicedeskapi/servicedesk' },
+    requesttype: { method: 'GET', path: '/rest/servicedeskapi/servicedesk/:desk/requesttype', params: { desk: NUMERIC_ID_PATTERN } },
+    request: { method: 'GET', path: '/rest/servicedeskapi/request/:issue', params: { issue: ISSUE_KEY_PATTERN } },
+    transitions: {
+      method: 'GET',
+      path: '/rest/servicedeskapi/request/:issue/transition',
+      params: { issue: ISSUE_KEY_PATTERN },
+      query: { start: /^(?:0|[1-9][0-9]{0,5})$/, limit: /^[1-9][0-9]{0,2}$/ },
+    },
+    comment: { method: 'GET', path: '/rest/servicedeskapi/request/:issue/comment/:comment', params: { issue: ISSUE_KEY_PATTERN, comment: NUMERIC_ID_PATTERN } },
+  },
+  // batch G3: an API token's scopes cannot be read back (developer.atlassian.com, read
+  // 2026-10-28); the first result says so
+  scopes: { manifest: 'jira', kind: 'none', vendor: 'Jira' },
+});
 
 function normalizeCredentials(credentials) {
   if (!credentials || typeof credentials.email !== 'string' || credentials.email.length === 0 ||
       typeof credentials.token !== 'string' || credentials.token.length === 0) {
-    throw new InputError('Credential provider must return non-empty email and token values.');
+    throw new CredentialsError('Credential provider must return non-empty email and token values.');
   }
   return { email: credentials.email, token: credentials.token };
 }
@@ -187,6 +238,25 @@ function buildCreatePayload({ serviceDeskId, requestTypeId, summary, description
 
 function buildCommentPayload({ body, isPublic }) {
   return { body: requireText(body, 'comment body'), public: isPublic === true };
+}
+
+// The Jira editor may store a pasted note with CRLF line ends, trailing spaces or
+// non-breaking spaces (batch 1 finding 10). The comment digest is taken over the body with
+// those normalised: CR LF and CR to LF, U+00A0 to a space, trailing spaces and tabs removed
+// from each line, trailing newlines removed. Any other change, a word or markup the editor
+// converted, changes the digest, so a converted note fails closed.
+function normaliseCommentBody(text) {
+  return String(text)
+    .replace(/\r\n?/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+$/, ''))
+    .join('\n')
+    .replace(/\n+$/, '');
+}
+
+function commentDigest({ body, public: isPublic }) {
+  return sha256Hex(serializePayload({ body: normaliseCommentBody(body), public: isPublic === true }));
 }
 
 // The build*Confirmation helpers produce the binding line printed with every HUMAN-RUN
@@ -247,6 +317,8 @@ function apiRequest(cfg, method, apiPath, payload = null, options = {}) {
     throw new InputError('Jira API path must be a local /rest/servicedeskapi/ path without controls.');
   }
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new InputError('Request timeout must be positive.');
+  // the same tripwire as the contract's own transport: no test reaches a real Jira site
+  if (!options.request && process.env.AEGIS_NETWORK_TRIPWIRE === '1') throw new TripwireError();
 
   return new Promise((resolve, reject) => {
     const auth = Buffer.from(`${credentials.email}:${credentials.token}`, 'utf8').toString('base64');
@@ -278,7 +350,7 @@ function apiRequest(cfg, method, apiPath, payload = null, options = {}) {
         clearTimeout(timer);
         let json = null;
         try { json = raw.length ? JSON.parse(raw) : null; } catch { /* response bodies are never echoed */ }
-        resolve({ status: response.statusCode, body: raw, json });
+        resolve({ status: response.statusCode, headers: response.headers || {}, body: raw, json });
       });
     });
     request.on('error', finishError);
@@ -292,10 +364,38 @@ function apiRequest(cfg, method, apiPath, payload = null, options = {}) {
   });
 }
 
+// The default fetch: one Jira read through the shared contract. A 2xx returns the JSON with
+// the credentials redacted and any instruction-like text flagged; a non-2xx returns its
+// status with the body withheld; a refused request is an input error; every other failure
+// (timeout, network, an answer that is not JSON) is an API failure carrying the contract's
+// result for the operator message.
+async function contractFetch(cfg, method, apiPath, deps = {}) {
+  const site = normalizeSite(cfg && cfg.site);
+  const credentials = normalizeCredentials(cfg);
+  const env = { JIRA_SITE: site, JIRA_EMAIL: credentials.email, JIRA_API_TOKEN: credentials.token };
+  const transport = deps.transport ||
+    ((request) => apiRequest({ site, ...credentials }, request.method, request.path, null, { timeoutMs: request.timeoutMs }));
+  const client = createClient(JIRA_SPEC, { env, transport, sleep: deps.sleep, random: deps.random, timeoutMs: deps.timeoutMs, audit: deps.audit, scopePreflight: deps.scopePreflight === true });
+  const res = await client.send({ method, path: apiPath });
+  if (res.state === STATES.OK) return { status: res.status, json: res.data, flags: res.flags, result: res };
+  if (res.state === STATES.HTTP_ERROR) return { status: res.status, json: null, result: res };
+  if (res.state === STATES.REFUSED) throw new InputError(`Refused by the read-only contract: ${res.error}`);
+  throw new ApiError(null, res);
+}
+
 function createRuntime(env, dependencies = {}) {
+  // batch G3: a person running the CLI gets the audit sink; a test that injects a fetch or a
+  // transport gets none unless it passes one
+  const injected = typeof dependencies.fetch === 'function' || typeof dependencies.transport === 'function';
+  let audit = null;
+  if (dependencies.audit !== undefined) audit = typeof dependencies.audit === 'function' ? dependencies.audit : null;
+  else if (!injected) audit = auditSink({ AEGIS_AUDIT_DIR: defaultAuditDir(env && env.AEGIS_AUDIT_DIR ? env : process.env) });
+  const scopePreflight = dependencies.scopePreflight !== undefined ? dependencies.scopePreflight === true : !injected;
+  const contractDeps = { transport: dependencies.transport, sleep: dependencies.sleep, random: dependencies.random, timeoutMs: dependencies.timeoutMs, audit, scopePreflight };
   return {
     env,
-    fetch: dependencies.fetch || apiRequest,
+    audit,
+    fetch: dependencies.fetch || ((cfg, method, apiPath) => contractFetch(cfg, method, apiPath, contractDeps)),
     getCredentials: dependencies.getCredentials || loadCredentials,
     now: dependencies.now || Date.now,
     out: dependencies.out || defaultOut,
@@ -313,15 +413,16 @@ async function fetchResponse(runtime, cfg, method, apiPath) {
   let response;
   try {
     response = await runtime.fetch(cfg, method, apiPath);
-  } catch {
-    throw new ApiError();
+  } catch (error) {
+    if (error instanceof InputError) throw error;
+    throw new ApiError(null, error instanceof ApiError ? error.result : null);
   }
   if (!response || !Number.isInteger(response.status)) throw new ApiError();
   return response;
 }
 
 function requireSuccess(response) {
-  if (!isSuccessfulStatus(response.status)) throw new ApiError(response.status);
+  if (!isSuccessfulStatus(response.status)) throw new ApiError(response.status, response.result || null);
   return response;
 }
 
@@ -331,7 +432,37 @@ function refuseWrite(runtime, next) {
   runtime.err(WRITE_REFUSAL);
   runtime.err(next);
   runtime.err('No credentials were read and no network call was made.');
+  printFailure(runtime, 'REFUSED', {}, null);
   return 1;
+}
+
+// batch G3: the two-part failure message (scripts/adapters/operator-message.js), as two
+// stderr lines after the client's own line.
+function printFailure(runtime, state, extra, command) {
+  const m = operatorMessage({ state, ok: false, ...extra }, { platform: 'jira', operation: command || null });
+  runtime.err(`Aegis: ${m.operator}`);
+  runtime.err(`admin detail: ${m.admin}`);
+}
+
+// batch G3: each HUMAN-RUN procedure the client prints is recorded in the audit trail
+// first (command, R class, a placeholder target and the payload digest); if it cannot be
+// recorded, nothing is printed.
+function recordProcedure(runtime, command, digest) {
+  if (!runtime.audit) return;
+  try {
+    runtime.audit({ kind: 'procedure', command, gate: null, r_class: 'R1', target: '[JIRA-###]', read_back: null, procedure_sha256: digest, change: null });
+  } catch {
+    throw new AuditError('the audit trail could not record the procedure, so it was not printed');
+  }
+}
+
+function recordJiraVerdict(runtime, command, verified) {
+  if (!runtime.audit) return;
+  try {
+    runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: null });
+  } catch {
+    throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
+  }
 }
 
 function previewNotBefore(runtime) {
@@ -451,7 +582,7 @@ function verifyCommentReadBack(json, commentId, expectSha256) {
   if (!json || typeof json !== 'object') throw new ContractError('Malformed comment read-back.');
   const id = String(json.id === undefined ? '' : json.id);
   if (id !== commentId || typeof json.body !== 'string' || typeof json.public !== 'boolean' ||
-      sha256Hex(serializePayload({ body: json.body, public: json.public })) !== expectSha256) {
+      commentDigest({ body: json.body, public: json.public }) !== expectSha256) {
     throw new ContractError('Comment read-back did not prove the approved id, body, and visibility.');
   }
   return { id };
@@ -589,6 +720,7 @@ function createPayloadFromArgs(runtime, args) {
 async function cmdCreate(runtime, args) {
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const payload = createPayloadFromArgs(runtime, args);
+  recordProcedure(runtime, 'jira-create', sha256Hex(serializePayload(payload)));
   runtime.out(`PREVIEW - exact create payload: ${serializePayload(payload)}`);
   runtime.out(`Payload binding: ${buildCreateConfirmation(site, payload)}`);
   printProcedure(runtime, [
@@ -611,14 +743,15 @@ async function cmdComment(runtime, args) {
   const payload = buildCommentPayload({ body: args.body, isPublic: args.public });
   const visibility = payload.public ? 'PUBLIC' : 'INTERNAL';
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}/comment`;
+  recordProcedure(runtime, 'jira-comment', commentDigest(payload));
   runtime.out(`PREVIEW - exact comment payload: ${serializePayload(payload)}`);
   runtime.out(`Visibility: ${visibility}${payload.public ? ' (the reporter can read it)' : ' (agents only)'}`);
   runtime.out(`Payload binding: ${buildCommentConfirmation(site, issueKey, payload)}`);
   printProcedure(runtime, [
-    `  1. Portal: open ${issueKey} -> ${payload.public ? 'Reply to customer' : 'Add internal note'} -> paste the body from the payload above, unedited -> Save.`,
+    `  1. Portal: open ${issueKey} -> ${payload.public ? 'Reply to customer' : 'Add internal note'} -> paste the body from the payload above, unedited, in the plain-text editor (the rich-text editor may convert markup and the read-back would then fail closed) -> Save.`,
     ...apiLines(site, apiPath, payload),
     '  3. Prove it with a read-back, using the comment id Jira returned:',
-    `     node scripts/jira-client.js verify-comment --issue ${issueKey} --comment-id [COMMENT_ID] --expect-sha256 ${sha256Hex(serializePayload(payload))}` +
+    `     node scripts/jira-client.js verify-comment --issue ${issueKey} --comment-id [COMMENT_ID] --expect-sha256 ${commentDigest(payload)}` +
       ` --not-before ${previewNotBefore(runtime)} --execute`,
   ]);
   if (args.execute === true || args.confirm !== undefined) {
@@ -658,6 +791,7 @@ async function cmdTransition(runtime, args) {
   const cfg = await networkConfig(runtime, site);
   const preflight = await preflightTransition(runtime, cfg, issueKey, selector);
   const { snapshot, transition } = preflight;
+  recordProcedure(runtime, 'jira-transition', sha256Hex(preflight.confirmation));
   runtime.out(`Preflight target: ${snapshot.issueKey} ID ${snapshot.issueId}; current status=${snapshot.currentStatus}.`);
   runtime.out(`Resolved transition: ID ${transition.id} name=${transition.name}.`);
   runtime.out(`Transition binding: ${preflight.confirmation}`);
@@ -685,9 +819,14 @@ function requireVerifyFlags(command, args) {
   if (extra.length) throw new InputError(`${command} does not take --${extra[0]}; pass only the values the preview printed (${VERIFY_FLAGS[command].map((f) => `--${f}`).join(' ')}).`);
 }
 
+// A verify-* dry run proves nothing, so it has its own exit code: never 0, the code of a
+// passed read-back (batch 1 finding 7).
+const EXIT_VERIFY_DRY_RUN = 4;
+
 function dryRunRead(runtime, args, apiPath) {
   if (args.execute === true) return false;
   runtime.out(`DRY RUN - would GET ${apiPath}. Add --execute to perform this read.`);
+  runtime.out('NOT VERIFIED: a dry run reads nothing, so it proves nothing (exit 4).');
   return true;
 }
 
@@ -700,7 +839,7 @@ async function cmdVerifyCreate(runtime, args) {
   const expectSha256 = requireDigest(args);
   const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}`;
-  if (dryRunRead(runtime, args, apiPath)) return 0;
+  if (dryRunRead(runtime, args, apiPath)) return EXIT_VERIFY_DRY_RUN;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   const observed = verifyCreatedRequestReadBack(response.json, issueKey, expectSha256);
@@ -722,7 +861,7 @@ async function cmdVerifyComment(runtime, args) {
   const expectSha256 = requireDigest(args);
   const notBefore = requireNotBefore(args);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}/comment/${encodeURIComponent(commentId)}`;
-  if (dryRunRead(runtime, args, apiPath)) return 0;
+  if (dryRunRead(runtime, args, apiPath)) return EXIT_VERIFY_DRY_RUN;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   verifyCommentReadBack(response.json, commentId, expectSha256);
@@ -746,7 +885,7 @@ async function cmdVerifyTransition(runtime, args) {
   if (/^\[.*\]$/.test(toStatus)) throw new InputError('--to-status still holds the placeholder; name the status the transition should leave.');
   const site = normalizeSite(runtime.env.JIRA_SITE);
   const apiPath = `/rest/servicedeskapi/request/${encodeURIComponent(issueKey)}`;
-  if (dryRunRead(runtime, args, apiPath)) return 0;
+  if (dryRunRead(runtime, args, apiPath)) return EXIT_VERIFY_DRY_RUN;
   const cfg = await networkConfig(runtime, site);
   const response = requireSuccess(await fetchResponse(runtime, cfg, 'GET', apiPath));
   const after = normalizeCustomerRequest(response.json, issueKey);
@@ -781,22 +920,50 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
       throw new InputError('Usage: node scripts/jira-client.js ' +
         '<list-desks|list-types|create|comment|get|transition|verify-create|verify-comment|verify-transition> [flags]');
     }
-    return await COMMANDS[command](runtime, args);
+    const code = await COMMANDS[command](runtime, args);
+    if (code === 0 && /^verify-/.test(command)) recordJiraVerdict(runtime, command, true);
+    return code;
   } catch (error) {
+    const command = args && args._ ? args._[0] : null;
+    const op = typeof command === 'string' && COMMANDS[command] ? command : null;
     if (error instanceof InputError) {
       runtime.err(`Input error: ${error.message}`);
+      printFailure(runtime, error instanceof CredentialsError ? 'NO_CREDENTIALS' : 'REFUSED', {}, op);
       return 1;
+    }
+    if (error instanceof AuditError) {
+      runtime.err(`Jira operation stopped: ${error.message}.`);
+      printFailure(runtime, 'AUDIT_FAILED', {}, op);
+      return 2;
+    }
+    // a read-back that ran and did not prove the write is a verdict, recorded as such
+    if (op && /^verify-/.test(op) && (error instanceof ContractError || error instanceof ApiError)) {
+      try { recordJiraVerdict(runtime, op, false); } catch {
+        runtime.err('Jira operation stopped: the audit trail could not record this read-back, so its verdict is withheld.');
+        printFailure(runtime, 'AUDIT_FAILED', {}, op);
+        return 2;
+      }
     }
     if (error instanceof ApiError) {
       const suffix = error.status === null ? '' : ` (HTTP ${error.status})`;
       runtime.err(`Jira API request failed${suffix}; response body withheld.`);
+      const r = error.result;
+      if (r && typeof r.state === 'string') {
+        printFailure(runtime, r.state, { status: r.status, attempts: r.attempts, request_id: r.request_id, handoff: r.handoff }, op);
+      } else {
+        printFailure(runtime, error.status === null ? 'NETWORK_ERROR' : 'HTTP_ERROR', { status: error.status === null ? undefined : error.status }, op);
+      }
       return 2;
     }
     if (error instanceof ContractError) {
       runtime.err(`Jira preflight/read-back contract failed: ${error.message} This client sends no writes.`);
+      // a verify-* that read and did not match is a read-back that did not prove the write
+      if (op && /^verify-/.test(op)) printFailure(runtime, 'OK', { verified: false }, op);
+      else printFailure(runtime, 'INVALID_RESPONSE', {}, op);
       return 2;
     }
     runtime.err('Jira operation failed safely; details withheld.');
+    printFailure(runtime, 'INVALID_RESPONSE', {}, op);
     return 2;
   }
 }
@@ -806,6 +973,8 @@ if (require.main === module) {
 }
 
 module.exports = {
+  EXIT_VERIFY_DRY_RUN,
+  JIRA_SPEC,
   REQUEST_TIMEOUT_MS,
   TRANSITION_PAGE_LIMIT,
   apiRequest,
@@ -814,11 +983,14 @@ module.exports = {
   buildCreateConfirmation,
   buildCreatePayload,
   buildTransitionConfirmation,
+  commentDigest,
+  contractFetch,
   createDigest,
   fetchAllTransitions,
   loadCredentials,
   normalizeIssueKey,
   normalizeSite,
+  normaliseCommentBody,
   normalizeWriteReceipt,
   parseArgs,
   preflightTransition,

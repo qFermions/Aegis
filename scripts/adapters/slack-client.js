@@ -101,6 +101,7 @@ const {
   STATES, RefusedError, TRIPWIRE_MESSAGE,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
+const { cliDeps, recordVerdict } = require('./cli-support.js');
 
 const HOST = 'slack.com';
 const HISTORY_LIMIT = '50';
@@ -149,6 +150,13 @@ function teamIdsIn(json) {
 }
 
 const appListQuery = { team_id: PATTERNS.team, limit: PATTERNS.limit1000, cursor: PATTERNS.cursor };
+
+// batch G3: the scope preflight (scripts/adapters/scope-manifest.json). Slack returns the
+// token's scopes in the x-oauth-scopes header (docs.slack.dev, legacy OAuth scopes page,
+// read 2026-10-28). Only read scopes pass: names ending in :read, :read.<detail> or
+// :history; admin passes only for the access-logs token, whose one read needs it.
+const SLACK_READ_SCOPE = /^[a-z][a-z0-9_.]*:(?:read(?:\.[a-z0-9_]+)?|history)$/;
+const scopeList = (value) => String(value).split(',').map((s) => s.trim()).filter(Boolean);
 const AUTH_TEST_ROUTE = { method: 'GET', path: '/api/auth.test' };
 
 const SPEC = defineAdapter({
@@ -173,6 +181,7 @@ const SPEC = defineAdapter({
     'admin.apps.restricted.list': { method: 'GET', path: '/api/admin.apps.restricted.list', query: appListQuery },
   },
   tenant: { env: 'SLACK_TEAM_ID', collect: teamIdsIn },
+  scopes: { manifest: 'slack', kind: 'header', vendor: 'Slack', header: 'x-oauth-scopes', granted: scopeList, allowed: (s) => SLACK_READ_SCOPE.test(s) },
 });
 
 // team.accessLogs needs the admin scope, so it has its own spec and its own token
@@ -187,6 +196,7 @@ const ACCESS_LOGS_SPEC = defineAdapter({
     'team.accessLogs': { method: 'GET', path: '/api/team.accessLogs', query: { count: PATTERNS.limit1000, page: PATTERNS.page100 } },
   },
   tenant: { env: 'SLACK_TEAM_ID', collect: teamIdsIn },
+  scopes: { manifest: 'slack-access-logs', kind: 'header', vendor: 'Slack', header: 'x-oauth-scopes', granted: scopeList, allowed: (s) => s === 'admin' || SLACK_READ_SCOPE.test(s) },
 });
 
 for (const spec of [SPEC, ACCESS_LOGS_SPEC]) {
@@ -752,7 +762,7 @@ async function run(argv, env, deps = {}) {
   const err = typeof deps.err === 'function' ? deps.err : (s) => process.stderr.write(s);
   const now = typeof deps.now === 'function' ? deps.now : Date.now;
   const emit = (res, secrets = []) => {
-    out(renderResult(res, { secrets }));
+    out(renderResult(res, { secrets, platform: 'slack' }));
     return exitCodeFor(res);
   };
   const refuse = (command, error) => {
@@ -766,6 +776,7 @@ async function run(argv, env, deps = {}) {
   const ctx = {};
   let steps;
   let client;
+  let cli = null;
   try {
     ({ command, def, args } = parseCommand(argv));
     if (def.kind === 'offline') {
@@ -780,7 +791,9 @@ async function run(argv, env, deps = {}) {
       ctx.oldest = oldestFromMs(ctx.notBeforeMs);
     }
     steps = def.steps(args, ctx);
-    client = createClient(def.spec || SPEC, { env: environment, transport: deps.transport, sleep: deps.sleep, now: deps.now });
+    // batch G3: the audit sink (and the test seams) come from cliDeps
+    cli = cliDeps(deps, environment);
+    client = createClient(def.spec || SPEC, { env: environment, ...cli });
     const planned = steps.map((s) => client.plan(s.route, {}, s.query));
     const refusedPlan = planned.find((p) => p.state !== STATES.OK);
     if (refusedPlan) throw new RefusedError(refusedPlan.error);
@@ -803,7 +816,7 @@ async function run(argv, env, deps = {}) {
   }
 
   const res = def.kind === 'verify'
-    ? await def.verify(command, args, ctx, client, steps)
+    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps))
     : await runRead(command, def, steps, client);
   // Only the variable this command's spec names is read, and only after the request
   // was allowed; that value is redacted from everything printed.

@@ -1,0 +1,16 @@
+# command: node --test scripts/readiness-gate.test.js
+# commit: 95c3f5d (plus uncommitted changes in the working tree)  started: 2026-10-28T09:34:22Z  node: v24.22.1
+✔ every criterion names a command, a file or an owner action, and who runs it (1.788399ms)
+✔ the charter criteria are all there, and the three that need the owner are labeled owner only (0.729675ms)
+✔ every repository path the page names exists (3.111307ms)
+✔ the page never marks the gate passed (0.407043ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.460084
+# exit: 0  finished: 2026-10-28T09:34:22Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

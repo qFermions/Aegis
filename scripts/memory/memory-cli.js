@@ -191,9 +191,23 @@ function ledger(event, fields) {
   } catch (e) { /* instrumentation only */ }
 }
 
+// The event names this CLI writes. A reader counts these by name; any other name (a line
+// edited on disk) is counted as unknown and never printed, and a line that is not JSON is
+// counted as malformed instead of crashing the reader (batch G3).
+const LEDGER_EVENTS = new Set(['RESEAL_REFUSED', 'TENANT_BOUND', 'INVALID', 'BLOCKED', 'CASE_REFUSED', 'DUPLICATE', 'PROPOSED',
+  'MERGED', 'GATE_REFUSED', 'CONFLICT_REFUSED', 'PROMOTED', 'REJECTED', 'VERIFIED', 'MARKED_STALE', 'DECLINED']);
+
 function readLedger() {
-  if (!fs.existsSync(LEDGER_PATH)) return [];
-  return fs.readFileSync(LEDGER_PATH, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  if (!fs.existsSync(LEDGER_PATH)) return { entries: [], malformed: 0 };
+  const entries = [];
+  let malformed = 0;
+  for (const line of fs.readFileSync(LEDGER_PATH, 'utf8').split('\n').filter(Boolean)) {
+    let entry;
+    try { entry = JSON.parse(line); } catch { entry = null; }
+    if (entry && typeof entry === 'object' && !Array.isArray(entry)) entries.push(entry);
+    else malformed += 1;
+  }
+  return { entries, malformed };
 }
 
 // ── tenant binding (one store, one tenant) ───────────────────────────────────
@@ -281,7 +295,9 @@ function acquireLock() {
   let stole = false;
   const again = lockAge(LOCK_PATH);
   if (again === null || (again >= LOCK_STALE_MS && lockOwner() === seen)) { // still the stale lock (crashed writer)
-    removeLockDir();
+    // A lock already gone is not removed: another writer may have taken it since the
+    // second look, so only the create is retried (EEXIST then means that writer holds it).
+    if (again !== null) removeLockDir();
     try { takeLock(); stole = true; } catch (e) { if (e.code !== 'EEXIST') { fs.rmdirSync(STEAL_PATH); throw e; } }
   }
   fs.rmdirSync(STEAL_PATH);
@@ -608,10 +624,14 @@ function cmdShow(id) {
 }
 
 // Evidence audit: reports, never gates. A memory whose evidence has left the
-// disk stays verified (truth ≠ file retention) but the loss is visible.
+// disk stays verified (truth ≠ file retention) but the loss is visible. The record
+// goes through the same integrity check as list and show; a record that is not
+// intact prints its id and why, never its stored status or evidence refs.
 function cmdAudit(id) {
   const rec = loadRecord(id);
-  out({ ok: true, id: rec.id, status: rec.status, evidence: auditProvenance(rec) });
+  const integrity = integrityOf(loadIndex().records.find((row) => row.id === id), rec);
+  if (integrity !== 'intact') return out({ ok: true, id, integrity, status: null, evidence: null });
+  out({ ok: true, id: rec.id, integrity, status: rec.status, evidence: auditProvenance(rec) });
 }
 
 // Inventory view: every row is labelled with its integrity, and only an intact
@@ -631,14 +651,27 @@ function cmdList(flags) {
   out({ ok: true, count: rows.length, records: rows });
 }
 
+// Counts only: a row is counted by its status only when it passes the same integrity
+// check as list; any other row is counted as withheld, so changed index text is never
+// printed as a status name.
 function cmdStats() {
   const index = loadIndex();
   const byStatus = {};
   for (const s of store.STATUSES) byStatus[s] = 0;
-  for (const r of index.records) byStatus[r.status] = (byStatus[r.status] || 0) + 1;
+  let withheld = 0;
+  for (const r of index.records) {
+    const id = /^mem-\d{4}$/.test(String(r.id)) ? r.id : null;
+    if (id && integrityOf(r, tryLoadRecord(id)) === 'intact') byStatus[r.status] += 1;
+    else withheld += 1;
+  }
   const events = {};
-  for (const e of readLedger()) events[e.event] = (events[e.event] || 0) + 1;
-  out({ ok: true, records: { total: index.records.length, ...byStatus }, ledger: events });
+  const { entries, malformed } = readLedger();
+  for (const e of entries) {
+    const name = LEDGER_EVENTS.has(e.event) ? e.event : 'unknown';
+    events[name] = (events[name] || 0) + 1;
+  }
+  if (malformed) events.malformed = malformed;
+  out({ ok: true, records: { total: index.records.length, ...byStatus, withheld }, ledger: events });
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────

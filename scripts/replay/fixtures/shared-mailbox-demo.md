@@ -7,6 +7,7 @@
 `[UPN]` needs **Full Access** on `[SHARED_MAILBOX]`; auto-mapping then adds it to their Outlook within about an hour.
 
 ## Step-by-step fix (portal first)
+> **PREVIEW ONLY [replay-demo-shared-mailbox-steps]:** Synthetic demo fixture, not a runbook: these steps show what a rendered replay case looks like and do not authorize a mailbox permission change. A real grant runs from its gated runbook.
 1. Exchange admin center (admin.exchange.microsoft.com) → Recipients → Mailboxes → `[SHARED_MAILBOX]` → **Delegation** → **Read and manage (Full Access)** → **Edit** → **Add permissions** → `[UPN]` → Save.
 2. Only if they must send from it: same page → **Send As** → **Edit** → add `[UPN]`.
 3. Tell the user to restart Outlook; if the mailbox has not appeared after 60 minutes, add it manually: Outlook → File → Account Settings → Account Settings → Email → Change → More Settings → Advanced → Add → `[SHARED_MAILBOX]`.

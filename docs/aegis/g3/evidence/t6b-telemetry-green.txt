@@ -1,0 +1,31 @@
+# command: node --test scripts/adapters/contract-g3.test.js scripts/audit/audit-log.test.js
+# commit: 6643617 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:16:28Z  node: v24.22.1
+✔ Retry-After in seconds or as an HTTP date is waited exactly, up to 30 s, then the read succeeds (5.783419ms)
+✔ a Retry-After over 30 s is not waited out: the read stops in RETRY_AFTER_TOO_LONG with when to try again (1.088999ms)
+✔ without Retry-After the backoff doubles from 200 ms to a 2 s cap with jitter inside [base/2, base] (6.444791ms)
+✔ the total retry time is capped: a retry that would pass the budget is not made (RETRY_BUDGET_SPENT) (0.459462ms)
+✔ every exhausted read ends in RETRIES_EXHAUSTED with what failed, what was not done and the next step (153.593902ms)
+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.389916ms)
+✔ a request id of a safe form is kept from the response headers; anything else is dropped (0.604525ms)
+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (4.734194ms)
+✔ renderResult adds a plain operator message and an admin detail line to every failure, and nothing to a success (1.511281ms)
+✔ a failure that never reaches the network (no credential, a refused request) is one audit entry, and status counts it (20.488234ms)
+✔ append writes one hash-chained JSON line per entry and a head naming the last one; verify passes (14.244444ms)
+✔ an edited entry, a cut line, a removed tail, a removed head and an inserted entry are each reported as the first broken link (39.344271ms)
+✔ a reordered log is detected at the first entry out of place (5.244608ms)
+✔ an append onto a broken tail is refused and names verify; the file is unchanged (5.101942ms)
+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (3.630814ms)
+✔ concurrent writers in separate processes never corrupt the chain (205.81869ms)
+✔ status summarises connector failures by connector and state over a time window, matching a known event set (10.202797ms)
+✔ the CLI: verify exits 0 on an intact chain and 2 naming the first broken link; status prints the summary; a bad window is an input error (190.25948ms)
+✔ the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR overrides it, and the README says what the chain cannot prove (4.056692ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 556.572183
+# exit: 0  finished: 2026-10-28T09:16:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

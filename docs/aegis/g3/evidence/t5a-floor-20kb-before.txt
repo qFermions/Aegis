@@ -1,0 +1,34 @@
+# command: node docs/aegis/g3/evidence/tools/floor-times.js 9a636aa^ 9a636aa 20kb
+# commit: 6eebc30  started: 2026-10-28T11:32:09Z  node: v24.22.1
+guard  group membership removal         "remove member from "  before: 20 KB 12609 ms
+guard  security-control change (SR-2)   "exclude from "        before: 20 KB 25006 ms
+guard  account / work-profile removal   "remove account from " before: 1 KB 22 ms, 2 KB 342 ms, 4 KB 4317 ms (20 KB not run)
+guard  security-control change -- Google "exclude from "        before: 20 KB 16473 ms
+guard  Slack or Linear member           "kick user "           before: 20 KB 25930 ms
+guard  Slack or Linear member           "slack kick "          before: 20 KB 33021 ms
+guard  Okta lifecycle change            "reset all "           before: 20 KB 29451 ms
+guard  Okta app unassignment            "okta remove "         before: 20 KB 24502 ms
+guard  Okta app unassignment            "remove app "          before: 20 KB 20445 ms
+guard  Fleet script run                 "run script "          before: 20 KB 19710 ms
+guard  Fleet script run                 "fleet run "           before: 20 KB 23926 ms
+guard  fleet-wide host operation        "lock all "            before: 20 KB 38242 ms
+guard  Linear bulk issue operation      "delete all "          before: 20 KB 20074 ms
+guard  retention change                 "change messages "     before: 20 KB 9297 ms
+guard  retention change                 "change retention "    before: 20 KB 10937 ms
+guard  fleet-wide computer or Mac       "lock all "            before: 20 KB 41160 ms
+engine group membership removal         "remove member from "  before: 20 KB 14648 ms
+engine account / work-profile removal   "remove account from " before: 1 KB 13 ms, 2 KB 213 ms, 4 KB 3539 ms (20 KB not run)
+engine Slack or Linear member           "kick user "           before: 20 KB 26995 ms
+engine Slack or Linear member           "slack kick "          before: 20 KB 30475 ms
+engine Okta lifecycle change            "reset all "           before: 20 KB 28068 ms
+engine Okta app unassignment            "okta remove "         before: 20 KB 21069 ms
+engine Okta app unassignment            "remove app "          before: 20 KB 20305 ms
+engine Fleet script run                 "run script "          before: 20 KB 26936 ms
+engine Fleet script run                 "fleet run "           before: 20 KB 27212 ms
+engine fleet-wide host operation        "lock all "            before: 20 KB 31268 ms
+engine Linear bulk issue operation      "delete all "          before: 20 KB 24205 ms
+engine retention change                 "change messages "     before: 20 KB 13348 ms
+engine retention change                 "change retention "    before: 20 KB 14469 ms
+engine fleet-wide computer or Mac       "lock all "            before: 20 KB 47973 ms
+# exit: 0  finished: 2026-10-28T11:44:04Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

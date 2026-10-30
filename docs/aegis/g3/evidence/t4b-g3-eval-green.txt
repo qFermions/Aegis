@@ -1,0 +1,18 @@
+# command: node --test scripts/eval/g3-ticket-eval.test.js
+# commit: e921bb6 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:01:32Z  node: v24.22.1
+✔ every G3 ticket passes the core checks and its expected decision; every pair holds (2093.848996ms)
+✔ the corpus meets the charter minimums, and the minimums are the charter numbers (2032.500637ms)
+✔ each intake ticket is read from its fixture: ACCEPTED, and the case text is the ticket text (1978.643678ms)
+✔ clarify.js: exactly one question for each CLARIFY ticket, of the expected kind, and none for any other ticket (0.508037ms)
+✔ the scorer judges the implementation: a changed expectation or a changed ticket fails (1968.495779ms)
+✔ CI runs the G3 eval beside the other ticket evals (0.405226ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8173.443574
+# exit: 0  finished: 2026-10-28T09:01:40Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

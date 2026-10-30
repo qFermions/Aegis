@@ -1,0 +1,21 @@
+# command: node --test scripts/audit/audit-log.test.js
+# commit: 99a3747  started: 2026-10-28T08:00:43Z  node: v24.22.1
+✔ append writes one hash-chained JSON line per entry and a head naming the last one; verify passes (17.014239ms)
+✔ an edited entry, a cut line, a removed tail, a removed head and an inserted entry are each reported as the first broken link (31.538659ms)
+✔ a reordered log is detected at the first entry out of place (4.681493ms)
+✔ an append onto a broken tail is refused and names verify; the file is unchanged (4.949363ms)
+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (3.425272ms)
+✔ concurrent writers in separate processes never corrupt the chain (187.76355ms)
+✔ status summarises connector failures by connector and state over a time window, matching a known event set (11.145026ms)
+✔ the CLI: verify exits 0 on an intact chain and 2 naming the first broken link; status prints the summary; a bad window is an input error (188.228568ms)
+✔ the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR overrides it, and the README says what the chain cannot prove (4.7721ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 534.869877
+# exit: 0  finished: 2026-10-28T08:00:43Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

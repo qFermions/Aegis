@@ -54,6 +54,10 @@ const LINEAR_DELETION = {
   test: (text) => String(text).split('.').some((s) => LINEAR_DELETE_VERB.test(s) && (LINEAR_ANCHOR.test(s) || LINEAR_KEY.test(s))),
 };
 
+// No floor chains two unbounded gaps ([^.]* ... [^.]*) in sequence: on a long sentence that
+// never completes the match that is cubic or worse (9 to 48 s on 20 KB for two gaps; batch G3).
+// Every gap but the last is read once as (?=([^.]*?X))\N, which takes the text up to the
+// first X and never gives it back. scripts/tier/tier-routing.test.js checks both lists.
 const ESCALATION_PATTERNS = [
   // SR-2 destructive class — gated regardless of how routine the wording sounds
   { pattern: /\bwipe\b|\bretire\b[^.]*(?:\b(device|devices|phone|phones|laptop|laptops|iphone|android|ipad|mac|workstation|tablet|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|Clear-MobileDevice|Invoke-MgRetireDeviceManagementManagedDevice|Fresh\s*Start|factory[- ]reset/i, label: 'device wipe / retire / factory reset (SR-2)' },
@@ -65,14 +69,17 @@ const ESCALATION_PATTERNS = [
   // every or all next to inbox, everyone's inbox, company-wide), not one person's inbox
   { pattern: /\bpurg(?:e|es|ed|ing)\b(?=[^.]*\b(?:messages?|e-?mails?|mail|items?)\b)(?=[^.]*\b(?:every|all|each|across)\b)(?=[^.]*\b(?:inbox(?:es)?|mailbox(?:es)?|users?)\b)|\b(?:delet(?:e|es|ed|ing)|purg(?:e|es|ed|ing))\b(?=[^.]*\b(?:messages?|e-?mails?|mail|items?)\b)(?=[^.]*(?:\b(?:inboxes|mailboxes)\b|\b(?:every|all|each|across)\s+(?:[\w'-]+\s+){0,2}(?:inbox(?:es)?|mailbox(?:es)?|users?)\b|\beveryone\W?s\s+(?:inbox|mailbox)(?:es)?\b|\b(?:org|company|tenant|domain)[- ]?wide\b|\bentire\s+(?:company|org(?:ani[sz]ation)?|tenant|domain)\b))|\b(?:compliance|content)\s+search\b[^.]*\bpurg(?:e|es|ed|ing)\b|\bpurg(?:e|es|ed|ing)\b[^.]*\b(?:compliance|content)\s+search\b|New-ComplianceSearchAction\b[^\r\n]*-Purge\b/i, label: 'Exchange / Purview message purge across mailboxes (SR-2, hard delete)' },
   { pattern: /\b(remove|revoke|reclaim|unassign)\b[^.]*\blicen[cs]e/i, label: 'license removal (SR-2)' },
-  { pattern: /\b(remove|revoke)\b[^.]*\b(from|member)[^.]*\bgroup\b/i, label: 'group membership removal (SR-2)' },
+  { pattern: /\b(remove|revoke)\b(?=([^.]*?\b(from|member)))\2[^.]*\bgroup\b/i, label: 'group membership removal (SR-2)' },
   { pattern: /revoke[^.]*\bsession|sign[- ]?out[^.]*\b(all|every)\b|Revoke-MgUserSignInSession/i, label: 'session revocation (SR-2)' },
-  { pattern: /\b(disable|bypass|turn\s*off|relax|exclude[^.]*from)\b[^.]*\b(mfa|2sv|2fa|two[- ](step|factor)|conditional access|ca polic|defender|firewall|antivirus|dlp|audit(ing)? log)/i, label: 'security-control change (SR-2)' },
+  { pattern: /\b(disable|bypass|turn\s*off|relax|exclude(?=([^.]*?from\b))\2)\b[^.]*\b(mfa|2sv|2fa|two[- ](step|factor)|conditional access|ca polic|defender|firewall|antivirus|dlp|audit(ing)? log)/i, label: 'security-control change (SR-2)' },
   { pattern: /\boffboard|termination|leaver|separat(ed|ion)\b/i, label: 'offboarding flow (destructive multi-step — existing /offboard path)' },
   // Security incident — not an SR-2 class by itself, but a lane floor: a ticket that
   // says the account may be compromised must never be handled as a routine
   // "new phone" MFA reset. It belongs to the existing /security-alert-triage path.
-  { pattern: /\b(compromis(?:e|ed|ing)|breach(?:ed)?|hacked|phish(?:ed|ing) (?:link|click|success)|attacker|unauthori[sz]ed (?:access|sign[- ]?in|login))\b/i, label: 'suspected compromise / security incident (existing /security-alert-triage path)' },
+  // batch G3: "breached" about an SLA, a deadline or a target ("SLA breached", "breached its SLA",
+  // "in breach of the response SLA") is a missed commitment, not a compromise, so it does not
+  // floor here; "the account was breached" and "a data breach" still do.
+  { pattern: /\b(compromis(?:e|ed|ing)|(?<!\b(?:SLAs?|service[- ]levels?|deadlines?|targets?|OLAs?|KPIs?)\s+(?:(?:was|were|is|are|has\s+been|have\s+been|got)\s+)?)breach(?:ed|es)?(?!\s+(?:of\s+)?(?:(?:its|their|the|our|an?|this|that)\s+)?(?:[\w-]+\s+){0,2}(?:SLAs?|service[- ]levels?|deadlines?|targets?|OLAs?|KPIs?)\b)|hacked|phish(?:ed|ing) (?:link|click|success)|attacker|unauthori[sz]ed (?:access|sign[- ]?in|login))\b/i, label: 'suspected compromise / security incident (existing /security-alert-triage path)' },
   // G1 — Google Workspace / Okta / Jamf consequential actions. Mirrored in the
   // graph engine's SR2_TRIGGER_PATTERNS; tier-routing.test.js pins both. The
   // engine writes each pattern in its own pre-existing `.*` style (and drops the
@@ -81,28 +88,33 @@ const ESCALATION_PATTERNS = [
   { pattern: /\btransfer(?:s|red|ring)?\b[^.]*\b(?:ownership|owner|drive|calendar|data|files|docs)\b|\bownership\s+transfer\b|\bdata\s+transfer\b/i, label: 'Drive / Calendar / data ownership transfer (R2+ — capture pre-state first)' },
   { pattern: /\bde-?provision(?:s|ed|ing)?\b/i, label: 'deprovision — device or account (SR-2)' },
   { pattern: /\bpower\s*-?wash(?:es|ed|ing)?\b/i, label: 'Chromebook powerwash — factory reset (SR-2)' },
-  { pattern: /\b(?:remove|clear|delete|wipe|erase)\b[^.]*\b(?:account|work profile|work data|managed profile|user profiles?)\b[^.]*\b(?:from|on|off)\b[^.]*\b(?:device|devices|phone|phones|laptop|laptops|chromebook|chromebooks|mac|macbook|tablet|ipad|iphone|android)\b/i, label: 'account / work-profile removal from a device (SR-2)' },
+  { pattern: /\b(?:remove|clear|delete|wipe|erase)\b(?=([^.]*?\b(?:account|work profile|work data|managed profile|user profiles?)\b))\1(?=([^.]*?\b(?:from|on|off)\b))\2[^.]*\b(?:device|devices|phone|phones|laptop|laptops|chromebook|chromebooks|mac|macbook|tablet|ipad|iphone|android)\b/i, label: 'account / work-profile removal from a device (SR-2)' },
   { pattern: /\brevok(?:e|ed|es|ing)\b[^.]*\b(?:oauth|tokens?|app[- ]?passwords?|app[- ]specific passwords?|app access|third[- ]party (?:app )?access|api access)\b|\b(?:delete|remove|reset)\b[^.]*\bapp[- ]?passwords?\b/i, label: 'OAuth token / app-password / app-access revocation (SR-2 session class)' },
-  { pattern: /\b(?:grant|assign|make|add|give|promote|elevate)\b[^.]*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:role|rights|privileges?|access)|global admin|org(?:anization)? admin|delegated admin)\b/i, label: 'admin-role grant — super admin or any admin role (privilege change, SR-2 class)' },
+  // batch G3: also "make [UPN] an admin" and "grant admin" (G3 corpus I-G4); "grant admin
+  // consent" is the Entra app-consent phrase and is left to its own rules
+  { pattern: /\b(?:grant|assign|make|add|give|promote|elevate)\b[^.]*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:role|rights|privileges?|access)|global admin|org(?:anization)? admin|delegated admin)\b|\b(?:make|promote|elevate)\b[^.]*\ban?\s+(?:(?:workspace|org|organi[sz]ation|team|site|tenant)\s+)?admin(?:istrator)?\b|\bgrant(?:s|ed|ing)?\s+(?:\S+\s+)?admin(?:istrator)?\b(?!\s+consent)/i, label: 'admin-role grant: super admin or any admin role (privilege change, SR-2 class)' },
   { pattern: /\b(?:vault|litigation|legal)\s+hold\b|\bretention\s+(?:rule|rules|polic(?:y|ies)|period|settings?)\b/i, label: 'Vault / litigation hold or retention-rule change (records preservation)' },
-  { pattern: /\bokta\b[^.]*\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b[^.]*\bokta\b|\bclear(?:s|ed|ing)?\b[^.]*\bsessions?\b|\breset\b[^.]*\ball\b[^.]*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors (SR-2)' },
+  // batch G3: suspend floors like deactivate (it stops sign-in and ends every session, as a
+  // Google suspend does); an app unassignment can deactivate the person's app account
+  { pattern: /\bokta\b[^.]*\b(?:deactivat\w*|de-?provision\w*|delet\w*|suspend\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*|suspend\w*)\b[^.]*\bokta\b|\bclear(?:s|ed|ing)?\b[^.]*\bsessions?\b|\breset\b(?=([^.]*?\ball\b))\1[^.]*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors (SR-2)' },
+  { pattern: /\bokta\b[^.]*\bunassign\w*\b|\bokta\b(?=([^.]*?\bremov\w*\b))\1[^.]*\bapps?\b|\bunassign\w*\b[^.]*\bokta\b|\bremov\w*\b(?=([^.]*?\bapps?\b))\2[^.]*\bokta\b/i, label: 'Okta app unassignment, which can deactivate the person\'s account in the app (SR-2)' },
   { pattern: /\berase\b[^.]*\b(?:device|devices|mac|macs|macbook|computer|computers|laptop|iphone|ipad|disk)\b|\bremote(?:ly)?[- ]?lock\b|\block\b[^.]*\bremote(?:ly)?\b|\bjamf\b[^.]*\block\b|\block\b[^.]*\bjamf\b|\blost mode\b|\bremove\b[^.]*\bmdm profile\b|\bunmanag(?:e|ed|ing)\b|\bremoveFramework\b/i, label: 'Jamf / MDM erase, remote lock, lost mode, MDM-profile removal or unmanage (SR-2)' },
-  { pattern: /\b(?:disable|bypass|turn\s*off|relax|unenforce|exclude[^.]*from|remove|delete)\b[^.]*\b(?:2-?step verification|2-?step|context[- ]aware access|security keys?|passkeys?)\b/i, label: 'security-control change — Google 2-Step Verification, security keys/passkeys, or Context-Aware Access (SR-2)' },
+  { pattern: /\b(?:disable|bypass|turn\s*off|relax|unenforce|exclude(?=([^.]*?from\b))\1|remove|delete)\b[^.]*\b(?:2-?step verification|2-?step|context[- ]aware access|security keys?|passkeys?)\b/i, label: 'security-control change: Google 2-Step Verification, security keys/passkeys, or Context-Aware Access (SR-2)' },
   // G2: Fleet (fleetdm). Each G2 floor is mirrored in the graph engine's
   // SR2_TRIGGER_PATTERNS (`.*` there, so the engine floors a superset);
   // tier-routing.test.js pins both, one block per platform.
   // The unenroll floor anchors on a device word, Intune or the Company Portal; Intune
   // followed by a course or training word is a class, not a device (security review 2).
   { pattern: /\bfleet(?:ctl|dm)?\b[^.]*\block(?:s|ed|ing)?\b|\block(?:s|ed|ing)?\b[^.]*\bfleet(?:ctl|dm)?\b|\bturn(?:s|ed|ing)?\s*off\b[^.]*\bmdm\b|\bun-?enroll(?:s|ed|ing|ment)?\b[^.]*(?:\b(?:fleet(?:ctl|dm)?|mdm|hosts?|devices?|iphones?|ipads?|android|phones?|macs?|macbooks?|laptops?|computers?|chromebooks?|tablets?|workstations?|company portal)\b|\bintune\b(?!\s+(?:basics|training|courses?|class(?:es)?|webinars?|workshops?|lessons?|modules?|certifications?|exams?|learning|bootcamps?|101|fundamentals)\b)|\[DEVICE_NAME\]|\b[DL]T-)|(?:\b(?:fleet(?:ctl|dm)?|mdm|hosts?|devices?|iphones?|ipads?|android|phones?|macs?|macbooks?|laptops?|computers?|chromebooks?|tablets?|workstations?|company portal)\b|\bintune\b(?!\s+(?:basics|training|courses?|class(?:es)?|webinars?|workshops?|lessons?|modules?|certifications?|exams?|learning|bootcamps?|101|fundamentals)\b)|\[DEVICE_NAME\]|\b[DL]T-)[^.]*\bun-?enroll(?:s|ed|ing|ment)?\b|\b(?:delete|remove)\b[^.]*\bhosts?\b(?![- ]file)/i, label: 'Fleet host lock, MDM turn-off / unenroll, or host deletion (SR-2)' },
-  { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b[^.]*\bscripts?\b[^.]*\bfleet(?:ctl|dm)?\b|\bfleet(?:ctl|dm)?\b[^.]*\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b[^.]*\bscripts?\b/i, label: 'Fleet script run on hosts (code runs on endpoints, SR-2 extended-gate class)' },
-  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b[^.]*(?:\b(?:all|every|entire)\b[^.]*\bhosts?\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
+  { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b(?=([^.]*?\bscripts?\b))\1[^.]*\bfleet(?:ctl|dm)?\b|\bfleet(?:ctl|dm)?\b(?=([^.]*?\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b))\2[^.]*\bscripts?\b/i, label: 'Fleet script run on hosts (code runs on endpoints, SR-2 extended-gate class)' },
+  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b(?:(?=([^.]*?\b(?:all|every|entire)\b))\1[^.]*\bhosts?\b|[^.]*\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
   // G2: Linear (the IT ticket system)
   // needs a Linear anchor (Linear, [ISSUE_ID] or an issue key) in the same sentence, so
   // "Outlook keeps deleting emails, the issue started" and "deleted a Teams chat" stay clean
   { pattern: LINEAR_DELETION, label: 'Linear issue / project / label / team deletion (SR-2)' },
-  { pattern: /\b(?:bulk|mass)\b[^.]*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b[^.]*(?:\b(?:all|every)\b[^.]*\b(?:issues?|tickets?|requests?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
+  { pattern: /\b(?:bulk|mass)\b[^.]*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b(?:(?=([^.]*?\b(?:all|every)\b))\1[^.]*\b(?:issues?|tickets?|requests?)\b|[^.]*\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
   { pattern: /\b(?:suspend|deactivate|remove|kick)\w*\b[^.]*\bmembers?\b/i, label: 'workspace member suspension or removal (SR-2)' },
-  { pattern: /\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b[^.]*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)[^.]*\b(?:slack|linear)\b|\b(?:slack|linear)\b[^.]*\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b[^.]*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)|\bremov\w*\b[^.]*\bfrom\b(?:\s+the)?\s+(?:slack|linear)\b/i, label: 'Slack or Linear member deactivation, suspension or removal (SR-2)' },
+  { pattern: /\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b(?=([^.]*?(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)))\1[^.]*\b(?:slack|linear)\b|\b(?:slack|linear)\b(?=([^.]*?\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b))\2[^.]*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)|\bremov\w*\b[^.]*\bfrom\b(?:\s+the)?\s+(?:slack|linear)\b/i, label: 'Slack or Linear member deactivation, suspension or removal (SR-2)' },
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|switch(?:es|ed|ing)?\s*off|relax\w*|remove[sd]?|removing|bypass\w*|unenforce\w*)\b[^.]*\b(?:saml|scim|sso|single sign-on|login methods?|sign-in methods?|authentication methods?)\b/i, label: 'SSO / SCIM / sign-in method change (security control, SR-2)' },
   // G2: Slack
   // needs a Slack anchor (Slack, a channel, DMs or the workspace) in the same sentence, so
@@ -111,17 +123,23 @@ const ESCALATION_PATTERNS = [
   { pattern: /\bexport\w*\b[^.]*\b(?:messages|dms|direct messages|private channels|conversations|chat history|workspace data)\b/i, label: 'message or workspace data export (disclosure, SR-2 class)' },
   { pattern: /\breset\w*\b[^.]*\bsessions?\b|\bsign(?:s|ed|ing)?\s*out\b[^.]*\bsessions?\b/i, label: 'session reset / sign-out (SR-2 session class)' },
   { pattern: /\b(?:sign|log)\s+(?!(?:in|on|into|up)\b)(?:(?!(?:and|but|or|then|to)\b)(?:\[[A-Z_@.]+\]|\w+)\s+){1,4}out\b[^.]*\b(?:sessions?|everywhere|every device|all devices)\b/i, label: 'sign-out everywhere: a person signed out of every session or device (SR-2 session class)' },
-  { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b[^.]*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b[^.]*\bretention\b|\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b[^.]*\bretention\b[^.]*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b/i, label: 'retention change (records preservation)' },
+  { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b(?=([^.]*?\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b))\1[^.]*\bretention\b|\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b(?=([^.]*?\bretention\b))\2[^.]*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b/i, label: 'retention change (records preservation)' },
   { pattern: /\bdisconnect\w*\b[^.]*\b(?:slack connect|organi[sz]ations?|external (?:orgs?|organi[sz]ations?|channels?|workspaces?))\b/i, label: 'Slack Connect disconnection (R3)' },
   // G2: Jamf Pro (beyond G1's lock, erase and unmanage)
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|decrypt\w*|remove[sd]?|removing|deactivate[sd]?|deactivating)\b[^.]*\b(?:filevault|disk encryption)\b/i, label: 'FileVault / disk-encryption turned off (security control, SR-2)' },
   { pattern: /\b(?:delete|remove)\b[^.]*\b(?:computer|mobile device) records?\b/i, label: 'computer or mobile-device record deletion (SR-2)' },
-  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|deploy|push|update|upgrade|scope|redeploy|enable|disable|run)\w*\b[^.]*(?:\b(?:all|every|entire)\b[^.]*\b(?:computers?|macs?|macbooks?|mobile devices?|endpoints?|ipads?|iphones?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:computers|macs|macbooks|mobile devices|endpoints|ipads|iphones)\b)/i, label: 'fleet-wide computer or Mac operation (mass)' },
+  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|deploy|push|update|upgrade|scope|redeploy|enable|disable|run)\w*\b(?:(?=([^.]*?\b(?:all|every|entire)\b))\1[^.]*\b(?:computers?|macs?|macbooks?|mobile devices?|endpoints?|ipads?|iphones?)\b|[^.]*\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:computers|macs|macbooks|mobile devices|endpoints|ipads|iphones)\b)/i, label: 'fleet-wide computer or Mac operation (mass)' },
   // G2: Google Workspace (beyond G1)
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|open(?:s|ed|ing)?(?:\s+up)?|permit(?:s|ted|ting)?)\b[^.]*\b(?:external sharing|sharing outside|share\w*\s+(?:externally|outside)|outside (?:the )?(?:domain|organi[sz]ation|company)|public links?|anyone with the link)/i, label: 'external sharing opened (data exposure, security control)' },
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|permit(?:s|ted|ting)?)\b[^.]*\bauto(?:matic)?[- ]?forward/i, label: 'Gmail automatic forwarding allowed (exfiltration path, security control)' },
   { pattern: /\b(?:remove[sd]?|removing|revok(?:e|es|ed|ing)|unassign\w*|demot\w*|strip\w*)\b[^.]*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:roles?|rights|privileges?|access))/i, label: 'admin-role removal (privilege change, SR-2 class)' },
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|trust(?:s|ed|ing)?)\b[^.]*\b(?:less secure apps?|legacy (?:access|auth\w*|protocols?)|unconfigured third-party apps|all third-party apps|unrestricted (?:api|app) access)/i, label: 'legacy or third-party app access opened (security control)' },
+  // G3: GitHub (batch G3, task 5a); each has its twin in scripts/graph/engine.js
+  { pattern: /\b(?:remov\w*|delet\w*|disabl\w*|turn(?:s|ed|ing)?\s+off|weaken\w*|drop\w*|bypass\w*|lift\w*|relax\w*)\b[^.]*\b(?:branch protections?|protection rules?|protected branch(?:es)?|rulesets?|required (?:reviews?|status checks?))\b|\b(?:branch protections?|rulesets?)\b[^.]*\b(?:remov\w*|delet\w*|disabl\w*|turn(?:s|ed|ing)?\s+off|weaken\w*|bypass\w*)\b|\ballow\w*\b[^.]*\bforce[- ]?push\w*\b/i, label: 'GitHub branch protection or ruleset weakening (SR-2)' },
+  { pattern: /\b(?:remov\w*|kick\w*)\b(?=([^.]*?(?:\[GITHUB_USER\]|\[FIRST_NAME\]|\[UPN\]|\b(?:them|him|her|users?|members?|collaborators?|contractors?|people|person)\b)))\1(?=([^.]*?\bfrom\b))\2[^.]*(?:\bgithub\b|\borgani[sz]ation\b|\bthe org\b|\[@Aegion_GITHUB_ORG\]|\brepositor(?:y|ies)\b|\[REPO_NAME\])|\bconvert\w*\b[^.]*\boutside collaborators?\b/i, label: 'GitHub member or collaborator removal (SR-2)' },
+  { pattern: /\b(?:dismiss\w*|clos(?:e|es|ed|ing)|resolv\w*)\b(?=([^.]*?\b(?:all|every|1[1-9]|[2-9]\d|\d{3,})\b))\1[^.]*\balerts?\b|\b(?:all|every)\b(?=([^.]*?\balerts?\b))\2[^.]*\b(?:dismiss\w*|clos(?:e|es|ed|ing))\b/i, label: 'security alert bulk dismissal (mass, hides risk) (SR-2)' },
+  { pattern: /\b(?:require|enforc\w*|turn(?:s|ed|ing)?\s+on|enabl\w*)\b(?=([^.]*?\b(?:two[- ]factor|2fa)\b))\1[^.]*\b(?:organi[sz]ation|org|everyone|all members)\b/i, label: 'GitHub organization two-factor requirement (removes members without it) (SR-2)' },
+  { pattern: /\b(?:add|make|promot|grant|give|invit)\w*\b[^.]*\b(?:org(?:anization)? owners?|owner role|as (?:an? )?owner)\b/i, label: 'GitHub organization owner grant (privilege change) (SR-2)' },
   // Mass / broad blast radius — numbers, "all", org-wide phrasing
   { pattern: /\b(all|every|entire|org[- ]?wide|company[- ]?wide|tenant[- ]?wide|domain[- ]?wide)\b[^.]*\b(user|users|staff|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|workstation)/i, label: 'org-wide / all-objects operation (mass)' },
   { pattern: /\b(1[1-9]|[2-9]\d|\d{3,})\s*(\+\s*)?(user|users|employee|employees|account|accounts|device|devices|mailbox|mailboxes|machine|machines|member|members|staff|contractor|contractors|people)\b/i, label: 'mass operation (>10 objects)' },
@@ -196,7 +214,9 @@ const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_S
   'JAMF_URL', 'JIRA_SPACE', 'JIRA_URL', 'NETPARTNER', 'OKTA_ORG_URL', 'REMOTE_ACCESS', 'SITE_2', 'SITE_3', 'SITE_4',
   'SITE_COUNT', 'SIZE', 'VOIP', 'VOIP_LEGACY', 'VOIP_URL', 'WAN', 'XYZ',
   // G2: Fleet, Slack and Linear
-  'FLEET_URL', 'SLACK_URL', 'SLACK_TEAM_ID', 'LINEAR_ORG', 'LINEAR_TEAM']);
+  'FLEET_URL', 'SLACK_URL', 'SLACK_TEAM_ID', 'LINEAR_ORG', 'LINEAR_TEAM',
+  // G3: GitHub
+  'GITHUB_ORG']);
 function orgTokenWords(body) {
   return body.replace(/([a-z])([A-Z])/g, '$1_$2').replace(/([A-Za-z])(\d)/g, '$1_$2').replace(/(\d)([A-Za-z])/g, '$1_$2')
     .toUpperCase().split(/[\s_.-]+/).filter(Boolean);
@@ -249,10 +269,72 @@ function maskCanonicalPlaceholders(text) {
   return String(text).replace(/\[[^\]\n]*\]/g, (tok) => (isCanonicalPlaceholder(tok) ? ' ' : tok));
 }
 
+// Personal data (SR-1), one rule for the graph edge sanitizer, the memory store and the
+// replay cache. An email-shaped literal is personal data unless its domain is an RFC
+// example domain ("#" is part of the literal, so a guest UPN ...#EXT#@tenant is one
+// literal); a phone number is any of the forms below. Callers blank the canonical
+// placeholders first (maskCanonicalPlaceholders), so [USER@DOMAIN.COM] is not data.
+const EMAIL_LITERAL = /[A-Za-z0-9._%+#-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
+const ALLOWED_EMAIL_DOMAIN = /(^|\.)example\.(com|org|net)$/i;
+// dashed, dotted, spaced, parenthesised area code, +country with 2 to 4 groups,
+// +country (0) trunk form, E.164 without separators, bare ten digits
+const PHONE_LITERAL = /(?:\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|\+\d{1,3}\s*\(0\)\s*\d{2,4}(?:[\s-]\d{2,4}){1,4}\b|\+\d{1,3}(?:[\s-]\d{2,4}){2,4}\b|\+\d{9,15}\b|\b\d{10}\b)/;
+// The spans [start, end) that EMAIL_LITERAL's global matching would return, found in
+// linear time. The regex itself backtracks: over a run of local-part characters with no
+// "@" every start rescans the run, so 100,000 characters took 11.6 s (batch G3). Same
+// rules: a local part of [A-Za-z0-9._%+#-] that ends at an "@" (it starts where the
+// previous match ended at the earliest), then a domain label of [A-Za-z0-9-] and one or
+// more ".label" groups, each as long as it can be.
+const EMAIL_LOCAL_CHAR = /^[A-Za-z0-9._%+#-]$/;
+const EMAIL_DOMAIN_CHAR = /^[A-Za-z0-9-]$/;
+function emailSpans(text) {
+  const s = String(text);
+  const spans = [];
+  const domainRun = (from) => { let i = from; while (i < s.length && EMAIL_DOMAIN_CHAR.test(s[i])) i += 1; return i; };
+  let floor = 0;
+  let at = s.indexOf('@');
+  while (at !== -1) {
+    let start = at;
+    while (start > floor && EMAIL_LOCAL_CHAR.test(s[start - 1])) start -= 1;
+    let end = -1;
+    if (start < at) {
+      let i = domainRun(at + 1);
+      if (i > at + 1) {
+        while (s[i] === '.') { const next = domainRun(i + 1); if (next === i + 1) break; end = next; i = next; }
+      }
+    }
+    if (end !== -1) { spans.push([start, end]); floor = end; }
+    at = s.indexOf('@', Math.max(at + 1, floor));
+  }
+  return spans;
+}
+function findEmails(text) {
+  const s = String(text);
+  return emailSpans(s).map(([a, b]) => s.slice(a, b));
+}
+function replaceEmails(text, replacer) {
+  const s = String(text);
+  let out = '';
+  let last = 0;
+  for (const [a, b] of emailSpans(s)) { out += s.slice(last, a) + replacer(s.slice(a, b)); last = b; }
+  return out + s.slice(last);
+}
+// The kinds of personal data in the text: 'email' and 'phone', each at most once.
+function personalDataIn(text) {
+  const s = String(text);
+  const found = [];
+  for (const m of findEmails(s)) {
+    if (!ALLOWED_EMAIL_DOMAIN.test(m.slice(m.indexOf('@') + 1))) { found.push('email'); break; }
+  }
+  if (PHONE_LITERAL.test(s)) found.push('phone');
+  return found;
+}
+
 module.exports = {
   assess, foldConfusables, ESCALATION_PATTERNS,
   foldedForms, INJECTION_MARKERS, injectionMarkersIn, ORG_TOKEN, ORG_TOKEN_SUFFIXES, hasForeignOrgToken, containsLiteral,
   isCanonicalPlaceholder, maskCanonicalPlaceholders,
+  EMAIL_LITERAL, ALLOWED_EMAIL_DOMAIN, PHONE_LITERAL, personalDataIn, findEmails, replaceEmails,
 };
 
 if (require.main === module) {

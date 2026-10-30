@@ -1,0 +1,51 @@
+# command: node --test --test-name-pattern=sits inside the temporary folder scripts/adapters/linear-client.test.js
+# commit: c65a723  started: 2026-10-28T07:55:19Z  node: v24.22.1
+✖ a repo file outside tasks/ is refused even when the repo sits inside the temporary folder; a note in tasks/ is still read (11.103993ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.007684
+
+✖ failing tests:
+
+test at scripts/adapters/linear-client.test.js:874:1
+✖ a repo file outside tasks/ is refused even when the repo sits inside the temporary folder; a note in tasks/ is still read (11.103993ms)
+  AssertionError [ERR_ASSERTION]: PREVIEW ONLY: Aegis does not post this note. A human posts it in Linear (Aegis advises; humans execute).
+  Issue: IT-123
+  ----- note body: paste exactly the text between these two lines -----
+  Repository readme text that is not a ticket note.
+  ----- end of note body -----
+  Note SHA-256: de8ed5f933b5f8aa8a48558de30d33bf3a3ff109b3d366428f08dc7cc334f98b
+    (over the body with CRLF turned to LF, trailing spaces removed from each line and trailing newlines removed)
+  Not before: 2026-10-27T11:50:00.000Z
+    (10 minutes before this preview, to allow for a clock difference; the read-back counts only comments created at or after it)
+  
+  HUMAN-RUN posting steps (you post the note yourself; Aegis never writes to Linear):
+    1. In Linear, open issue IT-123.
+    2. Click the comment box at the bottom of the issue ("Leave a comment...") and paste the note body above, unedited.
+    3. Post it with the Comment button (or Cmd/Ctrl+Enter). A comment is not saved as a draft, so post it before leaving the page.
+    The labels above are read from Linear's search-indexed help page (linear.app/docs/comment-on-issues); confirm them on screen.
+    On an issue that came in through Asks or email intake, the comment may also reach the requester and cannot be called back.
+  
+  Read-back, after posting (it reads the comments; it posts nothing):
+    node scripts/adapters/linear-client.js verify-comment --issue IT-123 --expect-sha256 de8ed5f933b5f8aa8a48558de30d33bf3a3ff109b3d366428f08dc7cc334f98b --not-before 2026-10-27T11:50:00.000Z --execute
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/linear-client.test.js:894:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:55:19Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

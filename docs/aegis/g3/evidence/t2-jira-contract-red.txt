@@ -1,0 +1,126 @@
+# command: node --test scripts/jira-contract.test.js
+# commit: 6e30562  started: 2026-10-28T07:43:29Z  node: v24.22.1
+✖ JIRA_SPEC is a contract spec of GET routes only, one per read the client makes (1.192149ms)
+✖ the default fetch sends a read through the contract: the request is the allow-listed GET with Basic auth (2.465965ms)
+✖ a path off the allow-list or any other method is refused by the contract before credentials or the transport (0.494113ms)
+✖ a Jira read retries a 503 and a timeout like every adapter, then succeeds (0.49725ms)
+✖ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (0.553142ms)
+✖ instruction text in a Jira answer is flagged as data by the contract, never followed (0.282237ms)
+✖ the default transport honours the network tripwire, so nothing leaves the machine in a test (0.160473ms)
+✖ the read result keeps its contract state for the operator message (0.263234ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 103.137376
+
+✖ failing tests:
+
+test at scripts/jira-contract.test.js:66:1
+✖ JIRA_SPEC is a contract spec of GET routes only, one per read the client makes (1.192149ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'platform')
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:68:31)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at scripts/jira-contract.test.js:78:1
+✖ the default fetch sends a read through the contract: the request is the allow-listed GET with Basic auth (2.465965ms)
+  AssertionError [ERR_ASSERTION]: Jira API request failed; response body withheld.
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:81:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/jira-contract.test.js:91:1
+✖ a path off the allow-list or any other method is refused by the contract before credentials or the transport (0.494113ms)
+  TypeError [Error]: jira.contractFetch is not a function
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:95:31)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/jira-contract.test.js:104:1
+✖ a Jira read retries a 503 and a timeout like every adapter, then succeeds (0.49725ms)
+  AssertionError [ERR_ASSERTION]: Jira API request failed; response body withheld.
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:107:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/jira-contract.test.js:111:1
+✖ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (0.553142ms)
+  AssertionError [ERR_ASSERTION]: Jira API request failed; response body withheld.
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:114:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/jira-contract.test.js:128:1
+✖ instruction text in a Jira answer is flagged as data by the contract, never followed (0.282237ms)
+  TypeError [Error]: jira.contractFetch is not a function
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:130:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/jira-contract.test.js:136:1
+✖ the default transport honours the network tripwire, so nothing leaves the machine in a test (0.160473ms)
+  TypeError [Error]: jira.contractFetch is not a function
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:138:29)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/jira-contract.test.js:141:1
+✖ the read result keeps its contract state for the operator message (0.263234ms)
+  TypeError [Error]: jira.contractFetch is not a function
+      at TestContext.<anonymous> (<repo>/scripts/jira-contract.test.js:143:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+# exit: 1  finished: 2026-10-28T07:43:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

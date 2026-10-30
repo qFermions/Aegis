@@ -41,6 +41,9 @@ const MIXED_STATE_COMMANDS = [
   'jamf-config-profiles', 'jamf-policies-self-service', 'jamf-patch-management', 'jamf-filevault', 'jamf-inventory-groups',
   // G2: Google Workspace
   'gws-drive-sharing', 'gws-2sv-enforcement', 'gws-account-containment', 'gws-admin-roles', 'gws-security-posture',
+  // G3: GitHub and Okta (batch G3)
+  'github-repo-access', 'github-branch-protection', 'github-org-security', 'github-offboard-member', 'github-security-alerts',
+  'okta-group-membership',
 ];
 
 const REFERENCE_BOUNDARIES = [
@@ -581,8 +584,9 @@ function nextMarkerLine(marker) {
 }
 
 // G2 lane documents: the 25 runbooks this lane adds (Fleet, Slack and Linear by prefix,
-// the new Jamf Pro and Google Workspace runbooks by name).
-const G2_LANE_DOCUMENT = /^\.claude\/commands\/(?:(?:fleet|slack|linear)-[\w-]+|jamf-(?:config-profiles|policies-self-service|patch-management|filevault|inventory-groups)|gws-(?:drive-sharing|2sv-enforcement|account-containment|admin-roles|security-posture))\.md$/;
+// the new Jamf Pro and Google Workspace runbooks by name). Batch G3: the GitHub runbooks
+// join by prefix, so their close, require and turn-off steps are candidates too.
+const G2_LANE_DOCUMENT = /^\.claude\/commands\/(?:(?:fleet|slack|linear|github)-[\w-]+|jamf-(?:config-profiles|policies-self-service|patch-management|filevault|inventory-groups)|gws-(?:drive-sharing|2sv-enforcement|account-containment|admin-roles|security-posture))\.md$/;
 const G2_PORTAL_ACTIONS = 'Archive|Unarchive|Export|Approve|Disconnect|Flush|Distribute|Redeploy|Uninstall|Trash|Rotate|Post|Accept|Decline|Show(?=\\s+(?:disk encryption\\s+)?key\\b)';
 
 function portalMutationCandidates(document) {
@@ -627,7 +631,9 @@ function portalMutationCandidates(document) {
     const match = line.match(navigationListMutation) ||
       ((cue || navReference) ? line.match(navigationLabelMutation) : null) ||
       ((cue || inPortalRegion || g1LaneDocument) ? line.match(imperativeMutation) : null) ||
-      (portalCue.test(line) && /^\\s*(?:>\\s*)?(?:\\d+[.)]|[-*])\\s+/.test(line) ? line.match(arrowMutation) : null) ||
+      // batch G3: this clause once held a regex literal written with doubled backslashes, which
+      // matched a literal backslash and never fired; it uses the list-item rule above now.
+      (portalCue.test(line) && listItem.test(line) ? line.match(arrowMutation) : null) ||
       ((g1PortalCue.test(line) || (g1LaneDocument && portalCue.test(line))) && listItem.test(line) ? line.match(g2LaneDocument ? g2ArrowMutation : g1ArrowMutation) : null) ||
       (g2LaneDocument && listItem.test(line) ? line.match(g2ArrowMutation) : null);
     if (match) {
@@ -2626,7 +2632,9 @@ test('G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action
   ].join('\n');
   const candidates = portalMutationCandidates(parseFences('fixture/g1-portal.md', source));
   const byLine = Object.fromEntries(candidates.map((candidate) => [candidate.line, candidate.actionWord.toLowerCase()]));
-  assert.deepEqual(byLine, { 3: 'suspend', 4: 'deprovision', 5: 'deactivate', 6: 'lock', 7: 'erase', 8: 'transfer', 9: 'powerwash', 10: 'unsuspend' });
+  // Line 12 is the Microsoft arrow grammar (an Intune cue, a list item, an arrow and an action);
+  // it was missed while that clause was dead (batch G3), and "fleet-wide" still is not a Fleet cue.
+  assert.deepEqual(byLine, { 3: 'suspend', 4: 'deprovision', 5: 'deactivate', 6: 'lock', 7: 'erase', 8: 'transfer', 9: 'powerwash', 10: 'unsuspend', 12: 'run' });
   for (const action of ['suspend', 'deprovision', 'deactivate', 'lock', 'erase', 'transfer', 'powerwash', 'unsuspend']) {
     assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
   }
@@ -2744,7 +2752,9 @@ test('G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 ru
   // A G1 runbook and a Microsoft runbook keep their grammar: the existing cues (Fleet, a
   // generic Settings) find the existing verbs, and no G2 verb becomes a candidate there.
   assert.deepEqual(actionsByLine('.claude/commands/okta-fixture.md'), { 3: 'wipe', 5: 'suspend' });
-  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'wipe' });
+  // In a Microsoft runbook the generic Settings cue and the arrow grammar find the Microsoft verb
+  // suspend on line 5 (missed while that clause was dead, batch G3); no G2 verb is a candidate there.
+  assert.deepEqual(actionsByLine('.claude/commands/ms-fixture.md'), { 3: 'wipe', 5: 'suspend' });
   for (const action of ['archive', 'export', 'flush', 'approve', 'disconnect', 'show', 'uninstall', 'unarchive', 'trash', 'rotate', 'post', 'accept', 'decline', 'distribute', 'redeploy']) {
     assert.ok(PORTAL_CONFIRMATION_BY_ACTION.has(action), `${action} needs a confirmation family`);
   }

@@ -1,0 +1,18 @@
+{
+  "data": {
+    "issue": {
+      "identifier": "IT-201",
+      "title": "Jamf: MacBook for [FIRST_NAME] stopped checking in",
+      "description": "The Mac LT-[FIRST_NAME],[LAST_NAME] has not checked in to Jamf Pro for 12 days, and its FileVault status shows unknown.",
+      "comments": {
+        "nodes": [],
+        "pageInfo": {
+          "hasNextPage": false
+        }
+      }
+    },
+    "organization": {
+      "urlKey": "org-a"
+    }
+  }
+}

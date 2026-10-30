@@ -1,0 +1,18 @@
+# command: node --test scripts/audit/change-record.test.js
+# commit: 0b4d553 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:02:52Z  node: v24.22.1
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (219.975909ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (150.048986ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (199.040665ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (872.910343ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (373.791073ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.500776ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1908.752351
+# exit: 0  finished: 2026-10-28T08:02:54Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

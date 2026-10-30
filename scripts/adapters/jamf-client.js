@@ -29,6 +29,8 @@
 //     verify-policy      --id [POLICY_ID] and at least one of [--trigger T] [--frequency F]
 //                        [--enabled true|false] [--no-triggers] (a policy that merely exists
 //                        proves no change, so the bare form is refused)
+//     verify-checked-in  --serial [SERIAL_NUMBER] --not-before [NOT_BEFORE] (general.lastContactTime
+//                        at or after the time; Jamf Pro defines no last MDM check-in field)
 //
 // Environment, read only after a request is allowed (the host for a dry run too, the
 // credentials only under --execute):
@@ -88,6 +90,7 @@ const {
   STATES, RefusedError, TripwireError,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
+const { cliDeps, recordVerdict } = require('./cli-support.js');
 
 // ── The allow-list: the lane spec's Jamf Pro reads ───────────────────────────
 const SECTIONS = Object.freeze(['GENERAL', 'HARDWARE', 'OPERATING_SYSTEM', 'DISK_ENCRYPTION', 'CONFIGURATION_PROFILES', 'GROUP_MEMBERSHIPS', 'APPLICATIONS']);
@@ -150,6 +153,10 @@ const SPEC = defineAdapter({
     build: (creds) => ({ grant_type: 'client_credentials', client_id: creds.JAMF_CLIENT_ID, client_secret: creds.JAMF_CLIENT_SECRET }),
     parse: (json) => ({ token: json && json.access_token, expiresInSeconds: json && json.expires_in }),
   },
+  // batch G3: the token response's scope lists API role IDs (api-role:7), not privileges, so
+  // Jamf Pro does not expose whether the client is read-only (developer.jamf.com, read
+  // 2026-10-28); the first result says so
+  scopes: { manifest: 'jamf', kind: 'none', vendor: 'Jamf Pro' },
 });
 checkRoutes(SPEC.routes);
 
@@ -291,6 +298,13 @@ const COMMANDS = Object.freeze({
     plans: (a) => [['inventory', {}, inventoryQuery(a.serial, 'HARDWARE')], ['inventory', {}, inventoryQuery(a.serial, 'DISK_ENCRYPTION')]],
     expected: (a) => ({ serial: a.serial, fileVaultState: 'ENCRYPTED', keyValidation: 'VALID' }),
   },
+  // batch G3 (task 5d): Jamf Pro defines no "last MDM check-in" field (vendor fact J-07);
+  // general.lastContactTime is the closest, and the output names it
+  'verify-checked-in': {
+    kind: 'verify', flags: ['serial', 'not-before'],
+    plans: (a) => [['inventory', {}, inventoryQuery(a.serial, 'HARDWARE')], ['inventory', {}, inventoryQuery(a.serial, 'GENERAL')]],
+    expected: (a) => ({ serial: a.serial, lastContactTime: `at or after ${a.notBefore}`, field: 'general.lastContactTime (Jamf Pro defines no last MDM check-in field)' }),
+  },
   'verify-policy': {
     kind: 'verify', flags: ['id'], optional: ['trigger', 'frequency', 'enabled', 'no-triggers'],
     plans: (a) => [['policy', { id: a.id }, {}]],
@@ -310,6 +324,7 @@ const USAGE = [
   '          verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] [--absent]',
   '          verify-group-count --id N --expect N | verify-filevault --serial [SERIAL_NUMBER]',
   '          verify-policy --id [POLICY_ID] with one or more of --trigger T, --frequency F, --enabled true|false, --no-triggers',
+  '          verify-checked-in --serial [SERIAL_NUMBER] --not-before [NOT_BEFORE]',
   'Every command is a dry run unless the bare --execute flag is given. No command writes to Jamf Pro.',
   '',
 ].join('\n');
@@ -523,6 +538,23 @@ async function verifyFileVault(client, a) {
   return verdict(command, enabled && valid, expected, observed, reason, flags);
 }
 
+async function verifyCheckedIn(client, a) {
+  const command = 'verify-checked-in';
+  const expected = COMMANDS[command].expected(a);
+  const observed = { serial: null, computerId: null, lastContactTime: null, reportDate: null, mdmCapable: null };
+  const flags = [];
+  const mac = await readMac(client, command, a.serial, 'GENERAL', observed, flags);
+  if (mac.failure) return mac.failure;
+  if (mac.reason) return verdict(command, false, expected, observed, mac.reason, flags);
+  const g = mac.record.general;
+  if (!isObject(g)) return verdict(command, false, expected, observed, 'the record holds no general section', flags);
+  const time = (v) => (typeof v === 'string' && Number.isFinite(Date.parse(v)) ? v : null);
+  Object.assign(observed, { lastContactTime: time(g.lastContactTime), reportDate: time(g.reportDate), mdmCapable: isObject(g.mdmCapable) && typeof g.mdmCapable.capable === 'boolean' ? g.mdmCapable.capable : null });
+  if (!observed.lastContactTime) return verdict(command, false, expected, observed, 'the record shows no lastContactTime', flags);
+  const ok = Date.parse(observed.lastContactTime) >= Date.parse(a.notBefore);
+  return verdict(command, ok, expected, observed, `the last contact is not at or after ${a.notBefore}; ask the person to open the Mac and run a check-in, then read again`, flags);
+}
+
 async function verifyCommand(client, a) {
   const command = 'verify-command';
   const expected = COMMANDS[command].expected(a);
@@ -653,6 +685,7 @@ const VERIFY = Object.freeze({
   'verify-group-count': verifyGroupCount,
   'verify-filevault': verifyFileVault,
   'verify-policy': verifyPolicy,
+  'verify-checked-in': verifyCheckedIn,
 });
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
@@ -699,12 +732,14 @@ async function run(argv, env = process.env, deps = {}) {
         return value;
       },
     });
-    const client = createClient(SPEC, { env: envView, transport: deps.transport, sleep: deps.sleep, now: deps.now, timeoutMs: deps.timeoutMs, maxRetries: deps.maxRetries });
+    // batch G3: the audit sink (and the test seams) come from cliDeps
+    const cli = cliDeps(deps, env);
+    const client = createClient(SPEC, { env: envView, ...cli });
 
     if (args.execute !== true) {
       const { res } = dryRun(client, command, def, a);
       const code = exitCodeFor(res);
-      (code === 1 ? err : out)(renderResult(res));
+      (code === 1 ? err : out)(renderResult(res, { platform: 'jamf' }));
       return code;
     }
 
@@ -713,18 +748,18 @@ async function run(argv, env = process.env, deps = {}) {
       const r = await read(client, ...def.request(a));
       res = r.ok ? readOutput(command, r) : failed(command, r);
     } else {
-      res = await VERIFY[command](client, a);
+      res = recordVerdict(cli.audit, 'jamf', await VERIFY[command](client, a));
     }
     const code = exitCodeFor(res);
-    (code === 1 ? err : out)(renderResult(res, { secrets: seen }));
+    (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'jamf' }));
     return code;
   } catch (error) {
     if (error instanceof TripwireError || (error && error.name === 'NetworkTripwireError')) throw error;
     if (error instanceof RefusedError) {
-      err(renderResult({ state: STATES.REFUSED, ok: false, error: error.message }));
+      err(renderResult({ state: STATES.REFUSED, ok: false, error: error.message }, { platform: 'jamf' }));
       return 1;
     }
-    err(renderResult({ state: STATES.INVALID_RESPONSE, ok: false, error: 'unexpected adapter error (details withheld)' }));
+    err(renderResult({ state: STATES.INVALID_RESPONSE, ok: false, error: 'unexpected adapter error (details withheld)' }, { platform: 'jamf' }));
     return 2;
   }
 }

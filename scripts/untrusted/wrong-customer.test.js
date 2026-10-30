@@ -462,3 +462,22 @@ test('C16 a bracketed chat handle whose last word is a dictionary suffix reads a
     assert.doesNotMatch(r.stdout + r.stderr, /without the brackets|drop the brackets|remove the brackets/i, 'the replay refusal gives no rewrite either');
   }
 });
+
+// ── batch 1 finding 8: a read never binds the replay store ──
+
+test('C17 a lookup that marks a case stale never binds an unbound replay store to the reader\'s tenant', () => {
+  const store = path.join(freshDir('c17-replay'), 'store');
+  const ticket = 'Guest [GUEST_UPN] cannot open the finance site shared by [UPN].';
+  const dep = writeFile('authority.md', 'authority doctrine v1 for guest access\n');
+  let r = replayAs(null, store)(['record', '--ticket', ticket, '--solution-file', writeFile('solution.md', fixture('tenant-solution.md')), '--deps', dep]);
+  assert.equal(r.code, 0, short(r));
+  assert.equal(replayAs(null, store)(['verify', 'case-0001', '--evidence', 'synthetic fixture: guest membership read back on the site']).code, 0);
+  fs.appendFileSync(dep, 'amended\n');
+  r = replayAs(TENANT_A, store)(['lookup', '--ticket', ticket]);
+  assert.equal(r.json.result, 'STALE', short(r));
+  assert.equal(JSON.parse(fs.readFileSync(path.join(store, 'case-0001.json'), 'utf8')).status, 'stale', 'the lookup still marks the case stale');
+  assert.ok(!fs.existsSync(path.join(store, 'tenant.json')), 'a read must not bind the store');
+  r = replayAs(TENANT_B, store)(['lookup', '--ticket', ticket]);
+  assert.equal(r.code, 0, `still unbound: tenant B reads: ${short(r)}`);
+  assert.equal(r.json.result, 'STALE', short(r));
+});

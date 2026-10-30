@@ -1,0 +1,178 @@
+# command: bash -c cd <tmp> && git log --oneline -1 && node --test --test-name-pattern='chains two unbounded' scripts/tier/tier-routing.test.js
+# commit: 0ccbc1b (plus uncommitted changes in the working tree)  started: 2026-10-28T10:22:06Z  node: v24.22.1
+0ccbc1b feat(runbooks): five GitHub runbooks (/github-repo-access, /github-branch-protection, /github-org-security, /github-offboard-member, /github-security-alerts): reads first, every change a human step behind its own gate (34 gated, 3 preview, none ungated) and proved by a connector read-back; G3 placeholders registered; the GitHub corpus minimum is 8 (task 5a)
+✖ no floor in the guard or the engine chains two unbounded gaps in sequence (cubic on a long line) (15.614273ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 111.941584
+
+✖ failing tests:
+
+test at scripts/tier/tier-routing.test.js:663:1
+✖ no floor in the guard or the engine chains two unbounded gaps in sequence (cubic on a long line) (15.614273ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   [
+  +     'guard: group membership removal (SR-2)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: security-control change (SR-2)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: account / work-profile removal from a device (SR-2)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: Okta lifecycle change / session clear / reset all factors (SR-2)',
+  +     [
+  +       'alternative 4'
+  +     ]
+  +   ],
+  +   [
+  +     "guard: Okta app unassignment, which can deactivate the person's account in the app (SR-2)",
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: security-control change -- Google 2-Step Verification, security keys/passkeys, or Context-Aware Access (SR-2)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: Fleet script run on hosts (code runs on endpoints, SR-2 extended-gate class)',
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: fleet-wide host operation (mass)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: Linear bulk issue operation (mass)',
+  +     [
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: Slack or Linear member deactivation, suspension or removal (SR-2)',
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: retention change (records preservation)',
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'guard: fleet-wide computer or Mac operation (mass)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: group membership removal',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: account / work-profile removal from a device',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: Okta lifecycle change / session clear / reset all factors',
+  +     [
+  +       'alternative 4'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: Okta app unassignment',
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: Fleet script run on hosts',
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: fleet-wide host operation (mass)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: Linear bulk issue operation (mass)',
+  +     [
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: Slack or Linear member deactivation, suspension or removal',
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: retention change (records preservation)',
+  +     [
+  +       'alternative 1',
+  +       'alternative 2'
+  +     ]
+  +   ],
+  +   [
+  +     'engine: fleet-wide computer or Mac operation (mass)',
+  +     [
+  +       'alternative 1'
+  +     ]
+  +   ]
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<tmp>:679:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ 'guard: group membership removal (SR-2)', [Array] ], [ 'guard: security-control change (SR-2)', [Array] ], [ 'guard: account / work-profile removal from a device (SR-2)', [Array] ], [ 'guard: Okta lifecycle change / session clear / reset all factors (SR-2)', [Array] ], [ "guard: Okta app unassignment, which can deactivate the person's account in the app (SR-2)", [Array] ], [ 'guard: security-control change -- Google 2-Step Verification, security keys/passkeys, or Context-Aware Access (SR-2)', [Array] ], [ 'guard: Fleet script run on hosts (code runs on endpoints, SR-2 extended-gate class)', [Array] ], [ 'guard: fleet-wide host operation (mass)', [Array] ], [ 'guard: Linear bulk issue operation (mass)', [Array] ], [ 'guard: Slack or Linear member deactivation, suspension or removal (SR-2)', [Array] ], [ 'guard: retention change (records preservation)', [Array] ], [ 'guard: fleet-wide computer or Mac operation (mass)', [Array] ], [ 'engine: group membership removal', [Array] ], [ 'engine: account / work-profile removal from a device', [Array] ], [ 'engine: Okta lifecycle change / session clear / reset all factors', [Array] ], [ 'engine: Okta app unassignment', [Array] ], [ 'engine: Fleet script run on hosts', [Array] ], [ 'engine: fleet-wide host operation (mass)', [Array] ], [ 'engine: Linear bulk issue operation (mass)', [Array] ], [ 'engine: Slack or Linear member deactivation, suspension or removal', [Array] ], [ 'engine: retention change (records preservation)', [Array] ], [ 'engine: fleet-wide computer or Mac operation (mass)', [Array] ] ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T10:22:06Z
+# capture edited after the run: U+2014 written as "--" (2), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -1,0 +1,12 @@
+# command: node --test
+# commit: f185071  started: 2026-10-28T07:18:48Z  node: v24.22.1  pwsh: PowerShell 7.6.9
+1204:ℹ tests 1045
+1206:ℹ pass 1044
+1207:ℹ fail 1
+✖ failing tests:
+
+test at scripts/adapters/linear-client.test.js:502:1
+✖ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (6.467098ms)
+  AssertionError [ERR_ASSERTION]: PREVIEW ONLY: Aegis does not post this note. A human posts it in Linear (Aegis advises; humans execute).
+# exit: 1  finished: 2026-10-28T07:19:59Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

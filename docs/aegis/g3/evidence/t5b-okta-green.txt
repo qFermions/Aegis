@@ -1,0 +1,48 @@
+# command: node --test scripts/adapters/okta-client.test.js scripts/adapters/scope-preflight.test.js
+# commit: 3d05f77 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:32:45Z  node: v24.22.1
+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.28111ms)
+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.980443ms)
+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (1.050631ms)
+✔ every write and every path off the allow-list is refused through client.send before an OKTA_ credential is read or the transport is called (17.974633ms)
+✔ a second Okta org is refused before any credential is read: another request host, or an OKTA_ORG_URL with a scheme, path, port or a second name (4.658078ms)
+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (39.341982ms)
+✔ a full page says more may follow: group-members at 200 members, logs at 100 events (28.387178ms)
+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (5.65367ms)
+✔ the token exchange is never retried, and one token serves every read of a run (7.229129ms)
+✔ a private key that is not an RSA private key in PEM form, or a client ID or key ID of the wrong shape, is refused before the transport and never printed (2.313608ms)
+✔ --execute with a missing credential is NO_CREDENTIALS (exit 1), named, with nothing sent (0.577824ms)
+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (11.605826ms)
+✔ scope preflight through the contract: the refusal holds for the client, is one audit entry, and no second request is sent (2.996237ms)
+✔ dry run by default: each read and verify-* prints the exact planned request(s), reads no credential, calls no transport and exits 0 (3.856118ms)
+✔ verify-status: exactly the status given (O-21) on a record of the user asked for (27.546385ms)
+✔ verify-factor-reset and verify-factors-reset-all: the user read succeeds first, then the factor list proves the type (or every factor) is gone (27.770328ms)
+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (29.237855ms)
+✔ verify-group-member: the user read succeeds first; present on any page proves membership; --absent needs every page read, at most 10 pages of 200 (86.632385ms)
+✔ verify-app-assigned: present is a 200 with status ACTIVE or PROVISIONED; absent is a 404 on the app-user read after a successful read of the same user (18.99293ms)
+✔ every failure state prints the two-part message for platform Okta, with no stack trace, raw body or credential (72.789035ms)
+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (11.368822ms)
+✔ personal fields print as set or missing: a user's profile except login and its credentials, a factor's profile, an app user's profile and credentials; a flag on one keeps its path and withholds its text (18.657683ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it (5.291251ms)
+✔ with an audit sink each request is one connector-call entry and each verify-* verdict one verify entry; a sink that fails withholds the verdict (13.773577ms)
+✔ bad input is refused with exit 1 before anything is read or sent (5.555873ms)
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it (2.682788ms)
+✔ the file run directly exits with the code run() returns, and its dry run reads no credential and opens no socket (191.602479ms)
+✔ the connector source reads no file, never logs, asks for .read scopes only, and has no em-dash (1.629973ms)
+✔ the manifest names every connector: least-privilege reads, how scopes are exposed, and dated vendor sources (9.640818ms)
+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (5.841274ms)
+✔ Google Workspace: a token response that grants a write scope is refused before any read (38.452938ms)
+✔ Fleet: the API user's role is read from /me first; any role beyond observer is refused, and observer reads proceed (1.810254ms)
+✔ Linear, Jira and Jamf Pro do not expose a credential's scopes: the first result says so and no extra request is made (5.538831ms)
+✔ the preflight is on by default for a person running a CLI and off for an injected test transport unless asked (2.495516ms)
+✔ scopes.js prints a connector's manifest entry and refuses an unknown connector (119.674434ms)
+✔ every scope refusal is on the audit trail as SCOPE_REFUSED, whichever way the vendor exposed the scopes (60.269624ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 881.160619
+# exit: 0  finished: 2026-10-28T09:32:46Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

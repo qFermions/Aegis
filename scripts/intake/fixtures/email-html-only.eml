@@ -1,0 +1,10 @@
+From: Requester <requester@example.org>
+To: helpdesk@example.org
+Subject: =?utf-8?B?T25lRHJpdmUgaXMgbm90IHN5bmNpbmc=?=
+Message-ID: <fixture-html-1@example.org>
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><head><style>p { color: red; }</style></head><body><p>OneDrive shows a red X and stopped syncing my Documents =
+folder.</p><script>alert(1)</script><p>It started after the update &amp; restart.</p></body></html>

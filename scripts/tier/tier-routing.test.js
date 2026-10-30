@@ -566,6 +566,148 @@ test('the purge floor stays fast on a long line that never names a mailbox (guar
   assert.ok(guardMs < 1000 && engineMs < 1000, `guard ${guardMs.toFixed(0)} ms, engine ${engineMs.toFixed(0)} ms`);
 });
 
+// Batch G3: the GitHub floors with two gaps (member removal, bulk alert dismissal, the
+// organization 2FA requirement) read each gap once, so a 20 KB line that never completes
+// the match fails fast, in the guard and in its engine twin (the member removal floor took
+// about 20 s on such a line before it was written that way; it never shipped). Each floor
+// still fires on its short example through assess and the engine scan.
+// A floor's pattern by the start of its label: the guard's from ESCALATION_PATTERNS, the
+// engine's from its source line (SR2_TRIGGER_PATTERNS is not exported), null when absent.
+const guardFloor = (label) => {
+  const floor = require('./tier-guard.js').ESCALATION_PATTERNS.find((p) => p.label.startsWith(label));
+  return floor ? floor.pattern : null;
+};
+const engineFloor = (label) => {
+  const at = read('scripts/graph/engine.js').split('\n').find((l) => l.includes(`, label: '${label}`));
+  if (!at) return null;
+  const literal = at.slice(at.indexOf('/'), at.indexOf(', label: '));
+  return new RegExp(literal.slice(1, literal.lastIndexOf('/')), literal.slice(literal.lastIndexOf('/') + 1));
+};
+const floorPattern = (label) => ({ guard: guardFloor(label), engine: engineFloor(label) });
+const msFor = (re, text) => { const start = process.hrtime.bigint(); re.test(text); return Number(process.hrtime.bigint() - start) / 1e6; };
+
+test('the GitHub floors fire on their example and each stays fast on a 20 KB line that never completes it (guard and engine)', () => {
+  const engine = require('../graph/engine.js');
+  const scan = (text) => engine.scanSr2Triggers({ steps: [{ id: 's1', action: text, undo: '', verify: '' }], powershell: '' });
+  const cases = [
+    ['GitHub member or collaborator removal', 'Remove [GITHUB_USER] from the GitHub organization.', 'remove them '.repeat(1700)],
+    ['GitHub member or collaborator removal', 'Kick the contractor from the [REPO_NAME] repository.', 'remove member from '.repeat(1100)],
+    ['security alert bulk dismissal', 'Dismiss all 40 Dependabot alerts in [REPO_NAME].', 'dismiss all '.repeat(1700)],
+    ['GitHub organization two-factor requirement', 'Require 2FA for everyone in the organization.', 'require 2fa '.repeat(1700)],
+  ];
+  for (const [label, example, hostile] of cases) {
+    assert.ok(assess(example).triggers.some((t) => t.startsWith(label)), `guard: ${example}`);
+    assert.ok(scan(example).some((t) => t.startsWith(label)), `engine: ${example}`);
+    const { guard, engine: twin } = floorPattern(label);
+    const guardMs = msFor(guard, hostile);
+    const engineMs = msFor(twin, hostile);
+    assert.ok(guardMs < 1000 && engineMs < 1000, `${label}: guard ${guardMs.toFixed(0)} ms, engine ${engineMs.toFixed(0)} ms`);
+  }
+});
+
+// Batch G3: twelve floors in the guard and ten engine twins chained two unbounded gaps
+// (verb ... object ... target): eleven and nine of them on main before this batch, one
+// pair added in commit 96564ea. On a long line that never completes the match that is
+// cubic (9 to 48 s on one 20 KB line), and worse for the one floor with three gaps (4.3 s at
+// 4 KB, growing 13 to 17 times per doubling; 20 KB not run): enough to stall a ticket that
+// pastes a long log line (evidence t5a-floor-20kb-before, t5a-floor-cubic-before-after). Each gap but the last is now read once through
+// (?=(gap?X))\N, with the same matches as before (t5a-floor-rewrite-differential: 0
+// disagreements). The rule below keeps the next floor
+// from chaining two gaps.
+//
+// chainedGaps(source): where one match can chain two unbounded gaps ([^.]*, .*,
+// [^\r\n]*, lazy or not) in sequence. A group counts its widest branch (a repeated group
+// that holds a gap counts as two); a lookaround counts nothing in its sequence and is
+// checked on its own, which is why (?=(gap?X))\N is one gap read once.
+function chainedGaps(source) {
+  const found = [];
+  const parse = (i) => {
+    const branches = [[]];
+    while (i < source.length && source[i] !== ')') {
+      const c = source[i];
+      const seq = branches[branches.length - 1];
+      if (c === '|') { branches.push([]); i += 1; continue; }
+      let item;
+      if (c === '\\') { item = { kind: 'atom' }; i += 2; } else if (c === '[') {
+        let j = i + 1;
+        if (source[j] === '^') j += 1;
+        if (source[j] === ']') j += 1;
+        while (source[j] !== ']') j += source[j] === '\\' ? 2 : 1;
+        const cls = source.slice(i, j + 1);
+        item = { kind: cls === '[^.]' || cls === '[^\\r\\n]' ? 'gap' : 'atom' };
+        i = j + 1;
+      } else if (c === '(') {
+        const look = /^\(\?<?[=!]/.test(source.slice(i, i + 4));
+        const named = source.startsWith('(?<', i) && !look;
+        const open = look ? (source[i + 2] === '<' ? 4 : 3) : named ? source.indexOf('>', i) + 1 - i : source[i + 1] === '?' ? 3 : 1;
+        const inner = parse(i + open);
+        item = { kind: look ? 'look' : 'group', branches: inner.branches };
+        i = inner.end + 1;
+      } else { item = { kind: c === '.' ? 'gap' : 'atom' }; i += 1; }
+      let q = '';
+      if ('*+?'.includes(source[i])) { q = source[i]; i += 1; } else if (source[i] === '{') { const j = source.indexOf('}', i); q = source.slice(i, j + 1); i = j + 1; }
+      if (source[i] === '?') i += 1;
+      item.unbounded = q === '*' || q === '+' || /,\}$/.test(q);
+      seq.push(item);
+    }
+    return { branches, end: i };
+  };
+  const count = (seq, where) => {
+    let n = 0;
+    for (const it of seq) {
+      if (it.kind === 'gap' && it.unbounded) n += 1;
+      if (it.kind === 'look') it.branches.forEach((b) => { if (count(b, `${where}, lookaround`) > 1) found.push(`${where}, lookaround`); });
+      if (it.kind === 'group') { const widest = Math.max(...it.branches.map((b) => count(b, where))); n += it.unbounded && widest > 0 ? 2 : widest; }
+    }
+    return n;
+  };
+  parse(0).branches.forEach((b, k) => { if (count(b, `alternative ${k + 1}`) > 1) found.push(`alternative ${k + 1}`); });
+  return found;
+}
+
+test('no floor in the guard or the engine chains two unbounded gaps in sequence (cubic on a long line)', () => {
+  // the rule itself, on the shapes it must tell apart
+  assert.deepEqual(chainedGaps(String.raw`\bremove\b[^.]*\bfrom\b[^.]*\bgroup\b`), ['alternative 1']);
+  assert.deepEqual(chainedGaps(String.raw`\bremove\b.*\bfrom\b.*\bgroup\b`), ['alternative 1']);
+  assert.deepEqual(chainedGaps(String.raw`\ba\b(?=[^.]*\bb\b[^.]*\bc\b)`), ['alternative 1, lookaround']);
+  assert.deepEqual(chainedGaps(String.raw`\ba(?:x[^.]*)+b`), ['alternative 1']);
+  assert.deepEqual(chainedGaps(String.raw`\bremove\b(?=([^.]*?\bfrom\b))\1[^.]*\bgroup\b`), []);
+  assert.deepEqual(chainedGaps(String.raw`\block\b(?:(?=([^.]*?\ball\b))\1[^.]*\bhosts\b|[^.]*\b\d{3,} hosts\b)`), []);
+  assert.deepEqual(chainedGaps(String.raw`\bpurge\b(?=[^.]*\bmail\b)(?=[^.]*\ball\b)|\bcontent search\b[^.]*\bpurge\b`), []);
+  const { ESCALATION_PATTERNS } = require('./tier-guard.js');
+  const engineFloors = [...read('scripts/graph/engine.js').matchAll(/^\s*\{ pattern: \/(.*)\/[a-z]*, label: '((?:[^'\\]|\\.)*)'/gm)];
+  assert.ok(engineFloors.length >= 40, `${engineFloors.length} engine floors read`);
+  const chained = [
+    ...ESCALATION_PATTERNS.filter((p) => p.pattern instanceof RegExp).map((p) => [`guard: ${p.label}`, chainedGaps(p.pattern.source)]),
+    ...engineFloors.map((m) => [`engine: ${m[2]}`, chainedGaps(m[1])]),
+  ].filter(([, where]) => where.length);
+  assert.deepEqual(chained, []);
+});
+
+test('the twelve floors that chained two gaps stay under 1 s on a 20 KB line that never completes them (guard and engine)', () => {
+  // Every case is timed in the guard and in its engine twin, and a twin that is missing fails
+  // the test. The one exception is named: the engine's plain security-control floor (no
+  // exclude ... from clause) never chained two gaps, so that case is guard only.
+  const GUARD_ONLY = new Set(['security-control change (SR-2)']);
+  const cases = [
+    ['group membership removal', 'remove member from '], ['security-control change (SR-2)', 'exclude from '],
+    ['account / work-profile removal', 'remove account from '], ['security-control change: Google', 'exclude from '],
+    ['Slack or Linear member', 'kick user '], ['Slack or Linear member', 'slack kick '], ['Okta lifecycle change', 'reset all '],
+    ['Okta app unassignment', 'okta remove '], ['Okta app unassignment', 'remove app '], ['Fleet script run', 'run script '],
+    ['Fleet script run', 'fleet run '], ['fleet-wide host operation', 'lock all '], ['Linear bulk issue operation', 'delete all '],
+    ['retention change', 'change messages '], ['retention change', 'change retention '], ['fleet-wide computer or Mac', 'lock all '],
+  ];
+  for (const [label, unit] of cases) {
+    const line = unit.repeat(Math.ceil(20000 / unit.length)).slice(0, 20000);
+    const sides = [['guard', guardFloor(label)], ...(GUARD_ONLY.has(label) ? [] : [['engine', engineFloor(label)]])];
+    for (const [side, re] of sides) {
+      assert.ok(re, `${side} has no floor labelled "${label}"`);
+      const ms = msFor(re, line);
+      assert.ok(ms < 1000, `${side} ${label} on ${JSON.stringify(unit)}: ${ms.toFixed(0)} ms`);
+    }
+  }
+});
+
 // Finding 15: the engine's G2 floors are the guard's G2 floors with each sentence gap
 // ([^.]* in the guard) read as a line gap (.* in the engine). The check runs on the
 // pattern sources, so the two hand-kept copies cannot drift on a wording no example
@@ -619,3 +761,57 @@ g2Suite('security review 2, Intune unenroll', [
   'Unenroll [FIRST_NAME] from the Intune training.',
   'Unenroll [FIRST_NAME] from the security awareness course.',
 ]);
+
+// Batch G3, G2 close-out: "breached" about an SLA, a deadline or a target is a missed
+// commitment to triage, not a compromise; "breached" about an account, a system or data
+// still floors through the suspected-compromise rule.
+test('an SLA breach stays routine; a breached account, mailbox or system still floors as a compromise', () => {
+  const routine = [
+    'Linear shows IT issue [ISSUE_ID] breached its SLA overnight; who picks it up?',
+    'SLA breached on [JIRA-###]: the first response was late.',
+    'The SLA breach report for last week shows 4 late tickets.',
+    'Ticket [JIRA-###] is in breach of the response SLA.',
+    'We breached the 4-hour resolution target on the printer ticket.',
+    'The breach of SLA alert fired for [ISSUE_ID] again.',
+  ];
+  const compromise = [
+    "[FIRST_NAME]'s Linear account was breached overnight.",
+    'We think the mailbox [USER@DOMAIN.COM] was breached.',
+    'Our Slack workspace was breached and an attacker posted links.',
+    'Possible data breach: files were shared outside the company.',
+    'The SLA tool itself was breached by an unknown sign-in.',
+  ];
+  const wrong = [];
+  for (const t of routine) { const r = assess(t); if (r.floor !== 'none') wrong.push(`routine floored: ${t} -> ${r.triggers.join('|')}`); }
+  for (const t of compromise) { const r = assess(t); if (!r.triggers.some((x) => /compromise/.test(x))) wrong.push(`compromise missed: ${t} -> ${r.floor}`); }
+  assert.deepEqual(wrong, []);
+});
+
+// batch G3: EMAIL_LITERAL backtracks over a long run of local-part characters with no
+// "@": each start in the run rescans it, so 100,000 characters took 11.6 s (measured
+// 2026-10-28). findEmails and replaceEmails give the same matches in linear time, and
+// every caller (the personal-data rule, the graph edge sanitizer, the replay key, the
+// intake) uses them.
+test('findEmails and replaceEmails give exactly the matches of EMAIL_LITERAL', () => {
+  const guard = require('./tier-guard.js');
+  // written with ~ for @ and turned into @ at run time, so the commit scanner sees no address
+  const samples = ['a~b.cc+d~e.ff', 'x~y~z.com', 'a~b..com', 'a~b.com.', 'guest_x#EXT#~tenant.example.com and b~c.de', '[USER@DOMAIN.COM] a.b~c.d.e',
+    'no email here', '~~~', 'a~', '~b.com', 'm~n.o-p.q, r~s.t', 'one~two.three~four.five', '...~a.b', 'a%b+c~d-e.f-g.h!', 'x~y.z~'].map((x) => x.replace(/~/g, '@'));
+  for (const s of samples) {
+    assert.deepEqual(guard.findEmails(s), s.match(guard.EMAIL_LITERAL) || [], s);
+    assert.equal(guard.replaceEmails(s, () => '<E>'), s.replace(guard.EMAIL_LITERAL, '<E>'), s);
+  }
+});
+
+test('a 60,000-character run with no "@" is checked in well under a second by the personal-data rule, the sanitizer and the replay key', () => {
+  const guard = require('./tier-guard.js');
+  const sanitize = require('../graph/sanitize.js');
+  const replay = require('../replay/replay-cli.js');
+  const run = 'a'.repeat(60000);
+  const started = process.hrtime.bigint();
+  assert.deepEqual(guard.personalDataIn(run), []);
+  assert.equal(sanitize.scanText(run).piiWarnings.length, 0);
+  assert.equal(replay.shapeOf(run).slots, 0);
+  const ms = Number(process.hrtime.bigint() - started) / 1e6;
+  assert.ok(ms < 1000, `took ${Math.round(ms)} ms`);
+});

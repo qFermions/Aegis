@@ -1,0 +1,6 @@
+# command: git clone https://github.com/qFermions/Aegis <clone> && git checkout --detach f185071
+# at: 2026-10-28T07:22:07Z
+HEAD f18507189815dbbdb25c238bf64e2f501fd238fc Merge pull request #4 from qFermions/chore/baseline-and-boundary
+package.json: none; package-lock.json: none; nothing to install
+note: a first clone under the system temporary folder failed 1 test (see baseline-in-tmp.txt)
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -128,12 +128,23 @@ if ($confirmation -ceq $requiredConfirmation) {
 ```
 </details>
 
+## 🔎 Read-back (read-only, after the person finishes)
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `User.Read.All` and `AuditLog.Read.All`) proves the reset. Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user's object ID as `[USER_ID]`.
+
+```bash
+# HUMAN-RUN read-only read-back: passes only when Entra shows a password change at or after [NOT_BEFORE]; for a synced user, run it after the next sync
+node scripts/adapters/msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --execute
+# HUMAN-RUN read-only read-back: passes only when the sign-in logs show a successful sign-in at or after [NOT_BEFORE] (Entra ID P1 or P2)
+node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```
+
 ## ⚠️ Risk warning
 - `Revoke-MgUserSignInSession` invalidates Entra refresh tokens and browser cookies after propagation; current access tokens and app-issued sessions can persist until expiry.
 - For a synced user, a cloud-side reset can be overwritten at next sync — always reset **on-prem** for synced users.
 
 ## ✅ Verification checklist
 - [ ] User signs in with temp password and is forced to change it
+- [ ] `verify-password-changed` passes; `verify-signin` passes after the user signs in
 - [ ] (Synced) change visible in Entra after sync — `Get-MgUser -UserId "[UPN]"`
 - [ ] Entra session revocation completed and sign-in logs were checked after propagation; no claim is made about app-issued sessions
 - [ ] MFA working, or re-registered via `/mfa-issue`

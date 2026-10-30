@@ -1,0 +1,101 @@
+# command: node --test scripts/jira-client.test.js
+# commit: e773759  started: 2026-10-28T07:47:00Z  node: v24.22.1
+✔ site validation accepts and canonicalizes one Atlassian tenant label (1.395175ms)
+✔ site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls (0.629819ms)
+✔ direct apiRequest validates the destination before invoking the transport (0.348189ms)
+✔ argument parser requires --confirm VALUE while execute/public remain bare booleans (0.426133ms)
+✔ argument parser rejects duplicate, malformed, and unknown flags (0.261616ms)
+✔ issue keys are normalized but paths and placeholder text are rejected (0.302482ms)
+✔ create payload is exact, numeric-id-bound, and deterministically serialized (1.033028ms)
+✔ create confirmation contains a full SHA-256 and changes with every material field (4.005312ms)
+✔ create dry run and missing/wrong confirmations use zero credentials and zero network (1.742202ms)
+✔ the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload (0.708448ms)
+▶ verify-create proves the human-created request by an independent GET and fails closed on any mismatch
+  ✔ match (0.996344ms)
+  ✔ different issue key (0.441728ms)
+  ✔ missing immutable id (0.1818ms)
+  ✔ different request type (0.207628ms)
+  ✔ different service desk (0.457419ms)
+  ✔ drifted summary (0.174225ms)
+  ✔ drifted description (0.211589ms)
+  ✔ an older request with the same text (created before the preview) (0.179059ms)
+  ✔ no creation time (0.161543ms)
+  ✔ read failure (0.206405ms)
+✔ verify-create proves the human-created request by an independent GET and fails closed on any mismatch (4.388871ms)
+✔ invalid create destination fails before credentials/network and is not echoed (0.319063ms)
+✔ comment confirmations bind issue, visibility, site, and full payload digest (0.303448ms)
+✔ comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes (0.563958ms)
+✔ exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose (0.422756ms)
+▶ verify-comment proves the comment id, body and visibility and fails closed on any mismatch
+  ✔ match (0.691477ms)
+  ✔ different id (0.200039ms)
+  ✔ drifted body (0.246601ms)
+  ✔ wrong visibility (0.157063ms)
+  ✔ an older comment with the same body (created before the preview) (0.327149ms)
+  ✔ malformed (0.159915ms)
+  ✔ read failure (0.158107ms)
+  ✔ a non-numeric comment id is an input error before credentials or network (1.975584ms)
+✔ verify-comment proves the comment id, body and visibility and fails closed on any mismatch (4.872857ms)
+✔ transition local preview calls neither credentials nor Jira (0.368896ms)
+✔ transition --execute performs paginated read-only preflight and prints immutable confirmation (1.00842ms)
+✔ any transition --confirm, exact or not, is refused before credentials or network (0.299917ms)
+▶ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+  ✔ duplicate selected names (0.199773ms)
+  ✔ duplicate ids across pages (0.169485ms)
+  ✔ no match (0.178778ms)
+  ✔ non-progressing page (0.13054ms)
+  ✔ wrong page start (0.130009ms)
+  ✔ missing current-state version (0.09108ms)
+✔ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST (1.579932ms)
+✔ the transition preflight prints a HUMAN-RUN procedure bound to the resolved id and sends zero POSTs (0.477767ms)
+✔ a status version that is not a plain timestamp is refused before anything is printed to paste (0.48759ms)
+✔ a status version that does not start with a digit is refused, so the printed verify line always parses (0.631045ms)
+▶ verify-transition proves the same immutable request left the preflight status and fails closed otherwise
+  ✔ moved to the expected status (0.298309ms)
+  ✔ unchanged since the preflight (0.211609ms)
+  ✔ moved, but to another status (an automation, not this transition) (0.1104ms)
+  ✔ different immutable id (0.078329ms)
+  ✔ read failure (0.070257ms)
+  ✔ the printed placeholder status is an input error before credentials or network (0.120066ms)
+✔ verify-transition proves the same immutable request left the preflight status and fails closed otherwise (1.454143ms)
+✔ the transport refuses every method but GET, and any payload, before touching the network (0.277622ms)
+✔ no write command reaches the network with anything but GET, under any flag combination (1.10206ms)
+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.757848ms)
+▶ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed)
+  ✔ PowerShell 7 (555.089368ms)
+  ✔ bash (3.906034ms)
+✔ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed) (559.561344ms)
+✔ verify commands refuse a free-text flag instead of ignoring it, before credentials or network (0.677876ms)
+✔ verify commands without --execute are dry runs with zero credentials and zero network (0.344836ms)
+✔ API failures with bodies fail closed and never disclose response content (0.280888ms)
+✔ apiRequest timeout is finite, destroys the request, and rejects (21.557311ms)
+✖ verify-comment accepts the posted body after whitespace normalisation and still refuses a changed word (1.436533ms)
+ℹ tests 65
+ℹ suites 0
+ℹ pass 64
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 705.344873
+
+✖ failing tests:
+
+test at scripts/jira-client.test.js:792:1
+✖ verify-comment accepts the posted body after whitespace normalisation and still refuses a changed word (1.436533ms)
+  AssertionError [ERR_ASSERTION]: "Printer driver reinstalled.\r\nTest page printed.": Jira preflight/read-back contract failed: Comment read-back did not prove the approved id, body, and visibility. This client sends no writes.
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/jira-client.test.js:800:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:47:01Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

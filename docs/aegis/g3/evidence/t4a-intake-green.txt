@@ -1,0 +1,45 @@
+# command: node --test scripts/intake/intake.test.js
+# commit: a452125 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:49:18Z  node: v24.22.1
+✔ linear: a well-formed item becomes one graph case at INTAKE with source, provenance and tenant binding (8.815065ms)
+✔ linear: instruction-like text is kept as quoted data and flagged, never followed (1.105173ms)
+✔ linear: an item from a second tenant is TENANT_MISMATCH, nothing is kept and the other tenant is not echoed (0.6723ms)
+✔ linear: an oversized item is OVERSIZED before it is parsed (4.011197ms)
+✔ linear: a malformed item is MALFORMED and an empty one is EMPTY (0.656132ms)
+✔ linear: an HTML-only body becomes its visible text; scripts dropped; a hidden comment is flagged (1.675826ms)
+✔ linear: a credential in the text is BLOCKED and never echoed; phones and emails are redacted (5.861872ms)
+✔ github: a well-formed item becomes one graph case at INTAKE with source, provenance and tenant binding (1.174993ms)
+✔ github: instruction-like text is kept as quoted data and flagged, never followed (0.77116ms)
+✔ github: an item from a second tenant is TENANT_MISMATCH, nothing is kept and the other tenant is not echoed (0.411185ms)
+✔ github: an oversized item is OVERSIZED before it is parsed (3.490857ms)
+✔ github: a malformed item is MALFORMED and an empty one is EMPTY (0.299274ms)
+✔ github: an HTML-only body becomes its visible text; scripts dropped; a hidden comment is flagged (0.977821ms)
+✔ github: a credential in the text is BLOCKED and never echoed; phones and emails are redacted (0.866594ms)
+✔ slack: a well-formed item becomes one graph case at INTAKE with source, provenance and tenant binding (1.31902ms)
+✔ slack: instruction-like text is kept as quoted data and flagged, never followed (0.591838ms)
+✔ slack: an item from a second tenant is TENANT_MISMATCH, nothing is kept and the other tenant is not echoed (0.218895ms)
+✔ slack: an oversized item is OVERSIZED before it is parsed (4.521439ms)
+✔ slack: a malformed item is MALFORMED and an empty one is EMPTY (0.29369ms)
+✔ slack: an HTML-only body becomes its visible text; scripts dropped; a hidden comment is flagged (0.626116ms)
+✔ slack: a credential in the text is BLOCKED and never echoed; phones and emails are redacted (0.383718ms)
+✔ email: a well-formed item becomes one graph case at INTAKE with source, provenance and tenant binding (4.054733ms)
+✔ email: instruction-like text is kept as quoted data and flagged, never followed (0.764069ms)
+✔ email: an item from a second tenant is TENANT_MISMATCH, nothing is kept and the other tenant is not echoed (1.442163ms)
+✔ email: an oversized item is OVERSIZED before it is parsed (4.241534ms)
+✔ email: a malformed item is MALFORMED and an empty one is EMPTY (0.817711ms)
+✔ email: an HTML-only body becomes its visible text; scripts dropped; a hidden comment is flagged (1.071884ms)
+✔ email: a credential in the text is BLOCKED and never echoed; phones and emails are redacted (1.13706ms)
+✔ rendered text: title, body and comments in order; mentions and tenant values become placeholders (4.6908ms)
+✔ a Linear issue is read live through linear-client.js: one POST of AegisIssueIntake, tenant checked by the contract; a dry run sends nothing (9.304834ms)
+✔ the engine records the intake on the case and refuses a malformed intake record (1.315195ms)
+✔ the CLI: prints the record and the case, exit codes by state, --save writes only the run state (416.859718ms)
+✔ hostile shapes near the 512 KiB limit are handled in linear time: no "@" or ">" for 500,000 characters, unclosed comments and scripts, long space runs (270.809375ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 894.088366
+# exit: 0  finished: 2026-10-28T08:49:19Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

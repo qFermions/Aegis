@@ -1,0 +1,29 @@
+From: Requester <requester@example.org>
+To: helpdesk@example.org
+Subject: Teams camera not working
+Message-ID: <fixture-multi-1@example.org>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="outer-b"
+
+This is a multi-part message in MIME format.
+--outer-b
+Content-Type: multipart/alternative; boundary="inner-b"
+
+--inner-b
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+VGhlIGNhbWVyYSBpcyBibGFjayBpbiBUZWFtcyBtZWV0aW5ncyBidXQgd29ya3MgaW4gdGhlIENh
+bWVyYSBhcHAu
+--inner-b
+Content-Type: text/html; charset=utf-8
+
+<p>The camera is black in Teams meetings but works in the Camera app.</p>
+--inner-b--
+--outer-b
+Content-Type: image/png; name="screenshot.png"
+Content-Disposition: attachment; filename="screenshot.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgo=
+--outer-b--

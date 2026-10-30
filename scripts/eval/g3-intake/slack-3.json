@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "user": "U0AAA00001",
+      "team": "T0OURS0001",
+      "ts": "1761600300.000100",
+      "thread_ts": "1761600300.000100",
+      "text": "VPN will not connect from home since the update, error 809."
+    }
+  ]
+}

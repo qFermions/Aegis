@@ -63,7 +63,8 @@ const ADAPTERS = {
       ['script-result', '--execution-id', 'e1a2b3c4-0000-4000-8000-000000000001'], ['commands', '--host-identifier', 'C02FIXTURE01'], ['activities'],
       ['report-results', '--id', '4'], ['verify-lock', '--id', '7'], ['verify-unlock', '--id', '7'], ['verify-wipe', '--id', '7'],
       ['verify-script', '--execution-id', 'e1a2b3c4-0000-4000-8000-000000000001'], ['verify-mdm-off', '--id', '7'],
-      ['verify-deleted', '--identifier', 'C02FIXTURE01', '--not-before', NOT_BEFORE], ['host-upcoming', '--id', '7']],
+      ['verify-deleted', '--identifier', 'C02FIXTURE01', '--not-before', NOT_BEFORE], ['host-upcoming', '--id', '7'],
+      ['verify-checked-in', '--id', '7', '--not-before', NOT_BEFORE]], // batch G3, task 5d
   },
   jamf: {
     file: 'jamf-client.js',
@@ -75,7 +76,8 @@ const ADAPTERS = {
       ['patch-titles'], ['patch-report', '--id', '3'], ['update-plans'], ['update-plan-events', '--id', 'a1b2c3d4-0000-4000-8000-000000000002'],
       ['verify-command', '--management-id', 'a1b2c3d4-0000-4000-8000-000000000001', '--type', 'DEVICE_LOCK', '--not-before', NOT_BEFORE],
       ['verify-profile', '--serial', 'C02FIXTURE01', '--profile-id', '9', '--profile-identifier', 'com.example.fixture.wifi'], ['verify-group-count', '--id', '5', '--expect', '3'],
-      ['verify-filevault', '--serial', 'C02FIXTURE01'], ['verify-policy', '--id', '21', '--enabled', 'true']],
+      ['verify-filevault', '--serial', 'C02FIXTURE01'], ['verify-policy', '--id', '21', '--enabled', 'true'],
+      ['verify-checked-in', '--serial', 'C02FIXTURE01', '--not-before', NOT_BEFORE]], // batch G3, task 5d
   },
   slack: {
     file: 'slack-client.js',

@@ -1,0 +1,81 @@
+# command: node --test scripts/jira-client.test.js
+# commit: 6e30562 (plus uncommitted changes in the working tree)  started: 2026-10-28T07:44:27Z  node: v24.22.1
+✔ site validation accepts and canonicalizes one Atlassian tenant label (1.596973ms)
+✔ site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls (0.935478ms)
+✔ direct apiRequest validates the destination before invoking the transport (0.368916ms)
+✔ argument parser requires --confirm VALUE while execute/public remain bare booleans (0.667571ms)
+✔ argument parser rejects duplicate, malformed, and unknown flags (0.211115ms)
+✔ issue keys are normalized but paths and placeholder text are rejected (0.344319ms)
+✔ create payload is exact, numeric-id-bound, and deterministically serialized (1.231021ms)
+✔ create confirmation contains a full SHA-256 and changes with every material field (0.827082ms)
+✔ create dry run and missing/wrong confirmations use zero credentials and zero network (1.877797ms)
+✔ the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload (0.758777ms)
+▶ verify-create proves the human-created request by an independent GET and fails closed on any mismatch
+  ✔ match (1.091714ms)
+  ✔ different issue key (0.608804ms)
+  ✔ missing immutable id (0.184909ms)
+  ✔ different request type (0.15763ms)
+  ✔ different service desk (0.285347ms)
+  ✔ drifted summary (0.155366ms)
+  ✔ drifted description (0.21424ms)
+  ✔ an older request with the same text (created before the preview) (0.120071ms)
+  ✔ no creation time (0.253998ms)
+  ✔ read failure (0.203861ms)
+✔ verify-create proves the human-created request by an independent GET and fails closed on any mismatch (4.386388ms)
+✔ invalid create destination fails before credentials/network and is not echoed (0.76325ms)
+✔ comment confirmations bind issue, visibility, site, and full payload digest (0.398655ms)
+✔ comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes (0.797474ms)
+✔ exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose (0.390324ms)
+▶ verify-comment proves the comment id, body and visibility and fails closed on any mismatch
+  ✔ match (1.349534ms)
+  ✔ different id (0.209102ms)
+  ✔ drifted body (0.144068ms)
+  ✔ wrong visibility (0.097587ms)
+  ✔ an older comment with the same body (created before the preview) (0.122329ms)
+  ✔ malformed (0.073568ms)
+  ✔ read failure (0.184282ms)
+  ✔ a non-numeric comment id is an input error before credentials or network (0.731798ms)
+✔ verify-comment proves the comment id, body and visibility and fails closed on any mismatch (3.7143ms)
+✔ transition local preview calls neither credentials nor Jira (0.362114ms)
+✔ transition --execute performs paginated read-only preflight and prints immutable confirmation (0.920279ms)
+✔ any transition --confirm, exact or not, is refused before credentials or network (0.209663ms)
+▶ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+  ✔ duplicate selected names (0.203325ms)
+  ✔ duplicate ids across pages (0.806784ms)
+  ✔ no match (0.144091ms)
+  ✔ non-progressing page (0.093527ms)
+  ✔ wrong page start (0.236495ms)
+  ✔ missing current-state version (0.156489ms)
+✔ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST (2.33427ms)
+✔ the transition preflight prints a HUMAN-RUN procedure bound to the resolved id and sends zero POSTs (0.436713ms)
+✔ a status version that is not a plain timestamp is refused before anything is printed to paste (0.511357ms)
+✔ a status version that does not start with a digit is refused, so the printed verify line always parses (0.744269ms)
+▶ verify-transition proves the same immutable request left the preflight status and fails closed otherwise
+  ✔ moved to the expected status (0.297899ms)
+  ✔ unchanged since the preflight (0.208988ms)
+  ✔ moved, but to another status (an automation, not this transition) (0.09608ms)
+  ✔ different immutable id (0.175649ms)
+  ✔ read failure (0.086557ms)
+  ✔ the printed placeholder status is an input error before credentials or network (0.187066ms)
+✔ verify-transition proves the same immutable request left the preflight status and fails closed otherwise (1.765884ms)
+✔ the transport refuses every method but GET, and any payload, before touching the network (0.399776ms)
+✔ no write command reaches the network with anything but GET, under any flag combination (1.207822ms)
+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.639257ms)
+▶ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed)
+  ✔ PowerShell 7 (655.284973ms)
+  ✔ bash (4.707455ms)
+✔ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed) (660.592071ms)
+✔ verify commands refuse a free-text flag instead of ignoring it, before credentials or network (0.883763ms)
+✔ verify commands without --execute are dry runs with zero credentials and zero network (0.479152ms)
+✔ API failures with bodies fail closed and never disclose response content (0.366609ms)
+✔ apiRequest timeout is finite, destroys the request, and rejects (34.252059ms)
+ℹ tests 64
+ℹ suites 0
+ℹ pass 64
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 832.299529
+# exit: 0  finished: 2026-10-28T07:44:28Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

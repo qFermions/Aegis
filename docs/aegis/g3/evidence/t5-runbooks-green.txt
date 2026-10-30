@@ -1,0 +1,26 @@
+# command: node --test scripts/adapters/g3-runbooks.test.js
+# commit: ae88348  started: 2026-10-28T13:11:00Z  node: v24.22.1
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (11.521282ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.085727ms)
+✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.500658ms)
+✔ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (5.17499ms)
+✔ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (1.704269ms)
+✔ github-org-security: every github line runs as written (dry run) and the required read-backs are there (1.540244ms)
+✔ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (2.280497ms)
+✔ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (1.966388ms)
+✔ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (6.609943ms)
+✔ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (1.26402ms)
+✔ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (1.622762ms)
+✔ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (3.25708ms)
+✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (2.633209ms)
+✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (2.902636ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 128.541949
+# exit: 0  finished: 2026-10-28T13:11:00Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

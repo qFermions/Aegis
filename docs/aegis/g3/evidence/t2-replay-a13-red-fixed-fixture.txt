@@ -1,0 +1,34 @@
+# command: node --test --test-name-pattern=A13 scripts/untrusted/instruction-injection.test.js
+# commit: 4a1774b (plus uncommitted changes in the working tree)  started: 2026-10-28T07:53:06Z  node: v24.22.1
+✖ A13 record refuses a dependency path that carries instruction text (78.827681ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 172.564785
+
+✖ failing tests:
+
+test at scripts/untrusted/instruction-injection.test.js:495:1
+✖ A13 record refuses a dependency path that carries instruction text (78.827681ms)
+  AssertionError [ERR_ASSERTION]: a dependency path with an injection marker is a sanitization BLOCK: exit 0: { "ok": true, "caseId": "case-0001", "status": "candidate", "riskFloor": "none", "note": "not replayable until verified with evidence" } | 
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/untrusted/instruction-injection.test.js:500:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T07:53:07Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

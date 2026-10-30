@@ -1,0 +1,16 @@
+{
+  "data": {
+    "issue": {
+      "identifier": "IT-142",
+      "title": "VPN drops every few minutes for [FIRST_NAME]",
+      "description": "Since Monday the VPN client disconnects every 5 to 10 minutes. Requester: requester@example.org. Laptop LT-[FIRST_NAME],[LAST_NAME].",
+      "comments": {
+        "nodes": [
+          { "body": "Same thing happened at the main office and at home, so it is not the home Wi-Fi." }
+        ],
+        "pageInfo": { "hasNextPage": false }
+      }
+    },
+    "organization": { "urlKey": "org-a" }
+  }
+}

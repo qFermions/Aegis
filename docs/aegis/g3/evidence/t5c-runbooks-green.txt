@@ -1,0 +1,14 @@
+# command: node --test scripts/adapters/g3-runbooks.test.js
+# commit: 65a2e98 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:24:35Z  node: v24.22.1
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (14.883897ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.508623ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97.347391
+# exit: 0  finished: 2026-10-28T09:24:35Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -467,3 +467,25 @@ test('the GAM export gates stop before replacing an existing file (bash, mocked 
   }
   for (const f of fences) assert.doesNotMatch(f.body, /would be replaced/, `${f.id}: the Scope no longer admits a replacement`);
 });
+
+// Batch G3, G2 close-out: /gws-audit-log finds Google compromise signals, and Google
+// containment lives in /gws-account-containment (suspend, password, app passwords, OAuth
+// grants). The Microsoft-only /security-alert-triage holds no Google step, so a Google
+// finding handed there has nowhere to go (capability-map row 59).
+test('/gws-audit-log hands Google containment to /gws-account-containment, never to the Microsoft-only triage runbook', () => {
+  const audit = textOf('gws-audit-log');
+  assert.doesNotMatch(audit, /\/security-alert-triage/, '/gws-audit-log must not send a Google case to the Microsoft-only triage runbook');
+  const sections = {
+    'fast path': /## Fast path[\s\S]*?\n## /,
+    'suspicious sign-ins': /## Phase 3 [^\n]*\n[\s\S]*?\n## /,
+    'admin-role request': /## Verifying an admin-role request[^\n]*\n[\s\S]*?\n(?:<details>|## )/,
+    'verification checklist': /## ✅ Verification checklist[\s\S]*$/,
+  };
+  for (const [name, pattern] of Object.entries(sections)) {
+    const section = audit.match(pattern);
+    assert.ok(section, `${name}: section found`);
+    assert.match(section[0], /`\/gws-account-containment`/, `${name}: names /gws-account-containment`);
+  }
+  assert.match(audit.match(sections['admin-role request'])[0], /`\/gws-admin-roles`/, 'a genuine role grant goes through /gws-admin-roles');
+  assert.ok(fs.existsSync(fileOf('gws-account-containment')) && fs.existsSync(fileOf('gws-admin-roles')), 'both target runbooks exist');
+});

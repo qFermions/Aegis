@@ -38,6 +38,10 @@ const SR2_LINEAR_DELETION = {
   test: (text) => String(text).split('\n').some((l) => SR2_LINEAR_VERB.test(l) && (SR2_LINEAR_ANCHOR.test(l) || SR2_LINEAR_KEY.test(l))),
 };
 
+// No floor chains two unbounded gaps (.* ... .*) in sequence: on a long line that
+// never completes the match that is cubic or worse (9 to 48 s on 20 KB for two gaps; batch G3).
+// Every gap but the last is read once as (?=(.*?X))\N, which takes the text up to the
+// first X and never gives it back. scripts/tier/tier-routing.test.js checks both lists.
 const SR2_TRIGGER_PATTERNS = [
   { pattern: /\bwipe\b|\bretire\b.*(?:\b(device|devices|phone|laptop|iphone|android|ipad|mac|intune)\b|\[DEVICE_NAME\]|\b[DL]T-)|Clear-MobileDevice|Invoke-MgRetireDeviceManagementManagedDevice|Fresh\s*Start/i, label: 'device wipe / retire' },
   { pattern: /\bdelete\b.*\b(user|account|mailbox|group|device|devices)\b|Remove-Mg(User|Group|DeviceManagementManagedDevice)|Remove-Mailbox|Remove-ADUser/i, label: 'account/mailbox/group/device deletion' },
@@ -48,7 +52,7 @@ const SR2_TRIGGER_PATTERNS = [
   // every or all next to inbox, everyone's inbox, company-wide), not one person's inbox
   { pattern: /\bpurg(?:e|es|ed|ing)\b(?=.*\b(?:messages?|e-?mails?|mail|items?)\b)(?=.*\b(?:every|all|each|across)\b)(?=.*\b(?:inbox(?:es)?|mailbox(?:es)?|users?)\b)|\b(?:delet(?:e|es|ed|ing)|purg(?:e|es|ed|ing))\b(?=.*\b(?:messages?|e-?mails?|mail|items?)\b)(?=.*(?:\b(?:inboxes|mailboxes)\b|\b(?:every|all|each|across)\s+(?:[\w'-]+\s+){0,2}(?:inbox(?:es)?|mailbox(?:es)?|users?)\b|\beveryone\W?s\s+(?:inbox|mailbox)(?:es)?\b|\b(?:org|company|tenant|domain)[- ]?wide\b|\bentire\s+(?:company|org(?:ani[sz]ation)?|tenant|domain)\b))|\b(?:compliance|content)\s+search\b.*\bpurg(?:e|es|ed|ing)\b|\bpurg(?:e|es|ed|ing)\b.*\b(?:compliance|content)\s+search\b|New-ComplianceSearchAction\b.*-Purge\b/i, label: 'Exchange / Purview message purge across mailboxes' },
   { pattern: /\bremove\b.*\blicense\b|Set-MgUserLicense\s+.*-RemoveLicenses/i, label: 'license removal' },
-  { pattern: /\bremove\b.*\b(from|member).*\bgroup\b|Remove-MgGroupMember/i, label: 'group membership removal' },
+  { pattern: /\bremove\b(?=(.*?\b(from|member)))\1.*\bgroup\b|Remove-MgGroupMember/i, label: 'group membership removal' },
   { pattern: /Revoke-MgUserSignInSession|revoke\s+sessions?/i, label: 'session revocation' },
   { pattern: /\b(disable|bypass|exclude)\b.*\b(MFA|conditional access|CA policy|defender|firewall|antivirus)\b/i, label: 'security-control change' },
   // Google Workspace / Okta / Jamf consequential actions — mirrors the support
@@ -58,38 +62,45 @@ const SR2_TRIGGER_PATTERNS = [
   { pattern: /\btransfer(?:s|red|ring)?\b.*\b(?:ownership|owner|drive|calendar|data|files|docs)\b|\bownership\s+transfer\b|\bdata\s+transfer\b/i, label: 'Drive / Calendar / data ownership transfer' },
   { pattern: /\bde-?provision(?:s|ed|ing)?\b/i, label: 'deprovision (device or account)' },
   { pattern: /\bpower\s*-?wash(?:es|ed|ing)?\b/i, label: 'Chromebook powerwash' },
-  { pattern: /\b(?:remove|clear|delete|wipe|erase)\b.*\b(?:account|work profile|work data|managed profile|user profiles?)\b.*\b(?:from|on|off)\b.*\b(?:device|devices|phone|phones|laptop|laptops|chromebook|chromebooks|mac|macbook|tablet|ipad|iphone|android)\b/i, label: 'account / work-profile removal from a device' },
+  { pattern: /\b(?:remove|clear|delete|wipe|erase)\b(?=(.*?\b(?:account|work profile|work data|managed profile|user profiles?)\b))\1(?=(.*?\b(?:from|on|off)\b))\2.*\b(?:device|devices|phone|phones|laptop|laptops|chromebook|chromebooks|mac|macbook|tablet|ipad|iphone|android)\b/i, label: 'account / work-profile removal from a device' },
   { pattern: /\brevok(?:e|ed|es|ing)\b.*\b(?:oauth|tokens?|app[- ]?passwords?|app[- ]specific passwords?|app access|third[- ]party (?:app )?access|api access)\b|\b(?:delete|remove|reset)\b.*\bapp[- ]?passwords?\b/i, label: 'OAuth token / app-password revocation' },
-  { pattern: /\b(?:grant|assign|make|add|give|promote|elevate)\b.*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:role|rights|privileges?|access)|global admin|org(?:anization)? admin|delegated admin)\b/i, label: 'admin-role grant' },
+  { pattern: /\b(?:grant|assign|make|add|give|promote|elevate)\b.*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:role|rights|privileges?|access)|global admin|org(?:anization)? admin|delegated admin)\b|\b(?:make|promote|elevate)\b.*\ban?\s+(?:(?:workspace|org|organi[sz]ation|team|site|tenant)\s+)?admin(?:istrator)?\b|\bgrant(?:s|ed|ing)?\s+(?:\S+\s+)?admin(?:istrator)?\b(?!\s+consent)/i, label: 'admin-role grant' },
   { pattern: /\b(?:vault|litigation|legal)\s+hold\b|\bretention\s+(?:rule|rules|polic(?:y|ies)|period|settings?)\b/i, label: 'Vault / litigation hold or retention-rule change' },
-  { pattern: /\bokta\b.*\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*)\b.*\bokta\b|\bclear(?:s|ed|ing)?\b.*\bsessions?\b|\breset\b.*\ball\b.*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors' },
-  { pattern: /\b(?:disable|bypass|turn\s*off|relax|unenforce|exclude|remove|delete)\b.*\b(?:2-?step verification|2-?step|context[- ]aware access|security keys?|passkeys?)\b/i, label: 'security-control change — Google 2-Step Verification, security keys/passkeys, or Context-Aware Access' },
+  { pattern: /\bokta\b.*\b(?:deactivat\w*|de-?provision\w*|delet\w*|suspend\w*)\b|\b(?:deactivat\w*|de-?provision\w*|delet\w*|suspend\w*)\b.*\bokta\b|\bclear(?:s|ed|ing)?\b.*\bsessions?\b|\breset\b(?=(.*?\ball\b))\1.*\b(?:factors|authenticators)\b/i, label: 'Okta lifecycle change / session clear / reset all factors' },
+  { pattern: /\bokta\b.*\bunassign\w*\b|\bokta\b(?=(.*?\bremov\w*\b))\1.*\bapps?\b|\bunassign\w*\b.*\bokta\b|\bremov\w*\b(?=(.*?\bapps?\b))\2.*\bokta\b/i, label: 'Okta app unassignment' },
+  { pattern: /\b(?:disable|bypass|turn\s*off|relax|unenforce|exclude|remove|delete)\b.*\b(?:2-?step verification|2-?step|context[- ]aware access|security keys?|passkeys?)\b/i, label: 'security-control change: Google 2-Step Verification, security keys/passkeys, or Context-Aware Access' },
   { pattern: /\berase\b.*\b(?:device|devices|mac|macs|macbook|computer|computers|laptop|iphone|ipad|disk)\b|\bremote(?:ly)?[- ]?lock\b|\block\b.*\bremote(?:ly)?\b|\bjamf\b.*\block\b|\block\b.*\bjamf\b|\blost mode\b|\bremove\b.*\bmdm profile\b|\bunmanag(?:e|ed|ing)\b|\bremoveFramework\b/i, label: 'Jamf / MDM erase, remote lock, lost mode, MDM-profile removal or unmanage' },
   // G2: Fleet, Linear, Slack, Jamf and Google Workspace consequential actions:
   // mirrors the support lane's G2 floor set in this file's `.*` style.
   { pattern: /\bfleet(?:ctl|dm)?\b.*\block(?:s|ed|ing)?\b|\block(?:s|ed|ing)?\b.*\bfleet(?:ctl|dm)?\b|\bturn(?:s|ed|ing)?\s*off\b.*\bmdm\b|\bun-?enroll(?:s|ed|ing|ment)?\b.*(?:\b(?:fleet(?:ctl|dm)?|mdm|hosts?|devices?|iphones?|ipads?|android|phones?|macs?|macbooks?|laptops?|computers?|chromebooks?|tablets?|workstations?|company portal)\b|\bintune\b(?!\s+(?:basics|training|courses?|class(?:es)?|webinars?|workshops?|lessons?|modules?|certifications?|exams?|learning|bootcamps?|101|fundamentals)\b)|\[DEVICE_NAME\]|\b[DL]T-)|(?:\b(?:fleet(?:ctl|dm)?|mdm|hosts?|devices?|iphones?|ipads?|android|phones?|macs?|macbooks?|laptops?|computers?|chromebooks?|tablets?|workstations?|company portal)\b|\bintune\b(?!\s+(?:basics|training|courses?|class(?:es)?|webinars?|workshops?|lessons?|modules?|certifications?|exams?|learning|bootcamps?|101|fundamentals)\b)|\[DEVICE_NAME\]|\b[DL]T-).*\bun-?enroll(?:s|ed|ing|ment)?\b|\b(?:delete|remove)\b.*\bhosts?\b(?![- ]file)/i, label: 'Fleet host lock, MDM turn-off / unenroll, or host deletion' },
-  { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b.*\bscripts?\b.*\bfleet(?:ctl|dm)?\b|\bfleet(?:ctl|dm)?\b.*\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b.*\bscripts?\b/i, label: 'Fleet script run on hosts' },
-  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b.*(?:\b(?:all|every|entire)\b.*\bhosts?\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
+  { pattern: /\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b(?=(.*?\bscripts?\b))\1.*\bfleet(?:ctl|dm)?\b|\bfleet(?:ctl|dm)?\b(?=(.*?\b(?:run|runs|running|execute[sd]?|executing|push(?:es|ed|ing)?|deploy(?:s|ed|ing)?)\b))\2.*\bscripts?\b/i, label: 'Fleet script run on hosts' },
+  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|transfer|unenroll|run|execute|push|deploy|update|upgrade|scope|redeploy|enable|disable)\w*\b(?:(?=(.*?\b(?:all|every|entire)\b))\1.*\bhosts?\b|.*\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?hosts\b)/i, label: 'fleet-wide host operation (mass)' },
   { pattern: SR2_LINEAR_DELETION, label: 'Linear issue / project / label / team deletion' },
-  { pattern: /\b(?:bulk|mass)\b.*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b.*(?:\b(?:all|every)\b.*\b(?:issues?|tickets?|requests?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
+  { pattern: /\b(?:bulk|mass)\b.*\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b|\b(?:delete|archive|close|cancel|move|update|edit|relabel|label|assign|reassign|mark|trash)\w*\b(?:(?=(.*?\b(?:all|every)\b))\1.*\b(?:issues?|tickets?|requests?)\b|.*\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:\w+\s+)?(?:issues|tickets|requests)\b)/i, label: 'Linear bulk issue operation (mass)' },
   { pattern: /\b(?:suspend|deactivate|remove|kick)\w*\b.*\bmembers?\b/i, label: 'workspace member suspension or removal' },
-  { pattern: /\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b.*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b).*\b(?:slack|linear)\b|\b(?:slack|linear)\b.*\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b.*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)|\bremov\w*\b.*\bfrom\b(?:\s+the)?\s+(?:slack|linear)\b/i, label: 'Slack or Linear member deactivation, suspension or removal' },
+  { pattern: /\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b(?=(.*?(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)))\1.*\b(?:slack|linear)\b|\b(?:slack|linear)\b(?=(.*?\b(?:deactivat\w*|suspend\w*|kick\w*|disabl\w*|offboard\w*)\b))\2.*(?:\[FIRST_NAME\]|\[LAST_NAME\]|\[USER_ID\]|\[USER@DOMAIN\.COM\]|\[UPN\]|\b(?:guests?|users?|members?|accounts?|people|person|employees?|contractors?|staff)\b)|\bremov\w*\b.*\bfrom\b(?:\s+the)?\s+(?:slack|linear)\b/i, label: 'Slack or Linear member deactivation, suspension or removal' },
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|switch(?:es|ed|ing)?\s*off|relax\w*|remove[sd]?|removing|bypass\w*|unenforce\w*)\b.*\b(?:saml|scim|sso|single sign-on|login methods?|sign-in methods?|authentication methods?)\b/i, label: 'SSO / SCIM / sign-in method change (security control)' },
   { pattern: /\b(?:delete[sd]?|deleting|purge[sd]?|purging)\b(?=.*\b(?:messages?|files?|channels?|conversations?|dms?|direct messages|threads?|chat history)\b)(?:(?=.*(?:\bslack\b|#\[CHANNEL_NAME\]|#[a-z0-9][\w-]*|\[CHANNEL_ID\]|\bchannels?\b|\bdms?\b|\bdirect messages\b|\bworkspace\b))|(?<=(?:\bslack\b|#\[CHANNEL_NAME\]|#[a-z0-9][\w-]*|\[CHANNEL_ID\]|\bchannels?\b|\bdms?\b|\bdirect messages\b|\bworkspace\b).*))/i, label: 'Slack message / file / channel deletion' },
   { pattern: /\bexport\w*\b.*\b(?:messages|dms|direct messages|private channels|conversations|chat history|workspace data)\b/i, label: 'message or workspace data export (disclosure)' },
   { pattern: /\breset\w*\b.*\bsessions?\b|\bsign(?:s|ed|ing)?\s*out\b.*\bsessions?\b/i, label: 'session reset / sign-out' },
   { pattern: /\b(?:sign|log)\s+(?!(?:in|on|into|up)\b)(?:(?!(?:and|but|or|then|to)\b)(?:\[[A-Z_@.]+\]|\w+)\s+){1,4}out\b.*\b(?:sessions?|everywhere|every device|all devices)\b/i, label: 'sign-out everywhere: a person signed out of every session or device' },
-  { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b.*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b.*\bretention\b|\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b.*\bretention\b.*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b/i, label: 'retention change (records preservation)' },
+  { pattern: /\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b(?=(.*?\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b))\1.*\bretention\b|\b(?:change[sd]?|changing|shorten\w*|reduc\w*|lower\w*|set|sets|setting|turn(?:s|ed|ing)?\s+off|disabl\w*|delet\w*|remov\w*)\b(?=(.*?\bretention\b))\2.*\b(?:messages?|files?|channels?|conversations?|workspace|slack|data)\b/i, label: 'retention change (records preservation)' },
   { pattern: /\bdisconnect\w*\b.*\b(?:slack connect|organi[sz]ations?|external (?:orgs?|organi[sz]ations?|channels?|workspaces?))\b/i, label: 'Slack Connect disconnection' },
   { pattern: /\bdeactivat\w*\b.*\b(?:user|users|account|accounts)\b/i, label: 'account deactivation (disable)' },
   { pattern: /\b(?:disable|bypass|turn\s*off|relax|exclude)\b.*\b(?:two[- ](?:step|factor)|2fa|mfa)\b/i, label: 'security-control change (two-factor / MFA)' },
   { pattern: /\b(?:disable[sd]?|disabling|turn(?:s|ed|ing)?\s*off|decrypt\w*|remove[sd]?|removing|deactivate[sd]?|deactivating)\b.*\b(?:filevault|disk encryption)\b/i, label: 'FileVault / disk-encryption turned off' },
   { pattern: /\b(?:delete|remove)\b.*\b(?:computer|mobile device) records?\b/i, label: 'computer or mobile-device record deletion' },
-  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|deploy|push|update|upgrade|scope|redeploy|enable|disable|run)\w*\b.*(?:\b(?:all|every|entire)\b.*\b(?:computers?|macs?|macbooks?|mobile devices?|endpoints?|ipads?|iphones?)\b|\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:computers|macs|macbooks|mobile devices|endpoints|ipads|iphones)\b)/i, label: 'fleet-wide computer or Mac operation (mass)' },
+  { pattern: /\b(?:lock|wipe|erase|install|uninstall|delete|remove|deploy|push|update|upgrade|scope|redeploy|enable|disable|run)\w*\b(?:(?=(.*?\b(?:all|every|entire)\b))\1.*\b(?:computers?|macs?|macbooks?|mobile devices?|endpoints?|ipads?|iphones?)\b|.*\b(?:1[1-9]|[2-9]\d|\d{3,})\s*(?:\+\s*)?(?:computers|macs|macbooks|mobile devices|endpoints|ipads|iphones)\b)/i, label: 'fleet-wide computer or Mac operation (mass)' },
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|open(?:s|ed|ing)?(?:\s+up)?|permit(?:s|ted|ting)?)\b.*\b(?:external sharing|sharing outside|share\w*\s+(?:externally|outside)|outside (?:the )?(?:domain|organi[sz]ation|company)|public links?|anyone with the link)/i, label: 'external sharing opened (data exposure)' },
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|permit(?:s|ted|ting)?)\b.*\bauto(?:matic)?[- ]?forward/i, label: 'Gmail automatic forwarding allowed' },
   { pattern: /\b(?:remove[sd]?|removing|revok(?:e|es|ed|ing)|unassign\w*|demot\w*|strip\w*)\b.*\b(?:super[- ]?admin|admin(?:istrator)?[- ](?:roles?|rights|privileges?|access))/i, label: 'admin-role removal' },
   { pattern: /\b(?:allow(?:s|ed|ing)?|enabl(?:e|es|ed|ing)|turn(?:s|ed|ing)?\s+on|trust(?:s|ed|ing)?)\b.*\b(?:less secure apps?|legacy (?:access|auth\w*|protocols?)|unconfigured third-party apps|all third-party apps|unrestricted (?:api|app) access)/i, label: 'legacy or third-party app access opened' },
+  // G3: GitHub (batch G3, task 5a), twins of the tier guard rules
+  { pattern: /\b(?:remov\w*|delet\w*|disabl\w*|turn(?:s|ed|ing)?\s+off|weaken\w*|drop\w*|bypass\w*|lift\w*|relax\w*)\b.*\b(?:branch protections?|protection rules?|protected branch(?:es)?|rulesets?|required (?:reviews?|status checks?))\b|\b(?:branch protections?|rulesets?)\b.*\b(?:remov\w*|delet\w*|disabl\w*|turn(?:s|ed|ing)?\s+off|weaken\w*|bypass\w*)\b|\ballow\w*\b.*\bforce[- ]?push\w*\b/i, label: 'GitHub branch protection or ruleset weakening' },
+  { pattern: /\b(?:remov\w*|kick\w*)\b(?=(.*?(?:\[GITHUB_USER\]|\[FIRST_NAME\]|\[UPN\]|\b(?:them|him|her|users?|members?|collaborators?|contractors?|people|person)\b)))\1(?=(.*?\bfrom\b))\2.*(?:\bgithub\b|\borgani[sz]ation\b|\bthe org\b|\[@Aegion_GITHUB_ORG\]|\brepositor(?:y|ies)\b|\[REPO_NAME\])|\bconvert\w*\b.*\boutside collaborators?\b/i, label: 'GitHub member or collaborator removal' },
+  { pattern: /\b(?:dismiss\w*|clos(?:e|es|ed|ing)|resolv\w*)\b(?=(.*?\b(?:all|every|1[1-9]|[2-9]\d|\d{3,})\b))\1.*\balerts?\b|\b(?:all|every)\b(?=(.*?\balerts?\b))\2.*\b(?:dismiss\w*|clos(?:e|es|ed|ing))\b/i, label: 'security alert bulk dismissal (mass, hides risk)' },
+  { pattern: /\b(?:require|enforc\w*|turn(?:s|ed|ing)?\s+on|enabl\w*)\b(?=(.*?\b(?:two[- ]factor|2fa)\b))\1.*\b(?:organi[sz]ation|org|everyone|all members)\b/i, label: 'GitHub organization two-factor requirement (removes members without it)' },
+  { pattern: /\b(?:add|make|promot|grant|give|invit)\w*\b.*\b(?:org(?:anization)? owners?|owner role|as (?:an? )?owner)\b/i, label: 'GitHub organization owner grant (privilege change)' },
 ];
 const SR2_MASS_THRESHOLD = 10; // > 10 objects = mass operation (SR-2)
 
@@ -135,12 +146,36 @@ function planHash(state) {
 
 // ── run creation (INTAKE — engine node, no model) ────────────────────────────
 
-function newState({ ticketText, source = 'operator', mode = 'dry-run' }) {
+// batch G3 (task 4a): the record scripts/intake/intake.js attaches to an imported case.
+// Exact keys only, the tenant bound, the source the same as the run's; anything else is
+// refused, so an unbound or foreign item never becomes a case.
+const INTAKE_VIAS = new Set(['linear-client', 'github-client', 'export-file', 'eml-file']);
+const INTAKE_KEYS = ['html_only', 'origin', 'raw_sha256', 'received_at', 'redactions', 'source', 'tenant', 'via'];
+const INTAKE_REDACTION_KEYS = ['emails', 'mentions', 'phones', 'tenant_values'];
+function checkIntake(intake, source) {
+  const bad = (why) => { throw new GraphError(2, `intake record refused: ${why}`); };
+  if (!intake || typeof intake !== 'object' || Array.isArray(intake)) bad('not an object');
+  if (JSON.stringify(Object.keys(intake).sort()) !== JSON.stringify(INTAKE_KEYS)) bad(`keys must be ${INTAKE_KEYS.join(', ')}`);
+  if (intake.source !== source || !['linear', 'github', 'slack', 'email'].includes(source)) bad('source must be the run source: linear, github, slack or email');
+  if (!INTAKE_VIAS.has(intake.via)) bad('unknown via');
+  if (typeof intake.origin !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._#:-]{0,127}$/.test(intake.origin)) bad('origin must be a short safe id');
+  if (typeof intake.raw_sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(intake.raw_sha256)) bad('raw_sha256 must be a SHA-256 hex digest');
+  if (typeof intake.received_at !== 'string' || Number.isNaN(Date.parse(intake.received_at)) || new Date(intake.received_at).toISOString() !== intake.received_at) bad('received_at must be an ISO time');
+  const t = intake.tenant;
+  if (!t || typeof t !== 'object' || JSON.stringify(Object.keys(t).sort()) !== '["bound","env"]' || t.bound !== true || !/^[A-Z][A-Z0-9_]{1,40}$/.test(t.env || '')) bad('the tenant must be bound');
+  if (typeof intake.html_only !== 'boolean') bad('html_only must be true or false');
+  const r = intake.redactions;
+  if (!r || typeof r !== 'object' || JSON.stringify(Object.keys(r).sort()) !== JSON.stringify(INTAKE_REDACTION_KEYS) || !INTAKE_REDACTION_KEYS.every((k) => Number.isInteger(r[k]) && r[k] >= 0)) bad('redactions must count emails, mentions, phones and tenant_values');
+  return Object.freeze({ ...intake, tenant: Object.freeze({ ...t }), redactions: Object.freeze({ ...r }) });
+}
+
+function newState({ ticketText, source = 'operator', mode = 'dry-run', intake }) {
   if (!schema.MODES.includes(mode)) throw new GraphError(2, `mode must be ${schema.MODES.join('|')}`);
   if (mode === 'live' && process.env.AEGIS_GRAPH_ALLOW_LIVE !== '1') {
     throw new GraphError(4, 'live mode refused — set AEGIS_GRAPH_ALLOW_LIVE=1 (double-key, ILF idiom). v1 executes nothing in live mode regardless.');
   }
   if (typeof ticketText !== 'string' || !ticketText.trim()) throw new GraphError(2, 'ticket text required');
+  const intakeRecord = intake === undefined ? undefined : checkIntake(intake, source);
 
   const scan = sanitize.scanText(ticketText);
   if (scan.blocks.length > 0) {
@@ -168,6 +203,7 @@ function newState({ ticketText, source = 'operator', mode = 'dry-run' }) {
       provenance: source === 'operator' ? 'operator_typed' : 'external_content',
       injectionFlags: scan.injectionFlags,
       sanitization: { tenantLiteralHits: 0, piiWarnings: scan.piiWarnings },
+      ...(intakeRecord ? { intake: intakeRecord } : {}),
     },
     classification: null,
     rankedCauses: [],
@@ -189,6 +225,9 @@ function newState({ ticketText, source = 'operator', mode = 'dry-run' }) {
     history: [],
   };
   pushHistory(state, 'INTAKE', 'run-created', `mode=${mode} source=${source} injectionFlags=${scan.injectionFlags.length}`);
+  if (intakeRecord) {
+    pushHistory(state, 'INTAKE', 'intake-bound', `via=${intakeRecord.via} origin=${intakeRecord.origin} tenant=${intakeRecord.tenant.env} sha256=${intakeRecord.raw_sha256.slice(0, 12)}`);
+  }
   if (scan.injectionFlags.length > 0) {
     pushHistory(state, 'INTAKE', 'injection-flagged', 'embedded directives quoted as data, not followed (SR-3)');
   }

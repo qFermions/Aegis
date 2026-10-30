@@ -8,15 +8,16 @@
 // of docs/aegis/lanes/g2.md, which is this adapter's allow-list.
 //
 // EXPECTED DECISION
-// The Linear adapter reads Linear through seven named GraphQL query documents and
+// The Linear adapter reads Linear through eight named GraphQL query documents and
 // nothing else, and proves a human's write afterwards with a verify-* read.
 // Concretely, for `run(argv, env, deps)` and the exported SPEC:
 //
 // 1. Allow-list. SPEC holds exactly the lane's seven query documents (AegisViewer,
 //    AegisIssue, AegisIssueComments, AegisTeamStates, AegisLabels, AegisTriage,
-//    AegisMembers), each sent as a POST to the fixed host api.linear.app at the one
-//    path /graphql, with no GET route and no token exchange. Every document also
-//    reads organization { urlKey } at its root.
+//    AegisMembers) and, since batch G3, the intake's AegisIssueIntake, each sent as
+//    a POST to the fixed host api.linear.app at the one path /graphql, with no GET
+//    route and no token exchange. Every document also reads organization { urlKey }
+//    at its root.
 // 2. Writes are refused. Every mutation the lane names (commentCreate, commentUpdate,
 //    commentDelete, issueCreate, issueUpdate, issueBatchUpdate, issueArchive,
 //    issueDelete, issueAddLabel, issueRemoveLabel, userSuspend, userUnsuspend,
@@ -94,7 +95,8 @@ const NOW = Date.UTC(2026, 9, 27, 12, 0, 0);
 const NOT_BEFORE = '2026-10-27T11:50:00.000Z';
 const AFTER = '2026-10-27T12:05:00.000Z';
 const ISSUE = 'IT-123';
-const DOCS = ['AegisViewer', 'AegisIssue', 'AegisIssueComments', 'AegisTeamStates', 'AegisLabels', 'AegisTriage', 'AegisMembers'];
+// batch G3: AegisIssueIntake, the issue text the intake reads (scripts/intake/intake.js)
+const DOCS = ['AegisViewer', 'AegisIssue', 'AegisIssueComments', 'AegisTeamStates', 'AegisLabels', 'AegisTriage', 'AegisMembers', 'AegisIssueIntake'];
 const LANE_WRITES = [
   'commentCreate', 'commentUpdate', 'commentDelete', 'issueCreate', 'issueUpdate', 'issueBatchUpdate',
   'issueArchive', 'issueDelete', 'issueAddLabel', 'issueRemoveLabel', 'userSuspend', 'userUnsuspend',
@@ -206,7 +208,7 @@ function assertGraphqlCall(call, doc, variables, label) {
   assert.deepEqual(JSON.parse(call.body), { query: linear.SPEC.graphql.documents[doc], variables, operationName: doc }, label);
 }
 
-test('the spec: seven named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation', () => {
+test('the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation', () => {
   const spec = linear.SPEC;
   assert.deepEqual(Object.keys(spec.graphql.documents).sort(), [...DOCS].sort());
   assert.deepEqual(spec.routes, {});
@@ -865,4 +867,37 @@ test('a network tripwire is never swallowed: run() rejects with it', async () =>
     /Network tripwire fired/,
   );
   assert.equal(transport.calls.length, 1);
+});
+
+// Batch G3 (found by the Phase 0 baseline, a clone under the system temporary folder): the
+// note roots are this repo's tasks/ folder and the temporary folder, so a repo checked out
+// inside the temporary folder lost the rule that a repo file outside tasks/ is refused. The
+// repo rule is checked first now, wherever the repo lives.
+test('a repo file outside tasks/ is refused even when the repo sits inside the temporary folder; a note in tasks/ is still read', async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-linear-repo-in-tmp-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const repo = path.join(tmp, 'Aegis');
+  fs.mkdirSync(path.join(repo, 'tasks'), { recursive: true });
+  const readme = path.join(repo, 'README.md');
+  fs.writeFileSync(readme, 'Repository readme text that is not a ticket note.\n');
+  const note = path.join(repo, 'tasks', 'note.md');
+  fs.writeFileSync(note, 'Printer driver reinstalled. Test page printed.\n');
+  const noteRoots = [path.join(repo, 'tasks'), tmp];
+  const transport = queuedTransport([]);
+  const run = (file) => {
+    const out = [];
+    const err = [];
+    return linear.run(['note', '--issue', ISSUE, '--body-file', file], ENV, {
+      transport, now: () => NOW, sleep: noSleep, noteRoots, repoRoot: repo,
+      out: (s) => { out.push(String(s)); }, err: (s) => { err.push(String(s)); },
+    }).then((code) => ({ code, stdout: out.join(''), stderr: err.join('') }));
+  };
+  const refused = await run(readme);
+  assert.equal(refused.code, 1, refused.stdout);
+  assert.match(refused.stderr, /REFUSED/);
+  assert.ok(!(refused.stdout + refused.stderr).includes('Repository readme text'), 'the repo file is never printed');
+  const ok = await run(note);
+  assert.equal(ok.code, 0, ok.stderr);
+  assert.ok(ok.stdout.includes('Printer driver reinstalled. Test page printed.'));
+  assert.equal(transport.calls.length, 0);
 });

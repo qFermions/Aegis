@@ -1,0 +1,20 @@
+From: Requester <requester@example.org>
+To: Help Desk <helpdesk@example.org>
+Subject: Shared mailbox access for the finance team
+Date: Wed, 28 Oct 2026 09:00:00 +0000
+Message-ID: <g3-e3@example.org>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="g3-outer"
+
+--g3-outer
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Please give [UPN] Full Access to the [SHARED_MAILBOX] shared mailbox.
+--g3-outer
+Content-Type: application/pdf; name="approval.pdf"
+Content-Disposition: attachment; filename="approval.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQK
+--g3-outer--

@@ -36,6 +36,7 @@ this file — never invent a parallel set.
 | `[@Aegion_SLACK_TEAM_ID]` | Slack workspace (team) ID; the Slack adapter refuses a record from any other team (`SLACK_TEAM_ID`) | `[SLACK_TEAM_ID]` |
 | `[@Aegion_LINEAR_ORG]` | Linear workspace URL key (`linear.app/<key>`); the Linear adapter refuses a record from any other workspace (`LINEAR_ORG`) | `[LINEAR_URL_KEY]` |
 | `[@Aegion_LINEAR_TEAM]` | Linear team key that holds IT tickets (the prefix of `[ISSUE_ID]`) | `IT` |
+| `[@Aegion_GITHUB_ORG]` | GitHub organization login (`github.com/<login>`); the intake and the GitHub connector refuse an item from any other organization (`GITHUB_ORG`) | `[GITHUB_ORG]` |
 
 ## Generic operational tokens (always-placeholder)
 
@@ -94,7 +95,18 @@ INSTALL_PROFILE) · `[TRIGGERS]` / `[FREQUENCY]` (a Jamf Pro policy's triggers a
 frequency after a change) · `[ADD_COUNT]` / `[REMOVE_COUNT]` (the number of Macs a static group
 change adds and removes, each named by serial in the change record). `[APP_NAME]` also covers a Slack app and a software title in Fleet or
 Jamf Pro. In a Jamf Pro runbook, `[DEVICE_ID]` is either the computer ID or the
-management ID, and the runbook says which. Note templates keep using lowercase or
+management ID, and the runbook says which.
+
+Added with batch G3 (2026-10-28): `[GITHUB_USER]` (a GitHub login, as an @mention in an
+issue or a member in a read; the intake writes it in place of every @mention) ·
+`[REPO_NAME]` (a repository in `[@Aegion_GITHUB_ORG]`, its name only) · `[BRANCH_NAME]` (a
+branch, such as main) · `[TEAM_SLUG]` (a GitHub team's slug) · `[ALERT_NUMBER]` (a secret
+scanning or Dependabot alert number in one repository) · `[OKTA_USER_ID]` /
+`[OKTA_GROUP_ID]` / `[RULE_ID]` / `[FACTOR_ID]` (an Okta user, group, group rule or
+factor ID, as the Okta read prints it) · `[GROUP_NAME]` (a group's display name in Okta,
+Microsoft 365 or Google Workspace, beside its ID) · `[RULESET_NAME]` (a GitHub repository
+ruleset's name) · `[ALERT_COUNT]` (how many alerts a bulk action covers) ·
+`[DISMISS_REASON]` (a Dependabot dismissal reason, one of the five GitHub names). Note templates keep using lowercase or
 single-letter fill-ins (`[X]`, `[N]`, `[timestamp]`) for numbers and times, as the
 existing runbooks do.
 

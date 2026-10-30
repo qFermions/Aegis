@@ -1,0 +1,18 @@
+{
+  "data": {
+    "issue": {
+      "identifier": "IT-203",
+      "title": "Fleet flags a vulnerable Chrome version",
+      "description": "Fleet shows [CVE_ID] for Google Chrome on 14 hosts. Which fleets are affected, and is a fixed version available?",
+      "comments": {
+        "nodes": [],
+        "pageInfo": {
+          "hasNextPage": false
+        }
+      }
+    },
+    "organization": {
+      "urlKey": "org-a"
+    }
+  }
+}

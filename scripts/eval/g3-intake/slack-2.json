@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "user": "U0AAA00001",
+      "team": "T0OURS0001",
+      "ts": "1761600200.000100",
+      "thread_ts": "1761600200.000100",
+      "text": "Can someone reset my Okta MFA? I lost my phone over the weekend."
+    },
+    {
+      "type": "message",
+      "user": "U0AAA00002",
+      "team": "T0OURS0001",
+      "ts": "1761600200.000101",
+      "thread_ts": "1761600200.000100",
+      "text": "<@U0AAA00001> did you set up a backup factor?"
+    },
+    {
+      "type": "message",
+      "user": "U0AAA00001",
+      "team": "T0OURS0001",
+      "ts": "1761600200.000102",
+      "thread_ts": "1761600200.000100",
+      "text": "No, only Okta Verify."
+    }
+  ]
+}

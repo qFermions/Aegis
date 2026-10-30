@@ -1,0 +1,33 @@
+# command: node --test scripts/adapters/github-client.test.js scripts/adapters/scope-preflight.test.js
+# commit: ece4ac3 (plus uncommitted changes in the working tree)  started: 2026-10-28T09:12:39Z  node: v24.22.1
+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (2.01814ms)
+✔ a non-GET request is refused before the credential is read; no org flag exists (1.819632ms)
+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (9.762768ms)
+✔ issue reads the issue and its comments and prints the {issue, comments} shape the intake imports (0.754823ms)
+✔ a dry run prints the planned GET, reads no credential and sends nothing (0.545814ms)
+✔ bad values are refused before anything is sent (0.695787ms)
+✔ a response that names another organization is TENANT_MISMATCH and nothing is returned (5.116115ms)
+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (2.025804ms)
+✔ verify-collaborator: the role_name must equal the expected role (2.082463ms)
+✔ verify-collaborator-removed: absent from every page of direct collaborators; a list past 10 pages is not proof (15.277019ms)
+✔ verify-offboarded: the org read must succeed first; then no membership, no invitation, not an outside collaborator (2.005588ms)
+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (2.964307ms)
+✔ a failure prints the two-part message for GitHub, with no body and no token (0.41944ms)
+✔ the manifest names every connector: least-privilege reads, how scopes are exposed, and dated vendor sources (3.407012ms)
+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (5.707843ms)
+✔ Google Workspace: a token response that grants a write scope is refused before any read (52.143058ms)
+✔ Fleet: the API user's role is read from /me first; any role beyond observer is refused, and observer reads proceed (1.639804ms)
+✔ Linear, Jira and Jamf Pro do not expose a credential's scopes: the first result says so and no extra request is made (1.67654ms)
+✔ the preflight is on by default for a person running a CLI and off for an injected test transport unless asked (1.95891ms)
+✔ scopes.js prints a connector's manifest entry and refuses an unknown connector (111.127165ms)
+✔ every scope refusal is on the audit trail as SCOPE_REFUSED, whichever way the vendor exposed the scopes (141.8097ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 425.170733
+# exit: 0  finished: 2026-10-28T09:12:40Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

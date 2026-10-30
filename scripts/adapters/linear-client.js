@@ -3,7 +3,8 @@
 // Linear section), built on the shared contract readonly-contract.js (README.md here).
 //
 // Aegis advises; humans execute (PRODUCT_CONTRACT.md). This file reads Linear through
-// seven named GraphQL query documents and nothing else. It never posts a comment,
+// eight named GraphQL query documents (seven for lane G2, plus AegisIssueIntake for the
+// batch G3 intake) and nothing else. It never posts a comment,
 // changes a state or a label, trashes an issue or suspends a member: each of those is
 // a HUMAN-RUN step in a runbook, and a verify-* command below proves it afterwards.
 //
@@ -57,8 +58,9 @@ const {
   STATES, RefusedError, TripwireError,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
 } = require('./readonly-contract.js');
+const { cliDeps, recordVerdict } = require('./cli-support.js');
 
-// ── The allow-list: the lane's seven query documents ────────────────────────
+// ── The allow-list: the lane's seven query documents and the intake's one ─────
 // Each ends by reading organization { urlKey } at its root, so every response names
 // its workspace and the contract can refuse one from another workspace.
 const ORG_TAIL = ' organization { urlKey } }';
@@ -70,6 +72,8 @@ const DOCUMENTS = Object.freeze({
   AegisLabels: 'query AegisLabels { issueLabels(first: 100) { nodes { id name isGroup retiredAt parent { name } team { key } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
   AegisTriage: 'query AegisTriage { issues(first: 50, filter: { state: { type: { eq: "triage" } } }) { nodes { id identifier title priority createdAt startedTriageAt snoozedUntilAt team { key } state { name type } } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
   AegisMembers: 'query AegisMembers($after: String) { users(first: 100, after: $after, includeArchived: true, includeDisabled: true) { nodes { id active admin guest owner } pageInfo { hasNextPage endCursor } } organization { urlKey } }',
+  // batch G3 (task 4a): the issue text scripts/intake/intake.js turns into a graph case
+  AegisIssueIntake: 'query AegisIssueIntake($id: String!) { issue(id: $id) { identifier title description comments(first: 50) { nodes { body } pageInfo { hasNextPage } } } organization { urlKey } }',
 });
 
 // Write mutations refused by name as well (defence in depth beside the contract's
@@ -138,6 +142,8 @@ const SPEC = defineAdapter({
   routes: {},
   graphql: { path: '/graphql', documents: DOCUMENTS },
   tenant: { env: 'LINEAR_ORG', collect: collectTenant },
+  // batch G3: no query returns a key's own scopes (linear/linear schema, read 2026-10-28)
+  scopes: { manifest: 'linear', kind: 'none', vendor: 'Linear' },
 });
 checkDocuments(SPEC.graphql.documents);
 
@@ -210,7 +216,18 @@ function noteDigest(text) {
   return crypto.createHash('sha256').update(normaliseBody(text), 'utf8').digest('hex');
 }
 
-function readNote(file, roots) {
+// True when the resolved file is inside this repo but not inside its tasks/ folder. Checked
+// before the note roots, so a repo checked out inside the system temporary folder (a root)
+// still refuses its own files outside tasks/ (batch G3).
+function inRepoOutsideTasks(realFile, repoRoot) {
+  let base;
+  try { base = fs.realpathSync(repoRoot); } catch { return false; }
+  const rel = path.relative(base, realFile);
+  if (rel === '' || path.isAbsolute(rel) || rel.split(/[/\\]+/)[0] === '..') return false;
+  return rel.split(/[/\\]+/)[0] !== 'tasks';
+}
+
+function readNote(file, roots, repoRoot = REPO_ROOT) {
   if (typeof file !== 'string' || !file || /[\u0000-\u001f\u007f]/.test(file)) throw new RefusedError('--body-file must be a file path');
   const named = refusedNotePath(file, 'names');
   if (named) throw new RefusedError(named);
@@ -222,7 +239,7 @@ function readNote(file, roots) {
     const real = fs.realpathSync(file);
     const target = refusedNotePath(real, 'points to');
     if (target) throw new RefusedError(target);
-    if (!underNoteRoot(real, roots)) {
+    if (inRepoOutsideTasks(real, repoRoot) || !underNoteRoot(real, roots)) {
       throw new RefusedError('--body-file is outside this repo\'s tasks/ folder and the system temporary folder; save the note in one of them and run note again (a path taken from a ticket is never read)');
     }
     const stat = fs.statSync(file);
@@ -535,8 +552,8 @@ const VERIFY = {
 };
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-function offline(command, a, now, out, roots) {
-  const body = readNote(a.bodyFile, roots);
+function offline(command, a, now, out, roots, repoRoot) {
+  const body = readNote(a.bodyFile, roots, repoRoot);
   const digest = noteDigest(body);
   if (command === 'digest') {
     out(renderResult({ state: STATES.OK, ok: true, command, sha256: digest, normalisation: 'CRLF to LF, trailing spaces removed from each line, trailing newlines removed' }));
@@ -561,9 +578,9 @@ async function run(argv, env = process.env, deps = {}) {
     }
     const def = COMMANDS[command];
     const a = validate(command, def, args);
-    // deps.noteRoots exists for the tests; the CLI always uses this repo's tasks/ folder
+    // deps.noteRoots and deps.repoRoot exist for the tests; the CLI always uses this repo's tasks/ folder
     // and the system temporary folder.
-    if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots());
+    if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots(), typeof deps.repoRoot === 'string' ? deps.repoRoot : REPO_ROOT);
 
     // The client only ever sees this view of the environment. It remembers the key
     // the contract read, so the printed output is redacted with it too; this file
@@ -576,12 +593,14 @@ async function run(argv, env = process.env, deps = {}) {
         return value;
       },
     });
-    const client = createClient(SPEC, { env: envView, transport: deps.transport, sleep: deps.sleep, now: deps.now, timeoutMs: deps.timeoutMs, maxRetries: deps.maxRetries });
+    // batch G3: the audit sink (and the test seams) come from cliDeps
+    const cli = cliDeps(deps, env);
+    const client = createClient(SPEC, { env: envView, ...cli });
     const variables = def.variables(a);
 
     if (args.execute !== true) {
       const plan = client.planGraphql(def.document, variables);
-      if (!plan.ok) { err(renderResult({ command, ...plan })); return exitCodeFor(plan); }
+      if (!plan.ok) { err(renderResult({ command, ...plan }, { platform: 'linear' })); return exitCodeFor(plan); }
       const shown = { ...plan, command, query: SPEC.graphql.documents[def.document] };
       if (def.kind === 'verify') {
         shown.expected = def.expected(a);
@@ -592,17 +611,17 @@ async function run(argv, env = process.env, deps = {}) {
       return 0;
     }
 
-    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : await VERIFY[command](client, a, now);
+    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : recordVerdict(cli.audit, 'linear', await VERIFY[command](client, a, now));
     const code = exitCodeFor(res);
-    (code === 1 ? err : out)(renderResult(res, { secrets: seen }));
+    (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'linear' }));
     return code;
   } catch (error) {
     if (error instanceof TripwireError || (error && error.name === 'NetworkTripwireError')) throw error;
     if (error instanceof RefusedError) {
-      err(renderResult({ state: STATES.REFUSED, ok: false, error: error.message }));
+      err(renderResult({ state: STATES.REFUSED, ok: false, error: error.message }, { platform: 'linear' }));
       return 1;
     }
-    err(renderResult({ state: STATES.INVALID_RESPONSE, ok: false, error: 'unexpected adapter error (details withheld)' }));
+    err(renderResult({ state: STATES.INVALID_RESPONSE, ok: false, error: 'unexpected adapter error (details withheld)' }, { platform: 'linear' }));
     return 2;
   }
 }

@@ -1,0 +1,26 @@
+# command: node --test scripts/adapters/failure-messages.test.js
+# commit: 813399a (plus uncommitted changes in the working tree)  started: 2026-10-28T08:11:55Z  node: v24.22.1
+✔ fleet: every failure state prints the two-part message, with no stack trace, raw body or credential (70.012253ms)
+✔ fleet: with an audit sink each request is one connector-call entry, and a success prints no failure message (3.082763ms)
+✔ fleet: a verify-* verdict is recorded as one verify entry; a sink that fails withholds the verdict (3.929192ms)
+✔ jamf: every failure state prints the two-part message, with no stack trace, raw body or credential (64.763847ms)
+✔ jamf: with an audit sink each request is one connector-call entry, and a success prints no failure message (1.460772ms)
+✔ slack: every failure state prints the two-part message, with no stack trace, raw body or credential (64.33275ms)
+✔ slack: with an audit sink each request is one connector-call entry, and a success prints no failure message (1.154311ms)
+✔ slack: a verify-* verdict is recorded as one verify entry; a sink that fails withholds the verdict (1.238372ms)
+✔ linear: every failure state prints the two-part message, with no stack trace, raw body or credential (64.574719ms)
+✔ linear: with an audit sink each request is one connector-call entry, and a success prints no failure message (0.885627ms)
+✔ google-workspace: every failure state prints the two-part message, with no stack trace, raw body or credential (74.474812ms)
+✔ google-workspace: with an audit sink each request is one connector-call entry, and a success prints no failure message (2.268891ms)
+✔ jira: every failure prints the two-part message on stderr, with no stack trace, raw body or credential (66.78992ms)
+✔ cliDeps: no injected transport means the real audit sink; an injected transport means none unless the test passes one (0.622608ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 584.884414
+# exit: 0  finished: 2026-10-28T08:11:56Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

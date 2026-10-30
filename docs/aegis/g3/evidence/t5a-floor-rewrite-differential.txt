@@ -1,0 +1,7 @@
+# command: node docs/aegis/g3/evidence/tools/floor-diff.js 9a636aa^ 9a636aa
+# commit: ae88348  started: 2026-10-28T13:12:57Z  node: v24.22.1
+22 floors changed between 9a636aa^ and 9a636aa
+740 corpus tickets and test sentences, plus 40000 random sentences per floor
+896280 comparisons on 22 floors (802288 distinct inputs); 0 disagreements
+# exit: 0  finished: 2026-10-28T13:12:58Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

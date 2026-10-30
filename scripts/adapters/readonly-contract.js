@@ -17,12 +17,19 @@
 // response holding a record from another tenant returns no data. Reads retry a
 // bounded number of times; the token exchange never repeats.
 //
+// Batch G3: a 429 or 503 with Retry-After is waited out up to 30 s, and a longer one is not;
+// the backoff has jitter; the total time one read may spend retrying is capped; every read
+// that gives up ends in a named handoff state with plain words for the operator; a request
+// id the vendor returns is kept; with an audit sink (scripts/audit/) every request is one
+// connector-call entry, and a sink that fails withholds the answer.
+//
 // The transport is injected. The default is node:https, and it throws "Network
 // tripwire fired" when AEGIS_NETWORK_TRIPWIRE=1 (every adapter test sets it
 // through socket-tripwire.js), so no test can reach a real system.
 
 const https = require('node:https');
 const { injectionMarkersIn } = require('../tier/tier-guard.js');
+const { operatorMessage, handoffFor, isFailure } = require('./operator-message.js');
 
 const STATES = Object.freeze({
   OK: 'OK',
@@ -33,6 +40,17 @@ const STATES = Object.freeze({
   NETWORK_ERROR: 'NETWORK_ERROR',
   TENANT_MISMATCH: 'TENANT_MISMATCH',
   INVALID_RESPONSE: 'INVALID_RESPONSE',
+  // batch G3: the credential holds a write scope beyond the manifest; the audit trail could
+  // not record the request
+  SCOPE_REFUSED: 'SCOPE_REFUSED',
+  AUDIT_FAILED: 'AUDIT_FAILED',
+});
+
+// The named states a read ends in when it gives up retrying (batch G3).
+const HANDOFF = Object.freeze({
+  RETRIES_EXHAUSTED: 'RETRIES_EXHAUSTED',
+  RETRY_AFTER_TOO_LONG: 'RETRY_AFTER_TOO_LONG',
+  RETRY_BUDGET_SPENT: 'RETRY_BUDGET_SPENT',
 });
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -40,6 +58,14 @@ const DEFAULT_MAX_RETRIES = 2;
 const MAX_RETRIES_CAP = 3;
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 const QUOTE_LIMIT = 200;
+const BACKOFF_BASE_MS = 200;
+const BACKOFF_CAP_MS = 2000;
+const MAX_RETRY_AFTER_MS = 30000;
+const DEFAULT_RETRY_BUDGET_MS = 60000;
+// Response headers that carry the vendor's request id, in the order they are tried.
+const REQUEST_ID_HEADERS = ['x-request-id', 'x-github-request-id', 'x-okta-request-id', 'request-id', 'client-request-id',
+  'x-ms-request-id', 'x-slack-req-id', 'x-arequestid', 'x-amzn-requestid'];
+const REQUEST_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const REDACTED = '[REDACTED]';
 const TRIPWIRE_MESSAGE = 'Network tripwire fired';
 
@@ -246,6 +272,20 @@ function defineAdapter(spec) {
       contentType: t.contentType || 'application/x-www-form-urlencoded',
     });
   }
+  // batch G3: how the vendor exposes the scopes or role a credential holds, and which are
+  // read-only (scripts/adapters/scope-manifest.json, docs/aegis/g3/scope-manifest.md)
+  let scopes = null;
+  if (spec.scopes) {
+    const s = spec.scopes;
+    if (typeof s.manifest !== 'string' || !/^[a-z][a-z0-9-]{1,40}$/.test(s.manifest)) throw new Error('scopes need a manifest entry name');
+    if (!['header', 'token', 'route', 'none'].includes(s.kind)) throw new Error('scopes kind is header, token, route or none');
+    if (typeof s.vendor !== 'string' || !s.vendor) throw new Error('scopes need the vendor name for the notice');
+    if (s.kind !== 'none' && (typeof s.granted !== 'function' || typeof s.allowed !== 'function')) throw new Error('scopes need granted and allowed functions');
+    if (s.kind === 'header' && !/^[a-z][a-z0-9-]{1,60}$/.test(s.header || '')) throw new Error('header scopes need a lower-case header name');
+    if (s.kind === 'route' && !(s.route in routes)) throw new Error('route scopes need a route of this spec');
+    if (s.kind === 'token' && !spec.tokenExchange) throw new Error('token scopes need a token exchange');
+    scopes = Object.freeze({ manifest: s.manifest, kind: s.kind, vendor: s.vendor, header: s.header || null, route: s.route || null, granted: s.granted || null, allowed: s.allowed || null });
+  }
   let tenant = null;
   if (spec.tenant) {
     if (!ENV_NAME.test(spec.tenant.env || '') || typeof spec.tenant.collect !== 'function') throw new Error('tenant binding needs an env name and a collect function');
@@ -260,6 +300,7 @@ function defineAdapter(spec) {
     graphql,
     tokenExchange,
     tenant,
+    scopes,
   });
 }
 
@@ -438,6 +479,48 @@ function withTimeout(promiseFactory, timeoutMs) {
   });
 }
 
+// ── Retry timing (batch G3) ──────────────────────────────────────────────────
+// The wait before retry n: the base doubles from 200 ms to a 2 s cap, and the wait is drawn
+// from [base/2, base] (equal jitter), so many readers do not retry in step.
+function backoffDelay(attempt, random = Math.random) {
+  const base = Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (attempt - 1));
+  const r = Math.min(1, Math.max(0, Number(random()) || 0));
+  return Math.round(base / 2 + r * (base / 2));
+}
+
+function headerValue(headers, name) {
+  if (!headers || typeof headers !== 'object') return undefined;
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() !== name) continue;
+    const v = headers[key];
+    return Array.isArray(v) ? String(v[0]) : (v === undefined || v === null ? undefined : String(v));
+  }
+  return undefined;
+}
+
+// Retry-After as milliseconds from now: whole seconds, or an HTTP date (IMF-fixdate). Any
+// other form is ignored and the normal backoff applies.
+const HTTP_DATE = /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+function retryAfterMs(headers, nowMs) {
+  const raw = headerValue(headers, 'retry-after');
+  if (raw === undefined) return undefined;
+  const value = raw.trim();
+  if (/^\d{1,7}$/.test(value)) return Number(value) * 1000;
+  if (HTTP_DATE.test(value)) {
+    const at = Date.parse(value);
+    if (Number.isFinite(at)) return Math.max(0, at - nowMs);
+  }
+  return undefined;
+}
+
+function requestIdOf(headers) {
+  for (const name of REQUEST_ID_HEADERS) {
+    const v = headerValue(headers, name);
+    if (v !== undefined && REQUEST_ID.test(v)) return v;
+  }
+  return undefined;
+}
+
 // ── Client ───────────────────────────────────────────────────────────────────
 function result(state, extra = {}) {
   return { state, ok: state === STATES.OK, ...extra };
@@ -451,6 +534,15 @@ function createClient(spec, deps = {}) {
   const maxRetries = Math.min(MAX_RETRIES_CAP, Number.isInteger(deps.maxRetries) && deps.maxRetries >= 0 ? deps.maxRetries : DEFAULT_MAX_RETRIES);
   const sleep = deps.sleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
   const now = deps.now || Date.now;
+  const random = typeof deps.random === 'function' ? deps.random : Math.random;
+  const retryBudgetMs = Number.isFinite(deps.retryBudgetMs) && deps.retryBudgetMs > 0 ? deps.retryBudgetMs : DEFAULT_RETRY_BUDGET_MS;
+  const audit = typeof deps.audit === 'function' ? deps.audit : null;
+  // batch G3: the scope preflight is on for a person running a CLI (no injected transport)
+  // and for any caller that asks; a test transport turns it off unless the test asks.
+  const scopePreflight = deps.scopePreflight !== undefined ? deps.scopePreflight === true : !deps.transport;
+  let scopeVerdict = null; // null: not checked yet; { ok, notice } or { refused }
+  let noticeShown = false;
+  let inPreflight = false;
   let token = null;
   let tokenExpiresAt = 0;
   const secrets = [];
@@ -487,12 +579,85 @@ function createClient(spec, deps = {}) {
     if (outcome.timedOut) return result(STATES.TIMEOUT, { error: `no response within ${timeoutMs} ms` });
     const res = outcome.value;
     if (!res || !Number.isInteger(res.status)) return result(STATES.INVALID_RESPONSE, { error: 'transport returned no status' });
-    if (res.status < 200 || res.status >= 300) return result(STATES.HTTP_ERROR, { status: res.status, error: `HTTP ${res.status} (body withheld)` });
+    // the request id and Retry-After are read from the headers; the headers themselves never
+    // leave this function
+    const meta = {};
+    const id = requestIdOf(res.headers);
+    if (id !== undefined) meta.request_id = id;
+    if (spec.scopes && spec.scopes.kind === 'header') meta.scopeHeader = headerValue(res.headers, spec.scopes.header);
+    if (res.status < 200 || res.status >= 300) {
+      const wait = res.status === 429 || res.status === 503 ? retryAfterMs(res.headers, now()) : undefined;
+      return result(STATES.HTTP_ERROR, { status: res.status, ...meta, error: `HTTP ${res.status} (body withheld)`, ...(wait !== undefined ? { retryAfterMs: wait } : {}) });
+    }
     const body = typeof res.body === 'string' ? res.body : '';
-    if (Buffer.byteLength(body, 'utf8') > MAX_RESPONSE_BYTES) return result(STATES.INVALID_RESPONSE, { status: res.status, error: 'response larger than the read limit' });
+    if (Buffer.byteLength(body, 'utf8') > MAX_RESPONSE_BYTES) return result(STATES.INVALID_RESPONSE, { status: res.status, ...meta, error: 'response larger than the read limit' });
     let json;
-    try { json = JSON.parse(body); } catch { return result(STATES.INVALID_RESPONSE, { status: res.status, error: 'response is not JSON (body withheld)' }); }
-    return result(STATES.OK, { status: res.status, json });
+    try { json = JSON.parse(body); } catch { return result(STATES.INVALID_RESPONSE, { status: res.status, ...meta, error: 'response is not JSON (body withheld)' }); }
+    return result(STATES.OK, { status: res.status, ...meta, json });
+  }
+
+  // One connector-call entry per request (batch G3). The entry holds names, a state and
+  // numbers only. A sink that throws turns the answer into AUDIT_FAILED: no data is
+  // returned without its record.
+  function record(operation, r, attempts, startedAt) {
+    if (!audit) return null;
+    try {
+      audit({
+        kind: 'connector-call',
+        connector: spec.platform,
+        operation,
+        state: r.state,
+        attempts,
+        status: Number.isInteger(r.status) ? r.status : null,
+        request_id: typeof r.request_id === 'string' ? r.request_id : null,
+        handoff: r.handoff && typeof r.handoff.state === 'string' ? r.handoff.state : null,
+        duration_ms: Math.max(0, Math.round(now() - startedAt)),
+      });
+      return null;
+    } catch {
+      return result(STATES.AUDIT_FAILED, { attempts, error: 'the audit trail could not record this request, so its answer is withheld' });
+    }
+  }
+
+  // The public shape of a failed attempt: internal timing fields dropped.
+  function failure(r, attempts, extra = {}) {
+    const { retryAfterMs: _wait, json: _json, scopeHeader: _scopes, ...rest } = r;
+    return { ...rest, attempts, ...extra };
+  }
+
+  // The scope verdict from what the vendor exposed: null or undefined means it exposed
+  // nothing readable (a notice on first use); otherwise every granted scope or role must be
+  // one the manifest allows, or the credential is refused for this client.
+  function judgeScopes(granted, where) {
+    if (granted === null || granted === undefined) {
+      return { ok: true, notice: `${spec.scopes.vendor} did not return the granted scopes ${where}, so Aegis could not check that this credential is read-only; use a credential with exactly the read scopes in docs/aegis/g3/scope-manifest.md` };
+    }
+    const beyond = granted.filter((s) => !spec.scopes.allowed(s));
+    if (!beyond.length) return { ok: true, notice: null };
+    return {
+      refused: result(STATES.SCOPE_REFUSED, {
+        write_scopes: beyond,
+        error: `this credential holds scopes or roles beyond the read-only manifest (${beyond.join(', ')}); Aegis does not use it`,
+      }),
+    };
+  }
+
+  function notExposedNotice() {
+    return `${spec.scopes.vendor} does not expose which scopes or role this credential holds, so Aegis cannot prove it is read-only; use a credential with exactly the read scopes in docs/aegis/g3/scope-manifest.md`;
+  }
+
+  // A refusal judged from the token response or the who-am-I read is its own audit entry
+  // (operation scope-preflight); the call before it was recorded with its own state.
+  function recordRefusal(startedAt) {
+    const refused = { ...scopeVerdict.refused, attempts: 0 };
+    return record('scope-preflight', refused, 0, startedAt) || refused;
+  }
+
+  // Attaches the first-use notice to the first result of this client.
+  function withNotice(res) {
+    if (!scopePreflight || !spec.scopes || noticeShown || !scopeVerdict || !scopeVerdict.notice) return res;
+    noticeShown = true;
+    return { ...res, scope_notice: scopeVerdict.notice };
   }
 
   const retryable = (r) => r.state === STATES.TIMEOUT || r.state === STATES.NETWORK_ERROR || (r.state === STATES.HTTP_ERROR && (r.status === 429 || r.status >= 500));
@@ -506,11 +671,20 @@ function createClient(spec, deps = {}) {
     const body = spec.tokenExchange.contentType === 'application/json' ? JSON.stringify(fields) : new URLSearchParams(fields).toString();
     const headers = { 'Content-Type': spec.tokenExchange.contentType, Accept: 'application/json', ...(spec.tokenExchange.headers ? spec.tokenExchange.headers(creds) : {}) };
     // The token exchange is not a read: one attempt, never retried.
+    const startedAt = now();
     const r = await attempt({ hostname: host, path: spec.tokenExchange.path, method: 'POST', headers, body });
-    if (!r.ok) return { failed: r };
+    const audited = record('token-exchange', r, 1, startedAt);
+    if (audited) return { failed: audited };
+    if (!r.ok) return { failed: failure(r, 1) };
     let parsed;
     try { parsed = spec.tokenExchange.parse(r.json); } catch { parsed = null; }
     if (!parsed || !plainString(parsed.token) || !parsed.token) return { failed: result(STATES.INVALID_RESPONSE, { error: 'token exchange returned no token' }) };
+    if (scopePreflight && spec.scopes && spec.scopes.kind === 'token' && !scopeVerdict) {
+      let granted = null;
+      try { granted = spec.scopes.granted(r.json); } catch { granted = null; }
+      scopeVerdict = judgeScopes(granted, 'in the token response');
+      if (scopeVerdict.refused) return { failed: recordRefusal(startedAt) };
+    }
     token = parsed.token;
     if (!secrets.includes(token)) secrets.push(token);
     // Refresh before the vendor's own expiry: a quarter of the lifetime early, at most
@@ -522,22 +696,75 @@ function createClient(spec, deps = {}) {
 
   async function perform(checked) {
     const expectedTenant = tenantExpected();
+    if (scopeVerdict && scopeVerdict.refused) return scopeVerdict.refused;
     const { creds, missing } = loadCredentials();
-    if (missing.length) return result(STATES.NO_CREDENTIALS, { error: `missing credential environment variable(s): ${missing.join(', ')}` });
+    if (missing.length) {
+      // batch G3 (task 6b): a failure that never reaches the network is on the trail too
+      const res = result(STATES.NO_CREDENTIALS, { error: `missing credential environment variable(s): ${missing.join(', ')}` });
+      return record(checked.route || checked.document || 'read', res, 0, now()) || res;
+    }
+    if (scopePreflight && spec.scopes && !scopeVerdict && !inPreflight) {
+      if (spec.scopes.kind === 'none') scopeVerdict = { ok: true, notice: notExposedNotice() };
+      if (spec.scopes.kind === 'route') {
+        // the vendor's own "who am I" read comes first; its answer decides
+        const startedAt = now();
+        inPreflight = true;
+        let pre;
+        try { pre = await perform(routeRequest(spec.scopes.route, {}, {})); } finally { inPreflight = false; }
+        if (!pre.ok) return pre;
+        let granted = null;
+        try { granted = spec.scopes.granted(pre.data); } catch { granted = null; }
+        scopeVerdict = judgeScopes(granted, `from ${spec.scopes.route}`);
+        if (scopeVerdict.refused) return recordRefusal(startedAt);
+      }
+    }
     const tokenOrFail = await ensureToken(creds);
     if (tokenOrFail && tokenOrFail.failed) return tokenOrFail.failed;
     const headers = { Accept: 'application/json', ...spec.auth(creds, tokenOrFail) };
     if (checked.body !== undefined) headers['Content-Type'] = 'application/json';
     const request = { hostname: checked.host, path: checked.path, method: checked.method, headers, body: checked.body };
+    const operation = checked.route || checked.document || 'read';
+    const startedAt = now();
     let r;
     let attempts = 0;
+    let handoff = null;
     for (;;) {
       attempts += 1;
       r = await attempt(request);
-      if (r.ok || !retryable(r) || attempts > maxRetries) break;
-      await sleep(Math.min(2000, 200 * 2 ** (attempts - 1)));
+      if (r.ok || !retryable(r)) break;
+      if (attempts > maxRetries) { handoff = { state: HANDOFF.RETRIES_EXHAUSTED }; break; }
+      let wait;
+      if (r.retryAfterMs !== undefined) {
+        if (r.retryAfterMs > MAX_RETRY_AFTER_MS) {
+          handoff = { state: HANDOFF.RETRY_AFTER_TOO_LONG, retryAfterSeconds: Math.ceil(r.retryAfterMs / 1000) };
+          break;
+        }
+        wait = r.retryAfterMs;
+      } else {
+        wait = backoffDelay(attempts, random);
+      }
+      // a retry is made only when its wait and one more full attempt still fit in the budget
+      if (now() - startedAt + wait + timeoutMs > retryBudgetMs) { handoff = { state: HANDOFF.RETRY_BUDGET_SPENT }; break; }
+      await sleep(wait);
     }
-    if (!r.ok) return { ...r, attempts };
+    if (!r.ok) {
+      const base = failure(r, attempts);
+      if (handoff) {
+        base.handoff = handoffFor(handoff.state, base, { platform: spec.platform, retryAfterSeconds: handoff.retryAfterSeconds, budgetMs: retryBudgetMs });
+      }
+      return record(operation, base, attempts, startedAt) || base;
+    }
+    if (scopePreflight && spec.scopes && spec.scopes.kind === 'header' && !scopeVerdict && !inPreflight) {
+      let granted = null;
+      try { granted = r.scopeHeader === undefined ? null : spec.scopes.granted(r.scopeHeader); } catch { granted = null; }
+      scopeVerdict = judgeScopes(granted, `in the ${spec.scopes.header} header`);
+      if (scopeVerdict.refused) {
+        const refused = { ...scopeVerdict.refused, attempts, status: r.status };
+        return record(operation, refused, attempts, startedAt) || refused;
+      }
+    }
+    const audited = record(operation, r, attempts, startedAt);
+    if (audited) return audited;
     let ids = [];
     if (spec.tenant) {
       try { ids = spec.tenant.collect(r.json) || []; } catch { return result(STATES.INVALID_RESPONSE, { attempts, error: 'tenant fields unreadable' }); }
@@ -546,7 +773,7 @@ function createClient(spec, deps = {}) {
       }
     }
     const data = redactDeep(r.json, secrets);
-    return result(STATES.OK, { status: r.status, attempts, data, flags: scanUntrusted(data) });
+    return withNotice(result(STATES.OK, { status: r.status, attempts, ...(r.request_id ? { request_id: r.request_id } : {}), data, flags: scanUntrusted(data) }));
   }
 
   async function run(fn) {
@@ -554,7 +781,11 @@ function createClient(spec, deps = {}) {
       return await fn();
     } catch (error) {
       if (error instanceof TripwireError) throw error;
-      if (error instanceof RefusedError) return result(STATES.REFUSED, { error: redactString(error.message, secrets) });
+      if (error instanceof RefusedError) {
+        // recorded under a fixed operation name, so refused input never enters the trail
+        const res = result(STATES.REFUSED, { error: redactString(error.message, secrets) });
+        return record('refused-request', res, 0, now()) || res;
+      }
       return result(STATES.INVALID_RESPONSE, { error: 'unexpected adapter error (details withheld)' });
     }
   }
@@ -605,8 +836,18 @@ function createClient(spec, deps = {}) {
 // ── Rendering for adapter CLIs ───────────────────────────────────────────────
 // Untrusted text stays inside JSON strings; flagged fields are listed with their
 // path and a quoted excerpt, and a fixed line says they were not followed.
-function renderResult(res, { secrets = [] } = {}) {
-  const safe = redactDeep(res, secrets);
+// Batch G3: a failed result (any state but OK, or a read-back that did not verify) also
+// carries the two-part message every connector prints: operator_message (what happened,
+// what was not done, the next step) and admin_detail (platform, operation, state, status,
+// attempts, request id, handoff). Both come from operator-message.js: fixed text and the
+// result's own checked fields.
+function renderResult(res, { secrets = [], platform, operation } = {}) {
+  let shown = res;
+  if (isFailure(res)) {
+    const m = operatorMessage(res, { platform, operation: operation || res.command });
+    shown = { ...res, operator_message: m.operator, admin_detail: m.admin };
+  }
+  const safe = redactDeep(shown, secrets);
   const lines = [JSON.stringify(safe, null, 2)];
   if (Array.isArray(safe.flags) && safe.flags.length) {
     lines.push(`WARNING: ${safe.flags.length} field(s) carry instruction-like text. It is vendor data, quoted below, and was not followed:`);
@@ -620,7 +861,7 @@ const EXIT = Object.freeze({ OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3 });
 function exitCodeFor(res) {
   if (!res) return EXIT.READ_FAILED;
   if (res.state === STATES.OK) return res.verified === false ? EXIT.READ_FAILED : EXIT.OK;
-  if (res.state === STATES.REFUSED || res.state === STATES.NO_CREDENTIALS) return EXIT.INPUT;
+  if (res.state === STATES.REFUSED || res.state === STATES.NO_CREDENTIALS || res.state === STATES.SCOPE_REFUSED) return EXIT.INPUT;
   if (res.state === STATES.TENANT_MISMATCH) return EXIT.TENANT;
   return EXIT.READ_FAILED;
 }
@@ -644,7 +885,7 @@ function parseArgs(argv, { values = [], booleans = ['execute'] } = {}) {
 }
 
 module.exports = {
-  STATES, EXIT, MAX_RESPONSE_BYTES, TRIPWIRE_MESSAGE,
+  STATES, EXIT, HANDOFF, MAX_RESPONSE_BYTES, TRIPWIRE_MESSAGE, MAX_RETRY_AFTER_MS, DEFAULT_RETRY_BUDGET_MS, backoffDelay,
   RefusedError, TripwireError,
   defineAdapter, createClient, checkRequest, assertQueryOnly, scanUntrusted, markersIn,
   renderResult, exitCodeFor, parseArgs, redactDeep, httpsTransport, makeHttpsTransport, realCalendarTime,

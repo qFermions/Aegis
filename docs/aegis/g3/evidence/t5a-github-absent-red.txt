@@ -1,0 +1,46 @@
+# command: node --test --test-name-pattern longer than 10 full pages scripts/adapters/github-client.test.js
+# commit: f416bcd (plus uncommitted changes in the working tree)  started: 2026-10-28T09:21:43Z  node: v24.22.1
+✖ verify-team-member --absent: absence on a list longer than 10 full pages is not proof (25.842184ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.034799
+
+✖ failing tests:
+
+test at scripts/adapters/github-client.test.js:282:1
+✖ verify-team-member --absent: absence on a list longer than 10 full pages is not proof (25.842184ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-team-member",
+    "verified": true,
+    "expected": {
+      "team": "docs",
+      "user": "leaver",
+      "member": false
+    },
+    "observed": {
+      "member": false
+    }
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/github-client.test.js:284:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-28T09:21:43Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -1,0 +1,34 @@
+# command: node docs/aegis/g3/evidence/tools/floor-times.js 9a636aa^ 9a636aa
+# commit: ae88348  started: 2026-10-28T13:12:25Z  node: v24.22.1
+guard  group membership removal         "remove member from "  5 KB before   197 ms, after   2 ms; 20 KB after  31 ms
+guard  security-control change (SR-2)   "exclude from "        5 KB before   506 ms, after   5 ms; 20 KB after  61 ms
+guard  account / work-profile removal   "remove account from " 5 KB before  8915 ms, after   3 ms; 20 KB after  36 ms
+guard  security-control change -- Google "exclude from "        5 KB before   270 ms, after   2 ms; 20 KB after  37 ms
+guard  Slack or Linear member           "kick user "           5 KB before   373 ms, after   2 ms; 20 KB after  38 ms
+guard  Slack or Linear member           "slack kick "          5 KB before   483 ms, after   6 ms; 20 KB after  75 ms
+guard  Okta lifecycle change            "reset all "           5 KB before   400 ms, after   4 ms; 20 KB after  55 ms
+guard  Okta app unassignment            "okta remove "         5 KB before   394 ms, after   5 ms; 20 KB after  76 ms
+guard  Okta app unassignment            "remove app "          5 KB before   320 ms, after   3 ms; 20 KB after  38 ms
+guard  Fleet script run                 "run script "          5 KB before   331 ms, after   5 ms; 20 KB after  65 ms
+guard  Fleet script run                 "fleet run "           5 KB before   481 ms, after   3 ms; 20 KB after  43 ms
+guard  fleet-wide host operation        "lock all "            5 KB before   493 ms, after   6 ms; 20 KB after  90 ms
+guard  Linear bulk issue operation      "delete all "          5 KB before   268 ms, after   4 ms; 20 KB after  48 ms
+guard  retention change                 "change messages "     5 KB before   140 ms, after   2 ms; 20 KB after  29 ms
+guard  retention change                 "change retention "    5 KB before   192 ms, after   4 ms; 20 KB after  61 ms
+guard  fleet-wide computer or Mac       "lock all "            5 KB before   645 ms, after   6 ms; 20 KB after 100 ms
+engine group membership removal         "remove member from "  5 KB before   245 ms, after   2 ms; 20 KB after  33 ms
+engine account / work-profile removal   "remove account from " 5 KB before  9877 ms, after   2 ms; 20 KB after  26 ms
+engine Slack or Linear member           "kick user "           5 KB before   442 ms, after   4 ms; 20 KB after  65 ms
+engine Slack or Linear member           "slack kick "          5 KB before   505 ms, after   4 ms; 20 KB after  95 ms
+engine Okta lifecycle change            "reset all "           5 KB before   375 ms, after   3 ms; 20 KB after  41 ms
+engine Okta app unassignment            "okta remove "         5 KB before   317 ms, after   4 ms; 20 KB after  67 ms
+engine Okta app unassignment            "remove app "          5 KB before   269 ms, after   2 ms; 20 KB after  37 ms
+engine Fleet script run                 "run script "          5 KB before   401 ms, after   3 ms; 20 KB after  51 ms
+engine Fleet script run                 "fleet run "           5 KB before   606 ms, after   6 ms; 20 KB after  67 ms
+engine fleet-wide host operation        "lock all "            5 KB before   484 ms, after   6 ms; 20 KB after  75 ms
+engine Linear bulk issue operation      "delete all "          5 KB before   295 ms, after   4 ms; 20 KB after  59 ms
+engine retention change                 "change messages "     5 KB before   171 ms, after   2 ms; 20 KB after  35 ms
+engine retention change                 "change retention "    5 KB before   249 ms, after   5 ms; 20 KB after  87 ms
+engine fleet-wide computer or Mac       "lock all "            5 KB before   864 ms, after   7 ms; 20 KB after 100 ms
+# exit: 0  finished: 2026-10-28T13:12:57Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

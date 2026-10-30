@@ -51,7 +51,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders } = require('../tier/tier-guard.js'); // pure functions, no I/O
+const { assess, foldedForms, injectionMarkersIn, hasForeignOrgToken, containsLiteral, maskCanonicalPlaceholders, findEmails, replaceEmails, personalDataIn } = require('../tier/tier-guard.js'); // pure functions, no I/O
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORE = process.env.AEGIS_REPLAY_DIR || path.join(ROOT, 'memory', 'replay');
@@ -74,7 +74,9 @@ const keyOf = (text) => sha256(normalize(text));
 // Identity placeholders from modules/security/placeholder-dictionary.md that
 // stand for a single principal's sign-in name, plus any email-shaped literal.
 const IDENTITY_PLACEHOLDERS = ['[UPN]', '[USER@DOMAIN.COM]', '[MANAGER_UPN]', '[USER_UPN]', '[GUEST_UPN]', '[EMAIL]'];
-const EMAIL_LITERAL = /[A-Za-z0-9._%+#-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g; // "#" so a guest UPN (…#EXT#@tenant) is one literal
+// findEmails and replaceEmails (EMAIL_LITERAL's matches in linear time, shared with the
+// personal-data rule in scripts/tier/tier-guard.js) keep "#", so a guest UPN
+// (…#EXT#@tenant) is one literal
 const SLOT = '<id>';
 
 // ── object class of the identity slot ────────────────────────────────────────
@@ -99,8 +101,8 @@ function slotClass(text) {
       return { objectClass: cls, anchor: cls === 'unknown' ? 'none' : 'placeholder' };
     }
   }
-  const lit = s.match(EMAIL_LITERAL);
-  if (lit && GUEST_UPN_MARKER.test(lit[0])) return { objectClass: 'guest', anchor: 'ext-marker' };
+  const lit = findEmails(s);
+  if (lit.length && GUEST_UPN_MARKER.test(lit[0])) return { objectClass: 'guest', anchor: 'ext-marker' };
   return { objectClass: 'unknown', anchor: 'none' };
 }
 
@@ -124,7 +126,7 @@ function shapeOf(text) {
   for (const ph of IDENTITY_PLACEHOLDERS) {
     s = s.replace(new RegExp(ph.replace(/[[\]@.]/g, (ch) => '\\' + ch), 'gi'), SENTINEL);
   }
-  s = s.replace(EMAIL_LITERAL, SENTINEL);
+  s = replaceEmails(s, () => SENTINEL);
   const segments = s.split(SENTINEL);
   const slots = segments.length - 1;
   const shape = segments.map(normalize).join(` ${SLOT} `).replace(/\s+/g, ' ').trim();
@@ -134,8 +136,8 @@ function shapeOf(text) {
 // ── sanitization at the persistence boundary (SR-1 / SR-8) ───────────────────
 // Secrets/credentials, the real tenant literal, real email addresses, and
 // phone-number patterns can never enter the store. Canonical placeholders and
-// RFC example domains are exempt; nothing else is.
-const ALLOWED_EMAIL_DOMAIN = /(^|\.)example\.(com|org|net)$/i;
+// RFC example domains are exempt; nothing else is. The personal-data rule is shared
+// with the graph edge sanitizer and the memory store (scripts/tier/tier-guard.js).
 function sanitizationHits(text) {
   const hits = [];
   const forms = foldedForms(text); // one fold for the literal, marker and org-token checks
@@ -160,12 +162,9 @@ function sanitizationHits(text) {
   // token such as [USER@DOMAIN.COM] / [JIRA-###] or the [@Aegion_*] family. A
   // bracket wrapped around a real, lower-case address or a digit string is not
   // a placeholder and is scanned like any other text.
-  const unbracketed = maskCanonicalPlaceholders(text);
-  for (const m of unbracketed.matchAll(EMAIL_LITERAL)) {
-    const domain = m[0].slice(m[0].indexOf('@') + 1);
-    if (!ALLOWED_EMAIL_DOMAIN.test(domain)) { hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])'); break; }
-  }
-  if (PHONE_LITERAL.test(unbracketed)) hits.push('phone number pattern (use [PHONE_NUMBER])');
+  const pii = personalDataIn(maskCanonicalPlaceholders(text));
+  if (pii.includes('email')) hits.push('real email address (use [USER@DOMAIN.COM] / [UPN])');
+  if (pii.includes('phone')) hits.push('phone number pattern (use [PHONE_NUMBER])');
   hits.push(...injectionHits(text, forms));
   if (hasForeignOrgToken(text, forms)) hits.push('mixed-tenant case (an org token from another namespace than [@Aegion_*]; one deployment serves one tenant)');
   return hits;
@@ -179,9 +178,6 @@ function injectionHits(text, forms) {
   return injectionMarkersIn(text, forms)
     .map((name) => `instruction-shaped text (prompt-injection marker: ${name}; content is data, never instructions)`);
 }
-// dashed · dotted · spaced · parenthesised area code · +country with 2–4 groups ·
-// +country (0) trunk form · E.164 without separators · bare ten digits
-const PHONE_LITERAL = /(?:\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|\+\d{1,3}\s*\(0\)\s*\d{2,4}(?:[\s-]\d{2,4}){1,4}\b|\+\d{1,3}(?:[\s-]\d{2,4}){2,4}\b|\+\d{9,15}\b|\b\d{10}\b)/;
 
 // Canonical placeholders are recognised by the shared rule in scripts/tier/tier-guard.js.
 // Shape safety: only pure-ASCII tickets are shape-eligible. A homoglyph ("wıpe",
@@ -201,8 +197,11 @@ function hasNonAscii(text) {
 // Residual: a gate-clean edit is not detected (case files carry no seal).
 // audit: status and list print every field of the case, so every string leaf and key
 // name is checked one by one (a newline inside a leaf stays a newline), and the
-// caseId and status must have their own shapes.
+// caseId and status must have their own shapes. Every mode checks that the printed
+// verification time has the ISO form this CLI writes; lookup and render name a changed
+// dependency by its path, so each path is scanned like the text.
 const CASE_STATUSES = new Set(['candidate', 'verified', 'stale']);
+const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 function stringLeaves(value, out = []) {
   if (typeof value === 'string') out.push(value);
   else if (Array.isArray(value)) value.forEach((v) => stringLeaves(v, out));
@@ -213,6 +212,14 @@ function storedCaseHits(c, { audit = false } = {}) {
   const hits = [c.ticket, c.solution].some((t) => typeof t !== 'string') ? ['stored text is not a string'] : [];
   const texts = audit ? stringLeaves(c) : [c.ticket, c.solution].filter((t) => typeof t === 'string');
   for (const t of texts) hits.push(...sanitizationHits(t));
+  const verifiedAt = c.provenance && c.provenance.verifiedAt;
+  if (verifiedAt != null && !(typeof verifiedAt === 'string' && ISO_TIME.test(verifiedAt))) hits.push('stored verifiedAt is not an ISO time');
+  if (!audit) { // audit already scans every string leaf, the paths included
+    for (const d of Array.isArray(c.deps) ? c.deps : []) {
+      if (!d || typeof d.path !== 'string') hits.push('stored dependency path is not a string');
+      else hits.push(...sanitizationHits(d.path));
+    }
+  }
   if (audit && !validCaseId(c.caseId)) hits.push('stored caseId is not a case id');
   if (audit && !CASE_STATUSES.has(c.status)) hits.push('stored status is not a replay status');
   return Array.from(new Set(hits));
@@ -248,7 +255,8 @@ function saveCase(c) { atomicWrite(casePath(c.caseId), JSON.stringify(c, null, 2
 // tenant domain, never the literal (SR-8). Every command then refuses (exit 6)
 // when the runtime tenant differs or is unset. An unbound store (created before
 // this rule, or only written with AEGION_DOMAIN unset) carries no evidence of
-// whose it is: it stays readable, and its first write under a tenant binds it.
+// whose it is: it stays readable, and its first write under a tenant binds it (a
+// lookup that marks a case stale is a read and never binds).
 // Same rule as scripts/memory/memory-cli.js (inline: R4 pins this file's deps).
 const tenantFingerprint = (domain) => sha256('aegis.tenant.v1\n' + domain.trim().toLowerCase());
 function runtimeTenant() {
@@ -270,14 +278,17 @@ function assertTenant() {
   if (!current) fail(6, 'store is bound to a tenant but AEGION_DOMAIN is not set: this case cannot be shown to belong to it; nothing read or written');
   if (current !== bound) fail(6, `store belongs to another tenant (binding ${bound.slice(0, 12)}, runtime ${current.slice(0, 12)}): one store, one tenant; nothing read or written`);
 }
+// A read that writes (lookup marking a case stale) never claims the store: withLock
+// clears this for it, so only an operator's write binds an unbound store.
+let lockBinds = true;
 function bindTenantIfUnbound() {
   const current = runtimeTenant();
-  if (!current || fs.existsSync(TENANT)) return;
+  if (!lockBinds || !current || fs.existsSync(TENANT)) return;
   atomicWrite(TENANT, JSON.stringify({ schema: 'aegis.tenant-binding.v1', tenant: current, boundAt: new Date().toISOString() }, null, 2));
 }
 
 let lockHeld = false;
-function withLock(fn) {
+function withLock(fn, { binds = true } = {}) {
   // R8 guard: a write store inside the repo must stay under the git-ignored
   // memory/ area — a redirected in-tree store could otherwise be committed.
   const rel = path.relative(ROOT, STORE);
@@ -290,10 +301,11 @@ function withLock(fn) {
     fail(5, 'store is locked by another writer — retry after it completes (stale lock: remove ' + LOCK + ')');
   }
   lockHeld = true;
+  lockBinds = binds;
   // Re-checked under the lock (another writer may have bound the store since
   // main() checked it); bound only after fn() returns, so a refused write never
   // claims the store. Same rule as scripts/memory/memory-cli.js.
-  try { assertTenant(); const result = fn(); bindTenantIfUnbound(); return result; } finally { lockHeld = false; try { fs.rmdirSync(LOCK); } catch {} }
+  try { assertTenant(); const result = fn(); bindTenantIfUnbound(); return result; } finally { lockHeld = false; lockBinds = true; try { fs.rmdirSync(LOCK); } catch {} }
 }
 
 function fingerprint(deps) {
@@ -385,8 +397,10 @@ function main() {
       const solutionFile = opt('solution-file');
       if (!ticket || !solutionFile) fail(1, 'usage: record --ticket "<text>" --solution-file <path> [--deps p1,p2]');
       const solution = fs.readFileSync(solutionFile, 'utf8');
-      const hits = sanitizationHits(ticket + '\n' + solution);
-      if (hits.length) fail(4, 'sanitization BLOCK — refused to persist: ' + hits.join(', '));
+      const depPaths = (opt('deps') || '').split(',').filter(Boolean).map((p) => p.trim());
+      // the dependency paths are stored and printed later, so they are scanned like the text
+      const hits = [...sanitizationHits(ticket + '\n' + solution), ...depPaths.flatMap((p) => sanitizationHits(p))];
+      if (hits.length) fail(4, 'sanitization BLOCK: refused to persist: ' + Array.from(new Set(hits)).join(', '));
       withLock(() => {
         const ix = loadIndex();
         const k = keyOf(ticket);
@@ -401,7 +415,7 @@ function main() {
           riskAtRecord: risk,
           status: 'candidate', solution,
           shape: null,
-          deps: (opt('deps') || '').split(',').filter(Boolean).map((p) => ({ path: p.trim(), sha256: null })),
+          deps: depPaths.map((p) => ({ path: p, sha256: null })),
           provenance: { createdAt: now, verifiedAt: null, evidence: null },
           history: [{ at: now, event: 'recorded (candidate — not replayable until verified)' }],
         };
@@ -420,7 +434,7 @@ function main() {
         fail(2, 'verification refused: --evidence is required — unverified output is not authoritative memory');
       }
       const evHits = sanitizationHits(evidence);
-      if (evHits.length) fail(4, 'sanitization BLOCK — evidence text refused: ' + evHits.join(', '));
+      if (evHits.length) fail(4, 'sanitization BLOCK: evidence text refused: ' + evHits.join(', '));
       withLock(() => {
         const c = loadCase(id);
         if (!c) fail(1, 'no such case: ' + id);
@@ -482,9 +496,15 @@ function main() {
               cc.history.push({ at: new Date().toISOString(), event: 'marked stale at lookup', changed: drift });
               saveCase(cc);
             }
-          });
+          }, { binds: false }); // a read's side effect: never binds an unbound store
         }
         out({ ok: true, result: 'STALE', caseId: r.caseId, via: r.via, changed: drift.length ? drift : 'previously detected (status shows the checked history)', route: 'adaptive', note: 'authority basis changed; preserved as historical, not current' });
+        break;
+      }
+      // the same rule as render: only a verified case with evidence replays; any other
+      // status (a case file edited on disk) is a MISS, never a CACHE_HIT (batch G3)
+      if (c.status !== 'verified' || !c.provenance || !c.provenance.evidence) {
+        out({ ok: true, result: 'MISS', key: r.key, caseId: r.caseId, route: 'adaptive', note: 'case is not in a verified state (unknown status or no evidence); work the ticket fresh' });
         break;
       }
       const hit = { ok: true, result: 'CACHE_HIT', caseId: r.caseId, via: r.via, verifiedAt: c.provenance.verifiedAt, deps: c.deps.length, render: `node scripts/replay/replay-cli.js render ${r.caseId}` };
@@ -521,7 +541,7 @@ function main() {
       const ticket = opt('ticket');
       if (!id || !ticket) fail(1, 'usage: alias --case <caseId> --ticket "<alias text>"');
       const aHits = sanitizationHits(ticket);
-      if (aHits.length) fail(4, 'sanitization BLOCK — alias text refused: ' + aHits.join(', '));
+      if (aHits.length) fail(4, 'sanitization BLOCK: alias text refused: ' + aHits.join(', '));
       withLock(() => {
         const ix = loadIndex();
         const c = loadCase(id);
@@ -545,7 +565,7 @@ function main() {
       if (!id) fail(1, 'usage: invalidate <caseId> --reason "<why>"');
       const reason = opt('reason') || '(none given)';
       const rHits = sanitizationHits(reason);
-      if (rHits.length) fail(4, 'sanitization BLOCK — reason text refused: ' + rHits.join(', '));
+      if (rHits.length) fail(4, 'sanitization BLOCK: reason text refused: ' + rHits.join(', '));
       withLock(() => {
         const c = loadCase(id);
         if (!c) fail(1, 'no such case: ' + id);
@@ -608,6 +628,8 @@ function main() {
   }
 }
 
-module.exports = { normalize, keyOf, shapeOf, shapeIndexKey, sanitizationHits, slotClass, resolveClass, IDENTITY_PLACEHOLDERS, OBJECT_CLASSES, SLOT };
+// loadIndex and resolveCase are read-only (no lock, no write); scripts/eval/latency.js times
+// the lookup with them in-process (batch G3, task 6c)
+module.exports = { normalize, keyOf, shapeOf, shapeIndexKey, sanitizationHits, slotClass, resolveClass, loadIndex, resolveCase, IDENTITY_PLACEHOLDERS, OBJECT_CLASSES, SLOT };
 
 if (require.main === module) main();

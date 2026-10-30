@@ -1,0 +1,20 @@
+# command: node --test scripts/adapters/scope-preflight.test.js
+# commit: d637281 (plus uncommitted changes in the working tree)  started: 2026-10-28T08:22:33Z  node: v24.22.1
+✔ the manifest names every connector: least-privilege reads, how scopes are exposed, and dated vendor sources (2.116103ms)
+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (7.344248ms)
+✔ Google Workspace: a token response that grants a write scope is refused before any read (82.434432ms)
+✔ Fleet: the API user's role is read from /me first; any role beyond observer is refused, and observer reads proceed (3.611584ms)
+✔ Linear, Jira and Jamf Pro do not expose a credential's scopes: the first result says so and no extra request is made (2.105271ms)
+✔ the preflight is on by default for a person running a CLI and off for an injected test transport unless asked (2.910115ms)
+✔ scopes.js prints a connector's manifest entry and refuses an unknown connector (140.325865ms)
+✔ every scope refusal is on the audit trail as SCOPE_REFUSED, whichever way the vendor exposed the scopes (24.480503ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 432.663598
+# exit: 0  finished: 2026-10-28T08:22:34Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

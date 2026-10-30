@@ -1,9 +1,9 @@
 # Aegis project state
 
 > Dev-facing state file, rewritten by batch 1 on 2026-10-27 to match the repo as it is, and
-> updated by batch G2 on 2026-10-28 (section "Changed by batch G2"). Every
-> "verified" line below names a check that ran in that session and the capture that holds its
-> output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
+> updated by batch G2 and batch G3 on 2026-10-28 (sections "Changed by batch G2" and "Changed by
+> batch G3"). Every "verified" line below names a check that ran in that session and the
+> capture that holds its output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
 
 ## Baseline and branch
@@ -34,7 +34,8 @@ runbook (rows 30, 31), the ticket graph (row 23), replay and memory engines (row
 2026-10-27; every suite behind them ran again on the branch in `node --test`
 (`docs/baseline/branch/node-test.txt:746-749`). The ticket evals prove routing and runbook
 structure, not answer quality. After batch G2 the map has 62 rows: 39 verified now, 6
-implemented but unverified, 14 partial, 3 missing (`docs/aegis/capability-map.md:72`).
+implemented but unverified, 14 partial, 3 missing; after batch G3 it has 83 rows: 60 verified
+now, 7 implemented but unverified, 13 partial, 3 missing (both counts: `docs/aegis/capability-map.md:93`).
 
 ## Changed by batch 1
 
@@ -83,24 +84,60 @@ lane spec is `docs/aegis/lanes/g2.md`; the corpus is `scripts/eval/g2-tickets.js
   (`docs/aegis/boundary-audit.md`, rows 20 to 28).
 - **Capability map:** rows 37 to 62 added, one platform each; row 14 (Google posture audit) is
   verified now; row 12 names Okta only and its Google half is row 59 (partial: `/gws-audit-log`
-  still hands Google containment to the Microsoft-only triage runbook).
+  still hands Google containment to the Microsoft-only triage runbook; closed in batch G3, see
+  row 59).
 - **Not verified in this batch:** answer quality for every G2 platform (rows 38, 43, 48, 53, 58),
   and every vendor fact that rests on a search excerpt or a vendor repository because the vendor
   documentation hosts were refused by the session network (`docs/aegis/lanes/g2.md`, Sources).
 
+## Changed by batch G3
+
+Branch `feat/g3-production-hardening`, draft PR #6 against `main` (base `f185071`). Tier 1 help
+desk hardening in advisory mode: no new write path; every connector reads only. Production
+readiness is **NOT PASSED**: `docs/aegis/production-readiness.md` lists the 12 criteria, which
+rows this batch proves for each platform and which only the owner can run (real tenants,
+held-out cases, operator validation, vendor facts by hand). Captures in `docs/aegis/g3/evidence/`;
+every G3 suite count at `ae88348` (after code review round 3 and the evidence review) is in
+`docs/aegis/g3/evidence/t7-head-suite-counts.txt`.
+
+| Platform | Status | Commands | Proof (command and count) |
+|---|---|---|---|
+| GitHub | landed whole: connector, 5 runbooks, 5 floors, corpus | `/github-repo-access`, `/github-branch-protection`, `/github-org-security`, `/github-offboard-member`, `/github-security-alerts` | `node scripts/eval/g3-ticket-eval.js`: 10/10 GitHub tickets (`docs/aegis/g3/evidence/t5-g3-eval-final.txt:62`), 5/5 pairs (`:53-57`); `node --test scripts/adapters/github-client.test.js` 14/14; every runbook connector line runs as written, 5/5 (`t5-runbooks-green.txt:6-10`) |
+| Okta | landed whole: connector, read-backs, group runbook | `/okta-user-lifecycle`, `/okta-mfa-reset`, `/okta-app-assignment` (read-backs added), `/okta-group-membership` (new) | G3 eval: 8/8 Okta tickets (`t5-g3-eval-final.txt:63`); `node --test scripts/adapters/okta-client.test.js` 28/28; runbook lines 4/4 (`t5-runbooks-green.txt:11-14`) |
+| Microsoft 365 (Graph) | landed whole: connector and read-backs | `/password-reset`, `/mfa-issue`, `/intune-compliance` (read-backs added) | G3 eval: 9/9 Microsoft tickets (`t5-g3-eval-final.txt:64`); `node --test scripts/adapters/msgraph-client.test.js` 6/6; runbook lines 3/3 (`t5-runbooks-green.txt:3-5`) |
+| Fleet | read-back added | `/fleet-host-health` (`verify-checked-in`) | `node --test scripts/adapters/endpoint-sync.test.js` 2/2; runbook lines 1/1 (`t5-runbooks-green.txt:15`) |
+| Jamf Pro | read-back added | `/mac-troubleshoot` (`verify-checked-in`, from the last contact time) | `endpoint-sync.test.js` 2/2; runbook lines 1/1 (`t5-runbooks-green.txt:16`) |
+| Linear, GitHub, Slack, email | one intake | `node scripts/intake/intake.js <linear\|github\|slack\|email> --file <path>` | `node --test scripts/intake/intake.test.js` 33/33; G3 eval: 4 intake tickets per source, 16/16 (`t5-g3-eval-final.txt:33-48`) |
+| No platform named | one question first | `scripts/intake/clarify.js` | G3 eval: 6/6 ambiguous tickets ask one question (`t5-g3-eval-final.txt:27-32`) |
+
+- **Guardrails:** least-privilege scope manifest and preflight for every connector
+  (`scripts/adapters/scope-manifest.json`, `docs/aegis/g3/scope-manifest.md`); a hash-chained
+  local audit trail and change records (`scripts/audit/`); every connector failure ends in a
+  named state with a two-part operator message; latency budget p95 50 ms per ticket, measured
+  0.61 to 0.71 ms over three runs (`docs/aegis/g3/evidence/t6c-latency-runs.txt`).
+- **Shipped bug fixed:** eleven tier floors and nine engine twins on `main`, and one pair this batch
+  added, took cubic or worse time on a long line (9 to 48 s on 20 KB, the three-gap one far longer); fixed with the same matches and a test that
+  rejects the shape (`docs/review/incidents.md`).
+- **Boundary:** `docs/aegis/boundary-audit.md` rows 29 to 40; `scripts/g3-boundary.test.js`
+  (10 tests) proves no G3 command, connector, intake or audit path can write to a vendor system.
+- **Capability map:** rows 63 to 83 added, one platform each or platform-neutral; row 59 (Google
+  containment) moved from partial to verified now; 60 verified now, 7 implemented but
+  unverified, 13 partial, 3 missing.
+- **Not verified in this batch:** answer quality on every platform (rows 5, 38, 43, 48, 53, 58,
+  66), and every UNCONFIRMED vendor fact (`docs/aegis/g3/vendor-facts-to-check.md`).
+
 ## Partial
 
-14 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
+13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
 portal-path currency in `scripts/security-audit.js` (row 3); network, VPN, SIP and VoIP routing
 (row 8, no corpus ticket); Microsoft incident triage and report guidance, structure and gates
-checked but not the containment order (row 10); Okta containment (row 12) and Google containment (row 59: the steps exist, but
-`/gws-audit-log` still routes to a Microsoft-only runbook); the security audit's checklist content (row 13); the log
+checked but not the containment order (row 10); Okta containment (row 12); the security audit's checklist content (row 13); the log
 analyzer and hash checker (row 15, no tests); PowerShell and GAM procedure correctness (rows 16,
 17); strategy selection, loops and review independence (row 24, model behaviour); session
 bootstrap, with a stale continuity snapshot (row 29); injection and wrong-customer cases beyond
 the deterministic edges (rows 34, 35). Implemented but unverified: Google answer quality and
 real-tenant procedure evidence (row 5), and answer quality and vendor-fact currency for each G2
-platform (rows 38, 43, 48, 53, 58).
+platform (rows 38, 43, 48, 53, 58) and for GitHub (row 66, batch G3).
 
 ## Missing
 
@@ -122,7 +159,8 @@ automated runner for the model-judged eval half (the rubric is a document only).
 
 ## Current work
 
-Batch 1's draft pull request (#4) and batch G2's draft pull request (#5), stacked on it.
+Batch 1's pull request (#4) and batch G2's (#5) were merged into `main` on 2026-10-28 (`f185071`,
+read from the GitHub pull request API); batch G3's draft pull request (#6) is open against `main`.
 `node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
 (`docs/aegis/evidence/claim-list.txt`).
 
@@ -139,8 +177,8 @@ and a row batch G2 added or changed cites a capture run on 2026-10-28 (`docs/aeg
    tickets (row 8).
 2. **Defensive cybersecurity and incident response guidance:** Microsoft and Google compromise
    floors and triage routes verified (rows 9, 11); Okta containment partial (row 12); Google
-   containment partial (row 59: `/gws-audit-log` still routes to the Microsoft-only triage
-   runbook); Google posture audit verified in batch G2 (row 14).
+   containment verified in batch G3 (row 59: `/gws-audit-log` now routes to
+   `/gws-account-containment`); Google posture audit verified in batch G2 (row 14).
 3. **Platform engineering and infrastructure development:** release tooling and health checks
    verified (rows 20, 21); no infrastructure as code (rows 18, 19).
 4. **Agent strategy and workflow design:** tier floor and ticket graph verified (rows 22, 23,

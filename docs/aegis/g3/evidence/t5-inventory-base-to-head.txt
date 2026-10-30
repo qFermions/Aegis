@@ -1,0 +1,20 @@
+# command: node docs/aegis/g3/evidence/tools/inventory-diff.js f185071
+# commit: ae88348  started: 2026-10-28T13:11:00Z  node: v24.22.1
+examples: 676 at f185071, 727 now; added 51, removed 0, mode changed 0
+  added in .claude/commands/github-branch-protection.md: gated 12
+  added in .claude/commands/github-offboard-member.md: gated 4, preview 1
+  added in .claude/commands/github-org-security.md: gated 3, preview 2
+  added in .claude/commands/github-repo-access.md: gated 8
+  added in .claude/commands/github-security-alerts.md: gated 7
+  added in .claude/commands/new-user.md: preview 1
+  added in .claude/commands/okta-group-membership.md: gated 7
+  added in scripts/replay/fixtures/shared-mailbox-demo.md: preview 1
+  added in docs/evidence/ticket-eval-samples.md: preview 4
+  added in .claude/commands/troubleshoot.md: preview 1
+  added by mode: {"gated":41,"preview":10}
+  entries present at both with another field changed: {"sinks":45}
+clientBoundaries: 9 at f185071, 9 now; added 0, removed 0, mode changed 0
+  added by mode: {}
+  entries present at both with another field changed: {}
+# exit: 0  finished: 2026-10-28T13:11:00Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

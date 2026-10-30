@@ -118,6 +118,12 @@ Four tickets, one starting point: read the Jamf Pro inventory record — last ch
 **PORTAL ACTION [mac-troubleshoot-blank-push-portal]:** Only after step 2 shows the Mac online and the exact match:
 1. Jamf Pro → Computers → Search inventory → `[DEVICE_NAME]` → **Management** → **Send Blank Push**.
 2. **WAIT UNTIL** History → Management History moves the command from pending to completed; then System Settings → General → Device Management shows the profile.
+3. Read-back (R0): write the time of the push as `[NOT_BEFORE]`; Jamf Pro defines no "last MDM check-in" field, so the read-back uses its last contact time (batch G3).
+
+```bash
+# HUMAN-RUN read-only read-back: passes only when Jamf Pro's general.lastContactTime for the Mac is at or after [NOT_BEFORE]
+node scripts/adapters/jamf-client.js verify-checked-in --serial [SERIAL_NUMBER] --not-before [NOT_BEFORE] --execute
+```
 
 <details>
 <summary>Terminal on the Mac — the scale version (HUMAN-RUN; read-only first, gated mutations after)</summary>
@@ -202,7 +208,7 @@ sudo profiles show
 - [ ] Branch A: the user signs in at the login window with the new Okta password; Okta Admin Console → Directory → People → `[UPN]` reads Active and not locked; Reports → System Log shows the sign-in.
 - [ ] Branch B: Jamf Pro → Computers → `[DEVICE_NAME]` → Inventory → Disk Encryption reads FileVault 2 Enabled = Enabled and Personal Recovery Key Validation = Valid; `sudo fdesetup status` on the Mac reads On.
 - [ ] Branch C: `networksetup -getairportnetwork en0` names the office network; System Settings → Wi-Fi shows it connected; the Wi-Fi profile is listed under Device Management.
-- [ ] Branch D: Jamf Pro → Computers → `[DEVICE_NAME]` → History → Management History shows the command completed; System Settings → General → Device Management lists the profile.
+- [ ] Branch D: Jamf Pro → Computers → `[DEVICE_NAME]` → History → Management History shows the command completed; System Settings → General → Device Management lists the profile; `verify-checked-in` passes.
 
 ## 📝 Jira-ready note
 

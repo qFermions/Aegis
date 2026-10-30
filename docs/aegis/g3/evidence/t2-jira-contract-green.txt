@@ -1,0 +1,20 @@
+# command: node --test scripts/jira-contract.test.js
+# commit: 6e30562 (plus uncommitted changes in the working tree)  started: 2026-10-28T07:44:27Z  node: v24.22.1
+✔ JIRA_SPEC is a contract spec of GET routes only, one per read the client makes (1.727123ms)
+✔ the default fetch sends a read through the contract: the request is the allow-listed GET with Basic auth (4.96698ms)
+✔ a path off the allow-list or any other method is refused by the contract before credentials or the transport (1.252233ms)
+✔ a Jira read retries a 503 and a timeout like every adapter, then succeeds (0.95432ms)
+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (1.099982ms)
+✔ instruction text in a Jira answer is flagged as data by the contract, never followed (1.623932ms)
+✔ the default transport honours the network tripwire, so nothing leaves the machine in a test (0.711214ms)
+✔ the read result keeps its contract state for the operator message (0.633953ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 131.799203
+# exit: 0  finished: 2026-10-28T07:44:27Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

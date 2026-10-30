@@ -47,7 +47,8 @@ function cliDeps(deps = {}, env = process.env) {
 }
 
 // argv without its --change pair, and the change id (undefined when the flag is absent), or
-// error when the flag is repeated or has no value.
+// error when the flag is repeated, has no value, or is written --change=chg-... (code review
+// round 1, finding 6).
 function takeChange(argv) {
   const list = Array.isArray(argv) ? argv.map(String) : [];
   const rest = [];

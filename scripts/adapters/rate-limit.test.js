@@ -12,9 +12,12 @@
 // - Primary limit: when one second after the reset is within the contract's 30-second cap and
 //   the read's retry budget, the read waits that long and retries; otherwise it ends at once in
 //   the named handoff state RATE_LIMITED, which gives the reset time in UTC (retry_at). A reset
-//   that is malformed or already past is never waited on: RATE_LIMITED, no retry.
+//   that is malformed or already past is never waited on: RATE_LIMITED, no retry, unless the
+//   answer carries a retry-after within the cap (added by code review round 1, finding 3);
+//   with both a usable reset and a retry-after, the later time wins (round 2, finding 4).
 // - Secondary limit: retry-after within the cap is waited out; no retry-after (the docs' "at
-//   least one minute" is over the cap) or a longer one ends in RATE_LIMITED.
+//   least one minute" is over the cap) or a longer one ends in RATE_LIMITED; with remaining 0
+//   and a usable reset, the reset is waited for.
 // - A 403 with neither signal stays a permission refusal: HTTP_ERROR 403, one attempt.
 // - The operator message for every rate-limit handoff says in plain words that this is a rate
 //   limit, not a permission problem, and that the token should not be widened.

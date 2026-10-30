@@ -111,6 +111,7 @@ function isFailure(res) {
 // limit, not a permission problem, with the UTC time after which the read may run again when
 // the vendor gave a usable one. rateLimit is the contract's { limit: { kind, header }, retryAt,
 // reset }; the header is the opted-in spec's own remaining-requests header.
+// A response header name as a spec may declare one (readonly-contract.js checks specs with it).
 const HEADER_NAME = /^[a-z][a-z0-9-]{1,60}$/;
 function rateLimitedHandoff(res, who, rateLimit) {
   const r = rateLimit || {};
@@ -166,4 +167,4 @@ function handoffFor(state, res, { platform, retryAfterSeconds, budgetMs, rateLim
   };
 }
 
-module.exports = { operatorMessage, handoffFor, isFailure, platformName, NAMES };
+module.exports = { operatorMessage, handoffFor, isFailure, platformName, NAMES, HEADER_NAME };

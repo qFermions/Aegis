@@ -37,7 +37,7 @@
 
 const https = require('node:https');
 const { injectionMarkersIn } = require('../tier/tier-guard.js');
-const { operatorMessage, handoffFor, isFailure } = require('./operator-message.js');
+const { operatorMessage, handoffFor, isFailure, HEADER_NAME } = require('./operator-message.js');
 
 const STATES = Object.freeze({
   OK: 'OK',
@@ -291,7 +291,7 @@ function defineAdapter(spec) {
     if (!['header', 'token', 'route', 'none'].includes(s.kind)) throw new Error('scopes kind is header, token, route or none');
     if (typeof s.vendor !== 'string' || !s.vendor) throw new Error('scopes need the vendor name for the notice');
     if (s.kind !== 'none' && (typeof s.granted !== 'function' || typeof s.allowed !== 'function')) throw new Error('scopes need granted and allowed functions');
-    if (s.kind === 'header' && !/^[a-z][a-z0-9-]{1,60}$/.test(s.header || '')) throw new Error('header scopes need a lower-case header name');
+    if (s.kind === 'header' && !HEADER_NAME.test(s.header || '')) throw new Error('header scopes need a lower-case header name');
     if (s.kind === 'route' && !(s.route in routes)) throw new Error('route scopes need a route of this spec');
     if (s.kind === 'token' && !spec.tokenExchange) throw new Error('token scopes need a token exchange');
     scopes = Object.freeze({ manifest: s.manifest, kind: s.kind, vendor: s.vendor, header: s.header || null, route: s.route || null, granted: s.granted || null, allowed: s.allowed || null });
@@ -300,9 +300,8 @@ function defineAdapter(spec) {
   let rateLimit = null;
   if (spec.rateLimit) {
     const r = spec.rateLimit;
-    const header = /^[a-z][a-z0-9-]{1,60}$/;
     if (!Array.isArray(r.statuses) || !r.statuses.length || !r.statuses.every((s) => s === 403 || s === 429)) throw new Error('rateLimit statuses are 403 and/or 429');
-    if (!header.test(r.remainingHeader || '') || !header.test(r.resetHeader || '')) throw new Error('rateLimit needs lower-case remaining and reset header names');
+    if (!HEADER_NAME.test(r.remainingHeader || '') || !HEADER_NAME.test(r.resetHeader || '')) throw new Error('rateLimit needs lower-case remaining and reset header names');
     if (!(r.secondaryMessage instanceof RegExp) || !/^[A-Za-z_][A-Za-z0-9_]{0,40}$/.test(r.messageField || '')) throw new Error('rateLimit needs a secondaryMessage pattern and the body field that holds it');
     rateLimit = Object.freeze({ statuses: Object.freeze([...r.statuses]), remainingHeader: r.remainingHeader, resetHeader: r.resetHeader, secondaryMessage: r.secondaryMessage, messageField: r.messageField });
   }

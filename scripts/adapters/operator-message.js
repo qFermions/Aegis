@@ -125,7 +125,7 @@ function rateLimitedHandoff(res, who, rateLimit) {
   let when;
   if (retryAt) when = `run the read again after ${retryAt} (UTC)`;
   else if (r.reset === 'past') when = `the reset time ${who} gave has already passed on this machine's clock, so check the clock, wait a few minutes and run the read again`;
-  else when = `${who} gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again`;
+  else when = `${who} gave no readable reset time, so wait for its rate-limit window to reset (its status page or console shows the limit), then run the read again`;
   return {
     state: 'RATE_LIMITED',
     limit,

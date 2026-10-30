@@ -21,3 +21,25 @@ REVIEW.md was read before each round. Round 1 reviewed the branch against `main`
 | 13 | `scripts/adapters/operator-message.js:120` | the RATE_LIMITED words named GitHub's header and an hourly window for any opted-in spec | fixed: the header comes from the spec, no window is named | `c25acb4` (red), `d974d1e` |
 
 Round 1: 13 found, 10 fixed, 3 closed (2, 11, 12); fixed plus closed equals found.
+
+## Round 2 (`3bba35e..f6fd359`, the diff after round 1): 15 found
+
+| # | file:line (as reported) | finding | outcome | commit(s) |
+|---|---|---|---|---|
+| 1 | `scripts/adapters/change-binding.test.js:250` | a gate marked "R1 to R3" counted as R1, so the run-script read-backs stayed unbound and the test locked that in | fixed: a range counts as its highest class; both read-backs bound, each says to drop `--change` when step 1 set R1; 74 bound | `4c33de8` (red), `74f581d` |
+| 2 | `scripts/adapters/cli-support.js:92` | `open`'s next step did not say to run the read-back with `--change`, and an unbound read-back now prints no seq | fixed: the step names `--change <id>` and the `audit_seq` link takes | `f5655e7` (red), `5207b83` |
+| 3 | `scripts/adapters/operator-message.js:128` | the no-reset fallback still named an hourly window | fixed | `d93ce08` (red), `92fce46` |
+| 4 | `scripts/adapters/readonly-contract.js:573` | a usable reset beat a longer retry-after, so the read retried before the vendor allowed | fixed: the later of the two | `d93ce08` (red), `2403205` |
+| 5 | `.claude/commands/fleet-device-actions.md:204` | the batch run's read-back step lacked `--change` while its checkpoint required it | fixed with finding 1 (same runbook lines and pin test) | `4c33de8` (red), `74f581d` |
+| 6 | `scripts/jira-client.js:467` | (pre-existing, in a function this branch edits) every Jira verify entry was recorded with state OK, a failed read included | fixed: the read's own state; incidents row added | `dc35062` (red), `0f0a4b6`, `a7fcf50` |
+| 7 | `scripts/adapters/cli-support.js:64` | `--change=` on a plain read gave the two-argument advice before "not a read-back" | fixed: `changeRefusal` takes the whole `takeChange` result and checks in one order everywhere | `b86469b` (red), `a30fa39` |
+| 8 | `scripts/adapters/change-binding.test.js:291` | no test covered a bound read-back that did not verify | fixed: test added, shown failing when the condition is dropped | `a5be106` |
+| 9 | `docs/review/incidents.md:10` | no incidents row for round 1 finding 4, a shipped bug | fixed | `428e429` |
+| 10 | `docs/review/incidents.md:10` | the audit-seq row said every read-back prints its seq | fixed | `1a01645` |
+| 11 | `docs/aegis/boundary-audit.md:69` | round 1 findings 2 and 7 share commit `5d44b0f` | closed: the branch is pushed and the charter forbids force-pushing and rebasing, so history is not rewritten; reverting `5d44b0f` reverts both (recorded as a deviation in `checks.md`) | none |
+| 12 | `checks.md:31` | E1 to E4 carried a verdict outside pass, fail, unresolved | fixed: unresolved until the head capture, then set from it | the commit that adds this round |
+| 13 | `scripts/jira-client.js:946` | altitude: the Jira fix buffered output around every verify-* | fixed: a passed read-back returns its line, `run()` prints it after the record | `1cd0773` |
+| 14 | `scripts/adapters/operator-message.js:114` | the header-name rule was copied three times | fixed: one `HEADER_NAME` | `abf370b` |
+| 15 | `scripts/adapters/rate-limit.test.js:15` | the rate-limit test header and `takeChange`'s comment were stale | fixed | `e7f0396` |
+
+Round 2: 15 found, 14 fixed, 1 closed (11); fixed plus closed equals found.

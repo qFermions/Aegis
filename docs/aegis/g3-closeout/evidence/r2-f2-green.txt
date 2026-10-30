@@ -1,0 +1,29 @@
+# command: node --test scripts/audit/change-record.test.js
+# commit: f5655e7 (plus uncommitted changes in the working tree)  started: 2026-10-30T08:10:26Z  node: v24.22.2
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (253.525562ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (176.76966ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (236.083744ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (1029.943046ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (499.896734ms)
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one (406.866107ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (201.502034ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (454.650749ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (377.440548ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (119.095134ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.530512ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (441.852611ms)
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (228.853926ms)
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI (222.775636ms)
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (138.76745ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.548751ms)
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints (71.13349ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4966.30143
+# exit: 0  finished: 2026-10-30T08:10:31Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

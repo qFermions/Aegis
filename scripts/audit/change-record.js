@@ -180,7 +180,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       out(`${JSON.stringify({ ok: true, change, procedure_sha256: digest, audit_seq: r.seq, next: [
         'A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>',
         'A person runs the procedure (Aegis does not)',
-        `Run the ${flags['read-back']} read-back, then: link --change <id> --verify-seq <its audit seq>; status --change <id> reports done only when all three match`,
+        `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints>; status --change ${change} reports done only when all three match`,
       ] }, null, 2)}\n`);
       return 0;
     }

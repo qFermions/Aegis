@@ -353,7 +353,9 @@ test('every connector with a verify-* command takes --change out of argv, checks
     checked += 1;
     const name = path.basename(file);
     assert.match(src, /const bound = takeChange\(argv\);/, `${name}: takes --change out of argv`);
-    assert.match(src, /changeRefusal\(/, `${name}: checks --change before any read`);
+    // the whole takeChange result, never bound.change (code review round 3, finding 2)
+    assert.match(src, /changeRefusal\([^,()]+, [^,()]+, bound, /, `${name}: checks --change before any read, given takeChange's result`);
+    assert.doesNotMatch(src, /changeRefusal\([^)]*bound\.change/, `${name}: never passes bound.change to changeRefusal`);
     if (name === 'jira-client.js') assert.match(src, /runtime\.change = bound\.change;/, `${name}: records the verdict under the change`);
     else {
       // each call's arguments, with parentheses nested up to two levels
@@ -398,4 +400,14 @@ test('a bound read-back that did not verify prints no audit seq (adapters throug
   assert.equal(code, 2, out.join('\n'));
   assert.doesNotMatch(out.join('\n'), /Recorded as audit entry/);
   assert.equal(verifies(tr).pop().verified, false);
+});
+
+// Code review round 3, finding 2: changeRefusal fails closed when it is not given takeChange's
+// result (a change id string, nothing), instead of reading that as "no --change".
+test('changeRefusal refuses when it is not given takeChange\'s result', () => {
+  const { changeRefusal } = require('./cli-support.js');
+  for (const wrong of ['chg-0123456789ab', undefined, null, 42]) {
+    assert.match(String(changeRefusal('fleet', 'verify-lock', wrong, null)), /takeChange/, String(wrong));
+  }
+  assert.equal(changeRefusal('fleet', 'verify-lock', { change: undefined }, null), null, 'no --change: nothing to check');
 });

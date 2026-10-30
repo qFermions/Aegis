@@ -1,0 +1,59 @@
+# command: node --test scripts/adapters/rate-limit.test.js scripts/adapters/failure-messages.test.js scripts/adapters/contract-g3.test.js
+# commit: c25acb4 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:54:31Z  node: v24.22.2
+✔ Retry-After in seconds or as an HTTP date is waited exactly, up to 30 s, then the read succeeds (5.515383ms)
+✔ a Retry-After over 30 s is not waited out: the read stops in RETRY_AFTER_TOO_LONG with when to try again (0.894678ms)
+✔ without Retry-After the backoff doubles from 200 ms to a 2 s cap with jitter inside [base/2, base] (3.523517ms)
+✔ the total retry time is capped: a retry that would pass the budget is not made (RETRY_BUDGET_SPENT) (0.480109ms)
+✔ every exhausted read ends in RETRIES_EXHAUSTED with what failed, what was not done and the next step (156.778888ms)
+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (3.018513ms)
+✔ a request id of a safe form is kept from the response headers; anything else is dropped (1.594821ms)
+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (5.827139ms)
+✔ renderResult adds a plain operator message and an admin detail line to every failure, and nothing to a success (4.26535ms)
+✔ a failure that never reaches the network (no credential, a refused request) is one audit entry, and status counts it (26.986127ms)
+✔ fleet: every failure state prints the two-part message, with no stack trace, raw body or credential (70.5426ms)
+✔ fleet: with an audit sink each request is one connector-call entry, and a success prints no failure message (3.783322ms)
+✔ fleet: a verify-* verdict is recorded as one verify entry; a sink that fails withholds the verdict (4.800139ms)
+✔ jamf: every failure state prints the two-part message, with no stack trace, raw body or credential (67.717516ms)
+✔ jamf: with an audit sink each request is one connector-call entry, and a success prints no failure message (2.135591ms)
+✔ slack: every failure state prints the two-part message, with no stack trace, raw body or credential (66.546362ms)
+✔ slack: with an audit sink each request is one connector-call entry, and a success prints no failure message (0.862433ms)
+✔ slack: a verify-* verdict is recorded as one verify entry; a sink that fails withholds the verdict (1.471698ms)
+✔ linear: every failure state prints the two-part message, with no stack trace, raw body or credential (66.569943ms)
+✔ linear: with an audit sink each request is one connector-call entry, and a success prints no failure message (1.456607ms)
+✔ google-workspace: every failure state prints the two-part message, with no stack trace, raw body or credential (83.228332ms)
+✔ google-workspace: with an audit sink each request is one connector-call entry, and a success prints no failure message (2.649992ms)
+✔ jira: every failure prints the two-part message on stderr, with no stack trace, raw body or credential (70.368934ms)
+✔ cliDeps: no injected transport means the real audit sink; an injected transport means none unless the test passes one (0.980692ms)
+✔ github: a primary-limit 403 whose reset is within the cap waits until one second after the reset, retries once and succeeds (15.151186ms)
+✔ github: a primary-limit 403 whose reset is beyond the cap hands off at once with the reset time in UTC: one attempt, no wait, no retry storm (2.010408ms)
+✔ github: a primary-limit 429 is handled the same way (within the cap: wait and retry; beyond it: RATE_LIMITED) (1.467887ms)
+✔ github: a reset within the cap that does not fit the read's retry budget hands off instead of waiting (0.724385ms)
+✔ github: a reset that is malformed, missing or already past is never waited on: RATE_LIMITED after one attempt, no retry (6.377687ms)
+✔ github: when every wait was within the cap and the limit still holds after the last retry, the read ends in RATE_LIMITED, not a permission refusal (0.899468ms)
+✔ github: a secondary-limit 403 with retry-after within the cap waits that many seconds and retries (0.877348ms)
+✔ github: a secondary-limit 403 without retry-after (the docs' "at least one minute" is over the cap) or with a longer one hands off at once (0.95235ms)
+✔ github: a primary limit whose reset is missing or past but which carries retry-after within the cap waits retry-after and retries (2.137445ms)
+✔ github: a secondary limit with remaining 0 but a missing or past reset falls back to at least one minute, not to the clock message (0.890764ms)
+✔ github: a 403 with neither signal stays a permission refusal: one attempt, no wait, the permission message (0.83893ms)
+✔ github: a body that is not JSON, or JSON without a message, is not a secondary-limit signal (0.870734ms)
+✔ github: the rate-limit handoff is recorded in a real audit trail, which accepts RATE_LIMITED and holds no body (9.941902ms)
+✔ contract: rateLimit is opt-in and checked when the spec is defined; only the GitHub spec turns it on (0.894192ms)
+✔ contract: the RATE_LIMITED message names the opted-in spec's own remaining-requests header and no window it does not have (0.797162ms)
+✔ fleet: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (3.119308ms)
+✔ jamf: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (4.394829ms)
+✔ slack: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (4.695356ms)
+✔ linear: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (5.801687ms)
+✔ google-workspace: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (6.988877ms)
+✔ okta: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (5.846035ms)
+✔ msgraph: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (5.008187ms)
+✔ jira: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait) (3.682041ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 47
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 589.586292
+# exit: 0  finished: 2026-10-30T07:54:32Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

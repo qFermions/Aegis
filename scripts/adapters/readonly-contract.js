@@ -552,7 +552,8 @@ function rateLimitOf(rl, res, nowMs) {
     secondary = typeof message === 'string' && rl.secondaryMessage.test(message);
   } catch { secondary = false; }
   if (!exhausted && !secondary) return null;
-  const limit = secondary ? 'secondary' : 'primary';
+  // the result carries the spec's own header name, so the operator message names it
+  const limit = { kind: secondary ? 'secondary' : 'primary', header: rl.remainingHeader };
   const untilReset = () => {
     const raw = headerValue(res.headers, rl.resetHeader);
     const value = raw === undefined ? '' : raw.trim();

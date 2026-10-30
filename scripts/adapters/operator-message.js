@@ -109,15 +109,19 @@ function isFailure(res) {
 
 // The rate-limit handoff (batch G3 close-out, owner decision 3): said plainly to be a rate
 // limit, not a permission problem, with the UTC time after which the read may run again when
-// the vendor gave a usable one. rateLimit is the contract's { limit, retryAt, reset }.
+// the vendor gave a usable one. rateLimit is the contract's { limit: { kind, header }, retryAt,
+// reset }; the header is the opted-in spec's own remaining-requests header.
+const HEADER_NAME = /^[a-z][a-z0-9-]{1,60}$/;
 function rateLimitedHandoff(res, who, rateLimit) {
   const r = rateLimit || {};
-  const limit = r.limit === 'secondary' ? 'secondary' : 'primary';
+  const l = r.limit && typeof r.limit === 'object' ? r.limit : {};
+  const limit = l.kind === 'secondary' ? 'secondary' : 'primary';
+  const header = typeof l.header === 'string' && HEADER_NAME.test(l.header) ? l.header : 'the remaining-requests header';
   const retryAt = Number.isFinite(r.retryAt) ? new Date(r.retryAt).toISOString() : null;
   const status = Number.isInteger(res.status) ? res.status : 'error';
   const kind = limit === 'secondary'
     ? `its secondary rate limit (too many requests in a short time, HTTP ${status})`
-    : `its primary rate limit (the credential's requests for this hour are used up, HTTP ${status} with x-ratelimit-remaining 0)`;
+    : `its primary rate limit (the credential's request allowance for the current window is used up, HTTP ${status} with ${header} 0)`;
   let when;
   if (retryAt) when = `run the read again after ${retryAt} (UTC)`;
   else if (r.reset === 'past') when = `the reset time ${who} gave has already passed on this machine's clock, so check the clock, wait a few minutes and run the read again`;

@@ -201,7 +201,7 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **WAIT UNTIL** each checked host shows the run under Host details → Activity → Past; offline hosts stay in Upcoming until they check in.
 
-**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `host-activities --id [HOST_ID]` and `verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID]`. Any host that fails stops the batch story: report which hosts passed and which did not.
+**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` and `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`. Any host that fails stops the batch story: report which hosts passed and which did not.
 
 **Verification checkpoint**: [ ] `verify-script` passed for the pilot (with `--change [CHANGE_ID]` unless step 1 set R1) and, with `--change [CHANGE_ID]`, for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
 

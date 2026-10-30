@@ -50,3 +50,4 @@ Branch `fix/g3-closeout` on qFermions/Aegis, base `main` at `01dcb37` (the merge
 - Round 2 over `3bba35e..f6fd359` (diff only): 15 found, 14 fixed, 1 closed.
   - Closed, finding 11 (round 1 findings 2 and 7 share commit `5d44b0f`): the branch is pushed and the charter forbids force-pushing and rebasing; reverting `5d44b0f` reverts both. Deviation recorded here.
 - Round 3 over `f6fd359..64bf95c` (diff only, the last round): 10 found, 10 fixed, 0 closed. Finding 3's runbook part is fixed; whether `status` should require a read-back for every host of a batch is left to the owner (a change record holds no host count).
+- `/security-review` 2 over `60a5580..f9c6a99`, every change after the first: no findings; 15 candidates and why each was rejected in `docs/aegis/g3-closeout/evidence/security-review-2.md`.

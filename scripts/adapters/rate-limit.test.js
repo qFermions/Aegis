@@ -269,6 +269,24 @@ test('contract: rateLimit is opt-in and checked when the spec is defined; only t
   assert.ok(require('./github-client.js').SPEC.rateLimit, 'GitHub opts in');
 });
 
+// Code review round 1, finding 13: the handoff's words come from the spec that opted in, so a
+// connector with other header names is never told about GitHub's header or hourly window.
+test('contract: the RATE_LIMITED message names the opted-in spec\'s own remaining-requests header and no window it does not have', async () => {
+  const spec = contract.defineAdapter({
+    platform: 'okta', host: { fixed: 'api.example.com' }, credentials: ['DEMO_TOKEN'], auth: () => ({}),
+    routes: { one: { method: 'GET', path: '/one' } },
+    rateLimit: { statuses: [429], remainingHeader: 'x-rate-limit-remaining', resetHeader: 'x-rate-limit-reset', secondaryMessage: /never matches this/, messageField: 'errorSummary' },
+  });
+  const transport = async () => ({ status: 429, headers: { 'x-rate-limit-remaining': '0', 'x-rate-limit-reset': String(NOW_S + 600) }, body: JSON.stringify({ errorSummary: RAW }) });
+  const client = contract.createClient(spec, { env: { DEMO_TOKEN: TOKEN }, transport, now: () => NOW, sleep: async () => {} });
+  const res = await client.get('one');
+  assert.equal(res.handoff.state, 'RATE_LIMITED');
+  const text = contract.renderResult(res, { platform: 'okta', operation: 'one' });
+  assert.match(text, /HTTP 429 with x-rate-limit-remaining 0/);
+  assert.doesNotMatch(text, /x-ratelimit-remaining|this hour/);
+  assert.ok(!text.includes(RAW));
+});
+
 // ── The other eight connectors: a 403 is unchanged ──────────────────────────
 const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });

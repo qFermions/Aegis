@@ -1,0 +1,48 @@
+# command: node --test --test-name-pattern=names the opted-in spec scripts/adapters/rate-limit.test.js
+# commit: 871657c (plus uncommitted changes in the working tree)  started: 2026-10-30T07:54:11Z  node: v24.22.2
+✖ contract: the RATE_LIMITED message names the opted-in spec's own remaining-requests header and no window it does not have (5.990787ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 162.545029
+
+✖ failing tests:
+
+test at scripts/adapters/rate-limit.test.js:274:1
+✖ contract: the RATE_LIMITED message names the opted-in spec's own remaining-requests header and no window it does not have (5.990787ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /HTTP 429 with x-rate-limit-remaining 0/. Input:
+  
+  '{\n' +
+    '  "state": "HTTP_ERROR",\n' +
+    '  "ok": false,\n' +
+    '  "status": 429,\n' +
+    '  "error": "HTTP 429 (body withheld)",\n' +
+    '  "attempts": 1,\n' +
+    '  "handoff": {\n' +
+    '    "state": "RATE_LIMITED",\n' +
+    '    "limit": "primary",\n' +
+    '    "retry_at": "2026-10-30T12:10:00.000Z",\n' +
+    `    "what_failed": "Okta refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem",\n` +
+    '    "not_done": "Nothing was read and nothing was changed",\n' +
+    '    "next_step": "Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC)"\n' +
+    '  },\n' +
+    `  "operator_message": "Okta refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC).",\n` +
+    '  "admin_detail": "platform=okta operation=one state=HTTP_ERROR status=429 attempts=1 request_id=- handoff=RATE_LIMITED"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:285:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `{\n  "state": "HTTP_ERROR",\n  "ok": false,\n  "status": 429,\n  "error": "HTTP 429 (body withheld)",\n  "attempts": 1,\n  "handoff": {\n    "state": "RATE_LIMITED",\n    "limit": "primary",\n    "retry_at": "2026-10-30T12:10:00.000Z",\n    "what_failed": "Okta refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem",\n    "not_done": "Nothing was read and nothing was changed",\n    "next_step": "Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC)"\n  },\n  "operator_message": "Okta refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC).",\n  "admin_detail": "platform=okta operation=one state=HTTP_ERROR status=429 attempts=1 request_id=- handoff=RATE_LIMITED"\n}\n`,
+    expected: /HTTP 429 with x-rate-limit-remaining 0/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:54:11Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

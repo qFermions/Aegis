@@ -189,6 +189,30 @@ test('github: a secondary-limit 403 without retry-after (the docs\' "at least on
   assert.deepEqual(withReset.sleeps, [5000]);
 });
 
+// Code review round 1, finding 3: a usable retry-after is never thrown away, and a secondary
+// limit with no usable time falls back to the vendor's "at least one minute".
+test('github: a primary limit whose reset is missing or past but which carries retry-after within the cap waits retry-after and retries', async () => {
+  for (const reset of [undefined, String(NOW_S - 30)]) {
+    const headers = { 'x-ratelimit-remaining': '0', 'retry-after': '5', ...(reset === undefined ? {} : { 'x-ratelimit-reset': reset }) };
+    const r = await github(['org', '--execute'], [{ status: 429, headers, body: { message: RAW } }, ok(ORG_BODY)]);
+    assert.equal(r.code, 0, `${reset}: ${r.text}`);
+    assert.deepEqual(r.sleeps, [5000]);
+    assert.equal(r.calls.length, 2);
+  }
+});
+
+test('github: a secondary limit with remaining 0 but a missing or past reset falls back to at least one minute, not to the clock message', async () => {
+  for (const reset of [undefined, String(NOW_S - 30)]) {
+    const headers = { 'x-ratelimit-remaining': '0', ...(reset === undefined ? {} : { 'x-ratelimit-reset': reset }) };
+    const r = await github(['org', '--execute'], [{ status: 403, headers, body: { message: `You have exceeded a secondary rate limit ${RAW}` } }]);
+    assert.equal(r.calls.length, 1);
+    assertRateLimitMessage(r, `secondary, reset ${reset}`);
+    assert.equal(r.json.handoff.limit, 'secondary');
+    assert.equal(r.json.handoff.retry_at, '2026-10-30T12:01:00.000Z', 'at least one minute');
+    assert.doesNotMatch(r.json.operator_message, /clock|no readable reset/);
+  }
+});
+
 // ── GitHub: a plain permission 403 ───────────────────────────────────────────
 test('github: a 403 with neither signal stays a permission refusal: one attempt, no wait, the permission message', async () => {
   const r = await github(['org', '--execute'], [forbidden(), ok(ORG_BODY)]);

@@ -337,3 +337,13 @@ test('the change-record module writes only the local audit trail: no network mod
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();
   assert.deepEqual(requires, ['./audit-log.js', 'node:crypto', 'node:fs', 'node:path']);
 });
+
+// Code review round 2 of the batch G3 close-out, finding 2: open's printed next steps say to run
+// the read-back with --change and the id, and that link takes the audit_seq it prints.
+test('open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  const step = o.json.next.find((n) => /read-back/.test(n));
+  assert.ok(step.includes(`--change ${o.json.change}`), step);
+  assert.match(step, /audit_seq/);
+});

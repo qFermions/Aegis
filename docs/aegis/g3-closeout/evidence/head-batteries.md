@@ -15,5 +15,8 @@ The `node --test` totals of the full battery (`run-battery.sh`, the same command
 | `c499e9d` | yes | 1422, 1422, 0 | 1422, 1422, 0 |
 | `2ba52bc` | yes | 1422, 1422, 0 | 1422, 1422, 0 |
 | `420188e` | yes | 1422, 1422, 0 | 1422, 1422, 0 |
+| `342e273` | yes | 1422, 1422, 0 | 1422, 1422, 0 |
 
 At `64bf95c` the one failure is `command-safety-gates` (the gated-fence comment fixed in `f8763ed`); that head was pushed anyway, a deviation recorded in `checks.md`.
+
+At `342e273` both test runs passed, but the scanner (`node scripts/pre-commit-check.js --all`) exited 1 with 2 BLOCK lines: `t1-change-record-test-diff.txt` quoted a commit header holding a mail address. That head was pushed anyway; the next commit regenerates the capture without the header (a deviation in `checks.md`).

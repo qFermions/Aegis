@@ -1,34 +1,11 @@
-# command: bash -c echo "--- lines removed from change-record.test.js by the task 1 red commit (no assertion among them):"; git show d5cffe9 -- scripts/audit/change-record.test.js | grep "^-" | grep -v "^---"; echo "--- the whole change:"; git show d5cffe9 -- scripts/audit/change-record.test.js
-# commit: 420188e (plus uncommitted changes in the working tree)  started: 2026-10-30T09:39:29Z  node: v24.22.2
---- lines removed from change-record.test.js by the task 1 red commit (no assertion among them):
+# command: bash -c echo "--- lines removed from change-record.test.js by the task 1 red commit d5cffe9 (no assertion among them):"; git diff d5cffe9^ d5cffe9 -- scripts/audit/change-record.test.js | grep "^-" | grep -v "^---"; echo "--- the whole change to that file:"; git diff d5cffe9^ d5cffe9 -- scripts/audit/change-record.test.js
+# commit: 342e273  started: 2026-10-30T09:52:47Z  node: v24.22.2
+--- lines removed from change-record.test.js by the task 1 red commit d5cffe9 (no assertion among them):
 -  const v = verifyEntry(s, true);
 -  const v = verifyEntry(b, true);
 -  const v = verifyEntry(s, true);
 -  const good = verifyEntry(s, true);
---- the whole change:
-commit d5cffe9f663d5f29af795b0f8e235e791851432f
-Author: Claude <noreply@anthropic.com>
-Date:   Fri Oct 30 07:26:06 2026 +0000
-
-    test(audit): each read-back is bound to its change when it is recorded, owner decision 1 (red)
-    
-    change-binding.test.js, per connector (Fleet, GitHub, Google Workspace, Jamf Pro, Linear,
-    Microsoft Graph, Okta, Slack, Jira): a verify-* with --change naming no change, an unapproved
-    change, or a change opened for another verify-* command or connector is refused with exit 1
-    before any transport call, dry or live; a bound read-back records the change id, links and
-    reports done; an unbound read-back still runs but link refuses it, as it refuses one bound to
-    another change; --change on a plain read, as the bare placeholder, twice or without a value is
-    refused. A pin test requires --change [CHANGE_ID] on each of the 71 runbook read-backs of an R2
-    or R3 gate and on no other, and the [CHANGE_ID] dictionary entry. change-record.test.js adds
-    link and status refusals of unbound read-backs and bindRefusal; its four tests that link a
-    read-back now record it under its change, as the CLIs will (no assertion changed). The runbook
-    line tests fill [CHANGE_ID] from a temporary trail (scripts/audit/test-trail.js); the Fleet
-    flag test accepts --change on verify-* only; two Jamf exact-line tests expect the bound lines.
-    Red: 25 of 123 fail (docs/aegis/g3-closeout/evidence/t1-red.txt).
-    
-    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-    Claude-Session: https://claude.ai/code/session_012iGG3nB1EGB1XxG85yMzwg
-
+--- the whole change to that file:
 diff --git a/scripts/audit/change-record.test.js b/scripts/audit/change-record.test.js
 index bd910a6..b2b9123 100644
 --- a/scripts/audit/change-record.test.js
@@ -125,5 +102,5 @@ index bd910a6..b2b9123 100644
  test('the change-record module writes only the local audit trail: no network module, no child process', () => {
    const source = fs.readFileSync(CLI, 'utf8');
    const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();
-# exit: 0  finished: 2026-10-30T09:39:29Z
+# exit: 0  finished: 2026-10-30T09:52:47Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

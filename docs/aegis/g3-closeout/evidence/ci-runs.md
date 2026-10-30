@@ -11,4 +11,6 @@ Source: the GitHub Actions API (`list_workflow_runs` for branch `fix/g3-closeout
 | `f9c6a99` | 41029090017, success, 1.8 | 41029090023, failure, 3.5 | windows-latest (job 123974215667, log read): `env-example.test.js`, backslash paths (fixed in `c499e9d`) |
 | `c499e9d` | 41031984800, success, 2.5 | 41031984533, success, 3.2 | none |
 | `2ba52bc` | 41033171739, success, 2.6 | 41033171800, success, 4.5 | none (jobs: detect, risk-tier, verify, evals; ubuntu-latest 1.6, windows-latest 4.5) |
-| `420188e` | 41035089168, running at the read | 41035089459, running at the read | |
+| `420188e` | 41035089168: no failed job (the check-suite notice at 09:45 UTC; runs not read) | 41035089459: no failed job (same notice) | none |
+
+Heads after `420188e` (`342e273`, where the scanner blocked 2 lines, and the final head) are reported in PR #7's body.

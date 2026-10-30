@@ -272,18 +272,22 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
 
 // Fixed beyond the task: link needs the verify entry's audit seq (--verify-seq), so a recorded
 // read-back prints it: "audit_seq" in the JSON of the eight adapters, an "audit seq" line from
-// Jira. Before this, the seq could be found only by reading the trail's file.
+// Jira. Before this, the seq could be found only by reading the trail's file. Code review round
+// 1, finding 5: it is printed only for a read-back link can accept, one bound with --change
+// that verified; an unbound one prints no seq to link.
+const printedSeq = (c, text) => (c.name === 'jira' ? text.match(/^Recorded as audit entry (\d+)/m) : text.match(/"audit_seq": (\d+)/));
 for (const c of CONNECTORS) {
-  test(`${c.name}: a recorded read-back prints its audit seq, the number change-record.js link takes`, async (t) => {
+  test(`${c.name}: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none`, async (t) => {
     const tr = trail(t);
     const change = tr.open(`${c.name}:${c.verify[0]}`);
-    for (const argv of [[...c.verify, '--change', change], c.verify]) {
-      const r = await run(c, argv, tr);
-      assert.equal(r.code, 0, r.text);
-      const seq = verifies(tr).pop().seq;
-      const printed = c.name === 'jira' ? r.text.match(/^Recorded as audit entry (\d+)/m) : r.text.match(/"audit_seq": (\d+)/);
-      assert.ok(printed, `${c.name}: the audit seq is printed\n${r.text}`);
-      assert.equal(Number(printed[1]), seq);
-    }
+    const bound = await run(c, [...c.verify, '--change', change], tr);
+    assert.equal(bound.code, 0, bound.text);
+    const printed = printedSeq(c, bound.text);
+    assert.ok(printed, `${c.name}: the audit seq is printed\n${bound.text}`);
+    assert.equal(Number(printed[1]), verifies(tr).pop().seq);
+    assert.equal(tr.record(['link', '--change', change, '--verify-seq', printed[1]]).code, 0, 'the printed seq links');
+    const unbound = await run(c, c.verify, tr);
+    assert.equal(unbound.code, 0, unbound.text);
+    assert.equal(printedSeq(c, unbound.text), null, `${c.name}: no seq for a read-back link refuses\n${unbound.text}`);
   });
 }

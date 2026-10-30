@@ -1,10 +1,10 @@
 # command: node docs/aegis/g3/evidence/tools/inventory-diff.js 01dcb37
-# commit: 2ba52bc  started: 2026-10-30T09:24:21Z  node: v24.22.2
+# commit: e3029ae  started: 2026-10-30T09:44:37Z  node: v24.22.2
 examples: 727 at 01dcb37, 727 now; added 0, removed 0, mode changed 0
   added by mode: {}
   entries present at both with another field changed: {}
 clientBoundaries: 9 at 01dcb37, 9 now; added 0, removed 0, mode changed 0
   added by mode: {}
   entries present at both with another field changed: {}
-# exit: 0  finished: 2026-10-30T09:24:21Z
+# exit: 0  finished: 2026-10-30T09:44:37Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

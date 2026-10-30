@@ -1,5 +1,5 @@
 # command: bash docs/aegis/g3-closeout/evidence/tools/e9-dependencies.sh 01dcb37
-# commit: 2ba52bc  started: 2026-10-30T09:24:22Z  node: v24.22.2
+# commit: e3029ae  started: 2026-10-30T09:44:38Z  node: v24.22.2
 --- package manifests or lockfiles tracked at HEAD:
 0
 --- of those, changed since 01dcb37:
@@ -7,5 +7,5 @@
 --- require() or import of a module that is not node: or a relative path, on lines added since 01dcb37:
 0
 --- tools: v24.22.2 (node), PowerShell 7.6.9
-# exit: 0  finished: 2026-10-30T09:24:22Z
+# exit: 0  finished: 2026-10-30T09:44:38Z
 # capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

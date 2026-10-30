@@ -1,0 +1,992 @@
+# command: bash docs/aegis/g3-closeout/evidence/tools/e6-hits.sh 01dcb37 <this file> (the hit lines it saves)
+# commit: e3029ae
+88:-| E6 no secret, token, personal path, real name, internal hostname or private email | pass | the charter's grep over `git log -p 01dcb37..HEAD` (the command is the first line of `docs/aegis/g3-closeout/evidence/head/charter-grep.txt`; 724 hit lines): the hit lines are variable names (`GITHUB_TOKEN=` and the like, empty in `.env.example`), prose and test names about tokens and secrets, and sentinel values the tests build; `node docs/aegis/g3/evidence/tools/leak-grep.js 01dcb37`: credential-shape pass over added lines 0 hits; the 2 lines with a personal-path or mail pattern are checks rows that quote the charter's grep itself; URL hosts in added lines are public vendor documentation and API hosts plus `*.example.invalid`; mail domains are `domain.com` (the `[USER@DOMAIN.COM]` placeholder) and `example.com`; the scanner, which blocks the tenant literal and unregistered org values, 0 BLOCK (`docs/aegis/g3-closeout/evidence/head/charter-grep.txt`, `docs/aegis/g3-closeout/evidence/head/leak-grep.txt`, `docs/aegis/g3-closeout/evidence/head/battery-pre-commit-check-all.txt`) |  |
+96:+| E3 GitHub rate-limit 403s are not permission refusals (owner decision 3) | pass | `scripts/adapters/rate-limit.test.js`: a primary-limit 403 within the cap waits one second past the reset, retries and succeeds (:96); beyond the cap it ends in RATE_LIMITED with `retry_at` in UTC after one call (:105); a primary-limit 429 (:122); a malformed, negative, past or missing reset, no wait and no retry (:145); a secondary limit with and without retry-after (:169, :177); a plain permission 403 stays a refusal with one attempt (:230); each of the other seven connectors and Jira unchanged on a 403 with both signals (:360-393); no output or audit entry holds the body sentinel (`assertNoBody`, :89-93). Red 18 of 20 (`docs/aegis/g3-closeout/evidence/t3-red.txt`), green 20/20 (`docs/aegis/g3-closeout/evidence/t3-green.txt`); the suite also passes inside the runs after round 1 findings 3 and 13 (`docs/aegis/g3-closeout/evidence/r1-f3-green.txt`, `docs/aegis/g3-closeout/evidence/r1-f13-green.txt`, multi-file runs of 69 and 47 tests); 26/26 at `2ba52bc` (`docs/aegis/g3-closeout/evidence/head/test-counts.txt`). The operator message says it is a rate limit, not a permission problem, and not to widen the token. `scripts/adapters/github-client.js:39-45` replaces the "Known limit" note. Vendor facts G-40 and G-41 (`docs/aegis/g3/vendor-facts.md:91-92`) cite https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api, opened on 2026-10-30, with quotes of 22 and 21 words (`docs/aegis/g3-closeout/evidence/t3-github-rate-limit-page.txt`). | round 1 findings 3 and 13 and round 3 finding 1: a usable retry-after was thrown away, the message named GitHub's header for any spec, and a secondary limit retried before its reset; fixed |
+99:+| E6 no secret, token, personal path, real name, internal hostname or private email | pass | Captures over `01dcb37..HEADX` (`HEADX` is the last commit before the one that adds them; that commit adds only these captures and replaces this word in `checks.md`). The charter's grep: HITS hit lines, every one saved (`docs/aegis/g3-closeout/evidence/head/charter-grep-lines.txt`) and grouped by the exact text matched (`docs/aegis/g3-closeout/evidence/head/charter-grep-classes.txt`, from `bash docs/aegis/g3-closeout/evidence/tools/e6-hits.sh 01dcb37 <file>`). Every hit is one of: the words token, secret, password and their plurals in prose, test titles and runbook text; variable names (`GITHUB_TOKEN`, `SLACK_TOKEN`, `JAMF_CLIENT_SECRET` and the like, each empty in `.env.example`); gate, test-corpus and file ids that contain the words (`password-reset`, `verify-secret-alert`, `T02-password-reset-synced`); code names (`tokenExchange`, `client_secret`, `ORG_TOKEN_SUFFIXES`); built test sentinels and made-up vendor ids (`00u1abcd2EFGH3ijk4x7`); API paths matching `/Users/` case-insensitively (`v1/users/...`); and the charter's own pattern quoted in captures and checks rows (all `@gmail`, `/Users/` and `C:\\Users` hits). `node docs/aegis/g3/evidence/tools/leak-grep.js 01dcb37`: 0 credential-shape hits on added lines; its 2 personal-path or mail lines quote the charter's grep; URL hosts in added lines are public vendor documentation and API hosts plus `*.example.invalid`; mail domains are `domain.com` (the `[USER@DOMAIN.COM]` placeholder) and `example.com` (`docs/aegis/g3-closeout/evidence/head/leak-grep.txt`). No real organization or person name: the scanner's org-literal and placeholder checks pass, 0 BLOCK; its tenant-literal check is skipped, because `AEGION_DOMAIN` is not set in this session (`docs/aegis/g3-closeout/evidence/head/battery-pre-commit-check-all.txt:4`). | the evidence review found the hit lines unsaved and the scan run before the last two commits; both fixed here |
+141:+- No call to any GitHub, Okta, Microsoft, Google, Jamf, Fleet, Slack, Linear or Jira tenant; no secret read or printed; no message sent to a person.
+224:+-  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change), { out, err, secrets });
+225:++  return emit(recordVerdict(cli.audit, 'fleet', output), { out, err, secrets });
+309: | 15 | Do the new tests hold real credentials, write the real trail or reach the network? | No. Fixture tokens are built sentinels; transports and audit sinks are injected; the suite passes under the socket tripwire. |
+320:+| 2 | Could a secret written in a `credentials` list or an `env:` literal be echoed? | The scan keeps identifier shapes only, and anything it finds is already committed source. |
+345:+PAT='api[_-]?key|secret|token|password|/Users/|C:\\\\Users|@gmail'
+578:+ℹ 34 names read: AEGION_DOMAIN AEGIS_AUDIT_DIR AEGIS_GRAPH_RUNS_DIR AEGIS_NETWORK_TRIPWIRE FLEET_API_TOKEN FLEET_URL GITHUB_ORG GITHUB_TOKEN GWS_ADMIN_SUBJECT GWS_CUSTOMER_ID GWS_SA_CLIENT_EMAIL GWS_SA_PRIVATE_KEY JAMF_CLIENT_ID JAMF_CLIENT_SECRET JAMF_URL JIRA_API_TOKEN JIRA_EMAIL JIRA_REQUEST_TYPE_ID JIRA_SERVICE_DESK_ID JIRA_SITE LINEAR_API_KEY LINEAR_ORG MS_CERT_SHA256 MS_CLIENT_ID MS_PRIVATE_KEY MS_SCOPE_CHECK_USER MS_TENANT_ID OKTA_CLIENT_ID OKTA_KEY_ID OKTA_ORG_URL OKTA_PRIVATE_KEY SLACK_ACCESS_LOGS_TOKEN SLACK_TEAM_ID SLACK_TOKEN
+583:+TENANT AUDITOR AEGION_DOMAIN AEGION_ORG_NAME JIRA_SITE JIRA_EMAIL JIRA_API_TOKEN JIRA_SERVICE_DESK_ID JIRA_REQUEST_TYPE_ID MEMORY_DIR PROJECT_KEY 
+585:+AEGION_DOMAIN JIRA_API_TOKEN JIRA_EMAIL JIRA_REQUEST_TYPE_ID JIRA_SERVICE_DESK_ID JIRA_SITE 
+618:   for (const n of ['GITHUB_ORG', 'GITHUB_TOKEN', 'AEGIS_AUDIT_DIR', 'AEGIS_GRAPH_RUNS_DIR', 'AEGION_DOMAIN', 'JIRA_SITE']) assert.ok(read.has(n), `the scan misses ${n}`);
+678:-| E6 no secret, token, personal path, real name, internal hostname or private email | unresolved | not run yet | |
+689:+| E6 no secret, token, personal path, real name, internal hostname or private email | pass | the charter's grep over `git log -p 01dcb37..HEAD` (the command is the first line of `docs/aegis/g3-closeout/evidence/head/charter-grep.txt`; 724 hit lines): the hit lines are variable names (`GITHUB_TOKEN=` and the like, empty in `.env.example`), prose and test names about tokens and secrets, and sentinel values the tests build; `node docs/aegis/g3/evidence/tools/leak-grep.js 01dcb37`: credential-shape pass over added lines 0 hits; the 2 lines with a personal-path or mail pattern are checks rows that quote the charter's grep itself; URL hosts in added lines are public vendor documentation and API hosts plus `*.example.invalid`; mail domains are `domain.com` (the `[USER@DOMAIN.COM]` placeholder) and `example.com`; the scanner, which blocks the tenant literal and unregistered org values, 0 BLOCK (`docs/aegis/g3-closeout/evidence/head/charter-grep.txt`, `docs/aegis/g3-closeout/evidence/head/leak-grep.txt`, `docs/aegis/g3-closeout/evidence/head/battery-pre-commit-check-all.txt`) |  |
+865:+PASS  G06-github-secret-alert-first-step   DIAGNOSTIC  floor=none → /github-security-alerts
+874:+PASS  O05-okta-password-expired            QUICK_FIX   floor=none → /okta-user-lifecycle
+880:+PASS  M05-m365-password-reset-change       QUICK_FIX   floor=none → /password-reset
+883:+PASS  A02-password-expired-no-system       QUICK_FIX   floor=none → /troubleshoot
+907:+PASS  pair A02-password-expired-no-system ≠ M05-m365-password-reset-change -- the same reset with no system named needs one question first; with Microsoft 365 named it is a routine reset
+912:+PASS  pair G06-github-secret-alert-first-step ≠ G07-github-bulk-dismiss-dependabot -- one alert triage starts by rotating the secret; dismissing 40 alerts at once is a bulk change that hides risk
+942:+PASS  G02-password-forgotten               QUICK_FIX   floor=none → /gws-password-reset
+962:+PASS  G22-okta-password-reset              QUICK_FIX   floor=none → /okta-user-lifecycle
+972:+PASS  G32-mac-login-password-sync          DIAGNOSTIC  floor=none → /mac-troubleshoot
+984:+PASS  pair G22-okta-password-reset ≠ G23-okta-deactivate -- 'Okta' and one user: a password reset is routine, deactivation deprovisions every assigned app
+1028:+PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
+1029:+PASS  T02-password-reset-synced            QUICK_FIX   floor=none → /password-reset
+1050:+PASS  T23-outlook-password-prompt          DIAGNOSTIC  floor=none → /outlook-issue
+1052:+PASS  T25-mass-password-reset              PROCEDURE   floor=T3   → /password-reset
+1059:+PASS  pair T23-outlook-password-prompt ≠ T24-account-disable-compromised -- Outlook credential loop vs an account-disable incident
+1061:+PASS  pair T02-password-reset-synced ≠ T25-mass-password-reset -- single-user reset vs a tenant-wide mass reset
+1198:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (3.257692ms)
+1200:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (5.7704ms)
+1219:+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (2.780885ms)
+1221:+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (1.614653ms)
+1227:+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.324294ms)
+1262:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.622576ms)
+1263:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (22.492456ms)
+1277:+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (4.208129ms)
+1279:+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (29.113123ms)
+1284:+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (1.751854ms)
+1288:+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (9.801933ms)
+1289:+✔ a failure prints the two-part message for GitHub, with no body and no token (1.549474ms)
+1291:+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (3.6396ms)
+1293:+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (83.910307ms)
+1294:+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (6.640482ms)
+1295:+✔ the token exchange is never retried, and one token serves every read of a run (14.806561ms)
+1297:+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (7.79832ms)
+1317:+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (19.347836ms)
+1318:+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (22.549695ms)
+1319:+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (2.76766ms)
+1330:+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (3.928307ms)
+1331:+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (3.907939ms)
+1338:+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (2.689899ms)
+1349:+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (3.839197ms)
+1351:+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (3.874461ms)
+1357:+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (11.730384ms)
+1376:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (1.740553ms)
+1381:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.643473ms)
+1383:+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (3.680657ms)
+1384:+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (19.75983ms)
+1387:+✔ verify read-backs for the password-reset and MFA runbooks (39.335231ms)
+1388:+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (4.08948ms)
+1389:+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.554141ms)
+1390:+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (1.153599ms)
+1391:+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.54914ms)
+1394:+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (86.040648ms)
+1396:+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (7.723575ms)
+1397:+✔ the token exchange is never retried, and one token serves every read of a run (9.502639ms)
+1400:+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (14.244512ms)
+1405:+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (73.887782ms)
+1409:+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (13.850859ms)
+1443:+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (10.480466ms)
+1449:+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (2.276161ms)
+1455:+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.932115ms)
+1463:+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (1.008215ms)
+1467:+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (9.652728ms)
+1468:+✔ Google Workspace: a token response that grants a write scope is refused before any read (134.561017ms)
+1474:+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (2.177742ms)
+1475:+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (16.340336ms)
+1476:+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (7.302782ms)
+1477:+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (4.379215ms)
+1478:+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (3.692759ms)
+1488:+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (3.707328ms)
+1507:+✔ each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN (1.672537ms)
+1518:+✔ slack-retention-export: a deleted channel's failed read counts only when Phase A read the same channel with the same token (0.526273ms)
+1544:+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (9.350644ms)
+1591:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1737.629656ms)
+1592:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1772.591593ms)
+1602:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1825.771214ms)
+1619:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.138793ms)
+1645:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.040398ms)
+1738:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.125095ms)
+1739:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.107934ms)
+1740:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.101368ms)
+1741:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.116416ms)
+1760:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.117592ms)
+1761:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.100753ms)
+1800:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.138441ms)
+1801:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.204039ms)
+1873:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.098923ms)
+1905:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.303674ms)
+1912:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.211953ms)
+1913:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.126433ms)
+1914:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.31138ms)
+1994:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (346.252175ms)
+2015:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (312.484253ms)
+2016:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (304.922911ms)
+2032:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (310.812319ms)
+2278:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.562898ms)
+2295:+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (2.161185ms)
+2339:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+2350:+✔ blocks a staged synthetic secret without printing the value or source line (414.216027ms)
+2375:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (252.614307ms)
+2383:+✔ blocks a Google OAuth client secret without printing the value or source line (129.499234ms)
+2384:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (201.321518ms)
+2387:+✔ blocks an Okta SSWS API token header without printing the value or source line (148.26568ms)
+2388:+✔ blocks a bare Okta API token without printing the value or source line (182.02998ms)
+2400:+✔ blocks a Slack refresh token (xoxe-) without printing the value or source line (150.435136ms)
+2401:+✔ blocks a Slack app-level token (xapp-) without printing the value or source line (131.232531ms)
+2402:+✔ blocks a rotating Slack access token (xoxe.xoxp-) through the existing Slack token rule (138.342204ms)
+2424:+{"ok":false,"error":"sanitization BLOCK: refused to persist: GitHub token"}
+2425:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+2454:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+2455:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+2460:+PASS R16 the secret-key pattern needs a word boundary: a word ending in "sk-" is prose, an sk- key is still refused
+2466:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (15.245181ms)
+2467:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (15.37828ms)
+2472:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (64.649385ms)
+2544:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.726177ms)
+2630:+✔ B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record (170.176693ms)
+2640:+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (176.45089ms)
+2641:+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (194.252805ms)
+2645:+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (1054.539053ms)
+2648:+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (414.450792ms)
+2650:+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (898.391795ms)
+2651:+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (1.095917ms)
+2652:+✔ C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours (154.535583ms)
+2795:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.602665ms)
+2797:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (3.768378ms)
+2816:+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (4.580413ms)
+2818:+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (2.56079ms)
+2824:+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.593834ms)
+2859:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.554802ms)
+2860:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (16.586684ms)
+2874:+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (2.497478ms)
+2876:+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (15.707388ms)
+2881:+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (1.601145ms)
+2885:+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (5.198826ms)
+2886:+✔ a failure prints the two-part message for GitHub, with no body and no token (0.525848ms)
+2888:+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (3.490179ms)
+2890:+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (124.571102ms)
+2891:+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (7.448237ms)
+2892:+✔ the token exchange is never retried, and one token serves every read of a run (14.378463ms)
+2894:+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (7.885589ms)
+2914:+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (14.936917ms)
+2915:+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (22.654069ms)
+2916:+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (2.627411ms)
+2927:+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (3.107628ms)
+2928:+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (3.290906ms)
+2935:+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (3.065345ms)
+2946:+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (7.653063ms)
+2948:+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (4.020589ms)
+2954:+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (8.982177ms)
+2973:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.619858ms)
+2978:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.578949ms)
+2980:+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (5.413981ms)
+2981:+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (16.003588ms)
+2984:+✔ verify read-backs for the password-reset and MFA runbooks (30.919069ms)
+2985:+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (2.748686ms)
+2986:+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.551275ms)
+2987:+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.712712ms)
+2988:+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.580836ms)
+2991:+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (48.982642ms)
+2993:+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (7.81188ms)
+2994:+✔ the token exchange is never retried, and one token serves every read of a run (12.281457ms)
+2997:+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (15.864622ms)
+3002:+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (48.52359ms)
+3006:+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (32.617126ms)
+3040:+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (6.570109ms)
+3046:+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.200545ms)
+3052:+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.339723ms)
+3060:+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.871432ms)
+3064:+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (9.503788ms)
+3065:+✔ Google Workspace: a token response that grants a write scope is refused before any read (48.23648ms)
+3071:+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (2.732417ms)
+3072:+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (23.159749ms)
+3073:+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (9.128999ms)
+3074:+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (8.551279ms)
+3075:+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (6.287653ms)
+3085:+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (6.310122ms)
+3104:+✔ each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN (2.474675ms)
+3115:+✔ slack-retention-export: a deleted channel's failed read counts only when Phase A read the same channel with the same token (0.339634ms)
+3141:+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (4.013389ms)
+3188:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1862.160573ms)
+3189:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1844.046835ms)
+3199:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1808.010176ms)
+3216:+✔ ad-connect-password-hash: preview region contains no executable mutation (3.134954ms)
+3242:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.060561ms)
+3335:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.17881ms)
+3336:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.214691ms)
+3337:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.184049ms)
+3338:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.164832ms)
+3357:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.243056ms)
+3358:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.180952ms)
+3397:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.249437ms)
+3398:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.212822ms)
+3470:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.177492ms)
+3502:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.182058ms)
+3509:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.208509ms)
+3510:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.204183ms)
+3511:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.345477ms)
+3591:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (290.117744ms)
+3612:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (180.763778ms)
+3613:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (233.431161ms)
+3629:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (156.101156ms)
+3875:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.782352ms)
+3892:+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (3.613404ms)
+3936:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+3947:+✔ blocks a staged synthetic secret without printing the value or source line (264.197586ms)
+3972:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (285.995119ms)
+3980:+✔ blocks a Google OAuth client secret without printing the value or source line (98.521496ms)
+3981:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (170.101475ms)
+3984:+✔ blocks an Okta SSWS API token header without printing the value or source line (110.30001ms)
+3985:+✔ blocks a bare Okta API token without printing the value or source line (101.176481ms)
+3997:+✔ blocks a Slack refresh token (xoxe-) without printing the value or source line (127.237068ms)
+3998:+✔ blocks a Slack app-level token (xapp-) without printing the value or source line (119.886038ms)
+3999:+✔ blocks a rotating Slack access token (xoxe.xoxp-) through the existing Slack token rule (125.375013ms)
+4021:+{"ok":false,"error":"sanitization BLOCK: refused to persist: GitHub token"}
+4022:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+4051:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+4052:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+4057:+PASS R16 the secret-key pattern needs a word boundary: a word ending in "sk-" is prose, an sk- key is still refused
+4063:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (13.311128ms)
+4064:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (15.932385ms)
+4069:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (80.655328ms)
+4141:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (1.190059ms)
+4227:+✔ B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record (140.984529ms)
+4237:+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (241.701893ms)
+4238:+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (112.692979ms)
+4242:+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (808.972382ms)
+4245:+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (336.880454ms)
+4247:+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (710.840512ms)
+4248:+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (1.025581ms)
+4249:+✔ C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours (150.986382ms)
+4350:+    ⚠️  WARN  Line 294: GAM deprovision (tokens, app passwords, backup codes)
+4424:+    ⚠️  WARN  Line 70: Revoke-* session/token cmdlet -- session or token revocation
+4471:+  File: .claude/commands/password-reset.md
+4474:+    ⚠️  WARN  Line 93: Update-MgUser -PasswordProfile -- cloud password reset
+4476:+    ⚠️  WARN  Line 123: Revoke-* session/token cmdlet -- session or token revocation
+4478:+    ⚠️  WARN  Line 142: Revoke-* session/token cmdlet -- session or token revocation
+4492:+    ⚠️  WARN  Line 141: Revoke-* session/token cmdlet -- session or token revocation
+4532:+    ⚠️  WARN  Line 218: Jamf secret disclosure (FileVault key, Recovery Lock, device PIN, LAPS)
+4584:+    ⚠️  WARN  Line 310: Revoke-* session/token cmdlet -- session or token revocation
+4638:+    ⚠️  WARN  Line 107: Set-ADAccountPassword -Reset -- on-premises password reset
+4640:+    ⚠️  WARN  Line 108: Invoke-MgInvalidateUserRefreshToken -- refresh-token invalidation
+4839:+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+4862:+ 6. same words, another member-user placeholder → CACHE_HIT via shape (class anchored by the dictionary token)
+4878:+14. secret-shaped content cannot enter the store
+4879:+    exit 4 → {"ok":false,"error":"sanitization BLOCK: refused to persist: GitHub token"}
+4935:+# command: bash -c git log -p 01dcb37..HEAD | grep -n -i -E "api[_-]?key|secret|token|password|/Users/|C:\\\\Users|@gmail" | wc -l
+5056:+charter grep: 724 hit lines (case-insensitive) in 77 files; by keyword: {"password":182,"token":398,"secret":128,"api_key":6,"/users/":10}
+5057:+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 2
+5058:+  18464: checks.md: -| D10 no secret, token, personal path, real name, internal hostname or private email | pass | `d10-leak-grep.txt` (over `f185071..ae88348`; later commits are d
+5059:+  22562: docs/review/batches/g3-checks.md: +| D10 no secret, token, personal path, real name, internal hostname or private email | pass | `d10-leak-grep.txt` (over `f185071..ae88348`; later commits are d
+5273:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (15.05216ms)
+5294:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.632462ms)
+5299:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (1.07335ms)
+5826:+| 10 | Can the rate-limit retry resend a request that is not a GET? | No. It resends the request the method allow-list already passed, the token exchange is never retried, and this path did not change. |
+5831:+| 15 | Do the new tests hold real credentials, write the real trail or reach the network? | No. Fixture tokens are built sentinels; transports and audit sinks are injected; the suite passes under the socket tripwire. |
+6057:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.928821ms)
+6076:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1347.497923ms)
+6077:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1292.523243ms)
+6087:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1330.653007ms)
+6104:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.065524ms)
+6130:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.041661ms)
+6223:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.17333ms)
+6224:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.118198ms)
+6225:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.09995ms)
+6226:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.148109ms)
+6245:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.112656ms)
+6246:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.134208ms)
+6285:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.137847ms)
+6286:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.147956ms)
+6358:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.150793ms)
+6390:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.12533ms)
+6397:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.111283ms)
+6398:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.088959ms)
+6399:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.153749ms)
+6479:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (226.427532ms)
+6500:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (204.411476ms)
+6501:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (220.765718ms)
+6517:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (169.491864ms)
+6670:+    "- **Role needed:** Maintainer or Admin in Fleet (global, or on the host's fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person's session, a shared login or an API token that carries a higher role.\n" +
+6689:+    '- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n' +
+6717:+    'node scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\n' +
+6730:+    actual: '---\ndescription: Lock, unlock, wipe, run a script on, turn off MDM for, or delete a host in Fleet (macOS, Windows, Linux, iPhone, iPad, Android), plus cancelling a pending action. Read the host first, then each action under its own exact-phrase gate with the Fleet adapter read-back. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /fleet-device-actions\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command. Aegis advises; a human administrator runs every step (HUMAN-RUN).\n\nCRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.\n\n**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet\'s search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host\'s display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item\'s ID: an MDM command\'s UUID, or a queued script\'s execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.\n\n**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate\'s id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket\'s approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate\'s read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).\n\n## ⚠️ Admin / safety gate\n\n- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one\'s history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.\n- **Role needed:** Maintainer or Admin in Fleet (global, or on the host\'s fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person\'s session, a shared login or an API token that carries a higher role.\n- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.\n- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).\n- Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).\n- Every action is queued for the host\'s next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.\n\n## Inputs needed\n\n- `[SERIAL_NUMBER]` or `[HOST_ID]`, and the ticket\'s goal: left somewhere (lock), found again (unlock), stolen with sensitive data (wipe), a one-off fix (script), leaving the fleet (turn off MDM, then delete the record).\n- From Phase A: platform and OS version, MDM status (On (automatic) or On (manual)), last seen, anything pending, and for Windows and Linux whether scripts are enabled in fleetd (Fleet\'s agent), because their lock, unlock and the Linux wipe run as scripts.\n- For a script: `[SCRIPT_NAME]` saved in Fleet and read line by line before it runs; for more than one host, `[FLEET_NAME]` and the number of hosts, written in the ticket before the gate.\n- For a stolen device: the identity-side containment plan **[org gap: which runbook, and who owns it]**.\n- Who holds Maintainer or Admin in Fleet for an escalation **[org gap]**.\n\n## How the systems hang together\n\n- Apple hosts (macOS, iOS, iPadOS) receive MDM commands, so they need Fleet MDM turned on; a Mac whose MDM is Jamf Pro belongs to `/jamf-lock-erase`. Windows lock and unlock run as Fleet scripts, a Windows wipe is an MDM command, and Linux lock, unlock and wipe all run as scripts.\n- Everything is queued. The badge on the host moves from Lock pending to Locked, and from Wipe pending to Wiped (Linux shows no wipe badge; Android never shows Locked). The API carries the same state as `mdm.device_status` (unlocked, locked, locking, unlocking, wiped, wiping) and `mdm.pending_action` (lock, unlock, wipe, or empty).\n- An activity (locked_host, unlocked_host, wiped_host, ran_script, mdm_unenrolled, deleted_host) proves who asked and when; the device result is proven by `mdm.device_status`, the MDM command status or the script\'s exit code.\n- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n- Fleet 4.82.0 renamed teams to fleets and queries to reports; an older note that says "team" means a fleet.\n\n## Fast path\n\n1. Phase A: read the host, its pending actions and the clicking admin\'s role (R0). Save the read as the pre-state.\n2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).\n3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.\n4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.\n5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.\n6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.\n7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).\n\n## Phase A: Read the host (R0)\n\n**Purpose**: which action you can send, and whether it will land, depends on what the record says.\n\n1. Fleet → Hosts → search `[SERIAL_NUMBER]` (the search takes a name, hostname, UUID, serial or private IP) → open the host → Host details → read status (online, offline, mia, missing or new), last seen, platform and OS version, fleet, MDM status and any badge (Lock pending, Locked, Unlock pending, Wipe pending, Wiped). Record `[HOST_ID]`. Prefer the serial: when hostnames collide, Fleet\'s lookup returns the first match.\n2. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past (what was already sent, by whom, when) and Upcoming (anything still queued). A queued script or lock changes the plan.\n3. Two records for one serial: the one with a recent last seen is the live host; act on that one only.\n4. A script that already ran (read only, no gate): Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Past → open the entry for that script run → read its exit code and output. Exit code 0 is success, no exit code yet means the host has not reported, and a timeout means it ran past the 5-minute default.\n5. Decide the smallest action that solves the ticket, and confirm that the admin who will click holds the role named in that phase. If they hold Observer, the answer is an escalation to a Maintainer or Admin, not a workaround.\n\n<details>\n<summary>Fleet adapter: the read-only scale version (HUMAN-RUN; Aegis may run the same reads)</summary>\n\n```bash\n# HUMAN-RUN, read-only: the adapter is dry by default and prints the request; --execute sends the GET, never a write\nnode scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\nnode scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execute   # resolves the serial to [HOST_ID] with status, seen_time and the MDM fields\nnode scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version'... 37691 more characters,
+6889:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (1.909109ms)
+6890:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (14.88597ms)
+6922:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1370.008595ms)
+6923:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1297.738741ms)
+6933:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1375.269803ms)
+6950:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.102644ms)
+6976:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.074283ms)
+7069:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.237756ms)
+7070:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.133806ms)
+7071:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.183787ms)
+7072:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.260909ms)
+7091:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.107943ms)
+7092:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.096955ms)
+7131:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.207618ms)
+7132:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.244452ms)
+7204:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.098406ms)
+7236:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.236576ms)
+7243:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.12848ms)
+7244:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.198213ms)
+7245:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.238034ms)
+7325:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (204.572612ms)
+7346:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (202.911213ms)
+7347:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (208.687265ms)
+7363:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (202.436599ms)
+7688:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (21.287188ms)
+7720:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1314.413944ms)
+7721:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1319.205391ms)
+7731:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1279.263354ms)
+7748:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.136969ms)
+7774:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.112733ms)
+7867:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.158665ms)
+7868:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.164117ms)
+7869:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.119128ms)
+7870:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.099707ms)
+7889:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.135085ms)
+7890:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.101501ms)
+7929:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.148132ms)
+7930:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.247335ms)
+8002:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.154481ms)
+8034:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.110626ms)
+8041:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.105341ms)
+8042:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.313162ms)
+8043:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.227664ms)
+8123:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (173.947578ms)
+8144:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (211.048853ms)
+8145:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (212.646327ms)
+8161:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (204.765019ms)
+8656:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.780476ms)
+8673:+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (2.235279ms)
+8809:+  const env = { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: ['api', 'example.org'].join('@'), JIRA_API_TOKEN: ['sentinel', 'jira', String(7 * 47)].join('-') };
+8812:+    fetch: async () => ({}), getCredentials: async () => ({ email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN }), audit: (e) => { entries.push(e); }, out: () => {}, err: () => {},
+8979:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (2.125087ms)
+8980:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (12.782ms)
+8994:+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (5.088957ms)
+9012:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.787273ms)
+9017:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.902674ms)
+9029:+✔ each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN (1.289419ms)
+9040:+✔ slack-retention-export: a deleted channel's failed read counts only when Phase A read the same channel with the same token (0.326451ms)
+9117:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.480624ms)
+9255:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.112797ms)
+9257:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (1.975806ms)
+9286:+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (9.446107ms)
+9292:+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.365929ms)
+9298:+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.747271ms)
+9306:+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.562337ms)
+9326: | Retries (batch G3) | A read retries up to 2 times on a timeout, a network error, 429 or 5xx. A 429 or 503 with `Retry-After` (seconds or an HTTP date) waits exactly that long when it is 30 s or less; a longer one is not waited out. Otherwise the wait doubles from 200 ms to a 2 s cap, drawn from [base/2, base] (jitter). A retry is made only when its wait and one more full attempt fit in the read's retry budget (60 s). The token exchange is never retried. |
+9329: | Handoff (batch G3) | A read that gives up ends in a named handoff state on the result: `RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG` (with `retry_after_seconds`) or `RETRY_BUDGET_SPENT`, and since the batch G3 close-out `RATE_LIMITED` (with `limit`, primary or secondary, and `retry_at`, the UTC time after which the read may run again, or null when the vendor gave no usable time), each with `what_failed`, `not_done` and `next_step` in plain words. The `RATE_LIMITED` message says it is a rate limit, not a permission problem, and not to widen the token. |
+9331: | Audit (batch G3) | Given an audit sink (`scripts/audit/audit-log.js`), every request, each read and the token exchange, is one `connector-call` entry: connector, operation, state, attempts, status, request id, handoff, duration. A failure that never reaches the network is one entry too, with 0 attempts: a missing credential (under the route's name) and a refused request (under `refused-request`, so refused input never enters the trail). No data, body or credential. A sink that fails turns the answer into `AUDIT_FAILED`. `node scripts/audit/audit-log.js status --since 24h` summarises failures by connector and state (task 6b). |
+9344: //   limit, not a permission problem, and that the token should not be widened.
+9576:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.852103ms)
+9595:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1227.509991ms)
+9596:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1223.47023ms)
+9606:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1319.118513ms)
+9623:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.058421ms)
+9649:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.047086ms)
+9742:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.199976ms)
+9743:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.168339ms)
+9744:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.179337ms)
+9745:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.247183ms)
+9764:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.323116ms)
+9765:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.188907ms)
+9804:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.209535ms)
+9805:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.296568ms)
+9877:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.187333ms)
+9909:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.184097ms)
+9916:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.1632ms)
+9917:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.167935ms)
+9918:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.417566ms)
+9998:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (173.593237ms)
+10019:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (234.564842ms)
+10020:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (210.717377ms)
+10036:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (227.905535ms)
+10171:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1300.119394ms)
+10172:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1364.614649ms)
+10182:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1289.07323ms)
+10199:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.090228ms)
+10225:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.061971ms)
+10318:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.205062ms)
+10319:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.168812ms)
+10320:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.170589ms)
+10321:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.154721ms)
+10340:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.182536ms)
+10341:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.22732ms)
+10380:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.28561ms)
+10381:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.215498ms)
+10453:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.104078ms)
+10485:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.119619ms)
+10492:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.11224ms)
+10493:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.341537ms)
+10494:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.179413ms)
+10574:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (214.384757ms)
+10595:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (190.738966ms)
+10596:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (191.054115ms)
+10612:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (197.691165ms)
+10756: | E6 no secret, token, personal path, real name, internal hostname or private email | unresolved | not run yet | |
+10818: | 39 | The six G3 runbooks (five `github-*`, `/okta-group-membership`) and the read-backs added to `/okta-user-lifecycle`, `/okta-mfa-reset`, `/okta-app-assignment`, `/password-reset`, `/mfa-issue`, `/intune-compliance`, `/fleet-host-health` and `/mac-troubleshoot` | GitHub portal steps (access, branch protection, rulesets, the 2FA requirement, the owner role, member removal, alert closing and dismissal) and Okta group steps, as text for an administrator | Every discovered mutation is gated or a preview: the six runbooks add 44 inventory examples, 41 gated and 3 preview (`docs/aegis/g3/evidence/t5-inventory-base-to-head.txt:4-8`, `:10`), and no example was removed or changed mode (`:3`); all six carry `disable-model-invocation: true` and the execution boundary, checked by `scripts/command-safety-gates.test.js` (474/474, `t7-head-suite-counts.txt:22`); each change ends in a read-back a person runs | **human-executed** |
+10819: | 40 | Row 28 after G3 | Nothing new | `t7-boundary-grep-io.txt`: the HTTPS clients are still `scripts/jira-client.js` and `scripts/adapters/readonly-contract.js`; the new process calls are row 38 and the developer-run evidence tools in `docs/aegis/g3/evidence/tools/` (four JavaScript tools call `git` through `execFileSync` with an argument list, `t7-boundary-grep-io.txt:3-6`; the shell tools run `git` and `node`), none of which touches a vendor system; `t7-boundary-grep-write-verbs.txt`: the only `'POST'` literals are in the contract (the GraphQL query path and the token exchange at `readonly-contract.js:675`); no `'PUT'`, `'PATCH'` or `'DELETE'` | **none exists**: no code path writes to GitHub, Okta, Microsoft 365, Fleet or Jamf Pro |
+10922: //   limit, not a permission problem, and that the token should not be widened.
+10965:     if (!['header', 'token', 'route', 'none'].includes(s.kind)) throw new Error('scopes kind is header, token, route or none');
+10971:     if (s.kind === 'token' && !spec.tokenExchange) throw new Error('token scopes need a token exchange');
+11802:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.52991ms)
+11818:+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (1.763471ms)
+11929:+  const env = { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: ['api', 'example.org'].join('@'), JIRA_API_TOKEN: ['sentinel', 'jira', String(7 * 43)].join('-') };
+11967:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.409695ms)
+11969:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (2.296604ms)
+11997:+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (7.104902ms)
+12003:+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.402885ms)
+12009:+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.507565ms)
+12017:+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.483522ms)
+12037: | Retries (batch G3) | A read retries up to 2 times on a timeout, a network error, 429 or 5xx. A 429 or 503 with `Retry-After` (seconds or an HTTP date) waits exactly that long when it is 30 s or less; a longer one is not waited out. Otherwise the wait doubles from 200 ms to a 2 s cap, drawn from [base/2, base] (jitter). A retry is made only when its wait and one more full attempt fit in the read's retry budget (60 s). The token exchange is never retried. |
+12040: | Handoff (batch G3) | A read that gives up ends in a named handoff state on the result: `RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG` (with `retry_after_seconds`) or `RETRY_BUDGET_SPENT`, and since the batch G3 close-out `RATE_LIMITED` (with `limit`, primary or secondary, and `retry_at`, the UTC time after which the read may run again, or null when the vendor gave no usable time), each with `what_failed`, `not_done` and `next_step` in plain words. The `RATE_LIMITED` message says it is a rate limit, not a permission problem, and not to widen the token. |
+12042: | Audit (batch G3) | Given an audit sink (`scripts/audit/audit-log.js`), every request, each read and the token exchange, is one `connector-call` entry: connector, operation, state, attempts, status, request id, handoff, duration. A failure that never reaches the network is one entry too, with 0 attempts: a missing credential (under the route's name) and a refused request (under `refused-request`, so refused input never enters the trail). No data, body or credential. A sink that fails turns the answer into `AUDIT_FAILED`. `node scripts/audit/audit-log.js status --since 24h` summarises failures by connector and state (task 6b). |
+12161:+    '    "next_step": "Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again"\n' +
+12163:+    `  "operator_message": "Okta refused the read under its primary rate limit (the credential's request allowance for the current window is used up, HTTP 429 with x-rate-limit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again.",\n` +
+12172:+    actual: `{\n  "state": "HTTP_ERROR",\n  "ok": false,\n  "status": 429,\n  "error": "HTTP 429 (body withheld)",\n  "attempts": 1,\n  "handoff": {\n    "state": "RATE_LIMITED",\n    "limit": "primary",\n    "retry_at": null,\n    "what_failed": "Okta refused the read under its primary rate limit (the credential's request allowance for the current window is used up, HTTP 429 with x-rate-limit-remaining 0): this is a rate limit, not a permission problem",\n    "not_done": "Nothing was read and nothing was changed",\n    "next_step": "Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again"\n  },\n  "operator_message": "Okta refused the read under its primary rate limit (the credential's request allowance for the current window is used up, HTTP 429 with x-rate-limit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again.",\n  "admin_detail": "platform=okta operation=one state=HTTP_ERROR status=429 attempts=1 request_id=- handoff=RATE_LIMITED"\n}\n`,
+12218:+    platform: 'okta', host: { fixed: 'api.example.com' }, credentials: ['DEMO_TOKEN'], auth: () => ({}),
+12223:+  const res = await contract.createClient(spec, { env: { DEMO_TOKEN: TOKEN }, transport, now: () => NOW, sleep: async () => {} }).get('one');
+12500:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.633781ms)
+12642: | E6 no secret, token, personal path, real name, internal hostname or private email | unresolved | not run yet | |
+12726: | 39 | The six G3 runbooks (five `github-*`, `/okta-group-membership`) and the read-backs added to `/okta-user-lifecycle`, `/okta-mfa-reset`, `/okta-app-assignment`, `/password-reset`, `/mfa-issue`, `/intune-compliance`, `/fleet-host-health` and `/mac-troubleshoot` | GitHub portal steps (access, branch protection, rulesets, the 2FA requirement, the owner role, member removal, alert closing and dismissal) and Okta group steps, as text for an administrator | Every discovered mutation is gated or a preview: the six runbooks add 44 inventory examples, 41 gated and 3 preview (`docs/aegis/g3/evidence/t5-inventory-base-to-head.txt:4-8`, `:10`), and no example was removed or changed mode (`:3`); all six carry `disable-model-invocation: true` and the execution boundary, checked by `scripts/command-safety-gates.test.js` (474/474, `t7-head-suite-counts.txt:22`); each change ends in a read-back a person runs | **human-executed** |
+12727: | 40 | Row 28 after G3 | Nothing new | `t7-boundary-grep-io.txt`: the HTTPS clients are still `scripts/jira-client.js` and `scripts/adapters/readonly-contract.js`; the new process calls are row 38 and the developer-run evidence tools in `docs/aegis/g3/evidence/tools/` (four JavaScript tools call `git` through `execFileSync` with an argument list, `t7-boundary-grep-io.txt:3-6`; the shell tools run `git` and `node`), none of which touches a vendor system; `t7-boundary-grep-write-verbs.txt`: the only `'POST'` literals are in the contract (the GraphQL query path and the token exchange at `readonly-contract.js:675`); no `'PUT'`, `'PATCH'` or `'DELETE'` | **none exists**: no code path writes to GitHub, Okta, Microsoft 365, Fleet or Jamf Pro |
+13486:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.507142ms)
+14335:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (1.948356ms)
+14350:+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (2.083869ms)
+14475:+    { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: ['api', 'example.org'].join('@'), JIRA_API_TOKEN: ['sentinel', 'jira', String(7 * 41)].join('-') },
+14506:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (3.018513ms)
+14508:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (5.827139ms)
+14647:+    '    "next_step": "Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC)"\n' +
+14649:+    `  "operator_message": "Okta refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC).",\n` +
+14658:+    actual: `{\n  "state": "HTTP_ERROR",\n  "ok": false,\n  "status": 429,\n  "error": "HTTP 429 (body withheld)",\n  "attempts": 1,\n  "handoff": {\n    "state": "RATE_LIMITED",\n    "limit": "primary",\n    "retry_at": "2026-10-30T12:10:00.000Z",\n    "what_failed": "Okta refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem",\n    "not_done": "Nothing was read and nothing was changed",\n    "next_step": "Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC)"\n  },\n  "operator_message": "Okta refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; run the read again after 2026-10-30T12:10:00.000Z (UTC).",\n  "admin_detail": "platform=okta operation=one state=HTTP_ERROR status=429 attempts=1 request_id=- handoff=RATE_LIMITED"\n}\n`,
+14677:+    platform: 'okta', host: { fixed: 'api.example.com' }, credentials: ['DEMO_TOKEN'], auth: () => ({}),
+14682:+  const client = contract.createClient(spec, { env: { DEMO_TOKEN: TOKEN }, transport, now: () => NOW, sleep: async () => {} });
+14722:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.718192ms)
+14724:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (2.894297ms)
+14727:+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (2.421348ms)
+14729:+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (17.369492ms)
+14734:+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (2.15555ms)
+14738:+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (5.489026ms)
+14739:+✔ a failure prints the two-part message for GitHub, with no body and no token (0.653596ms)
+14763:+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (6.939641ms)
+14769:+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.094624ms)
+14775:+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.735282ms)
+14783:+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.636768ms)
+14803: | Retries (batch G3) | A read retries up to 2 times on a timeout, a network error, 429 or 5xx. A 429 or 503 with `Retry-After` (seconds or an HTTP date) waits exactly that long when it is 30 s or less; a longer one is not waited out. Otherwise the wait doubles from 200 ms to a 2 s cap, drawn from [base/2, base] (jitter). A retry is made only when its wait and one more full attempt fit in the read's retry budget (60 s). The token exchange is never retried. |
+14806: | Handoff (batch G3) | A read that gives up ends in a named handoff state on the result: `RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG` (with `retry_after_seconds`) or `RETRY_BUDGET_SPENT`, and since the batch G3 close-out `RATE_LIMITED` (with `limit`, primary or secondary, and `retry_at`, the UTC time after which the read may run again, or null when the vendor gave no usable time), each with `what_failed`, `not_done` and `next_step` in plain words. The `RATE_LIMITED` message says it is a rate limit, not a permission problem, and not to widen the token. |
+14808: | Audit (batch G3) | Given an audit sink (`scripts/audit/audit-log.js`), every request, each read and the token exchange, is one `connector-call` entry: connector, operation, state, attempts, status, request id, handoff, duration. A failure that never reaches the network is one entry too, with 0 attempts: a missing credential (under the route's name) and a refused request (under `refused-request`, so refused input never enters the trail). No data, body or credential. A sink that fails turns the answer into `AUDIT_FAILED`. `node scripts/audit/audit-log.js status --since 24h` summarises failures by connector and state (task 6b). |
+14917:+      "next_step": "Do not widen the token or ask for more permissions; GitHub gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again"
+14919:+    "operator_message": "GitHub refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; GitHub gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again.",
+15108:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.958965ms)
+15109:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (18.258026ms)
+15253:+| 5 | Can the rate-limit retry send a non-GET request or reach another host? | No. The retry resends the same request object, already checked against the allow-list; the token exchange is still one attempt; `spec.rateLimit` accepts only 403 and 429 and checks its header and field names. |
+15257:+| 9 | Secrets or real values in `.env.example`, the dictionary or `tier-guard.js`? | None: secrets empty, org values `[@Aegion_*]` placeholders; adding `MS_TENANT_ID` to `ORG_TOKEN_SUFFIXES` keeps foreign-token detection as strict as before for every other name. |
+15358:+const TOKEN = ['sentinel', 'dryrun', 'credential', String(7 * 613)].join('-');
+15363:+const token = (extra = {}) => ok({ access_token: 'issued-access-value', expires_in: 1200, token_type: 'Bearer', ...extra });
+15365:+  { name: 'fleet', file: 'fleet-client.js', env: { FLEET_URL: 'fleet.example.invalid', FLEET_API_TOKEN: TOKEN }, argv: CONNECTORS.fleet.verify,
+15367:+  { name: 'github', file: 'github-client.js', env: { GITHUB_ORG: 'example-org', GITHUB_TOKEN: TOKEN }, argv: CONNECTORS.github.verify,
+15370:+    replies: (pass) => [token({ expires_in: 3599 }), ok({ kind: 'admin#directory#user', id: '100000000000000000001', primaryEmail: 'person@example.com', customerId: 'C0test1', suspended: pass })] },
+15371:+  { name: 'jamf', file: 'jamf-client.js', env: { JAMF_URL: 'jamf.example.invalid', JAMF_CLIENT_ID: 'client-id-value', JAMF_CLIENT_SECRET: TOKEN }, argv: CONNECTORS.jamf.verify,
+15372:+    replies: (pass) => [token(), ok({ totalCount: 1, results: [{ id: '7', hardware: { serialNumber: 'C02TEST0001' } }] }), ok({ totalCount: 1, results: [{ id: '7', general: { lastContactTime: pass ? '2026-10-28T09:30:00.000Z' : '2026-10-20T09:30:00.000Z' } }] })] },
+15373:+  { name: 'linear', file: 'linear-client.js', env: { LINEAR_API_KEY: TOKEN, LINEAR_ORG: 'org-under-test' }, argv: CONNECTORS.linear.verify,
+15376:+    replies: (pass) => [token({ expires_in: 3599 }), ok({ id: 'aaaaaaaa-0000-4000-8000-000000000001', accountEnabled: !pass })] },
+15378:+    replies: (pass) => [token({ scope: 'okta.users.read' }), ok({ id: '00u1abcd2EFGH3ijk4x7', status: pass ? 'SUSPENDED' : 'ACTIVE', profile: { login: at('user', 'example.com') } })] },
+15379:+  { name: 'slack', file: 'slack-client.js', env: { SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: 'T0OURS0001' }, argv: CONNECTORS.slack.verify,
+15400:+  const env = { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: at('api', 'example.org'), JIRA_API_TOKEN: TOKEN };
+15655:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.502647ms)
+16089:    AEGIS_NETWORK_TRIPWIRE. Names and placeholders only: every secret is empty, every org value
+16090:    is an [@Aegion_*] placeholder. The Microsoft tenant ID had no token, so [@Aegion_MS_TENANT_ID]
+16092:    ORG_TOKEN_SUFFIXES, which test C14 holds equal to the dictionary. Green: env-example 4/4 and
+16107:+# Names and placeholders only: secrets stay empty here and live in the secret manager;
+16121:@@ -17,6 +21,54 @@ JIRA_API_TOKEN=
+16125:+# Fleet (scripts/adapters/fleet-client.js): the server host, and the API-only Observer user's token
+16127:+FLEET_API_TOKEN=
+16129:+# Jamf Pro (scripts/adapters/jamf-client.js): the server host, and the read-only API client's ID and secret
+16132:+JAMF_CLIENT_SECRET=
+16134:+# Slack (scripts/adapters/slack-client.js and the intake): the workspace ID, the read token, and the admin token exported for access-logs only
+16136:+SLACK_TOKEN=
+16137:+SLACK_ACCESS_LOGS_TOKEN=
+16141:+LINEAR_API_KEY=
+16162:+# GitHub (scripts/adapters/github-client.js and the intake): the organization login, and a read-only fine-grained token
+16164:+GITHUB_TOKEN=
+16191:+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (132.56301ms)
+16192:+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (129.557605ms)
+16196:+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (847.949842ms)
+16199:+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (335.65885ms)
+16201:+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (734.160476ms)
+16202:+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (0.696597ms)
+16203:+✔ C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours (146.494608ms)
+16291:+| `[@Aegion_MS_TENANT_ID]` | Microsoft Entra tenant ID (a GUID); the Microsoft Graph connector builds its token request and binds its reads to it (`MS_TENANT_ID`) | `[MS_TENANT_ID]` |
+16293: ## Generic operational tokens (always-placeholder)
+16299:@@ -216,7 +216,9 @@ const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_S
+16307: function orgTokenWords(body) {
+16358:+    FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js)
+16361:+    GITHUB_TOKEN (read in scripts/adapters/github-client.js)
+16367:+    JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js)
+16369:+    LINEAR_API_KEY (read in scripts/adapters/linear-client.js)
+16380:+    SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js)
+16382:+    SLACK_TOKEN (read in scripts/adapters/slack-client.js)
+16389:+  +   'FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js)',
+16392:+  +   'GITHUB_TOKEN (read in scripts/adapters/github-client.js)',
+16398:+  +   'JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js)',
+16400:+  +   'LINEAR_API_KEY (read in scripts/adapters/linear-client.js)',
+16411:+  +   'SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js)',
+16413:+  +   'SLACK_TOKEN (read in scripts/adapters/slack-client.js)'
+16424:+    actual: [ 'AEGIS_AUDIT_DIR (read in scripts/adapters/cli-support.js, scripts/jira-client.js, scripts/audit/audit-log.js)', 'AEGIS_GRAPH_RUNS_DIR (read in scripts/intake/intake.js)', 'AEGIS_NETWORK_TRIPWIRE (read in scripts/adapters/readonly-contract.js, scripts/jira-client.js)', 'FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js)', 'FLEET_URL (read in scripts/adapters/fleet-client.js)', 'GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js)', 'GITHUB_TOKEN (read in scripts/adapters/github-client.js)', 'GWS_ADMIN_SUBJECT (read in scripts/adapters/gws-client.js)', 'GWS_CUSTOMER_ID (read in scripts/adapters/gws-client.js)', 'GWS_SA_CLIENT_EMAIL (read in scripts/adapters/gws-client.js)', 'GWS_SA_PRIVATE_KEY (read in scripts/adapters/gws-client.js)', 'JAMF_CLIENT_ID (read in scripts/adapters/jamf-client.js)', 'JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js)', 'JAMF_URL (read in scripts/adapters/jamf-client.js)', 'LINEAR_API_KEY (read in scripts/adapters/linear-client.js)', 'LINEAR_ORG (read in scripts/adapters/linear-client.js, scripts/intake/intake.js)', 'MS_CERT_SHA256 (read in scripts/adapters/msgraph-client.js)', 'MS_CLIENT_ID (read in scripts/adapters/msgraph-client.js)', 'MS_PRIVATE_KEY (read in scripts/adapters/msgraph-client.js)', 'MS_SCOPE_CHECK_USER (read in scripts/adapters/scopes.js)', 'MS_TENANT_ID (read in scripts/adapters/msgraph-client.js, scripts/adapters/scopes.js)', 'OKTA_CLIENT_ID (read in scripts/adapters/okta-client.js)', 'OKTA_KEY_ID (read in scripts/adapters/okta-client.js)', 'OKTA_ORG_URL (read in scripts/adapters/okta-client.js)', 'OKTA_PRIVATE_KEY (read in scripts/adapters/okta-client.js)', 'SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js)', 'SLACK_TEAM_ID (read in scripts/adapters/slack-client.js, scripts/intake/intake.js)', 'SLACK_TOKEN (read in scripts/adapters/slack-client.js)' ],
+16432:+  AssertionError [ERR_ASSERTION]: AEGIS_AUDIT_DIR (read in scripts/adapters/cli-support.js, scripts/jira-client.js, scripts/audit/audit-log.js); AEGIS_GRAPH_RUNS_DIR (read in scripts/intake/intake.js); AEGIS_NETWORK_TRIPWIRE (read in scripts/adapters/readonly-contract.js, scripts/jira-client.js); FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js); FLEET_URL (read in scripts/adapters/fleet-client.js); GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js); GITHUB_TOKEN (read in scripts/adapters/github-client.js); GWS_ADMIN_SUBJECT (read in scripts/adapters/gws-client.js); GWS_CUSTOMER_ID (read in scripts/adapters/gws-client.js); GWS_SA_CLIENT_EMAIL (read in scripts/adapters/gws-client.js); GWS_SA_PRIVATE_KEY (read in scripts/adapters/gws-client.js); JAMF_CLIENT_ID (read in scripts/adapters/jamf-client.js); JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js); JAMF_URL (read in scripts/adapters/jamf-client.js); LINEAR_API_KEY (read in scripts/adapters/linear-client.js); LINEAR_ORG (read in scripts/adapters/linear-client.js, scripts/intake/intake.js); MS_CERT_SHA256 (read in scripts/adapters/msgraph-client.js); MS_CLIENT_ID (read in scripts/adapters/msgraph-client.js); MS_PRIVATE_KEY (read in scripts/adapters/msgraph-client.js); MS_SCOPE_CHECK_USER (read in scripts/adapters/scopes.js); MS_TENANT_ID (read in scripts/adapters/msgraph-client.js, scripts/adapters/scopes.js); OKTA_CLIENT_ID (read in scripts/adapters/okta-client.js); OKTA_KEY_ID (read in scripts/adapters/okta-client.js); OKTA_ORG_URL (read in scripts/adapters/okta-client.js); OKTA_PRIVATE_KEY (read in scripts/adapters/okta-client.js); SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js); SLACK_TEAM_ID (read in scripts/adapters/slack-client.js, scripts/intake/intake.js); SLACK_TOKEN (read in scripts/adapters/slack-client.js)
+16582:+  for (const n of ['GITHUB_ORG', 'GITHUB_TOKEN', 'AEGIS_AUDIT_DIR', 'AEGIS_GRAPH_RUNS_DIR', 'AEGION_DOMAIN', 'JIRA_SITE']) assert.ok(read.has(n), `the scan misses ${n}`);
+16597:+  // a key block), and for a value also any long unbroken token
+16599:+  const LONG_TOKEN = /[A-Za-z0-9+/=_-]{32,}/;
+16607:+    assert.doesNotMatch(value, LONG_TOKEN, `${name}: no long token`);
+16781: # Enterprise Cloud with an owner token, the removal event, it must be dated after NOT_BEFORE
+16870: **Placeholders:** `[REPO_NAME]` (one repository in `[@Aegion_GITHUB_ORG]`) · `[ALERT_NUMBER]` (one secret scanning or Dependabot alert number in that repository) · `[DISMISS_REASON]` (one Dependabot reason exactly as the API writes it: fix_started, inaccurate, no_bandwidth, not_used or tolerable_risk, G-24) · `[ALERT_COUNT]` (the number of Dependabot alerts a bulk dismissal selects, written in the ticket before the gate) · `[JIRA-###]` or `[ISSUE_ID]` (the ticket) · `[ADMIN_NAME]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+16876: - **A leaked secret is fixed at its issuer, not in GitHub.** A human rotates or revokes it in the system that issued it, under that system's own change process, and proves it there. Only then is the alert closed as revoked (R1). Closing an alert changes nothing about the secret.
+16968: **Placeholders:** `[USER@DOMAIN.COM]` (the compromised account) · `[UPN]` (your own administrator address: the actor that Admin log events records) · `[APP_NAME]` and `[APP_ID]` (a third-party app and its OAuth client ID, as Connected applications or the token events show them) · `[TEMP_PASSWORD]` (the new temporary password: password manager only, never the ticket) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the Linear ticket, its prepared note, the note's digest, and the time a read-back starts from) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+16974: - **Five changes, five gates, five phrases:** suspend (R2), reset the password (R2, forward-only), revoke app passwords (R1), revoke one OAuth grant still listed (R1), reactivate (R1). "yes" is never a confirmation, and a phrase never carries into a later phase.
+16987: # read-back: a password-change event with you as the actor after NOT_BEFORE whose parameters name the compromised account, the event name as recorded in /gws-audit-log
+16988:-node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+16989:+node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+16992: `--target` makes the read prove this account's reset: a password change you made on another account during the incident does not pass. The read prints the matched event's parameters. GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the password change for `[USER@DOMAIN.COM]` with your address as the actor. The event name and its parameter names are not confirmed in this lane's sources: if `verify-event` finds nothing, read the entry for `[USER@DOMAIN.COM]` in the GUI before concluding the reset did not happen.
+17443: **Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[NOT_BEFORE]` (the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, written in the ticket just before a change) · `[USER@DOMAIN.COM]` (their Google account) · `[TEMP_PASSWORD]` (a temporary password handed over out of band) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+17449: - **Deactivate and delete are R3.** Deactivation removes every app assignment, deprovisions apps with deprovisioning enabled (which can destroy app data such as email or files) and permanently deletes the password; deletion is permanent and needs a deactivated user first. An offboarding that spans Okta, Google and devices is a destructive multi-system plan: route it through an independent, out-of-session review before Phase F runs.
+17535: | 39 | The six G3 runbooks (five `github-*`, `/okta-group-membership`) and the read-backs added to `/okta-user-lifecycle`, `/okta-mfa-reset`, `/okta-app-assignment`, `/password-reset`, `/mfa-issue`, `/intune-compliance`, `/fleet-host-health` and `/mac-troubleshoot` | GitHub portal steps (access, branch protection, rulesets, the 2FA requirement, the owner role, member removal, alert closing and dismissal) and Okta group steps, as text for an administrator | Every discovered mutation is gated or a preview: the six runbooks add 44 inventory examples, 41 gated and 3 preview (`docs/aegis/g3/evidence/t5-inventory-base-to-head.txt:4-8`, `:10`), and no example was removed or changed mode (`:3`); all six carry `disable-model-invocation: true` and the execution boundary, checked by `scripts/command-safety-gates.test.js` (474/474, `t7-head-suite-counts.txt:22`); each change ends in a read-back a person runs | **human-executed** |
+17536: | 40 | Row 28 after G3 | Nothing new | `t7-boundary-grep-io.txt`: the HTTPS clients are still `scripts/jira-client.js` and `scripts/adapters/readonly-contract.js`; the new process calls are row 38 and the developer-run evidence tools in `docs/aegis/g3/evidence/tools/` (four JavaScript tools call `git` through `execFileSync` with an argument list, `t7-boundary-grep-io.txt:3-6`; the shell tools run `git` and `node`), none of which touches a vendor system; `t7-boundary-grep-write-verbs.txt`: the only `'POST'` literals are in the contract (the GraphQL query path and the token exchange at `readonly-contract.js:675`); no `'PUT'`, `'PATCH'` or `'DELETE'` | **none exists**: no code path writes to GitHub, Okta, Microsoft 365, Fleet or Jamf Pro |
+17597:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.554298ms)
+17598:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (20.052322ms)
+17612:+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (2.628255ms)
+17630:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.846258ms)
+17635:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.523008ms)
+17684: | 3 | Connectors refuse write-capable credentials where the vendor exposes them, and say so where it does not | `node --test scripts/adapters/scope-preflight.test.js` and each connector test; `node scripts/adapters/scopes.js <connector>` | this batch | a write scope or role is SCOPE_REFUSED before its answer is used (Slack, GitHub classic tokens, Google Workspace, Fleet, Okta); Linear, Jira, Jamf Pro and Microsoft Graph print a scope notice on first use |
+17688: | 6 | Every failure state tested with its operator message | `node --test scripts/adapters/failure-messages.test.js scripts/adapters/contract-g3.test.js` and the GitHub, Okta and Microsoft Graph connector tests | this batch | every state in every connector prints the two-part message (what happened, what was not done, the next step; admin detail line) with no stack trace, body or secret |
+17715: | `okta-client.js` (batch G3) | Okta Management API GETs on the org host | `OKTA_ORG_URL`, `OKTA_CLIENT_ID`, `OKTA_PRIVATE_KEY`, `OKTA_KEY_ID` | private_key_jwt client-credentials exchange at `/oauth2/v1/token` (RS256, never retried); a granted scope that is not `.read` is `SCOPE_REFUSED`; personal fields masked |
+17716: | `msgraph-client.js` (batch G3) | Microsoft Graph v1.0 GETs (six routes; user, group and device reads with a fixed `$select`) | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_PRIVATE_KEY`, `MS_CERT_SHA256` | certificate client-credentials exchange at `login.microsoftonline.com/{tenant}/oauth2/v2.0/token` (PS256 assertion); Graph does not show an app its permissions, so the first use prints a scope notice |
+17722: ### Slack tokens and scopes
+17812:@@ -563,7 +563,10 @@ function emit(output, { out, err, secrets = [] }) {
+17837:-  return emit(recordVerdict(cli.audit, 'fleet', output), { out, err, secrets });
+17838:+  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change), { out, err, secrets });
+17858:   const secrets = () => [env.GITHUB_TOKEN].filter((v) => typeof v === 'string' && v.length > 0);
+17894:     const shown = redactDeep(res, secrets());
+17906: // ── Hosts, token exchange and scopes ─────────────────────────────────────────
+17947:     (code === 1 ? err : out)(renderResult(shown, { secrets: seen, platform: 'google-workspace' }));
+17991:     (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'jamf' }));
+18043:     (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'linear' }));
+18057: const TOKEN_HOST = 'login.microsoftonline.com';
+18061:   const secrets = () => [...seen, ...['MS_CLIENT_ID', 'MS_PRIVATE_KEY', 'MS_CERT_SHA256'].map((n) => env[n]).filter((v) => typeof v === 'string' && v.length >= 4)];
+18096:     const shown = redactDeep(res, secrets());
+18212: No body, no response data, no free text, no secret, no token and no personal value can be written: a field outside the list is refused, a value outside its form is refused (a target must be a placeholder, a reference an issue key), and every value is also checked against credential shapes (Slack, GitHub, Google, Okta tokens, a JWT, a bearer or basic header, a private key block).
+18450:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.570417ms)
+18451:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (17.370314ms)
+18465:+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (4.342615ms)
+18483:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.734325ms)
+18488:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.574557ms)
+19014:+    '1. Pre-state: the Phase A read (level, distribution method, scope and payload names) is in the ticket, and the current values of the settings the change record touches are read on screen and written into the change record. A password, certificate or challenge is never copied; its owner keeps it. Without the pre-state there is no way back.\n' +
+19058:+    actual: "## Phase F: Change a deployed profile and Distribute to All (R2, R3 above 10 Macs)\n\n**Purpose**: give every Mac in scope corrected settings, knowing each Mac drops the profile for a moment.\n\n1. Pre-state: the Phase A read (level, distribution method, scope and payload names) is in the ticket, and the current values of the settings the change record touches are read on screen and written into the change record. A password, certificate or challenge is never copied; its owner keeps it. Without the pre-state there is no way back.\n2. Count the Macs in scope: Complete plus Remaining plus Failed from Phase A. More than 10 is R3: the independent review and a change window come first.\n3. **Stop if** the profile carries Wi-Fi, a certificate or restrictions people work under and the change window is during working hours: the remove-and-reinstall gap is felt on every Mac at once.\n\n**Role needed:** the same Jamf Pro privileges as Phase C.\n\n<!-- SAFETY GATE [jamf-config-profiles-distribute-all-portal] -->\n- **Target:** [PROFILE_NAME] payload settings on every Mac in its scope\n- **Effect:** distribute the edited profile to every Mac in its scope, so each Mac drops the old copy before it receives the new settings\n- **Scope:** every Mac in Targets minus Exclusions (the step 2 count); R2 at 10 Macs or fewer, R3 above 10\n- **Reversibility:** R2 or R3 as Scope says: re-enter the old values from the pre-state and run this gate again; each Mac goes through a second remove and reinstall, with a short gap without the profile each time\n- **Required confirmation:** Type exactly `DISTRIBUTE CHANGED PROFILE [PROFILE_NAME] TO ALL`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [jamf-config-profiles-distribute-all-portal]:** Only after the pre-state, the count, (above 10 Macs) the independent review, and the exact match:\n1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → change only the payload values the change record names → **Save**.\n2. When Jamf Pro asks, choose **Distribute to All**. Write the time as `[NOT_BEFORE]`.\n\n**WAIT UNTIL** the profile's row reads Remaining 0; each Mac takes the remove and the reinstall at its next check-in.\n\n<details>\n<summary>Read-back through the read-only adapter (HUMAN-RUN, read-only)</summary>\n\n```bash\n# HUMAN-RUN - read-only - on a sample of Macs in scope\n# the profile's payload names and scope are unchanged; the adapter withholds payload settings, so the new values are compared on screen (step 1's payload) with the change record\nnode scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute\n# proves this Mac still lists the profile after the reinstall\nnode scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute\n# proves the reinstall command for this profile on this Mac was acknowledged after the distribution time - a command for another profile is not proof\nnode scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --execute\n```\n</details>\n\n**Verification checkpoint**: [ ] the payload values on screen match the change record (the adapter does not print payload settings) · [ ] Remaining 0, Failed 0 · [ ] sample read-backs passed.\n",
+19198:+const TOKEN = ['sentinel', 'binding', 'credential', String(7 * 919)].join('-');
+19205:+const token = (extra = {}) => ok({ access_token: 'issued-access-value', expires_in: 1200, token_type: 'Bearer', ...extra });
+19211:+    name: 'fleet', file: './fleet-client.js', env: { FLEET_URL: 'fleet.example.invalid', FLEET_API_TOKEN: TOKEN },
+19216:+    name: 'github', file: './github-client.js', env: { GITHUB_ORG: 'org-a', GITHUB_TOKEN: TOKEN },
+19224:+    replies: () => [token({ expires_in: 3599 }), ok({ kind: 'admin#directory#user', id: '100000000000000000001', primaryEmail: at('person', 'example.com'), customerId: 'C0test1', orgUnitPath: '/Staff', suspended: true, suspensionReason: 'ADMIN' })],
+19227:+    name: 'jamf', file: './jamf-client.js', env: { JAMF_URL: 'jamf.example.invalid', JAMF_CLIENT_ID: 'client-id-value', JAMF_CLIENT_SECRET: TOKEN },
+19229:+    replies: () => [token(), ok({ totalCount: 1, results: [{ id: '7', hardware: { serialNumber: 'C02TEST0001' } }] }), ok({ totalCount: 1, results: [{ id: '7', general: { lastContactTime: '2026-10-28T09:30:00.000Z' } }] })],
+19232:+    name: 'linear', file: './linear-client.js', env: { LINEAR_API_KEY: TOKEN, LINEAR_ORG: 'org-under-test' },
+19240:+    replies: () => [token({ expires_in: 3599 }), ok({ id: 'aaaaaaaa-0000-4000-8000-000000000001', accountEnabled: false })],
+19245:+    replies: () => [token({ scope: 'okta.users.read' }), ok({ id: '00u1abcd2EFGH3ijk4x7', status: 'SUSPENDED', profile: { login: at('user', 'example.com') }, _links: { self: { href: 'https://okta.example.invalid/api/v1/users/00u1abcd2EFGH3ijk4x7' } } })],
+19248:+    name: 'slack', file: './slack-client.js', env: { SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: 'T0OURS0001' },
+19253:+    name: 'jira', file: '../jira-client.js', env: { JIRA_SITE: 'example-tenant.atlassian.net', JIRA_EMAIL: at('api', 'example.org'), JIRA_API_TOKEN: TOKEN },
+19392:+  const code = await gh.run(['verify-2fa-required', '--change', 'chg-0123456789ab', '--execute'], { GITHUB_ORG: 'org-a', GITHUB_TOKEN: TOKEN }, { transport, out: (s) => out.push(s), err: (s) => out.push(s) });
+19765:+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (4.491769ms)
+19767:+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (2.70895ms)
+19773:+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.717825ms)
+19794:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (20.921007ms)
+19808:+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (2.547273ms)
+19810:+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (67.674125ms)
+19811:+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (4.851646ms)
+19812:+✔ the token exchange is never retried, and one token serves every read of a run (8.122296ms)
+19814:+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (4.141467ms)
+19834:+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (23.979836ms)
+19835:+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (25.130134ms)
+19836:+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (11.406783ms)
+19847:+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (5.943219ms)
+19848:+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (5.434087ms)
+19855:+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (3.601305ms)
+19857:+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (5.754902ms)
+19863:+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (6.597394ms)
+19882:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.728851ms)
+19887:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.69852ms)
+19889:+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.712274ms)
+19890:+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.813249ms)
+19891:+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.606283ms)
+19894:+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (50.580222ms)
+19896:+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (6.707296ms)
+19897:+✔ the token exchange is never retried, and one token serves every read of a run (12.599189ms)
+19900:+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (17.792386ms)
+19905:+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (60.343749ms)
+19909:+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (12.330279ms)
+19917:+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (4.088973ms)
+19918:+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (26.08705ms)
+19919:+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (10.187363ms)
+19920:+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (8.077856ms)
+19921:+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (6.358354ms)
+19931:+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (4.712208ms)
+20005:+   assert.ok(!yes.text.includes(TOKEN));
+20014:+   assert.ok(!yes.text.includes(TOKEN) && !yes.text.includes('issued-jamf-access'));
+20027:+     assert.ok(!reads.includes('FLEET_API_TOKEN'), `${argv.join(' ')}: a dry run reads no credential`);
+20056:+@@ -488,13 +488,13 @@ test('every write and secret read the lane names is refused through client.send
+20089:+@@ -294,12 +294,12 @@ test('every write and secret read the lane names is refused through client.send
+20141:+     assert.ok(!reads.includes('SLACK_TOKEN') && !reads.includes('SLACK_ACCESS_LOGS_TOKEN'), `${label}: the dry run read a token`);
+20192:    limit, not a permission problem, and not to widen the token. The audit trail accepts
+20253:@@ -88,8 +88,8 @@ Token prefixes
+20271: | Retries (batch G3) | A read retries up to 2 times on a timeout, a network error, 429 or 5xx. A 429 or 503 with `Retry-After` (seconds or an HTTP date) waits exactly that long when it is 30 s or less; a longer one is not waited out. Otherwise the wait doubles from 200 ms to a 2 s cap, drawn from [base/2, base] (jitter). A retry is made only when its wait and one more full attempt fit in the read's retry budget (60 s). The token exchange is never retried. |
+20274:+| Handoff (batch G3) | A read that gives up ends in a named handoff state on the result: `RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG` (with `retry_after_seconds`) or `RETRY_BUDGET_SPENT`, and since the batch G3 close-out `RATE_LIMITED` (with `limit`, primary or secondary, and `retry_at`, the UTC time after which the read may run again, or null when the vendor gave no usable time), each with `what_failed`, `not_done` and `next_step` in plain words. The `RATE_LIMITED` message says it is a rate limit, not a permission problem, and not to widen the token. |
+20276: | Audit (batch G3) | Given an audit sink (`scripts/audit/audit-log.js`), every request, each read and the token exchange, is one `connector-call` entry: connector, operation, state, attempts, status, request id, handoff, duration. A failure that never reaches the network is one entry too, with 0 attempts: a missing credential (under the route's name) and a refused request (under `refused-request`, so refused input never enters the trail). No data, body or credential. A sink that fails turns the answer into `AUDIT_FAILED`. `node scripts/audit/audit-log.js status --since 24h` summarises failures by connector and state (task 6b). |
+20277: | Scope preflight (batch G3) | Each spec's `scopes` block points at its entry in `scope-manifest.json`. A person running a CLI gets the preflight; an injected test transport does not unless it asks. Slack and GitHub classic tokens: `x-oauth-scopes` on the first answer; Google Workspace and Okta: the token response `scope`; Fleet: `GET /api/v1/fleet/me` first. A scope or role beyond the manifest is `SCOPE_REFUSED` (exit 1, one audit entry), the answer is dropped and no later request is sent. Linear, Jira, Jamf Pro and Microsoft Graph do not expose it (nor does a GitHub fine-grained token, whose answer has no `x-oauth-scopes`): the first result carries a `scope_notice`. `node scripts/adapters/scopes.js <connector>` prints the entry; `--execute` checks the exported credential. Plain-English table: `docs/aegis/g3/scope-manifest.md`. |
+20284: // organization. GITHUB_TOKEN is a read-only fine-grained token or App installation token
+20285: // (scope-manifest.json "github"); a classic token holding any scope but read:* is refused.
+20301:   // batch G3: GitHub returns a classic token's scopes in X-OAuth-Scopes (vendor fact G-31);
+20302:   // fine-grained and App tokens do not, so they get the not-exposed notice
+20338:+    next_step: `Do not widen the token or ask for more permissions; ${when}`,
+20393:     if (s.kind === 'token' && !spec.tokenExchange) throw new Error('token scopes need a token exchange');
+20410:     tokenExchange,
+20529: // 28 characters, so a token-shaped string is not a name)
+20543:    problem, and not to widen the token; no body reaches output or the audit trail. The other
+20951:+//   limit, not a permission problem, and that the token should not be widened.
+20969:+const TOKEN = ['sentinel', 'rate', 'credential', String(7 * 887)].join('-');
+20973:+const ENV = Object.freeze({ GITHUB_ORG: ORG, GITHUB_TOKEN: TOKEN });
+21012:+  assert.match(r.json.operator_message, /do not widen the token/i, label);
+21020:+  assert.ok(!r.text.includes(TOKEN), `${label}: no credential`);
+21170:+  const base = { platform: 'demo', host: { fixed: 'api.example.com' }, credentials: ['DEMO_TOKEN'], auth: () => ({}), routes: { one: { method: 'GET', path: '/one' } } };
+21183:+const tokenBody = (extra = {}) => ok({ access_token: 'issued-access-value', expires_in: 1200, token_type: 'Bearer', ...extra });
+21186:+  { name: 'fleet', file: 'fleet-client.js', env: { FLEET_URL: 'fleet.example.invalid', FLEET_API_TOKEN: TOKEN }, argv: ['version', '--execute'], pre: [] },
+21187:+  { name: 'jamf', file: 'jamf-client.js', env: { JAMF_URL: 'jamf.example.invalid', JAMF_CLIENT_ID: 'client-id-value', JAMF_CLIENT_SECRET: TOKEN }, argv: ['version', '--execute'], pre: [tokenBody()] },
+21188:+  { name: 'slack', file: 'slack-client.js', env: { SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: 'T0OURS0001' }, argv: ['team', '--execute'], pre: [] },
+21189:+  { name: 'linear', file: 'linear-client.js', env: { LINEAR_API_KEY: TOKEN, LINEAR_ORG: 'org-under-test' }, argv: ['viewer', '--execute'], pre: [] },
+21193:+    argv: ['users', '--execute'], pre: [tokenBody({ expires_in: 3599 })],
+21197:+    argv: ['user', '--user', '00u1abcd2EFGH3ijk4x7', '--execute'], pre: [tokenBody({ scope: 'okta.users.read' })],
+21202:+    argv: ['user', '--user', 'aaaaaaaa-0000-4000-8000-000000000001', '--execute'], pre: [tokenBody({ expires_in: 3599 })],
+21226:+  const env = { JIRA_SITE: 'example-tenant.atlassian.net', JIRA_EMAIL: at('api', 'example.org'), JIRA_API_TOKEN: TOKEN };
+21277: - **Where they are:** the repository's **Security and quality** tab (the old "Security" tab name is gone, B-08): secret scanning under "Vulnerability alerts", Dependabot under "Findings" (B-08, B-10).
+21278: - **Removing the secret from the code does not make it safe.** Anyone who cloned the repository before has it. Revocation at the issuer is the fix; a history rewrite is a separate repository change outside this runbook.
+21279:-- **The connector is read only.** `verify-secret-alert` and `verify-dependabot-alert` print verified true or false: exit 0 verified, exit 2 not verified.
+21280:+- **The connector is read only.** `verify-secret-alert` and `verify-dependabot-alert` print verified true or false: exit 0 verified, exit 2 not verified. Without `--execute` they exit 4 and print NOT VERIFIED: a dry run proves nothing.
+21289: | Scope preflight (batch G3) | Each spec's `scopes` block points at its entry in `scope-manifest.json`. A person running a CLI gets the preflight; an injected test transport does not unless it asks. Slack and GitHub classic tokens: `x-oauth-scopes` on the first answer; Google Workspace and Okta: the token response `scope`; Fleet: `GET /api/v1/fleet/me` first. A scope or role beyond the manifest is `SCOPE_REFUSED` (exit 1, one audit entry), the answer is dropped and no later request is sent. Linear, Jira, Jamf Pro and Microsoft Graph do not expose it (nor does a GitHub fine-grained token, whose answer has no `x-oauth-scopes`): the first result carries a `scope_notice`. `node scripts/adapters/scopes.js <connector>` prints the entry; `--execute` checks the exported credential. Plain-English table: `docs/aegis/g3/scope-manifest.md`. |
+21330:     'transfer, live reports and the secret reads (disk encryption key, Recovery Lock password,',
+21331:     'managed account password) are refused; each write is a HUMAN-RUN step in a runbook, proved',
+21384: // Reports API token events instead of tokens.list and asps.list.
+21487: //     verify-password-changed --user U --not-before T   (lastPasswordChangeDateTime at or after T)
+21516:-// write-scoped token; 2 the read failed or a verify-* read did not prove the write.
+21517:+// write-scoped token; 2 the read failed or a verify-* read did not prove the write; 4 a
+21546:@@ -856,8 +856,22 @@ function renderResult(res, { secrets = [], platform, operation } = {}) {
+21680:+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (3.718895ms)
+21682:+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (2.474482ms)
+21688:+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.355536ms)
+21709:+✖ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (14.132526ms)
+21723:+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (3.527311ms)
+21725:+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (79.045077ms)
+21726:+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (4.718762ms)
+21727:+✔ the token exchange is never retried, and one token serves every read of a run (8.313679ms)
+21729:+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (7.461219ms)
+21749:+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (20.32088ms)
+21750:+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (23.536799ms)
+21751:+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (3.994294ms)
+21762:+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (4.441543ms)
+21763:+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (3.937572ms)
+21770:+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (6.152916ms)
+21772:+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (3.678837ms)
+21778:+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (6.395024ms)
+21797:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.593963ms)
+21802:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.804638ms)
+21804:+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.571646ms)
+21805:+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.829614ms)
+21806:+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.624985ms)
+21809:+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (75.345938ms)
+21811:+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (11.235588ms)
+21812:+✔ the token exchange is never retried, and one token serves every read of a run (12.402379ms)
+21815:+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (22.881716ms)
+21820:+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (56.057001ms)
+21824:+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (19.563919ms)
+21832:+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (3.426686ms)
+21833:+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (23.092381ms)
+21834:+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (8.624856ms)
+21835:+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (7.602627ms)
+21836:+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (5.558627ms)
+21846:+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (6.074202ms)
+22004:+✖ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (14.132526ms)
+22005:+  AssertionError [ERR_ASSERTION]: password-reset: verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --execute
+22009:+    "command": "verify-password-changed",
+22012:+    "path": "/v1.0/users/aaaaaaaa-0000-4000-8000-000000000001?%24select=id%2CuserPrincipalName%2CaccountEnabled%2CuserType%2ConPremisesSyncEnabled%2ClastPasswordChangeDateTime%2CcreatedDateTime",
+22015:+      "lastPasswordChangeDateTime": "at or after 2026-10-28T09:00:00Z"
+22017:+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+22045:+    "path": "/v1.0/users/aaaaaaaa-0000-4000-8000-000000000001/authentication/methods",
+22054:+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+22087:+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+22260:+  AssertionError [ERR_ASSERTION]: github-security-alerts: verify-secret-alert --repo [REPO_NAME] --number [ALERT_NUMBER] --state resolved --resolution revoked --execute
+22264:+    "command": "verify-secret-alert",
+22267:+    "path": "/repos/example-org/service-repo/secret-scanning/alerts/12",
+22294:+  AssertionError [ERR_ASSERTION]: okta-user-lifecycle: verify-password-reset --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute
+22298:+    "command": "verify-password-reset",
+22303:+        "path": "/api/v1/logs?since=2026-10-28T09%3A00%3A00Z&filter=eventType+eq+%22user.account.reset_password%22+and+target.id+eq+%2200u1abcd2EFGH3ijk4x7%22&limit=100"
+22308:+      "eventType": "user.account.reset_password",
+22317:+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+22347:+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+22352:+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7/factors"
+22366:+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+22396:+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+22401:+        "path": "/api/v1/apps/0oa1abcd2EFGH3ijk4x7/users/00u1abcd2EFGH3ijk4x7"
+22415:+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+22445:+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+22465:+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+22947:+    "path": "/admin/directory/v1/users/person%40example.com",
+22952:+    "auth": "before the first read, one POST to oauth2.googleapis.com/token with grant_type and a signed assertion for the scopes below; the access token then goes only in the Authorization header",
+23068:+    "path": "/v1.0/users/aaaaaaaa-0000-4000-8000-000000000001?%24select=id%2CuserPrincipalName%2CaccountEnabled%2CuserType%2ConPremisesSyncEnabled%2ClastPasswordChangeDateTime%2CcreatedDateTime",
+23073:+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+23103:+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+23116:+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+23207:+  AssertionError [ERR_ASSERTION]: msgraph verify-password-changed --user aaaaaaaa-0000-4000-8000-000000000001 --not-before 2026-10-27T00:00:00Z: the dry run is accepted
+23269:   assert.ok(!yes.text.includes(TOKEN));
+23278:   assert.ok(!yes.text.includes(TOKEN) && !yes.text.includes('issued-jamf-access'));
+23291:     assert.ok(!reads.includes('FLEET_API_TOKEN'), `${argv.join(' ')}: a dry run reads no credential`);
+23320:@@ -488,13 +488,13 @@ test('every write and secret read the lane names is refused through client.send
+23353:@@ -294,12 +294,12 @@ test('every write and secret read the lane names is refused through client.send
+23405:     assert.ok(!reads.includes('SLACK_TOKEN') && !reads.includes('SLACK_ACCESS_LOGS_TOKEN'), `${label}: the dry run read a token`);
+23634:-| D3 guardrails: write-scoped mock credential refused where scopes are readable; tampered, truncated or reordered log detected; no secret, token, body or personal value written; concurrent writers safe; mismatched digest or missing approval never done | pass | scope preflight 8/8 (`t3a-scope-green.txt:11-14`), with every connector test at head (`t7-head-suite-counts.txt`); audit trail 9/9 (`t3b-audit-green.txt:12-15`: tamper, truncation, reorder, credential shapes, two concurrent writers); audit trail 13/13 and change records 13/13 at `ae88348` after code review rounds 1 to 3 and the Windows lock fix (`t7-head-suite-counts.txt:13-14`) | round 1 finding 2: a read-back of another kind could close a change; fixed (`73d02d9`, `6e3b748`) |
+23641:-| D10 no secret, token, personal path, real name, internal hostname or private email | pass | `d10-leak-grep.txt` (over `f185071..ae88348`; later commits are docs and captures): the charter command finds 1,846 hit lines (`:4`) and the tool the same 1,846 (`:6`), by file at `:75-206`; every hit is a credential variable name, a redaction or refusal rule, the word "password" or "token" in runbook prose and vendor facts, an API path (`/users/`, case-insensitive), or a run-time sentinel in a test; a personal path or mail on any line (`/Users/`; `C:\Users` or `C:\\Users` in any case; `@gmail`): 66 lines (`:7-73`), all the tool's own text: 17 in `leak-grep.js`, 42 in earlier copies of this capture, 4 in earlier text of this row, 1 in the round 3 record of finding 10, 2 in the commit messages that changed the tool; credential-shape pass over added lines (GitHub, Okta, Microsoft, Slack, Linear, Google, AWS, JWT, private key): 0 (`:207`); every URL host an added line names (`:208`) is a vendor's public documentation or API host, `github.com` (this repository and the `org-a`, `org-b` test fixtures) or a placeholder, and every mail domain (`:209`) is the `[USER@DOMAIN.COM]` placeholder, an `example` domain or a synthetic test value; the repository slug `qFermions/Aegis` was already in 19 files at `f185071`. Real person or organization names are guarded by the scanner (0 BLOCK, `t8-head-checks.txt:8`) and the placeholder dictionary, not by this grep | |
+23670:-| a scope refusal of the token and route kinds was not recorded in the audit trail | `d637281` | `2b402b9` | `t3a-scope-green.txt:10` |
+23679:+| E6 no secret, token, personal path, real name, internal hostname or private email | unresolved | not run yet | |
+23865:+PASS  G06-github-secret-alert-first-step   DIAGNOSTIC  floor=none → /github-security-alerts
+23874:+PASS  O05-okta-password-expired            QUICK_FIX   floor=none → /okta-user-lifecycle
+23880:+PASS  M05-m365-password-reset-change       QUICK_FIX   floor=none → /password-reset
+23883:+PASS  A02-password-expired-no-system       QUICK_FIX   floor=none → /troubleshoot
+23907:+PASS  pair A02-password-expired-no-system ≠ M05-m365-password-reset-change -- the same reset with no system named needs one question first; with Microsoft 365 named it is a routine reset
+23912:+PASS  pair G06-github-secret-alert-first-step ≠ G07-github-bulk-dismiss-dependabot -- one alert triage starts by rotating the secret; dismissing 40 alerts at once is a bulk change that hides risk
+23942:+PASS  G02-password-forgotten               QUICK_FIX   floor=none → /gws-password-reset
+23962:+PASS  G22-okta-password-reset              QUICK_FIX   floor=none → /okta-user-lifecycle
+23972:+PASS  G32-mac-login-password-sync          DIAGNOSTIC  floor=none → /mac-troubleshoot
+23984:+PASS  pair G22-okta-password-reset ≠ G23-okta-deactivate -- 'Okta' and one user: a password reset is routine, deactivation deprovisions every assigned app
+24028:+PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot
+24029:+PASS  T02-password-reset-synced            QUICK_FIX   floor=none → /password-reset
+24050:+PASS  T23-outlook-password-prompt          DIAGNOSTIC  floor=none → /outlook-issue
+24052:+PASS  T25-mass-password-reset              PROCEDURE   floor=T3   → /password-reset
+24059:+PASS  pair T23-outlook-password-prompt ≠ T24-account-disable-compromised -- Outlook credential loop vs an account-disable incident
+24061:+PASS  pair T02-password-reset-synced ≠ T25-mass-password-reset -- single-user reset vs a tenant-wide mass reset
+24127:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.511648ms)
+24129:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (2.293024ms)
+24148:+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (4.045518ms)
+24150:+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (2.692634ms)
+24156:+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.472724ms)
+24191:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.920982ms)
+24192:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (18.736662ms)
+24206:+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (5.40534ms)
+24208:+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (30.065571ms)
+24213:+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (3.168714ms)
+24217:+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (4.815024ms)
+24218:+✔ a failure prints the two-part message for GitHub, with no body and no token (0.652993ms)
+24220:+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (2.329774ms)
+24222:+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (75.384835ms)
+24223:+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (4.114239ms)
+24224:+✔ the token exchange is never retried, and one token serves every read of a run (8.090149ms)
+24226:+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (4.565019ms)
+24246:+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (28.46684ms)
+24247:+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (23.041832ms)
+24248:+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (5.703977ms)
+24259:+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (4.33814ms)
+24260:+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (8.796027ms)
+24267:+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (3.961457ms)
+24278:+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (3.609179ms)
+24280:+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (3.67144ms)
+24286:+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (9.439791ms)
+24305:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (1.116732ms)
+24310:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.978207ms)
+24312:+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (4.111113ms)
+24313:+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (13.295243ms)
+24316:+✔ verify read-backs for the password-reset and MFA runbooks (30.471047ms)
+24317:+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (2.194541ms)
+24318:+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.442725ms)
+24319:+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.851354ms)
+24320:+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.552851ms)
+24323:+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (47.512245ms)
+24325:+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (7.204464ms)
+24326:+✔ the token exchange is never retried, and one token serves every read of a run (9.152005ms)
+24329:+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (12.98792ms)
+24334:+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (50.341315ms)
+24338:+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (13.680243ms)
+24346:+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (10.049167ms)
+24352:+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.67584ms)
+24358:+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (22.013901ms)
+24366:+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.56342ms)
+24370:+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (7.418402ms)
+24371:+✔ Google Workspace: a token response that grants a write scope is refused before any read (90.8277ms)
+24377:+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (3.081252ms)
+24378:+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (24.693857ms)
+24379:+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (9.091611ms)
+24380:+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (6.61267ms)
+24381:+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (4.834798ms)
+24391:+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (8.637437ms)
+24410:+✔ each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN (1.577522ms)
+24421:+✔ slack-retention-export: a deleted channel's failed read counts only when Phase A read the same channel with the same token (0.375153ms)
+24427:+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (4.956868ms)
+24470:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1426.095483ms)
+24471:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1297.011343ms)
+24481:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1474.750778ms)
+24498:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.052604ms)
+24524:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.072463ms)
+24617:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.132023ms)
+24618:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.170233ms)
+24619:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.185778ms)
+24620:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.253013ms)
+24639:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.145554ms)
+24640:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.119029ms)
+24679:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.146334ms)
+24680:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.187796ms)
+24752:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.113281ms)
+24784:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.135681ms)
+24791:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.126583ms)
+24792:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.154722ms)
+24793:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.2477ms)
+24873:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (263.403038ms)
+24894:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (151.550926ms)
+24895:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (174.803259ms)
+24911:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (227.514155ms)
+25153:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.873042ms)
+25167:+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (1.65593ms)
+25211:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+25222:+✔ blocks a staged synthetic secret without printing the value or source line (277.701205ms)
+25247:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (253.552962ms)
+25255:+✔ blocks a Google OAuth client secret without printing the value or source line (106.144298ms)
+25256:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (145.977644ms)
+25259:+✔ blocks an Okta SSWS API token header without printing the value or source line (114.122147ms)
+25260:+✔ blocks a bare Okta API token without printing the value or source line (136.021745ms)
+25272:+✔ blocks a Slack refresh token (xoxe-) without printing the value or source line (117.898305ms)
+25273:+✔ blocks a Slack app-level token (xapp-) without printing the value or source line (120.41588ms)
+25274:+✔ blocks a rotating Slack access token (xoxe.xoxp-) through the existing Slack token rule (99.08507ms)
+25296:+{"ok":false,"error":"sanitization BLOCK: refused to persist: GitHub token"}
+25297:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+25326:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+25327:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+25332:+PASS R16 the secret-key pattern needs a word boundary: a word ending in "sk-" is prose, an sk- key is still refused
+25338:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (14.917548ms)
+25339:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (10.66529ms)
+25344:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (46.871202ms)
+25416:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.768868ms)
+25502:+✔ B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record (137.127373ms)
+25512:+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (133.69564ms)
+25513:+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (153.869602ms)
+25517:+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (937.494454ms)
+25520:+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (428.875756ms)
+25522:+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (789.28528ms)
+25523:+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (0.920661ms)
+25524:+✔ C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours (141.265839ms)
+25596:+✔ a non-read is never retried: the token exchange runs once even with a short Retry-After (1.163647ms)
+25598:+✔ with an audit sink every request is one connector-call entry with no data, token or body; a failing sink withholds the answer (2.068604ms)
+25617:+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (3.544877ms)
+25619:+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (2.801214ms)
+25625:+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.51073ms)
+25660:+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.837426ms)
+25661:+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (14.314919ms)
+25675:+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (2.325349ms)
+25677:+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (19.839583ms)
+25682:+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (1.715015ms)
+25686:+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (5.576147ms)
+25687:+✔ a failure prints the two-part message for GitHub, with no body and no token (0.781503ms)
+25689:+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (2.15766ms)
+25691:+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (84.310419ms)
+25692:+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (4.304559ms)
+25693:+✔ the token exchange is never retried, and one token serves every read of a run (8.246784ms)
+25695:+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (4.846322ms)
+25715:+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (16.833718ms)
+25716:+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (22.589685ms)
+25717:+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (2.298297ms)
+25728:+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (7.660745ms)
+25729:+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (5.576809ms)
+25736:+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (2.523904ms)
+25747:+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (3.31407ms)
+25749:+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (3.77482ms)
+25755:+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (9.531193ms)
+25774:+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.584998ms)
+25779:+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.523134ms)
+25781:+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (3.36328ms)
+25782:+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (11.930841ms)
+25785:+✔ verify read-backs for the password-reset and MFA runbooks (30.883195ms)
+25786:+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (2.472413ms)
+25787:+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.459073ms)
+25788:+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.86727ms)
+25789:+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.521935ms)
+25792:+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (45.949128ms)
+25794:+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (7.939854ms)
+25795:+✔ the token exchange is never retried, and one token serves every read of a run (12.194063ms)
+25798:+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (25.426428ms)
+25803:+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (48.75263ms)
+25807:+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (13.53714ms)
+25815:+✔ an allow-listed GET reads, sends the token only in the Authorization header, and returns data (6.695801ms)
+25821:+✔ token exchange: only the exact path with the declared grant fields; a business payload is refused before any credential is read (1.0676ms)
+25827:+✔ a retry never repeats a non-read: the token exchange runs once, even on 503 or a timeout (21.396651ms)
+25835:+✔ a token with a short lifetime is refreshed before it expires, not kept for 300 s (0.487627ms)
+25839:+✔ Slack: a token whose x-oauth-scopes holds a write scope is refused before its answer is used, and nothing more is sent (5.625076ms)
+25840:+✔ Google Workspace: a token response that grants a write scope is refused before any read (55.695207ms)
+25846:+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (2.304599ms)
+25847:+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (29.213995ms)
+25848:+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (9.785822ms)
+25849:+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (7.330365ms)
+25850:+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (4.500142ms)
+25860:+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (4.060849ms)
+25879:+✔ each runbook names the token variable and every scope of the adapter commands it runs, and never puts the admin scope in SLACK_TOKEN (3.642132ms)
+25890:+✔ slack-retention-export: a deleted channel's failed read counts only when Phase A read the same channel with the same token (0.31339ms)
+25896:+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (4.910851ms)
+25939:+✔ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (1369.639564ms)
+25940:+✔ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1283.280025ms)
+25950:+✔ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (1305.481411ms)
+25967:+✔ ad-connect-password-hash: preview region contains no executable mutation (0.156673ms)
+25993:+✔ password-reset-delta-sync: preview region contains no executable mutation (0.037976ms)
+26086:+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.136292ms)
+26087:+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.103924ms)
+26088:+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.092659ms)
+26089:+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.097532ms)
+26108:+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.110837ms)
+26109:+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.096169ms)
+26148:+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.118507ms)
+26149:+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.140423ms)
+26221:+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.11568ms)
+26253:+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.372855ms)
+26260:+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.243981ms)
+26261:+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.179168ms)
+26262:+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.260992ms)
+26342:+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (212.639295ms)
+26363:+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (169.957559ms)
+26364:+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (155.330179ms)
+26380:+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (187.349425ms)
+26622:+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell (0.468744ms)
+26636:+✔ an echoed API token is redacted, a non-2xx withholds the body, and the exit codes are kept (1.743055ms)
+26680:+PASS M7 sensitive fixtures (password, token, PII email, tenant literal) all BLOCK with zero writes and a redacted ledger
+26691:+✔ blocks a staged synthetic secret without printing the value or source line (167.259627ms)
+26716:+✔ staged regular-to-symlink typechanges are scanned and cannot hide a secret (196.465413ms)
+26724:+✔ blocks a Google OAuth client secret without printing the value or source line (99.780239ms)
+26725:+✔ every new secret-format BLOCK gets revoke-or-rotate guidance, not placeholder guidance (107.548547ms)
+26728:+✔ blocks an Okta SSWS API token header without printing the value or source line (91.766917ms)
+26729:+✔ blocks a bare Okta API token without printing the value or source line (92.3442ms)
+26741:+✔ blocks a Slack refresh token (xoxe-) without printing the value or source line (91.939601ms)
+26742:+✔ blocks a Slack app-level token (xapp-) without printing the value or source line (86.96704ms)
+26743:+✔ blocks a rotating Slack access token (xoxe.xoxp-) through the existing Slack token rule (93.588804ms)
+26765:+{"ok":false,"error":"sanitization BLOCK: refused to persist: GitHub token"}
+26766:+PASS R8 real store is git-ignored; secrets are blocked at persist; fixtures are synthetic
+26795:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+26796:+{"ok":false,"error":"identity-variants refused: the stored ticket's identity slot has no deterministic object class -- write the ticket with a dictionary token ([UPN] / [GUEST_UPN]) or pass --object-class <member-user|guest|shared-mailbox|distribution-group|m365-group|resource-mailbox|service-account> stating what the verified procedure applies to"}
+26801:+PASS R16 the secret-key pattern needs a word boundary: a word ending in "sk-" is prose, an sk- key is still refused
+26807:+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (10.657112ms)
+26808:+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (12.229081ms)
+26813:+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (43.12575ms)
+26885:+✔ a dot inside a token ([first.last], DOMAIN.COM, file names) is not a sentence end -- existing floors hold (0.830151ms)
+26971:+✔ B15 a phone number inside an upper-case bracket token is still flagged at the edge and refused by memory propose and replay record (128.324464ms)
+26981:+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (163.994729ms)
+26982:+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (151.340615ms)
+26986:+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (776.258799ms)
+26989:+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (373.944431ms)
+26991:+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (737.647648ms)
+26992:+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (0.764094ms)
+26993:+✔ C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours (147.880383ms)
+27094:+    ⚠️  WARN  Line 294: GAM deprovision (tokens, app passwords, backup codes)
+27168:+    ⚠️  WARN  Line 70: Revoke-* session/token cmdlet -- session or token revocation
+27215:+  File: .claude/commands/password-reset.md
+27218:+    ⚠️  WARN  Line 93: Update-MgUser -PasswordProfile -- cloud password reset
+27220:+    ⚠️  WARN  Line 123: Revoke-* session/token cmdlet -- session or token revocation
+27222:+    ⚠️  WARN  Line 142: Revoke-* session/token cmdlet -- session or token revocation
+27236:+    ⚠️  WARN  Line 141: Revoke-* session/token cmdlet -- session or token revocation
+27276:+    ⚠️  WARN  Line 218: Jamf secret disclosure (FileVault key, Recovery Lock, device PIN, LAPS)
+27328:+    ⚠️  WARN  Line 310: Revoke-* session/token cmdlet -- session or token revocation
+27382:+    ⚠️  WARN  Line 107: Set-ADAccountPassword -Reset -- on-premises password reset
+27384:+    ⚠️  WARN  Line 108: Invoke-MgInvalidateUserRefreshToken -- refresh-token invalidation
+27583:+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+27606:+ 6. same words, another member-user placeholder → CACHE_HIT via shape (class anchored by the dictionary token)
+27622:+14. secret-shaped content cannot enter the store
+27623:+    exit 4 → {"ok":false,"error":"sanitization BLOCK: refused to persist: GitHub token"}
+27732:+| D3 guardrails: write-scoped mock credential refused where scopes are readable; tampered, truncated or reordered log detected; no secret, token, body or personal value written; concurrent writers safe; mismatched digest or missing approval never done | pass | scope preflight 8/8 (`t3a-scope-green.txt:11-14`), with every connector test at head (`t7-head-suite-counts.txt`); audit trail 9/9 (`t3b-audit-green.txt:12-15`: tamper, truncation, reorder, credential shapes, two concurrent writers); audit trail 13/13 and change records 13/13 at `ae88348` after code review rounds 1 to 3 and the Windows lock fix (`t7-head-suite-counts.txt:13-14`) | round 1 finding 2: a read-back of another kind could close a change; fixed (`73d02d9`, `6e3b748`) |
+27739:+| D10 no secret, token, personal path, real name, internal hostname or private email | pass | `d10-leak-grep.txt` (over `f185071..ae88348`; later commits are docs and captures): the charter command finds 1,846 hit lines (`:4`) and the tool the same 1,846 (`:6`), by file at `:75-206`; every hit is a credential variable name, a redaction or refusal rule, the word "password" or "token" in runbook prose and vendor facts, an API path (`/users/`, case-insensitive), or a run-time sentinel in a test; a personal path or mail on any line (`/Users/`; `C:\Users` or `C:\\Users` in any case; `@gmail`): 66 lines (`:7-73`), all the tool's own text: 17 in `leak-grep.js`, 42 in earlier copies of this capture, 4 in earlier text of this row, 1 in the round 3 record of finding 10, 2 in the commit messages that changed the tool; credential-shape pass over added lines (GitHub, Okta, Microsoft, Slack, Linear, Google, AWS, JWT, private key): 0 (`:207`); every URL host an added line names (`:208`) is a vendor's public documentation or API host, `github.com` (this repository and the `org-a`, `org-b` test fixtures) or a placeholder, and every mail domain (`:209`) is the `[USER@DOMAIN.COM]` placeholder, an `example` domain or a synthetic test value; the repository slug `qFermions/Aegis` was already in 19 files at `f185071`. Real person or organization names are guarded by the scanner (0 BLOCK, `t8-head-checks.txt:8`) and the placeholder dictionary, not by this grep | |
+27768:+| a scope refusal of the token and route kinds was not recorded in the audit trail | `d637281` | `2b402b9` | `t3a-scope-green.txt:10` |
+27784:-- **Open issues:** owner decisions in the PR body (bind read-backs to changes inside each connector, dry-run exit codes across connectors, GitHub 403 rate limit read as a permission refusal, Okta read role, Jamf token path, `.env.example` lacking `GITHUB_ORG`, a keyed audit seal); readiness rows 4, 9, 10, 11, 12 are the owner's.
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

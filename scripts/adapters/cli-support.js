@@ -77,7 +77,9 @@ const NOT_A_READ_BACK = '--change binds a verify-* read-back to its change recor
 // first, then a malformed flag, then the id's form, then the trail (code review round 2,
 // finding 7).
 function changeRefusal(connector, command, bound, audit) {
-  const { change, error } = bound || {};
+  // fail closed on a wrong call (a change id string, nothing): never read it as "no --change"
+  if (!bound || typeof bound !== 'object' || Array.isArray(bound)) return 'the --change check was not given takeChange\'s result, so the read-back is refused';
+  const { change, error } = bound;
   if (change === undefined && !error) return null;
   if (typeof command !== 'string' || !VERIFY_COMMAND.test(command)) return NOT_A_READ_BACK;
   if (error) return error;

@@ -461,10 +461,12 @@ function recordProcedure(runtime, command, digest) {
 
 // A verdict link can accept (run with --change, verified) has its audit seq printed, the number
 // change-record.js link takes (--verify-seq); any other has none, since link would refuse it.
-function recordJiraVerdict(runtime, command, verified) {
+// state: OK when the read ran (it proved the write or did not); the contract's failure state
+// when the read itself failed (code review round 2 of the batch G3 close-out, finding 6).
+function recordJiraVerdict(runtime, command, verified, state = STATES.OK) {
   if (!runtime.audit) return;
   try {
-    const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: typeof runtime.change === 'string' ? runtime.change : null });
+    const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state, change: typeof runtime.change === 'string' ? runtime.change : null });
     if (typeof runtime.change === 'string' && verified === true && written && Number.isInteger(written.seq)) runtime.recorded = written.seq;
   } catch {
     throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
@@ -965,7 +967,9 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
     }
     // a read-back that ran and did not prove the write is a verdict, recorded as such
     if (op && /^verify-/.test(op) && (error instanceof ContractError || error instanceof ApiError)) {
-      try { recordJiraVerdict(runtime, op, false); } catch {
+      const r = error instanceof ApiError ? error.result : null;
+      const failed = r && Object.values(STATES).includes(r.state) ? r.state : (error.status === null ? STATES.NETWORK_ERROR : STATES.HTTP_ERROR);
+      try { recordJiraVerdict(runtime, op, false, error instanceof ApiError ? failed : STATES.OK); } catch {
         runtime.err('Jira operation stopped: the audit trail could not record this read-back, so its verdict is withheld.');
         printFailure(runtime, 'AUDIT_FAILED', {}, op);
         return 2;

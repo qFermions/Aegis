@@ -7,8 +7,9 @@
 // suite never writes the operator's real audit trail.
 //
 // recordVerdict: records a verify-* verdict as one verify entry. A sink that fails turns
-// the verdict into AUDIT_FAILED: a read-back that is not on record is not reported. The
-// verdict shows the entry's seq as audit_seq, the number change-record.js link takes.
+// the verdict into AUDIT_FAILED: a read-back that is not on record is not reported. A verdict
+// link can accept (run with --change, verified) shows its entry's seq as audit_seq, the number
+// change-record.js link takes; any other shows none, since link would refuse it.
 //
 // takeChange and changeRefusal (batch G3 close-out, owner decision 1): every verify-* command
 // takes --change chg-... . takeChange removes the flag from argv before the connector's own
@@ -82,7 +83,8 @@ function recordVerdict(audit, connector, output, change) {
   if (!audit || !output || typeof output.verified !== 'boolean' || typeof output.command !== 'string' || !VERIFY_COMMAND.test(output.command)) return output;
   try {
     const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: AUDITED_STATES.has(output.state) ? output.state : 'INVALID_RESPONSE', change: typeof change === 'string' ? change : null });
-    return written && Number.isInteger(written.seq) ? { ...output, audit_seq: written.seq } : output;
+    const linkable = typeof change === 'string' && output.verified === true && written && Number.isInteger(written.seq);
+    return linkable ? { ...output, audit_seq: written.seq } : output;
   } catch {
     return { command: output.command, state: 'AUDIT_FAILED', ok: false, verified: false, error: 'the audit trail could not record this read-back, so its verdict is withheld' };
   }

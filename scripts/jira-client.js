@@ -459,12 +459,13 @@ function recordProcedure(runtime, command, digest) {
   }
 }
 
-// The verdict's audit seq is printed, the number change-record.js link takes (--verify-seq).
+// A verdict link can accept (run with --change, verified) has its audit seq printed, the number
+// change-record.js link takes (--verify-seq); any other has none, since link would refuse it.
 function recordJiraVerdict(runtime, command, verified) {
   if (!runtime.audit) return;
   try {
     const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: typeof runtime.change === 'string' ? runtime.change : null });
-    if (written && Number.isInteger(written.seq)) runtime.recorded = written.seq;
+    if (typeof runtime.change === 'string' && verified === true && written && Number.isInteger(written.seq)) runtime.recorded = written.seq;
   } catch {
     throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
   }

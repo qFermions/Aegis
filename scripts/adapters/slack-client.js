@@ -101,7 +101,7 @@ const {
   STATES, EXIT, RefusedError, TRIPWIRE_MESSAGE,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal, NOT_A_READ_BACK } = require('./cli-support.js');
 
 const HOST = 'slack.com';
 const HISTORY_LIMIT = '50';
@@ -783,7 +783,7 @@ async function run(argv, env, deps = {}) {
   try {
     ({ command, def, args } = parseCommand(bound.argv));
     if (bound.error) throw new RefusedError(bound.error);
-    if (def.kind === 'offline' && bound.change !== undefined) throw new RefusedError(changeRefusal('slack', command, bound.change, null));
+    if (def.kind === 'offline' && bound.change !== undefined) throw new RefusedError(NOT_A_READ_BACK);
     if (def.kind === 'offline') {
       const { result, line } = digest(args, deps, now);
       const code = emit(result);

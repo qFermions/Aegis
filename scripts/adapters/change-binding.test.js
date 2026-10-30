@@ -319,3 +319,15 @@ test('the contract, cli-support and the audit trail agree on what a verify-* com
     assert.equal(/must be the change id/.test(refusal), !audit.CHANGE_ID.test(id), id);
   }
 });
+
+// Code review round 1, finding 10: an offline command (Slack digest, Linear note) refuses
+// --change with the fixed "not a read-back" message, before it reads any file.
+test('offline commands refuse --change as not a read-back, before reading any file', async () => {
+  const { NOT_A_READ_BACK } = require('./cli-support.js');
+  for (const [file, argv] of [['./slack-client.js', ['digest', '--file', 'no-such-file.txt']], ['./linear-client.js', ['note', '--issue', 'IT-1', '--body-file', 'no-such-file.md']]]) {
+    const out = [];
+    const code = await require(file).run([...argv, '--change', 'chg-0123456789ab'], {}, { transport: async () => { throw new Error('no network'); }, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) });
+    assert.equal(code, 1, out.join(''));
+    assert.ok(out.join('').includes(NOT_A_READ_BACK), out.join(''));
+  }
+});

@@ -19,11 +19,10 @@
 // recorded under the change id; a run without --change records change null, which
 // change-record.js link refuses.
 
-const { auditSink, defaultAuditDir } = require('../audit/audit-log.js');
+// CHANGE_ID and VERIFY_COMMAND are the trail's own forms, so a run is checked with exactly the
+// rule its verify entry is written under (readonly-contract.js isVerifyCommand matches it too).
+const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND } = require('../audit/audit-log.js');
 const { bindRefusal } = require('../audit/change-record.js');
-
-const CHANGE_ID = /^chg-[0-9a-f]{12}$/;
-const VERIFY_COMMAND = /^verify-[a-z0-9-]{1,48}$/;
 
 const AUDITED_STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
   'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED']);

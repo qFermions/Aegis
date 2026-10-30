@@ -304,3 +304,18 @@ for (const c of CONNECTORS) {
     assert.match(r.text, /--change takes the change id as the next argument/);
   });
 }
+
+// Code review round 1, finding 9: one rule for a verify-* command name. cli-support.js checks
+// with the trail's own forms (audit-log.js), and the contract's isVerifyCommand (which may not
+// load the trail's file module) must agree with them.
+test('the contract, cli-support and the audit trail agree on what a verify-* command and a change id are', () => {
+  const contract = require('./readonly-contract.js');
+  const support = require('./cli-support.js');
+  for (const name of ['verify-lock', 'verify-2fa-required', 'verify-', 'verify-Lock', 'verifylock', 'host', `verify-${'a'.repeat(48)}`, `verify-${'a'.repeat(49)}`, 'verify-a_b']) {
+    assert.equal(contract.isVerifyCommand(name), audit.VERIFY_COMMAND.test(name), name);
+  }
+  for (const id of ['chg-0123456789ab', 'chg-0123456789AB', 'chg-0123456789a', '[CHANGE_ID]']) {
+    const refusal = support.changeRefusal('github', 'verify-2fa-required', id, null);
+    assert.equal(/must be the change id/.test(refusal), !audit.CHANGE_ID.test(id), id);
+  }
+});

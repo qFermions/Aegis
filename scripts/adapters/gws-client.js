@@ -658,7 +658,7 @@ async function run(argv, env = process.env, deps = {}) {
     const paths = def.paths(a);
     // batch G3: the audit sink (and the test seams) come from cliDeps
     const cli = cliDeps(deps, env);
-    const refusal = bound.error || changeRefusal('google-workspace', command, bound.change, cli.audit);
+    const refusal = changeRefusal('google-workspace', command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {

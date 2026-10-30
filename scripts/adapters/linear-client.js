@@ -582,8 +582,7 @@ async function run(argv, env = process.env, deps = {}) {
     }
     const def = COMMANDS[command];
     const a = validate(command, def, args);
-    if (bound.error) throw new RefusedError(bound.error);
-    if (def.kind === 'offline' && bound.change !== undefined) throw new RefusedError(NOT_A_READ_BACK);
+    if (def.kind === 'offline' && (bound.change !== undefined || bound.error)) throw new RefusedError(NOT_A_READ_BACK);
     // deps.noteRoots and deps.repoRoot exist for the tests; the CLI always uses this repo's tasks/ folder
     // and the system temporary folder.
     if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots(), typeof deps.repoRoot === 'string' ? deps.repoRoot : REPO_ROOT);
@@ -601,7 +600,7 @@ async function run(argv, env = process.env, deps = {}) {
     });
     // batch G3: the audit sink (and the test seams) come from cliDeps
     const cli = cliDeps(deps, env);
-    const refusal = changeRefusal('linear', command, bound.change, cli.audit);
+    const refusal = changeRefusal('linear', command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
     const client = createClient(SPEC, { env: envView, ...cli });
     const variables = def.variables(a);

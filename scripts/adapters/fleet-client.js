@@ -593,7 +593,7 @@ async function run(argv, env = process.env, deps = {}) {
 
   // batch G3: the audit sink (and the test seams) come from cliDeps
   const cli = cliDeps(deps, env);
-  const refusal = bound.error || changeRefusal('fleet', name, bound.change, cli.audit);
+  const refusal = changeRefusal('fleet', name, bound, cli.audit);
   if (refusal) return emit({ command: name, state: STATES.REFUSED, ok: false, error: refusal }, { out, err });
   const client = createClient(SPEC, { env, ...cli });
 

@@ -72,9 +72,14 @@ const NOT_A_READ_BACK = '--change binds a verify-* read-back to its change recor
 
 // Why this run may not go on under --change, or null when it may (no --change, or a change
 // opened for connector:command and approved, in the trail the verdict will be written to).
-function changeRefusal(connector, command, change, audit) {
-  if (change === undefined) return null;
+// bound is takeChange's result; the checks run in one order for every CLI: not a read-back
+// first, then a malformed flag, then the id's form, then the trail (code review round 2,
+// finding 7).
+function changeRefusal(connector, command, bound, audit) {
+  const { change, error } = bound || {};
+  if (change === undefined && !error) return null;
   if (typeof command !== 'string' || !VERIFY_COMMAND.test(command)) return NOT_A_READ_BACK;
+  if (error) return error;
   if (typeof change !== 'string' || !CHANGE_ID.test(change)) return '--change must be the change id that node scripts/audit/change-record.js open printed (chg- and 12 lower-case hex characters)';
   const log = audit && audit.log;
   if (!log || typeof log.entries !== 'function' || typeof log.verify !== 'function') return '--change needs the audit trail the read-back is recorded in, and none is open for this run';

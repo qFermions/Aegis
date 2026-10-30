@@ -676,7 +676,7 @@ async function run(argv, env = process.env, deps = {}) {
 
     // batch G3: the audit sink, the scope preflight and the test seams come from cliDeps
     const cli = cliDeps(deps, env);
-    const refusal = bound.error || changeRefusal(PLATFORM, command, bound.change, cli.audit);
+    const refusal = changeRefusal(PLATFORM, command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {

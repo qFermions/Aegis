@@ -217,7 +217,7 @@ async function run(argv, env = process.env, deps = {}) {
     const spec = makeSpec({ tenant: env.MS_TENANT_ID, now, remember });
     const steps = def.steps(a);
     const cli = cliDeps(deps, env);
-    const refusal = bound.error || changeRefusal('msgraph', command, bound.change, cli.audit);
+    const refusal = changeRefusal('msgraph', command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {

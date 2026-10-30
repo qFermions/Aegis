@@ -343,7 +343,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (!ORG.test(org)) throw new RefusedError('GITHUB_ORG must name this deployment\'s organization (its login) before any read');
     const steps = def.steps(a).map((s) => ({ ...s, params: { org, ...s.params } }));
     const cli = cliDeps(deps, env);
-    const refusal = bound.error || changeRefusal('github', command, bound.change, cli.audit);
+    const refusal = changeRefusal('github', command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {

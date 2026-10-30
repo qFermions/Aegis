@@ -321,7 +321,7 @@ test('the contract, cli-support and the audit trail agree on what a verify-* com
     assert.equal(contract.isVerifyCommand(name), audit.VERIFY_COMMAND.test(name), name);
   }
   for (const id of ['chg-0123456789ab', 'chg-0123456789AB', 'chg-0123456789a', '[CHANGE_ID]']) {
-    const refusal = support.changeRefusal('github', 'verify-2fa-required', id, null);
+    const refusal = support.changeRefusal('github', 'verify-2fa-required', { change: id }, null);
     assert.equal(/must be the change id/.test(refusal), !audit.CHANGE_ID.test(id), id);
   }
 });

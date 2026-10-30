@@ -942,7 +942,7 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
       throw new InputError('Usage: node scripts/jira-client.js ' +
         '<list-desks|list-types|create|comment|get|transition|verify-create|verify-comment|verify-transition> [flags]');
     }
-    const refusal = bound.error || changeRefusal('jira', command, bound.change, runtime.audit);
+    const refusal = changeRefusal('jira', command, bound, runtime.audit);
     if (refusal) throw new InputError(refusal);
     runtime.change = bound.change;
     if (/^verify-/.test(command)) runtime.out = (line) => held.push(line);

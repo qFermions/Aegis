@@ -782,8 +782,7 @@ async function run(argv, env, deps = {}) {
   const bound = takeChange(argv);
   try {
     ({ command, def, args } = parseCommand(bound.argv));
-    if (bound.error) throw new RefusedError(bound.error);
-    if (def.kind === 'offline' && bound.change !== undefined) throw new RefusedError(NOT_A_READ_BACK);
+    if (def.kind === 'offline' && (bound.change !== undefined || bound.error)) throw new RefusedError(NOT_A_READ_BACK);
     if (def.kind === 'offline') {
       const { result, line } = digest(args, deps, now);
       const code = emit(result);
@@ -798,7 +797,7 @@ async function run(argv, env, deps = {}) {
     steps = def.steps(args, ctx);
     // batch G3: the audit sink (and the test seams) come from cliDeps
     cli = cliDeps(deps, environment);
-    const refusal = changeRefusal('slack', command, bound.change, cli.audit);
+    const refusal = changeRefusal('slack', command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
     client = createClient(def.spec || SPEC, { env: environment, ...cli });
     const planned = steps.map((s) => client.plan(s.route, {}, s.query));

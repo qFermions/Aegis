@@ -738,7 +738,7 @@ async function run(argv, env = process.env, deps = {}) {
     });
     // batch G3: the audit sink (and the test seams) come from cliDeps
     const cli = cliDeps(deps, env);
-    const refusal = bound.error || changeRefusal('jamf', command, bound.change, cli.audit);
+    const refusal = changeRefusal('jamf', command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
     const client = createClient(SPEC, { env: envView, ...cli });
 

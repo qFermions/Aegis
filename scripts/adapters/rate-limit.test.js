@@ -216,6 +216,16 @@ test('github: a secondary limit with remaining 0 but a missing or past reset fal
   }
 });
 
+// Code review round 3, finding 1: a secondary limit with remaining 0 also waits for the later
+// of its retry-after and its reset, the same rule as the primary limit.
+test('github: a secondary limit with remaining 0, a later reset and a short retry-after waits until after the reset', async () => {
+  const r = await github(['org', '--execute'], [secondary(403, { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(NOW_S + 25), 'retry-after': '2' }), ok(ORG_BODY)]);
+  assert.equal(r.code, 0, r.text);
+  assert.deepEqual(r.sleeps, [26000], 'one second past the reset, not the 2 s retry-after');
+  const later = await github(['org', '--execute'], [secondary(403, { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(NOW_S + 3), 'retry-after': '9' }), ok(ORG_BODY)]);
+  assert.deepEqual(later.sleeps, [9000], 'the retry-after when it is the later time');
+});
+
 // ── GitHub: a plain permission 403 ───────────────────────────────────────────
 test('github: a 403 with neither signal stays a permission refusal: one attempt, no wait, the permission message', async () => {
   const r = await github(['org', '--execute'], [forbidden(), ok(ORG_BODY)]);

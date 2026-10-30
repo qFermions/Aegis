@@ -838,3 +838,16 @@ test('a verify-* whose read fails is recorded with the failure state; one that r
     assert.deepEqual(verdicts.map((e) => [e.verified, e.state]), [[false, state]], state);
   }
 });
+
+// Code review round 3 of the batch G3 close-out, finding 6: the state of a failed read-back
+// comes from the same rule the adapters use (cli-support.js verdictState): an answer with no
+// status is INVALID_RESPONSE, not a network error.
+test('a verify-* whose answer has no status is recorded INVALID_RESPONSE, by the adapters\' own rule', async () => {
+  const env = { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: ['api', 'example.org'].join('@'), JIRA_API_TOKEN: ['sentinel', 'jira', String(7 * 47)].join('-') };
+  const entries = [];
+  const code = await run(['verify-transition', '--issue', 'HELP-1', '--issue-id', '10001', '--from-version', '1', '--to-status', 'Done', '--execute'], env, {
+    fetch: async () => ({}), getCredentials: async () => ({ email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN }), audit: (e) => { entries.push(e); }, out: () => {}, err: () => {},
+  });
+  assert.equal(code, 2);
+  assert.deepEqual(entries.filter((e) => e.kind === 'verify').map((e) => [e.verified, e.state]), [[false, 'INVALID_RESPONSE']]);
+});

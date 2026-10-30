@@ -74,7 +74,7 @@ Branch `fix/g3-closeout` on qFermions/Aegis, base `main` at `01dcb37` (the merge
 
 - Pushes of `fix/g3-closeout`, a branch this batch created, at `793bb2a`, `3bba35e`, `f6fd359`, `64bf95c`, `f9c6a99`, `c499e9d`, `2ba52bc`, `420188e` and the final head; no other branch touched (`docs/aegis/g3-closeout/refs-before.txt` against `git ls-remote` at the end).
 - Draft pull request #7 opened against `main`, its body updated; subscribed to its activity. No comment posted, nothing merged.
-- Reads of this repository on GitHub: CI check runs, workflow runs and three job logs (`docs/aegis/g3-closeout/evidence/ci-runs.md`).
+- Reads of this repository on GitHub: CI check runs, workflow runs and four job logs (`docs/aegis/g3-closeout/evidence/ci-runs.md`).
 - One public documentation page fetched: https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api on 2026-10-30 (`docs/aegis/g3-closeout/evidence/t3-github-rate-limit-page.txt`).
 - Tools installed in the session container: Node.js v24.22.2 from nodejs.org and PowerShell 7.6.9 from the Microsoft package repository (`docs/aegis/g3-closeout/baseline/dependencies.md`).
 - No call to any GitHub, Okta, Microsoft, Google, Jamf, Fleet, Slack, Linear or Jira tenant; no secret read or printed; no message sent to a person.

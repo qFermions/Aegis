@@ -12,5 +12,7 @@ Source: the GitHub Actions API (`list_workflow_runs` for branch `fix/g3-closeout
 | `c499e9d` | 41031984800, success, 2.5 | 41031984533, success, 3.2 | none |
 | `2ba52bc` | 41033171739, success, 2.6 | 41033171800, success, 4.5 | none (jobs: detect, risk-tier, verify, evals; ubuntu-latest 1.6, windows-latest 4.5) |
 | `420188e` | 41035089168: no failed job (the check-suite notice at 09:45 UTC; runs not read) | 41035089459: no failed job (same notice) | none |
+| `342e273` | 41036580629, failure | 41036580591, failure | verify (job 123998780033, log read): the scanner, "COMMIT BLOCKED, 2 critical issue(s)", the mail address in a capture's quoted commit header; ubuntu-latest and windows-latest (123998778716, 123998778925) failed on the same scan, logs not read |
+| `ad8c1c5` | 41037621479, success, 2.5 | 41037622065, success, 4.9 | none (ubuntu-latest 1.8, windows-latest 4.9) |
 
-Heads after `420188e` (`342e273`, where the scanner blocked 2 lines, and the final head) are reported in PR #7's body.
+The last head's own run is in PR #7's body.

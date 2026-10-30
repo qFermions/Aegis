@@ -101,7 +101,7 @@ const {
   STATES, EXIT, RefusedError, TRIPWIRE_MESSAGE,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict, takeChange, changeRefusal, NOT_A_READ_BACK } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 const HOST = 'slack.com';
 const HISTORY_LIMIT = '50';
@@ -782,7 +782,9 @@ async function run(argv, env, deps = {}) {
   const bound = takeChange(argv);
   try {
     ({ command, def, args } = parseCommand(bound.argv));
-    if (def.kind === 'offline' && (bound.change !== undefined || bound.error)) throw new RefusedError(NOT_A_READ_BACK);
+    // an offline command is not a read-back: --change in either form is refused by the one rule
+    const offlineRefusal = def.kind === 'offline' ? changeRefusal('slack', command, bound, null) : null;
+    if (offlineRefusal) throw new RefusedError(offlineRefusal);
     if (def.kind === 'offline') {
       const { result, line } = digest(args, deps, now);
       const code = emit(result);

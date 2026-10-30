@@ -59,7 +59,7 @@ const {
   STATES, RefusedError, TripwireError,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict, takeChange, changeRefusal, NOT_A_READ_BACK } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 // ── The allow-list: the lane's seven query documents and the intake's one ─────
 // Each ends by reading organization { urlKey } at its root, so every response names
@@ -582,7 +582,9 @@ async function run(argv, env = process.env, deps = {}) {
     }
     const def = COMMANDS[command];
     const a = validate(command, def, args);
-    if (def.kind === 'offline' && (bound.change !== undefined || bound.error)) throw new RefusedError(NOT_A_READ_BACK);
+    // an offline command is not a read-back: --change in either form is refused by the one rule
+    const offlineRefusal = def.kind === 'offline' ? changeRefusal('linear', command, bound, null) : null;
+    if (offlineRefusal) throw new RefusedError(offlineRefusal);
     // deps.noteRoots and deps.repoRoot exist for the tests; the CLI always uses this repo's tasks/ folder
     // and the system temporary folder.
     if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots(), typeof deps.repoRoot === 'string' ? deps.repoRoot : REPO_ROOT);

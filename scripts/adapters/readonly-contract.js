@@ -23,6 +23,14 @@
 // id the vendor returns is kept; with an audit sink (scripts/audit/) every request is one
 // connector-call entry, and a sink that fails withholds the answer.
 //
+// Batch G3 close-out (owner decision 3): an opt-in rate-limit hook (spec.rateLimit; only
+// GitHub turns it on). A 403 or 429 that carries the vendor's documented rate-limit signal
+// (the remaining-requests header at 0, or a body message naming the secondary limit) is a
+// rate limit, not a permission refusal: it is waited out when the vendor's own wait fits the
+// 30 s cap and the retry budget, and otherwise ends in the RATE_LIMITED handoff with the time
+// in UTC after which the read may run again. The body is read here only to test that message;
+// it never leaves this file.
+//
 // The transport is injected. The default is node:https, and it throws "Network
 // tripwire fired" when AEGIS_NETWORK_TRIPWIRE=1 (every adapter test sets it
 // through socket-tripwire.js), so no test can reach a real system.
@@ -51,6 +59,8 @@ const HANDOFF = Object.freeze({
   RETRIES_EXHAUSTED: 'RETRIES_EXHAUSTED',
   RETRY_AFTER_TOO_LONG: 'RETRY_AFTER_TOO_LONG',
   RETRY_BUDGET_SPENT: 'RETRY_BUDGET_SPENT',
+  // batch G3 close-out: the vendor's rate limit could not be waited out within the cap
+  RATE_LIMITED: 'RATE_LIMITED',
 });
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -286,6 +296,16 @@ function defineAdapter(spec) {
     if (s.kind === 'token' && !spec.tokenExchange) throw new Error('token scopes need a token exchange');
     scopes = Object.freeze({ manifest: s.manifest, kind: s.kind, vendor: s.vendor, header: s.header || null, route: s.route || null, granted: s.granted || null, allowed: s.allowed || null });
   }
+  // batch G3 close-out: the opt-in rate-limit hook, data only (rateLimitOf reads it)
+  let rateLimit = null;
+  if (spec.rateLimit) {
+    const r = spec.rateLimit;
+    const header = /^[a-z][a-z0-9-]{1,60}$/;
+    if (!Array.isArray(r.statuses) || !r.statuses.length || !r.statuses.every((s) => s === 403 || s === 429)) throw new Error('rateLimit statuses are 403 and/or 429');
+    if (!header.test(r.remainingHeader || '') || !header.test(r.resetHeader || '')) throw new Error('rateLimit needs lower-case remaining and reset header names');
+    if (!(r.secondaryMessage instanceof RegExp) || !/^[A-Za-z_][A-Za-z0-9_]{0,40}$/.test(r.messageField || '')) throw new Error('rateLimit needs a secondaryMessage pattern and the body field that holds it');
+    rateLimit = Object.freeze({ statuses: Object.freeze([...r.statuses]), remainingHeader: r.remainingHeader, resetHeader: r.resetHeader, secondaryMessage: r.secondaryMessage, messageField: r.messageField });
+  }
   let tenant = null;
   if (spec.tenant) {
     if (!ENV_NAME.test(spec.tenant.env || '') || typeof spec.tenant.collect !== 'function') throw new Error('tenant binding needs an env name and a collect function');
@@ -301,6 +321,7 @@ function defineAdapter(spec) {
     tokenExchange,
     tenant,
     scopes,
+    rateLimit,
   });
 }
 
@@ -513,6 +534,41 @@ function retryAfterMs(headers, nowMs) {
   return undefined;
 }
 
+// The vendor's rate-limit signal on a 403 or 429 (batch G3 close-out, owner decision 3), or
+// null when there is none. primary: the remaining header is 0, so the read may run again one
+// second after the reset header's time (UTC epoch seconds); a reset that is missing,
+// malformed or already past gives no usable time. secondary: the body's message names the
+// secondary limit; retry-after seconds when present, else the reset when remaining is 0,
+// else at least one minute (the vendor's rule). The body is parsed only to test that message.
+const SECONDARY_DEFAULT_WAIT_MS = 60000;
+function rateLimitOf(rl, res, nowMs) {
+  const remaining = headerValue(res.headers, rl.remainingHeader);
+  const exhausted = remaining !== undefined && remaining.trim() === '0';
+  let secondary = false;
+  try {
+    const parsed = typeof res.body === 'string' && res.body.length <= MAX_RESPONSE_BYTES ? JSON.parse(res.body) : null;
+    const message = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed[rl.messageField] : null;
+    secondary = typeof message === 'string' && rl.secondaryMessage.test(message);
+  } catch { secondary = false; }
+  if (!exhausted && !secondary) return null;
+  const limit = secondary ? 'secondary' : 'primary';
+  const untilReset = () => {
+    const raw = headerValue(res.headers, rl.resetHeader);
+    const value = raw === undefined ? '' : raw.trim();
+    if (!/^[0-9]{1,12}$/.test(value)) return { limit, waitMs: null, retryAt: null, reset: 'unreadable' };
+    const after = Number(value) * 1000 + 1000;
+    if (after <= nowMs) return { limit, waitMs: null, retryAt: null, reset: 'past' };
+    return { limit, waitMs: after - nowMs, retryAt: Number(value) * 1000 };
+  };
+  if (secondary) {
+    const wait = retryAfterMs(res.headers, nowMs);
+    if (wait !== undefined) return { limit, waitMs: wait, retryAt: nowMs + wait };
+    if (exhausted) return untilReset();
+    return { limit, waitMs: SECONDARY_DEFAULT_WAIT_MS, retryAt: nowMs + SECONDARY_DEFAULT_WAIT_MS };
+  }
+  return untilReset();
+}
+
 function requestIdOf(headers) {
   for (const name of REQUEST_ID_HEADERS) {
     const v = headerValue(headers, name);
@@ -587,7 +643,8 @@ function createClient(spec, deps = {}) {
     if (spec.scopes && spec.scopes.kind === 'header') meta.scopeHeader = headerValue(res.headers, spec.scopes.header);
     if (res.status < 200 || res.status >= 300) {
       const wait = res.status === 429 || res.status === 503 ? retryAfterMs(res.headers, now()) : undefined;
-      return result(STATES.HTTP_ERROR, { status: res.status, ...meta, error: `HTTP ${res.status} (body withheld)`, ...(wait !== undefined ? { retryAfterMs: wait } : {}) });
+      const limited = spec.rateLimit && spec.rateLimit.statuses.includes(res.status) ? rateLimitOf(spec.rateLimit, res, now()) : null;
+      return result(STATES.HTTP_ERROR, { status: res.status, ...meta, error: `HTTP ${res.status} (body withheld)`, ...(wait !== undefined ? { retryAfterMs: wait } : {}), ...(limited ? { rateLimit: limited } : {}) });
     }
     const body = typeof res.body === 'string' ? res.body : '';
     if (Buffer.byteLength(body, 'utf8') > MAX_RESPONSE_BYTES) return result(STATES.INVALID_RESPONSE, { status: res.status, ...meta, error: 'response larger than the read limit' });
@@ -621,7 +678,7 @@ function createClient(spec, deps = {}) {
 
   // The public shape of a failed attempt: internal timing fields dropped.
   function failure(r, attempts, extra = {}) {
-    const { retryAfterMs: _wait, json: _json, scopeHeader: _scopes, ...rest } = r;
+    const { retryAfterMs: _wait, json: _json, scopeHeader: _scopes, rateLimit: _limit, ...rest } = r;
     return { ...rest, attempts, ...extra };
   }
 
@@ -731,7 +788,18 @@ function createClient(spec, deps = {}) {
     for (;;) {
       attempts += 1;
       r = await attempt(request);
-      if (r.ok || !retryable(r)) break;
+      if (r.ok) break;
+      // batch G3 close-out: a vendor rate limit is waited out only when the vendor's own wait
+      // is known, within the cap, and fits the retry count and budget; otherwise it hands off
+      // at once, so a limited read never turns into a burst of retries
+      if (r.rateLimit) {
+        const w = r.rateLimit.waitMs;
+        const fits = w !== null && w >= 0 && w <= MAX_RETRY_AFTER_MS && attempts <= maxRetries && now() - startedAt + w + timeoutMs <= retryBudgetMs;
+        if (!fits) { handoff = { state: HANDOFF.RATE_LIMITED, rateLimit: r.rateLimit }; break; }
+        await sleep(w);
+        continue;
+      }
+      if (!retryable(r)) break;
       if (attempts > maxRetries) { handoff = { state: HANDOFF.RETRIES_EXHAUSTED }; break; }
       let wait;
       if (r.retryAfterMs !== undefined) {
@@ -750,7 +818,7 @@ function createClient(spec, deps = {}) {
     if (!r.ok) {
       const base = failure(r, attempts);
       if (handoff) {
-        base.handoff = handoffFor(handoff.state, base, { platform: spec.platform, retryAfterSeconds: handoff.retryAfterSeconds, budgetMs: retryBudgetMs });
+        base.handoff = handoffFor(handoff.state, base, { platform: spec.platform, retryAfterSeconds: handoff.retryAfterSeconds, budgetMs: retryBudgetMs, rateLimit: handoff.rateLimit });
       }
       return record(operation, base, attempts, startedAt) || base;
     }

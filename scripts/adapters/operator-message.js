@@ -107,9 +107,35 @@ function isFailure(res) {
   return Boolean(res) && typeof res === 'object' && (res.state !== 'OK' || res.verified === false);
 }
 
+// The rate-limit handoff (batch G3 close-out, owner decision 3): said plainly to be a rate
+// limit, not a permission problem, with the UTC time after which the read may run again when
+// the vendor gave a usable one. rateLimit is the contract's { limit, retryAt, reset }.
+function rateLimitedHandoff(res, who, rateLimit) {
+  const r = rateLimit || {};
+  const limit = r.limit === 'secondary' ? 'secondary' : 'primary';
+  const retryAt = Number.isFinite(r.retryAt) ? new Date(r.retryAt).toISOString() : null;
+  const status = Number.isInteger(res.status) ? res.status : 'error';
+  const kind = limit === 'secondary'
+    ? `its secondary rate limit (too many requests in a short time, HTTP ${status})`
+    : `its primary rate limit (the credential's requests for this hour are used up, HTTP ${status} with x-ratelimit-remaining 0)`;
+  let when;
+  if (retryAt) when = `run the read again after ${retryAt} (UTC)`;
+  else if (r.reset === 'past') when = `the reset time ${who} gave has already passed on this machine's clock, so check the clock, wait a few minutes and run the read again`;
+  else when = `${who} gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again`;
+  return {
+    state: 'RATE_LIMITED',
+    limit,
+    retry_at: retryAt,
+    what_failed: `${who} refused the read under ${kind}: this is a rate limit, not a permission problem`,
+    not_done: 'Nothing was read and nothing was changed',
+    next_step: `Do not widen the token or ask for more permissions; ${when}`,
+  };
+}
+
 // The handoff an exhausted read ends in: the named state and its plain words.
-function handoffFor(state, res, { platform, retryAfterSeconds, budgetMs } = {}) {
+function handoffFor(state, res, { platform, retryAfterSeconds, budgetMs, rateLimit } = {}) {
   const who = platformName(platform);
+  if (state === 'RATE_LIMITED') return rateLimitedHandoff(res, who, rateLimit);
   const happened = whatHappened(res, who);
   if (state === 'RETRY_AFTER_TOO_LONG') {
     return {

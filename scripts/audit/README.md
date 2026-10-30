@@ -44,4 +44,4 @@ One writer at a time: `audit.lock` is created with O_EXCL and holds the writer's
 
 ## Status
 
-`node scripts/audit/audit-log.js status [--since 24h|7d|<UTC time>]` prints connector calls and failures in the window, by connector: calls, failures, the failure states and the handoff states (`RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG`, `RETRY_BUDGET_SPENT`). Only entries before the first broken link are counted, and the summary says whether the chain is intact. Nothing leaves the machine.
+`node scripts/audit/audit-log.js status [--since 24h|7d|<UTC time>]` prints connector calls and failures in the window, by connector: calls, failures, the failure states and the handoff states (`RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG`, `RETRY_BUDGET_SPENT`, and `RATE_LIMITED` since the batch G3 close-out). Only entries before the first broken link are counted, and the summary says whether the chain is intact. Nothing leaves the machine.

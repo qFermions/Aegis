@@ -231,7 +231,8 @@ test('github: the rate-limit handoff is recorded in a real audit trail, which ac
   assert.equal(entries[0].handoff, 'RATE_LIMITED');
   assert.equal(sink.log.verify().ok, true);
   assert.ok(!fs.readFileSync(path.join(dir, audit.LOG_FILE), 'utf8').includes(RAW));
-  assert.deepEqual(sink.log.status({ sinceMs: NOW - 3600000, nowMs: NOW + 3600000 }).byConnector.github.handoffs, { RATE_LIMITED: 1 });
+  // the sink stamps entries with this machine's clock, not the injected one
+  assert.deepEqual(sink.log.status({ sinceMs: 0, nowMs: Date.now() + 60000 }).byConnector.github.handoffs, { RATE_LIMITED: 1 });
 });
 
 // ── The contract hook ────────────────────────────────────────────────────────

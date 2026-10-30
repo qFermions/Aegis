@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[OU_PATH]` (the organizational unit whose sharing setting is read or changed) · `[GROUP_EMAIL]` (a configuration group that carries its own sharing value) · `[FILE_NAME]` (the file shared outside) · `[USER@DOMAIN.COM]` (the file's owner) · `[EXTERNAL_DOMAIN]` (the partner domain outside `[@Aegion_DOMAIN]`) · `[UPN]` (your own administrator sign-in address; the audit log records it as the actor) · `[NOT_BEFORE]` (the UTC time, ISO 8601, you write down just before a change; every read-back starts there) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear ticket note) · `[ADMIN_NAME]` (the next owner in a partial-state note) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-event`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Six changes, six gates.** Removing one external account from one file is R1. Adding an allowlisted domain, and removing it again (its rollback), is R2 (one list for the whole organization). Restricting, turning off or allowing external sharing for an organizational unit is R3 (a security control for every user in the unit). Every other step is a read (R0).
@@ -116,12 +118,12 @@ Prerequisites: the Phase B role is in the ticket; the file is in My Drive. Write
 # read-only: Drive events since [NOT_BEFORE], each with its actor and event name
 node scripts/adapters/gws-client.js activities --app drive --user all --start [NOT_BEFORE] --execute
 # read-only: passes only if a change_user_access Drive event by [UPN] after [NOT_BEFORE] names [FILE_NAME] in its parameters
-node scripts/adapters/gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]" --execute
+node scripts/adapters/gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]" --change [CHANGE_ID] --execute
 ```
 
 `--target` ties the event to `[FILE_NAME]`: a sharing change you made on another file since `[NOT_BEFORE]` does not pass, and the read prints the matched event's parameters. The event name `change_user_access` is listed in the lane's sources but not confirmed, the parameter that carries the file name is not confirmed either, and the lane could not confirm which account Google records as the actor for a change made in the investigation tool. If the activities read shows the removal under another name, or under the owner `[USER@DOMAIN.COM]`, rerun `verify-event` with that name or with `--user [USER@DOMAIN.COM]`, keeping `--target "[FILE_NAME]"`, and note it in the ticket. The GUI read-back above decides.
 
-**Verification checkpoint:** [ ] the People tab no longer lists the account · [ ] `verify-event --target "[FILE_NAME]"` passed, with the event name and actor noted · [ ] the GAM filelist read (scale version) no longer lists the permission.
+**Verification checkpoint:** [ ] the People tab no longer lists the account · [ ] `verify-event --target "[FILE_NAME]"` passed for each file, with the event name and actor noted (drop `--change [CHANGE_ID]` for one file: an R1 removal has no change record) · [ ] the GAM filelist read (scale version) no longer lists the permission.
 
 <details>
 <summary>GAM: removing external permissions in bulk (PREVIEW ONLY, not authorized here)</summary>

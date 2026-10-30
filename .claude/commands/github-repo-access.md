@@ -174,10 +174,10 @@ node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when role_name is the new role
-node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --execute
+node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --change [CHANGE_ID] --execute
 ```
 
-**Verification checkpoint:** [ ] `verify-collaborator` exits 0 · [ ] the old and new roles are in the ticket.
+**Verification checkpoint:** [ ] `verify-collaborator` exits 0 (drop `--change [CHANGE_ID]` when the Phase A role was read, triage or write: an R1 change has no change record) · [ ] the old and new roles are in the ticket.
 
 ## Phase E: Remove one direct collaborator (R2)
 

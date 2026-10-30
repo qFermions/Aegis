@@ -348,7 +348,7 @@ test('the CLI dry run prints the exact planned request, reads no credential and 
     const { env, reads } = recordingEnv();
     const { code, transport, json } = await cli(argv, { env });
     const label = argv.join(' ');
-    assert.equal(code, 0, label);
+    assert.equal(code, 4, label);
     assert.equal(transport.calls.length, 0, label);
     assert.deepEqual(credentialReads(reads), [], label);
     assert.deepEqual(json.requests.map((r) => r.path), expected, label);

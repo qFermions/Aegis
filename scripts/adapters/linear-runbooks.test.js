@@ -187,7 +187,7 @@ test('every adapter line in the runbooks is one the adapter accepts, and the sno
         seen.add(argv[0]);
         const out = [];
         const code = await linear.run(argv, {}, { transport: async () => { throw new Error('no transport in a dry run'); }, out: (s) => out.push(s), err: (s) => out.push(s) });
-        if (code !== 0) problems.push(`${name}.md:${i + 1}: exit ${code}: ${argv.join(' ')}: ${out.join('').slice(0, 200)}`);
+        if (code !== (argv[0].startsWith('verify-') ? 4 : 0)) problems.push(`${name}.md:${i + 1}: exit ${code}: ${argv.join(' ')}: ${out.join('').slice(0, 200)}`);
       }
     }
   }

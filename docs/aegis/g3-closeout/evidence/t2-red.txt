@@ -1,0 +1,1582 @@
+# command: node --test scripts/adapters/verify-dry-run.test.js scripts/adapters/endpoint-sync.test.js scripts/adapters/fleet-client.test.js scripts/adapters/g3-runbooks.test.js scripts/adapters/gws-client.test.js scripts/adapters/jamf-client.test.js scripts/adapters/linear-client.test.js scripts/adapters/linear-runbooks.test.js scripts/adapters/okta-client.test.js scripts/adapters/slack-client.test.js scripts/g3-boundary.test.js scripts/gws-runbooks.test.js
+# commit: b9abf94 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:01:39Z  node: v24.22.2
+✖ Fleet verify-checked-in: the MDM check-in after --not-before passes; an older one, MDM off, or another host does not (14.132671ms)
+✖ Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and the output names the field it used (8.030301ms)
+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (3.718895ms)
+✔ every read command sends the exact method, host and path, and the credential only in the Authorization header (21.53295ms)
+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (2.474482ms)
+✔ every method but GET is refused on every allow-listed read path (8.618619ms)
+✖ the dry run prints the exact planned request, reads no credential and calls no transport (6.644867ms)
+✔ only the bare --execute flag performs a read (1.552964ms)
+✔ --execute prints the vendor data through renderResult (3.025995ms)
+✔ input errors exit 1 before any credential or network: unknown command, missing or extra flags, bad values (6.630228ms)
+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.355536ms)
+✔ a failed read exits 2: HTTP 404 once, HTTP 503 after the bounded retries (5.065465ms)
+✔ verify-lock: locked with nothing pending is verified (exit 0); locking, or locked with an unlock pending, is not (exit 2) (3.097934ms)
+✔ verify-unlock: unlocked with nothing pending is verified; still locked is not (1.037955ms)
+✔ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command or no wipe status is not (4.129124ms)
+✔ verify-wipe on Windows reads the host's commands and needs a doWipe command with status 200; Linux cannot be proven by this read (2.55969ms)
+✔ verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script (0.770267ms)
+✔ verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check (1.933484ms)
+✔ verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not (3.023777ms)
+✔ verify-mdm-off: an empty MDM read and an enrollment that no longer reads On is verified; On is not (3.072958ms)
+✔ verify-deleted: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolving to that host, is verified (5.788668ms)
+✔ no credential value appears in stdout, stderr or a result, also when the transport or the vendor echoes it (2.065144ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (0.769519ms)
+✔ tenant: Fleet binds no tenant id; the configured FLEET_URL is the only host a request can reach (0.934048ms)
+✔ host-upcoming reads one host's queued items (an Observer read) and nothing else: no deeper path, no order or filter keys, no write (0.730003ms)
+✔ the lane spec's Fleet table lists every route on the allow-list, with its method and path (0.7536ms)
+✔ activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit (3.91758ms)
+✔ vulnerability: HTTP 204 means Fleet knows the CVE and nothing is affected (exit 0, no data) (0.419359ms)
+✔ the default transport is the contract's, and the tripwire stops it in tests (1.101521ms)
+✔ help prints the commands; run directly, the CLI exits with run()'s code (296.040837ms)
+✔ verify-deleted says whether --not-before is malformed or an impossible date (round 2, finding 14) (0.532719ms)
+✖ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (14.132526ms)
+✖ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.015287ms)
+✖ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.740737ms)
+✖ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (5.081375ms)
+✖ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (1.39496ms)
+✖ github-org-security: every github line runs as written (dry run) and the required read-backs are there (1.49457ms)
+✖ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (1.142404ms)
+✖ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (1.31374ms)
+✖ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (5.343629ms)
+✖ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (4.613314ms)
+✖ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (0.874147ms)
+✖ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (5.449868ms)
+✖ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (3.944114ms)
+✖ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (3.270647ms)
+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (3.527311ms)
+✔ the scopes are exactly the seven read-only scopes; admin.directory.user.security and every other scope is refused (0.929808ms)
+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (79.045077ms)
+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (4.718762ms)
+✔ the token exchange is never retried, and one token serves every read of a run (8.313679ms)
+✔ a private key that is not an RSA private key in PEM form is refused before the transport, and is never printed (2.413786ms)
+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (7.461219ms)
+✖ dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0 (4 for a verify-*) (4.475782ms)
+✔ --execute with a mock transport prints the data; a missing credential is NO_CREDENTIALS (exit 1) and a missing GWS_CUSTOMER_ID is refused (exit 1), with nothing sent (6.787475ms)
+✔ tenant: a record whose customerId names another customer exits 3 with no data; a user record with no customerId returns no data (17.621368ms)
+✔ verify-suspended, verify-2sv-enforced and verify-ou: verified true exits 0, false exits 2, and a record for another user is never proof (30.522359ms)
+✔ verify-2sv-not-enforced: exit 0 only on a successful read of the named user whose isEnforcedIn2Sv is exactly false; a failed read, a missing field or another user is never proof (20.607399ms)
+✔ user and users print recoveryEmail and recoveryPhone as set or missing, never their values (10.943521ms)
+✔ a verify-* read of a user withholds a flagged recovery detail too, as the user read does (5.785804ms)
+✔ verify-admin-role-removed: reads the user, then its role assignments; proof only when no direct assignment of the role is listed and no page follows (12.214123ms)
+✔ verify-event: an event of that name, in that application, by that user, at or after --not-before (17.422997ms)
+✔ verify-event --target: the matched event must name the target in a parameter value; the same admin acting on another account is never proof (17.626019ms)
+✔ credentials never appear in stdout, stderr or results, also when the transport error or the response echoes them (11.726373ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it (3.467114ms)
+✔ bad input is refused with exit 1 before anything is read or sent (2.064637ms)
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it (2.126457ms)
+✔ the file run directly exits with the code run() returns, and its dry run reads nothing and opens no socket (210.874748ms)
+✔ the adapter source reads no file, never logs, and asks for no write scope (0.926102ms)
+✔ user and users print every personal field as set or missing (names, phones, addresses, other emails, IDs, relations, organizations, locations), and a flag on one withholds its text (5.801907ms)
+✔ user and users print aliases and nonEditableAliases as set or missing, like the other addresses, and a flag on one withholds its text (round 2, finding 6) (5.349307ms)
+✔ the allow-list holds exactly the lane spec's Jamf Pro reads, each a GET, on JAMF_URL, with no tenant variable (6.301286ms)
+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (20.32088ms)
+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (23.536799ms)
+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (3.994294ms)
+✖ the CLI dry run prints the exact planned request, reads no credential and calls no transport (13.733741ms)
+✔ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (10.261208ms)
+✔ verify-command reads further pages while a page is full, and stops after ten pages without proof (79.580697ms)
+✔ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not (5.312146ms)
+✔ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof (4.002946ms)
+✔ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier (3.417061ms)
+✔ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof (1.70178ms)
+✔ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed (3.272107ms)
+✔ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused (11.201859ms)
+✔ key-like fields are stripped from every response before it is printed, and the instruction scan runs on what is left (1.445944ms)
+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (4.441543ms)
+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (3.937572ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (1.498104ms)
+✔ Jamf Pro binds no tenant variable: one server per tenant, bound by JAMF_URL; any other host is refused (0.545366ms)
+✔ bad input, unknown or write-shaped commands and misplaced flags exit 1 before anything is read or sent (2.319487ms)
+✔ missing credentials exit 1 and name the variable, never a value; nothing is sent (0.940308ms)
+✔ a failed read exits 2 and withholds the body; a network tripwire is never swallowed (1.76605ms)
+✔ the adapter has no file, socket or console access of its own, and runs as a CLI (dry run and refusal only) (210.165901ms)
+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (6.152916ms)
+✔ every read and verify-* sends POST api.linear.app/graphql with its named document byte-equal, and the key only in the Authorization header (27.690879ms)
+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (3.678837ms)
+✖ dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0 (4 for a verify-*) (3.476458ms)
+✔ --execute with a mock transport prints the data; a missing key is NO_CREDENTIALS (exit 1) and nothing is sent (1.057742ms)
+✔ tenant: LINEAR_ORG is required before any read, and a record from another workspace exits 3 with no data (5.605009ms)
+✔ note is offline: it prints the exact body, its SHA-256 over the normalised body, a not-before time, the HUMAN-RUN posting steps and the exact verify-comment line (15.468466ms)
+✔ note and digest read only a .md or .txt note outside key and settings folders, and refuse a body the commit scanner blocks; a refused file is never printed (9.39161ms)
+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (6.395024ms)
+✔ note and digest refuse a line carrying the tenant's own domain or name (SR-8), read from the same environment names the commit scanner reads, and never print it (3.268866ms)
+✔ verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2) (6.454578ms)
+✔ verify-state, verify-labels and verify-trashed print verified, observed and expected values; exit 0 when the read proves the write, 2 when it does not (2.993948ms)
+✔ verify-snoozed: the issue read carries snoozedUntilAt, and a time later than the read proves the snooze (exit 0); empty, past, now, unreadable or another issue is not proof (exit 2) (6.125601ms)
+✔ verify-suspended: the member's active is false (exit 0); active, or not found on any page, is not proof (exit 2) (2.292628ms)
+✔ the key never appears in stdout, stderr or results, also when the transport error or the response echoes it (4.72997ms)
+✔ a 200 response carrying GraphQL errors returns no data and exits 2, printing only the error type codes (0.834532ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it (1.029993ms)
+✔ bad input is refused with exit 1 before anything is read or sent (2.037741ms)
+✔ a network tripwire is never swallowed: run() rejects with it (1.343374ms)
+✔ a repo file outside tasks/ is refused even when the repo sits inside the temporary folder; a note in tasks/ is still read (3.172812ms)
+✔ the four runbooks carry the gates this file judges (1.283258ms)
+✔ every delete is R3: its gate names the written rollback path, the action waits for it, and no line labels a delete lower (2.702537ms)
+✔ every gate phrase names the value or the comment it changes, and its Target binds the same placeholders (1.267353ms)
+✔ triage Phase E corrects a wrong priority under a gate that changes the priority and nothing else (0.693556ms)
+✖ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed (39.111488ms)
+✔ the workspace-admin Phase A stop depends on the person who makes the change, never on the key (0.670451ms)
+✔ ticket-note: a digest that still differs after one replace is a stop with a partial-state note, not another edit (0.6766ms)
+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.593963ms)
+✔ a reversal over more than 10 issues is its own R3 change: the bulk delete rolls back by a reviewed bulk restore, never by N single R1 restores (2.297757ms)
+✔ every Linear-ready note read-back proves who posted it; workspace-admin never passes the member as --author (0.803488ms)
+✔ ticket-note stops when the comment it needs is past the 50-comment page or the 20-entry list (2.682703ms)
+✔ triage compares a snooze time in UTC, the form verify-snoozed prints (0.665035ms)
+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.804638ms)
+✔ ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key (0.190293ms)
+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.571646ms)
+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.829614ms)
+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.624985ms)
+✔ every write and every path off the allow-list is refused through client.send before an OKTA_ credential is read or the transport is called (19.979569ms)
+✔ a second Okta org is refused before any credential is read: another request host, or an OKTA_ORG_URL with a scheme, path, port or a second name (5.296068ms)
+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (75.345938ms)
+✔ a full page says more may follow: group-members at 200 members, logs at 100 events (56.280783ms)
+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (11.235588ms)
+✔ the token exchange is never retried, and one token serves every read of a run (12.402379ms)
+✔ a private key that is not an RSA private key in PEM form, or a client ID or key ID of the wrong shape, is refused before the transport and never printed (3.442607ms)
+✔ --execute with a missing credential is NO_CREDENTIALS (exit 1), named, with nothing sent (0.879881ms)
+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (22.881716ms)
+✔ scope preflight through the contract: the refusal holds for the client, is one audit entry, and no second request is sent (6.028327ms)
+✖ dry run by default: each read and verify-* prints the exact planned request(s), reads no credential, calls no transport and exits 0 (4.755711ms)
+✔ verify-status: exactly the status given (O-21) on a record of the user asked for (43.564392ms)
+✔ verify-factor-reset and verify-factors-reset-all: the user read succeeds first, then the factor list proves the type (or every factor) is gone (43.135681ms)
+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (56.057001ms)
+✔ verify-group-member: the user read succeeds first; present on any page proves membership; --absent needs every page read, at most 10 pages of 200 (128.63581ms)
+✔ verify-app-assigned: present is a 200 with status ACTIVE or PROVISIONED; absent is a 404 on the app-user read after a successful read of the same user (34.103135ms)
+✔ every failure state prints the two-part message for platform Okta, with no stack trace, raw body or credential (81.954383ms)
+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (19.563919ms)
+✔ personal fields print as set or missing: a user's profile except login and its credentials, a factor's profile, an app user's profile and credentials; a flag on one keeps its path and withholds its text (21.274516ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it (6.148982ms)
+✔ with an audit sink each request is one connector-call entry and each verify-* verdict one verify entry; a sink that fails withholds the verdict (9.675577ms)
+✔ bad input is refused with exit 1 before anything is read or sent (3.146698ms)
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it (3.740102ms)
+✔ the file run directly exits with the code run() returns, and its dry run reads no credential and opens no socket (213.647537ms)
+✔ the connector source reads no file, never logs, asks for .read scopes only, and has no em-dash (9.140776ms)
+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (3.426686ms)
+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (23.092381ms)
+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (8.624856ms)
+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (7.602627ms)
+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (5.558627ms)
+✖ the CLI dry run prints the exact planned requests, reads no credential and calls no transport (3.719888ms)
+✔ only the bare --execute flag performs the read; any other spelling is refused and nothing is sent (1.639601ms)
+✔ digest is offline: the SHA-256 of the whitespace-normalised draft, a not-before time and the exact verify-posted line (5.319456ms)
+✔ --execute prints the data; user and users print state fields only, never a profile (2.525174ms)
+✔ an HTTP 200 answer with ok:false is a failed read reported with the error code only (4.475403ms)
+✔ verify-deactivated, verify-reactivated and verify-guest pass only on the matching user state (4.378454ms)
+✔ verify-archived passes only when the channel read is the one asked for and is archived (1.000179ms)
+✔ verify-posted passes only on a plain message after --not-before whose normalised text has the expected digest (8.53661ms)
+✔ verify-app-approved needs the app in the approved list and out of the pending requests; verify-app-restricted needs it in the restricted list (3.96266ms)
+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (6.074202ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it (1.252694ms)
+✔ a user, member, team or channel record from another workspace, or with no team id, is refused (exit 3) and prints none of its data (1.861087ms)
+✔ input validation runs before any credential or network: IDs, limits and cursors outside their patterns are refused (0.960523ms)
+✔ without an injected transport the default one throws the network tripwire; no socket is opened (1.069251ms)
+✔ a flag on a personal profile field names its path and withholds the text: user, users, a user read-back and an app requester (1.318446ms)
+✔ verify-app-approved withholds a flagged requester name in the pending list, as app-requests does (round 2, finding 3) (0.556546ms)
+✔ a flag on a person's name outside the user reads withholds the quote: access-logs username, a message author profile; a message's own text keeps its quote (round 2, finding 4) (1.515726ms)
+✔ outside the user reads a flag keeps its quote only on a field that read exists to show: attachment authors and other unlisted fields are withheld (round 3, finding 8) (0.876717ms)
+✖ the shared contract names the verify-* dry-run exit code 4 beside the other four (4.151634ms)
+✖ fleet: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (8.773316ms)
+✖ github: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (4.5837ms)
+✖ google-workspace: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.658644ms)
+✖ jamf: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.265568ms)
+✖ linear: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.886713ms)
+✖ msgraph: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (3.393418ms)
+✖ okta: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (7.192139ms)
+✖ slack: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.103335ms)
+✔ a verify-* dry run that the connector refuses (bad input) still exits 1, not 4 (2.147097ms)
+✖ jira: the verify-* dry run uses the shared constant (4) and prints the same NOT VERIFIED line; get dry run exits 0 (3.280367ms)
+✖ github: every connector command sends reads only, and nothing without --execute (23.670303ms)
+✔ github: the spec defines GET routes only and the source opens no connection and writes no file (1.373189ms)
+✖ msgraph: every connector command sends reads only, and nothing without --execute (28.693334ms)
+✔ msgraph: the spec defines GET routes only and the source opens no connection and writes no file (0.622972ms)
+✖ okta: every connector command sends reads only, and nothing without --execute (31.817674ms)
+✔ okta: the spec defines GET routes only and the source opens no connection and writes no file (0.822932ms)
+✔ no G3 module opens a connection of its own (3.050826ms)
+✔ the intake sends at most one read and writes only the case state.json, only in saveCase (23.128343ms)
+✔ every G3 connector command a runbook or README tells an operator to run is exercised above (18.035862ms)
+✔ every G3 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (9.905131ms)
+✔ the parser reads every gate in the five runbooks with all six fields, a phrase and an R-class (6.15353ms)
+✖ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*) (10.742843ms)
+✔ no runbook treats exit 2 from a verify-* read as an expected result (7.515059ms)
+✔ exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate (8.18198ms)
+✔ every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect (6.331818ms)
+✔ every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict (2.89305ms)
+✔ each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change (7.552574ms)
+✔ every verify-event whose actor is the administrator carries --target, and the checklists require the target (3.326824ms)
+✔ no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof (6.809588ms)
+✔ every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook (10.438981ms)
+✔ the containment suspend gate waits for a user read in the ticket, also on the urgent path (2.613348ms)
+✔ every Drive sharing gate that changes who outside can be shared with waits for a named approver (7.756241ms)
+✔ single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing (13.892854ms)
+✔ the GAM export gates stop before replacing an existing file (bash, mocked gam) (56.166742ms)
+✔ /gws-audit-log hands Google containment to /gws-account-containment, never to the Microsoft-only triage runbook (0.855051ms)
+ℹ tests 213
+ℹ suites 0
+ℹ pass 176
+ℹ fail 37
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1817.217321
+
+✖ failing tests:
+
+test at scripts/adapters/endpoint-sync.test.js:51:1
+✖ Fleet verify-checked-in: the MDM check-in after --not-before passes; an older one, MDM off, or another host does not (14.132671ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-checked-in",
+    "state": "OK",
+    "dry_run": true,
+    "requests": [
+      {
+        "method": "GET",
+        "host": "fleet.example.invalid",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true"
+      }
+    ],
+    "note": "dry run: no credentials read, no network. Add the bare --execute flag to perform the read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/endpoint-sync.test.js:68:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/endpoint-sync.test.js:81:1
+✖ Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and the output names the field it used (8.030301ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-checked-in",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "jamf.example.invalid",
+        "path": "/api/v1/computers-inventory?section=HARDWARE&filter=hardware.serialNumber%3D%3D%22C02TEST0001%22"
+      },
+      {
+        "method": "GET",
+        "host": "jamf.example.invalid",
+        "path": "/api/v1/computers-inventory?section=GENERAL&filter=hardware.serialNumber%3D%3D%22C02TEST0001%22"
+      }
+    ],
+    "note": "dry run: no credentials read, no network",
+    "expected": {
+      "serial": "C02TEST0001",
+      "lastContactTime": "at or after 2026-10-28T09:00:00Z",
+      "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"
+    },
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/endpoint-sync.test.js:96:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/fleet-client.test.js:280:1
+✖ the dry run prints the exact planned request, reads no credential and calls no transport (6.644867ms)
+  AssertionError [ERR_ASSERTION]: verify-lock --id 7: {
+    "command": "verify-lock",
+    "state": "OK",
+    "dry_run": true,
+    "requests": [
+      {
+        "method": "GET",
+        "host": "fleet.example.invalid",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true"
+      }
+    ],
+    "note": "dry run: no credentials read, no network. Add the bare --execute flag to perform the read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/fleet-client.test.js:285:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (14.132526ms)
+  AssertionError [ERR_ASSERTION]: password-reset: verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-password-changed",
+    "method": "GET",
+    "host": "graph.microsoft.com",
+    "path": "/v1.0/users/aaaaaaaa-0000-4000-8000-000000000001?%24select=id%2CuserPrincipalName%2CaccountEnabled%2CuserType%2ConPremisesSyncEnabled%2ClastPasswordChangeDateTime%2CcreatedDateTime",
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "lastPasswordChangeDateTime": "at or after 2026-10-28T09:00:00Z"
+    },
+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.015287ms)
+  AssertionError [ERR_ASSERTION]: mfa-issue: verify-mfa-cleared --user [USER_ID] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-mfa-cleared",
+    "method": "GET",
+    "host": "graph.microsoft.com",
+    "path": "/v1.0/users/aaaaaaaa-0000-4000-8000-000000000001/authentication/methods",
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "none_of": [
+        "microsoftAuthenticator",
+        "phone",
+        "softwareOath"
+      ]
+    },
+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (0.740737ms)
+  AssertionError [ERR_ASSERTION]: intune-compliance: verify-device-synced --device [DEVICE_ID] --not-before [NOT_BEFORE] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-device-synced",
+    "method": "GET",
+    "host": "graph.microsoft.com",
+    "path": "/v1.0/deviceManagement/managedDevices/cccccccc-0000-4000-8000-000000000003?%24select=id%2CdeviceName%2ClastSyncDateTime%2CcomplianceState%2CoperatingSystem%2CmanagementState",
+    "expected": {
+      "device": "cccccccc-0000-4000-8000-000000000003",
+      "lastSyncDateTime": "at or after 2026-10-28T09:00:00Z"
+    },
+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (5.081375ms)
+  AssertionError [ERR_ASSERTION]: github-repo-access: verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-collaborator",
+    "method": "GET",
+    "host": "api.github.com",
+    "path": "/repos/example-org/service-repo/collaborators/octo-person/permission",
+    "expected": {
+      "repo": "service-repo",
+      "user": "octo-person",
+      "role_name": "write"
+    },
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (1.39496ms)
+  AssertionError [ERR_ASSERTION]: github-branch-protection: verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews 1 --enforce-admins --no-force-push --no-deletions --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-protection",
+    "method": "GET",
+    "host": "api.github.com",
+    "path": "/repos/example-org/service-repo/branches/main/protection",
+    "expected": {
+      "repo": "service-repo",
+      "branch": "main",
+      "protected": true,
+      "required_approving_review_count_at_least": 1,
+      "enforce_admins": true,
+      "allow_force_pushes": false,
+      "allow_deletions": false
+    },
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ github-org-security: every github line runs as written (dry run) and the required read-backs are there (1.49457ms)
+  AssertionError [ERR_ASSERTION]: github-org-security: verify-2fa-required --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-2fa-required",
+    "method": "GET",
+    "host": "api.github.com",
+    "path": "/orgs/example-org",
+    "expected": {
+      "two_factor_requirement_enabled": true
+    },
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (1.142404ms)
+  AssertionError [ERR_ASSERTION]: github-offboard-member: verify-offboarded --user [GITHUB_USER] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-offboarded",
+    "method": "GET",
+    "host": "api.github.com",
+    "path": "/orgs/example-org",
+    "then": [
+      {
+        "method": "GET",
+        "host": "api.github.com",
+        "path": "/orgs/example-org/memberships/octo-person"
+      },
+      {
+        "method": "GET",
+        "host": "api.github.com",
+        "path": "/orgs/example-org/invitations?per_page=100"
+      },
+      {
+        "method": "GET",
+        "host": "api.github.com",
+        "path": "/orgs/example-org/outside_collaborators?per_page=100"
+      }
+    ],
+    "expected": {
+      "user": "octo-person",
+      "member": false,
+      "pending_invitation": false,
+      "outside_collaborator": false
+    },
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (1.31374ms)
+  AssertionError [ERR_ASSERTION]: github-security-alerts: verify-secret-alert --repo [REPO_NAME] --number [ALERT_NUMBER] --state resolved --resolution revoked --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-secret-alert",
+    "method": "GET",
+    "host": "api.github.com",
+    "path": "/repos/example-org/service-repo/secret-scanning/alerts/12",
+    "expected": {
+      "repo": "service-repo",
+      "number": "12",
+      "state": "resolved",
+      "resolution": "revoked"
+    },
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (5.343629ms)
+  AssertionError [ERR_ASSERTION]: okta-user-lifecycle: verify-password-reset --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-password-reset",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/logs?since=2026-10-28T09%3A00%3A00Z&filter=eventType+eq+%22user.account.reset_password%22+and+target.id+eq+%2200u1abcd2EFGH3ijk4x7%22&limit=100"
+      }
+    ],
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "eventType": "user.account.reset_password",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "scopes": [
+      "okta.users.read",
+      "okta.groups.read",
+      "okta.logs.read",
+      "okta.apps.read"
+    ],
+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (4.613314ms)
+  AssertionError [ERR_ASSERTION]: okta-mfa-reset: verify-factor-reset --user [OKTA_USER_ID] --factor-type push --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-factor-reset",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+      },
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7/factors"
+      }
+    ],
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "factorType": "push",
+      "enrolled": false
+    },
+    "scopes": [
+      "okta.users.read",
+      "okta.groups.read",
+      "okta.logs.read",
+      "okta.apps.read"
+    ],
+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (0.874147ms)
+  AssertionError [ERR_ASSERTION]: okta-app-assignment: verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-app-assigned",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+      },
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/apps/0oa1abcd2EFGH3ijk4x7/users/00u1abcd2EFGH3ijk4x7"
+      }
+    ],
+    "expected": {
+      "app": "0oa1abcd2EFGH3ijk4x7",
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "assigned": true
+    },
+    "scopes": [
+      "okta.users.read",
+      "okta.groups.read",
+      "okta.logs.read",
+      "okta.apps.read"
+    ],
+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (5.449868ms)
+  AssertionError [ERR_ASSERTION]: okta-group-membership: verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-group-member",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+      },
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/groups/00g1abcd2EFGH3ijk4x7/users?limit=200"
+      }
+    ],
+    "expected": {
+      "group": "00g1abcd2EFGH3ijk4x7",
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "member": true
+    },
+    "pages": "up to 10 pages of 200 members, each next page with after set to the last member's id",
+    "scopes": [
+      "okta.users.read",
+      "okta.groups.read",
+      "okta.logs.read",
+      "okta.apps.read"
+    ],
+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (3.944114ms)
+  AssertionError [ERR_ASSERTION]: fleet-host-health: verify-checked-in --id [HOST_ID] --not-before [NOT_BEFORE] --execute
+  {
+    "command": "verify-checked-in",
+    "state": "OK",
+    "dry_run": true,
+    "requests": [
+      {
+        "method": "GET",
+        "host": "fleet.example.invalid",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true"
+      }
+    ],
+    "note": "dry run: no credentials read, no network. Add the bare --execute flag to perform the read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/g3-runbooks.test.js:97:5
+✖ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (3.270647ms)
+  AssertionError [ERR_ASSERTION]: mac-troubleshoot: verify-checked-in --serial [SERIAL_NUMBER] --not-before [NOT_BEFORE] --execute
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-checked-in",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "jamf.example.invalid",
+        "path": "/api/v1/computers-inventory?section=HARDWARE&filter=hardware.serialNumber%3D%3D%22C02TEST0001%22"
+      },
+      {
+        "method": "GET",
+        "host": "jamf.example.invalid",
+        "path": "/api/v1/computers-inventory?section=GENERAL&filter=hardware.serialNumber%3D%3D%22C02TEST0001%22"
+      }
+    ],
+    "note": "dry run: no credentials read, no network",
+    "expected": {
+      "serial": "C02TEST0001",
+      "lastContactTime": "at or after 2026-10-28T09:00:00Z",
+      "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"
+    },
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:110:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/gws-client.test.js:491:1
+✖ dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0 (4 for a verify-*) (4.475782ms)
+  AssertionError [ERR_ASSERTION]: verify-suspended --user user@example.com: 
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/gws-client.test.js:497:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:333:1
+✖ the CLI dry run prints the exact planned request, reads no credential and calls no transport (13.733741ms)
+  AssertionError [ERR_ASSERTION]: verify-command --management-id 0a1b2c3d-0000-4000-8000-00000000abcd --type INSTALL_PROFILE --not-before 2026-10-27T09:00:00Z --profile-identifier 5A1F0C3E-0000-4000-8000-000000000007
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/jamf-client.test.js:351:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/linear-client.test.js:297:1
+✖ dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0 (4 for a verify-*) (3.476458ms)
+  AssertionError [ERR_ASSERTION]: verify-comment: 
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/linear-client.test.js:302:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/linear-runbooks.test.js:169:1
+✖ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed (39.111488ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'linear-intake.md:100: exit 0: verify-state --issue IT-123 --state Done: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-intake.md:126: exit 0: verify-labels --issue IT-123 --has Hardware: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-intake.md:169: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssueComments",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: ',
+  +   'linear-ticket-note.md:123: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssueComments",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: ',
+  +   'linear-ticket-note.md:212: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssueComments",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: ',
+  +   'linear-triage.md:112: exit 0: verify-labels --issue IT-123 --has Hardware: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-triage.md:135: exit 0: verify-state --issue IT-123 --state Done: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-triage.md:162: exit 0: verify-state --issue IT-123 --state Done: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-triage.md:181: exit 0: verify-state --issue IT-123 --state Done: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-triage.md:199: exit 0: verify-snoozed --issue IT-123: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-triage.md:284: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssueComments",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: ',
+  +   'linear-workspace-admin.md:108: exit 0: verify-trashed --issue IT-123: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-workspace-admin.md:165: exit 0: verify-state --issue IT-123 --state Done: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-workspace-admin.md:187: exit 0: verify-trashed --issue IT-123: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssue",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: no crede',
+  +   'linear-workspace-admin.md:216: exit 0: verify-suspended --user user-7: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisMembers",\n' +
+  +     '  "variables": {},\n' +
+  +     '  "note": "dry run: no credentials read, no netw',
+  +   'linear-workspace-admin.md:314: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z: {\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "method": "POST",\n' +
+  +     '  "host": "api.linear.app",\n' +
+  +     '  "path": "/graphql",\n' +
+  +     '  "document": "AegisIssueComments",\n' +
+  +     '  "variables": {\n' +
+  +     '    "id": "IT-123"\n' +
+  +     '  },\n' +
+  +     '  "note": "dry run: '
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/linear-runbooks.test.js:194:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'linear-intake.md:100: exit 0: verify-state --issue IT-123 --state Done: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-intake.md:126: exit 0: verify-labels --issue IT-123 --has Hardware: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-intake.md:169: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssueComments",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: ', 'linear-ticket-note.md:123: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssueComments",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: ', 'linear-ticket-note.md:212: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssueComments",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: ', 'linear-triage.md:112: exit 0: verify-labels --issue IT-123 --has Hardware: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-triage.md:135: exit 0: verify-state --issue IT-123 --state Done: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-triage.md:162: exit 0: verify-state --issue IT-123 --state Done: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-triage.md:181: exit 0: verify-state --issue IT-123 --state Done: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-triage.md:199: exit 0: verify-snoozed --issue IT-123: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-triage.md:284: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z --author user-7: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssueComments",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: ', 'linear-workspace-admin.md:108: exit 0: verify-trashed --issue IT-123: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-workspace-admin.md:165: exit 0: verify-state --issue IT-123 --state Done: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-workspace-admin.md:187: exit 0: verify-trashed --issue IT-123: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssue",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: no crede', 'linear-workspace-admin.md:216: exit 0: verify-suspended --user user-7: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisMembers",\n  "variables": {},\n  "note": "dry run: no credentials read, no netw', 'linear-workspace-admin.md:314: exit 0: verify-comment --issue IT-123 --expect-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --not-before 2026-10-27T11:50:00.000Z: {\n  "state": "OK",\n  "ok": true,\n  "method": "POST",\n  "host": "api.linear.app",\n  "path": "/graphql",\n  "document": "AegisIssueComments",\n  "variables": {\n    "id": "IT-123"\n  },\n  "note": "dry run: ' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/okta-client.test.js:656:1
+✖ dry run by default: each read and verify-* prints the exact planned request(s), reads no credential, calls no transport and exits 0 (4.755711ms)
+  AssertionError [ERR_ASSERTION]: verify-status --user 00u1abcd2EFGH3ijkl4m --status SUSPENDED: 
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/okta-client.test.js:677:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/slack-client.test.js:376:1
+✖ the CLI dry run prints the exact planned requests, reads no credential and calls no transport (3.719888ms)
+  AssertionError [ERR_ASSERTION]: verify-deactivated --user U0TEST0001: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-deactivated",
+    "dry_run": true,
+    "requests": [
+      {
+        "method": "GET",
+        "host": "slack.com",
+        "path": "/api/users.info?user=U0TEST0001"
+      }
+    ],
+    "note": "dry run: no credentials read, no network. Add the bare --execute flag to perform the read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/slack-client.test.js:381:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:75:1
+✖ the shared contract names the verify-* dry-run exit code 4 beside the other four (4.151634ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      INPUT: 1,
+      OK: 0,
+      READ_FAILED: 2,
+      TENANT: 3,
+  -   VERIFY_DRY_RUN: 4
+    }
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:76:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3 },
+    expected: { OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ fleet: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (8.773316ms)
+  AssertionError [ERR_ASSERTION]: verify-checked-in --id 7 --not-before 2026-10-28T09:00:00Z
+  {
+    "command": "verify-checked-in",
+    "state": "OK",
+    "dry_run": true,
+    "requests": [
+      {
+        "method": "GET",
+        "host": "fleet.example.invalid",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true"
+      }
+    ],
+    "note": "dry run: no credentials read, no network. Add the bare --execute flag to perform the read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ github: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (4.5837ms)
+  AssertionError [ERR_ASSERTION]: verify-2fa-required
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-2fa-required",
+    "method": "GET",
+    "host": "api.github.com",
+    "path": "/orgs/example-org",
+    "expected": {
+      "two_factor_requirement_enabled": true
+    },
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ google-workspace: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.658644ms)
+  AssertionError [ERR_ASSERTION]: verify-suspended --user person@example.com
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-suspended",
+    "method": "GET",
+    "host": "admin.googleapis.com",
+    "path": "/admin/directory/v1/users/person%40example.com",
+    "expected": {
+      "user": "person@example.com",
+      "suspended": true
+    },
+    "auth": "before the first read, one POST to oauth2.googleapis.com/token with grant_type and a signed assertion for the scopes below; the access token then goes only in the Authorization header",
+    "scopes": [
+      "https://www.googleapis.com/auth/admin.directory.user.readonly",
+      "https://www.googleapis.com/auth/admin.directory.group.readonly",
+      "https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly",
+      "https://www.googleapis.com/auth/admin.directory.device.mobile.readonly",
+      "https://www.googleapis.com/auth/admin.directory.device.chromeos.readonly",
+      "https://www.googleapis.com/auth/admin.reports.audit.readonly",
+      "https://www.googleapis.com/auth/admin.reports.usage.readonly"
+    ],
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ jamf: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.265568ms)
+  AssertionError [ERR_ASSERTION]: verify-checked-in --serial C02TEST0001 --not-before 2026-10-28T09:00:00Z
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-checked-in",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "jamf.example.invalid",
+        "path": "/api/v1/computers-inventory?section=HARDWARE&filter=hardware.serialNumber%3D%3D%22C02TEST0001%22"
+      },
+      {
+        "method": "GET",
+        "host": "jamf.example.invalid",
+        "path": "/api/v1/computers-inventory?section=GENERAL&filter=hardware.serialNumber%3D%3D%22C02TEST0001%22"
+      }
+    ],
+    "note": "dry run: no credentials read, no network",
+    "expected": {
+      "serial": "C02TEST0001",
+      "lastContactTime": "at or after 2026-10-28T09:00:00Z",
+      "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"
+    },
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ linear: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.886713ms)
+  AssertionError [ERR_ASSERTION]: verify-state --issue IT-123 --state Done
+  {
+    "state": "OK",
+    "ok": true,
+    "method": "POST",
+    "host": "api.linear.app",
+    "path": "/graphql",
+    "document": "AegisIssue",
+    "variables": {
+      "id": "IT-123"
+    },
+    "note": "dry run: no credentials read, no network",
+    "command": "verify-state",
+    "query": "query AegisIssue($id: String!) { issue(id: $id) { id identifier title priority priorityLabel createdAt archivedAt trashed triagedAt snoozedUntilAt slaType slaStartedAt slaBreachesAt state { name type } labels(first: 100) { nodes { id name } pageInfo { hasNextPage } } assignee { id } team { key } } organization { urlKey } }",
+    "expected": {
+      "issue": "IT-123",
+      "state": "Done"
+    },
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ msgraph: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (3.393418ms)
+  AssertionError [ERR_ASSERTION]: verify-account-enabled --user aaaaaaaa-0000-4000-8000-000000000001 --enabled false
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-account-enabled",
+    "method": "GET",
+    "host": "graph.microsoft.com",
+    "path": "/v1.0/users/aaaaaaaa-0000-4000-8000-000000000001?%24select=id%2CuserPrincipalName%2CaccountEnabled%2CuserType%2ConPremisesSyncEnabled%2ClastPasswordChangeDateTime%2CcreatedDateTime",
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "accountEnabled": false
+    },
+    "auth": "before the first read, one POST to login.microsoftonline.com/11111111-2222-4333-8444-555555555555/oauth2/v2.0/token with a certificate assertion; the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ okta: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (7.192139ms)
+  AssertionError [ERR_ASSERTION]: verify-status --user 00u1abcd2EFGH3ijk4x7 --status SUSPENDED
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-status",
+    "requests": [
+      {
+        "method": "GET",
+        "host": "okta.example.invalid",
+        "path": "/api/v1/users/00u1abcd2EFGH3ijk4x7"
+      }
+    ],
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "status": "SUSPENDED"
+    },
+    "scopes": [
+      "okta.users.read",
+      "okta.groups.read",
+      "okta.logs.read",
+      "okta.apps.read"
+    ],
+    "auth": "before the first read, one POST to okta.example.invalid/oauth2/v1/token with grant_type client_credentials, the scopes below and a client assertion signed with OKTA_PRIVATE_KEY (private_key_jwt); the access token then goes only in the Authorization header",
+    "note": "dry run: no credentials read, no network",
+    "next": "Add --execute to perform this read-back."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:81:3
+✖ slack: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (5.103335ms)
+  AssertionError [ERR_ASSERTION]: verify-deactivated --user U0TEST0001
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-deactivated",
+    "dry_run": true,
+    "requests": [
+      {
+        "method": "GET",
+        "host": "slack.com",
+        "path": "/api/users.info?user=U0TEST0001"
+      }
+    ],
+    "note": "dry run: no credentials read, no network. Add the bare --execute flag to perform the read."
+  }
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:83:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:100:1
+✖ jira: the verify-* dry run uses the shared constant (4) and prints the same NOT VERIFIED line; get dry run exits 0 (3.280367ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  4 !== undefined
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-dry-run.test.js:102:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/g3-boundary.test.js:101:3
+✖ github: every connector command sends reads only, and nothing without --execute (23.670303ms)
+  AssertionError [ERR_ASSERTION]: github verify-collaborator --repo docs --user person-a --role read: the dry run is accepted
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/g3-boundary.test.js:108:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/g3-boundary.test.js:101:3
+✖ msgraph: every connector command sends reads only, and nothing without --execute (28.693334ms)
+  AssertionError [ERR_ASSERTION]: msgraph verify-password-changed --user aaaaaaaa-0000-4000-8000-000000000001 --not-before 2026-10-27T00:00:00Z: the dry run is accepted
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/g3-boundary.test.js:108:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/g3-boundary.test.js:101:3
+✖ okta: every connector command sends reads only, and nothing without --execute (31.817674ms)
+  AssertionError [ERR_ASSERTION]: okta verify-status --user 00u1a2b3c4d5e6f7g8h9 --status SUSPENDED: the dry run is accepted
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/g3-boundary.test.js:108:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/gws-runbooks.test.js:132:1
+✖ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*) (10.742843ms)
+  AssertionError [ERR_ASSERTION]: gws-account-containment:108: node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --execute
+  
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/gws-runbooks.test.js:138:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:01:40Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -129,12 +129,13 @@ async function dryRun(argv) {
   return { code, stdout: out.join(''), stderr: err.join('') };
 }
 
-test('every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0)', async () => {
+test('every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*)', async () => {
   const lines = RUNBOOKS.flatMap(adapterLines);
   assert.ok(lines.length >= 40, `only ${lines.length} adapter lines found`);
   for (const l of lines) {
-    const res = await dryRun(argvOf(l.text));
-    assert.equal(res.code, 0, `${l.file}:${l.line}: ${l.text}\n${res.stderr}`);
+    const argv = argvOf(l.text);
+    const res = await dryRun(argv);
+    assert.equal(res.code, argv[0].startsWith('verify-') ? 4 : 0, `${l.file}:${l.line}: ${l.text}\n${res.stderr}`);
   }
 });
 

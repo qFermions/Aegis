@@ -294,12 +294,12 @@ test('every write and secret read the lane names is refused through client.send 
   assert.equal(transport.calls.length, 1);
 });
 
-test('dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0', async () => {
+test('dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0 (4 for a verify-*)', async () => {
   for (const r of [...READS, ...VERIFIES]) {
     const label = r.argv[0];
     const { env, reads } = recordingEnv();
     const { code, stdout, stderr, transport } = await cli(r.argv, { env });
-    assert.equal(code, 0, `${label}: ${stderr}`);
+    assert.equal(code, r.argv[0].startsWith('verify-') ? 4 : 0, `${label}: ${stderr}`);
     assert.equal(transport.calls.length, 0, label);
     assert.deepEqual(linearReads(reads), [], `${label}: a dry run reads no Linear variable`);
     const plan = firstJson(stdout);

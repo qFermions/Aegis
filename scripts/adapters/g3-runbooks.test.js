@@ -4,7 +4,8 @@
 // EXPECTED DECISION (written before the runbook changes)
 // - Every `node scripts/adapters/<connector>-client.js ...` line in a runbook wired to a G3
 //   connector runs exactly as written: with each placeholder filled by a valid sample
-//   value and --execute dropped, the connector's own dry run exits 0 and sends nothing.
+//   value and --execute dropped, the connector's own dry run exits 0 (4 for a verify-*: a dry
+//   run proves nothing, owner decision 2 of the batch G3 close-out) and sends nothing.
 //   A command that does not exist, a flag the command does not take, or a value the
 //   connector refuses fails here, so a runbook can never tell a person to run a read-back
 //   that would not work.
@@ -106,7 +107,7 @@ for (const [connector, c] of Object.entries(CONNECTORS)) {
         const out = [];
         let sent = 0;
         const code = await c.client().run(filled, c.env, { transport: async () => { sent += 1; throw new Error('no network in a dry run'); }, out: (s) => out.push(s), err: (s) => out.push(s) });
-        assert.equal(code, 0, `${runbook}: ${argv.join(' ')}\n${out.join('')}`);
+        assert.equal(code, argv[0].startsWith('verify-') ? 4 : 0, `${runbook}: ${argv.join(' ')}\n${out.join('')}`);
         assert.equal(sent, 0);
         assert.match(out.join(''), /dry run/);
       }

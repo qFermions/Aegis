@@ -9,6 +9,9 @@
 //   A command that does not exist, a flag the command does not take, or a value the
 //   connector refuses fails here, so a runbook can never tell a person to run a read-back
 //   that would not work.
+// - Batch G3 close-out (owner decision 1): a read-back of an R2 or R3 gate passes
+//   --change [CHANGE_ID]; here [CHANGE_ID] is a change opened and approved for that
+//   connector and command in a temporary audit trail, so the line runs as written.
 // - Each runbook carries the read-backs its changes need (REQUIRED below).
 // - No runbook line calls a connector with anything but a read: there is no write command
 //   to call (each connector refuses every non-GET and every unknown command).
@@ -20,6 +23,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+
+const { changeTrail } = require('../audit/test-trail.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const read = (name) => fs.readFileSync(path.join(ROOT, '.claude', 'commands', `${name}.md`), 'utf8');
@@ -94,19 +99,21 @@ function commandLines(text, connector) {
 
 for (const [connector, c] of Object.entries(CONNECTORS)) {
   for (const [runbook, required] of Object.entries(c.runbooks)) {
-    test(`${runbook}: every ${connector} line runs as written (dry run) and the required read-backs are there`, async () => {
+    test(`${runbook}: every ${connector} line runs as written (dry run) and the required read-backs are there`, async (t) => {
+      const trail = changeTrail(t);
       // a connector with `only` is checked on the G3 read-backs alone; its other lines
       // belong to the lane G2 runbook tests
       const lines = commandLines(read(runbook), connector).filter((argv) => !c.only || c.only.includes(argv[0]));
       const commands = new Set(lines.map((argv) => argv[0]));
       for (const name of required) assert.ok(commands.has(name), `${runbook} calls ${name}`);
       for (const argv of lines) {
-        const filled = argv.filter((t) => t !== '--execute').map((t) => (Object.prototype.hasOwnProperty.call(c.values, t) ? c.values[t] : t));
+        const filled = argv.filter((w) => w !== '--execute').map((w) => (Object.prototype.hasOwnProperty.call(c.values, w) ? c.values[w] : w))
+          .map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`${connector}:${argv[0]}`) : w));
         const unfilled = filled.filter((t) => /^\[[A-Z_@.]+\]$/.test(t));
         assert.deepEqual(unfilled, [], `${runbook}: a placeholder with no sample value in ${argv.join(' ')}`);
         const out = [];
         let sent = 0;
-        const code = await c.client().run(filled, c.env, { transport: async () => { sent += 1; throw new Error('no network in a dry run'); }, out: (s) => out.push(s), err: (s) => out.push(s) });
+        const code = await c.client().run(filled, c.env, { transport: async () => { sent += 1; throw new Error('no network in a dry run'); }, audit: trail.sink, out: (s) => out.push(s), err: (s) => out.push(s) });
         assert.equal(code, argv[0].startsWith('verify-') ? 4 : 0, `${runbook}: ${argv.join(' ')}\n${out.join('')}`);
         assert.equal(sent, 0);
         assert.match(out.join(''), /dry run/);

@@ -163,7 +163,9 @@ test('every adapter command a Fleet runbook tells the operator to run exists in 
       const [, cmd, rest] = m;
       if (cmd === 'help') continue;
       assert.ok(Object.prototype.hasOwnProperty.call(commands, cmd), `${name}: fleet-client.js has no command ${cmd}`);
-      const accepted = new Set(['execute', ...(commands[cmd].values || []), ...(commands[cmd].booleans || [])]);
+      // --change binds a verify-* read-back to its change record (batch G3 close-out); every
+      // verify-* command takes it, before its own flags are parsed (cli-support.js takeChange)
+      const accepted = new Set(['execute', ...(cmd.startsWith('verify-') ? ['change'] : []), ...(commands[cmd].values || []), ...(commands[cmd].booleans || [])]);
       for (const f of rest.matchAll(/(?:^|\s)--([a-z][a-z-]*)/g)) assert.ok(accepted.has(f[1]), `${name}: ${cmd} does not take --${f[1]}`);
     }
   }

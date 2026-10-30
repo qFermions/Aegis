@@ -19,6 +19,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const gws = require('./adapters/gws-client.js');
+const { changeTrail } = require('./audit/test-trail.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const RUNBOOKS = Object.freeze([
@@ -122,19 +123,24 @@ function argvOf(text) {
   return words.slice(2).filter((w) => w !== '--execute');
 }
 
-async function dryRun(argv) {
+// audit: the trail a line's --change [CHANGE_ID] is checked against (batch G3 close-out)
+async function dryRun(argv, audit) {
   const out = [];
   const err = [];
-  const code = await gws.run(argv, {}, { out: (s) => out.push(String(s)), err: (s) => err.push(String(s)) });
+  const code = await gws.run(argv, {}, { audit, out: (s) => out.push(String(s)), err: (s) => err.push(String(s)) });
   return { code, stdout: out.join(''), stderr: err.join('') };
 }
 
-test('every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*)', async () => {
+test('every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*)', async (t) => {
   const lines = RUNBOOKS.flatMap(adapterLines);
   assert.ok(lines.length >= 40, `only ${lines.length} adapter lines found`);
+  // a read-back of an R2 or R3 gate passes --change [CHANGE_ID]: a change opened and approved
+  // for that command in a temporary trail (batch G3 close-out, owner decision 1)
+  const trail = changeTrail(t);
   for (const l of lines) {
-    const argv = argvOf(l.text);
-    const res = await dryRun(argv);
+    const raw = argvOf(l.text);
+    const argv = raw.map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`google-workspace:${raw[0]}`) : w));
+    const res = await dryRun(argv, trail.sink);
     assert.equal(res.code, argv[0].startsWith('verify-') ? 4 : 0, `${l.file}:${l.line}: ${l.text}\n${res.stderr}`);
   }
 });

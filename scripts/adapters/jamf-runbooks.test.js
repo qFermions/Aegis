@@ -107,7 +107,8 @@ test('every profile read-back names the profile by its identifier, so an install
   }
   // Phase F: verify-profile passed before the redistribution too, so the proof of the
   // reinstall is a fresh acknowledged install for this profile after the distribution time.
-  assert.match(section(PROFILES, 'Phase F'), /verify-command --management-id \[DEVICE_ID\] --type INSTALL_PROFILE --profile-identifier \[PROFILE_IDENTIFIER\] --not-before \[NOT_BEFORE\] --execute/);
+  // an R2 gate's read-back, bound to its change record (batch G3 close-out)
+  assert.match(section(PROFILES, 'Phase F'), /verify-command --management-id \[DEVICE_ID\] --type INSTALL_PROFILE --profile-identifier \[PROFILE_IDENTIFIER\] --not-before \[NOT_BEFORE\] --change \[CHANGE_ID\] --execute/);
   assert.match(section(PROFILES, 'Phase A'), /Write the profile's identifier in the ticket as `\[PROFILE_IDENTIFIER\]`/);
   assert.match(section(FILEVAULT, 'Phase B'), /jamf-client\.js profile --id \[PROFILE_ID\] --execute/, 'the FileVault runbook reads the new profile\'s identifier');
 });
@@ -119,11 +120,12 @@ test('every policy read-back proves a property, never mere existence: no trigger
     }
   }
   const create = section(POLICIES, 'Phase C');
-  assert.match(create, /verify-policy --id \[POLICY_ID\] --frequency "Once per computer" --enabled true --no-triggers --execute/, 'a ticked trigger would turn the Self Service item into an automatic install');
+  // the R2 gates' read-backs below are bound to their change records (batch G3 close-out)
+  assert.match(create, /verify-policy --id \[POLICY_ID\] --frequency "Once per computer" --enabled true --no-triggers --change \[CHANGE_ID\] --execute/, 'a ticked trigger would turn the Self Service item into an automatic install');
   const change = section(POLICIES, 'Phase D');
   assert.match(change, /verify-policy --id \[POLICY_ID\] --enabled false --execute/, 'the disable read-back proves the policy reads disabled');
-  assert.match(change, /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once every day" --enabled true --execute/);
-  assert.match(section(FILEVAULT, 'Phase D'), /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once per computer" --enabled true --execute/, 'the new-key policy read-back proves its trigger and frequency');
+  assert.match(change, /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once every day" --enabled true --change \[CHANGE_ID\] --execute/);
+  assert.match(section(FILEVAULT, 'Phase D'), /verify-policy --id \[POLICY_ID\] --trigger checkin --frequency "Once per computer" --enabled true --change \[CHANGE_ID\] --execute/, 'the new-key policy read-back proves its trigger and frequency');
 });
 
 test('a stage that can reach more than 10 Macs carries R3 ceremony: the App Installers rollout, and a large group leaving a profile\'s Targets', () => {

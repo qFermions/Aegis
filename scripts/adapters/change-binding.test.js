@@ -374,3 +374,25 @@ for (const c of CONNECTORS) {
     assert.doesNotMatch(r.text, /next argument/);
   });
 }
+
+// Code review round 2, finding 8: a bound read-back that did not verify prints no seq either,
+// since link refuses it.
+test('a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira)', async (t) => {
+  const tr = trail(t);
+  const change = tr.open('fleet:verify-lock');
+  const { recordVerdict } = require('./cli-support.js');
+  const failed = recordVerdict(tr.sink, 'fleet', { command: 'verify-lock', state: 'OK', verified: false }, change);
+  assert.equal(failed.audit_seq, undefined);
+  const passed = recordVerdict(tr.sink, 'fleet', { command: 'verify-lock', state: 'OK', verified: true }, change);
+  assert.ok(Number.isInteger(passed.audit_seq), 'the control: a verified bound read-back prints it');
+  const jira = CONNECTORS.find((c) => c.name === 'jira');
+  const jchange = tr.open('jira:verify-transition');
+  const mod = require(jira.file);
+  const out = [];
+  const code = await mod.run([...jira.verify.slice(0, -1), 'Resolved', '--change', jchange, '--execute'], jira.env, {
+    transport: queued(jira.replies()), audit: tr.sink, timeoutMs: 50, sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)),
+  });
+  assert.equal(code, 2, out.join('\n'));
+  assert.doesNotMatch(out.join('\n'), /Recorded as audit entry/);
+  assert.equal(verifies(tr).pop().verified, false);
+});

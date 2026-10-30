@@ -37,6 +37,7 @@ this file — never invent a parallel set.
 | `[@Aegion_LINEAR_ORG]` | Linear workspace URL key (`linear.app/<key>`); the Linear adapter refuses a record from any other workspace (`LINEAR_ORG`) | `[LINEAR_URL_KEY]` |
 | `[@Aegion_LINEAR_TEAM]` | Linear team key that holds IT tickets (the prefix of `[ISSUE_ID]`) | `IT` |
 | `[@Aegion_GITHUB_ORG]` | GitHub organization login (`github.com/<login>`); the intake and the GitHub connector refuse an item from any other organization (`GITHUB_ORG`) | `[GITHUB_ORG]` |
+| `[@Aegion_MS_TENANT_ID]` | Microsoft Entra tenant ID (a GUID); the Microsoft Graph connector builds its token request and binds its reads to it (`MS_TENANT_ID`) | `[MS_TENANT_ID]` |
 
 ## Generic operational tokens (always-placeholder)
 

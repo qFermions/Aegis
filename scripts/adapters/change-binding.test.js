@@ -247,10 +247,12 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       // a gate is a marker block in the page or a comment block inside a bash fence (code review
       // round 1, finding 1: the fenced form was missed, and one R2 read-back with it)
       if (/<!-- SAFETY GATE \[[^\]]+\] -->|^# SAFETY GATE \[[^\]]+\]/.test(l)) { gate = l; rClass = null; }
-      // a range ("R1 to R3", "R2 or R3") counts as its highest class: the change may be R2 or R3
-      // (code review round 2, finding 1)
-      const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)\s*(R[0-3])(?:\s+(?:to|or)\s+(R[0-3]))?/);
-      if (r && gate) rClass = r[2] && r[2] > r[1] ? r[2] : r[1];
+      // a gate whose class depends on scope ("R1 to R3", "R2 or R3", "R1 for one file (R2 for 2
+      // to 10 files", "R1 when ...; R2 when ...") counts as its highest class, since the change
+      // may be R2 or R3 (code review round 2, finding 1; round 3, finding 5); a class written
+      // after "separate" names another gate ("the separate R3 Phase F gate") and does not count
+      const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)(.*)$/);
+      if (r && gate) rClass = (r[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null;
       if (!VERIFY.test(l)) continue;
       const wantBound = rClass === 'R2' || rClass === 'R3';
       assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${rClass || 'no gate'}): ${l.trim().slice(0, 120)}`);
@@ -260,8 +262,8 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
     if (has) assert.match(text, /\*\*Change record \((?:R2 and R3|R2|R3) gates\):\*\* before a gate[^\n]*`node scripts\/audit\/change-record\.js open`[^\n]*`\[CHANGE_ID\]`/, `${file}: says where [CHANGE_ID] comes from`);
     else assert.doesNotMatch(text, /\[CHANGE_ID\]/, `${file}: no change record, no [CHANGE_ID]`);
   }
-  assert.equal(bound, 74, 'the 74 read-backs of R2 and R3 gates at the batch G3 close-out');
-  assert.equal(unbound, 79, 'the 79 read-backs of R0 and R1 work, or of no gate, stay unbound');
+  assert.equal(bound, 76, 'the 76 read-backs of R2 and R3 gates at the batch G3 close-out');
+  assert.equal(unbound, 77, 'the 77 read-backs of R0 and R1 work, or of no gate, stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // two read-backs of R2 and R3 changes are named in prose, not on a command line: the rollback
@@ -276,6 +278,9 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // step 1, the fenced fleetctl gate by the class its own precondition writes in the ticket, in
   // a comment the gated-fence rules allow (code review round 3, finding 8)
   assert.equal((page('fleet-device-actions').match(/drop `--change \[CHANGE_ID\]` when step 1 set R1/g) || []).length, 1);
+  // the two gates that are R1 or R2 by scope say when to drop --change (code review round 3, finding 5)
+  assert.match(page('gws-drive-sharing'), /drop `--change \[CHANGE_ID\]` for one file: an R1 removal has no change record/);
+  assert.match(page('github-repo-access'), /drop `--change \[CHANGE_ID\]` when the Phase A role was read, triage or write: an R1 change has no change record/);
   assert.match(page('fleet-device-actions'), /^# read-back: passes only when that execution reports exit code 0, and drop the --change flag and its id when the ticket gives this script R1, since an R1 run has no change record\nnode scripts\/adapters\/fleet-client\.js verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\] --execute$/m);
 });
 

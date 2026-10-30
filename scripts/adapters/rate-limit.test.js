@@ -287,6 +287,35 @@ test('contract: the RATE_LIMITED message names the opted-in spec\'s own remainin
   assert.ok(!text.includes(RAW));
 });
 
+// Code review round 2, finding 3: the fallback for a missing reset names no window either.
+test('contract: a RATE_LIMITED handoff with no usable time names no window the spec does not have', async () => {
+  const spec = contract.defineAdapter({
+    platform: 'okta', host: { fixed: 'api.example.com' }, credentials: ['DEMO_TOKEN'], auth: () => ({}),
+    routes: { one: { method: 'GET', path: '/one' } },
+    rateLimit: { statuses: [429], remainingHeader: 'x-rate-limit-remaining', resetHeader: 'x-rate-limit-reset', secondaryMessage: /never matches this/, messageField: 'errorSummary' },
+  });
+  const transport = async () => ({ status: 429, headers: { 'x-rate-limit-remaining': '0' }, body: '{}' });
+  const res = await contract.createClient(spec, { env: { DEMO_TOKEN: TOKEN }, transport, now: () => NOW, sleep: async () => {} }).get('one');
+  const text = contract.renderResult(res, { platform: 'okta', operation: 'one' });
+  assert.match(text, /RATE_LIMITED/);
+  assert.match(text, /rate limit, not a permission problem/);
+  assert.doesNotMatch(text, /hour/);
+});
+
+// Code review round 2, finding 4: when the answer carries both a usable reset and a longer
+// retry-after, the later time wins, so the read never retries before the vendor said it may.
+test('github: a primary limit with a near reset but a longer retry-after waits for the later of the two (here: hands off, no retry)', async () => {
+  const r = await github(['org', '--execute'], [primary(429, NOW_S + 5, { 'retry-after': '120' }), ok(ORG_BODY), ok(ORG_BODY)]);
+  assert.equal(r.code, 2, r.text);
+  assert.equal(r.calls.length, 1, 'no retry before retry-after');
+  assert.deepEqual(r.sleeps, []);
+  assertRateLimitMessage(r, 'reset and longer retry-after');
+  assert.equal(r.json.handoff.retry_at, '2026-10-30T12:02:00.000Z');
+  const shorter = await github(['org', '--execute'], [primary(429, NOW_S + 20, { 'retry-after': '3' }), ok(ORG_BODY)]);
+  assert.equal(shorter.code, 0, shorter.text);
+  assert.deepEqual(shorter.sleeps, [21000], 'the reset is the later time here');
+});
+
 // ── The other eight connectors: a 403 is unchanged ──────────────────────────
 const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });

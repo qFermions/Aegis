@@ -1,0 +1,77 @@
+# command: node --test --test-name-pattern=names no window|the later of the two scripts/adapters/rate-limit.test.js
+# commit: 5207b83 (plus uncommitted changes in the working tree)  started: 2026-10-30T08:10:46Z  node: v24.22.2
+✖ contract: a RATE_LIMITED handoff with no usable time names no window the spec does not have (5.69099ms)
+✖ github: a primary limit with a near reset but a longer retry-after waits for the later of the two (here: hands off, no retry) (7.918899ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 217.489837
+
+✖ failing tests:
+
+test at scripts/adapters/rate-limit.test.js:291:1
+✖ contract: a RATE_LIMITED handoff with no usable time names no window the spec does not have (5.69099ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /hour/. Input:
+  
+  '{\n' +
+    '  "state": "HTTP_ERROR",\n' +
+    '  "ok": false,\n' +
+    '  "status": 429,\n' +
+    '  "error": "HTTP 429 (body withheld)",\n' +
+    '  "attempts": 1,\n' +
+    '  "handoff": {\n' +
+    '    "state": "RATE_LIMITED",\n' +
+    '    "limit": "primary",\n' +
+    '    "retry_at": null,\n' +
+    `    "what_failed": "Okta refused the read under its primary rate limit (the credential's request allowance for the current window is used up, HTTP 429 with x-rate-limit-remaining 0): this is a rate limit, not a permission problem",\n` +
+    '    "not_done": "Nothing was read and nothing was changed",\n' +
+    '    "next_step": "Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again"\n' +
+    '  },\n' +
+    `  "operator_message": "Okta refused the read under its primary rate limit (the credential's request allowance for the current window is used up, HTTP 429 with x-rate-limit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again.",\n` +
+    '  "admin_detail": "platform=okta operation=one state=HTTP_ERROR status=429 attempts=1 request_id=- handoff=RATE_LIMITED"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:302:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `{\n  "state": "HTTP_ERROR",\n  "ok": false,\n  "status": 429,\n  "error": "HTTP 429 (body withheld)",\n  "attempts": 1,\n  "handoff": {\n    "state": "RATE_LIMITED",\n    "limit": "primary",\n    "retry_at": null,\n    "what_failed": "Okta refused the read under its primary rate limit (the credential's request allowance for the current window is used up, HTTP 429 with x-rate-limit-remaining 0): this is a rate limit, not a permission problem",\n    "not_done": "Nothing was read and nothing was changed",\n    "next_step": "Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again"\n  },\n  "operator_message": "Okta refused the read under its primary rate limit (the credential's request allowance for the current window is used up, HTTP 429 with x-rate-limit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; Okta gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again.",\n  "admin_detail": "platform=okta operation=one state=HTTP_ERROR status=429 attempts=1 request_id=- handoff=RATE_LIMITED"\n}\n`,
+    expected: /hour/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:307:1
+✖ github: a primary limit with a near reset but a longer retry-after waits for the later of the two (here: hands off, no retry) (7.918899ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "org",
+    "status": 200,
+    "attempts": 2,
+    "data": {
+      "login": "org-a",
+      "repos_url": "https://api.github.com/orgs/org-a/repos"
+    }
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:309:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T08:10:46Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

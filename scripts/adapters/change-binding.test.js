@@ -331,3 +331,27 @@ test('offline commands refuse --change as not a read-back, before reading any fi
     assert.ok(out.join('').includes(NOT_A_READ_BACK), out.join(''));
   }
 });
+
+// Code review round 1, finding 12: the --change wiring is three calls in each CLI, so a static
+// guard fails any connector with a verify-* command that leaves one out (a new one included).
+test('every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it', () => {
+  const files = fs.readdirSync(__dirname).filter((n) => n.endsWith('-client.js')).map((n) => path.join(__dirname, n));
+  files.push(path.join(__dirname, '..', 'jira-client.js'));
+  let checked = 0;
+  for (const file of files) {
+    const src = fs.readFileSync(file, 'utf8');
+    if (!/^\s+'verify-[a-z0-9-]+':/m.test(src)) continue;
+    checked += 1;
+    const name = path.basename(file);
+    assert.match(src, /const bound = takeChange\(argv\);/, `${name}: takes --change out of argv`);
+    assert.match(src, /changeRefusal\(/, `${name}: checks --change before any read`);
+    if (name === 'jira-client.js') assert.match(src, /runtime\.change = bound\.change;/, `${name}: records the verdict under the change`);
+    else {
+      // each call's arguments, with parentheses nested up to two levels
+      const calls = [...src.matchAll(/recordVerdict\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)\)/g)].map((m) => m[1]);
+      assert.ok(calls.length >= 1, `${name}: records its verdicts`);
+      for (const call of calls) assert.match(call, /,\s*bound\.change\s*$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change last`);
+    }
+  }
+  assert.equal(checked, 9, 'the nine connectors with read-backs');
+});

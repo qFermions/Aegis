@@ -10,8 +10,8 @@
 //   "NOT VERIFIED: a dry run reads nothing, so it proves nothing". It still sends nothing.
 // - A plain read's dry run exits 0 and prints no such line.
 // - Jira uses the shared constant: EXIT_VERIFY_DRY_RUN is EXIT.VERIFY_DRY_RUN.
-// - A live verify-* that passes still exits 0 and one that fails exits 2: each connector's own
-//   suite proves it (cited in checks.md, row E2).
+// - A live verify-* that passes still exits 0 and one that fails exits 2, the verdict itself
+//   checked: the per-connector live tests at the end of this file.
 // Run: node --test scripts/adapters/verify-dry-run.test.js
 
 require('./socket-tripwire.js');

@@ -1,0 +1,13 @@
+# command: bash -c git branch -r --contains 01dcb37; git branch -r --contains 355d28b
+# commit: 420188e (plus uncommitted changes in the working tree)  started: 2026-10-30T09:39:29Z  node: v24.22.2
+  origin/HEAD -> origin/main
+  origin/claude/eloquent-darwin-o65h90
+  origin/fix/g3-closeout
+  origin/main
+  origin/HEAD -> origin/main
+  origin/claude/eloquent-darwin-o65h90
+  origin/feat/g3-production-hardening
+  origin/fix/g3-closeout
+  origin/main
+# exit: 0  finished: 2026-10-30T09:39:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

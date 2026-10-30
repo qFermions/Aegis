@@ -87,7 +87,7 @@ test('every environment variable a connector, the Jira client, the intake or the
   assert.deepEqual(missing, [], `.env.example is missing:\n  ${missing.join('\n  ')}`);
 });
 
-test('the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names', () => {
+test('the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names', (t) => {
   const read = readNames();
   const specs = [
     require('./adapters/fleet-client.js').SPEC, require('./adapters/jamf-client.js').SPEC,
@@ -107,6 +107,8 @@ test('the scan finds every name the connectors declare (credentials, host and te
   for (const n of declared) assert.ok(read.has(n), `the scan misses ${n}`);
   for (const n of ['GITHUB_ORG', 'GITHUB_TOKEN', 'AEGIS_AUDIT_DIR', 'AEGIS_GRAPH_RUNS_DIR', 'AEGION_DOMAIN', 'JIRA_SITE']) assert.ok(read.has(n), `the scan misses ${n}`);
   assert.ok(read.size >= 34, `only ${read.size} names found (34 at the batch G3 close-out)`);
+  // the names themselves, never a value, so a reviewer can count them (evidence review, E4)
+  t.diagnostic(`${read.size} names read: ${[...read.keys()].sort().join(' ')}`);
 });
 
 test('a name removed from .env.example is reported by name', () => {

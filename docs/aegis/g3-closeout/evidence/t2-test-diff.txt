@@ -1,0 +1,186 @@
+# command: git diff b9abf94 1a41937 -- <the 11 changed test files> (verify-dry-run.test.js is new and not shown)
+# at: 2026-10-30T07:08:24Z
+diff --git a/scripts/adapters/endpoint-sync.test.js b/scripts/adapters/endpoint-sync.test.js
+index 99d0991..2ce273f 100644
+--- a/scripts/adapters/endpoint-sync.test.js
++++ b/scripts/adapters/endpoint-sync.test.js
+@@ -65,7 +65,7 @@ test('Fleet verify-checked-in: the MDM check-in after --not-before passes; an ol
+   const other = await cli(fleet, ['verify-checked-in', '--id', '7', '--not-before', NOT_BEFORE, '--execute'], FLEET_ENV, [{ status: 200, body: host({ id: 8 }) }]);
+   assert.equal(other.code, 2);
+   const dry = await cli(fleet, ['verify-checked-in', '--id', '7', '--not-before', NOT_BEFORE], { FLEET_URL: 'fleet.example.invalid' }, []);
+-  assert.equal(dry.code, 0, dry.text);
++  assert.equal(dry.code, 4, dry.text);
+   assert.equal(dry.transport.calls.length, 0);
+   assert.ok(!yes.text.includes(TOKEN));
+ });
+@@ -93,7 +93,7 @@ test('Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and
+   const none = await cli(jamf, ['verify-checked-in', '--serial', SERIAL, '--not-before', NOT_BEFORE, '--execute'], JAMF_ENV, jamfReplies({}));
+   assert.equal(none.code, 2);
+   const dry = await cli(jamf, ['verify-checked-in', '--serial', SERIAL, '--not-before', NOT_BEFORE], { JAMF_URL: 'jamf.example.invalid' }, []);
+-  assert.equal(dry.code, 0, dry.text);
++  assert.equal(dry.code, 4, dry.text);
+   assert.equal(dry.transport.calls.length, 0);
+   assert.ok(!yes.text.includes(TOKEN) && !yes.text.includes('issued-jamf-access'));
+ });
+diff --git a/scripts/adapters/fleet-client.test.js b/scripts/adapters/fleet-client.test.js
+index b3213ef..be0da0e 100644
+--- a/scripts/adapters/fleet-client.test.js
++++ b/scripts/adapters/fleet-client.test.js
+@@ -282,7 +282,7 @@ test('the dry run prints the exact planned request, reads no credential and call
+   for (const [argv, expected] of cases) {
+     const { env, reads } = recordingEnv();
+     const r = await cli(argv, { env, replies: [ok({})] });
+-    assert.equal(r.code, 0, `${argv.join(' ')}: ${r.stdout}${r.stderr}`);
++    assert.equal(r.code, argv[0].startsWith('verify-') ? 4 : 0, `${argv.join(' ')}: ${r.stdout}${r.stderr}`);
+     assert.equal(r.transport.calls.length, 0, `${argv.join(' ')}: a dry run calls no transport`);
+     assert.ok(!reads.includes('FLEET_API_TOKEN'), `${argv.join(' ')}: a dry run reads no credential`);
+     assert.equal(r.json.dry_run, true, argv.join(' '));
+diff --git a/scripts/adapters/g3-runbooks.test.js b/scripts/adapters/g3-runbooks.test.js
+index f30dfe7..2e7bcab 100644
+--- a/scripts/adapters/g3-runbooks.test.js
++++ b/scripts/adapters/g3-runbooks.test.js
+@@ -4,7 +4,8 @@
+ // EXPECTED DECISION (written before the runbook changes)
+ // - Every `node scripts/adapters/<connector>-client.js ...` line in a runbook wired to a G3
+ //   connector runs exactly as written: with each placeholder filled by a valid sample
+-//   value and --execute dropped, the connector's own dry run exits 0 and sends nothing.
++//   value and --execute dropped, the connector's own dry run exits 0 (4 for a verify-*: a dry
++//   run proves nothing, owner decision 2 of the batch G3 close-out) and sends nothing.
+ //   A command that does not exist, a flag the command does not take, or a value the
+ //   connector refuses fails here, so a runbook can never tell a person to run a read-back
+ //   that would not work.
+@@ -106,7 +107,7 @@ for (const [connector, c] of Object.entries(CONNECTORS)) {
+         const out = [];
+         let sent = 0;
+         const code = await c.client().run(filled, c.env, { transport: async () => { sent += 1; throw new Error('no network in a dry run'); }, out: (s) => out.push(s), err: (s) => out.push(s) });
+-        assert.equal(code, 0, `${runbook}: ${argv.join(' ')}\n${out.join('')}`);
++        assert.equal(code, argv[0].startsWith('verify-') ? 4 : 0, `${runbook}: ${argv.join(' ')}\n${out.join('')}`);
+         assert.equal(sent, 0);
+         assert.match(out.join(''), /dry run/);
+       }
+diff --git a/scripts/adapters/gws-client.test.js b/scripts/adapters/gws-client.test.js
+index 866b5b7..c125987 100644
+--- a/scripts/adapters/gws-client.test.js
++++ b/scripts/adapters/gws-client.test.js
+@@ -488,13 +488,13 @@ test('every write and secret read the lane names is refused through client.send
+   assert.equal(transport.calls.length, 2);
+ });
+ 
+-test('dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0', async () => {
++test('dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0 (4 for a verify-*)', async () => {
+   const plans = [...ROUTES.map((r) => ({ argv: r.argv, paths: [r.path] })), ...VERIFIES];
+   for (const p of plans) {
+     const label = p.argv.join(' ');
+     const { env, reads } = recordingEnv();
+     const { code, stdout, stderr, transport } = await cli(p.argv, { env });
+-    assert.equal(code, 0, `${label}: ${stderr}`);
++    assert.equal(code, p.argv[0].startsWith('verify-') ? 4 : 0, `${label}: ${stderr}`);
+     assert.equal(transport.calls.length, 0, label);
+     assert.deepEqual(gwsReads(reads), [], `${label}: a dry run reads no GWS_ variable`);
+     const plan = firstJson(stdout);
+diff --git a/scripts/adapters/jamf-client.test.js b/scripts/adapters/jamf-client.test.js
+index 22cc9a2..d8e5eb9 100644
+--- a/scripts/adapters/jamf-client.test.js
++++ b/scripts/adapters/jamf-client.test.js
+@@ -348,7 +348,7 @@ test('the CLI dry run prints the exact planned request, reads no credential and
+     const { env, reads } = recordingEnv();
+     const { code, transport, json } = await cli(argv, { env });
+     const label = argv.join(' ');
+-    assert.equal(code, 0, label);
++    assert.equal(code, 4, label);
+     assert.equal(transport.calls.length, 0, label);
+     assert.deepEqual(credentialReads(reads), [], label);
+     assert.deepEqual(json.requests.map((r) => r.path), expected, label);
+diff --git a/scripts/adapters/linear-client.test.js b/scripts/adapters/linear-client.test.js
+index daccf4f..7c44b3d 100644
+--- a/scripts/adapters/linear-client.test.js
++++ b/scripts/adapters/linear-client.test.js
+@@ -294,12 +294,12 @@ test('every write and secret read the lane names is refused through client.send
+   assert.equal(transport.calls.length, 1);
+ });
+ 
+-test('dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0', async () => {
++test('dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0 (4 for a verify-*)', async () => {
+   for (const r of [...READS, ...VERIFIES]) {
+     const label = r.argv[0];
+     const { env, reads } = recordingEnv();
+     const { code, stdout, stderr, transport } = await cli(r.argv, { env });
+-    assert.equal(code, 0, `${label}: ${stderr}`);
++    assert.equal(code, r.argv[0].startsWith('verify-') ? 4 : 0, `${label}: ${stderr}`);
+     assert.equal(transport.calls.length, 0, label);
+     assert.deepEqual(linearReads(reads), [], `${label}: a dry run reads no Linear variable`);
+     const plan = firstJson(stdout);
+diff --git a/scripts/adapters/linear-runbooks.test.js b/scripts/adapters/linear-runbooks.test.js
+index fa84695..b0ee7f5 100644
+--- a/scripts/adapters/linear-runbooks.test.js
++++ b/scripts/adapters/linear-runbooks.test.js
+@@ -187,7 +187,7 @@ test('every adapter line in the runbooks is one the adapter accepts, and the sno
+         seen.add(argv[0]);
+         const out = [];
+         const code = await linear.run(argv, {}, { transport: async () => { throw new Error('no transport in a dry run'); }, out: (s) => out.push(s), err: (s) => out.push(s) });
+-        if (code !== 0) problems.push(`${name}.md:${i + 1}: exit ${code}: ${argv.join(' ')}: ${out.join('').slice(0, 200)}`);
++        if (code !== (argv[0].startsWith('verify-') ? 4 : 0)) problems.push(`${name}.md:${i + 1}: exit ${code}: ${argv.join(' ')}: ${out.join('').slice(0, 200)}`);
+       }
+     }
+   }
+diff --git a/scripts/adapters/okta-client.test.js b/scripts/adapters/okta-client.test.js
+index e638ab8..15d8ea1 100644
+--- a/scripts/adapters/okta-client.test.js
++++ b/scripts/adapters/okta-client.test.js
+@@ -674,7 +674,7 @@ test('dry run by default: each read and verify-* prints the exact planned reques
+     const label = v.argv.join(' ');
+     const { env, reads } = recordingEnv();
+     const { code, stdout, stderr, transport } = await cli(v.argv, { env });
+-    assert.equal(code, 0, `${label}: ${stderr}`);
++    assert.equal(code, 4, `${label}: ${stderr}`);
+     assert.equal(transport.calls.length, 0, label);
+     assert.deepEqual(credentialReads(reads), [], label);
+     const plan = firstJson(stdout);
+diff --git a/scripts/adapters/slack-client.test.js b/scripts/adapters/slack-client.test.js
+index 12a8ca0..6c433ac 100644
+--- a/scripts/adapters/slack-client.test.js
++++ b/scripts/adapters/slack-client.test.js
+@@ -378,7 +378,7 @@ test('the CLI dry run prints the exact planned requests, reads no credential and
+     const { env, reads } = recordingEnv();
+     const { code, stdout, transport } = await cli(c.argv, { env, replies: c.replies });
+     const label = c.argv.join(' ');
+-    assert.equal(code, 0, `${label}: ${stdout}`);
++    assert.equal(code, c.argv[0].startsWith('verify-') ? 4 : 0, `${label}: ${stdout}`);
+     assert.equal(transport.calls.length, 0, label);
+     assert.ok(!reads.includes('SLACK_TOKEN') && !reads.includes('SLACK_ACCESS_LOGS_TOKEN'), `${label}: the dry run read a token`);
+     const res = firstJson(stdout);
+diff --git a/scripts/g3-boundary.test.js b/scripts/g3-boundary.test.js
+index 9e98cc6..77f1161 100644
+--- a/scripts/g3-boundary.test.js
++++ b/scripts/g3-boundary.test.js
+@@ -105,7 +105,7 @@ for (const [platform, adapter] of Object.entries(ADAPTERS)) {
+     for (const argv of adapter.commands) {
+       const dry = recordingTransport(adapter);
+       const dryCode = await mod.run(argv, adapter.env, { transport: dry, out: () => {}, err: () => {}, sleep: async () => {} });
+-      assert.equal(dryCode, 0, `${platform} ${argv.join(' ')}: the dry run is accepted`);
++      assert.equal(dryCode, argv[0].startsWith('verify-') ? 4 : 0, `${platform} ${argv.join(' ')}: the dry run is accepted`);
+       assert.equal(dry.calls.length, 0, `${platform} ${argv.join(' ')}: a dry run sends nothing`);
+       const live = recordingTransport(adapter);
+       await mod.run([...argv, '--execute'], adapter.env, { transport: live, out: () => {}, err: () => {}, sleep: async () => {} });
+diff --git a/scripts/gws-runbooks.test.js b/scripts/gws-runbooks.test.js
+index 9aa92d2..ce3ac26 100644
+--- a/scripts/gws-runbooks.test.js
++++ b/scripts/gws-runbooks.test.js
+@@ -129,12 +129,13 @@ async function dryRun(argv) {
+   return { code, stdout: out.join(''), stderr: err.join('') };
+ }
+ 
+-test('every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0)', async () => {
++test('every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*)', async () => {
+   const lines = RUNBOOKS.flatMap(adapterLines);
+   assert.ok(lines.length >= 40, `only ${lines.length} adapter lines found`);
+   for (const l of lines) {
+-    const res = await dryRun(argvOf(l.text));
+-    assert.equal(res.code, 0, `${l.file}:${l.line}: ${l.text}\n${res.stderr}`);
++    const argv = argvOf(l.text);
++    const res = await dryRun(argv);
++    assert.equal(res.code, argv[0].startsWith('verify-') ? 4 : 0, `${l.file}:${l.line}: ${l.text}\n${res.stderr}`);
+   }
+ });
+ 
+# changed lines: 36

@@ -1,0 +1,32 @@
+# command: node --test --test-name-pattern=cannot be recorded prints no Verified scripts/jira-client.test.js
+# commit: d974d1e (plus uncommitted changes in the working tree)  started: 2026-10-30T07:54:50Z  node: v24.22.2
+✖ a verify-* that passes but cannot be recorded prints no Verified line, only that the verdict is withheld (exit 2) (12.470353ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 155.008618
+
+✖ failing tests:
+
+test at scripts/jira-client.test.js:811:1
+✖ a verify-* that passes but cannot be recorded prints no Verified line, only that the verdict is withheld (exit 2) (12.470353ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /Verified/. Input:
+  
+  'Verified: HELP-1 ID 10001 moved after the preflight and is now Done.'
+  
+      at TestContext.<anonymous> (<repo>/scripts/jira-client.test.js:819:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Verified: HELP-1 ID 10001 moved after the preflight and is now Done.',
+    expected: /Verified/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:54:50Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

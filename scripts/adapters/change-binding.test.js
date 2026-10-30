@@ -259,10 +259,16 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       if (wantBound) { bound += 1; has = true; } else unbound += 1;
     }
     const text = lines.join('\n');
+    // a read-back named in prose is the whole command line, with --execute: a fragment without
+    // it is a dry run, which exits 4 and records no verdict to link (code review round 3, finding 4)
+    for (const [, span] of text.matchAll(/`((?:verify-|node scripts)[^`]*--change \[CHANGE_ID\][^`]*)`/g)) {
+      assert.match(span, /^node scripts\/(?:adapters\/)?[a-z]+-client\.js verify-[a-z0-9-]+ [^`]*--change \[CHANGE_ID\] --execute$/, `${file}: ${span}`);
+    }
     if (has) assert.match(text, /\*\*Change record \((?:R2 and R3|R2|R3) gates\):\*\* before a gate[^\n]*`node scripts\/audit\/change-record\.js open`[^\n]*`\[CHANGE_ID\]`/, `${file}: says where [CHANGE_ID] comes from`);
     else assert.doesNotMatch(text, /\[CHANGE_ID\]/, `${file}: no change record, no [CHANGE_ID]`);
   }
-  assert.equal(bound, 76, 'the 76 read-backs of R2 and R3 gates at the batch G3 close-out');
+  // 78: the two prose read-backs written as whole command lines count too (round 3, finding 4)
+  assert.equal(bound, 78, 'the 78 read-backs of R2 and R3 gates at the batch G3 close-out');
   assert.equal(unbound, 77, 'the 77 read-backs of R0 and R1 work, or of no gate, stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
@@ -270,9 +276,9 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // gate's read-back after a branch-protection exception, and the per-host read-back of a
   // batch script run (code review round 1, finding 1)
   const page = (name) => fs.readFileSync(path.join(dir, `${name}.md`), 'utf8');
-  assert.match(page('github-branch-protection'), /Then run the rollback gate it names, and its read-back: `verify-protection [^`]*--change \[CHANGE_ID\]`/);
+  assert.match(page('github-branch-protection'), /Then run the rollback gate it names, and its read-back: `node scripts\/adapters\/github-client\.js verify-protection [^`]*--change \[CHANGE_ID\] --execute`/);
   // the batch script run (R3): its read-back step and its checkpoint (code review round 2, finding 5)
-  assert.match(page('fleet-device-actions'), /\*\*Read-back:\*\* [^\n]*`verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\]/);
+  assert.match(page('fleet-device-actions'), /\*\*Read-back:\*\* [^\n]*`node scripts\/adapters\/fleet-client\.js verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\] --execute`/);
   assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` unless step 1 set R1\) and, with `--change \[CHANGE_ID\]`, for every checked host/);
   // a gate whose class is set at run time says when to drop --change: the portal gate by its
   // step 1, the fenced fleetctl gate by the class its own precondition writes in the ticket, in

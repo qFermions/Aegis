@@ -340,7 +340,7 @@ else
 fi
 # read-back: the ran_script entry on this host carries the execution id
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
-# read-back: passes only when that execution reports exit code 0; drop `--change [CHANGE_ID]` when step 1 set R1 (an R1 run has no change record)
+# read-back: passes only when that execution reports exit code 0, and drop the --change flag and its id when the ticket gives this script R1, since an R1 run has no change record
 node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute
 ```
 

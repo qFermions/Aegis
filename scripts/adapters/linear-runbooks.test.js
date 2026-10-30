@@ -63,7 +63,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const linear = require('./linear-client.js');
-const { changeTrail } = require('../audit/test-trail.js');
+const { changeTrail } = require('../audit/trail-helper.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const RUNBOOKS = ['linear-intake', 'linear-ticket-note', 'linear-triage', 'linear-workspace-admin'];

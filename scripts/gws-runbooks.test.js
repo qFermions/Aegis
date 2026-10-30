@@ -19,7 +19,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const gws = require('./adapters/gws-client.js');
-const { changeTrail } = require('./audit/test-trail.js');
+const { changeTrail } = require('./audit/trail-helper.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const RUNBOOKS = Object.freeze([

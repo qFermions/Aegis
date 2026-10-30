@@ -34,7 +34,7 @@ function sourceFiles() {
     ...list('scripts/adapters', (n) => n.endsWith('-client.js') || ['readonly-contract.js', 'cli-support.js', 'scopes.js'].includes(n)),
     'scripts/jira-client.js',
     ...list('scripts/intake', () => true),
-    ...list('scripts/audit', (n) => n !== 'test-trail.js'),
+    ...list('scripts/audit', (n) => n !== 'trail-helper.js'),
   ];
 }
 

@@ -1,9 +1,10 @@
 'use strict';
-// test-trail.js: test support for the runbook command-line tests (batch G3 close-out, owner
+// trail-helper.js: test support for the runbook command-line tests (batch G3 close-out, owner
 // decision 1). A temporary audit trail in which a change is opened and approved for a
 // read-back, so a runbook line that passes --change [CHANGE_ID] runs as written: the
 // verify-* command checks the change in this trail before its dry run. Used by tests only;
-// the folder is removed when the test ends.
+// the folder is removed when the test ends. Not named test-*.js, which node --test would run
+// as a test file.
 
 const fs = require('node:fs');
 const os = require('node:os');

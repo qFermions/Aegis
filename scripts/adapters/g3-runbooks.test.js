@@ -24,7 +24,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
-const { changeTrail } = require('../audit/test-trail.js');
+const { changeTrail } = require('../audit/trail-helper.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const read = (name) => fs.readFileSync(path.join(ROOT, '.claude', 'commands', `${name}.md`), 'utf8');

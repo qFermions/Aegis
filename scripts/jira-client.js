@@ -459,10 +459,12 @@ function recordProcedure(runtime, command, digest) {
   }
 }
 
+// The verdict's audit seq is printed, the number change-record.js link takes (--verify-seq).
 function recordJiraVerdict(runtime, command, verified) {
   if (!runtime.audit) return;
   try {
-    runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: typeof runtime.change === 'string' ? runtime.change : null });
+    const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: typeof runtime.change === 'string' ? runtime.change : null });
+    if (written && Number.isInteger(written.seq)) runtime.out(`Recorded as audit entry ${written.seq} (change-record.js link takes it as --verify-seq ${written.seq}).`);
   } catch {
     throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
   }

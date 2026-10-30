@@ -536,10 +536,11 @@ function retryAfterMs(headers, nowMs) {
 
 // The vendor's rate-limit signal on a 403 or 429 (batch G3 close-out, owner decision 3), or
 // null when there is none. primary: the remaining header is 0, so the read may run again one
-// second after the reset header's time (UTC epoch seconds); a reset that is missing,
-// malformed or already past gives no usable time. secondary: the body's message names the
-// secondary limit; retry-after seconds when present, else the reset when remaining is 0,
-// else at least one minute (the vendor's rule). The body is parsed only to test that message.
+// second after the reset header's time (UTC epoch seconds); when the reset is missing,
+// malformed or already past, a retry-after the answer carries, else no usable time.
+// secondary: the body's message names the secondary limit; retry-after seconds when present,
+// else the reset when remaining is 0 and the reset is usable, else at least one minute (the
+// vendor's rule). The body is parsed only to test that message.
 const SECONDARY_DEFAULT_WAIT_MS = 60000;
 function rateLimitOf(rl, res, nowMs) {
   const remaining = headerValue(res.headers, rl.remainingHeader);
@@ -560,13 +561,15 @@ function rateLimitOf(rl, res, nowMs) {
     if (after <= nowMs) return { limit, waitMs: null, retryAt: null, reset: 'past' };
     return { limit, waitMs: after - nowMs, retryAt: Number(value) * 1000 };
   };
+  const wait = retryAfterMs(res.headers, nowMs);
+  const byRetryAfter = wait === undefined ? null : { limit, waitMs: wait, retryAt: nowMs + wait };
+  const byReset = exhausted ? untilReset() : null;
   if (secondary) {
-    const wait = retryAfterMs(res.headers, nowMs);
-    if (wait !== undefined) return { limit, waitMs: wait, retryAt: nowMs + wait };
-    if (exhausted) return untilReset();
+    if (byRetryAfter) return byRetryAfter;
+    if (byReset && byReset.waitMs !== null) return byReset;
     return { limit, waitMs: SECONDARY_DEFAULT_WAIT_MS, retryAt: nowMs + SECONDARY_DEFAULT_WAIT_MS };
   }
-  return untilReset();
+  return byReset.waitMs !== null ? byReset : (byRetryAfter || byReset);
 }
 
 function requestIdOf(headers) {

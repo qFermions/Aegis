@@ -181,7 +181,7 @@ Do not delete the host until it reads wiped: deleting removes Fleet's record of 
 
 **WAIT UNTIL** Host details → Activity moves the run from Upcoming to Past.
 
-**Read-back:** `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows the ran_script entry whose `script_execution_id` is `[EXECUTION_ID]`; then `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --execute` passes on exit code 0. An empty exit code means the host has not reported yet; `host_timeout` true means it ran past the timeout.
+**Read-back:** `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows the ran_script entry whose `script_execution_id` is `[EXECUTION_ID]`; then `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute` passes on exit code 0 (drop `--change [CHANGE_ID]` when step 1 set R1: an R1 run has no change record). An empty exit code means the host has not reported yet; `host_timeout` true means it ran past the timeout.
 
 ### E2: More than one host (R3)
 
@@ -201,9 +201,9 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **WAIT UNTIL** each checked host shows the run under Host details → Activity → Past; offline hosts stay in Upcoming until they check in.
 
-**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `host-activities --id [HOST_ID]` and `verify-script --execution-id [EXECUTION_ID]`. Any host that fails stops the batch story: report which hosts passed and which did not.
+**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `host-activities --id [HOST_ID]` and `verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID]`. Any host that fails stops the batch story: report which hosts passed and which did not.
 
-**Verification checkpoint**: [ ] `verify-script` passed for the pilot and, run with `--change [CHANGE_ID]`, for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
+**Verification checkpoint**: [ ] `verify-script` passed for the pilot (with `--change [CHANGE_ID]` unless step 1 set R1) and, with `--change [CHANGE_ID]`, for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
 
 ## Phase F: Leaving the fleet, Turn off MDM then delete (R3 each)
 
@@ -340,8 +340,8 @@ else
 fi
 # read-back: the ran_script entry on this host carries the execution id
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
-# read-back: passes only when that execution reports exit code 0
-node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --execute
+# read-back: passes only when that execution reports exit code 0; drop `--change [CHANGE_ID]` when step 1 set R1 (an R1 run has no change record)
+node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute
 ```
 
 **Role needed:** Maintainer or Admin for the fleetctl lock; Maintainer or Admin for `fleetctl run-script`, because a script sent from a local file is not a saved script and Fleet's role guide limits arbitrary scripts to those two roles.

@@ -261,7 +261,7 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
     else assert.doesNotMatch(text, /\[CHANGE_ID\]/, `${file}: no change record, no [CHANGE_ID]`);
   }
   assert.equal(bound, 74, 'the 74 read-backs of R2 and R3 gates at the batch G3 close-out');
-  assert.ok(unbound >= 80, `read-backs of R0 and R1 work stay unbound (${unbound})`);
+  assert.equal(unbound, 79, 'the 79 read-backs of R0 and R1 work, or of no gate, stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // two read-backs of R2 and R3 changes are named in prose, not on a command line: the rollback

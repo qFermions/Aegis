@@ -28,7 +28,7 @@
 //                                          with admin.apps:read), team_id = SLACK_TEAM_ID
 //     access-logs [--count 1-1000] [--page 1-100]
 //                                          auth.test, then team.accessLogs (paid plans)
-//   Read-backs (exit 0 verified, 2 not verified):
+//   Read-backs (exit 0 verified, 2 not verified, 4 a dry run):
 //     verify-deactivated --user [USER_ID]  users.info: deleted is true
 //     verify-reactivated --user [USER_ID]  users.info: deleted is false or absent
 //     verify-guest --user [USER_ID] --type single|multi
@@ -82,7 +82,7 @@
 // a browser redirect and a code a person approves.
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
-// 2 read failed or not verified; 3 a record from another workspace.
+// 2 read failed or not verified; 3 a record from another workspace; 4 a verify-* dry run.
 //
 // Vendor facts (read 2026-10-27, docs/aegis/lanes/g2.md): method names, the
 // https://slack.com/api/ base and the Bearer header from Slack's SDK source; user and
@@ -98,8 +98,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const {
-  STATES, RefusedError, TRIPWIRE_MESSAGE,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
+  STATES, EXIT, RefusedError, TRIPWIRE_MESSAGE,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
@@ -807,7 +807,8 @@ async function run(argv, env, deps = {}) {
         note: 'dry run: no credentials read, no network. Add the bare --execute flag to perform the read.',
       };
       if (def.pagination) dry.pagination = def.pagination;
-      return emit(dry);
+      const code = emit(dry);
+      return code === EXIT.OK ? dryRunExit(command, err) : code;
     }
     teamFromEnv(environment); // the workspace binding comes before any read
   } catch (error) {

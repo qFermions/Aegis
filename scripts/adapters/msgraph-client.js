@@ -13,7 +13,7 @@
 //     user --user [USER_ID]|[UPN] | auth-methods --user ... | member-of --user ...
 //     group-members --group [GROUP_ID] | sign-ins --user [USER_ID] --since [NOT_BEFORE]
 //     managed-device --device [DEVICE_ID]
-//   Read-backs (verified true or false; exit 0 verified, 2 not verified):
+//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run):
 //     verify-password-changed --user U --not-before T   (lastPasswordChangeDateTime at or after T)
 //     verify-account-enabled  --user U --enabled true|false
 //     verify-mfa-method       --user U --method microsoftAuthenticator|phone|fido2|softwareOath|windowsHelloForBusiness|email|temporaryAccessPass
@@ -32,7 +32,7 @@
 
 const crypto = require('node:crypto');
 const {
-  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep,
+  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
@@ -224,7 +224,7 @@ async function run(argv, env = process.env, deps = {}) {
       shown.note = 'dry run: no credentials read, no network';
       shown.next = 'Add --execute to perform this read.';
       out(renderResult(shown, { platform: 'msgraph' }));
-      return 0;
+      return dryRunExit(command, err);
     }
 
     const cli = cliDeps(deps, env);

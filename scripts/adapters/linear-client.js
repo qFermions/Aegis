@@ -36,7 +36,8 @@
 //                   returns no data (exit 3).
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
-// 2 the read failed or a verify-* read did not prove the write; 3 another workspace.
+// 2 the read failed or a verify-* read did not prove the write; 3 another workspace; 4 a
+// verify-* dry run (nothing was read, so nothing is verified).
 //
 // Facts the lane could not confirm (vendor pages unreachable, docs/aegis/lanes/g2.md),
 // and the safer reading taken here:
@@ -56,7 +57,7 @@ const path = require('node:path');
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
@@ -608,7 +609,7 @@ async function run(argv, env = process.env, deps = {}) {
       }
       shown.next = 'Add --execute to perform this read.';
       out(renderResult(shown));
-      return 0;
+      return dryRunExit(command, err);
     }
 
     const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : recordVerdict(cli.audit, 'linear', await VERIFY[command](client, a, now));

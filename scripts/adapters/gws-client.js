@@ -54,7 +54,8 @@
 // Reports API token events instead of tokens.list and asps.list.
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
-// 2 the read failed or a verify-* read did not prove the write; 3 another customer.
+// 2 the read failed or a verify-* read did not prove the write; 3 another customer; 4 a
+// verify-* dry run (nothing was read, so nothing is verified).
 //
 // Requests are built here as raw paths and pass the contract's own allow-list door
 // (checkRequest for a dry run, client.send for a read), which tests each value as
@@ -84,7 +85,7 @@ const crypto = require('node:crypto');
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime,
+  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
@@ -655,7 +656,7 @@ async function run(argv, env = process.env, deps = {}) {
 
     if (args.execute !== true) {
       out(renderResult(dryRun(command, def, a, paths)));
-      return 0;
+      return dryRunExit(command, err);
     }
 
     // The client only ever sees this view of the environment. It remembers the

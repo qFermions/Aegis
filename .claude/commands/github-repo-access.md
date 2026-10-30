@@ -35,7 +35,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **`verify-collaborator-removed` proves only the direct grant is gone.** Access through a team stays until Phase G takes the person out of that team.
 - **Team lists include child teams:** the team members read lists members of child teams too (G-06). A person in a child team stays listed for the parent.
 - **Someone outside `[@Aegion_GITHUB_ORG]`** added to a repository becomes an outside collaborator [unconfirmed: check in the GitHub UI]. Whether the org allows that is **[org gap: the outside collaborator policy]**.
-- **The connector is read only.** Without `--execute` it prints the planned GET and sends nothing. Each `verify-*` read prints verified true or false: exit 0 verified, exit 2 not verified.
+- **The connector is read only.** Without `--execute` it prints the planned GET and sends nothing. Each `verify-*` read prints verified true or false: exit 0 verified, exit 2 not verified. A `verify-*` without `--execute` exits 4 and prints NOT VERIFIED: a dry run proves nothing.
 
 ## Fast path
 

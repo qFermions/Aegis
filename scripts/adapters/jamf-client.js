@@ -60,7 +60,8 @@
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
 // 2 the read failed or a verify-* read did not prove the write. Jamf Pro serves one
-// tenant per server and is bound by JAMF_URL, so no read returns exit 3.
+// tenant per server and is bound by JAMF_URL, so no read returns exit 3. 4 a verify-* dry
+// run (nothing was read, so nothing is verified).
 //
 // Facts the lane could not confirm (vendor pages unreachable, docs/aegis/lanes/g2.md),
 // and the safer reading taken here:
@@ -87,8 +88,8 @@
 //   - The computer history subset names PolicyLogs and Commands are not confirmed.
 
 const {
-  STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
+  STATES, EXIT, RefusedError, TripwireError,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
@@ -740,7 +741,7 @@ async function run(argv, env = process.env, deps = {}) {
       const { res } = dryRun(client, command, def, a);
       const code = exitCodeFor(res);
       (code === 1 ? err : out)(renderResult(res, { platform: 'jamf' }));
-      return code;
+      return code === EXIT.OK ? dryRunExit(command, err) : code;
     }
 
     let res;

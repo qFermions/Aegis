@@ -856,8 +856,22 @@ function renderResult(res, { secrets = [], platform, operation } = {}) {
   return `${lines.join('\n')}\n`;
 }
 
-// Exit codes shared by every adapter CLI.
-const EXIT = Object.freeze({ OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3 });
+// Exit codes shared by every adapter CLI and the Jira client. VERIFY_DRY_RUN (batch G3
+// close-out, owner decision 2): a verify-* dry run reads nothing, so it proves nothing, and it
+// never exits with 0, the code of a passed read-back.
+const EXIT = Object.freeze({ OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4 });
+const NOT_VERIFIED_DRY_RUN = 'NOT VERIFIED: a dry run reads nothing, so it proves nothing (exit 4).';
+const isVerifyCommand = (command) => typeof command === 'string' && /^verify-[a-z0-9-]{1,48}$/.test(command);
+
+// The exit code of a dry run whose plan was printed: a verify-* command also prints the NOT
+// VERIFIED line (on stderr, so the planned request on stdout stays one JSON object) and exits
+// VERIFY_DRY_RUN; a plain read's dry run exits OK.
+function dryRunExit(command, err) {
+  if (!isVerifyCommand(command)) return EXIT.OK;
+  err(`${NOT_VERIFIED_DRY_RUN}\n`);
+  return EXIT.VERIFY_DRY_RUN;
+}
+
 function exitCodeFor(res) {
   if (!res) return EXIT.READ_FAILED;
   if (res.state === STATES.OK) return res.verified === false ? EXIT.READ_FAILED : EXIT.OK;
@@ -889,4 +903,5 @@ module.exports = {
   RefusedError, TripwireError,
   defineAdapter, createClient, checkRequest, assertQueryOnly, scanUntrusted, markersIn,
   renderResult, exitCodeFor, parseArgs, redactDeep, httpsTransport, makeHttpsTransport, realCalendarTime,
+  NOT_VERIFIED_DRY_RUN, isVerifyCommand, dryRunExit,
 };

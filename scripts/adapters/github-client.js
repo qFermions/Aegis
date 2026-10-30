@@ -22,7 +22,7 @@
 //     dependabot-alerts [--state ...] [--severity ...] [--page N] | dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER]
 //     issue --repo [REPO_NAME] --number N (the issue and its first 100 comments: the JSON
 //       scripts/intake/intake.js imports as a GitHub issue)
-//   Read-backs (verified true or false; exit 0 verified, 2 not verified):
+//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run):
 //     verify-collaborator --repo R --user U --role read|triage|write|maintain|admin
 //     verify-collaborator-removed --repo R --user U
 //     verify-offboarded --user U
@@ -41,7 +41,7 @@
 // asking for a wider permission.
 
 const {
-  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep,
+  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
@@ -341,7 +341,7 @@ async function run(argv, env = process.env, deps = {}) {
       shown.note = 'dry run: no credentials read, no network';
       shown.next = 'Add --execute to perform this read.';
       out(renderResult(shown, { platform: 'github' }));
-      return 0;
+      return dryRunExit(command, err);
     }
 
     const cli = cliDeps(deps, env);

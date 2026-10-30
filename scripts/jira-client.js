@@ -50,7 +50,7 @@
 const crypto = require('node:crypto');
 const https = require('node:https');
 
-const { STATES, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
+const { STATES, EXIT, NOT_VERIFIED_DRY_RUN, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
 const { operatorMessage } = require('./adapters/operator-message.js');
 const { auditSink, defaultAuditDir } = require('./audit/audit-log.js');
 
@@ -820,13 +820,14 @@ function requireVerifyFlags(command, args) {
 }
 
 // A verify-* dry run proves nothing, so it has its own exit code: never 0, the code of a
-// passed read-back (batch 1 finding 7).
-const EXIT_VERIFY_DRY_RUN = 4;
+// passed read-back (batch 1 finding 7). Since the batch G3 close-out (owner decision 2) it is
+// the shared contract's EXIT.VERIFY_DRY_RUN, the code every connector's verify-* dry run uses.
+const EXIT_VERIFY_DRY_RUN = EXIT.VERIFY_DRY_RUN;
 
 function dryRunRead(runtime, args, apiPath) {
   if (args.execute === true) return false;
   runtime.out(`DRY RUN - would GET ${apiPath}. Add --execute to perform this read.`);
-  runtime.out('NOT VERIFIED: a dry run reads nothing, so it proves nothing (exit 4).');
+  runtime.out(NOT_VERIFIED_DRY_RUN);
   return true;
 }
 

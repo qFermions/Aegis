@@ -52,7 +52,8 @@
 // for), so the role is checked in the Admin Console.
 //
 // Exit codes: 0 read or verified; 1 refused, input error, missing credentials or a
-// write-scoped token; 2 the read failed or a verify-* read did not prove the write.
+// write-scoped token; 2 the read failed or a verify-* read did not prove the write; 4 a
+// verify-* dry run (nothing was read, so nothing is verified).
 //
 // Facts this file relies on that section A3 does not state (or marks UNCONFIRMED), and the
 // safer reading taken:
@@ -79,8 +80,8 @@
 const crypto = require('node:crypto');
 
 const {
-  STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime,
+  STATES, EXIT, RefusedError, TripwireError,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict } = require('./cli-support.js');
 
@@ -674,7 +675,7 @@ async function run(argv, env = process.env, deps = {}) {
       const res = dryRun(createClient(makeSpec({ env: envView, now }), { env: envView }), command, def, a);
       const code = exitCodeFor(res);
       (code === 1 ? err : out)(renderResult(res, { platform: PLATFORM, operation: command }));
-      return code;
+      return code === EXIT.OK ? dryRunExit(command, err) : code;
     }
 
     // batch G3: the audit sink, the scope preflight and the test seams come from cliDeps

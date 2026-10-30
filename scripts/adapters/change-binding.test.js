@@ -261,3 +261,21 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
 });
+
+// Fixed beyond the task: link needs the verify entry's audit seq (--verify-seq), so a recorded
+// read-back prints it: "audit_seq" in the JSON of the eight adapters, an "audit seq" line from
+// Jira. Before this, the seq could be found only by reading the trail's file.
+for (const c of CONNECTORS) {
+  test(`${c.name}: a recorded read-back prints its audit seq, the number change-record.js link takes`, async (t) => {
+    const tr = trail(t);
+    const change = tr.open(`${c.name}:${c.verify[0]}`);
+    for (const argv of [[...c.verify, '--change', change], c.verify]) {
+      const r = await run(c, argv, tr);
+      assert.equal(r.code, 0, r.text);
+      const seq = verifies(tr).pop().seq;
+      const printed = c.name === 'jira' ? r.text.match(/^Recorded as audit entry (\d+)/m) : r.text.match(/"audit_seq": (\d+)/);
+      assert.ok(printed, `${c.name}: the audit seq is printed\n${r.text}`);
+      assert.equal(Number(printed[1]), seq);
+    }
+  });
+}

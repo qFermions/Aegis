@@ -1,0 +1,300 @@
+# command: node --test --test-name-pattern=audit seq scripts/adapters/change-binding.test.js
+# commit: 3a77057 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:32:54Z  node: v24.22.2
+✖ fleet: a recorded read-back prints its audit seq, the number change-record.js link takes (42.662153ms)
+✖ github: a recorded read-back prints its audit seq, the number change-record.js link takes (18.749822ms)
+✖ google-workspace: a recorded read-back prints its audit seq, the number change-record.js link takes (23.374106ms)
+✖ jamf: a recorded read-back prints its audit seq, the number change-record.js link takes (21.639535ms)
+✖ linear: a recorded read-back prints its audit seq, the number change-record.js link takes (13.95992ms)
+✖ msgraph: a recorded read-back prints its audit seq, the number change-record.js link takes (17.627479ms)
+✖ okta: a recorded read-back prints its audit seq, the number change-record.js link takes (22.750563ms)
+✖ slack: a recorded read-back prints its audit seq, the number change-record.js link takes (16.822328ms)
+✖ jira: a recorded read-back prints its audit seq, the number change-record.js link takes (19.791208ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 0
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 444.702064
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ fleet: a recorded read-back prints its audit seq, the number change-record.js link takes (42.662153ms)
+  AssertionError [ERR_ASSERTION]: fleet: the audit seq is printed
+  {
+    "command": "verify-checked-in",
+    "state": "OK",
+    "verified": true,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "darwin",
+      "host.status": "online",
+      "host.seen_time": "2026-10-28T09:40:00Z",
+      "host.last_mdm_checked_in_at": "2026-10-28T09:30:00Z",
+      "host.mdm.enrollment_status": "On (automatic)"
+    },
+    "expected": {
+      "host.id": 7,
+      "host.mdm.enrollment_status": "On (...)",
+      "host.last_mdm_checked_in_at": "at or after 2026-10-28T09:00:00Z"
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "flags": []
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ github: a recorded read-back prints its audit seq, the number change-record.js link takes (18.749822ms)
+  AssertionError [ERR_ASSERTION]: github: the audit seq is printed
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-2fa-required",
+    "verified": true,
+    "expected": {
+      "two_factor_requirement_enabled": true
+    },
+    "observed": {
+      "two_factor_requirement_enabled": true
+    }
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ google-workspace: a recorded read-back prints its audit seq, the number change-record.js link takes (23.374106ms)
+  AssertionError [ERR_ASSERTION]: google-workspace: the audit seq is printed
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-suspended",
+    "verified": true,
+    "expected": {
+      "user": "person@example.com",
+      "suspended": true
+    },
+    "observed": {
+      "user": "person@example.com",
+      "suspended": true,
+      "suspensionReason": "ADMIN"
+    }
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ jamf: a recorded read-back prints its audit seq, the number change-record.js link takes (21.639535ms)
+  AssertionError [ERR_ASSERTION]: jamf: the audit seq is printed
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-checked-in",
+    "verified": true,
+    "expected": {
+      "serial": "C02TEST0001",
+      "lastContactTime": "at or after 2026-10-28T09:00:00Z",
+      "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"
+    },
+    "observed": {
+      "serial": "C02TEST0001",
+      "computerId": "7",
+      "lastContactTime": "2026-10-28T09:30:00.000Z",
+      "reportDate": null,
+      "mdmCapable": null
+    }
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ linear: a recorded read-back prints its audit seq, the number change-record.js link takes (13.95992ms)
+  AssertionError [ERR_ASSERTION]: linear: the audit seq is printed
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-state",
+    "verified": true,
+    "expected": {
+      "issue": "IT-123",
+      "state": "Done"
+    },
+    "observed": {
+      "issue": "IT-123",
+      "state": {
+        "name": "Done",
+        "type": "completed"
+      }
+    }
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ msgraph: a recorded read-back prints its audit seq, the number change-record.js link takes (17.627479ms)
+  AssertionError [ERR_ASSERTION]: msgraph: the audit seq is printed
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-account-enabled",
+    "verified": true,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "accountEnabled": false
+    },
+    "observed": {
+      "accountEnabled": false
+    }
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ okta: a recorded read-back prints its audit seq, the number change-record.js link takes (22.750563ms)
+  AssertionError [ERR_ASSERTION]: okta: the audit seq is printed
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-status",
+    "verified": true,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "status": "SUSPENDED"
+    },
+    "observed": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "status": "SUSPENDED"
+    }
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ slack: a recorded read-back prints its audit seq, the number change-record.js link takes (16.822328ms)
+  AssertionError [ERR_ASSERTION]: slack: the audit seq is printed
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-deactivated",
+    "verified": true,
+    "expected": {
+      "user": "U0USER0001",
+      "deleted": true
+    },
+    "observed": {
+      "user": "U0USER0001",
+      "deleted": true,
+      "is_restricted": null,
+      "is_ultra_restricted": null
+    },
+    "flags": []
+  }
+  
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:269:3
+✖ jira: a recorded read-back prints its audit seq, the number change-record.js link takes (19.791208ms)
+  AssertionError [ERR_ASSERTION]: jira: the audit seq is printed
+  Verified: HELP-1 ID 10001 moved after the preflight and is now Done.
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:277:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:32:54Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

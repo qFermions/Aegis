@@ -7,9 +7,22 @@
 // suite never writes the operator's real audit trail.
 //
 // recordVerdict: records a verify-* verdict as one verify entry. A sink that fails turns
-// the verdict into AUDIT_FAILED: a read-back that is not on record is not reported.
+// the verdict into AUDIT_FAILED: a read-back that is not on record is not reported. A verdict
+// link can accept (run with --change, verified) shows its entry's seq as audit_seq, the number
+// change-record.js link takes; any other shows none, since link would refuse it.
+//
+// takeChange and changeRefusal (batch G3 close-out, owner decision 1): every verify-* command
+// takes --change chg-... . takeChange removes the flag from argv before the connector's own
+// parser runs, so each connector keeps its flag rules; changeRefusal then checks, before any
+// read, dry or live, that the trail the verdict will be written to holds that change, opened
+// for this connector and command and approved (change-record.js bindRefusal). The verdict is
+// recorded under the change id; a run without --change records change null, which
+// change-record.js link refuses.
 
-const { auditSink, defaultAuditDir } = require('../audit/audit-log.js');
+// CHANGE_ID and VERIFY_COMMAND are the trail's own forms, so a run is checked with exactly the
+// rule its verify entry is written under (readonly-contract.js isVerifyCommand matches it too).
+const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND } = require('../audit/audit-log.js');
+const { bindRefusal } = require('../audit/change-record.js');
 
 const AUDITED_STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
   'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED']);
@@ -33,14 +46,67 @@ function cliDeps(deps = {}, env = process.env) {
   };
 }
 
-function recordVerdict(audit, connector, output) {
-  if (!audit || !output || typeof output.verified !== 'boolean' || typeof output.command !== 'string' || !/^verify-[a-z0-9-]{1,48}$/.test(output.command)) return output;
+// argv without its --change pair, and the change id (undefined when the flag is absent), or
+// error when the flag is repeated, has no value, or is written --change=chg-... (code review
+// round 1, finding 6).
+function takeChange(argv) {
+  const list = Array.isArray(argv) ? argv.map(String) : [];
+  const rest = [];
+  const values = [];
+  let joined = false;
+  for (let i = 0; i < list.length; i += 1) {
+    // --change=chg-... is taken out too, so the refusal names the flag's real form
+    if (list[i].startsWith('--change=')) { joined = true; continue; }
+    if (list[i] !== '--change') { rest.push(list[i]); continue; }
+    const value = i + 1 < list.length && !list[i + 1].startsWith('--') ? list[i + 1] : null;
+    values.push(value);
+    if (value !== null) i += 1;
+  }
+  if (joined) return { argv: rest, error: '--change takes the change id as the next argument: --change chg-... (not --change=chg-...)' };
+  if (values.length > 1) return { argv: rest, error: '--change may appear once' };
+  if (values.length === 1 && values[0] === null) return { argv: rest, error: '--change needs the change id that node scripts/audit/change-record.js open printed' };
+  return { argv: rest, change: values.length ? values[0] : undefined };
+}
+
+// The refusal of --change on a command that is not a read-back (an offline command among them).
+const NOT_A_READ_BACK = '--change binds a verify-* read-back to its change record; this command is not a read-back';
+
+// Why this run may not go on under --change, or null when it may (no --change, or a change
+// opened for connector:command and approved, in the trail the verdict will be written to).
+// bound is takeChange's result; the checks run in one order for every CLI: not a read-back
+// first, then a malformed flag, then the id's form, then the trail (code review round 2,
+// finding 7).
+function changeRefusal(connector, command, bound, audit) {
+  // fail closed on a wrong call (a change id string, nothing): never read it as "no --change"
+  if (!bound || typeof bound !== 'object' || Array.isArray(bound)) return 'the --change check was not given takeChange\'s result, so the read-back is refused';
+  const { change, error } = bound;
+  if (change === undefined && !error) return null;
+  if (typeof command !== 'string' || !VERIFY_COMMAND.test(command)) return NOT_A_READ_BACK;
+  if (error) return error;
+  if (typeof change !== 'string' || !CHANGE_ID.test(change)) return '--change must be the change id that node scripts/audit/change-record.js open printed (chg- and 12 lower-case hex characters)';
+  const log = audit && audit.log;
+  if (!log || typeof log.entries !== 'function' || typeof log.verify !== 'function') return '--change needs the audit trail the read-back is recorded in, and none is open for this run';
   try {
-    audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: AUDITED_STATES.has(output.state) ? output.state : 'INVALID_RESPONSE', change: null });
-    return output;
+    return bindRefusal(log, change, `${connector}:${command}`);
+  } catch {
+    return 'the audit trail could not be read, so the change could not be checked';
+  }
+}
+
+// The state a verify entry records: one the trail accepts, else INVALID_RESPONSE. The Jira
+// client uses it too, so every connector maps a state the same way (code review round 3,
+// finding 6).
+const verdictState = (state) => (AUDITED_STATES.has(state) ? state : 'INVALID_RESPONSE');
+
+function recordVerdict(audit, connector, output, change) {
+  if (!audit || !output || typeof output.verified !== 'boolean' || typeof output.command !== 'string' || !VERIFY_COMMAND.test(output.command)) return output;
+  try {
+    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null });
+    const linkable = typeof change === 'string' && output.verified === true && written && Number.isInteger(written.seq);
+    return linkable ? { ...output, audit_seq: written.seq } : output;
   } catch {
     return { command: output.command, state: 'AUDIT_FAILED', ok: false, verified: false, error: 'the audit trail could not record this read-back, so its verdict is withheld' };
   }
 }
 
-module.exports = { cliDeps, recordVerdict };
+module.exports = { cliDeps, recordVerdict, takeChange, changeRefusal, verdictState, NOT_A_READ_BACK };

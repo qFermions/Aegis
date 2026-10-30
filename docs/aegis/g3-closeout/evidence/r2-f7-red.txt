@@ -1,0 +1,238 @@
+# command: node --test --test-name-pattern=on a plain read is refused as not a read-back scripts/adapters/change-binding.test.js
+# commit: 0f0a4b6 (plus uncommitted changes in the working tree)  started: 2026-10-30T08:11:52Z  node: v24.22.2
+✖ fleet: --change=chg-... on a plain read is refused as not a read-back (12.994828ms)
+✖ github: --change=chg-... on a plain read is refused as not a read-back (3.638318ms)
+✖ google-workspace: --change=chg-... on a plain read is refused as not a read-back (4.698925ms)
+✖ jamf: --change=chg-... on a plain read is refused as not a read-back (3.539362ms)
+✖ linear: --change=chg-... on a plain read is refused as not a read-back (6.265309ms)
+✖ msgraph: --change=chg-... on a plain read is refused as not a read-back (6.082595ms)
+✖ okta: --change=chg-... on a plain read is refused as not a read-back (6.618096ms)
+✖ slack: --change=chg-... on a plain read is refused as not a read-back (8.319986ms)
+✖ jira: --change=chg-... on a plain read is refused as not a read-back (5.000227ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 0
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 210.132587
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ fleet: --change=chg-... on a plain read is refused as not a read-back (12.994828ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "command": "host",\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Fleet. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=fleet operation=host state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "command": "host",\n  "state": "REFUSED",\n  "ok": false,\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Fleet. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=fleet operation=host state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ github: --change=chg-... on a plain read is refused as not a read-back (3.638318ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting GitHub. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=github operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting GitHub. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=github operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ google-workspace: --change=chg-... on a plain read is refused as not a read-back (4.698925ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Google Workspace. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=google-workspace operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Google Workspace. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=google-workspace operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ jamf: --change=chg-... on a plain read is refused as not a read-back (3.539362ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Jamf Pro. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=jamf operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Jamf Pro. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=jamf operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ linear: --change=chg-... on a plain read is refused as not a read-back (6.265309ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Linear. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=linear operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Linear. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=linear operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ msgraph: --change=chg-... on a plain read is refused as not a read-back (6.082595ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ okta: --change=chg-... on a plain read is refused as not a read-back (6.618096ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Okta. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=okta operation=user state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Okta. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=okta operation=user state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ slack: --change=chg-... on a plain read is refused as not a read-back (8.319986ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "command": "user",\n' +
+    '  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Slack. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=slack operation=user state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n' +
+    '\n' +
+    'REFUSED: --change takes the change id as the next argument: --change chg-... (not --change=chg-...)\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '{\n  "state": "REFUSED",\n  "ok": false,\n  "command": "user",\n  "error": "--change takes the change id as the next argument: --change chg-... (not --change=chg-...)",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Slack. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=slack operation=user state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n\nREFUSED: --change takes the change id as the next argument: --change chg-... (not --change=chg-...)\n',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:368:3
+✖ jira: --change=chg-... on a plain read is refused as not a read-back (5.000227ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /this command is not a read-back/. Input:
+  
+  '\n' +
+    'Input error: --change takes the change id as the next argument: --change chg-... (not --change=chg-...)\n' +
+    'Aegis: Aegis refused this request before reading any credential or contacting Jira. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.\n' +
+    'admin detail: platform=jira operation=get state=REFUSED status=- attempts=- request_id=- handoff=-'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:373:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\nInput error: --change takes the change id as the next argument: --change chg-... (not --change=chg-...)\nAegis: Aegis refused this request before reading any credential or contacting Jira. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.\nadmin detail: platform=jira operation=get state=REFUSED status=- attempts=- request_id=- handoff=-',
+    expected: /this command is not a read-back/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T08:11:52Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

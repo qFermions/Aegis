@@ -674,7 +674,7 @@ test('dry run by default: each read and verify-* prints the exact planned reques
     const label = v.argv.join(' ');
     const { env, reads } = recordingEnv();
     const { code, stdout, stderr, transport } = await cli(v.argv, { env });
-    assert.equal(code, 0, `${label}: ${stderr}`);
+    assert.equal(code, 4, `${label}: ${stderr}`);
     assert.equal(transport.calls.length, 0, label);
     assert.deepEqual(credentialReads(reads), [], label);
     const plan = firstJson(stdout);

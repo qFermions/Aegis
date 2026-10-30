@@ -805,3 +805,49 @@ test('verify-comment accepts the posted body after whitespace normalisation and 
   assert.ok(preview.stdout.includes(`--expect-sha256 ${sha256Hex(serializePayload({ body: 'Line one\nline two', public: false }))}`), 'the preview prints the digest of the normalised body');
   assert.match(preview.stdout, /plain-text editor/, 'the procedure says how to post so the note is stored as typed');
 });
+
+// Code review round 1 of the batch G3 close-out, finding 4: a read-back whose verdict the
+// audit trail could not record is withheld, so its "Verified" line is never printed either.
+test('a verify-* that passes but cannot be recorded prints no Verified line, only that the verdict is withheld (exit 2)', async () => {
+  const out = [];
+  const err = [];
+  const transport = async () => ({ status: 200, headers: {}, body: JSON.stringify({ issueKey: 'HELP-1', issueId: '10001', currentStatus: { status: 'Done', statusDate: { epochMillis: 2000 } } }) });
+  const code = await run(['verify-transition', '--issue', 'HELP-1', '--issue-id', '10001', '--from-version', '1', '--to-status', 'Done', '--execute'],
+    { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: ['api', 'example.org'].join('@'), JIRA_API_TOKEN: ['sentinel', 'jira', String(7 * 41)].join('-') },
+    { transport, timeoutMs: 50, sleep: async () => {}, audit: (entry) => { if (entry.kind === 'verify') throw new Error('trail locked'); }, out: (s) => out.push(String(s)), err: (s) => err.push(String(s)) });
+  assert.equal(code, 2);
+  assert.doesNotMatch(out.join('\n'), /Verified/);
+  assert.match(err.join('\n'), /verdict is withheld/);
+});
+
+// Code review round 2 of the batch G3 close-out, finding 6: a read-back that failed to read is
+// recorded with the read's own state, not OK (which says the read ran and disproved the change).
+test('a verify-* whose read fails is recorded with the failure state; one that read and did not match is recorded OK', async () => {
+  const env = { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: ['api', 'example.org'].join('@'), JIRA_API_TOKEN: ['sentinel', 'jira', String(7 * 43)].join('-') };
+  const argv = ['verify-transition', '--issue', 'HELP-1', '--issue-id', '10001', '--from-version', '1', '--to-status', 'Done', '--execute'];
+  const cases = [
+    ['HTTP_ERROR', async () => ({ status: 503, headers: {}, body: '{}' })],
+    ['NETWORK_ERROR', async () => { throw new Error('connection reset'); }],
+    ['OK', async () => ({ status: 200, headers: {}, body: JSON.stringify({ issueKey: 'HELP-1', issueId: '10001', currentStatus: { status: 'In Progress', statusDate: { epochMillis: 2000 } } }) })],
+  ];
+  for (const [state, transport] of cases) {
+    const entries = [];
+    const code = await run(argv, env, { transport, timeoutMs: 50, sleep: async () => {}, audit: (e) => { entries.push(e); }, out: () => {}, err: () => {} });
+    assert.equal(code, 2, state);
+    const verdicts = entries.filter((e) => e.kind === 'verify');
+    assert.deepEqual(verdicts.map((e) => [e.verified, e.state]), [[false, state]], state);
+  }
+});
+
+// Code review round 3 of the batch G3 close-out, finding 6: the state of a failed read-back
+// comes from the same rule the adapters use (cli-support.js verdictState): an answer with no
+// status is INVALID_RESPONSE, not a network error.
+test('a verify-* whose answer has no status is recorded INVALID_RESPONSE, by the adapters\' own rule', async () => {
+  const env = { JIRA_SITE: 'example.atlassian.net', JIRA_EMAIL: ['api', 'example.org'].join('@'), JIRA_API_TOKEN: ['sentinel', 'jira', String(7 * 47)].join('-') };
+  const entries = [];
+  const code = await run(['verify-transition', '--issue', 'HELP-1', '--issue-id', '10001', '--from-version', '1', '--to-status', 'Done', '--execute'], env, {
+    fetch: async () => ({}), getCredentials: async () => ({ email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN }), audit: (e) => { entries.push(e); }, out: () => {}, err: () => {},
+  });
+  assert.equal(code, 2);
+  assert.deepEqual(entries.filter((e) => e.kind === 'verify').map((e) => [e.verified, e.state]), [[false, 'INVALID_RESPONSE']]);
+});

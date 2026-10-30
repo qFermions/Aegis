@@ -1,0 +1,12 @@
+# command: bash -c node --test scripts/env-example.test.js 2>&1 | grep -E "names read|^ℹ (tests|pass|fail)"; echo "--- names in .env.example at 01dcb37:"; git show 01dcb37:.env.example | grep -oE "^[A-Z][A-Z0-9_]*[A-Z0-9]=" | tr -d "=" | tr "\n" " "; echo; echo "--- of the names read, those .env.example held at 01dcb37:"; for n in $(node --test scripts/env-example.test.js 2>&1 | grep "names read" | sed "s/.*names read: //"); do git show 01dcb37:.env.example | grep -q "^$n=" && printf "%s " "$n"; done; echo
+# commit: 420188e (plus uncommitted changes in the working tree)  started: 2026-10-30T09:40:03Z  node: v24.22.2
+ℹ 34 names read: AEGION_DOMAIN AEGIS_AUDIT_DIR AEGIS_GRAPH_RUNS_DIR AEGIS_NETWORK_TRIPWIRE FLEET_API_TOKEN FLEET_URL GITHUB_ORG GITHUB_TOKEN GWS_ADMIN_SUBJECT GWS_CUSTOMER_ID GWS_SA_CLIENT_EMAIL GWS_SA_PRIVATE_KEY JAMF_CLIENT_ID JAMF_CLIENT_SECRET JAMF_URL JIRA_API_TOKEN JIRA_EMAIL JIRA_REQUEST_TYPE_ID JIRA_SERVICE_DESK_ID JIRA_SITE LINEAR_API_KEY LINEAR_ORG MS_CERT_SHA256 MS_CLIENT_ID MS_PRIVATE_KEY MS_SCOPE_CHECK_USER MS_TENANT_ID OKTA_CLIENT_ID OKTA_KEY_ID OKTA_ORG_URL OKTA_PRIVATE_KEY SLACK_ACCESS_LOGS_TOKEN SLACK_TEAM_ID SLACK_TOKEN
+ℹ tests 4
+ℹ pass 4
+ℹ fail 0
+--- names in .env.example at 01dcb37:
+TENANT AUDITOR AEGION_DOMAIN AEGION_ORG_NAME JIRA_SITE JIRA_EMAIL JIRA_API_TOKEN JIRA_SERVICE_DESK_ID JIRA_REQUEST_TYPE_ID MEMORY_DIR PROJECT_KEY 
+--- of the names read, those .env.example held at 01dcb37:
+AEGION_DOMAIN JIRA_API_TOKEN JIRA_EMAIL JIRA_REQUEST_TYPE_ID JIRA_SERVICE_DESK_ID JIRA_SITE 
+# exit: 0  finished: 2026-10-30T09:40:04Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

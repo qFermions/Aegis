@@ -21,7 +21,8 @@
 // request(s) it would send (method, host, path), reads no credential and opens no
 // connection. Exit codes (shared by every adapter): 0 read or verified; 1 refused
 // input or missing credentials; 2 the read failed or a verify-* read did not
-// prove the write; 3 a record from another tenant (never raised here, see above).
+// prove the write; 3 a record from another tenant (never raised here, see above); 4 a
+// verify-* dry run (nothing was read, so nothing is verified).
 //
 // Vendor facts come from Fleet's own docs source (fleetdm/fleet on GitHub, read
 // 2026-10-27): the REST API reference, the lock and wipe guide, the enroll guide
@@ -29,9 +30,9 @@
 // session that wrote this file.
 
 const {
-  STATES, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
+  STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 // ── Validators ───────────────────────────────────────────────────────────────
 const ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software title ids
@@ -540,7 +541,7 @@ function helpText() {
     'Reads:',
   ];
   for (const [name, c] of Object.entries(READS)) lines.push(`  ${name} ${c.usage}`.trimEnd(), `      ${c.summary}`);
-  lines.push('', 'Read-backs (exit 0 verified, 2 not verified):');
+  lines.push('', 'Read-backs (exit 0 verified, 2 not verified, 4 a dry run: it reads nothing, so it proves nothing):');
   for (const [name, c] of Object.entries(VERIFIES)) lines.push(`  ${name} ${c.usage}`, `      ${c.summary}`);
   lines.push(
     '',
@@ -548,7 +549,7 @@ function helpText() {
     'transfer, live reports and the secret reads (disk encryption key, Recovery Lock password,',
     'managed account password) are refused; each write is a HUMAN-RUN step in a runbook, proved',
     'afterwards with a verify-* read.',
-    'Exit codes: 0 read or verified; 1 refused input or missing credentials; 2 read failed or not verified.',
+    'Exit codes: 0 read or verified; 1 refused input or missing credentials; 2 read failed or not verified; 4 a verify-* dry run.',
   );
   return `${lines.join('\n')}\n`;
 }
@@ -562,7 +563,10 @@ function emit(output, { out, err, secrets = [] }) {
 async function run(argv, env = process.env, deps = {}) {
   const out = deps.out || ((s) => process.stdout.write(s));
   const err = deps.err || ((s) => process.stderr.write(s));
-  const list = Array.isArray(argv) ? argv.map(String) : [];
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
+  const list = bound.argv;
   const name = list[0];
   if (name === 'help' || name === '--help') { out(helpText()); return 0; }
 
@@ -589,6 +593,8 @@ async function run(argv, env = process.env, deps = {}) {
 
   // batch G3: the audit sink (and the test seams) come from cliDeps
   const cli = cliDeps(deps, env);
+  const refusal = changeRefusal('fleet', name, bound, cli.audit);
+  if (refusal) return emit({ command: name, state: STATES.REFUSED, ok: false, error: refusal }, { out, err });
   const client = createClient(SPEC, { env, ...cli });
 
   // Every request known before the read is checked here, with no credential read.
@@ -603,7 +609,8 @@ async function run(argv, env = process.env, deps = {}) {
     const dry = { command: name, state: STATES.OK, dry_run: true, requests: planned };
     if (command.then) dry.then = command.then;
     dry.note = DRY_RUN_NOTE;
-    return emit(dry, { out, err });
+    const code = emit(dry, { out, err });
+    return code === EXIT.OK ? dryRunExit(name, err) : code;
   }
 
   if (isRead) {
@@ -633,7 +640,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (outcome.note) output.note = outcome.note;
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
-  return emit(recordVerdict(cli.audit, 'fleet', output), { out, err, secrets });
+  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change), { out, err, secrets });
 }
 
 // Read only after the client has used it, so printed output can be redacted

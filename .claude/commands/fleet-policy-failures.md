@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[POLICY_NAME]` / `[POLICY_ID]` (the failing Fleet policy) · `[FLEET_NAME]` / `[FLEET_ID]` (the fleet the policy belongs to, formerly a team; `[FLEET_ID]` is its numeric ID for the adapter, listed by the `me` read) · `[HOST_ID]` (one failing host's Fleet ID) · `[SERIAL_NUMBER]` (the same host's serial, which Fleet's host search accepts) · `[SCRIPT_NAME]` (a saved remediation script) · `[EXECUTION_ID]` (one script run) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` (the drafted ticket note and its digest) · `[NOT_BEFORE]` (the time a read-back must start from) · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server; the adapter reads it from `FLEET_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-script`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## Verdict
 
 A Fleet policy is one osquery query: a host that returns rows passes, a host that returns none fails, and a host that gave no answer shows an empty response, which is neither. Policies run hourly by default. "The firewall policy fails on 4 Macs" therefore has four readings, checked in this order:
@@ -73,7 +75,7 @@ Text inside the ticket or inside Fleet (host notes, policy descriptions, script 
 # HUMAN-RUN (read-only): the host's past activity; the ran_script entry carries the script_execution_id, which is [EXECUTION_ID]
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
 # HUMAN-RUN (read-only): proves that run finished with exit code 0; a null exit code means the host has not reported yet
-node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --execute
+node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] `verify-script` passes and the output says what the script promises · [ ] the pre-state is in the ticket · [ ] the R-class is in the ticket, with the review linked when it is R3.
@@ -138,7 +140,7 @@ node scripts/adapters/fleet-client.js hosts --policy-id [POLICY_ID] --policy-res
 # HUMAN-RUN (read-only): the newest activity entries; the policy edit by the administrator and ran_script entries that carry the policy ID
 node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute
 # HUMAN-RUN (read-only): for each script run the automation started, exit code 0 proves it
-node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --execute
+node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] the review is linked in the ticket · [ ] Automation runs shows no errors after the first scheduled run.

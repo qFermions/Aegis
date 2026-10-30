@@ -107,9 +107,40 @@ function isFailure(res) {
   return Boolean(res) && typeof res === 'object' && (res.state !== 'OK' || res.verified === false);
 }
 
+// The rate-limit handoff (batch G3 close-out, owner decision 3): said plainly to be a rate
+// limit, not a permission problem, with the UTC time after which the read may run again when
+// the vendor gave a usable one. rateLimit is the contract's { limit: { kind, header }, retryAt,
+// reset }; the header is the opted-in spec's own remaining-requests header.
+// A response header name as a spec may declare one (readonly-contract.js checks specs with it).
+const HEADER_NAME = /^[a-z][a-z0-9-]{1,60}$/;
+function rateLimitedHandoff(res, who, rateLimit) {
+  const r = rateLimit || {};
+  const l = r.limit && typeof r.limit === 'object' ? r.limit : {};
+  const limit = l.kind === 'secondary' ? 'secondary' : 'primary';
+  const header = typeof l.header === 'string' && HEADER_NAME.test(l.header) ? l.header : 'the remaining-requests header';
+  const retryAt = Number.isFinite(r.retryAt) ? new Date(r.retryAt).toISOString() : null;
+  const status = Number.isInteger(res.status) ? res.status : 'error';
+  const kind = limit === 'secondary'
+    ? `its secondary rate limit (too many requests in a short time, HTTP ${status})`
+    : `its primary rate limit (the credential's request allowance for the current window is used up, HTTP ${status} with ${header} 0)`;
+  let when;
+  if (retryAt) when = `run the read again after ${retryAt} (UTC)`;
+  else if (r.reset === 'past') when = `the reset time ${who} gave has already passed on this machine's clock, so check the clock, wait a few minutes and run the read again`;
+  else when = `${who} gave no readable reset time, so wait for its rate-limit window to reset (its status page or console shows the limit), then run the read again`;
+  return {
+    state: 'RATE_LIMITED',
+    limit,
+    retry_at: retryAt,
+    what_failed: `${who} refused the read under ${kind}: this is a rate limit, not a permission problem`,
+    not_done: 'Nothing was read and nothing was changed',
+    next_step: `Do not widen the token or ask for more permissions; ${when}`,
+  };
+}
+
 // The handoff an exhausted read ends in: the named state and its plain words.
-function handoffFor(state, res, { platform, retryAfterSeconds, budgetMs } = {}) {
+function handoffFor(state, res, { platform, retryAfterSeconds, budgetMs, rateLimit } = {}) {
   const who = platformName(platform);
+  if (state === 'RATE_LIMITED') return rateLimitedHandoff(res, who, rateLimit);
   const happened = whatHappened(res, who);
   if (state === 'RETRY_AFTER_TOO_LONG') {
     return {
@@ -136,4 +167,4 @@ function handoffFor(state, res, { platform, retryAfterSeconds, budgetMs } = {}) 
   };
 }
 
-module.exports = { operatorMessage, handoffFor, isFailure, platformName, NAMES };
+module.exports = { operatorMessage, handoffFor, isFailure, platformName, NAMES, HEADER_NAME };

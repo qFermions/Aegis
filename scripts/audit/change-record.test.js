@@ -19,6 +19,11 @@
 //   an approval of that digest after it, and a verify-* result that verified after the
 //   approval, on an intact chain. Anything missing or mismatched is "not done", with the
 //   reason, exit 2.
+// - Batch G3 close-out (owner decision 1): a read-back is bound to its change when it is
+//   recorded (the verify-* CLIs take --change, scripts/adapters/change-binding.test.js). link
+//   refuses a verify entry recorded with change null or under another change, and status never
+//   counts one, even a link written into the trail around the CLI. The tests below that link a
+//   read-back record it under its change, as the CLIs now do.
 // Run: node --test scripts/audit/change-record.test.js
 
 const assert = require('node:assert/strict');
@@ -67,7 +72,7 @@ test('open, approve, a passing verify-* read-back and link: the change is done (
   assert.equal(a.code, 0, a.stderr);
   assert.match(a.stdout, /authorizes a person's procedure/i);
   assert.match(a.stdout, /no change/i);
-  const v = verifyEntry(s, true);
+  const v = verifyEntry(s, true, o.json.change);
   const l = s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]);
   assert.equal(l.code, 0, l.stderr);
   const st = s.run(CLI, ['status', '--change', o.json.change]);
@@ -148,7 +153,7 @@ test('R0 and R1 procedures are refused at open; an unknown change is not done; a
   const b = setup(t);
   const o = openChange(b);
   b.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-128', '--procedure-sha256', o.json.procedure_sha256]);
-  const v = verifyEntry(b, true);
+  const v = verifyEntry(b, true, o.json.change);
   b.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]);
   assert.equal(b.run(CLI, ['status', '--change', o.json.change]).json.done, true);
   const file = path.join(b.env.AEGIS_AUDIT_DIR, audit.LOG_FILE);
@@ -209,7 +214,7 @@ test('one read-back proves one change: a second link is refused, and one written
   const a = openChange(s);
   const b = openChange(s);
   for (const o of [a, b]) s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
-  const v = verifyEntry(s, true);
+  const v = verifyEntry(s, true, a.json.change);
   assert.equal(s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(v.seq)]).code, 0);
   const before = s.log.entries().length;
   const second = s.run(CLI, ['link', '--change', b.json.change, '--verify-seq', String(v.seq)]);
@@ -282,12 +287,65 @@ test('link refuses a read-back that cannot prove the change: no approval, before
   const other = verifyEntry(s, true, 'chg-0123456789ab');
   assert.equal(s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(other.seq)]).code, 2, 'recorded for another change');
   assert.equal(s.log.entries().filter((e) => e.kind === 'change-link').length, 0, 'nothing linked');
-  const good = verifyEntry(s, true);
+  const good = verifyEntry(s, true, a.json.change);
   assert.equal(s.run(CLI, ['link', '--change', a.json.change, '--verify-seq', String(good.seq)]).code, 0);
+});
+
+// Batch G3 close-out, owner decision 1: a read-back recorded without --change (change null)
+// proves no change; link refuses it, names --change, and records nothing.
+test('link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  const unbound = verifyEntry(s, true);
+  const before = s.log.entries().length;
+  const l = s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(unbound.seq)]);
+  assert.equal(l.code, 2);
+  assert.match(l.stderr, /without --change/);
+  assert.match(l.stderr, new RegExp(`--change ${o.json.change}`));
+  assert.equal(s.log.entries().length, before, 'nothing recorded');
+  assert.equal(s.run(CLI, ['status', '--change', o.json.change]).json.done, false);
+});
+
+test('status never counts a read-back that was not recorded under this change, even one linked around the CLI', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  for (const change of [null, 'chg-0123456789ab']) {
+    const v = verifyEntry(s, true, change);
+    s.log.append({ kind: 'change-link', change: o.json.change, verify_seq: v.seq });
+    const st = s.run(CLI, ['status', '--change', o.json.change]);
+    assert.equal(st.code, 2, `${change}: ${st.stdout}`);
+    assert.equal(st.json.done, false);
+    assert.ok(st.json.missing.some((m) => /not run with --change/.test(m)), st.stdout);
+  }
+});
+
+test('bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved', (t) => {
+  const s = setup(t);
+  assert.match(changes.bindRefusal(s.log, 'chg-0123456789ab', 'okta:verify-factor-reset'), /holds no change/);
+  const o = openChange(s);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), /no approval/);
+  s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-status'), /proved by okta:verify-factor-reset/);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'github:verify-factor-reset'), /proved by okta:verify-factor-reset/);
+  assert.equal(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), null);
 });
 
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
   const source = fs.readFileSync(CLI, 'utf8');
   const requires = [...source.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]).sort();
   assert.deepEqual(requires, ['./audit-log.js', 'node:crypto', 'node:fs', 'node:path']);
+});
+
+// Code review round 2 of the batch G3 close-out, finding 2: open's printed next steps say to run
+// the read-back with --change and the id, and that link takes the audit_seq it prints.
+test('open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  const step = o.json.next.find((n) => /read-back/.test(n));
+  assert.ok(step.includes(`--change ${o.json.change}`), step);
+  assert.match(step, /audit_seq/);
+  // Jira prints the seq in its own line (code review round 3, finding 7)
+  assert.match(step, /Recorded as audit entry N/);
 });

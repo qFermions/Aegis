@@ -378,7 +378,7 @@ test('the CLI dry run prints the exact planned requests, reads no credential and
     const { env, reads } = recordingEnv();
     const { code, stdout, transport } = await cli(c.argv, { env, replies: c.replies });
     const label = c.argv.join(' ');
-    assert.equal(code, 0, `${label}: ${stdout}`);
+    assert.equal(code, c.argv[0].startsWith('verify-') ? 4 : 0, `${label}: ${stdout}`);
     assert.equal(transport.calls.length, 0, label);
     assert.ok(!reads.includes('SLACK_TOKEN') && !reads.includes('SLACK_ACCESS_LOGS_TOKEN'), `${label}: the dry run read a token`);
     const res = firstJson(stdout);

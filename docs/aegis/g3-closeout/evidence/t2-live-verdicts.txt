@@ -1,0 +1,32 @@
+# command: node --test scripts/adapters/verify-dry-run.test.js
+# commit: 60a5580 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:36:14Z  node: v24.22.2
+✔ the shared contract names the verify-* dry-run exit code 4 beside the other four (1.968907ms)
+✔ fleet: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (6.67434ms)
+✔ github: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (2.61524ms)
+✔ google-workspace: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (3.066402ms)
+✔ jamf: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (3.39124ms)
+✔ linear: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (4.706904ms)
+✔ msgraph: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (2.32676ms)
+✔ okta: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (2.969039ms)
+✔ slack: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything (2.730903ms)
+✔ a verify-* dry run that the connector refuses (bad input) still exits 1, not 4 (1.046348ms)
+✔ jira: the verify-* dry run uses the shared constant (4) and prints the same NOT VERIFIED line; get dry run exits 0 (2.975162ms)
+✔ fleet: a live verify-* that proves the change exits 0, and one that does not exits 2 (4.408593ms)
+✔ github: a live verify-* that proves the change exits 0, and one that does not exits 2 (3.021056ms)
+✔ google-workspace: a live verify-* that proves the change exits 0, and one that does not exits 2 (6.059787ms)
+✔ jamf: a live verify-* that proves the change exits 0, and one that does not exits 2 (2.289825ms)
+✔ linear: a live verify-* that proves the change exits 0, and one that does not exits 2 (1.193324ms)
+✔ msgraph: a live verify-* that proves the change exits 0, and one that does not exits 2 (4.412834ms)
+✔ okta: a live verify-* that proves the change exits 0, and one that does not exits 2 (4.366534ms)
+✔ slack: a live verify-* that proves the change exits 0, and one that does not exits 2 (1.316711ms)
+✔ jira: a live verify-* that proves the change exits 0, and one that does not exits 2 (1.576337ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 266.475551
+# exit: 0  finished: 2026-10-30T07:36:14Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

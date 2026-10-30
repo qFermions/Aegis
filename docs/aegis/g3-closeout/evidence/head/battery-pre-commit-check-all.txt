@@ -1,0 +1,563 @@
+# command: node scripts/pre-commit-check.js --all
+# commit: 2ba52bc  started: 2026-10-30T09:21:08Z  node: v24.22.2  pwsh: PowerShell 7.6.9
+pre-commit-check: --all mode -- scanning 765 tracked and non-ignored files.
+pre-commit-check: ℹ tenant-literal check skipped -- configure tenant literals to enable.
+
+╔══════════════════════════════════════════════╗
+║  Aegis Pre-Commit Safety Check               ║
+╚══════════════════════════════════════════════╝
+
+  File: .claude/agents/graph-risk-finalizer.md
+    ⚠️  WARN  Line 45: Invoke-Expression / IEX -- arbitrary code execution
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/agents/graph-router.md
+    ⚠️  WARN  Line 27: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/ad-connect.md
+    ⚠️  WARN  Line 76: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 106: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 196: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/conditional-access.md
+    ⚠️  WARN  Line 213: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/device-wipe.md
+    ⚠️  WARN  Line 63: Clear-MgDeviceManagementManagedDevice -- managed-device factory reset
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 71: Invoke-MgRetireDeviceManagementManagedDevice -- managed-device retire
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 73: Clear-MgDeviceManagementManagedDevice -- managed-device factory reset
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/distribution-list.md
+    ⚠️  WARN  Line 39: New-DistributionGroup -- distribution group creation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/email-quarantine.md
+    ⚠️  WARN  Line 147: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 193: Release-QuarantineMessage -ReleaseToAll -- quarantine release to all recipients
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 225: Release-QuarantineMessage -- recipient-scoped quarantine release
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 253: Delete-QuarantineMessage -- quarantine message deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/email-to-spam.md
+    ⚠️  WARN  Line 171: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 224: Remove-BlockedSenderAddress -- restricted sender re-enable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/email-whitelist.md
+    ⚠️  WARN  Line 130: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/fleet-device-actions.md
+    ⚠️  WARN  Line 285: Fleet host deletion or MDM turn-off
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 304: Fleet MDM lock / unlock / wipe (fleetctl)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 334: Fleet script run on hosts
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 347: Fleet script run on hosts
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/gws-2sv-reset.md
+    ⚠️  WARN  Line 193: GAM 2-Step Verification turn-off
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/gws-chromeos-device.md
+    ⚠️  WARN  Line 170: GAM ChromeOS device action (disable / deprovision)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 197: GAM ChromeOS device action (disable / deprovision)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 278: GAM ChromeOS device action (disable / deprovision)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 294: GAM deprovision (tokens, app passwords, backup codes)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/gws-drive-sharing.md
+    ⚠️  WARN  Line 133: GAM Drive permission removal
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/gws-drive-transfer.md
+    ⚠️  WARN  Line 34: GAM data transfer (Drive / Calendar ownership)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 140: GAM data transfer (Drive / Calendar ownership)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 169: GAM data transfer (Drive / Calendar ownership)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 196: GAM data transfer (Drive / Calendar ownership)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/gws-license-assign.md
+    ⚠️  WARN  Line 152: GAM licence removal
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/gws-offboard.md
+    ⚠️  WARN  Line 163: Okta lifecycle change (deactivate / suspend / reset)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 190: GAM user suspension
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 217: GAM data transfer (Drive / Calendar ownership)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 244: GAM user deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/jamf-lock-erase.md
+    ⚠️  WARN  Line 31: Jamf framework removal (unmanage)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 118: Jamf framework removal (unmanage)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 190: Jamf MDM command (lock / wipe)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 217: Jamf MDM command (lock / wipe)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/jira-create.md
+    ⚠️  WARN  Line 33: jira-client --execute -- external Jira mutation/read boundary
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 34: jira-client --execute -- external Jira mutation/read boundary
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 58: jira-client --execute -- external Jira mutation/read boundary
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/jira-update.md
+    ⚠️  WARN  Line 24: jira-client --execute -- external Jira mutation/read boundary
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 53: jira-client --execute -- external Jira mutation/read boundary
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 71: jira-client --execute -- external Jira mutation/read boundary
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 87: jira-client --execute -- external Jira mutation/read boundary
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/mac-troubleshoot.md
+    ⚠️  WARN  Line 157: FileVault change (fdesetup)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/mailbox-permissions.md
+    ⚠️  WARN  Line 44: Add-MailboxPermission -- mailbox permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 46: Add-RecipientPermission -- Send As permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 52: Add-MailboxPermission -- mailbox permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 56: Remove-MailboxPermission -- mailbox permission revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/mfa-issue.md
+    ⚠️  WARN  Line 70: Revoke-* session/token cmdlet -- session or token revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/new-user.md
+    ⚠️  WARN  Line 36: New-ADUser -- directory account creation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 61: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/offboard.md
+    ⚠️  WARN  Line 46: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 47: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 48: Update-MgUser AccountEnabled false -- cloud sign-in block
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 126: Set-Mailbox -Type Shared -- mailbox conversion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 127: Add-MailboxPermission -- mailbox permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 207: Remove-ADGroupMember -- AD group access revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/okta-mfa-reset.md
+    ⚠️  WARN  Line 142: Okta session or user deletion (DELETE /api/v1/users…)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 169: Okta lifecycle change (deactivate / suspend / reset)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/okta-user-lifecycle.md
+    ⚠️  WARN  Line 296: Okta lifecycle change (deactivate / suspend / reset)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 323: Okta session or user deletion (DELETE /api/v1/users…)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 350: Okta lifecycle change (deactivate / suspend / reset)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 404: Okta lifecycle change (deactivate / suspend / reset)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 458: Okta session or user deletion (DELETE /api/v1/users…)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/onedrive-issue.md
+    ⚠️  WARN  Line 97: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 100: Set-SPOSite -- SharePoint site mutation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/password-reset.md
+    ⚠️  WARN  Line 68: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 93: Update-MgUser -PasswordProfile -- cloud password reset
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 123: Revoke-* session/token cmdlet -- session or token revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 142: Revoke-* session/token cmdlet -- session or token revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/printer-issue.md
+    ⚠️  WARN  Line 116: Remove-Item -Force -- forced file deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/security-alert-triage.md
+    ⚠️  WARN  Line 69: Update-MgUser AccountEnabled false -- cloud sign-in block
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 101: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 116: Update-MgUser AccountEnabled false -- cloud sign-in block
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 141: Revoke-* session/token cmdlet -- session or token revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/shared-mailbox.md
+    ⚠️  WARN  Line 42: New-Mailbox -- mailbox creation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 44: Add-MailboxPermission -- mailbox permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 46: Add-RecipientPermission -- Send As permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 50: Set-Mailbox -Type Shared -- mailbox conversion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/sharepoint-access.md
+    ⚠️  WARN  Line 57: Remove-PnPGroupMember -- SharePoint access revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/slack-user-lifecycle.md
+    ⚠️  WARN  Line 271: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: .claude/commands/teams-issue.md
+    ⚠️  WARN  Line 92: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 109: Grant-CsTeams*Policy -- Teams policy assignment
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: CHANGELOG.md
+    ⚠️  WARN  Line 264: scp/sftp -- local or remote file transfer
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/adr/ADR-001-blast-radius-classes.md
+    ⚠️  WARN  Line 9: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/aegis/g3/evidence/t2-b1-finding-6-red.txt
+    ⚠️  WARN  Line 16: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/aegis/lanes/g2.md
+    ⚠️  WARN  Line 218: Jamf secret disclosure (FileVault key, Recovery Lock, device PIN, LAPS)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/aegis/workflow.md
+    ⚠️  WARN  Line 149: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/evidence/ticket-eval-samples.md
+    ⚠️  WARN  Line 21: Add-MailboxPermission -- mailbox permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 22: Remove-MailboxPermission -- mailbox permission revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 123: Add-MailboxPermission -- mailbox permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 125: Remove-MailboxPermission -- mailbox permission revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 186: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/examples.md
+    ⚠️  WARN  Line 228: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 243: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 276: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 277: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/gws-reversibility.md
+    ⚠️  WARN  Line 78: Jamf framework removal (unmanage)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/security_model.md
+    ⚠️  WARN  Line 163: git push --force -- can overwrite remote history
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 164: Invoke-Expression / IEX -- arbitrary code execution
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 165: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: docs/ticket-examples.md
+    ⚠️  WARN  Line 38: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 84: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 133: Set-MgUserLicense -- license assignment change
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/automation/powershell/examples.md
+    ⚠️  WARN  Line 219: Set-MgUserLicense -- license assignment change
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 310: Revoke-* session/token cmdlet -- session or token revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 514: New-MgDeviceManagementDeviceCompliancePolicyAssignment -- compliance policy assignment
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/automation/powershell/rollback_patterns.md
+    ⚠️  WARN  Line 196: New-MgGroupMember -- group membership grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 208: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/automation/powershell/safety_patterns.md
+    ⚠️  WARN  Line 15: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 18: Remove-ADGroupMember -- AD group access revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 29: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 162: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 388: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 389: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 438: Set-MgUserLicense -- license assignment change
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 499: Remove-Item -Recurse -Force -- mass file deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 500: Invoke-Expression / IEX -- arbitrary code execution
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/automation/pre_commit_hooks.md
+    ⚠️  WARN  Line 37: Git hook installation -- repository-local executable change
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 38: Git hook installation -- repository-local executable change
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 97: Remove-Item -Recurse -Force -- mass file deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 98: Remove-Item -Force -- forced file deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 100: Remove-Mailbox -- permanent mailbox deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 101: Remove-MailboxPermission -- mailbox permission revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 102: Clear-MgDeviceManagementManagedDevice -- managed-device factory reset
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 103: Delete-QuarantineMessage -- quarantine message deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 104: Remove-BlockedSenderAddress -- restricted sender re-enable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 105: Remove-ADGroupMember -- AD group access revocation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 106: Update-MgUser AccountEnabled false -- cloud sign-in block
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 107: Set-ADAccountPassword -Reset -- on-premises password reset
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 108: Invoke-MgInvalidateUserRefreshToken -- refresh-token invalidation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 109: Set-MgUserLicense -- license assignment change
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 110: New-ADUser -- directory account creation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 111: Add-MailboxPermission -- mailbox permission grant
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 112: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 113: Conditional Access policy mutation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 114: Set-SPOSite -- SharePoint site mutation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 115: New-MgDeviceManagementDeviceCompliancePolicyAssignment -- compliance policy assignment
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 116: Set-Mailbox -Type Shared -- mailbox conversion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 117: Install-Module -- PowerShell module installation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 118: Format-Volume/Drive -- destructive storage format
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 119: Clear-Mailbox -- wipes mailbox contents
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 120: Clear-MobileDevice -- remote device wipe
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 121: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 123: BlockCredential $true -- blocks user sign-in
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 124: Invoke-Expression / IEX -- arbitrary code execution
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 125: Start-Process -FilePath -- arbitrary process launch
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 126: ConvertTo-SecureString -AsPlainText -- plaintext credential in script
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 127: git push --force -- can overwrite remote history
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 128: git reset --hard -- destroys uncommitted work
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 129: git commit --no-verify -- pre-commit gate bypass
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 132: scp/sftp -- local or remote file transfer
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 168: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 201: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 202: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/it_support/workflows.md
+    ⚠️  WARN  Line 42: New-ADUser -- directory account creation
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 71: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/security/security-doctrine.md
+    ⚠️  WARN  Line 47: git push --force -- can overwrite remote history
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 48: Invoke-Expression / IEX -- arbitrary code execution
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 57: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/security/threat_detection.md
+    ⚠️  WARN  Line 97: git push --force -- can overwrite remote history
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 153: Remove-Item -Recurse -Force -- mass file deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 155: Remove-Mailbox -- permanent mailbox deletion
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 156: Disable-* -- account/object disable
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 158: BlockCredential $true -- blocks user sign-in
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 159: Invoke-Expression / IEX -- arbitrary code execution
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 160: Start-Process -FilePath -- arbitrary process launch
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 161: ConvertTo-SecureString -AsPlainText -- plaintext credential in script
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 162: git push --force -- can overwrite remote history
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 163: git reset --hard -- destroys uncommitted work
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 166: scp/sftp -- local or remote file transfer
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/security/threat_model.md
+    ⚠️  WARN  Line 59: Remove-Mg* -- Graph API deletion cmdlet
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/systems/health_checks.md
+    ⚠️  WARN  Line 45: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: modules/systems/infrastructure.md
+    ⚠️  WARN  Line 67: Start-ADSyncSyncCycle -- directory synchronization trigger
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/adapters/fleet-client.test.js
+    ⚠️  WARN  Line 591: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/adapters/linear-client.test.js
+    ⚠️  WARN  Line 413: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 824: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/adapters/readonly-contract.test.js
+    ⚠️  WARN  Line 326: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 326: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/audit/audit-log.test.js
+    ⚠️  WARN  Line 138: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/eval/g2-tickets.json
+    ⚠️  WARN  Line 131: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 289: Prompt-injection marker (disregard-rules)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 482: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 636: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 804: Prompt-injection marker (system-prompt override)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/eval/g3-intake/email-4.eml
+    ⚠️  WARN  Line 9: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/eval/g3-intake/github-4.json
+    ⚠️  WARN  Line 5: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/eval/g3-tickets.json
+    ⚠️  WARN  Line 124: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 471: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 597: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/intake/intake.test.js
+    ⚠️  WARN  Line 52: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 83: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/jira-contract.test.js
+    ⚠️  WARN  Line 129: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/tier/tier-routing.test.js
+    ⚠️  WARN  Line 407: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/untrusted/instruction-injection.test.js
+    ⚠️  WARN  Line 171: Prompt-injection marker (disregard-rules)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 172: Prompt-injection marker (system-prompt override)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 173: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 174: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 175: Prompt-injection marker (mode-override claim)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 176: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 177: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+  File: scripts/untrusted/poisoned-memory.test.js
+    ⚠️  WARN  Line 149: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+    ⚠️  WARN  Line 150: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+⚠️  207 warning(s) found -- review the flagged lines above.
+   These are dangerous cmdlets in scripts. Confirm they are intentional.
+   Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
+
+# exit: 0  finished: 2026-10-30T09:21:10Z
+# capture edited after the run: U+2014 written as "--" (139), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

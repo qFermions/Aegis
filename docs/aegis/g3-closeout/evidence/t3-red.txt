@@ -1,0 +1,370 @@
+# command: node --test scripts/adapters/rate-limit.test.js
+# commit: 4a7a66a (plus uncommitted changes in the working tree)  started: 2026-10-30T07:06:14Z  node: v24.22.2
+✖ github: a primary-limit 403 whose reset is within the cap waits until one second after the reset, retries once and succeeds (11.375684ms)
+✖ github: a primary-limit 403 whose reset is beyond the cap hands off at once with the reset time in UTC: one attempt, no wait, no retry storm (1.890977ms)
+✖ github: a primary-limit 429 is handled the same way (within the cap: wait and retry; beyond it: RATE_LIMITED) (4.291034ms)
+✖ github: a reset within the cap that does not fit the read's retry budget hands off instead of waiting (1.479541ms)
+✖ github: a reset that is malformed, missing or already past is never waited on: RATE_LIMITED after one attempt, no retry (0.976629ms)
+✖ github: when every wait was within the cap and the limit still holds after the last retry, the read ends in RATE_LIMITED, not a permission refusal (0.904411ms)
+✖ github: a secondary-limit 403 with retry-after within the cap waits that many seconds and retries (4.370908ms)
+✖ github: a secondary-limit 403 without retry-after (the docs' "at least one minute" is over the cap) or with a longer one hands off at once (1.303327ms)
+✔ github: a 403 with neither signal stays a permission refusal: one attempt, no wait, the permission message (1.904245ms)
+✔ github: a body that is not JSON, or JSON without a message, is not a secondary-limit signal (1.753485ms)
+✖ github: the rate-limit handoff is recorded in a real audit trail, which accepts RATE_LIMITED and holds no body (12.825182ms)
+✖ contract: rateLimit is opt-in and checked when the spec is defined; only the GitHub spec turns it on (0.705388ms)
+✖ fleet: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (6.321315ms)
+✖ jamf: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (3.462452ms)
+✖ slack: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (3.329955ms)
+✖ linear: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (4.71018ms)
+✖ google-workspace: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (9.490412ms)
+✖ okta: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (7.939962ms)
+✖ msgraph: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (7.98374ms)
+✖ jira: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait) (4.986205ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 2
+ℹ fail 18
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 262.747143
+
+✖ failing tests:
+
+test at scripts/adapters/rate-limit.test.js:93:1
+✖ github: a primary-limit 403 whose reset is within the cap waits until one second after the reset, retries once and succeeds (11.375684ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "org",
+    "state": "HTTP_ERROR",
+    "ok": false,
+    "status": 403,
+    "error": "HTTP 403 (body withheld)",
+    "attempts": 1,
+    "operator_message": "GitHub refused the read (HTTP 403): the credential lacks a read permission or the item is restricted. Nothing was read and nothing was changed. Compare the credential with the scope manifest and ask its owner for the missing read permission; never add a write permission.",
+    "admin_detail": "platform=github operation=org state=HTTP_ERROR status=403 attempts=1 request_id=- handoff=-"
+  }
+  
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:95:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:102:1
+✖ github: a primary-limit 403 whose reset is beyond the cap hands off at once with the reset time in UTC: one attempt, no wait, no retry storm (1.890977ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'state')
+      at assertRateLimitMessage (<repo>/scripts/adapters/rate-limit.test.js:79:31)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:110:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/rate-limit.test.js:119:1
+✖ github: a primary-limit 429 is handled the same way (within the cap: wait and retry; beyond it: RATE_LIMITED) (4.291034ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   177
+  -   6000
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:122:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 177 ],
+    expected: [ 6000 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:130:1
+✖ github: a reset within the cap that does not fit the read's retry budget hands off instead of waiting (1.479541ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /"state": "RATE_LIMITED"/. Input:
+  
+  '{\n' +
+    '  "command": "org",\n' +
+    '  "state": "HTTP_ERROR",\n' +
+    '  "ok": false,\n' +
+    '  "status": 403,\n' +
+    '  "error": "HTTP 403 (body withheld)",\n' +
+    '  "attempts": 1,\n' +
+    '  "operator_message": "GitHub refused the read (HTTP 403): the credential lacks a read permission or the item is restricted. Nothing was read and nothing was changed. Compare the credential with the scope manifest and ask its owner for the missing read permission; never add a write permission.",\n' +
+    '  "admin_detail": "platform=github operation=org state=HTTP_ERROR status=403 attempts=1 request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:139:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '{\n  "command": "org",\n  "state": "HTTP_ERROR",\n  "ok": false,\n  "status": 403,\n  "error": "HTTP 403 (body withheld)",\n  "attempts": 1,\n  "operator_message": "GitHub refused the read (HTTP 403): the credential lacks a read permission or the item is restricted. Nothing was read and nothing was changed. Compare the credential with the scope manifest and ask its owner for the missing read permission; never add a write permission.",\n  "admin_detail": "platform=github operation=org state=HTTP_ERROR status=403 attempts=1 request_id=- handoff=-"\n}\n',
+    expected: /"state": "RATE_LIMITED"/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:142:1
+✖ github: a reset that is malformed, missing or already past is never waited on: RATE_LIMITED after one attempt, no retry (0.976629ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'state')
+      at assertRateLimitMessage (<repo>/scripts/adapters/rate-limit.test.js:79:31)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:148:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/rate-limit.test.js:157:1
+✖ github: when every wait was within the cap and the limit still holds after the last retry, the read ends in RATE_LIMITED, not a permission refusal (0.904411ms)
+  AssertionError [ERR_ASSERTION]: the first try and two retries
+  
+  1 !== 3
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:160:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:166:1
+✖ github: a secondary-limit 403 with retry-after within the cap waits that many seconds and retries (4.370908ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "org",
+    "state": "HTTP_ERROR",
+    "ok": false,
+    "status": 403,
+    "error": "HTTP 403 (body withheld)",
+    "attempts": 1,
+    "operator_message": "GitHub refused the read (HTTP 403): the credential lacks a read permission or the item is restricted. Nothing was read and nothing was changed. Compare the credential with the scope manifest and ask its owner for the missing read permission; never add a write permission.",
+    "admin_detail": "platform=github operation=org state=HTTP_ERROR status=403 attempts=1 request_id=- handoff=-"
+  }
+  
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:168:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:174:1
+✖ github: a secondary-limit 403 without retry-after (the docs' "at least one minute" is over the cap) or with a longer one hands off at once (1.303327ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'state')
+      at assertRateLimitMessage (<repo>/scripts/adapters/rate-limit.test.js:79:31)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:179:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/rate-limit.test.js:218:1
+✖ github: the rate-limit handoff is recorded in a real audit trail, which accepts RATE_LIMITED and holds no body (12.825182ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + null
+  - 'RATE_LIMITED'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:231:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'RATE_LIMITED',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:238:1
+✖ contract: rateLimit is opt-in and checked when the spec is defined; only the GitHub spec turns it on (0.705388ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:240:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:276:3
+✖ fleet: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (6.321315ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:289:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:276:3
+✖ jamf: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (3.462452ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:289:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:276:3
+✖ slack: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (3.329955ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:289:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:276:3
+✖ linear: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (4.71018ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:289:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:276:3
+✖ google-workspace: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (9.490412ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:289:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:276:3
+✖ okta: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (7.939962ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:289:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:276:3
+✖ msgraph: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (7.98374ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:289:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:293:1
+✖ jira: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait) (4.986205ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:307:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:06:14Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[USER_ID]` (the guest's Slack member ID) · `[CHANNEL_NAME]` / `[CHANNEL_ID]` (the channel) · `[EXTERNAL_DOMAIN]` (the partner organization in Slack Connect) · `[ISSUE_ID]` (the Linear ticket) · `[NOTE_FILE]` / `[NOTE_SHA256]` / `[NOT_BEFORE]` (the ticket note, its digest, and the time its read-back starts from) · `[ADMIN_NAME]` (the administrator who makes the change) · `[@Aegion_SLACK_URL]` (the workspace) · `[@Aegion_SLACK_TEAM_ID]` (the workspace ID the read adapter is bound to) · org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `slack:verify-archived`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - Eight changes, eight gates, eight phrases: set a guest's time limit (R1), approve a Slack Connect invitation (R2) or decline it (R1), remove a partner organization from one channel (R3), disconnect a partner organization (R3), archive a channel (R2, its member list is the pre-state), unarchive it (R1) and add its recorded members back (R1 for one member, R2 for 2 to 10, R3 above 10 after the independent review).
@@ -203,7 +205,7 @@ Before the gate: the Phase A member list is in the ticket, the channel is not `#
 
 ```bash
 # read-only: proves conversations.info shows is_archived true for [CHANNEL_ID]; exit 2 means not archived or a failed read
-node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --execute
+node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --change [CHANGE_ID] --execute
 ```
 
 **Role needed:** the same people who may archive the channel.

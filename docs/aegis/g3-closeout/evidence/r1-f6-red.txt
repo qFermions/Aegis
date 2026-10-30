@@ -1,0 +1,238 @@
+# command: node --test --test-name-pattern=names the two-argument form scripts/adapters/change-binding.test.js
+# commit: 7902143 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:56:23Z  node: v24.22.2
+✖ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (23.873682ms)
+✖ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (9.569937ms)
+✖ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (10.075262ms)
+✖ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (7.907005ms)
+✖ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (9.119442ms)
+✖ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (8.565084ms)
+✖ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (7.209655ms)
+✖ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (8.933699ms)
+✖ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (8.624527ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 0
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 265.948808
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (23.873682ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "command": "verify-checked-in",\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change=chg-dd50cbe44923",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Fleet. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=fleet operation=verify-checked-in state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "command": "verify-checked-in",\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change=chg-dd50cbe44923",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Fleet. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=fleet operation=verify-checked-in state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (9.569937ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change=chg-15c78287b477",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting GitHub. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=github operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change=chg-15c78287b477",\n  "operator_message": "Aegis refused this request before reading any credential or contacting GitHub. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=github operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (10.075262ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change=chg-82d841c6e616",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Google Workspace. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=google-workspace operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change=chg-82d841c6e616",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Google Workspace. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=google-workspace operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (7.907005ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change=chg-553125ba9534",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Jamf Pro. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=jamf operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change=chg-553125ba9534",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Jamf Pro. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=jamf operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (9.119442ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change=chg-556a9482173b",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Linear. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=linear operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change=chg-556a9482173b",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Linear. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=linear operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (8.565084ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change=chg-c8c6e5ca0f37",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change=chg-c8c6e5ca0f37",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (7.209655ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change=chg-438f6c8d228d",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Okta. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=okta operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change=chg-438f6c8d228d",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Okta. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=okta operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (8.933699ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "command": null,\n' +
+    '  "error": "unknown flag --change=chg-a698d3145359",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting Slack. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=slack operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n' +
+    '\n' +
+    'REFUSED: unknown flag --change=chg-a698d3145359\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '{\n  "state": "REFUSED",\n  "ok": false,\n  "command": null,\n  "error": "unknown flag --change=chg-a698d3145359",\n  "operator_message": "Aegis refused this request before reading any credential or contacting Slack. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=slack operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n\nREFUSED: unknown flag --change=chg-a698d3145359\n',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:298:3
+✖ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (8.624527ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--change takes the change id as the next argument/. Input:
+  
+  '\n' +
+    'Input error: Flag values must be separate arguments; --change=chg-91d2a630bec5 is not allowed.\n' +
+    'Aegis: Aegis refused this request before reading any credential or contacting Jira. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.\n' +
+    'admin detail: platform=jira operation=- state=REFUSED status=- attempts=- request_id=- handoff=-'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:304:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\nInput error: Flag values must be separate arguments; --change=chg-91d2a630bec5 is not allowed.\nAegis: Aegis refused this request before reading any credential or contacting Jira. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.\nadmin detail: platform=jira operation=- state=REFUSED status=- attempts=- request_id=- handoff=-',
+    expected: /--change takes the change id as the next argument/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:56:23Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

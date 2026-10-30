@@ -216,7 +216,9 @@ const ORG_TOKEN_SUFFIXES = new Set(['ALARM', 'DOMAIN', 'DOMAIN_SHORT', 'DOMAIN_S
   // G2: Fleet, Slack and Linear
   'FLEET_URL', 'SLACK_URL', 'SLACK_TEAM_ID', 'LINEAR_ORG', 'LINEAR_TEAM',
   // G3: GitHub
-  'GITHUB_ORG']);
+  'GITHUB_ORG',
+  // G3 close-out: Microsoft Graph, the tenant ID .env.example names
+  'MS_TENANT_ID']);
 function orgTokenWords(body) {
   return body.replace(/([a-z])([A-Z])/g, '$1_$2').replace(/([A-Za-z])(\d)/g, '$1_$2').replace(/(\d)([A-Za-z])/g, '$1_$2')
     .toUpperCase().split(/[\s_.-]+/).filter(Boolean);

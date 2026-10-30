@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[USER@DOMAIN.COM]` (the admin being checked, or whose role changes) · `[ROLE_NAME]` (the admin role, for example Super Admin or a custom role) · `[ROLE_ID]` (the numeric roleId the read-only `roles` read prints for `[ROLE_NAME]`) · `[GROUP_EMAIL]` (a group that holds a role) · `[OU_PATH]` (the organizational unit a setting applies to) · `[UPN]` (your own administrator address: the actor that Admin log events records) · `[MANAGER_UPN]` (the approver named in the ticket) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the Linear ticket, its prepared note, the note's digest, and the time a read-back starts from) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-event`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Reading roles changes nothing (R0).** Phase A and the read half of Phase B are reads; most tickets ("how many super admins do we have?") end there.
@@ -191,7 +193,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 # read-back: the roles the user now holds, the roleId of the assigned role should be listed
 node scripts/adapters/gws-client.js role-assignments --user [USER@DOMAIN.COM] --execute
 # read-back: a role-assignment event with you as the actor after NOT_BEFORE whose parameters name the user, the event name as recorded in /gws-audit-log
-node scripts/adapters/gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 ```
 
 `--target` makes the read prove this user's assignment, not another one you made since `[NOT_BEFORE]`; the read prints the matched event's parameters. For Super Admin the event may be recorded as `GRANT_ADMIN_PRIVILEGE` instead; both names come from `/gws-audit-log` (checked 2026-10-15, not re-confirmed in this lane's sources), and the parameter names are not confirmed either, so run the read again with that name, keeping `--target [USER@DOMAIN.COM]`, before concluding the event is missing. GUI read-back: Admin console → Account → Admin roles → `[ROLE_NAME]` → **Admins** lists `[USER@DOMAIN.COM]` with the recorded scope.
@@ -225,7 +227,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: proves the user no longer holds the Super Admin role, ROLE_ID is the Super Admin roleId from Phase A
-node scripts/adapters/gws-client.js verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID] --execute
+node scripts/adapters/gws-client.js verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID] --change [CHANGE_ID] --execute
 # read-only: isAdmin should now read false for the user
 node scripts/adapters/gws-client.js user --user [USER@DOMAIN.COM] --execute
 ```
@@ -256,7 +258,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: proves the user no longer holds the role, ROLE_ID is the roleId of the delegated role from Phase A
-node scripts/adapters/gws-client.js verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID] --execute
+node scripts/adapters/gws-client.js verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID] --change [CHANGE_ID] --execute
 ```
 
 GUI read-back: Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Admin roles and privileges** no longer lists `[ROLE_NAME]`.

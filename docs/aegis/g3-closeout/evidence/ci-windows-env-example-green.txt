@@ -1,0 +1,28 @@
+# command: bash -c node --require ./docs/aegis/g3-closeout/evidence/tools/win32-relative-join.js --test scripts/env-example.test.js && node --test scripts/env-example.test.js
+# commit: 159e4f5 (plus uncommitted changes in the working tree)  started: 2026-10-30T09:05:54Z  node: v24.22.2
+✔ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (12.691259ms)
+✔ the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names (64.881621ms)
+✔ a name removed from .env.example is reported by name (5.480891ms)
+✔ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (1.669086ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 239.408311
+✔ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (12.841819ms)
+✔ the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names (43.597138ms)
+✔ a name removed from .env.example is reported by name (4.765955ms)
+✔ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (1.607022ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 197.19352
+# exit: 0  finished: 2026-10-30T09:05:55Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

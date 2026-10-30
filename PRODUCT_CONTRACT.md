@@ -196,3 +196,16 @@ Batch G3 (2026-10-28, branch `feat/g3-production-hardening`, base `main` at
   human's procedure only. The change record (`scripts/audit/change-record.js`) links
   the approval, the issued procedure's digest and the read-back; it never runs the
   procedure. What production readiness still needs: `docs/aegis/production-readiness.md`.
+
+Batch G3 close-out (2026-10-30, branch `fix/g3-closeout`, base `main` at `01dcb37`). Nothing
+was removed and no sentence above changed; the boundary paragraph and every gate are as at
+`01dcb37`.
+
+- Not changed: every connector still sends allow-listed reads only, and an approval still
+  authorizes a human's procedure only. The four owner decisions from PR #6 change how reads
+  and read-backs report, not what Aegis may do: a read-back is recorded under the change
+  record it proves (`--change`, and `change-record.js link` accepts no other), a `verify-*`
+  dry run exits 4 because it proves nothing, a GitHub rate-limit 403 ends in a `RATE_LIMITED`
+  handoff instead of reading as a permission refusal, and `.env.example` names every variable
+  the connectors, the Jira client, the intake and the audit trail read. Reason: each closes a gap PR #6
+  reported; none adds a write path (`docs/aegis/boundary-audit.md` rows 35 and 37).

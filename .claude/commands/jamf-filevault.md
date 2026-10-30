@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[SERIAL_NUMBER]` (the Mac, as searched in Jamf Pro) · `[DEVICE_ID]` (the Jamf Pro computer ID that the inventory record and `computer` show; `history` takes it) · `[PROFILE_NAME]` / `[PROFILE_ID]` (the FileVault configuration profile) · `[PROFILE_IDENTIFIER]` (that profile's own PayloadIdentifier: `payloadSummary[0].profile.PayloadIdentifier` in the `profile --id` read) · `[POLICY_NAME]` / `[POLICY_ID]` (the new-key policy) · `[SMART_GROUP]` (the pilot group, or the rollout group where a gate says so) · `[SMART_GROUP_ID]` and `[MEMBER_COUNT]` (that group's ID and the member count recorded before the change) · `[ISSUE_ID]` (the Linear issue) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server, `JAMF_URL` for the adapter) · org values from `modules/security/placeholder-dictionary.md`. The recovery key itself never gets a placeholder: it is never written down.
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-profile`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - Five gated actions and one planning-only request: a FileVault profile for the pilot group (R3, a security control), the same profile widened to the rollout group (R3, after independent review), one more Mac added to that profile (R3), showing one Mac's recovery key (R3, a disclosure), issuing a new recovery key (R2), and turning FileVault off (planning only here, Phase E).
@@ -117,9 +119,9 @@ Before the gate: `verify-group-count` passes for the pilot group, Phase A step 5
 # the new profile's own identifier is payloadSummary[0].profile.PayloadIdentifier - write it in the ticket as [PROFILE_IDENTIFIER]
 node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 # proves one pilot Mac lists this FileVault profile, by its id and its identifier
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
 # proves FileVault is enabled on that Mac and its escrowed key is Valid
-node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --execute
+node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --change [CHANGE_ID] --execute
 ```
 </details>
 
@@ -210,11 +212,11 @@ Prerequisites: macOS 10.14 or later; the Mac has a valid escrowed key or a FileV
 
 ```bash
 # proves the new-key policy is enabled on Recurring Check-in, Once per computer, as the gate created it; exit 2 means it is not
-node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once per computer" --enabled true --execute
+node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once per computer" --enabled true --change [CHANGE_ID] --execute
 # reads the policy logs of the Mac; the new-key policy should show as completed, not as an authentication error
 node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLogs --execute
 # proves the new escrowed key is Valid after the next inventory update
-node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --execute
+node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --change [CHANGE_ID] --execute
 ```
 </details>
 

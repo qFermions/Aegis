@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[POLICY_NAME]` / `[POLICY_ID]` (the policy as Jamf Pro lists it, and its ID) · `[SMART_GROUP]` (the computer group the policy is scoped to; after a Phase D change, every target group it leaves, all named) · `[TRIGGERS]` / `[FREQUENCY]` (the triggers left ticked after a Phase D change, as Jamf Pro names them, or NO TRIGGER, and the execution frequency as Jamf Pro writes it) · `[MEMBER_COUNT]` (the number of Macs the policy reaches after that change, the Phase D step 2 count) · `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's Jamf Pro computer ID, the `id` the inventory read returns) · `[NOT_BEFORE]` (the time the change was made; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-policy`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - A policy runs on every Mac in its scope whenever one of its triggers fires, as often as its execution frequency allows; a Self Service item runs when a person clicks it. What a policy has already run (a package, a script) is not undone by disabling, rescoping or deleting the policy.
@@ -125,7 +127,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 ```bash
 # HUMAN-RUN - read-only
 # proves the policy is enabled, runs Once per computer and has no trigger ticked (every trigger_ field false, no custom event): a ticked trigger would make it an automatic install
-node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --enabled true --no-triggers --execute
+node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --enabled true --no-triggers --change [CHANGE_ID] --execute
 # the full policy - Self Service on, scope is the one group
 node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 ```
@@ -191,7 +193,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 ```bash
 # HUMAN-RUN - read-only - the frequency below is the worked example, use the value the change record names
 # proves the policy is enabled with the new trigger and execution frequency - the values are the worked example (Recurring Check-in, Once every day): use the ones the change record names, one --trigger per read for each trigger left ticked
-node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once every day" --enabled true --execute
+node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once every day" --enabled true --change [CHANGE_ID] --execute
 # the full policy - compare the ticked triggers and the scope with the change record
 node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 ```

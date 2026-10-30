@@ -1,0 +1,90 @@
+# command: node --test scripts/adapters/rate-limit.test.js
+# commit: d957697 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:53:26Z  node: v24.22.2
+✔ github: a primary-limit 403 whose reset is within the cap waits until one second after the reset, retries once and succeeds (15.591245ms)
+✔ github: a primary-limit 403 whose reset is beyond the cap hands off at once with the reset time in UTC: one attempt, no wait, no retry storm (2.32416ms)
+✔ github: a primary-limit 429 is handled the same way (within the cap: wait and retry; beyond it: RATE_LIMITED) (1.818669ms)
+✔ github: a reset within the cap that does not fit the read's retry budget hands off instead of waiting (0.836539ms)
+✔ github: a reset that is malformed, missing or already past is never waited on: RATE_LIMITED after one attempt, no retry (3.510385ms)
+✔ github: when every wait was within the cap and the limit still holds after the last retry, the read ends in RATE_LIMITED, not a permission refusal (1.040515ms)
+✔ github: a secondary-limit 403 with retry-after within the cap waits that many seconds and retries (0.970393ms)
+✔ github: a secondary-limit 403 without retry-after (the docs' "at least one minute" is over the cap) or with a longer one hands off at once (1.325208ms)
+✖ github: a primary limit whose reset is missing or past but which carries retry-after within the cap waits retry-after and retries (3.018828ms)
+✖ github: a secondary limit with remaining 0 but a missing or past reset falls back to at least one minute, not to the clock message (1.10367ms)
+✔ github: a 403 with neither signal stays a permission refusal: one attempt, no wait, the permission message (0.954534ms)
+✔ github: a body that is not JSON, or JSON without a message, is not a secondary-limit signal (0.759264ms)
+✔ github: the rate-limit handoff is recorded in a real audit trail, which accepts RATE_LIMITED and holds no body (8.845075ms)
+✔ contract: rateLimit is opt-in and checked when the spec is defined; only the GitHub spec turns it on (1.018936ms)
+✔ fleet: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (4.232218ms)
+✔ jamf: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (4.995064ms)
+✔ slack: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (3.972099ms)
+✔ linear: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (6.644887ms)
+✔ google-workspace: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (9.163558ms)
+✔ okta: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (7.986151ms)
+✔ msgraph: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (6.458685ms)
+✔ jira: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait) (4.433616ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 20
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 290.32444
+
+✖ failing tests:
+
+test at scripts/adapters/rate-limit.test.js:194:1
+✖ github: a primary limit whose reset is missing or past but which carries retry-after within the cap waits retry-after and retries (3.018828ms)
+  AssertionError [ERR_ASSERTION]: undefined: {
+    "command": "org",
+    "state": "HTTP_ERROR",
+    "ok": false,
+    "status": 429,
+    "error": "HTTP 429 (body withheld)",
+    "attempts": 1,
+    "handoff": {
+      "state": "RATE_LIMITED",
+      "limit": "primary",
+      "retry_at": null,
+      "what_failed": "GitHub refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem",
+      "not_done": "Nothing was read and nothing was changed",
+      "next_step": "Do not widen the token or ask for more permissions; GitHub gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again"
+    },
+    "operator_message": "GitHub refused the read under its primary rate limit (the credential's requests for this hour are used up, HTTP 429 with x-ratelimit-remaining 0): this is a rate limit, not a permission problem. Nothing was read and nothing was changed. Do not widen the token or ask for more permissions; GitHub gave no readable reset time, so wait up to an hour for the limit to reset, then run the read again.",
+    "admin_detail": "platform=github operation=org state=HTTP_ERROR status=429 attempts=1 request_id=- handoff=RATE_LIMITED"
+  }
+  
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:198:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/rate-limit.test.js:204:1
+✖ github: a secondary limit with remaining 0 but a missing or past reset falls back to at least one minute, not to the clock message (1.10367ms)
+  AssertionError [ERR_ASSERTION]: at least one minute
+  + actual - expected
+  
+  + null
+  - '2026-10-30T12:01:00.000Z'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:211:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: '2026-10-30T12:01:00.000Z',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:53:26Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

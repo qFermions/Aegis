@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[USER_ID]` (the person's Slack member ID) · `[USER@DOMAIN.COM]` (their work email, the address Slack and Okta know them by) · `[UPN]` (their Okta username) · `[CHANNEL_NAME]` / `[CHANNEL_ID]` (a Slack channel) · `[@Aegion_SLACK_URL]` (the workspace host people sign in to) · `[@Aegion_SLACK_TEAM_ID]` (the workspace ID the read-only adapter is bound to) · `[ISSUE_ID]` (the Linear ticket) · `[ADMIN_NAME]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `slack:verify-deactivated`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Deactivation is R3 here.** Slack keeps the profile and every past message, and reactivation exists, but the person leaves every channel and reactivation does not put them back: the channel list captured in Phase A is the only way back. An offboarding that spans Okta, Google Workspace, devices and Slack is a multi-system plan, so it gets an independent out-of-session review before Phase D runs.
@@ -167,7 +169,7 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when users.info reports deleted true for the member
-node scripts/adapters/slack-client.js verify-deactivated --user [USER_ID] --execute
+node scripts/adapters/slack-client.js verify-deactivated --user [USER_ID] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] `verify-deactivated` passes · [ ] the GUI shows the account deactivated · [ ] with SCIM on, the Okta read-back in `/okta-user-lifecycle` agrees. An identity-provider push can fail on Slack's side (an Okta knowledge-base report, third-party and unverified), so the Slack read-back is required even when Okta says done.
@@ -222,7 +224,7 @@ node scripts/adapters/slack-client.js verify-reactivated --user [USER_ID] --exec
 
 ```bash
 # HUMAN-RUN read-only read-back, passes when users.info reports is_ultra_restricted true
-node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type single --execute
+node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type single --change [CHANGE_ID] --execute
 ```
 
 **Role needed:** Workspace Owner or Workspace Admin (Enterprise: Org Owner or Org Admin).
@@ -240,7 +242,7 @@ node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type singl
 
 ```bash
 # HUMAN-RUN read-only read-back, passes when users.info reports is_restricted true and is_ultra_restricted not true
-node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type multi --execute
+node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type multi --change [CHANGE_ID] --execute
 ```
 
 **Role needed:** Workspace Owner or Workspace Admin (Enterprise: Org Owner or Org Admin).

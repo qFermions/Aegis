@@ -26,10 +26,22 @@ Five kinds, each with a fixed field list, every value of a fixed form; anything 
 | `connector-call` | connector name, operation (route or query name), result state, attempts, HTTP status, request id, handoff state, duration in ms |
 | `procedure` | command, gate id, R class, one placeholder target such as `[UPN]`, the read-back that proves it (`connector:verify-...`, for a change record), the procedure's SHA-256, change id |
 | `approval` | an issue key such as `IT-123`, gate id, the approved procedure's SHA-256, change id |
-| `verify` | connector, `verify-*` command, verified true or false, result state, change id |
-| `change-link` | change id, the seq of a `verify` entry already in the trail (`change-record.js link`; refused unless it is the connector and command the change named at `open`) |
+| `verify` | connector, `verify-*` command, verified true or false, result state, change id (the `--change` the read-back ran under, or null) |
+| `change-link` | change id, the seq of a `verify` entry already in the trail (`change-record.js link`; refused unless it is the connector and command the change named at `open`, ran under `--change` with this change id, verified, after the approval, and no other change holds it) |
 
 No body, no response data, no free text, no secret, no token and no personal value can be written: a field outside the list is refused, a value outside its form is refused (a target must be a placeholder, a reference an issue key), and every value is also checked against credential shapes (Slack, GitHub, Google, Okta tokens, a JWT, a bearer or basic header, a private key block).
+
+## Binding a read-back to its change (batch G3 close-out, owner decision 1)
+
+A change record for an R2 or R3 procedure runs in this order, and only people run the procedure itself:
+
+1. `node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --read-back CONNECTOR:verify-... --procedure-file FILE` records the issued procedure's digest and prints the change id (`[CHANGE_ID]` in the runbooks, `chg-` and 12 lower-case hex characters).
+2. `change-record.js approve --change [CHANGE_ID] --ref ISSUE-123 --procedure-sha256 H` records the ticket's approval of exactly that digest. It authorizes a person's procedure and triggers no write.
+3. A person runs the procedure.
+4. The read-back runs with `--change [CHANGE_ID] --execute`. Before any read, dry or live, the `verify-*` command (any of the nine connectors: Fleet, GitHub, Google Workspace, Jamf Pro, Linear, Microsoft Graph, Okta, Slack, Jira) checks the id's form and that this trail holds the change, opened for this connector and command, with an approval of its procedure recorded after it (`change-record.js` `bindRefusal`); otherwise it refuses with exit 1 and reads nothing. Its `verify` entry records the change id.
+5. `change-record.js link --change [CHANGE_ID] --verify-seq N` joins that entry to the change (N is the entry's seq, which a bound read-back that verified prints as `audit_seq`, or in Jira's "Recorded as audit entry N" line; an unbound or unverified one prints none, since `link` would refuse it); `status --change [CHANGE_ID]` reports done only when the digest, the approval and a verified read-back bound to this change match, in that order.
+
+A read-back run without `--change` still prints its verdict and records `change: null`, but `link` refuses it, and `status` never counts it, even when a link to it is written into the trail around the CLI. The same holds for a read-back bound to another change. A trail written before the batch G3 close-out holds read-backs recorded with `change: null`, so a change linked to one of them now reads not done: run its read-back again with `--change` and link that entry (code review round 1, finding 2; no deployment held a trail when this changed). What the entries cannot say is which object the read-back read: they hold placeholders, never a user or device value, so matching the object stays the operator's step (`docs/aegis/boundary-audit.md` row 37).
 
 ## Concurrency
 
@@ -44,4 +56,4 @@ One writer at a time: `audit.lock` is created with O_EXCL and holds the writer's
 
 ## Status
 
-`node scripts/audit/audit-log.js status [--since 24h|7d|<UTC time>]` prints connector calls and failures in the window, by connector: calls, failures, the failure states and the handoff states (`RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG`, `RETRY_BUDGET_SPENT`). Only entries before the first broken link are counted, and the summary says whether the chain is intact. Nothing leaves the machine.
+`node scripts/audit/audit-log.js status [--since 24h|7d|<UTC time>]` prints connector calls and failures in the window, by connector: calls, failures, the failure states and the handoff states (`RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG`, `RETRY_BUDGET_SPENT`, and `RATE_LIMITED` since the batch G3 close-out). Only entries before the first broken link are counted, and the summary says whether the chain is intact. Nothing leaves the machine.

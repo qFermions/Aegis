@@ -37,7 +37,9 @@
  * (what happened, what was not done, the next step), and "admin detail: " with the platform,
  * operation, state, status, attempts, request id and handoff. A person running the CLI gets
  * the audit trail (scripts/audit/): each read, each verify-* verdict and each printed
- * HUMAN-RUN procedure is recorded first.
+ * HUMAN-RUN procedure is recorded first. A verify-* run with --change chg-... (batch G3
+ * close-out, owner decision 1) is checked against the change record before any read, dry or
+ * live, and its verdict is recorded under that change id (scripts/audit/README.md).
  *
  * Exit codes: 0 preview, read or verified read-back; 1 input error or a refused
  * write; 2 API, preflight or read-back failure (including a read-back that does not
@@ -50,9 +52,10 @@
 const crypto = require('node:crypto');
 const https = require('node:https');
 
-const { STATES, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
+const { STATES, EXIT, NOT_VERIFIED_DRY_RUN, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
 const { operatorMessage } = require('./adapters/operator-message.js');
 const { auditSink, defaultAuditDir } = require('./audit/audit-log.js');
+const { takeChange, changeRefusal, verdictState } = require('./adapters/cli-support.js');
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TRANSITION_PAGE_LIMIT = 50;
@@ -456,10 +459,15 @@ function recordProcedure(runtime, command, digest) {
   }
 }
 
-function recordJiraVerdict(runtime, command, verified) {
+// A verdict link can accept (run with --change, verified) has its audit seq printed, the number
+// change-record.js link takes (--verify-seq); any other has none, since link would refuse it.
+// state: OK when the read ran (it proved the write or did not); the contract's failure state
+// when the read itself failed (code review round 2 of the batch G3 close-out, finding 6).
+function recordJiraVerdict(runtime, command, verified, state = STATES.OK) {
   if (!runtime.audit) return;
   try {
-    runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: null });
+    const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state, change: typeof runtime.change === 'string' ? runtime.change : null });
+    if (typeof runtime.change === 'string' && verified === true && written && Number.isInteger(written.seq)) runtime.recorded = written.seq;
   } catch {
     throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
   }
@@ -820,13 +828,14 @@ function requireVerifyFlags(command, args) {
 }
 
 // A verify-* dry run proves nothing, so it has its own exit code: never 0, the code of a
-// passed read-back (batch 1 finding 7).
-const EXIT_VERIFY_DRY_RUN = 4;
+// passed read-back (batch 1 finding 7). Since the batch G3 close-out (owner decision 2) it is
+// the shared contract's EXIT.VERIFY_DRY_RUN, the code every connector's verify-* dry run uses.
+const EXIT_VERIFY_DRY_RUN = EXIT.VERIFY_DRY_RUN;
 
 function dryRunRead(runtime, args, apiPath) {
   if (args.execute === true) return false;
   runtime.out(`DRY RUN - would GET ${apiPath}. Add --execute to perform this read.`);
-  runtime.out('NOT VERIFIED: a dry run reads nothing, so it proves nothing (exit 4).');
+  runtime.out(NOT_VERIFIED_DRY_RUN);
   return true;
 }
 
@@ -848,8 +857,8 @@ async function cmdVerifyCreate(runtime, args) {
   if (createdMillis(response.json, 'createdDate', 'Create') < notBefore) {
     throw new ContractError('The request was created before the preview that prepared it; it is not the administrator\'s new request.');
   }
-  runtime.out(`Verified: ${observed.issueKey} ID ${observed.issueId} was created after the preview and carries the approved service desk, request type, summary and description.`);
-  return 0;
+  // the verdict line is printed by run() once the verdict is on record
+  return { code: 0, verdict: `Verified: ${observed.issueKey} ID ${observed.issueId} was created after the preview and carries the approved service desk, request type, summary and description.` };
 }
 
 // verify-comment: prove the comment id, the exact body and the visibility the human chose.
@@ -868,8 +877,8 @@ async function cmdVerifyComment(runtime, args) {
   if (createdMillis(response.json, 'created', 'Comment') < notBefore) {
     throw new ContractError('The comment was created before the preview that prepared it; it is not the administrator\'s new comment.');
   }
-  runtime.out(`Verified: ${response.json.public ? 'PUBLIC' : 'INTERNAL'} comment ${commentId} on ${issueKey} was created after the preview and carries the approved body and visibility.`);
-  return 0;
+  // the verdict line is printed by run() once the verdict is on record
+  return { code: 0, verdict: `Verified: ${response.json.public ? 'PUBLIC' : 'INTERNAL'} comment ${commentId} on ${issueKey} was created after the preview and carries the approved body and visibility.` };
 }
 
 // verify-transition: prove the same immutable request moved after the preflight (its
@@ -894,8 +903,8 @@ async function cmdVerifyTransition(runtime, args) {
   if (after.currentStatus !== toStatus) {
     throw new ContractError(`The request is in ${after.currentStatus}, not ${toStatus}; something other than this transition moved it, or it has not been applied.`);
   }
-  runtime.out(`Verified: ${after.issueKey} ID ${after.issueId} moved after the preflight and is now ${after.currentStatus}.`);
-  return 0;
+  // the verdict line is printed by run() once the verdict is on record
+  return { code: 0, verdict: `Verified: ${after.issueKey} ID ${after.issueId} moved after the preflight and is now ${after.currentStatus}.` };
 }
 
 const COMMANDS = {
@@ -914,14 +923,26 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
   const runtime = createRuntime(env, dependencies);
   let args;
   try {
-    args = parseArgs(argv);
+    // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+    // record; it is taken out of argv here and checked before the command reads anything
+    const bound = takeChange(argv);
+    args = parseArgs(bound.argv);
     const command = args._[0];
     if (!command || !COMMANDS[command] || args._.length !== 1) {
       throw new InputError('Usage: node scripts/jira-client.js ' +
         '<list-desks|list-types|create|comment|get|transition|verify-create|verify-comment|verify-transition> [flags]');
     }
-    const code = await COMMANDS[command](runtime, args);
+    const refusal = changeRefusal('jira', command, bound, runtime.audit);
+    if (refusal) throw new InputError(refusal);
+    runtime.change = bound.change;
+    // A passed read-back returns its "Verified" line instead of printing it, and the line is
+    // printed only once the verdict is on record, so a verdict the audit trail could not record
+    // is never shown as verified (code review rounds 1 and 2 of the batch G3 close-out).
+    const result = await COMMANDS[command](runtime, args);
+    const code = result && typeof result === 'object' ? result.code : result;
     if (code === 0 && /^verify-/.test(command)) recordJiraVerdict(runtime, command, true);
+    if (result && typeof result === 'object' && typeof result.verdict === 'string') runtime.out(result.verdict);
+    if (Number.isInteger(runtime.recorded)) runtime.out(`Recorded as audit entry ${runtime.recorded} (change-record.js link takes it as --verify-seq ${runtime.recorded}).`);
     return code;
   } catch (error) {
     const command = args && args._ ? args._[0] : null;
@@ -938,7 +959,10 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
     }
     // a read-back that ran and did not prove the write is a verdict, recorded as such
     if (op && /^verify-/.test(op) && (error instanceof ContractError || error instanceof ApiError)) {
-      try { recordJiraVerdict(runtime, op, false); } catch {
+      // the read's own state (an HTTP status without one is HTTP_ERROR), mapped by the adapters' rule
+      const r = error.result;
+      const failed = error instanceof ApiError ? verdictState(r && r.state ? r.state : (Number.isInteger(error.status) ? STATES.HTTP_ERROR : undefined)) : STATES.OK;
+      try { recordJiraVerdict(runtime, op, false, failed); } catch {
         runtime.err('Jira operation stopped: the audit trail could not record this read-back, so its verdict is withheld.');
         printFailure(runtime, 'AUDIT_FAILED', {}, op);
         return 2;

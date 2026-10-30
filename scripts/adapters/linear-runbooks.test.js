@@ -63,6 +63,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const linear = require('./linear-client.js');
+const { changeTrail } = require('../audit/trail-helper.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const RUNBOOKS = ['linear-intake', 'linear-ticket-note', 'linear-triage', 'linear-workspace-admin'];
@@ -177,17 +178,21 @@ test('every adapter line in the runbooks is one the adapter accepts, and the sno
   };
   const seen = new Set();
   const problems = [];
+  // a read-back of an R2 or R3 gate passes --change [CHANGE_ID]: a change opened and approved
+  // for that command in a temporary trail (batch G3 close-out, owner decision 1)
+  const trail = changeTrail(t);
   for (const name of RUNBOOKS) {
     const lines = text[name].split('\n');
     for (let i = 0; i < lines.length; i += 1) {
       for (const m of lines[i].matchAll(/node scripts\/adapters\/linear-client\.js ([^`\n]+)/g)) {
-        const argv = words(m[1].trim()).filter((w) => w !== '--execute').map((w) => SAMPLE[w] || w);
+        const raw = words(m[1].trim()).filter((w) => w !== '--execute').map((w) => SAMPLE[w] || w);
+        const argv = raw.map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`linear:${raw[0]}`) : w));
         const unknown = argv.filter((w) => /\[[^\]]+\]/.test(w));
         if (unknown.length) { problems.push(`${name}.md:${i + 1}: no sample value for ${unknown.join(' ')}`); continue; }
         seen.add(argv[0]);
         const out = [];
-        const code = await linear.run(argv, {}, { transport: async () => { throw new Error('no transport in a dry run'); }, out: (s) => out.push(s), err: (s) => out.push(s) });
-        if (code !== 0) problems.push(`${name}.md:${i + 1}: exit ${code}: ${argv.join(' ')}: ${out.join('').slice(0, 200)}`);
+        const code = await linear.run(argv, {}, { transport: async () => { throw new Error('no transport in a dry run'); }, audit: trail.sink, out: (s) => out.push(s), err: (s) => out.push(s) });
+        if (code !== (argv[0].startsWith('verify-') ? 4 : 0)) problems.push(`${name}.md:${i + 1}: exit ${code}: ${argv.join(' ')}: ${out.join('').slice(0, 200)}`);
       }
     }
   }

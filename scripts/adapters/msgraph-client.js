@@ -13,7 +13,7 @@
 //     user --user [USER_ID]|[UPN] | auth-methods --user ... | member-of --user ...
 //     group-members --group [GROUP_ID] | sign-ins --user [USER_ID] --since [NOT_BEFORE]
 //     managed-device --device [DEVICE_ID]
-//   Read-backs (verified true or false; exit 0 verified, 2 not verified):
+//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run):
 //     verify-password-changed --user U --not-before T   (lastPasswordChangeDateTime at or after T)
 //     verify-account-enabled  --user U --enabled true|false
 //     verify-mfa-method       --user U --method microsoftAuthenticator|phone|fido2|softwareOath|windowsHelloForBusiness|email|temporaryAccessPass
@@ -32,9 +32,9 @@
 
 const crypto = require('node:crypto');
 const {
-  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep,
+  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 const API_HOST = 'graph.microsoft.com';
 const TOKEN_HOST = 'login.microsoftonline.com';
@@ -201,8 +201,11 @@ async function run(argv, env = process.env, deps = {}) {
   const seen = [];
   const remember = (value) => { if (typeof value === 'string' && value.length >= 4 && !seen.includes(value)) seen.push(value); };
   const secrets = () => [...seen, ...['MS_CLIENT_ID', 'MS_PRIVATE_KEY', 'MS_CERT_SHA256'].map((n) => env[n]).filter((v) => typeof v === 'string' && v.length >= 4)];
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
+    const args = parseArgs(bound.argv, { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
     const command = args._command;
     if (command === 'help' || command === '--help') { out(USAGE); return 0; }
     if (typeof command !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, command)) {
@@ -213,6 +216,9 @@ async function run(argv, env = process.env, deps = {}) {
     const a = validate(command, def, args);
     const spec = makeSpec({ tenant: env.MS_TENANT_ID, now, remember });
     const steps = def.steps(a);
+    const cli = cliDeps(deps, env);
+    const refusal = changeRefusal('msgraph', command, bound, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {
       const dryClient = createClient(spec, { env: {}, transport: async () => { throw new Error('dry run'); } });
@@ -224,10 +230,9 @@ async function run(argv, env = process.env, deps = {}) {
       shown.note = 'dry run: no credentials read, no network';
       shown.next = 'Add --execute to perform this read.';
       out(renderResult(shown, { platform: 'msgraph' }));
-      return 0;
+      return dryRunExit(command, err);
     }
 
-    const cli = cliDeps(deps, env);
     const client = createClient(spec, { env, ...cli, now });
     const r = await client.get(steps[0].route, steps[0].params, steps[0].query);
     let res;
@@ -239,7 +244,7 @@ async function run(argv, env = process.env, deps = {}) {
       const judged = judge(command, a, r.data);
       const verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed, ...(r.scope_notice ? { scope_notice: r.scope_notice } : {}) };
       if (!verdict.verified) verdict.reason = judged.reason;
-      res = recordVerdict(cli.audit, 'msgraph', verdict);
+      res = recordVerdict(cli.audit, 'msgraph', verdict, bound.change);
     }
     const shown = redactDeep(res, secrets());
     const code = exitCodeFor(shown);

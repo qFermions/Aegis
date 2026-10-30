@@ -22,7 +22,7 @@
 //     dependabot-alerts [--state ...] [--severity ...] [--page N] | dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER]
 //     issue --repo [REPO_NAME] --number N (the issue and its first 100 comments: the JSON
 //       scripts/intake/intake.js imports as a GitHub issue)
-//   Read-backs (verified true or false; exit 0 verified, 2 not verified):
+//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run):
 //     verify-collaborator --repo R --user U --role read|triage|write|maintain|admin
 //     verify-collaborator-removed --repo R --user U
 //     verify-offboarded --user U
@@ -36,14 +36,19 @@
 // exactly as GitHub returns its login; every path is built from it and no command takes an
 // organization. GITHUB_TOKEN is a read-only fine-grained token or App installation token
 // (scope-manifest.json "github"); a classic token holding any scope but read:* is refused.
-// Known limit: GitHub answers an exhausted primary rate limit with 403 (x-ratelimit-remaining
-// 0, vendor fact G-40), which reads here as a permission refusal; check the limit before
-// asking for a wider permission.
+// Rate limits (batch G3 close-out, owner decision 3): GitHub answers an exhausted primary
+// rate limit with 403 or 429 and x-ratelimit-remaining 0 (vendor fact G-40), and a secondary
+// limit with 403 or 429 and a message naming it (G-41). SPEC.rateLimit turns on the
+// contract's rate-limit hook, so neither reads as a permission refusal: a wait that fits the
+// contract's 30 s cap and retry budget is waited out (one second past x-ratelimit-reset, or
+// retry-after seconds), and anything longer ends in the RATE_LIMITED handoff with the UTC time
+// to run the read again and the words "a rate limit, not a permission problem". A 403 with
+// neither signal is still a permission refusal.
 
 const {
-  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep,
+  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 const API_VERSION = '2022-11-28';
 const PER_PAGE = '100';
@@ -129,6 +134,8 @@ const SPEC = defineAdapter({
   // batch G3: GitHub returns a classic token's scopes in X-OAuth-Scopes (vendor fact G-31);
   // fine-grained and App tokens do not, so they get the not-exposed notice
   scopes: { manifest: 'github', kind: 'header', vendor: 'GitHub', header: 'x-oauth-scopes', granted: scopeList, allowed: (s) => READ_SCOPE.test(s) },
+  // batch G3 close-out: GitHub's rate-limit signals (vendor facts G-40, G-41)
+  rateLimit: { statuses: [403, 429], remainingHeader: 'x-ratelimit-remaining', resetHeader: 'x-ratelimit-reset', secondaryMessage: /secondary rate limit/i, messageField: 'message' },
 });
 
 // ── Commands ─────────────────────────────────────────────────────────────────
@@ -319,8 +326,11 @@ async function run(argv, env = process.env, deps = {}) {
   const out = deps.out || ((s) => process.stdout.write(s));
   const err = deps.err || ((s) => process.stderr.write(s));
   const secrets = () => [env.GITHUB_TOKEN].filter((v) => typeof v === 'string' && v.length > 0);
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
+    const args = parseArgs(bound.argv, { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
     const command = args._command;
     if (command === 'help' || command === '--help') { out(USAGE); return 0; }
     if (typeof command !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, command)) {
@@ -332,6 +342,9 @@ async function run(argv, env = process.env, deps = {}) {
     const org = typeof env.GITHUB_ORG === 'string' ? env.GITHUB_ORG.trim() : '';
     if (!ORG.test(org)) throw new RefusedError('GITHUB_ORG must name this deployment\'s organization (its login) before any read');
     const steps = def.steps(a).map((s) => ({ ...s, params: { org, ...s.params } }));
+    const cli = cliDeps(deps, env);
+    const refusal = changeRefusal('github', command, bound, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {
       const dryClient = createClient(SPEC, { env: { GITHUB_ORG: org }, transport: async () => { throw new Error('dry run'); } });
@@ -341,10 +354,9 @@ async function run(argv, env = process.env, deps = {}) {
       shown.note = 'dry run: no credentials read, no network';
       shown.next = 'Add --execute to perform this read.';
       out(renderResult(shown, { platform: 'github' }));
-      return 0;
+      return dryRunExit(command, err);
     }
 
-    const cli = cliDeps(deps, env);
     const client = createClient(SPEC, { env, ...cli });
     let res;
     if (def.kind === 'read') {
@@ -363,7 +375,7 @@ async function run(argv, env = process.env, deps = {}) {
       else {
         const verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed };
         if (!verdict.verified) verdict.reason = judged.reason;
-        res = recordVerdict(cli.audit, 'github', verdict);
+        res = recordVerdict(cli.audit, 'github', verdict, bound.change);
       }
     }
     const shown = redactDeep(res, secrets());

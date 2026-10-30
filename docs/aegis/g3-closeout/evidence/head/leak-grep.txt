@@ -1,0 +1,106 @@
+# command: node docs/aegis/g3/evidence/tools/leak-grep.js 01dcb37
+# commit: e3029ae  started: 2026-10-30T09:44:37Z  node: v24.22.2
+charter grep: 989 hit lines (case-insensitive) in 90 files; by keyword: {"secret":185,"token":541,"password":246,"/users/":11,"api_key":6}
+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 6
+  99: checks.md: +| E6 no secret, token, personal path, real name, internal hostname or private email | pass | Captures over `01dcb37..HEADX` (`HEADX` is the last commit before 
+  345: docs/aegis/g3-closeout/evidence/tools/e6-hits.sh: +PAT='api[_-]?key|secret|token|password|/Users/|C:\\\\Users|@gmail'
+  4935: docs/aegis/g3-closeout/evidence/head/charter-grep.txt: +# command: bash -c git log -p 01dcb37..HEAD | grep -n -i -E "api[_-]?key|secret|token|password|/Users/|C:\\\\Users|@gmail" | wc -l
+  5057: docs/aegis/g3-closeout/evidence/head/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 2
+  23641: checks.md: -| D10 no secret, token, personal path, real name, internal hostname or private email | pass | `d10-leak-grep.txt` (over `f185071..ae88348`; later commits are d
+  27739: docs/review/batches/g3-checks.md: +| D10 no secret, token, personal path, real name, internal hostname or private email | pass | `d10-leak-grep.txt` (over `f185071..ae88348`; later commits are d
+hits by file (path: lines):
+  docs/aegis/g3-closeout/evidence/head/battery-node-test-under-tripwire.txt: 107
+  docs/aegis/g3-closeout/evidence/head/battery-node-test.txt: 107
+  docs/aegis/g3-closeout/baseline/node-test-under-tripwire.txt: 107
+  docs/aegis/g3-closeout/baseline/node-test.txt: 107
+  docs/aegis/g3-closeout/evidence/t2-red.txt: 66
+  docs/aegis/g3-closeout/evidence/t2-green.txt: 34
+  docs/aegis/g3-closeout/evidence/r3-f4-green.txt: 24
+  docs/aegis/g3-closeout/evidence/r3-f3-green.txt: 23
+  docs/aegis/g3-closeout/evidence/r3-f5-green.txt: 23
+  docs/aegis/g3-closeout/evidence/r3-f8-green.txt: 23
+  docs/aegis/g3-closeout/evidence/r3-f8-red.txt: 22
+  scripts/adapters/rate-limit.test.js: 21
+  scripts/adapters/README.md: 17
+  docs/aegis/g3-closeout/evidence/t4-red.txt: 14
+  scripts/adapters/change-binding.test.js: 13
+  checks.md: 12
+  scripts/adapters/verify-dry-run.test.js: 12
+  .env.example: 12
+  docs/aegis/g3-closeout/evidence/head/battery-pre-commit-check-all.txt: 11
+  docs/aegis/g3-closeout/evidence/r1-f3-green.txt: 11
+  docs/aegis/g3-closeout/baseline/pre-commit-check-all.txt: 11
+  docs/aegis/g3-closeout/evidence/r3-f2-green.txt: 8
+  docs/aegis/g3-closeout/evidence/t4-green.txt: 7
+  docs/aegis/g3-closeout/evidence/t1-red.txt: 7
+  docs/aegis/g3-closeout/evidence/head/battery-g3-ticket-eval.txt: 6
+  docs/aegis/g3-closeout/evidence/head/battery-ms-ticket-eval.txt: 6
+  docs/aegis/g3-closeout/evidence/r3-f1-green.txt: 6
+  docs/aegis/boundary-audit.md: 6
+  docs/aegis/g3-closeout/evidence/r2-f4-green.txt: 6
+  .claude/commands/github-security-alerts.md: 6
+  .claude/commands/gws-account-containment.md: 6
+  scripts/adapters/github-client.js: 6
+  docs/aegis/g3-closeout/evidence/t2-test-diff.txt: 6
+  docs/aegis/g3-closeout/baseline/g3-ticket-eval.txt: 6
+  docs/aegis/g3-closeout/baseline/ms-ticket-eval.txt: 6
+  scripts/env-example.test.js: 5
+  scripts/adapters/readonly-contract.js: 5
+  docs/aegis/g3-closeout/evidence/t1-green.txt: 5
+  scripts/adapters/fleet-client.js: 5
+  docs/aegis/g3-closeout/evidence/security-review-2.md: 4
+  docs/aegis/g3-closeout/evidence/head/battery-gws-ticket-eval.txt: 4
+  docs/aegis/g3-closeout/evidence/head/leak-grep.txt: 4
+  docs/aegis/g3-closeout/evidence/r3-f3-red.txt: 4
+  scripts/jira-client.test.js: 4
+  scripts/adapters/msgraph-client.js: 4
+  docs/aegis/g3-closeout/baseline/gws-ticket-eval.txt: 4
+  docs/aegis/g3-closeout/evidence/t4-scan-names.txt: 3
+  docs/aegis/g3-closeout/evidence/head/battery-replay-demo.txt: 3
+  docs/aegis/g3-closeout/evidence/helper-name-green.txt: 3
+  docs/aegis/g3-closeout/evidence/r2-f3-f4-red.txt: 3
+  docs/aegis/g3-closeout/evidence/r1-f13-red.txt: 3
+  (commit 3a77057 header and message): 3
+  scripts/adapters/gws-client.js: 3
+  docs/aegis/g3-closeout/baseline/replay-demo.txt: 3
+  docs/review/batches/g3-checks.md: 3
+  docs/aegis/g3-closeout/evidence/r1-f12-guard-mutation.txt: 2
+  docs/aegis/g3-closeout/evidence/r3-f6-green.txt: 2
+  docs/aegis/g3-closeout/evidence/r2-f6-green.txt: 2
+  docs/aegis/g3-closeout/evidence/r1-f4-green.txt: 2
+  docs/aegis/g3-closeout/evidence/r1-f13-green.txt: 2
+  docs/aegis/g3-closeout/evidence/r1-f3-red.txt: 2
+  docs/aegis/g3-closeout/evidence/r1-f1-green.txt: 2
+  docs/aegis/g3-closeout/evidence/security-review-1.md: 2
+  modules/security/placeholder-dictionary.md: 2
+  scripts/tier/tier-guard.js: 2
+  .claude/commands/okta-user-lifecycle.md: 2
+  docs/aegis/production-readiness.md: 2
+  scripts/adapters/okta-client.js: 2
+  scripts/adapters/endpoint-sync.test.js: 2
+  docs/aegis/g3-closeout/evidence/tools/e6-hits.sh: 1
+  docs/aegis/g3-closeout/evidence/head/battery-release-boundary-check.txt: 1
+  docs/aegis/g3-closeout/evidence/head/charter-grep.txt: 1
+  docs/aegis/g3-closeout/evidence/r2-f1-green.txt: 1
+  docs/aegis/g3-closeout/evidence/r1-f5-green.txt: 1
+  docs/aegis/g3-closeout/evidence/fix-audit-seq-green.txt: 1
+  .claude/commands/github-offboard-member.md: 1
+  scripts/adapters/jamf-client.js: 1
+  scripts/adapters/linear-client.js: 1
+  scripts/audit/README.md: 1
+  (commit b3436c7 header and message): 1
+  docs/aegis/g3/vendor-facts.md: 1
+  scripts/adapters/operator-message.js: 1
+  scripts/audit/audit-log.js: 1
+  (commit cc4db5b header and message): 1
+  scripts/adapters/fleet-client.test.js: 1
+  scripts/adapters/gws-client.test.js: 1
+  scripts/adapters/linear-client.test.js: 1
+  scripts/adapters/slack-client.test.js: 1
+  docs/aegis/g3-closeout/baseline/release-boundary-check.txt: 1
+  progress.md: 1
+credential-shape pass over added lines: 0 hit(s)
+URL hosts in added lines (7): docs.github.com 8, www.googleapis.com 7, api.github.com 4, claude.ai 1, github.com 1, nodejs.org 1, okta.example.invalid 1
+mail domains in added lines (3): domain.com 46, example.com 14, anthropic.com 2
+# exit: 0  finished: 2026-10-30T09:44:37Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -1,0 +1,766 @@
+# command: node --test scripts/adapters/change-binding.test.js scripts/audit/change-record.test.js scripts/adapters/g3-runbooks.test.js scripts/gws-runbooks.test.js scripts/adapters/linear-runbooks.test.js scripts/adapters/fleet-runbooks.test.js scripts/adapters/jamf-runbooks.test.js
+# commit: 793bb2a (plus uncommitted changes in the working tree)  started: 2026-10-30T07:25:42Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (31.902963ms)
+✖ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.760701ms)
+✖ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (28.063411ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.306577ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.85275ms)
+✖ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (5.839933ms)
+✖ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.530652ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (8.13718ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (21.0282ms)
+✖ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (7.258628ms)
+✖ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (26.238515ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.735621ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (18.979227ms)
+✖ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (6.828216ms)
+✖ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (29.144402ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (7.674126ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (18.881233ms)
+✖ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (12.211907ms)
+✖ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (17.104123ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.762221ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.263366ms)
+✖ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (5.264588ms)
+✖ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (27.662008ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (7.605558ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (20.386218ms)
+✖ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (7.536688ms)
+✖ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (31.515169ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (7.466658ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (20.171864ms)
+✖ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (6.572649ms)
+✖ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (22.173566ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (8.453208ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (19.340785ms)
+✖ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (6.869464ms)
+✖ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (20.55395ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (7.400993ms)
+✖ a verify-* with --change and no audit trail to check it against is refused, never run unbound (1.10108ms)
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (3.712818ms)
+✔ deleting a host record is R3 everywhere (SR-2 device delete), with pre-state and rollback path before step 1 (2.639248ms)
+✔ each lock, wipe and Turn off MDM read-back names a proof that can pass on the platform it covers (0.848793ms)
+✔ the cancel gate names the one queued item it stops, in its target, its phrase and its read-back (SR-2: name the object) (0.755893ms)
+✔ a queued script's cancel can be filled and proven: host-upcoming names its execution ID, and the read-back compares every page with the before list (0.887261ms)
+✔ every adapter command a Fleet runbook tells the operator to run exists in fleet-client.js, with flags it accepts (1.030512ms)
+✔ a remediation script on one host takes its R-class from what it changes, as in /fleet-device-actions E1: a security setting is R3 with the review (1.263275ms)
+✔ more than 10 hosts already failing a policy go to the R3 batch gate in /fleet-device-actions, never to Phase 5, which does not reach them (0.550069ms)
+✔ the R1 gates that say "installs nothing" keep every path that could install out of them (0.503908ms)
+✔ nits: the batch phrase binds the host count, the osquery storage read cancels its edit forms, the lane spec names only verify-wipe on GET /commands (0.861419ms)
+✔ the fleetctl gates carry the prerequisites their portal counterparts carry, and every script gate asks for the pre-state (0.877194ms)
+✔ one script on one host asks for the same R2 and R3 ceremony in all three gates: checkpoint for R2 and R3, rollback path and review for R3 (0.712087ms)
+✔ round-2 nits: the Android lock in the fast path and the fleetctl block, paged MDM command reads, and a Linux wipe with no exit code (1.203379ms)
+✔ the exposure check compares against the ticket's own count, not the F04 corpus number (0.695924ms)
+✔ the vulnerable-title read that yields [SOFTWARE_TITLE_ID] pages, so a long list can be read to the end (0.167416ms)
+✔ the role check reads the operator's own role in Fleet; `me` only confirms the adapter token is an Observer (0.570417ms)
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (17.370314ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (2.978726ms)
+✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (1.736504ms)
+✔ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (8.288549ms)
+✔ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (3.54227ms)
+✔ github-org-security: every github line runs as written (dry run) and the required read-backs are there (4.711252ms)
+✔ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (2.433412ms)
+✔ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (3.518079ms)
+✔ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (8.287664ms)
+✔ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (3.502184ms)
+✔ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (1.972666ms)
+✔ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (4.732127ms)
+✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (4.528191ms)
+✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (4.953382ms)
+✔ reads that can carry secrets are never pasted whole into a ticket: the runbooks name the fields to copy (4.342615ms)
+✖ every profile read-back names the profile by its identifier, so an install or an entry for another profile is never proof (4.077331ms)
+✖ every policy read-back proves a property, never mere existence: no trigger ticked after the Self Service create, disabled after the disable (1.725814ms)
+✔ a stage that can reach more than 10 Macs carries R3 ceremony: the App Installers rollout, and a large group leaving a profile's Targets (6.228039ms)
+✔ every console Save in the five runbooks sits inside an action-local SAFETY GATE: no ungated scope change, saved search or group (7.13815ms)
+✔ no Mac gets a second FileVault profile: Phase A reads each Mac's profiles, and every FileVault scope gate waits for that read (1.331573ms)
+✔ every pilot gate stops above 10 Macs, in the steps before it and in its Only after line (3.912637ms)
+✔ each FileVault R3 scope gate names its written rollback and needs the pre-state and that rollback in the ticket before step 1 (1.341777ms)
+✔ the inventory update gate states its downstream effect and records the Mac's groups before and after (1.040686ms)
+✔ the policy, static-group and profile gate phrases bind the values they set, and an existing profile changes only its scope there (4.327826ms)
+✔ round-1 nits: the R3 rule cites a CLAUDE.md section that exists, group names are quoted, member IDs map to serials, the stripped validation field is named, and widening keeps the pilot group (1.389411ms)
+✔ the four runbooks carry the gates this file judges (1.244149ms)
+✔ every delete is R3: its gate names the written rollback path, the action waits for it, and no line labels a delete lower (2.171366ms)
+✔ every gate phrase names the value or the comment it changes, and its Target binds the same placeholders (0.915125ms)
+✔ triage Phase E corrects a wrong priority under a gate that changes the priority and nothing else (0.301502ms)
+✔ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed (20.253573ms)
+✔ the workspace-admin Phase A stop depends on the person who makes the change, never on the key (0.463404ms)
+✔ ticket-note: a digest that still differs after one replace is a stop with a partial-state note, not another edit (0.50464ms)
+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.734325ms)
+✔ a reversal over more than 10 issues is its own R3 change: the bulk delete rolls back by a reviewed bulk restore, never by N single R1 restores (1.336071ms)
+✔ every Linear-ready note read-back proves who posted it; workspace-admin never passes the member as --author (0.64311ms)
+✔ ticket-note stops when the comment it needs is past the 50-comment page or the 20-entry list (0.409796ms)
+✔ triage compares a snooze time in UTC, the form verify-snoozed prints (0.572544ms)
+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.574557ms)
+✔ ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key (0.197182ms)
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (289.669598ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (215.482871ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (256.127629ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (1055.648054ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (459.990027ms)
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one (438.829631ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (216.452788ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (521.742696ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (405.500818ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (106.780553ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.579161ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (452.484883ms)
+✖ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (213.797725ms)
+✖ status never counts a read-back that was not recorded under this change, even one linked around the CLI (198.437881ms)
+✖ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (2.420626ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.58121ms)
+✔ the parser reads every gate in the five runbooks with all six fields, a phrase and an R-class (6.214472ms)
+✔ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*) (30.836627ms)
+✔ no runbook treats exit 2 from a verify-* read as an expected result (2.588224ms)
+✔ exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate (7.203331ms)
+✔ every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect (6.81299ms)
+✔ every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict (3.158144ms)
+✔ each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change (11.587717ms)
+✔ every verify-event whose actor is the administrator carries --target, and the checklists require the target (4.04184ms)
+✔ no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof (4.400226ms)
+✔ every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook (13.746278ms)
+✔ the containment suspend gate waits for a user read in the ticket, also on the urgent path (2.167294ms)
+✔ every Drive sharing gate that changes who outside can be shared with waits for a named approver (7.920496ms)
+✔ single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing (23.773736ms)
+✔ the GAM export gates stop before replacing an existing file (bash, mocked gam) (43.793718ms)
+✔ /gws-audit-log hands Google containment to /gws-account-containment, never to the Microsoft-only triage runbook (1.106598ms)
+ℹ tests 123
+ℹ suites 0
+ℹ pass 98
+ℹ fail 25
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5225.844076
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.760701ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  {
+    "command": "verify-checked-in",
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Fleet. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=fleet operation=verify-checked-in state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (28.063411ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-2d68b93bd20a",
+    "verify_seq": 6,
+    "audit_seq": 7
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (5.839933ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting GitHub. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=github operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.530652ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-dd40aa658a10",
+    "verify_seq": 6,
+    "audit_seq": 7
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (7.258628ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Google Workspace. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=google-workspace operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (26.238515ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-d2861c1efe4b",
+    "verify_seq": 7,
+    "audit_seq": 8
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (6.828216ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Jamf Pro. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=jamf operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (29.144402ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-868591f74133",
+    "verify_seq": 8,
+    "audit_seq": 9
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (12.211907ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Linear. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=linear operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (17.104123ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-8b411369c581",
+    "verify_seq": 6,
+    "audit_seq": 7
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (5.264588ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (27.662008ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-894b831c1203",
+    "verify_seq": 7,
+    "audit_seq": 8
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (7.536688ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Okta. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=okta operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (31.515169ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-a76335a6d622",
+    "verify_seq": 7,
+    "audit_seq": 8
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (6.572649ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: {
+    "state": "REFUSED",
+    "ok": false,
+    "command": null,
+    "error": "unknown flag --change",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Slack. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=slack operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  REFUSED: unknown flag --change
+  
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (22.173566ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-3ccd7e2c03a5",
+    "verify_seq": 6,
+    "audit_seq": 7
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:165:3
+✖ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (6.869464ms)
+  AssertionError [ERR_ASSERTION]: a bound dry run is still a dry run: 
+  Input error: Unknown flag: --change
+  Aegis: Aegis refused this request before reading any credential or contacting Jira. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.
+  admin detail: platform=jira operation=- state=REFUSED status=- attempts=- request_id=- handoff=-
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:169:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:183:3
+✖ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (20.55395ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-719b40daee19",
+    "verify_seq": 6,
+    "audit_seq": 7
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:192:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:221:1
+✖ a verify-* with --change and no audit trail to check it against is refused, never run unbound (1.10108ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /audit trail/. Input:
+  
+  '{\n' +
+    '  "state": "REFUSED",\n' +
+    '  "ok": false,\n' +
+    '  "error": "unknown flag --change",\n' +
+    '  "operator_message": "Aegis refused this request before reading any credential or contacting GitHub. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n' +
+    '  "admin_detail": "platform=github operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:228:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '{\n  "state": "REFUSED",\n  "ok": false,\n  "error": "unknown flag --change",\n  "operator_message": "Aegis refused this request before reading any credential or contacting GitHub. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",\n  "admin_detail": "platform=github operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"\n}\n',
+    expected: /audit trail/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:234:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (3.712818ms)
+  AssertionError [ERR_ASSERTION]: fleet-device-actions.md:100 (R2): - macOS, Windows, Linux, iPhone and iPad: `node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute` p
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:252:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-runbooks.test.js:96:1
+✖ every profile read-back names the profile by its identifier, so an install or an entry for another profile is never proof (4.077331ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /verify-command --management-id \[DEVICE_ID\] --type INSTALL_PROFILE --profile-identifier \[PROFILE_IDENTIFIER\] --not-before \[NOT_BEFORE\] --change \[CHANGE_ID\] --execute/. Input:
+  
+  '## Phase F: Change a deployed profile and Distribute to All (R2, R3 above 10 Macs)\n' +
+    '\n' +
+    '**Purpose**: give every Mac in scope corrected settings, knowing each Mac drops the profile for a moment.\n' +
+    '\n' +
+    '1. Pre-state: the Phase A read (level, distribution method, scope and payload names) is in the ticket, and the current values of the settings the change record touches are read on screen and written into the change record. A password, certificate or challenge is never copied; its owner keeps it. Without the pre-state there is no way back.\n' +
+    '2. Count the Macs in scope: Complete plus Remaining plus Failed from Phase A. More than 10 is R3: the independent review and a change window come first.\n' +
+    '3. **Stop if** the profile carries Wi-Fi, a certificate or restrictions people work under and the change window is during working hours: the remove-and-reinstall gap is felt on every Mac at once.\n' +
+    '\n' +
+    '**Role needed:** the same Jamf Pro privileges as Phase C.\n' +
+    '\n' +
+    '<!-- SAFETY GATE [jamf-config-profiles-distribute-all-portal] -->\n' +
+    '- **Target:** [PROFILE_NAME] payload settings on every Mac in its scope\n' +
+    '- **Effect:** distribute the edited profile to every Mac in its scope, so each Mac drops the old copy before it receives the new settings\n' +
+    '- **Scope:** every Mac in Targets minus Exclusions (the step 2 count); R2 at 10 Macs or fewer, R3 above 10\n' +
+    '- **Reversibility:** R2 or R3 as Scope says: re-enter the old values from the pre-state and run this gate again; each Mac goes through a second remove and reinstall, with a short gap without the profile each time\n' +
+    '- **Required confirmation:** Type exactly `DISTRIBUTE CHANGED PROFILE [PROFILE_NAME] TO ALL`.\n' +
+    '- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n' +
+    '**PORTAL ACTION [jamf-config-profiles-distribute-all-portal]:** Only after the pre-state, the count, (above 10 Macs) the independent review, and the exact match:\n' +
+    '1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → change only the payload values the change record names → **Save**.\n' +
+    '2. When Jamf Pro asks, choose **Distribute to All**. Write the time as `[NOT_BEFORE]`.\n' +
+    '\n' +
+    "**WAIT UNTIL** the profile's row reads Remaining 0; each Mac takes the remove and the reinstall at its next check-in.\n" +
+    '\n' +
+    '<details>\n' +
+    '<summary>Read-back through the read-only adapter (HUMAN-RUN, read-only)</summary>\n' +
+    '\n' +
+    '```bash\n' +
+    '# HUMAN-RUN - read-only - on a sample of Macs in scope\n' +
+    "# the profile's payload names and scope are unchanged; the adapter withholds payload settings, so the new values are compared on screen (step 1's payload) with the change record\n" +
+    'node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute\n' +
+    '# proves this Mac still lists the profile after the reinstall\n' +
+    'node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute\n' +
+    '# proves the reinstall command for this profile on this Mac was acknowledged after the distribution time - a command for another profile is not proof\n' +
+    'node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --execute\n' +
+    '```\n' +
+    '</details>\n' +
+    '\n' +
+    '**Verification checkpoint**: [ ] the payload values on screen match the change record (the adapter does not print payload settings) · [ ] Remaining 0, Failed 0 · [ ] sample read-backs passed.\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/jamf-runbooks.test.js:111:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "## Phase F: Change a deployed profile and Distribute to All (R2, R3 above 10 Macs)\n\n**Purpose**: give every Mac in scope corrected settings, knowing each Mac drops the profile for a moment.\n\n1. Pre-state: the Phase A read (level, distribution method, scope and payload names) is in the ticket, and the current values of the settings the change record touches are read on screen and written into the change record. A password, certificate or challenge is never copied; its owner keeps it. Without the pre-state there is no way back.\n2. Count the Macs in scope: Complete plus Remaining plus Failed from Phase A. More than 10 is R3: the independent review and a change window come first.\n3. **Stop if** the profile carries Wi-Fi, a certificate or restrictions people work under and the change window is during working hours: the remove-and-reinstall gap is felt on every Mac at once.\n\n**Role needed:** the same Jamf Pro privileges as Phase C.\n\n<!-- SAFETY GATE [jamf-config-profiles-distribute-all-portal] -->\n- **Target:** [PROFILE_NAME] payload settings on every Mac in its scope\n- **Effect:** distribute the edited profile to every Mac in its scope, so each Mac drops the old copy before it receives the new settings\n- **Scope:** every Mac in Targets minus Exclusions (the step 2 count); R2 at 10 Macs or fewer, R3 above 10\n- **Reversibility:** R2 or R3 as Scope says: re-enter the old values from the pre-state and run this gate again; each Mac goes through a second remove and reinstall, with a short gap without the profile each time\n- **Required confirmation:** Type exactly `DISTRIBUTE CHANGED PROFILE [PROFILE_NAME] TO ALL`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [jamf-config-profiles-distribute-all-portal]:** Only after the pre-state, the count, (above 10 Macs) the independent review, and the exact match:\n1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → change only the payload values the change record names → **Save**.\n2. When Jamf Pro asks, choose **Distribute to All**. Write the time as `[NOT_BEFORE]`.\n\n**WAIT UNTIL** the profile's row reads Remaining 0; each Mac takes the remove and the reinstall at its next check-in.\n\n<details>\n<summary>Read-back through the read-only adapter (HUMAN-RUN, read-only)</summary>\n\n```bash\n# HUMAN-RUN - read-only - on a sample of Macs in scope\n# the profile's payload names and scope are unchanged; the adapter withholds payload settings, so the new values are compared on screen (step 1's payload) with the change record\nnode scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute\n# proves this Mac still lists the profile after the reinstall\nnode scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute\n# proves the reinstall command for this profile on this Mac was acknowledged after the distribution time - a command for another profile is not proof\nnode scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --execute\n```\n</details>\n\n**Verification checkpoint**: [ ] the payload values on screen match the change record (the adapter does not print payload settings) · [ ] Remaining 0, Failed 0 · [ ] sample read-backs passed.\n",
+    expected: /verify-command --management-id \[DEVICE_ID\] --type INSTALL_PROFILE --profile-identifier \[PROFILE_IDENTIFIER\] --not-before \[NOT_BEFORE\] --change \[CHANGE_ID\] --execute/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-runbooks.test.js:116:1
+✖ every policy read-back proves a property, never mere existence: no trigger ticked after the Self Service create, disabled after the disable (1.725814ms)
+  AssertionError [ERR_ASSERTION]: a ticked trigger would turn the Self Service item into an automatic install
+      at TestContext.<anonymous> (<repo>/scripts/adapters/jamf-runbooks.test.js:124:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '## Phase C: Offer an approved app in Self Service (R2, then one R1 test install)\n\n**Purpose**: make the app installable by the people who need it, with nothing installing until someone clicks.\n\n1. The app is approved and its package is already in Jamf Pro: **[org gap: approval record and package name]**. If the app is in the Jamf App Catalog, App Installers can offer it in Self Service instead; that belongs to this lane\'s patching runbook.\n2. Count `[SMART_GROUP]` with `/jamf-inventory-groups` Phase C step 1. Offering an item is not an install, so the count only bounds who can click.\n3. **Stop if** the plan ticks any trigger: that turns a Self Service item into an automatic install, which is Phase D\'s change (R3 above 10 Macs).\n\n**Role needed:** a Jamf Pro account with the Administrator privilege set, or a Custom privilege set with create, read and update for policies plus read for packages, categories and computer groups (Jamf\'s account page says a change needs privileges on every object it touches; the exact English privilege names were not confirmed).\n\n<!-- SAFETY GATE [jamf-policies-self-service-create-portal] -->\n- **Target:** [POLICY_NAME] (new), scoped to [SMART_GROUP]\n- **Effect:** create one policy that offers the approved app in Self Service, scope it to [SMART_GROUP], so its members see the item; nothing installs until a person clicks Install\n- **Scope:** the members of [SMART_GROUP]; with every trigger off, no Mac changes until someone installs the item on it\n- **Reversibility:** R2: Phase D\'s disable gate withdraws the offer at once; installs already done stay, and removing the app is app-specific **[org gap: the app\'s own uninstaller]**\n- **Required confirmation:** Type exactly `CREATE SELF SERVICE POLICY [POLICY_NAME] AND ADD [SMART_GROUP] TO ITS SCOPE`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [jamf-policies-self-service-create-portal]:** Only after the approval record, the package check, the count and the exact match:\n1. Jamf Pro → Computers → Policies → **New** → General: display name `[POLICY_NAME]`, Enabled ticked, the category from the change record, no trigger ticked (an item with no trigger runs only from Self Service; that pattern is not spelled out in the sources read, so confirm on screen that every trigger box is clear), Execution Frequency: Once per computer.\n2. Packages → Configure → **Add** beside the approved package (the Packages payload is not in the sources read; confirm its labels on screen).\n3. Scope → Targets → **Add** → pick `[SMART_GROUP]`.\n4. Self Service → tick the option that makes the policy available in Self Service → display name, Markdown description, icon, categories, and Featured only if the change record says so → **Save**. Write the save time as `[NOT_BEFORE]`.\n\n**WAIT UNTIL** the item shows in Self Service on a test Mac in `[SMART_GROUP]` (when Self Service refreshes its list is not in the sources read; quit and reopen Self Service).\n\n<details>\n<summary>Read-back through the read-only adapter (HUMAN-RUN, read-only)</summary>\n\n```bash\n# HUMAN-RUN - read-only\n# proves the policy is enabled, runs Once per computer and has no trigger ticked (every trigger_ field false, no custom event): a ticked trigger would make it an automatic install\nnode scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --enabled true --no-triggers --execute\n# the full policy - Self Service on, scope is the one group\nnode scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute\n```\n</details>\n\n**Role needed:** no Jamf Pro privilege: a person signed in on the test Mac clicks Install in Self Service; the test Mac must be a member of `[SMART_GROUP]`.\n\n<!-- SAFETY GATE [jamf-policies-self-service-test-install-portal] -->\n- **Target:** [SERIAL_NUMBER], one test Mac\n- **Effect:** install the approved app on one test Mac by running [POLICY_NAME] from Self Service\n- **Scope:** one Mac; the policy writes one log entry for it\n- **Reversibility:** R1: removing the app is app-specific **[org gap: the app\'s own uninstaller]**; with Once per computer the item will not run again on this Mac until its log is flushed (Phase E)\n- **Required confirmation:** Type exactly `INSTALL [POLICY_NAME] ON [SERIAL_NUMBER] FROM SELF SERVICE`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [jamf-policies-self-service-test-install-portal]:** Only after the item shows in Self Service on the test Mac and the exact match:\n1. On the test Mac: Self Service → the category from the change record → `[POLICY_NAME]` → **Install**. Write the time as `[NOT_BEFORE]`.\n2. Keep Self Service open until it reports the item finished.\n\n**WAIT UNTIL** Jamf Pro → Computers → Policies → `[POLICY_NAME]` → Logs shows a Completed run for `[SERIAL_NUMBER]` after `[NOT_BEFORE]`. A Failed run goes to Phase B.\n\n<details>\n<summary>Read-back through the read-only adapter (HUMAN-RUN, read-only)</summary>\n\n```bash\n# HUMAN-RUN - read-only\n# the policy logs of the test Mac - a completed run of the policy after the install time\nnode scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLogs --execute\n# the applications Jamf Pro lists for the test Mac - the app appears after the next inventory update\nnode scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section APPLICATIONS --execute\n```\n</details>\n\n**Verification checkpoint**: [ ] `verify-policy --no-triggers` passed (no trigger ticked) and the policy read shows Self Service on · [ ] the test Mac\'s run reads Completed · [ ] the app is listed for the test Mac after its next inventory update (`/jamf-inventory-groups` Phase B holds the gated inventory update).\n',
+    expected: /verify-policy --id \[POLICY_ID\] --frequency "Once per computer" --enabled true --no-triggers --change \[CHANGE_ID\] --execute/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:296:1
+✖ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (213.797725ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:303:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:310:1
+✖ status never counts a read-back that was not recorded under this change, even one linked around the CLI (198.437881ms)
+  AssertionError [ERR_ASSERTION]: null: {
+    "change": "chg-70853d1ec1c2",
+    "done": true,
+    "chain": "intact",
+    "procedure": {
+      "seq": 1,
+      "command": "okta-mfa-reset",
+      "gate": "okta-mfa-reset-selected-portal",
+      "r_class": "R2",
+      "target": "[UPN]",
+      "read_back": "okta:verify-factor-reset",
+      "procedure_sha256": "c06327a61aa64f4a4d210697e61f7c34c9c0b7b4e80df599b51f6133a1ae7dd2"
+    },
+    "approval": {
+      "seq": 2,
+      "ref": "IT-123",
+      "matches": true
+    },
+    "readBack": {
+      "seq": 3,
+      "connector": "okta",
+      "command": "verify-factor-reset",
+      "verified": true
+    },
+    "missing": []
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:318:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:324:1
+✖ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (2.420626ms)
+  TypeError [Error]: changes.bindRefusal is not a function
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:326:24)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+# exit: 1  finished: 2026-10-30T07:25:48Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -1,0 +1,172 @@
+# command: node --test scripts/adapters/change-binding.test.js
+# commit: d667bac (plus uncommitted changes in the working tree)  started: 2026-10-30T08:40:28Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (49.897857ms)
+✔ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (19.844005ms)
+✔ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (16.626829ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.892219ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (20.796987ms)
+✔ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.383689ms)
+✔ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (14.212389ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.263719ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (20.784281ms)
+✔ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (25.302307ms)
+✔ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (48.235559ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (8.123806ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (22.775079ms)
+✔ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (16.654283ms)
+✔ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (26.729728ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.514939ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (21.978183ms)
+✔ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (14.226877ms)
+✔ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.975668ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (7.594147ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (27.076085ms)
+✔ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (21.43034ms)
+✔ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (25.423545ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (7.181666ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (22.870348ms)
+✔ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (16.36966ms)
+✔ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (23.116918ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.636562ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.194406ms)
+✔ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (12.402056ms)
+✔ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.622785ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.697366ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.057858ms)
+✔ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.89233ms)
+✔ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.448116ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.530379ms)
+✔ a verify-* with --change and no audit trail to check it against is refused, never run unbound (0.537483ms)
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (41.730893ms)
+✔ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (16.667323ms)
+✔ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.01002ms)
+✔ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (22.675464ms)
+✔ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (19.95874ms)
+✔ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (13.199006ms)
+✔ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (20.979999ms)
+✔ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (22.474958ms)
+✔ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (17.952293ms)
+✔ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (14.982816ms)
+✔ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (6.172472ms)
+✔ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.682291ms)
+✔ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.528535ms)
+✔ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.492749ms)
+✔ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.619197ms)
+✔ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.37965ms)
+✔ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.59802ms)
+✔ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.19211ms)
+✔ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (7.457798ms)
+✔ the contract, cli-support and the audit trail agree on what a verify-* command and a change id are (0.55935ms)
+✔ offline commands refuse --change as not a read-back, before reading any file (0.655719ms)
+✔ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (3.924443ms)
+✔ fleet: --change=chg-... on a plain read is refused as not a read-back (1.403149ms)
+✔ github: --change=chg-... on a plain read is refused as not a read-back (1.119877ms)
+✔ google-workspace: --change=chg-... on a plain read is refused as not a read-back (0.82865ms)
+✔ jamf: --change=chg-... on a plain read is refused as not a read-back (0.805845ms)
+✔ linear: --change=chg-... on a plain read is refused as not a read-back (0.784438ms)
+✔ msgraph: --change=chg-... on a plain read is refused as not a read-back (1.062435ms)
+✔ okta: --change=chg-... on a plain read is refused as not a read-back (0.788656ms)
+✔ slack: --change=chg-... on a plain read is refused as not a read-back (0.929453ms)
+✔ jira: --change=chg-... on a plain read is refused as not a read-back (0.81793ms)
+✔ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (21.258905ms)
+✔ changeRefusal refuses when it is not given takeChange's result (0.407305ms)
+ℹ tests 70
+ℹ suites 0
+ℹ pass 69
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1217.224419
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:234:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (41.730893ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` set to the E1 change's id, unless step 1 set R1\) and, with `--change \[CHANGE_ID\]` set to this gate's own change id, for every checked host/. Input:
+  
+  '---\n' +
+    'description: Lock, unlock, wipe, run a script on, turn off MDM for, or delete a host in Fleet (macOS, Windows, Linux, iPhone, iPad, Android), plus cancelling a pending action. Read the host first, then each action under its own exact-phrase gate with the Fleet adapter read-back. Placeholders only.\n' +
+    'disable-model-invocation: true\n' +
+    '---\n' +
+    '\n' +
+    '# /fleet-device-actions\n' +
+    '\n' +
+    '> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command. Aegis advises; a human administrator runs every step (HUMAN-RUN).\n' +
+    '\n' +
+    'CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.\n' +
+    '\n' +
+    '**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet\'s search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host\'s display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item\'s ID: an MDM command\'s UUID, or a queued script\'s execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.\n' +
+    '\n' +
+    "**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).\n" +
+    '\n' +
+    '## ⚠️ Admin / safety gate\n' +
+    '\n' +
+    "- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one's history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.\n" +
+    "- **Role needed:** Maintainer or Admin in Fleet (global, or on the host's fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person's session, a shared login or an API token that carries a higher role.\n" +
+    '- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.\n' +
+    '- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).\n' +
+    '- Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).\n' +
+    "- Every action is queued for the host's next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.\n" +
+    '\n' +
+    '## Inputs needed\n' +
+    '\n' +
+    "- `[SERIAL_NUMBER]` or `[HOST_ID]`, and the ticket's goal: left somewhere (lock), found again (unlock), stolen with sensitive data (wipe), a one-off fix (script), leaving the fleet (turn off MDM, then delete the record).\n" +
+    "- From Phase A: platform and OS version, MDM status (On (automatic) or On (manual)), last seen, anything pending, and for Windows and Linux whether scripts are enabled in fleetd (Fleet's agent), because their lock, unlock and the Linux wipe run as scripts.\n" +
+    '- For a script: `[SCRIPT_NAME]` saved in Fleet and read line by line before it runs; for more than one host, `[FLEET_NAME]` and the number of hosts, written in the ticket before the gate.\n' +
+    '- For a stolen device: the identity-side containment plan **[org gap: which runbook, and who owns it]**.\n' +
+    '- Who holds Maintainer or Admin in Fleet for an escalation **[org gap]**.\n' +
+    '\n' +
+    '## How the systems hang together\n' +
+    '\n' +
+    '- Apple hosts (macOS, iOS, iPadOS) receive MDM commands, so they need Fleet MDM turned on; a Mac whose MDM is Jamf Pro belongs to `/jamf-lock-erase`. Windows lock and unlock run as Fleet scripts, a Windows wipe is an MDM command, and Linux lock, unlock and wipe all run as scripts.\n' +
+    '- Everything is queued. The badge on the host moves from Lock pending to Locked, and from Wipe pending to Wiped (Linux shows no wipe badge; Android never shows Locked). The API carries the same state as `mdm.device_status` (unlocked, locked, locking, unlocking, wiped, wiping) and `mdm.pending_action` (lock, unlock, wipe, or empty).\n' +
+    "- An activity (locked_host, unlocked_host, wiped_host, ran_script, mdm_unenrolled, deleted_host) proves who asked and when; the device result is proven by `mdm.device_status`, the MDM command status or the script's exit code.\n" +
+    '- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n' +
+    '- Fleet 4.82.0 renamed teams to fleets and queries to reports; an older note that says "team" means a fleet.\n' +
+    '\n' +
+    '## Fast path\n' +
+    '\n' +
+    "1. Phase A: read the host, its pending actions and the clicking admin's role (R0). Save the read as the pre-state.\n" +
+    '2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).\n' +
+    '3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.\n' +
+    '4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.\n' +
+    '5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.\n' +
+    '6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.\n' +
+    '7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).\n' +
+    '\n' +
+    '## Phase A: Read the host (R0)\n' +
+    '\n' +
+    '**Purpose**: which action you can send, and whether it will land, depends on what the record says.\n' +
+    '\n' +
+    "1. Fleet → Hosts → search `[SERIAL_NUMBER]` (the search takes a name, hostname, UUID, serial or private IP) → open the host → Host details → read status (online, offline, mia, missing or new), last seen, platform and OS version, fleet, MDM status and any badge (Lock pending, Locked, Unlock pending, Wipe pending, Wiped). Record `[HOST_ID]`. Prefer the serial: when hostnames collide, Fleet's lookup returns the first match.\n" +
+    '2. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past (what was already sent, by whom, when) and Upcoming (anything still queued). A queued script or lock changes the plan.\n' +
+    '3. Two records for one serial: the one with a recent last seen is the live host; act on that one only.\n' +
+    '4. A script that already ran (read only, no gate): Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Past → open the entry for that script run → read its exit code and output. Exit code 0 is success, no exit code yet means the host has not reported, and a timeout means it ran past the 5-minute default.\n' +
+    '5. Decide the smallest action that solves the ticket, and confirm that the admin who will click holds the role named in that phase. If they hold Observer, the answer is an escalation to a Maintainer or Admin, not a workaround.\n' +
+    '\n' +
+    '<details>\n' +
+    '<summary>Fleet adapter: the read-only scale version (HUMAN-RUN; Aegis may run the same reads)</summary>\n' +
+    '\n' +
+    '```bash\n' +
+    '# HUMAN-RUN, read-only: the adapter is dry by default and prints the request; --execute sends the GET, never a write\n' +
+    'node scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\n' +
+    'node scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execute   # resolves the serial to [HOST_ID] with status, seen_time and the MDM fields\n' +
+    'node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version'... 37691 more characters
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:284:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '---\ndescription: Lock, unlock, wipe, run a script on, turn off MDM for, or delete a host in Fleet (macOS, Windows, Linux, iPhone, iPad, Android), plus cancelling a pending action. Read the host first, then each action under its own exact-phrase gate with the Fleet adapter read-back. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /fleet-device-actions\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command. Aegis advises; a human administrator runs every step (HUMAN-RUN).\n\nCRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.\n\n**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet\'s search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host\'s display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item\'s ID: an MDM command\'s UUID, or a queued script\'s execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.\n\n**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate\'s id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket\'s approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate\'s read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).\n\n## ⚠️ Admin / safety gate\n\n- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one\'s history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.\n- **Role needed:** Maintainer or Admin in Fleet (global, or on the host\'s fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person\'s session, a shared login or an API token that carries a higher role.\n- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.\n- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).\n- Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).\n- Every action is queued for the host\'s next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.\n\n## Inputs needed\n\n- `[SERIAL_NUMBER]` or `[HOST_ID]`, and the ticket\'s goal: left somewhere (lock), found again (unlock), stolen with sensitive data (wipe), a one-off fix (script), leaving the fleet (turn off MDM, then delete the record).\n- From Phase A: platform and OS version, MDM status (On (automatic) or On (manual)), last seen, anything pending, and for Windows and Linux whether scripts are enabled in fleetd (Fleet\'s agent), because their lock, unlock and the Linux wipe run as scripts.\n- For a script: `[SCRIPT_NAME]` saved in Fleet and read line by line before it runs; for more than one host, `[FLEET_NAME]` and the number of hosts, written in the ticket before the gate.\n- For a stolen device: the identity-side containment plan **[org gap: which runbook, and who owns it]**.\n- Who holds Maintainer or Admin in Fleet for an escalation **[org gap]**.\n\n## How the systems hang together\n\n- Apple hosts (macOS, iOS, iPadOS) receive MDM commands, so they need Fleet MDM turned on; a Mac whose MDM is Jamf Pro belongs to `/jamf-lock-erase`. Windows lock and unlock run as Fleet scripts, a Windows wipe is an MDM command, and Linux lock, unlock and wipe all run as scripts.\n- Everything is queued. The badge on the host moves from Lock pending to Locked, and from Wipe pending to Wiped (Linux shows no wipe badge; Android never shows Locked). The API carries the same state as `mdm.device_status` (unlocked, locked, locking, unlocking, wiped, wiping) and `mdm.pending_action` (lock, unlock, wipe, or empty).\n- An activity (locked_host, unlocked_host, wiped_host, ran_script, mdm_unenrolled, deleted_host) proves who asked and when; the device result is proven by `mdm.device_status`, the MDM command status or the script\'s exit code.\n- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n- Fleet 4.82.0 renamed teams to fleets and queries to reports; an older note that says "team" means a fleet.\n\n## Fast path\n\n1. Phase A: read the host, its pending actions and the clicking admin\'s role (R0). Save the read as the pre-state.\n2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).\n3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.\n4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.\n5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.\n6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.\n7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).\n\n## Phase A: Read the host (R0)\n\n**Purpose**: which action you can send, and whether it will land, depends on what the record says.\n\n1. Fleet → Hosts → search `[SERIAL_NUMBER]` (the search takes a name, hostname, UUID, serial or private IP) → open the host → Host details → read status (online, offline, mia, missing or new), last seen, platform and OS version, fleet, MDM status and any badge (Lock pending, Locked, Unlock pending, Wipe pending, Wiped). Record `[HOST_ID]`. Prefer the serial: when hostnames collide, Fleet\'s lookup returns the first match.\n2. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past (what was already sent, by whom, when) and Upcoming (anything still queued). A queued script or lock changes the plan.\n3. Two records for one serial: the one with a recent last seen is the live host; act on that one only.\n4. A script that already ran (read only, no gate): Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Past → open the entry for that script run → read its exit code and output. Exit code 0 is success, no exit code yet means the host has not reported, and a timeout means it ran past the 5-minute default.\n5. Decide the smallest action that solves the ticket, and confirm that the admin who will click holds the role named in that phase. If they hold Observer, the answer is an escalation to a Maintainer or Admin, not a workaround.\n\n<details>\n<summary>Fleet adapter: the read-only scale version (HUMAN-RUN; Aegis may run the same reads)</summary>\n\n```bash\n# HUMAN-RUN, read-only: the adapter is dry by default and prints the request; --execute sends the GET, never a write\nnode scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\nnode scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execute   # resolves the serial to [HOST_ID] with status, seen_time and the MDM fields\nnode scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version'... 37691 more characters,
+    expected: /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` set to the E1 change's id, unless step 1 set R1\) and, with `--change \[CHANGE_ID\]` set to this gate's own change id, for every checked host/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T08:40:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

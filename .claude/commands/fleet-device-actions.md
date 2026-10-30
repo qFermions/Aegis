@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet's search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host's display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item's ID: an MDM command's UUID, or a queued script's execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one's history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.
@@ -97,7 +99,7 @@ Before the gate: an iPhone or iPad can be locked only when it is supervised (com
 
 **Read-back, by platform:**
 
-- macOS, Windows, Linux, iPhone and iPad: `node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute` passes only when `mdm.device_status` is `locked` and nothing is pending. Host details → Activity → Past shows the lock request with the admin's name and the time.
+- macOS, Windows, Linux, iPhone and iPad: `node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --change [CHANGE_ID] --execute` passes only when `mdm.device_status` is `locked` and nothing is pending. Host details → Activity → Past shows the lock request with the admin's name and the time.
 - Android: `verify-lock` cannot pass here, because it needs `mdm.device_status` `locked` and Fleet never shows Locked for an Android host. The proof is the locked_host entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` (who sent the lock, and when) plus a person who sees the lock screen on the device and says so in the ticket. If nobody can see the device, the ticket records the lock as sent, not as proven.
 
 **Verification checkpoint**: [ ] the badge reads Locked (Android: Lock pending is gone) · [ ] `verify-lock` passed (Android: the locked_host entry and the on-device confirmation are in the ticket) · [ ] the activity names the admin and the time.
@@ -148,7 +150,7 @@ Before the gate: the independent out-of-session review has the Phase A pre-state
 
 **Read-back, by platform:**
 
-- Mac, iPhone, iPad and Windows: `node scripts/adapters/fleet-client.js verify-wipe --id [HOST_ID] --execute` passes on `wiping` or `wiped` with the EraseDevice or doWipe command acknowledged; for an Apple device, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` shows the command's status.
+- Mac, iPhone, iPad and Windows: `node scripts/adapters/fleet-client.js verify-wipe --id [HOST_ID] --change [CHANGE_ID] --execute` passes on `wiping` or `wiped` with the EraseDevice or doWipe command acknowledged; for an Apple device, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` shows the command's status.
 - Company-owned Android: `verify-wipe` cannot pass here, because it proves only an Apple EraseDevice or a Windows doWipe command. The proof is `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` showing `mdm.device_status` `wiping` and then `wiped`, plus the wiped_host entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute`.
 - Linux: `verify-wipe` cannot pass here either (the guides do not say whether a Linux host ever reports `wiped`; unverified). The proof is the wiped_host entry plus the wipe script's result under Host details → Activity → Past; `verify-script --execution-id [EXECUTION_ID]` reads that result when the same `host-activities` read lists the run's execution ID (whether it does is not in the sources read; unverified), and while the wipe is still queued, `host-upcoming --id [HOST_ID]` lists the wipe script with its execution ID (Phase G step 2). The wipe halts the host, and the sources do not say whether its result reaches Fleet before the halt (unverified): if no exit code arrives, the ticket records the Linux wipe as sent and not proven, with the wiped_host entry, and uses the partial-state note.
 
@@ -179,7 +181,7 @@ Do not delete the host until it reads wiped: deleting removes Fleet's record of 
 
 **WAIT UNTIL** Host details → Activity moves the run from Upcoming to Past.
 
-**Read-back:** `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows the ran_script entry whose `script_execution_id` is `[EXECUTION_ID]`; then `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --execute` passes on exit code 0. An empty exit code means the host has not reported yet; `host_timeout` true means it ran past the timeout.
+**Read-back:** `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` shows the ran_script entry whose `script_execution_id` is `[EXECUTION_ID]`; then `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute` passes on exit code 0 (drop `--change [CHANGE_ID]` when step 1 set R1: an R1 run has no change record). An empty exit code means the host has not reported yet; `host_timeout` true means it ran past the timeout.
 
 ### E2: More than one host (R3)
 
@@ -199,9 +201,9 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **WAIT UNTIL** each checked host shows the run under Host details → Activity → Past; offline hosts stay in Upcoming until they check in.
 
-**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `host-activities --id [HOST_ID]` and `verify-script --execution-id [EXECUTION_ID]`. Any host that fails stops the batch story: report which hosts passed and which did not.
+**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` and `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`, with `[CHANGE_ID]` the id of this gate's own change record, not the pilot's. Any host that fails stops the batch story: report which hosts passed and which did not. `change-record.js status` reads done once one linked read-back verified, so it proves one host, not the batch: the ticket's list of the hosts that passed and failed is the batch's record.
 
-**Verification checkpoint**: [ ] `verify-script` passed for the pilot and for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
+**Verification checkpoint**: [ ] `verify-script` passed for the pilot (with `--change [CHANGE_ID]` set to the E1 change's id, unless step 1 set R1) and, with `--change [CHANGE_ID]` set to this gate's own change id, for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
 
 ## Phase F: Leaving the fleet, Turn off MDM then delete (R3 each)
 
@@ -228,7 +230,7 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 
 **Read-back, by platform:**
 
-- Mac: `node scripts/adapters/fleet-client.js verify-mdm-off --id [HOST_ID] --execute` passes when the host's MDM read is empty and its enrollment no longer reads On; Host details → Activity → Past shows the unenrollment (mdm_unenrolled).
+- Mac: `node scripts/adapters/fleet-client.js verify-mdm-off --id [HOST_ID] --change [CHANGE_ID] --execute` passes when the host's MDM read is empty and its enrollment no longer reads On; Host details → Activity → Past shows the unenrollment (mdm_unenrolled).
 - iPhone, iPad and personally owned Android: `verify-mdm-off` covers macOS only here, because its first read (`GET /api/v1/fleet/hosts/:id/mdm`) is documented for macOS and Windows hosts. The proof is the mdm_unenrolled entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` plus `mdm.enrollment_status` in `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` reading Off (not On and not Pending).
 
 > **PREVIEW ONLY [fleet-device-actions-handover-preview]:** Planning only; nothing here authorizes an uninstall, a release or a deletion. A Windows host has no Turn off MDM action in Fleet: Fleet's guide says to uninstall fleetd instead, which is its own reviewed change (the uninstall steps were not in the guides read). A host enrolled through Apple Business must be released from Apple Business before its Fleet record is deleted, or it comes back as Pending; releasing is an asset-disposal decision outside this runbook. After an OS reinstall, the old record is deleted before the host re-enrolls, or Fleet does not escrow a new disk encryption key.
@@ -248,7 +250,7 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Delete**.
 2. If Fleet asks for confirmation, confirm.
 
-**Read-back:** `node scripts/adapters/fleet-client.js verify-deleted --identifier [SERIAL_NUMBER] --not-before [NOT_BEFORE] --execute` passes when a deleted_host activity for that serial exists after `[NOT_BEFORE]`; `host --identifier [SERIAL_NUMBER]` then answers not found, or a new host ID if the device re-enrolled.
+**Read-back:** `node scripts/adapters/fleet-client.js verify-deleted --identifier [SERIAL_NUMBER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute` passes when a deleted_host activity for that serial exists after `[NOT_BEFORE]`; `host --identifier [SERIAL_NUMBER]` then answers not found, or a new host ID if the device re-enrolled.
 
 **Verification checkpoint**: [ ] the F1 read-back for the platform passed: `verify-mdm-off` (Mac), mdm_unenrolled plus enrollment Off (iPhone, iPad, Android) · [ ] `verify-deleted` passed (F2) · [ ] the Apple Business decision is in the ticket.
 
@@ -307,7 +309,7 @@ else
   exit 1
 fi
 # read-back: passes only when the host reads locked with nothing pending
-node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute
+node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --change [CHANGE_ID] --execute
 # on Android verify-lock cannot pass, because Fleet never shows Locked there: the proof is the locked_host entry in the read below plus a person who confirms the lock on the device, as in Phase B
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
 ```
@@ -338,8 +340,8 @@ else
 fi
 # read-back: the ran_script entry on this host carries the execution id
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
-# read-back: passes only when that execution reports exit code 0
-node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --execute
+# read-back: passes only when that execution reports exit code 0, and drop the --change flag and its id when the ticket gives this script R1, since an R1 run has no change record
+node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute
 ```
 
 **Role needed:** Maintainer or Admin for the fleetctl lock; Maintainer or Admin for `fleetctl run-script`, because a script sent from a local file is not a saved script and Fleet's role guide limits arbitrary scripts to those two roles.

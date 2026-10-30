@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[APP_NAME]` (the app integration's display name in Okta) · `[APP_ID]` (its Okta app ID, starts `0oa`; the value the API section exports as `APP_ID`) · `[UPN]` (the person's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[GROUP_EMAIL]` (the Okta group's name; in this shop Okta groups are pushed to Google Groups, so a group is named by its Google address, written without the at sign) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-app-assigned`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Assign to a person** is R1: one user, one app, undone by the separate unassign gate.
@@ -111,7 +113,7 @@ It passes for a Group assignment too, so the **Type** column above decides Indiv
 
 ```bash
 # HUMAN-RUN read-only read-back for the one member picked in the pre-state, passes only when that member now holds the app with status ACTIVE or PROVISIONED
-node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --execute
+node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 ```
 
 If the spot check fails right after the save, **WAIT UNTIL** the Assignments tab lists that member with **Type** reading **Group**, then run it again; never assign the group again to make it pass. One member is a spot check, not proof for the whole group: the Assignments tab count against the recorded member count is the group-wide read-back.
@@ -136,7 +138,7 @@ If the spot check fails right after the save, **WAIT UNTIL** the Assignments tab
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the user read succeeds and the app-user read then returns HTTP 404. It proves the unassign only when the Phase A read showed the assignment with scope USER
-node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --execute
+node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
 ```
 
 An HTTP 404 also comes from a wrong app ID, so check `[APP_ID]` against the app before trusting a pass. If the person also holds the app through a group, the read finds that assignment and fails, which is correct: they still have the app (Phase E).

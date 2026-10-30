@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[@Aegion_GITHUB_ORG]` (the organization login) · `[GITHUB_USER]` (one person's GitHub login) · `[MEMBER_COUNT]` (the number of members the `members --filter 2fa_disabled` read lists in Phase A) · `[JIRA-###]` or `[ISSUE_ID]` (the ticket) · `[ADMIN_NAME]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R3 gates):** before a gate whose reversibility is R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `github:verify-2fa-required`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **This runbook is a review first.** Phase A changes nothing. Three changes have gates: the 2FA requirement (R3), taking the owner role away (R2), granting it (R3).
@@ -135,7 +137,7 @@ gh api --paginate orgs/[@Aegion_GITHUB_ORG]/outside_collaborators
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the organization requires 2FA, needs an owner credential
-node scripts/adapters/github-client.js verify-2fa-required --execute
+node scripts/adapters/github-client.js verify-2fa-required --change [CHANGE_ID] --execute
 # must list nobody now
 node scripts/adapters/github-client.js members --filter 2fa_disabled --execute
 ```

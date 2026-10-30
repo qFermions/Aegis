@@ -28,7 +28,7 @@
 //                                          with admin.apps:read), team_id = SLACK_TEAM_ID
 //     access-logs [--count 1-1000] [--page 1-100]
 //                                          auth.test, then team.accessLogs (paid plans)
-//   Read-backs (exit 0 verified, 2 not verified):
+//   Read-backs (exit 0 verified, 2 not verified, 4 a dry run):
 //     verify-deactivated --user [USER_ID]  users.info: deleted is true
 //     verify-reactivated --user [USER_ID]  users.info: deleted is false or absent
 //     verify-guest --user [USER_ID] --type single|multi
@@ -82,7 +82,7 @@
 // a browser redirect and a code a person approves.
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
-// 2 read failed or not verified; 3 a record from another workspace.
+// 2 read failed or not verified; 3 a record from another workspace; 4 a verify-* dry run.
 //
 // Vendor facts (read 2026-10-27, docs/aegis/lanes/g2.md): method names, the
 // https://slack.com/api/ base and the Bearer header from Slack's SDK source; user and
@@ -98,10 +98,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const {
-  STATES, RefusedError, TRIPWIRE_MESSAGE,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime,
+  STATES, EXIT, RefusedError, TRIPWIRE_MESSAGE,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 const HOST = 'slack.com';
 const HISTORY_LIMIT = '50';
@@ -777,8 +777,14 @@ async function run(argv, env, deps = {}) {
   let steps;
   let client;
   let cli = null;
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    ({ command, def, args } = parseCommand(argv));
+    ({ command, def, args } = parseCommand(bound.argv));
+    // an offline command is not a read-back: --change in either form is refused by the one rule
+    const offlineRefusal = def.kind === 'offline' ? changeRefusal('slack', command, bound, null) : null;
+    if (offlineRefusal) throw new RefusedError(offlineRefusal);
     if (def.kind === 'offline') {
       const { result, line } = digest(args, deps, now);
       const code = emit(result);
@@ -793,6 +799,8 @@ async function run(argv, env, deps = {}) {
     steps = def.steps(args, ctx);
     // batch G3: the audit sink (and the test seams) come from cliDeps
     cli = cliDeps(deps, environment);
+    const refusal = changeRefusal('slack', command, bound, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
     client = createClient(def.spec || SPEC, { env: environment, ...cli });
     const planned = steps.map((s) => client.plan(s.route, {}, s.query));
     const refusedPlan = planned.find((p) => p.state !== STATES.OK);
@@ -807,7 +815,8 @@ async function run(argv, env, deps = {}) {
         note: 'dry run: no credentials read, no network. Add the bare --execute flag to perform the read.',
       };
       if (def.pagination) dry.pagination = def.pagination;
-      return emit(dry);
+      const code = emit(dry);
+      return code === EXIT.OK ? dryRunExit(command, err) : code;
     }
     teamFromEnv(environment); // the workspace binding comes before any read
   } catch (error) {
@@ -816,7 +825,7 @@ async function run(argv, env, deps = {}) {
   }
 
   const res = def.kind === 'verify'
-    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps))
+    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps), bound.change)
     : await runRead(command, def, steps, client);
   // Only the variable this command's spec names is read, and only after the request
   // was allowed; that value is redacted from everything printed.

@@ -65,7 +65,7 @@ test('Fleet verify-checked-in: the MDM check-in after --not-before passes; an ol
   const other = await cli(fleet, ['verify-checked-in', '--id', '7', '--not-before', NOT_BEFORE, '--execute'], FLEET_ENV, [{ status: 200, body: host({ id: 8 }) }]);
   assert.equal(other.code, 2);
   const dry = await cli(fleet, ['verify-checked-in', '--id', '7', '--not-before', NOT_BEFORE], { FLEET_URL: 'fleet.example.invalid' }, []);
-  assert.equal(dry.code, 0, dry.text);
+  assert.equal(dry.code, 4, dry.text);
   assert.equal(dry.transport.calls.length, 0);
   assert.ok(!yes.text.includes(TOKEN));
 });
@@ -93,7 +93,7 @@ test('Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and
   const none = await cli(jamf, ['verify-checked-in', '--serial', SERIAL, '--not-before', NOT_BEFORE, '--execute'], JAMF_ENV, jamfReplies({}));
   assert.equal(none.code, 2);
   const dry = await cli(jamf, ['verify-checked-in', '--serial', SERIAL, '--not-before', NOT_BEFORE], { JAMF_URL: 'jamf.example.invalid' }, []);
-  assert.equal(dry.code, 0, dry.text);
+  assert.equal(dry.code, 4, dry.text);
   assert.equal(dry.transport.calls.length, 0);
   assert.ok(!yes.text.includes(TOKEN) && !yes.text.includes('issued-jamf-access'));
 });

@@ -1,0 +1,34 @@
+# command: node --test --test-name-pattern=runbooks: every read-back scripts/adapters/change-binding.test.js
+# commit: 3bba35e (plus uncommitted changes in the working tree)  started: 2026-10-30T07:52:51Z  node: v24.22.2
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (9.671156ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 227.476886
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:234:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (9.671156ms)
+  AssertionError [ERR_ASSERTION]: fleet-device-actions.md:312 (R2): node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:254:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:52:51Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the person's Okta username) · `[OKTA_USER_ID]` (their Okta user ID, starts `00u`) · `[GROUP_NAME]` (the Okta group's name) · `[OKTA_GROUP_ID]` (its ID, starts `00g`) · `[RULE_ID]` (a group rule's ID) · `[APP_NAME]` / `[APP_ID]` (an app the group is assigned, ID starts `0oa`) · `[NOT_BEFORE]` (the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, written in the ticket just before a change) · `[N]` (the number of people on a change list) · `[JIRA-###]` · `[@Aegion_OKTA_ORG_URL]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-group-member`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Add one person** is R1: one user, one group, undone by the separate remove gate. It also gives the person every app the group is assigned.
@@ -136,14 +138,14 @@ node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the user read succeeds and the person is not on the group's member list. It proves the removal only when Phase A showed them as a member
-node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --execute
+node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
 ```
 
 For each app the person held only through this group:
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the user read succeeds and the app-user read returns HTTP 404. A 404 also comes from a wrong app ID, so check [APP_ID] first
-node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --execute
+node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
 ```
 
 If the person also holds that app individually or through another group, this read finds that assignment and fails, which is correct: they keep the app. **WAIT UNTIL** each app with **Deactivate User** on shows the account deactivated, and record it in the ticket.
@@ -176,7 +178,7 @@ If the person also holds that app individually or through another group, this re
 # HUMAN-RUN read-only read-back, the rule list: the new rule names [OKTA_GROUP_ID] and reads status ACTIVE
 node scripts/adapters/okta-client.js group-rules --execute
 # HUMAN-RUN read-only read-back for one person the rule should add, picked from the prediction, passes only when that person is now a member. It proves the rule only when Phase A showed them absent
-node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --execute
+node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 ```
 
 ### Phase D2: Change a group rule (its condition, target group or exclusions)
@@ -199,7 +201,7 @@ This is also the path for taking one person out of a rule-managed group: exclude
 # HUMAN-RUN read-only read-back, the rule list: [RULE_ID] shows the new condition and its status
 node scripts/adapters/okta-client.js group-rules --execute
 # HUMAN-RUN read-only read-back for one person who should leave, passes only when that person is no longer a member. For one who should join, run it without --absent
-node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --execute
+node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
 ```
 
 ### Phase D3: Deactivate a group rule
@@ -245,7 +247,7 @@ node scripts/adapters/okta-client.js group-members --group [OKTA_GROUP_ID] --exe
 
 ```bash
 # HUMAN-RUN read-only read-back, run once per person on the list, every run must pass
-node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --execute
+node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 # HUMAN-RUN read-only, the membership events since [NOT_BEFORE]: their count should equal [N]. A full page of 100 says more may follow
 node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event group.user_membership.add --execute
 ```
@@ -265,7 +267,7 @@ node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event group.use
 
 ```bash
 # HUMAN-RUN read-only read-back, run once per person on the list, every run must pass
-node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --execute
+node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
 # HUMAN-RUN read-only, the removal events since [NOT_BEFORE]: their count should equal [N]. A full page of 100 says more may follow
 node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event group.user_membership.remove --execute
 ```

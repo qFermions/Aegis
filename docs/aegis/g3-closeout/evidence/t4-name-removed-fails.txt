@@ -1,0 +1,61 @@
+# command: node --test scripts/env-example.test.js
+# .env.example was edited for this run only: the GITHUB_ORG= line removed (sed -i "/^GITHUB_ORG=/d" .env.example), then restored from a copy
+# commit: 7d790a5 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:29:35Z  node: v24.22.2
+✖ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (16.021879ms)
+✔ the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names (50.389536ms)
+✔ a name removed from .env.example is reported by name (5.286204ms)
+✖ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (0.787052ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 167.910976
+
+✖ failing tests:
+
+test at scripts/env-example.test.js:84:1
+✖ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (16.021879ms)
+  AssertionError [ERR_ASSERTION]: .env.example is missing:
+    GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js)
+  + actual - expected
+  
+  + [
+  +   'GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js)'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/env-example.test.js:86:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js)' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/env-example.test.js:118:1
+✖ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (0.787052ms)
+  AssertionError [ERR_ASSERTION]: 38 names (39 at the batch G3 close-out)
+      at TestContext.<anonymous> (<repo>/scripts/env-example.test.js:126:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:29:36Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

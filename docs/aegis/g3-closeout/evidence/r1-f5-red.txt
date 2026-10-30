@@ -1,0 +1,550 @@
+# command: node --test --test-name-pattern=prints its audit seq scripts/adapters/change-binding.test.js
+# commit: b877c5b (plus uncommitted changes in the working tree)  started: 2026-10-30T07:55:48Z  node: v24.22.2
+✖ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (52.743995ms)
+✖ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (22.71259ms)
+✖ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (32.982436ms)
+✖ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (38.558743ms)
+✖ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (27.801359ms)
+✖ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (37.249134ms)
+✖ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (33.049827ms)
+✖ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (22.368872ms)
+✖ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (24.401749ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 0
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 515.145253
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (52.743995ms)
+  AssertionError [ERR_ASSERTION]: fleet: no seq for a read-back link refuses
+  {
+    "command": "verify-checked-in",
+    "state": "OK",
+    "verified": true,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "darwin",
+      "host.status": "online",
+      "host.seen_time": "2026-10-28T09:40:00Z",
+      "host.last_mdm_checked_in_at": "2026-10-28T09:30:00Z",
+      "host.mdm.enrollment_status": "On (automatic)"
+    },
+    "expected": {
+      "host.id": 7,
+      "host.mdm.enrollment_status": "On (...)",
+      "host.last_mdm_checked_in_at": "at or after 2026-10-28T09:00:00Z"
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "flags": [],
+    "audit_seq": 7
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 7',
+  +   '7',
+  +   groups: undefined,
+  +   index: 655,
+  +   input: '{\n' +
+  +     '  "command": "verify-checked-in",\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "observed": {\n' +
+  +     '    "host.id": 7,\n' +
+  +     '    "host.platform": "darwin",\n' +
+  +     '    "host.status": "online",\n' +
+  +     '    "host.seen_time": "2026-10-28T09:40:00Z",\n' +
+  +     '    "host.last_mdm_checked_in_at": "2026-10-28T09:30:00Z",\n' +
+  +     '    "host.mdm.enrollment_status": "On (automatic)"\n' +
+  +     '  },\n' +
+  +     '  "expected": {\n' +
+  +     '    "host.id": 7,\n' +
+  +     '    "host.mdm.enrollment_status": "On (...)",\n' +
+  +     '    "host.last_mdm_checked_in_at": "at or after 2026-10-28T09:00:00Z"\n' +
+  +     '  },\n' +
+  +     '  "reads": [\n' +
+  +     '    {\n' +
+  +     '      "method": "GET",\n' +
+  +     '      "path": "/api/v1/fleet/hosts/7?exclude_software=true",\n' +
+  +     '      "state": "OK",\n' +
+  +     '      "status": 200\n' +
+  +     '    }\n' +
+  +     '  ],\n' +
+  +     '  "flags": [],\n' +
+  +     '  "audit_seq": 7\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 7', '7', index: 655, input: '{\n  "command": "verify-checked-in",\n  "state": "OK",\n  "verified": true,\n  "observed": {\n    "host.id": 7,\n    "host.platform": "darwin",\n    "host.status": "online",\n    "host.seen_time": "2026-10-28T09:40:00Z",\n    "host.last_mdm_checked_in_at": "2026-10-28T09:30:00Z",\n    "host.mdm.enrollment_status": "On (automatic)"\n  },\n  "expected": {\n    "host.id": 7,\n    "host.mdm.enrollment_status": "On (...)",\n    "host.last_mdm_checked_in_at": "at or after 2026-10-28T09:00:00Z"\n  },\n  "reads": [\n    {\n      "method": "GET",\n      "path": "/api/v1/fleet/hosts/7?exclude_software=true",\n      "state": "OK",\n      "status": 200\n    }\n  ],\n  "flags": [],\n  "audit_seq": 7\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (22.71259ms)
+  AssertionError [ERR_ASSERTION]: github: no seq for a read-back link refuses
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-2fa-required",
+    "verified": true,
+    "expected": {
+      "two_factor_requirement_enabled": true
+    },
+    "observed": {
+      "two_factor_requirement_enabled": true
+    },
+    "audit_seq": 7
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 7',
+  +   '7',
+  +   groups: undefined,
+  +   index: 219,
+  +   input: '{\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "command": "verify-2fa-required",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "expected": {\n' +
+  +     '    "two_factor_requirement_enabled": true\n' +
+  +     '  },\n' +
+  +     '  "observed": {\n' +
+  +     '    "two_factor_requirement_enabled": true\n' +
+  +     '  },\n' +
+  +     '  "audit_seq": 7\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 7', '7', index: 219, input: '{\n  "state": "OK",\n  "ok": true,\n  "command": "verify-2fa-required",\n  "verified": true,\n  "expected": {\n    "two_factor_requirement_enabled": true\n  },\n  "observed": {\n    "two_factor_requirement_enabled": true\n  },\n  "audit_seq": 7\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (32.982436ms)
+  AssertionError [ERR_ASSERTION]: google-workspace: no seq for a read-back link refuses
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-suspended",
+    "verified": true,
+    "expected": {
+      "user": "person@example.com",
+      "suspended": true
+    },
+    "observed": {
+      "user": "person@example.com",
+      "suspended": true,
+      "suspensionReason": "ADMIN"
+    },
+    "audit_seq": 9
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 9',
+  +   '9',
+  +   groups: undefined,
+  +   index: 275,
+  +   input: '{\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "command": "verify-suspended",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "expected": {\n' +
+  +     '    "user": "person@example.com",\n' +
+  +     '    "suspended": true\n' +
+  +     '  },\n' +
+  +     '  "observed": {\n' +
+  +     '    "user": "person@example.com",\n' +
+  +     '    "suspended": true,\n' +
+  +     '    "suspensionReason": "ADMIN"\n' +
+  +     '  },\n' +
+  +     '  "audit_seq": 9\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 9', '9', index: 275, input: '{\n  "state": "OK",\n  "ok": true,\n  "command": "verify-suspended",\n  "verified": true,\n  "expected": {\n    "user": "person@example.com",\n    "suspended": true\n  },\n  "observed": {\n    "user": "person@example.com",\n    "suspended": true,\n    "suspensionReason": "ADMIN"\n  },\n  "audit_seq": 9\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (38.558743ms)
+  AssertionError [ERR_ASSERTION]: jamf: no seq for a read-back link refuses
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-checked-in",
+    "verified": true,
+    "expected": {
+      "serial": "C02TEST0001",
+      "lastContactTime": "at or after 2026-10-28T09:00:00Z",
+      "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"
+    },
+    "observed": {
+      "serial": "C02TEST0001",
+      "computerId": "7",
+      "lastContactTime": "2026-10-28T09:30:00.000Z",
+      "reportDate": null,
+      "mdmCapable": null
+    },
+    "audit_seq": 11
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 11',
+  +   '11',
+  +   groups: undefined,
+  +   index: 454,
+  +   input: '{\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "command": "verify-checked-in",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "expected": {\n' +
+  +     '    "serial": "C02TEST0001",\n' +
+  +     '    "lastContactTime": "at or after 2026-10-28T09:00:00Z",\n' +
+  +     '    "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"\n' +
+  +     '  },\n' +
+  +     '  "observed": {\n' +
+  +     '    "serial": "C02TEST0001",\n' +
+  +     '    "computerId": "7",\n' +
+  +     '    "lastContactTime": "2026-10-28T09:30:00.000Z",\n' +
+  +     '    "reportDate": null,\n' +
+  +     '    "mdmCapable": null\n' +
+  +     '  },\n' +
+  +     '  "audit_seq": 11\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 11', '11', index: 454, input: '{\n  "state": "OK",\n  "ok": true,\n  "command": "verify-checked-in",\n  "verified": true,\n  "expected": {\n    "serial": "C02TEST0001",\n    "lastContactTime": "at or after 2026-10-28T09:00:00Z",\n    "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"\n  },\n  "observed": {\n    "serial": "C02TEST0001",\n    "computerId": "7",\n    "lastContactTime": "2026-10-28T09:30:00.000Z",\n    "reportDate": null,\n    "mdmCapable": null\n  },\n  "audit_seq": 11\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (27.801359ms)
+  AssertionError [ERR_ASSERTION]: linear: no seq for a read-back link refuses
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-state",
+    "verified": true,
+    "expected": {
+      "issue": "IT-123",
+      "state": "Done"
+    },
+    "observed": {
+      "issue": "IT-123",
+      "state": {
+        "name": "Done",
+        "type": "completed"
+      }
+    },
+    "audit_seq": 7
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 7',
+  +   '7',
+  +   groups: undefined,
+  +   index: 261,
+  +   input: '{\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "command": "verify-state",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "expected": {\n' +
+  +     '    "issue": "IT-123",\n' +
+  +     '    "state": "Done"\n' +
+  +     '  },\n' +
+  +     '  "observed": {\n' +
+  +     '    "issue": "IT-123",\n' +
+  +     '    "state": {\n' +
+  +     '      "name": "Done",\n' +
+  +     '      "type": "completed"\n' +
+  +     '    }\n' +
+  +     '  },\n' +
+  +     '  "audit_seq": 7\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 7', '7', index: 261, input: '{\n  "state": "OK",\n  "ok": true,\n  "command": "verify-state",\n  "verified": true,\n  "expected": {\n    "issue": "IT-123",\n    "state": "Done"\n  },\n  "observed": {\n    "issue": "IT-123",\n    "state": {\n      "name": "Done",\n      "type": "completed"\n    }\n  },\n  "audit_seq": 7\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (37.249134ms)
+  AssertionError [ERR_ASSERTION]: msgraph: no seq for a read-back link refuses
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-account-enabled",
+    "verified": true,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "accountEnabled": false
+    },
+    "observed": {
+      "accountEnabled": false
+    },
+    "audit_seq": 9
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 9',
+  +   '9',
+  +   groups: undefined,
+  +   index: 244,
+  +   input: '{\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "command": "verify-account-enabled",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "expected": {\n' +
+  +     '    "user": "aaaaaaaa-0000-4000-8000-000000000001",\n' +
+  +     '    "accountEnabled": false\n' +
+  +     '  },\n' +
+  +     '  "observed": {\n' +
+  +     '    "accountEnabled": false\n' +
+  +     '  },\n' +
+  +     '  "audit_seq": 9\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 9', '9', index: 244, input: '{\n  "state": "OK",\n  "ok": true,\n  "command": "verify-account-enabled",\n  "verified": true,\n  "expected": {\n    "user": "aaaaaaaa-0000-4000-8000-000000000001",\n    "accountEnabled": false\n  },\n  "observed": {\n    "accountEnabled": false\n  },\n  "audit_seq": 9\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (33.049827ms)
+  AssertionError [ERR_ASSERTION]: okta: no seq for a read-back link refuses
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-status",
+    "verified": true,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "status": "SUSPENDED"
+    },
+    "observed": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "status": "SUSPENDED"
+    },
+    "audit_seq": 9
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 9',
+  +   '9',
+  +   groups: undefined,
+  +   index: 251,
+  +   input: '{\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "command": "verify-status",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "expected": {\n' +
+  +     '    "user": "00u1abcd2EFGH3ijk4x7",\n' +
+  +     '    "status": "SUSPENDED"\n' +
+  +     '  },\n' +
+  +     '  "observed": {\n' +
+  +     '    "user": "00u1abcd2EFGH3ijk4x7",\n' +
+  +     '    "status": "SUSPENDED"\n' +
+  +     '  },\n' +
+  +     '  "audit_seq": 9\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 9', '9', index: 251, input: '{\n  "state": "OK",\n  "ok": true,\n  "command": "verify-status",\n  "verified": true,\n  "expected": {\n    "user": "00u1abcd2EFGH3ijk4x7",\n    "status": "SUSPENDED"\n  },\n  "observed": {\n    "user": "00u1abcd2EFGH3ijk4x7",\n    "status": "SUSPENDED"\n  },\n  "audit_seq": 9\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (22.368872ms)
+  AssertionError [ERR_ASSERTION]: slack: no seq for a read-back link refuses
+  {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-deactivated",
+    "verified": true,
+    "expected": {
+      "user": "U0USER0001",
+      "deleted": true
+    },
+    "observed": {
+      "user": "U0USER0001",
+      "deleted": true,
+      "is_restricted": null,
+      "is_ultra_restricted": null
+    },
+    "flags": [],
+    "audit_seq": 7
+  }
+  
+  
+  + actual - expected
+  
+  + [
+  +   '"audit_seq": 7',
+  +   '7',
+  +   groups: undefined,
+  +   index: 299,
+  +   input: '{\n' +
+  +     '  "state": "OK",\n' +
+  +     '  "ok": true,\n' +
+  +     '  "command": "verify-deactivated",\n' +
+  +     '  "verified": true,\n' +
+  +     '  "expected": {\n' +
+  +     '    "user": "U0USER0001",\n' +
+  +     '    "deleted": true\n' +
+  +     '  },\n' +
+  +     '  "observed": {\n' +
+  +     '    "user": "U0USER0001",\n' +
+  +     '    "deleted": true,\n' +
+  +     '    "is_restricted": null,\n' +
+  +     '    "is_ultra_restricted": null\n' +
+  +     '  },\n' +
+  +     '  "flags": [],\n' +
+  +     '  "audit_seq": 7\n' +
+  +     '}\n' +
+  +     '\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '"audit_seq": 7', '7', index: 299, input: '{\n  "state": "OK",\n  "ok": true,\n  "command": "verify-deactivated",\n  "verified": true,\n  "expected": {\n    "user": "U0USER0001",\n    "deleted": true\n  },\n  "observed": {\n    "user": "U0USER0001",\n    "deleted": true,\n    "is_restricted": null,\n    "is_ultra_restricted": null\n  },\n  "flags": [],\n  "audit_seq": 7\n}\n\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:280:3
+✖ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (24.401749ms)
+  AssertionError [ERR_ASSERTION]: jira: no seq for a read-back link refuses
+  Verified: HELP-1 ID 10001 moved after the preflight and is now Done.
+  Recorded as audit entry 7 (change-record.js link takes it as --verify-seq 7).
+  
+  + actual - expected
+  
+  + [
+  +   'Recorded as audit entry 7',
+  +   '7',
+  +   groups: undefined,
+  +   index: 69,
+  +   input: 'Verified: HELP-1 ID 10001 moved after the preflight and is now Done.\n' +
+  +     'Recorded as audit entry 7 (change-record.js link takes it as --verify-seq 7).\n'
+  + ]
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:291:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'Recorded as audit entry 7', '7', index: 69, input: 'Verified: HELP-1 ID 10001 moved after the preflight and is now Done.\nRecorded as audit entry 7 (change-record.js link takes it as --verify-seq 7).\n', groups: undefined ],
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:55:49Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

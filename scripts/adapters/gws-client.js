@@ -54,7 +54,8 @@
 // Reports API token events instead of tokens.list and asps.list.
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
-// 2 the read failed or a verify-* read did not prove the write; 3 another customer.
+// 2 the read failed or a verify-* read did not prove the write; 3 another customer; 4 a
+// verify-* dry run (nothing was read, so nothing is verified).
 //
 // Requests are built here as raw paths and pass the contract's own allow-list door
 // (checkRequest for a dry run, client.send for a read), which tests each value as
@@ -84,9 +85,9 @@ const crypto = require('node:crypto');
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime,
+  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 // ── Hosts, token exchange and scopes ─────────────────────────────────────────
 const API_HOST = 'admin.googleapis.com';
@@ -641,8 +642,11 @@ async function run(argv, env = process.env, deps = {}) {
   const seen = [];
   const identities = [];
   const remember = (value) => { if (typeof value === 'string' && value.length >= 4 && !seen.includes(value)) seen.push(value); };
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS });
+    const args = parseArgs(bound.argv, { values: VALUE_FLAGS });
     const command = args._command;
     if (command === 'help' || command === '--help' || command === '-h') { out(USAGE); return 0; }
     if (typeof command !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, command)) {
@@ -652,10 +656,14 @@ async function run(argv, env = process.env, deps = {}) {
     const def = COMMANDS[command];
     const a = validate(command, def, args);
     const paths = def.paths(a);
+    // batch G3: the audit sink (and the test seams) come from cliDeps
+    const cli = cliDeps(deps, env);
+    const refusal = changeRefusal('google-workspace', command, bound, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {
       out(renderResult(dryRun(command, def, a, paths)));
-      return 0;
+      return dryRunExit(command, err);
     }
 
     // The client only ever sees this view of the environment. It remembers the
@@ -671,14 +679,12 @@ async function run(argv, env = process.env, deps = {}) {
         return value;
       },
     });
-    // batch G3: the audit sink (and the test seams) come from cliDeps
-    const cli = cliDeps(deps, env);
     const client = createClient(makeSpec({ now, remember }), { env: envView, ...cli });
     const read = await readAll(client, paths);
     let res;
     if (read.failed) res = { command, ...read.failed };
     else if (def.kind === 'read') res = readOutput(command, read.results[0]);
-    else res = recordVerdict(cli.audit, 'google-workspace', verdictOutput(command, def, a, read.results, { identities }));
+    else res = recordVerdict(cli.audit, 'google-workspace', verdictOutput(command, def, a, read.results, { identities }), bound.change);
     const shown = redactDeep(res, seen);
     const code = exitCodeFor(shown);
     (code === 1 ? err : out)(renderResult(shown, { secrets: seen, platform: 'google-workspace' }));

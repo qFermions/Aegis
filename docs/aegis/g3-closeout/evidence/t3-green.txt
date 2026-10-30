@@ -1,0 +1,32 @@
+# command: node --test scripts/adapters/rate-limit.test.js
+# commit: cc4db5b (plus uncommitted changes in the working tree)  started: 2026-10-30T07:08:05Z  node: v24.22.2
+✔ github: a primary-limit 403 whose reset is within the cap waits until one second after the reset, retries once and succeeds (13.559605ms)
+✔ github: a primary-limit 403 whose reset is beyond the cap hands off at once with the reset time in UTC: one attempt, no wait, no retry storm (2.195455ms)
+✔ github: a primary-limit 429 is handled the same way (within the cap: wait and retry; beyond it: RATE_LIMITED) (1.632724ms)
+✔ github: a reset within the cap that does not fit the read's retry budget hands off instead of waiting (0.620987ms)
+✔ github: a reset that is malformed, missing or already past is never waited on: RATE_LIMITED after one attempt, no retry (3.028051ms)
+✔ github: when every wait was within the cap and the limit still holds after the last retry, the read ends in RATE_LIMITED, not a permission refusal (1.506ms)
+✔ github: a secondary-limit 403 with retry-after within the cap waits that many seconds and retries (1.027759ms)
+✔ github: a secondary-limit 403 without retry-after (the docs' "at least one minute" is over the cap) or with a longer one hands off at once (1.313946ms)
+✔ github: a 403 with neither signal stays a permission refusal: one attempt, no wait, the permission message (1.031744ms)
+✔ github: a body that is not JSON, or JSON without a message, is not a secondary-limit signal (2.650798ms)
+✔ github: the rate-limit handoff is recorded in a real audit trail, which accepts RATE_LIMITED and holds no body (10.617281ms)
+✔ contract: rateLimit is opt-in and checked when the spec is defined; only the GitHub spec turns it on (0.917493ms)
+✔ fleet: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (3.966369ms)
+✔ jamf: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (5.334246ms)
+✔ slack: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (5.542619ms)
+✔ linear: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (5.763893ms)
+✔ google-workspace: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (9.90536ms)
+✔ okta: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (10.116085ms)
+✔ msgraph: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait, no RATE_LIMITED) (6.654941ms)
+✔ jira: a 403 carrying GitHub's rate-limit headers and message is still a permission refusal (one attempt, no wait) (5.124754ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 244.07249
+# exit: 0  finished: 2026-10-30T07:08:05Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

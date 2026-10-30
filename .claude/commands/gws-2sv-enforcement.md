@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[OU_PATH]` (the organizational unit being enforced, shown as `/[OU_PATH]` in the Admin console tree) · `[GROUP_EMAIL]` (the exception group: one configuration group whose 2-Step Verification enforcement is off) · `[USER@DOMAIN.COM]` (a sample user in `[OU_PATH]`, or one person who needs an exception) · `[START_DATE]` (the day enforcement starts) · `[MANAGER_UPN]` (who approves an exception or a turn-off) · `[UPN]` (your own administrator address: the actor that Admin log events records) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the Linear ticket, its prepared note, the note's digest, and the time a read-back starts from) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R3 gates):** before a gate whose reversibility is R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-2sv-not-enforced`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Every change here is a security-control change on a whole organizational unit or group.** Allowing enrollment forces nobody, but it is an MFA setting on a whole unit and its rollback has an unstated effect on users who already enrolled, so it is R3, with a rollback gate that runs only while nobody in the unit is enrolled. Enforcing adds protection but locks out each user in `[OU_PATH]` who has not enrolled by the start date (R3). Turning enforcement off for the exception group, adding a person to it or removing a person from it, Only security key and turning enforcement off change who must use a second step (R3). Each has its own gate and exact phrase; "yes" is never a confirmation.
@@ -209,7 +211,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 # read-back: the exception group's members, [USER@DOMAIN.COM] should now be listed
 node scripts/adapters/gws-client.js group-members --group [GROUP_EMAIL] --execute
 # read-back: once the unit is enforced (Phase D), proves the person is not enforced, exit 0 only when the read succeeded for that user and isEnforcedIn2Sv is false
-node scripts/adapters/gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint**: [ ] the member list shows `[USER@DOMAIN.COM]` · [ ] approver and end date in the ticket · [ ] after the start date, `verify-2sv-not-enforced` exit 0 for the person.
@@ -247,7 +249,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 # read-back: the exception group's members, [USER@DOMAIN.COM] should no longer be listed
 node scripts/adapters/gws-client.js group-members --group [GROUP_EMAIL] --execute
 # read-back: once the unit is enforced, proves the person is enforced again
-node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint**: [ ] the member list no longer shows `[USER@DOMAIN.COM]` · [ ] `verify-2sv-enforced` exit 0 for the person when the unit is enforced · [ ] the exemption's end recorded in the ticket.
@@ -284,7 +286,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: once the unit is enforced, proves a member is enforced again, run it for one or two members
-node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint**: [ ] every member read enrolled before the change · [ ] the group reads the restored value · [ ] `verify-2sv-enforced` exit 0 for a member when the unit is enforced.
@@ -316,7 +318,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: proves the sample user is enforced, run it for two or three users in the unit after the start date
-node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 # read-only: anyone in the unit still not enrolled is locked out now unless the exception group holds them
 node scripts/adapters/gws-client.js users --query "isEnrolledIn2Sv=false" --max-results 500 --execute
 ```
@@ -354,7 +356,7 @@ No read in the sources proves the method itself; the Methods value on the page i
 
 ```bash
 # read-back: the sample user is still enforced after the methods change
-node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 # read-only: the sample user's sign-in events since NOT_BEFORE, the next successful sign-in should be listed
 node scripts/adapters/gws-client.js activities --app login --user [USER@DOMAIN.COM] --start [NOT_BEFORE] --execute
 ```
@@ -388,7 +390,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: the sample user is still enforced after the methods change
-node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 # read-only: the sample user's sign-in events since NOT_BEFORE, the next successful sign-in should be listed
 node scripts/adapters/gws-client.js activities --app login --user [USER@DOMAIN.COM] --start [NOT_BEFORE] --execute
 ```
@@ -420,7 +422,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: proves a sample user in the unit is no longer enforced, exit 0 only when the read succeeded for that user and isEnforcedIn2Sv is false
-node scripts/adapters/gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 # read-only: the same user with orgUnitPath and both 2-Step Verification flags, to confirm the sample is in the unit
 node scripts/adapters/gws-client.js user --user [USER@DOMAIN.COM] --execute
 ```

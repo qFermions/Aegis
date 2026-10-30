@@ -1,0 +1,39 @@
+# command: node --require ./docs/aegis/g3-closeout/evidence/tools/win32-relative-join.js --test scripts/env-example.test.js
+# commit: 159e4f5  started: 2026-10-30T09:05:46Z  node: v24.22.2
+✔ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (11.779433ms)
+✔ the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names (42.513817ms)
+✖ a name removed from .env.example is reported by name (5.823577ms)
+✔ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (1.347479ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 192.218413
+
+✖ failing tests:
+
+test at scripts/env-example.test.js:111:1
+✖ a name removed from .env.example is reported by name (5.823577ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^GITHUB_ORG \(read in scripts\/adapters\/github-client\.js/. Input:
+  
+  'GITHUB_ORG (read in scripts\\adapters\\github-client.js, scripts\\adapters\\scopes.js, scripts\\intake\\intake.js)'
+  
+      at TestContext.<anonymous> (<repo>/scripts/env-example.test.js:115:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'GITHUB_ORG (read in scripts\\adapters\\github-client.js, scripts\\adapters\\scopes.js, scripts\\intake\\intake.js)',
+    expected: /^GITHUB_ORG \(read in scripts\/adapters\/github-client\.js/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T09:05:46Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

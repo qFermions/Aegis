@@ -1,0 +1,39 @@
+# command: bash docs/aegis/g3-closeout/evidence/tools/mutation-check.sh scripts/adapters/cli-support.js typeof change === 'string' && output.verified === true && written typeof change === 'string' && written a bound read-back that did not verify prints no audit seq scripts/adapters/change-binding.test.js
+# commit: 6c05c10  started: 2026-10-30T09:40:29Z  node: v24.22.2
+--- mutation in scripts/adapters/cli-support.js:
+-    const linkable = typeof change === 'string' && output.verified === true && written && Number.isInteger(written.seq);
++    const linkable = typeof change === 'string' && written && Number.isInteger(written.seq);
+--- node --test --test-name-pattern "a bound read-back that did not verify prints no audit seq" scripts/adapters/change-binding.test.js (expected to fail):
+✖ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (23.183158ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 202.480358
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:410:1
+✖ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (23.183158ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== undefined
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:415:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+--- test exit 1; scripts/adapters/cli-support.js restored: yes
+# exit: 0  finished: 2026-10-30T09:40:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

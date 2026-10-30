@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[NOT_BEFORE]` (the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, written in the ticket just before a change) · `[USER@DOMAIN.COM]` (their Google account) · `[TEMP_PASSWORD]` (a temporary password handed over out of band) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R3 gates):** before a gate whose reversibility is R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-status`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Deactivate and delete are R3.** Deactivation removes every app assignment, deprovisions apps with deprovisioning enabled (which can destroy app data such as email or files) and permanently deletes the password; deletion is permanent and needs a deactivated user first. An offboarding that spans Okta, Google and devices is a destructive multi-system plan: route it through an independent, out-of-session review before Phase F runs.
@@ -211,7 +213,7 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the user record reads status DEPROVISIONED, Deactivated in the Admin Console. It proves the change only when Phase A recorded another status
-node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --execute
+node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
 ```
 
 **WAIT UNTIL** the Google side shows the provisioning result: Admin console → Directory → Users → `[USER@DOMAIN.COM]` → status. With no deactivation options selected the account is **Suspended**; with *Do not suspend user* it stays **Active** and the Google suspension is a separate gated step in `/gws-offboard`.

@@ -105,7 +105,7 @@ for (const [platform, adapter] of Object.entries(ADAPTERS)) {
     for (const argv of adapter.commands) {
       const dry = recordingTransport(adapter);
       const dryCode = await mod.run(argv, adapter.env, { transport: dry, out: () => {}, err: () => {}, sleep: async () => {} });
-      assert.equal(dryCode, 0, `${platform} ${argv.join(' ')}: the dry run is accepted`);
+      assert.equal(dryCode, argv[0].startsWith('verify-') ? 4 : 0, `${platform} ${argv.join(' ')}: the dry run is accepted`);
       assert.equal(dry.calls.length, 0, `${platform} ${argv.join(' ')}: a dry run sends nothing`);
       const live = recordingTransport(adapter);
       await mod.run([...argv, '--execute'], adapter.env, { transport: live, out: () => {}, err: () => {}, sleep: async () => {} });

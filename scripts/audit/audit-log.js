@@ -55,7 +55,7 @@ class AuditBroken extends Error {
 // ── What may be written ──────────────────────────────────────────────────────
 const STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
   'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED']);
-const HANDOFFS = new Set(['RETRIES_EXHAUSTED', 'RETRY_AFTER_TOO_LONG', 'RETRY_BUDGET_SPENT']);
+const HANDOFFS = new Set(['RETRIES_EXHAUSTED', 'RETRY_AFTER_TOO_LONG', 'RETRY_BUDGET_SPENT', 'RATE_LIMITED']);
 const NAME = /^[a-z][a-z0-9-]{1,30}$/;
 // a route or query name: short words joined by dots, dashes or underscores (no word over
 // 28 characters, so a token-shaped string is not a name)
@@ -446,7 +446,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 }
 
 module.exports = {
-  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, AuditRefused, AuditBroken,
+  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, VERIFY_COMMAND, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

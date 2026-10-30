@@ -1,0 +1,7 @@
+# command: git fetch origin; git clone -q <repo> <clone>; cd <clone>; git checkout -q --detach 01dcb37
+# at: 2026-10-30T06:53:10Z
+HEAD 01dcb37cd1ad93e429d53d99e2d8f52bbb0dcd4d Merge pull request #6 from qFermions/feat/g3-production-hardening
+git status --porcelain in <clone>: 0 lines (clean)
+origin/main after the fetch: 01dcb37cd1ad93e429d53d99e2d8f52bbb0dcd4d; git branch -r --contains 01dcb37 and --contains 355d28b both list origin/main
+package.json: none; package-lock.json: none; nothing to install
+note: the clone is a local clone of the session's checkout after git fetch origin, so it holds exactly the objects of origin/main; it sits outside the system temporary folder (a clone under it fails 1 Linear test, docs/aegis/g3/baseline/node-test-clone-under-tmp.txt)

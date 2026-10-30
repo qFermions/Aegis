@@ -1,0 +1,13 @@
+# command: node --test --test-name-pattern=names no window scripts/adapters/rate-limit.test.js
+# commit: d93ce08 (plus uncommitted changes in the working tree)  started: 2026-10-30T08:10:58Z  node: v24.22.2
+✔ contract: a RATE_LIMITED handoff with no usable time names no window the spec does not have (4.633469ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.305229
+# exit: 0  finished: 2026-10-30T08:10:58Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

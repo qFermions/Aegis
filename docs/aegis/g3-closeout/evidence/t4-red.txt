@@ -1,0 +1,135 @@
+# command: node --test scripts/env-example.test.js
+# commit: 3ebb352 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:29:01Z  node: v24.22.2
+✖ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (14.053391ms)
+✔ the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names (51.350776ms)
+✖ a name removed from .env.example is reported by name (6.022619ms)
+✖ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (0.853981ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 202.778178
+
+✖ failing tests:
+
+test at scripts/env-example.test.js:84:1
+✖ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (14.053391ms)
+  AssertionError [ERR_ASSERTION]: .env.example is missing:
+    AEGIS_AUDIT_DIR (read in scripts/adapters/cli-support.js, scripts/jira-client.js, scripts/audit/audit-log.js)
+    AEGIS_GRAPH_RUNS_DIR (read in scripts/intake/intake.js)
+    AEGIS_NETWORK_TRIPWIRE (read in scripts/adapters/readonly-contract.js, scripts/jira-client.js)
+    FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js)
+    FLEET_URL (read in scripts/adapters/fleet-client.js)
+    GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js)
+    GITHUB_TOKEN (read in scripts/adapters/github-client.js)
+    GWS_ADMIN_SUBJECT (read in scripts/adapters/gws-client.js)
+    GWS_CUSTOMER_ID (read in scripts/adapters/gws-client.js)
+    GWS_SA_CLIENT_EMAIL (read in scripts/adapters/gws-client.js)
+    GWS_SA_PRIVATE_KEY (read in scripts/adapters/gws-client.js)
+    JAMF_CLIENT_ID (read in scripts/adapters/jamf-client.js)
+    JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js)
+    JAMF_URL (read in scripts/adapters/jamf-client.js)
+    LINEAR_API_KEY (read in scripts/adapters/linear-client.js)
+    LINEAR_ORG (read in scripts/adapters/linear-client.js, scripts/intake/intake.js)
+    MS_CERT_SHA256 (read in scripts/adapters/msgraph-client.js)
+    MS_CLIENT_ID (read in scripts/adapters/msgraph-client.js)
+    MS_PRIVATE_KEY (read in scripts/adapters/msgraph-client.js)
+    MS_SCOPE_CHECK_USER (read in scripts/adapters/scopes.js)
+    MS_TENANT_ID (read in scripts/adapters/msgraph-client.js, scripts/adapters/scopes.js)
+    OKTA_CLIENT_ID (read in scripts/adapters/okta-client.js)
+    OKTA_KEY_ID (read in scripts/adapters/okta-client.js)
+    OKTA_ORG_URL (read in scripts/adapters/okta-client.js)
+    OKTA_PRIVATE_KEY (read in scripts/adapters/okta-client.js)
+    SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js)
+    SLACK_TEAM_ID (read in scripts/adapters/slack-client.js, scripts/intake/intake.js)
+    SLACK_TOKEN (read in scripts/adapters/slack-client.js)
+  + actual - expected
+  
+  + [
+  +   'AEGIS_AUDIT_DIR (read in scripts/adapters/cli-support.js, scripts/jira-client.js, scripts/audit/audit-log.js)',
+  +   'AEGIS_GRAPH_RUNS_DIR (read in scripts/intake/intake.js)',
+  +   'AEGIS_NETWORK_TRIPWIRE (read in scripts/adapters/readonly-contract.js, scripts/jira-client.js)',
+  +   'FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js)',
+  +   'FLEET_URL (read in scripts/adapters/fleet-client.js)',
+  +   'GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js)',
+  +   'GITHUB_TOKEN (read in scripts/adapters/github-client.js)',
+  +   'GWS_ADMIN_SUBJECT (read in scripts/adapters/gws-client.js)',
+  +   'GWS_CUSTOMER_ID (read in scripts/adapters/gws-client.js)',
+  +   'GWS_SA_CLIENT_EMAIL (read in scripts/adapters/gws-client.js)',
+  +   'GWS_SA_PRIVATE_KEY (read in scripts/adapters/gws-client.js)',
+  +   'JAMF_CLIENT_ID (read in scripts/adapters/jamf-client.js)',
+  +   'JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js)',
+  +   'JAMF_URL (read in scripts/adapters/jamf-client.js)',
+  +   'LINEAR_API_KEY (read in scripts/adapters/linear-client.js)',
+  +   'LINEAR_ORG (read in scripts/adapters/linear-client.js, scripts/intake/intake.js)',
+  +   'MS_CERT_SHA256 (read in scripts/adapters/msgraph-client.js)',
+  +   'MS_CLIENT_ID (read in scripts/adapters/msgraph-client.js)',
+  +   'MS_PRIVATE_KEY (read in scripts/adapters/msgraph-client.js)',
+  +   'MS_SCOPE_CHECK_USER (read in scripts/adapters/scopes.js)',
+  +   'MS_TENANT_ID (read in scripts/adapters/msgraph-client.js, scripts/adapters/scopes.js)',
+  +   'OKTA_CLIENT_ID (read in scripts/adapters/okta-client.js)',
+  +   'OKTA_KEY_ID (read in scripts/adapters/okta-client.js)',
+  +   'OKTA_ORG_URL (read in scripts/adapters/okta-client.js)',
+  +   'OKTA_PRIVATE_KEY (read in scripts/adapters/okta-client.js)',
+  +   'SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js)',
+  +   'SLACK_TEAM_ID (read in scripts/adapters/slack-client.js, scripts/intake/intake.js)',
+  +   'SLACK_TOKEN (read in scripts/adapters/slack-client.js)'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/env-example.test.js:86:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'AEGIS_AUDIT_DIR (read in scripts/adapters/cli-support.js, scripts/jira-client.js, scripts/audit/audit-log.js)', 'AEGIS_GRAPH_RUNS_DIR (read in scripts/intake/intake.js)', 'AEGIS_NETWORK_TRIPWIRE (read in scripts/adapters/readonly-contract.js, scripts/jira-client.js)', 'FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js)', 'FLEET_URL (read in scripts/adapters/fleet-client.js)', 'GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js)', 'GITHUB_TOKEN (read in scripts/adapters/github-client.js)', 'GWS_ADMIN_SUBJECT (read in scripts/adapters/gws-client.js)', 'GWS_CUSTOMER_ID (read in scripts/adapters/gws-client.js)', 'GWS_SA_CLIENT_EMAIL (read in scripts/adapters/gws-client.js)', 'GWS_SA_PRIVATE_KEY (read in scripts/adapters/gws-client.js)', 'JAMF_CLIENT_ID (read in scripts/adapters/jamf-client.js)', 'JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js)', 'JAMF_URL (read in scripts/adapters/jamf-client.js)', 'LINEAR_API_KEY (read in scripts/adapters/linear-client.js)', 'LINEAR_ORG (read in scripts/adapters/linear-client.js, scripts/intake/intake.js)', 'MS_CERT_SHA256 (read in scripts/adapters/msgraph-client.js)', 'MS_CLIENT_ID (read in scripts/adapters/msgraph-client.js)', 'MS_PRIVATE_KEY (read in scripts/adapters/msgraph-client.js)', 'MS_SCOPE_CHECK_USER (read in scripts/adapters/scopes.js)', 'MS_TENANT_ID (read in scripts/adapters/msgraph-client.js, scripts/adapters/scopes.js)', 'OKTA_CLIENT_ID (read in scripts/adapters/okta-client.js)', 'OKTA_KEY_ID (read in scripts/adapters/okta-client.js)', 'OKTA_ORG_URL (read in scripts/adapters/okta-client.js)', 'OKTA_PRIVATE_KEY (read in scripts/adapters/okta-client.js)', 'SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js)', 'SLACK_TEAM_ID (read in scripts/adapters/slack-client.js, scripts/intake/intake.js)', 'SLACK_TOKEN (read in scripts/adapters/slack-client.js)' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/env-example.test.js:111:1
+✖ a name removed from .env.example is reported by name (6.022619ms)
+  AssertionError [ERR_ASSERTION]: AEGIS_AUDIT_DIR (read in scripts/adapters/cli-support.js, scripts/jira-client.js, scripts/audit/audit-log.js); AEGIS_GRAPH_RUNS_DIR (read in scripts/intake/intake.js); AEGIS_NETWORK_TRIPWIRE (read in scripts/adapters/readonly-contract.js, scripts/jira-client.js); FLEET_API_TOKEN (read in scripts/adapters/fleet-client.js); FLEET_URL (read in scripts/adapters/fleet-client.js); GITHUB_ORG (read in scripts/adapters/github-client.js, scripts/adapters/scopes.js, scripts/intake/intake.js); GITHUB_TOKEN (read in scripts/adapters/github-client.js); GWS_ADMIN_SUBJECT (read in scripts/adapters/gws-client.js); GWS_CUSTOMER_ID (read in scripts/adapters/gws-client.js); GWS_SA_CLIENT_EMAIL (read in scripts/adapters/gws-client.js); GWS_SA_PRIVATE_KEY (read in scripts/adapters/gws-client.js); JAMF_CLIENT_ID (read in scripts/adapters/jamf-client.js); JAMF_CLIENT_SECRET (read in scripts/adapters/jamf-client.js); JAMF_URL (read in scripts/adapters/jamf-client.js); LINEAR_API_KEY (read in scripts/adapters/linear-client.js); LINEAR_ORG (read in scripts/adapters/linear-client.js, scripts/intake/intake.js); MS_CERT_SHA256 (read in scripts/adapters/msgraph-client.js); MS_CLIENT_ID (read in scripts/adapters/msgraph-client.js); MS_PRIVATE_KEY (read in scripts/adapters/msgraph-client.js); MS_SCOPE_CHECK_USER (read in scripts/adapters/scopes.js); MS_TENANT_ID (read in scripts/adapters/msgraph-client.js, scripts/adapters/scopes.js); OKTA_CLIENT_ID (read in scripts/adapters/okta-client.js); OKTA_KEY_ID (read in scripts/adapters/okta-client.js); OKTA_ORG_URL (read in scripts/adapters/okta-client.js); OKTA_PRIVATE_KEY (read in scripts/adapters/okta-client.js); SLACK_ACCESS_LOGS_TOKEN (read in scripts/adapters/slack-client.js); SLACK_TEAM_ID (read in scripts/adapters/slack-client.js, scripts/intake/intake.js); SLACK_TOKEN (read in scripts/adapters/slack-client.js)
+  
+  28 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/env-example.test.js:114:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 28,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/env-example.test.js:118:1
+✖ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (0.853981ms)
+  AssertionError [ERR_ASSERTION]: 11 names (39 at the batch G3 close-out)
+      at TestContext.<anonymous> (<repo>/scripts/env-example.test.js:126:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T07:29:01Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

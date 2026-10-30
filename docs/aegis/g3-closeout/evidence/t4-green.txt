@@ -1,0 +1,34 @@
+# command: node --test scripts/env-example.test.js scripts/untrusted/wrong-customer.test.js
+# commit: 7d790a5 (plus uncommitted changes in the working tree)  started: 2026-10-30T07:32:16Z  node: v24.22.2
+✔ every environment variable a connector, the Jira client, the intake or the audit trail reads is named in .env.example (10.162105ms)
+✔ the scan finds every name the connectors declare (credentials, host and tenant), and the names the task names (40.243148ms)
+✔ a name removed from .env.example is reported by name (4.252464ms)
+✔ .env.example holds names and placeholders only: each value empty or one registered placeholder, no credential shape, one comment line per group (1.816451ms)
+✔ C1 graph intake: a ticket mixing two org namespaces, or naming only another org, is refused (exit 3) and creates no run (152.89754ms)
+✔ C1 control: a B2B guest ticket inside the deployment namespace ([GUEST_UPN], #EXT#) is one customer and is accepted (60.095236ms)
+✔ C2 graph submit: evidence that pulls in another org namespace is refused (exit 3); node and evidence are unchanged (268.307681ms)
+✔ C3 memory propose carrying another org namespace token is refused (exit 3) and writes no record (132.56301ms)
+✔ C4 replay record carrying another org namespace token in the ticket or the solution is refused (exit 4) and creates no case (129.557605ms)
+✔ C5 a memory store written under tenant A refuses tenant B and an unset tenant (exit 6) and never prints tenant A text (758.144513ms)
+✔ C6 a replay store written under tenant A refuses tenant B and an unset tenant (exit 6) and never prints the solution (943.875497ms)
+✔ C7 a store with no tenant binding stays readable; its first write under a tenant binds it (memory and replay) (993.305635ms)
+✔ C8 a foreign org token with a mixed-case, multi-segment or hyphenated name is still a second tenant (graph 3, memory 3, replay 4) (847.949842ms)
+✔ C9 the deployment's own tenant literal hidden by a zero-width character or a look-alike letter is still blocked (graph 3, memory 3, replay 4) (591.508742ms)
+✔ C10 a refused or duplicate write never binds an unbound store, and both CLIs re-check the binding under the store lock (392.002009ms)
+✔ C11 chat handles are not a second tenant, while spaced spellings of a foreign org token still are (335.65885ms)
+✔ C12 an accented tenant literal disguised with a zero-width character is still found (folded on both sides) (7.246671ms)
+✔ C13 camelCase, numbered, spaced and nested spellings of a foreign org token are a second tenant; chat handles and AegionCo-style names are judged by namespace (734.160476ms)
+✔ C14 the org-token suffix list equals the placeholder dictionary's [@Aegion_*] suffixes (0.696597ms)
+✔ C15 a second org name inside the [@Aegion_*] namespace or joined by a dot is a second tenant, and every dictionary token is still ours (146.494608ms)
+✔ C16 a bracketed chat handle whose last word is a dictionary suffix reads as a second tenant (fail safe); the graph refusal names that case, and no refusal offers a rewrite that would pass a real one (377.434726ms)
+✔ C17 a lookup that marks a case stale never binds an unbound replay store to the reader's tenant (270.632865ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7250.859501
+# exit: 0  finished: 2026-10-30T07:32:23Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

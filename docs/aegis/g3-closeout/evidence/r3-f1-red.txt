@@ -1,0 +1,36 @@
+# command: node --test --test-name-pattern=waits until after the reset scripts/adapters/rate-limit.test.js
+# commit: f8763ed (plus uncommitted changes in the working tree)  started: 2026-10-30T08:27:12Z  node: v24.22.2
+✖ github: a secondary limit with remaining 0, a later reset and a short retry-after waits until after the reset (14.1704ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 261.007987
+
+✖ failing tests:
+
+test at scripts/adapters/rate-limit.test.js:221:1
+✖ github: a secondary limit with remaining 0, a later reset and a short retry-after waits until after the reset (14.1704ms)
+  AssertionError [ERR_ASSERTION]: one second past the reset, not the 2 s retry-after
+  + actual - expected
+  
+    [
+  +   2000
+  -   26000
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/rate-limit.test.js:224:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 2000 ],
+    expected: [ 26000 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-30T08:27:12Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

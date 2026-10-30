@@ -282,7 +282,7 @@ test('the dry run prints the exact planned request, reads no credential and call
   for (const [argv, expected] of cases) {
     const { env, reads } = recordingEnv();
     const r = await cli(argv, { env, replies: [ok({})] });
-    assert.equal(r.code, 0, `${argv.join(' ')}: ${r.stdout}${r.stderr}`);
+    assert.equal(r.code, argv[0].startsWith('verify-') ? 4 : 0, `${argv.join(' ')}: ${r.stdout}${r.stderr}`);
     assert.equal(r.transport.calls.length, 0, `${argv.join(' ')}: a dry run calls no transport`);
     assert.ok(!reads.includes('FLEET_API_TOKEN'), `${argv.join(' ')}: a dry run reads no credential`);
     assert.equal(r.json.dry_run, true, argv.join(' '));

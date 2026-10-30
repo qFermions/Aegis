@@ -308,7 +308,7 @@ node scripts/adapters/github-client.js protection --repo [REPO_NAME] --branch [B
 node scripts/adapters/github-client.js rulesets --repo [REPO_NAME] --execute
 ```
 
-**WAIT UNTIL** the end time in the exception block. Then run the rollback gate it names, and its read-back: `verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions` must exit 0, or `rulesets` must show the Phase A state again. An exception still open after its end time is an incident for the repository owner.
+**WAIT UNTIL** the end time in the exception block. Then run the rollback gate it names, and its read-back: `verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions --change [CHANGE_ID]` (the rollback gate's own change record) must exit 0, or `rulesets` must show the Phase A state again. An exception still open after its end time is an incident for the repository owner.
 
 **Verification checkpoint:** [ ] the exception block was in the ticket before step 1 · [ ] the read-back shows the one weaker setting, and nothing else changed · [ ] the rollback ran at the end time and its read-back passed.
 

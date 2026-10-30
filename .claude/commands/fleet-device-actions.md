@@ -203,7 +203,7 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `host-activities --id [HOST_ID]` and `verify-script --execution-id [EXECUTION_ID]`. Any host that fails stops the batch story: report which hosts passed and which did not.
 
-**Verification checkpoint**: [ ] `verify-script` passed for the pilot and for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
+**Verification checkpoint**: [ ] `verify-script` passed for the pilot and, run with `--change [CHANGE_ID]`, for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
 
 ## Phase F: Leaving the fleet, Turn off MDM then delete (R3 each)
 
@@ -309,7 +309,7 @@ else
   exit 1
 fi
 # read-back: passes only when the host reads locked with nothing pending
-node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --execute
+node scripts/adapters/fleet-client.js verify-lock --id [HOST_ID] --change [CHANGE_ID] --execute
 # on Android verify-lock cannot pass, because Fleet never shows Locked there: the proof is the locked_host entry in the read below plus a person who confirms the lock on the device, as in Phase B
 node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
 ```

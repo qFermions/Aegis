@@ -361,3 +361,16 @@ test('every connector with a verify-* command takes --change out of argv, checks
   }
   assert.equal(checked, 9, 'the nine connectors with read-backs');
 });
+
+// Code review round 2, finding 7: on a plain read, --change in either form is refused as not a
+// read-back, never with advice to retry in the two-argument form.
+for (const c of CONNECTORS) {
+  test(`${c.name}: --change=chg-... on a plain read is refused as not a read-back`, async (t) => {
+    const tr = trail(t);
+    const r = await run(c, [...c.read, '--change=chg-0123456789ab'], tr);
+    assert.equal(r.code, 1, r.text);
+    assert.equal(r.calls, 0);
+    assert.match(r.text, /this command is not a read-back/);
+    assert.doesNotMatch(r.text, /next argument/);
+  });
+}

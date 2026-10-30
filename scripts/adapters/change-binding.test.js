@@ -247,8 +247,10 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       // a gate is a marker block in the page or a comment block inside a bash fence (code review
       // round 1, finding 1: the fenced form was missed, and one R2 read-back with it)
       if (/<!-- SAFETY GATE \[[^\]]+\] -->|^# SAFETY GATE \[[^\]]+\]/.test(l)) { gate = l; rClass = null; }
-      const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)\s*(R[0-3])/);
-      if (r && gate) rClass = r[1];
+      // a range ("R1 to R3", "R2 or R3") counts as its highest class: the change may be R2 or R3
+      // (code review round 2, finding 1)
+      const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)\s*(R[0-3])(?:\s+(?:to|or)\s+(R[0-3]))?/);
+      if (r && gate) rClass = r[2] && r[2] > r[1] ? r[2] : r[1];
       if (!VERIFY.test(l)) continue;
       const wantBound = rClass === 'R2' || rClass === 'R3';
       assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${rClass || 'no gate'}): ${l.trim().slice(0, 120)}`);
@@ -258,7 +260,7 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
     if (has) assert.match(text, /\*\*Change record \((?:R2 and R3|R2|R3) gates\):\*\* before a gate[^\n]*`node scripts\/audit\/change-record\.js open`[^\n]*`\[CHANGE_ID\]`/, `${file}: says where [CHANGE_ID] comes from`);
     else assert.doesNotMatch(text, /\[CHANGE_ID\]/, `${file}: no change record, no [CHANGE_ID]`);
   }
-  assert.equal(bound, 72, 'the 72 read-backs of R2 and R3 gates at the batch G3 close-out');
+  assert.equal(bound, 74, 'the 74 read-backs of R2 and R3 gates at the batch G3 close-out');
   assert.ok(unbound >= 80, `read-backs of R0 and R1 work stay unbound (${unbound})`);
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
@@ -267,7 +269,11 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // batch script run (code review round 1, finding 1)
   const page = (name) => fs.readFileSync(path.join(dir, `${name}.md`), 'utf8');
   assert.match(page('github-branch-protection'), /Then run the rollback gate it names, and its read-back: `verify-protection [^`]*--change \[CHANGE_ID\]`/);
-  assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot and, run with `--change \[CHANGE_ID\]`, for every checked host/);
+  // the batch script run (R3): its read-back step and its checkpoint (code review round 2, finding 5)
+  assert.match(page('fleet-device-actions'), /\*\*Read-back:\*\* [^\n]*`verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\]/);
+  assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` unless step 1 set R1\) and, with `--change \[CHANGE_ID\]`, for every checked host/);
+  // a gate whose class is set at run time says when to drop --change
+  assert.equal((page('fleet-device-actions').match(/drop `--change \[CHANGE_ID\]` when step 1 set R1/g) || []).length, 2);
 });
 
 // Fixed beyond the task: link needs the verify entry's audit seq (--verify-seq), so a recorded

@@ -279,7 +279,11 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   assert.match(page('github-branch-protection'), /Then run the rollback gate it names, and its read-back: `node scripts\/adapters\/github-client\.js verify-protection [^`]*--change \[CHANGE_ID\] --execute`/);
   // the batch script run (R3): its read-back step and its checkpoint (code review round 2, finding 5)
   assert.match(page('fleet-device-actions'), /\*\*Read-back:\*\* [^\n]*`node scripts\/adapters\/fleet-client\.js verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\] --execute`/);
-  assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` unless step 1 set R1\) and, with `--change \[CHANGE_ID\]`, for every checked host/);
+  // the pilot (E1) and the batch (E2) are two changes with two ids, and status proves one host,
+  // not the batch (code review round 3, finding 3)
+  assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` set to the E1 change's id, unless step 1 set R1\) and, with `--change \[CHANGE_ID\]` set to this gate's own change id, for every checked host/);
+  assert.match(page('fleet-device-actions'), /with `\[CHANGE_ID\]` the id of this gate's own change record, not the pilot's\./);
+  assert.match(page('fleet-device-actions'), /`change-record\.js status` reads done once one linked read-back verified, so it proves one host, not the batch: the ticket's list of the hosts that passed and failed is the batch's record\./);
   // a gate whose class is set at run time says when to drop --change: the portal gate by its
   // step 1, the fenced fleetctl gate by the class its own precondition writes in the ticket, in
   // a comment the gated-fence rules allow (code review round 3, finding 8)

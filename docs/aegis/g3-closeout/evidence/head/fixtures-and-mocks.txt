@@ -1,0 +1,34 @@
+# command: bash docs/aegis/g3/evidence/tools/fixtures-and-mocks.sh 01dcb37
+# commit: 2ba52bc  started: 2026-10-30T09:24:21Z  node: v24.22.2
+--- fixture files added (data read by tests or the corpus scorer):
+--- test files added or changed: socket tripwire loaded, lines that inject a transport, request or fetch, network modules required
+    (0 and 0: the file injects no transport of its own; the whole suite, child processes included, also passes with the tripwire preloaded, d12-whole-suite-under-tripwire.txt):
+scripts/adapters/change-binding.test.js: tripwire 1, injected transport, request or fetch lines 2, network module requires 0
+scripts/adapters/endpoint-sync.test.js: tripwire 1, injected transport, request or fetch lines 0, network module requires 0
+scripts/adapters/fleet-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/fleet-runbooks.test.js: tripwire 1, injected transport, request or fetch lines 0, network module requires 0
+scripts/adapters/g3-runbooks.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/gws-client.test.js: tripwire 2, injected transport, request or fetch lines 3, network module requires 0
+scripts/adapters/jamf-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/jamf-runbooks.test.js: tripwire 1, injected transport, request or fetch lines 0, network module requires 0
+scripts/adapters/linear-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/linear-runbooks.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/okta-client.test.js: tripwire 2, injected transport, request or fetch lines 3, network module requires 0
+scripts/adapters/rate-limit.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/slack-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/adapters/verify-dry-run.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/audit/change-record.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/env-example.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/g3-boundary.test.js: tripwire 1, injected transport, request or fetch lines 2, network module requires 0
+scripts/gws-runbooks.test.js: tripwire 1, injected transport, request or fetch lines 0, network module requires 0
+scripts/jira-client.test.js: tripwire 0, injected transport, request or fetch lines 16, network module requires 0
+--- tenant and host values the added test lines use:
+      4 FLEET_URL: 'fleet.example.invalid'
+      3 GITHUB_ORG: 'example-org'
+      2 GITHUB_ORG: 'org-a'
+      4 JAMF_URL: 'jamf.example.invalid'
+      3 LINEAR_ORG: 'org-under-test'
+      4 MS_TENANT_ID: '11111111-2222-4333-8444-555555555555'
+      4 OKTA_ORG_URL: 'okta.example.invalid'
+# exit: 0  finished: 2026-10-30T09:24:22Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

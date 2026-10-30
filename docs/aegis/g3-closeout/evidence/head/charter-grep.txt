@@ -1,0 +1,5 @@
+# command: bash -c git log -p 01dcb37..HEAD | grep -n -i -E "api[_-]?key|secret|token|password|/Users/|C:\\\\Users|@gmail" | wc -l
+# commit: 2ba52bc  started: 2026-10-30T09:24:21Z  node: v24.22.2
+724
+# exit: 0  finished: 2026-10-30T09:24:21Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

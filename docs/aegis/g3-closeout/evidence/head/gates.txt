@@ -1,0 +1,16 @@
+# command: bash docs/aegis/g3-closeout/evidence/tools/e10-gates.sh 01dcb37
+# commit: 2ba52bc  started: 2026-10-30T09:24:22Z  node: v24.22.2
+--- files whose SAFETY GATE count changed since 01dcb37 (path: base -> here):
+docs/aegis/g3-closeout/baseline/head-checks.txt: 0 -> 2
+docs/aegis/g3-closeout/baseline/node-test-under-tripwire.txt: 0 -> 1
+docs/aegis/g3-closeout/baseline/node-test.txt: 0 -> 1
+docs/aegis/g3-closeout/evidence/r3-f2-green.txt: 0 -> 1
+docs/aegis/g3-closeout/evidence/r3-f3-red.txt: 0 -> 2
+docs/aegis/g3-closeout/evidence/t1-green.txt: 0 -> 1
+docs/aegis/g3-closeout/evidence/t1-red.txt: 0 -> 5
+docs/aegis/g3-closeout/evidence/tools/e10-gates.sh: 0 -> 5
+docs/review/batches/g3-checks.md: 0 -> 1
+--- gate marker or gate field lines added or removed in .claude/commands since 01dcb37:
+0
+# exit: 0  finished: 2026-10-30T09:24:23Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

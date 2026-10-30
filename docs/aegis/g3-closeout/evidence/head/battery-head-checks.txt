@@ -1,0 +1,18 @@
+# command: bash docs/aegis/g3/evidence/tools/head-checks.sh 01dcb37
+# commit: 2ba52bc  started: 2026-10-30T09:21:10Z  node: v24.22.2  pwsh: PowerShell 7.6.9
+node scripts/eval/ms-ticket-eval.js: exit 0; 28/28 tickets · 6/6 dangerous pairs
+node scripts/eval/gws-ticket-eval.js: exit 0; 38/38 tickets · 9/9 dangerous pairs
+node scripts/eval/g2-ticket-eval.js: exit 0; 65/65 tickets · 13/13 dangerous pairs
+node scripts/eval/g3-ticket-eval.js: exit 0; 44/44 tickets · 8/8 dangerous pairs
+node scripts/lint/command-structure.js: exit 0; 108 commands; clean
+node scripts/pre-commit-check.js --all: exit 0; BLOCK lines 0, WARN lines 207
+node scripts/harness/release-boundary-check.js: exit 0; RELEASE BOUNDARY: PASS
+CLAUDE.md: 19202 bytes; lines changed since 01dcb37: 0
+PRODUCT_CONTRACT.md lines removed since 01dcb37:
+boundary sentences: 'AEGIS ADVISES. HUMAN ADMINISTRATORS EXECUTE.' in PRODUCT_CONTRACT.md 1 (at 01dcb37 1); 'AEGIS ADVISES; HUMAN ADMINISTRATORS' in CLAUDE.md 1
+SAFETY GATE markers in .claude, modules and docs: 476 at 01dcb37, 494 here
+files whose SAFETY GATE count fell since 01dcb37: 0
+files added since 01dcb37 holding U+2014: 0
+added lines since 01dcb37 holding U+2014: 0
+# exit: 0  finished: 2026-10-30T09:21:25Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

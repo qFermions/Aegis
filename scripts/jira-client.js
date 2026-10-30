@@ -464,7 +464,7 @@ function recordJiraVerdict(runtime, command, verified) {
   if (!runtime.audit) return;
   try {
     const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: typeof runtime.change === 'string' ? runtime.change : null });
-    if (written && Number.isInteger(written.seq)) runtime.out(`Recorded as audit entry ${written.seq} (change-record.js link takes it as --verify-seq ${written.seq}).`);
+    if (written && Number.isInteger(written.seq)) runtime.recorded = written.seq;
   } catch {
     throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
   }
@@ -918,6 +918,16 @@ const COMMANDS = {
 
 async function run(argv = process.argv.slice(2), env = process.env, dependencies = {}) {
   const runtime = createRuntime(env, dependencies);
+  // A read-back's own lines ("Verified: ...") are held until its verdict is on record, so a
+  // verdict the audit trail could not record is never shown as verified (code review round 1
+  // of the batch G3 close-out, finding 4).
+  const out = runtime.out;
+  const held = [];
+  const flush = () => {
+    runtime.out = out;
+    for (const line of held.splice(0)) out(line);
+    if (Number.isInteger(runtime.recorded)) out(`Recorded as audit entry ${runtime.recorded} (change-record.js link takes it as --verify-seq ${runtime.recorded}).`);
+  };
   let args;
   try {
     // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
@@ -932,10 +942,14 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
     const refusal = bound.error || changeRefusal('jira', command, bound.change, runtime.audit);
     if (refusal) throw new InputError(refusal);
     runtime.change = bound.change;
+    if (/^verify-/.test(command)) runtime.out = (line) => held.push(line);
     const code = await COMMANDS[command](runtime, args);
     if (code === 0 && /^verify-/.test(command)) recordJiraVerdict(runtime, command, true);
+    flush();
     return code;
   } catch (error) {
+    // a verdict that could not be recorded is withheld with its lines; anything else shows them
+    if (error instanceof AuditError) { held.length = 0; runtime.out = out; } else flush();
     const command = args && args._ ? args._[0] : null;
     const op = typeof command === 'string' && COMMANDS[command] ? command : null;
     if (error instanceof InputError) {

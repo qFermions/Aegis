@@ -53,12 +53,16 @@ function takeChange(argv) {
   const list = Array.isArray(argv) ? argv.map(String) : [];
   const rest = [];
   const values = [];
+  let joined = false;
   for (let i = 0; i < list.length; i += 1) {
+    // --change=chg-... is taken out too, so the refusal names the flag's real form
+    if (list[i].startsWith('--change=')) { joined = true; continue; }
     if (list[i] !== '--change') { rest.push(list[i]); continue; }
     const value = i + 1 < list.length && !list[i + 1].startsWith('--') ? list[i + 1] : null;
     values.push(value);
     if (value !== null) i += 1;
   }
+  if (joined) return { argv: rest, error: '--change takes the change id as the next argument: --change chg-... (not --change=chg-...)' };
   if (values.length > 1) return { argv: rest, error: '--change may appear once' };
   if (values.length === 1 && values[0] === null) return { argv: rest, error: '--change needs the change id that node scripts/audit/change-record.js open printed' };
   return { argv: rest, change: values.length ? values[0] : undefined };

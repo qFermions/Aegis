@@ -23,3 +23,26 @@
 | 13 | Does one linked host read-back make a whole Fleet batch read done? | A known design limit, not a code flaw: the runbook now says `status` proves one host and the ticket's host list is the batch's record; no code path accepts a read-back for a change it was not bound to. Whether `status` should require every host is an owner decision. |
 | 14 | Can the "drop `--change` when R1" notes be used to skip binding on an R2 or R3 change? | No false proof follows: an unbound read-back is refused by `link` and never counted by `status`. |
 | 15 | Do the new tests hold real credentials, write the real trail or reach the network? | No. Fixture tokens are built sentinels; transports and audit sinks are injected; the suite passes under the socket tripwire. |
+
+## Addendum: `f9c6a99..6c05c10` (code and tests changed after review 2 ran)
+
+- Range: `git diff f9c6a99..6c05c10 -- scripts .claude .env.example`, run on 2026-10-30 so that every change after security review 1 is reviewed: the Windows path fix in `env-example.test.js` (`c499e9d`), the file-name test in `change-binding.test.js` (`37dabc5`), the rename of `scripts/audit/test-trail.js` to `trail-helper.js` with its three requires and the scan's exclusion (`2ba52bc`), and the env-example diagnostic with a comment fix in `verify-dry-run.test.js` (`6c05c10`). The commits between them touch only `checks.md`, `progress.md`, `docs/aegis/boundary-audit.md` and `docs/aegis/g3-closeout/evidence/`.
+- Method: one sub-task, read-only, with the same categories, exclusions and confidence bar as above.
+- Result: **No findings.**
+
+| # | question | why rejected |
+|---|---|---|
+| 1 | Can the new `t.diagnostic` print an environment variable's value? | No. It prints the scan's map keys, upper-case names taken from source text; the file never reads `process.env`. |
+| 2 | Could a secret written in a `credentials` list or an `env:` literal be echoed? | The scan keeps identifier shapes only, and anything it finds is already committed source. |
+| 3 | Do the names in a public CI log expose anything? | They are variable names, already published in `.env.example`. |
+| 4 | Path traversal through the `${dir}/${n}` join? | `n` comes from `readdirSync` and holds no separator; `dir` is a fixed literal. |
+| 5 | Can the `.js` filter be bypassed so a `.env` file is read? | Only names ending `.js` and not `.test.js` are kept, plus the fixed `scripts/jira-client.js`. |
+| 6 | Does the recursive listing follow a symlink out of the repository? | It lists names only and opens nothing; `scripts/` holds no symlink. |
+| 7 | A slow pattern in the file-name test? | Denial of service is out of scope, and the input is short file names. |
+| 8 | Does a stale `test-trail.js` require make a runbook test skip? | No code reference is left, and a missing module fails the file loudly. |
+| 9 | Does excluding `trail-helper.js` from the scan hide an env read? | The helper builds an `AEGIS_AUDIT_DIR` object for tests and reads no environment. |
+| 10 | Temporary folder handling in the helper? | Unchanged apart from comments: a random `mkdtemp` folder removed after the test. |
+| 11 | Do the changed runbook tests reach the network? | Only their require line changed; each loads the socket tripwire. |
+| 12 | Do connector modules required by `env-example.test.js` do I/O at load? | Not new in this range; every client runs its CLI only under `require.main === module`. |
+| 13 | Does the `verify-dry-run.test.js` header change behavior? | A comment only. |
+| 14 | Does the name test list files outside `scripts/`? | Its root is `scripts/`, and it only lists names. |

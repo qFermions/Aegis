@@ -134,18 +134,28 @@ owner decisions from PR #6's report, each landed test first; captures in
 
 | Decision | What changed | Proof (command and count) |
 |---|---|---|
-| 1, bind each read-back to its change | every `verify-*` command of the nine connectors takes `--change`, refuses before any read unless the change is open for that connector and command and approved, and records the change id; `change-record.js link` refuses an unbound read-back or one bound to another change; 78 runbook read-backs of R2 and R3 gates (gates that are R2 or R3 by scope included) pass `--change [CHANGE_ID] --execute` | `node --test scripts/adapters/change-binding.test.js scripts/audit/change-record.test.js` and the runbook line tests: 123/123 at landing (`t1-green.txt`) |
-| 2, a `verify-*` dry run exits 4 | shared `EXIT.VERIFY_DRY_RUN`; every connector prints NOT VERIFIED; plain read dry runs keep 0 | `node --test scripts/adapters/verify-dry-run.test.js` and the 11 changed suites: 213/213 (`t2-green.txt`); the test diff moves only verify-* dry-run expectations (`t2-test-diff.txt`) |
-| 3, GitHub rate-limit 403s | opt-in rate-limit hook in the contract, on for GitHub only; `RATE_LIMITED` handoff with the UTC retry time; a 403 with neither signal is still a permission refusal | `node --test scripts/adapters/rate-limit.test.js`: 20/20 (`t3-green.txt`); vendor facts G-40 and G-41 re-checked on 2026-10-30 |
-| 5, `.env.example` | 28 names added by connector; `[@Aegion_MS_TENANT_ID]` registered | `node --test scripts/env-example.test.js`: 4/4, and it fails naming `GITHUB_ORG` when that line is removed (`t4-green.txt`, `t4-name-removed-fails.txt`) |
+| 1, bind each read-back to its change | every `verify-*` command of the nine connectors takes `--change`, refuses before any read unless the change is open for that connector and command and approved, and records the change id; `change-record.js link` refuses an unbound read-back or one bound to another change; 78 runbook read-backs of R2 and R3 gates (gates that are R2 or R3 by scope included) pass `--change [CHANGE_ID] --execute` | `node --test scripts/adapters/change-binding.test.js scripts/audit/change-record.test.js` and the runbook line tests: 123/123 at landing (`t1-green.txt`); at the code head `2ba52bc`, change-binding 71/71 and change-record 17/17 (`head/test-counts.txt`) |
+| 2, a `verify-*` dry run exits 4 | shared `EXIT.VERIFY_DRY_RUN`; every connector prints NOT VERIFIED; plain read dry runs keep 0 | `node --test scripts/adapters/verify-dry-run.test.js` and the 11 changed suites: 213/213 at landing (`t2-green.txt`); the test diff moves only verify-* dry-run expectations (`t2-test-diff.txt`); verify-dry-run 20/20 at `2ba52bc` |
+| 3, GitHub rate-limit 403s | opt-in rate-limit hook in the contract, on for GitHub only; `RATE_LIMITED` handoff with the UTC retry time; a 403 with neither signal is still a permission refusal | `node --test scripts/adapters/rate-limit.test.js`: 20/20 at landing (`t3-green.txt`), 26/26 at `2ba52bc`; vendor facts G-40 and G-41 re-checked on 2026-10-30 |
+| 5, `.env.example` | 28 names added by connector; `[@Aegion_MS_TENANT_ID]` registered | `node --test scripts/env-example.test.js`: 4/4, and it fails naming `GITHUB_ORG` when that line is removed (`t4-green.txt`, `t4-name-removed-fails.txt`); 4/4 at `2ba52bc` on Linux and with Windows path joins |
 
-- **Fixed beyond the four:** a recorded read-back now prints its audit seq, the number
-  `change-record.js link` takes (`docs/review/incidents.md`, row of 2026-10-30).
+- **Whole battery at the code head `2ba52bc`:** `node --test` 1422/1422 (1294 at the base,
+  +128 per file), also under the socket tripwire; every eval, lint, gate and scanner floor as at
+  the base; CI and the Release Gate green (`docs/aegis/g3-closeout/evidence/head/`,
+  `docs/aegis/g3-closeout/evidence/ci-runs.md`).
+- **Fixed beyond the four:** a bound read-back that verified prints its audit seq, the number
+  `change-record.js link` takes; Jira printed "Verified" before its audit record and recorded
+  every verify entry as OK (each in `docs/review/incidents.md`, rows of 2026-10-30); the
+  env-example test failed on Windows only (backslash paths); the runbook tests' trail helper
+  was named like a test file, so `node --test` counted it as a test.
 - **Boundary:** unchanged; no write path added (`docs/aegis/boundary-audit.md` rows 35 and 37,
   `PRODUCT_CONTRACT.md` "Changes in this batch").
-- **Not done here:** binding a read-back to the exact object it read (which user or device);
-  the Microsoft runbooks' gates carry no R class, so their read-backs stay unbound (both are
-  owner decisions in PR #7's body).
+- **Not done here (owner decisions in PR #7's body):** binding a read-back to the exact object
+  it read (which user or device); whether `change-record.js status` should need a read-back
+  for every host of a batch (a change record holds no host count); the Microsoft runbooks'
+  gates say "not reversible" with no R class, and `/mfa-issue`'s `verify-mfa-cleared` proves
+  "Require re-register MFA", an MFA change (R3 in CLAUDE.md's table) that the runbook does not
+  gate, so its read-backs stay unbound until those gates are classed.
 
 ## Partial
 

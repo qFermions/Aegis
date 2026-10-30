@@ -1,0 +1,36 @@
+# command: bash docs/aegis/g3-closeout/evidence/tools/mutation-check.sh scripts/adapters/fleet-client.js recordVerdict(cli.audit, 'fleet', output, bound.change) recordVerdict(cli.audit, 'fleet', output) every connector with a verify-\* command takes --change scripts/adapters/change-binding.test.js
+# commit: 6c05c10  started: 2026-10-30T09:40:28Z  node: v24.22.2
+--- mutation in scripts/adapters/fleet-client.js:
+-  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change), { out, err, secrets });
++  return emit(recordVerdict(cli.audit, 'fleet', output), { out, err, secrets });
+--- node --test --test-name-pattern "every connector with a verify-\* command takes --change" scripts/adapters/change-binding.test.js (expected to fail):
+✖ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (3.544383ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 145.91906
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:371:1
+✖ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (3.544383ms)
+  AssertionError [ERR_ASSERTION]: fleet-client.js: recordVerdict(cli.audit, 'fleet', output) passes bound.change last
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:389:40)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: "cli.audit, 'fleet', output",
+    expected: /,\s*bound\.change\s*$/,
+    operator: 'match',
+    diff: 'simple'
+  }
+--- test exit 1; scripts/adapters/fleet-client.js restored: yes
+# exit: 0  finished: 2026-10-30T09:40:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

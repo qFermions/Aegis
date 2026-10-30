@@ -26,9 +26,10 @@ const test = require('node:test');
 const ROOT = path.resolve(__dirname, '..');
 const EXAMPLE = path.join(ROOT, '.env.example');
 
-// The files whose environment reads .env.example must name.
+// The files whose environment reads .env.example must name, as repository paths with "/" on
+// every system (path.join gave backslashes on the windows-latest runner, so the report differed by OS)
 function sourceFiles() {
-  const list = (dir, keep) => fs.readdirSync(path.join(ROOT, dir)).filter((n) => n.endsWith('.js') && !n.endsWith('.test.js') && keep(n)).map((n) => path.join(dir, n));
+  const list = (dir, keep) => fs.readdirSync(path.join(ROOT, dir)).filter((n) => n.endsWith('.js') && !n.endsWith('.test.js') && keep(n)).map((n) => `${dir}/${n}`);
   return [
     ...list('scripts/adapters', (n) => n.endsWith('-client.js') || ['readonly-contract.js', 'cli-support.js', 'scopes.js'].includes(n)),
     'scripts/jira-client.js',

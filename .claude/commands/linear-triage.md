@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[ISSUE_ID]` (a Linear issue identifier such as `[@Aegion_LINEAR_TEAM]-123`) · `[CANONICAL_ISSUE_ID]` (the older issue a duplicate points to) · `[@Aegion_LINEAR_TEAM]` (the IT team key, the prefix of every IT issue) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · `[STATE_NAME]` (a workflow status name exactly as the `states` read prints it) · `[LABEL_NAME]` (a Linear label) · `[PRIORITY_LEVEL]` (one of Linear's levels: Urgent, High, Medium, Low or No priority) · `[DATE_TIME]` (the date and time a snooze ends, written in the ticket and the phrase in UTC as ISO 8601, the form `verify-snoozed` prints) · `[ADMIN_NAME]` (the next owner of an open item) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the drafted note, its digest, and the time its read-back starts from) · `[USER_ID]` (the Linear user ID of the administrator who posts the note, from the `viewer` read run with their own key) · other org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `linear:verify-state`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Triage edits are writes to the ticket system.** Every priority, label, accept, duplicate, decline and snooze change below is made by a person in Linear, behind its own exact phrase. Aegis reads the queue through `scripts/adapters/linear-client.js`, drafts the decisions and the note, and proves each change with a read; it never writes to Linear.
@@ -159,7 +161,7 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → Triage no longer list
 
 ```bash
 # read-only read-back: exits 0 only when [ISSUE_ID] sits in the team's duplicate status, named exactly [STATE_NAME] as the states read printed it
-node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --execute
+node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --change [CHANGE_ID] --execute
 ```
 
 <!-- SAFETY GATE [linear-triage-decline-portal] -->

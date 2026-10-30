@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[REPO_NAME]` (one repository in `[@Aegion_GITHUB_ORG]`) · `[BRANCH_NAME]` (the branch, usually the default branch such as main) · `[RULESET_NAME]` (one ruleset's name, as the `rulesets` read prints it) · `[TEAM_SLUG]` (the one team a ruleset bypass goes to) · `[N]` (a number of required approving reviews, 0 to 6) · `[JIRA-###]` or `[ISSUE_ID]` (the ticket) · `[ADMIN_NAME]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `github:verify-protection`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Strengthening is R2** (it changes how every contributor merges): add a classic rule, strengthen one, create an Active ruleset, set a ruleset to Active, take a team off a bypass list. Save the Phase A reads to `tasks/checkpoints/` before each gate.
@@ -102,7 +104,7 @@ gh api repos/[@Aegion_GITHUB_ORG]/[REPO_NAME]/rules/branches/[BRANCH_NAME]
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the classic rule holds every baseline setting
-node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions --execute
+node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] `verify-protection` exits 0 · [ ] Settings → Branches lists the rule for `[BRANCH_NAME]`.
@@ -129,7 +131,7 @@ node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --br
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the classic rule now holds every baseline setting
-node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions --execute
+node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] `verify-protection` exits 0 · [ ] the ticket lists each setting that changed, old and new.

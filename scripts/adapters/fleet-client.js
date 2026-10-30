@@ -32,7 +32,7 @@
 const {
   STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 // ── Validators ───────────────────────────────────────────────────────────────
 const ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software title ids
@@ -563,7 +563,10 @@ function emit(output, { out, err, secrets = [] }) {
 async function run(argv, env = process.env, deps = {}) {
   const out = deps.out || ((s) => process.stdout.write(s));
   const err = deps.err || ((s) => process.stderr.write(s));
-  const list = Array.isArray(argv) ? argv.map(String) : [];
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
+  const list = bound.argv;
   const name = list[0];
   if (name === 'help' || name === '--help') { out(helpText()); return 0; }
 
@@ -590,6 +593,8 @@ async function run(argv, env = process.env, deps = {}) {
 
   // batch G3: the audit sink (and the test seams) come from cliDeps
   const cli = cliDeps(deps, env);
+  const refusal = bound.error || changeRefusal('fleet', name, bound.change, cli.audit);
+  if (refusal) return emit({ command: name, state: STATES.REFUSED, ok: false, error: refusal }, { out, err });
   const client = createClient(SPEC, { env, ...cli });
 
   // Every request known before the read is checked here, with no credential read.
@@ -635,7 +640,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (outcome.note) output.note = outcome.note;
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
-  return emit(recordVerdict(cli.audit, 'fleet', output), { out, err, secrets });
+  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change), { out, err, secrets });
 }
 
 // Read only after the client has used it, so printed output can be redacted

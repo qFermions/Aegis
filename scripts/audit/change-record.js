@@ -15,6 +15,11 @@
 //   node scripts/audit/change-record.js approve --change chg-... --ref IT-123 --procedure-sha256 H
 //   node scripts/audit/change-record.js link --change chg-... --verify-seq N
 //   node scripts/audit/change-record.js status --change chg-...
+// Batch G3 close-out (owner decision 1): a read-back is bound to its change when it is
+// recorded. The verify-* command takes --change chg-... and, before any read, refuses unless
+// this trail holds the change opened for that connector and command with an approval of its
+// procedure (bindRefusal below); its verify entry then carries the change id, and link accepts
+// only a read-back recorded under this change.
 // Exit codes: 0 done (status) or recorded; 1 input error or refused; 2 not done, a digest
 // that does not match, or a broken trail.
 
@@ -26,9 +31,10 @@ const audit = require('./audit-log.js');
 
 const MAX_PROCEDURE_BYTES = 1024 * 1024;
 // The read-back that proves the change, named at open: a connector and its verify-* command
-// (okta:verify-factor-reset). The audit entries hold no target value, only placeholders, so
-// the kind of read-back is what binds it; which object it read is the operator's link. The
-// form is the trail's own (audit-log.js READ_BACK).
+// (okta:verify-factor-reset). Since the batch G3 close-out the read-back also carries the
+// change id it was run under (--change), so link binds it to exactly one change; the audit
+// entries hold no target value, only placeholders, so which object it read is still the
+// operator's step. The form is the trail's own (audit-log.js READ_BACK).
 const { READ_BACK } = audit;
 const kindOf = (e) => `${e.connector}:${e.command}`;
 
@@ -127,10 +133,14 @@ function changeView(log, change, entries = null) {
   const links = all.filter((e) => e.kind === 'change-link' && e.change === change);
   const taken = links.filter((l) => owner.get(l.verify_seq) !== change);
   const linked = links.filter((l) => owner.get(l.verify_seq) === change).map((l) => bySeq.get(l.verify_seq)).filter((e) => e && e.kind === 'verify');
-  const readBacks = linked.filter((e) => kindOf(e) === procedure.read_back);
+  // only a read-back recorded under this change counts (batch G3 close-out), so one linked
+  // around the CLI, unbound or bound to another change, never makes the change done
+  const ofKind = linked.filter((e) => kindOf(e) === procedure.read_back);
+  const readBacks = ofKind.filter((e) => e.change === change);
   const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq);
   if (proving) view.readBack = { seq: proving.seq, connector: proving.connector, command: proving.command, verified: true };
   else if (!readBacks.length && !linked.length && taken.length) view.missing.push(`the linked read-back already proves ${owner.get(taken[0].verify_seq)}; one read-back proves one change`);
+  else if (!readBacks.length && ofKind.length) view.missing.push(`the linked read-back was not run with --change ${change}, so it is not bound to this change`);
   else if (!readBacks.length && linked.length) view.missing.push(`the linked read-back is not the one this change names (${procedure.read_back})`);
   else if (!readBacks.length) view.missing.push(`no ${procedure.read_back} read-back is linked to this change`);
   else if (!readBacks.some((e) => e.verified === true)) view.missing.push('the linked read-back did not verify the change');
@@ -138,6 +148,19 @@ function changeView(log, change, entries = null) {
   // with no matching approval, the missing approval above is the reason; no read-back reason
   view.done = view.missing.length === 0;
   return view;
+}
+
+// Why a read-back may not be run under this change id, or null when it may (batch G3
+// close-out, owner decision 1): the trail is intact and holds the change record open wrote for
+// this id, its read-back is exactly readBack (connector:verify-command), and an approval of
+// its procedure was recorded after it. The verify-* CLIs call this before any read.
+function bindRefusal(log, change, readBack) {
+  const view = changeView(log, change);
+  if (view.chain !== 'intact') return view.missing[0];
+  if (!view.procedure) return `the audit trail holds no change ${change}; open it with node scripts/audit/change-record.js open before the change`;
+  if (view.procedure.read_back !== readBack) return `change ${change} is proved by ${view.procedure.read_back}, not by ${readBack}`;
+  if (!view.approval || !view.approval.matches) return `change ${change} has no approval of its procedure yet; record it with node scripts/audit/change-record.js approve first`;
+  return null;
 }
 
 function main(argv = process.argv.slice(2), env = process.env, io = {}) {
@@ -188,7 +211,9 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (!view.approval || !view.approval.matches) throw new NotDone('this change has no approval of its procedure yet; record the approval first. Nothing was recorded');
       if (target.seq < view.approval.seq) throw new NotDone('that read-back ran before the approval, so it cannot prove the approved change. Nothing was recorded');
       if (target.verified !== true) throw new NotDone('that read-back did not verify the change. Nothing was recorded');
-      if (target.change !== null && target.change !== flags.change) throw new NotDone(`that read-back was recorded for ${target.change}. Nothing was recorded`);
+      // batch G3 close-out (owner decision 1): only a read-back run with --change <this id>
+      if (target.change === null) throw new NotDone(`that read-back was run without --change, so it is not bound to any change; run it again with --change ${flags.change}. Nothing was recorded`);
+      if (target.change !== flags.change) throw new NotDone(`that read-back was recorded for ${target.change}. Nothing was recorded`);
       // checked under the write lock, so two links of one read-back cannot both succeed
       const r = log.append({ kind: 'change-link', change: flags.change, verify_seq: seq }, { guard: (all) => {
         const earlier = all.find((e) => e.kind === 'change-link' && e.verify_seq === seq);
@@ -212,6 +237,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, hasCommandKey, main };
+module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, main };
 
 if (require.main === module) process.exitCode = main();

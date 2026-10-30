@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[GITHUB_USER]` (the person's GitHub login) · `[REPO_NAME]` (one repository in `[@Aegion_GITHUB_ORG]`, its name only) · `[TEAM_SLUG]` (a team's slug) · `[ROLE_NAME]` (a repository role exactly as GitHub writes it: read, triage, write, maintain or admin) · `[MEMBER_COUNT]` (a team's member count, recorded in Phase A) · `[JIRA-###]` or `[ISSUE_ID]` (the ticket) · `[ADMIN_NAME]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `github:verify-collaborator`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - Eight changes, eight gates. **Add a person with read, triage or write** is R1. **Maintain or admin** for a person is R3 (a privilege grant). **Change a role** to read, triage or write is R1, and R2 when the current role is maintain or admin. **Remove a direct collaborator** is R2.
@@ -146,7 +148,7 @@ node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when role_name is maintain or admin as granted
-node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --execute
+node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] `verify-collaborator` exits 0 · [ ] the approval, end date and rollback path are in the ticket.
@@ -198,7 +200,7 @@ node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the person is no longer a direct collaborator
-node scripts/adapters/github-client.js verify-collaborator-removed --repo [REPO_NAME] --user [GITHUB_USER] --execute
+node scripts/adapters/github-client.js verify-collaborator-removed --repo [REPO_NAME] --user [GITHUB_USER] --change [CHANGE_ID] --execute
 # what is left: role_name through a team, or no role at all
 node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GITHUB_USER] --execute
 ```
@@ -227,7 +229,7 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 
 ```bash
 # HUMAN-RUN read-only read-back for one member of the team, picked from the Phase A list, passes when role_name is the team's new role
-node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --execute
+node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --change [CHANGE_ID] --execute
 ```
 
 The spot check proves the grant only for a member whose Phase A role was lower than `[ROLE_NAME]`; pick one. Collaborators & teams must list `[TEAM_SLUG]` with `[ROLE_NAME]`.
@@ -287,7 +289,7 @@ node scripts/adapters/github-client.js verify-team-member --team [TEAM_SLUG] --u
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the person is no longer listed in the team
-node scripts/adapters/github-client.js verify-team-member --team [TEAM_SLUG] --user [GITHUB_USER] --absent --execute
+node scripts/adapters/github-client.js verify-team-member --team [TEAM_SLUG] --user [GITHUB_USER] --absent --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] `verify-team-member` exits 0 for the add, or with `--absent` for the removal.

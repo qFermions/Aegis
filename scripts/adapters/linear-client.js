@@ -59,7 +59,7 @@ const {
   STATES, RefusedError, TripwireError,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 // ── The allow-list: the lane's seven query documents and the intake's one ─────
 // Each ends by reading organization { urlKey } at its root, so every response names
@@ -569,8 +569,11 @@ async function run(argv, env = process.env, deps = {}) {
   const out = deps.out || ((s) => process.stdout.write(s));
   const err = deps.err || ((s) => process.stderr.write(s));
   const now = deps.now || Date.now;
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS });
+    const args = parseArgs(bound.argv, { values: VALUE_FLAGS });
     const command = args._command;
     if (command === 'help' || command === '--help' || command === '-h') { out(USAGE); return 0; }
     if (typeof command !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, command)) {
@@ -579,6 +582,8 @@ async function run(argv, env = process.env, deps = {}) {
     }
     const def = COMMANDS[command];
     const a = validate(command, def, args);
+    if (bound.error) throw new RefusedError(bound.error);
+    if (def.kind === 'offline' && bound.change !== undefined) throw new RefusedError(changeRefusal('linear', command, bound.change, null));
     // deps.noteRoots and deps.repoRoot exist for the tests; the CLI always uses this repo's tasks/ folder
     // and the system temporary folder.
     if (def.kind === 'offline') return offline(command, a, now, out, Array.isArray(deps.noteRoots) ? deps.noteRoots : defaultNoteRoots(), typeof deps.repoRoot === 'string' ? deps.repoRoot : REPO_ROOT);
@@ -596,6 +601,8 @@ async function run(argv, env = process.env, deps = {}) {
     });
     // batch G3: the audit sink (and the test seams) come from cliDeps
     const cli = cliDeps(deps, env);
+    const refusal = changeRefusal('linear', command, bound.change, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
     const client = createClient(SPEC, { env: envView, ...cli });
     const variables = def.variables(a);
 
@@ -612,7 +619,7 @@ async function run(argv, env = process.env, deps = {}) {
       return dryRunExit(command, err);
     }
 
-    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : recordVerdict(cli.audit, 'linear', await VERIFY[command](client, a, now));
+    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : recordVerdict(cli.audit, 'linear', await VERIFY[command](client, a, now), bound.change);
     const code = exitCodeFor(res);
     (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'linear' }));
     return code;

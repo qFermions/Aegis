@@ -91,7 +91,7 @@ const {
   STATES, EXIT, RefusedError, TripwireError,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 // ── The allow-list: the lane spec's Jamf Pro reads ───────────────────────────
 const SECTIONS = Object.freeze(['GENERAL', 'HARDWARE', 'OPERATING_SYSTEM', 'DISK_ENCRYPTION', 'CONFIGURATION_PROFILES', 'GROUP_MEMBERSHIPS', 'APPLICATIONS']);
@@ -711,8 +711,11 @@ function dryRun(client, command, def, a) {
 async function run(argv, env = process.env, deps = {}) {
   const out = deps.out || ((s) => process.stdout.write(s));
   const err = deps.err || ((s) => process.stderr.write(s));
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
+    const args = parseArgs(bound.argv, { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
     const command = args._command;
     if (command === 'help' || command === '--help' || command === '-h') { out(USAGE); return 0; }
     if (typeof command !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, command)) {
@@ -735,6 +738,8 @@ async function run(argv, env = process.env, deps = {}) {
     });
     // batch G3: the audit sink (and the test seams) come from cliDeps
     const cli = cliDeps(deps, env);
+    const refusal = bound.error || changeRefusal('jamf', command, bound.change, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
     const client = createClient(SPEC, { env: envView, ...cli });
 
     if (args.execute !== true) {
@@ -749,7 +754,7 @@ async function run(argv, env = process.env, deps = {}) {
       const r = await read(client, ...def.request(a));
       res = r.ok ? readOutput(command, r) : failed(command, r);
     } else {
-      res = recordVerdict(cli.audit, 'jamf', await VERIFY[command](client, a));
+      res = recordVerdict(cli.audit, 'jamf', await VERIFY[command](client, a), bound.change);
     }
     const code = exitCodeFor(res);
     (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'jamf' }));

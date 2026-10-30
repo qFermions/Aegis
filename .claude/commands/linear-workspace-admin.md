@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[ISSUE_ID]` (a Linear issue identifier such as `[@Aegion_LINEAR_TEAM]-123`) · `[@Aegion_LINEAR_TEAM]` (the IT team key) · `[@Aegion_LINEAR_ORG]` (the workspace URL key the adapter is bound to) · `[STATE_NAME]` (a workflow status name exactly as the `states` read prints it) · `[FILE_NAME]` (the pre-state list for a bulk change: one issue identifier per line with its current status and labels, kept under `tasks/checkpoints/`) · `[USER@DOMAIN.COM]` (the member's sign-in email) · `[USER_ID]` (the member's Linear user ID) · `[ADMIN_NAME]` (the next owner of an open item) · `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the drafted note, its digest, and the time its read-back starts from) · other org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R3 gates):** before a gate whose reversibility is R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `linear:verify-trashed`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **This runbook needs a workspace Admin; export needs an Owner.** Each gate names its role. A Member or Guest who asks for one of these changes gets the escalation, never a workaround: no borrowed Admin session, no Admin's API key, no shared login.
@@ -105,7 +107,7 @@ Before the gate: a request that is only a duplicate or a mistake keeps its histo
 
 ```bash
 # read-only read-back: exits 0 only when [ISSUE_ID] is in the trash
-node scripts/adapters/linear-client.js verify-trashed --issue [ISSUE_ID] --execute
+node scripts/adapters/linear-client.js verify-trashed --issue [ISSUE_ID] --change [CHANGE_ID] --execute
 ```
 
 GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → Archives → Recently deleted issues lists `[ISSUE_ID]` (search excerpt). Write the date 30 days on (14 to be safe) in the ticket as the last restore day.
@@ -162,7 +164,7 @@ Capture the pre-state (R0):
 
 ```bash
 # read-only read-back, run once for each identifier in [FILE_NAME]: exits 0 only when that issue now sits in [STATE_NAME]
-node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --execute
+node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --change [CHANGE_ID] --execute
 ```
 
 GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → the list filtered on `[STATE_NAME]` shows every identifier from `[FILE_NAME]`. A failure part-way is an inconsistent state: record which identifiers passed and which did not, and stop.
@@ -184,7 +186,7 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → the list filtered on 
 
 ```bash
 # read-only read-back, run once for each identifier in [FILE_NAME]: exits 0 only when that issue is in the trash
-node scripts/adapters/linear-client.js verify-trashed --issue [ISSUE_ID] --execute
+node scripts/adapters/linear-client.js verify-trashed --issue [ISSUE_ID] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] every identifier in `[FILE_NAME]` passed its read-back · [ ] the reviewer's sign-off and the last restore day (for a delete) are in the ticket.
@@ -213,7 +215,7 @@ node scripts/adapters/linear-client.js verify-trashed --issue [ISSUE_ID] --execu
 
 ```bash
 # read-only read-back: exits 0 only when Linear user [USER_ID] reads active false
-node scripts/adapters/linear-client.js verify-suspended --user [USER_ID] --execute
+node scripts/adapters/linear-client.js verify-suspended --user [USER_ID] --change [CHANGE_ID] --execute
 ```
 
 GUI read-back: Linear → Settings → Administration → Members → filtered on Suspended lists `[USER@DOMAIN.COM]`.

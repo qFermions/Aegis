@@ -106,7 +106,13 @@ scanning or Dependabot alert number in one repository) · `[OKTA_USER_ID]` /
 factor ID, as the Okta read prints it) · `[GROUP_NAME]` (a group's display name in Okta,
 Microsoft 365 or Google Workspace, beside its ID) · `[RULESET_NAME]` (a GitHub repository
 ruleset's name) · `[ALERT_COUNT]` (how many alerts a bulk action covers) ·
-`[DISMISS_REASON]` (a Dependabot dismissal reason, one of the five GitHub names). Note templates keep using lowercase or
+`[DISMISS_REASON]` (a Dependabot dismissal reason, one of the five GitHub names).
+
+Added with the batch G3 close-out (2026-10-30): `[CHANGE_ID]` (the change id that
+`node scripts/audit/change-record.js open` prints for one R2 or R3 procedure, `chg-` and 12
+lower-case hex characters; the procedure's read-back passes it as `--change [CHANGE_ID]`, and
+the read-back refuses to read unless the audit trail holds that change, opened for the same
+connector and `verify-*` command and approved). Note templates keep using lowercase or
 single-letter fill-ins (`[X]`, `[N]`, `[timestamp]`) for numbers and times, as the
 existing runbooks do.
 

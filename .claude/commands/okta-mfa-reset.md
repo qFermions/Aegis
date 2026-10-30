@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-factor-reset`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Stop first if the ticket smells like a compromise:** sign-ins the user did not make, a phishing click, Okta Verify pushes they did not send, or a "reset my MFA" request that arrived by email or chat instead of from the person. Route it through `/security-alert-triage` before any reset: resetting MFA on a compromised account hands the attacker a fresh enrollment.
@@ -76,7 +78,7 @@ Run the connector read-back now, before the user re-enrolls: once Okta Verify is
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when no push factor is listed for the user. It proves the reset only when Phase A listed a push factor
-node scripts/adapters/okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --execute
+node scripts/adapters/okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute
 ```
 
 If Phase A also listed `signed_nonce` (FastPass), run the same read with `--factor-type signed_nonce`. The read judges by factor type only: if Phase A listed one type twice, it cannot tell the two apart, so the dialog read-back above decides.
@@ -103,7 +105,7 @@ If Phase A also listed `signed_nonce` (FastPass), run the same read with `--fact
 
 ```bash
 # HUMAN-RUN read-only read-back, run it before the user re-enrolls, passes only when no factor at all is listed for the user. It proves the reset only when Phase A listed at least one factor
-node scripts/adapters/okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --execute
+node scripts/adapters/okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 ```
 
 If it fails, the output lists the factor types still enrolled: compare them with the dialog before anything else, and never reset again to make it pass.

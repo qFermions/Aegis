@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[USER@DOMAIN.COM]` (the compromised account) · `[UPN]` (your own administrator address: the actor that Admin log events records) · `[APP_NAME]` and `[APP_ID]` (a third-party app and its OAuth client ID, as Connected applications or the token events show them) · `[TEMP_PASSWORD]` (the new temporary password: password manager only, never the ticket) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the Linear ticket, its prepared note, the note's digest, and the time a read-back starts from) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-suspended`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Five changes, five gates, five phrases:** suspend (R2), reset the password (R2, forward-only), revoke app passwords (R1), revoke one OAuth grant still listed (R1), reactivate (R1). "yes" is never a confirmation, and a phrase never carries into a later phase.
@@ -105,7 +107,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: proves the account is suspended
-node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint**: [ ] the `user` read's status, organizational unit and `isAdmin` were in the ticket before the gate · [ ] `verify-suspended` exit 0 · [ ] the account page reads Suspended · [ ] `[NOT_BEFORE]` of this phase in the ticket.
@@ -132,7 +134,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 ```bash
 # read-back: a password-change event with you as the actor after NOT_BEFORE whose parameters name the compromised account, the event name as recorded in /gws-audit-log
-node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 ```
 
 `--target` makes the read prove this account's reset: a password change you made on another account during the incident does not pass. The read prints the matched event's parameters. GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the password change for `[USER@DOMAIN.COM]` with your address as the actor. The event name and its parameter names are not confirmed in this lane's sources: if `verify-event` finds nothing, read the entry for `[USER@DOMAIN.COM]` in the GUI before concluding the reset did not happen.

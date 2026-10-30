@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[GITHUB_USER]` (the departing person's GitHub login) · `[FIRST_NAME]` `[LAST_NAME]` / `[UPN]` (the same person in the identity systems, for the `/offboard` plan only, never typed into GitHub) · `[REPO_NAME]` (one repository in `[@Aegion_GITHUB_ORG]`) · `[TEAM_SLUG]` (a team's slug) · `[JIRA-###]` or `[ISSUE_ID]` (the ticket) · `[ADMIN_NAME]` · `[NOT_BEFORE]` (the time noted just before a removal, for the audit log read) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `github:verify-offboarded`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Removing a member from the organization is R3.** They lose every repository and team at once. An offboarding spans systems (identity, mail, devices, GitHub), so this step belongs with `/offboard` and runs after its independent out-of-session review, with the Phase A pre-state saved to `tasks/checkpoints/` and the rollback path written before step 1.
@@ -152,7 +154,7 @@ node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --
 
 ```bash
 # HUMAN-RUN read-only read-back, must NOT pass: it must say the person is now an outside collaborator, which proves the conversion
-node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --execute
+node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
 # each kept repository, the role must match the ticket, repeat per repository
 node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GITHUB_USER] --execute
 ```
@@ -183,7 +185,7 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the person is not a member, has no pending invitation and is not an outside collaborator
-node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --execute
+node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
 # Enterprise Cloud with an owner token, the removal event, it must be dated after NOT_BEFORE
 node scripts/adapters/github-client.js audit-log --phrase "action:org.remove_member" --execute
 ```
@@ -212,7 +214,7 @@ node scripts/adapters/github-client.js audit-log --phrase "action:org.remove_mem
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the person is not a member, has no pending invitation and is not an outside collaborator
-node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --execute
+node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] `verify-offboarded` exits 0 · [ ] the outside collaborator list no longer shows the person.

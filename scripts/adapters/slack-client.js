@@ -101,7 +101,7 @@ const {
   STATES, EXIT, RefusedError, TRIPWIRE_MESSAGE,
   defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 const HOST = 'slack.com';
 const HISTORY_LIMIT = '50';
@@ -777,8 +777,13 @@ async function run(argv, env, deps = {}) {
   let steps;
   let client;
   let cli = null;
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    ({ command, def, args } = parseCommand(argv));
+    ({ command, def, args } = parseCommand(bound.argv));
+    if (bound.error) throw new RefusedError(bound.error);
+    if (def.kind === 'offline' && bound.change !== undefined) throw new RefusedError(changeRefusal('slack', command, bound.change, null));
     if (def.kind === 'offline') {
       const { result, line } = digest(args, deps, now);
       const code = emit(result);
@@ -793,6 +798,8 @@ async function run(argv, env, deps = {}) {
     steps = def.steps(args, ctx);
     // batch G3: the audit sink (and the test seams) come from cliDeps
     cli = cliDeps(deps, environment);
+    const refusal = changeRefusal('slack', command, bound.change, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
     client = createClient(def.spec || SPEC, { env: environment, ...cli });
     const planned = steps.map((s) => client.plan(s.route, {}, s.query));
     const refusedPlan = planned.find((p) => p.state !== STATES.OK);
@@ -817,7 +824,7 @@ async function run(argv, env, deps = {}) {
   }
 
   const res = def.kind === 'verify'
-    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps))
+    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps), bound.change)
     : await runRead(command, def, steps, client);
   // Only the variable this command's spec names is read, and only after the request
   // was allowed; that value is redacted from everything printed.

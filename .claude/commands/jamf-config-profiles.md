@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[PROFILE_NAME]` / `[PROFILE_ID]` (the computer configuration profile as Jamf Pro lists it, and its ID) · `[PROFILE_IDENTIFIER]` (that profile's own PayloadIdentifier: `payloadSummary[0].profile.PayloadIdentifier` in the `profile --id` read; every profile read-back names it, so a command or an entry for another profile is never proof) · `[SMART_GROUP]` / `[SMART_GROUP_ID]` (the pilot smart group and its ID) · `[MEMBER_COUNT]` (the number of Macs you predict in that group) · `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's management ID, from the inventory read) · `[NOT_BEFORE]` (the time the change was saved; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-group-count`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - A configuration profile changes every Mac in its scope at that Mac's next check-in. The blast radius is the scope, not the click: count the Macs before every scope change.
@@ -136,20 +138,20 @@ node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execu
 # the members of the group
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
 # proves the group holds exactly the predicted number of Macs - stop if it does not
-node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --execute
+node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --change [CHANGE_ID] --execute
 # after the save: the profile's own identifier is payloadSummary[0].profile.PayloadIdentifier - write it in the ticket as [PROFILE_IDENTIFIER]
 node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 # proves one pilot Mac lists this profile, by its id and its identifier - repeat for each member
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
 # proves an install command for this profile (its identifier) on that Mac was acknowledged after the save time - the type name comes from a search excerpt of the API reference
-node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --execute
+node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 
 ```bash
 # HUMAN-RUN - read-only - the scale version - pilot-serials.txt holds one serial per line; the group-members read returns computer IDs, so map each ID to its serial with the computer-detail --id read first
 while IFS= read -r serial; do
   # proves this Mac lists the profile
-  node scripts/adapters/jamf-client.js verify-profile --serial "$serial" --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+  node scripts/adapters/jamf-client.js verify-profile --serial "$serial" --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
 done < pilot-serials.txt
 ```
 </details>
@@ -189,9 +191,9 @@ done < pilot-serials.txt
 ```bash
 # HUMAN-RUN - read-only - repeat on a sample of Macs outside the pilot, the sample size is an org gap
 # proves this Mac lists the profile
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
 # proves its install command for this profile was acknowledged after the save time
-node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --execute
+node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 </details>
 
@@ -228,7 +230,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 ```bash
 # HUMAN-RUN - read-only
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
 ```
 </details>
 
@@ -251,9 +253,9 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 ```bash
 # HUMAN-RUN - read-only
 # proves the Mac lists the profile again
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
 # proves a new install command for this profile was acknowledged after the save time
-node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --execute
+node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 </details>
 
@@ -290,9 +292,9 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 # the profile's payload names and scope are unchanged; the adapter withholds payload settings, so the new values are compared on screen (step 1's payload) with the change record
 node scripts/adapters/jamf-client.js profile --id [PROFILE_ID] --execute
 # proves this Mac still lists the profile after the reinstall
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
 # proves the reinstall command for this profile on this Mac was acknowledged after the distribution time - a command for another profile is not proof
-node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --execute
+node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 </details>
 
@@ -326,7 +328,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 ```bash
 # HUMAN-RUN - read-only - repeat for each member of the pilot group
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
 ```
 </details>
 
@@ -350,9 +352,9 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 ```bash
 # HUMAN-RUN - read-only - on a sample of Macs outside the pilot group
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
 # proves a pilot Mac still lists it
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
 ```
 </details>
 
@@ -376,7 +378,7 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 ```bash
 # HUMAN-RUN - read-only - on a sample of the group's members, the sample size is an org gap
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --execute
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
 ```
 </details>
 

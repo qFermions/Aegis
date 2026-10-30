@@ -37,7 +37,9 @@
  * (what happened, what was not done, the next step), and "admin detail: " with the platform,
  * operation, state, status, attempts, request id and handoff. A person running the CLI gets
  * the audit trail (scripts/audit/): each read, each verify-* verdict and each printed
- * HUMAN-RUN procedure is recorded first.
+ * HUMAN-RUN procedure is recorded first. A verify-* run with --change chg-... (batch G3
+ * close-out, owner decision 1) is checked against the change record before any read, dry or
+ * live, and its verdict is recorded under that change id (scripts/audit/README.md).
  *
  * Exit codes: 0 preview, read or verified read-back; 1 input error or a refused
  * write; 2 API, preflight or read-back failure (including a read-back that does not
@@ -53,6 +55,7 @@ const https = require('node:https');
 const { STATES, EXIT, NOT_VERIFIED_DRY_RUN, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
 const { operatorMessage } = require('./adapters/operator-message.js');
 const { auditSink, defaultAuditDir } = require('./audit/audit-log.js');
+const { takeChange, changeRefusal } = require('./adapters/cli-support.js');
 
 const REQUEST_TIMEOUT_MS = 15000;
 const TRANSITION_PAGE_LIMIT = 50;
@@ -459,7 +462,7 @@ function recordProcedure(runtime, command, digest) {
 function recordJiraVerdict(runtime, command, verified) {
   if (!runtime.audit) return;
   try {
-    runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: null });
+    runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state: 'OK', change: typeof runtime.change === 'string' ? runtime.change : null });
   } catch {
     throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
   }
@@ -915,12 +918,18 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
   const runtime = createRuntime(env, dependencies);
   let args;
   try {
-    args = parseArgs(argv);
+    // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+    // record; it is taken out of argv here and checked before the command reads anything
+    const bound = takeChange(argv);
+    args = parseArgs(bound.argv);
     const command = args._[0];
     if (!command || !COMMANDS[command] || args._.length !== 1) {
       throw new InputError('Usage: node scripts/jira-client.js ' +
         '<list-desks|list-types|create|comment|get|transition|verify-create|verify-comment|verify-transition> [flags]');
     }
+    const refusal = bound.error || changeRefusal('jira', command, bound.change, runtime.audit);
+    if (refusal) throw new InputError(refusal);
+    runtime.change = bound.change;
     const code = await COMMANDS[command](runtime, args);
     if (code === 0 && /^verify-/.test(command)) recordJiraVerdict(runtime, command, true);
     return code;

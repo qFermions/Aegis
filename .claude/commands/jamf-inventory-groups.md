@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's Jamf Pro computer ID, the `id` the inventory read returns) · `[SMART_GROUP]` / `[SMART_GROUP_ID]` (a smart or static computer group and its ID) · `[MEMBER_COUNT]` (the member count you predict before a change) · `[ADD_COUNT]` / `[REMOVE_COUNT]` (the number of Macs a static group change adds and removes, each Mac named by serial in the change record) · `[PROFILE_NAME]` / `[PROFILE_ID]` and `[POLICY_NAME]` / `[POLICY_ID]` (a profile or policy whose scope names the group) · `[NOT_BEFORE]` (the time the change was made; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
+**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-group-count`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **Groups are scope.** A group that a profile or policy targets, limits or excludes is a live switch: change its criteria or members and Macs join or leave, and every profile and policy that names it installs, removes or runs at each Mac's next check-in. Read where a group is used before changing it.
@@ -229,7 +231,7 @@ node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --
 ```bash
 # HUMAN-RUN - read-only
 # proves the group now holds exactly the predicted number of Macs
-node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --execute
+node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --change [CHANGE_ID] --execute
 # the members after the change - compare with the pre-state in the ticket
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
 ```

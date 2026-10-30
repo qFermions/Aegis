@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[REPO_NAME]` (one repository in `[@Aegion_GITHUB_ORG]`) · `[ALERT_NUMBER]` (one secret scanning or Dependabot alert number in that repository) · `[DISMISS_REASON]` (one Dependabot reason exactly as the API writes it: fix_started, inaccurate, no_bandwidth, not_used or tolerable_risk, G-24) · `[ALERT_COUNT]` (the number of Dependabot alerts a bulk dismissal selects, written in the ticket before the gate) · `[JIRA-###]` or `[ISSUE_ID]` (the ticket) · `[ADMIN_NAME]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R3 gates):** before a gate whose reversibility is R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `github:verify-dependabot-alert`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+
 ## ⚠️ Admin / safety gate
 
 - **A leaked secret is fixed at its issuer, not in GitHub.** A human rotates or revokes it in the system that issued it, under that system's own change process, and proves it there. Only then is the alert closed as revoked (R1). Closing an alert changes nothing about the secret.
@@ -277,7 +279,7 @@ node scripts/adapters/github-client.js dependabot-alert --repo [REPO_NAME] --num
 
 ```bash
 # HUMAN-RUN read-only read-back, run once per alert number on the saved list, each must pass
-node scripts/adapters/github-client.js verify-dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER] --state dismissed --reason [DISMISS_REASON] --execute
+node scripts/adapters/github-client.js verify-dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER] --state dismissed --reason [DISMISS_REASON] --change [CHANGE_ID] --execute
 ```
 
 Any alert that does not pass stops the story: write which passed and which did not, and use the partial-state note.

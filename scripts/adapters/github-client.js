@@ -48,7 +48,7 @@
 const {
   STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
 const API_VERSION = '2022-11-28';
 const PER_PAGE = '100';
@@ -326,8 +326,11 @@ async function run(argv, env = process.env, deps = {}) {
   const out = deps.out || ((s) => process.stdout.write(s));
   const err = deps.err || ((s) => process.stderr.write(s));
   const secrets = () => [env.GITHUB_TOKEN].filter((v) => typeof v === 'string' && v.length > 0);
+  // batch G3 close-out (owner decision 1): --change binds a verify-* read-back to its change
+  // record; it is taken out of argv here and checked below, before any read
+  const bound = takeChange(argv);
   try {
-    const args = parseArgs(Array.isArray(argv) ? argv : [], { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
+    const args = parseArgs(bound.argv, { values: VALUE_FLAGS, booleans: BOOLEAN_FLAGS });
     const command = args._command;
     if (command === 'help' || command === '--help') { out(USAGE); return 0; }
     if (typeof command !== 'string' || !Object.prototype.hasOwnProperty.call(COMMANDS, command)) {
@@ -339,6 +342,9 @@ async function run(argv, env = process.env, deps = {}) {
     const org = typeof env.GITHUB_ORG === 'string' ? env.GITHUB_ORG.trim() : '';
     if (!ORG.test(org)) throw new RefusedError('GITHUB_ORG must name this deployment\'s organization (its login) before any read');
     const steps = def.steps(a).map((s) => ({ ...s, params: { org, ...s.params } }));
+    const cli = cliDeps(deps, env);
+    const refusal = bound.error || changeRefusal('github', command, bound.change, cli.audit);
+    if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {
       const dryClient = createClient(SPEC, { env: { GITHUB_ORG: org }, transport: async () => { throw new Error('dry run'); } });
@@ -351,7 +357,6 @@ async function run(argv, env = process.env, deps = {}) {
       return dryRunExit(command, err);
     }
 
-    const cli = cliDeps(deps, env);
     const client = createClient(SPEC, { env, ...cli });
     let res;
     if (def.kind === 'read') {
@@ -370,7 +375,7 @@ async function run(argv, env = process.env, deps = {}) {
       else {
         const verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed };
         if (!verdict.verified) verdict.reason = judged.reason;
-        res = recordVerdict(cli.audit, 'github', verdict);
+        res = recordVerdict(cli.audit, 'github', verdict, bound.change);
       }
     }
     const shown = redactDeep(res, secrets());

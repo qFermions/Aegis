@@ -332,6 +332,16 @@ for (const c of CONNECTORS) {
 // Code review round 1, finding 9: one rule for a verify-* command name. cli-support.js checks
 // with the trail's own forms (audit-log.js), and the contract's isVerifyCommand (which may not
 // load the trail's file module) must agree with them.
+// node --test also runs files named test-*.js, *-test.js, *_test.js, test.js or under a test/
+// folder: a support module with such a name runs as one empty passing test and lifts the count
+// (the trail helper did, as test-trail.js). Only *.test.js files hold tests here.
+test('no support file under scripts/ has a name node --test runs as a test file', () => {
+  const root = path.join(__dirname, '..');
+  const picked = fs.readdirSync(root, { recursive: true }).map((p) => String(p).split(path.sep).join('/'))
+    .filter((p) => /(^|\/)(test-[^/]*|[^/]*-test|[^/]*_test|test)\.(js|mjs|cjs)$|(^|\/)test\/.*\.(js|mjs|cjs)$/.test(p));
+  assert.deepEqual(picked, []);
+});
+
 test('the contract, cli-support and the audit trail agree on what a verify-* command and a change id are', () => {
   const contract = require('./readonly-contract.js');
   const support = require('./cli-support.js');

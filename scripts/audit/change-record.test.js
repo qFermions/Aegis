@@ -346,4 +346,6 @@ test('open tells the operator to run the read-back with --change <id> and to lin
   const step = o.json.next.find((n) => /read-back/.test(n));
   assert.ok(step.includes(`--change ${o.json.change}`), step);
   assert.match(step, /audit_seq/);
+  // Jira prints the seq in its own line (code review round 3, finding 7)
+  assert.match(step, /Recorded as audit entry N/);
 });

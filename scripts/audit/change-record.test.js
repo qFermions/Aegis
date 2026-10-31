@@ -702,6 +702,30 @@ test('open refuses a read-back the gate\'s runbook does not bind for it: another
   assert.equal(openH1(s, H1.removePerson, 'okta:verify-app-assigned --absent').code, 0);
 });
 
+// Code review round 1 of the batch G3 close-out 3, finding 1: a comment that names its read-back
+// for several gates ("read-back of [a], [b] or [c]") bound it to the first gate only, so the
+// others took any read-back. Each gate it names now binds it.
+test('a read-back named for several gates in one comment binds each of them', (t) => {
+  const s = setup(t);
+  const open = (command, gate, readBack) => s.run(CLI, ['open', '--command', command, '--gate', gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure]);
+  const named = [
+    ['password-reset', 'password-reset-cloud-portal', 'msgraph:verify-password-changed'],
+    ['password-reset', 'password-cloud-reset', 'msgraph:verify-password-changed'],
+    ['password-reset', 'password-reset-synced-portal', 'msgraph:verify-password-changed'],
+    ['password-reset', 'password-session-revoke-portal', 'msgraph:verify-sessions-revoked'],
+    ['password-reset', 'password-session-revoke', 'msgraph:verify-sessions-revoked'],
+    ['security-alert-triage', 'security-session-revoke-portal', 'msgraph:verify-sessions-revoked'],
+    ['security-alert-triage', 'security-session-revoke', 'msgraph:verify-sessions-revoked'],
+  ];
+  for (const [command, gate, readBack] of named) {
+    const other = open(command, gate, 'msgraph:verify-group-member');
+    assert.equal(other.code, 1, `${gate}: ${other.stdout}`);
+    assert.match(other.stderr, new RegExp(`gate ${gate}'s read-back in \\.claude/commands/${command}\\.md runs as ${readBack}, not as msgraph:verify-group-member`), gate);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  for (const [command, gate, readBack] of named) assert.equal(open(command, gate, readBack).code, 0, `${gate} opens for ${readBack}`);
+});
+
 test('a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change', (t) => {
   const s = setup(t);
   const change = approvedH1(s, H1.removePerson, 'okta:verify-group-member --absent');

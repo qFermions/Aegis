@@ -17,14 +17,15 @@ const changes = require('./change-record.js');
 // instead of .claude/commands in this test process (code review round 1 of the batch G3
 // close-out 3, finding 13: open refuses a gate whose runbook binds no read-back, and a real gate
 // binds only its own). Returns gateFor(readBack): the runbook and gate that bind it. When the test
-// ends, change-record.js reads the real runbooks again (code review round 2, finding 7).
+// ends, change-record.js reads the folder it read before (code review round 2, finding 7; round 3,
+// finding 6).
 function testRunbooks(dir, t) {
   const folder = path.join(dir, 'commands');
   fs.mkdirSync(folder, { recursive: true });
   const file = path.join(folder, 'aegis-test.md');
   fs.writeFileSync(file, '# Test gates for the connector tests\n');
-  changes.useRunbooksForTests(folder);
-  t.after(() => changes.useRunbooksForTests(null));
+  const before = changes.useRunbooksForTests(folder);
+  t.after(() => changes.useRunbooksForTests(before));
   const gates = new Map();
   return (readBack) => {
     if (gates.has(readBack)) return gates.get(readBack);

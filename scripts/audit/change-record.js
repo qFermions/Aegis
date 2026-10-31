@@ -60,9 +60,14 @@ const ROOT = path.resolve(__dirname, '..', '..');
 // finding 13: the helpers had opened their changes on a real gate that binds no read-back).
 const REAL_RUNBOOKS = path.join(ROOT, '.claude', 'commands');
 let RUNBOOKS = REAL_RUNBOOKS;
-// dir: the test gates' folder, or null to read the real runbooks again (code review round 2,
-// finding 7: the helpers now point it back when their test ends)
-function useRunbooksForTests(dir) { RUNBOOKS = dir || REAL_RUNBOOKS; }
+// dir: the test gates' folder, or null to read the real runbooks again. Returns the folder it
+// replaces, which the helpers restore when their test ends, so a nested trail gives the outer one
+// its folder back (code review round 2, finding 7; round 3, finding 6).
+function useRunbooksForTests(dir) {
+  const before = RUNBOOKS;
+  RUNBOOKS = dir || REAL_RUNBOOKS;
+  return before;
+}
 const CONNECTOR_FILES = Object.freeze({
   fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js',
   'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js',

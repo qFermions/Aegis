@@ -353,7 +353,7 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 # HUMAN-RUN - read-only - on a sample of Macs outside the pilot group
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
 node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
-# a pilot Mac still lists the profile: check one with Phase C's read-back (the line without --absent), which is not this change's proof
+# the pilot group keeps the profile: this change does not touch it, and Phase C's read-back proved it there
 ```
 </details>
 

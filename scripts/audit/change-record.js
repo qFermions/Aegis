@@ -272,12 +272,14 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
     if (command === 'open') {
       need(flags, ['command', 'gate', 'r-class', 'target', 'read-back', 'procedure-file'], ['expected']);
       if (flags['r-class'] !== 'R2' && flags['r-class'] !== 'R3') throw new InputError('a change record is for an R2 or R3 procedure; R0 and R1 need none');
+      // the gate first, so a misspelled counted gate is told it is missing, not that it takes
+      // no count (code review round 2 of the batch G3 close-out 2, finding 3)
+      checkGate(flags.command, flags.gate);
       const count = Object.prototype.hasOwnProperty.call(COUNTED_GATES, flags.gate) ? COUNTED_GATES[flags.gate] : null;
       if (flags.expected !== undefined && !EXPECTED.test(flags.expected)) throw new InputError('--expected is the number of objects written in the ticket, a whole number from 1 to 99999');
       if (count && flags.expected === undefined) throw new InputError(`gate ${flags.gate} names a count (${count}): open it with --expected N, the number written in the ticket`);
       if (!count && flags.expected !== undefined) throw new InputError(`gate ${flags.gate} names no count; a change without a count is proved by one read-back, so --expected is not taken`);
       const expected = count ? Number(flags.expected) : null;
-      checkGate(flags.command, flags.gate);
       checkReadBack(flags['read-back']);
       const digest = procedureDigest(readProcedure(flags['procedure-file']));
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;

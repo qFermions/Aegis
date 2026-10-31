@@ -268,8 +268,11 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)(.*)$/);
       if (r && gate) rClass = (r[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null;
       if (!VERIFY.test(l)) continue;
-      const named = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of \[([a-z0-9-]+)\]/);
-      const cls = named && classOf.has(named[1]) ? classOf.get(named[1]) : rClass;
+      // a comment may name several gates ("read-back of [a], [b] or [c]"): the highest class of
+      // them counts (code review round 1 of the batch G3 close-out 3, finding 1)
+      const namedFor = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of (\[[a-z0-9-]+\](?:(?:,? or |,? and |, )\[[a-z0-9-]+\])*)/);
+      const namedClasses = namedFor ? [...namedFor[1].matchAll(/\[([a-z0-9-]+)\]/g)].map((x) => classOf.get(x[1])).filter(Boolean) : [];
+      const cls = namedClasses.length ? namedClasses.sort().pop() : rClass;
       // a read that checks another object than the change's proof (a pilot Mac that keeps a
       // profile the change removes elsewhere) runs unbound and says so: under the change it would
       // be refused, since the change names one read-back with its flags (batch G3 close-out 3, H1)

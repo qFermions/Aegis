@@ -23,7 +23,7 @@ const path = require('node:path');
 const { test } = require('node:test');
 
 const audit = require('./audit-log.js');
-const { COUNTED_GATES } = require('./change-record.js');
+const { COUNTED_GATES, boundReadBacks } = require('./change-record.js');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIR = path.join(ROOT, '.claude', 'commands');
@@ -114,24 +114,21 @@ test('each runbook with a bound read-back that has a pass flag says to name the 
 
 test('a bound read-back under a removal gate proves the removal: no bound presence read of the same kind sits beside an --absent one', () => {
   // a read that checks another object than the change's proof (a pilot Mac that keeps the
-  // profile) runs without --change and says so; otherwise the gate's change could be opened for
-  // the presence form and a presence pass would prove the removal
+  // profile) is not bound to the change; otherwise the gate's change could be opened for the
+  // presence form and a presence pass would prove the removal. The lines are read as
+  // change-record.js binds them: every gate a comment names, else the section's gate (code review
+  // round 1 of the batch G3 close-out 3, finding 8: a line under "## Read-back" with its gate
+  // named in the comment was skipped, and only the first of several named gates was read)
   const byGate = new Map();
   for (const file of fs.readdirSync(DIR).filter((n) => n.endsWith('.md'))) {
-    const lines = fs.readFileSync(path.join(DIR, file), 'utf8').split('\n');
-    let gate = null;
-    lines.forEach((l, i) => {
-      if (/^## /.test(l)) gate = null;
-      const g = l.match(/<!-- SAFETY GATE \[([^\]]+)\] -->|^# SAFETY GATE \[([^\]]+)\]/);
-      if (g) gate = g[1] || g[2];
-      const m = l.match(VERIFY_LINE);
-      if (!m || !gate || !/--change \[CHANGE_ID\]/.test(l)) return;
-      const kind = `${CONNECTOR[m[1]] || m[1]}:${m[2]}`;
-      const named = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of \[([a-z0-9-]+)\]/);
-      const key = `${file} ${named ? named[1] : gate} ${kind}`;
-      if (!byGate.has(key)) byGate.set(key, new Set());
-      byGate.get(key).add(/\s--absent(\s|$)/.test(l) ? 'absent' : 'present');
-    });
+    for (const b of boundReadBacks(fs.readFileSync(path.join(DIR, file), 'utf8'))) {
+      assert.ok(b.gates.length, `${file}:${b.line}: a bound read-back names its gate or sits under one`);
+      for (const gate of b.gates) {
+        const key = `${file} ${gate} ${b.kind}`;
+        if (!byGate.has(key)) byGate.set(key, new Set());
+        byGate.get(key).add(b.argv.includes('--absent') ? 'absent' : 'present');
+      }
+    }
   }
   const both = [...byGate].filter(([, forms]) => forms.size > 1).map(([key]) => key);
   // the one gate that legitimately proves both directions (a rule change that adds some people

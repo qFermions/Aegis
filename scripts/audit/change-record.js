@@ -103,7 +103,16 @@ function checkReadBack(readBack) {
 // whether open should refuse it is an owner decision in PR #9.
 const RUNBOOK_LINE = /node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-z0-9-]+)([^`\n]*)/;
 const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
-function gateReadBacks(text, gate) {
+// the gates a comment names a read-back for: "read-back of [a]", or of several, "[a], [b] or
+// [c]" (code review round 1 of the batch G3 close-out 3, finding 1: only the first was read)
+const NAMED_FOR = /^# [^\n]*\bread-back of (\[[a-z0-9-]+\](?:(?:,? or |,? and |, )\[[a-z0-9-]+\])*)/;
+const namedGates = (comment) => {
+  const m = String(comment || '').match(NAMED_FOR);
+  return m ? [...m[1].matchAll(/\[([a-z0-9-]+)\]/g)].map((x) => x[1]) : null;
+};
+// every read-back line a runbook binds with --change, with the gates it proves: the gates its
+// comment names, else the gate whose section it sits in (pass-flags.test.js reads them the same way)
+function boundReadBacks(text) {
   const lines = text.split('\n');
   const found = [];
   let current = null;
@@ -113,12 +122,12 @@ function gateReadBacks(text, gate) {
     if (g) current = g[1] || g[2];
     const m = l.match(RUNBOOK_LINE);
     if (!m || !/--change \[CHANGE_ID\]/.test(l)) return;
-    const named = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of \[([a-z0-9-]+)\]/);
-    if ((named ? named[1] : current) !== gate) return;
-    found.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)] });
+    const gates = namedGates(lines[i - 1]) || (current ? [current] : []);
+    found.push({ line: i + 1, gates, kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)] });
   });
   return found;
 }
+const gateReadBacks = (text, gate) => boundReadBacks(text).filter((b) => b.gates.includes(gate));
 // a runbook line's pass flags: name to the value it writes (null for a switch)
 function lineFlags(kind, argv) {
   const rules = audit.PASS_FLAGS[kind];
@@ -471,6 +480,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, main, COUNTED_GATES };
+module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, main, COUNTED_GATES };
 
 if (require.main === module) process.exitCode = main();

@@ -313,9 +313,9 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       if (r && gate) rClass = (r[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null;
       if (!VERIFY.test(l)) continue;
       // a comment may name several gates ("read-back of [a], [b] or [c]"): the highest class of
-      // them counts (code review round 1 of the batch G3 close-out 3, finding 1)
-      const namedFor = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of (\[[a-z0-9-]+\](?:(?:,? or |,? and |, )\[[a-z0-9-]+\])*)/);
-      const namedClasses = namedFor ? [...namedFor[1].matchAll(/\[([a-z0-9-]+)\]/g)].map((x) => classOf.get(x[1])).filter(Boolean) : [];
+      // them counts (code review round 1 of the batch G3 close-out 3, finding 1); the gates are
+      // read by change-record.js's own helper, so the pin and open agree (round 2, finding 13)
+      const namedClasses = (changes.namedGates(lines[i - 1]) || []).map((g) => classOf.get(g)).filter(Boolean);
       const cls = namedClasses.length ? namedClasses.sort().pop() : rClass;
       // every read-back line under an R2 or R3 gate is bound, with no exception (code review round
       // 1 of the batch G3 close-out 3, finding 9: H1 had exempted a line whose comment said "not

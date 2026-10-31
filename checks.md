@@ -41,6 +41,28 @@ Owner answers with no work (PR #8 items 1, 2, 3 and 7): the F1 confirmation phra
 | E11 CLAUDE.md size, contract, state and progress files | unresolved | not run yet | |
 | Push only commits at which the full battery passes | unresolved | not run yet | |
 
+## H4: newly classed R2 and R3 gates and their read-backs
+
+44 of the 58 newly classed gates are R2 or R3. 13 bind a read-back now (`/offboard`: sign-in block, session revocation, password reset, MFA clear, the last a counted gate; `/password-reset`: the three resets and both session revocations; `/security-alert-triage`: both session revocations and the two cloud sign-in blocks). The other 31 have none, for these reasons:
+
+| gate(s) | class | why no read-back |
+|---|---|---|
+| `conditional-access-enable-portal` | R3 | the Graph connector reads no Conditional Access policy |
+| `device-full-wipe-portal`, `device-full-wipe`, `offboard-device-wipe-portal`, `offboard-work-phone-wipe-portal` | R3 | Intune wipe: the Graph connector reads a managed device but has no wipe read-back (Fleet and Jamf have theirs, for their own devices) |
+| `distribution-external-senders-portal`, `offboard-mailbox-delegation-strip-portal` | R3 | Exchange settings and permissions: no Exchange connector |
+| `quarantine-release-all-portal`, `quarantine-release-all`, `quarantine-delete-portal`, `quarantine-permanent-delete` | R3 | Defender quarantine: no connector reads it |
+| `quarantine-release-one-portal`, `quarantine-release-one` | R2 | the same |
+| `restricted-entity-unblock-portal`, `restricted-entity-unblock` | R3 | Defender restricted entities: no connector reads them |
+| `license-remove-portal`, `offboard-license-remove-portal` | R3 | the Graph connector has no license read |
+| `offboard-ad-disable-portal`, `offboard-disabled-ou-portal`, `security-synced-ad-disable` | R3 | on-premises Active Directory: no connector reads it |
+| `offboard-group-strip-portal`, `offboard-dl-strip-portal` | R3 | the sets are on-premises AD groups and distribution lists (Domain Users is excluded); Graph `verify-group-member --absent` sees only those synced to Entra, after a sync, so it is not written as their proof (an owner decision in PR #9) |
+| `offboard-voip-deactivate-portal`, `offboard-voicemail-clear-portal` | R3 | the VoIP platform: no connector |
+| `offboard-voip-reclaim-extension-portal` | R2 | the same |
+| `offboard-zoom-portal`, `offboard-adobe-portal`, `offboard-vpn-portal`, `offboard-physical-portal` | R3 | Zoom, Adobe, the VPN and the alarm and badge systems: no connector |
+| `print-queue-delete-portal`, `print-queue-delete` | R3 | a local spool folder on one workstation: no connector, the gate's own read is the proof |
+
+The counted-gate rule, applied to these gates: only `offboard-clear-mfa-portal` names a count of objects each proved by its own read-back (`verify-method-absent`), so it is the fifth counted gate; the nine other Microsoft gates that name a count keep their reason in `scripts/audit/counted-gates.test.js` (now R3, no `verify-*` read-back).
+
 ## Review rounds
 
 Not run yet.

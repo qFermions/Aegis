@@ -157,6 +157,20 @@ owner decisions from PR #6's report, each landed test first; captures in
   "Require re-register MFA", an MFA change (R3 in CLAUDE.md's table) that the runbook does not
   gate, so its read-backs stay unbound until those gates are classed.
 
+## Changed by the batch G3 close-out 3
+
+Branch `fix/g3-closeout-3`, draft PR #9 against `main` (base `0a5feb7`, the merge of PR #8).
+The owner's decisions on PR #8's eight items; captures in `docs/aegis/g3-closeout-3/evidence/`,
+the acceptance table in `checks.md`. Items 1, 2, 3 and 7 were answered with no work.
+
+| Decision | What changed | Proof (command and count) |
+|---|---|---|
+| H1, a presence pass never proves a removal | the flags that change what a read-back passes on (`--absent` on five read-backs, and the closed-set, number and digest flags) are recorded in the verify entry and named with the read-back at `open`; `open` checks the form against the gate's own read-back lines; `--change`, `link` and `status` count only the same flags | `node --test scripts/audit/pass-flags.test.js scripts/audit/change-record.test.js scripts/adapters/change-binding.test.js` and the touched suites: 733/733 (`h1-green.txt`) |
+| H2, the approval covers N | a counted gate's saved procedure carries `Count: N`; `open` refuses another `--expected`, so the approved digest covers N | 599/599 over the touched suites (`h2-green.txt`) |
+| H3, read-backs for the two unproven `/mfa-issue` actions | `msgraph-client.js verify-sessions-revoked` and `verify-method-absent`, GET only, vendor facts M-26 and M-27, both bound in `/mfa-issue` | 623/623 over the touched suites (`h3-green.txt`) |
+| H4, every gate gets an R class | the 58 gates without one carry it, citing the table (32 R3, 12 R2, 14 R1); 13 newly classed R2 and R3 gates bind a read-back, 31 have none, each listed with its reason in `checks.md`; `/offboard`'s MFA clear is the fifth counted gate | `node --test scripts/gate-r-class.test.js` and the touched suites: 632/632 (`h4-green.txt`); the test fails with one class removed (`h4-one-class-removed.txt`) |
+| H5, `/mfa-issue`'s list starts at step 1 | step 1 added before the first gate | 563/563 (`h5-green.txt`) |
+
 ## Changed by the batch G3 close-out 2
 
 Branch `fix/g3-closeout-2`, draft PR #8 against `main` (base `f086c88`, the merge of PR #7).

@@ -1,0 +1,16 @@
+# command: bash docs/aegis/g3-closeout/evidence/tools/e10-gates.sh f086c88
+# commit: 2915068  started: 2026-10-31T04:07:04Z  node: v24.22.2
+--- files whose SAFETY GATE count changed since f086c88 (path: base -> here):
+.claude/commands/mfa-issue.md: 4 -> 5
+docs/aegis/g3-closeout-2/baseline/head-checks.txt: 0 -> 2
+docs/aegis/g3-closeout-2/baseline/node-test-under-tripwire.txt: 0 -> 1
+docs/aegis/g3-closeout-2/baseline/node-test.txt: 0 -> 1
+docs/aegis/g3-closeout-2/baseline/runbook-gate-markers.txt: 0 -> 1
+docs/aegis/g3-closeout-2/evidence/f2-red.txt: 0 -> 2
+docs/aegis/g3-closeout-2/evidence/r2-red.txt: 0 -> 12
+docs/aegis/g3-closeout-2/evidence/tools/runbook-gate-markers.sh: 0 -> 5
+docs/review/batches/g3-closeout-checks.md: 0 -> 2
+--- gate marker or gate field lines added or removed in .claude/commands since f086c88:
+18
+# exit: 0  finished: 2026-10-31T04:07:05Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -1,0 +1,14 @@
+# command: bash docs/aegis/g3/evidence/tools/fixtures-and-mocks.sh f086c88
+# commit: 2915068  started: 2026-10-31T04:07:04Z  node: v24.22.2
+--- fixture files added (data read by tests or the corpus scorer):
+--- test files added or changed: socket tripwire loaded, lines that inject a transport, request or fetch, network modules required
+    (0 and 0: the file injects no transport of its own; the whole suite, child processes included, also passes with the tripwire preloaded, d12-whole-suite-under-tripwire.txt):
+scripts/adapters/change-binding.test.js: tripwire 1, injected transport, request or fetch lines 2, network module requires 0
+scripts/adapters/fleet-client.test.js: tripwire 1, injected transport, request or fetch lines 1, network module requires 0
+scripts/audit/audit-log.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/audit/change-record.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/audit/counted-gates.test.js: tripwire 0, injected transport, request or fetch lines 0, network module requires 0
+scripts/mfa-issue-gates.test.js: tripwire 1, injected transport, request or fetch lines 0, network module requires 0
+--- tenant and host values the added test lines use:
+# exit: 0  finished: 2026-10-31T04:07:04Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -1,0 +1,9 @@
+# command: bash docs/aegis/g3-closeout-2/evidence/tools/runbook-gate-markers.sh f086c88
+# commit: 2915068  started: 2026-10-31T04:07:05Z  node: v24.22.2
+--- files whose count changed (base -> here):
+.claude/commands/mfa-issue.md: 3 -> 4
+total: 342 at f086c88, 343 here
+--- gate ids removed (<) or added (>) here:
+> mfa-require-reregister-portal
+# exit: 0  finished: 2026-10-31T04:07:06Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

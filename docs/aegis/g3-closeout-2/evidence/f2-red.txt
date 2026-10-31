@@ -1,0 +1,498 @@
+# command: node --test scripts/audit/change-record.test.js scripts/audit/counted-gates.test.js scripts/adapters/change-binding.test.js
+# commit: ecd060b (plus uncommitted changes in the working tree)  started: 2026-10-31T02:36:17Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (38.951137ms)
+✔ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (14.934607ms)
+✔ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (14.41632ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.566052ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (13.533046ms)
+✔ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.402885ms)
+✔ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (9.378267ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.452078ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (16.07274ms)
+✔ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (11.685638ms)
+✔ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (22.093878ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.448446ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (11.377859ms)
+✔ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (14.33788ms)
+✔ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (17.246876ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.31097ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (12.452767ms)
+✔ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (11.61218ms)
+✔ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (13.57937ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.792294ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (18.450538ms)
+✔ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.67649ms)
+✔ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (20.476518ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.663249ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (9.159525ms)
+✔ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (15.74393ms)
+✔ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.920328ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.79441ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.324265ms)
+✔ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (9.019765ms)
+✔ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.169258ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.6557ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (16.743754ms)
+✔ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (9.179722ms)
+✔ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (15.743592ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.427624ms)
+✔ a verify-* with --change and no audit trail to check it against is refused, never run unbound (0.43238ms)
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (28.027401ms)
+✔ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (14.022626ms)
+✔ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.186374ms)
+✔ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (18.105949ms)
+✔ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (16.514661ms)
+✔ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (10.38612ms)
+✔ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (15.51584ms)
+✔ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (20.053668ms)
+✔ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.311612ms)
+✔ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (16.985604ms)
+✖ fleet verify-script records its execution id as the run; every other read-back records none (1.722246ms)
+✔ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.650804ms)
+✔ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.241766ms)
+✔ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (6.119153ms)
+✔ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.569234ms)
+✔ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.532765ms)
+✔ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.010167ms)
+✔ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (7.057568ms)
+✔ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.492475ms)
+✔ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.354148ms)
+✔ no support file under scripts/ has a name node --test runs as a test file (2.390987ms)
+✔ the contract, cli-support and the audit trail agree on what a verify-* command and a change id are (0.18453ms)
+✔ offline commands refuse --change as not a read-back, before reading any file (0.357075ms)
+✔ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (2.041347ms)
+✔ fleet: --change=chg-... on a plain read is refused as not a read-back (0.701482ms)
+✔ github: --change=chg-... on a plain read is refused as not a read-back (0.64087ms)
+✔ google-workspace: --change=chg-... on a plain read is refused as not a read-back (0.688124ms)
+✔ jamf: --change=chg-... on a plain read is refused as not a read-back (0.628712ms)
+✔ linear: --change=chg-... on a plain read is refused as not a read-back (0.531688ms)
+✔ msgraph: --change=chg-... on a plain read is refused as not a read-back (0.79223ms)
+✔ okta: --change=chg-... on a plain read is refused as not a read-back (0.53303ms)
+✔ slack: --change=chg-... on a plain read is refused as not a read-back (0.564565ms)
+✔ jira: --change=chg-... on a plain read is refused as not a read-back (0.606422ms)
+✔ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (12.227659ms)
+✔ changeRefusal refuses when it is not given takeChange's result (0.187633ms)
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (176.476155ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (124.166315ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (192.741669ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (770.373906ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (351.953827ms)
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one (291.517883ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (131.172243ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (345.769768ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (314.587316ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (105.716323ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.318064ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (337.810776ms)
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (183.850669ms)
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI (182.501803ms)
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (109.510642ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.478229ms)
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints (45.44142ms)
+✖ a counted gate opened without --expected is refused at open, and nothing is recorded (46.633575ms)
+✖ a gate without a count refuses --expected and keeps the one-read-back rule (40.211613ms)
+✖ k below N reads partial and never done; k equal to N reads done (38.87146ms)
+✖ one failed host keeps the change not done and names that read-back (41.483013ms)
+✖ the same execution id read twice counts once (45.356303ms)
+✖ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (41.646775ms)
+✖ only bound read-backs of the named kind recorded after the approval count toward k (34.401325ms)
+✖ the audit trail takes a run id that is a job id and refuses one that is not job-shaped (1.107914ms)
+✖ every gate whose confirmation names a count is classified: counted, or not counted with its reason (14.703807ms)
+✖ each counted gate's runbook opens its change with --expected and the count, and says what status reports (9.972968ms)
+✖ the audit README describes counted changes (1.100648ms)
+ℹ tests 100
+ℹ suites 0
+ℹ pass 87
+ℹ fail 13
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4055.281836
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:234:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (28.027401ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Open that change record for \[fleet-device-actions-batch-script-portal\] with `--expected \[HOST_COUNT\]`, the host count in the ticket/. Input:
+  
+  '---\n' +
+    'description: Lock, unlock, wipe, run a script on, turn off MDM for, or delete a host in Fleet (macOS, Windows, Linux, iPhone, iPad, Android), plus cancelling a pending action. Read the host first, then each action under its own exact-phrase gate with the Fleet adapter read-back. Placeholders only.\n' +
+    'disable-model-invocation: true\n' +
+    '---\n' +
+    '\n' +
+    '# /fleet-device-actions\n' +
+    '\n' +
+    '> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command. Aegis advises; a human administrator runs every step (HUMAN-RUN).\n' +
+    '\n' +
+    'CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.\n' +
+    '\n' +
+    '**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet\'s search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host\'s display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item\'s ID: an MDM command\'s UUID, or a queued script\'s execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.\n' +
+    '\n' +
+    "**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).\n" +
+    '\n' +
+    '## ⚠️ Admin / safety gate\n' +
+    '\n' +
+    "- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one's history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.\n" +
+    "- **Role needed:** Maintainer or Admin in Fleet (global, or on the host's fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person's session, a shared login or an API token that carries a higher role.\n" +
+    '- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.\n' +
+    '- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).\n' +
+    '- Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).\n' +
+    "- Every action is queued for the host's next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.\n" +
+    '\n' +
+    '## Inputs needed\n' +
+    '\n' +
+    "- `[SERIAL_NUMBER]` or `[HOST_ID]`, and the ticket's goal: left somewhere (lock), found again (unlock), stolen with sensitive data (wipe), a one-off fix (script), leaving the fleet (turn off MDM, then delete the record).\n" +
+    "- From Phase A: platform and OS version, MDM status (On (automatic) or On (manual)), last seen, anything pending, and for Windows and Linux whether scripts are enabled in fleetd (Fleet's agent), because their lock, unlock and the Linux wipe run as scripts.\n" +
+    '- For a script: `[SCRIPT_NAME]` saved in Fleet and read line by line before it runs; for more than one host, `[FLEET_NAME]` and the number of hosts, written in the ticket before the gate.\n' +
+    '- For a stolen device: the identity-side containment plan **[org gap: which runbook, and who owns it]**.\n' +
+    '- Who holds Maintainer or Admin in Fleet for an escalation **[org gap]**.\n' +
+    '\n' +
+    '## How the systems hang together\n' +
+    '\n' +
+    '- Apple hosts (macOS, iOS, iPadOS) receive MDM commands, so they need Fleet MDM turned on; a Mac whose MDM is Jamf Pro belongs to `/jamf-lock-erase`. Windows lock and unlock run as Fleet scripts, a Windows wipe is an MDM command, and Linux lock, unlock and wipe all run as scripts.\n' +
+    '- Everything is queued. The badge on the host moves from Lock pending to Locked, and from Wipe pending to Wiped (Linux shows no wipe badge; Android never shows Locked). The API carries the same state as `mdm.device_status` (unlocked, locked, locking, unlocking, wiped, wiping) and `mdm.pending_action` (lock, unlock, wipe, or empty).\n' +
+    "- An activity (locked_host, unlocked_host, wiped_host, ran_script, mdm_unenrolled, deleted_host) proves who asked and when; the device result is proven by `mdm.device_status`, the MDM command status or the script's exit code.\n" +
+    '- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n' +
+    '- Fleet 4.82.0 renamed teams to fleets and queries to reports; an older note that says "team" means a fleet.\n' +
+    '\n' +
+    '## Fast path\n' +
+    '\n' +
+    "1. Phase A: read the host, its pending actions and the clicking admin's role (R0). Save the read as the pre-state.\n" +
+    '2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).\n' +
+    '3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.\n' +
+    '4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.\n' +
+    '5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.\n' +
+    '6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.\n' +
+    '7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).\n' +
+    '\n' +
+    '## Phase A: Read the host (R0)\n' +
+    '\n' +
+    '**Purpose**: which action you can send, and whether it will land, depends on what the record says.\n' +
+    '\n' +
+    "1. Fleet → Hosts → search `[SERIAL_NUMBER]` (the search takes a name, hostname, UUID, serial or private IP) → open the host → Host details → read status (online, offline, mia, missing or new), last seen, platform and OS version, fleet, MDM status and any badge (Lock pending, Locked, Unlock pending, Wipe pending, Wiped). Record `[HOST_ID]`. Prefer the serial: when hostnames collide, Fleet's lookup returns the first match.\n" +
+    '2. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past (what was already sent, by whom, when) and Upcoming (anything still queued). A queued script or lock changes the plan.\n' +
+    '3. Two records for one serial: the one with a recent last seen is the live host; act on that one only.\n' +
+    '4. A script that already ran (read only, no gate): Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Past → open the entry for that script run → read its exit code and output. Exit code 0 is success, no exit code yet means the host has not reported, and a timeout means it ran past the 5-minute default.\n' +
+    '5. Decide the smallest action that solves the ticket, and confirm that the admin who will click holds the role named in that phase. If they hold Observer, the answer is an escalation to a Maintainer or Admin, not a workaround.\n' +
+    '\n' +
+    '<details>\n' +
+    '<summary>Fleet adapter: the read-only scale version (HUMAN-RUN; Aegis may run the same reads)</summary>\n' +
+    '\n' +
+    '```bash\n' +
+    '# HUMAN-RUN, read-only: the adapter is dry by default and prints the request; --execute sends the GET, never a write\n' +
+    'node scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\n' +
+    'node scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execute   # resolves the serial to [HOST_ID] with status, seen_time and the MDM fields\n' +
+    'node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version'... 38016 more characters
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:303:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '---\ndescription: Lock, unlock, wipe, run a script on, turn off MDM for, or delete a host in Fleet (macOS, Windows, Linux, iPhone, iPad, Android), plus cancelling a pending action. Read the host first, then each action under its own exact-phrase gate with the Fleet adapter read-back. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /fleet-device-actions\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command. Aegis advises; a human administrator runs every step (HUMAN-RUN).\n\nCRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.\n\n**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet\'s search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host\'s display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item\'s ID: an MDM command\'s UUID, or a queued script\'s execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.\n\n**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate\'s id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket\'s approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate\'s read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).\n\n## ⚠️ Admin / safety gate\n\n- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one\'s history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.\n- **Role needed:** Maintainer or Admin in Fleet (global, or on the host\'s fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person\'s session, a shared login or an API token that carries a higher role.\n- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.\n- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).\n- Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).\n- Every action is queued for the host\'s next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.\n\n## Inputs needed\n\n- `[SERIAL_NUMBER]` or `[HOST_ID]`, and the ticket\'s goal: left somewhere (lock), found again (unlock), stolen with sensitive data (wipe), a one-off fix (script), leaving the fleet (turn off MDM, then delete the record).\n- From Phase A: platform and OS version, MDM status (On (automatic) or On (manual)), last seen, anything pending, and for Windows and Linux whether scripts are enabled in fleetd (Fleet\'s agent), because their lock, unlock and the Linux wipe run as scripts.\n- For a script: `[SCRIPT_NAME]` saved in Fleet and read line by line before it runs; for more than one host, `[FLEET_NAME]` and the number of hosts, written in the ticket before the gate.\n- For a stolen device: the identity-side containment plan **[org gap: which runbook, and who owns it]**.\n- Who holds Maintainer or Admin in Fleet for an escalation **[org gap]**.\n\n## How the systems hang together\n\n- Apple hosts (macOS, iOS, iPadOS) receive MDM commands, so they need Fleet MDM turned on; a Mac whose MDM is Jamf Pro belongs to `/jamf-lock-erase`. Windows lock and unlock run as Fleet scripts, a Windows wipe is an MDM command, and Linux lock, unlock and wipe all run as scripts.\n- Everything is queued. The badge on the host moves from Lock pending to Locked, and from Wipe pending to Wiped (Linux shows no wipe badge; Android never shows Locked). The API carries the same state as `mdm.device_status` (unlocked, locked, locking, unlocking, wiped, wiping) and `mdm.pending_action` (lock, unlock, wipe, or empty).\n- An activity (locked_host, unlocked_host, wiped_host, ran_script, mdm_unenrolled, deleted_host) proves who asked and when; the device result is proven by `mdm.device_status`, the MDM command status or the script\'s exit code.\n- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n- Fleet 4.82.0 renamed teams to fleets and queries to reports; an older note that says "team" means a fleet.\n\n## Fast path\n\n1. Phase A: read the host, its pending actions and the clicking admin\'s role (R0). Save the read as the pre-state.\n2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).\n3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.\n4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.\n5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.\n6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.\n7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).\n\n## Phase A: Read the host (R0)\n\n**Purpose**: which action you can send, and whether it will land, depends on what the record says.\n\n1. Fleet → Hosts → search `[SERIAL_NUMBER]` (the search takes a name, hostname, UUID, serial or private IP) → open the host → Host details → read status (online, offline, mia, missing or new), last seen, platform and OS version, fleet, MDM status and any badge (Lock pending, Locked, Unlock pending, Wipe pending, Wiped). Record `[HOST_ID]`. Prefer the serial: when hostnames collide, Fleet\'s lookup returns the first match.\n2. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past (what was already sent, by whom, when) and Upcoming (anything still queued). A queued script or lock changes the plan.\n3. Two records for one serial: the one with a recent last seen is the live host; act on that one only.\n4. A script that already ran (read only, no gate): Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Past → open the entry for that script run → read its exit code and output. Exit code 0 is success, no exit code yet means the host has not reported, and a timeout means it ran past the 5-minute default.\n5. Decide the smallest action that solves the ticket, and confirm that the admin who will click holds the role named in that phase. If they hold Observer, the answer is an escalation to a Maintainer or Admin, not a workaround.\n\n<details>\n<summary>Fleet adapter: the read-only scale version (HUMAN-RUN; Aegis may run the same reads)</summary>\n\n```bash\n# HUMAN-RUN, read-only: the adapter is dry by default and prints the request; --execute sends the GET, never a write\nnode scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\nnode scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execute   # resolves the serial to [HOST_ID] with status, seen_time and the MDM fields\nnode scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version'... 38016 more characters,
+    expected: /Open that change record for \[fleet-device-actions-batch-script-portal\] with `--expected \[HOST_COUNT\]`, the host count in the ticket/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:340:1
+✖ fleet verify-script records its execution id as the run; every other read-back records none (1.722246ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   'fleet:verify-script': 'execution-id'
+  - }
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:343:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { 'fleet:verify-script': 'execution-id' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:381:1
+✖ a counted gate opened without --expected is refused at open, and nothing is recorded (46.633575ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-fddffe6aaccf",
+    "procedure_sha256": "c06327a61aa64f4a4d210697e61f7c34c9c0b7b4e80df599b51f6133a1ae7dd2",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-fddffe6aaccf (it refuses to read until this change is approved), then: link --change chg-fddffe6aaccf --verify-seq <the audit_seq it prints, or N from Jira's \"Recorded as audit entry N\" line>; status --change chg-fddffe6aaccf reports done only when all three match"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:385:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:396:1
+✖ a gate without a count refuses --expected and keeps the one-read-back rule (40.211613ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /names no count/. Input:
+  
+  'change-record: unknown flag --expected\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:400:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'change-record: unknown flag --expected\n',
+    expected: /names no count/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:408:1
+✖ k below N reads partial and never done; k equal to N reads done (38.87146ms)
+  AssertionError [ERR_ASSERTION]: change-record: unknown flag --expected
+  
+  
+  1 !== 0
+  
+      at approved (<repo>/scripts/audit/change-record.test.js:372:10)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:410:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:428:1
+✖ one failed host keeps the change not done and names that read-back (41.483013ms)
+  AssertionError [ERR_ASSERTION]: change-record: unknown flag --expected
+  
+  
+  1 !== 0
+  
+      at approved (<repo>/scripts/audit/change-record.test.js:372:10)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:430:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:449:1
+✖ the same execution id read twice counts once (45.356303ms)
+  AssertionError [ERR_ASSERTION]: change-record: unknown flag --expected
+  
+  
+  1 !== 0
+  
+      at approved (<repo>/scripts/audit/change-record.test.js:372:10)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:451:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:461:1
+✖ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (41.646775ms)
+  AssertionError [ERR_ASSERTION]: change-record: unknown flag --expected
+  
+  
+  1 !== 0
+  
+      at approved (<repo>/scripts/audit/change-record.test.js:372:10)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:463:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:474:1
+✖ only bound read-backs of the named kind recorded after the approval count toward k (34.401325ms)
+  TypeError [Error]: Cannot read properties of null (reading 'change')
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:478:35)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:488:1
+✖ the audit trail takes a run id that is a job id and refuses one that is not job-shaped (1.107914ms)
+  AuditRefused: field "run" is not recorded for verify
+      at checkEntry (<repo>/scripts/audit/audit-log.js:118:84)
+      at Object.append (<repo>/scripts/audit/audit-log.js:305:20)
+      at runRead (<repo>/scripts/audit/change-record.test.js:377:60)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:490:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/counted-gates.test.js:67:1
+✖ every gate whose confirmation names a count is classified: counted, or not counted with its reason (14.703807ms)
+  TypeError [Error]: Cannot convert undefined or null to object
+      at Object.keys (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/audit/counted-gates.test.js:69:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at scripts/audit/counted-gates.test.js:77:1
+✖ each counted gate's runbook opens its change with --expected and the count, and says what status reports (9.972968ms)
+  TypeError [Error]: Cannot convert undefined or null to object
+      at Object.entries (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/audit/counted-gates.test.js:79:38)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at scripts/audit/counted-gates.test.js:90:1
+✖ the audit README describes counted changes (1.100648ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--expected N/. Input:
+  
+  '# Audit trail (batch G3)\n' +
+    '\n' +
+    'Aegis advises; humans execute (`PRODUCT_CONTRACT.md`). This folder records what Aegis itself did, so an owner can later check it: each connector call, each procedure Aegis issued, each approval reference the operator supplied, and each `verify-*` result. It never records what a person did in a vendor system; the `verify-*` read-backs prove that.\n' +
+    '\n' +
+    '## Files\n' +
+    '\n' +
+    '| file | what it is |\n' +
+    '|---|---|\n' +
+    '| `audit-log.js` | The one module that writes the trail, and its CLI (`verify`, `status`, `procedure`, `approval`). |\n' +
+    '| `change-record.js` | Change records for R2 and R3 procedures: the issued digest, the approval reference and the `verify-*` read-back, joined by a change id. |\n' +
+    '\n' +
+    'The trail lives in `.aegis-state/audit/` (gitignored), or in `AEGIS_AUDIT_DIR`: `audit.jsonl` (one entry per line), `audit.head` (the last seq and hash) and, while a write is in progress, `audit.lock`.\n' +
+    '\n' +
+    '## The chain\n' +
+    '\n' +
+    "Every entry is one JSON line with `seq` (1, 2, 3 and so on), `at` (UTC), `kind`, its fields, `prev` (the `hash` of the entry before it; 64 zeros for the first) and `hash`, the SHA-256 of `aegis.audit.v1`, `prev` and the entry's canonical JSON without its hash. `audit.head` names the last `seq` and `hash`, written after the line by an atomic rename.\n" +
+    '\n' +
+    "`node scripts/audit/audit-log.js verify` walks the chain and names the first broken link: a line that is not JSON (a cut or edited line), a `seq` out of order (a missing, inserted or reordered entry), a `prev` that does not match (a removed, inserted or reordered entry), a `hash` that does not match (an edited entry), a field the trail never writes, a head that names a later entry (a removed tail) or a missing head. Exit 0 intact, 2 broken. An append onto a broken tail is refused, so every Aegis read that records a call stops (the contract's `AUDIT_FAILED` state) until a person runs `verify` and decides.\n" +
+    '\n' +
+    '## What is written, and what never is\n' +
+    '\n' +
+    'Five kinds, each with a fixed field list, every value of a fixed form; anything else is refused before a byte is written:\n' +
+    '\n' +
+    '| kind | fields |\n' +
+    '|---|---|\n' +
+    '| `connector-call` | connector name, operation (route or query name), result state, attempts, HTTP status, request id, handoff state, duration in ms |\n' +
+    "| `procedure` | command, gate id, R class, one placeholder target such as `[UPN]`, the read-back that proves it (`connector:verify-...`, for a change record), the procedure's SHA-256, change id |\n" +
+    "| `approval` | an issue key such as `IT-123`, gate id, the approved procedure's SHA-256, change id |\n" +
+    '| `verify` | connector, `verify-*` command, verified true or false, result state, change id (the `--change` the read-back ran under, or null) |\n' +
+    '| `change-link` | change id, the seq of a `verify` entry already in the trail (`change-record.js link`; refused unless it is the connector and command the change named at `open`, ran under `--change` with this change id, verified, after the approval, and no other change holds it) |\n' +
+    '\n' +
+    'No body, no response data, no free text, no secret, no token and no personal value can be written: a field outside the list is refused, a value outside its form is refused (a target must be a placeholder, a reference an issue key), and every value is also checked against credential shapes (Slack, GitHub, Google, Okta tokens, a JWT, a bearer or basic header, a private key block).\n' +
+    '\n' +
+    '## Binding a read-back to its change (batch G3 close-out, owner decision 1)\n' +
+    '\n' +
+    'A change record for an R2 or R3 procedure runs in this order, and only people run the procedure itself:\n' +
+    '\n' +
+    "1. `node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --read-back CONNECTOR:verify-... --procedure-file FILE` records the issued procedure's digest and prints the change id (`[CHANGE_ID]` in the runbooks, `chg-` and 12 lower-case hex characters).\n" +
+    "2. `change-record.js approve --change [CHANGE_ID] --ref ISSUE-123 --procedure-sha256 H` records the ticket's approval of exactly that digest. It authorizes a person's procedure and triggers no write.\n" +
+    '3. A person runs the procedure.\n' +
+    "4. The read-back runs with `--change [CHANGE_ID] --execute`. Before any read, dry or live, the `verify-*` command (any of the nine connectors: Fleet, GitHub, Google Workspace, Jamf Pro, Linear, Microsoft Graph, Okta, Slack, Jira) checks the id's form and that this trail holds the change, opened for this connector and command, with an approval of its procedure recorded after it (`change-record.js` `bindRefusal`); otherwise it refuses with exit 1 and reads nothing. Its `verify` entry records the change id.\n" +
+    '5. `change-record.js link --change [CHANGE_ID] --verify-seq N` joins that entry to the change (N is the entry\'s seq, which a bound read-back that verified prints as `audit_seq`, or in Jira\'s "Recorded as audit entry N" line; an unbound or unverified one prints none, since `link` would refuse it); `status --change [CHANGE_ID]` reports done only when the digest, the approval and a verified read-back bound to this change match, in that order.\n' +
+    '\n' +
+    "A read-back run without `--change` still prints its verdict and records `change: null`, but `link` refuses it, and `status` never counts it, even when a link to it is written into the trail around the CLI. The same holds for a read-back bound to another change. A trail written before the batch G3 close-out holds read-backs recorded with `change: null`, so a change linked to one of them now reads not done: run its read-back again with `--change` and link that entry (code review round 1, finding 2; no deployment held a trail when this changed). What the entries cannot say is which object the read-back read: they hold placeholders, never a user or device value, so matching the object stays the operator's step (`docs/aegis/boundary-audit.md` row 37).\n" +
+    '\n' +
+    '## Concurrency\n' +
+    '\n' +
+    "One writer at a time: `audit.lock` is created with O_EXCL and holds the writer's process id. A lock left by a process that no longer exists is removed under a second lock (`audit.lock.steal`) and only if it is still the same lock, so a fresh lock is never removed. A writer waits up to 15 s, then fails closed.\n" +
+    '\n' +
+    '## What the chain cannot prove without external storage\n' +
+    '\n' +
+    "- **A rewrite of the whole file.** Anyone who can write this folder can delete the log and head, or rebuild a consistent chain with different entries; the hashes are not keyed and nothing outside this machine holds a copy. Proving that no entry was ever removed or replaced needs the head (or each entry's hash) sent somewhere the writer cannot change: a write-once store, a log service, or a signed copy the owner keeps.\n" +
+    '- **A removed tail together with a rewritten head.** The head catches a cut tail only while the head itself is intact.\n' +
+    "- **The time.** `at` is this machine's clock.\n" +
+    "- **Completeness.** The trail holds what the Aegis CLIs and the contract recorded. A command run outside them (a person's own terminal, an agent holding a shell, `.claude/agents/*`) is not recorded; that is the residual named in `docs/aegis/boundary-audit.md` rows 4 and 5.\n" +
+    '\n' +
+    '## Status\n' +
+    '\n' +
+    '`node scripts/audit/audit-log.js status [--since 24h|7d|<UTC time>]` prints connector calls and failures in the window, by connector: calls, failures, the failure states and the handoff states (`RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG`, `RETRY_BUDGET_SPENT`, and `RATE_LIMITED` since the batch G3 close-out). Only entries before the first broken link are counted, and the summary says whether the chain is intact. Nothing leaves the machine.\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/counted-gates.test.js:92:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# Audit trail (batch G3)\n\nAegis advises; humans execute (`PRODUCT_CONTRACT.md`). This folder records what Aegis itself did, so an owner can later check it: each connector call, each procedure Aegis issued, each approval reference the operator supplied, and each `verify-*` result. It never records what a person did in a vendor system; the `verify-*` read-backs prove that.\n\n## Files\n\n| file | what it is |\n|---|---|\n| `audit-log.js` | The one module that writes the trail, and its CLI (`verify`, `status`, `procedure`, `approval`). |\n| `change-record.js` | Change records for R2 and R3 procedures: the issued digest, the approval reference and the `verify-*` read-back, joined by a change id. |\n\nThe trail lives in `.aegis-state/audit/` (gitignored), or in `AEGIS_AUDIT_DIR`: `audit.jsonl` (one entry per line), `audit.head` (the last seq and hash) and, while a write is in progress, `audit.lock`.\n\n## The chain\n\nEvery entry is one JSON line with `seq` (1, 2, 3 and so on), `at` (UTC), `kind`, its fields, `prev` (the `hash` of the entry before it; 64 zeros for the first) and `hash`, the SHA-256 of `aegis.audit.v1`, `prev` and the entry\'s canonical JSON without its hash. `audit.head` names the last `seq` and `hash`, written after the line by an atomic rename.\n\n`node scripts/audit/audit-log.js verify` walks the chain and names the first broken link: a line that is not JSON (a cut or edited line), a `seq` out of order (a missing, inserted or reordered entry), a `prev` that does not match (a removed, inserted or reordered entry), a `hash` that does not match (an edited entry), a field the trail never writes, a head that names a later entry (a removed tail) or a missing head. Exit 0 intact, 2 broken. An append onto a broken tail is refused, so every Aegis read that records a call stops (the contract\'s `AUDIT_FAILED` state) until a person runs `verify` and decides.\n\n## What is written, and what never is\n\nFive kinds, each with a fixed field list, every value of a fixed form; anything else is refused before a byte is written:\n\n| kind | fields |\n|---|---|\n| `connector-call` | connector name, operation (route or query name), result state, attempts, HTTP status, request id, handoff state, duration in ms |\n| `procedure` | command, gate id, R class, one placeholder target such as `[UPN]`, the read-back that proves it (`connector:verify-...`, for a change record), the procedure\'s SHA-256, change id |\n| `approval` | an issue key such as `IT-123`, gate id, the approved procedure\'s SHA-256, change id |\n| `verify` | connector, `verify-*` command, verified true or false, result state, change id (the `--change` the read-back ran under, or null) |\n| `change-link` | change id, the seq of a `verify` entry already in the trail (`change-record.js link`; refused unless it is the connector and command the change named at `open`, ran under `--change` with this change id, verified, after the approval, and no other change holds it) |\n\nNo body, no response data, no free text, no secret, no token and no personal value can be written: a field outside the list is refused, a value outside its form is refused (a target must be a placeholder, a reference an issue key), and every value is also checked against credential shapes (Slack, GitHub, Google, Okta tokens, a JWT, a bearer or basic header, a private key block).\n\n## Binding a read-back to its change (batch G3 close-out, owner decision 1)\n\nA change record for an R2 or R3 procedure runs in this order, and only people run the procedure itself:\n\n1. `node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --read-back CONNECTOR:verify-... --procedure-file FILE` records the issued procedure\'s digest and prints the change id (`[CHANGE_ID]` in the runbooks, `chg-` and 12 lower-case hex characters).\n2. `change-record.js approve --change [CHANGE_ID] --ref ISSUE-123 --procedure-sha256 H` records the ticket\'s approval of exactly that digest. It authorizes a person\'s procedure and triggers no write.\n3. A person runs the procedure.\n4. The read-back runs with `--change [CHANGE_ID] --execute`. Before any read, dry or live, the `verify-*` command (any of the nine connectors: Fleet, GitHub, Google Workspace, Jamf Pro, Linear, Microsoft Graph, Okta, Slack, Jira) checks the id\'s form and that this trail holds the change, opened for this connector and command, with an approval of its procedure recorded after it (`change-record.js` `bindRefusal`); otherwise it refuses with exit 1 and reads nothing. Its `verify` entry records the change id.\n5. `change-record.js link --change [CHANGE_ID] --verify-seq N` joins that entry to the change (N is the entry\'s seq, which a bound read-back that verified prints as `audit_seq`, or in Jira\'s "Recorded as audit entry N" line; an unbound or unverified one prints none, since `link` would refuse it); `status --change [CHANGE_ID]` reports done only when the digest, the approval and a verified read-back bound to this change match, in that order.\n\nA read-back run without `--change` still prints its verdict and records `change: null`, but `link` refuses it, and `status` never counts it, even when a link to it is written into the trail around the CLI. The same holds for a read-back bound to another change. A trail written before the batch G3 close-out holds read-backs recorded with `change: null`, so a change linked to one of them now reads not done: run its read-back again with `--change` and link that entry (code review round 1, finding 2; no deployment held a trail when this changed). What the entries cannot say is which object the read-back read: they hold placeholders, never a user or device value, so matching the object stays the operator\'s step (`docs/aegis/boundary-audit.md` row 37).\n\n## Concurrency\n\nOne writer at a time: `audit.lock` is created with O_EXCL and holds the writer\'s process id. A lock left by a process that no longer exists is removed under a second lock (`audit.lock.steal`) and only if it is still the same lock, so a fresh lock is never removed. A writer waits up to 15 s, then fails closed.\n\n## What the chain cannot prove without external storage\n\n- **A rewrite of the whole file.** Anyone who can write this folder can delete the log and head, or rebuild a consistent chain with different entries; the hashes are not keyed and nothing outside this machine holds a copy. Proving that no entry was ever removed or replaced needs the head (or each entry\'s hash) sent somewhere the writer cannot change: a write-once store, a log service, or a signed copy the owner keeps.\n- **A removed tail together with a rewritten head.** The head catches a cut tail only while the head itself is intact.\n- **The time.** `at` is this machine\'s clock.\n- **Completeness.** The trail holds what the Aegis CLIs and the contract recorded. A command run outside them (a person\'s own terminal, an agent holding a shell, `.claude/agents/*`) is not recorded; that is the residual named in `docs/aegis/boundary-audit.md` rows 4 and 5.\n\n## Status\n\n`node scripts/audit/audit-log.js status [--since 24h|7d|<UTC time>]` prints connector calls and failures in the window, by connector: calls, failures, the failure states and the handoff states (`RETRIES_EXHAUSTED`, `RETRY_AFTER_TOO_LONG`, `RETRY_BUDGET_SPENT`, and `RATE_LIMITED` since the batch G3 close-out). Only entries before the first broken link are counted, and the summary says whether the chain is intact. Nothing leaves the machine.\n',
+    expected: /--expected N/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T02:36:21Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

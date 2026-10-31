@@ -209,3 +209,22 @@ was removed and no sentence above changed; the boundary paragraph and every gate
   handoff instead of reading as a permission refusal, and `.env.example` names every variable
   the connectors, the Jira client, the intake and the audit trail read. Reason: each closes a gap PR #6
   reported; none adds a write path (`docs/aegis/boundary-audit.md` rows 35 and 37).
+
+Batch G3 close-out 2 (2026-10-31, branch `fix/g3-closeout-2`, base `main` at `f086c88`).
+Nothing was removed and no sentence above changed; the boundary paragraph is as at `f086c88`,
+and every gate that existed there still exists.
+
+- Added: one human-run gate, `/mfa-issue`'s `[mfa-require-reregister-portal]` (R3, Require
+  re-register MFA), as the alternative to the one-method delete; every `/mfa-issue` gate now
+  names its R class from CLAUDE.md's Risk-Classified Execution Policy. Reason: owner decision
+  1 on PR #7, so the read-back of that MFA change can be bound to its change record.
+- Changed: a counted batch change (the Fleet batch script, the Dependabot bulk dismiss, the
+  Okta bulk add and remove) is reported done only when every object in it is proven
+  (`change-record.js open --expected N`, `status` "verified k of N"). Reason: owner decision 2
+  on PR #7. It changes how a change reports done, not what Aegis may do; no write path is added
+  (`docs/aegis/boundary-audit.md` rows 35 and 37).
+- Changed in review: Fleet's script reads (`script-result`, `verify-script`) take only a UUID
+  execution id, the form Fleet documents (`docs/aegis/g3/vendor-facts.md` F-12), so a serial or
+  host name typed in its place is refused before any read. Reason: code review round 3 of PR #8;
+  it narrows an existing read, it adds none.
+- Not built: binding a read-back to the exact object it read (owner decision 3, "not now").

@@ -325,3 +325,22 @@ test('the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR o
   assert.match(readme, /cannot prove/i);
   assert.match(readme, /external storage/i);
 });
+
+// Code review round 3 of the batch G3 close-out 2, finding 7: which read-backs may record a run
+// is a rule for writing (append), not for the chain check, so a trail written under an older
+// run-id table still verifies intact. The entry below is written by hand with a valid chain.
+test('a run on a verify entry the run-id table does not name is refused on append, and an intact chain holding one still verifies', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-audit-r3-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const log = audit.openAuditLog({ dir });
+  const entry = { kind: 'verify', connector: 'okta', command: 'verify-group-member', verified: true, state: 'OK', change: null, run: '3f2a9c1e-77b0-4c2b-9d1e-000000000001' };
+  assert.throws(() => log.append(entry), audit.AuditRefused);
+  const record = { seq: 1, at: '2026-10-31T00:00:00.000Z', ...entry, prev: audit.GENESIS };
+  record.hash = audit.entryHash(record);
+  const ordered = {};
+  for (const key of Object.keys(record).sort()) ordered[key] = record[key];
+  fs.writeFileSync(path.join(dir, audit.LOG_FILE), `${JSON.stringify(ordered)}\n`, { mode: 0o600 });
+  fs.writeFileSync(path.join(dir, audit.HEAD_FILE), `${JSON.stringify({ seq: 1, hash: record.hash })}\n`, { mode: 0o600 });
+  const check = audit.openAuditLog({ dir }).verify();
+  assert.equal(check.ok, true, JSON.stringify(check));
+});

@@ -265,6 +265,8 @@ node scripts/adapters/github-client.js dependabot-alert --repo [REPO_NAME] --num
 
 **Role needed:** a role allowed to dismiss Dependabot alerts on `[REPO_NAME]` [unconfirmed: check in the GitHub UI].
 
+**Counted change:** open the change record for [github-security-alerts-dependabot-bulk-dismiss-portal] with `--expected [ALERT_COUNT]`, the number of alerts on the saved list. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N" over the bound `verify-dependabot-alert` read-backs, one per alert, lists any that failed, and reads done only when exactly [ALERT_COUNT] passed and none failed; anything else reads partial. The read-back records no run id, so a repeated read of the same alert is not detected: read each alert on the list once, after the change shows. A read that failed with an answer cannot be matched to a later pass of the same alert, so it keeps the change partial: write the alerts not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that alert again.
+
 <!-- SAFETY GATE [github-security-alerts-dependabot-bulk-dismiss-portal] -->
 - **Target:** [ALERT_COUNT] open Dependabot alerts in [REPO_NAME], listed in the ticket
 - **Effect:** change [ALERT_COUNT] Dependabot alerts in [REPO_NAME] from open to dismissed with one reason, [DISMISS_REASON]

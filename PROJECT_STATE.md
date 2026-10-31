@@ -157,6 +157,27 @@ owner decisions from PR #6's report, each landed test first; captures in
   "Require re-register MFA", an MFA change (R3 in CLAUDE.md's table) that the runbook does not
   gate, so its read-backs stay unbound until those gates are classed.
 
+## Changed by the batch G3 close-out 2
+
+Branch `fix/g3-closeout-2`, draft PR #8 against `main` (base `f086c88`, the merge of PR #7).
+The owner's decisions on PR #7's three open items; captures in
+`docs/aegis/g3-closeout-2/evidence/`, the acceptance table in `checks.md`.
+
+| Decision | What changed | Proof (command and count) |
+|---|---|---|
+| 1, gate `/mfa-issue`'s Require re-register MFA as R3 | new gate `[mfa-require-reregister-portal]` (alternative to the one-method delete, never both); every `/mfa-issue` gate classed from CLAUDE.md's Risk-Classified Execution Policy (session revocation R2, both MFA changes R3); `verify-mfa-cleared` bound with `--change [CHANGE_ID]`; vendor fact B-18 re-dated 2026-10-31 | `node --test scripts/mfa-issue-gates.test.js scripts/adapters/change-binding.test.js` and the touched suites: 589/589 (`f1-green.txt`); runbook gate markers 342 to 343, none fell (`f1-gate-markers.txt`); inventory 1 entry added, gated (`f1-inventory-diff.txt`) |
+| 2, a batch change is done only when every object is proven | `change-record.js open --expected N` for the four counted gates, after the runbook and gate are checked; `status` "verified k of N", done only when exactly N passed and none failed, failed read-backs named, anything else partial; a read with no answer is uncounted; a run id (Fleet's script execution id, a UUID recorded in lower case) counts once; with no run id a re-read is not detected, so a failed object goes under a new change | `node --test scripts/audit/change-record.test.js scripts/audit/counted-gates.test.js` and the touched suites: 648/648 (`f2-green.txt`), then after review rounds 1 to 3: 656/656 (`r3-green.txt`) |
+| 3, object-level binding with a keyed digest | not now: nothing built; PR #7's write-up is the record | none |
+
+- **Review:** security review 1 and 2, no findings; code review rounds 1 to 3 (xhigh): 41
+  found, 36 fixed, 4 closed, 1 fixed in part and closed in part
+  (`docs/aegis/g3-closeout-2/evidence/code-review-rounds.md`).
+- **Not done here (owner decisions in PR #8's body):** `/mfa-issue`'s session revocation (R2)
+  and one-method delete (R3) have no `verify-*` read-back in the read-only connector, so they
+  take no change record; `/password-reset`'s gates still carry no R class; the trail does not
+  record whether `verify-group-member` ran with `--absent`; `--expected` is not in the approved
+  digest.
+
 ## Partial
 
 13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
@@ -192,7 +213,8 @@ automated runner for the model-judged eval half (the rubric is a document only).
 
 Batch 1's pull request (#4) and batch G2's (#5) were merged into `main` on 2026-10-28 (`f185071`,
 read from the GitHub pull request API); batch G3's (#6) was merged on 2026-10-30 (`01dcb37`); the
-batch G3 close-out's draft pull request (#7) is open against `main`.
+batch G3 close-out's (#7) on 2026-10-30 (`f086c88`); the batch G3 close-out 2's draft pull
+request (#8) is open against `main`.
 `node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
 (`docs/aegis/evidence/claim-list.txt`).
 

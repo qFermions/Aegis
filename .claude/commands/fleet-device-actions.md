@@ -189,6 +189,8 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **Role needed:** Technician, Maintainer or Admin on `[FLEET_NAME]` for a saved script (the role guide read gives no separate batch permission).
 
+**Counted change:** before the gate, open this gate's own change record for [fleet-device-actions-batch-script-portal], not the pilot's, with `--expected [HOST_COUNT]`, the host count in the ticket, then record its approval. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N", one per distinct execution id, lists every host whose read-back failed, and reads done only when exactly [HOST_COUNT] runs passed and none failed; anything else reads partial. A run that failed while the host had not reported and passed later counts as passed. A read that got an answer but recorded no run id cannot be matched to a later pass, so it keeps the change partial: write the hosts not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that run again.
+
 <!-- SAFETY GATE [fleet-device-actions-batch-script-portal] -->
 - **Target:** [SCRIPT_NAME] on [HOST_COUNT] hosts checked in [FLEET_NAME]
 - **Effect:** run one saved script on every checked host in one fleet
@@ -201,7 +203,7 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **WAIT UNTIL** each checked host shows the run under Host details → Activity → Past; offline hosts stay in Upcoming until they check in.
 
-**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` and `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`, with `[CHANGE_ID]` the id of this gate's own change record, not the pilot's. Any host that fails stops the batch story: report which hosts passed and which did not. `change-record.js status` reads done once one linked read-back verified, so it proves one host, not the batch: the ticket's list of the hosts that passed and failed is the batch's record.
+**Read-back:** `node scripts/adapters/fleet-client.js activities --page 0 --per-page 50 --execute` lists the batch run (ran_script_batch) with the admin's name; then, for each checked host, `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute` and `node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`, with `[CHANGE_ID]` the id of this gate's own change record, opened before the gate (above), not the pilot's. Any host that fails stops the batch story: report which hosts passed and which did not.
 
 **Verification checkpoint**: [ ] `verify-script` passed for the pilot (with `--change [CHANGE_ID]` set to the E1 change's id, unless step 1 set R1) and, with `--change [CHANGE_ID]` set to this gate's own change id, for every checked host, or the ticket lists the failures · [ ] the count matched the ticket.
 

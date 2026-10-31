@@ -9,6 +9,8 @@ disable-model-invocation: true
 
 **Verdict:** Most MFA tickets are "got a new phone" (re-register) or "not getting prompts" (auth-method or Conditional Access misconfig). The classic gotcha: a CA policy blocks login **before** the user can re-register — temporarily exclude them, let them register, re-add.
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a verify-* read-back below (here only [mfa-require-reregister-portal]), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and `msgraph:verify-mfa-cleared` as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Session revocation (R2) and the one-method delete (R3) have no verify-* read-back in the read-only connector, so they take no change record: their proof is a read: for the delete, `auth-methods` saved to `tasks/checkpoints/` (it prints phone numbers and device names, so the ticket names the method type only); for the revocation, the portal read after the propagation interval, written in the ticket.
+
 ## What to check first
 - Entra → Users → `[UPN]` → **Authentication methods** → what's registered?
 - Entra → Sign-in logs → filter `[UPN]` → is MFA being prompted/failing, or never triggered?
@@ -21,19 +23,30 @@ disable-model-invocation: true
 - **Target:** [UPN]
 - **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies
 - **Scope:** Entra-managed refresh tokens and browser cookies for one user; current access tokens and app-issued sessions can persist until expiry
-- **Reversibility:** not reversible; the user must authenticate again
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly. It touches one user, as the single reversible write row does, but has no undo command; it is hard to reverse, as the multi-object or hard-to-reverse row says; so it takes the higher of the two. It changes no setting and takes nothing away, so the last row does not apply): not reversible; the user must authenticate again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly.
+**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, with the user's recent sign-ins from `node scripts/adapters/msgraph-client.js sign-ins --user [USER_ID] --since [DATE_TIME] --execute` saved to `tasks/checkpoints/` (the R2 pre-state: which sessions were in use, read before the click; [DATE_TIME] a time before the device was lost, in UTC, written in the ticket, not the time the work started) and the time of the click written in the ticket, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly.
 
 <!-- SAFETY GATE [mfa-method-delete-portal] -->
 - **Target:** the displayed method type and method ID for [UPN]
 - **Effect:** delete one reviewed obsolete authentication method
 - **Scope:** one named method for one user; all other methods remain unchanged
-- **Reversibility:** not reversible; the method must be registered again
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the method must be registered again
 - **Required confirmation:** Render the reviewed values as `$methodType` and `$methodId`, then type exactly `DELETE MFA METHOD $methodType ID $methodId FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.
+**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, with the method list from `node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute` saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers that method again at aka.ms/mfasetup), Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.
+
+**Or, instead of the one-method delete:** clear every phone, Authenticator and software OATH method with Require re-register MFA. [mfa-require-reregister-portal] and [mfa-method-delete-portal] are alternatives: one or the other for a ticket, never both.
+
+<!-- SAFETY GATE [mfa-require-reregister-portal] -->
+- **Target:** [UPN]
+- **Effect:** Require re-register MFA, which "deactivates the user's hardware OATH tokens and deletes the following authentication methods from this user: phone numbers, Microsoft Authenticator apps and software OATH tokens" (Microsoft Learn, howto-mfa-userdevicesettings, read 2026-10-31)
+- **Scope:** one user; the alternative to [mfa-method-delete-portal], never with it on the same ticket
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the user must register again before any sign-in that requires MFA
+- **Required confirmation:** Type exactly `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, signed in as at least Authentication Administrator (Microsoft Learn, "Manage user authentication options"; `docs/aegis/g3/vendor-facts.md` B-18), with its change record approved, the method list from `node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute` saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below right away, before the user registers again (step 2): `verify-mfa-cleared` with `--change [CHANGE_ID]` passes only while no phone, Authenticator or software OATH method is left.
 2. Tell the user to go to **aka.ms/mfasetup** and register the new device.
 > **PREVIEW ONLY [mfa-phone-add]:** An administrator adding a fallback method is a separate identity change. Do not perform it from this command without its own reviewed target/method gate.
 3. Proposed fallback: Entra → Users → `[UPN]` → **Authentication methods** → **+ Add method** → **Phone** → `[PHONE_NUMBER]`.
@@ -63,7 +76,7 @@ Get-MgUserAuthenticationMethod -UserId $sessionUser.Id -ErrorAction Stop        
 # Target: canonical UPN and immutable ID in $sessionUser
 # Effect: invalidates Entra refresh tokens and browser session cookies without deleting MFA methods
 # Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry
-# Reversibility: not reversible; the user must authenticate again
+# Reversibility: R2: not reversible; the user must authenticate again. CLAUDE.md risk table: one user but no undo command, and hard to reverse, so the higher of the two rows it touches
 $requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -79,8 +92,8 @@ if ($confirmation -ceq $requiredConfirmation) {
 The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`) proves each step. Use the user's object ID as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
 
 ```bash
-# HUMAN-RUN read-only read-back after "Require re-register MFA": passes only when no phone, Authenticator or software OATH method is left
-node scripts/adapters/msgraph-client.js verify-mfa-cleared --user [USER_ID] --execute
+# HUMAN-RUN read-only read-back of [mfa-require-reregister-portal] (Require re-register MFA): run it right after that gate, before the user registers again; passes only when no phone, Authenticator or software OATH method is left
+node scripts/adapters/msgraph-client.js verify-mfa-cleared --user [USER_ID] --change [CHANGE_ID] --execute
 # HUMAN-RUN read-only read-back after the user registers on the new phone: passes only when an Authenticator method is registered
 node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
 # HUMAN-RUN read-only read-back: passes only when the sign-in logs show a successful sign-in at or after [NOT_BEFORE] (Entra ID P1 or P2)
@@ -93,10 +106,12 @@ node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-bef
 
 ## ✅ Verification checklist
 - [ ] User completed registration at aka.ms/mfasetup (new method shows in Authentication methods)
-- [ ] `verify-mfa-cleared` passed after the re-register step, and `verify-mfa-method` and `verify-signin` pass after the new registration
+- [ ] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration
+- [ ] One-method delete path: `auth-methods` no longer lists that method (its output saved to `tasks/checkpoints/`; the ticket names the method type only)
+- [ ] `verify-mfa-method` and `verify-signin` pass after the new registration
 - [ ] Test sign-in prompts for MFA and succeeds
 - [ ] Any CA exclusion has been **removed** (no lingering bypass)
 - [ ] Sign-in logs show successful MFA
 
 ## 📝 Jira-ready note
-> Resolved [date/time]. MFA issue for `[UPN]`: [new-phone re-registration / no-prompt CA diagnosis]. Authentication-method state: [exact frozen method set deleted under its separate gate and empty-set read-back passed / unchanged]. Re-registration: [verified at aka.ms/mfasetup and in sign-in logs / not completed]. [If separately authorized and verified: temporary CA exclusion applied, then removed after registration — approval [MANAGER_NAME].] Time spent: [X] min.
+> Resolved [date/time]. MFA issue for `[UPN]`: [new-phone re-registration / no-prompt CA diagnosis]. Authentication-method state: [one method deleted under [mfa-method-delete-portal] and its absence read with `auth-methods` / every phone, Authenticator and software OATH method cleared under [mfa-require-reregister-portal] and `verify-mfa-cleared` passed under its change / unchanged]. Re-registration: [verified at aka.ms/mfasetup and in sign-in logs / not completed]. [If separately authorized and verified: temporary CA exclusion applied, then removed after registration; approval [MANAGER_NAME].] Time spent: [X] min.

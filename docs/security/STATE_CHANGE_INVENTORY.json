@@ -5736,6 +5736,21 @@
       ]
     },
     {
+      "id": "mfa-require-reregister-portal",
+      "file": ".claude/commands/mfa-issue.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "mfa-session-revoke",
       "file": ".claude/commands/mfa-issue.md",
       "kind": "powershell",

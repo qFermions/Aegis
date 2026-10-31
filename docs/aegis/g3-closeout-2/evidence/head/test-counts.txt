@@ -1,0 +1,12 @@
+# command: bash docs/aegis/g3/evidence/tools/test-counts.sh <clone>
+# commit: 3070afe  started: 2026-10-31T03:59:22Z  node: v24.22.2
+scripts/adapters/change-binding.test.js: base 71 head 72 (1)
+scripts/audit/audit-log.test.js: base 13 head 14 (1)
+scripts/audit/change-record.test.js: base 17 head 31 (14)
+scripts/audit/counted-gates.test.js: base 0 head 3 (3)
+scripts/command-safety-gates.test.js: base 474 head 475 (1)
+scripts/mfa-issue-gates.test.js: base 0 head 5 (5)
+files: 58; tests added 25; tests removed 0
+whole run: base 1422, head 1447
+# exit: 0  finished: 2026-10-31T04:08:09Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

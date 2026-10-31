@@ -32,7 +32,7 @@
 const {
   STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal, runIdOf } = require('./cli-support.js');
 
 // ── Validators ───────────────────────────────────────────────────────────────
 const ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software title ids
@@ -44,7 +44,11 @@ const CVE = /^CVE-[0-9]{4}-[0-9]{4,7}$/; // the path always carries the upper-ca
 // the u flag, i never folds a non-ASCII letter into an ASCII one, so a look-alike
 // character is still refused.
 const CVE_ANY_CASE = /^cve-[0-9]{4}-[0-9]{4,7}$/i;
-const EXECUTION_ID = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}[A-Za-z0-9])?$/;
+// A script execution id is a UUID (docs/aegis/g3/vendor-facts.md F-12), the form the audit trail
+// takes as a run (audit-log.js RUN_ID), so verify-script cannot pass on an id the trail would not
+// record and a serial or host name typed in its place is refused before any read (code review
+// round 3 of the batch G3 close-out 2, finding 5).
+const EXECUTION_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const HOST_STATUS = /^(?:new|online|offline|mia|missing)$/;
 const POLICY_RESPONSE = /^(?:passing|failing)$/;
 const COMMAND_STATUS = /^(?:ran|pending|failed)$/; // the documented command_status values
@@ -346,8 +350,13 @@ async function verifyScript(read, args) {
     message: field(d, 'message'),
   };
   const expected = { execution_id: [args['execution-id']], exit_code: [0], host_timeout: [false] };
-  // An execution_id that is present must be the one asked for.
-  const idOk = observed.execution_id === null || observed.execution_id === args['execution-id'];
+  // The answer must name the execution asked for: one that names none cannot be told apart from
+  // another run, so it does not verify (code review round 2 of the batch G3 close-out 2,
+  // finding 6; a counted change counts each run once by this id). Fleet documents execution_id
+  // in this answer (docs/aegis/g3/vendor-facts.md F-12, round 3, finding 6).
+  // An execution id is a UUID (round 3, finding 5), one id in either case, so the match ignores
+  // case (round 3, finding 2): an id typed in upper case that Fleet answers in lower case passes.
+  const idOk = typeof observed.execution_id === 'string' && observed.execution_id.toLowerCase() === args['execution-id'].toLowerCase();
   const verified = idOk && observed.exit_code === 0 && observed.host_timeout === false;
   const note = observed.exit_code === null ? 'exit_code null: the host has not reported the result yet (vendor docs).' : undefined;
   return { verified, observed, expected, note };
@@ -640,7 +649,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (outcome.note) output.note = outcome.note;
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
-  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change), { out, err, secrets });
+  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change, runIdOf('fleet', name, args, outcome.failed ? null : output.observed.execution_id)), { out, err, secrets });
 }
 
 // Read only after the client has used it, so printed output can be redacted

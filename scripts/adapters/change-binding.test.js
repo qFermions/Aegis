@@ -117,7 +117,7 @@ function trail(t) {
   };
   // open (and by default approve) a change record whose read-back is readBack
   const open = (readBack, { approve = true } = {}) => {
-    const o = record(['open', '--command', 'binding-test', '--gate', 'binding-test-gate', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    const o = record(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
     assert.equal(o.code, 0, o.text);
     if (approve) assert.equal(record(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
     return o.json.change;
@@ -238,6 +238,17 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   let unbound = 0;
   for (const file of fs.readdirSync(dir).filter((n) => n.endsWith('.md'))) {
     const lines = fs.readFileSync(path.join(dir, file), 'utf8').split('\n');
+    // a read-back in its own section names the gate it proves in the comment above it
+    // ("read-back of [mfa-require-reregister-portal]"), and takes that gate's class (batch G3
+    // close-out 2, owner decision 1: the /mfa-issue read-backs sit under "## Read-back")
+    const classOf = new Map();
+    let id = null;
+    for (const l of lines) {
+      const g = l.match(/<!-- SAFETY GATE \[([^\]]+)\] -->|^# SAFETY GATE \[([^\]]+)\]/);
+      if (g) id = g[1] || g[2];
+      const rv = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)(.*)$/);
+      if (rv && id) classOf.set(id, (rv[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null);
+    }
     let gate = null;
     let rClass = null;
     let has = false;
@@ -254,8 +265,10 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)(.*)$/);
       if (r && gate) rClass = (r[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null;
       if (!VERIFY.test(l)) continue;
-      const wantBound = rClass === 'R2' || rClass === 'R3';
-      assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${rClass || 'no gate'}): ${l.trim().slice(0, 120)}`);
+      const named = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of \[([a-z0-9-]+)\]/);
+      const cls = named && classOf.has(named[1]) ? classOf.get(named[1]) : rClass;
+      const wantBound = cls === 'R2' || cls === 'R3';
+      assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${cls || 'no gate'}): ${l.trim().slice(0, 120)}`);
       if (wantBound) { bound += 1; has = true; } else unbound += 1;
     }
     const text = lines.join('\n');
@@ -267,9 +280,11 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
     if (has) assert.match(text, /\*\*Change record \((?:R2 and R3|R2|R3) gates\):\*\* before a gate[^\n]*`node scripts\/audit\/change-record\.js open`[^\n]*`\[CHANGE_ID\]`/, `${file}: says where [CHANGE_ID] comes from`);
     else assert.doesNotMatch(text, /\[CHANGE_ID\]/, `${file}: no change record, no [CHANGE_ID]`);
   }
-  // 78: the two prose read-backs written as whole command lines count too (round 3, finding 4)
-  assert.equal(bound, 78, 'the 78 read-backs of R2 and R3 gates at the batch G3 close-out');
-  assert.equal(unbound, 77, 'the 77 read-backs of R0 and R1 work, or of no gate, stay unbound');
+  // 78 at the batch G3 close-out (the two prose read-backs written as whole command lines count
+  // too, round 3, finding 4); 79 with /mfa-issue's verify-mfa-cleared, the read-back of its R3
+  // Require re-register MFA gate (batch G3 close-out 2, owner decision 1)
+  assert.equal(bound, 79, 'the 79 read-backs of R2 and R3 gates');
+  assert.equal(unbound, 76, 'the 76 read-backs of R0 and R1 work, or of no gate, stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // two read-backs of R2 and R3 changes are named in prose, not on a command line: the rollback
@@ -282,8 +297,13 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // the pilot (E1) and the batch (E2) are two changes with two ids, and status proves one host,
   // not the batch (code review round 3, finding 3)
   assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` set to the E1 change's id, unless step 1 set R1\) and, with `--change \[CHANGE_ID\]` set to this gate's own change id, for every checked host/);
-  assert.match(page('fleet-device-actions'), /with `\[CHANGE_ID\]` the id of this gate's own change record, not the pilot's\./);
-  assert.match(page('fleet-device-actions'), /`change-record\.js status` reads done once one linked read-back verified, so it proves one host, not the batch: the ticket's list of the hosts that passed and failed is the batch's record\./);
+  // the read-back names the change opened before the gate (code review round 2 of the batch G3
+  // close-out 2, finding 13: the moved text had left a broken sentence)
+  assert.match(page('fleet-device-actions'), /with `\[CHANGE_ID\]` the id of this gate's own change record, opened before the gate \(above\), not the pilot's\. Any host/);
+  assert.doesNotMatch(page('fleet-device-actions'), /not the pilot's\. \(opened/);
+  // the batch is a counted change (batch G3 close-out 2, owner decision 2): opened with
+  // --expected [HOST_COUNT], done only when every checked host's read-back passed
+  assert.match(page('fleet-device-actions'), /\*\*Counted change:\*\* before the gate, open this gate's own change record for \[fleet-device-actions-batch-script-portal\], not the pilot's, with `--expected \[HOST_COUNT\]`, the host count in the ticket, then record its approval\./);
   // a gate whose class is set at run time says when to drop --change: the portal gate by its
   // step 1, the fenced fleetctl gate by the class its own precondition writes in the ticket, in
   // a comment the gated-fence rules allow (code review round 3, finding 8)
@@ -316,6 +336,61 @@ for (const c of CONNECTORS) {
   });
 }
 
+// Batch G3 close-out 2, owner decision 2: a read-back that takes a job id records it as its
+// verify entry's run, so a counted batch change counts each run once. Fleet's verify-script is
+// the one (--execution-id); every other read-back records run null, so no user, email, device
+// name or serial is ever recorded as a run.
+test('fleet verify-script records its execution id as the run; every other read-back records none', async (t) => {
+  const tr = trail(t);
+  const support = require('./cli-support.js');
+  assert.deepEqual(support.RUN_ID_FLAGS, { 'fleet:verify-script': 'execution-id' });
+  const fleet = CONNECTORS.find((c) => c.name === 'fleet');
+  const change = tr.open('fleet:verify-script');
+  const id = 'e797d6c6-3aae-11ee-be56-0242ac120002';
+  const script = (body) => ({ ...fleet, replies: () => [ok(body)] });
+  const r = await run(script({ execution_id: id, host_id: 7, exit_code: 0, host_timeout: false, output: 'done', message: '' }), ['verify-script', '--execution-id', id, '--change', change], tr);
+  assert.equal(r.code, 0, r.text);
+  const e = verifies(tr).pop();
+  assert.equal(e.run, id);
+  assert.equal(e.change, change);
+  // security review 1 of the batch G3 close-out 2: the run is recorded only when it is a UUID
+  // and Fleet answered for exactly that id, so a serial or host name typed as an execution id,
+  // a failed read and an answer for another id all record run null
+  // code review round 3, finding 5: Fleet's execution ids are UUIDs (vendor-facts.md F-12), so a
+  // serial or host name typed as one is refused before any read; verify-script can no longer
+  // pass on an id the trail does not take as a run (it passed with run null before)
+  const before = verifies(tr).length;
+  const serial = await run(script({ execution_id: 'C02XK1ABJG5H', host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', 'C02XK1ABJG5H', '--change', change], tr);
+  assert.equal(serial.code, 1, serial.text);
+  assert.equal(verifies(tr).length, before, 'a serial is never read, so nothing is recorded');
+  // code review round 3, finding 2: a UUID is one id in either case, so an id typed in upper case
+  // that Fleet answers in lower case verifies, and the run is recorded in lower case
+  const upper = await run(script({ execution_id: id, host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id.toUpperCase(), '--change', change], tr);
+  assert.equal(upper.code, 0, upper.text);
+  assert.equal(verifies(tr).pop().run, id);
+  const failed = await run({ ...fleet, replies: () => [{ status: 404, body: '{}' }] }, ['verify-script', '--execution-id', id, '--change', change], tr);
+  assert.equal(failed.code, 2, failed.text);
+  assert.equal(verifies(tr).pop().run, null, 'a failed read records no run');
+  const other = await run(script({ execution_id: 'd6cffa75-b5b5-41ef-9230-15073c8a88cf', host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id, '--change', change], tr);
+  assert.equal(other.code, 2, other.text);
+  assert.equal(verifies(tr).pop().run, null, 'an answer for another id records no run');
+  // code review round 2, finding 6: an answer that names no execution id does not verify, so the
+  // command and the change record agree
+  const noId = await run(script({ host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id, '--change', change], tr);
+  assert.equal(noId.code, 2, noId.text);
+  assert.equal(verifies(tr).pop().verified, false);
+  // code review round 3, finding 6: Fleet documents execution_id in the script result's answer
+  const facts = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'aegis', 'g3', 'vendor-facts.md'), 'utf8');
+  const f12 = facts.split('\n').find((l) => l.startsWith('- F-12.'));
+  assert.ok(f12 && f12.includes('/api/v1/fleet/scripts/results/:execution_id') && f12.includes('"execution_id": "e797d6c6-3aae-11ee-be56-0242ac120002"'), String(f12));
+  assert.match(fs.readFileSync(path.join(__dirname, 'fleet-client.js'), 'utf8'), /vendor-facts\.md F-12/);
+  for (const c of CONNECTORS) {
+    const other = await run(c, c.verify, tr);
+    assert.equal(other.code, 0, `${c.name}: ${other.text}`);
+    assert.equal(verifies(tr).pop().run, null, `${c.name}: no run id recorded`);
+  }
+});
+
 // Code review round 1, finding 6: --change=chg-... is refused with a message that says the id
 // goes in its own argument, not as an unknown flag.
 for (const c of CONNECTORS) {
@@ -347,6 +422,12 @@ test('the contract, cli-support and the audit trail agree on what a verify-* com
   const support = require('./cli-support.js');
   for (const name of ['verify-lock', 'verify-2fa-required', 'verify-', 'verify-Lock', 'verifylock', 'host', `verify-${'a'.repeat(48)}`, `verify-${'a'.repeat(49)}`, 'verify-a_b']) {
     assert.equal(contract.isVerifyCommand(name), audit.VERIFY_COMMAND.test(name), name);
+  }
+  // code review round 1 of the batch G3 close-out 2, finding 11: one table of read-backs that
+  // record a run id, and one run-id form, both the trail's
+  assert.equal(support.RUN_ID_FLAGS, audit.RUN_IDS);
+  for (const id of ['e797d6c6-3aae-11ee-be56-0242ac120002', 'E797D6C6-3AAE-11EE-BE56-0242AC120002', 'C02XK1ABJG5H', 'exec-0001']) {
+    assert.equal(support.runIdOf('fleet', 'verify-script', { 'execution-id': id }, id) !== null, audit.RUN_ID.test(id), id);
   }
   for (const id of ['chg-0123456789ab', 'chg-0123456789AB', 'chg-0123456789a', '[CHANGE_ID]']) {
     const refusal = support.changeRefusal('github', 'verify-2fa-required', { change: id }, null);
@@ -386,7 +467,9 @@ test('every connector with a verify-* command takes --change out of argv, checks
       // each call's arguments, with parentheses nested up to two levels
       const calls = [...src.matchAll(/recordVerdict\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)\)/g)].map((m) => m[1]);
       assert.ok(calls.length >= 1, `${name}: records its verdicts`);
-      for (const call of calls) assert.match(call, /,\s*bound\.change\s*$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change last`);
+      // bound.change is the fourth argument; a read-back that takes a job id adds its run id after
+      // it (batch G3 close-out 2, owner decision 2)
+      for (const call of calls) assert.match(call, /,\s*bound\.change\s*(?:,\s*runIdOf\('[a-z-]+', name, args(?:, [^()]+)?\)\s*)?$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change fourth`);
     }
   }
   assert.equal(checked, 9, 'the nine connectors with read-backs');

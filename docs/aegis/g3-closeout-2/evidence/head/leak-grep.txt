@@ -1,0 +1,46 @@
+# command: node docs/aegis/g3/evidence/tools/leak-grep.js f086c88
+# commit: 2915068  started: 2026-10-31T04:07:04Z  node: v24.22.2
+charter grep: 471 hit lines (case-insensitive) in 34 files; by keyword: {"password":174,"token":205,"secret":92}
+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 2
+  9669: checks.md: -| E6 no secret, token, personal path, real name, internal hostname or private email | pass | Captures over `01dcb37..e3029ae` (`e3029ae` is the last commit bef
+  14122: docs/review/batches/g3-closeout-checks.md: +| E6 no secret, token, personal path, real name, internal hostname or private email | pass | Captures over `01dcb37..e3029ae` (`e3029ae` is the last commit bef
+hits by file (path: lines):
+  docs/aegis/g3-closeout-2/baseline/node-test-under-tripwire.txt: 108
+  docs/aegis/g3-closeout-2/baseline/node-test.txt: 108
+  docs/aegis/g3-closeout-2/evidence/r2-green.txt: 29
+  docs/aegis/g3-closeout-2/evidence/r1-green.txt: 28
+  docs/aegis/g3-closeout-2/evidence/f2-green.txt: 28
+  docs/aegis/g3-closeout-2/evidence/r3-green.txt: 27
+  docs/aegis/g3-closeout-2/evidence/f1-green.txt: 26
+  docs/aegis/g3-closeout-2/evidence/r2-red.txt: 14
+  docs/aegis/g3-closeout-2/baseline/pre-commit-check-all.txt: 11
+  docs/aegis/boundary-audit.md: 8
+  .claude/commands/mfa-issue.md: 8
+  progress.md: 6
+  docs/aegis/g3-closeout-2/evidence/f2-red.txt: 6
+  docs/aegis/g3-closeout-2/baseline/g3-ticket-eval.txt: 6
+  docs/aegis/g3-closeout-2/baseline/ms-ticket-eval.txt: 6
+  scripts/audit/counted-gates.test.js: 5
+  scripts/audit/audit-log.js: 4
+  docs/aegis/g3-closeout-2/evidence/sr1-run-id-green.txt: 4
+  scripts/adapters/fleet-client.js: 4
+  checks.md: 4
+  docs/aegis/g3-closeout-2/baseline/gws-ticket-eval.txt: 4
+  PROJECT_STATE.md: 3
+  scripts/audit/README.md: 3
+  docs/aegis/g3/vendor-facts.md: 3
+  docs/aegis/g3-closeout-2/baseline/replay-demo.txt: 3
+  docs/aegis/g3-closeout-2/evidence/f1-ms-mfa-page.txt: 3
+  docs/review/batches/g3-closeout-checks.md: 3
+  scripts/mfa-issue-gates.test.js: 2
+  docs/aegis/g3-closeout-2/baseline/runbook-gate-markers.txt: 2
+  (commit e220fc5 header and message): 1
+  docs/aegis/g3-closeout-2/evidence/r3-red.txt: 1
+  (commit e4caabe header and message): 1
+  docs/aegis/g3-closeout-2/evidence/f1-red.txt: 1
+  docs/aegis/g3-closeout-2/baseline/release-boundary-check.txt: 1
+credential-shape pass over added lines: 0 hit(s)
+URL hosts in added lines (4): learn.microsoft.com 4, fleetdm.com 3, docs.github.com 2, x.invalid 1
+mail domains in added lines (2): domain.com 16, example.com 2
+# exit: 0  finished: 2026-10-31T04:07:04Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

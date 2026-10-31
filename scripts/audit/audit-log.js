@@ -73,6 +73,16 @@ const PLACEHOLDER = /^\[(?:@Aegion_[A-Za-z0-9_]{1,40}|[A-Z][A-Z0-9_]{0,39}|USER@
 const ISSUE_KEY = /^[A-Z][A-Z0-9]{0,9}-[1-9][0-9]{0,6}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const CHANGE_ID = /^chg-[0-9a-f]{12}$/;
+// A run id a read-back recorded (batch G3 close-out 2): a job id, today Fleet's script
+// execution id, which Fleet documents as a UUID. Only a UUID is taken, so a serial, a host name
+// or a user name typed in its place is refused (security review 1 of that batch).
+const RUN_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+// The read-backs that record a run id, connector:command to the flag that holds it: only a job
+// id belongs here, never a user, email, device name or serial (cli-support.js runIdOf).
+const RUN_IDS = Object.freeze({ 'fleet:verify-script': 'execution-id' });
+// Whether a read-back (connector:command) records a run id: the one test for the trail, the CLIs
+// (cli-support.js runIdOf) and status (change-record.js countedView).
+const recordsRunId = (readBack) => Object.prototype.hasOwnProperty.call(RUN_IDS, readBack);
 
 // Credential shapes refused in any value, whatever its field allows (defence in depth):
 // Slack, GitHub, OpenAI-style, Google, GitLab and Okta tokens, a JWT, a bearer or basic
@@ -92,13 +102,15 @@ const KINDS = Object.freeze({
   procedure: {
     command: matches(COMMAND), gate: nullable(matches(GATE)), r_class: matches(R_CLASS), target: matches(PLACEHOLDER),
     read_back: nullable(matches(READ_BACK)), procedure_sha256: nullable(matches(SHA256)), change: nullable(matches(CHANGE_ID)),
+    // the number of objects a counted batch change acts on, as written in the ticket
+    expected: nullable(isInt(1, 99999)),
   },
   approval: {
     ref: matches(ISSUE_KEY), gate: matches(GATE), procedure_sha256: matches(SHA256), change: matches(CHANGE_ID),
   },
   verify: {
     connector: matches(NAME), command: matches(VERIFY_COMMAND), verified: (v) => typeof v === 'boolean', state: oneOf(STATES),
-    change: nullable(matches(CHANGE_ID)),
+    change: nullable(matches(CHANGE_ID)), run: nullable(matches(RUN_ID)),
   },
   // joins a verify-* result already in the trail (its seq) to a change record
   'change-link': {
@@ -129,6 +141,19 @@ function checkEntry(entry) {
     if (fields.read_back === null || fields.procedure_sha256 === null || fields.gate === null || (fields.r_class !== 'R2' && fields.r_class !== 'R3')) {
       throw new AuditRefused('a procedure under a change id needs its read-back, digest and gate, and an R2 or R3 class');
     }
+  }
+  if (kind === 'procedure' && fields.expected !== null && fields.change === null) throw new AuditRefused('a count is recorded only on a change record');
+  return fields;
+}
+
+// Rules for writing a new entry, on top of its form (checkEntry). They follow today's tables, so
+// verify does not apply them to entries already in the chain: a trail written under an older
+// run-id table still verifies (code review round 3 of the batch G3 close-out 2, finding 7).
+function checkWrite(fields) {
+  // a run id only on a read-back that records one (round 2, finding 14), so no other read-back's
+  // flag value can reach the trail as a run
+  if (fields.kind === 'verify' && fields.run !== null && !recordsRunId(`${fields.connector}:${fields.command}`)) {
+    throw new AuditRefused('a run id is recorded only by a read-back that takes one');
   }
   return fields;
 }
@@ -302,7 +327,7 @@ function openAuditLog({ dir = defaultAuditDir(), now = Date.now } = {}) {
   // guard(entries), when given, runs under the write lock on the trail as it is; if it throws,
   // nothing is written (a check that must not race another writer)
   function append(entry, { guard } = {}) {
-    const fields = checkEntry(entry);
+    const fields = checkWrite(checkEntry(entry));
     return withLock(() => {
       if (guard) guard(entries());
       const before = tail();
@@ -446,7 +471,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 }
 
 module.exports = {
-  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, VERIFY_COMMAND, AuditRefused, AuditBroken,
+  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

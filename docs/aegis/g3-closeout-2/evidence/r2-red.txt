@@ -1,0 +1,580 @@
+# command: node --test scripts/audit/change-record.test.js scripts/adapters/change-binding.test.js scripts/audit/counted-gates.test.js scripts/mfa-issue-gates.test.js scripts/adapters/g3-runbooks.test.js scripts/gws-runbooks.test.js scripts/adapters/linear-runbooks.test.js
+# commit: 9966e7c (plus uncommitted changes in the working tree)  started: 2026-10-31T03:13:51Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (26.598786ms)
+✔ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (19.618823ms)
+✔ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (32.787978ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.176294ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (19.211627ms)
+✔ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (14.132506ms)
+✔ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (21.484344ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (8.857557ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (13.503338ms)
+✔ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (21.958015ms)
+✔ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (24.307762ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.139127ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.077772ms)
+✔ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (14.608588ms)
+✔ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (21.309348ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.991711ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (13.192864ms)
+✔ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.565531ms)
+✔ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (12.984263ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.195599ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (13.79674ms)
+✔ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (12.374458ms)
+✔ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (21.625637ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.855312ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.328763ms)
+✔ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.298722ms)
+✔ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (28.63549ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (7.459149ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (26.21666ms)
+✔ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (14.352723ms)
+✔ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (16.072538ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.25733ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.41136ms)
+✔ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.314462ms)
+✔ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (13.069003ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.462655ms)
+✔ a verify-* with --change and no audit trail to check it against is refused, never run unbound (0.400532ms)
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (25.396375ms)
+✔ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (14.210088ms)
+✔ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (8.895874ms)
+✔ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (14.410952ms)
+✔ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (14.268284ms)
+✔ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (9.882662ms)
+✔ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.432715ms)
+✔ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.970954ms)
+✔ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (8.905365ms)
+✔ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (11.28162ms)
+✖ fleet verify-script records its execution id as the run; every other read-back records none (23.749341ms)
+✔ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.667318ms)
+✔ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.80326ms)
+✔ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.640715ms)
+✔ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.874695ms)
+✔ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.987067ms)
+✔ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.746435ms)
+✔ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.389811ms)
+✔ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.232102ms)
+✔ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.220293ms)
+✔ no support file under scripts/ has a name node --test runs as a test file (2.446218ms)
+✔ the contract, cli-support and the audit trail agree on what a verify-* command and a change id are (0.344868ms)
+✔ offline commands refuse --change as not a read-back, before reading any file (0.351612ms)
+✔ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (2.264393ms)
+✔ fleet: --change=chg-... on a plain read is refused as not a read-back (0.870363ms)
+✔ github: --change=chg-... on a plain read is refused as not a read-back (0.619486ms)
+✔ google-workspace: --change=chg-... on a plain read is refused as not a read-back (0.613137ms)
+✔ jamf: --change=chg-... on a plain read is refused as not a read-back (0.513676ms)
+✔ linear: --change=chg-... on a plain read is refused as not a read-back (0.507433ms)
+✔ msgraph: --change=chg-... on a plain read is refused as not a read-back (0.937184ms)
+✔ okta: --change=chg-... on a plain read is refused as not a read-back (0.567284ms)
+✔ slack: --change=chg-... on a plain read is refused as not a read-back (0.759332ms)
+✔ jira: --change=chg-... on a plain read is refused as not a read-back (0.630167ms)
+✔ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (17.212446ms)
+✔ changeRefusal refuses when it is not given takeChange's result (0.199813ms)
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (13.214805ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (10.78378ms)
+✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (1.210717ms)
+✔ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (15.988541ms)
+✔ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (6.543594ms)
+✔ github-org-security: every github line runs as written (dry run) and the required read-backs are there (6.328708ms)
+✔ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (4.976796ms)
+✔ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (5.496215ms)
+✔ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (13.960308ms)
+✔ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (8.509017ms)
+✔ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (6.875008ms)
+✔ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (15.527554ms)
+✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (4.329865ms)
+✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (4.926794ms)
+✔ the four runbooks carry the gates this file judges (0.967676ms)
+✔ every delete is R3: its gate names the written rollback path, the action waits for it, and no line labels a delete lower (1.659829ms)
+✔ every gate phrase names the value or the comment it changes, and its Target binds the same placeholders (0.780692ms)
+✔ triage Phase E corrects a wrong priority under a gate that changes the priority and nothing else (1.203242ms)
+✔ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed (35.894255ms)
+✔ the workspace-admin Phase A stop depends on the person who makes the change, never on the key (0.501837ms)
+✔ ticket-note: a digest that still differs after one replace is a stop with a partial-state note, not another edit (0.826535ms)
+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.655154ms)
+✔ a reversal over more than 10 issues is its own R3 change: the bulk delete rolls back by a reviewed bulk restore, never by N single R1 restores (1.592646ms)
+✔ every Linear-ready note read-back proves who posted it; workspace-admin never passes the member as --author (0.695374ms)
+✔ ticket-note stops when the comment it needs is past the 50-comment page or the 20-entry list (0.889088ms)
+✔ triage compares a snooze time in UTC, the form verify-snoozed prints (0.687105ms)
+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.570565ms)
+✔ ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key (0.296904ms)
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (230.020248ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (126.067213ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (190.863149ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (688.491996ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (320.791545ms)
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one (297.373681ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (129.880515ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (378.788134ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (325.510153ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (104.443329ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.405814ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (305.93051ms)
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (172.019615ms)
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI (166.305557ms)
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (80.766269ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.498796ms)
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints (43.731406ms)
+✔ a counted gate opened without --expected is refused at open, and nothing is recorded (231.637736ms)
+✔ a gate without a count refuses --expected and keeps the one-read-back rule (118.140553ms)
+✔ k below N reads partial and never done; k equal to N reads done (175.609705ms)
+✔ one failed host keeps the change not done and names that read-back (168.840594ms)
+✔ the same execution id read twice counts once (161.023998ms)
+✔ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (160.240691ms)
+✔ only bound read-backs of the named kind recorded after the approval count toward k (125.958395ms)
+✔ the audit trail takes a run id that is a job id and refuses one that is not job-shaped (4.063676ms)
+✔ a Fleet read with no run id is listed as uncounted: a failed one does not block, a passing one does not count (162.952752ms)
+✖ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial (115.369659ms)
+✖ open refuses a command with no runbook, and checks the gate before the count (41.805563ms)
+✖ a Fleet failure with an answer but no run id blocks; open's next step and the trail follow the run-id rule (134.631861ms)
+✔ open refuses a gate the named runbook does not have (36.626798ms)
+✔ every gate whose confirmation names a count is classified: counted, or not counted with its reason (18.398794ms)
+✔ each counted gate's runbook opens its change with --expected and the count, and says what status reports (15.484901ms)
+✔ the audit README describes counted changes (0.392357ms)
+✔ the parser reads every gate in the five runbooks with all six fields, a phrase and an R-class (3.583938ms)
+✔ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*) (45.196338ms)
+✔ no runbook treats exit 2 from a verify-* read as an expected result (1.618917ms)
+✔ exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate (3.566834ms)
+✔ every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect (2.889313ms)
+✔ every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict (2.077442ms)
+✔ each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change (8.149513ms)
+✔ every verify-event whose actor is the administrator carries --target, and the checklists require the target (1.794074ms)
+✔ no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof (2.640289ms)
+✔ every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook (6.23268ms)
+✔ the containment suspend gate waits for a user read in the ticket, also on the urgent path (1.829401ms)
+✔ every Drive sharing gate that changes who outside can be shared with waits for a named approver (5.392221ms)
+✔ single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing (11.442405ms)
+✔ the GAM export gates stop before replacing an existing file (bash, mocked gam) (27.733431ms)
+✔ /gws-audit-log hands Google containment to /gws-account-containment, never to the Microsoft-only triage runbook (0.540358ms)
+✔ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (3.244746ms)
+✖ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (4.005895ms)
+✔ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.470165ms)
+✔ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.681093ms)
+✖ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (0.447063ms)
+ℹ tests 153
+ℹ suites 0
+ℹ pass 146
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5427.670441
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:234:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (25.396375ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /with `\[CHANGE_ID\]` the id of this gate's own change record, opened before the gate \(above\), not the pilot's\. Any host/. Input:
+  
+  '---\n' +
+    'description: Lock, unlock, wipe, run a script on, turn off MDM for, or delete a host in Fleet (macOS, Windows, Linux, iPhone, iPad, Android), plus cancelling a pending action. Read the host first, then each action under its own exact-phrase gate with the Fleet adapter read-back. Placeholders only.\n' +
+    'disable-model-invocation: true\n' +
+    '---\n' +
+    '\n' +
+    '# /fleet-device-actions\n' +
+    '\n' +
+    '> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command. Aegis advises; a human administrator runs every step (HUMAN-RUN).\n' +
+    '\n' +
+    'CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.\n' +
+    '\n' +
+    '**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet\'s search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host\'s display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item\'s ID: an MDM command\'s UUID, or a queued script\'s execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.\n' +
+    '\n' +
+    "**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).\n" +
+    '\n' +
+    '## ⚠️ Admin / safety gate\n' +
+    '\n' +
+    "- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one's history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.\n" +
+    "- **Role needed:** Maintainer or Admin in Fleet (global, or on the host's fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person's session, a shared login or an API token that carries a higher role.\n" +
+    '- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.\n' +
+    '- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).\n' +
+    '- Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).\n' +
+    "- Every action is queued for the host's next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.\n" +
+    '\n' +
+    '## Inputs needed\n' +
+    '\n' +
+    "- `[SERIAL_NUMBER]` or `[HOST_ID]`, and the ticket's goal: left somewhere (lock), found again (unlock), stolen with sensitive data (wipe), a one-off fix (script), leaving the fleet (turn off MDM, then delete the record).\n" +
+    "- From Phase A: platform and OS version, MDM status (On (automatic) or On (manual)), last seen, anything pending, and for Windows and Linux whether scripts are enabled in fleetd (Fleet's agent), because their lock, unlock and the Linux wipe run as scripts.\n" +
+    '- For a script: `[SCRIPT_NAME]` saved in Fleet and read line by line before it runs; for more than one host, `[FLEET_NAME]` and the number of hosts, written in the ticket before the gate.\n' +
+    '- For a stolen device: the identity-side containment plan **[org gap: which runbook, and who owns it]**.\n' +
+    '- Who holds Maintainer or Admin in Fleet for an escalation **[org gap]**.\n' +
+    '\n' +
+    '## How the systems hang together\n' +
+    '\n' +
+    '- Apple hosts (macOS, iOS, iPadOS) receive MDM commands, so they need Fleet MDM turned on; a Mac whose MDM is Jamf Pro belongs to `/jamf-lock-erase`. Windows lock and unlock run as Fleet scripts, a Windows wipe is an MDM command, and Linux lock, unlock and wipe all run as scripts.\n' +
+    '- Everything is queued. The badge on the host moves from Lock pending to Locked, and from Wipe pending to Wiped (Linux shows no wipe badge; Android never shows Locked). The API carries the same state as `mdm.device_status` (unlocked, locked, locking, unlocking, wiped, wiping) and `mdm.pending_action` (lock, unlock, wipe, or empty).\n' +
+    "- An activity (locked_host, unlocked_host, wiped_host, ran_script, mdm_unenrolled, deleted_host) proves who asked and when; the device result is proven by `mdm.device_status`, the MDM command status or the script's exit code.\n" +
+    '- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n' +
+    '- Fleet 4.82.0 renamed teams to fleets and queries to reports; an older note that says "team" means a fleet.\n' +
+    '\n' +
+    '## Fast path\n' +
+    '\n' +
+    "1. Phase A: read the host, its pending actions and the clicking admin's role (R0). Save the read as the pre-state.\n" +
+    '2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).\n' +
+    '3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.\n' +
+    '4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.\n' +
+    '5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.\n' +
+    '6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.\n' +
+    '7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).\n' +
+    '\n' +
+    '## Phase A: Read the host (R0)\n' +
+    '\n' +
+    '**Purpose**: which action you can send, and whether it will land, depends on what the record says.\n' +
+    '\n' +
+    "1. Fleet → Hosts → search `[SERIAL_NUMBER]` (the search takes a name, hostname, UUID, serial or private IP) → open the host → Host details → read status (online, offline, mia, missing or new), last seen, platform and OS version, fleet, MDM status and any badge (Lock pending, Locked, Unlock pending, Wipe pending, Wiped). Record `[HOST_ID]`. Prefer the serial: when hostnames collide, Fleet's lookup returns the first match.\n" +
+    '2. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past (what was already sent, by whom, when) and Upcoming (anything still queued). A queued script or lock changes the plan.\n' +
+    '3. Two records for one serial: the one with a recent last seen is the live host; act on that one only.\n' +
+    '4. A script that already ran (read only, no gate): Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Past → open the entry for that script run → read its exit code and output. Exit code 0 is success, no exit code yet means the host has not reported, and a timeout means it ran past the 5-minute default.\n' +
+    '5. Decide the smallest action that solves the ticket, and confirm that the admin who will click holds the role named in that phase. If they hold Observer, the answer is an escalation to a Maintainer or Admin, not a workaround.\n' +
+    '\n' +
+    '<details>\n' +
+    '<summary>Fleet adapter: the read-only scale version (HUMAN-RUN; Aegis may run the same reads)</summary>\n' +
+    '\n' +
+    '```bash\n' +
+    '# HUMAN-RUN, read-only: the adapter is dry by default and prints the request; --execute sends the GET, never a write\n' +
+    'node scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\n' +
+    'node scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execute   # resolves the serial to [HOST_ID] with status, seen_time and the MDM fields\n' +
+    'node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version'... 38354 more characters
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:302:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '---\ndescription: Lock, unlock, wipe, run a script on, turn off MDM for, or delete a host in Fleet (macOS, Windows, Linux, iPhone, iPad, Android), plus cancelling a pending action. Read the host first, then each action under its own exact-phrase gate with the Fleet adapter read-back. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /fleet-device-actions\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command. Aegis advises; a human administrator runs every step (HUMAN-RUN).\n\nCRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.\n\n**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet\'s search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host\'s display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item\'s ID: an MDM command\'s UUID, or a queued script\'s execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.\n\n**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate\'s id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket\'s approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate\'s read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).\n\n## ⚠️ Admin / safety gate\n\n- Seven actions, each with its own undo story, under eight portal gates (a script on one host and on many hosts are separate gates). **Lock** (R2) is undone by **Unlock** (R1), and on a Mac the unlock needs a six-digit PIN that Fleet shows. **Wipe** (R3) cannot be undone once the host runs it. **Run script** is R1 to R3 depending on what the script does, and Fleet has no undo after it runs. **Turn off MDM** (R3) is undone only by enrolling the device again. **Delete host** (R3, a device delete under SR-2) removes the record for good: the host usually comes back, but as a new record without the old one\'s history and labels. **Cancel** (Phase G) stops a pending action and is the only rollback a wipe has, and only while it is still pending.\n- **Role needed:** Maintainer or Admin in Fleet (global, or on the host\'s fleet), with Fleet Premium, to lock, unlock or wipe; Maintainer or Admin to turn off MDM, delete a host or cancel an upcoming activity; Technician, Maintainer or Admin to run a saved script. Observer and Observer+ can do none of these. An operator who holds Observer stops here and escalates to a Fleet Maintainer or Admin; never borrow another person\'s session, a shared login or an API token that carries a higher role.\n- Wipe, Turn off MDM, a script on more than 10 hosts (or all hosts) and a script on one host that deletes data or changes a security setting (Phase E step 1) are R3: save the pre-state to `tasks/checkpoints/`, write the rollback path, and get an independent out-of-session review before the gate runs. A script on one host that is R2 saves its pre-state to `tasks/checkpoints/` too. A stolen device is a multi-system plan (Fleet plus the identity provider), so it always gets that review.\n- Delete host is R3 as well: save the Phase A pre-state to `tasks/checkpoints/` and write the rollback path in the ticket before step 1. Deleting one record acts on Fleet alone, so it needs the independent review only when it is part of a multi-system plan (a stolen or departing device).\n- Urgency or authority ("URGENT", "from the CFO", "no time for approval") never skips a gate, a host count or a review (SR-2).\n- Every action is queued for the host\'s next check-in, and its activity is written when the request is sent, not when the device finishes. Not done until the read-back in each phase passes.\n\n## Inputs needed\n\n- `[SERIAL_NUMBER]` or `[HOST_ID]`, and the ticket\'s goal: left somewhere (lock), found again (unlock), stolen with sensitive data (wipe), a one-off fix (script), leaving the fleet (turn off MDM, then delete the record).\n- From Phase A: platform and OS version, MDM status (On (automatic) or On (manual)), last seen, anything pending, and for Windows and Linux whether scripts are enabled in fleetd (Fleet\'s agent), because their lock, unlock and the Linux wipe run as scripts.\n- For a script: `[SCRIPT_NAME]` saved in Fleet and read line by line before it runs; for more than one host, `[FLEET_NAME]` and the number of hosts, written in the ticket before the gate.\n- For a stolen device: the identity-side containment plan **[org gap: which runbook, and who owns it]**.\n- Who holds Maintainer or Admin in Fleet for an escalation **[org gap]**.\n\n## How the systems hang together\n\n- Apple hosts (macOS, iOS, iPadOS) receive MDM commands, so they need Fleet MDM turned on; a Mac whose MDM is Jamf Pro belongs to `/jamf-lock-erase`. Windows lock and unlock run as Fleet scripts, a Windows wipe is an MDM command, and Linux lock, unlock and wipe all run as scripts.\n- Everything is queued. The badge on the host moves from Lock pending to Locked, and from Wipe pending to Wiped (Linux shows no wipe badge; Android never shows Locked). The API carries the same state as `mdm.device_status` (unlocked, locked, locking, unlocking, wiped, wiping) and `mdm.pending_action` (lock, unlock, wipe, or empty).\n- An activity (locked_host, unlocked_host, wiped_host, ran_script, mdm_unenrolled, deleted_host) proves who asked and when; the device result is proven by `mdm.device_status`, the MDM command status or the script\'s exit code.\n- Deleting a host does not unenroll it: macOS, Windows and Linux hosts come back while the agent and enroll secret are valid, iPhones and iPads at the next check-in, Android within about 24 hours.\n- Fleet 4.82.0 renamed teams to fleets and queries to reports; an older note that says "team" means a fleet.\n\n## Fast path\n\n1. Phase A: read the host, its pending actions and the clicking admin\'s role (R0). Save the read as the pre-state.\n2. Phase B, left somewhere: Lock (R2 gate). **WAIT UNTIL** the badge reads Locked (Android: until Lock pending is gone, then the Android read-back in Phase B).\n3. Phase C, found again: Unlock (R1 gate); on a Mac, read the PIN to the person at the Mac.\n4. Phase D, stolen with sensitive data: Wipe (R3 gate, after independent review). **WAIT UNTIL** the badge reads Wiped.\n5. Phase E, a fix: a saved script on one host (gate by content); more than one host is the R3 batch gate after a one-host pilot.\n6. Phase F, leaving the fleet: Turn off MDM (R3 gate), then delete the record (R3 gate) once nothing is pending.\n7. Phase G, a pending action that must not happen: cancel it while it is still in Upcoming (gate).\n\n## Phase A: Read the host (R0)\n\n**Purpose**: which action you can send, and whether it will land, depends on what the record says.\n\n1. Fleet → Hosts → search `[SERIAL_NUMBER]` (the search takes a name, hostname, UUID, serial or private IP) → open the host → Host details → read status (online, offline, mia, missing or new), last seen, platform and OS version, fleet, MDM status and any badge (Lock pending, Locked, Unlock pending, Wipe pending, Wiped). Record `[HOST_ID]`. Prefer the serial: when hostnames collide, Fleet\'s lookup returns the first match.\n2. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past (what was already sent, by whom, when) and Upcoming (anything still queued). A queued script or lock changes the plan.\n3. Two records for one serial: the one with a recent last seen is the live host; act on that one only.\n4. A script that already ran (read only, no gate): Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Past → open the entry for that script run → read its exit code and output. Exit code 0 is success, no exit code yet means the host has not reported, and a timeout means it ran past the 5-minute default.\n5. Decide the smallest action that solves the ticket, and confirm that the admin who will click holds the role named in that phase. If they hold Observer, the answer is an escalation to a Maintainer or Admin, not a workaround.\n\n<details>\n<summary>Fleet adapter: the read-only scale version (HUMAN-RUN; Aegis may run the same reads)</summary>\n\n```bash\n# HUMAN-RUN, read-only: the adapter is dry by default and prints the request; --execute sends the GET, never a write\nnode scripts/adapters/fleet-client.js me --execute   # the role of the adapter token itself, an API-only Observer is expected, it reads and never acts\nnode scripts/adapters/fleet-client.js host --identifier [SERIAL_NUMBER] --execute   # resolves the serial to [HOST_ID] with status, seen_time and the MDM fields\nnode scripts/adapters/fleet-client.js host --id [HOST_ID] --execute   # mdm.device_status, mdm.pending_action, mdm.enrollment_status, platform and OS version'... 38354 more characters,
+    expected: /with `\[CHANGE_ID\]` the id of this gate's own change record, opened before the gate \(above\), not the pilot's\. Any host/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/change-binding.test.js:343:1
+✖ fleet verify-script records its execution id as the run; every other read-back records none (23.749341ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-script",
+    "state": "OK",
+    "verified": true,
+    "observed": {
+      "execution_id": null,
+      "host_id": 7,
+      "exit_code": 0,
+      "host_timeout": false,
+      "output": null,
+      "message": null
+    },
+    "expected": {
+      "execution_id": [
+        "e797d6c6-3aae-11ee-be56-0242ac120002"
+      ],
+      "exit_code": [
+        0
+      ],
+      "host_timeout": [
+        false
+      ]
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/scripts/results/e797d6c6-3aae-11ee-be56-0242ac120002",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "flags": [],
+    "audit_seq": 12
+  }
+  
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:371:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:527:1
+✖ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial (115.369659ms)
+  AssertionError [ERR_ASSERTION]: {
+    "change": "chg-82d2a70275e2",
+    "done": true,
+    "chain": "intact",
+    "procedure": {
+      "seq": 1,
+      "command": "okta-group-membership",
+      "gate": "okta-group-membership-bulk-add-portal",
+      "r_class": "R3",
+      "target": "[FLEET_NAME]",
+      "read_back": "okta:verify-group-member",
+      "procedure_sha256": "c06327a61aa64f4a4d210697e61f7c34c9c0b7b4e80df599b51f6133a1ae7dd2"
+    },
+    "approval": {
+      "seq": 2,
+      "ref": "IT-123",
+      "matches": true
+    },
+    "readBack": null,
+    "missing": [],
+    "expected": 2,
+    "verified": 2,
+    "summary": "verified 2 of 2",
+    "failed": [
+      {
+        "seq": 3,
+        "run": null,
+        "state": "OK"
+      }
+    ],
+    "uncounted": [],
+    "note": "okta:verify-group-member records no run id, so each bound read-back that passed counts once, a repeated read of the same object is not detected, and a failed read stays listed but cannot be matched to a later pass of the same object",
+    "result": "done"
+  }
+  
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:534:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:551:1
+✖ open refuses a command with no runbook, and checks the gate before the count (41.805563ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-5c8cba41c96a",
+    "procedure_sha256": "c06327a61aa64f4a4d210697e61f7c34c9c0b7b4e80df599b51f6133a1ae7dd2",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-5c8cba41c96a (it refuses to read until this change is approved), then: link --change chg-5c8cba41c96a --verify-seq <the audit_seq it prints, or N from Jira's \"Recorded as audit entry N\" line>; status --change chg-5c8cba41c96a reports done only when all three match"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:554:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:570:1
+✖ a Fleet failure with an answer but no run id blocks; open's next step and the trail follow the run-id rule (134.631861ms)
+  AssertionError [ERR_ASSERTION]: {
+    "change": "chg-a1a57a4e511c",
+    "done": true,
+    "chain": "intact",
+    "procedure": {
+      "seq": 1,
+      "command": "fleet-device-actions",
+      "gate": "fleet-device-actions-batch-script-portal",
+      "r_class": "R3",
+      "target": "[FLEET_NAME]",
+      "read_back": "fleet:verify-script",
+      "procedure_sha256": "c06327a61aa64f4a4d210697e61f7c34c9c0b7b4e80df599b51f6133a1ae7dd2"
+    },
+    "approval": {
+      "seq": 2,
+      "ref": "IT-123",
+      "matches": true
+    },
+    "readBack": null,
+    "missing": [],
+    "expected": 1,
+    "verified": 1,
+    "summary": "verified 1 of 1",
+    "failed": [],
+    "uncounted": [
+      {
+        "seq": 3,
+        "run": null,
+        "state": "OK",
+        "reason": "no answer named a run, so this read proves nothing about any object"
+      }
+    ],
+    "result": "done"
+  }
+  
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:576:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:71:1
+✖ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (4.005895ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^\*\*PORTAL ACTION \[mfa-require-reregister-portal\]:\*\* Only after the exact match, signed in as at least Authentication Administrator/m. Input:
+  
+  '---\n' +
+    'description: Troubleshoot and reset MFA in Entra -- re-register on a new phone, clear old methods, fix "no prompt" issues, handle the CA-blocks-re-registration gotcha. Placeholders only.\n' +
+    'disable-model-invocation: true\n' +
+    '---\n' +
+    '\n' +
+    '# /mfa-issue\n' +
+    '\n' +
+    '> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.\n' +
+    '\n' +
+    '**Verdict:** Most MFA tickets are "got a new phone" (re-register) or "not getting prompts" (auth-method or Conditional Access misconfig). The classic gotcha: a CA policy blocks login **before** the user can re-register -- temporarily exclude them, let them register, re-add.\n' +
+    '\n' +
+    "**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a verify-* read-back below (here only [mfa-require-reregister-portal]), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and `msgraph:verify-mfa-cleared` as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Session revocation (R2) and the one-method delete (R3) have no verify-* read-back in the read-only connector, so they take no change record: their proof is the portal read written in the ticket.\n" +
+    '\n' +
+    '## What to check first\n' +
+    "- Entra → Users → `[UPN]` → **Authentication methods** → what's registered?\n" +
+    '- Entra → Sign-in logs → filter `[UPN]` → is MFA being prompted/failing, or never triggered?\n' +
+    '- Entra ID → Conditional Access → which policy applies to this user?\n' +
+    '\n' +
+    '## Step-by-step fix (portal first)\n' +
+    '\n' +
+    '**New phone / re-register:**\n' +
+    '<!-- SAFETY GATE [mfa-session-revoke-portal] -->\n' +
+    '- **Target:** [UPN]\n' +
+    '- **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies\n' +
+    '- **Scope:** Entra-managed refresh tokens and browser cookies for one user; current access tokens and app-issued sessions can persist until expiry\n' +
+    '- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly. It touches one user, as the single reversible write row does, but has no undo command; it is hard to reverse, as the multi-object or hard-to-reverse row says; so it takes the higher of the two. It changes no setting and takes nothing away, so the last row does not apply): not reversible; the user must authenticate again\n' +
+    '- **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.\n' +
+    '- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n' +
+    '**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly. The R2 pre-state: there is no pre-state to restore (the revocation ends sessions only, and the user signs in again), so write that, and the time, in the ticket before the click.\n' +
+    '\n' +
+    '<!-- SAFETY GATE [mfa-method-delete-portal] -->\n' +
+    '- **Target:** the displayed method type and method ID for [UPN]\n' +
+    '- **Effect:** delete one reviewed obsolete authentication method\n' +
+    '- **Scope:** one named method for one user; all other methods remain unchanged\n' +
+    '- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the method must be registered again\n' +
+    '- **Required confirmation:** Render the reviewed values as `$methodType` and `$methodId`, then type exactly `DELETE MFA METHOD $methodType ID $methodId FOR [UPN]`.\n' +
+    '- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n' +
+    '**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, with the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers that method again at aka.ms/mfasetup), Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.\n' +
+    '\n' +
+    '**Or, instead of the one-method delete:** clear every phone, Authenticator and software OATH method with Require re-register MFA. [mfa-require-reregister-portal] and [mfa-method-delete-portal] are alternatives: one or the other for a ticket, never both.\n' +
+    '\n' +
+    '<!-- SAFETY GATE [mfa-require-reregister-portal] -->\n' +
+    '- **Target:** [UPN]\n' +
+    `- **Effect:** Require re-register MFA, which "deactivates the user's hardware OATH tokens and deletes the following authentication methods from this user: phone numbers, Microsoft Authenticator apps and software OATH tokens" (Microsoft Learn, howto-mfa-userdevicesettings, read 2026-10-31)\n` +
+    '- **Scope:** one user; the alternative to [mfa-method-delete-portal], never with it on the same ticket\n' +
+    '- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the user must register again before any sign-in that requires MFA\n' +
+    '- **Required confirmation:** Type exactly `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`.\n' +
+    '- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n' +
+    '**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, with its change record approved, the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below right away, before the user registers again (step 2): `verify-mfa-cleared` with `--change [CHANGE_ID]` passes only while no phone, Authenticator or software OATH method is left.\n' +
+    '**Role needed (Require re-register MFA):** at least Authentication Administrator (Microsoft Learn, "Manage user authentication options"; `docs/aegis/g3/vendor-facts.md` B-18).\n' +
+    '2. Tell the user to go to **aka.ms/mfasetup** and register the new device.\n' +
+    '> **PREVIEW ONLY [mfa-phone-add]:** An administrator adding a fallback method is a separate identity change. Do not perform it from this command without its own reviewed target/method gate.\n' +
+    '3. Proposed fallback: Entra → Users → `[UPN]` → **Authentication methods** → **+ Add method** → **Phone** → `[PHONE_NUMBER]`.\n' +
+    '\n' +
+    '**Not getting prompts:**\n' +
+    '1. Confirm a method is registered (above). If none → have them register at aka.ms/mfasetup.\n' +
+    "2. Entra ID → **Conditional Access** → confirm an MFA policy targets the user and isn't excluded.\n" +
+    '3. Check **Authentication methods policy** (Entra ID → Authentication methods → Policies) -- is the method (Authenticator/SMS) enabled?\n' +
+    '\n' +
+    '**⚠️ CA-blocks-re-registration gotcha (Temporary Exception):**\n' +
+    '> **PREVIEW ONLY [mfa-ca-exclusion]:** A Conditional Access exclusion is a separate R3 policy change. Export the policy, set a time-bounded rollback, and use a separate reviewed `/conditional-access` runbook; do not change it here.\n' +
+    '1. Proposed recovery path: Entra ID → Conditional Access → the blocking policy → **Assignments → Users → Exclude** → add `[UPN]`.\n' +
+    '2. User registers at aka.ms/mfasetup.\n' +
+    '3. **Re-add the user** to the policy (remove the exclusion). Document as a Temporary Exception (who approved, when reverted).\n' +
+    '\n' +
+    '<details>\n' +
+    '<summary>PowerShell -- for reference only</summary>\n' +
+    '\n' +
+    '```powershell\n' +
+    'Connect-MgGraph -Scopes "UserAuthenticationMethod.Read.All","User.RevokeSessions.All"  # list methods + revoke Entra sessions\n' +
+    '$sessionUser = Get-MgUser -UserId "[UPN]" -Property Id,UserPrincipalName -ErrorAction Stop\n' +
+    `if ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUser.UserPrincipalName -cne '[UPN]') { throw "The exact Entra identity was not resolved. No change was made." }\n` +
+    "# List the resolved user's registered methods (read-only check)\n" +
+    "Get-MgUserAuthenticationMethod -UserId $sessionUser.Id -ErrorAction Stop             # see what's registered\n" +
+    '# Request refresh-token/browser-cookie revocation. A later authentication prompts for MFA only when the applicable policy and application require it.\n' +
+    '# SAFETY GATE [mfa-session-revoke]\n' +
+    '# Target: canonical UPN and immutable ID in $sessionUser\n' +
+    '# Effect: invalidates Entra refresh tokens and browser session cookies without deleting MFA methods\n' +
+    '# Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry\n' +
+    '# Reversibility: R2: not reversible; the user must authenticate again. CLAUDE.md risk table: one user but no undo command, and hard to reverse, so the higher of the two rows it touches\n' +
+    '$requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"\n' +
+    `$confirmation = Read-Host "Type '$requiredConfirmation' to confirm"\n` +
+    'if ($confirmation -ceq $requiredConfirmation) {\n' +
+    '    $revocationAccepted = Revoke-MgUserSignInSession -UserId $sessionUser.Id -ErrorAction Stop\n' +
+    '    if ($revocationAccepted.Value -ne $true) { throw "Entra did not acknowledge the revocation request. Current session state is unknown." }\n' +
+    '} else {\n' +
+    '    throw "Confirmation did not match. No change was made."\n' +
+    '}\n' +
+    '```\n' +
+    '</details>\n' +
+    '\n' +
+    '## 🔎 Read-back (read-only, after the person finishes)\n' +
+    'The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`) pr'... 2517 more characters
+  
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:87:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '---\ndescription: Troubleshoot and reset MFA in Entra -- re-register on a new phone, clear old methods, fix "no prompt" issues, handle the CA-blocks-re-registration gotcha. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /mfa-issue\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.\n\n**Verdict:** Most MFA tickets are "got a new phone" (re-register) or "not getting prompts" (auth-method or Conditional Access misconfig). The classic gotcha: a CA policy blocks login **before** the user can re-register -- temporarily exclude them, let them register, re-add.\n\n**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a verify-* read-back below (here only [mfa-require-reregister-portal]), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate\'s id as `--gate`, and `msgraph:verify-mfa-cleared` as `--read-back`), then record the ticket\'s approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate\'s read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Session revocation (R2) and the one-method delete (R3) have no verify-* read-back in the read-only connector, so they take no change record: their proof is the portal read written in the ticket.\n\n## What to check first\n- Entra → Users → `[UPN]` → **Authentication methods** → what\'s registered?\n- Entra → Sign-in logs → filter `[UPN]` → is MFA being prompted/failing, or never triggered?\n- Entra ID → Conditional Access → which policy applies to this user?\n\n## Step-by-step fix (portal first)\n\n**New phone / re-register:**\n<!-- SAFETY GATE [mfa-session-revoke-portal] -->\n- **Target:** [UPN]\n- **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies\n- **Scope:** Entra-managed refresh tokens and browser cookies for one user; current access tokens and app-issued sessions can persist until expiry\n- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly. It touches one user, as the single reversible write row does, but has no undo command; it is hard to reverse, as the multi-object or hard-to-reverse row says; so it takes the higher of the two. It changes no setting and takes nothing away, so the last row does not apply): not reversible; the user must authenticate again\n- **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly. The R2 pre-state: there is no pre-state to restore (the revocation ends sessions only, and the user signs in again), so write that, and the time, in the ticket before the click.\n\n<!-- SAFETY GATE [mfa-method-delete-portal] -->\n- **Target:** the displayed method type and method ID for [UPN]\n- **Effect:** delete one reviewed obsolete authentication method\n- **Scope:** one named method for one user; all other methods remain unchanged\n- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the method must be registered again\n- **Required confirmation:** Render the reviewed values as `$methodType` and `$methodId`, then type exactly `DELETE MFA METHOD $methodType ID $methodId FOR [UPN]`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, with the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers that method again at aka.ms/mfasetup), Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.\n\n**Or, instead of the one-method delete:** clear every phone, Authenticator and software OATH method with Require re-register MFA. [mfa-require-reregister-portal] and [mfa-method-delete-portal] are alternatives: one or the other for a ticket, never both.\n\n<!-- SAFETY GATE [mfa-require-reregister-portal] -->\n- **Target:** [UPN]\n- **Effect:** Require re-register MFA, which "deactivates the user\'s hardware OATH tokens and deletes the following authentication methods from this user: phone numbers, Microsoft Authenticator apps and software OATH tokens" (Microsoft Learn, howto-mfa-userdevicesettings, read 2026-10-31)\n- **Scope:** one user; the alternative to [mfa-method-delete-portal], never with it on the same ticket\n- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the user must register again before any sign-in that requires MFA\n- **Required confirmation:** Type exactly `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, with its change record approved, the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below right away, before the user registers again (step 2): `verify-mfa-cleared` with `--change [CHANGE_ID]` passes only while no phone, Authenticator or software OATH method is left.\n**Role needed (Require re-register MFA):** at least Authentication Administrator (Microsoft Learn, "Manage user authentication options"; `docs/aegis/g3/vendor-facts.md` B-18).\n2. Tell the user to go to **aka.ms/mfasetup** and register the new device.\n> **PREVIEW ONLY [mfa-phone-add]:** An administrator adding a fallback method is a separate identity change. Do not perform it from this command without its own reviewed target/method gate.\n3. Proposed fallback: Entra → Users → `[UPN]` → **Authentication methods** → **+ Add method** → **Phone** → `[PHONE_NUMBER]`.\n\n**Not getting prompts:**\n1. Confirm a method is registered (above). If none → have them register at aka.ms/mfasetup.\n2. Entra ID → **Conditional Access** → confirm an MFA policy targets the user and isn\'t excluded.\n3. Check **Authentication methods policy** (Entra ID → Authentication methods → Policies) -- is the method (Authenticator/SMS) enabled?\n\n**⚠️ CA-blocks-re-registration gotcha (Temporary Exception):**\n> **PREVIEW ONLY [mfa-ca-exclusion]:** A Conditional Access exclusion is a separate R3 policy change. Export the policy, set a time-bounded rollback, and use a separate reviewed `/conditional-access` runbook; do not change it here.\n1. Proposed recovery path: Entra ID → Conditional Access → the blocking policy → **Assignments → Users → Exclude** → add `[UPN]`.\n2. User registers at aka.ms/mfasetup.\n3. **Re-add the user** to the policy (remove the exclusion). Document as a Temporary Exception (who approved, when reverted).\n\n<details>\n<summary>PowerShell -- for reference only</summary>\n\n```powershell\nConnect-MgGraph -Scopes "UserAuthenticationMethod.Read.All","User.RevokeSessions.All"  # list methods + revoke Entra sessions\n$sessionUser = Get-MgUser -UserId "[UPN]" -Property Id,UserPrincipalName -ErrorAction Stop\nif ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUser.UserPrincipalName -cne \'[UPN]\') { throw "The exact Entra identity was not resolved. No change was made." }\n# List the resolved user\'s registered methods (read-only check)\nGet-MgUserAuthenticationMethod -UserId $sessionUser.Id -ErrorAction Stop             # see what\'s registered\n# Request refresh-token/browser-cookie revocation. A later authentication prompts for MFA only when the applicable policy and application require it.\n# SAFETY GATE [mfa-session-revoke]\n# Target: canonical UPN and immutable ID in $sessionUser\n# Effect: invalidates Entra refresh tokens and browser session cookies without deleting MFA methods\n# Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry\n# Reversibility: R2: not reversible; the user must authenticate again. CLAUDE.md risk table: one user but no undo command, and hard to reverse, so the higher of the two rows it touches\n$requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"\n$confirmation = Read-Host "Type \'$requiredConfirmation\' to confirm"\nif ($confirmation -ceq $requiredConfirmation) {\n    $revocationAccepted = Revoke-MgUserSignInSession -UserId $sessionUser.Id -ErrorAction Stop\n    if ($revocationAccepted.Value -ne $true) { throw "Entra did not acknowledge the revocation request. Current session state is unknown." }\n} else {\n    throw "Confirmation did not match. No change was made."\n}\n```\n</details>\n\n## 🔎 Read-back (read-only, after the person finishes)\nThe read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`) pr'... 2517 more characters,
+    expected: /^\*\*PORTAL ACTION \[mfa-require-reregister-portal\]:\*\* Only after the exact match, signed in as at least Authentication Administrator/m,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:114:1
+✖ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (0.447063ms)
+  AssertionError [ERR_ASSERTION]: mfa-require-reregister-portal
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:118:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, with its change record approved, the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below right away, before the user registers again (step 2): `verify-mfa-cleared` with `--change [CHANGE_ID]` passes only while no phone, Authenticator or software OATH method is left.',
+    expected: /the method list from `node scripts\/adapters\/msgraph-client\.js auth-methods --user \[USER_ID\] --execute` saved to `tasks\/checkpoints\/`/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T03:13:57Z
+# capture edited after the run: U+2014 written as "--" (8), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

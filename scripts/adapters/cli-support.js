@@ -21,7 +21,7 @@
 
 // CHANGE_ID and VERIFY_COMMAND are the trail's own forms, so a run is checked with exactly the
 // rule its verify entry is written under (readonly-contract.js isVerifyCommand matches it too).
-const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND } = require('../audit/audit-log.js');
+const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId } = require('../audit/audit-log.js');
 const { bindRefusal } = require('../audit/change-record.js');
 
 const AUDITED_STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
@@ -98,10 +98,27 @@ function changeRefusal(connector, command, bound, audit) {
 // finding 6).
 const verdictState = (state) => (AUDITED_STATES.has(state) ? state : 'INVALID_RESPONSE');
 
-function recordVerdict(audit, connector, output, change) {
+// Read-backs that take a job id (batch G3 close-out 2, owner decision 2), the trail's own table
+// and form (audit-log.js RUN_IDS, RUN_ID): connector:command to the flag that holds it. The id
+// is recorded as the verify entry's run, so a counted batch change (change-record.js) counts
+// each run once. Only a job id belongs here, never a user, email, device name or serial: the run
+// is recorded only when it has the trail's form (a UUID, Fleet's documented execution id form)
+// and the vendor's answer named that same id (observedId), else null.
+// RUN_ID_FLAGS is the name the adapters' agreement test reads; it is the trail's table itself.
+const RUN_ID_FLAGS = RUN_IDS;
+const runIdOf = (connector, command, args, observedId) => {
+  const key = `${connector}:${command}`;
+  const flag = recordsRunId(key) ? RUN_IDS[key] : null;
+  const id = flag && args ? args[flag] : null;
+  // a UUID is one id in either case, so the match ignores case and the run is recorded in lower
+  // case, so one execution typed two ways counts once (code review round 3, finding 2)
+  return typeof id === 'string' && RUN_ID.test(id) && typeof observedId === 'string' && observedId.toLowerCase() === id.toLowerCase() ? id.toLowerCase() : null;
+};
+
+function recordVerdict(audit, connector, output, change, run = null) {
   if (!audit || !output || typeof output.verified !== 'boolean' || typeof output.command !== 'string' || !VERIFY_COMMAND.test(output.command)) return output;
   try {
-    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null });
+    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null, run: typeof run === 'string' ? run : null });
     const linkable = typeof change === 'string' && output.verified === true && written && Number.isInteger(written.seq);
     return linkable ? { ...output, audit_seq: written.seq } : output;
   } catch {
@@ -109,4 +126,4 @@ function recordVerdict(audit, connector, output, change) {
   }
 }
 
-module.exports = { cliDeps, recordVerdict, takeChange, changeRefusal, verdictState, NOT_A_READ_BACK };
+module.exports = { cliDeps, recordVerdict, takeChange, changeRefusal, verdictState, runIdOf, RUN_ID_FLAGS, NOT_A_READ_BACK };

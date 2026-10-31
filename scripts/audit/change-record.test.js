@@ -349,3 +349,267 @@ test('open tells the operator to run the read-back with --change <id> and to lin
   // Jira prints the seq in its own line (code review round 3, finding 7)
   assert.match(step, /Recorded as audit entry N/);
 });
+
+// ── Batch G3 close-out 2, owner decision 2: a counted batch change ──────────────────────────
+// A gate whose required confirmation names a count of objects, each proved by its own verify-*
+// read-back (change-record.js COUNTED_GATES), is opened with --expected N, the number written in
+// the ticket. status prints "verified k of N", lists each failed read-back, and reports done
+// only when N distinct bound read-backs passed after the approval; anything less is "partial",
+// never done. Distinct means distinct run ids where the read-back records one (a job id, never a
+// user, email, device name or serial); where it records none, bound read-backs are counted and
+// status says a repeated read of the same object is not detected. A gate without a count keeps
+// the one-read-back rule (every test above).
+const FLEET_BATCH = { gate: 'fleet-device-actions-batch-script-portal', command: 'fleet-device-actions', readBack: 'fleet:verify-script' };
+const OKTA_BULK = { gate: 'okta-group-membership-bulk-add-portal', command: 'okta-group-membership', readBack: 'okta:verify-group-member' };
+
+function openCounted(s, g, expected) {
+  const args = ['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', g.readBack, '--procedure-file', s.procedure];
+  if (expected !== undefined) args.push('--expected', String(expected));
+  return s.run(CLI, args);
+}
+function approved(s, g, expected) {
+  const o = openCounted(s, g, expected);
+  assert.equal(o.code, 0, o.stderr);
+  const a = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(a.code, 0, a.stderr);
+  return o.json.change;
+}
+// Fleet's script execution ids are UUIDs (vendor docs); a run id of any other form is refused
+const uuid = (n) => `3f2a9c1e-77b0-4c2b-9d1e-${String(n).padStart(12, '0')}`;
+const runRead = (s, change, run, verified = true) => s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified, state: 'OK', change, run });
+const personRead = (s, change, verified = true) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified, state: 'OK', change });
+const status = (s, change) => s.run(CLI, ['status', '--change', change]);
+
+test('a counted gate opened without --expected is refused at open, and nothing is recorded', (t) => {
+  const s = setup(t);
+  const before = s.log.entries().length;
+  const r = openCounted(s, FLEET_BATCH);
+  assert.equal(r.code, 1, r.stdout);
+  assert.match(r.stderr, /names a count \(\[HOST_COUNT\]\): open it with --expected N, the number written in the ticket/);
+  assert.equal(s.log.entries().length, before);
+  for (const bad of ['0', '-1', '2.5', 'ten', '100001']) {
+    const b = openCounted(s, FLEET_BATCH, bad);
+    assert.equal(b.code, 1, bad);
+    assert.match(b.stderr, /--expected is the number of objects written in the ticket/, bad);
+  }
+  assert.equal(s.log.entries().length, before);
+});
+
+test('a gate without a count refuses --expected and keeps the one-read-back rule', (t) => {
+  const s = setup(t);
+  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', s.procedure, '--expected', '3']);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /names no count/);
+  const o = openChange(s);
+  assert.equal(o.code, 0, o.stderr);
+  const v = s.run(CLI, ['status', '--change', o.json.change]);
+  assert.equal(v.json.expected, undefined, 'an uncounted change reports no count');
+  assert.equal(v.json.result, undefined);
+});
+
+test('k below N reads partial and never done; k equal to N reads done', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 3);
+  runRead(s, change, uuid(1));
+  runRead(s, change, uuid(2));
+  const partial = status(s, change);
+  assert.equal(partial.code, 2);
+  assert.equal(partial.json.done, false);
+  assert.equal(partial.json.result, 'partial');
+  assert.equal(partial.json.summary, 'verified 2 of 3');
+  assert.ok(partial.json.missing.some((m) => /verified 2 of 3/.test(m)), partial.stdout);
+  runRead(s, change, uuid(3));
+  const done = status(s, change);
+  assert.equal(done.code, 0, done.stdout);
+  assert.equal(done.json.done, true);
+  assert.equal(done.json.result, 'done');
+  assert.equal(done.json.summary, 'verified 3 of 3');
+  assert.deepEqual(done.json.failed, []);
+});
+
+test('one failed host keeps the change not done and names that read-back', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 2);
+  runRead(s, change, uuid(1));
+  runRead(s, change, uuid(2));
+  const bad = runRead(s, change, uuid(3), false);
+  const v = status(s, change);
+  assert.equal(v.code, 2);
+  assert.equal(v.json.done, false);
+  assert.equal(v.json.result, 'partial');
+  assert.deepEqual(v.json.failed, [{ seq: bad.seq, run: uuid(3), state: 'OK' }]);
+  assert.ok(v.json.missing.some((m) => m.includes(`seq ${bad.seq}`) && m.includes(uuid(3))), v.stdout);
+  // a run that failed while the host had not reported and passed later counts as passed
+  runRead(s, change, uuid(3), true);
+  const again = status(s, change);
+  assert.deepEqual(again.json.failed, []);
+  assert.equal(again.json.summary, 'verified 3 of 2');
+  assert.equal(again.json.done, false, 'more hosts passed than the ticket names: not done');
+  assert.ok(again.json.missing.some((m) => /more than the 2 the ticket names/.test(m)), again.stdout);
+});
+
+test('the same execution id read twice counts once', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 2);
+  runRead(s, change, uuid(1));
+  runRead(s, change, uuid(1));
+  const v = status(s, change);
+  assert.equal(v.json.summary, 'verified 1 of 2');
+  assert.equal(v.json.done, false);
+  runRead(s, change, uuid(2));
+  assert.equal(status(s, change).json.done, true);
+});
+
+test('a read-back that records no run id counts bound read-backs and says a repeated read is not detected', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  personRead(s, change);
+  const one = status(s, change);
+  assert.equal(one.json.summary, 'verified 1 of 2');
+  assert.match(one.json.note, /a repeated read of the same object is not detected/);
+  personRead(s, change);
+  const two = status(s, change);
+  assert.equal(two.json.done, true, two.stdout);
+  assert.match(two.json.note, /a repeated read of the same object is not detected/);
+});
+
+test('only bound read-backs of the named kind recorded after the approval count toward k', (t) => {
+  const s = setup(t);
+  const o = openCounted(s, FLEET_BATCH, 2);
+  // before the approval, unbound, another change's, another command's: none counts
+  const early = runRead(s, o.json.change, uuid(9));
+  s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  runRead(s, null, uuid(1));
+  runRead(s, 'chg-0123456789ab', uuid(2));
+  s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-lock', verified: true, state: 'OK', change: o.json.change });
+  const v = status(s, o.json.change);
+  assert.equal(v.json.summary, 'verified 0 of 2', v.stdout);
+  assert.ok(early.seq > 0);
+});
+
+test('the audit trail takes a run id that is a job id and refuses one that is not job-shaped', (t) => {
+  const s = setup(t);
+  assert.ok(runRead(s, null, '3f2a9c1e-77b0-4c2b-9d1e-0a1b2c3d4e5f').seq > 0);
+  // security review 1 of the batch G3 close-out 2: a serial, a host name or a user name passed
+  // as an execution id must never be recorded, so the trail takes a UUID only
+  for (const bad of ['person@example.com', 'two words', '', 'x'.repeat(129), 'C02XK1ABJG5H', 'LT-JohnSmith', 'DESKTOP-JSMITH01', 'jsmith', 'exec-0001']) {
+    assert.throws(() => runRead(s, null, bad), audit.AuditRefused, bad);
+  }
+  assert.throws(() => s.log.append({ kind: 'procedure', command: 'okta-mfa-reset', gate: 'g', r_class: 'R2', target: '[UPN]', read_back: null, procedure_sha256: null, change: null, expected: 3 }), audit.AuditRefused, 'a count only on a change record');
+});
+
+// ── Code review round 1 of the batch G3 close-out 2 ─────────────────────────────────────────
+// Finding 1: a Fleet read that got no answer (a timeout, a 404 from a mistyped id) records run
+// null; it proves nothing about any host, so it is listed and does not block a change whose N
+// runs passed. Finding 2: a pass with no run id (Fleet answered without execution_id) cannot be
+// told apart from a re-read, so for a read-back that records run ids it does not count toward k.
+test('a Fleet read with no run id is listed as uncounted: one that got no answer does not block, a passing one does not count', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 2);
+  const timeout = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: false, state: 'TIMEOUT', change });
+  const noId = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: true, state: 'OK', change });
+  runRead(s, change, uuid(1));
+  const one = status(s, change);
+  assert.equal(one.json.summary, 'verified 1 of 2', 'a pass with no run id does not count');
+  assert.deepEqual(one.json.uncounted.map((u) => u.seq), [timeout.seq, noId.seq]);
+  assert.deepEqual(one.json.failed, [], 'a read with no answer is not a failed host');
+  runRead(s, change, uuid(2));
+  const done = status(s, change);
+  assert.equal(done.json.done, true, done.stdout);
+  assert.equal(done.json.uncounted.length, 2);
+});
+
+// Finding 4 (round 1) made a failed read with no run id non-blocking; code review round 2,
+// finding 1, showed that lets a batch with a known failed object read done. The owner's rule
+// stands: a failed read keeps the change not done and is named. With no run id it cannot be
+// matched to a later pass of the same object, so it stays (a new change takes the objects left).
+// Round 2, finding 5: more passes than N also reads partial, as with run ids.
+test('a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  const bad = personRead(s, change, false);
+  personRead(s, change);
+  personRead(s, change);
+  const v = status(s, change);
+  assert.equal(v.json.done, false, v.stdout);
+  assert.equal(v.json.summary, 'verified 2 of 2');
+  assert.deepEqual(v.json.failed.map((f) => f.seq), [bad.seq]);
+  assert.ok(v.json.missing.some((m) => m.includes(`seq ${bad.seq}`)), v.stdout);
+  assert.match(v.json.note, /a repeated read of the same object is not detected/);
+  const over = approved(s, OKTA_BULK, 2);
+  personRead(s, over); personRead(s, over); personRead(s, over);
+  const o = status(s, over);
+  assert.equal(o.json.done, false);
+  assert.ok(o.json.missing.some((m) => /more than the 2 the ticket names/.test(m)), o.stdout);
+});
+
+// Finding 6: open checks the gate against the runbook it names, so a mistyped counted gate is
+// refused instead of falling back to the one-read-back rule.
+// Code review round 2, finding 2: a command with no runbook is refused too, so a misspelled
+// --command cannot skip the gate check; finding 3: the gate is checked before the count, so a
+// misspelled counted gate given with --expected is told the gate is missing.
+test('open refuses a command with no runbook, and checks the gate before the count', (t) => {
+  const s = setup(t);
+  const r = s.run(CLI, ['open', '--command', 'fleet-device-action', '--gate', 'fleet-device-actions-batch-script', '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure]);
+  assert.equal(r.code, 1, r.stdout);
+  assert.match(r.stderr, /no runbook \.claude\/commands\/fleet-device-action\.md/);
+  const e = s.run(CLI, ['open', '--command', 'fleet-device-actions', '--gate', 'fleet-device-actions-batch-script', '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure, '--expected', '5']);
+  assert.equal(e.code, 1);
+  assert.match(e.stderr, /has no gate fleet-device-actions-batch-script/);
+  const bad = s.run(CLI, ['open', '--command', '../../etc/passwd', '--gate', 'g', '--r-class', 'R3', '--target', '[UPN]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure]);
+  assert.equal(bad.code, 1);
+  assert.match(bad.stderr, /--command is a runbook name/);
+  assert.equal(s.log.entries().length, 0);
+});
+
+// Round 2, finding 4: a Fleet read that got an answer but recorded no run id (an answer for no
+// id, or another id) is a failed host, not a read with no answer, so it blocks; only a read with
+// no answer (a state other than OK) is uncounted. Finding 9: open's next step for a read-back
+// with no run id says to read each object once and that a re-read is not detected. Finding 14:
+// the trail takes a run only on a read-back that records one.
+test('a Fleet failure with an answer but no run id blocks; open\'s next step and the trail follow the run-id rule', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 1);
+  const answered = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: false, state: 'OK', change });
+  runRead(s, change, uuid(1));
+  const v = status(s, change);
+  assert.equal(v.json.done, false, v.stdout);
+  assert.deepEqual(v.json.failed.map((f) => f.seq), [answered.seq]);
+  const o = openCounted(s, OKTA_BULK, 3);
+  const step = o.json.next.find((n) => /read-back/.test(n));
+  assert.match(step, /read each of the 3 objects once: a re-read of the same object is not detected/);
+  assert.doesNotMatch(step, /distinct/);
+  assert.throws(() => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified: true, state: 'OK', change: null, run: uuid(7) }), audit.AuditRefused);
+});
+
+test('open refuses a gate the named runbook does not have', (t) => {
+  const s = setup(t);
+  const r = s.run(CLI, ['open', '--command', 'fleet-device-actions', '--gate', 'fleet-device-actions-batch-script', '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure]);
+  assert.equal(r.code, 1, r.stdout);
+  assert.match(r.stderr, /\.claude\/commands\/fleet-device-actions\.md has no gate fleet-device-actions-batch-script/);
+  assert.equal(s.log.entries().length, 0);
+});
+
+// Code review round 3 of the batch G3 close-out 2. Finding 1: a read that got no answer (a state
+// other than OK: a timeout, a rate limit, a 404 from a mistyped id) proves nothing about any
+// object, so it is uncounted for every counted kind, not a failed object that blocks for good.
+// Finding 2: a Fleet failure that got an answer but recorded no run id cannot be matched to a
+// later pass of the same host, so status names the way forward: a new change for the hosts left.
+test('a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  const timeout = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified: false, state: 'TIMEOUT', change });
+  personRead(s, change);
+  personRead(s, change);
+  const v = status(s, change);
+  assert.equal(v.json.done, true, v.stdout);
+  assert.deepEqual(v.json.failed, []);
+  assert.deepEqual(v.json.uncounted.map((u) => u.seq), [timeout.seq]);
+  const fleet = approved(s, FLEET_BATCH, 1);
+  s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: false, state: 'OK', change: fleet });
+  runRead(s, fleet, uuid(1));
+  const f = status(s, fleet);
+  assert.equal(f.json.done, false);
+  assert.ok(f.json.missing.some((m) => /recorded no run id/.test(m) && /open a new change for the hosts left/.test(m)), f.stdout);
+  assert.ok(!f.json.missing.some((m) => /that run never passed/.test(m) && !/\(run /.test(m)), 'no "that run never passed" for an entry with no run');
+});

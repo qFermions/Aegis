@@ -343,12 +343,25 @@ test('fleet verify-script records its execution id as the run; every other read-
   assert.deepEqual(support.RUN_ID_FLAGS, { 'fleet:verify-script': 'execution-id' });
   const fleet = CONNECTORS.find((c) => c.name === 'fleet');
   const change = tr.open('fleet:verify-script');
-  const script = { ...fleet, replies: () => [ok({ execution_id: 'e-3f2a9c1e', host_id: 7, exit_code: 0, host_timeout: false, output: 'done', message: '' })] };
-  const r = await run(script, ['verify-script', '--execution-id', 'e-3f2a9c1e', '--change', change], tr);
+  const id = 'e797d6c6-3aae-11ee-be56-0242ac120002';
+  const script = (body) => ({ ...fleet, replies: () => [ok(body)] });
+  const r = await run(script({ execution_id: id, host_id: 7, exit_code: 0, host_timeout: false, output: 'done', message: '' }), ['verify-script', '--execution-id', id, '--change', change], tr);
   assert.equal(r.code, 0, r.text);
   const e = verifies(tr).pop();
-  assert.equal(e.run, 'e-3f2a9c1e');
+  assert.equal(e.run, id);
   assert.equal(e.change, change);
+  // security review 1 of the batch G3 close-out 2: the run is recorded only when it is a UUID
+  // and Fleet answered for exactly that id, so a serial or host name typed as an execution id,
+  // a failed read and an answer for another id all record run null
+  const serial = await run(script({ execution_id: 'C02XK1ABJG5H', host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', 'C02XK1ABJG5H', '--change', change], tr);
+  assert.equal(serial.code, 0, serial.text);
+  assert.equal(verifies(tr).pop().run, null, 'a serial is never recorded as a run');
+  const failed = await run({ ...fleet, replies: () => [{ status: 404, body: '{}' }] }, ['verify-script', '--execution-id', id, '--change', change], tr);
+  assert.equal(failed.code, 2, failed.text);
+  assert.equal(verifies(tr).pop().run, null, 'a failed read records no run');
+  const other = await run(script({ execution_id: 'd6cffa75-b5b5-41ef-9230-15073c8a88cf', host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id, '--change', change], tr);
+  assert.equal(other.code, 2, other.text);
+  assert.equal(verifies(tr).pop().run, null, 'an answer for another id records no run');
   for (const c of CONNECTORS) {
     const other = await run(c, c.verify, tr);
     assert.equal(other.code, 0, `${c.name}: ${other.text}`);
@@ -428,7 +441,7 @@ test('every connector with a verify-* command takes --change out of argv, checks
       assert.ok(calls.length >= 1, `${name}: records its verdicts`);
       // bound.change is the fourth argument; a read-back that takes a job id adds its run id after
       // it (batch G3 close-out 2, owner decision 2)
-      for (const call of calls) assert.match(call, /,\s*bound\.change\s*(?:,\s*runIdOf\('[a-z-]+', name, args\)\s*)?$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change fourth`);
+      for (const call of calls) assert.match(call, /,\s*bound\.change\s*(?:,\s*runIdOf\('[a-z-]+', name, args(?:, [^()]+)?\)\s*)?$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change fourth`);
     }
   }
   assert.equal(checked, 9, 'the nine connectors with read-backs');

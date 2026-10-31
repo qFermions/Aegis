@@ -374,6 +374,8 @@ function approved(s, g, expected) {
   assert.equal(a.code, 0, a.stderr);
   return o.json.change;
 }
+// Fleet's script execution ids are UUIDs (vendor docs); a run id of any other form is refused
+const uuid = (n) => `3f2a9c1e-77b0-4c2b-9d1e-${String(n).padStart(12, '0')}`;
 const runRead = (s, change, run, verified = true) => s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified, state: 'OK', change, run });
 const personRead = (s, change, verified = true) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified, state: 'OK', change });
 const status = (s, change) => s.run(CLI, ['status', '--change', change]);
@@ -408,15 +410,15 @@ test('a gate without a count refuses --expected and keeps the one-read-back rule
 test('k below N reads partial and never done; k equal to N reads done', (t) => {
   const s = setup(t);
   const change = approved(s, FLEET_BATCH, 3);
-  runRead(s, change, 'exec-0001');
-  runRead(s, change, 'exec-0002');
+  runRead(s, change, uuid(1));
+  runRead(s, change, uuid(2));
   const partial = status(s, change);
   assert.equal(partial.code, 2);
   assert.equal(partial.json.done, false);
   assert.equal(partial.json.result, 'partial');
   assert.equal(partial.json.summary, 'verified 2 of 3');
   assert.ok(partial.json.missing.some((m) => /verified 2 of 3/.test(m)), partial.stdout);
-  runRead(s, change, 'exec-0003');
+  runRead(s, change, uuid(3));
   const done = status(s, change);
   assert.equal(done.code, 0, done.stdout);
   assert.equal(done.json.done, true);
@@ -428,17 +430,17 @@ test('k below N reads partial and never done; k equal to N reads done', (t) => {
 test('one failed host keeps the change not done and names that read-back', (t) => {
   const s = setup(t);
   const change = approved(s, FLEET_BATCH, 2);
-  runRead(s, change, 'exec-0001');
-  runRead(s, change, 'exec-0002');
-  const bad = runRead(s, change, 'exec-0003', false);
+  runRead(s, change, uuid(1));
+  runRead(s, change, uuid(2));
+  const bad = runRead(s, change, uuid(3), false);
   const v = status(s, change);
   assert.equal(v.code, 2);
   assert.equal(v.json.done, false);
   assert.equal(v.json.result, 'partial');
-  assert.deepEqual(v.json.failed, [{ seq: bad.seq, run: 'exec-0003', state: 'OK' }]);
-  assert.ok(v.json.missing.some((m) => m.includes(`seq ${bad.seq}`) && m.includes('exec-0003')), v.stdout);
+  assert.deepEqual(v.json.failed, [{ seq: bad.seq, run: uuid(3), state: 'OK' }]);
+  assert.ok(v.json.missing.some((m) => m.includes(`seq ${bad.seq}`) && m.includes(uuid(3))), v.stdout);
   // a run that failed while the host had not reported and passed later counts as passed
-  runRead(s, change, 'exec-0003', true);
+  runRead(s, change, uuid(3), true);
   const again = status(s, change);
   assert.deepEqual(again.json.failed, []);
   assert.equal(again.json.summary, 'verified 3 of 2');
@@ -449,12 +451,12 @@ test('one failed host keeps the change not done and names that read-back', (t) =
 test('the same execution id read twice counts once', (t) => {
   const s = setup(t);
   const change = approved(s, FLEET_BATCH, 2);
-  runRead(s, change, 'exec-0001');
-  runRead(s, change, 'exec-0001');
+  runRead(s, change, uuid(1));
+  runRead(s, change, uuid(1));
   const v = status(s, change);
   assert.equal(v.json.summary, 'verified 1 of 2');
   assert.equal(v.json.done, false);
-  runRead(s, change, 'exec-0002');
+  runRead(s, change, uuid(2));
   assert.equal(status(s, change).json.done, true);
 });
 
@@ -475,10 +477,10 @@ test('only bound read-backs of the named kind recorded after the approval count 
   const s = setup(t);
   const o = openCounted(s, FLEET_BATCH, 2);
   // before the approval, unbound, another change's, another command's: none counts
-  const early = runRead(s, o.json.change, 'exec-0009');
+  const early = runRead(s, o.json.change, uuid(9));
   s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
-  runRead(s, null, 'exec-0001');
-  runRead(s, 'chg-0123456789ab', 'exec-0002');
+  runRead(s, null, uuid(1));
+  runRead(s, 'chg-0123456789ab', uuid(2));
   s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-lock', verified: true, state: 'OK', change: o.json.change });
   const v = status(s, o.json.change);
   assert.equal(v.json.summary, 'verified 0 of 2', v.stdout);
@@ -488,7 +490,9 @@ test('only bound read-backs of the named kind recorded after the approval count 
 test('the audit trail takes a run id that is a job id and refuses one that is not job-shaped', (t) => {
   const s = setup(t);
   assert.ok(runRead(s, null, '3f2a9c1e-77b0-4c2b-9d1e-0a1b2c3d4e5f').seq > 0);
-  for (const bad of ['person@example.com', 'two words', '', 'x'.repeat(129)]) {
+  // security review 1 of the batch G3 close-out 2: a serial, a host name or a user name passed
+  // as an execution id must never be recorded, so the trail takes a UUID only
+  for (const bad of ['person@example.com', 'two words', '', 'x'.repeat(129), 'C02XK1ABJG5H', 'LT-JohnSmith', 'DESKTOP-JSMITH01', 'jsmith', 'exec-0001']) {
     assert.throws(() => runRead(s, null, bad), audit.AuditRefused, bad);
   }
   assert.throws(() => s.log.append({ kind: 'procedure', command: 'okta-mfa-reset', gate: 'g', r_class: 'R2', target: '[UPN]', read_back: null, procedure_sha256: null, change: null, expected: 3 }), audit.AuditRefused, 'a count only on a change record');

@@ -379,3 +379,18 @@ test('a verify entry records the flags that change what its pass means, in one f
   }
   assert.equal(log.verify().ok, true);
 });
+
+// Security review 1 of the batch G3 close-out 3: the verify entry's flags were held to their form
+// but not to the credential-shape check every other text field of the trail takes, and a token's
+// shape can fit a flag's value rule (Google Workspace's --event).
+test('a verify entry\'s flags never hold a credential-shaped value', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-audit-flags-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const log = audit.openAuditLog({ dir });
+  const read = (flags) => ({ kind: 'verify', connector: 'google-workspace', command: 'verify-event', verified: true, state: 'OK', change: null, flags });
+  for (const token of ['ghp_' + 'A'.repeat(36), 'AIza' + 'B'.repeat(30)]) {
+    assert.throws(() => log.append(read(`--app login --event ${token}`)), audit.AuditRefused, token.slice(0, 4));
+  }
+  assert.equal(log.append(read('--app login --event login_success')).seq, 1);
+  assert.equal(log.verify().ok, true);
+});

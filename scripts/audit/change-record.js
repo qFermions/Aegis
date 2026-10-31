@@ -201,11 +201,14 @@ function checkGate(command, gate) {
 // read, and would change what the digest of the reviewed text means.
 const COUNT_LINE = /^Count: ([1-9][0-9]{0,4})$/;
 // a line whose first word is a count, whatever comes before it (spaces, a bullet, a number, a
-// quote or a heading mark) and in any case, so a second count in another shape is never missed
-// (code review round 1 of the batch G3 close-out 3, finding 12)
-const COUNT_LIKE = /^[\s>#*+\-.0-9)]*count\s*:/i;
+// quote or a heading mark), in any case and with any Markdown around it (bold, italics,
+// backticks, a table cell, a task box), so a second count in another shape is never missed (code
+// review round 1 of the batch G3 close-out 3, finding 12; round 2, finding 5). A script comment
+// that starts with "count:" is read as one too, and refused: the saved text holds one count.
+const COUNT_LIKE = /^[\s>#+\-.0-9)]*count\s*:/i;
+const unwrap = (l) => l.replace(/\[[ xX]\]/g, '').replace(/[*_`|]/g, '');
 function checkCount(text, expected) {
-  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => COUNT_LIKE.test(l));
+  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => COUNT_LIKE.test(unwrap(l)));
   if (lines.length !== 1 || !COUNT_LINE.test(lines[0])) {
     throw new InputError('the saved procedure of a counted gate carries one line Count: N, the number in the ticket, so the approval covers it');
   }

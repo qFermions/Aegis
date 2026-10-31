@@ -79,11 +79,14 @@ function checkReadBack(readBack) {
 
 // A gate must be one the named runbook has (code review round 1 of the batch G3 close-out 2,
 // finding 6), so a mistyped counted gate is refused instead of falling back to the
-// one-read-back rule. A command with no runbook file (the tests' own) is not checked.
+// one-read-back rule. The command must name a runbook that exists (round 2, finding 2), so a
+// misspelled --command cannot skip the check; its shape is the trail's own (audit-log.js
+// COMMAND), so it cannot leave .claude/commands/.
 function checkGate(command, gate) {
+  if (!audit.COMMAND.test(command)) throw new InputError('--command is a runbook name, such as fleet-device-actions');
   const file = path.join(ROOT, '.claude', 'commands', `${command}.md`);
   let text;
-  try { text = fs.readFileSync(file, 'utf8'); } catch { return; }
+  try { text = fs.readFileSync(file, 'utf8'); } catch { throw new InputError(`no runbook .claude/commands/${command}.md`); }
   if (!text.includes(`<!-- SAFETY GATE [${gate}] -->`) && !text.split('\n').includes(`# SAFETY GATE [${gate}]`)) {
     throw new InputError(`.claude/commands/${command}.md has no gate ${gate}`);
   }

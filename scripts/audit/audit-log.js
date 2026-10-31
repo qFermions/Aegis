@@ -456,7 +456,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 }
 
 module.exports = {
-  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS, AuditRefused, AuditBroken,
+  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

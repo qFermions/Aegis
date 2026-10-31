@@ -104,9 +104,11 @@ const verdictState = (state) => (AUDITED_STATES.has(state) ? state : 'INVALID_RE
 // each run once. Only a job id belongs here, never a user, email, device name or serial: the run
 // is recorded only when it has the trail's form (a UUID, Fleet's documented execution id form)
 // and the vendor's answer named that same id (observedId), else null.
+// RUN_ID_FLAGS is the name the adapters' agreement test reads; it is the trail's table itself.
 const RUN_ID_FLAGS = RUN_IDS;
 const runIdOf = (connector, command, args, observedId) => {
-  const flag = recordsRunId(`${connector}:${command}`) ? RUN_ID_FLAGS[`${connector}:${command}`] : null;
+  const key = `${connector}:${command}`;
+  const flag = recordsRunId(key) ? RUN_IDS[key] : null;
   const id = flag && args ? args[flag] : null;
   // a UUID is one id in either case, so the match ignores case and the run is recorded in lower
   // case, so one execution typed two ways counts once (code review round 3, finding 2)

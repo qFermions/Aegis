@@ -130,6 +130,11 @@ const passFlagRules = (kind) => (Object.prototype.hasOwnProperty.call(PASS_FLAGS
 // one form: each flag once, by name, a switch alone and a value after its flag
 const joinFlags = (found) => [...found.keys()].sort().map((name) => found.get(name)).join(' ');
 
+// A pass flag's value in the one form the trail records: a digest in lower case, any other value
+// as written. passFlags and parseReadBack both use it, so a run and its change record agree on one
+// value (code review round 3 of the batch G3 close-out 3, finding 10).
+const flagValue = (rule, value) => (rule === DIGEST ? value.toLowerCase() : value);
+
 // The pass flags a read-back ran with, from its argv, in one form ('' for none), or null for a
 // read-back none of whose flags changes what its pass means. A digest is recorded in lower case,
 // since a connector may take it in either case (Slack does; code review round 1 of the batch G3
@@ -146,7 +151,7 @@ function passFlags(kind, argv) {
     if (!Object.prototype.hasOwnProperty.call(rules, name)) continue;
     if (rules[name] === SWITCH) found.set(name, `--${name}`);
     else if (typeof list[i + 1] === 'string') {
-      const value = rules[name] === DIGEST ? list[i + 1].toLowerCase() : list[i + 1];
+      const value = flagValue(rules[name], list[i + 1]);
       if (rules[name].test(value)) found.set(name, `--${name} ${value}`);
     }
   }
@@ -177,8 +182,8 @@ function parseReadBack(text) {
     }
     if (found.has(name)) throw new AuditRefused(`--${name} may appear once`);
     if (rules[name] === SWITCH) { found.set(name, token); values.set(name, null); continue; }
-    // a digest in lower case, as passFlags records it (code review round 2, finding 11)
-    const value = typeof rest[i + 1] === 'string' && rules[name] === DIGEST ? rest[i + 1].toLowerCase() : rest[i + 1];
+    // the value as passFlags records it (code review round 2, finding 11; round 3, finding 10)
+    const value = typeof rest[i + 1] === 'string' ? flagValue(rules[name], rest[i + 1]) : rest[i + 1];
     if (typeof value !== 'string' || !rules[name].test(value)) throw new AuditRefused(`--${name} needs the value ${kind}'s read-back takes`);
     found.set(name, `${token} ${value}`);
     values.set(name, value);

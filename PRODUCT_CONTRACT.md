@@ -223,4 +223,8 @@ and every gate that existed there still exists.
   (`change-record.js open --expected N`, `status` "verified k of N"). Reason: owner decision 2
   on PR #7. It changes how a change reports done, not what Aegis may do; no write path is added
   (`docs/aegis/boundary-audit.md` rows 35 and 37).
+- Changed in review: Fleet's script reads (`script-result`, `verify-script`) take only a UUID
+  execution id, the form Fleet documents (`docs/aegis/g3/vendor-facts.md` F-12), so a serial or
+  host name typed in its place is refused before any read. Reason: code review round 3 of PR #8;
+  it narrows an existing read, it adds none.
 - Not built: binding a read-back to the exact object it read (owner decision 3, "not now").

@@ -213,8 +213,9 @@ const KINDS = Object.freeze({
   verify: {
     connector: matches(NAME), command: matches(VERIFY_COMMAND), verified: (v) => typeof v === 'boolean', state: oneOf(STATES),
     change: nullable(matches(CHANGE_ID)), run: nullable(matches(RUN_ID)),
-    // the pass flags it ran with (batch G3 close-out 3, owner decision H1; checkWrite)
-    flags: nullable((v) => typeof v === 'string' && PASS_FLAG_LIST.test(v)),
+    // the pass flags it ran with (batch G3 close-out 3, owner decision H1; checkWrite), held to
+    // the credential-shape check like every other text field (security review 1)
+    flags: nullable(matches(PASS_FLAG_LIST)),
   },
   // joins a verify-* result already in the trail (its seq) to a change record
   'change-link': {

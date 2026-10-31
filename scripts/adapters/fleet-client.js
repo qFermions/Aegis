@@ -649,7 +649,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (outcome.note) output.note = outcome.note;
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
-  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change, runIdOf('fleet', name, args, outcome.failed ? null : output.observed.execution_id)), { out, err, secrets });
+  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change, runIdOf('fleet', name, args, outcome.failed ? null : output.observed.execution_id), bound.argv), { out, err, secrets });
 }
 
 // Read only after the client has used it, so printed output can be redacted

@@ -1,0 +1,47 @@
+# command: node --test scripts/mfa-issue-gates.test.js
+# commit: 251b1c7 (plus uncommitted changes in the working tree)  started: 2026-10-31T07:15:27Z  node: v24.22.2
+✔ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (3.497694ms)
+✔ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.636618ms)
+✔ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.272498ms)
+✔ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.382623ms)
+✔ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (0.568261ms)
+✔ every R2 and R3 gate in /mfa-issue has a read-back bound to its change (0.953821ms)
+✖ the New phone / re-register list starts at step 1 and counts on (1.379674ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.082526
+
+✖ failing tests:
+
+test at scripts/mfa-issue-gates.test.js:179:1
+✖ the New phone / re-register list starts at step 1 and counts on (1.379674ms)
+  AssertionError [ERR_ASSERTION]: steps 2, 3
+  + actual - expected
+  
+    [
+  -   1,
+      2,
+  +   3
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:185:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 2, 3 ],
+    expected: [ 1, 2 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T07:15:27Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

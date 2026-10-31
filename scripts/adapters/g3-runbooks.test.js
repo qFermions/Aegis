@@ -35,6 +35,8 @@ const CONNECTORS = {
     env: { MS_TENANT_ID: '11111111-2222-4333-8444-555555555555' },
     values: {
       '[USER_ID]': 'aaaaaaaa-0000-4000-8000-000000000001', '[GROUP_ID]': 'bbbbbbbb-0000-4000-8000-000000000002',
+      // batch G3 close-out 3, owner decision H3: an authentication method's id
+      '[METHOD_ID]': '3179e48a-750b-4051-897c-87b9720928f7',
       '[DEVICE_ID]': 'cccccccc-0000-4000-8000-000000000003', '[NOT_BEFORE]': '2026-10-28T09:00:00Z', '[UPN]': 'person@example.com',
     },
     runbooks: {
@@ -107,8 +109,9 @@ for (const [connector, c] of Object.entries(CONNECTORS)) {
       const commands = new Set(lines.map((argv) => argv[0]));
       for (const name of required) assert.ok(commands.has(name), `${runbook} calls ${name}`);
       for (const argv of lines) {
-        const filled = argv.filter((w) => w !== '--execute').map((w) => (Object.prototype.hasOwnProperty.call(c.values, w) ? c.values[w] : w))
-          .map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`${connector}:${argv[0]}`) : w));
+        const sampled = argv.filter((w) => w !== '--execute').map((w) => (Object.prototype.hasOwnProperty.call(c.values, w) ? c.values[w] : w));
+        // the change is opened for the read-back with the same flags the line runs with (H1)
+        const filled = sampled.map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`${connector}:${argv[0]}`, sampled) : w));
         const unfilled = filled.filter((t) => /^\[[A-Z_@.]+\]$/.test(t));
         assert.deepEqual(unfilled, [], `${runbook}: a placeholder with no sample value in ${argv.join(' ')}`);
         const out = [];

@@ -1,0 +1,28 @@
+# command: bash docs/aegis/g3-closeout/evidence/tools/e10-gates.sh 0a5feb7
+# commit: fb22339e  started: 2026-10-31T09:07:49Z  node: v24.22.2
+--- files whose SAFETY GATE count changed since 0a5feb7 (path: base -> here):
+docs/aegis/g3-closeout-3/baseline/head-checks.txt: 0 -> 2
+docs/aegis/g3-closeout-3/baseline/node-test-under-tripwire.txt: 0 -> 1
+docs/aegis/g3-closeout-3/baseline/node-test.txt: 0 -> 1
+docs/aegis/g3-closeout-3/baseline/runbook-gate-markers.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/code-review-rounds.md: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/cr1-f14-green.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/cr1-f9-green.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/cr2-f1-green.txt: 0 -> 2
+docs/aegis/g3-closeout-3/evidence/cr2-f6-green.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/cr2-f6-red.txt: 0 -> 2
+docs/aegis/g3-closeout-3/evidence/cr3-f3-green.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/cr3-f3-red.txt: 0 -> 2
+docs/aegis/g3-closeout-3/evidence/h1-green.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/h3-red.txt: 0 -> 10
+docs/aegis/g3-closeout-3/evidence/h4-green.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/h4-one-class-removed.txt: 0 -> 2
+docs/aegis/g3-closeout-3/evidence/h4-red.txt: 0 -> 8
+docs/aegis/g3-closeout-3/evidence/h5-green.txt: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/tools/README.md: 0 -> 1
+docs/aegis/g3-closeout-3/evidence/tools/gate-field-lines.js: 0 -> 3
+docs/review/batches/g3-closeout-2-checks.md: 0 -> 5
+--- gate marker or gate field lines added or removed in .claude/commands since 0a5feb7:
+120
+# exit: 0  finished: 2026-10-31T09:07:50Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

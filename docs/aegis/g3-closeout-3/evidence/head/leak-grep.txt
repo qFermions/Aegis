@@ -1,0 +1,101 @@
+# command: node docs/aegis/g3/evidence/tools/leak-grep.js 0a5feb7
+# commit: fb22339e  started: 2026-10-31T09:07:48Z  node: v24.22.2
+charter grep: 797 hit lines (case-insensitive) in 89 files; by keyword: {"password":363,"secret":134,"token":290,"/users/":10}
+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 2
+  21717: checks.md: -| E6 no secret, token, personal path, real name, internal hostname or private email | pass | Captures over `f086c88..2915068` (`2915068` is the last commit bef
+  26204: docs/review/batches/g3-closeout-2-checks.md: +| E6 no secret, token, personal path, real name, internal hostname or private email | pass | Captures over `f086c88..2915068` (`2915068` is the last commit bef
+hits by file (path: lines):
+  docs/aegis/g3-closeout-3/baseline/node-test-under-tripwire.txt: 108
+  docs/aegis/g3-closeout-3/baseline/node-test.txt: 108
+  docs/aegis/g3-closeout-3/evidence/h3-green.txt: 29
+  docs/aegis/g3-closeout-3/evidence/h1-green.txt: 28
+  docs/aegis/g3-closeout-3/evidence/cr3-f3-green.txt: 24
+  .claude/commands/password-reset.md: 24
+  docs/aegis/g3-closeout-3/evidence/cr1-f9-green.txt: 24
+  docs/aegis/g3-closeout-3/evidence/cr2-f8-green.txt: 23
+  docs/aegis/g3-closeout-3/evidence/cr2-f6-green.txt: 23
+  docs/aegis/g3-closeout-3/evidence/cr1-f14-green.txt: 23
+  docs/aegis/g3-closeout-3/evidence/h4-green.txt: 23
+  docs/aegis/g3-closeout-3/evidence/cr3-f9-green.txt: 22
+  docs/aegis/g3-closeout-3/evidence/h5-green.txt: 22
+  docs/aegis/g3-closeout-3/evidence/h2-green.txt: 22
+  scripts/audit/audit-log.js: 20
+  docs/aegis/g3-closeout-3/evidence/h3-red.txt: 13
+  docs/aegis/g3-closeout-3/evidence/cr1-f4-green.txt: 12
+  scripts/adapters/msgraph-client.test.js: 11
+  docs/aegis/g3-closeout-3/baseline/pre-commit-check-all.txt: 11
+  .claude/commands/offboard.md: 10
+  docs/aegis/g3-closeout-3/evidence/h4-red.txt: 10
+  scripts/adapters/change-binding.test.js: 9
+  checks.md: 8
+  docs/aegis/boundary-audit.md: 8
+  scripts/adapters/msgraph-client.js: 8
+  docs/aegis/g3-closeout-3/evidence/cr2-f1-green.txt: 7
+  docs/aegis/g3-closeout-3/baseline/g3-ticket-eval.txt: 6
+  docs/aegis/g3-closeout-3/baseline/ms-ticket-eval.txt: 6
+  .claude/commands/gws-account-containment.md: 5
+  docs/aegis/g3-closeout-3/evidence/cr1-f7-green.txt: 5
+  scripts/audit/change-record.test.js: 5
+  docs/aegis/g3-closeout-3/evidence/sr1-method-case-green.txt: 5
+  .claude/commands/security-alert-triage.md: 5
+  progress.md: 4
+  docs/aegis/g3-closeout-3/evidence/cr3-f1-green.txt: 4
+  docs/aegis/g3-closeout-3/evidence/cr1-f11-f15-green.txt: 4
+  docs/aegis/g3-closeout-3/evidence/cr1-f7-red.txt: 4
+  docs/aegis/g3-closeout-3/evidence/cr1-f2-green.txt: 4
+  docs/aegis/g3-closeout-3/evidence/cr1-f5-green.txt: 4
+  docs/aegis/g3-closeout-3/evidence/security-review-1.md: 4
+  docs/aegis/g3-closeout-3/evidence/sr1-flags-shape-green.txt: 4
+  docs/aegis/g3-closeout-3/evidence/sr1-method-case-red.txt: 4
+  docs/aegis/g3-closeout-3/evidence/sr1-gate-kind-green.txt: 4
+  scripts/audit/counted-gates.test.js: 4
+  scripts/gate-r-class.test.js: 4
+  docs/aegis/g3-closeout-3/evidence/h3-ms-pages.txt: 4
+  docs/aegis/g3-closeout-3/evidence/h1-red.txt: 4
+  docs/aegis/g3-closeout-3/baseline/gws-ticket-eval.txt: 4
+  docs/aegis/g3-closeout-3/evidence/cr3-f6-green.txt: 3
+  docs/aegis/g3-closeout-3/evidence/cr2-f2-green.txt: 3
+  docs/aegis/g3-closeout-3/evidence/cr2-f7-green.txt: 3
+  docs/aegis/g3-closeout-3/evidence/cr1-f1-green.txt: 3
+  scripts/audit/audit-log.test.js: 3
+  docs/aegis/g3-closeout-3/evidence/sr1-gate-kind-red.txt: 3
+  .claude/commands/mfa-issue.md: 3
+  docs/aegis/g3-closeout-3/baseline/replay-demo.txt: 3
+  docs/aegis/g3-closeout-3/evidence/security-review-2.md: 2
+  docs/aegis/g3-closeout-3/evidence/cr3-f3-red.txt: 2
+  docs/aegis/g3-closeout-3/evidence/cr2-f6-red.txt: 2
+  .claude/commands/github-security-alerts.md: 2
+  .claude/commands/okta-user-lifecycle.md: 2
+  docs/aegis/g3-closeout-3/evidence/code-review-rounds.md: 2
+  (commit 4d6ed7a header and message): 2
+  (commit ef31ef3 header and message): 2
+  .claude/commands/email-to-spam.md: 2
+  (commit f9daf80 header and message): 2
+  docs/aegis/g3/vendor-facts.md: 2
+  scripts/adapters/fleet-client.js: 2
+  docs/aegis/g3-closeout-3/baseline/runbook-gate-markers.txt: 2
+  docs/aegis/g3-closeout-3/evidence/cr3-f10-green.txt: 1
+  docs/aegis/g3-closeout-3/evidence/cr2-f11-green.txt: 1
+  docs/aegis/g3-closeout-3/evidence/cr2-f11-red.txt: 1
+  (commit 15d677a header and message): 1
+  docs/aegis/g3-closeout-3/evidence/cr1-f4-red.txt: 1
+  docs/aegis/g3-closeout-3/evidence/cr1-f3-green.txt: 1
+  (commit 3c46342 header and message): 1
+  docs/aegis/g3-closeout-3/evidence/cr1-f1-red.txt: 1
+  docs/aegis/g3-closeout-3/evidence/sr1-flags-shape-red.txt: 1
+  (commit 251b1c7 header and message): 1
+  scripts/g3-boundary.test.js: 1
+  (commit e68c6cb header and message): 1
+  docs/aegis/g3-closeout-3/evidence/h2-red.txt: 1
+  scripts/adapters/github-client.js: 1
+  scripts/adapters/gws-client.js: 1
+  scripts/adapters/jamf-client.js: 1
+  scripts/adapters/linear-client.js: 1
+  scripts/audit/README.md: 1
+  docs/aegis/g3-closeout-3/baseline/release-boundary-check.txt: 1
+  docs/review/batches/g3-closeout-2-checks.md: 1
+credential-shape pass over added lines: 0 hit(s)
+URL hosts in added lines (3): learn.microsoft.com 17, graph.microsoft.com 2, okta.example.invalid 2
+mail domains in added lines (1): domain.com 15
+# exit: 0  finished: 2026-10-31T09:07:48Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

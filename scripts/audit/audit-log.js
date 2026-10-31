@@ -65,6 +65,10 @@ const COMMAND = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const VERIFY_COMMAND = /^verify-[a-z0-9-]{1,48}$/;
 // The read-back a change record names: the connector and its verify-* command.
 const READ_BACK = /^[a-z][a-z0-9-]{1,30}:verify-[a-z0-9-]{1,48}$/;
+// The same, with the flags that change what its pass means (batch G3 close-out 3, owner decision
+// H1), such as okta:verify-group-member --absent; parseReadBack holds it to one form.
+const PASS_FLAG_LIST = /^(?:--[a-z][a-z0-9-]{0,40}(?: [A-Za-z0-9_:.-]{1,100})?(?: --[a-z][a-z0-9-]{0,40}(?: [A-Za-z0-9_:.-]{1,100})?){0,7})?$/;
+const READ_BACK_NAMED = /^[a-z][a-z0-9-]{1,30}:verify-[a-z0-9-]{1,48}(?: --[a-z][a-z0-9-]{0,40}(?: [A-Za-z0-9_:.-]{1,100})?){0,8}$/;
 const GATE = /^[a-z0-9][a-z0-9-]{0,95}$/;
 const R_CLASS = /^R[0-3]$/;
 // A placeholder from modules/security/placeholder-dictionary.md: one bracketed token.
@@ -84,6 +88,119 @@ const RUN_IDS = Object.freeze({ 'fleet:verify-script': 'execution-id' });
 // (cli-support.js runIdOf) and status (change-record.js countedView).
 const recordsRunId = (readBack) => Object.prototype.hasOwnProperty.call(RUN_IDS, readBack);
 
+// The read-back flags that change what a pass means (batch G3 close-out 3, owner decision H1: a
+// presence pass must never prove a removal), connector:command to each flag and its rule: a
+// switch, or the closed set, number or digest its connector takes (the connector checks the value
+// first; the rule here keeps free text out of the trail). A verify entry records the ones it ran
+// with in one form (passFlags), and a change record names its read-back with them (readBackFor),
+// so a read-back counts only for a change whose flags match. Flags that name the object read,
+// bound the time or carry free text are not here; scripts/audit/pass-flags.test.js lists each
+// with its reason.
+const SWITCH = 'switch';
+const DIGEST = /^[0-9a-f]{64}$/;
+const BOOL = /^(?:true|false)$/;
+const PASS_FLAGS = Object.freeze({
+  'okta:verify-group-member': Object.freeze({ absent: SWITCH }),
+  'okta:verify-app-assigned': Object.freeze({ absent: SWITCH }),
+  // okta-client.js STATUSES
+  'okta:verify-status': Object.freeze({ status: /^(?:ACTIVE|DEPROVISIONED|LOCKED_OUT|PASSWORD_EXPIRED|PROVISIONED|RECOVERY|STAGED|SUSPENDED)$/ }),
+  'github:verify-team-member': Object.freeze({ absent: SWITCH }),
+  // github-client.js ROLES, the alert commands' stateRule, resolutionRule and reasonRule, and its reviews rule
+  'github:verify-collaborator': Object.freeze({ role: /^(?:read|triage|write|maintain|admin)$/ }),
+  'github:verify-secret-alert': Object.freeze({ state: /^resolved$/, resolution: /^(?:revoked|false_positive|wont_fix|used_in_tests)$/ }),
+  'github:verify-dependabot-alert': Object.freeze({ state: /^(?:dismissed|fixed)$/, reason: /^(?:fix_started|inaccurate|no_bandwidth|not_used|tolerable_risk)$/ }),
+  'github:verify-protection': Object.freeze({ reviews: /^[0-6]$/, 'enforce-admins': SWITCH, 'no-force-push': SWITCH, 'no-deletions': SWITCH }),
+  'msgraph:verify-group-member': Object.freeze({ absent: SWITCH }),
+  'msgraph:verify-account-enabled': Object.freeze({ enabled: BOOL }),
+  'jamf:verify-profile': Object.freeze({ absent: SWITCH }),
+  // jamf-client.js COUNT and COMMAND_TYPE
+  'jamf:verify-group-count': Object.freeze({ expect: /^(?:0|[1-9][0-9]{0,6})$/ }),
+  'jamf:verify-command': Object.freeze({ type: /^[A-Z][A-Z0-9_]{1,63}$/ }),
+  'jamf:verify-policy': Object.freeze({ enabled: BOOL, 'no-triggers': SWITCH }),
+  // gws-client.js APPS and EVENT_NAME
+  'google-workspace:verify-event': Object.freeze({ app: /^(?:admin|login|drive|token|saml|user_accounts)$/, event: /^[A-Za-z][A-Za-z0-9_]{0,99}$/ }),
+  'slack:verify-guest': Object.freeze({ type: /^(?:single|multi)$/ }),
+  // the digest of the text the read must find: the --expect style flags
+  'slack:verify-posted': Object.freeze({ 'expect-sha256': DIGEST }),
+  'linear:verify-comment': Object.freeze({ 'expect-sha256': DIGEST }),
+  'jira:verify-create': Object.freeze({ 'expect-sha256': DIGEST }),
+  'jira:verify-comment': Object.freeze({ 'expect-sha256': DIGEST }),
+});
+const passFlagRules = (kind) => (Object.prototype.hasOwnProperty.call(PASS_FLAGS, kind) ? PASS_FLAGS[kind] : null);
+// one form: each flag once, by name, a switch alone and a value after its flag
+const joinFlags = (found) => [...found.keys()].sort().map((name) => found.get(name)).join(' ');
+
+// A pass flag's value in the one form the trail records: a digest in lower case, any other value
+// as written. passFlags and parseReadBack both use it, so a run and its change record agree on one
+// value (code review round 3 of the batch G3 close-out 3, finding 10).
+const flagValue = (rule, value) => (rule === DIGEST ? value.toLowerCase() : value);
+
+// The pass flags a read-back ran with, from its argv, in one form ('' for none), or null for a
+// read-back none of whose flags changes what its pass means. A digest is recorded in lower case,
+// since a connector may take it in either case (Slack does; code review round 1 of the batch G3
+// close-out 3, finding 4); every other value rule is the connector's own, so a value outside it
+// is refused by the connector before any read and is left out here.
+function passFlags(kind, argv) {
+  const rules = passFlagRules(kind);
+  if (!rules) return null;
+  const list = Array.isArray(argv) ? argv.map(String) : [];
+  const found = new Map();
+  for (let i = 0; i < list.length; i += 1) {
+    if (!list[i].startsWith('--')) continue;
+    const name = list[i].slice(2);
+    if (!Object.prototype.hasOwnProperty.call(rules, name)) continue;
+    if (rules[name] === SWITCH) found.set(name, `--${name}`);
+    else if (typeof list[i + 1] === 'string') {
+      const value = flagValue(rules[name], list[i + 1]);
+      if (rules[name].test(value)) found.set(name, `--${name} ${value}`);
+    }
+  }
+  return joinFlags(found);
+}
+// The read-back a change record names for kind run with argv: kind, then its pass flags.
+function readBackFor(kind, argv) {
+  const flags = passFlags(kind, argv);
+  return flags ? `${kind} ${flags}` : kind;
+}
+// A read-back named with its pass flags, held to one form; AuditRefused names what is wrong.
+function parseReadBack(text) {
+  if (typeof text !== 'string') throw new AuditRefused('a read-back is the connector, its verify-* command and its pass flags');
+  const [kind, ...rest] = text.split(' ');
+  if (!READ_BACK.test(kind)) throw new AuditRefused('a read-back names the connector and its verify-* command, such as okta:verify-group-member');
+  const rules = passFlagRules(kind);
+  if (!rest.length) return { kind, flags: rules ? '' : null, values: new Map(), readBack: kind };
+  if (!rules) throw new AuditRefused(`no flag changes what ${kind}'s pass means, so it is named without flags`);
+  const found = new Map();
+  // each flag's value, null for a switch (change-record.js compares them with a runbook line)
+  const values = new Map();
+  for (let i = 0; i < rest.length; i += 1) {
+    const token = rest[i];
+    if (!/^--[a-z][a-z0-9-]{0,40}$/.test(token)) throw new AuditRefused(`${JSON.stringify(token).slice(0, 40)} is not a flag of ${kind}'s read-back`);
+    const name = token.slice(2);
+    if (!Object.prototype.hasOwnProperty.call(rules, name)) {
+      throw new AuditRefused(`--${name} does not change what ${kind}'s pass means; name the read-back with only ${Object.keys(rules).map((n) => `--${n}`).join(', ')}`);
+    }
+    if (found.has(name)) throw new AuditRefused(`--${name} may appear once`);
+    if (rules[name] === SWITCH) { found.set(name, token); values.set(name, null); continue; }
+    // the value as passFlags records it (code review round 2, finding 11; round 3, finding 10)
+    const value = typeof rest[i + 1] === 'string' ? flagValue(rules[name], rest[i + 1]) : rest[i + 1];
+    if (typeof value !== 'string' || !rules[name].test(value)) throw new AuditRefused(`--${name} needs the value ${kind}'s read-back takes`);
+    found.set(name, `${token} ${value}`);
+    values.set(name, value);
+    i += 1;
+  }
+  const flags = joinFlags(found);
+  return { kind, flags, values, readBack: flags ? `${kind} ${flags}` : kind };
+}
+// The read-back a verify entry proves, with its pass flags, or null when it has pass flags and
+// recorded none (an entry written before the batch G3 close-out 3): it cannot show which ran.
+function readBackOf(entry) {
+  const kind = `${entry.connector}:${entry.command}`;
+  if (!passFlagRules(kind)) return kind;
+  if (typeof entry.flags !== 'string') return null;
+  return entry.flags ? `${kind} ${entry.flags}` : kind;
+}
+
 // Credential shapes refused in any value, whatever its field allows (defence in depth):
 // Slack, GitHub, OpenAI-style, Google, GitLab and Okta tokens, a JWT, a bearer or basic
 // header, a private key block.
@@ -101,9 +218,12 @@ const KINDS = Object.freeze({
   },
   procedure: {
     command: matches(COMMAND), gate: nullable(matches(GATE)), r_class: matches(R_CLASS), target: matches(PLACEHOLDER),
-    read_back: nullable(matches(READ_BACK)), procedure_sha256: nullable(matches(SHA256)), change: nullable(matches(CHANGE_ID)),
+    read_back: nullable(matches(READ_BACK_NAMED)), procedure_sha256: nullable(matches(SHA256)), change: nullable(matches(CHANGE_ID)),
     // the number of objects a counted batch change acts on, as written in the ticket
     expected: nullable(isInt(1, 99999)),
+    // true when change-record.js open checked the read-back against the gate's runbook (code
+    // review round 3 of the batch G3 close-out 3, findings 1 and 2); null on older entries
+    gate_checked: nullable((v) => v === true),
   },
   approval: {
     ref: matches(ISSUE_KEY), gate: matches(GATE), procedure_sha256: matches(SHA256), change: matches(CHANGE_ID),
@@ -111,6 +231,9 @@ const KINDS = Object.freeze({
   verify: {
     connector: matches(NAME), command: matches(VERIFY_COMMAND), verified: (v) => typeof v === 'boolean', state: oneOf(STATES),
     change: nullable(matches(CHANGE_ID)), run: nullable(matches(RUN_ID)),
+    // the pass flags it ran with (batch G3 close-out 3, owner decision H1; checkWrite), held to
+    // the credential-shape check like every other text field (security review 1)
+    flags: nullable(matches(PASS_FLAG_LIST)),
   },
   // joins a verify-* result already in the trail (its seq) to a change record
   'change-link': {
@@ -154,6 +277,19 @@ function checkWrite(fields) {
   // flag value can reach the trail as a run
   if (fields.kind === 'verify' && fields.run !== null && !recordsRunId(`${fields.connector}:${fields.command}`)) {
     throw new AuditRefused('a run id is recorded only by a read-back that takes one');
+  }
+  // the pass flags a read-back ran with, on one whose pass a flag changes, in one form ('' for
+  // none), and on no other (batch G3 close-out 3, owner decision H1)
+  if (fields.kind === 'verify') {
+    const kind = `${fields.connector}:${fields.command}`;
+    const rules = passFlagRules(kind);
+    if (!rules && fields.flags !== null) throw new AuditRefused(`no flag changes what ${kind}'s pass means, so it records none`);
+    if (rules && fields.flags === null) throw new AuditRefused(`${kind} records the flags it ran with that change what its pass means ('' for none)`);
+    if (rules && fields.flags !== '' && parseReadBack(`${kind} ${fields.flags}`).flags !== fields.flags) throw new AuditRefused('the pass flags are written in one form: each once, by name');
+  }
+  // a change record names its read-back with its pass flags, in one form
+  if (fields.kind === 'procedure' && fields.read_back !== null && parseReadBack(fields.read_back).readBack !== fields.read_back) {
+    throw new AuditRefused('a read-back is named in one form: its pass flags each once, by name');
   }
   return fields;
 }
@@ -471,7 +607,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 }
 
 module.exports = {
-  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId, AuditRefused, AuditBroken,
+  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId,
+  PASS_FLAGS, SWITCH, passFlags, readBackFor, parseReadBack, readBackOf, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

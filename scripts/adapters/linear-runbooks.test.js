@@ -186,7 +186,7 @@ test('every adapter line in the runbooks is one the adapter accepts, and the sno
     for (let i = 0; i < lines.length; i += 1) {
       for (const m of lines[i].matchAll(/node scripts\/adapters\/linear-client\.js ([^`\n]+)/g)) {
         const raw = words(m[1].trim()).filter((w) => w !== '--execute').map((w) => SAMPLE[w] || w);
-        const argv = raw.map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`linear:${raw[0]}`) : w));
+        const argv = raw.map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`linear:${raw[0]}`, raw) : w));
         const unknown = argv.filter((w) => /\[[^\]]+\]/.test(w));
         if (unknown.length) { problems.push(`${name}.md:${i + 1}: no sample value for ${unknown.join(' ')}`); continue; }
         seen.add(argv[0]);

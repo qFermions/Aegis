@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[APP_NAME]` (the app integration's display name in Okta) · `[APP_ID]` (its Okta app ID, starts `0oa`; the value the API section exports as `APP_ID`) · `[UPN]` (the person's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[GROUP_EMAIL]` (the Okta group's name; in this shop Okta groups are pushed to Google Groups, so a group is named by its Google address, written without the at sign) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 gates):** before a gate whose reversibility is R2, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-app-assigned`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-app-assigned`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-app-assigned --absent` for an unassignment, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -112,7 +112,7 @@ It passes for a Group assignment too, so the **Type** column above decides Indiv
 3. Read back: the Assignments tab lists the members with **Type** reading **Group**.
 
 ```bash
-# HUMAN-RUN read-only read-back for the one member picked in the pre-state, passes only when that member now holds the app with status ACTIVE or PROVISIONED
+# HUMAN-RUN read-only read-back of [okta-app-assignment-assign-group-portal] or [okta-app-assignment-assign-group], for the one member picked in the pre-state, passes only when that member now holds the app with status ACTIVE or PROVISIONED
 node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 ```
 
@@ -137,7 +137,7 @@ If the spot check fails right after the save, **WAIT UNTIL** the Assignments tab
 3. Read back: `[APP_NAME]` is gone from the person's Applications tab and from the app's Assignments tab.
 
 ```bash
-# HUMAN-RUN read-only read-back, passes only when the user read succeeds and the app-user read then returns HTTP 404. It proves the unassign only when the Phase A read showed the assignment with scope USER
+# HUMAN-RUN read-only read-back of [okta-app-assignment-unassign-person-portal] or [okta-app-assignment-unassign-person], passes only when the user read succeeds and the app-user read then returns HTTP 404. It proves the unassign only when the Phase A read showed the assignment with scope USER
 node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
 ```
 

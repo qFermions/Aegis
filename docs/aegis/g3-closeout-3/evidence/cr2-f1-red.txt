@@ -1,0 +1,111 @@
+# command: node --test scripts/adapters/change-binding.test.js
+# commit: 15d677a (plus uncommitted changes in the working tree)  started: 2026-10-31T08:23:40Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (30.783035ms)
+✔ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (17.203165ms)
+✔ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (16.006165ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.942022ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (20.698607ms)
+✔ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (11.763597ms)
+✔ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (16.828829ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (9.350227ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.970054ms)
+✔ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (16.509793ms)
+✔ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (21.539631ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.855306ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.546791ms)
+✔ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.950608ms)
+✔ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (23.35447ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.381184ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (17.399641ms)
+✔ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.073896ms)
+✔ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (12.926176ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.211241ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (12.269405ms)
+✔ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (11.888127ms)
+✔ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (16.164153ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.518732ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (11.258766ms)
+✔ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (11.351545ms)
+✔ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (16.71458ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.76923ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (12.100891ms)
+✔ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (8.732484ms)
+✔ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (13.821981ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.138736ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (13.022232ms)
+✔ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.442166ms)
+✔ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (12.878512ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.185781ms)
+✔ a verify-* with --change and no audit trail to check it against is refused, never run unbound (0.378182ms)
+✖ runbooks: a change-record paragraph covers only gates with a read-back named for them, and a scripted gate binds its portal twin's read-back (2.456773ms)
+✔ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (24.998278ms)
+✔ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (10.911066ms)
+✔ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (13.961119ms)
+✔ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (16.276425ms)
+✔ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (18.494284ms)
+✔ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (19.031533ms)
+✔ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (16.705043ms)
+✔ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (17.767962ms)
+✔ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.03601ms)
+✔ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (13.830127ms)
+✔ fleet verify-script records its execution id as the run; every other read-back records none (73.068451ms)
+✔ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.037273ms)
+✔ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (6.42892ms)
+✔ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.35982ms)
+✔ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.370715ms)
+✔ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (7.224152ms)
+✔ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.499978ms)
+✔ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.421907ms)
+✔ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.80076ms)
+✔ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.055887ms)
+✔ no support file under scripts/ has a name node --test runs as a test file (2.93185ms)
+✔ the contract, cli-support and the audit trail agree on what a verify-* command and a change id are (0.264218ms)
+✔ offline commands refuse --change as not a read-back, before reading any file (0.322314ms)
+✔ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (3.055992ms)
+✔ fleet: --change=chg-... on a plain read is refused as not a read-back (1.24117ms)
+✔ github: --change=chg-... on a plain read is refused as not a read-back (0.842122ms)
+✔ google-workspace: --change=chg-... on a plain read is refused as not a read-back (1.458698ms)
+✔ jamf: --change=chg-... on a plain read is refused as not a read-back (1.524502ms)
+✔ linear: --change=chg-... on a plain read is refused as not a read-back (1.26753ms)
+✔ msgraph: --change=chg-... on a plain read is refused as not a read-back (1.197756ms)
+✔ okta: --change=chg-... on a plain read is refused as not a read-back (1.015493ms)
+✔ slack: --change=chg-... on a plain read is refused as not a read-back (1.062011ms)
+✔ jira: --change=chg-... on a plain read is refused as not a read-back (0.97239ms)
+✔ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (18.062137ms)
+✔ changeRefusal refuses when it is not given takeChange's result (0.218539ms)
+✔ every connector records the flags that change what its read-back passes on, and none on a read-back without them (77.862454ms)
+✔ okta verify-group-member: a removal change takes only the --absent read, and an add change never does (15.308911ms)
+✔ okta verify-app-assigned: a removal change takes only the --absent read, and an add change never does (25.080889ms)
+✔ github verify-team-member: a removal change takes only the --absent read, and an add change never does (16.397254ms)
+✔ msgraph verify-group-member: a removal change takes only the --absent read, and an add change never does (18.045554ms)
+✔ jamf verify-profile: a removal change takes only the --absent read, and an add change never does (22.103837ms)
+ℹ tests 79
+ℹ suites 0
+ℹ pass 78
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1134.347235
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:244:1
+✖ runbooks: a change-record paragraph covers only gates with a read-back named for them, and a scripted gate binds its portal twin's read-back (2.456773ms)
+  AssertionError [ERR_ASSERTION]: fleet-device-actions.md: the paragraph covers only gates with a read-back
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:252:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: "**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).",
+    expected: /before a gate whose reversibility is (?:R2 or R3|R2|R3) and that has a read-back named for it/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T08:23:41Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

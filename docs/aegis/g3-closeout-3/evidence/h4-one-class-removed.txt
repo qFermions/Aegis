@@ -1,0 +1,84 @@
+# what: the class of one gate (install-teams-module in .claude/commands/teams-issue.md) removed by hand from the working tree, the test run, then the file restored (cmp below)
+# command: node --test scripts/gate-r-class.test.js
+# commit: 371a1b0 (plus uncommitted changes in the working tree)  started: 2026-10-31T07:13:30Z  node: v24.22.2
+✖ every SAFETY GATE in every runbook carries an R class on its Reversibility line (27.160281ms)
+✖ the check fails when one class is removed (43.445655ms)
+✖ the 58 gates classed in this batch carry their class first and cite the row of CLAUDE.md's table (11.016897ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 167.1062
+
+✖ failing tests:
+
+test at scripts/gate-r-class.test.js:80:1
+✖ every SAFETY GATE in every runbook carries an R class on its Reversibility line (27.160281ms)
+  AssertionError [ERR_ASSERTION]: gates with no R class
+  + actual - expected
+  
+  + [
+  +   'install-teams-module'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/gate-r-class.test.js:83:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'install-teams-module' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/gate-r-class.test.js:86:1
+✖ the check fails when one class is removed (43.445655ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'device-full-wipe-portal',
+  +   'install-teams-module'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/gate-r-class.test.js:95:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'device-full-wipe-portal', 'install-teams-module' ],
+    expected: [ 'device-full-wipe-portal' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/gate-r-class.test.js:98:1
+✖ the 58 gates classed in this batch carry their class first and cite the row of CLAUDE.md's table (11.016897ms)
+  AssertionError [ERR_ASSERTION]: install-teams-module: R1 first, citing the table: reversible through a separately reviewed Uninstall-Module action
+      at TestContext.<anonymous> (<repo>/scripts/gate-r-class.test.js:104:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T07:13:30Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

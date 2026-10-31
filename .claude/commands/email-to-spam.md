@@ -141,7 +141,7 @@ A user appearing here had their outbound mail blocked. Complete password reset, 
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** restore outbound sending after credential and persistence remediation
 - **Scope:** one secured sender account
-- **Reversibility:** reversible by restricting the sender again
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, the change of a sending control; it lifts a sending restriction and fits no closer row, so the higher class): reversible by restricting the sender again
 - **Required confirmation:** Type exactly `UNBLOCK OUTBOUND MAIL FOR [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [restricted-entity-unblock-portal]:** Only after the exact match, remove `[USER@DOMAIN.COM]` from **Restricted entities**, then verify outbound behavior and sign-in logs.
@@ -164,7 +164,7 @@ if ([string]$candidate.Name -cne $moduleName -or [string]$candidate.Version -cne
 # Target: exact $moduleName version $moduleVersionText from canonical $repositoryName
 # Effect: installs one local PowerShell module without changing sender restrictions
 # Scope: CurrentUser on this workstation
-# Reversibility: reversible through a separately reviewed Uninstall-Module action
+# Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible through a separately reviewed Uninstall-Module action
 $requiredConfirmation = "INSTALL POWERSHELL MODULE $moduleName VERSION $moduleVersionText FROM $repositoryName"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm the local CurrentUser install"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -217,7 +217,7 @@ Connect-ExchangeOnline -UserPrincipalName "[UPN]"
 # Target: [USER@DOMAIN.COM]
 # Effect: restores outbound sending after account remediation
 # Scope: one secured sender account
-# Reversibility: not directly reversible; restricting the sender again is a separate reviewed containment action
+# Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, the change of a sending control; it lifts a sending restriction and fits no closer row, so the higher class): not directly reversible; restricting the sender again is a separate reviewed containment action
 $requiredConfirmation = "UNBLOCK OUTBOUND MAIL FOR [USER@DOMAIN.COM]"
 $confirmation = Read-Host "Type '$requiredConfirmation' after verifying password reset, session revocation, and rule cleanup"
 if ($confirmation -ceq $requiredConfirmation) {

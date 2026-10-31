@@ -27,6 +27,7 @@ const test = require('node:test');
 
 const audit = require('../audit/audit-log.js');
 const changes = require('../audit/change-record.js');
+const { testRunbooks } = require('../audit/trail-helper.js');
 
 const TOKEN = ['sentinel', 'binding', 'credential', String(7 * 919)].join('-');
 const NOW = Date.parse('2026-10-28T12:00:00Z');
@@ -107,6 +108,7 @@ function trail(t) {
   const procedure = path.join(dir, 'procedure.md');
   fs.writeFileSync(procedure, 'Phase B: the gated change for [UPN].\nType exactly: CHANGE [UPN]\n');
   const sink = audit.auditSink(env);
+  const gateFor = testRunbooks(dir, t);
   const record = (argv) => {
     const out = [];
     const err = [];
@@ -117,7 +119,9 @@ function trail(t) {
   };
   // open (and by default approve) a change record whose read-back is readBack
   const open = (readBack, { approve = true } = {}) => {
-    const o = record(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    // a test gate that binds this read-back (trail-helper.js testRunbooks)
+    const g = gateFor(readBack);
+    const o = record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
     assert.equal(o.code, 0, o.text);
     if (approve) assert.equal(record(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
     return o.json.change;
@@ -140,7 +144,8 @@ async function run(c, argv, tr, { execute = true } = {}) {
 const verifies = (tr) => tr.sink.log.entries().filter((e) => e.kind === 'verify');
 
 for (const c of CONNECTORS) {
-  const readBack = `${c.name}:${c.verify[0]}`;
+  // the read-back with the flags that change what its pass means (batch G3 close-out 3, H1)
+  const readBack = audit.readBackFor(`${c.name}:${c.verify[0]}`, c.verify);
 
   test(`${c.name}: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live`, async (t) => {
     const tr = trail(t);
@@ -231,6 +236,76 @@ test('a verify-* with --change and no audit trail to check it against is refused
 // The runbooks: every read-back of a gate marked R2 or R3 passes --change [CHANGE_ID]; no other
 // read-back does (open refuses an R0 or R1 change record, so such a read-back could never
 // run); each runbook with one says where the id comes from; the dictionary registers it.
+// Code review round 2 of the batch G3 close-out 3, finding 7: a test trail pointed change-record.js
+// at its own folder of test gates and never pointed it back, so after that test's folder was
+// removed, open in the same process could no longer read a real runbook.
+test('after a test trail ends, open reads the real runbooks again', async (t) => {
+  await t.test('a test trail', (st) => { trail(st).open('okta:verify-group-member --absent'); });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-change-binding-after-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const procedure = path.join(dir, 'procedure.md');
+  fs.writeFileSync(procedure, 'The reset for [UPN].\n');
+  const err = [];
+  const code = changes.main(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', procedure], { AEGIS_AUDIT_DIR: path.join(dir, 'audit') }, { out: () => {}, err: (x) => err.push(x) });
+  assert.equal(code, 0, err.join(''));
+});
+
+// Code review round 3 of the batch G3 close-out 3, finding 7: the pin reads named gates through
+// change-record.js's own helper, so the helper is checked here on its own, against fixed comments,
+// and a narrowed pattern fails this test even when the pin and open agree.
+test('namedGates reads every gate a read-back comment names, with each separator, and nothing else', () => {
+  const cases = [
+    ['# HUMAN-RUN read-only read-back of [a-portal]: passes only when ...', ['a-portal']],
+    ['# read-back of [a-portal] or [a]: ...', ['a-portal', 'a']],
+    ['# read-back of [a], [b] or [c], passes only when [NOT_BEFORE]', ['a', 'b', 'c']],
+    ['# read-back of [a], [b], or [c]', ['a', 'b', 'c']],
+    ['# read-back of [a] and [b]', ['a', 'b']],
+    ['# read-back of [a], and [b]', ['a', 'b']],
+    ['# HUMAN-RUN read-only read-back, passes only when ...', null],
+    ['node scripts/adapters/okta-client.js verify-status', null],
+    ['read-back of [a] in prose, not a comment', null],
+  ];
+  for (const [comment, want] of cases) assert.deepEqual(changes.namedGates(comment), want, comment);
+});
+
+// Code review round 3 of the batch G3 close-out 3, finding 6: a nested trail pointed
+// change-record.js at the real runbooks when it ended, not back at the outer trail's test gates.
+test('a nested test trail gives the outer trail its test gates back when it ends', async (t) => {
+  const outer = trail(t);
+  outer.open('okta:verify-group-member --absent');
+  await t.test('an inner trail', (st) => { trail(st).open('okta:verify-app-assigned --absent'); });
+  outer.open('github:verify-team-member --absent');
+});
+
+// Code review round 2 of the batch G3 close-out 3, finding 1: open refuses a gate whose runbook
+// binds no read-back (round 1, finding 5), so a change-record paragraph that told the operator to
+// open one before every R2 or R3 gate sent them to a refusal; each paragraph now covers only the
+// gates with a read-back named for them. Finding 3: a scripted gate whose portal twin binds a
+// read-back binds it too, so open takes it on either path.
+test('runbooks: a change-record paragraph covers only gates with a read-back named for them, and a scripted gate binds its portal twin\'s read-back', () => {
+  const dir = path.join(__dirname, '..', '..', '.claude', 'commands');
+  let paragraphs = 0;
+  for (const file of fs.readdirSync(dir).filter((n) => n.endsWith('.md'))) {
+    const text = fs.readFileSync(path.join(dir, file), 'utf8');
+    const para = (text.match(/^\*\*Change record \([^)]*\):\*\* [^\n]*/m) || [null])[0];
+    if (para) {
+      paragraphs += 1;
+      assert.match(para, /before a gate whose reversibility is (?:R2 or R3|R2|R3) and that has a read-back named for it/, `${file}: the paragraph covers only gates with a read-back`);
+      assert.match(para, /takes no change record/, `${file}: the paragraph says a gate with no read-back takes none`);
+    }
+    const bound = new Set(changes.boundReadBacks(text).flatMap((b) => b.gates));
+    for (const [, gate] of text.matchAll(/^# SAFETY GATE \[([^\]]+)\]/gm)) {
+      if (bound.has(`${gate}-portal`)) assert.ok(bound.has(gate), `${file}: ${gate} binds the read-back of ${gate}-portal`);
+    }
+  }
+  // every runbook with a bound read-back has one, 27 since this batch (code review round 3, finding 7)
+  assert.equal(paragraphs, 27, `${paragraphs} change-record paragraphs`);
+  const okta = fs.readFileSync(path.join(dir, 'okta-mfa-reset.md'), 'utf8');
+  assert.ok(changes.boundReadBacks(okta).some((b) => b.gates.includes('okta-mfa-reset-factor')), 'the API reset of one factor binds verify-factor-reset');
+  // the rollback after an exception: Phase B's and C's gates have a read-back, D's and E's do not
+  assert.match(fs.readFileSync(path.join(dir, 'github-branch-protection.md'), 'utf8'), /for Phase D's or Phase E's gate, which takes no change record, `rulesets` must show the Phase A state again/);
+});
+
 test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered', () => {
   const dir = path.join(__dirname, '..', '..', '.claude', 'commands');
   const VERIFY = /node scripts\/(?:adapters\/)?[a-z]+-client\.js verify-[a-z0-9-]+/;
@@ -265,8 +340,14 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)(.*)$/);
       if (r && gate) rClass = (r[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null;
       if (!VERIFY.test(l)) continue;
-      const named = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of \[([a-z0-9-]+)\]/);
-      const cls = named && classOf.has(named[1]) ? classOf.get(named[1]) : rClass;
+      // a comment may name several gates ("read-back of [a], [b] or [c]"): the highest class of
+      // them counts (code review round 1 of the batch G3 close-out 3, finding 1); the gates are
+      // read by change-record.js's own helper, so the pin and open agree (round 2, finding 13)
+      const namedClasses = (changes.namedGates(lines[i - 1]) || []).map((g) => classOf.get(g)).filter(Boolean);
+      const cls = namedClasses.length ? namedClasses.sort().pop() : rClass;
+      // every read-back line under an R2 or R3 gate is bound, with no exception (code review round
+      // 1 of the batch G3 close-out 3, finding 9: H1 had exempted a line whose comment said "not
+      // this change's proof"; the Jamf pilot read it covered now points to Phase C's read-back)
       const wantBound = cls === 'R2' || cls === 'R3';
       assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${cls || 'no gate'}): ${l.trim().slice(0, 120)}`);
       if (wantBound) { bound += 1; has = true; } else unbound += 1;
@@ -283,15 +364,35 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // 78 at the batch G3 close-out (the two prose read-backs written as whole command lines count
   // too, round 3, finding 4); 79 with /mfa-issue's verify-mfa-cleared, the read-back of its R3
   // Require re-register MFA gate (batch G3 close-out 2, owner decision 1)
-  assert.equal(bound, 79, 'the 79 read-backs of R2 and R3 gates');
-  assert.equal(unbound, 76, 'the 76 read-backs of R0 and R1 work, or of no gate, stay unbound');
+  // batch G3 close-out 3, H1: the pilot read under /jamf-config-profiles' removal from all
+  // computers runs unbound (79 to 78, 76 to 77), and /okta-group-membership's rule change binds a
+  // read-back for the people who join beside the one for those who leave (78 to 79)
+  // owner decision H3: /mfa-issue binds verify-sessions-revoked and verify-method-absent (79 to 81)
+  // owner decision H4: the newly classed gates of /offboard (4), /password-reset (2, one of them
+  // the verify-password-changed line that was unbound) and /security-alert-triage (3) bind their
+  // read-backs (81 to 90 bound, 77 to 76 unbound)
+  // code review round 1 of the batch G3 close-out 3, finding 3: the rollback read-back written in
+  // the prose after /github-branch-protection's Phase F sat under the last exception gate; it now
+  // names the rollback gate's own read-back line instead of repeating it (90 to 89)
+  assert.equal(bound, 89, 'the 89 read-backs of R2 and R3 gates');
+  // code review round 1 of the batch G3 close-out 3, finding 9: the Jamf pilot read under the
+  // removal from All Computers is no longer a line there (76 to 75); round 3, finding 3: it is read
+  // after the removals in an R0 section of its own (75 to 76)
+  assert.equal(unbound, 76, 'the 76 read-backs of R0 and R1 work or of no gate stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
-  // two read-backs of R2 and R3 changes are named in prose, not on a command line: the rollback
-  // gate's read-back after a branch-protection exception, and the per-host read-back of a
-  // batch script run (code review round 1, finding 1)
+  // read-backs of R2 and R3 changes named in prose: the per-host read-back of a batch script run
+  // (code review round 1, finding 1). The rollback after a branch-protection exception named its
+  // read-back in prose too, under the last exception gate, which bound the read that passes when
+  // protection is on to "disable a ruleset"; it now points to the rollback gate's own read-back
+  // line, and no Phase F exception gate binds a read-back (code review round 1 of the batch G3
+  // close-out 3, finding 3; a check rewritten, checks.md D7)
   const page = (name) => fs.readFileSync(path.join(dir, `${name}.md`), 'utf8');
-  assert.match(page('github-branch-protection'), /Then run the rollback gate it names, and its read-back: `node scripts\/adapters\/github-client\.js verify-protection [^`]*--change \[CHANGE_ID\] --execute`/);
+  // code review round 2, finding 1: Phase D's and E's gates take no change record
+  assert.match(page('github-branch-protection'), /Then run the rollback gate it names\. For Phase B's or Phase C's gate, under its own change record, its own read-back \(the `verify-protection` line under that gate\) must exit 0/);
+  for (const b of changes.boundReadBacks(page('github-branch-protection'))) {
+    assert.ok(b.gates.every((g) => /-(?:add-rule|strengthen-rule)-portal$/.test(g)), `github-branch-protection.md:${b.line} binds a read-back to ${b.gates.join(', ')}: only the gates that add or strengthen protection bind one`);
+  }
   // the batch script run (R3): its read-back step and its checkpoint (code review round 2, finding 5)
   assert.match(page('fleet-device-actions'), /\*\*Read-back:\*\* [^\n]*`node scripts\/adapters\/fleet-client\.js verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\] --execute`/);
   // the pilot (E1) and the batch (E2) are two changes with two ids, and status proves one host,
@@ -323,7 +424,7 @@ const printedSeq = (c, text) => (c.name === 'jira' ? text.match(/^Recorded as au
 for (const c of CONNECTORS) {
   test(`${c.name}: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none`, async (t) => {
     const tr = trail(t);
-    const change = tr.open(`${c.name}:${c.verify[0]}`);
+    const change = tr.open(audit.readBackFor(`${c.name}:${c.verify[0]}`, c.verify));
     const bound = await run(c, [...c.verify, '--change', change], tr);
     assert.equal(bound.code, 0, bound.text);
     const printed = printedSeq(c, bound.text);
@@ -396,7 +497,7 @@ test('fleet verify-script records its execution id as the run; every other read-
 for (const c of CONNECTORS) {
   test(`${c.name}: --change=chg-... is refused before any transport call with a message that names the two-argument form`, async (t) => {
     const tr = trail(t);
-    const change = tr.open(`${c.name}:${c.verify[0]}`);
+    const change = tr.open(audit.readBackFor(`${c.name}:${c.verify[0]}`, c.verify));
     const r = await run(c, [...c.verify, `--change=${change}`], tr);
     assert.equal(r.code, 1, r.text);
     assert.equal(r.calls, 0);
@@ -462,14 +563,18 @@ test('every connector with a verify-* command takes --change out of argv, checks
     // the whole takeChange result, never bound.change (code review round 3, finding 2)
     assert.match(src, /changeRefusal\([^,()]+, [^,()]+, bound, /, `${name}: checks --change before any read, given takeChange's result`);
     assert.doesNotMatch(src, /changeRefusal\([^)]*bound\.change/, `${name}: never passes bound.change to changeRefusal`);
-    if (name === 'jira-client.js') assert.match(src, /runtime\.change = bound\.change;/, `${name}: records the verdict under the change`);
+    if (name === 'jira-client.js') {
+      assert.match(src, /runtime\.change = bound\.change;/, `${name}: records the verdict under the change`);
+      assert.match(src, /runtime\.argv = bound\.argv;/, `${name}: records the flags that change what its pass means`);
+    }
     else {
       // each call's arguments, with parentheses nested up to two levels
       const calls = [...src.matchAll(/recordVerdict\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)\)/g)].map((m) => m[1]);
       assert.ok(calls.length >= 1, `${name}: records its verdicts`);
-      // bound.change is the fourth argument; a read-back that takes a job id adds its run id after
-      // it (batch G3 close-out 2, owner decision 2)
-      for (const call of calls) assert.match(call, /,\s*bound\.change\s*(?:,\s*runIdOf\('[a-z-]+', name, args(?:, [^()]+)?\)\s*)?$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change fourth`);
+      // bound.change is the fourth argument, then the run id (a job id, or null: batch G3 close-out
+      // 2, owner decision 2), then bound.argv, from which the flags that change what the pass
+      // means are recorded (batch G3 close-out 3, owner decision H1)
+      for (const call of calls) assert.match(call, /,\s*bound\.change\s*,\s*(?:null|runIdOf\('[a-z-]+', name, args(?:, [^()]+)?\))\s*,\s*bound\.argv\s*$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change, the run id and bound.argv`);
     }
   }
   assert.equal(checked, 9, 'the nine connectors with read-backs');
@@ -519,3 +624,61 @@ test('changeRefusal refuses when it is not given takeChange\'s result', () => {
   }
   assert.equal(changeRefusal('fleet', 'verify-lock', { change: undefined }, null), null, 'no --change: nothing to check');
 });
+
+// ── Batch G3 close-out 3, owner decision H1: a presence pass never proves a removal ───────────
+// Each read-back whose pass a flag changes records the flags it ran with; one with none records
+// none.
+test('every connector records the flags that change what its read-back passes on, and none on a read-back without them', async (t) => {
+  const tr = trail(t);
+  for (const c of CONNECTORS) {
+    const kind = `${c.name}:${c.verify[0]}`;
+    const change = tr.open(audit.readBackFor(kind, c.verify));
+    const r = await run(c, [...c.verify, '--change', change], tr);
+    assert.equal(r.code, 0, `${c.name}: ${r.text}`);
+    const e = verifies(tr).pop();
+    assert.equal(e.flags, audit.passFlags(kind, c.verify), `${c.name}: flags`);
+  }
+  assert.equal(verifies(tr).find((e) => e.connector === 'msgraph').flags, '--enabled false');
+  assert.equal(verifies(tr).find((e) => e.connector === 'okta').flags, '--status SUSPENDED');
+  assert.equal(verifies(tr).find((e) => e.connector === 'fleet').flags, null);
+});
+
+// Per command with --absent: under a removal change a read without --absent is refused before any
+// transport call; one with it is recorded with its flag, links and reads done; under an add change
+// a read with --absent is refused before any transport call.
+const conn = (name) => CONNECTORS.find((c) => c.name === name);
+const ABSENT = [
+  { name: 'okta', command: 'verify-group-member', argv: ['--group', '00g1abcd2EFGH3ijk4x7', '--user', '00u1abcd2EFGH3ijk4x7'],
+    replies: () => [token({ scope: 'okta.users.read okta.groups.read' }), ok({ id: '00u1abcd2EFGH3ijk4x7', status: 'ACTIVE', profile: { login: at('user', 'example.com') }, _links: { self: { href: 'https://okta.example.invalid/api/v1/users/00u1abcd2EFGH3ijk4x7' } } }), ok([{ id: '00u0000000000000other', status: 'ACTIVE', profile: { login: at('other', 'example.com') } }])] },
+  { name: 'okta', command: 'verify-app-assigned', argv: ['--app', '0oa1abcd2EFGH3ijk4x7', '--user', '00u1abcd2EFGH3ijk4x7'],
+    replies: () => [token({ scope: 'okta.users.read okta.apps.read' }), ok({ id: '00u1abcd2EFGH3ijk4x7', status: 'ACTIVE', profile: { login: at('user', 'example.com') }, _links: { self: { href: 'https://okta.example.invalid/api/v1/users/00u1abcd2EFGH3ijk4x7' } } }), { status: 404, body: { errorCode: 'E0000007' } }] },
+  { name: 'github', command: 'verify-team-member', argv: ['--team', 'docs', '--user', 'a2'],
+    replies: () => [ok([{ login: 'a1', id: 1002, type: 'User', site_admin: false }])] },
+  { name: 'msgraph', command: 'verify-group-member', argv: ['--group', 'bbbbbbbb-0000-4000-8000-000000000002', '--user', 'aaaaaaaa-0000-4000-8000-000000000001'],
+    replies: () => [token({ expires_in: 3599 }), ok({ value: [{ id: 'aaaaaaaa-0000-4000-8000-000000000009' }] })] },
+  { name: 'jamf', command: 'verify-profile', argv: ['--serial', 'C02TEST0001', '--profile-id', '9', '--profile-identifier', 'com.example.profile.9'],
+    replies: () => [token(), ok({ totalCount: 1, results: [{ id: '42', hardware: { serialNumber: 'C02TEST0001' } }] }), ok({ totalCount: 1, results: [{ id: '42', configurationProfiles: [{ id: '7', displayName: 'Wi-Fi', profileIdentifier: 'com.example.profile.7' }] }] })] },
+];
+for (const a of ABSENT) {
+  test(`${a.name} ${a.command}: a removal change takes only the --absent read, and an add change never does`, async (t) => {
+    const tr = trail(t);
+    const c = { ...conn(a.name), replies: a.replies };
+    const kind = `${a.name}:${a.command}`;
+    const removal = tr.open(`${kind} --absent`);
+    const presence = await run(c, [a.command, ...a.argv, '--change', removal], tr);
+    assert.equal(presence.code, 1, presence.text);
+    assert.equal(presence.calls, 0, 'refused before any transport call');
+    assert.match(presence.text, new RegExp(`${kind} --absent`));
+    const absent = await run(c, [a.command, ...a.argv, '--absent', '--change', removal], tr);
+    assert.equal(absent.code, 0, absent.text);
+    const e = verifies(tr).pop();
+    assert.equal(e.flags, '--absent');
+    assert.equal(tr.record(['link', '--change', removal, '--verify-seq', String(e.seq)]).code, 0);
+    assert.equal(tr.record(['status', '--change', removal]).json.done, true);
+    const add = tr.open(kind);
+    const wrong = await run(c, [a.command, ...a.argv, '--absent', '--change', add], tr);
+    assert.equal(wrong.code, 1, wrong.text);
+    assert.equal(wrong.calls, 0);
+    assert.equal(tr.record(['status', '--change', add]).json.done, false);
+  });
+}

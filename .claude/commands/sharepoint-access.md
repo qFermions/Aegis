@@ -31,7 +31,7 @@ disable-model-invocation: true
 - **Target:** [UPN] in [SITE_NAME] Members
 - **Effect:** remove every site permission inherited from that group
 - **Scope:** one user and one SharePoint site group
-- **Reversibility:** reversible by adding the user back to the same group
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by adding the user back to the same group
 - **Required confirmation:** Type exactly `REMOVE [UPN] FROM [SITE_NAME] MEMBERS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [sharepoint-access-revoke-portal]:** Only after the exact match, remove `[UPN]` from `[SITE_NAME] Members`. **Stop sharing** and deleting an Entra guest have different scope and require their own action-specific confirmation.
@@ -50,7 +50,7 @@ Connect-PnPOnline -Url "https://[@Aegion_DOMAIN_SP]/sites/[SITE_NAME]" -Interact
 # Target: [UPN] in [SITE_NAME] Members
 # Effect: removes every site permission inherited from that group
 # Scope: one user and one SharePoint site group
-# Reversibility: reversible by adding the user back to the same group
+# Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by adding the user back to the same group
 $requiredConfirmation = "REMOVE [UPN] FROM [SITE_NAME] MEMBERS"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

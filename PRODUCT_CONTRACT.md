@@ -228,3 +228,24 @@ and every gate that existed there still exists.
   host name typed in its place is refused before any read. Reason: code review round 3 of PR #8;
   it narrows an existing read, it adds none.
 - Not built: binding a read-back to the exact object it read (owner decision 3, "not now").
+
+Batch G3 close-out 3 (2026-10-31, branch `fix/g3-closeout-3`, base `main` at `0a5feb7`).
+Nothing was removed and no sentence above changed; the boundary paragraph is as at `0a5feb7`,
+and every gate that existed there still exists, with no field changed but its Reversibility line
+(two `/mfa-issue` PORTAL ACTION lines also name their change record and bound read-back, and the
+session revocation's replaces "Verify after the documented propagation interval" with Microsoft's
+note that tokens may take a few minutes more, H3).
+
+- Added: two read-only Microsoft Graph read-backs, `verify-sessions-revoked` and
+  `verify-method-absent` (GET only, `User.Read.All` and `UserAuthenticationMethod.Read.All`), so
+  every R2 and R3 gate in `/mfa-issue` has a read-back. Reason: owner decision H3 on PR #8.
+- Changed: a read-back is recorded and named with the flags that change what its pass means
+  (`--absent` and the like), and a change counts only a read-back with the same ones, so a
+  presence pass never proves a removal; a counted gate's saved procedure carries `Count: N`, so
+  the approval covers N; every SAFETY GATE carries an R class from CLAUDE.md's table. Reason:
+  owner decisions H1, H2 and H4 on PR #8. They change how a change is proved and reported, not
+  what Aegis may do; no write path is added (`docs/aegis/boundary-audit.md` rows 31, 36 and 37).
+- Changed: a change record is opened only for a gate whose runbook binds a read-back for it, and
+  only with one of those read-backs; `open` marks its entries, and an older or hand-written entry
+  that fails `open`'s check proves nothing. Reason: security review 1 and code review rounds 1 to
+  3 of PR #9. It narrows how a change is proved; it adds no read and no write.

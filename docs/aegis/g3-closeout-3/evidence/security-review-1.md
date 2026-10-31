@@ -1,0 +1,25 @@
+# Security review 1 (`/security-review`, batch G3 close-out 3)
+
+- Range: `0a5feb7..77b74fd` (H1 to H5 and the docs), run on 2026-10-31. The captures in `docs/aegis/g3-closeout-3/` were left out (test output). REVIEW.md was read first.
+- Method: as the command prescribes, one sub-task searched for vulnerabilities. It traced data flow in `audit-log.js` (`PASS_FLAGS`, `passFlags`, `parseReadBack`, `checkWrite`), `change-record.js` (`checkGateReadBack`, `sameForm`, `checkCount`, `countedView`, `bindRefusal`), `cli-support.js` (`changeRefusal`, `recordVerdict`), every connector's `bound.argv` call, `jira-client.js`, `msgraph-client.js` (`verify-sessions-revoked`, `verify-method-absent`) and the runbook changes. It confirmed or ruled out each hypothesis with local probes on a fake transport and a scratch trail, with no network. A false-positive filter sub-task runs per finding; there were none to filter.
+- Result: **No findings at confidence 8 or above.** The search reported four observations below the bar; three were real gaps in files this batch edits and were fixed, each test first; one stays a stated limit.
+
+## Hypotheses checked and ruled out
+
+| # | question | why ruled out |
+|---|---|---|
+| 1 | Can the flags recorded differ from the flags the connector ran with? | Every connector passes the same `bound.argv` to `passFlags` and to its own parser; the shared parser (`readonly-contract.js`) and Jira's refuse a value starting with `--`, a repeated flag and an unknown name such as `--absent=false`; each value rule in `PASS_FLAGS` matches the connector's own, and where a connector is looser (Slack lower-cases a digest) the value is left out of the record and the run is refused under the change, failing closed. |
+| 2 | Can `parseReadBack`, `checkWrite`, `sameForm` or `checkCount` be fooled by `__proto__`, `constructor`, a newline, a double or trailing space, a repeated flag, flag order or `--absent=false`? | Each is refused or put into the one sorted form; the rule tables are read through own-property checks only; `$` is not multiline, so a newline cannot slip past an anchor. |
+| 3 | Can a wrong read count at `open`, `link` or `status` within one read-back? | Probed end to end: `open` refuses `--enabled true` and the bare form for a sign-in block; a run with `--enabled true` under the change is refused before any read; `link` and `countedView` compare `readBackOf` with the procedure's `read_back`, and an entry without recorded flags reads `null`, failing closed. |
+| 4 | Can the `Count: N` line be faked? | `checkCount` needs exactly one ASCII line `Count: N` equal to `--expected`, on the same text that is hashed; a look-alike line is ignored by the check but seen by the approver. |
+| 5 | Does `msgraph-client.js` add a write, a path injection, a secret in output or a read without `--execute`? | Both routes are GET; `--user` is checked and URL-encoded, `.` and `..` refused; `--method-id` never reaches the URL; no new value is logged; without `--execute` the run returns before any request; a malformed time fails closed and a paged method list never proves absence. |
+| 6 | Secrets, hostnames or personal data added? | Every added line grepped: only `example.com`, `*.example.invalid` and learn.microsoft.com links. |
+
+## Observations below the bar, and what was done
+
+| # | observation (search confidence) | action |
+|---|---|---|
+| 1 | `checkGateReadBack` compared only the gate's lines of the same read-back, so a removal gate could be opened for another connector's or command's presence read (for example `okta-group-membership-bulk-remove-portal` with `msgraph:verify-group-member`), whose pass would then prove the removal (medium) | A gap in H1, fixed: a gate whose runbook binds read-backs takes only one of those, in the form its line runs (`c9c3763` red, `cf33cd6` green; `sr1-gate-kind-red.txt`, `sr1-gate-kind-green.txt`). A gate whose runbook binds no read-back is still not compared: whether `open` should refuse it is an owner decision in PR #9 |
+| 2 | `verify-method-absent` compared the method id case for case, so a GUID typed in capitals read as absent while Graph listed it in lower case; a typo or a made-up id also reads absent (medium) | The case gap fixed: a GUID is compared without case, any other id keeps its case (`2f0f6b2` red, `82e1e17` green; `sr1-method-case-red.txt`, `sr1-method-case-green.txt`). That the id read is the method removed stays the object-level binding limit (owner decision 3, parked) |
+| 3 | `verify-sessions-revoked` passes or fails on `--not-before`, which is not recorded, so an early time passes for any user (low) | Not changed: a time bound is not a pass flag (`pass-flags.test.js`, TIME), as with `verify-password-changed`; recording it and holding it to the approval's time belongs with object-level binding, an owner decision |
+| 4 | The verify entry's new `flags` field skipped the trail's credential-shape check, and a `ghp_` token fits Google Workspace's `--event` rule (low, hardening) | Fixed: `flags` uses `matches`, like every other text field (`ef31ef3` red, `4d6ed7a` green; `sr1-flags-shape-red.txt`, `sr1-flags-shape-green.txt`) |

@@ -1,0 +1,135 @@
+# command: node --test scripts/audit/change-record.test.js
+# commit: 71f656f (plus uncommitted changes in the working tree)  started: 2026-10-31T08:26:50Z  node: v24.22.2
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (214.136282ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (136.561101ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (196.014597ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (849.279476ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (354.082516ms)
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one (334.43279ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (172.657783ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (418.314234ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (326.988271ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (105.518048ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.473922ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (410.113639ms)
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (226.247822ms)
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI (211.288021ms)
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (97.184698ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.921491ms)
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints (60.913493ms)
+✔ a counted gate opened without --expected is refused at open, and nothing is recorded (314.162224ms)
+✔ a gate without a count refuses --expected and keeps the one-read-back rule (163.078381ms)
+✔ k below N reads partial and never done; k equal to N reads done (218.54516ms)
+✔ one failed host keeps the change not done and names that read-back (250.562117ms)
+✔ the same execution id read twice counts once (191.767824ms)
+✔ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (195.902723ms)
+✔ only bound read-backs of the named kind recorded after the approval count toward k (159.539199ms)
+✔ the audit trail takes a run id that is a job id and refuses one that is not job-shaped (5.152149ms)
+✔ a Fleet read with no run id is listed as uncounted: one that got no answer does not block, a passing one does not count (256.474133ms)
+✔ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial (325.918127ms)
+✔ open refuses a command with no runbook, and checks the gate before the count (136.632039ms)
+✔ a Fleet failure with an answer but no run id blocks; open's next step and the trail follow the run-id rule (197.430254ms)
+✔ open refuses a gate the named runbook does not have (43.484751ms)
+✔ a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward (326.64096ms)
+✔ open names the read-back with its pass flags, in one form, and refuses a flag that does not change what a pass means (139.053657ms)
+✔ open refuses a removal gate named without --absent, and an add gate named with it (178.106028ms)
+✔ open refuses a read-back the gate's runbook does not bind for it: another connector's or command's read never proves a removal (339.318279ms)
+✔ a read-back named for several gates in one comment binds each of them (684.476778ms)
+✔ open refuses a gate whose runbook binds no read-back: its proof is the read its runbook names, never a change record (215.678024ms)
+✔ an exception gate that weakens protection is never opened for the read that passes when protection is on (102.126485ms)
+✔ a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change (302.086069ms)
+✔ an add change is not done by an --absent read (303.129305ms)
+✔ a counted removal counts only --absent reads: a presence read is listed as uncounted (284.640506ms)
+✔ a change whose read-back its gate no longer binds in that form (opened before this batch, or written around the CLI) is never done and refuses its read (137.393043ms)
+✖ a done change stays done after its runbook changes; only a read-back named without its line's pass flags is stale (13.072588ms)
+✖ approve refuses a change whose read-back is named without its gate's pass flags, and records nothing (72.440349ms)
+✔ a counted gate's procedure carries its count, and open refuses an N that differs from it or a procedure without one (202.45156ms)
+✔ a second count written in another shape (indented, a bullet, a quote, a heading, another case) is refused (436.328554ms)
+✔ an approval given for one N does not cover a different N (254.881241ms)
+✔ a gate without a count keeps today's rule: no Count line needed, and --expected still refused (144.502204ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 45
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10830.659049
+
+✖ failing tests:
+
+test at scripts/audit/change-record.test.js:825:1
+✖ a done change stays done after its runbook changes; only a read-back named without its line's pass flags is stale (13.072588ms)
+  AssertionError [ERR_ASSERTION]: {
+    "change": "chg-5197aa46c12b",
+    "done": false,
+    "chain": "intact",
+    "procedure": {
+      "seq": 1,
+      "command": "aegis-test",
+      "gate": "aegis-test-gate-1",
+      "r_class": "R2",
+      "target": "[UPN]",
+      "read_back": "okta:verify-group-member --absent",
+      "procedure_sha256": "c06327a61aa64f4a4d210697e61f7c34c9c0b7b4e80df599b51f6133a1ae7dd2"
+    },
+    "approval": {
+      "seq": 2,
+      "ref": "IT-123",
+      "matches": true
+    },
+    "readBack": {
+      "seq": 3,
+      "connector": "okta",
+      "command": "verify-group-member",
+      "verified": true
+    },
+    "missing": [
+      "change chg-5197aa46c12b names okta:verify-group-member --absent for gate aegis-test-gate-1, which its runbook does not bind in that form (a change opened before the batch G3 close-out 3, or written around the CLI), so nothing proves it; open a new change (gate aegis-test-gate-1 in .claude/commands/aegis-test.md binds no read-back: a change record is opened only for a gate whose runbook names its read-back with --change [CHANGE_ID]; this gate's proof is the read its runbook names)"
+    ]
+  }
+  
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:845:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:848:1
+✖ approve refuses a change whose read-back is named without its gate's pass flags, and records nothing (72.440349ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-0123456789ab",
+    "ref": "IT-123",
+    "audit_seq": 2,
+    "note": "The approval authorizes a person's procedure. Aegis makes no change: a person runs it, then the verify-* read-back proves it."
+  }
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:855:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 0,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T08:27:01Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

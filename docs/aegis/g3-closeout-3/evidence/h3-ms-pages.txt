@@ -1,0 +1,72 @@
+# command: curl -sS -L --max-time 60 -o <page>.html <url>, then each page's main text extracted (tags removed) and the lines below kept verbatim
+# fetched: 2026-10-31T06:54:40Z https://learn.microsoft.com/graph/api/user-revokesigninsessions?view=graph-rest-1.0; 200 https://learn.microsoft.com/en-us/graph/api/user-revokesigninsessions?view=graph-rest-1.0 59353; 2026-10-31T06:54:40Z https://learn.microsoft.com/graph/api/resources/user?view=graph-rest-1.0; 200 https://learn.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0 172511; 2026-10-31T06:54:41Z https://learn.microsoft.com/graph/api/user-get?view=graph-rest-1.0; 200 https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0 105843; 2026-10-31T06:54:42Z https://learn.microsoft.com/graph/api/authentication-list-methods?view=graph-rest-1.0; 200 https://learn.microsoft.com/en-us/graph/api/authentication-list-methods?view=graph-rest-1.0 61942
+--- user: revokeSignInSessions, https://learn.microsoft.com/graph/api/user-revokesigninsessions?view=graph-rest-1.0 (extracted lines 26 to 35):
+Namespace: microsoft.graph
+Invalidates all the refresh tokens issued to applications for a user (and session cookies in a user's browser), by resetting the
+signInSessionsValidFromDateTime
+user property to the current date-time. Typically, this operation is performed (by the user or an administrator) if the user has a lost or stolen device. This operation prevents access to the organization's data through applications on the device by requiring the user to sign in again to all applications that they consented to previously, independent of device.
+If the application attempts to redeem a delegated access token for this user by using an invalidated refresh token, the application will get an error. If this happens, the application will need to acquire a new refresh token by making a request to the authorize endpoint, which will force the user to sign in.
+Note
+After you call
+revokeSignInSessions
+, there might be a small delay of a few minutes before tokens are revoked.
+This API doesn't revoke sign-in sessions for external users, because external users sign in through their home tenant.
+--- the same page, permissions (extracted lines 50 to 66):
+. For details about delegated and application permissions, see
+Permission types
+. To learn more about these permissions, see the
+permissions reference
+.
+Permission type
+Least privileged permissions
+Higher privileged permissions
+Delegated (work or school account)
+User.RevokeSessions.All
+AgentIdUser.ReadWrite.All, AgentIdUser.ReadWrite.IdentityParentedBy, Directory.ReadWrite.All, User.ReadWrite.All
+Delegated (personal Microsoft account)
+Not supported.
+Not supported.
+Application
+User.RevokeSessions.All
+Not available.
+--- user resource type, https://learn.microsoft.com/graph/api/resources/user?view=graph-rest-1.0, the signInSessionsValidFromDateTime row (extracted lines 1868 to 1875):
+signInSessionsValidFromDateTime
+DateTimeOffset
+Any refresh tokens or session tokens (session cookies) issued before this time are invalid. Applications get an error when using an invalid refresh or session token to acquire a delegated access token (to access APIs such as Microsoft Graph). If this happens, the application needs to acquire a new refresh token by requesting the authorized endpoint. Read-only. Use
+revokeSignInSessions
+to reset.
+Requires
+$select
+to retrieve.
+--- Get user, https://learn.microsoft.com/graph/api/user-get?view=graph-rest-1.0, permissions (extracted lines 65 to 80):
+Permission types
+. To learn more about these permissions, see the
+permissions reference
+.
+Permission type
+Least privileged permissions
+Higher privileged permissions
+Delegated (work or school account)
+User.Read
+User.ReadWrite, User.ReadBasic.All, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+Delegated (personal Microsoft account)
+User.Read
+User.ReadWrite
+Application
+User.Read.All
+User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+--- List methods, https://learn.microsoft.com/graph/api/authentication-list-methods?view=graph-rest-1.0, permissions on other users (extracted lines 67 to 80):
+Permissions acting on other users
+Permission type
+Least privileged permissions
+Higher privileged permissions
+Delegated (work or school account)
+UserAuthenticationMethod.Read.All
+UserAuthenticationMethod.ReadWrite.All
+Delegated (personal Microsoft account)
+Not supported.
+Not supported.
+Application
+UserAuthenticationMethod.Read.All
+UserAuthenticationMethod.ReadWrite.All
+Important

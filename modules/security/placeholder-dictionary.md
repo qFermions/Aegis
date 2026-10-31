@@ -117,6 +117,10 @@ connector and `verify-*` command and approved). Note templates keep using lowerc
 single-letter fill-ins (`[X]`, `[N]`, `[timestamp]`) for numbers and times, as the
 existing runbooks do.
 
+Added with the batch G3 close-out 3 (2026-10-31): `[METHOD_ID]` (one authentication method's
+id, as `node scripts/adapters/msgraph-client.js auth-methods` prints it and the portal shows
+it; `verify-method-absent --method-id [METHOD_ID]` proves that method is gone).
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

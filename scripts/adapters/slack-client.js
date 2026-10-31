@@ -825,7 +825,7 @@ async function run(argv, env, deps = {}) {
   }
 
   const res = def.kind === 'verify'
-    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps), bound.change)
+    ? recordVerdict(cli.audit, 'slack', await def.verify(command, args, ctx, client, steps), bound.change, null, bound.argv)
     : await runRead(command, def, steps, client);
   // Only the variable this command's spec names is read, and only after the request
   // was allowed; that value is redacted from everything printed.

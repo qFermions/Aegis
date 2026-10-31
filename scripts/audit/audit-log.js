@@ -143,9 +143,16 @@ function checkEntry(entry) {
     }
   }
   if (kind === 'procedure' && fields.expected !== null && fields.change === null) throw new AuditRefused('a count is recorded only on a change record');
-  // a run id only on a read-back that records one (code review round 2 of the batch G3
-  // close-out 2, finding 14), so no other read-back's flag value can reach the trail as a run
-  if (kind === 'verify' && fields.run !== null && !recordsRunId(`${fields.connector}:${fields.command}`)) {
+  return fields;
+}
+
+// Rules for writing a new entry, on top of its form (checkEntry). They follow today's tables, so
+// verify does not apply them to entries already in the chain: a trail written under an older
+// run-id table still verifies (code review round 3 of the batch G3 close-out 2, finding 7).
+function checkWrite(fields) {
+  // a run id only on a read-back that records one (round 2, finding 14), so no other read-back's
+  // flag value can reach the trail as a run
+  if (fields.kind === 'verify' && fields.run !== null && !recordsRunId(`${fields.connector}:${fields.command}`)) {
     throw new AuditRefused('a run id is recorded only by a read-back that takes one');
   }
   return fields;
@@ -320,7 +327,7 @@ function openAuditLog({ dir = defaultAuditDir(), now = Date.now } = {}) {
   // guard(entries), when given, runs under the write lock on the trail as it is; if it throws,
   // nothing is written (a check that must not race another writer)
   function append(entry, { guard } = {}) {
-    const fields = checkEntry(entry);
+    const fields = checkWrite(checkEntry(entry));
     return withLock(() => {
       if (guard) guard(entries());
       const before = tail();

@@ -1,0 +1,11 @@
+# command: bash docs/aegis/g3/evidence/tools/test-counts.sh <base-clone>
+# commit: fb22339e  started: 2026-10-31T09:07:53Z  node: v24.22.2
+scripts/adapters/change-binding.test.js: base 72 head 84 (12)
+scripts/adapters/msgraph-client.test.js: base 6 head 10 (4)
+scripts/audit/audit-log.test.js: base 14 head 18 (4)
+scripts/audit/change-record.test.js: base 31 head 50 (19)
+scripts/audit/counted-gates.test.js: base 3 head 4 (1)
+scripts/audit/pass-flags.test.js: base 0 head 5 (5)
+scripts/gate-r-class.test.js: base 0 head 3 (3)
+scripts/mfa-issue-gates.test.js: base 5 head 9 (4)
+files: 60; tests added 52; tests removed 0

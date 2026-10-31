@@ -1,0 +1,10 @@
+# command: bash docs/aegis/g3-closeout/evidence/tools/e11-state-files.sh 0a5feb7
+# commit: fb22339e  started: 2026-10-31T09:07:50Z  node: v24.22.2
+CLAUDE.md: 19202 bytes (limit 20000); lines changed since 0a5feb7: 0
+PRODUCT_CONTRACT.md "Changes in this batch" heading: 144:## Changes in this batch
+PRODUCT_CONTRACT.md lines naming the batch G3 close-out: 3
+PRODUCT_CONTRACT.md lines removed since 0a5feb7: 0
+PROJECT_STATE.md close-out heading: 129:## Changed by the batch G3 close-out
+progress.md: 8 lines (limit 40); Next action: 1; last commit touching it: 6bc59da1
+# exit: 0  finished: 2026-10-31T09:07:50Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -1,0 +1,7 @@
+# command: node scripts/lint/command-structure.js
+# commit: fb22339e  started: 2026-10-31T09:05:25Z  node: v24.22.2  pwsh: PowerShell 7.6.9
+command-structure lint -- 108 commands (B:23 E:6 D:3 C:11 A:63 ALIAS:2)
+
+clean -- structural GUI-first contract holds for every operational/troubleshooting command
+# exit: 0  finished: 2026-10-31T09:05:25Z
+# capture edited after the run: U+2014 written as "--" (2), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

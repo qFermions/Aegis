@@ -23,7 +23,7 @@ disable-model-invocation: true
 - **Target:** [DL_NAME]
 - **Effect:** allow unauthenticated external senders to address the distribution list
 - **Scope:** one distribution list; moderation remains as displayed
-- **Reversibility:** reversible by requiring authenticated senders again
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, the change of a sending control; it widens who may send to the list and fits no closer row, so the higher class): reversible by requiring authenticated senders again
 - **Required confirmation:** Type exactly `ALLOW EXTERNAL SENDERS TO [DL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [distribution-external-senders-portal]:** Only after the exact match, open `[DL_NAME]` → Settings → enable **Allow external senders to email this group**, then verify moderation and delivery restrictions.

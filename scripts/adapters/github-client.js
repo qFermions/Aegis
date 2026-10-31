@@ -375,7 +375,7 @@ async function run(argv, env = process.env, deps = {}) {
       else {
         const verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed };
         if (!verdict.verified) verdict.reason = judged.reason;
-        res = recordVerdict(cli.audit, 'github', verdict, bound.change);
+        res = recordVerdict(cli.audit, 'github', verdict, bound.change, null, bound.argv);
       }
     }
     const shown = redactDeep(res, secrets());

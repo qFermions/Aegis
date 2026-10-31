@@ -1,0 +1,76 @@
+# command: node --test scripts/audit/change-record.test.js
+# commit: eb22556 (plus uncommitted changes in the working tree)  started: 2026-10-31T08:00:26Z  node: v24.22.2
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (230.955487ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (158.038436ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (180.295034ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (735.2613ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (411.747022ms)
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one (362.022083ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (132.574604ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (435.566686ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (309.702638ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (94.521066ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.426621ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (329.923122ms)
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (161.796849ms)
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI (192.195338ms)
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (131.728753ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.419697ms)
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints (56.894982ms)
+✔ a counted gate opened without --expected is refused at open, and nothing is recorded (241.986751ms)
+✔ a gate without a count refuses --expected and keeps the one-read-back rule (142.967012ms)
+✔ k below N reads partial and never done; k equal to N reads done (188.544139ms)
+✔ one failed host keeps the change not done and names that read-back (197.94192ms)
+✔ the same execution id read twice counts once (191.536644ms)
+✔ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (242.198202ms)
+✔ only bound read-backs of the named kind recorded after the approval count toward k (173.594638ms)
+✔ the audit trail takes a run id that is a job id and refuses one that is not job-shaped (4.856535ms)
+✔ a Fleet read with no run id is listed as uncounted: one that got no answer does not block, a passing one does not count (221.731392ms)
+✔ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial (326.970031ms)
+✔ open refuses a command with no runbook, and checks the gate before the count (118.887039ms)
+✔ a Fleet failure with an answer but no run id blocks; open's next step and the trail follow the run-id rule (178.952879ms)
+✔ open refuses a gate the named runbook does not have (44.343985ms)
+✔ a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward (361.566801ms)
+✔ open names the read-back with its pass flags, in one form, and refuses a flag that does not change what a pass means (161.574914ms)
+✔ open refuses a removal gate named without --absent, and an add gate named with it (187.458501ms)
+✔ open refuses a read-back the gate's runbook does not bind for it: another connector's or command's read never proves a removal (324.993907ms)
+✔ a read-back named for several gates in one comment binds each of them (666.545715ms)
+✔ open refuses a gate whose runbook binds no read-back: its proof is the read its runbook names, never a change record (182.888761ms)
+✔ an exception gate that weakens protection is never opened for the read that passes when protection is on (118.558428ms)
+✔ a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change (360.352264ms)
+✔ an add change is not done by an --absent read (285.689645ms)
+✔ a counted removal counts only --absent reads: a presence read is listed as uncounted (206.645452ms)
+✖ a change whose read-back its gate no longer binds in that form (opened before this batch, or written around the CLI) is never done and refuses its read (5.075409ms)
+✔ a counted gate's procedure carries its count, and open refuses an N that differs from it or a procedure without one (239.182006ms)
+✔ an approval given for one N does not cover a different N (317.240944ms)
+✔ a gate without a count keeps today's rule: no Count line needed, and --expected still refused (165.423402ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 43
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9902.5406
+
+✖ failing tests:
+
+test at scripts/audit/change-record.test.js:802:1
+✖ a change whose read-back its gate no longer binds in that form (opened before this batch, or written around the CLI) is never done and refuses its read (5.075409ms)
+  AssertionError [ERR_ASSERTION]: the presence read is refused before any read
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:809:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'null',
+    expected: /okta-group-membership-remove-person-portal/,
+    operator: 'match',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T08:00:36Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

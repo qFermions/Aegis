@@ -620,7 +620,7 @@ async function run(argv, env = process.env, deps = {}) {
       return dryRunExit(command, err);
     }
 
-    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : recordVerdict(cli.audit, 'linear', await VERIFY[command](client, a, now), bound.change);
+    const res = def.kind === 'read' ? await readOnce(client, command, def.document, variables) : recordVerdict(cli.audit, 'linear', await VERIFY[command](client, a, now), bound.change, null, bound.argv);
     const code = exitCodeFor(res);
     (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'linear' }));
     return code;

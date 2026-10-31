@@ -1,0 +1,37 @@
+# command: git diff -U14 0a5feb7 fb22339 -- docs/security/STATE_CHANGE_INVENTORY.json
+# the one inventory entry whose fields changed: its impactCategories gain two keyword categories (checks.md D6)
+diff --git a/docs/security/STATE_CHANGE_INVENTORY.json b/docs/security/STATE_CHANGE_INVENTORY.json
+index 8976a40..cd80cab 100644
+--- a/docs/security/STATE_CHANGE_INVENTORY.json
++++ b/docs/security/STATE_CHANGE_INVENTORY.json
+@@ -6874,28 +6874,30 @@
+       ]
+     },
+     {
+       "id": "okta-group-membership-rule-change-portal",
+       "file": ".claude/commands/okta-group-membership.md",
+       "kind": "portal",
+       "mode": "gated",
+       "sinks": [
+         {
+           "sink": "portal:update",
+           "count": 1
+         }
+       ],
+       "impactCategories": [
++        "data-removal related",
++        "destructive",
+         "external-system mutation",
+         "identity-related",
+         "permission-related"
+       ]
+     },
+     {
+       "id": "okta-group-membership-rule-create-portal",
+       "file": ".claude/commands/okta-group-membership.md",
+       "kind": "portal",
+       "mode": "gated",
+       "sinks": [
+         {
+           "sink": "portal:add",
+           "count": 1

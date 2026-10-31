@@ -1,0 +1,48 @@
+# command: node --test scripts/audit/audit-log.test.js
+# commit: 82e1e17 (plus uncommitted changes in the working tree)  started: 2026-10-31T07:37:14Z  node: v24.22.2
+✔ append writes one hash-chained JSON line per entry and a head naming the last one; verify passes (18.154612ms)
+✔ an edited entry, a cut line, a removed tail, a removed head and an inserted entry are each reported as the first broken link (49.320193ms)
+✔ a reordered log is detected at the first entry out of place (7.808673ms)
+✔ an append onto a broken tail is refused and names verify; the file is unchanged (6.296112ms)
+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (3.860872ms)
+✔ concurrent writers in separate processes never corrupt the chain (238.839653ms)
+✔ on Windows a lock file that another writer is deleting (EPERM or EACCES) means wait, not fail (40.88316ms)
+✔ on Windows a folder that refuses every new file (EPERM) is reported as itself, fast (1.49276ms)
+✔ on Windows a lock that stays pending deletion and unreadable for a while is waited out while the folder takes new files (592.876587ms)
+✔ status summarises connector failures by connector and state over a time window, matching a known event set (13.253538ms)
+✔ the CLI: verify exits 0 on an intact chain and 2 naming the first broken link; status prints the summary; a bad window is an input error (203.227647ms)
+✔ the audit CLI refuses a procedure under a change id; the trail refuses a change-linked procedure without read-back, digest, gate or an R2/R3 class (102.524605ms)
+✔ the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR overrides it, and the README says what the chain cannot prove (4.557689ms)
+✔ a run on a verify entry the run-id table does not name is refused on append, and an intact chain holding one still verifies (1.750881ms)
+✔ a verify entry records the flags that change what its pass means, in one form, and only on a read-back that has them (11.552191ms)
+✖ a verify entry's flags never hold a credential-shaped value (4.28732ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 15
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1383.488773
+
+✖ failing tests:
+
+test at scripts/audit/audit-log.test.js:386:1
+✖ a verify entry's flags never hold a credential-shaped value (4.28732ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception (AuditRefused): ghp_
+      at TestContext.<anonymous> (<repo>/scripts/audit/audit-log.test.js:392:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T07:37:15Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

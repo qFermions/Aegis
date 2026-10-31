@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` `[first.last]` `[MANAGER_UPN]` `[DEVICE_NAME]` `[EXTENSION]` `[SHARED_MAILBOX]` `[PRODUCT_PROFILE]` `[WORK_PHONE_DEVICE_GROUP]` — org values use the native `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below (blocking sign-in, revoking sessions, resetting the password and clearing MFA, in Phase A's read-backs), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and that read-back as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `msgraph:verify-account-enabled --enabled false`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. The other R2 and R3 gates here have no read-back in a read-only connector, so each one takes no change record (`open` refuses it): its proof is the read it names.
+
 ⚠️ **This is a destructive multi-system plan — route it through independent plan review before executing.** Every disable/wipe/removal step below hits the destructive-action gate: confirm before running.
 ⚠️ **Involuntary termination?** Complete Steps 1–4 BEFORE the user is notified. Speed matters.
 
@@ -24,7 +26,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [first.last] mapped to [UPN]
 - **Effect:** disable the authoritative on-prem AD account
 - **Scope:** one verified AD identity; no cloud or sync action
-- **Reversibility:** reversible by separately re-enabling the AD account
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by separately re-enabling the AD account
 - **Required confirmation:** Type exactly `DISABLE AD ACCOUNT [first.last] MAPPED TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-ad-disable-portal]:** Only after the exact match, ADUC (`dsa.msc`) → `[first.last]` → right-click → **Disable Account**, then read back the disabled state (Account tab shows the account disabled).
@@ -33,7 +35,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN] and its displayed Entra object ID
 - **Effect:** block Microsoft Entra sign-in while normal directory sync propagates
 - **Scope:** one verified cloud identity
-- **Reversibility:** reversible by separately re-enabling sign-in
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by separately re-enabling sign-in
 - **Required confirmation:** Type exactly `BLOCK CLOUD SIGN-IN FOR [UPN] ID [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-cloud-block-portal]:** Only after the separate exact match, block sign-in for the displayed `[UPN]` object and read back the state. A forced sync is not authorized here; use the normal cycle or a separate `/ad-connect` runbook.
@@ -58,7 +60,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN]
 - **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies
 - **Scope:** Entra-managed refresh tokens and browser cookies for one user; current access tokens and app-issued sessions can persist until expiry
-- **Reversibility:** not reversible; authentication is required again
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; authentication is required again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-revoke-sessions-portal]:** Only after this separate exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions** → Confirm; verify after propagation.
@@ -72,7 +74,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [first.last] mapped to [UPN]
 - **Effect:** replace the authoritative password with an unshared random value
 - **Scope:** one verified hybrid identity
-- **Reversibility:** not reversible; another verified reset is required
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): not reversible; another verified reset is required
 - **Required confirmation:** Type exactly `RESET AD PASSWORD FOR [first.last] MAPPED TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-password-reset-portal]:** Only after the exact match, reset `[first.last]` in ADUC to a long random value and do not record or share it. Forced sync is a separate action.
@@ -82,17 +84,34 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ### STEP 4 — Clear ALL MFA methods
 
+**Counted change:** open the change record for [offboard-clear-mfa-portal] with `--read-back msgraph:verify-method-absent` and `--expected $methodCount`, the number of method IDs in the reviewed set. The procedure saved for approval carries the count on one line, `Count: $methodCount`, and `open` refuses an `--expected` that differs from it, so the approval covers the count. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N" over the bound `verify-method-absent` read-backs, one per method ID, lists any that failed, and reads done only when exactly `$methodCount` passed and none failed; anything else reads partial. The read-back records no run id, so a repeated read of the same method is not detected: read each method ID in the set once. A read that failed with an answer cannot be matched to a later pass of the same method, so it keeps the change partial: write the methods not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that method again. An answer that proves nothing either way (another page or no method list) is uncounted too, and reading again returns the same answer: check that method in the Entra admin center, write it in the ticket, and open a new change for the methods left.
+
 <!-- SAFETY GATE [offboard-clear-mfa-portal] -->
 - **Target:** [UPN] and the exact sorted authentication-method ID set represented by `$methodSetHash`
 - **Effect:** delete only the `$methodCount` authentication methods in that reviewed immutable-ID set
 - **Scope:** exactly `$methodCount` reviewed IDs for one user; stop on set drift or the first failure
-- **Reversibility:** not reversible; methods must be registered again
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "CA/MFA/licensing changes"): not reversible; methods must be registered again
 - **Required confirmation:** Render the displayed integer and SHA-256 set digest, then type exactly `DELETE $methodCount MFA METHODS FOR [UPN] SET $methodSetHash`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-clear-mfa-portal]:** Read the exact method IDs and types, sort the IDs, and compute/display `$methodSetHash` before approval. Immediately before the first deletion, re-query and stop unless both count and digest match. Delete only the frozen IDs one at a time; after each deletion, read back and require the remaining IDs to equal the frozen set minus verified completions. Stop on the first mismatch and report completed, possibly changed, and not-attempted IDs. Verify the final list is empty.
 
 ✅ Verify: Authentication methods list is empty.
 **Why:** A registered Authenticator on a personal phone is a standing approval channel — clearing it severs SSPR and any future re-auth path.
+
+### Phase A read-backs (read-only, after the person finishes)
+
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves four Phase A steps. Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
+
+```bash
+# HUMAN-RUN read-only read-back of [offboard-cloud-block-portal]: passes only when Entra shows sign-in blocked
+node scripts/adapters/msgraph-client.js verify-account-enabled --user [USER_ID] --enabled false --change [CHANGE_ID] --execute
+# HUMAN-RUN read-only read-back of [offboard-revoke-sessions-portal]: passes only when the sessions are valid only from [NOT_BEFORE] on (vendor fact M-26)
+node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+# HUMAN-RUN read-only read-back of [offboard-password-reset-portal]: passes only when Entra shows a password change at or after [NOT_BEFORE], after the next sync
+node scripts/adapters/msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+# HUMAN-RUN read-only read-back of [offboard-clear-mfa-portal], once for each method ID in the reviewed set: passes only when that ID is no longer listed
+node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+```
 
 ---
 
@@ -104,7 +123,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN]
 - **Effect:** convert one reviewed mailbox to Shared without changing delegation
 - **Scope:** one mailbox after size/archive and retention review
-- **Reversibility:** reversible by separately converting it back to User
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by separately converting it back to User
 - **Required confirmation:** Type exactly `CONVERT OFFBOARD MAILBOX [UPN] TO SHARED`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-mailbox-convert-portal]:** After checking size/archive requirements, only the exact match authorizes converting `[UPN]` to Shared. It does not authorize delegation or license removal.
@@ -113,7 +132,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [MANAGER_UPN] on mailbox [UPN]
 - **Effect:** grant Full Access without Send As or forwarding
 - **Scope:** one reviewed mailbox and one authorized manager
-- **Reversibility:** reversible by removing that Full Access grant
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by removing that Full Access grant
 - **Required confirmation:** Type exactly `GRANT [MANAGER_UPN] FULL ACCESS TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-mailbox-delegate-portal]:** Only after conversion read-back and the separate exact match, grant Full Access and verify the single permission entry.
@@ -137,7 +156,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN] and [MANAGER_UPN]
 - **Effect:** grant the manager access to the departing user OneDrive
 - **Scope:** one OneDrive site and one authorized manager
-- **Reversibility:** reversible by removing the manager site permission
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by removing the manager site permission
 - **Required confirmation:** Type exactly `GRANT [MANAGER_UPN] ACCESS TO [UPN] ONEDRIVE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-onedrive-portal]:** Only after business authorization and the exact match, create the OneDrive access link for `[MANAGER_UPN]`; record how to remove that permission.
@@ -153,7 +172,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN], the exact sorted direct-license SKU-ID set represented by `$licenseSetHash`, and checkpoint `$licenseCheckpointId`
 - **Effect:** remove every displayed license and start service-data retention timers
 - **Scope:** one user and exactly `$licenseCount` frozen direct assignments; group-based licensing is excluded
-- **Reversibility:** restore the exact captured assignments and disabled-plan state from `$licenseCheckpointId` before service-data retention expires
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, CA and licensing changes): restore the exact captured assignments and disabled-plan state from `$licenseCheckpointId` before service-data retention expires
 - **Required confirmation:** Render the reviewed count, full set digest, and checkpoint ID, then type exactly `REMOVE $licenseCount LICENSES SET SHA256 $licenseSetHash FROM [UPN] USING CHECKPOINT $licenseCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-license-remove-portal]:** Capture each direct SKU ID plus disabled-plan state in no-clobber checkpoint `$licenseCheckpointId`; sort the SKU IDs and display full SHA-256 `$licenseSetHash`. Verify Steps 5–6, then re-query immediately before the first removal and stop unless count and digest are identical. Remove only frozen SKU IDs one at a time; after each, require read-back to equal the frozen set minus verified completions. On failure report completed IDs, current ID as UNKNOWN/POSSIBLY CHANGED, and not-attempted IDs. Group-based licensing requires a separate group-membership action and is not authorized here.
@@ -171,7 +190,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN], the exact sorted immutable group-ID set represented by `$groupSetHash`, and checkpoint `$groupCheckpointId`
 - **Effect:** remove the user from each reviewed access group
 - **Scope:** exactly `$groupCount` frozen group IDs for one user; Domain Users is excluded
-- **Reversibility:** restore the captured immutable memberships from `$groupCheckpointId`
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the count can pass 10, so the higher class): restore the captured immutable memberships from `$groupCheckpointId`
 - **Required confirmation:** Render the reviewed count, full set digest, and checkpoint ID, then type exactly `REMOVE [UPN] FROM $groupCount ACCESS GROUPS SET SHA256 $groupSetHash USING CHECKPOINT $groupCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-group-strip-portal]:** Export immutable group IDs and pre-state to no-clobber `$groupCheckpointId`, sort the IDs, and display full SHA-256 `$groupSetHash`. Re-query immediately before the first change and stop on count or digest drift. Remove frozen IDs one at a time; after each, require the remaining set to equal frozen minus verified completions. On failure report completed IDs, current ID as UNKNOWN/POSSIBLY CHANGED, and not-attempted IDs.
@@ -180,7 +199,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN], the exact sorted distribution-list object-ID set represented by `$distributionListSetHash`, and checkpoint `$distributionListCheckpointId`
 - **Effect:** remove the user from each reviewed distribution list
 - **Scope:** exactly `$distributionListCount` frozen list IDs for one user
-- **Reversibility:** restore the captured immutable memberships from `$distributionListCheckpointId`
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the count can pass 10, so the higher class): restore the captured immutable memberships from `$distributionListCheckpointId`
 - **Required confirmation:** Render the reviewed count, full set digest, and checkpoint ID, then type exactly `REMOVE [UPN] FROM $distributionListCount DISTRIBUTION LISTS SET SHA256 $distributionListSetHash USING CHECKPOINT $distributionListCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-dl-strip-portal]:** Capture immutable list IDs and membership pre-state in no-clobber `$distributionListCheckpointId`, sort IDs, and display full SHA-256 `$distributionListSetHash`. Re-query before the first removal and stop on any drift. Remove frozen IDs one at a time with exact remaining-set read-back; report completed, UNKNOWN/POSSIBLY CHANGED current, and not-attempted IDs on the first failure.
@@ -189,7 +208,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [UPN], the exact sorted mailbox-ID/permission-type/trustee-ID set represented by `$delegationSetHash`, and checkpoint `$delegationCheckpointId`
 - **Effect:** remove the user's reviewed shared-mailbox permissions
 - **Scope:** exactly `$delegationCount` frozen delegation tuples for one user
-- **Reversibility:** restore captured permission tuples from `$delegationCheckpointId`
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the count can pass 10, so the higher class): restore captured permission tuples from `$delegationCheckpointId`
 - **Required confirmation:** Render the reviewed count, full set digest, and checkpoint ID, then type exactly `REMOVE $delegationCount MAILBOX DELEGATIONS SET SHA256 $delegationSetHash FOR [UPN] USING CHECKPOINT $delegationCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-mailbox-delegation-strip-portal]:** Capture immutable mailbox/trustee IDs, permission type, and inheritance state in no-clobber `$delegationCheckpointId`; sort canonical tuples and display full SHA-256 `$delegationSetHash`. Re-query before the first removal and stop on drift. Remove frozen tuples one at a time with exact remaining-set read-back; report completed, UNKNOWN/POSSIBLY CHANGED current, and not-attempted tuples on failure.
@@ -217,7 +236,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [DEVICE_NAME] and its displayed managed-device ID
 - **Effect:** factory-reset the verified corporate computer and erase its data
 - **Scope:** one work-owned managed device
-- **Reversibility:** irreversible; data requires a separate backup
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "Wipe"): irreversible; data requires a separate backup
 - **Required confirmation:** Render the displayed ID as `$deviceId`, then type exactly `FULL WIPE [DEVICE_NAME] WITH ID $deviceId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-device-wipe-portal]:** Use `/device-wipe` and only the exact Full Wipe phrase for the displayed corporate device. Retire is a different action; neither choice authorizes later object deletion.
@@ -237,7 +256,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [DEVICE_NAME] and its displayed managed-device ID rendered as `$deviceId`
 - **Effect:** wipe the verified corporate phone
 - **Scope:** one work-owned managed device; no group or object removal
-- **Reversibility:** irreversible; data requires a separate verified backup
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "Wipe"): irreversible; data requires a separate verified backup
 - **Required confirmation:** Render the displayed ID as `$deviceId`, then type exactly `WIPE WORK PHONE [DEVICE_NAME] WITH ID $deviceId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-work-phone-wipe-portal]:** Capture evidence/backup state and verify corporate ownership, name, and `$deviceId`. Only after the exact match, issue the wipe and verify its status. This phrase does not authorize group removal or device-object deletion.
@@ -246,7 +265,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** the work phone with ID `$deviceId` in [WORK_PHONE_DEVICE_GROUP]
 - **Effect:** remove that device's one deployment-group membership
 - **Scope:** one verified device object and one exact group after wipe status is recorded
-- **Reversibility:** reversible by restoring the captured group membership
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by restoring the captured group membership
 - **Required confirmation:** Type exactly `REMOVE DEVICE $deviceId FROM [WORK_PHONE_DEVICE_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-work-phone-group-remove-portal]:** Re-resolve `$deviceId`, confirm the wipe status and current group membership, then require this separate exact phrase. Remove only that membership and read it back; do not delete the device object.
@@ -260,7 +279,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [UPN] as the exact displayed VoIP identity
 - **Effect:** deactivate the VoIP user without reclaiming the extension or deleting voicemail
 - **Scope:** one VoIP identity
-- **Reversibility:** reversible by reactivating the identity from captured pre-state
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by reactivating the identity from captured pre-state
 - **Required confirmation:** Type exactly `DEACTIVATE VOIP USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-voip-deactivate-portal]:** Capture identity, routing, extension, and voicemail pre-state. Only after the exact match, deactivate `[UPN]` and read back the new state. This phrase authorizes no later action.
@@ -269,7 +288,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [EXTENSION] currently assigned to [UPN]
 - **Effect:** remove that assignment and return the extension to the available pool
 - **Scope:** one exact extension after the user's deactivation is verified
-- **Reversibility:** reversible by reassigning the captured extension/routing state
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): reversible by reassigning the captured extension/routing state
 - **Required confirmation:** Type exactly `RECLAIM VOIP EXTENSION [EXTENSION] FROM [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-voip-reclaim-extension-portal]:** Re-resolve the owner and routing state. Only after this separate exact match, reclaim `[EXTENSION]` and verify its pool/routing state.
@@ -278,7 +297,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** the displayed voicemail box for [UPN] / [EXTENSION], exact sorted message-ID set represented by `$voicemailSetHash`, and export checkpoint `$voicemailCheckpointId`
 - **Effect:** permanently delete exactly the exported voicemail messages
 - **Scope:** exactly `$voicemailCount` frozen immutable message IDs in one voicemail box
-- **Reversibility:** irreversible; recovery depends on verified export `$voicemailCheckpointId`
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): irreversible; recovery depends on verified export `$voicemailCheckpointId`
 - **Required confirmation:** Render the count, full set digest, and export checkpoint ID, then type exactly `DELETE $voicemailCount VOICEMAIL MESSAGES SET SHA256 $voicemailSetHash FOR [UPN] EXTENSION [EXTENSION] USING CHECKPOINT $voicemailCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-voicemail-clear-portal]:** Verify `$voicemailCheckpointId` opens, sort exported immutable message IDs, and display full SHA-256 `$voicemailSetHash`. Re-query before the first deletion and stop unless count and digest match. Delete only frozen IDs one at a time with exact remaining-set read-back; on failure report completed IDs, current ID as UNKNOWN/POSSIBLY CHANGED, and not-attempted IDs.
@@ -294,7 +313,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [UPN] as the exact displayed Zoom identity
 - **Effect:** deactivate the Zoom account without deleting recordings
 - **Scope:** one Zoom identity after meeting and recording ownership review
-- **Reversibility:** reversible by reactivating the user
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by reactivating the user
 - **Required confirmation:** Type exactly `DEACTIVATE ZOOM FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-zoom-portal]:** Verify that any separately authorized meeting/recording transfer is complete or documented as unnecessary. Only after the exact match, deactivate `[UPN]`. Account deletion and ownership transfer are not authorized by this phrase.
@@ -308,7 +327,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [UPN] and [PRODUCT_PROFILE]
 - **Effect:** remove the user from the Adobe product profile
 - **Scope:** one Adobe identity and one reviewed product profile
-- **Reversibility:** reversible by assigning the product profile again
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, CA and licensing changes): reversible by assigning the product profile again
 - **Required confirmation:** Type exactly `REMOVE [UPN] FROM [PRODUCT_PROFILE]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-adobe-portal]:** Only after the exact match, remove `[UPN]` from `[PRODUCT_PROFILE]` and verify the seat count. Adobe user deletion is a separate action and is not authorized here.
@@ -322,7 +341,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [UPN], the exact sorted remote-access entry-ID set represented by `$remoteAccessSetHash`, and checkpoint `$remoteAccessCheckpointId`
 - **Effect:** revoke client VPN and documented legacy remote-access rights
 - **Scope:** one user and exactly `$remoteAccessCount` frozen provider/object IDs
-- **Reversibility:** restore only captured entries from `$remoteAccessCheckpointId`
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): restore only captured entries from `$remoteAccessCheckpointId`
 - **Required confirmation:** Render the count, full set digest, and checkpoint ID, then type exactly `REVOKE $remoteAccessCount REMOTE ACCESS ENTRIES SET SHA256 $remoteAccessSetHash FOR [UPN] USING CHECKPOINT $remoteAccessCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-vpn-portal]:** Capture provider, immutable entry/group/credential ID, and pre-state in no-clobber `$remoteAccessCheckpointId`; sort canonical IDs and display full SHA-256 `$remoteAccessSetHash`. Re-query immediately before the first revocation and stop on drift. Revoke frozen entries one at a time with provider read-back; report completed, UNKNOWN/POSSIBLY CHANGED current, and not-attempted IDs on failure. Do not uninstall unrelated software.
@@ -336,7 +355,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [UPN], exact sorted site/owner/access-object tuples represented by `$siteAccessSetHash`, and request checkpoint `$siteAccessCheckpointId`
 - **Effect:** request alarm-code and badge deactivation from the named site owners
 - **Scope:** one user and exactly `$siteCount` frozen named-owner requests
-- **Reversibility:** reversible only through the physical-access owners using `$siteAccessCheckpointId`
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible only through the physical-access owners using `$siteAccessCheckpointId`
 - **Required confirmation:** Render the count, full set digest, and checkpoint ID, then type exactly `SEND $siteCount SITE ACCESS REVOCATIONS SET SHA256 $siteAccessSetHash FOR [UPN] USING CHECKPOINT $siteAccessCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-physical-portal]:** Capture site, named owner, access-object identifier, destination, and request body in no-clobber `$siteAccessCheckpointId`; sort canonical tuples and display full SHA-256 `$siteAccessSetHash`. Revalidate destinations/bodies immediately before sending. Send frozen requests one at a time, retain delivery receipts, and stop/report completed, UNKNOWN/POSSIBLY SENT current, and not-attempted request IDs on failure. Do not call the access revoked until each owner supplies completion evidence.
@@ -354,7 +373,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Target:** [first.last]
 - **Effect:** move the disabled AD account to the Disabled Users OU
 - **Scope:** one disabled AD object after sync-scope impact review
-- **Reversibility:** reversible by moving the object back to its recorded source OU
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, the hard-to-undo change; one object and one move back, but a move out of the sync scope takes the cloud object out of Entra, so the higher class): reversible by moving the object back to its recorded source OU
 - **Required confirmation:** Type exactly `MOVE [first.last] TO DISABLED USERS OU`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [offboard-disabled-ou-portal]:** Record the source OU and verify whether the target is outside sync scope. Only after the exact match, move the disabled account; this does not authorize account deletion.

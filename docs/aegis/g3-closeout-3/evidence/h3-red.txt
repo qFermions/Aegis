@@ -1,0 +1,340 @@
+# command: node --test scripts/adapters/msgraph-client.test.js scripts/mfa-issue-gates.test.js scripts/adapters/change-binding.test.js scripts/g3-boundary.test.js scripts/adapters/g3-runbooks.test.js
+# commit: 8292bed (plus uncommitted changes in the working tree)  started: 2026-10-31T07:01:21Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (35.973903ms)
+✔ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (17.104806ms)
+✔ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (14.423194ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.896159ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (15.935065ms)
+✔ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.538293ms)
+✔ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (13.541339ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.105563ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (13.011203ms)
+✔ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (15.527028ms)
+✔ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (19.404091ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.398854ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (11.473847ms)
+✔ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (15.826564ms)
+✔ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (17.356984ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.609961ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.614923ms)
+✔ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (12.606995ms)
+✔ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (14.156247ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.302936ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.05616ms)
+✔ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (12.874584ms)
+✔ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (17.697621ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.978726ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (12.37747ms)
+✔ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.29667ms)
+✔ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (17.983394ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.455067ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.364108ms)
+✔ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (8.336584ms)
+✔ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (12.001267ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.379111ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (11.888517ms)
+✔ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (8.431549ms)
+✔ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (10.406877ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.116285ms)
+✔ a verify-* with --change and no audit trail to check it against is refused, never run unbound (0.266996ms)
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (19.295768ms)
+✔ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (9.388254ms)
+✔ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (10.620768ms)
+✔ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (18.730516ms)
+✔ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (16.767018ms)
+✔ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (17.573161ms)
+✔ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (17.050053ms)
+✔ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (15.871412ms)
+✔ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (10.029891ms)
+✔ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (10.817374ms)
+✔ fleet verify-script records its execution id as the run; every other read-back records none (51.44434ms)
+✔ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.858168ms)
+✔ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.730479ms)
+✔ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.178856ms)
+✔ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.099454ms)
+✔ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.127781ms)
+✔ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.375294ms)
+✔ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.54472ms)
+✔ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.50246ms)
+✔ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.673802ms)
+✔ no support file under scripts/ has a name node --test runs as a test file (13.531273ms)
+✔ the contract, cli-support and the audit trail agree on what a verify-* command and a change id are (0.323208ms)
+✔ offline commands refuse --change as not a read-back, before reading any file (0.609888ms)
+✔ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (7.118543ms)
+✔ fleet: --change=chg-... on a plain read is refused as not a read-back (3.772079ms)
+✔ github: --change=chg-... on a plain read is refused as not a read-back (1.077815ms)
+✔ google-workspace: --change=chg-... on a plain read is refused as not a read-back (0.961524ms)
+✔ jamf: --change=chg-... on a plain read is refused as not a read-back (1.154374ms)
+✔ linear: --change=chg-... on a plain read is refused as not a read-back (0.907899ms)
+✔ msgraph: --change=chg-... on a plain read is refused as not a read-back (1.048142ms)
+✔ okta: --change=chg-... on a plain read is refused as not a read-back (0.98449ms)
+✔ slack: --change=chg-... on a plain read is refused as not a read-back (1.050525ms)
+✔ jira: --change=chg-... on a plain read is refused as not a read-back (0.92093ms)
+✔ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (14.829553ms)
+✔ changeRefusal refuses when it is not given takeChange's result (0.195257ms)
+✔ every connector records the flags that change what its read-back passes on, and none on a read-back without them (87.939316ms)
+✔ okta verify-group-member: a removal change takes only the --absent read, and an add change never does (17.481932ms)
+✔ okta verify-app-assigned: a removal change takes only the --absent read, and an add change never does (15.718012ms)
+✔ github verify-team-member: a removal change takes only the --absent read, and an add change never does (16.657675ms)
+✔ msgraph verify-group-member: a removal change takes only the --absent read, and an add change never does (16.190562ms)
+✔ jamf verify-profile: a removal change takes only the --absent read, and an add change never does (16.381128ms)
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (11.626559ms)
+✔ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (11.696361ms)
+✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (1.140951ms)
+✔ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (17.57215ms)
+✔ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (8.17219ms)
+✔ github-org-security: every github line runs as written (dry run) and the required read-backs are there (6.775299ms)
+✔ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (6.36768ms)
+✔ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (6.618206ms)
+✔ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (11.188312ms)
+✔ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (8.711764ms)
+✔ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (11.145403ms)
+✔ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (18.818978ms)
+✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (3.071536ms)
+✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (2.804812ms)
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (2.441136ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (8.000371ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (8.776289ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (1.567296ms)
+✔ verify read-backs for the password-reset and MFA runbooks (18.994853ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (1.465946ms)
+✖ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (0.978326ms)
+✖ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (0.537255ms)
+✔ github: every connector command sends reads only, and nothing without --execute (23.361846ms)
+✔ github: the spec defines GET routes only and the source opens no connection and writes no file (0.77418ms)
+✖ msgraph: every connector command sends reads only, and nothing without --execute (27.65598ms)
+✔ msgraph: the spec defines GET routes only and the source opens no connection and writes no file (0.41463ms)
+✔ okta: every connector command sends reads only, and nothing without --execute (26.505055ms)
+✔ okta: the spec defines GET routes only and the source opens no connection and writes no file (1.354049ms)
+✔ no G3 module opens a connection of its own (1.391593ms)
+✔ the intake sends at most one read and writes only the case state.json, only in saveCase (14.586547ms)
+✔ every G3 connector command a runbook or README tells an operator to run is exercised above (8.416969ms)
+✔ every G3 runbook is operator-only, states the execution boundary, and every state change in it is gated or a preview (3.425916ms)
+✔ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (3.521024ms)
+✔ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.58496ms)
+✔ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.286646ms)
+✔ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.372463ms)
+✖ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (2.021749ms)
+✖ every R2 and R3 gate in /mfa-issue has a read-back bound to its change (0.276567ms)
+ℹ tests 116
+ℹ suites 0
+ℹ pass 110
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1059.312499
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:235:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (19.295768ms)
+  AssertionError [ERR_ASSERTION]: the 81 read-backs of R2 and R3 gates
+  
+  79 !== 81
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:295:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 79,
+    expected: 81,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/msgraph-client.test.js:205:1
+✖ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (0.978326ms)
+  AssertionError [ERR_ASSERTION]: Usage: node scripts/adapters/msgraph-client.js <command> [flags] [--execute]
+    Commands: user | auth-methods | member-of | group-members | sign-ins | managed-device | verify-password-changed | verify-account-enabled | verify-mfa-method | verify-mfa-cleared | verify-signin | verify-device-synced | verify-group-member
+    MS_TENANT_ID names the tenant; the credentials are read only with --execute.
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown command; no command writes to Microsoft 365",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/msgraph-client.test.js:210:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/msgraph-client.test.js:238:1
+✖ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (0.537255ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown flag --method-id",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/msgraph-client.test.js:245:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/g3-boundary.test.js:103:3
+✖ msgraph: every connector command sends reads only, and nothing without --execute (27.65598ms)
+  AssertionError [ERR_ASSERTION]: msgraph verify-sessions-revoked --user aaaaaaaa-0000-4000-8000-000000000001 --not-before 2026-10-27T00:00:00Z: the dry run is accepted
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (<repo>/scripts/g3-boundary.test.js:110:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:114:1
+✖ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (2.021749ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^- \[ \] One-method delete path: `verify-method-absent` passed under its change \(the `auth-methods` output stays in `tasks\/checkpoints\/`; the ticket names the method type only\)$/m. Input:
+  
+  '---\n' +
+    'description: Troubleshoot and reset MFA in Entra -- re-register on a new phone, clear old methods, fix "no prompt" issues, handle the CA-blocks-re-registration gotcha. Placeholders only.\n' +
+    'disable-model-invocation: true\n' +
+    '---\n' +
+    '\n' +
+    '# /mfa-issue\n' +
+    '\n' +
+    '> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.\n' +
+    '\n' +
+    '**Verdict:** Most MFA tickets are "got a new phone" (re-register) or "not getting prompts" (auth-method or Conditional Access misconfig). The classic gotcha: a CA policy blocks login **before** the user can re-register -- temporarily exclude them, let them register, re-add.\n' +
+    '\n' +
+    "**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a verify-* read-back below (here only [mfa-require-reregister-portal]), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and `msgraph:verify-mfa-cleared` as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Session revocation (R2) and the one-method delete (R3) have no verify-* read-back in the read-only connector, so they take no change record: their proof is a read: for the delete, `auth-methods` saved to `tasks/checkpoints/` (it prints phone numbers and device names, so the ticket names the method type only); for the revocation, the portal read after the propagation interval, written in the ticket.\n" +
+    '\n' +
+    '## What to check first\n' +
+    "- Entra → Users → `[UPN]` → **Authentication methods** → what's registered?\n" +
+    '- Entra → Sign-in logs → filter `[UPN]` → is MFA being prompted/failing, or never triggered?\n' +
+    '- Entra ID → Conditional Access → which policy applies to this user?\n' +
+    '\n' +
+    '## Step-by-step fix (portal first)\n' +
+    '\n' +
+    '**New phone / re-register:**\n' +
+    '<!-- SAFETY GATE [mfa-session-revoke-portal] -->\n' +
+    '- **Target:** [UPN]\n' +
+    '- **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies\n' +
+    '- **Scope:** Entra-managed refresh tokens and browser cookies for one user; current access tokens and app-issued sessions can persist until expiry\n' +
+    '- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly. It touches one user, as the single reversible write row does, but has no undo command; it is hard to reverse, as the multi-object or hard-to-reverse row says; so it takes the higher of the two. It changes no setting and takes nothing away, so the last row does not apply): not reversible; the user must authenticate again\n' +
+    '- **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.\n' +
+    '- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n' +
+    "**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, with the user's recent sign-ins from `node scripts/adapters/msgraph-client.js sign-ins --user [USER_ID] --since [DATE_TIME] --execute` saved to `tasks/checkpoints/` (the R2 pre-state: which sessions were in use, read before the click; [DATE_TIME] a time before the device was lost, in UTC, written in the ticket, not the time the work started) and the time of the click written in the ticket, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly.\n" +
+    '\n' +
+    '<!-- SAFETY GATE [mfa-method-delete-portal] -->\n' +
+    '- **Target:** the displayed method type and method ID for [UPN]\n' +
+    '- **Effect:** delete one reviewed obsolete authentication method\n' +
+    '- **Scope:** one named method for one user; all other methods remain unchanged\n' +
+    '- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the method must be registered again\n' +
+    '- **Required confirmation:** Render the reviewed values as `$methodType` and `$methodId`, then type exactly `DELETE MFA METHOD $methodType ID $methodId FOR [UPN]`.\n' +
+    '- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n' +
+    '**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, with the method list from `node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute` saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers that method again at aka.ms/mfasetup), Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.\n' +
+    '\n' +
+    '**Or, instead of the one-method delete:** clear every phone, Authenticator and software OATH method with Require re-register MFA. [mfa-require-reregister-portal] and [mfa-method-delete-portal] are alternatives: one or the other for a ticket, never both.\n' +
+    '\n' +
+    '<!-- SAFETY GATE [mfa-require-reregister-portal] -->\n' +
+    '- **Target:** [UPN]\n' +
+    `- **Effect:** Require re-register MFA, which "deactivates the user's hardware OATH tokens and deletes the following authentication methods from this user: phone numbers, Microsoft Authenticator apps and software OATH tokens" (Microsoft Learn, howto-mfa-userdevicesettings, read 2026-10-31)\n` +
+    '- **Scope:** one user; the alternative to [mfa-method-delete-portal], never with it on the same ticket\n' +
+    '- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the user must register again before any sign-in that requires MFA\n' +
+    '- **Required confirmation:** Type exactly `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`.\n' +
+    '- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n' +
+    '**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, signed in as at least Authentication Administrator (Microsoft Learn, "Manage user authentication options"; `docs/aegis/g3/vendor-facts.md` B-18), with its change record approved, the method list from `node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute` saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below right away, before the user registers again (step 2): `verify-mfa-cleared` with `--change [CHANGE_ID]` passes only while no phone, Authenticator or software OATH method is left.\n' +
+    '2. Tell the user to go to **aka.ms/mfasetup** and register the new device.\n' +
+    '> **PREVIEW ONLY [mfa-phone-add]:** An administrator adding a fallback method is a separate identity change. Do not perform it from this command without its own reviewed target/method gate.\n' +
+    '3. Proposed fallback: Entra → Users → `[UPN]` → **Authentication methods** → **+ Add method** → **Phone** → `[PHONE_NUMBER]`.\n' +
+    '\n' +
+    '**Not getting prompts:**\n' +
+    '1. Confirm a method is registered (above). If none → have them register at aka.ms/mfasetup.\n' +
+    "2. Entra ID → **Conditional Access** → confirm an MFA policy targets the user and isn't excluded.\n" +
+    '3. Check **Authentication methods policy** (Entra ID → Authentication methods → Policies) -- is the method (Authenticator/SMS) enabled?\n' +
+    '\n' +
+    '**⚠️ CA-blocks-re-registration gotcha (Temporary Exception):**\n' +
+    '> **PREVIEW ONLY [mfa-ca-exclusion]:** A Conditional Access exclusion is a separate R3 policy change. Export the policy, set a time-bounded rollback, and use a separate reviewed `/conditional-access` runbook; do not change it here.\n' +
+    '1. Proposed recovery path: Entra ID → Conditional Access → the blocking policy → **Assignments → Users → Exclude** → add `[UPN]`.\n' +
+    '2. User registers at aka.ms/mfasetup.\n' +
+    '3. **Re-add the user** to the policy (remove the exclusion). Document as a Temporary Exception (who approved, when reverted).\n' +
+    '\n' +
+    '<details>\n' +
+    '<summary>PowerShell -- for reference only</summary>\n' +
+    '\n' +
+    '```powershell\n' +
+    'Connect-MgGraph -Scopes "UserAuthenticationMethod.Read.All","User.RevokeSessions.All"  # list methods + revoke Entra sessions\n' +
+    '$sessionUser = Get-MgUser -UserId "[UPN]" -Property Id,UserPrincipalName -ErrorAction Stop\n' +
+    `if ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUser.UserPrincipalName -cne '[UPN]') { throw "The exact Entra identity was not resolved. No change was made." }\n` +
+    "# List the resolved user's registered methods (read-only check)\n" +
+    "Get-MgUserAuthenticationMethod -UserId $sessionUser.Id -ErrorAction Stop             # see what's registered\n" +
+    '# Request refresh-token/browser-cookie revocation. A later authentication prompts for MFA only when the applicable policy and application require it.\n' +
+    '# SAFETY GATE [mfa-session-revoke]\n' +
+    '# Target: canonical UPN and immutable ID in $sessionUser\n' +
+    '# Effect: invalidates Entra refresh tokens and browser session cookies without deleting MFA methods\n' +
+    '# Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry\n' +
+    '# Reversibility: R2: not reversible; the user must authenticate again. CLAUDE.md risk table: one user but no undo command, and hard to reverse, so the higher of the two rows it touches\n' +
+    '$requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"\n' +
+    `$confirmation = Read-Host "Type '$requiredConfirmation' to confirm"\n` +
+    'if ($confirmation -ceq $requiredConfirmation) {\n' +
+    '    $revocationAccepted = Revoke-MgUserSignInSes'... 3060 more characters
+  
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:139:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '---\ndescription: Troubleshoot and reset MFA in Entra -- re-register on a new phone, clear old methods, fix "no prompt" issues, handle the CA-blocks-re-registration gotcha. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /mfa-issue\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.\n\n**Verdict:** Most MFA tickets are "got a new phone" (re-register) or "not getting prompts" (auth-method or Conditional Access misconfig). The classic gotcha: a CA policy blocks login **before** the user can re-register -- temporarily exclude them, let them register, re-add.\n\n**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a verify-* read-back below (here only [mfa-require-reregister-portal]), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate\'s id as `--gate`, and `msgraph:verify-mfa-cleared` as `--read-back`), then record the ticket\'s approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate\'s read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Session revocation (R2) and the one-method delete (R3) have no verify-* read-back in the read-only connector, so they take no change record: their proof is a read: for the delete, `auth-methods` saved to `tasks/checkpoints/` (it prints phone numbers and device names, so the ticket names the method type only); for the revocation, the portal read after the propagation interval, written in the ticket.\n\n## What to check first\n- Entra → Users → `[UPN]` → **Authentication methods** → what\'s registered?\n- Entra → Sign-in logs → filter `[UPN]` → is MFA being prompted/failing, or never triggered?\n- Entra ID → Conditional Access → which policy applies to this user?\n\n## Step-by-step fix (portal first)\n\n**New phone / re-register:**\n<!-- SAFETY GATE [mfa-session-revoke-portal] -->\n- **Target:** [UPN]\n- **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies\n- **Scope:** Entra-managed refresh tokens and browser cookies for one user; current access tokens and app-issued sessions can persist until expiry\n- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly. It touches one user, as the single reversible write row does, but has no undo command; it is hard to reverse, as the multi-object or hard-to-reverse row says; so it takes the higher of the two. It changes no setting and takes nothing away, so the last row does not apply): not reversible; the user must authenticate again\n- **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, with the user\'s recent sign-ins from `node scripts/adapters/msgraph-client.js sign-ins --user [USER_ID] --since [DATE_TIME] --execute` saved to `tasks/checkpoints/` (the R2 pre-state: which sessions were in use, read before the click; [DATE_TIME] a time before the device was lost, in UTC, written in the ticket, not the time the work started) and the time of the click written in the ticket, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly.\n\n<!-- SAFETY GATE [mfa-method-delete-portal] -->\n- **Target:** the displayed method type and method ID for [UPN]\n- **Effect:** delete one reviewed obsolete authentication method\n- **Scope:** one named method for one user; all other methods remain unchanged\n- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the method must be registered again\n- **Required confirmation:** Render the reviewed values as `$methodType` and `$methodId`, then type exactly `DELETE MFA METHOD $methodType ID $methodId FOR [UPN]`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, with the method list from `node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute` saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers that method again at aka.ms/mfasetup), Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.\n\n**Or, instead of the one-method delete:** clear every phone, Authenticator and software OATH method with Require re-register MFA. [mfa-require-reregister-portal] and [mfa-method-delete-portal] are alternatives: one or the other for a ticket, never both.\n\n<!-- SAFETY GATE [mfa-require-reregister-portal] -->\n- **Target:** [UPN]\n- **Effect:** Require re-register MFA, which "deactivates the user\'s hardware OATH tokens and deletes the following authentication methods from this user: phone numbers, Microsoft Authenticator apps and software OATH tokens" (Microsoft Learn, howto-mfa-userdevicesettings, read 2026-10-31)\n- **Scope:** one user; the alternative to [mfa-method-delete-portal], never with it on the same ticket\n- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the user must register again before any sign-in that requires MFA\n- **Required confirmation:** Type exactly `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, signed in as at least Authentication Administrator (Microsoft Learn, "Manage user authentication options"; `docs/aegis/g3/vendor-facts.md` B-18), with its change record approved, the method list from `node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute` saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below right away, before the user registers again (step 2): `verify-mfa-cleared` with `--change [CHANGE_ID]` passes only while no phone, Authenticator or software OATH method is left.\n2. Tell the user to go to **aka.ms/mfasetup** and register the new device.\n> **PREVIEW ONLY [mfa-phone-add]:** An administrator adding a fallback method is a separate identity change. Do not perform it from this command without its own reviewed target/method gate.\n3. Proposed fallback: Entra → Users → `[UPN]` → **Authentication methods** → **+ Add method** → **Phone** → `[PHONE_NUMBER]`.\n\n**Not getting prompts:**\n1. Confirm a method is registered (above). If none → have them register at aka.ms/mfasetup.\n2. Entra ID → **Conditional Access** → confirm an MFA policy targets the user and isn\'t excluded.\n3. Check **Authentication methods policy** (Entra ID → Authentication methods → Policies) -- is the method (Authenticator/SMS) enabled?\n\n**⚠️ CA-blocks-re-registration gotcha (Temporary Exception):**\n> **PREVIEW ONLY [mfa-ca-exclusion]:** A Conditional Access exclusion is a separate R3 policy change. Export the policy, set a time-bounded rollback, and use a separate reviewed `/conditional-access` runbook; do not change it here.\n1. Proposed recovery path: Entra ID → Conditional Access → the blocking policy → **Assignments → Users → Exclude** → add `[UPN]`.\n2. User registers at aka.ms/mfasetup.\n3. **Re-add the user** to the policy (remove the exclusion). Document as a Temporary Exception (who approved, when reverted).\n\n<details>\n<summary>PowerShell -- for reference only</summary>\n\n```powershell\nConnect-MgGraph -Scopes "UserAuthenticationMethod.Read.All","User.RevokeSessions.All"  # list methods + revoke Entra sessions\n$sessionUser = Get-MgUser -UserId "[UPN]" -Property Id,UserPrincipalName -ErrorAction Stop\nif ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUser.UserPrincipalName -cne \'[UPN]\') { throw "The exact Entra identity was not resolved. No change was made." }\n# List the resolved user\'s registered methods (read-only check)\nGet-MgUserAuthenticationMethod -UserId $sessionUser.Id -ErrorAction Stop             # see what\'s registered\n# Request refresh-token/browser-cookie revocation. A later authentication prompts for MFA only when the applicable policy and application require it.\n# SAFETY GATE [mfa-session-revoke]\n# Target: canonical UPN and immutable ID in $sessionUser\n# Effect: invalidates Entra refresh tokens and browser session cookies without deleting MFA methods\n# Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry\n# Reversibility: R2: not reversible; the user must authenticate again. CLAUDE.md risk table: one user but no undo command, and hard to reverse, so the higher of the two rows it touches\n$requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"\n$confirmation = Read-Host "Type \'$requiredConfirmation\' to confirm"\nif ($confirmation -ceq $requiredConfirmation) {\n    $revocationAccepted = Revoke-MgUserSignInSes'... 3060 more characters,
+    expected: /^- \[ \] One-method delete path: `verify-method-absent` passed under its change \(the `auth-methods` output stays in `tasks\/checkpoints\/`; the ticket names the method type only\)$/m,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:149:1
+✖ every R2 and R3 gate in /mfa-issue has a read-back bound to its change (0.276567ms)
+  AssertionError [ERR_ASSERTION]: mfa-session-revoke-portal: node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:158:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T07:01:22Z
+# capture edited after the run: U+2014 written as "--" (8), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

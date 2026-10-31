@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-factor-reset`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-factor-reset`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -77,7 +77,7 @@ node scripts/adapters/okta-client.js factors --user [OKTA_USER_ID] --execute
 Run the connector read-back now, before the user re-enrolls: once Okta Verify is set up on the new phone, a `push` factor is listed again and this read fails.
 
 ```bash
-# HUMAN-RUN read-only read-back, passes only when no push factor is listed for the user. It proves the reset only when Phase A listed a push factor
+# HUMAN-RUN read-only read-back of [okta-mfa-reset-selected-portal] or [okta-mfa-reset-factor], passes only when no push factor is listed for the user. It proves the reset only when Phase A listed a push factor
 node scripts/adapters/okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute
 ```
 
@@ -104,7 +104,7 @@ If Phase A also listed `signed_nonce` (FastPass), run the same read with `--fact
 3. Read back: re-open the dialog (no enrollments remain), then close it.
 
 ```bash
-# HUMAN-RUN read-only read-back, run it before the user re-enrolls, passes only when no factor at all is listed for the user. It proves the reset only when Phase A listed at least one factor
+# HUMAN-RUN read-only read-back of [okta-mfa-reset-all-portal] or [okta-mfa-reset-all], run it before the user re-enrolls, passes only when no factor at all is listed for the user. It proves the reset only when Phase A listed at least one factor
 node scripts/adapters/okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 ```
 

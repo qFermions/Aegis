@@ -38,16 +38,15 @@ const NOT_COUNTED = Object.freeze({
   'jamf-inventory-groups-static-members-portal': `each Mac is read with the computer read, not a verify-* command; ${NO_VERIFY}`,
   'jamf-policies-self-service-change-portal': `one policy change; ${ONE_READ} (verify-policy)`,
   'slack-guests-connect-readd-members-portal': `proved in the GUI, the adapter reads no channel membership; ${NO_VERIFY}`,
-  'offboard-clear-mfa-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'offboard-license-remove-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'offboard-group-strip-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'offboard-dl-strip-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'offboard-mailbox-delegation-strip-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'offboard-voicemail-clear-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'offboard-vpn-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'offboard-physical-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'quarantine-release-all-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
-  'print-queue-delete-portal': `Microsoft runbook gate with no R class; ${NO_VERIFY}`,
+  'offboard-license-remove-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'offboard-group-strip-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'offboard-dl-strip-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'offboard-mailbox-delegation-strip-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'offboard-voicemail-clear-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'offboard-vpn-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'offboard-physical-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'quarantine-release-all-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  'print-queue-delete-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
 });
 
 // gate id -> { file, confirmation } for every gate whose required confirmation names a count
@@ -68,7 +67,9 @@ test('every gate whose confirmation names a count is classified: counted, or not
   const found = countGates();
   const classified = [...Object.keys(COUNTED_GATES), ...Object.keys(NOT_COUNTED)].sort();
   assert.deepEqual([...found.keys()].sort(), classified);
-  assert.equal(Object.keys(COUNTED_GATES).length, 4);
+  // batch G3 close-out 3, owner decision H4: the counted rule applied to the newly classed gates
+  // makes /offboard's MFA clear the fifth, since verify-method-absent (H3) proves each method
+  assert.equal(Object.keys(COUNTED_GATES).length, 5);
   for (const [gate, token] of Object.entries(COUNTED_GATES)) {
     assert.ok(found.get(gate).confirmation.includes(token), `${gate}: its confirmation names ${token}`);
   }
@@ -82,6 +83,9 @@ test('each counted gate\'s runbook opens its change with --expected and the coun
     assert.ok(line, `${found.get(gate).file}: a line names [${gate}] and --expected`);
     assert.ok(line.includes(`\`--expected ${token}\``), `${gate}: --expected ${token}`);
     assert.match(line, /verified k of N/, `${gate}: says what status reports`);
+    // batch G3 close-out 3, owner decision H2: the saved procedure carries the count, so the
+    // approval covers it
+    assert.ok(line.includes(`\`Count: ${token}\``), `${gate}: the procedure carries Count: ${token}`);
     // code review round 1 of the batch G3 close-out 2, finding 10: the change is opened and
     // approved before the gate, so the instruction comes before the gate's marker
     const lines = text.split('\n');
@@ -104,5 +108,16 @@ test('the audit README describes counted changes', () => {
   assert.match(readme, /verified k of N/);
   assert.match(readme, /partial/);
   assert.match(readme, /a repeated read of the same object is not detected/);
+  assert.match(readme, /`Count: N`/, 'the README says the procedure carries the count (H2)');
   for (const gate of Object.keys(COUNTED_GATES)) assert.ok(readme.includes(gate), `README names ${gate}`);
+});
+
+// Code review round 2 of the batch G3 close-out 3, finding 8: verify-method-absent records an
+// answer that proves nothing (another page, no method list) as uncounted, and the paragraph said
+// only to read an uncounted method again, which returns the same page.
+test('the counted MFA clear says what to do with an answer that proves nothing either way', () => {
+  const text = fs.readFileSync(path.join(__dirname, '..', '..', '.claude', 'commands', 'offboard.md'), 'utf8');
+  const para = text.split('\n').find((l) => l.startsWith('**Counted change:** open the change record for [offboard-clear-mfa-portal]'));
+  assert.ok(para, 'the counted paragraph');
+  assert.match(para, /An answer that proves nothing either way \(another page or no method list\) is uncounted too, and reading again returns the same answer: check that method in the Entra admin center, write it in the ticket, and open a new change for the methods left/);
 });

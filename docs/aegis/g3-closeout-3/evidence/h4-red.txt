@@ -1,0 +1,298 @@
+# command: node --test scripts/gate-r-class.test.js scripts/audit/counted-gates.test.js scripts/adapters/change-binding.test.js
+# commit: f9daf80 (plus uncommitted changes in the working tree)  started: 2026-10-31T07:07:55Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (31.837223ms)
+✔ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (16.426824ms)
+✔ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.712771ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.074904ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (18.504141ms)
+✔ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.381445ms)
+✔ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (12.875715ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.550259ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (11.766413ms)
+✔ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (19.482877ms)
+✔ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (22.594032ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.515011ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (18.250168ms)
+✔ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (18.659874ms)
+✔ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (25.348433ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.854232ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (11.909914ms)
+✔ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (9.401145ms)
+✔ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (11.289251ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.863129ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.829633ms)
+✔ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.866807ms)
+✔ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.304531ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.459032ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (18.969273ms)
+✔ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (17.509328ms)
+✔ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (24.647939ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (6.006885ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (17.176852ms)
+✔ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (14.294535ms)
+✔ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (15.525928ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.632275ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (17.814614ms)
+✔ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (12.918241ms)
+✔ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (19.039295ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.821424ms)
+✔ a verify-* with --change and no audit trail to check it against is refused, never run unbound (0.387092ms)
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (24.01773ms)
+✔ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (17.507693ms)
+✔ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (11.367638ms)
+✔ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (16.789784ms)
+✔ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (20.461854ms)
+✔ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (15.244219ms)
+✔ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (21.526027ms)
+✔ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (20.369781ms)
+✔ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (13.305434ms)
+✔ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.40821ms)
+✔ fleet verify-script records its execution id as the run; every other read-back records none (81.886062ms)
+✔ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (6.051863ms)
+✔ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.790174ms)
+✔ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.93921ms)
+✔ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.079635ms)
+✔ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.166393ms)
+✔ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (6.284454ms)
+✔ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (6.884526ms)
+✔ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.66464ms)
+✔ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (5.822866ms)
+✔ no support file under scripts/ has a name node --test runs as a test file (4.40851ms)
+✔ the contract, cli-support and the audit trail agree on what a verify-* command and a change id are (0.404218ms)
+✔ offline commands refuse --change as not a read-back, before reading any file (0.654879ms)
+✔ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (3.328162ms)
+✔ fleet: --change=chg-... on a plain read is refused as not a read-back (1.258232ms)
+✔ github: --change=chg-... on a plain read is refused as not a read-back (0.840548ms)
+✔ google-workspace: --change=chg-... on a plain read is refused as not a read-back (0.979593ms)
+✔ jamf: --change=chg-... on a plain read is refused as not a read-back (1.014737ms)
+✔ linear: --change=chg-... on a plain read is refused as not a read-back (0.876395ms)
+✔ msgraph: --change=chg-... on a plain read is refused as not a read-back (0.978314ms)
+✔ okta: --change=chg-... on a plain read is refused as not a read-back (1.029726ms)
+✔ slack: --change=chg-... on a plain read is refused as not a read-back (1.070282ms)
+✔ jira: --change=chg-... on a plain read is refused as not a read-back (0.850926ms)
+✔ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (15.582108ms)
+✔ changeRefusal refuses when it is not given takeChange's result (0.306526ms)
+✔ every connector records the flags that change what its read-back passes on, and none on a read-back without them (93.315053ms)
+✔ okta verify-group-member: a removal change takes only the --absent read, and an add change never does (20.947352ms)
+✔ okta verify-app-assigned: a removal change takes only the --absent read, and an add change never does (18.517825ms)
+✔ github verify-team-member: a removal change takes only the --absent read, and an add change never does (17.020962ms)
+✔ msgraph verify-group-member: a removal change takes only the --absent read, and an add change never does (17.492629ms)
+✔ jamf verify-profile: a removal change takes only the --absent read, and an add change never does (18.85439ms)
+✖ every gate whose confirmation names a count is classified: counted, or not counted with its reason (24.904876ms)
+✔ each counted gate's runbook opens its change with --expected and the count, and says what status reports (18.483439ms)
+✔ the audit README describes counted changes (0.841466ms)
+✖ every SAFETY GATE in every runbook carries an R class on its Reversibility line (32.575226ms)
+✖ the check fails when one class is removed (24.013035ms)
+✖ the 58 gates classed in this batch carry their class first and cite the row of CLAUDE.md's table (7.974067ms)
+ℹ tests 84
+ℹ suites 0
+ℹ pass 79
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1241.274138
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:235:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (24.01773ms)
+  AssertionError [ERR_ASSERTION]: the 90 read-backs of R2 and R3 gates
+  
+  81 !== 90
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:298:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 81,
+    expected: 90,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/counted-gates.test.js:66:1
+✖ every gate whose confirmation names a count is classified: counted, or not counted with its reason (24.904876ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      'fleet-device-actions-batch-script-portal',
+      'github-branch-protection-add-rule-portal',
+      'github-branch-protection-lower-reviews-portal',
+      'github-branch-protection-strengthen-rule-portal',
+  ...
+      'jamf-policies-self-service-change-portal',
+  +   'offboard-clear-mfa-portal',
+      'offboard-dl-strip-portal',
+      'offboard-group-strip-portal',
+      'offboard-license-remove-portal',
+      'offboard-mailbox-delegation-strip-portal',
+      'offboard-physical-portal',
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/counted-gates.test.js:69:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'fleet-device-actions-batch-script-portal', 'github-branch-protection-add-rule-portal', 'github-branch-protection-lower-reviews-portal', 'github-branch-protection-strengthen-rule-portal', 'github-org-security-2fa-require-portal', 'github-repo-access-team-grant-portal', 'github-security-alerts-dependabot-bulk-dismiss-portal', 'jamf-config-profiles-remove-group-portal', 'jamf-inventory-groups-smart-criteria-portal', 'jamf-inventory-groups-static-members-portal', 'jamf-policies-self-service-change-portal', 'offboard-clear-mfa-portal', 'offboard-dl-strip-portal', 'offboard-group-strip-portal', 'offboard-license-remove-portal', 'offboard-mailbox-delegation-strip-portal', 'offboard-physical-portal', 'offboard-voicemail-clear-portal', 'offboard-vpn-portal', 'okta-group-membership-bulk-add-portal', 'okta-group-membership-bulk-remove-portal', 'print-queue-delete-portal', 'quarantine-release-all-portal', 'slack-guests-connect-readd-members-portal' ],
+    expected: [ 'fleet-device-actions-batch-script-portal', 'github-branch-protection-add-rule-portal', 'github-branch-protection-lower-reviews-portal', 'github-branch-protection-strengthen-rule-portal', 'github-org-security-2fa-require-portal', 'github-repo-access-team-grant-portal', 'github-security-alerts-dependabot-bulk-dismiss-portal', 'jamf-config-profiles-remove-group-portal', 'jamf-inventory-groups-smart-criteria-portal', 'jamf-inventory-groups-static-members-portal', 'jamf-policies-self-service-change-portal', 'offboard-dl-strip-portal', 'offboard-group-strip-portal', 'offboard-license-remove-portal', 'offboard-mailbox-delegation-strip-portal', 'offboard-physical-portal', 'offboard-voicemail-clear-portal', 'offboard-vpn-portal', 'okta-group-membership-bulk-add-portal', 'okta-group-membership-bulk-remove-portal', 'print-queue-delete-portal', 'quarantine-release-all-portal', 'slack-guests-connect-readd-members-portal' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/gate-r-class.test.js:80:1
+✖ every SAFETY GATE in every runbook carries an R class on its Reversibility line (32.575226ms)
+  AssertionError [ERR_ASSERTION]: gates with no R class
+  + actual - expected
+  
+  + [
+  +   'conditional-access-enable-portal',
+  +   'install-graph-conditional-access',
+  +   'device-full-wipe-portal',
+  +   'device-full-wipe',
+  +   'distribution-external-senders-portal',
+  +   'quarantine-release-all-portal',
+  +   'quarantine-release-one-portal',
+  +   'quarantine-delete-portal',
+  +   'install-exchange-quarantine',
+  +   'quarantine-release-all',
+  +   'quarantine-release-one',
+  +   'quarantine-permanent-delete',
+  +   'restricted-entity-unblock-portal',
+  +   'install-exchange-spam',
+  +   'restricted-entity-unblock',
+  +   'install-exchange-whitelist',
+  +   'license-remove-portal',
+  +   'mailbox-permission-remove-portal',
+  +   'mailbox-permission-remove',
+  +   'offboard-ad-disable-portal',
+  +   'offboard-cloud-block-portal',
+  +   'offboard-revoke-sessions-portal',
+  +   'offboard-password-reset-portal',
+  +   'offboard-clear-mfa-portal',
+  +   'offboard-mailbox-convert-portal',
+  +   'offboard-mailbox-delegate-portal',
+  +   'offboard-onedrive-portal',
+  +   'offboard-license-remove-portal',
+  +   'offboard-group-strip-portal',
+  +   'offboard-dl-strip-portal',
+  +   'offboard-mailbox-delegation-strip-portal',
+  +   'offboard-device-wipe-portal',
+  +   'offboard-work-phone-wipe-portal',
+  +   'offboard-work-phone-group-remove-portal',
+  +   'offboard-voip-deactivate-portal',
+  +   'offboard-voip-reclaim-extension-portal',
+  +   'offboard-voicemail-clear-portal',
+  +   'offboard-zoom-portal',
+  +   'offboard-adobe-portal',
+  +   'offboard-vpn-portal',
+  +   'offboard-physical-portal',
+  +   'offboard-disabled-ou-portal',
+  +   'password-reset-synced-portal',
+  +   'password-reset-cloud-portal',
+  +   'password-session-revoke-portal',
+  +   'password-cloud-reset',
+  +   'password-session-revoke',
+  +   'print-queue-delete-portal',
+  +   'print-queue-delete',
+  +   'security-session-revoke-portal',
+  +   'security-account-block',
+  +   'security-synced-ad-disable',
+  +   'security-synced-cloud-gap-block',
+  +   'security-session-revoke',
+  +   'shared-mailbox-convert-portal',
+  +   'sharepoint-access-revoke-portal',
+  +   'sharepoint-access-revoke',
+  +   'install-teams-module'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/gate-r-class.test.js:83:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [
+      'conditional-access-enable-portal',         'install-graph-conditional-access',
+      'device-full-wipe-portal',                  'device-full-wipe',
+      'distribution-external-senders-portal',     'quarantine-release-all-portal',
+      'quarantine-release-one-portal',            'quarantine-delete-portal',
+      'install-exchange-quarantine',              'quarantine-release-all',
+      'quarantine-release-one',                   'quarantine-permanent-delete',
+      'restricted-entity-unblock-portal',         'install-exchange-spam',
+      'restricted-entity-unblock',                'install-exchange-whitelist',
+      'license-remove-portal',                    'mailbox-permission-remove-portal',
+      'mailbox-permission-remove',                'offboard-ad-disable-portal',
+      'offboard-cloud-block-portal',              'offboard-revoke-sessions-portal',
+      'offboard-password-reset-portal',           'offboard-clear-mfa-portal',
+      'offboard-mailbox-convert-portal',          'offboard-mailbox-delegate-portal',
+      'offboard-onedrive-portal',                 'offboard-license-remove-portal',
+      'offboard-group-strip-portal',              'offboard-dl-strip-portal',
+      'offboard-mailbox-delegation-strip-portal', 'offboard-device-wipe-portal',
+      'offboard-work-phone-wipe-portal',          'offboard-work-phone-group-remove-portal',
+      'offboard-voip-deactivate-portal',          'offboard-voip-reclaim-extension-portal',
+      'offboard-voicemail-clear-portal',          'offboard-zoom-portal',
+      'offboard-adobe-portal',                    'offboard-vpn-portal',
+      'offboard-physical-portal',                 'offboard-disabled-ou-portal',
+      'password-reset-synced-portal',             'password-reset-cloud-portal',
+      'password-session-revoke-portal',           'password-cloud-reset',
+      'password-session-revoke',                  'print-queue-delete-portal',
+      'print-queue-delete',                       'security-session-revoke-portal',
+      'security-account-block',                   'security-synced-ad-disable',
+      'security-synced-cloud-gap-block',          'security-session-revoke',
+      'shared-mailbox-convert-portal',            'sharepoint-access-revoke-portal',
+      'sharepoint-access-revoke',                 'install-teams-module'
+    ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/gate-r-class.test.js:86:1
+✖ the check fails when one class is removed (24.013035ms)
+  AssertionError [ERR_ASSERTION]: the class of device-full-wipe-portal was removed
+      at TestContext.<anonymous> (<repo>/scripts/gate-r-class.test.js:93:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '---\ndescription: Wipe or retire a device in Intune -- choose Full Wipe (work-owned) vs Retire/selective (BYOD), with a destructive-action confirmation gate. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /device-wipe\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.\n\n**Verdict:** Pick the right action for ownership. **Full Wipe** = factory reset (work-owned). **Retire** (selective wipe) = removes only company data/apps, leaves personal data (BYOD). **Fresh Start** = reinstall Windows, keep user data. Wrong choice on a personal phone wipes someone\'s photos -- confirm ownership first.\n\n## ⚠️ Destructive -- confirm before proceeding\nThis **erases data and cannot be undone**. Before any wipe, confirm with the operator:\n- Device: `[DEVICE_NAME]` · Owner: work-owned or BYOD? · Action: Wipe / Retire / Fresh Start?\n- For offboarding, this is part of `/offboard` -- coordinate so you wipe the right device.\nGeneric approval never authorizes a device action. Use only the action-specific exact gate below.\n\n## What to check first\n- Intune admin center → Devices → All devices → `[DEVICE_NAME]` → **Managed by** + **Ownership** (Corporate vs Personal).\n- Is the user still active? (If offboarding, follow `/offboard` order.)\n\n## Step-by-step fix (portal first)\n1. **Intune admin center** (intune.microsoft.com) → Devices → All devices → `[DEVICE_NAME]`.\n<!-- SAFETY GATE [device-full-wipe-portal] -->\n- **Target:** [DEVICE_NAME] and its displayed managed-device ID\n- **Effect:** factory-reset the verified corporate device and erase its data\n- **Scope:** one work-owned managed device\n- **Reversibility:** irreversible; data requires a separate backup\n- **Required confirmation:** Render the displayed ID as `$deviceId`, then type exactly `FULL WIPE [DEVICE_NAME] WITH ID $deviceId`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [device-full-wipe-portal]:** The exact phrase authorizes **Wipe** only for the displayed corporate device. Retire, Fresh Start, later object deletion, and Autopilot deregistration are separate actions and need separate approval.\n2. Choose the action on the device blade:\n   - **Wipe** (work-owned, full factory reset). Optionally "Retain enrollment state" for Autopilot re-provisioning.\n> **PREVIEW ONLY [device-alternatives]:** Retire and Fresh Start are not authorized by the Wipe gate. Move either choice to its own reviewed runbook and exact device/action gate.\n   - **Retire** (BYOD -- removes company data/apps/policies only; personal data stays).\n   - **Fresh Start** (Windows -- reinstall, keep user data).\n3. **Monitor** → device blade → **Device actions status** until it shows Complete.\n> **PREVIEW ONLY [device-record-removal]:** Object deletion and Autopilot deregistration are separate R3 actions and must not be performed from this command.\n4. After completion (if decommissioning): remove the stale object -- Intune → delete device; Entra → Devices → delete; Autopilot → Devices → deregister the hardware hash if not re-provisioning.\n\n<details>\n<summary>PowerShell -- for reference only</summary>\n\n```powershell\nConnect-MgGraph -Scopes "DeviceManagementManagedDevices.PrivilegedOperations.All"  # wipe rights\n$deviceName = "[DEVICE_NAME]"\nif ([string]::IsNullOrWhiteSpace($deviceName) -or $deviceName -match \'[\\x00-\\x1F\\x7F]\') { throw "Device name is empty or contains control characters. No change was made." }\n$escapedDeviceName = $deviceName.Replace("\'", "\'\'")\n$matches = @(Get-MgDeviceManagementManagedDevice -Filter "deviceName eq \'$escapedDeviceName\'")\nif ($matches.Count -ne 1) { throw "Expected exactly one managed device named \'$deviceName\'; found $($matches.Count). No change was made." }\n$d = $matches[0]\nif ([string]$d.DeviceName -cne $deviceName -or [string]::IsNullOrWhiteSpace([string]$d.Id)) { throw "The returned device name did not exactly match the requested name, or its immutable ID was empty. No change was made." }\nWrite-Host "Resolved device: $($d.DeviceName); ID: $($d.Id); serial: $($d.SerialNumber); ownership: $($d.ManagedDeviceOwnerType)"\nif ($d.ManagedDeviceOwnerType -ne \'company\') { throw "The resolved device is not verified Corporate ownership. No wipe was sent." }\n# SAFETY GATE [device-full-wipe]\n# Target: the resolved corporate device $($d.DeviceName) and managed-device ID $($d.Id)\n# Effect: factory-resets the corporate device and erases its data\n# Scope: one verified work-owned managed device\n# Reversibility: irreversible; data must be restored from a separate backup\n$requiredConfirmation = "FULL WIPE $($d.DeviceName) WITH ID $($d.Id)"\n$confirmation = Read-Host "Type \'$requiredConfirmation\' to confirm"\nif ($confirmation -ceq $requiredConfirmation) {\n    Clear-MgDeviceManagementManagedDevice -ManagedDeviceId $d.Id -ErrorAction Stop  # ⚠️ irreversible wipe request (work-owned)\n    $actionReadBack = Get-MgDeviceManagementManagedDevice -ManagedDeviceId $d.Id -Property Id,DeviceName,DeviceActionResults -ErrorAction Stop\n    if ([string]$actionReadBack.Id -cne [string]$d.Id -or [string]$actionReadBack.DeviceName -cne [string]$d.DeviceName) { throw "Wipe request returned but device read-back did not match the approved name and ID. Treat action state as UNKNOWN." }\n    Write-Host "Wipe request accepted for $($d.DeviceName) [$($d.Id)]. Completion is not proven until Intune reports the expected device-action status."\n} else {\n    throw "Confirmation did not match. No change was made."\n}\n# Retire (selective wipe) instead -- company data only:\n# PREVIEW ONLY [device-retire]: Invoke-MgRetireDeviceManagementManagedDevice -ManagedDeviceId $d.Id\n```\n> ⚠️ SCRIPT SAFETY SCAN -- `Clear-MgDeviceManagementManagedDevice` is a destructive factory reset. Confirm the device id + ownership before running.\n</details>\n\n## ⚠️ Risk warning\n- **Full Wipe on a BYOD device erases the user\'s personal data** -- only Wipe work-owned hardware; use **Retire** for personal.\n- Irreversible. No "undo." Double-check `[DEVICE_NAME]` is the right device (naming `DT-`/`LT-First,Last`).\n\n## ✅ Verification checklist\n- [ ] Correct action chosen for ownership (Wipe=corporate, Retire=BYOD)\n- [ ] Device action status = Complete in Intune\n- [ ] (Decommission) device removed from Intune + Entra + Autopilot deregistered\n- [ ] User notified if BYOD (company data removed)\n\n## 📝 Jira-ready note\n> Resolved [date/time]. `[DEVICE_NAME]` ([corporate/BYOD]): [Full Wipe verified under this command\'s exact gate / Retire verified under a separate reviewed action / Fresh Start verified under a separate reviewed action / no device action performed]. Management status: [verified value]. Object removal/deregistration: [verified under separate actions / not performed]. Time spent: [X] min.\n',
+    expected: '---\ndescription: Wipe or retire a device in Intune -- choose Full Wipe (work-owned) vs Retire/selective (BYOD), with a destructive-action confirmation gate. Placeholders only.\ndisable-model-invocation: true\n---\n\n# /device-wipe\n\n> **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.\n\n**Verdict:** Pick the right action for ownership. **Full Wipe** = factory reset (work-owned). **Retire** (selective wipe) = removes only company data/apps, leaves personal data (BYOD). **Fresh Start** = reinstall Windows, keep user data. Wrong choice on a personal phone wipes someone\'s photos -- confirm ownership first.\n\n## ⚠️ Destructive -- confirm before proceeding\nThis **erases data and cannot be undone**. Before any wipe, confirm with the operator:\n- Device: `[DEVICE_NAME]` · Owner: work-owned or BYOD? · Action: Wipe / Retire / Fresh Start?\n- For offboarding, this is part of `/offboard` -- coordinate so you wipe the right device.\nGeneric approval never authorizes a device action. Use only the action-specific exact gate below.\n\n## What to check first\n- Intune admin center → Devices → All devices → `[DEVICE_NAME]` → **Managed by** + **Ownership** (Corporate vs Personal).\n- Is the user still active? (If offboarding, follow `/offboard` order.)\n\n## Step-by-step fix (portal first)\n1. **Intune admin center** (intune.microsoft.com) → Devices → All devices → `[DEVICE_NAME]`.\n<!-- SAFETY GATE [device-full-wipe-portal] -->\n- **Target:** [DEVICE_NAME] and its displayed managed-device ID\n- **Effect:** factory-reset the verified corporate device and erase its data\n- **Scope:** one work-owned managed device\n- **Reversibility:** irreversible; data requires a separate backup\n- **Required confirmation:** Render the displayed ID as `$deviceId`, then type exactly `FULL WIPE [DEVICE_NAME] WITH ID $deviceId`.\n- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.\n**PORTAL ACTION [device-full-wipe-portal]:** The exact phrase authorizes **Wipe** only for the displayed corporate device. Retire, Fresh Start, later object deletion, and Autopilot deregistration are separate actions and need separate approval.\n2. Choose the action on the device blade:\n   - **Wipe** (work-owned, full factory reset). Optionally "Retain enrollment state" for Autopilot re-provisioning.\n> **PREVIEW ONLY [device-alternatives]:** Retire and Fresh Start are not authorized by the Wipe gate. Move either choice to its own reviewed runbook and exact device/action gate.\n   - **Retire** (BYOD -- removes company data/apps/policies only; personal data stays).\n   - **Fresh Start** (Windows -- reinstall, keep user data).\n3. **Monitor** → device blade → **Device actions status** until it shows Complete.\n> **PREVIEW ONLY [device-record-removal]:** Object deletion and Autopilot deregistration are separate R3 actions and must not be performed from this command.\n4. After completion (if decommissioning): remove the stale object -- Intune → delete device; Entra → Devices → delete; Autopilot → Devices → deregister the hardware hash if not re-provisioning.\n\n<details>\n<summary>PowerShell -- for reference only</summary>\n\n```powershell\nConnect-MgGraph -Scopes "DeviceManagementManagedDevices.PrivilegedOperations.All"  # wipe rights\n$deviceName = "[DEVICE_NAME]"\nif ([string]::IsNullOrWhiteSpace($deviceName) -or $deviceName -match \'[\\x00-\\x1F\\x7F]\') { throw "Device name is empty or contains control characters. No change was made." }\n$escapedDeviceName = $deviceName.Replace("\'", "\'\'")\n$matches = @(Get-MgDeviceManagementManagedDevice -Filter "deviceName eq \'$escapedDeviceName\'")\nif ($matches.Count -ne 1) { throw "Expected exactly one managed device named \'$deviceName\'; found $($matches.Count). No change was made." }\n$d = $matches[0]\nif ([string]$d.DeviceName -cne $deviceName -or [string]::IsNullOrWhiteSpace([string]$d.Id)) { throw "The returned device name did not exactly match the requested name, or its immutable ID was empty. No change was made." }\nWrite-Host "Resolved device: $($d.DeviceName); ID: $($d.Id); serial: $($d.SerialNumber); ownership: $($d.ManagedDeviceOwnerType)"\nif ($d.ManagedDeviceOwnerType -ne \'company\') { throw "The resolved device is not verified Corporate ownership. No wipe was sent." }\n# SAFETY GATE [device-full-wipe]\n# Target: the resolved corporate device $($d.DeviceName) and managed-device ID $($d.Id)\n# Effect: factory-resets the corporate device and erases its data\n# Scope: one verified work-owned managed device\n# Reversibility: irreversible; data must be restored from a separate backup\n$requiredConfirmation = "FULL WIPE $($d.DeviceName) WITH ID $($d.Id)"\n$confirmation = Read-Host "Type \'$requiredConfirmation\' to confirm"\nif ($confirmation -ceq $requiredConfirmation) {\n    Clear-MgDeviceManagementManagedDevice -ManagedDeviceId $d.Id -ErrorAction Stop  # ⚠️ irreversible wipe request (work-owned)\n    $actionReadBack = Get-MgDeviceManagementManagedDevice -ManagedDeviceId $d.Id -Property Id,DeviceName,DeviceActionResults -ErrorAction Stop\n    if ([string]$actionReadBack.Id -cne [string]$d.Id -or [string]$actionReadBack.DeviceName -cne [string]$d.DeviceName) { throw "Wipe request returned but device read-back did not match the approved name and ID. Treat action state as UNKNOWN." }\n    Write-Host "Wipe request accepted for $($d.DeviceName) [$($d.Id)]. Completion is not proven until Intune reports the expected device-action status."\n} else {\n    throw "Confirmation did not match. No change was made."\n}\n# Retire (selective wipe) instead -- company data only:\n# PREVIEW ONLY [device-retire]: Invoke-MgRetireDeviceManagementManagedDevice -ManagedDeviceId $d.Id\n```\n> ⚠️ SCRIPT SAFETY SCAN -- `Clear-MgDeviceManagementManagedDevice` is a destructive factory reset. Confirm the device id + ownership before running.\n</details>\n\n## ⚠️ Risk warning\n- **Full Wipe on a BYOD device erases the user\'s personal data** -- only Wipe work-owned hardware; use **Retire** for personal.\n- Irreversible. No "undo." Double-check `[DEVICE_NAME]` is the right device (naming `DT-`/`LT-First,Last`).\n\n## ✅ Verification checklist\n- [ ] Correct action chosen for ownership (Wipe=corporate, Retire=BYOD)\n- [ ] Device action status = Complete in Intune\n- [ ] (Decommission) device removed from Intune + Entra + Autopilot deregistered\n- [ ] User notified if BYOD (company data removed)\n\n## 📝 Jira-ready note\n> Resolved [date/time]. `[DEVICE_NAME]` ([corporate/BYOD]): [Full Wipe verified under this command\'s exact gate / Retire verified under a separate reviewed action / Fresh Start verified under a separate reviewed action / no device action performed]. Management status: [verified value]. Object removal/deregistration: [verified under separate actions / not performed]. Time spent: [X] min.\n',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/gate-r-class.test.js:98:1
+✖ the 58 gates classed in this batch carry their class first and cite the row of CLAUDE.md's table (7.974067ms)
+  AssertionError [ERR_ASSERTION]: conditional-access-enable-portal: R3 first, citing the table: reversible by disabling the policy with a verified emergency-access account
+      at TestContext.<anonymous> (<repo>/scripts/gate-r-class.test.js:104:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T07:07:57Z
+# capture edited after the run: U+2014 written as "--" (22), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -21,7 +21,7 @@
 
 // CHANGE_ID and VERIFY_COMMAND are the trail's own forms, so a run is checked with exactly the
 // rule its verify entry is written under (readonly-contract.js isVerifyCommand matches it too).
-const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId } = require('../audit/audit-log.js');
+const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId, passFlags, readBackFor } = require('../audit/audit-log.js');
 const { bindRefusal } = require('../audit/change-record.js');
 
 const AUDITED_STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
@@ -87,7 +87,9 @@ function changeRefusal(connector, command, bound, audit) {
   const log = audit && audit.log;
   if (!log || typeof log.entries !== 'function' || typeof log.verify !== 'function') return '--change needs the audit trail the read-back is recorded in, and none is open for this run';
   try {
-    return bindRefusal(log, change, `${connector}:${command}`);
+    // the read-back with the flags it would run with that change what its pass means, so a read
+    // in another form is refused before any read (batch G3 close-out 3, owner decision H1)
+    return bindRefusal(log, change, readBackFor(`${connector}:${command}`, bound.argv));
   } catch {
     return 'the audit trail could not be read, so the change could not be checked';
   }
@@ -115,10 +117,13 @@ const runIdOf = (connector, command, args, observedId) => {
   return typeof id === 'string' && RUN_ID.test(id) && typeof observedId === 'string' && observedId.toLowerCase() === id.toLowerCase() ? id.toLowerCase() : null;
 };
 
-function recordVerdict(audit, connector, output, change, run = null) {
+// argv: the run's arguments without --change (takeChange's argv), from which the flags that
+// change what the pass means are recorded (batch G3 close-out 3, owner decision H1). Without it a
+// read-back that has such flags records none, which the trail refuses, so its verdict is withheld.
+function recordVerdict(audit, connector, output, change, run = null, argv = null) {
   if (!audit || !output || typeof output.verified !== 'boolean' || typeof output.command !== 'string' || !VERIFY_COMMAND.test(output.command)) return output;
   try {
-    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null, run: typeof run === 'string' ? run : null });
+    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null, run: typeof run === 'string' ? run : null, flags: Array.isArray(argv) ? passFlags(`${connector}:${output.command}`, argv) : null });
     const linkable = typeof change === 'string' && output.verified === true && written && Number.isInteger(written.seq);
     return linkable ? { ...output, audit_seq: written.seq } : output;
   } catch {

@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[PROFILE_NAME]` / `[PROFILE_ID]` (the computer configuration profile as Jamf Pro lists it, and its ID) · `[PROFILE_IDENTIFIER]` (that profile's own PayloadIdentifier: `payloadSummary[0].profile.PayloadIdentifier` in the `profile --id` read; every profile read-back names it, so a command or an entry for another profile is never proof) · `[SMART_GROUP]` / `[SMART_GROUP_ID]` (the pilot smart group and its ID) · `[MEMBER_COUNT]` (the number of Macs you predict in that group) · `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's management ID, from the inventory read) · `[NOT_BEFORE]` (the time the change was saved; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-group-count`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-group-count`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `jamf:verify-profile --absent` for a removal, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -353,8 +353,7 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 # HUMAN-RUN - read-only - on a sample of Macs outside the pilot group
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
 node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
-# proves a pilot Mac still lists it
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
+# the pilot group must still list the profile: read one pilot Mac with the check after the removals below (R0, no change record)
 ```
 </details>
 
@@ -387,6 +386,17 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 > **PREVIEW ONLY [jamf-config-profiles-delete-preview]:** Planning only: deleting `[PROFILE_NAME]` is not authorized here. What Jamf Pro sends to the Macs when a profile is deleted is not in the sources read; take every target out of scope with the gates above, read the removals back, and plan the deletion as a separate reviewed change.
 
 **Verification checkpoint**: [ ] the removal read-backs passed on the Macs that left scope · [ ] the ticket names the Macs still waiting to check in.
+
+## After a removal: the pilot group still holds the profile (R0)
+
+A removal that rewrites the Targets can drop the pilot group by mistake. After it, read one Mac in `[SMART_GROUP]`: it must still list the profile. This read checks a Mac the removal must not touch, so it is no change's proof and names no change id.
+
+```bash
+# HUMAN-RUN read-only, one Mac in the pilot group: passes only when it still lists the profile by its id and its identifier
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+```
+
+**Stop if:** it fails: put the pilot group back in the Targets with Phase C's gate, under its own change record.
 
 ## ⚠️ Risk warning
 

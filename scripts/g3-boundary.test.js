@@ -62,7 +62,9 @@ const ADAPTERS = {
     commands: [['user', '--user', U], ['auth-methods', '--user', U], ['member-of', '--user', U], ['group-members', '--group', U], ['sign-ins', '--user', U, '--since', NOT_BEFORE],
       ['managed-device', '--device', U], ['verify-password-changed', '--user', U, '--not-before', NOT_BEFORE], ['verify-account-enabled', '--user', U, '--enabled', 'true'],
       ['verify-mfa-method', '--user', U, '--method', 'fido2'], ['verify-mfa-cleared', '--user', U], ['verify-signin', '--user', U, '--not-before', NOT_BEFORE],
-      ['verify-device-synced', '--device', U, '--not-before', NOT_BEFORE], ['verify-group-member', '--group', U, '--user', U]],
+      ['verify-device-synced', '--device', U, '--not-before', NOT_BEFORE], ['verify-group-member', '--group', U, '--user', U],
+      // batch G3 close-out 3, owner decision H3
+      ['verify-sessions-revoked', '--user', U, '--not-before', NOT_BEFORE], ['verify-method-absent', '--user', U, '--method-id', '3179e48a-750b-4051-897c-87b9720928f7']],
   },
   okta: {
     file: 'okta-client.js',

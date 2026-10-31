@@ -692,7 +692,7 @@ async function run(argv, env = process.env, deps = {}) {
       const r = await client.get(...def.request(a));
       res = r.ok ? readOutput(command, r) : failed(command, r);
     } else {
-      res = recordVerdict(cli.audit, PLATFORM, await VERIFY[command](client, a), bound.change);
+      res = recordVerdict(cli.audit, PLATFORM, await VERIFY[command](client, a), bound.change, null, bound.argv);
     }
     const shown = redactDeep(res, seen);
     const code = exitCodeFor(shown);

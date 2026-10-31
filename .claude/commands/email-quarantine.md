@@ -64,7 +64,7 @@ Options presented:
 - **Target:** [MESSAGE_IDENTITY_GUID] and the displayed original-recipient list rendered as `$recipientCount`
 - **Effect:** deliver the reviewed quarantined message to every original recipient
 - **Scope:** exactly `$recipientCount` reviewed original recipients shown in the release dialog
-- **Reversibility:** delivery cannot be recalled reliably
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the recipient count can pass 10 and delivery cannot be recalled, so the higher class): delivery cannot be recalled reliably
 - **Required confirmation:** Render the displayed integer as `$recipientCount`, then type exactly `RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO ALL $recipientCount LISTED RECIPIENTS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [quarantine-release-all-portal]:** Re-open the item and stop if the displayed recipient identities or `$recipientCount` drift. Only the exact match authorizes **Release to all recipients** for that list. A single-recipient release uses the separate gate below; neither phrase authorizes the other scope or the reporting option.
@@ -73,7 +73,7 @@ Options presented:
 - **Target:** [MESSAGE_IDENTITY_GUID] and [USER@DOMAIN.COM]
 - **Effect:** deliver the reviewed quarantined message to one verified original recipient
 - **Scope:** one quarantine item and one recipient shown in the release dialog
-- **Reversibility:** delivery cannot be recalled reliably
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): delivery cannot be recalled reliably
 - **Required confirmation:** Type exactly `RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [quarantine-release-one-portal]:** Only the exact match authorizes **Release to specific recipients** for the named recipient. It never authorizes Release to all.
@@ -106,7 +106,7 @@ See `/email-whitelist` for a full comparison of all allow methods and their trad
 - **Target:** [MESSAGE_IDENTITY_GUID]
 - **Effect:** permanently delete the reviewed quarantined message
 - **Scope:** one quarantine item
-- **Reversibility:** irreversible; the message cannot be released afterward
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): irreversible; the message cannot be released afterward
 - **Required confirmation:** Type exactly `DELETE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [quarantine-delete-portal]:** For a reviewed phish or malware item, only the exact match authorizes **Delete permanently**. Capture needed evidence first.
@@ -140,7 +140,7 @@ if ([string]$candidate.Name -cne $moduleName -or [string]$candidate.Version -cne
 # Target: exact $moduleName version $moduleVersionText from canonical $repositoryName
 # Effect: installs one local PowerShell module without changing quarantine state
 # Scope: CurrentUser on this workstation
-# Reversibility: reversible through a separately reviewed Uninstall-Module action
+# Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible through a separately reviewed Uninstall-Module action
 $requiredConfirmation = "INSTALL POWERSHELL MODULE $moduleName VERSION $moduleVersionText FROM $repositoryName"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm the local CurrentUser install"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -182,7 +182,7 @@ Write-Host "Recipient-set SHA256: $recipientSetHash"
 # Target: the resolved quarantine message identity and immutable $recipientSetHash
 # Effect: delivers the reviewed quarantined message to every original recipient
 # Scope: exactly the displayed recipient count for one message identity
-# Reversibility: delivery cannot be recalled reliably
+# Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the recipient count can pass 10 and delivery cannot be recalled, so the higher class): delivery cannot be recalled reliably
 $requiredConfirmation = "RELEASE QUARANTINED MESSAGE $messageIdentity TO $($recipients.Count) RECIPIENTS SET SHA256 $recipientSetHash"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm after header and recipient review"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -215,7 +215,7 @@ Write-Host "Message: $messageIdentity; recipient: $recipient"
 # Target: the resolved quarantine message identity and one verified original recipient
 # Effect: delivers the reviewed quarantined message to one recipient
 # Scope: one message identity and one verified original recipient
-# Reversibility: delivery cannot be recalled reliably
+# Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): delivery cannot be recalled reliably
 $requiredConfirmation = "RELEASE QUARANTINED MESSAGE $messageIdentity TO $recipient"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm after header review"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -244,7 +244,7 @@ Write-Host "Delete target: $($message.Identity); subject and sender reviewed in 
 # Target: the resolved quarantine message identity
 # Effect: permanently deletes the quarantined message
 # Scope: one reviewed quarantine item
-# Reversibility: irreversible; the message cannot be released afterward
+# Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): irreversible; the message cannot be released afterward
 $requiredConfirmation = "DELETE QUARANTINED MESSAGE $messageIdentity"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

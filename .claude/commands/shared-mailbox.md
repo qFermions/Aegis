@@ -28,7 +28,7 @@ disable-model-invocation: true
 - **Target:** [UPN]
 - **Effect:** convert the user mailbox to Shared without removing its license
 - **Scope:** one mailbox verified below 50 GB with archive requirements reviewed
-- **Reversibility:** reversible by converting the mailbox back to User
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by converting the mailbox back to User
 - **Required confirmation:** Type exactly `CONVERT MAILBOX [UPN] TO SHARED`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [shared-mailbox-convert-portal]:** Only after the exact match, EAC → Mailboxes → `[UPN]` → **Others → Convert to shared mailbox**. License removal is a separate destructive action and is not authorized by this phrase.

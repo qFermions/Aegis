@@ -1,0 +1,7 @@
+# command: bash docs/aegis/g3-closeout-2/evidence/tools/runbook-gate-markers.sh 0a5feb7
+# commit: fb22339e  started: 2026-10-31T09:07:50Z  node: v24.22.2
+--- files whose count changed (base -> here):
+total: 343 at 0a5feb7, 343 here
+--- gate ids removed (<) or added (>) here:
+# exit: 0  finished: 2026-10-31T09:07:51Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

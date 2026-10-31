@@ -503,7 +503,7 @@ test('the audit trail takes a run id that is a job id and refuses one that is no
 // null; it proves nothing about any host, so it is listed and does not block a change whose N
 // runs passed. Finding 2: a pass with no run id (Fleet answered without execution_id) cannot be
 // told apart from a re-read, so for a read-back that records run ids it does not count toward k.
-test('a Fleet read with no run id is listed as uncounted: a failed one does not block, a passing one does not count', (t) => {
+test('a Fleet read with no run id is listed as uncounted: one that got no answer does not block, a passing one does not count', (t) => {
   const s = setup(t);
   const change = approved(s, FLEET_BATCH, 2);
   const timeout = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: false, state: 'TIMEOUT', change });

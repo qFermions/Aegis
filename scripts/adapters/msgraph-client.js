@@ -211,7 +211,10 @@ function judge(command, a, data) {
         : { verified: false, observed: { signInSessionsValidFromDateTime: value }, reason: `sessions are valid from ${value}, before ${a['not-before']}: they were not revoked since` };
     }
     case 'verify-method-absent': {
-      if (!isObject(data) || !Array.isArray(data.value)) return { verified: false, observed: { listed: null }, reason: 'the answer has no method list, so this is not proof either way' };
+      // an answer that proves nothing either way is no usable answer (INVALID_RESPONSE), so a
+      // counted change lists it as uncounted rather than as a failed object (code review round 1
+      // of the batch G3 close-out 3, finding 7)
+      if (!isObject(data) || !Array.isArray(data.value)) return { verified: false, state: STATES.INVALID_RESPONSE, observed: { listed: null }, reason: 'the answer has no method list, so this is not proof either way' };
       const ids = data.value.filter(isObject).map((m) => String(m.id || ''));
       // a GUID is the same id in any case; any other id (base64url, a FIDO2 key's) keeps its case
       // (security review 1 of the batch G3 close-out 3)
@@ -219,7 +222,7 @@ function judge(command, a, data) {
       const same = GUID.test(want) ? (id) => id.toLowerCase() === want.toLowerCase() : (id) => id === want;
       if (ids.some(same)) return { verified: false, observed: { listed: true }, reason: 'the method is still listed' };
       // absence on a page with more pages behind it proves nothing
-      if (typeof data['@odata.nextLink'] === 'string') return { verified: false, observed: { listed: false }, reason: 'the method list has another page, so this is not proof either way' };
+      if (typeof data['@odata.nextLink'] === 'string') return { verified: false, state: STATES.INVALID_RESPONSE, observed: { listed: false }, reason: 'the method list has another page, so this is not proof either way' };
       return { verified: true, observed: { listed: false, methods_read: ids.length } };
     }
     default:
@@ -276,7 +279,8 @@ async function run(argv, env = process.env, deps = {}) {
       if (isObject(r.data) && typeof r.data['@odata.nextLink'] === 'string') { res.morePages = true; res.note = 'more records exist: narrow the read (a later --since) or read the rest in the admin center'; }
     } else {
       const judged = judge(command, a, r.data);
-      const verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed, ...(r.scope_notice ? { scope_notice: r.scope_notice } : {}) };
+      const state = judged.state || STATES.OK;
+      const verdict = { state, ok: state === STATES.OK, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed, ...(r.scope_notice ? { scope_notice: r.scope_notice } : {}) };
       if (!verdict.verified) verdict.reason = judged.reason;
       res = recordVerdict(cli.audit, 'msgraph', verdict, bound.change, null, bound.argv);
     }

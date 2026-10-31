@@ -131,8 +131,10 @@ const passFlagRules = (kind) => (Object.prototype.hasOwnProperty.call(PASS_FLAGS
 const joinFlags = (found) => [...found.keys()].sort().map((name) => found.get(name)).join(' ');
 
 // The pass flags a read-back ran with, from its argv, in one form ('' for none), or null for a
-// read-back none of whose flags changes what its pass means. A value outside its rule is left
-// out (the connector refuses it before any read).
+// read-back none of whose flags changes what its pass means. A digest is recorded in lower case,
+// since a connector may take it in either case (Slack does; code review round 1 of the batch G3
+// close-out 3, finding 4); every other value rule is the connector's own, so a value outside it
+// is refused by the connector before any read and is left out here.
 function passFlags(kind, argv) {
   const rules = passFlagRules(kind);
   if (!rules) return null;
@@ -143,7 +145,10 @@ function passFlags(kind, argv) {
     const name = list[i].slice(2);
     if (!Object.prototype.hasOwnProperty.call(rules, name)) continue;
     if (rules[name] === SWITCH) found.set(name, `--${name}`);
-    else if (typeof list[i + 1] === 'string' && rules[name].test(list[i + 1])) found.set(name, `--${name} ${list[i + 1]}`);
+    else if (typeof list[i + 1] === 'string') {
+      const value = rules[name] === DIGEST ? list[i + 1].toLowerCase() : list[i + 1];
+      if (rules[name].test(value)) found.set(name, `--${name} ${value}`);
+    }
   }
   return joinFlags(found);
 }

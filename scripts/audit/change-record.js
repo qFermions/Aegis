@@ -186,10 +186,11 @@ function changeView(log, change, entries = null) {
 // bound read-back carries this change id, so it needs no link).
 // - A read-back that records a run id (audit-log.js RUN_IDS, a job id): each run counts once, a
 //   run that failed and later passed counts as passed, and a run that only failed keeps the
-//   change not done. A read with no run id (no answer from the vendor, or an answer that named
-//   no run) is listed as uncounted: it proves nothing about any object, so it neither counts
-//   nor blocks (code review round 1 of the batch G3 close-out 2, findings 1 and 2). Done only
-//   when exactly N runs passed and no run is still failed.
+//   change not done. A pass with no run id cannot be told apart from a re-read, and a read that
+//   got no answer (a state other than OK) proves nothing about any object: both are listed as
+//   uncounted and neither counts nor blocks (code review round 1 of the batch G3 close-out 2,
+//   findings 1 and 2). A failure that got an answer but no run id is a failed object and blocks
+//   (round 2, finding 4). Done only when exactly N runs passed and nothing failed.
 // - A read-back that records none: each bound read-back that passed counts once and a repeated
 //   read of the same object is not detected. A failed read cannot be matched to a later pass of
 //   the same object, so it keeps the change not done (code review round 2, finding 1: letting it
@@ -205,11 +206,15 @@ function countedView(view, all, change, procedure, approval) {
   let passed;
   let failed;
   const uncounted = [];
+  const answeredFailures = [];
   if (runKind) {
     const runs = new Map();
     for (const e of bound) {
       if (typeof e.run !== 'string') {
-        uncounted.push({ ...brief(e), reason: e.verified === true ? 'the answer named no run id, so this pass cannot be told apart from a re-read' : 'no answer named a run, so this read proves nothing about any object' });
+        // an answered failure with no run id is a failed object, not a read with no answer
+        // (code review round 2, finding 4); only a read that got no answer proves nothing
+        if (e.verified !== true && e.state === 'OK') { answeredFailures.push(e); continue; }
+        uncounted.push({ ...brief(e), reason: e.verified === true ? 'the answer named no run id, so this pass cannot be told apart from a re-read' : 'the read got no answer, so it proves nothing about any object' });
         continue;
       }
       const r = runs.get(e.run) || { passed: false, failed: [] };
@@ -217,7 +222,7 @@ function countedView(view, all, change, procedure, approval) {
       runs.set(e.run, r);
     }
     passed = [...runs.values()].filter((r) => r.passed).length;
-    failed = [...runs.values()].filter((r) => !r.passed).flatMap((r) => r.failed);
+    failed = [...[...runs.values()].filter((r) => !r.passed).flatMap((r) => r.failed), ...answeredFailures];
   } else {
     passed = bound.filter((e) => e.verified === true).length;
     failed = bound.filter((e) => e.verified !== true);

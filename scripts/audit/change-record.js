@@ -196,8 +196,12 @@ function checkGate(command, gate) {
 // covers N; folding N into the digest instead would cover a number the opener typed and no one
 // read, and would change what the digest of the reviewed text means.
 const COUNT_LINE = /^Count: ([1-9][0-9]{0,4})$/;
+// a line whose first word is a count, whatever comes before it (spaces, a bullet, a number, a
+// quote or a heading mark) and in any case, so a second count in another shape is never missed
+// (code review round 1 of the batch G3 close-out 3, finding 12)
+const COUNT_LIKE = /^[\s>#*+\-.0-9)]*count\s*:/i;
 function checkCount(text, expected) {
-  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => l.startsWith('Count:'));
+  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => COUNT_LIKE.test(l));
   if (lines.length !== 1 || !COUNT_LINE.test(lines[0])) {
     throw new InputError('the saved procedure of a counted gate carries one line Count: N, the number in the ticket, so the approval covers it');
   }

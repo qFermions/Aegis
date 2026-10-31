@@ -189,7 +189,7 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 
 **Role needed:** Technician, Maintainer or Admin on `[FLEET_NAME]` for a saved script (the role guide read gives no separate batch permission).
 
-**Counted change:** before the gate, open this gate's own change record for [fleet-device-actions-batch-script-portal], not the pilot's, with `--expected [HOST_COUNT]`, the host count in the ticket, then record its approval. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N", one per distinct execution id, lists every host whose read-back failed, and reads done only when every checked host's read-back passed; anything less reads partial.
+**Counted change:** before the gate, open this gate's own change record for [fleet-device-actions-batch-script-portal], not the pilot's, with `--expected [HOST_COUNT]`, the host count in the ticket, then record its approval. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N", one per distinct execution id, lists every host whose read-back failed, and reads done only when exactly [HOST_COUNT] runs passed and none failed; anything else reads partial. A run that failed while the host had not reported and passed later counts as passed. A read that got an answer but recorded no run id cannot be matched to a later pass, so it keeps the change partial: write the hosts not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that run again.
 
 <!-- SAFETY GATE [fleet-device-actions-batch-script-portal] -->
 - **Target:** [SCRIPT_NAME] on [HOST_COUNT] hosts checked in [FLEET_NAME]

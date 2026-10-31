@@ -44,7 +44,11 @@ const CVE = /^CVE-[0-9]{4}-[0-9]{4,7}$/; // the path always carries the upper-ca
 // the u flag, i never folds a non-ASCII letter into an ASCII one, so a look-alike
 // character is still refused.
 const CVE_ANY_CASE = /^cve-[0-9]{4}-[0-9]{4,7}$/i;
-const EXECUTION_ID = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}[A-Za-z0-9])?$/;
+// A script execution id is a UUID (docs/aegis/g3/vendor-facts.md F-12), the form the audit trail
+// takes as a run (audit-log.js RUN_ID), so verify-script cannot pass on an id the trail would not
+// record and a serial or host name typed in its place is refused before any read (code review
+// round 3 of the batch G3 close-out 2, finding 5).
+const EXECUTION_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const HOST_STATUS = /^(?:new|online|offline|mia|missing)$/;
 const POLICY_RESPONSE = /^(?:passing|failing)$/;
 const COMMAND_STATUS = /^(?:ran|pending|failed)$/; // the documented command_status values

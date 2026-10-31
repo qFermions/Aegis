@@ -265,6 +265,8 @@ function changeView(log, change, entries = null) {
     return view;
   }
   view.procedure = { seq: procedure.seq, command: procedure.command, gate: procedure.gate, r_class: procedure.r_class, target: procedure.target, read_back: procedure.read_back, procedure_sha256: procedure.procedure_sha256 };
+  const stale = staleReadBack(change, procedure);
+  if (stale) view.missing.push(stale);
   const approvals = all.filter((e) => e.kind === 'approval' && e.change === change && e.seq > procedure.seq);
   const approval = approvals.find((e) => e.procedure_sha256 === procedure.procedure_sha256);
   if (approval) view.approval = { seq: approval.seq, ref: approval.ref, matches: true };
@@ -387,10 +389,25 @@ function countedView(view, all, change, procedure, approval) {
 // close-out, owner decision 1): the trail is intact and holds the change record open wrote for
 // this id, its read-back is exactly readBack (connector:verify-command), and an approval of
 // its procedure was recorded after it. The verify-* CLIs call this before any read.
+// A change's read-back must still be one its gate's runbook binds in that form, so a change
+// opened before the batch G3 close-out 3 (a removal named bare) or written around the CLI proves
+// nothing; the operator opens a new change (code review round 1 of that batch, finding 2).
+function staleReadBack(change, procedure) {
+  try {
+    checkGate(procedure.command, procedure.gate);
+    checkGateReadBack(procedure.command, procedure.gate, audit.parseReadBack(procedure.read_back));
+    return null;
+  } catch (error) {
+    if (!(error instanceof InputError) && !(error instanceof audit.AuditRefused)) throw error;
+    return `change ${change} names ${procedure.read_back} for gate ${procedure.gate}, which its runbook does not bind in that form (a change opened before the batch G3 close-out 3, or written around the CLI), so nothing proves it; open a new change (${error.message})`;
+  }
+}
 function bindRefusal(log, change, readBack) {
   const view = changeView(log, change);
   if (view.chain !== 'intact') return view.missing[0];
   if (!view.procedure) return `the audit trail holds no change ${change}; open it with node scripts/audit/change-record.js open before the change`;
+  const stale = staleReadBack(change, view.procedure);
+  if (stale) return stale;
   if (view.procedure.read_back !== readBack) return `change ${change} is proved by ${view.procedure.read_back}, not by ${readBack}`;
   if (!view.approval || !view.approval.matches) return `change ${change} has no approval of its procedure yet; record it with node scripts/audit/change-record.js approve first`;
   return null;
@@ -454,6 +471,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       const view = changeView(log, flags.change, all);
       if (view.chain !== 'intact') throw new NotDone(view.missing[0]);
       if (!view.procedure) throw new NotDone('no procedure was issued under this change id');
+      const stale = staleReadBack(flags.change, view.procedure);
+      if (stale) throw new NotDone(`${stale}. Nothing was recorded`);
       const target = all.find((e) => e.seq === seq);
       if (!target || target.kind !== 'verify') throw new NotDone('only a verify-* result can be linked; that audit seq is not one');
       // the same read-back with the same pass flags (batch G3 close-out 3, owner decision H1)

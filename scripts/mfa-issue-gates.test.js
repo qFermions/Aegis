@@ -120,7 +120,11 @@ test('/mfa-issue R2 and R3 actions capture pre-state and a rollback path, and ea
   }
   // the R2 revocation captures its pre-state too (code review round 2, finding 10)
   const revoke = PAGE.split('\n').find((l) => l.startsWith('**PORTAL ACTION [mfa-session-revoke-portal]:**'));
-  assert.match(revoke, /the user's recent sign-ins from `node scripts\/adapters\/msgraph-client\.js sign-ins --user \[USER_ID\] --since \[NOT_BEFORE\] --execute` saved to `tasks\/checkpoints\/`/);
+  // code review round 3, finding 3: the look-back starts before the loss ([DATE_TIME], written in
+  // the ticket), not at [NOT_BEFORE], the time the post-change read-backs start from
+  assert.match(revoke, /the user's recent sign-ins from `node scripts\/adapters\/msgraph-client\.js sign-ins --user \[USER_ID\] --since \[DATE_TIME\] --execute` saved to `tasks\/checkpoints\/`/);
+  assert.match(revoke, /\[DATE_TIME\] a time before the device was lost/);
+  assert.doesNotMatch(revoke, /\[NOT_BEFORE\]/);
   assert.doesNotMatch(revoke, /no pre-state to restore/);
   const re = PAGE.split('\n').find((l) => l.startsWith('**PORTAL ACTION [mfa-require-reregister-portal]:**'));
   assert.match(re, /right away, before the user registers again \(step 2\)/);
@@ -128,7 +132,10 @@ test('/mfa-issue R2 and R3 actions capture pre-state and a rollback path, and ea
   const i = lines.findIndex((l) => /msgraph-client\.js verify-mfa-cleared /.test(l));
   assert.match(lines[i - 1], /run it right after that gate, before the user registers again/);
   assert.match(PAGE, /^- \[ \] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration$/m);
-  assert.match(PAGE, /^- \[ \] One-method delete path: `auth-methods` no longer lists that method \(its output written in the ticket\)$/m);
+  // code review round 3, finding 8: the raw read holds phone numbers and device names, so it stays
+  // in tasks/checkpoints/ and the ticket gets the method type only
+  assert.match(PAGE, /^- \[ \] One-method delete path: `auth-methods` no longer lists that method \(its output saved to `tasks\/checkpoints\/`; the ticket names the method type only\)$/m);
+  assert.doesNotMatch(PAGE, /its output written in the ticket|the `auth-methods` output for the delete/);
   assert.doesNotMatch(PAGE, /`verify-mfa-cleared` passed after the re-register step/, 'the old unconditional checklist line is gone');
 });
 

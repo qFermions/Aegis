@@ -589,3 +589,27 @@ test('open refuses a gate the named runbook does not have', (t) => {
   assert.match(r.stderr, /\.claude\/commands\/fleet-device-actions\.md has no gate fleet-device-actions-batch-script/);
   assert.equal(s.log.entries().length, 0);
 });
+
+// Code review round 3 of the batch G3 close-out 2. Finding 1: a read that got no answer (a state
+// other than OK: a timeout, a rate limit, a 404 from a mistyped id) proves nothing about any
+// object, so it is uncounted for every counted kind, not a failed object that blocks for good.
+// Finding 2: a Fleet failure that got an answer but recorded no run id cannot be matched to a
+// later pass of the same host, so status names the way forward: a new change for the hosts left.
+test('a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  const timeout = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified: false, state: 'TIMEOUT', change });
+  personRead(s, change);
+  personRead(s, change);
+  const v = status(s, change);
+  assert.equal(v.json.done, true, v.stdout);
+  assert.deepEqual(v.json.failed, []);
+  assert.deepEqual(v.json.uncounted.map((u) => u.seq), [timeout.seq]);
+  const fleet = approved(s, FLEET_BATCH, 1);
+  s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: false, state: 'OK', change: fleet });
+  runRead(s, fleet, uuid(1));
+  const f = status(s, fleet);
+  assert.equal(f.json.done, false);
+  assert.ok(f.json.missing.some((m) => /recorded no run id/.test(m) && /open a new change for the hosts left/.test(m)), f.stdout);
+  assert.ok(!f.json.missing.some((m) => /that run never passed/.test(m) && !/\(run /.test(m)), 'no "that run never passed" for an entry with no run');
+});

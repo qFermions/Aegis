@@ -87,6 +87,13 @@ test('each counted gate\'s runbook opens its change with --expected and the coun
     const lines = text.split('\n');
     assert.ok(lines.indexOf(line) < lines.findIndex((l) => l.includes(`SAFETY GATE [${gate}]`)), `${gate}: --expected comes before the gate`);
   }
+  // code review round 3, finding 4: the runbook says what status does with a failed read
+  for (const [gate] of Object.entries(COUNTED_GATES)) {
+    const text = fs.readFileSync(path.join(DIR, found.get(gate).file), 'utf8');
+    const line = text.split('\n').find((l) => l.includes(`[${gate}]`) && l.includes('--expected'));
+    assert.match(line, /none failed/, `${gate}: done needs none failed`);
+    assert.match(line, /open a new change for the objects left/, `${gate}: a failed read means a new change`);
+  }
   const page = fs.readFileSync(path.join(DIR, 'fleet-device-actions.md'), 'utf8');
   assert.doesNotMatch(page, /reads done once one linked read-back verified/, 'the one-host rule is gone from the batch run');
 });

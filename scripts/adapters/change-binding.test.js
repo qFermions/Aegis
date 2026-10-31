@@ -356,9 +356,18 @@ test('fleet verify-script records its execution id as the run; every other read-
   // security review 1 of the batch G3 close-out 2: the run is recorded only when it is a UUID
   // and Fleet answered for exactly that id, so a serial or host name typed as an execution id,
   // a failed read and an answer for another id all record run null
+  // code review round 3, finding 5: Fleet's execution ids are UUIDs (vendor-facts.md F-12), so a
+  // serial or host name typed as one is refused before any read; verify-script can no longer
+  // pass on an id the trail does not take as a run (it passed with run null before)
+  const before = verifies(tr).length;
   const serial = await run(script({ execution_id: 'C02XK1ABJG5H', host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', 'C02XK1ABJG5H', '--change', change], tr);
-  assert.equal(serial.code, 0, serial.text);
-  assert.equal(verifies(tr).pop().run, null, 'a serial is never recorded as a run');
+  assert.equal(serial.code, 1, serial.text);
+  assert.equal(verifies(tr).length, before, 'a serial is never read, so nothing is recorded');
+  // code review round 3, finding 2: a UUID is one id in either case, so an id typed in upper case
+  // that Fleet answers in lower case verifies, and the run is recorded in lower case
+  const upper = await run(script({ execution_id: id, host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id.toUpperCase(), '--change', change], tr);
+  assert.equal(upper.code, 0, upper.text);
+  assert.equal(verifies(tr).pop().run, id);
   const failed = await run({ ...fleet, replies: () => [{ status: 404, body: '{}' }] }, ['verify-script', '--execution-id', id, '--change', change], tr);
   assert.equal(failed.code, 2, failed.text);
   assert.equal(verifies(tr).pop().run, null, 'a failed read records no run');
@@ -370,6 +379,11 @@ test('fleet verify-script records its execution id as the run; every other read-
   const noId = await run(script({ host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id, '--change', change], tr);
   assert.equal(noId.code, 2, noId.text);
   assert.equal(verifies(tr).pop().verified, false);
+  // code review round 3, finding 6: Fleet documents execution_id in the script result's answer
+  const facts = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'aegis', 'g3', 'vendor-facts.md'), 'utf8');
+  const f12 = facts.split('\n').find((l) => l.startsWith('- F-12.'));
+  assert.ok(f12 && f12.includes('/api/v1/fleet/scripts/results/:execution_id') && f12.includes('"execution_id": "e797d6c6-3aae-11ee-be56-0242ac120002"'), String(f12));
+  assert.match(fs.readFileSync(path.join(__dirname, 'fleet-client.js'), 'utf8'), /vendor-facts\.md F-12/);
   for (const c of CONNECTORS) {
     const other = await run(c, c.verify, tr);
     assert.equal(other.code, 0, `${c.name}: ${other.text}`);

@@ -7,6 +7,8 @@ disable-model-invocation: true
 
 > **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.
 
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below (the session revocation and the cloud sign-in blocks), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and that read-back as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `msgraph:verify-account-enabled --enabled false`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. The on-premises AD disable has no read-back in a read-only connector; its proof is the AD read its procedure names.
+
 **Verdict:** Work it as an incident: **assess severity → contain the account/device → investigate scope → remediate → document.** For a likely account compromise, containment (block sign-in + revoke sessions + reset) comes before deep investigation — stop the bleeding first.
 
 ## What to check first
@@ -23,7 +25,7 @@ disable-model-invocation: true
 - **Target:** [UPN]
 - **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies
 - **Scope:** Entra-managed refresh tokens and browser cookies for one user; current access tokens and app-issued sessions can persist until expiry
-- **Reversibility:** not reversible; the user must authenticate again
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [security-session-revoke-portal]:** Only the separate exact match authorizes Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. Verify after propagation.
@@ -62,7 +64,7 @@ if (-not $user.AccountEnabled) { throw "The account is already blocked. No chang
 # Target: the resolved cloud-only user ID and UPN in $user
 # Effect: blocks Microsoft Entra sign-in for that cloud-only account
 # Scope: one verified cloud-only user account
-# Reversibility: reversible by a separate reviewed re-enable action
+# Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by a separate reviewed re-enable action
 $requiredConfirmation = "BLOCK CLOUD-ONLY SIGN-IN FOR $($user.UserPrincipalName) ID $($user.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -94,7 +96,7 @@ if (-not $adUser.Enabled) { throw "The authoritative AD account is already disab
 # Target: the resolved authoritative AD account UPN and ObjectGuid
 # Effect: disables the synchronized identity at its on-premises source of authority
 # Scope: one exact AD identity; no cloud write is authorized by this phrase
-# Reversibility: reversible through a separately reviewed Enable-ADAccount action
+# Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible through a separately reviewed Enable-ADAccount action
 $requiredConfirmation = "DISABLE AUTHORITATIVE AD USER $($adUser.UserPrincipalName) GUID $($adUser.ObjectGuid)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -109,7 +111,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 # Target: the same synchronized Entra UPN and immutable cloud user ID
 # Effect: blocks cloud sign-in during the directory-sync propagation gap
 # Scope: one verified Entra identity after authoritative AD disable read-back
-# Reversibility: reversible by a separate reviewed cloud re-enable after AD recovery
+# Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by a separate reviewed cloud re-enable after AD recovery
 $requiredConfirmation = "BLOCK CLOUD SYNC GAP FOR $($cloudUser.UserPrincipalName) ID $($cloudUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -134,7 +136,7 @@ if ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUs
 # Target: canonical UPN and immutable ID in $sessionUser
 # Effect: invalidates Entra refresh tokens and browser session cookies
 # Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry
-# Reversibility: not reversible; the user must authenticate again
+# Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
 $requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -155,6 +157,18 @@ Get-InboxRule -Mailbox "[UPN]"                                       # look for 
 Get-Mailbox "[UPN]" | Select ForwardingSmtpAddress,DeliverToMailboxAndForward  # check hidden forwarding
 ```
 </details>
+
+## 🔎 Read-back (read-only, after the person finishes)
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves the Entra steps. Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
+
+```bash
+# HUMAN-RUN read-only read-back of [security-session-revoke-portal] or [security-session-revoke]: passes only when the sessions are valid only from [NOT_BEFORE] on (vendor fact M-26)
+node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+# HUMAN-RUN read-only read-back of [security-account-block]: passes only when Entra shows sign-in blocked
+node scripts/adapters/msgraph-client.js verify-account-enabled --user [USER_ID] --enabled false --change [CHANGE_ID] --execute
+# HUMAN-RUN read-only read-back of [security-synced-cloud-gap-block]: passes only when Entra shows sign-in blocked
+node scripts/adapters/msgraph-client.js verify-account-enabled --user [USER_ID] --enabled false --change [CHANGE_ID] --execute
+```
 
 ## ⚠️ Risk warning
 - Source-authoritative account blocking prevents new authentication. The separate Entra revocation request invalidates refresh tokens/browser cookies after propagation, while current access tokens/app-issued sessions may persist; confirm the identity/evidence before either gate.

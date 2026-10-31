@@ -24,7 +24,7 @@ disable-model-invocation: true
 - **Target:** [UPN] and [SKU]
 - **Effect:** remove the license and start the service-data retention countdown
 - **Scope:** one verified user and one license SKU
-- **Reversibility:** license assignment is reversible before service-data retention expires
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, CA and licensing changes): license assignment is reversible before service-data retention expires
 - **Required confirmation:** Type exactly `REMOVE LICENSE [SKU] FROM [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [license-remove-portal]:** Only after the mailbox/data retention check, manager authorization, and exact match, remove `[SKU]` from `[UPN]`. Repeat the full gate separately for every additional user or SKU.

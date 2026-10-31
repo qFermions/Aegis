@@ -69,6 +69,9 @@ const COUNTED_GATES = Object.freeze({
   'github-security-alerts-dependabot-bulk-dismiss-portal': '[ALERT_COUNT]',
   'okta-group-membership-bulk-add-portal': '[N]',
   'okta-group-membership-bulk-remove-portal': '[N]',
+  // batch G3 close-out 3, owner decision H4: /offboard's MFA clear, each method proved by
+  // msgraph verify-method-absent (H3)
+  'offboard-clear-mfa-portal': '$methodCount',
 });
 const EXPECTED = /^[1-9][0-9]{0,4}$/;
 

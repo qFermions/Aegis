@@ -25,7 +25,7 @@ Generic approval never authorizes a device action. Use only the action-specific 
 - **Target:** [DEVICE_NAME] and its displayed managed-device ID
 - **Effect:** factory-reset the verified corporate device and erase its data
 - **Scope:** one work-owned managed device
-- **Reversibility:** irreversible; data requires a separate backup
+- **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "Wipe"): irreversible; data requires a separate backup
 - **Required confirmation:** Render the displayed ID as `$deviceId`, then type exactly `FULL WIPE [DEVICE_NAME] WITH ID $deviceId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [device-full-wipe-portal]:** The exact phrase authorizes **Wipe** only for the displayed corporate device. Retire, Fresh Start, later object deletion, and Autopilot deregistration are separate actions and need separate approval.
@@ -56,7 +56,7 @@ if ($d.ManagedDeviceOwnerType -ne 'company') { throw "The resolved device is not
 # Target: the resolved corporate device $($d.DeviceName) and managed-device ID $($d.Id)
 # Effect: factory-resets the corporate device and erases its data
 # Scope: one verified work-owned managed device
-# Reversibility: irreversible; data must be restored from a separate backup
+# Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "Wipe"): irreversible; data must be restored from a separate backup
 $requiredConfirmation = "FULL WIPE $($d.DeviceName) WITH ID $($d.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

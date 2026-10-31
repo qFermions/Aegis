@@ -27,7 +27,7 @@ disable-model-invocation: true
 - **Target:** [UPN] on [MAILBOX]
 - **Effect:** remove Full Access while leaving other delegation unchanged
 - **Scope:** one user and one mailbox
-- **Reversibility:** reversible by granting Full Access again
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by granting Full Access again
 - **Required confirmation:** Type exactly `REMOVE FULL ACCESS FOR [UPN] FROM [MAILBOX]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 **PORTAL ACTION [mailbox-permission-remove-portal]:** Only after the exact match, remove `[UPN]` from **Full Access** on `[MAILBOX]` and re-read the Delegation list.
@@ -49,7 +49,7 @@ Get-RecipientPermission -Identity "[MAILBOX]"                                   
 # Target: [UPN] on [MAILBOX]
 # Effect: removes Full Access while leaving other delegation unchanged
 # Scope: one user and one mailbox
-# Reversibility: reversible with Add-MailboxPermission
+# Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible with Add-MailboxPermission
 $requiredConfirmation = "REMOVE FULL ACCESS FOR [UPN] FROM [MAILBOX]"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

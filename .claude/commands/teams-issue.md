@@ -85,7 +85,7 @@ if ([string]$candidate.Name -cne $moduleName -or [string]$candidate.Version -cne
 # Target: exact $moduleName version $moduleVersionText from canonical $repositoryName
 # Effect: installs one local PowerShell module without changing Teams policy
 # Scope: CurrentUser on this workstation
-# Reversibility: reversible through a separately reviewed Uninstall-Module action
+# Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible through a separately reviewed Uninstall-Module action
 $requiredConfirmation = "INSTALL POWERSHELL MODULE $moduleName VERSION $moduleVersionText FROM $repositoryName"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm the local CurrentUser install"
 if ($confirmation -ceq $requiredConfirmation) {

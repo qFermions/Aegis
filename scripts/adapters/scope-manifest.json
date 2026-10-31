@@ -409,8 +409,8 @@
         "MS_CERT_SHA256"
       ],
       "least_privilege": [
-        "User.Read.All",
-        "UserAuthenticationMethod.Read.All",
+        "User.Read.All (users; signInSessionsValidFromDateTime on $select for verify-sessions-revoked, vendor facts M-09, M-27)",
+        "UserAuthenticationMethod.Read.All (authentication methods; auth-methods, verify-mfa-method, verify-mfa-cleared and verify-method-absent, vendor fact M-14)",
         "AuditLog.Read.All (sign-in logs; Entra ID P1 or P2)",
         "GroupMember.ReadBasic.All",
         "Directory.Read.All (only for another user's memberOf)",
@@ -437,7 +437,9 @@
         "M-16",
         "M-18",
         "M-20",
-        "M-21"
+        "M-21",
+        "M-26",
+        "M-27"
       ],
       "unconfirmed": [
         "M-02: whether the legacy SHA-1 x5t header is still needed beside x5t#S256"
@@ -471,6 +473,16 @@
         {
           "url": "https://learn.microsoft.com/en-us/graph/api/authentication-list-methods?view=graph-rest-1.0",
           "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/graph/api/user-revokesigninsessions?view=graph-rest-1.0",
+          "read_on": "2026-10-31",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/graph/api/resources/user?view=graph-rest-1.0",
+          "read_on": "2026-10-31",
           "how": "vendor docs page"
         }
       ]

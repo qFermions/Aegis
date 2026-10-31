@@ -22,6 +22,10 @@
 //     verify-signin           --user [USER_ID] --not-before T   (a successful sign-in at or after T)
 //     verify-device-synced    --device [DEVICE_ID] --not-before T   (Intune lastSyncDateTime at or after T)
 //     verify-group-member     --group [GROUP_ID] --user [USER_ID] [--absent]
+//     verify-sessions-revoked --user [USER_ID] --not-before T   (signInSessionsValidFromDateTime at or
+//                                         after T: Revoke sessions resets it; vendor facts M-26, M-27)
+//     verify-method-absent    --user [USER_ID] --method-id [METHOD_ID]   (that method id no longer
+//                                         listed in the user's authentication methods)
 //
 // Environment: MS_TENANT_ID (the tenant GUID: the token URL is the tenant's own, so a
 // token can only come from this tenant), MS_CLIENT_ID, MS_PRIVATE_KEY (PEM) and
@@ -54,6 +58,8 @@ const USER_SELECT = 'id,userPrincipalName,accountEnabled,userType,onPremisesSync
 const DEVICE_SELECT = 'id,deviceName,lastSyncDateTime,complianceState,operatingSystem,managementState';
 const ROUTES = Object.freeze({
   user: { method: 'GET', path: '/v1.0/users/:user', params: { user: USER }, fixedQuery: { $select: USER_SELECT } },
+  // the session property is returned only on $select (vendor fact M-27), so it has its own read
+  userSessions: { method: 'GET', path: '/v1.0/users/:user', params: { user: USER }, fixedQuery: { $select: 'id,signInSessionsValidFromDateTime' } },
   authMethods: { method: 'GET', path: '/v1.0/users/:user/authentication/methods', params: { user: USER } },
   memberOf: { method: 'GET', path: '/v1.0/users/:user/memberOf', params: { user: USER }, fixedQuery: { $select: 'id,displayName' } },
   groupMembers: { method: 'GET', path: '/v1.0/groups/:group/members', params: { group: GUID }, fixedQuery: { $select: 'id,userPrincipalName' } },
@@ -99,7 +105,9 @@ function makeSpec({ tenant, now = Date.now, remember = () => {} } = {}) {
 }
 
 // ── Commands ─────────────────────────────────────────────────────────────────
-const RULES = { user: USER, group: GUID, device: GUID, since: ISO_UTC, 'not-before': ISO_UTC, enabled: /^(?:true|false)$/, method: new RegExp(`^(?:${METHODS.join('|')})$`) };
+// an authentication method's id as the methods read prints it: a GUID or a base64url string
+const METHOD_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const RULES = { user: USER, group: GUID, device: GUID, since: ISO_UTC, 'not-before': ISO_UTC, enabled: /^(?:true|false)$/, method: new RegExp(`^(?:${METHODS.join('|')})$`), 'method-id': METHOD_ID };
 const VALUE_FLAGS = Object.keys(RULES);
 const BOOLEAN_FLAGS = ['execute', 'absent'];
 const step = (route, params = {}, query = {}) => ({ route, params, query });
@@ -119,6 +127,10 @@ const COMMANDS = Object.freeze({
   'verify-signin': { kind: 'verify', flags: ['user', 'not-before'], guidUser: true, steps: (a) => [step('signIns', {}, { $filter: signinFilter(a.user, a['not-before']) })], expected: (a) => ({ user: a.user, successful_sign_in: `at or after ${a['not-before']}` }) },
   'verify-device-synced': { kind: 'verify', flags: ['device', 'not-before'], steps: (a) => [step('managedDevice', { device: a.device })], expected: (a) => ({ device: a.device, lastSyncDateTime: `at or after ${a['not-before']}` }) },
   'verify-group-member': { kind: 'verify', flags: ['group', 'user'], booleans: ['absent'], guidUser: true, steps: (a) => [step('groupMembers', { group: a.group })], expected: (a) => ({ group: a.group, user: a.user, member: !a.absent }) },
+  // batch G3 close-out 3, owner decision H3: the read-backs of /mfa-issue's session revocation
+  // and one-method delete
+  'verify-sessions-revoked': { kind: 'verify', flags: ['user', 'not-before'], steps: (a) => [step('userSessions', { user: a.user })], expected: (a) => ({ user: a.user, signInSessionsValidFromDateTime: `at or after ${a['not-before']}` }) },
+  'verify-method-absent': { kind: 'verify', flags: ['user', 'method-id'], steps: (a) => [step('authMethods', { user: a.user })], expected: (a) => ({ user: a.user, method_id: a['method-id'], listed: false }) },
 });
 
 const USAGE = `Usage: node scripts/adapters/msgraph-client.js <command> [flags] [--execute]
@@ -187,6 +199,24 @@ function judge(command, a, data) {
       if (!present && typeof d['@odata.nextLink'] === 'string') return { verified: false, observed: { member: false }, reason: 'the member list has another page, so this is not proof either way; check in the Entra admin center' };
       if (present === !a.absent) return { verified: true, observed: { member: present } };
       return { verified: false, observed: { member: present }, reason: present ? 'the user is still a member' : 'the user is not a member' };
+    }
+    case 'verify-sessions-revoked': {
+      // Revoke sessions resets signInSessionsValidFromDateTime to the time of the revocation
+      // (vendor fact M-26); Microsoft notes tokens may take a few minutes more to be revoked
+      const value = d.signInSessionsValidFromDateTime;
+      if (value === undefined || value === null) return { verified: false, observed: { signInSessionsValidFromDateTime: null }, reason: 'signInSessionsValidFromDateTime is not in the answer, so this is not proof either way' };
+      if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) return { verified: false, observed: { signInSessionsValidFromDateTime: null }, reason: 'signInSessionsValidFromDateTime is not a time, so this is not proof either way' };
+      return atOrAfter(value, a['not-before'])
+        ? { verified: true, observed: { signInSessionsValidFromDateTime: value } }
+        : { verified: false, observed: { signInSessionsValidFromDateTime: value }, reason: `sessions are valid from ${value}, before ${a['not-before']}: they were not revoked since` };
+    }
+    case 'verify-method-absent': {
+      if (!isObject(data) || !Array.isArray(data.value)) return { verified: false, observed: { listed: null }, reason: 'the answer has no method list, so this is not proof either way' };
+      const ids = data.value.filter(isObject).map((m) => String(m.id || ''));
+      if (ids.includes(a['method-id'])) return { verified: false, observed: { listed: true }, reason: 'the method is still listed' };
+      // absence on a page with more pages behind it proves nothing
+      if (typeof data['@odata.nextLink'] === 'string') return { verified: false, observed: { listed: false }, reason: 'the method list has another page, so this is not proof either way' };
+      return { verified: true, observed: { listed: false, methods_read: ids.length } };
     }
     default:
       throw new RefusedError('unknown read-back');

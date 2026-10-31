@@ -117,7 +117,7 @@ function trail(t) {
   };
   // open (and by default approve) a change record whose read-back is readBack
   const open = (readBack, { approve = true } = {}) => {
-    const o = record(['open', '--command', 'binding-test', '--gate', 'binding-test-gate', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    const o = record(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
     assert.equal(o.code, 0, o.text);
     if (approve) assert.equal(record(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
     return o.json.change;
@@ -297,10 +297,13 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // the pilot (E1) and the batch (E2) are two changes with two ids, and status proves one host,
   // not the batch (code review round 3, finding 3)
   assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` set to the E1 change's id, unless step 1 set R1\) and, with `--change \[CHANGE_ID\]` set to this gate's own change id, for every checked host/);
-  assert.match(page('fleet-device-actions'), /with `\[CHANGE_ID\]` the id of this gate's own change record, not the pilot's\./);
+  // the read-back names the change opened before the gate (code review round 2 of the batch G3
+  // close-out 2, finding 13: the moved text had left a broken sentence)
+  assert.match(page('fleet-device-actions'), /with `\[CHANGE_ID\]` the id of this gate's own change record, opened before the gate \(above\), not the pilot's\. Any host/);
+  assert.doesNotMatch(page('fleet-device-actions'), /not the pilot's\. \(opened/);
   // the batch is a counted change (batch G3 close-out 2, owner decision 2): opened with
   // --expected [HOST_COUNT], done only when every checked host's read-back passed
-  assert.match(page('fleet-device-actions'), /Open that change record for \[fleet-device-actions-batch-script-portal\] with `--expected \[HOST_COUNT\]`, the host count in the ticket/);
+  assert.match(page('fleet-device-actions'), /\*\*Counted change:\*\* before the gate, open this gate's own change record for \[fleet-device-actions-batch-script-portal\], not the pilot's, with `--expected \[HOST_COUNT\]`, the host count in the ticket, then record its approval\./);
   // a gate whose class is set at run time says when to drop --change: the portal gate by its
   // step 1, the fenced fleetctl gate by the class its own precondition writes in the ticket, in
   // a comment the gated-fence rules allow (code review round 3, finding 8)
@@ -362,6 +365,11 @@ test('fleet verify-script records its execution id as the run; every other read-
   const other = await run(script({ execution_id: 'd6cffa75-b5b5-41ef-9230-15073c8a88cf', host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id, '--change', change], tr);
   assert.equal(other.code, 2, other.text);
   assert.equal(verifies(tr).pop().run, null, 'an answer for another id records no run');
+  // code review round 2, finding 6: an answer that names no execution id does not verify, so the
+  // command and the change record agree
+  const noId = await run(script({ host_id: 7, exit_code: 0, host_timeout: false }), ['verify-script', '--execution-id', id, '--change', change], tr);
+  assert.equal(noId.code, 2, noId.text);
+  assert.equal(verifies(tr).pop().verified, false);
   for (const c of CONNECTORS) {
     const other = await run(c, c.verify, tr);
     assert.equal(other.code, 0, `${c.name}: ${other.text}`);

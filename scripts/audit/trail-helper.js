@@ -32,7 +32,7 @@ function changeTrail(t) {
   // The id of an approved change whose read-back is readBack (connector:verify-command).
   function changeFor(readBack) {
     if (opened.has(readBack)) return opened.get(readBack);
-    const o = call(['open', '--command', 'runbook-line-test', '--gate', 'runbook-line-test-gate', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    const o = call(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
     call(['approve', '--change', o.change, '--ref', 'IT-123', '--procedure-sha256', o.procedure_sha256]);
     opened.set(readBack, o.change);
     return o.change;

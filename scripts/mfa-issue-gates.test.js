@@ -83,7 +83,9 @@ test('Require re-register MFA is gated R3 as the alternative to the one-method d
   assert.equal(g.fields['Failure behavior'], del.fields['Failure behavior'], 'fails as the other gates do');
   assert.match(PAGE, /^\*\*PORTAL ACTION \[mfa-require-reregister-portal\]:\*\* Only after the exact match, [^\n]*\*\*Authentication methods\*\*[^\n]*\*\*Require re-register MFA\*\*/m);
   assert.match(PAGE, /\[mfa-require-reregister-portal\][^\n]*\[mfa-method-delete-portal\][^\n]*one or the other for a ticket, never both|\[mfa-method-delete-portal\][^\n]*\[mfa-require-reregister-portal\][^\n]*one or the other for a ticket, never both/);
-  assert.match(PAGE, /\*\*Role needed \(Require re-register MFA\):\*\* at least Authentication Administrator/);
+  // the role is read before the click, inside the gate's own action (code review round 2, finding 8)
+  assert.match(PAGE, /^\*\*PORTAL ACTION \[mfa-require-reregister-portal\]:\*\* Only after the exact match, signed in as at least Authentication Administrator/m);
+  assert.doesNotMatch(PAGE, /\*\*Role needed \(Require re-register MFA\):\*\*/);
 });
 
 test('verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named', () => {
@@ -112,18 +114,21 @@ test('vendor fact B-18 quotes the page as re-read on 2026-10-31', () => {
 test('/mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof', () => {
   for (const id of ['mfa-require-reregister-portal', 'mfa-method-delete-portal']) {
     const action = PAGE.split('\n').find((l) => l.startsWith(`**PORTAL ACTION [${id}]:**`));
-    assert.match(action, /the method list from "What to check first" saved to `tasks\/checkpoints\/`/, id);
+    // the pre-state is the connector's own read, saved as it prints (code review round 2, finding 15)
+    assert.match(action, /the method list from `node scripts\/adapters\/msgraph-client\.js auth-methods --user \[USER_ID\] --execute` saved to `tasks\/checkpoints\/`/, id);
     assert.match(action, /rollback path written in the ticket/, id);
   }
+  // the R2 revocation captures its pre-state too (code review round 2, finding 10)
   const revoke = PAGE.split('\n').find((l) => l.startsWith('**PORTAL ACTION [mfa-session-revoke-portal]:**'));
-  assert.match(revoke, /no pre-state to restore/);
+  assert.match(revoke, /the user's recent sign-ins from `node scripts\/adapters\/msgraph-client\.js sign-ins --user \[USER_ID\] --since \[NOT_BEFORE\] --execute` saved to `tasks\/checkpoints\/`/);
+  assert.doesNotMatch(revoke, /no pre-state to restore/);
   const re = PAGE.split('\n').find((l) => l.startsWith('**PORTAL ACTION [mfa-require-reregister-portal]:**'));
   assert.match(re, /right away, before the user registers again \(step 2\)/);
   const lines = PAGE.split('\n');
   const i = lines.findIndex((l) => /msgraph-client\.js verify-mfa-cleared /.test(l));
   assert.match(lines[i - 1], /run it right after that gate, before the user registers again/);
   assert.match(PAGE, /^- \[ \] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration$/m);
-  assert.match(PAGE, /^- \[ \] One-method delete path: the Authentication methods list no longer shows that method \(a portal read, written in the ticket\)$/m);
+  assert.match(PAGE, /^- \[ \] One-method delete path: `auth-methods` no longer lists that method \(its output written in the ticket\)$/m);
   assert.doesNotMatch(PAGE, /`verify-mfa-cleared` passed after the re-register step/, 'the old unconditional checklist line is gone');
 });
 

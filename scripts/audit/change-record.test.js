@@ -519,25 +519,69 @@ test('a Fleet read with no run id is listed as uncounted: a failed one does not 
   assert.equal(done.json.uncounted.length, 2);
 });
 
-// Finding 4: for a read-back with no run id, a failed read cannot be matched to a later pass of
-// the same object, so it is listed but does not block: the change is done once N bound
-// read-backs passed (a re-read is not detected, as status says).
-test('a read-back with no run id: a failed read stays listed and the change is done once N passed', (t) => {
+// Finding 4 (round 1) made a failed read with no run id non-blocking; code review round 2,
+// finding 1, showed that lets a batch with a known failed object read done. The owner's rule
+// stands: a failed read keeps the change not done and is named. With no run id it cannot be
+// matched to a later pass of the same object, so it stays (a new change takes the objects left).
+// Round 2, finding 5: more passes than N also reads partial, as with run ids.
+test('a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial', (t) => {
   const s = setup(t);
   const change = approved(s, OKTA_BULK, 2);
   const bad = personRead(s, change, false);
   personRead(s, change);
-  assert.equal(status(s, change).json.done, false);
   personRead(s, change);
   const v = status(s, change);
-  assert.equal(v.json.done, true, v.stdout);
+  assert.equal(v.json.done, false, v.stdout);
   assert.equal(v.json.summary, 'verified 2 of 2');
   assert.deepEqual(v.json.failed.map((f) => f.seq), [bad.seq]);
+  assert.ok(v.json.missing.some((m) => m.includes(`seq ${bad.seq}`)), v.stdout);
   assert.match(v.json.note, /a repeated read of the same object is not detected/);
+  const over = approved(s, OKTA_BULK, 2);
+  personRead(s, over); personRead(s, over); personRead(s, over);
+  const o = status(s, over);
+  assert.equal(o.json.done, false);
+  assert.ok(o.json.missing.some((m) => /more than the 2 the ticket names/.test(m)), o.stdout);
 });
 
 // Finding 6: open checks the gate against the runbook it names, so a mistyped counted gate is
 // refused instead of falling back to the one-read-back rule.
+// Code review round 2, finding 2: a command with no runbook is refused too, so a misspelled
+// --command cannot skip the gate check; finding 3: the gate is checked before the count, so a
+// misspelled counted gate given with --expected is told the gate is missing.
+test('open refuses a command with no runbook, and checks the gate before the count', (t) => {
+  const s = setup(t);
+  const r = s.run(CLI, ['open', '--command', 'fleet-device-action', '--gate', 'fleet-device-actions-batch-script', '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure]);
+  assert.equal(r.code, 1, r.stdout);
+  assert.match(r.stderr, /no runbook \.claude\/commands\/fleet-device-action\.md/);
+  const e = s.run(CLI, ['open', '--command', 'fleet-device-actions', '--gate', 'fleet-device-actions-batch-script', '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure, '--expected', '5']);
+  assert.equal(e.code, 1);
+  assert.match(e.stderr, /has no gate fleet-device-actions-batch-script/);
+  const bad = s.run(CLI, ['open', '--command', '../../etc/passwd', '--gate', 'g', '--r-class', 'R3', '--target', '[UPN]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure]);
+  assert.equal(bad.code, 1);
+  assert.match(bad.stderr, /--command is a runbook name/);
+  assert.equal(s.log.entries().length, 0);
+});
+
+// Round 2, finding 4: a Fleet read that got an answer but recorded no run id (an answer for no
+// id, or another id) is a failed host, not a read with no answer, so it blocks; only a read with
+// no answer (a state other than OK) is uncounted. Finding 9: open's next step for a read-back
+// with no run id says to read each object once and that a re-read is not detected. Finding 14:
+// the trail takes a run only on a read-back that records one.
+test('a Fleet failure with an answer but no run id blocks; open\'s next step and the trail follow the run-id rule', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 1);
+  const answered = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: false, state: 'OK', change });
+  runRead(s, change, uuid(1));
+  const v = status(s, change);
+  assert.equal(v.json.done, false, v.stdout);
+  assert.deepEqual(v.json.failed.map((f) => f.seq), [answered.seq]);
+  const o = openCounted(s, OKTA_BULK, 3);
+  const step = o.json.next.find((n) => /read-back/.test(n));
+  assert.match(step, /read each of the 3 objects once: a re-read of the same object is not detected/);
+  assert.doesNotMatch(step, /distinct/);
+  assert.throws(() => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified: true, state: 'OK', change: null, run: uuid(7) }), audit.AuditRefused);
+});
+
 test('open refuses a gate the named runbook does not have', (t) => {
   const s = setup(t);
   const r = s.run(CLI, ['open', '--command', 'fleet-device-actions', '--gate', 'fleet-device-actions-batch-script', '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure]);

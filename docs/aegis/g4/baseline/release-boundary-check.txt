@@ -1,0 +1,5 @@
+# command: node scripts/harness/release-boundary-check.js
+# commit: 1f6647c  started: 2026-10-31T23:26:22Z  node: v24.22.1  pwsh: PowerShell 7.6.9
+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+# exit: 0  finished: 2026-10-31T23:26:22Z
+# capture edited after the run: U+2014 written as "--" (1), ANSI colour codes removed, clone and temporary paths written as <clone> and <tmp>; line numbers unchanged

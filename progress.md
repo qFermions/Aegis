@@ -1,8 +1,10 @@
-# progress: batch G3 close-out 3 (owner decisions on PR #8's eight items)
+# progress: batch G4 (eval runner and close-out)
 
-- **Task:** on `fix/g3-closeout-3` from `main` at `0a5feb7` (contains `52441fb`), draft PR #9. Cut-line order H1 to H5. Items 1, 2, 3 and 7 of PR #8: answered by the owner, no work.
-- **Outputs:** `scripts/audit/audit-log.js` (pass flags, `flagValue`, the verify entry's `flags`, the procedure's `gate_checked`), `change-record.js` (read-back named with its flags, `boundReadBacks`, `namedGates`, `checkGateReadBack`, `checkCount`, `staleReadBack`, a fifth counted gate), `cli-support.js` and all nine connectors, `msgraph-client.js` (`verify-sessions-revoked`, `verify-method-absent`); 27 runbooks; vendor facts M-26, M-27; scope manifest; `[METHOD_ID]`; the audit README; tests (+52); `checks.md`; `docs/aegis/g3-closeout-3/`.
-- **Completed:** H1 to H5, each test first; `/security-review` 1 (three observations fixed); `/code-review xhigh` rounds 1 to 3 (40 found, 33 fixed, 7 closed); `/security-review` 2 over every later change (no findings at 8 or above); head captures and battery at `fb22339` (1499/1499; 12 pushes, each gated); checks.md verdicts; the evidence review (corrections applied in `cfff15e`); PR #9's body; `git ls-remote origin` matches `refs-before.txt` but for the branch and GitHub's two PR refs.
-- **Decisions:** H1 records closed-set, number and digest flags only; H2 checks N against a `Count: N` line in the approved text; H4 classes 32 R3, 12 R2 and 14 R1; the counted rule makes `/offboard`'s MFA clear the fifth counted gate; a gate whose runbook binds no read-back takes no change record.
-- **Open issues (owner decisions for the PR body):** D10, a time bound (`--not-before`) not recorded, so H1 is unresolved on that point; the fifth counted gate and the reworded counted-gate reasons (D5, D7); D7's three changed checks; 31 newly classed R2 and R3 gates with no read-back; security review 2's O1 (a disguised count line), with a ready fix; a password reset moving `signInSessionsValidFromDateTime` (D9); a shared inconclusive verdict state; an explicit read-back field per gate; the `audit-log.js approval` door; object-level binding.
-- **Next action:** none in this batch: PR #9 (draft, head pushed after its battery, body filled from the template) waits on the owner's review and the decisions listed under Open issues; the next batch starts from those answers.
+- **Task:** on `feat/g4-eval-and-closeout` from `main` at `1f6647c` (contains `46f84e8`, same tree). Cut-line order: A1, A2, A3, B1 to B11, A4, C1 to C4, D1 to D3.
+- **Outputs:** `docs/aegis/g4/baseline/` (Phase 0 captures), `checks.md` (new table), `docs/review/batches/g3-closeout-3-checks.md` (the previous table, moved).
+- **Completed:** Phase 0 on a fresh clone of `1f6647c`: `node --test` 1499/1499, the same under the socket tripwire; evals 28/28 6/6, 38/38 9/9, 65/65 13/13, 44/44 8/8; lint 108 clean; scanner 0 BLOCK; release boundary PASS; continuity STALE (exit 2); 343 runbook gate markers; CLAUDE.md 19,202 bytes.
+- **Decisions:** none yet beyond the baseline.
+- **Open issues:** the model deviation (Opus 5.5, owner's note) is recorded in `checks.md` V1.
+- **Next action:** A1: tests first for the disguised count lines in `scripts/audit/change-record.test.js`.
+</content>
+</invoke>

@@ -1,0 +1,10 @@
+# command: node docs/aegis/g3/evidence/tools/leak-grep.js 1f6647c
+# commit: 1f6647c  started: 2026-10-31T23:26:33Z  node: v24.22.1  pwsh: PowerShell 7.6.9
+charter grep: 0 hit lines (case-insensitive) in 0 files; by keyword: {}
+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 0
+hits by file (path: lines):
+credential-shape pass over added lines: 0 hit(s)
+URL hosts in added lines (0): 
+mail domains in added lines (0): 
+# exit: 0  finished: 2026-10-31T23:26:34Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone> and <tmp>; line numbers unchanged

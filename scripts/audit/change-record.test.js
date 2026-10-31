@@ -745,6 +745,19 @@ test('open refuses a gate whose runbook binds no read-back: its proof is the rea
   assert.equal(s.log.entries().length, 0, 'nothing recorded');
 });
 
+// Code review round 1 of the batch G3 close-out 3, finding 3: the rollback read-back written in
+// the prose after /github-branch-protection's Phase F was bound to the last exception gate above
+// it, so open for "disable a ruleset" took only the read that passes when protection is on.
+test('an exception gate that weakens protection is never opened for the read that passes when protection is on', (t) => {
+  const s = setup(t);
+  const on = 'github:verify-protection --enforce-admins --no-deletions --no-force-push --reviews 2';
+  const r = s.run(CLI, ['open', '--command', 'github-branch-protection', '--gate', 'github-branch-protection-disable-ruleset-portal', '--r-class', 'R3', '--target', '[REPO_NAME]', '--read-back', on, '--procedure-file', s.procedure]);
+  assert.equal(r.code, 1, r.stdout);
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  // the rollback gates that restore protection still take it
+  assert.equal(openH1(s, H1.protection, on).code, 0);
+});
+
 test('a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change', (t) => {
   const s = setup(t);
   const change = approvedH1(s, H1.removePerson, 'okta:verify-group-member --absent');

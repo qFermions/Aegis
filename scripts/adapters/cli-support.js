@@ -21,7 +21,7 @@
 
 // CHANGE_ID and VERIFY_COMMAND are the trail's own forms, so a run is checked with exactly the
 // rule its verify entry is written under (readonly-contract.js isVerifyCommand matches it too).
-const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS } = require('../audit/audit-log.js');
+const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId } = require('../audit/audit-log.js');
 const { bindRefusal } = require('../audit/change-record.js');
 
 const AUDITED_STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
@@ -106,7 +106,7 @@ const verdictState = (state) => (AUDITED_STATES.has(state) ? state : 'INVALID_RE
 // and the vendor's answer named that same id (observedId), else null.
 const RUN_ID_FLAGS = RUN_IDS;
 const runIdOf = (connector, command, args, observedId) => {
-  const flag = Object.prototype.hasOwnProperty.call(RUN_ID_FLAGS, `${connector}:${command}`) ? RUN_ID_FLAGS[`${connector}:${command}`] : null;
+  const flag = recordsRunId(`${connector}:${command}`) ? RUN_ID_FLAGS[`${connector}:${command}`] : null;
   const id = flag && args ? args[flag] : null;
   return typeof id === 'string' && RUN_ID.test(id) && observedId === id ? id : null;
 };

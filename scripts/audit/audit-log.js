@@ -80,6 +80,9 @@ const RUN_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-
 // The read-backs that record a run id, connector:command to the flag that holds it: only a job
 // id belongs here, never a user, email, device name or serial (cli-support.js runIdOf).
 const RUN_IDS = Object.freeze({ 'fleet:verify-script': 'execution-id' });
+// Whether a read-back (connector:command) records a run id: the one test for the trail, the CLIs
+// (cli-support.js runIdOf) and status (change-record.js countedView).
+const recordsRunId = (readBack) => Object.prototype.hasOwnProperty.call(RUN_IDS, readBack);
 
 // Credential shapes refused in any value, whatever its field allows (defence in depth):
 // Slack, GitHub, OpenAI-style, Google, GitLab and Okta tokens, a JWT, a bearer or basic
@@ -140,6 +143,11 @@ function checkEntry(entry) {
     }
   }
   if (kind === 'procedure' && fields.expected !== null && fields.change === null) throw new AuditRefused('a count is recorded only on a change record');
+  // a run id only on a read-back that records one (code review round 2 of the batch G3
+  // close-out 2, finding 14), so no other read-back's flag value can reach the trail as a run
+  if (kind === 'verify' && fields.run !== null && !recordsRunId(`${fields.connector}:${fields.command}`)) {
+    throw new AuditRefused('a run id is recorded only by a read-back that takes one');
+  }
   return fields;
 }
 
@@ -456,7 +464,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 }
 
 module.exports = {
-  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, AuditRefused, AuditBroken,
+  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

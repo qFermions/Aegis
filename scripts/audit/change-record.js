@@ -201,7 +201,7 @@ function changeView(log, change, entries = null) {
 //   failed; more than N reads partial, as with run ids (round 2, finding 5).
 function countedView(view, all, change, procedure, approval) {
   const expected = procedure.expected;
-  const runKind = Object.prototype.hasOwnProperty.call(audit.RUN_IDS, procedure.read_back);
+  const runKind = audit.recordsRunId(procedure.read_back);
   const bound = approval
     ? all.filter((e) => e.kind === 'verify' && e.change === change && kindOf(e) === procedure.read_back && e.seq > approval.seq)
     : [];

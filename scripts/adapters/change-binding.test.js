@@ -302,15 +302,24 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // owner decision H4: the newly classed gates of /offboard (4), /password-reset (2, one of them
   // the verify-password-changed line that was unbound) and /security-alert-triage (3) bind their
   // read-backs (81 to 90 bound, 77 to 76 unbound)
-  assert.equal(bound, 90, 'the 90 read-backs of R2 and R3 gates');
+  // code review round 1 of the batch G3 close-out 3, finding 3: the rollback read-back written in
+  // the prose after /github-branch-protection's Phase F sat under the last exception gate; it now
+  // names the rollback gate's own read-back line instead of repeating it (90 to 89)
+  assert.equal(bound, 89, 'the 89 read-backs of R2 and R3 gates');
   assert.equal(unbound, 76, 'the 76 read-backs of R0 and R1 work, of no gate, or not a change\'s proof stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
-  // two read-backs of R2 and R3 changes are named in prose, not on a command line: the rollback
-  // gate's read-back after a branch-protection exception, and the per-host read-back of a
-  // batch script run (code review round 1, finding 1)
+  // read-backs of R2 and R3 changes named in prose: the per-host read-back of a batch script run
+  // (code review round 1, finding 1). The rollback after a branch-protection exception named its
+  // read-back in prose too, under the last exception gate, which bound the read that passes when
+  // protection is on to "disable a ruleset"; it now points to the rollback gate's own read-back
+  // line, and no Phase F exception gate binds a read-back (code review round 1 of the batch G3
+  // close-out 3, finding 3; a check rewritten, checks.md D7)
   const page = (name) => fs.readFileSync(path.join(dir, `${name}.md`), 'utf8');
-  assert.match(page('github-branch-protection'), /Then run the rollback gate it names, and its read-back: `node scripts\/adapters\/github-client\.js verify-protection [^`]*--change \[CHANGE_ID\] --execute`/);
+  assert.match(page('github-branch-protection'), /Then run the rollback gate it names, under that gate's own change record, and that gate's own read-back \(the `verify-protection` line under Phase B's or Phase C's gate\) must exit 0/);
+  for (const b of changes.boundReadBacks(page('github-branch-protection'))) {
+    assert.ok(b.gates.every((g) => /-(?:add-rule|strengthen-rule)-portal$/.test(g)), `github-branch-protection.md:${b.line} binds a read-back to ${b.gates.join(', ')}: only the gates that add or strengthen protection bind one`);
+  }
   // the batch script run (R3): its read-back step and its checkpoint (code review round 2, finding 5)
   assert.match(page('fleet-device-actions'), /\*\*Read-back:\*\* [^\n]*`node scripts\/adapters\/fleet-client\.js verify-script --execution-id \[EXECUTION_ID\] --change \[CHANGE_ID\] --execute`/);
   // the pilot (E1) and the batch (E2) are two changes with two ids, and status proves one host,

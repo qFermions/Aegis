@@ -1,0 +1,19 @@
+# command: node --test scripts/eval/judged/backends.test.js
+# commit: 9cc7a28 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:41Z  node: v24.22.1
+✔ the SUT and judge command lines match the spec; --web moves the web tools to the allowed set (1.513321ms)
+✔ the prompt is the ticket, plus the evidence after the pasted-evidence header (0.310985ms)
+✔ the scrub list is every NAME= of .env.example plus the secret suffixes (0.705046ms)
+✔ the child runs from the repository root with a scrubbed environment (names only are checked) (43.98792ms)
+✔ a case with a follow_up resumes the first turn's session and records both answers, turns, cost and model (81.117867ms)
+✔ a slow child is stopped at the timeout: state TIMEOUT, and SIGKILL follows a child that ignores SIGTERM (815.160936ms)
+✔ output that is not stream-json, an error result, or a missing executable is ERROR (80.61336ms)
+✔ parseStream takes the result text, else the last assistant text, and counts invalid lines (0.466552ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1092.449204
+# exit: 0  finished: 2026-10-31T23:57:43Z

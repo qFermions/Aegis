@@ -726,6 +726,25 @@ test('a read-back named for several gates in one comment binds each of them', (t
   for (const [command, gate, readBack] of named) assert.equal(open(command, gate, readBack).code, 0, `${gate} opens for ${readBack}`);
 });
 
+// Code review round 1 of the batch G3 close-out 3, finding 5: a gate whose runbook binds no
+// read-back was not compared, so open took any read-back for it, and an unrelated or presence
+// pass could make an R3 disable or removal done. Such a gate now takes no change record.
+test('open refuses a gate whose runbook binds no read-back: its proof is the read its runbook names, never a change record', (t) => {
+  const s = setup(t);
+  const open = (command, gate, readBack) => s.run(CLI, ['open', '--command', command, '--gate', gate, '--r-class', 'R3', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure]);
+  for (const [command, gate, readBack] of [
+    ['offboard', 'offboard-ad-disable-portal', 'msgraph:verify-account-enabled --enabled false'],
+    ['offboard', 'offboard-group-strip-portal', 'msgraph:verify-group-member --absent'],
+    ['security-alert-triage', 'security-synced-ad-disable', 'okta:verify-group-member'],
+    ['printer-issue', 'print-queue-delete-portal', 'okta:verify-factor-reset'],
+  ]) {
+    const r = open(command, gate, readBack);
+    assert.equal(r.code, 1, `${gate}: ${r.stdout}`);
+    assert.match(r.stderr, new RegExp(`gate ${gate} in \\.claude/commands/${command}\\.md binds no read-back`), gate);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
 test('a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change', (t) => {
   const s = setup(t);
   const change = approvedH1(s, H1.removePerson, 'okta:verify-group-member --absent');

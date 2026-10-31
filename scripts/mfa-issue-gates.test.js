@@ -199,3 +199,14 @@ test('each step of the New phone / re-register list after the first renders as a
     assert.ok(lines[i - 1] === '' || /^\d+\. /.test(lines[i - 1]), `mfa-issue.md:${i + 1}: step ${m[1]} follows ${JSON.stringify(lines[i - 1].slice(0, 40))}`);
   }
 });
+
+// Code review round 3 of the batch G3 close-out 3, finding 9: the change-record paragraph names
+// each gate's read-back, but not the PowerShell twin [mfa-session-revoke], which round 2 bound to
+// verify-sessions-revoked, so an operator on that path found no read-back for their gate.
+test('the change-record paragraph names every gate a read-back below binds', () => {
+  const { boundReadBacks } = require('./audit/change-record.js');
+  const para = PAGE.split('\n').find((l) => l.startsWith('**Change record ('));
+  for (const gate of new Set(boundReadBacks(PAGE).flatMap((b) => b.gates))) {
+    assert.ok(para.includes(`[${gate}]`), `the paragraph names [${gate}]`);
+  }
+});

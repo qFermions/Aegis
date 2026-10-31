@@ -196,10 +196,11 @@ function changeView(log, change, entries = null) {
 //   findings 1 and 2). A failure that got an answer but no run id is a failed object and blocks
 //   (round 2, finding 4). Done only when exactly N runs passed and nothing failed.
 // - A read-back that records none: each bound read-back that passed counts once and a repeated
-//   read of the same object is not detected. A failed read cannot be matched to a later pass of
-//   the same object, so it keeps the change not done (code review round 2, finding 1: letting it
-//   pass made a batch with a known failed object read done). Done when exactly N passed and none
-//   failed; more than N reads partial, as with run ids (round 2, finding 5).
+//   read of the same object is not detected. A failed read that got an answer cannot be matched
+//   to a later pass of the same object, so it keeps the change not done (code review round 2,
+//   finding 1: letting it pass made a batch with a known failed object read done); a read that
+//   got no answer is uncounted, as with run ids (round 3, finding 1). Done when exactly N passed
+//   and none failed; more than N reads partial, as with run ids (round 2, finding 5).
 function countedView(view, all, change, procedure, approval) {
   const expected = procedure.expected;
   const runKind = audit.recordsRunId(procedure.read_back);
@@ -211,14 +212,22 @@ function countedView(view, all, change, procedure, approval) {
   let failed;
   const uncounted = [];
   const answeredFailures = [];
+  // a read that got no answer (a state other than OK: a timeout, a rate limit, a 404 from a
+  // mistyped id) proves nothing about any object, whatever the kind, so it neither counts nor
+  // blocks (code review round 3 of the batch G3 close-out 2, finding 1)
+  const answered = [];
+  for (const e of bound) {
+    if (e.verified !== true && e.state !== 'OK') uncounted.push({ ...brief(e), reason: 'the read got no answer, so it proves nothing about any object' });
+    else answered.push(e);
+  }
   if (runKind) {
     const runs = new Map();
-    for (const e of bound) {
+    for (const e of answered) {
       if (typeof e.run !== 'string') {
         // an answered failure with no run id is a failed object, not a read with no answer
-        // (code review round 2, finding 4); only a read that got no answer proves nothing
-        if (e.verified !== true && e.state === 'OK') { answeredFailures.push(e); continue; }
-        uncounted.push({ ...brief(e), reason: e.verified === true ? 'the answer named no run id, so this pass cannot be told apart from a re-read' : 'the read got no answer, so it proves nothing about any object' });
+        // (code review round 2, finding 4)
+        if (e.verified !== true) { answeredFailures.push(e); continue; }
+        uncounted.push({ ...brief(e), reason: 'the answer named no run id, so this pass cannot be told apart from a re-read' });
         continue;
       }
       const r = runs.get(e.run) || { passed: false, failed: [] };
@@ -228,16 +237,17 @@ function countedView(view, all, change, procedure, approval) {
     passed = [...runs.values()].filter((r) => r.passed).length;
     failed = [...[...runs.values()].filter((r) => !r.passed).flatMap((r) => r.failed), ...answeredFailures];
   } else {
-    passed = bound.filter((e) => e.verified === true).length;
-    failed = bound.filter((e) => e.verified !== true);
+    passed = answered.filter((e) => e.verified === true).length;
+    failed = answered.filter((e) => e.verified !== true);
   }
+  uncounted.sort((a, b) => a.seq - b.seq);
   failed.sort((a, b) => a.seq - b.seq);
   view.expected = expected;
   view.verified = passed;
   view.summary = `verified ${passed} of ${expected}`;
   view.failed = failed.map(brief);
   view.uncounted = uncounted;
-  if (!runKind) view.note = `${procedure.read_back} records no run id, so each bound read-back that passed counts once, a repeated read of the same object is not detected, and a failed read keeps the change not done, since it cannot be matched to a later pass of the same object`;
+  if (!runKind) view.note = `${procedure.read_back} records no run id, so each bound read-back that passed counts once, a repeated read of the same object is not detected, and a failed read that got an answer keeps the change not done, since it cannot be matched to a later pass of the same object; a read that got no answer is uncounted`;
   if (approval) {
     for (const f of view.failed) view.missing.push(runKind
       ? `the read-back at audit seq ${f.seq}${f.run ? ` (run ${f.run})` : ''} did not verify (${f.state}) and that run never passed; that object is not proven`

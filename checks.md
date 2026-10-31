@@ -34,3 +34,12 @@ Branch `fix/g3-closeout-2` on qFermions/Aegis, base `main` at `f086c88` (the mer
 | E9 dependencies and tools added | unresolved | not run yet | |
 | E10 product boundary unchanged | unresolved | not run yet | |
 | E11 CLAUDE.md size, contract, state and progress files | unresolved | not run yet | |
+
+## Review rounds
+
+- `/security-review` 1 over `f086c88..a98704b`: no findings; one candidate filtered out at confidence 2, whose correctness gap was fixed (the run id is a UUID Fleet answered for: `88cdd51` red, `0c5e02b` green); 14 rejected candidates in `docs/aegis/g3-closeout-2/evidence/security-review-1.md`.
+- `/code-review xhigh` (tier C), round 1 over `f086c88..09f9743`: 15 found, 12 fixed, 2 closed, 1 fixed in part and closed in part (`docs/aegis/g3-closeout-2/evidence/code-review-rounds.md`).
+  - Closed, finding 3 (an Okta remove change counts a read made without `--absent`): not introduced here, the one-person remove gate binds the same read-back since batch G3; recording which form of a read-back ran is a trail-schema change for the owner.
+  - Closed, finding 5 (with no run id, one object read N times reaches done): the owner's decision 2 accepts it for read-backs with no run id, and status says so; the keyed object digest that would close it is decision 3, parked.
+  - Closed in part, finding 14 (a bound counted read-back prints its audit seq): harmless; a counted change's next step names no link, and a link still records a valid join.
+

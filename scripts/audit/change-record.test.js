@@ -1083,3 +1083,69 @@ test('A1: the plain visible line Count: N still opens, beside comments, hidden r
   assert.equal(s.log.entries().length, 2);
   assert.equal(s.log.entries()[1].expected, 5);
 });
+
+// ── Batch G4, task A2: one approval writer ───────────────────────────────────────────────────────
+// audit-log.js approval wrote an approval for any change id (round 3 of the batch G3 close-out 3,
+// finding 5). It is removed from the CLI: change-record.js approve is the one writer, and it checks
+// that the change is open, the gate it names, the digest of the procedure issued for it, and that
+// the change has no earlier approval; a refusal writes nothing.
+test('A2: audit-log.js approval writes nothing: an unknown change id, a change not yet opened, a mismatched digest, a second approval', (t) => {
+  const s = setup(t);
+  const procedureOnly = s.run(AUDIT_CLI, ['procedure', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--procedure-sha256', 'd'.repeat(64)]);
+  assert.equal(procedureOnly.code, 0, procedureOnly.stderr);
+  const o = openChange(s);
+  assert.equal(o.code, 0, o.stderr);
+  const first = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(first.code, 0, first.stderr);
+  const before = s.log.entries().length;
+  const cases = [
+    ['an unknown change id', ['--change', 'chg-zz', '--procedure-sha256', o.json.procedure_sha256]],
+    ['a change not yet opened', ['--change', 'chg-0123456789ab', '--procedure-sha256', 'd'.repeat(64)]],
+    ['a mismatched digest', ['--change', o.json.change, '--procedure-sha256', 'c'.repeat(64)]],
+    ['a second approval', ['--change', o.json.change, '--procedure-sha256', o.json.procedure_sha256]],
+  ];
+  for (const [label, rest] of cases) {
+    const r = s.run(AUDIT_CLI, ['approval', '--ref', 'IT-124', '--gate', 'okta-mfa-reset-selected-portal', ...rest]);
+    assert.equal(r.code, 1, `${label}: ${r.stdout}`);
+    assert.match(r.stderr, /change-record\.js approve/, label);
+    assert.equal(s.log.entries().length, before, `${label}: nothing recorded`);
+  }
+  assert.doesNotMatch(fs.readFileSync(AUDIT_CLI, 'utf8').split('\n').slice(0, 40).join('\n'), /audit-log\.js approval --ref/, 'the header no longer offers the approval command');
+});
+
+test('A2: change-record.js approve refuses an unknown change, a change not yet opened, a mismatched digest and a second approval, and writes nothing', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  assert.equal(s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
+  const before = s.log.entries().length;
+  const unknown = s.run(CLI, ['approve', '--change', 'chg-zz', '--ref', 'IT-124', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.notEqual(unknown.code, 0, unknown.stdout);
+  const notOpened = s.run(CLI, ['approve', '--change', 'chg-0123456789ab', '--ref', 'IT-124', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(notOpened.code, 2, notOpened.stdout);
+  assert.match(notOpened.stderr, /no procedure was issued/);
+  const mismatch = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-124', '--procedure-sha256', 'c'.repeat(64)]);
+  assert.equal(mismatch.code, 2, mismatch.stdout);
+  const second = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-125', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(second.code, 2, second.stdout);
+  assert.match(second.stderr, /already has an approval \(audit seq \d+, IT-123\); one approval per change\. Nothing was recorded/);
+  assert.equal(s.log.entries().length, before, 'nothing recorded');
+  // the supported path still makes the change done
+  const v = verifyEntry(s, true, o.json.change);
+  assert.equal(s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]).code, 0);
+  const st = s.run(CLI, ['status', '--change', o.json.change]);
+  assert.equal(st.code, 0, st.stdout);
+  assert.equal(st.json.approval.ref, 'IT-123');
+});
+
+test('A2: two approvals of one change raced from two processes: exactly one is recorded', async (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  const { spawn } = require('node:child_process');
+  const once = (ref) => new Promise((resolve) => {
+    const c = spawn(process.execPath, [CLI, 'approve', '--change', o.json.change, '--ref', ref, '--procedure-sha256', o.json.procedure_sha256], { env: s.env });
+    c.on('close', (code) => resolve(code));
+  });
+  const codes = await Promise.all(['IT-201', 'IT-202', 'IT-203', 'IT-204'].map(once));
+  assert.deepEqual(codes.sort(), [0, 2, 2, 2]);
+  assert.equal(s.log.entries().filter((e) => e.kind === 'approval').length, 1);
+});

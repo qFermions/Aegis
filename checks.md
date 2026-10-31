@@ -44,4 +44,15 @@ Branch `fix/g3-closeout-2` on qFermions/Aegis, base `main` at `f086c88` (the mer
   - Closed in part, finding 14 (a bound counted read-back prints its audit seq): harmless; a counted change's next step names no link, and a link still records a valid join.
 - `/code-review xhigh`, round 2 over `09f9743..9966e7c` (diff only): 15 found, 14 fixed (each in its own commit, red tests first in `92e1b41`), 1 closed (`docs/aegis/g3-closeout-2/evidence/code-review-rounds.md`; `r2-red.txt`, `r2-green.txt`). Round 2 finding 1 reversed round 1 finding 4: a failed read with no run id keeps a counted change not done again.
   - Closed, finding 11 (round 1 findings 1, 2, 4 and 14 fixed in one commit, `d2b3a6d`): that commit is pushed and history is not rewritten; round 1 finding 4 was reversed on its own in `be8f44a`. Listed under Deviations.
+- `/code-review xhigh`, round 3 (the last) over `9966e7c..6f66568` (diff only): 11 found, 10 fixed (each in its own commit, red tests first in `a2e5915`), 1 closed (`code-review-rounds.md`; `r3-red.txt`, `r3-green.txt`).
+  - Closed, finding 10 (test trails open every connector's read-back under one real Okta gate): on purpose, the tests pass the same runbook and gate check production uses; an override of the runbook folder for tests would be a way around `checkGate`.
+
+## Deviations
+
+- The F1 confirmation is the owner's phrase plus the deletion it causes, `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`: `scripts/command-safety-gates.test.js` requires the typed phrase to name each action family of the gate's Effect, and the quoted Microsoft Learn Effect says "deletes" (`b7d5524`, `cfc798d`).
+- Round 1 findings 1, 2, 4 and 14 were fixed in one commit, `d2b3a6d`, against the one-commit-per-finding rule; it was pushed before round 2 found it, and this branch's history is not rewritten. Round 1 finding 4 was later reversed on its own (`be8f44a`).
+- Two green commits changed a test line: `60dbb88` (F2) widened the change-binding guard regex so a run id may follow `bound.change`; `6b84594` (round 2 finding 6) gave the fleet-client injection fixture the `execution_id` that verify-script now requires. Neither removed or loosened an assertion about behaviour.
+- Test fixtures that opened change records under made-up runbook commands were switched to a real gate, `okta-mfa-reset-selected-portal`, in the round 2 red commit `92e1b41`, when `open` began refusing an unknown runbook (round 3 finding 10 closed this as intended).
+- Review fixes replaced three assertions this batch had written: round 1 finding 4's test was reversed by round 2 finding 1 (`92e1b41`); the round 2 checklist pin for the one-method delete and the change-binding serial assertion (exit 0 with run null, now exit 1 with nothing recorded) were replaced in the round 3 red commit `a2e5915`. Each replacement is stricter than what it replaced.
+- `r3-red.txt` names commit `35decc2`, the red test commit before the capture was added to it (`a2e5915`); the tests are the same.
 

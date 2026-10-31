@@ -47,3 +47,23 @@ The reviewer reproduced findings 2 and 3 against a scratch audit folder. Red tes
 | 15 | `.claude/commands/mfa-issue.md:38` | the R3 pre-state and the delete's proof were hand-copied portal reads | fixed: `msgraph-client.js auth-methods` saved as it prints, for both | `f506fc0` |
 
 The audit README's counted rules were rewritten to match (`103927e`). Round 2: 15 found, 14 fixed, 1 closed (11); fixed plus closed equals found.
+
+## Round 3 (`9966e7c..6f66568`, diff only; the last round): 11 found
+
+The reviewer reproduced findings 1, 2 and 5 against a scratch audit folder. Red tests for findings 1 to 8 first (`a2e5915`, 5 of 125 failing, `r3-red.txt`); green after the fixes (`r3-green.txt`, 656/656 over the touched suites).
+
+| # | file:line (as reported) | finding | outcome | commit |
+|---|---|---|---|---|
+| 1 | `scripts/audit/change-record.js:232` | for a counted read-back with no run id, a read with no answer (a timeout) blocked the change for good | fixed: a read with no answer is uncounted for every counted kind | `632dbf1` |
+| 2 | `scripts/audit/change-record.js:220` | an upper-case Fleet execution id recorded an answered failure with no run that no later pass could clear, and status said "that run never passed" with no remedy | fixed: the id matches in either case and is recorded in lower case; an answered failure with no run id names a new change for the hosts left | `6383c74` |
+| 3 | `.claude/commands/mfa-issue.md:29` | the revocation's pre-state read started at [NOT_BEFORE], the time the work started | fixed: it starts at [DATE_TIME], a time before the device was lost | `e220fc5` |
+| 4 | `.claude/commands/okta-group-membership.md:236` | the Okta and GitHub counted paragraphs (and Fleet's) still gave round 1's rule and no way forward after a failed read | fixed: all four state exactly N and none failed, a new change for the objects left, and a read with no answer read again | `8c1cd48` |
+| 5 | `scripts/audit/README.md:53` | verify-script passed on a non-UUID id the trail would not record, so the command and the change record disagreed | fixed: Fleet takes only a UUID execution id (vendor fact F-12); the change-binding serial assertion went from exit 0 with run null to exit 1 with nothing recorded | `6a3213c` |
+| 6 | `scripts/adapters/fleet-client.js:352` | no vendor fact said Fleet's script result names execution_id | fixed: vendor fact F-12 from Fleet's public REST API page, captured in `r3-fleet-script-result-doc.txt` | `0912e57` |
+| 7 | `scripts/audit/audit-log.js:148` | the run-id rule ran inside the chain check, tying old trails to today's table | fixed: the rule moves to `checkWrite`, applied on append only | `b5acfb3` |
+| 8 | `.claude/commands/mfa-issue.md:110` | the delete path put raw `auth-methods` output, phone numbers included, in the ticket | fixed: the output stays in `tasks/checkpoints/`; the ticket names the method type only (the round 2 pin is replaced in `a2e5915`) | `7a15e42` |
+| 9 | `checks.md:46` | round 2 finding 11 pointed at a Deviations section checks.md did not have | fixed: checks.md has a Deviations section | the commit that adds this table |
+| 10 | `scripts/adapters/change-binding.test.js:120` | the test trails open every connector's read-back under one real Okta gate | closed: the tests go through the same runbook and gate check production uses on purpose; a runbook-directory override for tests would be a way around `checkGate` | none |
+| 11 | `scripts/adapters/cli-support.js:109` | runIdOf built its key twice and read an alias of the trail's table | fixed: one key, `RUN_IDS` read directly; the `RUN_ID_FLAGS` export stays for the agreement test | `fbb81c2` |
+
+Boundary-audit rows 35 to 37 cite the moved lines (`7fcd903`). Round 3: 11 found, 10 fixed, 1 closed (10); fixed plus closed equals found. This was the last code review round; `/security-review` then ran once more over every change after the first.

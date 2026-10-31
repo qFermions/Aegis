@@ -346,8 +346,10 @@ async function verifyScript(read, args) {
     message: field(d, 'message'),
   };
   const expected = { execution_id: [args['execution-id']], exit_code: [0], host_timeout: [false] };
-  // An execution_id that is present must be the one asked for.
-  const idOk = observed.execution_id === null || observed.execution_id === args['execution-id'];
+  // The answer must name the execution asked for: one that names none cannot be told apart from
+  // another run, so it does not verify (code review round 2 of the batch G3 close-out 2,
+  // finding 6; a counted change counts each run once by this id).
+  const idOk = observed.execution_id === args['execution-id'];
   const verified = idOk && observed.exit_code === 0 && observed.host_timeout === false;
   const note = observed.exit_code === null ? 'exit_code null: the host has not reported the result yet (vendor docs).' : undefined;
   return { verified, observed, expected, note };

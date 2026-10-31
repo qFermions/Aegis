@@ -1,0 +1,11 @@
+# command: node docs/aegis/g3/evidence/tools/inventory-diff.js f086c88
+# commit: b7d5524 (plus uncommitted changes in the working tree)  started: 2026-10-31T02:32:30Z  node: v24.22.2
+examples: 727 at f086c88, 728 now; added 1, removed 0, mode changed 0
+  added in .claude/commands/mfa-issue.md: gated 1
+  added by mode: {"gated":1}
+  entries present at both with another field changed: {"impactCategories":1}
+clientBoundaries: 9 at f086c88, 9 now; added 0, removed 0, mode changed 0
+  added by mode: {}
+  entries present at both with another field changed: {}
+# exit: 0  finished: 2026-10-31T02:32:30Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

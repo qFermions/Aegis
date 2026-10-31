@@ -173,3 +173,14 @@ test('every R2 and R3 gate in /mfa-issue has a read-back bound to its change', (
   assert.ok(manifest.sources.some((src) => /user-revokesigninsessions/.test(src.url) && src.read_on === '2026-10-31'));
   assert.ok(manifest.facts.includes('M-26') && manifest.facts.includes('M-27'));
 });
+
+// Batch G3 close-out 3, owner decision H5: the "New phone / re-register" list starts at step 1
+// and counts on without a gap (it started at 2 since before the batch G3 close-out 2).
+test('the New phone / re-register list starts at step 1 and counts on', () => {
+  const lines = PAGE.split('\n');
+  const from = lines.indexOf('**New phone / re-register:**');
+  const to = lines.indexOf('**Not getting prompts:**');
+  assert.ok(from > 0 && to > from, 'the section');
+  const steps = lines.slice(from, to).map((l) => l.match(/^(\d+)\. /)).filter(Boolean).map((m) => Number(m[1]));
+  assert.deepEqual(steps, steps.map((_, i) => i + 1), `steps ${steps.join(', ')}`);
+});

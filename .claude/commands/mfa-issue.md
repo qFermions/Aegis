@@ -19,6 +19,8 @@ disable-model-invocation: true
 ## Step-by-step fix (portal first)
 
 **New phone / re-register:**
+1. Cut the old phone off: revoke the user's sessions, then remove its methods, each under its gate below: the one-method delete or Require re-register MFA, one or the other for a ticket, never both.
+
 <!-- SAFETY GATE [mfa-session-revoke-portal] -->
 - **Target:** [UPN]
 - **Effect:** invalidate Microsoft Entra refresh tokens and browser session cookies

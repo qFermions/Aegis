@@ -1,0 +1,60 @@
+# command: node --test scripts/adapters/msgraph-client.test.js
+# commit: 4b2a193  started: 2026-10-31T08:05:47Z  node: v24.22.2
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (3.085624ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (10.187344ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (9.562893ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (5.151642ms)
+✔ verify read-backs for the password-reset and MFA runbooks (24.131944ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (2.229543ms)
+✔ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (9.734395ms)
+✔ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (8.195621ms)
+✖ verify-method-absent: an answer that proves nothing either way is recorded as INVALID_RESPONSE, never as a failed object (3.020669ms)
+✔ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case (5.647346ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 9
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 200.290977
+
+✖ failing tests:
+
+test at scripts/adapters/msgraph-client.test.js:274:1
+✖ verify-method-absent: an answer that proves nothing either way is recorded as INVALID_RESPONSE, never as a failed object (3.020669ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-method-absent",
+    "verified": false,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "method_id": "3179e48a-750b-4051-897c-87b9720928f7",
+      "listed": false
+    },
+    "observed": {
+      "listed": null
+    },
+    "reason": "the answer has no method list, so this is not proof either way",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=msgraph operation=verify-method-absent state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  + actual - expected
+  
+  + 'OK'
+  - 'INVALID_RESPONSE'
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/msgraph-client.test.js:282:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'OK',
+    expected: 'INVALID_RESPONSE',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T08:05:47Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

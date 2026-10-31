@@ -267,6 +267,26 @@ test('verify-method-absent: passes when the method id is no longer listed; fails
   assert.equal(bad.code, 1, 'a method id is one token of letters, digits, - and _');
 });
 
+// Code review round 1 of the batch G3 close-out 3, finding 7: an answer that proves nothing either
+// way (no method list, or another page behind it) was recorded as a read that got an answer and
+// failed, so it kept the counted MFA clear partial for good. It is now INVALID_RESPONSE, a read
+// with no usable answer, which a counted change lists as uncounted; it still never passes.
+test('verify-method-absent: an answer that proves nothing either way is recorded as INVALID_RESPONSE, never as a failed object', async () => {
+  const U = 'aaaaaaaa-0000-4000-8000-000000000001';
+  const ID = '3179e48a-750b-4051-897c-87b9720928f7';
+  const recorded = [];
+  const v = (body) => cli(['verify-method-absent', '--user', U, '--method-id', ID, '--execute'], { replies: [token(), ok(body)], extra: { audit: (e) => { recorded.push(e); return { seq: recorded.length }; } } });
+  for (const body of [{}, { value: [{ id: '28c10230-6103-485e-b985-444c60001490' }], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/users/x/authentication/methods?$skiptoken=y' }]) {
+    const r = await v(body);
+    assert.equal(r.code, 2, r.text);
+    assert.equal(r.json.state, 'INVALID_RESPONSE', r.text);
+    assert.notEqual(r.json.verified, true);
+  }
+  assert.deepEqual(recorded.filter((e) => e.kind === 'verify').map((e) => [e.state, e.verified]), [['INVALID_RESPONSE', false], ['INVALID_RESPONSE', false]]);
+  const still = await v({ value: [{ id: ID }] });
+  assert.equal(still.json.state, 'OK', 'a method still listed is an answer: the object failed');
+});
+
 // Security review 1 of the batch G3 close-out 3: the method id was compared case for case, so a
 // GUID typed in capitals read as absent while Graph still listed it in lower case. A GUID is
 // compared without case; any other id (a base64url id, such as a FIDO2 key's) keeps its case.

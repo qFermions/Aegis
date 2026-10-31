@@ -250,6 +250,24 @@ test('after a test trail ends, open reads the real runbooks again', async (t) =>
   assert.equal(code, 0, err.join(''));
 });
 
+// Code review round 3 of the batch G3 close-out 3, finding 7: the pin reads named gates through
+// change-record.js's own helper, so the helper is checked here on its own, against fixed comments,
+// and a narrowed pattern fails this test even when the pin and open agree.
+test('namedGates reads every gate a read-back comment names, with each separator, and nothing else', () => {
+  const cases = [
+    ['# HUMAN-RUN read-only read-back of [a-portal]: passes only when ...', ['a-portal']],
+    ['# read-back of [a-portal] or [a]: ...', ['a-portal', 'a']],
+    ['# read-back of [a], [b] or [c], passes only when [NOT_BEFORE]', ['a', 'b', 'c']],
+    ['# read-back of [a], [b], or [c]', ['a', 'b', 'c']],
+    ['# read-back of [a] and [b]', ['a', 'b']],
+    ['# read-back of [a], and [b]', ['a', 'b']],
+    ['# HUMAN-RUN read-only read-back, passes only when ...', null],
+    ['node scripts/adapters/okta-client.js verify-status', null],
+    ['read-back of [a] in prose, not a comment', null],
+  ];
+  for (const [comment, want] of cases) assert.deepEqual(changes.namedGates(comment), want, comment);
+});
+
 // Code review round 3 of the batch G3 close-out 3, finding 6: a nested trail pointed
 // change-record.js at the real runbooks when it ended, not back at the outer trail's test gates.
 test('a nested test trail gives the outer trail its test gates back when it ends', async (t) => {
@@ -280,7 +298,8 @@ test('runbooks: a change-record paragraph covers only gates with a read-back nam
       if (bound.has(`${gate}-portal`)) assert.ok(bound.has(gate), `${file}: ${gate} binds the read-back of ${gate}-portal`);
     }
   }
-  assert.ok(paragraphs >= 20, `${paragraphs} change-record paragraphs`);
+  // every runbook with a bound read-back has one, 27 since this batch (code review round 3, finding 7)
+  assert.equal(paragraphs, 27, `${paragraphs} change-record paragraphs`);
   const okta = fs.readFileSync(path.join(dir, 'okta-mfa-reset.md'), 'utf8');
   assert.ok(changes.boundReadBacks(okta).some((b) => b.gates.includes('okta-mfa-reset-factor')), 'the API reset of one factor binds verify-factor-reset');
   // the rollback after an exception: Phase B's and C's gates have a read-back, D's and E's do not

@@ -77,6 +77,18 @@ function checkReadBack(readBack) {
   if (!hasCommandKey(source, command)) throw new InputError(`--read-back: no such read-back, ${connector} has no ${command} command`);
 }
 
+// A gate must be one the named runbook has (code review round 1 of the batch G3 close-out 2,
+// finding 6), so a mistyped counted gate is refused instead of falling back to the
+// one-read-back rule. A command with no runbook file (the tests' own) is not checked.
+function checkGate(command, gate) {
+  const file = path.join(ROOT, '.claude', 'commands', `${command}.md`);
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return; }
+  if (!text.includes(`<!-- SAFETY GATE [${gate}] -->`) && !text.split('\n').includes(`# SAFETY GATE [${gate}]`)) {
+    throw new InputError(`.claude/commands/${command}.md has no gate ${gate}`);
+  }
+}
+
 class InputError extends Error {}
 class NotDone extends Error {}
 
@@ -253,6 +265,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (count && flags.expected === undefined) throw new InputError(`gate ${flags.gate} names a count (${count}): open it with --expected N, the number written in the ticket`);
       if (!count && flags.expected !== undefined) throw new InputError(`gate ${flags.gate} names no count; a change without a count is proved by one read-back, so --expected is not taken`);
       const expected = count ? Number(flags.expected) : null;
+      checkGate(flags.command, flags.gate);
       checkReadBack(flags['read-back']);
       const digest = procedureDigest(readProcedure(flags['procedure-file']));
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;

@@ -840,6 +840,25 @@ test('a counted gate\'s procedure carries its count, and open refuses an N that 
   assert.equal(s.log.entries()[0].expected, 3);
 });
 
+// Code review round 1 of the batch G3 close-out 3, finding 12: only a line starting exactly with
+// "Count:" was read, so an indented, bulleted, quoted or upper-case second count was ignored while
+// the approver saw it. Any line whose first word is a count now counts, and there must be one.
+test('a second count written in another shape (indented, a bullet, a quote, a heading, another case) is refused', (t) => {
+  const s = setup(t);
+  for (const extra of ['  Count: 50', '- Count: 50', '* Count: 50', '> Count: 50', '## Count: 50', 'COUNT: 50', 'count:50', '1. Count: 50']) {
+    const file = path.join(s.dir, 'procedure-shape.md');
+    fs.writeFileSync(file, `${fs.readFileSync(countedProcedure(s, 5), 'utf8')}${extra}\n`);
+    const r = openBatch(s, file, 5);
+    assert.equal(r.code, 1, `${JSON.stringify(extra)}: ${r.stdout}`);
+    assert.match(r.stderr, /one line Count: N/, extra);
+  }
+  const alone = path.join(s.dir, 'procedure-bullet.md');
+  fs.writeFileSync(alone, `${fs.readFileSync(s.procedure, 'utf8')}- Count: 5\n`);
+  assert.equal(openBatch(s, alone, 5).code, 1, 'the count line is exactly Count: N');
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  assert.equal(openBatch(s, countedProcedure(s, 5), 5).code, 0);
+});
+
 test('an approval given for one N does not cover a different N', (t) => {
   const s = setup(t);
   const twelve = openBatch(s, countedProcedure(s, 12), 12);

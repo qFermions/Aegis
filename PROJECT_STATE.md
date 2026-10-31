@@ -130,7 +130,7 @@ every G3 suite count at `ae88348` (after code review round 3 and the evidence re
 
 Branch `fix/g3-closeout`, draft PR #7 against `main` (base `01dcb37`, the merge of PR #6). Four
 owner decisions from PR #6's report, each landed test first; captures in
-`docs/aegis/g3-closeout/evidence/`, the acceptance table in `checks.md`.
+`docs/aegis/g3-closeout/evidence/`, the acceptance table in `docs/review/batches/g3-closeout-checks.md`.
 
 | Decision | What changed | Proof (command and count) |
 |---|---|---|
@@ -161,7 +161,7 @@ owner decisions from PR #6's report, each landed test first; captures in
 
 Branch `fix/g3-closeout-2`, draft PR #8 against `main` (base `f086c88`, the merge of PR #7).
 The owner's decisions on PR #7's three open items; captures in
-`docs/aegis/g3-closeout-2/evidence/`, the acceptance table in `checks.md`.
+`docs/aegis/g3-closeout-2/evidence/`, the acceptance table in `docs/review/batches/g3-closeout-2-checks.md`.
 
 | Decision | What changed | Proof (command and count) |
 |---|---|---|

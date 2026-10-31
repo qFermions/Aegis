@@ -1,0 +1,8 @@
+# command: git clone <repo> <clone>; git checkout --detach 0a5feb7
+# at: 2026-10-31T06:26:46Z (the clone; this file was written after the baseline runs)
+0a5feb7 Merge pull request #8 from qFermions/fix/g3-closeout-2
+status lines: 0
+contains 52441fb: yes
+ls: cannot access 'package.json': No such file or directory
+ls: cannot access 'package-lock.json': No such file or directory
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

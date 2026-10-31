@@ -298,7 +298,9 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // not the batch (code review round 3, finding 3)
   assert.match(page('fleet-device-actions'), /`verify-script` passed for the pilot \(with `--change \[CHANGE_ID\]` set to the E1 change's id, unless step 1 set R1\) and, with `--change \[CHANGE_ID\]` set to this gate's own change id, for every checked host/);
   assert.match(page('fleet-device-actions'), /with `\[CHANGE_ID\]` the id of this gate's own change record, not the pilot's\./);
-  assert.match(page('fleet-device-actions'), /`change-record\.js status` reads done once one linked read-back verified, so it proves one host, not the batch: the ticket's list of the hosts that passed and failed is the batch's record\./);
+  // the batch is a counted change (batch G3 close-out 2, owner decision 2): opened with
+  // --expected [HOST_COUNT], done only when every checked host's read-back passed
+  assert.match(page('fleet-device-actions'), /Open that change record for \[fleet-device-actions-batch-script-portal\] with `--expected \[HOST_COUNT\]`, the host count in the ticket/);
   // a gate whose class is set at run time says when to drop --change: the portal gate by its
   // step 1, the fenced fleetctl gate by the class its own precondition writes in the ticket, in
   // a comment the gated-fence rules allow (code review round 3, finding 8)
@@ -330,6 +332,29 @@ for (const c of CONNECTORS) {
     assert.equal(printedSeq(c, unbound.text), null, `${c.name}: no seq for a read-back link refuses\n${unbound.text}`);
   });
 }
+
+// Batch G3 close-out 2, owner decision 2: a read-back that takes a job id records it as its
+// verify entry's run, so a counted batch change counts each run once. Fleet's verify-script is
+// the one (--execution-id); every other read-back records run null, so no user, email, device
+// name or serial is ever recorded as a run.
+test('fleet verify-script records its execution id as the run; every other read-back records none', async (t) => {
+  const tr = trail(t);
+  const support = require('./cli-support.js');
+  assert.deepEqual(support.RUN_ID_FLAGS, { 'fleet:verify-script': 'execution-id' });
+  const fleet = CONNECTORS.find((c) => c.name === 'fleet');
+  const change = tr.open('fleet:verify-script');
+  const script = { ...fleet, replies: () => [ok({ execution_id: 'e-3f2a9c1e', host_id: 7, exit_code: 0, host_timeout: false, output: 'done', message: '' })] };
+  const r = await run(script, ['verify-script', '--execution-id', 'e-3f2a9c1e', '--change', change], tr);
+  assert.equal(r.code, 0, r.text);
+  const e = verifies(tr).pop();
+  assert.equal(e.run, 'e-3f2a9c1e');
+  assert.equal(e.change, change);
+  for (const c of CONNECTORS) {
+    const other = await run(c, c.verify, tr);
+    assert.equal(other.code, 0, `${c.name}: ${other.text}`);
+    assert.equal(verifies(tr).pop().run, null, `${c.name}: no run id recorded`);
+  }
+});
 
 // Code review round 1, finding 6: --change=chg-... is refused with a message that says the id
 // goes in its own argument, not as an unknown flag.

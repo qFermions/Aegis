@@ -349,3 +349,147 @@ test('open tells the operator to run the read-back with --change <id> and to lin
   // Jira prints the seq in its own line (code review round 3, finding 7)
   assert.match(step, /Recorded as audit entry N/);
 });
+
+// ── Batch G3 close-out 2, owner decision 2: a counted batch change ──────────────────────────
+// A gate whose required confirmation names a count of objects, each proved by its own verify-*
+// read-back (change-record.js COUNTED_GATES), is opened with --expected N, the number written in
+// the ticket. status prints "verified k of N", lists each failed read-back, and reports done
+// only when N distinct bound read-backs passed after the approval; anything less is "partial",
+// never done. Distinct means distinct run ids where the read-back records one (a job id, never a
+// user, email, device name or serial); where it records none, bound read-backs are counted and
+// status says a repeated read of the same object is not detected. A gate without a count keeps
+// the one-read-back rule (every test above).
+const FLEET_BATCH = { gate: 'fleet-device-actions-batch-script-portal', command: 'fleet-device-actions', readBack: 'fleet:verify-script' };
+const OKTA_BULK = { gate: 'okta-group-membership-bulk-add-portal', command: 'okta-group-membership', readBack: 'okta:verify-group-member' };
+
+function openCounted(s, g, expected) {
+  const args = ['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', g.readBack, '--procedure-file', s.procedure];
+  if (expected !== undefined) args.push('--expected', String(expected));
+  return s.run(CLI, args);
+}
+function approved(s, g, expected) {
+  const o = openCounted(s, g, expected);
+  assert.equal(o.code, 0, o.stderr);
+  const a = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(a.code, 0, a.stderr);
+  return o.json.change;
+}
+const runRead = (s, change, run, verified = true) => s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified, state: 'OK', change, run });
+const personRead = (s, change, verified = true) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified, state: 'OK', change });
+const status = (s, change) => s.run(CLI, ['status', '--change', change]);
+
+test('a counted gate opened without --expected is refused at open, and nothing is recorded', (t) => {
+  const s = setup(t);
+  const before = s.log.entries().length;
+  const r = openCounted(s, FLEET_BATCH);
+  assert.equal(r.code, 1, r.stdout);
+  assert.match(r.stderr, /names a count \(\[HOST_COUNT\]\): open it with --expected N, the number written in the ticket/);
+  assert.equal(s.log.entries().length, before);
+  for (const bad of ['0', '-1', '2.5', 'ten', '100001']) {
+    const b = openCounted(s, FLEET_BATCH, bad);
+    assert.equal(b.code, 1, bad);
+    assert.match(b.stderr, /--expected is the number of objects written in the ticket/, bad);
+  }
+  assert.equal(s.log.entries().length, before);
+});
+
+test('a gate without a count refuses --expected and keeps the one-read-back rule', (t) => {
+  const s = setup(t);
+  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', s.procedure, '--expected', '3']);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /names no count/);
+  const o = openChange(s);
+  assert.equal(o.code, 0, o.stderr);
+  const v = s.run(CLI, ['status', '--change', o.json.change]);
+  assert.equal(v.json.expected, undefined, 'an uncounted change reports no count');
+  assert.equal(v.json.result, undefined);
+});
+
+test('k below N reads partial and never done; k equal to N reads done', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 3);
+  runRead(s, change, 'exec-0001');
+  runRead(s, change, 'exec-0002');
+  const partial = status(s, change);
+  assert.equal(partial.code, 2);
+  assert.equal(partial.json.done, false);
+  assert.equal(partial.json.result, 'partial');
+  assert.equal(partial.json.summary, 'verified 2 of 3');
+  assert.ok(partial.json.missing.some((m) => /verified 2 of 3/.test(m)), partial.stdout);
+  runRead(s, change, 'exec-0003');
+  const done = status(s, change);
+  assert.equal(done.code, 0, done.stdout);
+  assert.equal(done.json.done, true);
+  assert.equal(done.json.result, 'done');
+  assert.equal(done.json.summary, 'verified 3 of 3');
+  assert.deepEqual(done.json.failed, []);
+});
+
+test('one failed host keeps the change not done and names that read-back', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 2);
+  runRead(s, change, 'exec-0001');
+  runRead(s, change, 'exec-0002');
+  const bad = runRead(s, change, 'exec-0003', false);
+  const v = status(s, change);
+  assert.equal(v.code, 2);
+  assert.equal(v.json.done, false);
+  assert.equal(v.json.result, 'partial');
+  assert.deepEqual(v.json.failed, [{ seq: bad.seq, run: 'exec-0003', state: 'OK' }]);
+  assert.ok(v.json.missing.some((m) => m.includes(`seq ${bad.seq}`) && m.includes('exec-0003')), v.stdout);
+  // a run that failed while the host had not reported and passed later counts as passed
+  runRead(s, change, 'exec-0003', true);
+  const again = status(s, change);
+  assert.deepEqual(again.json.failed, []);
+  assert.equal(again.json.summary, 'verified 3 of 2');
+  assert.equal(again.json.done, false, 'more hosts passed than the ticket names: not done');
+  assert.ok(again.json.missing.some((m) => /more than the 2 the ticket names/.test(m)), again.stdout);
+});
+
+test('the same execution id read twice counts once', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 2);
+  runRead(s, change, 'exec-0001');
+  runRead(s, change, 'exec-0001');
+  const v = status(s, change);
+  assert.equal(v.json.summary, 'verified 1 of 2');
+  assert.equal(v.json.done, false);
+  runRead(s, change, 'exec-0002');
+  assert.equal(status(s, change).json.done, true);
+});
+
+test('a read-back that records no run id counts bound read-backs and says a repeated read is not detected', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  personRead(s, change);
+  const one = status(s, change);
+  assert.equal(one.json.summary, 'verified 1 of 2');
+  assert.match(one.json.note, /a repeated read of the same object is not detected/);
+  personRead(s, change);
+  const two = status(s, change);
+  assert.equal(two.json.done, true, two.stdout);
+  assert.match(two.json.note, /a repeated read of the same object is not detected/);
+});
+
+test('only bound read-backs of the named kind recorded after the approval count toward k', (t) => {
+  const s = setup(t);
+  const o = openCounted(s, FLEET_BATCH, 2);
+  // before the approval, unbound, another change's, another command's: none counts
+  const early = runRead(s, o.json.change, 'exec-0009');
+  s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  runRead(s, null, 'exec-0001');
+  runRead(s, 'chg-0123456789ab', 'exec-0002');
+  s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-lock', verified: true, state: 'OK', change: o.json.change });
+  const v = status(s, o.json.change);
+  assert.equal(v.json.summary, 'verified 0 of 2', v.stdout);
+  assert.ok(early.seq > 0);
+});
+
+test('the audit trail takes a run id that is a job id and refuses one that is not job-shaped', (t) => {
+  const s = setup(t);
+  assert.ok(runRead(s, null, '3f2a9c1e-77b0-4c2b-9d1e-0a1b2c3d4e5f').seq > 0);
+  for (const bad of ['person@example.com', 'two words', '', 'x'.repeat(129)]) {
+    assert.throws(() => runRead(s, null, bad), audit.AuditRefused, bad);
+  }
+  assert.throws(() => s.log.append({ kind: 'procedure', command: 'okta-mfa-reset', gate: 'g', r_class: 'R2', target: '[UPN]', read_back: null, procedure_sha256: null, change: null, expected: 3 }), audit.AuditRefused, 'a count only on a change record');
+});

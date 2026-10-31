@@ -23,8 +23,9 @@
 // Batch G3 close-out 2 (owner decision 2): a gate whose required confirmation names a count of
 // objects, each proved by its own read-back (COUNTED_GATES), is a counted batch change: open
 // takes --expected N, the number written in the ticket, and status reports "verified k of N",
-// lists each failed read-back, and is done only when N distinct bound read-backs passed after
-// the approval; anything less is partial. A gate without a count keeps the one-read-back rule.
+// lists each failed read-back, and is done only when exactly N bound read-backs passed after
+// the approval and none failed (N distinct runs where the read-back records a run id); anything
+// else is partial. A gate without a count keeps the one-read-back rule.
 // Exit codes: 0 done (status) or recorded; 1 input error or refused; 2 not done, a digest
 // that does not match, or a broken trail.
 
@@ -287,9 +288,13 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       out(`${JSON.stringify({ ok: true, change, procedure_sha256: digest, audit_seq: r.seq, next: [
         'A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>',
         'A person runs the procedure (Aegis does not)',
-        expected
-          ? `Run the ${flags['read-back']} read-back with --change ${change} once for each of the ${expected} objects (it refuses to read until this change is approved); status --change ${change} reports "verified k of ${expected}" and is done only when ${expected} distinct read-backs passed after the approval`
-          : `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
+        // with no run id a re-read is not detected, so the step says so and never "distinct"
+        // (code review round 2 of the batch G3 close-out 2, finding 9)
+        expected && audit.recordsRunId(flags['read-back'])
+          ? `Run the ${flags['read-back']} read-back with --change ${change} once for each of the ${expected} objects (it refuses to read until this change is approved); status --change ${change} reports "verified k of ${expected}" and is done only when ${expected} distinct runs passed after the approval and none still failed`
+          : expected
+            ? `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved) and read each of the ${expected} objects once: a re-read of the same object is not detected. status --change ${change} reports "verified k of ${expected}" and is done only when exactly ${expected} read-backs passed after the approval and none failed`
+            : `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
       ] }, null, 2)}\n`);
       return 0;
     }

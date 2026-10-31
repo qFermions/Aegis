@@ -216,6 +216,9 @@ const KINDS = Object.freeze({
     read_back: nullable(matches(READ_BACK_NAMED)), procedure_sha256: nullable(matches(SHA256)), change: nullable(matches(CHANGE_ID)),
     // the number of objects a counted batch change acts on, as written in the ticket
     expected: nullable(isInt(1, 99999)),
+    // true when change-record.js open checked the read-back against the gate's runbook (code
+    // review round 3 of the batch G3 close-out 3, findings 1 and 2); null on older entries
+    gate_checked: nullable((v) => v === true),
   },
   approval: {
     ref: matches(ISSUE_KEY), gate: matches(GATE), procedure_sha256: matches(SHA256), change: matches(CHANGE_ID),

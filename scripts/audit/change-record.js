@@ -400,20 +400,22 @@ function countedView(view, all, change, procedure, approval) {
 // close-out, owner decision 1): the trail is intact and holds the change record open wrote for
 // this id, its read-back is exactly readBack (connector:verify-command), and an approval of
 // its procedure was recorded after it. The verify-* CLIs call this before any read.
-// A change opened before the batch G3 close-out 3 named a read-back with pass flags without them
-// (a removal as okta:verify-group-member), which now means the form with none, so a presence read
-// would prove it. Such a change is stale: its gate's runbook runs that read-back only with pass
-// flags. Only that case is judged against the runbook, so a done change stays done when its
-// runbook is edited later (code review round 1 of that batch, finding 2; round 2, finding 2).
+// open checks a change's read-back against its gate's runbook and marks the entry
+// (gate_checked). An entry without the mark (written before the batch G3 close-out 3, when a
+// removal could be named bare and a gate could name any read-back, or written around the CLI) gets
+// that whole check now, failing closed; a marked entry is never re-judged, so a change stays valid
+// when its runbook is edited later (code review round 1 of that batch, finding 2; round 2, finding
+// 2; round 3, findings 1 and 2).
 function staleReadBack(change, procedure) {
-  let parsed;
-  try { parsed = audit.parseReadBack(procedure.read_back); } catch { return null; }
-  if (parsed.flags !== '') return null;
-  let runbook;
-  try { runbook = checkGate(procedure.command, procedure.gate); } catch { return null; }
-  const lines = gateReadBacks(runbook, procedure.gate).filter((l) => l.kind === parsed.kind);
-  if (!lines.length || lines.some((l) => sameForm(parsed, l))) return null;
-  return `change ${change} names ${procedure.read_back} without the flags that change what its pass means, but gate ${procedure.gate}'s read-back in .claude/commands/${procedure.command}.md runs as ${[...new Set(lines.map(lineForm))].join(' or ')}; a change opened before the batch G3 close-out 3 was named so, and nothing proves it: open a new change`;
+  if (procedure.gate_checked === true) return null;
+  try {
+    const runbook = checkGate(procedure.command, procedure.gate);
+    checkGateReadBack(procedure.command, procedure.gate, audit.parseReadBack(procedure.read_back), runbook);
+    return null;
+  } catch (error) {
+    const why = error instanceof InputError || error instanceof audit.AuditRefused ? error.message : 'its runbook could not be read';
+    return `change ${change} was not opened by change-record.js open as it now checks (an entry from before the batch G3 close-out 3, or one written around the CLI), and its read-back ${procedure.read_back} fails that check: ${why}; nothing proves it, so open a new change`;
+  }
 }
 function bindRefusal(log, change, readBack) {
   const view = changeView(log, change);
@@ -449,7 +451,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (count) checkCount(text, expected);
       const digest = procedureDigest(text);
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;
-      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: named.readBack, procedure_sha256: digest, change, expected });
+      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: named.readBack, procedure_sha256: digest, change, expected, gate_checked: true });
       out(`${JSON.stringify({ ok: true, change, procedure_sha256: digest, audit_seq: r.seq, next: [
         'A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>',
         'A person runs the procedure (Aegis does not)',

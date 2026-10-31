@@ -184,3 +184,18 @@ test('the New phone / re-register list starts at step 1 and counts on', () => {
   const steps = lines.slice(from, to).map((l) => l.match(/^(\d+)\. /)).filter(Boolean).map((m) => Number(m[1]));
   assert.deepEqual(steps, steps.map((_, i) => i + 1), `steps ${steps.join(', ')}`);
 });
+
+// Code review round 1 of the batch G3 close-out 3, finding 14: under CommonMark a list item that
+// does not start at 1 cannot interrupt a paragraph or a quote, so steps 2 and 3, written straight
+// after the PORTAL ACTION paragraph and the PREVIEW ONLY quote, rendered as part of them. Each step
+// after the first follows a blank line or another step's line.
+test('each step of the New phone / re-register list after the first renders as a list item', () => {
+  const lines = PAGE.split('\n');
+  const from = lines.indexOf('**New phone / re-register:**');
+  const to = lines.indexOf('**Not getting prompts:**');
+  for (let i = from + 1; i < to; i += 1) {
+    const m = lines[i].match(/^(\d+)\. /);
+    if (!m || m[1] === '1') continue;
+    assert.ok(lines[i - 1] === '' || /^\d+\. /.test(lines[i - 1]), `mfa-issue.md:${i + 1}: step ${m[1]} follows ${JSON.stringify(lines[i - 1].slice(0, 40))}`);
+  }
+});

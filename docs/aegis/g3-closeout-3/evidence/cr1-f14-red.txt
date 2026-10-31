@@ -1,0 +1,40 @@
+# command: node --test scripts/mfa-issue-gates.test.js
+# commit: 20f9362 (plus uncommitted changes in the working tree)  started: 2026-10-31T08:07:29Z  node: v24.22.2
+✔ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (4.502122ms)
+✔ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.806891ms)
+✔ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.383361ms)
+✔ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.485033ms)
+✔ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (0.719825ms)
+✔ every R2 and R3 gate in /mfa-issue has a read-back bound to its change (1.12652ms)
+✔ the New phone / re-register list starts at step 1 and counts on (0.415673ms)
+✖ each step of the New phone / re-register list after the first renders as a list item (1.051125ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 109.414582
+
+✖ failing tests:
+
+test at scripts/mfa-issue-gates.test.js:192:1
+✖ each step of the New phone / re-register list after the first renders as a list item (1.051125ms)
+  AssertionError [ERR_ASSERTION]: mfa-issue.md:52: step 2 follows "**PORTAL ACTION [mfa-require-reregister-"
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:199:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T08:07:29Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

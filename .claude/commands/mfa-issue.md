@@ -26,7 +26,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly. It touches one user, as the single reversible write row does, but has no undo command; it is hard to reverse, as the multi-object or hard-to-reverse row says; so it takes the higher of the two. It changes no setting and takes nothing away, so the last row does not apply): not reversible; the user must authenticate again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly.
+**PORTAL ACTION [mfa-session-revoke-portal]:** Only after the exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. This is distinct from **Require re-register MFA** and does not authorize deleting a method. Verify after the documented propagation interval; do not claim every app session ended instantly. The R2 pre-state: there is no pre-state to restore (the revocation removes tokens only, and the user signs in again), so write that, and the time, in the ticket before the click.
 
 <!-- SAFETY GATE [mfa-method-delete-portal] -->
 - **Target:** the displayed method type and method ID for [UPN]
@@ -35,7 +35,7 @@ disable-model-invocation: true
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the method must be registered again
 - **Required confirmation:** Render the reviewed values as `$methodType` and `$methodId`, then type exactly `DELETE MFA METHOD $methodType ID $methodId FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.
+**PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, with the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers that method again at aka.ms/mfasetup), Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**.
 
 **Or, instead of the one-method delete:** clear every phone, Authenticator and software OATH method with Require re-register MFA. [mfa-require-reregister-portal] and [mfa-method-delete-portal] are alternatives: one or the other for a ticket, never both.
 
@@ -48,7 +48,7 @@ disable-model-invocation: true
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the user must register again before any sign-in that requires MFA
 - **Required confirmation:** Type exactly `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, with its change record approved, Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below, `verify-mfa-cleared` with `--change [CHANGE_ID]`.
+**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, with its change record approved, the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below, `verify-mfa-cleared` with `--change [CHANGE_ID]`.
 2. Tell the user to go to **aka.ms/mfasetup** and register the new device.
 > **PREVIEW ONLY [mfa-phone-add]:** An administrator adding a fallback method is a separate identity change. Do not perform it from this command without its own reviewed target/method gate.
 3. Proposed fallback: Entra → Users → `[UPN]` → **Authentication methods** → **+ Add method** → **Phone** → `[PHONE_NUMBER]`.

@@ -163,6 +163,21 @@ function checkGate(command, gate) {
   }
 }
 
+// A counted gate's saved procedure carries its count on one line, Count: N, and open refuses an
+// --expected that differs from it (batch G3 close-out 3, owner decision H2). The count is then
+// part of the text the approver reviews and whose digest the approval names, so the approval
+// covers N; folding N into the digest instead would cover a number the opener typed and no one
+// read, and would change what the digest of the reviewed text means.
+const COUNT_LINE = /^Count: ([1-9][0-9]{0,4})$/;
+function checkCount(text, expected) {
+  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => l.startsWith('Count:'));
+  if (lines.length !== 1 || !COUNT_LINE.test(lines[0])) {
+    throw new InputError('the saved procedure of a counted gate carries one line Count: N, the number in the ticket, so the approval covers it');
+  }
+  const written = Number(lines[0].match(COUNT_LINE)[1]);
+  if (written !== expected) throw new InputError(`--expected ${expected} is not the Count: ${written} the procedure carries; the approval covers the procedure's count, so open the change with that number`);
+}
+
 class InputError extends Error {}
 class NotDone extends Error {}
 
@@ -374,7 +389,9 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       const expected = count ? Number(flags.expected) : null;
       const named = checkReadBack(flags['read-back']);
       checkGateReadBack(flags.command, flags.gate, named);
-      const digest = procedureDigest(readProcedure(flags['procedure-file']));
+      const text = readProcedure(flags['procedure-file']);
+      if (count) checkCount(text, expected);
+      const digest = procedureDigest(text);
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;
       const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: named.readBack, procedure_sha256: digest, change, expected });
       out(`${JSON.stringify({ ok: true, change, procedure_sha256: digest, audit_seq: r.seq, next: [

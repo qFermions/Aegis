@@ -1,0 +1,182 @@
+# Each pushed head's battery, from the session's run folders: per capture, the commit line, the node --test totals where present, and the exit line.
+# Read 2026-10-31. The run at fb22339 is kept whole in head/battery-*.txt.
+== 7a0048c
+node-test: commit: 7a0048c started: 2026-10-31T06:50:00Z node: v24.22.2 pwsh: PowerShell 7. | tests=1463 pass=1463 fail=0 | # exit: 0  finished: 2026-10-31T06:51:16Z
+node-test-under-tripwire: commit: 7a0048c started: 2026-10-31T06:51:16Z node: v24.22.2 pwsh: PowerShell 7. | tests=1463 pass=1463 fail=0 | # exit: 0  finished: 2026-10-31T06:52:50Z
+ms-ticket-eval: commit: 7a0048c started: 2026-10-31T06:52:50Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:52:51Z
+gws-ticket-eval: commit: 7a0048c started: 2026-10-31T06:52:51Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:52:54Z
+g2-ticket-eval: commit: 7a0048c started: 2026-10-31T06:52:54Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:52:57Z
+g3-ticket-eval: commit: 7a0048c started: 2026-10-31T06:52:57Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:53:00Z
+command-structure-lint: commit: 7a0048c started: 2026-10-31T06:53:00Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:53:00Z
+replay-demo: commit: 7a0048c started: 2026-10-31T06:53:00Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:53:01Z
+pre-commit-check-all: commit: 7a0048c started: 2026-10-31T06:53:01Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:53:03Z
+release-boundary-check: commit: 7a0048c started: 2026-10-31T06:53:03Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:53:03Z
+head-checks: commit: 7a0048c started: 2026-10-31T06:53:03Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:53:14Z
+suite-counts: commit: 7a0048c started: 2026-10-31T06:53:14Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:55:12Z
+check-continuity: commit: 7a0048c started: 2026-10-31T06:55:12Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 2  finished: 2026-10-31T06:55:12Z
+gate: PUSH GATE: PASS at 7a0048c
+== 41807ae
+node-test: commit: 41807ae started: 2026-10-31T06:55:54Z node: v24.22.2 pwsh: PowerShell 7. | tests=1466 pass=1466 fail=0 | # exit: 0  finished: 2026-10-31T06:57:06Z
+node-test-under-tripwire: commit: 41807ae started: 2026-10-31T06:57:06Z node: v24.22.2 pwsh: PowerShell 7. | tests=1466 pass=1466 fail=0 | # exit: 0  finished: 2026-10-31T06:58:25Z
+ms-ticket-eval: commit: 41807ae started: 2026-10-31T06:58:25Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:27Z
+gws-ticket-eval: commit: 41807ae started: 2026-10-31T06:58:27Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:29Z
+g2-ticket-eval: commit: 41807ae started: 2026-10-31T06:58:29Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:32Z
+g3-ticket-eval: commit: 41807ae started: 2026-10-31T06:58:32Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:35Z
+command-structure-lint: commit: 41807ae started: 2026-10-31T06:58:35Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:35Z
+replay-demo: commit: 41807ae started: 2026-10-31T06:58:35Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:36Z
+pre-commit-check-all: commit: 41807ae started: 2026-10-31T06:58:36Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:38Z
+release-boundary-check: commit: 41807ae started: 2026-10-31T06:58:38Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:38Z
+head-checks: commit: 41807ae started: 2026-10-31T06:58:38Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T06:58:49Z
+suite-counts: commit: 41807ae started: 2026-10-31T06:58:49Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:00:45Z
+check-continuity: commit: 41807ae started: 2026-10-31T07:00:45Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 2  finished: 2026-10-31T07:00:45Z
+gate: PUSH GATE: PASS at 41807ae
+== f9daf80
+node-test: commit: f9daf80 started: 2026-10-31T07:04:21Z node: v24.22.2 pwsh: PowerShell 7. | tests=1469 pass=1469 fail=0 | # exit: 0  finished: 2026-10-31T07:05:31Z
+node-test-under-tripwire: commit: f9daf80 started: 2026-10-31T07:05:31Z node: v24.22.2 pwsh: PowerShell 7. | tests=1469 pass=1469 fail=0 | # exit: 0  finished: 2026-10-31T07:06:48Z
+ms-ticket-eval: commit: f9daf80 started: 2026-10-31T07:06:48Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:06:50Z
+gws-ticket-eval: commit: f9daf80 started: 2026-10-31T07:06:50Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:06:52Z
+g2-ticket-eval: commit: f9daf80 started: 2026-10-31T07:06:52Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:06:55Z
+g3-ticket-eval: commit: f9daf80 started: 2026-10-31T07:06:55Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:06:58Z
+command-structure-lint: commit: f9daf80 started: 2026-10-31T07:06:58Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:06:58Z
+replay-demo: commit: f9daf80 started: 2026-10-31T07:06:58Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:06:59Z
+pre-commit-check-all: commit: f9daf80 started: 2026-10-31T07:06:59Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:07:01Z
+release-boundary-check: commit: f9daf80 started: 2026-10-31T07:07:01Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:07:01Z
+head-checks: commit: f9daf80 started: 2026-10-31T07:07:01Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:07:12Z
+suite-counts: commit: f9daf80 started: 2026-10-31T07:07:12Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:09:09Z
+check-continuity: commit: f9daf80 started: 2026-10-31T07:09:09Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 2  finished: 2026-10-31T07:09:09Z
+gate: PUSH GATE: PASS at f9daf80
+== f246aac
+node-test: commit: f246aac started: 2026-10-31T07:16:52Z node: v24.22.2 pwsh: PowerShell 7. | tests=1473 pass=1473 fail=0 | # exit: 0  finished: 2026-10-31T07:18:06Z
+node-test-under-tripwire: commit: f246aac started: 2026-10-31T07:18:06Z node: v24.22.2 pwsh: PowerShell 7. | tests=1473 pass=1473 fail=0 | # exit: 0  finished: 2026-10-31T07:19:25Z
+ms-ticket-eval: commit: f246aac started: 2026-10-31T07:19:25Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:26Z
+gws-ticket-eval: commit: f246aac started: 2026-10-31T07:19:26Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:28Z
+g2-ticket-eval: commit: f246aac started: 2026-10-31T07:19:28Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:31Z
+g3-ticket-eval: commit: f246aac started: 2026-10-31T07:19:31Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:34Z
+command-structure-lint: commit: f246aac started: 2026-10-31T07:19:34Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:34Z
+replay-demo: commit: f246aac started: 2026-10-31T07:19:34Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:35Z
+pre-commit-check-all: commit: f246aac started: 2026-10-31T07:19:35Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:37Z
+release-boundary-check: commit: f246aac started: 2026-10-31T07:19:37Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:37Z
+head-checks: commit: f246aac started: 2026-10-31T07:19:37Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:19:48Z
+suite-counts: commit: f246aac started: 2026-10-31T07:19:48Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:21:40Z
+check-continuity: commit: f246aac started: 2026-10-31T07:21:40Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 2  finished: 2026-10-31T07:21:40Z
+gate: PUSH GATE: PASS at f246aac
+== 77b74fd
+node-test: commit: 77b74fd started: 2026-10-31T07:21:56Z node: v24.22.2 pwsh: PowerShell 7. | tests=1473 pass=1473 fail=0 | # exit: 0  finished: 2026-10-31T07:23:08Z
+node-test-under-tripwire: commit: 77b74fd started: 2026-10-31T07:23:08Z node: v24.22.2 pwsh: PowerShell 7. | tests=1473 pass=1473 fail=0 | # exit: 0  finished: 2026-10-31T07:24:23Z
+ms-ticket-eval: commit: 77b74fd started: 2026-10-31T07:24:23Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:25Z
+gws-ticket-eval: commit: 77b74fd started: 2026-10-31T07:24:25Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:27Z
+g2-ticket-eval: commit: 77b74fd started: 2026-10-31T07:24:27Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:30Z
+g3-ticket-eval: commit: 77b74fd started: 2026-10-31T07:24:30Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:32Z
+command-structure-lint: commit: 77b74fd started: 2026-10-31T07:24:32Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:32Z
+replay-demo: commit: 77b74fd started: 2026-10-31T07:24:32Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:34Z
+pre-commit-check-all: commit: 77b74fd started: 2026-10-31T07:24:34Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:35Z
+release-boundary-check: commit: 77b74fd started: 2026-10-31T07:24:35Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:35Z
+head-checks: commit: 77b74fd started: 2026-10-31T07:24:35Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:24:46Z
+suite-counts: commit: 77b74fd started: 2026-10-31T07:24:46Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:26:35Z
+check-continuity: commit: 77b74fd started: 2026-10-31T07:26:35Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 2  finished: 2026-10-31T07:26:35Z
+gate: PUSH GATE: PASS at 77b74fd
+== 83a512e
+node-test: commit: 83a512e started: 2026-10-31T07:26:47Z node: v24.22.2 pwsh: PowerShell 7. | tests=1473 pass=1473 fail=0 | # exit: 0  finished: 2026-10-31T07:27:55Z
+node-test-under-tripwire: commit: 83a512e started: 2026-10-31T07:27:55Z node: v24.22.2 pwsh: PowerShell 7. | tests=1473 pass=1473 fail=0 | # exit: 0  finished: 2026-10-31T07:29:16Z
+ms-ticket-eval: commit: 83a512e started: 2026-10-31T07:29:16Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:17Z
+gws-ticket-eval: commit: 83a512e started: 2026-10-31T07:29:17Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:19Z
+g2-ticket-eval: commit: 83a512e started: 2026-10-31T07:29:19Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:23Z
+g3-ticket-eval: commit: 83a512e started: 2026-10-31T07:29:23Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:25Z
+command-structure-lint: commit: 83a512e started: 2026-10-31T07:29:25Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:25Z
+replay-demo: commit: 83a512e started: 2026-10-31T07:29:25Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:27Z
+pre-commit-check-all: commit: 83a512e started: 2026-10-31T07:29:27Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:28Z
+release-boundary-check: commit: 83a512e started: 2026-10-31T07:29:28Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:28Z
+head-checks: commit: 83a512e started: 2026-10-31T07:29:28Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:29:40Z
+suite-counts: commit: 83a512e started: 2026-10-31T07:29:40Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:31:35Z
+check-continuity: commit: 83a512e started: 2026-10-31T07:31:35Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 2  finished: 2026-10-31T07:31:35Z
+gate: PUSH GATE: PASS at 83a512e
+== d07d166
+node-test: commit: d07d166 started: 2026-10-31T07:38:14Z node: v24.22.2 pwsh: PowerShell 7. | tests=1476 pass=1476 fail=0 | # exit: 0  finished: 2026-10-31T07:39:32Z
+node-test-under-tripwire: commit: d07d166 started: 2026-10-31T07:39:32Z node: v24.22.2 pwsh: PowerShell 7. | tests=1476 pass=1476 fail=0 | # exit: 0  finished: 2026-10-31T07:40:58Z
+ms-ticket-eval: commit: d07d166 started: 2026-10-31T07:40:58Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:00Z
+gws-ticket-eval: commit: d07d166 started: 2026-10-31T07:41:00Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:02Z
+g2-ticket-eval: commit: d07d166 started: 2026-10-31T07:41:02Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:05Z
+g3-ticket-eval: commit: d07d166 started: 2026-10-31T07:41:05Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:08Z
+command-structure-lint: commit: d07d166 started: 2026-10-31T07:41:08Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:08Z
+replay-demo: commit: d07d166 started: 2026-10-31T07:41:08Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:10Z
+pre-commit-check-all: commit: d07d166 started: 2026-10-31T07:41:10Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:11Z
+release-boundary-check: commit: d07d166 started: 2026-10-31T07:41:11Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:11Z
+head-checks: commit: d07d166 started: 2026-10-31T07:41:11Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:41:24Z
+suite-counts: commit: d07d166 started: 2026-10-31T07:41:24Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 0  finished: 2026-10-31T07:43:25Z
+check-continuity: commit: d07d166 started: 2026-10-31T07:43:25Z node: v24.22.2 pwsh: PowerShell 7. | # exit: 2  finished: 2026-10-31T07:43:25Z
+gate: PUSH GATE: PASS at d07d166
+== eb22556
+node-test: commit: eb225563 started: 2026-10-31T08:00:00Z node: v24.22.2 pwsh: PowerShell 7 | tests=1479 pass=1479 fail=0 | # exit: 0  finished: 2026-10-31T08:01:14Z
+node-test-under-tripwire: commit: eb225563 started: 2026-10-31T08:01:14Z node: v24.22.2 pwsh: PowerShell 7 | tests=1479 pass=1479 fail=0 | # exit: 0  finished: 2026-10-31T08:03:14Z
+ms-ticket-eval: commit: eb225563 started: 2026-10-31T08:03:14Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:16Z
+gws-ticket-eval: commit: eb225563 started: 2026-10-31T08:03:16Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:18Z
+g2-ticket-eval: commit: eb225563 started: 2026-10-31T08:03:18Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:21Z
+g3-ticket-eval: commit: eb225563 started: 2026-10-31T08:03:21Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:24Z
+command-structure-lint: commit: eb225563 started: 2026-10-31T08:03:24Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:24Z
+replay-demo: commit: eb225563 started: 2026-10-31T08:03:24Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:25Z
+pre-commit-check-all: commit: eb225563 started: 2026-10-31T08:03:25Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:27Z
+release-boundary-check: commit: eb225563 started: 2026-10-31T08:03:27Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:27Z
+head-checks: commit: eb225563 started: 2026-10-31T08:03:27Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:03:38Z
+suite-counts: commit: eb225563 started: 2026-10-31T08:03:38Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:05:35Z
+check-continuity: commit: eb225563 started: 2026-10-31T08:05:35Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 2  finished: 2026-10-31T08:05:35Z
+gate: PUSH GATE: PASS at eb22556
+== d97282d
+node-test: commit: d97282d5 started: 2026-10-31T08:11:29Z node: v24.22.2 pwsh: PowerShell 7 | tests=1484 pass=1484 fail=0 | # exit: 0  finished: 2026-10-31T08:12:37Z
+node-test-under-tripwire: commit: d97282d5 started: 2026-10-31T08:12:37Z node: v24.22.2 pwsh: PowerShell 7 | tests=1484 pass=1484 fail=0 | # exit: 0  finished: 2026-10-31T08:13:50Z
+ms-ticket-eval: commit: d97282d5 started: 2026-10-31T08:13:50Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:13:52Z
+gws-ticket-eval: commit: d97282d5 started: 2026-10-31T08:13:52Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:13:54Z
+g2-ticket-eval: commit: d97282d5 started: 2026-10-31T08:13:54Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:13:57Z
+g3-ticket-eval: commit: d97282d5 started: 2026-10-31T08:13:57Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:13:59Z
+command-structure-lint: commit: d97282d5 started: 2026-10-31T08:13:59Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:13:59Z
+replay-demo: commit: d97282d5 started: 2026-10-31T08:13:59Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:14:00Z
+pre-commit-check-all: commit: d97282d5 started: 2026-10-31T08:14:00Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:14:02Z
+release-boundary-check: commit: d97282d5 started: 2026-10-31T08:14:02Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:14:02Z
+head-checks: commit: d97282d5 started: 2026-10-31T08:14:02Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:14:12Z
+suite-counts: commit: d97282d5 started: 2026-10-31T08:14:12Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:16:05Z
+check-continuity: commit: d97282d5 started: 2026-10-31T08:16:05Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 2  finished: 2026-10-31T08:16:06Z
+gate: PUSH GATE: PASS at d97282d
+== 1981e03
+node-test: commit: 1981e037 started: 2026-10-31T08:34:23Z node: v24.22.2 pwsh: PowerShell 7 | tests=1493 pass=1493 fail=0 | # exit: 0  finished: 2026-10-31T08:35:36Z
+node-test-under-tripwire: commit: 1981e037 started: 2026-10-31T08:35:36Z node: v24.22.2 pwsh: PowerShell 7 | tests=1493 pass=1493 fail=0 | # exit: 0  finished: 2026-10-31T08:37:01Z
+ms-ticket-eval: commit: 1981e037 started: 2026-10-31T08:37:01Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:02Z
+gws-ticket-eval: commit: 1981e037 started: 2026-10-31T08:37:02Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:04Z
+g2-ticket-eval: commit: 1981e037 started: 2026-10-31T08:37:04Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:08Z
+g3-ticket-eval: commit: 1981e037 started: 2026-10-31T08:37:08Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:10Z
+command-structure-lint: commit: 1981e037 started: 2026-10-31T08:37:10Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:11Z
+replay-demo: commit: 1981e037 started: 2026-10-31T08:37:11Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:12Z
+pre-commit-check-all: commit: 1981e037 started: 2026-10-31T08:37:12Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:13Z
+release-boundary-check: commit: 1981e037 started: 2026-10-31T08:37:13Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:14Z
+head-checks: commit: 1981e037 started: 2026-10-31T08:37:14Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:37:26Z
+suite-counts: commit: 1981e037 started: 2026-10-31T08:37:26Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:39:31Z
+check-continuity: commit: 1981e037 started: 2026-10-31T08:39:31Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 2  finished: 2026-10-31T08:39:31Z
+gate: PUSH GATE: PASS at 1981e03
+== 6bc59da
+node-test: commit: 6bc59da1 started: 2026-10-31T08:53:42Z node: v24.22.2 pwsh: PowerShell 7 | tests=1499 pass=1499 fail=0 | # exit: 0  finished: 2026-10-31T08:54:58Z
+node-test-under-tripwire: commit: 6bc59da1 started: 2026-10-31T08:54:58Z node: v24.22.2 pwsh: PowerShell 7 | tests=1499 pass=1499 fail=0 | # exit: 0  finished: 2026-10-31T08:56:22Z
+ms-ticket-eval: commit: 6bc59da1 started: 2026-10-31T08:56:22Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:24Z
+gws-ticket-eval: commit: 6bc59da1 started: 2026-10-31T08:56:24Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:27Z
+g2-ticket-eval: commit: 6bc59da1 started: 2026-10-31T08:56:27Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:30Z
+g3-ticket-eval: commit: 6bc59da1 started: 2026-10-31T08:56:30Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:33Z
+command-structure-lint: commit: 6bc59da1 started: 2026-10-31T08:56:33Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:33Z
+replay-demo: commit: 6bc59da1 started: 2026-10-31T08:56:33Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:34Z
+pre-commit-check-all: commit: 6bc59da1 started: 2026-10-31T08:56:34Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:36Z
+release-boundary-check: commit: 6bc59da1 started: 2026-10-31T08:56:36Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:36Z
+head-checks: commit: 6bc59da1 started: 2026-10-31T08:56:36Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:56:48Z
+suite-counts: commit: 6bc59da1 started: 2026-10-31T08:56:48Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T08:58:51Z
+check-continuity: commit: 6bc59da1 started: 2026-10-31T08:58:51Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 2  finished: 2026-10-31T08:58:51Z
+gate: PUSH GATE: PASS at 6bc59da
+== fb22339
+node-test: commit: fb22339e started: 2026-10-31T09:02:32Z node: v24.22.2 pwsh: PowerShell 7 | tests=1499 pass=1499 fail=0 | # exit: 0  finished: 2026-10-31T09:03:49Z
+node-test-under-tripwire: commit: fb22339e started: 2026-10-31T09:03:49Z node: v24.22.2 pwsh: PowerShell 7 | tests=1499 pass=1499 fail=0 | # exit: 0  finished: 2026-10-31T09:05:15Z
+ms-ticket-eval: commit: fb22339e started: 2026-10-31T09:05:15Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:16Z
+gws-ticket-eval: commit: fb22339e started: 2026-10-31T09:05:16Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:19Z
+g2-ticket-eval: commit: fb22339e started: 2026-10-31T09:05:19Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:22Z
+g3-ticket-eval: commit: fb22339e started: 2026-10-31T09:05:22Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:25Z
+command-structure-lint: commit: fb22339e started: 2026-10-31T09:05:25Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:25Z
+replay-demo: commit: fb22339e started: 2026-10-31T09:05:25Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:26Z
+pre-commit-check-all: commit: fb22339e started: 2026-10-31T09:05:26Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:28Z
+release-boundary-check: commit: fb22339e started: 2026-10-31T09:05:28Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:28Z
+head-checks: commit: fb22339e started: 2026-10-31T09:05:28Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:05:40Z
+suite-counts: commit: fb22339e started: 2026-10-31T09:05:40Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 0  finished: 2026-10-31T09:07:46Z
+check-continuity: commit: fb22339e started: 2026-10-31T09:07:46Z node: v24.22.2 pwsh: PowerShell 7 | # exit: 2  finished: 2026-10-31T09:07:46Z
+gate: PUSH GATE: PASS at fb22339

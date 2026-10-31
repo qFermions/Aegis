@@ -232,7 +232,9 @@ and every gate that existed there still exists.
 Batch G3 close-out 3 (2026-10-31, branch `fix/g3-closeout-3`, base `main` at `0a5feb7`).
 Nothing was removed and no sentence above changed; the boundary paragraph is as at `0a5feb7`,
 and every gate that existed there still exists, with no field changed but its Reversibility line
-(two `/mfa-issue` PORTAL ACTION lines also name their bound read-backs, H3).
+(two `/mfa-issue` PORTAL ACTION lines also name their change record and bound read-back, and the
+session revocation's replaces "Verify after the documented propagation interval" with Microsoft's
+note that tokens may take a few minutes more, H3).
 
 - Added: two read-only Microsoft Graph read-backs, `verify-sessions-revoked` and
   `verify-method-absent` (GET only, `User.Read.All` and `UserAuthenticationMethod.Read.All`), so

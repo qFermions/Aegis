@@ -5718,7 +5718,6 @@
         "destructive",
         "external-system mutation",
         "identity-related",
-        "permission-related",
         "security-sensitive"
       ]
     },
@@ -5748,6 +5747,7 @@
         "destructive",
         "external-system mutation",
         "identity-related",
+        "permission-related",
         "security-sensitive"
       ]
     },

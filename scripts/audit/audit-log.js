@@ -177,9 +177,11 @@ function parseReadBack(text) {
     }
     if (found.has(name)) throw new AuditRefused(`--${name} may appear once`);
     if (rules[name] === SWITCH) { found.set(name, token); values.set(name, null); continue; }
-    if (typeof rest[i + 1] !== 'string' || !rules[name].test(rest[i + 1])) throw new AuditRefused(`--${name} needs the value ${kind}'s read-back takes`);
-    found.set(name, `${token} ${rest[i + 1]}`);
-    values.set(name, rest[i + 1]);
+    // a digest in lower case, as passFlags records it (code review round 2, finding 11)
+    const value = typeof rest[i + 1] === 'string' && rules[name] === DIGEST ? rest[i + 1].toLowerCase() : rest[i + 1];
+    if (typeof value !== 'string' || !rules[name].test(value)) throw new AuditRefused(`--${name} needs the value ${kind}'s read-back takes`);
+    found.set(name, `${token} ${value}`);
+    values.set(name, value);
     i += 1;
   }
   const flags = joinFlags(found);

@@ -144,7 +144,13 @@ test('a bound read-back under a removal gate proves the removal: no bound presen
 test('no read-back is named under a change for an object the change does not touch, and the audit README says so', () => {
   const jamf = fs.readFileSync(path.join(DIR, 'jamf-config-profiles.md'), 'utf8');
   assert.doesNotMatch(jamf, /check one with Phase C's read-back/);
-  assert.match(jamf, /# the pilot group keeps the profile: this change does not touch it, and Phase C's read-back proved it there/);
+  // code review round 3, finding 3: the removal can drop the pilot group by mistake, so a pilot
+  // Mac is read after it, in a read-only section of its own that no gate's change covers
+  assert.match(jamf, /# the pilot group must still list the profile: read one pilot Mac with the check after the removals below \(R0, no change record\)/);
+  const check = jamf.split('\n## ').find((sec) => sec.startsWith('After a removal: the pilot group still holds the profile (R0)'));
+  assert.ok(check, 'the R0 section after the removals');
+  assert.match(check, /\nnode scripts\/adapters\/jamf-client\.js verify-profile --serial \[SERIAL_NUMBER\] --profile-id \[PROFILE_ID\] --profile-identifier \[PROFILE_IDENTIFIER\] --execute\n/);
+  assert.doesNotMatch(check, /SAFETY GATE|--change/);
   const readme = fs.readFileSync(path.join(ROOT, 'scripts', 'audit', 'README.md'), 'utf8');
   assert.doesNotMatch(readme, /runs without `--change`, and its runbook says so/);
   assert.match(readme, /every read-back line under an R2 or R3 gate is bound to that gate's change/);

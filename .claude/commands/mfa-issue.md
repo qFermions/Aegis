@@ -48,7 +48,7 @@ disable-model-invocation: true
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the destructive, mass or security control row: "CA/MFA/licensing changes"): not reversible; the user must register again before any sign-in that requires MFA
 - **Required confirmation:** Type exactly `REQUIRE MFA RE-REGISTER FOR [UPN] AND DELETE ITS MFA METHODS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, with its change record approved, the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below, `verify-mfa-cleared` with `--change [CHANGE_ID]`.
+**PORTAL ACTION [mfa-require-reregister-portal]:** Only after the exact match, with its change record approved, the method list from "What to check first" saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers again at aka.ms/mfasetup), Entra admin center → Entra ID → Users → `[UPN]` → **Authentication methods** → **Require re-register MFA** at the top of the window. Then run its read-back below right away, before the user registers again (step 2): `verify-mfa-cleared` with `--change [CHANGE_ID]` passes only while no phone, Authenticator or software OATH method is left.
 2. Tell the user to go to **aka.ms/mfasetup** and register the new device.
 > **PREVIEW ONLY [mfa-phone-add]:** An administrator adding a fallback method is a separate identity change. Do not perform it from this command without its own reviewed target/method gate.
 3. Proposed fallback: Entra → Users → `[UPN]` → **Authentication methods** → **+ Add method** → **Phone** → `[PHONE_NUMBER]`.
@@ -94,7 +94,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`) proves each step. Use the user's object ID as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
 
 ```bash
-# HUMAN-RUN read-only read-back of [mfa-require-reregister-portal] (Require re-register MFA): passes only when no phone, Authenticator or software OATH method is left
+# HUMAN-RUN read-only read-back of [mfa-require-reregister-portal] (Require re-register MFA): run it right after that gate, before the user registers again; passes only when no phone, Authenticator or software OATH method is left
 node scripts/adapters/msgraph-client.js verify-mfa-cleared --user [USER_ID] --change [CHANGE_ID] --execute
 # HUMAN-RUN read-only read-back after the user registers on the new phone: passes only when an Authenticator method is registered
 node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute

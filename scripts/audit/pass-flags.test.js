@@ -136,3 +136,16 @@ test('a bound read-back under a removal gate proves the removal: no bound presen
   assert.deepEqual(both, ['okta-group-membership.md okta-group-membership-rule-change-portal okta:verify-group-member']);
   assert.match(fs.readFileSync(path.join(DIR, 'okta-group-membership.md'), 'utf8'), /one change record for the people who leave \(`okta:verify-group-member --absent`\) and one for the people who join \(`okta:verify-group-member`\)/);
 });
+
+// Code review round 2 of the batch G3 close-out 3, findings 6 and 10: the pilot read under
+// /jamf-config-profiles' removal from All Computers pointed to Phase C's line, which runs under
+// --change, so copying it under this change was refused; and the audit README still described an
+// unbound pilot line. The comment now says the pilot group keeps the profile without a read here.
+test('no read-back is named under a change for an object the change does not touch, and the audit README says so', () => {
+  const jamf = fs.readFileSync(path.join(DIR, 'jamf-config-profiles.md'), 'utf8');
+  assert.doesNotMatch(jamf, /check one with Phase C's read-back/);
+  assert.match(jamf, /# the pilot group keeps the profile: this change does not touch it, and Phase C's read-back proved it there/);
+  const readme = fs.readFileSync(path.join(ROOT, 'scripts', 'audit', 'README.md'), 'utf8');
+  assert.doesNotMatch(readme, /runs without `--change`, and its runbook says so/);
+  assert.match(readme, /every read-back line under an R2 or R3 gate is bound to that gate's change/);
+});

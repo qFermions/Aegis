@@ -1,0 +1,192 @@
+# command: node --test scripts/mfa-issue-gates.test.js scripts/adapters/change-binding.test.js
+# commit: 29043e5 (plus uncommitted changes in the working tree)  started: 2026-10-31T02:28:19Z  node: v24.22.2
+✔ fleet: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (34.501936ms)
+✔ fleet: a read-back bound with --change records the change id; link accepts it and status reports the change done (16.079693ms)
+✔ fleet: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (14.037998ms)
+✔ fleet: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (4.467205ms)
+✔ github: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (12.369347ms)
+✔ github: a read-back bound with --change records the change id; link accepts it and status reports the change done (10.896076ms)
+✔ github: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (14.212563ms)
+✔ github: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.795358ms)
+✔ google-workspace: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (13.119634ms)
+✔ google-workspace: a read-back bound with --change records the change id; link accepts it and status reports the change done (15.282963ms)
+✔ google-workspace: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (23.465225ms)
+✔ google-workspace: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (5.046796ms)
+✔ jamf: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (14.831314ms)
+✔ jamf: a read-back bound with --change records the change id; link accepts it and status reports the change done (13.015137ms)
+✔ jamf: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (18.116679ms)
+✔ jamf: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.589543ms)
+✔ linear: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (9.959072ms)
+✔ linear: a read-back bound with --change records the change id; link accepts it and status reports the change done (7.010393ms)
+✔ linear: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (10.444004ms)
+✔ linear: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.09935ms)
+✔ msgraph: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (10.154713ms)
+✔ msgraph: a read-back bound with --change records the change id; link accepts it and status reports the change done (11.561126ms)
+✔ msgraph: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (15.362516ms)
+✔ msgraph: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.104679ms)
+✔ okta: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (10.922211ms)
+✔ okta: a read-back bound with --change records the change id; link accepts it and status reports the change done (11.160819ms)
+✔ okta: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (14.089691ms)
+✔ okta: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.250931ms)
+✔ slack: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (10.897553ms)
+✔ slack: a read-back bound with --change records the change id; link accepts it and status reports the change done (9.007702ms)
+✔ slack: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (12.375138ms)
+✔ slack: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.503181ms)
+✔ jira: --change naming no change, an unapproved change, or a change for another read-back is refused before any transport call, dry or live (9.45361ms)
+✔ jira: a read-back bound with --change records the change id; link accepts it and status reports the change done (7.310707ms)
+✔ jira: an unbound read-back still works and records change null, but link refuses it; link refuses one bound to another change (11.199915ms)
+✔ jira: --change on a plain read, with the [CHANGE_ID] placeholder left in, or given twice is an input error before any transport call (3.072424ms)
+✔ a verify-* with --change and no audit trail to check it against is refused, never run unbound (0.283894ms)
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (20.659287ms)
+✔ fleet: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (13.238674ms)
+✔ github: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (9.76941ms)
+✔ google-workspace: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (11.469851ms)
+✔ jamf: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.614337ms)
+✔ linear: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (8.705594ms)
+✔ msgraph: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (13.198447ms)
+✔ okta: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (12.866993ms)
+✔ slack: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (8.858532ms)
+✔ jira: a bound read-back that verified prints its audit seq, the number change-record.js link takes; an unbound one prints none (8.404799ms)
+✔ fleet: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.098798ms)
+✔ github: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.556451ms)
+✔ google-workspace: --change=chg-... is refused before any transport call with a message that names the two-argument form (4.183481ms)
+✔ jamf: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.934698ms)
+✔ linear: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.251006ms)
+✔ msgraph: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.207973ms)
+✔ okta: --change=chg-... is refused before any transport call with a message that names the two-argument form (3.208215ms)
+✔ slack: --change=chg-... is refused before any transport call with a message that names the two-argument form (2.981465ms)
+✔ jira: --change=chg-... is refused before any transport call with a message that names the two-argument form (2.887433ms)
+✔ no support file under scripts/ has a name node --test runs as a test file (2.841299ms)
+✔ the contract, cli-support and the audit trail agree on what a verify-* command and a change id are (0.197248ms)
+✔ offline commands refuse --change as not a read-back, before reading any file (0.30324ms)
+✔ every connector with a verify-* command takes --change out of argv, checks it, and records its verdict under it (2.084507ms)
+✔ fleet: --change=chg-... on a plain read is refused as not a read-back (0.801927ms)
+✔ github: --change=chg-... on a plain read is refused as not a read-back (0.563177ms)
+✔ google-workspace: --change=chg-... on a plain read is refused as not a read-back (0.490901ms)
+✔ jamf: --change=chg-... on a plain read is refused as not a read-back (0.496812ms)
+✔ linear: --change=chg-... on a plain read is refused as not a read-back (0.511615ms)
+✔ msgraph: --change=chg-... on a plain read is refused as not a read-back (0.904988ms)
+✔ okta: --change=chg-... on a plain read is refused as not a read-back (0.620674ms)
+✔ slack: --change=chg-... on a plain read is refused as not a read-back (0.710869ms)
+✔ jira: --change=chg-... on a plain read is refused as not a read-back (0.627969ms)
+✔ a bound read-back that did not verify prints no audit seq (adapters through recordVerdict, and Jira) (11.330696ms)
+✔ changeRefusal refuses when it is not given takeChange's result (0.180812ms)
+✖ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (3.055722ms)
+✖ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.299568ms)
+✖ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.37072ms)
+✖ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.239093ms)
+ℹ tests 75
+ℹ suites 0
+ℹ pass 70
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 774.535685
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:234:1
+✖ runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered (20.659287ms)
+  AssertionError [ERR_ASSERTION]: the 79 read-backs of R2 and R3 gates
+  
+  78 !== 79
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:286:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 78,
+    expected: 79,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:52:1
+✖ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (3.055722ms)
+  AssertionError [ERR_ASSERTION]: the four gates of /mfa-issue
+  + actual - expected
+  
+    [
+      'mfa-method-delete-portal',
+  -   'mfa-require-reregister-portal',
+      'mfa-session-revoke',
+      'mfa-session-revoke-portal'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:54:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'mfa-method-delete-portal', 'mfa-session-revoke', 'mfa-session-revoke-portal' ],
+    expected: [ 'mfa-method-delete-portal', 'mfa-require-reregister-portal', 'mfa-session-revoke', 'mfa-session-revoke-portal' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:71:1
+✖ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.299568ms)
+  AssertionError [ERR_ASSERTION]: a portal gate [mfa-require-reregister-portal]
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:73:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:89:1
+✖ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.37072ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^# HUMAN-RUN read-only read-back of \[mfa-require-reregister-portal\]/. Input:
+  
+  '# HUMAN-RUN read-only read-back after "Require re-register MFA": passes only when no phone, Authenticator or software OATH method is left'
+  
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:93:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# HUMAN-RUN read-only read-back after "Require re-register MFA": passes only when no phone, Authenticator or software OATH method is left',
+    expected: /^# HUMAN-RUN read-only read-back of \[mfa-require-reregister-portal\]/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:98:1
+✖ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.239093ms)
+  AssertionError [ERR_ASSERTION]: - B-18. Require MFA re-registration: Entra ID > Users > user > Authentication methods > Require re-register MFA (at least Authentication Administrator); deletes phone, Authenticator and software OATH methods and deactivates hardware OATH. "Revoke sessions" is the session option on the same blade. | https://learn.microsoft.com/entra/identity/authentication/howto-mfa-userdevicesettings#manage-user-authentication-options | 2026-10-28 | vendor docs page | "Require re-register MFA deactivates the user's hardware OATH tokens and deletes the following authentication methods"
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:102:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T02:28:20Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

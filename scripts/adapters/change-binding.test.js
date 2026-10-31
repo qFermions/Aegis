@@ -238,6 +238,17 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   let unbound = 0;
   for (const file of fs.readdirSync(dir).filter((n) => n.endsWith('.md'))) {
     const lines = fs.readFileSync(path.join(dir, file), 'utf8').split('\n');
+    // a read-back in its own section names the gate it proves in the comment above it
+    // ("read-back of [mfa-require-reregister-portal]"), and takes that gate's class (batch G3
+    // close-out 2, owner decision 1: the /mfa-issue read-backs sit under "## Read-back")
+    const classOf = new Map();
+    let id = null;
+    for (const l of lines) {
+      const g = l.match(/<!-- SAFETY GATE \[([^\]]+)\] -->|^# SAFETY GATE \[([^\]]+)\]/);
+      if (g) id = g[1] || g[2];
+      const rv = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)(.*)$/);
+      if (rv && id) classOf.set(id, (rv[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null);
+    }
     let gate = null;
     let rClass = null;
     let has = false;
@@ -254,8 +265,10 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       const r = l.match(/(?:\*\*Reversibility:\*\*|^# Reversibility:)(.*)$/);
       if (r && gate) rClass = (r[1].split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null;
       if (!VERIFY.test(l)) continue;
-      const wantBound = rClass === 'R2' || rClass === 'R3';
-      assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${rClass || 'no gate'}): ${l.trim().slice(0, 120)}`);
+      const named = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of \[([a-z0-9-]+)\]/);
+      const cls = named && classOf.has(named[1]) ? classOf.get(named[1]) : rClass;
+      const wantBound = cls === 'R2' || cls === 'R3';
+      assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${cls || 'no gate'}): ${l.trim().slice(0, 120)}`);
       if (wantBound) { bound += 1; has = true; } else unbound += 1;
     }
     const text = lines.join('\n');
@@ -267,9 +280,11 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
     if (has) assert.match(text, /\*\*Change record \((?:R2 and R3|R2|R3) gates\):\*\* before a gate[^\n]*`node scripts\/audit\/change-record\.js open`[^\n]*`\[CHANGE_ID\]`/, `${file}: says where [CHANGE_ID] comes from`);
     else assert.doesNotMatch(text, /\[CHANGE_ID\]/, `${file}: no change record, no [CHANGE_ID]`);
   }
-  // 78: the two prose read-backs written as whole command lines count too (round 3, finding 4)
-  assert.equal(bound, 78, 'the 78 read-backs of R2 and R3 gates at the batch G3 close-out');
-  assert.equal(unbound, 77, 'the 77 read-backs of R0 and R1 work, or of no gate, stay unbound');
+  // 78 at the batch G3 close-out (the two prose read-backs written as whole command lines count
+  // too, round 3, finding 4); 79 with /mfa-issue's verify-mfa-cleared, the read-back of its R3
+  // Require re-register MFA gate (batch G3 close-out 2, owner decision 1)
+  assert.equal(bound, 79, 'the 79 read-backs of R2 and R3 gates');
+  assert.equal(unbound, 76, 'the 76 read-backs of R0 and R1 work, or of no gate, stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // two read-backs of R2 and R3 changes are named in prose, not on a command line: the rollback

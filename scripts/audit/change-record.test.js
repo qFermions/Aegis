@@ -1152,3 +1152,138 @@ test('A2: two approvals of one change raced from two processes: exactly one is r
   assert.deepEqual(codes.sort(), [0, 2, 2, 2]);
   assert.equal(s.log.entries().filter((e) => e.kind === 'approval').length, 1);
 });
+
+// ── Batch G4, task A3: every flag that decides what a pass means (D10 on PR #9) ───────────────────
+// A time bound (--not-before) is recorded with its read-back: the change names it bare (its value is
+// chosen after the approval), the verify entry records the value in UTC, and a --not-before earlier
+// than the change's approval never proves the change, since it could pass on a change made before
+// the approval. Closed-set flags newly declared (--method, --factor-type) and the digest and type
+// flags count only with the same value.
+const { testRunbooks } = require('./trail-helper.js');
+const DIGEST_A = 'a'.repeat(64);
+const DIGEST_B = 'b'.repeat(64);
+// every verify-* command that takes a time bound, with the other pass flags it is named with
+const TIMED = {
+  'fleet:verify-checked-in': '', 'fleet:verify-deleted': '',
+  'google-workspace:verify-event': '--app admin --event CHANGE_PASSWORD',
+  'jamf:verify-command': '--type INSTALL_PROFILE', 'jamf:verify-checked-in': '',
+  'linear:verify-comment': `--expect-sha256 ${DIGEST_A}`,
+  'msgraph:verify-password-changed': '', 'msgraph:verify-signin': '', 'msgraph:verify-device-synced': '', 'msgraph:verify-sessions-revoked': '',
+  'okta:verify-sessions-cleared': '', 'okta:verify-password-reset': '',
+  'slack:verify-posted': `--expect-sha256 ${DIGEST_A}`,
+  'jira:verify-create': `--expect-sha256 ${DIGEST_A}`, 'jira:verify-comment': `--expect-sha256 ${DIGEST_A}`,
+};
+
+function inProcessTrail(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-a3-test-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const env = { AEGIS_AUDIT_DIR: path.join(dir, 'audit') };
+  const procedure = path.join(dir, 'procedure.md');
+  fs.writeFileSync(procedure, 'Phase B: the gated change for [UPN].\n');
+  const gateFor = testRunbooks(dir, t);
+  const log = audit.openAuditLog({ dir: env.AEGIS_AUDIT_DIR });
+  const record = (argv) => {
+    const out = [];
+    const err = [];
+    const code = changes.main(argv, env, { out: (x) => out.push(x), err: (x) => err.push(x) });
+    let json = null;
+    try { json = JSON.parse(out.join('')); } catch { /* not JSON */ }
+    return { code, json, text: out.join('') + err.join('') };
+  };
+  const approvedChange = (readBack) => {
+    const g = gateFor(readBack);
+    const o = record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    assert.equal(o.code, 0, o.text);
+    const a = record(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+    assert.equal(a.code, 0, a.text);
+    const approval = log.entries().find((e) => e.kind === 'approval' && e.change === o.json.change);
+    return { change: o.json.change, approvalAt: Date.parse(approval.at), approve: a };
+  };
+  const read = (kind, change, flags, verified = true) => {
+    const [connector, command] = kind.split(':');
+    return log.append({ kind: 'verify', connector, command, verified, state: 'OK', change, run: null, flags });
+  };
+  return { record, approvedChange, read, log, gateFor, procedure };
+}
+const iso = (ms) => new Date(ms).toISOString();
+
+test('A3: each read-back with a time bound is named with --not-before; one earlier than the approval is not done, one at or after it is done when it passes', (t) => {
+  const declaredTimed = Object.entries(audit.PASS_FLAGS).filter(([, f]) => f['not-before']).map(([k]) => k).sort();
+  assert.deepEqual(declaredTimed, Object.keys(TIMED).sort(), 'every command with a time bound is covered here');
+  for (const [kind, others] of Object.entries(TIMED)) {
+    const tr = inProcessTrail(t);
+    const named = audit.parseReadBack([kind, others, '--not-before'].filter(Boolean).join(' ')).readBack;
+    const { change, approvalAt, approve } = tr.approvedChange(named);
+    assert.match(approve.json.next || approve.text, /--not-before at or after/, `${kind}: approve names the earliest time bound`);
+    const flagsFor = (ms) => audit.passFlags(kind, [kind.split(':')[1], ...others.split(' ').filter(Boolean), '--not-before', iso(ms)]);
+    assert.match(flagsFor(approvalAt), /--not-before \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/, `${kind}: the value is recorded in UTC`);
+    const early = tr.read(kind, change, flagsFor(approvalAt - 3600 * 1000));
+    const l1 = tr.record(['link', '--change', change, '--verify-seq', String(early.seq)]);
+    assert.equal(l1.code, 2, `${kind}: ${l1.text}`);
+    assert.match(l1.text, /earlier than the approval/, kind);
+    const st1 = tr.record(['status', '--change', change]);
+    assert.equal(st1.json.done, false, `${kind}: an early time bound never proves the change`);
+    const onTime = tr.read(kind, change, flagsFor(approvalAt));
+    const l2 = tr.record(['link', '--change', change, '--verify-seq', String(onTime.seq)]);
+    assert.equal(l2.code, 0, `${kind}: ${l2.text}`);
+    const st2 = tr.record(['status', '--change', change]);
+    assert.equal(st2.code, 0, `${kind}: ${st2.text}`);
+    assert.equal(st2.json.done, true, kind);
+  }
+});
+
+test('A3: an early time bound linked around the CLI still never makes the change done', (t) => {
+  const tr = inProcessTrail(t);
+  const kind = 'msgraph:verify-sessions-revoked';
+  const { change, approvalAt } = tr.approvedChange(`${kind} --not-before`);
+  const early = tr.read(kind, change, audit.passFlags(kind, ['verify-sessions-revoked', '--not-before', iso(approvalAt - 60000)]));
+  tr.log.append({ kind: 'change-link', change, verify_seq: early.seq });
+  const st = tr.record(['status', '--change', change]);
+  assert.equal(st.json.done, false);
+  assert.match(st.json.missing.join(' '), /earlier than the approval/);
+});
+
+test('A3: a time bound in epoch milliseconds is recorded in UTC and judged the same way', (t) => {
+  const tr = inProcessTrail(t);
+  const kind = 'jira:verify-create';
+  const { change, approvalAt } = tr.approvedChange(`${kind} --expect-sha256 ${DIGEST_A} --not-before`);
+  const flags = audit.passFlags(kind, ['verify-create', '--expect-sha256', DIGEST_A, '--not-before', String(approvalAt + 1000)]);
+  assert.equal(flags, `--expect-sha256 ${DIGEST_A} --not-before ${iso(approvalAt + 1000)}`);
+  const v = tr.read(kind, change, flags);
+  assert.equal(tr.record(['link', '--change', change, '--verify-seq', String(v.seq)]).code, 0);
+  assert.equal(tr.record(['status', '--change', change]).json.done, true);
+});
+
+test('A3: a change whose read-back takes a time bound is not opened without it, and the bound is named without a value', (t) => {
+  const tr = inProcessTrail(t);
+  const g = tr.gateFor('msgraph:verify-sessions-revoked --not-before');
+  for (const bad of ['msgraph:verify-sessions-revoked', 'msgraph:verify-sessions-revoked --not-before 2026-10-28T09:00:00Z']) {
+    const r = tr.record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', bad, '--procedure-file', tr.procedure]);
+    assert.equal(r.code, 1, `${bad}: ${r.text}`);
+    assert.match(r.text, /--not-before/, bad);
+  }
+  const good = tr.record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'msgraph:verify-sessions-revoked --not-before', '--procedure-file', tr.procedure]);
+  assert.equal(good.code, 0, good.text);
+  assert.match(good.json.next.join(' '), /--not-before at or after the approval/);
+});
+
+test('A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done', (t) => {
+  const cases = [
+    ['slack:verify-posted', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
+    ['linear:verify-comment', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
+    ['jira:verify-comment', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
+    ['jamf:verify-command', '--not-before --type INSTALL_PROFILE', (ms) => `--not-before ${iso(ms)} --type REMOVE_PROFILE`],
+    ['slack:verify-guest', '--type single', () => '--type multi'],
+    ['msgraph:verify-mfa-method', '--method microsoftAuthenticator', () => '--method phone'],
+    ['okta:verify-factor-reset', '--factor-type push', () => '--factor-type sms'],
+  ];
+  for (const [kind, named, other] of cases) {
+    const tr = inProcessTrail(t);
+    const { change, approvalAt } = tr.approvedChange(`${kind} ${named}`);
+    const v = tr.read(kind, change, other(approvalAt + 1000));
+    const l = tr.record(['link', '--change', change, '--verify-seq', String(v.seq)]);
+    assert.equal(l.code, 2, `${kind}: ${l.text}`);
+    assert.match(l.text, /this change is proved only by/, kind);
+    assert.equal(tr.record(['status', '--change', change]).json.done, false, kind);
+  }
+});

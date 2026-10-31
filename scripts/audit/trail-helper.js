@@ -34,7 +34,9 @@ function changeTrail(t) {
   function changeFor(kind, argv = []) {
     const readBack = audit.readBackFor(kind, argv);
     if (opened.has(readBack)) return opened.get(readBack);
-    const o = call(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    // a gate whose runbook binds no read-back, so any connector's read-back can be named (a gate
+    // that binds read-backs takes only those, security review 1 of the batch G3 close-out 3)
+    const o = call(['open', '--command', 'printer-issue', '--gate', 'print-queue-delete-portal', '--r-class', 'R3', '--target', '[DEVICE_NAME]', '--read-back', readBack, '--procedure-file', procedure]);
     call(['approve', '--change', o.change, '--ref', 'IT-123', '--procedure-sha256', o.procedure_sha256]);
     opened.set(readBack, o.change);
     return o.change;

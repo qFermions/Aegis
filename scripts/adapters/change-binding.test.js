@@ -117,7 +117,9 @@ function trail(t) {
   };
   // open (and by default approve) a change record whose read-back is readBack
   const open = (readBack, { approve = true } = {}) => {
-    const o = record(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    // a gate whose runbook binds no read-back, so any connector's read-back can be named (a gate
+    // that binds read-backs takes only those, security review 1 of the batch G3 close-out 3)
+    const o = record(['open', '--command', 'printer-issue', '--gate', 'print-queue-delete-portal', '--r-class', 'R3', '--target', '[DEVICE_NAME]', '--read-back', readBack, '--procedure-file', procedure]);
     assert.equal(o.code, 0, o.text);
     if (approve) assert.equal(record(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
     return o.json.change;

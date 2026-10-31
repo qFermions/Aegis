@@ -239,7 +239,16 @@ test('open refuses a read-back the connector does not have (a typo or an unknown
     assert.match(r.stderr, /no such read-back|no connector/, bad);
   }
   assert.equal(s.log.entries().length, 0, 'nothing recorded');
-  for (const good of ['okta:verify-factor-reset', 'github:verify-collaborator', 'jamf:verify-checked-in', 'jira:verify-comment']) assert.equal(open(good).code, 0, good);
+  assert.equal(open('okta:verify-factor-reset').code, 0);
+  // read-backs the connectors have pass the connector check; this gate's runbook binds Okta
+  // read-backs only, so open refuses them for the gate (security review 1 of the batch G3
+  // close-out 3)
+  for (const other of ['github:verify-collaborator', 'jamf:verify-checked-in', 'jira:verify-comment']) {
+    const r = open(other);
+    assert.equal(r.code, 1, other);
+    assert.doesNotMatch(r.stderr, /no such read-back|no connector/, other);
+    assert.match(r.stderr, /gate okta-mfa-reset-selected-portal's read-back in \.claude\/commands\/okta-mfa-reset\.md runs as okta:verify-factor-reset, not as /, other);
+  }
 });
 
 // Code review round 3, finding 1: a read-back is named as the trail records it, by the
@@ -669,6 +678,28 @@ test('open refuses a removal gate named without --absent, and an add gate named 
   assert.match(add.stderr, /okta-group-membership-rule-create-portal/);
   assert.equal(openH1(s, H1.removePerson, 'okta:verify-group-member --absent').code, 0);
   assert.equal(openH1(s, H1.ruleCreate, 'okta:verify-group-member').code, 0);
+});
+
+// Security review 1 of the batch G3 close-out 3: the form check compared only the gate's lines
+// of the same read-back, so a removal gate could be opened for another connector's or another
+// command's presence read. A gate whose runbook binds read-backs now takes only one of those.
+test('open refuses a read-back the gate\'s runbook does not bind for it: another connector\'s or command\'s read never proves a removal', (t) => {
+  const s = setup(t);
+  // the one-person removal binds two read-backs, both with --absent
+  for (const readBack of ['msgraph:verify-group-member', 'msgraph:verify-group-member --absent', 'okta:verify-app-assigned']) {
+    const o = openH1(s, H1.removePerson, readBack);
+    assert.equal(o.code, 1, `${readBack}: ${o.stdout}`);
+    assert.match(o.stderr, /gate okta-group-membership-remove-person-portal's read-back in \.claude\/commands\/okta-group-membership\.md runs as okta:verify-group-member --absent or okta:verify-app-assigned --absent, not as /, readBack);
+  }
+  // the counted removal binds one, so the other Okta read-back and Graph's are refused
+  for (const readBack of ['okta:verify-app-assigned --absent', 'msgraph:verify-group-member --absent']) {
+    const counted = openH1(s, H1.bulkRemove, readBack, ['--expected', '2']);
+    assert.equal(counted.code, 1, `${readBack}: ${counted.stdout}`);
+    assert.match(counted.stderr, /gate okta-group-membership-bulk-remove-portal's read-back in \.claude\/commands\/okta-group-membership\.md runs as okta:verify-group-member --absent, not as /, readBack);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  assert.equal(openH1(s, H1.removePerson, 'okta:verify-group-member --absent').code, 0);
+  assert.equal(openH1(s, H1.removePerson, 'okta:verify-app-assigned --absent').code, 0);
 });
 
 test('a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change', (t) => {

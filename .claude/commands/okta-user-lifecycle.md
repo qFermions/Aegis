@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[NOT_BEFORE]` (the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, written in the ticket just before a change) · `[USER@DOMAIN.COM]` (their Google account) · `[TEMP_PASSWORD]` (a temporary password handed over out of band) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R3 gates):** before a gate whose reversibility is R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-status`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-status --status DEPROVISIONED`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it.
+**Change record (R3 gates):** before a gate whose reversibility is R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-status`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-status --status DEPROVISIONED`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -212,7 +212,7 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 **WAIT UNTIL** the read-back below passes. Deactivation runs in the background, so the status can still read the old value for a while: run the read again, never the deactivation.
 
 ```bash
-# HUMAN-RUN read-only read-back, passes only when the user record reads status DEPROVISIONED, Deactivated in the Admin Console. It proves the change only when Phase A recorded another status
+# HUMAN-RUN read-only read-back of [okta-user-lifecycle-deactivate-portal] or [okta-user-lifecycle-deactivate], passes only when the user record reads status DEPROVISIONED, Deactivated in the Admin Console. It proves the change only when Phase A recorded another status
 node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
 ```
 

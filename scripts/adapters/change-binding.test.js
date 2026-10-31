@@ -345,7 +345,8 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // line, and no Phase F exception gate binds a read-back (code review round 1 of the batch G3
   // close-out 3, finding 3; a check rewritten, checks.md D7)
   const page = (name) => fs.readFileSync(path.join(dir, `${name}.md`), 'utf8');
-  assert.match(page('github-branch-protection'), /Then run the rollback gate it names, under that gate's own change record, and that gate's own read-back \(the `verify-protection` line under Phase B's or Phase C's gate\) must exit 0/);
+  // code review round 2, finding 1: Phase D's and E's gates take no change record
+  assert.match(page('github-branch-protection'), /Then run the rollback gate it names\. For Phase B's or Phase C's gate, under its own change record, its own read-back \(the `verify-protection` line under that gate\) must exit 0/);
   for (const b of changes.boundReadBacks(page('github-branch-protection'))) {
     assert.ok(b.gates.every((g) => /-(?:add-rule|strengthen-rule)-portal$/.test(g)), `github-branch-protection.md:${b.line} binds a read-back to ${b.gates.join(', ')}: only the gates that add or strengthen protection bind one`);
   }

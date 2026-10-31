@@ -899,6 +899,19 @@ test('a second count written in another shape (indented, a bullet, a quote, a he
   assert.equal(openBatch(s, countedProcedure(s, 5), 5).code, 0);
 });
 
+// Code review round 2 of the batch G3 close-out 3, finding 5: Markdown emphasis, a task box, a
+// table cell or backticks still hid a second count the approver would read.
+test('a second count wrapped in Markdown (bold, a task box, a table cell, italics, backticks) is refused', (t) => {
+  const s = setup(t);
+  for (const extra of ['**Count**: 50', '**Count:** 50', '- [ ] Count: 50', '| Count: 50 |', '_Count:_ 50', '`Count: 50`']) {
+    const file = path.join(s.dir, 'procedure-markdown.md');
+    fs.writeFileSync(file, `${fs.readFileSync(countedProcedure(s, 5), 'utf8')}${extra}\n`);
+    const r = openBatch(s, file, 5);
+    assert.equal(r.code, 1, `${JSON.stringify(extra)}: ${r.stdout}`);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
 test('an approval given for one N does not cover a different N', (t) => {
   const s = setup(t);
   const twelve = openBatch(s, countedProcedure(s, 12), 12);

@@ -6885,6 +6885,8 @@
         }
       ],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "identity-related",
         "permission-related"

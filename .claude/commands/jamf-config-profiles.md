@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[PROFILE_NAME]` / `[PROFILE_ID]` (the computer configuration profile as Jamf Pro lists it, and its ID) · `[PROFILE_IDENTIFIER]` (that profile's own PayloadIdentifier: `payloadSummary[0].profile.PayloadIdentifier` in the `profile --id` read; every profile read-back names it, so a command or an entry for another profile is never proof) · `[SMART_GROUP]` / `[SMART_GROUP_ID]` (the pilot smart group and its ID) · `[MEMBER_COUNT]` (the number of Macs you predict in that group) · `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's management ID, from the inventory read) · `[NOT_BEFORE]` (the time the change was saved; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-group-count`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-group-count`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `jamf:verify-profile --absent` for a removal, and run the line with the same flags: a read with other flags is refused under the change and never counts for it.
 
 ## ⚠️ Admin / safety gate
 
@@ -353,8 +353,8 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 # HUMAN-RUN - read-only - on a sample of Macs outside the pilot group
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
 node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
-# proves a pilot Mac still lists it
-node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute
+# proves a pilot Mac still lists it: not this change's proof (the --absent read above is), so it runs without --change
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
 ```
 </details>
 

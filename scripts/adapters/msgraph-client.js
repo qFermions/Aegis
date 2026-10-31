@@ -244,7 +244,7 @@ async function run(argv, env = process.env, deps = {}) {
       const judged = judge(command, a, r.data);
       const verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed, ...(r.scope_notice ? { scope_notice: r.scope_notice } : {}) };
       if (!verdict.verified) verdict.reason = judged.reason;
-      res = recordVerdict(cli.audit, 'msgraph', verdict, bound.change);
+      res = recordVerdict(cli.audit, 'msgraph', verdict, bound.change, null, bound.argv);
     }
     const shown = redactDeep(res, secrets());
     const code = exitCodeFor(shown);

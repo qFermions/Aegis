@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the person's Okta username) · `[OKTA_USER_ID]` (their Okta user ID, starts `00u`) · `[GROUP_NAME]` (the Okta group's name) · `[OKTA_GROUP_ID]` (its ID, starts `00g`) · `[RULE_ID]` (a group rule's ID) · `[APP_NAME]` / `[APP_ID]` (an app the group is assigned, ID starts `0oa`) · `[NOT_BEFORE]` (the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, written in the ticket just before a change) · `[N]` (the number of people on a change list) · `[JIRA-###]` · `[@Aegion_OKTA_ORG_URL]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-group-member`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`).
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-group-member`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-group-member --absent` for a removal, and run the line with the same flags: a read with other flags is refused under the change and never counts for it.
 
 ## ⚠️ Admin / safety gate
 
@@ -197,11 +197,15 @@ This is also the path for taking one person out of a rule-managed group: exclude
 
 **WAIT UNTIL** the `group-members` read shows the predicted count; never save the rule again to hurry it.
 
+**Change record:** a rule change that removes some people and adds others takes one change record for the people who leave (`okta:verify-group-member --absent`) and one for the people who join (`okta:verify-group-member`), each under this gate with the same reviewed procedure; each read-back below runs under its own `[CHANGE_ID]`.
+
 ```bash
 # HUMAN-RUN read-only read-back, the rule list: [RULE_ID] shows the new condition and its status
 node scripts/adapters/okta-client.js group-rules --execute
-# HUMAN-RUN read-only read-back for one person who should leave, passes only when that person is no longer a member. For one who should join, run it without --absent
+# HUMAN-RUN read-only read-back for one person who should leave, passes only when that person is no longer a member
 node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
+# HUMAN-RUN read-only read-back for one person who should join, passes only when that person is a member
+node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 ```
 
 ### Phase D3: Deactivate a group rule
@@ -256,7 +260,7 @@ node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event group.use
 
 ### Phase E2: Remove the listed people
 
-**Counted change:** open the change record for [okta-group-membership-bulk-remove-portal] with `--expected [N]`, the number of people on the list in the ticket. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N" over the bound `verify-group-member --absent` read-backs, one per person, lists any that failed, and reads done only when exactly [N] passed and none failed; anything else reads partial. The read-back records no run id, so a repeated read of the same person is not detected: read each person on the list once, after the change shows. A read that failed with an answer cannot be matched to a later pass of the same person, so it keeps the change partial: write the people not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that person again.
+**Counted change:** open the change record for [okta-group-membership-bulk-remove-portal] with `--read-back 'okta:verify-group-member --absent'` and `--expected [N]`, the number of people on the list in the ticket. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N" over the bound `verify-group-member --absent` read-backs, one per person, lists any that failed, and reads done only when exactly [N] passed and none failed; anything else reads partial. The read-back records no run id, so a repeated read of the same person is not detected: read each person on the list once, after the change shows. A read that failed with an answer cannot be matched to a later pass of the same person, so it keeps the change partial: write the people not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that person again.
 
 <!-- SAFETY GATE [okta-group-membership-bulk-remove-portal] -->
 - **Target:** [N] people on the change list and [GROUP_NAME]

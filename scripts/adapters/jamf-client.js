@@ -754,7 +754,7 @@ async function run(argv, env = process.env, deps = {}) {
       const r = await read(client, ...def.request(a));
       res = r.ok ? readOutput(command, r) : failed(command, r);
     } else {
-      res = recordVerdict(cli.audit, 'jamf', await VERIFY[command](client, a), bound.change);
+      res = recordVerdict(cli.audit, 'jamf', await VERIFY[command](client, a), bound.change, null, bound.argv);
     }
     const code = exitCodeFor(res);
     (code === 1 ? err : out)(renderResult(res, { secrets: seen, platform: 'jamf' }));

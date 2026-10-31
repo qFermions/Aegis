@@ -41,8 +41,13 @@ const MAX_PROCEDURE_BYTES = 1024 * 1024;
 // change id it was run under (--change), so link binds it to exactly one change; the audit
 // entries hold no target value, only placeholders, so which object it read is still the
 // operator's step. The form is the trail's own (audit-log.js READ_BACK).
-const { READ_BACK } = audit;
+// Since the batch G3 close-out 3 (owner decision H1) a read-back is named with the flags that
+// change what its pass means (okta:verify-group-member --absent), and a verify entry counts for a
+// change only when it ran with the same ones (audit-log.js readBackOf).
+const { READ_BACK, readBackOf, parseReadBack } = audit;
 const kindOf = (e) => `${e.connector}:${e.command}`;
+const kindOfReadBack = (readBack) => String(readBack).split(' ')[0];
+const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 // The read-back must be a verify-* command its connector really has. A connector is named
 // as its verify entries name it (cli-support.js recordVerdict, jira-client.js), and its file
@@ -70,12 +75,77 @@ const EXPECTED = /^[1-9][0-9]{0,4}$/;
 // A command is a key line of a command table: two spaces, the quoted name, a colon.
 const hasCommandKey = (source, command) => new RegExp(`^  '${command}': `, 'm').test(source);
 
+// The read-back named at open, with its pass flags in one form (batch G3 close-out 3, H1).
 function checkReadBack(readBack) {
-  if (!READ_BACK.test(readBack)) throw new InputError('--read-back names the connector and its verify-* command, such as okta:verify-factor-reset');
-  const [connector, command] = readBack.split(':');
+  const kind = kindOfReadBack(readBack);
+  if (typeof readBack !== 'string' || !READ_BACK.test(kind)) throw new InputError('--read-back names the connector and its verify-* command, such as okta:verify-factor-reset, then the flags that change what its pass means, such as \'okta:verify-group-member --absent\'');
+  const [connector, command] = kind.split(':');
   if (!Object.prototype.hasOwnProperty.call(CONNECTOR_FILES, connector)) throw new InputError(`--read-back: no connector named ${connector} (one of ${Object.keys(CONNECTOR_FILES).join(', ')})`);
   const source = fs.readFileSync(path.join(ROOT, CONNECTOR_FILES[connector]), 'utf8');
   if (!hasCommandKey(source, command)) throw new InputError(`--read-back: no such read-back, ${connector} has no ${command} command`);
+  try {
+    return parseReadBack(readBack);
+  } catch (error) {
+    if (error instanceof audit.AuditRefused) throw new InputError(`--read-back: ${error.message}`);
+    throw error;
+  }
+}
+
+// The read-back lines a gate's runbook runs under --change: in the gate's section, or named
+// "read-back of [gate]" in the comment above (the change-binding pin test reads them the same
+// way). A named read-back must be the form one of those lines runs, so a removal gate whose line
+// runs with --absent is never opened for a presence read (batch G3 close-out 3, owner decision
+// H1). A gate with no such line of that read-back (the tests' own trails) is not compared.
+const RUNBOOK_LINE = /node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-z0-9-]+)([^`\n]*)/;
+const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
+function gateReadBacks(text, gate) {
+  const lines = text.split('\n');
+  const found = [];
+  let current = null;
+  lines.forEach((l, i) => {
+    if (/^## /.test(l)) current = null;
+    const g = l.match(/<!-- SAFETY GATE \[([^\]]+)\] -->|^# SAFETY GATE \[([^\]]+)\]/);
+    if (g) current = g[1] || g[2];
+    const m = l.match(RUNBOOK_LINE);
+    if (!m || !/--change \[CHANGE_ID\]/.test(l)) return;
+    const named = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of \[([a-z0-9-]+)\]/);
+    if ((named ? named[1] : current) !== gate) return;
+    found.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)] });
+  });
+  return found;
+}
+// a runbook line's pass flags: name to the value it writes (null for a switch)
+function lineFlags(kind, argv) {
+  const rules = audit.PASS_FLAGS[kind];
+  const flags = new Map();
+  for (let i = 1; i < argv.length; i += 1) {
+    const name = argv[i].startsWith('--') ? argv[i].slice(2) : null;
+    if (name && hasOwn(rules, name)) flags.set(name, rules[name] === 'switch' ? null : argv[i + 1]);
+  }
+  return flags;
+}
+// whether a named read-back runs as a line does: the same pass flags, a placeholder value ([N])
+// standing for any value its rule takes
+function sameForm(parsed, line) {
+  const want = lineFlags(parsed.kind, line.argv);
+  const named = new Map((parsed.flags ? parsed.flags.split(/ (?=--)/) : []).map((part) => {
+    const [flag, value] = part.split(' ');
+    return [flag.slice(2), value === undefined ? null : value];
+  }));
+  if (named.size !== want.size) return false;
+  for (const [name, value] of want) {
+    if (!named.has(name)) return false;
+    if (value !== null && !/^\[[^\]]+\]$/.test(value) && named.get(name) !== value) return false;
+  }
+  return true;
+}
+function checkGateReadBack(command, gate, parsed) {
+  if (!hasOwn(audit.PASS_FLAGS, parsed.kind)) return;
+  const text = fs.readFileSync(path.join(ROOT, '.claude', 'commands', `${command}.md`), 'utf8');
+  const lines = gateReadBacks(text, gate).filter((l) => l.kind === parsed.kind);
+  if (!lines.length || lines.some((l) => sameForm(parsed, l))) return;
+  const forms = [...new Set(lines.map((l) => [l.kind, ...[...lineFlags(l.kind, l.argv)].sort(([a], [b]) => (a < b ? -1 : 1)).map(([n, v]) => (v === null ? `--${n}` : `--${n} ${v}`))].join(' ')))];
+  throw new InputError(`gate ${gate}'s read-back in .claude/commands/${command}.md runs as ${forms.join(' or ')}, not as ${parsed.readBack}; name the read-back with the flags on its line that change what its pass means`);
 }
 
 // A gate must be one the named runbook has (code review round 1 of the batch G3 close-out 2,
@@ -170,7 +240,8 @@ function changeView(log, change, entries = null) {
   const linked = links.filter((l) => owner.get(l.verify_seq) === change).map((l) => bySeq.get(l.verify_seq)).filter((e) => e && e.kind === 'verify');
   // only a read-back recorded under this change counts (batch G3 close-out), so one linked
   // around the CLI, unbound or bound to another change, never makes the change done
-  const ofKind = linked.filter((e) => kindOf(e) === procedure.read_back);
+  // the same read-back run with the same pass flags (batch G3 close-out 3, owner decision H1)
+  const ofKind = linked.filter((e) => readBackOf(e) === procedure.read_back);
   const readBacks = ofKind.filter((e) => e.change === change);
   const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq);
   if (proving) view.readBack = { seq: proving.seq, connector: proving.connector, command: proving.command, verified: true };
@@ -203,14 +274,20 @@ function changeView(log, change, entries = null) {
 //   and none failed; more than N reads partial, as with run ids (round 2, finding 5).
 function countedView(view, all, change, procedure, approval) {
   const expected = procedure.expected;
-  const runKind = audit.recordsRunId(procedure.read_back);
-  const bound = approval
-    ? all.filter((e) => e.kind === 'verify' && e.change === change && kindOf(e) === procedure.read_back && e.seq > approval.seq)
+  const kind = kindOfReadBack(procedure.read_back);
+  const runKind = audit.recordsRunId(kind);
+  const ofKind = approval
+    ? all.filter((e) => e.kind === 'verify' && e.change === change && kindOf(e) === kind && e.seq > approval.seq)
     : [];
+  // only a read run with the pass flags this change names counts (batch G3 close-out 3, owner
+  // decision H1); one with other flags is listed as uncounted, so a presence read never counts
+  // toward a removal
+  const bound = ofKind.filter((e) => readBackOf(e) === procedure.read_back);
   const brief = (e) => ({ seq: e.seq, run: typeof e.run === 'string' ? e.run : null, state: e.state });
   let passed;
   let failed;
-  const uncounted = [];
+  const uncounted = ofKind.filter((e) => readBackOf(e) !== procedure.read_back).map((e) => ({ ...brief(e),
+    reason: `it ran as ${readBackOf(e) || `${kind} with its pass flags not recorded`}; this change is proved by ${procedure.read_back}, so a read with other flags does not count` }));
   const answeredFailures = [];
   // a read that got no answer (a state other than OK: a timeout, a rate limit, a 404 from a
   // mistyped id) proves nothing about any object, whatever the kind, so it neither counts nor
@@ -295,20 +372,21 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (count && flags.expected === undefined) throw new InputError(`gate ${flags.gate} names a count (${count}): open it with --expected N, the number written in the ticket`);
       if (!count && flags.expected !== undefined) throw new InputError(`gate ${flags.gate} names no count; a change without a count is proved by one read-back, so --expected is not taken`);
       const expected = count ? Number(flags.expected) : null;
-      checkReadBack(flags['read-back']);
+      const named = checkReadBack(flags['read-back']);
+      checkGateReadBack(flags.command, flags.gate, named);
       const digest = procedureDigest(readProcedure(flags['procedure-file']));
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;
-      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: flags['read-back'], procedure_sha256: digest, change, expected });
+      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: named.readBack, procedure_sha256: digest, change, expected });
       out(`${JSON.stringify({ ok: true, change, procedure_sha256: digest, audit_seq: r.seq, next: [
         'A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>',
         'A person runs the procedure (Aegis does not)',
         // with no run id a re-read is not detected, so the step says so and never "distinct"
         // (code review round 2 of the batch G3 close-out 2, finding 9)
-        expected && audit.recordsRunId(flags['read-back'])
-          ? `Run the ${flags['read-back']} read-back with --change ${change} once for each of the ${expected} objects (it refuses to read until this change is approved); status --change ${change} reports "verified k of ${expected}" and is done only when ${expected} distinct runs passed after the approval and none still failed`
+        expected && audit.recordsRunId(named.kind)
+          ? `Run the ${named.readBack} read-back with --change ${change} once for each of the ${expected} objects (it refuses to read until this change is approved); status --change ${change} reports "verified k of ${expected}" and is done only when ${expected} distinct runs passed after the approval and none still failed`
           : expected
-            ? `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved) and read each of the ${expected} objects once: a re-read of the same object is not detected. status --change ${change} reports "verified k of ${expected}" and is done only when exactly ${expected} read-backs passed after the approval and none failed`
-            : `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
+            ? `Run the ${named.readBack} read-back with --change ${change} (it refuses to read until this change is approved) and read each of the ${expected} objects once: a re-read of the same object is not detected. status --change ${change} reports "verified k of ${expected}" and is done only when exactly ${expected} read-backs passed after the approval and none failed`
+            : `Run the ${named.readBack} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
       ] }, null, 2)}\n`);
       return 0;
     }
@@ -334,7 +412,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (!view.procedure) throw new NotDone('no procedure was issued under this change id');
       const target = all.find((e) => e.seq === seq);
       if (!target || target.kind !== 'verify') throw new NotDone('only a verify-* result can be linked; that audit seq is not one');
-      if (kindOf(target) !== view.procedure.read_back) throw new NotDone(`that read-back is ${kindOf(target)}; this change is proved only by ${view.procedure.read_back}. Nothing was recorded`);
+      // the same read-back with the same pass flags (batch G3 close-out 3, owner decision H1)
+      if (readBackOf(target) !== view.procedure.read_back) throw new NotDone(`that read-back is ${readBackOf(target) || `${kindOf(target)} with its pass flags not recorded`}; this change is proved only by ${view.procedure.read_back}. Nothing was recorded`);
       // one read-back proves one change, so only one that can prove this change is linked
       if (!view.approval || !view.approval.matches) throw new NotDone('this change has no approval of its procedure yet; record the approval first. Nothing was recorded');
       if (target.seq < view.approval.seq) throw new NotDone('that read-back ran before the approval, so it cannot prove the approved change. Nothing was recorded');

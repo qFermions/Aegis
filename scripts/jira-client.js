@@ -54,7 +54,7 @@ const https = require('node:https');
 
 const { STATES, EXIT, NOT_VERIFIED_DRY_RUN, TripwireError, defineAdapter, createClient } = require('./adapters/readonly-contract.js');
 const { operatorMessage } = require('./adapters/operator-message.js');
-const { auditSink, defaultAuditDir } = require('./audit/audit-log.js');
+const { auditSink, defaultAuditDir, passFlags } = require('./audit/audit-log.js');
 const { takeChange, changeRefusal, verdictState } = require('./adapters/cli-support.js');
 
 const REQUEST_TIMEOUT_MS = 15000;
@@ -466,7 +466,9 @@ function recordProcedure(runtime, command, digest) {
 function recordJiraVerdict(runtime, command, verified, state = STATES.OK) {
   if (!runtime.audit) return;
   try {
-    const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state, change: typeof runtime.change === 'string' ? runtime.change : null });
+    // the flags that change what the pass means, from the run's argv (batch G3 close-out 3, H1)
+    const flags = Array.isArray(runtime.argv) ? passFlags(`jira:${command}`, runtime.argv) : null;
+    const written = runtime.audit({ kind: 'verify', connector: 'jira', command, verified, state, change: typeof runtime.change === 'string' ? runtime.change : null, flags });
     if (typeof runtime.change === 'string' && verified === true && written && Number.isInteger(written.seq)) runtime.recorded = written.seq;
   } catch {
     throw new AuditError('the audit trail could not record this read-back, so its verdict is withheld');
@@ -935,6 +937,7 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
     const refusal = changeRefusal('jira', command, bound, runtime.audit);
     if (refusal) throw new InputError(refusal);
     runtime.change = bound.change;
+    runtime.argv = bound.argv;
     // A passed read-back returns its "Verified" line instead of printing it, and the line is
     // printed only once the verdict is on record, so a verdict the audit trail could not record
     // is never shown as verified (code review rounds 1 and 2 of the batch G3 close-out).

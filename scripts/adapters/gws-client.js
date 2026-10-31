@@ -684,7 +684,7 @@ async function run(argv, env = process.env, deps = {}) {
     let res;
     if (read.failed) res = { command, ...read.failed };
     else if (def.kind === 'read') res = readOutput(command, read.results[0]);
-    else res = recordVerdict(cli.audit, 'google-workspace', verdictOutput(command, def, a, read.results, { identities }), bound.change);
+    else res = recordVerdict(cli.audit, 'google-workspace', verdictOutput(command, def, a, read.results, { identities }), bound.change, null, bound.argv);
     const shown = redactDeep(res, seen);
     const code = exitCodeFor(shown);
     (code === 1 ? err : out)(renderResult(shown, { secrets: seen, platform: 'google-workspace' }));

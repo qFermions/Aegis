@@ -200,15 +200,16 @@ function checkGate(command, gate) {
 // covers N; folding N into the digest instead would cover a number the opener typed and no one
 // read, and would change what the digest of the reviewed text means.
 const COUNT_LINE = /^Count: ([1-9][0-9]{0,4})$/;
-// a line whose first word is a count, whatever comes before it (spaces, a bullet, a number, a
-// quote or a heading mark), in any case and with any Markdown around it (bold, italics,
-// backticks, a table cell, a task box), so a second count in another shape is never missed (code
-// review round 1 of the batch G3 close-out 3, finding 12; round 2, finding 5). A script comment
-// that starts with "count:" is read as one too, and refused: the saved text holds one count.
-const COUNT_LIKE = /^[\s>#+\-.0-9)]*count\s*:/i;
-const unwrap = (l) => l.replace(/\[[ xX]\]/g, '').replace(/[*_`|]/g, '');
+// A count line is any line where the word count meets a colon, after Unicode compatibility
+// folding (a full-width colon is a colon) and with invisible characters removed, whatever wraps it
+// (a bullet, a link, HTML, emphasis, a table cell), in any case; the saved text must hold exactly
+// one, and it must be exactly Count: N. A script comment that says count: is refused too, the
+// fail-safe side (code review round 1 of the batch G3 close-out 3, finding 12; round 2, finding 5;
+// round 3, finding 4: a list of shapes to strip always missed one).
+const COUNT_ANY = /(?<![a-z0-9])count(?![a-z0-9])[^a-z0-9\n]{0,8}:/i;
+const visible = (l) => l.normalize('NFKC').replace(/[\u200b-\u200f\u2060\ufeff]/g, '');
 function checkCount(text, expected) {
-  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => COUNT_LIKE.test(unwrap(l)));
+  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => COUNT_ANY.test(visible(l)));
   if (lines.length !== 1 || !COUNT_LINE.test(lines[0])) {
     throw new InputError('the saved procedure of a counted gate carries one line Count: N, the number in the ticket, so the approval covers it');
   }

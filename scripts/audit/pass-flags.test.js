@@ -158,3 +158,18 @@ test('no read-back is named under a change for an object the change does not tou
   assert.doesNotMatch(readme, /runs without `--change`, and its runbook says so/);
   assert.match(readme, /every read-back line under an R2 or R3 gate is bound to that gate's change/);
 });
+
+// Batch G4, task A3: a read-back bounded in time (--not-before) is named with its bound, bare, and
+// runs with a bound at or after the approval's time; each runbook that binds one under a change says
+// so in its change-record paragraph.
+const TIME_SENTENCE = 'A read-back whose line has `--not-before` is named with it and no value';
+test('each runbook that binds a time-bounded read-back says to name its bound bare and to run it at or after the approval', () => {
+  const timed = readBackLines().filter((r) => r.bound && r.flags.includes('not-before'));
+  const files = [...new Set(timed.map((r) => r.file))].sort();
+  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'jamf-config-profiles.md', 'mfa-issue.md', 'offboard.md', 'password-reset.md', 'security-alert-triage.md']);
+  for (const file of files) {
+    const paragraph = fs.readFileSync(path.join(DIR, file), 'utf8').split('\n').find((l) => l.startsWith('**Change record'));
+    assert.ok(paragraph && paragraph.includes(TIME_SENTENCE), `${file}: the change-record paragraph names the time bound`);
+    assert.match(paragraph, /at or after the approval's time, which `approve` prints/, file);
+  }
+});

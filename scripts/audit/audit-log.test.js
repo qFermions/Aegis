@@ -394,3 +394,16 @@ test('a verify entry\'s flags never hold a credential-shaped value', (t) => {
   assert.equal(log.append(read('--app login --event login_success')).seq, 1);
   assert.equal(log.verify().ok, true);
 });
+
+// Code review round 1 of the batch G3 close-out 3, finding 4: Slack's verify-posted takes a digest
+// in either case and lower-cases it, but the pass-flag rule took lower case only, so a run with an
+// upper-case digest recorded no flag at all, as if it had run without one.
+test('a digest the connector takes in either case is recorded in lower case, never dropped', () => {
+  const upper = 'AB'.repeat(32);
+  for (const kind of ['slack:verify-posted', 'linear:verify-comment', 'jira:verify-create', 'jira:verify-comment']) {
+    const command = kind.split(':')[1];
+    assert.equal(audit.passFlags(kind, [command, '--expect-sha256', upper]), `--expect-sha256 ${upper.toLowerCase()}`, kind);
+    assert.equal(audit.readBackFor(kind, [command, '--expect-sha256', upper]), `${kind} --expect-sha256 ${upper.toLowerCase()}`, kind);
+  }
+  assert.equal(audit.passFlags('slack:verify-posted', ['verify-posted', '--expect-sha256', 'xyz']), '', 'a value that is no digest is still not recorded');
+});

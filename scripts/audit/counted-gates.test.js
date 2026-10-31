@@ -82,6 +82,9 @@ test('each counted gate\'s runbook opens its change with --expected and the coun
     assert.ok(line, `${found.get(gate).file}: a line names [${gate}] and --expected`);
     assert.ok(line.includes(`\`--expected ${token}\``), `${gate}: --expected ${token}`);
     assert.match(line, /verified k of N/, `${gate}: says what status reports`);
+    // batch G3 close-out 3, owner decision H2: the saved procedure carries the count, so the
+    // approval covers it
+    assert.ok(line.includes(`\`Count: ${token}\``), `${gate}: the procedure carries Count: ${token}`);
     // code review round 1 of the batch G3 close-out 2, finding 10: the change is opened and
     // approved before the gate, so the instruction comes before the gate's marker
     const lines = text.split('\n');
@@ -104,5 +107,6 @@ test('the audit README describes counted changes', () => {
   assert.match(readme, /verified k of N/);
   assert.match(readme, /partial/);
   assert.match(readme, /a repeated read of the same object is not detected/);
+  assert.match(readme, /`Count: N`/, 'the README says the procedure carries the count (H2)');
   for (const gate of Object.keys(COUNTED_GATES)) assert.ok(readme.includes(gate), `README names ${gate}`);
 });

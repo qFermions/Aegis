@@ -362,8 +362,15 @@ test('open tells the operator to run the read-back with --change <id> and to lin
 const FLEET_BATCH = { gate: 'fleet-device-actions-batch-script-portal', command: 'fleet-device-actions', readBack: 'fleet:verify-script' };
 const OKTA_BULK = { gate: 'okta-group-membership-bulk-add-portal', command: 'okta-group-membership', readBack: 'okta:verify-group-member' };
 
+// Batch G3 close-out 3, owner decision H2: a counted gate's saved procedure carries its count on
+// one line, Count: N, so the approved digest covers N and open refuses another --expected.
+function countedProcedure(s, n) {
+  const file = path.join(s.dir, `procedure-count-${n}.md`);
+  fs.writeFileSync(file, `${fs.readFileSync(s.procedure, 'utf8').replace(/\s+$/, '')}\nCount: ${n}\n`);
+  return file;
+}
 function openCounted(s, g, expected) {
-  const args = ['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', g.readBack, '--procedure-file', s.procedure];
+  const args = ['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', g.readBack, '--procedure-file', expected === undefined ? s.procedure : countedProcedure(s, expected)];
   if (expected !== undefined) args.push('--expected', String(expected));
   return s.run(CLI, args);
 }
@@ -626,7 +633,10 @@ const H1 = {
   bulkRemove: { gate: 'okta-group-membership-bulk-remove-portal', command: 'okta-group-membership' },
   protection: { gate: 'github-branch-protection-add-rule-portal', command: 'github-branch-protection' },
 };
-const openH1 = (s, g, readBack, more = []) => s.run(CLI, ['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure, ...more]);
+const openH1 = (s, g, readBack, more = []) => {
+  const n = more.includes('--expected') ? more[more.indexOf('--expected') + 1] : undefined;
+  return s.run(CLI, ['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', n === undefined ? s.procedure : countedProcedure(s, n), ...more]);
+};
 function approvedH1(s, g, readBack, more) {
   const o = openH1(s, g, readBack, more);
   assert.equal(o.code, 0, o.stderr);
@@ -695,4 +705,54 @@ test('a counted removal counts only --absent reads: a presence read is listed as
   assert.ok(one.json.uncounted.some((u) => u.seq === presence.seq && /flags/.test(u.reason)), one.stdout);
   personRead(s, change, true, '--absent');
   assert.equal(status(s, change).json.done, true);
+});
+
+// ── Batch G3 close-out 3, owner decision H2: the approval covers N ─────────────────────────────
+// A counted gate's saved procedure carries its count on one line, Count: N; open refuses an
+// --expected that differs from it, and a procedure without one, so the digest the approval names
+// covers N. A gate without a count keeps today's rule.
+const openBatch = (s, file, expected) => s.run(CLI, ['open', '--command', FLEET_BATCH.command, '--gate', FLEET_BATCH.gate, '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', FLEET_BATCH.readBack, '--procedure-file', file, '--expected', String(expected)]);
+
+test('a counted gate\'s procedure carries its count, and open refuses an N that differs from it or a procedure without one', (t) => {
+  const s = setup(t);
+  const none = openBatch(s, s.procedure, 3);
+  assert.equal(none.code, 1, none.stdout);
+  assert.match(none.stderr, /Count: N/);
+  const differ = openBatch(s, countedProcedure(s, 5), 3);
+  assert.equal(differ.code, 1, differ.stdout);
+  assert.match(differ.stderr, /--expected 3 is not the Count: 5/);
+  const twice = path.join(s.dir, 'procedure-twice.md');
+  fs.writeFileSync(twice, `${fs.readFileSync(countedProcedure(s, 3), 'utf8')}Count: 4\n`);
+  assert.equal(openBatch(s, twice, 3).code, 1, 'one Count line');
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  const same = openBatch(s, countedProcedure(s, 3), 3);
+  assert.equal(same.code, 0, same.stderr);
+  assert.equal(s.log.entries()[0].expected, 3);
+});
+
+test('an approval given for one N does not cover a different N', (t) => {
+  const s = setup(t);
+  const twelve = openBatch(s, countedProcedure(s, 12), 12);
+  assert.equal(twelve.code, 0, twelve.stderr);
+  assert.equal(s.run(CLI, ['approve', '--change', twelve.json.change, '--ref', 'IT-123', '--procedure-sha256', twelve.json.procedure_sha256]).code, 0);
+  const five = openBatch(s, countedProcedure(s, 5), 5);
+  assert.equal(five.code, 0, five.stderr);
+  assert.notEqual(five.json.procedure_sha256, twelve.json.procedure_sha256, 'the count is inside the approved digest');
+  const reuse = s.run(CLI, ['approve', '--change', five.json.change, '--ref', 'IT-123', '--procedure-sha256', twelve.json.procedure_sha256]);
+  assert.equal(reuse.code, 2, reuse.stdout);
+  assert.match(reuse.stderr, /does not match/);
+  for (let i = 1; i <= 5; i += 1) runRead(s, five.json.change, uuid(i));
+  const v = status(s, five.json.change);
+  assert.equal(v.json.done, false, 'a change whose N no one approved never reads done');
+  assert.match(v.json.missing.join(' '), /no approval/);
+});
+
+test('a gate without a count keeps today\'s rule: no Count line needed, and --expected still refused', (t) => {
+  const s = setup(t);
+  assert.equal(openChange(s).code, 0, 'an uncounted gate opens with a procedure that has no Count line');
+  const withCount = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', countedProcedure(s, 2)]);
+  assert.equal(withCount.code, 0, 'a Count line on an uncounted gate is only text');
+  const expected = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', countedProcedure(s, 2), '--expected', '2']);
+  assert.equal(expected.code, 1);
+  assert.match(expected.stderr, /names no count/);
 });

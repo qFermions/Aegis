@@ -407,3 +407,12 @@ test('a digest the connector takes in either case is recorded in lower case, nev
   }
   assert.equal(audit.passFlags('slack:verify-posted', ['verify-posted', '--expect-sha256', 'xyz']), '', 'a value that is no digest is still not recorded');
 });
+
+// Code review round 2 of the batch G3 close-out 3, finding 11: passFlags records a digest in lower
+// case, but parseReadBack refused an upper-case one at open, so the two disagreed on one value.
+test('a read-back named with an upper-case digest is named in lower case, as its runs are recorded', () => {
+  const upper = 'CD'.repeat(32);
+  const parsed = audit.parseReadBack(`slack:verify-posted --expect-sha256 ${upper}`);
+  assert.equal(parsed.readBack, `slack:verify-posted --expect-sha256 ${upper.toLowerCase()}`);
+  assert.equal(parsed.readBack, audit.readBackFor('slack:verify-posted', ['verify-posted', '--expect-sha256', upper]));
+});

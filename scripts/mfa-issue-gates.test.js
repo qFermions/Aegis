@@ -103,3 +103,27 @@ test('vendor fact B-18 quotes the page as re-read on 2026-10-31', () => {
   assert.match(b18, /2026-10-31/);
   assert.match(b18, /https:\/\/learn\.microsoft\.com\/entra\/identity\/authentication\/howto-mfa-userdevicesettings/);
 });
+
+// Code review round 1 of the batch G3 close-out 2. Finding 7: an R2 or R3 change needs its
+// pre-state captured and, for R3, a written rollback path before step 1 (CLAUDE.md, contract
+// rule 1 and the R3 row). Finding 8: verify-mfa-cleared passes only before the user registers
+// again, so it runs right after the gate. Finding 9: the checklist and note give each path its
+// own proof, since the one-method delete has no verify-* read-back.
+test('/mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof', () => {
+  for (const id of ['mfa-require-reregister-portal', 'mfa-method-delete-portal']) {
+    const action = PAGE.split('\n').find((l) => l.startsWith(`**PORTAL ACTION [${id}]:**`));
+    assert.match(action, /the method list from "What to check first" saved to `tasks\/checkpoints\/`/, id);
+    assert.match(action, /rollback path written in the ticket/, id);
+  }
+  const revoke = PAGE.split('\n').find((l) => l.startsWith('**PORTAL ACTION [mfa-session-revoke-portal]:**'));
+  assert.match(revoke, /no pre-state to restore/);
+  const re = PAGE.split('\n').find((l) => l.startsWith('**PORTAL ACTION [mfa-require-reregister-portal]:**'));
+  assert.match(re, /right away, before the user registers again \(step 2\)/);
+  const lines = PAGE.split('\n');
+  const i = lines.findIndex((l) => /msgraph-client\.js verify-mfa-cleared /.test(l));
+  assert.match(lines[i - 1], /run it right after that gate, before the user registers again/);
+  assert.match(PAGE, /^- \[ \] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration$/m);
+  assert.match(PAGE, /^- \[ \] One-method delete path: the Authentication methods list no longer shows that method \(a portal read, written in the ticket\)$/m);
+  assert.doesNotMatch(PAGE, /`verify-mfa-cleared` passed after the re-register step/, 'the old unconditional checklist line is gone');
+});
+

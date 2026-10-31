@@ -82,6 +82,10 @@ test('each counted gate\'s runbook opens its change with --expected and the coun
     assert.ok(line, `${found.get(gate).file}: a line names [${gate}] and --expected`);
     assert.ok(line.includes(`\`--expected ${token}\``), `${gate}: --expected ${token}`);
     assert.match(line, /verified k of N/, `${gate}: says what status reports`);
+    // code review round 1 of the batch G3 close-out 2, finding 10: the change is opened and
+    // approved before the gate, so the instruction comes before the gate's marker
+    const lines = text.split('\n');
+    assert.ok(lines.indexOf(line) < lines.findIndex((l) => l.includes(`SAFETY GATE [${gate}]`)), `${gate}: --expected comes before the gate`);
   }
   const page = fs.readFileSync(path.join(DIR, 'fleet-device-actions.md'), 'utf8');
   assert.doesNotMatch(page, /reads done once one linked read-back verified/, 'the one-host rule is gone from the batch run');

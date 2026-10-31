@@ -497,3 +497,51 @@ test('the audit trail takes a run id that is a job id and refuses one that is no
   }
   assert.throws(() => s.log.append({ kind: 'procedure', command: 'okta-mfa-reset', gate: 'g', r_class: 'R2', target: '[UPN]', read_back: null, procedure_sha256: null, change: null, expected: 3 }), audit.AuditRefused, 'a count only on a change record');
 });
+
+// ── Code review round 1 of the batch G3 close-out 2 ─────────────────────────────────────────
+// Finding 1: a Fleet read that got no answer (a timeout, a 404 from a mistyped id) records run
+// null; it proves nothing about any host, so it is listed and does not block a change whose N
+// runs passed. Finding 2: a pass with no run id (Fleet answered without execution_id) cannot be
+// told apart from a re-read, so for a read-back that records run ids it does not count toward k.
+test('a Fleet read with no run id is listed as uncounted: a failed one does not block, a passing one does not count', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 2);
+  const timeout = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: false, state: 'TIMEOUT', change });
+  const noId = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified: true, state: 'OK', change });
+  runRead(s, change, uuid(1));
+  const one = status(s, change);
+  assert.equal(one.json.summary, 'verified 1 of 2', 'a pass with no run id does not count');
+  assert.deepEqual(one.json.uncounted.map((u) => u.seq), [timeout.seq, noId.seq]);
+  assert.deepEqual(one.json.failed, [], 'a read with no answer is not a failed host');
+  runRead(s, change, uuid(2));
+  const done = status(s, change);
+  assert.equal(done.json.done, true, done.stdout);
+  assert.equal(done.json.uncounted.length, 2);
+});
+
+// Finding 4: for a read-back with no run id, a failed read cannot be matched to a later pass of
+// the same object, so it is listed but does not block: the change is done once N bound
+// read-backs passed (a re-read is not detected, as status says).
+test('a read-back with no run id: a failed read stays listed and the change is done once N passed', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  const bad = personRead(s, change, false);
+  personRead(s, change);
+  assert.equal(status(s, change).json.done, false);
+  personRead(s, change);
+  const v = status(s, change);
+  assert.equal(v.json.done, true, v.stdout);
+  assert.equal(v.json.summary, 'verified 2 of 2');
+  assert.deepEqual(v.json.failed.map((f) => f.seq), [bad.seq]);
+  assert.match(v.json.note, /a repeated read of the same object is not detected/);
+});
+
+// Finding 6: open checks the gate against the runbook it names, so a mistyped counted gate is
+// refused instead of falling back to the one-read-back rule.
+test('open refuses a gate the named runbook does not have', (t) => {
+  const s = setup(t);
+  const r = s.run(CLI, ['open', '--command', 'fleet-device-actions', '--gate', 'fleet-device-actions-batch-script', '--r-class', 'R3', '--target', '[FLEET_NAME]', '--read-back', 'fleet:verify-script', '--procedure-file', s.procedure]);
+  assert.equal(r.code, 1, r.stdout);
+  assert.match(r.stderr, /\.claude\/commands\/fleet-device-actions\.md has no gate fleet-device-actions-batch-script/);
+  assert.equal(s.log.entries().length, 0);
+});

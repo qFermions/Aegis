@@ -401,6 +401,12 @@ test('the contract, cli-support and the audit trail agree on what a verify-* com
   for (const name of ['verify-lock', 'verify-2fa-required', 'verify-', 'verify-Lock', 'verifylock', 'host', `verify-${'a'.repeat(48)}`, `verify-${'a'.repeat(49)}`, 'verify-a_b']) {
     assert.equal(contract.isVerifyCommand(name), audit.VERIFY_COMMAND.test(name), name);
   }
+  // code review round 1 of the batch G3 close-out 2, finding 11: one table of read-backs that
+  // record a run id, and one run-id form, both the trail's
+  assert.equal(support.RUN_ID_FLAGS, audit.RUN_IDS);
+  for (const id of ['e797d6c6-3aae-11ee-be56-0242ac120002', 'E797D6C6-3AAE-11EE-BE56-0242AC120002', 'C02XK1ABJG5H', 'exec-0001']) {
+    assert.equal(support.runIdOf('fleet', 'verify-script', { 'execution-id': id }, id) !== null, audit.RUN_ID.test(id), id);
+  }
   for (const id of ['chg-0123456789ab', 'chg-0123456789AB', 'chg-0123456789a', '[CHANGE_ID]']) {
     const refusal = support.changeRefusal('github', 'verify-2fa-required', { change: id }, null);
     assert.equal(/must be the change id/.test(refusal), !audit.CHANGE_ID.test(id), id);

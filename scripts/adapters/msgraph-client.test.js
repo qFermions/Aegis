@@ -195,3 +195,74 @@ test('a failure prints the two-part message for Microsoft Graph with no body, ke
   assert.equal(missing.code, 1);
   assert.match(missing.json.operator_message, /Microsoft Graph credential is not set/);
 });
+
+// Batch G3 close-out 3, owner decision H3: read-backs for the two /mfa-issue actions that had
+// none. verify-sessions-revoked reads the user's signInSessionsValidFromDateTime, which Graph
+// returns only on $select (vendor fact M-27) and which revocation resets to the current time
+// (M-26): it passes when that time is at or after --not-before. verify-method-absent reads the
+// user's authentication methods and passes when the method id is no longer listed. GET only;
+// a read that fails never proves anything.
+test('verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404', async () => {
+  const U = 'aaaaaaaa-0000-4000-8000-000000000001';
+  const argv = ['verify-sessions-revoked', '--user', U, '--not-before', '2026-10-28T09:00:00Z'];
+  const v = (replies) => cli([...argv, '--execute'], { replies: [token(), ...replies] });
+  const pass = await v([ok({ id: U, signInSessionsValidFromDateTime: '2026-10-28T09:02:10Z' })]);
+  assert.equal(pass.code, 0, pass.text);
+  assert.equal(pass.json.verified, true);
+  const call = pass.transport.calls[1];
+  assert.equal(call.method, 'GET');
+  assert.match(call.path || call.url || '', new RegExp(`/v1\\.0/users/${U}\\?%24select=id%2CsignInSessionsValidFromDateTime$`));
+  const before = await v([ok({ id: U, signInSessionsValidFromDateTime: '2026-10-27T18:00:00Z' })]);
+  assert.equal(before.code, 2);
+  assert.match(before.json.reason, /before 2026-10-28T09:00:00Z/);
+  const missing = await v([ok({ id: U })]);
+  assert.equal(missing.code, 2);
+  assert.match(missing.json.reason, /not in the answer/);
+  const malformed = await v([ok({ id: U, signInSessionsValidFromDateTime: 'yesterday' })]);
+  assert.equal(malformed.code, 2);
+  assert.match(malformed.json.reason, /not a time/);
+  // a failed read prints its state and no verdict, and exits 2 (the contract's shape)
+  const denied = await v([{ status: 403, body: { error: { code: 'Authorization_RequestDenied' } } }]);
+  assert.equal(denied.code, 2);
+  assert.equal(denied.json.state, 'HTTP_ERROR');
+  assert.notEqual(denied.json.verified, true);
+  const gone = await v([{ status: 404, body: { error: { code: 'Request_ResourceNotFound' } } }]);
+  assert.equal(gone.code, 2);
+  assert.equal(gone.json.state, 'HTTP_ERROR');
+  assert.notEqual(gone.json.verified, true);
+  const dry = await cli(argv);
+  assert.equal(dry.code, 4, dry.text);
+  assert.equal(dry.transport.calls.length, 0);
+});
+
+test('verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404', async () => {
+  const U = 'aaaaaaaa-0000-4000-8000-000000000001';
+  const ID = '3179e48a-750b-4051-897c-87b9720928f7';
+  const argv = ['verify-method-absent', '--user', U, '--method-id', ID];
+  const v = (replies) => cli([...argv, '--execute'], { replies: [token(), ...replies] });
+  const other = { id: '28c10230-6103-485e-b985-444c60001490', '@odata.type': '#microsoft.graph.passwordAuthenticationMethod' };
+  const pass = await v([ok({ value: [other] })]);
+  assert.equal(pass.code, 0, pass.text);
+  assert.equal(pass.json.verified, true);
+  assert.equal(pass.transport.calls[1].method, 'GET');
+  const still = await v([ok({ value: [other, { id: ID, '@odata.type': '#microsoft.graph.phoneAuthenticationMethod' }] })]);
+  assert.equal(still.code, 2);
+  assert.match(still.json.reason, /still listed/);
+  const missing = await v([ok({})]);
+  assert.equal(missing.code, 2);
+  assert.match(missing.json.reason, /no method list/);
+  const paged = await v([ok({ value: [other], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/users/x/authentication/methods?$skiptoken=y' })]);
+  assert.equal(paged.code, 2, 'absence on a page with more pages behind it is not proof');
+  const denied = await v([{ status: 403, body: { error: { code: 'Authorization_RequestDenied' } } }]);
+  assert.equal(denied.code, 2);
+  assert.equal(denied.json.state, 'HTTP_ERROR');
+  const gone = await v([{ status: 404, body: { error: { code: 'Request_ResourceNotFound' } } }]);
+  assert.equal(gone.code, 2);
+  assert.equal(gone.json.state, 'HTTP_ERROR');
+  assert.notEqual(gone.json.verified, true, 'a 404 never proves the method gone');
+  const dry = await cli(argv);
+  assert.equal(dry.code, 4, dry.text);
+  assert.equal(dry.transport.calls.length, 0);
+  const bad = await cli(['verify-method-absent', '--user', U, '--method-id', 'a b']);
+  assert.equal(bad.code, 1, 'a method id is one token of letters, digits, - and _');
+});

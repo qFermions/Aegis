@@ -291,7 +291,8 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // batch G3 close-out 3, H1: the pilot read under /jamf-config-profiles' removal from all
   // computers runs unbound (79 to 78, 76 to 77), and /okta-group-membership's rule change binds a
   // read-back for the people who join beside the one for those who leave (78 to 79)
-  assert.equal(bound, 79, 'the 79 read-backs of R2 and R3 gates');
+  // owner decision H3: /mfa-issue binds verify-sessions-revoked and verify-method-absent (79 to 81)
+  assert.equal(bound, 81, 'the 81 read-backs of R2 and R3 gates');
   assert.equal(unbound, 77, 'the 77 read-backs of R0 and R1 work, of no gate, or not a change\'s proof stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);

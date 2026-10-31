@@ -35,6 +35,8 @@ const CONNECTORS = {
     env: { MS_TENANT_ID: '11111111-2222-4333-8444-555555555555' },
     values: {
       '[USER_ID]': 'aaaaaaaa-0000-4000-8000-000000000001', '[GROUP_ID]': 'bbbbbbbb-0000-4000-8000-000000000002',
+      // batch G3 close-out 3, owner decision H3: an authentication method's id
+      '[METHOD_ID]': '3179e48a-750b-4051-897c-87b9720928f7',
       '[DEVICE_ID]': 'cccccccc-0000-4000-8000-000000000003', '[NOT_BEFORE]': '2026-10-28T09:00:00Z', '[UPN]': 'person@example.com',
     },
     runbooks: {

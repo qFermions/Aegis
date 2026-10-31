@@ -134,8 +134,42 @@ test('/mfa-issue R2 and R3 actions capture pre-state and a rollback path, and ea
   assert.match(PAGE, /^- \[ \] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration$/m);
   // code review round 3, finding 8: the raw read holds phone numbers and device names, so it stays
   // in tasks/checkpoints/ and the ticket gets the method type only
-  assert.match(PAGE, /^- \[ \] One-method delete path: `auth-methods` no longer lists that method \(its output saved to `tasks\/checkpoints\/`; the ticket names the method type only\)$/m);
+  // batch G3 close-out 3, owner decision H3: the delete is proved by verify-method-absent under
+  // its change; the raw auth-methods output still stays in tasks/checkpoints/
+  assert.match(PAGE, /^- \[ \] One-method delete path: `verify-method-absent` passed under its change \(the `auth-methods` output stays in `tasks\/checkpoints\/`; the ticket names the method type only\)$/m);
   assert.doesNotMatch(PAGE, /its output written in the ticket|the `auth-methods` output for the delete/);
   assert.doesNotMatch(PAGE, /`verify-mfa-cleared` passed after the re-register step/, 'the old unconditional checklist line is gone');
 });
 
+
+// Batch G3 close-out 3, owner decision H3: every R2 and R3 gate in /mfa-issue has a read-back
+// bound to its change: session revocation by verify-sessions-revoked, the one-method delete by
+// verify-method-absent, Require re-register MFA by verify-mfa-cleared. The vendor facts quote
+// the two Microsoft Learn pages, and the scope manifest names the least-privileged read for each.
+test('every R2 and R3 gate in /mfa-issue has a read-back bound to its change', () => {
+  const lines = PAGE.split('\n');
+  const bound = [
+    ['mfa-session-revoke-portal', 'node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute'],
+    ['mfa-method-delete-portal', 'node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute'],
+    ['mfa-require-reregister-portal', 'node scripts/adapters/msgraph-client.js verify-mfa-cleared --user [USER_ID] --change [CHANGE_ID] --execute'],
+  ];
+  for (const [gate, line] of bound) {
+    const i = lines.indexOf(line);
+    assert.ok(i > 0, `${gate}: ${line}`);
+    assert.match(lines[i - 1], new RegExp(`^# HUMAN-RUN read-only read-back of \\[${gate}\\]`), gate);
+  }
+  const para = lines.find((l) => l.startsWith('**Change record (R2 and R3 gates):**'));
+  for (const rb of ['msgraph:verify-sessions-revoked', 'msgraph:verify-method-absent', 'msgraph:verify-mfa-cleared']) assert.ok(para.includes(`\`${rb}\``), rb);
+  assert.doesNotMatch(PAGE, /take no change record/);
+  assert.match(PAGE, /^- \[ \] Session revocation: `verify-sessions-revoked` passed under its change/m);
+  const facts = read('docs', 'aegis', 'g3', 'vendor-facts.md');
+  const m26 = facts.split('\n').find((l) => l.startsWith('- M-26.'));
+  assert.ok(m26 && m26.includes('"by resetting the') && m26.includes('https://learn.microsoft.com/graph/api/user-revokesigninsessions?view=graph-rest-1.0') && /few minutes/.test(m26), String(m26));
+  const m27 = facts.split('\n').find((l) => l.startsWith('- M-27.'));
+  assert.ok(m27 && m27.includes('"Requires') && m27.includes('signInSessionsValidFromDateTime'), String(m27));
+  const manifest = JSON.parse(read('scripts', 'adapters', 'scope-manifest.json')).connectors.msgraph;
+  assert.ok(manifest.least_privilege.some((p) => /^User\.Read\.All\b.*verify-sessions-revoked/.test(p)), 'User.Read.All names verify-sessions-revoked');
+  assert.ok(manifest.least_privilege.some((p) => /^UserAuthenticationMethod\.Read\.All\b.*verify-method-absent/.test(p)), 'UserAuthenticationMethod.Read.All names verify-method-absent');
+  assert.ok(manifest.sources.some((src) => /user-revokesigninsessions/.test(src.url) && src.read_on === '2026-10-31'));
+  assert.ok(manifest.facts.includes('M-26') && manifest.facts.includes('M-27'));
+});

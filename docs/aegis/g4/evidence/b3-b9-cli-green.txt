@@ -1,0 +1,18 @@
+# command: node --test scripts/eval/judged/cli.test.js
+# commit: da6498c (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:45Z  node: v24.22.1
+✔ a dry run prints the plan and the estimate, exits 4, and starts no process (6.465116ms)
+✔ the real CLI refuses the DEV file in the repository and a symlink into it (exit 1); dry run on a copy exits 4 (318.080408ms)
+✔ the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3) (756.082879ms)
+✔ with a threshold the runner prints PASS or FAIL; the calibrate command reports agreement and kappa (696.35032ms)
+✔ a boundary violation fails the run even without a threshold (exit 2) (689.764009ms)
+✔ a timed-out case is INCONCLUSIVE and never counts as a pass (309.813956ms)
+✔ a results directory in a tracked part of the repository is refused before any case runs (7.249613ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2886.962237
+# exit: 0  finished: 2026-10-31T23:57:48Z

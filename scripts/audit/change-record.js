@@ -249,9 +249,13 @@ function countedView(view, all, change, procedure, approval) {
   view.uncounted = uncounted;
   if (!runKind) view.note = `${procedure.read_back} records no run id, so each bound read-back that passed counts once, a repeated read of the same object is not detected, and a failed read that got an answer keeps the change not done, since it cannot be matched to a later pass of the same object; a read that got no answer is uncounted`;
   if (approval) {
-    for (const f of view.failed) view.missing.push(runKind
-      ? `the read-back at audit seq ${f.seq}${f.run ? ` (run ${f.run})` : ''} did not verify (${f.state}) and that run never passed; that object is not proven`
-      : `the read-back at audit seq ${f.seq} did not verify (${f.state}); with no run id it cannot be matched to a later pass of the same object, so open a new change for the objects left`);
+    // a failure with no run id cannot be matched to a later pass, so it names the way forward
+    // (code review round 3 of the batch G3 close-out 2, finding 2)
+    for (const f of view.failed) view.missing.push(runKind && f.run
+      ? `the read-back at audit seq ${f.seq} (run ${f.run}) did not verify (${f.state}) and that run never passed; that object is not proven`
+      : runKind
+        ? `the read-back at audit seq ${f.seq} got an answer that did not verify (${f.state}) and recorded no run id, so it cannot be matched to a later pass of the same host; open a new change for the hosts left`
+        : `the read-back at audit seq ${f.seq} did not verify (${f.state}); with no run id it cannot be matched to a later pass of the same object, so open a new change for the objects left`);
     if (passed < expected) view.missing.push(`verified ${passed} of ${expected}: ${expected - passed} more bound ${procedure.read_back} read-back(s) must pass`);
     if (passed > expected) view.missing.push(`verified ${passed} of ${expected}: more than the ${expected} the ticket names; check the batch against the ticket`);
   }

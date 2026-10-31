@@ -108,7 +108,9 @@ const RUN_ID_FLAGS = RUN_IDS;
 const runIdOf = (connector, command, args, observedId) => {
   const flag = recordsRunId(`${connector}:${command}`) ? RUN_ID_FLAGS[`${connector}:${command}`] : null;
   const id = flag && args ? args[flag] : null;
-  return typeof id === 'string' && RUN_ID.test(id) && observedId === id ? id : null;
+  // a UUID is one id in either case, so the match ignores case and the run is recorded in lower
+  // case, so one execution typed two ways counts once (code review round 3, finding 2)
+  return typeof id === 'string' && RUN_ID.test(id) && typeof observedId === 'string' && observedId.toLowerCase() === id.toLowerCase() ? id.toLowerCase() : null;
 };
 
 function recordVerdict(audit, connector, output, change, run = null) {

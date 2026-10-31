@@ -349,7 +349,9 @@ async function verifyScript(read, args) {
   // The answer must name the execution asked for: one that names none cannot be told apart from
   // another run, so it does not verify (code review round 2 of the batch G3 close-out 2,
   // finding 6; a counted change counts each run once by this id).
-  const idOk = observed.execution_id === args['execution-id'];
+  // An execution id is a UUID (round 3, finding 5), one id in either case, so the match ignores
+  // case (round 3, finding 2): an id typed in upper case that Fleet answers in lower case passes.
+  const idOk = typeof observed.execution_id === 'string' && observed.execution_id.toLowerCase() === args['execution-id'].toLowerCase();
   const verified = idOk && observed.exit_code === 0 && observed.host_timeout === false;
   const note = observed.exit_code === null ? 'exit_code null: the host has not reported the result yet (vendor docs).' : undefined;
   return { verified, observed, expected, note };

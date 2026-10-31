@@ -1,0 +1,47 @@
+# command: curl -sS -L --max-time 60 -o rest-api.html 'https://fleetdm.com/docs/rest-api/rest-api', then the page's main text extracted (tags removed) and the lines below kept verbatim
+# fetched: 2026-10-31T03:42:03Z, HTTP 200, final URL https://fleetdm.com/docs/api/rest-api, 2069861 bytes
+--- the end of "Run script" (its default response, extracted lines 18221 to 18227):
+POST /api/v1/fleet/scripts/run
+Default response
+Status: 202
+{
+"host_id": 1227,
+"execution_id": "e797d6c6-3aae-11ee-be56-0242ac120002"
+}
+--- section "Get script result" (extracted lines 18228 to 18263):
+Get script result
+Gets the result of a script that was executed.
+GET /api/v1/fleet/scripts/results/:execution_id
+Parameters
+Name
+Type
+In
+Description
+execution_id
+string
+path
+Required
+. The execution id of the script.
+Example
+GET /api/v1/fleet/scripts/results/:execution_id
+Default response
+Status: 200
+{
+"script_contents": "echo 'hello'",
+"exit_code": 0,
+"output": "hello",
+"message": "",
+"hostname": "Test Host",
+"host_timeout": false,
+"host_id": 1,
+"execution_id": "e797d6c6-3aae-11ee-be56-0242ac120002",
+"runtime": 20,
+"created_at": "2024-09-11T20:30:24Z"
+}
+Note:
+exit_code
+can be
+null
+if Fleet hasn't heard back from the host yet.
+Note:
+created_at

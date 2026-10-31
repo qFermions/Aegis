@@ -348,7 +348,8 @@ async function verifyScript(read, args) {
   const expected = { execution_id: [args['execution-id']], exit_code: [0], host_timeout: [false] };
   // The answer must name the execution asked for: one that names none cannot be told apart from
   // another run, so it does not verify (code review round 2 of the batch G3 close-out 2,
-  // finding 6; a counted change counts each run once by this id).
+  // finding 6; a counted change counts each run once by this id). Fleet documents execution_id
+  // in this answer (docs/aegis/g3/vendor-facts.md F-12, round 3, finding 6).
   // An execution id is a UUID (round 3, finding 5), one id in either case, so the match ignores
   // case (round 3, finding 2): an id typed in upper case that Fleet answers in lower case passes.
   const idOk = typeof observed.execution_id === 'string' && observed.execution_id.toLowerCase() === args['execution-id'].toLowerCase();

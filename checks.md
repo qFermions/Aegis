@@ -65,7 +65,9 @@ The counted-gate rule, applied to these gates: only `offboard-clear-mfa-portal` 
 
 ## Review rounds
 
-Not run yet.
+| round | range | result | record |
+|---|---|---|---|
+| `/security-review` 1 | `0a5feb7..77b74fd` | no findings at confidence 8 or above; of four observations below the bar, three fixed test first (a gate opened for a read-back its runbook does not bind, a GUID method id compared with case, the flags field without the credential-shape check) and one kept as a stated limit (`--not-before` not recorded) | `docs/aegis/g3-closeout-3/evidence/security-review-1.md` |
 
 ## Deviations
 

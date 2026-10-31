@@ -42,4 +42,6 @@ Branch `fix/g3-closeout-2` on qFermions/Aegis, base `main` at `f086c88` (the mer
   - Closed, finding 3 (an Okta remove change counts a read made without `--absent`): not introduced here, the one-person remove gate binds the same read-back since batch G3; recording which form of a read-back ran is a trail-schema change for the owner.
   - Closed, finding 5 (with no run id, one object read N times reaches done): the owner's decision 2 accepts it for read-backs with no run id, and status says so; the keyed object digest that would close it is decision 3, parked.
   - Closed in part, finding 14 (a bound counted read-back prints its audit seq): harmless; a counted change's next step names no link, and a link still records a valid join.
+- `/code-review xhigh`, round 2 over `09f9743..9966e7c` (diff only): 15 found, 14 fixed (each in its own commit, red tests first in `92e1b41`), 1 closed (`docs/aegis/g3-closeout-2/evidence/code-review-rounds.md`; `r2-red.txt`, `r2-green.txt`). Round 2 finding 1 reversed round 1 finding 4: a failed read with no run id keeps a counted change not done again.
+  - Closed, finding 11 (round 1 findings 1, 2, 4 and 14 fixed in one commit, `d2b3a6d`): that commit is pushed and history is not rewritten; round 1 finding 4 was reversed on its own in `be8f44a`. Listed under Deviations.
 

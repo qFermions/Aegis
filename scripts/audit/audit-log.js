@@ -163,9 +163,11 @@ function parseReadBack(text) {
   const [kind, ...rest] = text.split(' ');
   if (!READ_BACK.test(kind)) throw new AuditRefused('a read-back names the connector and its verify-* command, such as okta:verify-group-member');
   const rules = passFlagRules(kind);
-  if (!rest.length) return { kind, flags: rules ? '' : null, readBack: kind };
+  if (!rest.length) return { kind, flags: rules ? '' : null, values: new Map(), readBack: kind };
   if (!rules) throw new AuditRefused(`no flag changes what ${kind}'s pass means, so it is named without flags`);
   const found = new Map();
+  // each flag's value, null for a switch (change-record.js compares them with a runbook line)
+  const values = new Map();
   for (let i = 0; i < rest.length; i += 1) {
     const token = rest[i];
     if (!/^--[a-z][a-z0-9-]{0,40}$/.test(token)) throw new AuditRefused(`${JSON.stringify(token).slice(0, 40)} is not a flag of ${kind}'s read-back`);
@@ -174,13 +176,14 @@ function parseReadBack(text) {
       throw new AuditRefused(`--${name} does not change what ${kind}'s pass means; name the read-back with only ${Object.keys(rules).map((n) => `--${n}`).join(', ')}`);
     }
     if (found.has(name)) throw new AuditRefused(`--${name} may appear once`);
-    if (rules[name] === SWITCH) { found.set(name, token); continue; }
+    if (rules[name] === SWITCH) { found.set(name, token); values.set(name, null); continue; }
     if (typeof rest[i + 1] !== 'string' || !rules[name].test(rest[i + 1])) throw new AuditRefused(`--${name} needs the value ${kind}'s read-back takes`);
     found.set(name, `${token} ${rest[i + 1]}`);
+    values.set(name, rest[i + 1]);
     i += 1;
   }
   const flags = joinFlags(found);
-  return { kind, flags, readBack: flags ? `${kind} ${flags}` : kind };
+  return { kind, flags, values, readBack: flags ? `${kind} ${flags}` : kind };
 }
 // The read-back a verify entry proves, with its pass flags, or null when it has pass flags and
 // recorded none (an entry written before the batch G3 close-out 3): it cannot show which ran.
@@ -595,7 +598,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 
 module.exports = {
   LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId,
-  PASS_FLAGS, passFlags, readBackFor, parseReadBack, readBackOf, AuditRefused, AuditBroken,
+  PASS_FLAGS, SWITCH, passFlags, readBackFor, parseReadBack, readBackOf, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

@@ -140,7 +140,7 @@ function lineFlags(kind, argv) {
   const flags = new Map();
   for (let i = 1; i < argv.length; i += 1) {
     const name = argv[i].startsWith('--') ? argv[i].slice(2) : null;
-    if (name && hasOwn(rules, name)) flags.set(name, rules[name] === 'switch' ? null : argv[i + 1]);
+    if (name && hasOwn(rules, name)) flags.set(name, rules[name] === audit.SWITCH ? null : argv[i + 1]);
   }
   return flags;
 }
@@ -148,10 +148,9 @@ function lineFlags(kind, argv) {
 // standing for any value its rule takes
 function sameForm(parsed, line) {
   const want = lineFlags(parsed.kind, line.argv);
-  const named = new Map((parsed.flags ? parsed.flags.split(/ (?=--)/) : []).map((part) => {
-    const [flag, value] = part.split(' ');
-    return [flag.slice(2), value === undefined ? null : value];
-  }));
+  // the named flags as parseReadBack read them (code review round 1 of the batch G3 close-out 3,
+  // finding 11: they were split from the joined form again here)
+  const named = parsed.values;
   if (named.size !== want.size) return false;
   for (const [name, value] of want) {
     if (!named.has(name)) return false;
@@ -163,8 +162,9 @@ function sameForm(parsed, line) {
 const lineForm = (l) => (hasOwn(audit.PASS_FLAGS, l.kind)
   ? [l.kind, ...[...lineFlags(l.kind, l.argv)].sort(([a], [b]) => (a < b ? -1 : 1)).map(([n, v]) => (v === null ? `--${n}` : `--${n} ${v}`))].join(' ')
   : l.kind);
-function checkGateReadBack(command, gate, parsed) {
-  const text = fs.readFileSync(path.join(RUNBOOKS, `${command}.md`), 'utf8');
+// text: the runbook as checkGate read it, so open reads it once (code review round 1 of the batch
+// G3 close-out 3, finding 15)
+function checkGateReadBack(command, gate, parsed, text) {
   const bound = gateReadBacks(text, gate);
   // a gate whose runbook binds no read-back takes no change record: its proof is the read its
   // runbook names (code review round 1 of the batch G3 close-out 3, finding 5)
@@ -188,6 +188,7 @@ function checkGate(command, gate) {
   if (!text.includes(`<!-- SAFETY GATE [${gate}] -->`) && !text.split('\n').includes(`# SAFETY GATE [${gate}]`)) {
     throw new InputError(`.claude/commands/${command}.md has no gate ${gate}`);
   }
+  return text;
 }
 
 // A counted gate's saved procedure carries its count on one line, Count: N, and open refuses an
@@ -398,8 +399,8 @@ function countedView(view, all, change, procedure, approval) {
 // nothing; the operator opens a new change (code review round 1 of that batch, finding 2).
 function staleReadBack(change, procedure) {
   try {
-    checkGate(procedure.command, procedure.gate);
-    checkGateReadBack(procedure.command, procedure.gate, audit.parseReadBack(procedure.read_back));
+    const runbook = checkGate(procedure.command, procedure.gate);
+    checkGateReadBack(procedure.command, procedure.gate, audit.parseReadBack(procedure.read_back), runbook);
     return null;
   } catch (error) {
     if (!(error instanceof InputError) && !(error instanceof audit.AuditRefused)) throw error;
@@ -429,14 +430,14 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (flags['r-class'] !== 'R2' && flags['r-class'] !== 'R3') throw new InputError('a change record is for an R2 or R3 procedure; R0 and R1 need none');
       // the gate first, so a misspelled counted gate is told it is missing, not that it takes
       // no count (code review round 2 of the batch G3 close-out 2, finding 3)
-      checkGate(flags.command, flags.gate);
+      const runbook = checkGate(flags.command, flags.gate);
       const count = Object.prototype.hasOwnProperty.call(COUNTED_GATES, flags.gate) ? COUNTED_GATES[flags.gate] : null;
       if (flags.expected !== undefined && !EXPECTED.test(flags.expected)) throw new InputError('--expected is the number of objects written in the ticket, a whole number from 1 to 99999');
       if (count && flags.expected === undefined) throw new InputError(`gate ${flags.gate} names a count (${count}): open it with --expected N, the number written in the ticket`);
       if (!count && flags.expected !== undefined) throw new InputError(`gate ${flags.gate} names no count; a change without a count is proved by one read-back, so --expected is not taken`);
       const expected = count ? Number(flags.expected) : null;
       const named = checkReadBack(flags['read-back']);
-      checkGateReadBack(flags.command, flags.gate, named);
+      checkGateReadBack(flags.command, flags.gate, named, runbook);
       const text = readProcedure(flags['procedure-file']);
       if (count) checkCount(text, expected);
       const digest = procedureDigest(text);

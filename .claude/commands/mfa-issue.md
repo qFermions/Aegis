@@ -108,10 +108,12 @@ node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-bef
 
 ## ✅ Verification checklist
 - [ ] User completed registration at aka.ms/mfasetup (new method shows in Authentication methods)
-- [ ] `verify-mfa-cleared` passed after the re-register step, and `verify-mfa-method` and `verify-signin` pass after the new registration
+- [ ] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration
+- [ ] One-method delete path: the Authentication methods list no longer shows that method (a portal read, written in the ticket)
+- [ ] `verify-mfa-method` and `verify-signin` pass after the new registration
 - [ ] Test sign-in prompts for MFA and succeeds
 - [ ] Any CA exclusion has been **removed** (no lingering bypass)
 - [ ] Sign-in logs show successful MFA
 
 ## 📝 Jira-ready note
-> Resolved [date/time]. MFA issue for `[UPN]`: [new-phone re-registration / no-prompt CA diagnosis]. Authentication-method state: [exact frozen method set deleted under its separate gate and empty-set read-back passed / unchanged]. Re-registration: [verified at aka.ms/mfasetup and in sign-in logs / not completed]. [If separately authorized and verified: temporary CA exclusion applied, then removed after registration — approval [MANAGER_NAME].] Time spent: [X] min.
+> Resolved [date/time]. MFA issue for `[UPN]`: [new-phone re-registration / no-prompt CA diagnosis]. Authentication-method state: [one method deleted under [mfa-method-delete-portal] and its absence read in the portal / every phone, Authenticator and software OATH method cleared under [mfa-require-reregister-portal] and `verify-mfa-cleared` passed under its change / unchanged]. Re-registration: [verified at aka.ms/mfasetup and in sign-in logs / not completed]. [If separately authorized and verified: temporary CA exclusion applied, then removed after registration — approval [MANAGER_NAME].] Time spent: [X] min.

@@ -29,8 +29,10 @@ function changeTrail(t) {
     if (code !== 0) throw new Error(`change-record ${argv[0]} failed: ${err.join('')}`);
     return JSON.parse(out.join(''));
   };
-  // The id of an approved change whose read-back is readBack (connector:verify-command).
-  function changeFor(readBack) {
+  // The id of an approved change whose read-back is the runbook line's: kind (connector:verify-
+  // command) with the flags in argv that change what its pass means (batch G3 close-out 3, H1).
+  function changeFor(kind, argv = []) {
+    const readBack = audit.readBackFor(kind, argv);
     if (opened.has(readBack)) return opened.get(readBack);
     const o = call(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
     call(['approve', '--change', o.change, '--ref', 'IT-123', '--procedure-sha256', o.procedure_sha256]);

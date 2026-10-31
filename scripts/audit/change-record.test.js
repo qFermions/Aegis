@@ -177,7 +177,7 @@ test('open needs the read-back that proves the change; link refuses another kind
   s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
   // a verified read-back of another connector, and of another okta command
   const fleet = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-checked-in', verified: true, state: 'OK', change: null });
-  const status = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-status', verified: true, state: 'OK', change: null });
+  const status = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-status', verified: true, state: 'OK', change: null, flags: '--status SUSPENDED' });
   for (const v of [fleet, status]) {
     const before = s.log.entries().length;
     const l = s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]);
@@ -377,7 +377,8 @@ function approved(s, g, expected) {
 // Fleet's script execution ids are UUIDs (vendor docs); a run id of any other form is refused
 const uuid = (n) => `3f2a9c1e-77b0-4c2b-9d1e-${String(n).padStart(12, '0')}`;
 const runRead = (s, change, run, verified = true) => s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-script', verified, state: 'OK', change, run });
-const personRead = (s, change, verified = true) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified, state: 'OK', change });
+// a presence read records no pass flag ('' since the batch G3 close-out 3, owner decision H1)
+const personRead = (s, change, verified = true, flags = '') => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified, state: 'OK', change, flags });
 const status = (s, change) => s.run(CLI, ['status', '--change', change]);
 
 test('a counted gate opened without --expected is refused at open, and nothing is recorded', (t) => {
@@ -598,7 +599,7 @@ test('open refuses a gate the named runbook does not have', (t) => {
 test('a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward', (t) => {
   const s = setup(t);
   const change = approved(s, OKTA_BULK, 2);
-  const timeout = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified: false, state: 'TIMEOUT', change });
+  const timeout = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-group-member', verified: false, state: 'TIMEOUT', change, flags: '' });
   personRead(s, change);
   personRead(s, change);
   const v = status(s, change);
@@ -612,4 +613,86 @@ test('a read with no answer is uncounted for a read-back with no run id too; an 
   assert.equal(f.json.done, false);
   assert.ok(f.json.missing.some((m) => /recorded no run id/.test(m) && /open a new change for the hosts left/.test(m)), f.stdout);
   assert.ok(!f.json.missing.some((m) => /that run never passed/.test(m) && !/\(run /.test(m)), 'no "that run never passed" for an entry with no run');
+});
+
+// ── Batch G3 close-out 3, owner decision H1: a presence pass never proves a removal ───────────
+// The change record names its read-back with the flags that change what its pass means
+// (okta:verify-group-member --absent); open refuses a flag that does not, a value outside its
+// set, and a form the gate's own read-back lines in its runbook do not use; link and status
+// count only a read-back whose recorded flags match.
+const H1 = {
+  removePerson: { gate: 'okta-group-membership-remove-person-portal', command: 'okta-group-membership' },
+  ruleCreate: { gate: 'okta-group-membership-rule-create-portal', command: 'okta-group-membership' },
+  bulkRemove: { gate: 'okta-group-membership-bulk-remove-portal', command: 'okta-group-membership' },
+  protection: { gate: 'github-branch-protection-add-rule-portal', command: 'github-branch-protection' },
+};
+const openH1 = (s, g, readBack, more = []) => s.run(CLI, ['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure, ...more]);
+function approvedH1(s, g, readBack, more) {
+  const o = openH1(s, g, readBack, more);
+  assert.equal(o.code, 0, o.stderr);
+  assert.equal(s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
+  return o.json.change;
+}
+const link = (s, change, seq) => s.run(CLI, ['link', '--change', change, '--verify-seq', String(seq)]);
+
+test('open names the read-back with its pass flags, in one form, and refuses a flag that does not change what a pass means', (t) => {
+  const s = setup(t);
+  const o = openH1(s, H1.protection, 'github:verify-protection --reviews 2 --no-deletions --enforce-admins --no-force-push');
+  assert.equal(o.code, 0, o.stderr);
+  assert.equal(s.log.entries().find((e) => e.change === o.json.change).read_back, 'github:verify-protection --enforce-admins --no-deletions --no-force-push --reviews 2');
+  const object = openH1(s, H1.removePerson, 'okta:verify-group-member --group 00g1 --absent');
+  assert.equal(object.code, 1);
+  assert.match(object.stderr, /--group does not change what okta:verify-group-member's pass means/);
+  const value = openH1(s, H1.removePerson, 'okta:verify-group-member --absent yes');
+  assert.equal(value.code, 1, value.stdout);
+  assert.equal(s.log.entries().length, 1, 'only the first open was recorded');
+});
+
+test('open refuses a removal gate named without --absent, and an add gate named with it', (t) => {
+  const s = setup(t);
+  const bare = openH1(s, H1.removePerson, 'okta:verify-group-member');
+  assert.equal(bare.code, 1, bare.stdout);
+  assert.match(bare.stderr, /okta-group-membership-remove-person-portal/);
+  assert.match(bare.stderr, /okta:verify-group-member --absent/);
+  const add = openH1(s, H1.ruleCreate, 'okta:verify-group-member --absent');
+  assert.equal(add.code, 1, add.stdout);
+  assert.match(add.stderr, /okta-group-membership-rule-create-portal/);
+  assert.equal(openH1(s, H1.removePerson, 'okta:verify-group-member --absent').code, 0);
+  assert.equal(openH1(s, H1.ruleCreate, 'okta:verify-group-member').code, 0);
+});
+
+test('a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change', (t) => {
+  const s = setup(t);
+  const change = approvedH1(s, H1.removePerson, 'okta:verify-group-member --absent');
+  const presence = personRead(s, change, true, '');
+  const l = link(s, change, presence.seq);
+  assert.equal(l.code, 2, l.stdout);
+  assert.match(l.stderr, /okta:verify-group-member --absent/);
+  assert.equal(status(s, change).json.done, false);
+  const absent = personRead(s, change, true, '--absent');
+  assert.equal(link(s, change, absent.seq).code, 0);
+  assert.equal(status(s, change).json.done, true);
+});
+
+test('an add change is not done by an --absent read', (t) => {
+  const s = setup(t);
+  const change = approvedH1(s, H1.ruleCreate, 'okta:verify-group-member');
+  const absent = personRead(s, change, true, '--absent');
+  assert.equal(link(s, change, absent.seq).code, 2);
+  assert.equal(status(s, change).json.done, false);
+  const present = personRead(s, change, true, '');
+  assert.equal(link(s, change, present.seq).code, 0);
+  assert.equal(status(s, change).json.done, true);
+});
+
+test('a counted removal counts only --absent reads: a presence read is listed as uncounted', (t) => {
+  const s = setup(t);
+  const change = approvedH1(s, H1.bulkRemove, 'okta:verify-group-member --absent', ['--expected', '2']);
+  const presence = personRead(s, change, true, '');
+  personRead(s, change, true, '--absent');
+  const one = status(s, change);
+  assert.equal(one.json.summary, 'verified 1 of 2', one.stdout);
+  assert.ok(one.json.uncounted.some((u) => u.seq === presence.seq && /flags/.test(u.reason)), one.stdout);
+  personRead(s, change, true, '--absent');
+  assert.equal(status(s, change).json.done, true);
 });

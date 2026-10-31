@@ -1,0 +1,501 @@
+# command: node --test scripts/audit/pass-flags.test.js scripts/audit/audit-log.test.js scripts/audit/change-record.test.js scripts/adapters/change-binding.test.js scripts/audit/counted-gates.test.js scripts/adapters/g3-runbooks.test.js scripts/gws-runbooks.test.js scripts/adapters/linear-runbooks.test.js
+# commit: 29e4b3a (plus uncommitted changes in the working tree)  started: 2026-10-31T06:46:19Z  node: v24.22.2
+<repo>/scripts/adapters/change-binding.test.js:144
+  const readBack = audit.readBackFor(`${c.name}:${c.verify[0]}`, c.verify);
+                         ^
+
+TypeError: audit.readBackFor is not a function
+    at Object.<anonymous> (<repo>/scripts/adapters/change-binding.test.js:144:26)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.22.2
+✖ scripts/adapters/change-binding.test.js (109.428269ms)
+✔ password-reset: every msgraph line runs as written (dry run) and the required read-backs are there (16.806138ms)
+✖ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.887092ms)
+✔ intune-compliance: every msgraph line runs as written (dry run) and the required read-backs are there (3.10849ms)
+✖ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (5.450355ms)
+✖ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (2.361603ms)
+✖ github-org-security: every github line runs as written (dry run) and the required read-backs are there (1.942285ms)
+✖ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (3.178702ms)
+✖ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (3.830443ms)
+✖ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (5.893487ms)
+✖ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (1.608037ms)
+✖ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (2.138363ms)
+✖ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (4.057791ms)
+✔ fleet-host-health: every fleet line runs as written (dry run) and the required read-backs are there (3.607932ms)
+✔ mac-troubleshoot: every jamf line runs as written (dry run) and the required read-backs are there (3.313634ms)
+✔ the four runbooks carry the gates this file judges (1.19812ms)
+✔ every delete is R3: its gate names the written rollback path, the action waits for it, and no line labels a delete lower (2.541234ms)
+✔ every gate phrase names the value or the comment it changes, and its Target binds the same placeholders (2.22363ms)
+✔ triage Phase E corrects a wrong priority under a gate that changes the priority and nothing else (0.465276ms)
+✖ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed (22.87848ms)
+✔ the workspace-admin Phase A stop depends on the person who makes the change, never on the key (0.49731ms)
+✔ ticket-note: a digest that still differs after one replace is a stop with a partial-state note, not another edit (0.902117ms)
+✔ wording matches the sources: the scanner rule, the unsuspend role, the 50-comment page, the poster check and the team token (0.74998ms)
+✔ a reversal over more than 10 issues is its own R3 change: the bulk delete rolls back by a reviewed bulk restore, never by N single R1 restores (2.172142ms)
+✔ every Linear-ready note read-back proves who posted it; workspace-admin never passes the member as --author (1.304069ms)
+✔ ticket-note stops when the comment it needs is past the 50-comment page or the 20-entry list (0.34259ms)
+✔ triage compares a snooze time in UTC, the form verify-snoozed prints (0.381231ms)
+✔ every token a Linear runbook uses that the placeholder dictionary lacks is marked as not yet in it (0.573681ms)
+✔ ticket-note describes the note guard as it holds: tasks/ or the temporary folder only, and no promise that a mistyped path never prints a key (0.490049ms)
+✔ append writes one hash-chained JSON line per entry and a head naming the last one; verify passes (20.818101ms)
+✔ an edited entry, a cut line, a removed tail, a removed head and an inserted entry are each reported as the first broken link (36.551016ms)
+✔ a reordered log is detected at the first entry out of place (9.873115ms)
+✔ an append onto a broken tail is refused and names verify; the file is unchanged (8.514913ms)
+✔ no secret, token, raw body or personal value can be written: unknown fields and values outside their shape are refused before a byte is written (4.030689ms)
+✔ concurrent writers in separate processes never corrupt the chain (269.983965ms)
+✔ on Windows a lock file that another writer is deleting (EPERM or EACCES) means wait, not fail (47.814534ms)
+✔ on Windows a folder that refuses every new file (EPERM) is reported as itself, fast (1.47523ms)
+✔ on Windows a lock that stays pending deletion and unreadable for a while is waited out while the folder takes new files (572.844353ms)
+✔ status summarises connector failures by connector and state over a time window, matching a known event set (11.847131ms)
+✔ the CLI: verify exits 0 on an intact chain and 2 naming the first broken link; status prints the summary; a bad window is an input error (180.512162ms)
+✔ the audit CLI refuses a procedure under a change id; the trail refuses a change-linked procedure without read-back, digest, gate or an R2/R3 class (85.354725ms)
+✔ the default folder is the gitignored .aegis-state/audit, AEGIS_AUDIT_DIR overrides it, and the README says what the chain cannot prove (4.520615ms)
+✔ a run on a verify entry the run-id table does not name is refused on append, and an intact chain holding one still verifies (1.990444ms)
+✖ a verify entry records the flags that change what its pass means, in one form, and only on a read-back that has them (1.505254ms)
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (240.71343ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (114.843278ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (237.975307ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (732.255012ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (331.460453ms)
+✖ open needs the read-back that proves the change; link refuses another kind, and status never counts one (149.815587ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (119.014697ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (351.459266ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (281.080041ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (89.778593ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.320909ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (333.853924ms)
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (198.069161ms)
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI (234.152256ms)
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (103.745131ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.365807ms)
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints (54.264902ms)
+✔ a counted gate opened without --expected is refused at open, and nothing is recorded (260.154965ms)
+✔ a gate without a count refuses --expected and keeps the one-read-back rule (133.778445ms)
+✔ k below N reads partial and never done; k equal to N reads done (162.864376ms)
+✔ one failed host keeps the change not done and names that read-back (179.424239ms)
+✔ the same execution id read twice counts once (180.358907ms)
+✖ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (97.292664ms)
+✔ only bound read-backs of the named kind recorded after the approval count toward k (143.40796ms)
+✔ the audit trail takes a run id that is a job id and refuses one that is not job-shaped (4.331057ms)
+✔ a Fleet read with no run id is listed as uncounted: one that got no answer does not block, a passing one does not count (208.740972ms)
+✖ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial (90.735857ms)
+✔ open refuses a command with no runbook, and checks the gate before the count (134.945474ms)
+✔ a Fleet failure with an answer but no run id blocks; open's next step and the trail follow the run-id rule (192.222739ms)
+✔ open refuses a gate the named runbook does not have (44.259915ms)
+✖ a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward (90.757263ms)
+✖ open names the read-back with its pass flags, in one form, and refuses a flag that does not change what a pass means (42.690026ms)
+✖ open refuses a removal gate named without --absent, and an add gate named with it (60.904828ms)
+✖ a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change (46.977893ms)
+✖ an add change is not done by an --absent read (101.714226ms)
+✖ a counted removal counts only --absent reads: a presence read is listed as uncounted (51.069001ms)
+✔ every gate whose confirmation names a count is classified: counted, or not counted with its reason (16.798031ms)
+✔ each counted gate's runbook opens its change with --expected and the count, and says what status reports (13.657774ms)
+✔ the audit README describes counted changes (0.316134ms)
+✖ every flag a runbook passes to a read-back is classified: a pass flag, or not one with its reason (17.085168ms)
+✖ each pass flag is a flag its connector takes, and every value rule is a closed set, a number or a digest (0.353668ms)
+✖ each runbook with a bound read-back that has a pass flag says to name the read-back with it; each counted gate names it (18.13516ms)
+✖ a bound read-back under a removal gate proves the removal: no bound presence read of the same kind sits beside an --absent one (20.397383ms)
+✔ the parser reads every gate in the five runbooks with all six fields, a phrase and an R-class (6.077113ms)
+✖ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*) (7.81579ms)
+✔ no runbook treats exit 2 from a verify-* read as an expected result (2.684237ms)
+✔ exception-group membership is gated in /gws-2sv-enforcement as R3, with the stop conditions beside each gate (3.901729ms)
+✔ every 2-Step Verification gate is R3, and the Phase B rollback is gated to a state with a known effect (3.520375ms)
+✔ every gate that assigns an admin role is R3, matching /gws-audit-log, and records the source conflict (2.53371ms)
+✔ each exact phrase binds one effect: shared only by gates with the same effect and target, never a two-way change (6.264977ms)
+✔ every verify-event whose actor is the administrator carries --target, and the checklists require the target (3.348867ms)
+✔ no read-back copies its event name from the read before it; where no event name is known, the Admin console value is the proof (3.052425ms)
+✔ every rollback promised "under its own phrase" quotes a gate phrase that exists in the same runbook (8.031271ms)
+✔ the containment suspend gate waits for a user read in the ticket, also on the urgent path (1.753021ms)
+✔ every Drive sharing gate that changes who outside can be shared with waits for a named approver (5.262137ms)
+✔ single-page reads say "first page only", the Drive read has a time window, and recovery details are set or missing (9.455694ms)
+✔ the GAM export gates stop before replacing an existing file (bash, mocked gam) (28.913923ms)
+✔ /gws-audit-log hands Google containment to /gws-account-containment, never to the Microsoft-only triage runbook (0.917016ms)
+ℹ tests 102
+ℹ suites 0
+ℹ pass 75
+ℹ fail 27
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6023.074356
+
+✖ failing tests:
+
+test at scripts/adapters/change-binding.test.js:1:1
+✖ scripts/adapters/change-binding.test.js (109.428269ms)
+  'test failed'
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ mfa-issue: every msgraph line runs as written (dry run) and the required read-backs are there (1.887092ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ github-repo-access: every github line runs as written (dry run) and the required read-backs are there (5.450355ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ github-branch-protection: every github line runs as written (dry run) and the required read-backs are there (2.361603ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ github-org-security: every github line runs as written (dry run) and the required read-backs are there (1.942285ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ github-offboard-member: every github line runs as written (dry run) and the required read-backs are there (3.178702ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ github-security-alerts: every github line runs as written (dry run) and the required read-backs are there (3.830443ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ okta-user-lifecycle: every okta line runs as written (dry run) and the required read-backs are there (5.893487ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ okta-mfa-reset: every okta line runs as written (dry run) and the required read-backs are there (1.608037ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ okta-app-assignment: every okta line runs as written (dry run) and the required read-backs are there (2.138363ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/g3-runbooks.test.js:102:5
+✖ okta-group-membership: every okta line runs as written (dry run) and the required read-backs are there (4.057791ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/g3-runbooks.test.js:112:72
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/g3-runbooks.test.js:112:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/adapters/linear-runbooks.test.js:170:1
+✖ every adapter line in the runbooks is one the adapter accepts, and the snooze gate is read back with verify-snoozed (22.87848ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/adapters/linear-runbooks.test.js:189:66
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/linear-runbooks.test.js:189:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/audit-log.test.js:353:1
+✖ a verify entry records the flags that change what its pass means, in one form, and only on a read-back that has them (1.505254ms)
+  AuditRefused: field "flags" is not recorded for verify
+      at checkEntry (<repo>/scripts/audit/audit-log.js:130:84)
+      at Object.append (<repo>/scripts/audit/audit-log.js:330:31)
+      at TestContext.<anonymous> (<repo>/scripts/audit/audit-log.test.js:358:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:168:1
+✖ open needs the read-back that proves the change; link refuses another kind, and status never counts one (149.815587ms)
+  AuditRefused: field "flags" is not recorded for verify
+      at checkEntry (<repo>/scripts/audit/audit-log.js:130:84)
+      at Object.append (<repo>/scripts/audit/audit-log.js:330:31)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:180:24)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:464:1
+✖ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (97.292664ms)
+  AuditRefused: field "flags" is not recorded for verify
+      at checkEntry (<repo>/scripts/audit/audit-log.js:130:84)
+      at Object.append (<repo>/scripts/audit/audit-log.js:330:31)
+      at personRead (<repo>/scripts/audit/change-record.test.js:381:70)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:467:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:528:1
+✖ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial (90.735857ms)
+  AuditRefused: field "flags" is not recorded for verify
+      at checkEntry (<repo>/scripts/audit/audit-log.js:130:84)
+      at Object.append (<repo>/scripts/audit/audit-log.js:330:31)
+      at personRead (<repo>/scripts/audit/change-record.test.js:381:70)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:531:15)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:599:1
+✖ a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward (90.757263ms)
+  AuditRefused: field "flags" is not recorded for verify
+      at checkEntry (<repo>/scripts/audit/audit-log.js:130:84)
+      at Object.append (<repo>/scripts/audit/audit-log.js:330:31)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:602:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:638:1
+✖ open names the read-back with its pass flags, in one form, and refuses a flag that does not change what a pass means (42.690026ms)
+  AssertionError [ERR_ASSERTION]: change-record: --read-back names the connector and its verify-* command, such as okta:verify-factor-reset
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:641:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:651:1
+✖ open refuses a removal gate named without --absent, and an add gate named with it (60.904828ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-e88cf077e5cb",
+    "procedure_sha256": "c06327a61aa64f4a4d210697e61f7c34c9c0b7b4e80df599b51f6133a1ae7dd2",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the okta:verify-group-member read-back with --change chg-e88cf077e5cb (it refuses to read until this change is approved), then: link --change chg-e88cf077e5cb --verify-seq <the audit_seq it prints, or N from Jira's \"Recorded as audit entry N\" line>; status --change chg-e88cf077e5cb reports done only when all three match"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:654:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:664:1
+✖ a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change (46.977893ms)
+  AssertionError [ERR_ASSERTION]: change-record: --read-back names the connector and its verify-* command, such as okta:verify-factor-reset
+  
+  
+  1 !== 0
+  
+      at approvedH1 (<repo>/scripts/audit/change-record.test.js:632:10)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:666:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:677:1
+✖ an add change is not done by an --absent read (101.714226ms)
+  AuditRefused: field "flags" is not recorded for verify
+      at checkEntry (<repo>/scripts/audit/audit-log.js:130:84)
+      at Object.append (<repo>/scripts/audit/audit-log.js:330:31)
+      at personRead (<repo>/scripts/audit/change-record.test.js:381:70)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:680:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:688:1
+✖ a counted removal counts only --absent reads: a presence read is listed as uncounted (51.069001ms)
+  AssertionError [ERR_ASSERTION]: change-record: --read-back names the connector and its verify-* command, such as okta:verify-factor-reset
+  
+  
+  1 !== 0
+  
+      at approvedH1 (<repo>/scripts/audit/change-record.test.js:632:10)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:690:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/pass-flags.test.js:71:1
+✖ every flag a runbook passes to a read-back is classified: a pass flag, or not one with its reason (17.085168ms)
+  TypeError [Error]: Cannot convert undefined or null to object
+      at hasOwnProperty (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/audit/pass-flags.test.js:74:52)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at scripts/audit/pass-flags.test.js:86:1
+✖ each pass flag is a flag its connector takes, and every value rule is a closed set, a number or a digest (0.353668ms)
+  TypeError [Error]: Cannot convert undefined or null to object
+      at Object.entries (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/audit/pass-flags.test.js:88:38)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at scripts/audit/pass-flags.test.js:101:1
+✖ each runbook with a bound read-back that has a pass flag says to name the read-back with it; each counted gate names it (18.13516ms)
+  TypeError [Error]: audit.passFlags is not a function
+      at <repo>/scripts/audit/pass-flags.test.js:102:64
+      at Array.filter (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/audit/pass-flags.test.js:102:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/pass-flags.test.js:115:1
+✖ a bound read-back under a removal gate proves the removal: no bound presence read of the same kind sits beside an --absent one (20.397383ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'jamf-config-profiles.md jamf-config-profiles-remove-all-computers-portal jamf:verify-profile'
+  -   'okta-group-membership.md okta-group-membership-rule-change-portal okta:verify-group-member'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/pass-flags.test.js:139:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'jamf-config-profiles.md jamf-config-profiles-remove-all-computers-portal jamf:verify-profile' ],
+    expected: [ 'okta-group-membership.md okta-group-membership-rule-change-portal okta:verify-group-member' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/gws-runbooks.test.js:134:1
+✖ every gws-client.js line in the five runbooks is a command and flag set the adapter accepts (dry run, exit 0, or 4 for a verify-*) (7.81579ms)
+  TypeError [Error]: audit.readBackFor is not a function
+      at Object.changeFor (<repo>/scripts/audit/trail-helper.js:35:28)
+      at <repo>/scripts/gws-runbooks.test.js:142:62
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (<repo>/scripts/gws-runbooks.test.js:142:22)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+# exit: 1  finished: 2026-10-31T06:46:25Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

@@ -139,7 +139,7 @@ test('every gws-client.js line in the five runbooks is a command and flag set th
   const trail = changeTrail(t);
   for (const l of lines) {
     const raw = argvOf(l.text);
-    const argv = raw.map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`google-workspace:${raw[0]}`) : w));
+    const argv = raw.map((w) => (w === '[CHANGE_ID]' ? trail.changeFor(`google-workspace:${raw[0]}`, raw) : w));
     const res = await dryRun(argv, trail.sink);
     assert.equal(res.code, argv[0].startsWith('verify-') ? 4 : 0, `${l.file}:${l.line}: ${l.text}\n${res.stderr}`);
   }

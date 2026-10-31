@@ -344,3 +344,38 @@ test('a run on a verify entry the run-id table does not name is refused on appen
   const check = audit.openAuditLog({ dir }).verify();
   assert.equal(check.ok, true, JSON.stringify(check));
 });
+
+// Batch G3 close-out 3, owner decision H1: a presence pass must never prove a removal. A verify
+// entry records the flags that change what its pass means (audit-log.js PASS_FLAGS, such as
+// --absent), in one canonical form, so a change record can name its read-back with them. On a
+// read-back that has such flags the entry must say which ran ('' for none); on any other it
+// records none. A change record's read-back names the same flags.
+test('a verify entry records the flags that change what its pass means, in one form, and only on a read-back that has them', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-audit-h1-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const log = audit.openAuditLog({ dir });
+  const read = (connector, command, flags) => ({ kind: 'verify', connector, command, verified: true, state: 'OK', change: null, ...(flags === undefined ? {} : { flags }) });
+  assert.equal(log.append(read('okta', 'verify-group-member', '--absent')).seq, 1);
+  assert.equal(log.append(read('okta', 'verify-group-member', '')).seq, 2, 'a presence read records no flag');
+  assert.equal(log.append(read('github', 'verify-protection', '--enforce-admins --no-force-push --reviews 2')).seq, 3);
+  assert.equal(log.append(read('okta', 'verify-factor-reset')).seq, 4, 'a read-back with no pass flag records none');
+  assert.throws(() => log.append(read('okta', 'verify-group-member')), audit.AuditRefused, 'a read-back with a pass flag says which ran');
+  assert.throws(() => log.append(read('okta', 'verify-factor-reset', '--absent')), audit.AuditRefused, 'no flags on a read-back that has none');
+  assert.throws(() => log.append(read('okta', 'verify-group-member', '--group 00g1')), audit.AuditRefused, 'an object flag is not a pass flag');
+  assert.throws(() => log.append(read('okta', 'verify-status', '--status GONE')), audit.AuditRefused, 'a value outside the flag\'s set');
+  assert.throws(() => log.append(read('github', 'verify-protection', '--reviews 2 --enforce-admins')), audit.AuditRefused, 'one canonical order');
+  assert.throws(() => log.append(read('okta', 'verify-group-member', '--absent --absent')), audit.AuditRefused, 'a flag once');
+  assert.equal(audit.passFlags('okta:verify-group-member', ['verify-group-member', '--group', '00g1', '--user', '00u1', '--absent', '--execute']), '--absent');
+  assert.equal(audit.passFlags('okta:verify-group-member', ['verify-group-member', '--group', '00g1', '--user', '00u1']), '');
+  assert.equal(audit.passFlags('github:verify-protection', ['verify-protection', '--no-force-push', '--repo', 'r', '--reviews', '2', '--enforce-admins']), '--enforce-admins --no-force-push --reviews 2');
+  assert.equal(audit.passFlags('okta:verify-factor-reset', ['verify-factor-reset', '--factor-type', 'push']), null, 'no pass flags: null');
+  assert.equal(audit.readBackFor('okta:verify-group-member', ['verify-group-member', '--absent']), 'okta:verify-group-member --absent');
+  assert.equal(audit.readBackFor('okta:verify-factor-reset', ['verify-factor-reset', '--factor-type', 'push']), 'okta:verify-factor-reset');
+  // a change record names its read-back with the same flags
+  const proc = (readBack) => ({ kind: 'procedure', command: 'okta-group-membership', gate: 'okta-group-membership-remove-person-portal', r_class: 'R2', target: '[UPN]', read_back: readBack, procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' });
+  assert.equal(log.append(proc('okta:verify-group-member --absent')).seq, 5);
+  for (const bad of ['okta:verify-group-member --group 00g1', 'okta:verify-group-member  --absent', 'okta:verify-factor-reset --absent', 'github:verify-protection --reviews 2 --enforce-admins']) {
+    assert.throws(() => log.append(proc(bad)), audit.AuditRefused, bad);
+  }
+  assert.equal(log.verify().ok, true);
+});

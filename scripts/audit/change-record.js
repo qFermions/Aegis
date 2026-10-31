@@ -144,6 +144,8 @@ function changeView(log, change, entries = null) {
     view.approval = { seq: approvals[0].seq, ref: approvals[0].ref, matches: false };
     view.missing.push('the approved digest does not match the procedure Aegis issued, so the approval does not cover it');
   } else view.missing.push('no approval reference was recorded for this change');
+  // a counted batch change counts bound read-backs and needs no link (batch G3 close-out 2)
+  if (Number.isInteger(procedure.expected)) return countedView(view, all, change, procedure, approval);
   // one verify-* result proves one change: the first link of a read-back owns it
   const owner = new Map();
   for (const e of all) if (e.kind === 'change-link' && !owner.has(e.verify_seq)) owner.set(e.verify_seq, e.change);
@@ -152,7 +154,6 @@ function changeView(log, change, entries = null) {
   const linked = links.filter((l) => owner.get(l.verify_seq) === change).map((l) => bySeq.get(l.verify_seq)).filter((e) => e && e.kind === 'verify');
   // only a read-back recorded under this change counts (batch G3 close-out), so one linked
   // around the CLI, unbound or bound to another change, never makes the change done
-  if (Number.isInteger(procedure.expected)) return countedView(view, all, change, procedure, approval);
   const ofKind = linked.filter((e) => kindOf(e) === procedure.read_back);
   const readBacks = ofKind.filter((e) => e.change === change);
   const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq);
@@ -170,36 +171,54 @@ function changeView(log, change, entries = null) {
 
 // A counted batch change (batch G3 close-out 2, owner decision 2): N objects, each proved by its
 // own read-back. Only bound read-backs of the named kind recorded after the approval count (a
-// bound read-back carries this change id, so it needs no link). Where the read-back records a
-// run id (a job id), each run counts once and a run that failed and later passed counts as
-// passed; where it records none, each bound read-back counts and a repeated read of the same
-// object is not detected. Done only when exactly N passed and none is still failed.
-// approval: the approval entry of the issued digest, or undefined (changeView already says why)
+// bound read-back carries this change id, so it needs no link).
+// - A read-back that records a run id (audit-log.js RUN_IDS, a job id): each run counts once, a
+//   run that failed and later passed counts as passed, and a run that only failed keeps the
+//   change not done. A read with no run id (no answer from the vendor, or an answer that named
+//   no run) is listed as uncounted: it proves nothing about any object, so it neither counts
+//   nor blocks (code review round 1 of the batch G3 close-out 2, findings 1 and 2). Done only
+//   when exactly N runs passed and no run is still failed.
+// - A read-back that records none: each bound read-back that passed counts once, a repeated read
+//   of the same object is not detected, and a failed read is listed but cannot be matched to a
+//   later pass of the same object, so it does not block (finding 4). Done once N passed.
 function countedView(view, all, change, procedure, approval) {
   const expected = procedure.expected;
+  const runKind = Object.prototype.hasOwnProperty.call(audit.RUN_IDS, procedure.read_back);
   const bound = approval
     ? all.filter((e) => e.kind === 'verify' && e.change === change && kindOf(e) === procedure.read_back && e.seq > approval.seq)
     : [];
-  const runs = new Map();
-  const unrun = [];
-  for (const e of bound) {
-    if (typeof e.run !== 'string') { unrun.push(e); continue; }
-    const r = runs.get(e.run) || { passed: false, failed: [] };
-    if (e.verified === true) r.passed = true; else r.failed.push(e);
-    runs.set(e.run, r);
+  const brief = (e) => ({ seq: e.seq, run: typeof e.run === 'string' ? e.run : null, state: e.state });
+  let passed;
+  let failed;
+  const uncounted = [];
+  if (runKind) {
+    const runs = new Map();
+    for (const e of bound) {
+      if (typeof e.run !== 'string') {
+        uncounted.push({ ...brief(e), reason: e.verified === true ? 'the answer named no run id, so this pass cannot be told apart from a re-read' : 'no answer named a run, so this read proves nothing about any object' });
+        continue;
+      }
+      const r = runs.get(e.run) || { passed: false, failed: [] };
+      if (e.verified === true) r.passed = true; else r.failed.push(e);
+      runs.set(e.run, r);
+    }
+    passed = [...runs.values()].filter((r) => r.passed).length;
+    failed = [...runs.values()].filter((r) => !r.passed).flatMap((r) => r.failed);
+  } else {
+    passed = bound.filter((e) => e.verified === true).length;
+    failed = bound.filter((e) => e.verified !== true);
   }
-  const passed = [...runs.values()].filter((r) => r.passed).length + unrun.filter((e) => e.verified === true).length;
-  const failed = [...[...runs.values()].filter((r) => !r.passed).flatMap((r) => r.failed), ...unrun.filter((e) => e.verified !== true)]
-    .sort((a, b) => a.seq - b.seq);
+  failed.sort((a, b) => a.seq - b.seq);
   view.expected = expected;
   view.verified = passed;
   view.summary = `verified ${passed} of ${expected}`;
-  view.failed = failed.map((e) => ({ seq: e.seq, run: typeof e.run === 'string' ? e.run : null, state: e.state }));
-  if (unrun.length) view.note = `${procedure.read_back} records no run id, so each bound read-back that passed counts once and a repeated read of the same object is not detected`;
+  view.failed = failed.map(brief);
+  view.uncounted = uncounted;
+  if (!runKind) view.note = `${procedure.read_back} records no run id, so each bound read-back that passed counts once, a repeated read of the same object is not detected, and a failed read stays listed but cannot be matched to a later pass of the same object`;
   if (approval) {
-    for (const f of view.failed) view.missing.push(`the read-back at audit seq ${f.seq}${f.run ? ` (run ${f.run})` : ''} did not verify (${f.state}); that object is not proven`);
+    if (runKind) for (const f of view.failed) view.missing.push(`the read-back at audit seq ${f.seq}${f.run ? ` (run ${f.run})` : ''} did not verify (${f.state}) and that run never passed; that object is not proven`);
     if (passed < expected) view.missing.push(`verified ${passed} of ${expected}: ${expected - passed} more bound ${procedure.read_back} read-back(s) must pass`);
-    if (passed > expected) view.missing.push(`verified ${passed} of ${expected}: more than the ${expected} the ticket names; check the batch against the ticket`);
+    if (runKind && passed > expected) view.missing.push(`verified ${passed} of ${expected}: more than the ${expected} the ticket names; check the batch against the ticket`);
   }
   view.done = view.missing.length === 0;
   view.result = view.done ? 'done' : 'partial';

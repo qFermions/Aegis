@@ -111,3 +111,13 @@ test('the audit README describes counted changes', () => {
   assert.match(readme, /`Count: N`/, 'the README says the procedure carries the count (H2)');
   for (const gate of Object.keys(COUNTED_GATES)) assert.ok(readme.includes(gate), `README names ${gate}`);
 });
+
+// Code review round 2 of the batch G3 close-out 3, finding 8: verify-method-absent records an
+// answer that proves nothing (another page, no method list) as uncounted, and the paragraph said
+// only to read an uncounted method again, which returns the same page.
+test('the counted MFA clear says what to do with an answer that proves nothing either way', () => {
+  const text = fs.readFileSync(path.join(__dirname, '..', '..', '.claude', 'commands', 'offboard.md'), 'utf8');
+  const para = text.split('\n').find((l) => l.startsWith('**Counted change:** open the change record for [offboard-clear-mfa-portal]'));
+  assert.ok(para, 'the counted paragraph');
+  assert.match(para, /An answer that proves nothing either way \(another page or no method list\) is uncounted too, and reading again returns the same answer: check that method in the Entra admin center, write it in the ticket, and open a new change for the methods left/);
+});

@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 **Verdict:** Most MFA tickets are "got a new phone" (re-register) or "not getting prompts" (auth-method or Conditional Access misconfig). The classic gotcha: a CA policy blocks login **before** the user can re-register — temporarily exclude them, let them register, re-add.
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a verify-* read-back below (here only [mfa-require-reregister-portal]), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and `msgraph:verify-mfa-cleared` as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Session revocation (R2) and the one-method delete (R3) have no verify-* read-back in the read-only connector, so they take no change record: their proof is a read written in the ticket, the `auth-methods` output for the delete and the portal read after the propagation interval for the revocation.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a verify-* read-back below (here only [mfa-require-reregister-portal]), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and `msgraph:verify-mfa-cleared` as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Session revocation (R2) and the one-method delete (R3) have no verify-* read-back in the read-only connector, so they take no change record: their proof is a read: for the delete, `auth-methods` saved to `tasks/checkpoints/` (it prints phone numbers and device names, so the ticket names the method type only); for the revocation, the portal read after the propagation interval, written in the ticket.
 
 ## What to check first
 - Entra → Users → `[UPN]` → **Authentication methods** → what's registered?
@@ -107,7 +107,7 @@ node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-bef
 ## ✅ Verification checklist
 - [ ] User completed registration at aka.ms/mfasetup (new method shows in Authentication methods)
 - [ ] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration
-- [ ] One-method delete path: `auth-methods` no longer lists that method (its output written in the ticket)
+- [ ] One-method delete path: `auth-methods` no longer lists that method (its output saved to `tasks/checkpoints/`; the ticket names the method type only)
 - [ ] `verify-mfa-method` and `verify-signin` pass after the new registration
 - [ ] Test sign-in prompts for MFA and succeeds
 - [ ] Any CA exclusion has been **removed** (no lingering bypass)

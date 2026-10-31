@@ -266,3 +266,21 @@ test('verify-method-absent: passes when the method id is no longer listed; fails
   const bad = await cli(['verify-method-absent', '--user', U, '--method-id', 'a b']);
   assert.equal(bad.code, 1, 'a method id is one token of letters, digits, - and _');
 });
+
+// Security review 1 of the batch G3 close-out 3: the method id was compared case for case, so a
+// GUID typed in capitals read as absent while Graph still listed it in lower case. A GUID is
+// compared without case; any other id (a base64url id, such as a FIDO2 key's) keeps its case.
+test('verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case', async () => {
+  const U = 'aaaaaaaa-0000-4000-8000-000000000001';
+  const ID = '3179e48a-750b-4051-897c-87b9720928f7';
+  const v = (methodId, listed) => cli(['verify-method-absent', '--user', U, '--method-id', methodId, '--execute'], { replies: [token(), ok({ value: listed.map((id) => ({ id })) })] });
+  const upper = await v(ID.toUpperCase(), [ID]);
+  assert.equal(upper.code, 2, upper.text);
+  assert.match(upper.json.reason, /still listed/);
+  const lower = await v(ID, [ID.toUpperCase()]);
+  assert.equal(lower.code, 2, lower.text);
+  const key = '-2_GRUg2-HYz6_1YG4YRAQ2';
+  assert.equal((await v(key, [key])).code, 2, 'the same base64url id is still listed');
+  const otherCase = await v(key.toLowerCase(), [key]);
+  assert.equal(otherCase.code, 0, `a base64url id in another case is another id: ${otherCase.text}`);
+});

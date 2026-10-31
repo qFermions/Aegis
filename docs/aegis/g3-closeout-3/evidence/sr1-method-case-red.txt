@@ -1,0 +1,55 @@
+# command: node --test scripts/adapters/msgraph-client.test.js
+# commit: cf33cd6 (plus uncommitted changes in the working tree)  started: 2026-10-31T07:36:31Z  node: v24.22.2
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (3.122966ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (10.252416ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (10.795174ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (2.545722ms)
+✔ verify read-backs for the password-reset and MFA runbooks (26.080312ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (1.919296ms)
+✔ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (9.71812ms)
+✔ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (7.010413ms)
+✖ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case (2.08037ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 265.542606
+
+✖ failing tests:
+
+test at scripts/adapters/msgraph-client.test.js:273:1
+✖ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case (2.08037ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-method-absent",
+    "verified": true,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "method_id": "3179E48A-750B-4051-897C-87B9720928F7",
+      "listed": false
+    },
+    "observed": {
+      "listed": false,
+      "methods_read": 1
+    }
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/msgraph-client.test.js:278:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T07:36:31Z
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, clone and temporary paths written as <clone>, <repo> and <tmp>; line numbers unchanged

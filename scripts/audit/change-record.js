@@ -96,9 +96,11 @@ function checkReadBack(readBack) {
 
 // The read-back lines a gate's runbook runs under --change: in the gate's section, or named
 // "read-back of [gate]" in the comment above (the change-binding pin test reads them the same
-// way). A named read-back must be the form one of those lines runs, so a removal gate whose line
-// runs with --absent is never opened for a presence read (batch G3 close-out 3, owner decision
-// H1). A gate with no such line of that read-back (the tests' own trails) is not compared.
+// way). A named read-back must be one of those lines' read-backs, in the form the line runs, so
+// a removal gate whose line runs with --absent is never opened for a presence read, of its own
+// command or of another connector's (batch G3 close-out 3, owner decision H1, and security review
+// 1). A gate whose runbook binds no read-back is not compared: the runbooks name none for it, and
+// whether open should refuse it is an owner decision in PR #9.
 const RUNBOOK_LINE = /node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-z0-9-]+)([^`\n]*)/;
 const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
 function gateReadBacks(text, gate) {
@@ -142,13 +144,18 @@ function sameForm(parsed, line) {
   }
   return true;
 }
+// a runbook line's read-back as open names it: the kind, then its pass flags sorted by name
+const lineForm = (l) => (hasOwn(audit.PASS_FLAGS, l.kind)
+  ? [l.kind, ...[...lineFlags(l.kind, l.argv)].sort(([a], [b]) => (a < b ? -1 : 1)).map(([n, v]) => (v === null ? `--${n}` : `--${n} ${v}`))].join(' ')
+  : l.kind);
 function checkGateReadBack(command, gate, parsed) {
-  if (!hasOwn(audit.PASS_FLAGS, parsed.kind)) return;
   const text = fs.readFileSync(path.join(ROOT, '.claude', 'commands', `${command}.md`), 'utf8');
-  const lines = gateReadBacks(text, gate).filter((l) => l.kind === parsed.kind);
-  if (!lines.length || lines.some((l) => sameForm(parsed, l))) return;
-  const forms = [...new Set(lines.map((l) => [l.kind, ...[...lineFlags(l.kind, l.argv)].sort(([a], [b]) => (a < b ? -1 : 1)).map(([n, v]) => (v === null ? `--${n}` : `--${n} ${v}`))].join(' ')))];
-  throw new InputError(`gate ${gate}'s read-back in .claude/commands/${command}.md runs as ${forms.join(' or ')}, not as ${parsed.readBack}; name the read-back with the flags on its line that change what its pass means`);
+  const bound = gateReadBacks(text, gate);
+  if (!bound.length) return;
+  const lines = bound.filter((l) => l.kind === parsed.kind);
+  if (lines.length && (!hasOwn(audit.PASS_FLAGS, parsed.kind) || lines.some((l) => sameForm(parsed, l)))) return;
+  const forms = [...new Set(bound.map(lineForm))];
+  throw new InputError(`gate ${gate}'s read-back in .claude/commands/${command}.md runs as ${forms.join(' or ')}, not as ${parsed.readBack}; name the read-back its line runs, with the flags on it that change what its pass means`);
 }
 
 // A gate must be one the named runbook has (code review round 1 of the batch G3 close-out 2,

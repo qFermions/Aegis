@@ -857,6 +857,35 @@ test('approve refuses a change whose read-back is named without its gate\'s pass
   assert.equal(s.log.entries().length, before, 'nothing recorded');
 });
 
+// Code review round 3 of the batch G3 close-out 3, findings 1 and 2: round 2 judged only a
+// read-back named bare, so an entry from before this batch that names a read-back its gate does
+// not bind (or a gate that binds none) was no longer stale, and a change opened today could still
+// turn stale when its runbook later changed. open now marks its entries (gate_checked); an entry
+// without the mark gets open's whole check, failing closed, and a marked one is never re-judged.
+test('an entry from before this batch is judged by open\'s whole check; a change open marked is never re-judged', (t) => {
+  const s = setup(t);
+  const digest = changes.procedureDigest(fs.readFileSync(s.procedure, 'utf8'));
+  const old = (change, command, gate, readBack) => {
+    s.log.append({ kind: 'procedure', command, gate, r_class: 'R3', target: '[UPN]', read_back: readBack, procedure_sha256: digest, change });
+    s.log.append({ kind: 'approval', ref: 'IT-123', gate, procedure_sha256: digest, change });
+  };
+  old('chg-0000000000a1', 'okta-user-lifecycle', 'okta-user-lifecycle-deactivate-portal', 'okta:verify-factor-reset');
+  assert.match(String(changes.bindRefusal(s.log, 'chg-0000000000a1', 'okta:verify-factor-reset')), /open a new change/, 'another kind than the gate binds');
+  old('chg-0000000000a2', 'printer-issue', 'print-queue-delete-portal', 'okta:verify-factor-reset');
+  assert.match(String(changes.bindRefusal(s.log, 'chg-0000000000a2', 'okta:verify-factor-reset')), /open a new change/, 'a gate that binds no read-back');
+  // a change opened today, bare on an add gate, stays valid when its line later gains --absent
+  const gateFor = require('./trail-helper.js').testRunbooks(s.dir, t);
+  const g = gateFor('okta:verify-group-member');
+  const out = [];
+  assert.equal(changes.main(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-group-member', '--procedure-file', s.procedure], s.env, { out: (x) => out.push(x), err: () => {} }), 0);
+  const o = JSON.parse(out.join(''));
+  assert.equal(s.log.entries().find((e) => e.change === o.change).gate_checked, true, 'open marks its entry');
+  assert.equal(changes.main(['approve', '--change', o.change, '--ref', 'IT-123', '--procedure-sha256', o.procedure_sha256], s.env, { out: () => {}, err: () => {} }), 0);
+  const file = path.join(s.dir, 'commands', 'aegis-test.md');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('verify-group-member --change', 'verify-group-member --absent --change'));
+  assert.equal(changes.bindRefusal(s.log, o.change, 'okta:verify-group-member'), null);
+});
+
 // ── Batch G3 close-out 3, owner decision H2: the approval covers N ─────────────────────────────
 // A counted gate's saved procedure carries its count on one line, Count: N; open refuses an
 // --expected that differs from it, and a procedure without one, so the digest the approval names

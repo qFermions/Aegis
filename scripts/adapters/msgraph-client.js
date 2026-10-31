@@ -213,7 +213,11 @@ function judge(command, a, data) {
     case 'verify-method-absent': {
       if (!isObject(data) || !Array.isArray(data.value)) return { verified: false, observed: { listed: null }, reason: 'the answer has no method list, so this is not proof either way' };
       const ids = data.value.filter(isObject).map((m) => String(m.id || ''));
-      if (ids.includes(a['method-id'])) return { verified: false, observed: { listed: true }, reason: 'the method is still listed' };
+      // a GUID is the same id in any case; any other id (base64url, a FIDO2 key's) keeps its case
+      // (security review 1 of the batch G3 close-out 3)
+      const want = a['method-id'];
+      const same = GUID.test(want) ? (id) => id.toLowerCase() === want.toLowerCase() : (id) => id === want;
+      if (ids.some(same)) return { verified: false, observed: { listed: true }, reason: 'the method is still listed' };
       // absence on a page with more pages behind it proves nothing
       if (typeof data['@odata.nextLink'] === 'string') return { verified: false, observed: { listed: false }, reason: 'the method list has another page, so this is not proof either way' };
       return { verified: true, observed: { listed: false, methods_read: ids.length } };

@@ -193,7 +193,8 @@ function changeView(log, change, entries = null) {
 // - A read-back that records none: each bound read-back that passed counts once and a repeated
 //   read of the same object is not detected. A failed read cannot be matched to a later pass of
 //   the same object, so it keeps the change not done (code review round 2, finding 1: letting it
-//   pass made a batch with a known failed object read done). Done when N passed and none failed.
+//   pass made a batch with a known failed object read done). Done when exactly N passed and none
+//   failed; more than N reads partial, as with run ids (round 2, finding 5).
 function countedView(view, all, change, procedure, approval) {
   const expected = procedure.expected;
   const runKind = Object.prototype.hasOwnProperty.call(audit.RUN_IDS, procedure.read_back);
@@ -233,7 +234,7 @@ function countedView(view, all, change, procedure, approval) {
       ? `the read-back at audit seq ${f.seq}${f.run ? ` (run ${f.run})` : ''} did not verify (${f.state}) and that run never passed; that object is not proven`
       : `the read-back at audit seq ${f.seq} did not verify (${f.state}); with no run id it cannot be matched to a later pass of the same object, so open a new change for the objects left`);
     if (passed < expected) view.missing.push(`verified ${passed} of ${expected}: ${expected - passed} more bound ${procedure.read_back} read-back(s) must pass`);
-    if (runKind && passed > expected) view.missing.push(`verified ${passed} of ${expected}: more than the ${expected} the ticket names; check the batch against the ticket`);
+    if (passed > expected) view.missing.push(`verified ${passed} of ${expected}: more than the ${expected} the ticket names; check the batch against the ticket`);
   }
   view.done = view.missing.length === 0;
   view.result = view.done ? 'done' : 'partial';

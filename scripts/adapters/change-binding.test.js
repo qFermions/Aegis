@@ -250,6 +250,15 @@ test('after a test trail ends, open reads the real runbooks again', async (t) =>
   assert.equal(code, 0, err.join(''));
 });
 
+// Code review round 3 of the batch G3 close-out 3, finding 6: a nested trail pointed
+// change-record.js at the real runbooks when it ended, not back at the outer trail's test gates.
+test('a nested test trail gives the outer trail its test gates back when it ends', async (t) => {
+  const outer = trail(t);
+  outer.open('okta:verify-group-member --absent');
+  await t.test('an inner trail', (st) => { trail(st).open('okta:verify-app-assigned --absent'); });
+  outer.open('github:verify-team-member --absent');
+});
+
 // Code review round 2 of the batch G3 close-out 3, finding 1: open refuses a gate whose runbook
 // binds no read-back (round 1, finding 5), so a change-record paragraph that told the operator to
 // open one before every R2 or R3 gate sent them to a refusal; each paragraph now covers only the

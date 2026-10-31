@@ -77,6 +77,9 @@ const CHANGE_ID = /^chg-[0-9a-f]{12}$/;
 // execution id, which Fleet documents as a UUID. Only a UUID is taken, so a serial, a host name
 // or a user name typed in its place is refused (security review 1 of that batch).
 const RUN_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+// The read-backs that record a run id, connector:command to the flag that holds it: only a job
+// id belongs here, never a user, email, device name or serial (cli-support.js runIdOf).
+const RUN_IDS = Object.freeze({ 'fleet:verify-script': 'execution-id' });
 
 // Credential shapes refused in any value, whatever its field allows (defence in depth):
 // Slack, GitHub, OpenAI-style, Google, GitLab and Okta tokens, a JWT, a bearer or basic
@@ -453,7 +456,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 }
 
 module.exports = {
-  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, VERIFY_COMMAND, AuditRefused, AuditBroken,
+  LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

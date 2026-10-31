@@ -21,7 +21,7 @@
 
 // CHANGE_ID and VERIFY_COMMAND are the trail's own forms, so a run is checked with exactly the
 // rule its verify entry is written under (readonly-contract.js isVerifyCommand matches it too).
-const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND } = require('../audit/audit-log.js');
+const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS } = require('../audit/audit-log.js');
 const { bindRefusal } = require('../audit/change-record.js');
 
 const AUDITED_STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
@@ -98,17 +98,17 @@ function changeRefusal(connector, command, bound, audit) {
 // finding 6).
 const verdictState = (state) => (AUDITED_STATES.has(state) ? state : 'INVALID_RESPONSE');
 
-// Read-backs that take a job id (batch G3 close-out 2, owner decision 2): connector:command to
-// the flag that holds it. The id is recorded as the verify entry's run, so a counted batch
-// change (change-record.js) counts each run once. Only a job id belongs here, never a user,
-// email, device name or serial: the run is recorded only when it is a UUID (Fleet's documented
-// execution id form) and the vendor's answer named that same id (observedId), else null.
-const RUN_ID_FLAGS = Object.freeze({ 'fleet:verify-script': 'execution-id' });
-const UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+// Read-backs that take a job id (batch G3 close-out 2, owner decision 2), the trail's own table
+// and form (audit-log.js RUN_IDS, RUN_ID): connector:command to the flag that holds it. The id
+// is recorded as the verify entry's run, so a counted batch change (change-record.js) counts
+// each run once. Only a job id belongs here, never a user, email, device name or serial: the run
+// is recorded only when it has the trail's form (a UUID, Fleet's documented execution id form)
+// and the vendor's answer named that same id (observedId), else null.
+const RUN_ID_FLAGS = RUN_IDS;
 const runIdOf = (connector, command, args, observedId) => {
-  const flag = RUN_ID_FLAGS[`${connector}:${command}`];
+  const flag = Object.prototype.hasOwnProperty.call(RUN_ID_FLAGS, `${connector}:${command}`) ? RUN_ID_FLAGS[`${connector}:${command}`] : null;
   const id = flag && args ? args[flag] : null;
-  return typeof id === 'string' && UUID.test(id) && observedId === id ? id : null;
+  return typeof id === 'string' && RUN_ID.test(id) && observedId === id ? id : null;
 };
 
 function recordVerdict(audit, connector, output, change, run = null) {

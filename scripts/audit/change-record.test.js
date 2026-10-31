@@ -817,6 +817,46 @@ test('a change whose read-back its gate no longer binds in that form (opened bef
   assert.ok(st.json.missing.some((m) => /open a new change/.test(m)), st.stdout);
 });
 
+// Code review round 2 of the batch G3 close-out 3, finding 2: the re-check judged every change
+// against today's runbook, so a done change read not done after any edit of its runbook (a
+// read-back line moved, a gate renamed). Only a read-back named without the pass flags its gate's
+// line runs is stale now: the one way a change opened before this batch differs. Finding 9:
+// approve refuses such a change, so no approval is recorded for one nothing can prove.
+test('a done change stays done after its runbook changes; only a read-back named without its line\'s pass flags is stale', (t) => {
+  const s = setup(t);
+  const gateFor = require('./trail-helper.js').testRunbooks(s.dir, t);
+  const g = gateFor('okta:verify-group-member --absent');
+  const call = (argv) => {
+    const out = [];
+    const err = [];
+    const code = changes.main(argv, s.env, { out: (x) => out.push(x), err: (x) => err.push(x) });
+    return { code, text: out.join('') + err.join(''), json: (() => { try { return JSON.parse(out.join('')); } catch { return null; } })() };
+  };
+  const o = call(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-group-member --absent', '--procedure-file', s.procedure]);
+  assert.equal(o.code, 0, o.text);
+  assert.equal(call(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
+  const read = personRead(s, o.json.change, true, '--absent');
+  assert.equal(call(['link', '--change', o.json.change, '--verify-seq', String(read.seq)]).code, 0);
+  assert.equal(call(['status', '--change', o.json.change]).json.done, true);
+  // the runbook is edited: the gate's read-back line is removed
+  const file = path.join(s.dir, 'commands', 'aegis-test.md');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^node scripts\/adapters\/okta-client\.js .*$/m, '# the read-back moved'));
+  const after = call(['status', '--change', o.json.change]);
+  assert.equal(after.json.done, true, after.text);
+});
+
+test('approve refuses a change whose read-back is named without its gate\'s pass flags, and records nothing', (t) => {
+  const s = setup(t);
+  const change = 'chg-0123456789ab';
+  const digest = changes.procedureDigest(fs.readFileSync(s.procedure, 'utf8'));
+  s.log.append({ kind: 'procedure', command: H1.removePerson.command, gate: H1.removePerson.gate, r_class: 'R2', target: '[UPN]', read_back: 'okta:verify-group-member', procedure_sha256: digest, change });
+  const before = s.log.entries().length;
+  const a = s.run(CLI, ['approve', '--change', change, '--ref', 'IT-123', '--procedure-sha256', digest]);
+  assert.notEqual(a.code, 0, a.stdout);
+  assert.match(a.stderr, /open a new change/);
+  assert.equal(s.log.entries().length, before, 'nothing recorded');
+});
+
 // ── Batch G3 close-out 3, owner decision H2: the approval covers N ─────────────────────────────
 // A counted gate's saved procedure carries its count on one line, Count: N; open refuses an
 // --expected that differs from it, and a procedure without one, so the digest the approval names

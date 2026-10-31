@@ -348,8 +348,9 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // names the rollback gate's own read-back line instead of repeating it (90 to 89)
   assert.equal(bound, 89, 'the 89 read-backs of R2 and R3 gates');
   // code review round 1 of the batch G3 close-out 3, finding 9: the Jamf pilot read under the
-  // removal from All Computers is no longer a line there; the comment points to Phase C's (76 to 75)
-  assert.equal(unbound, 75, 'the 75 read-backs of R0 and R1 work or of no gate stay unbound');
+  // removal from All Computers is no longer a line there (76 to 75); round 3, finding 3: it is read
+  // after the removals in an R0 section of its own (75 to 76)
+  assert.equal(unbound, 76, 'the 76 read-backs of R0 and R1 work or of no gate stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // read-backs of R2 and R3 changes named in prose: the per-host read-back of a batch script run

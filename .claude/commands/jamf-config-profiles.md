@@ -353,7 +353,7 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 # HUMAN-RUN - read-only - on a sample of Macs outside the pilot group
 # proves the Mac no longer lists the profile by its id or its identifier, and that every listed entry carries an identifier
 node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute
-# the pilot group keeps the profile: this change does not touch it, and Phase C's read-back proved it there
+# the pilot group must still list the profile: read one pilot Mac with the check after the removals below (R0, no change record)
 ```
 </details>
 
@@ -386,6 +386,17 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 > **PREVIEW ONLY [jamf-config-profiles-delete-preview]:** Planning only: deleting `[PROFILE_NAME]` is not authorized here. What Jamf Pro sends to the Macs when a profile is deleted is not in the sources read; take every target out of scope with the gates above, read the removals back, and plan the deletion as a separate reviewed change.
 
 **Verification checkpoint**: [ ] the removal read-backs passed on the Macs that left scope · [ ] the ticket names the Macs still waiting to check in.
+
+## After a removal: the pilot group still holds the profile (R0)
+
+A removal that rewrites the Targets can drop the pilot group by mistake. After it, read one Mac in `[SMART_GROUP]`: it must still list the profile. This read checks a Mac the removal must not touch, so it is no change's proof and names no change id.
+
+```bash
+# HUMAN-RUN read-only, one Mac in the pilot group: passes only when it still lists the profile by its id and its identifier
+node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --execute
+```
+
+**Stop if:** it fails: put the pilot group back in the Targets with Phase C's gate, under its own change record.
 
 ## ⚠️ Risk warning
 

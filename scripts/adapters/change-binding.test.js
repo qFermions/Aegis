@@ -236,6 +236,20 @@ test('a verify-* with --change and no audit trail to check it against is refused
 // The runbooks: every read-back of a gate marked R2 or R3 passes --change [CHANGE_ID]; no other
 // read-back does (open refuses an R0 or R1 change record, so such a read-back could never
 // run); each runbook with one says where the id comes from; the dictionary registers it.
+// Code review round 2 of the batch G3 close-out 3, finding 7: a test trail pointed change-record.js
+// at its own folder of test gates and never pointed it back, so after that test's folder was
+// removed, open in the same process could no longer read a real runbook.
+test('after a test trail ends, open reads the real runbooks again', async (t) => {
+  await t.test('a test trail', (st) => { trail(st).open('okta:verify-group-member --absent'); });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-change-binding-after-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const procedure = path.join(dir, 'procedure.md');
+  fs.writeFileSync(procedure, 'The reset for [UPN].\n');
+  const err = [];
+  const code = changes.main(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', procedure], { AEGIS_AUDIT_DIR: path.join(dir, 'audit') }, { out: () => {}, err: (x) => err.push(x) });
+  assert.equal(code, 0, err.join(''));
+});
+
 // Code review round 2 of the batch G3 close-out 3, finding 1: open refuses a gate whose runbook
 // binds no read-back (round 1, finding 5), so a change-record paragraph that told the operator to
 // open one before every R2 or R3 gate sent them to a refusal; each paragraph now covers only the

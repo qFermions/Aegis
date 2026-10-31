@@ -27,6 +27,7 @@ const test = require('node:test');
 
 const audit = require('../audit/audit-log.js');
 const changes = require('../audit/change-record.js');
+const { testRunbooks } = require('../audit/trail-helper.js');
 
 const TOKEN = ['sentinel', 'binding', 'credential', String(7 * 919)].join('-');
 const NOW = Date.parse('2026-10-28T12:00:00Z');
@@ -107,6 +108,7 @@ function trail(t) {
   const procedure = path.join(dir, 'procedure.md');
   fs.writeFileSync(procedure, 'Phase B: the gated change for [UPN].\nType exactly: CHANGE [UPN]\n');
   const sink = audit.auditSink(env);
+  const gateFor = testRunbooks(dir);
   const record = (argv) => {
     const out = [];
     const err = [];
@@ -117,9 +119,9 @@ function trail(t) {
   };
   // open (and by default approve) a change record whose read-back is readBack
   const open = (readBack, { approve = true } = {}) => {
-    // a gate whose runbook binds no read-back, so any connector's read-back can be named (a gate
-    // that binds read-backs takes only those, security review 1 of the batch G3 close-out 3)
-    const o = record(['open', '--command', 'printer-issue', '--gate', 'print-queue-delete-portal', '--r-class', 'R3', '--target', '[DEVICE_NAME]', '--read-back', readBack, '--procedure-file', procedure]);
+    // a test gate that binds this read-back (trail-helper.js testRunbooks)
+    const g = gateFor(readBack);
+    const o = record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
     assert.equal(o.code, 0, o.text);
     if (approve) assert.equal(record(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
     return o.json.change;

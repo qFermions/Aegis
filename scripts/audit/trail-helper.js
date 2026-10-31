@@ -13,6 +13,30 @@ const path = require('node:path');
 const audit = require('./audit-log.js');
 const changes = require('./change-record.js');
 
+// A folder of test gates, each binding one read-back with --change, which change-record.js reads
+// instead of .claude/commands in this test process (code review round 1 of the batch G3
+// close-out 3, finding 13: open refuses a gate whose runbook binds no read-back, and a real gate
+// binds only its own). Returns gateFor(readBack): the runbook and gate that bind it.
+function testRunbooks(dir) {
+  const folder = path.join(dir, 'commands');
+  fs.mkdirSync(folder, { recursive: true });
+  const file = path.join(folder, 'aegis-test.md');
+  fs.writeFileSync(file, '# Test gates for the connector tests\n');
+  changes.useRunbooksForTests(folder);
+  const gates = new Map();
+  return (readBack) => {
+    if (gates.has(readBack)) return gates.get(readBack);
+    const { kind, flags } = audit.parseReadBack(readBack);
+    const [connector, command] = kind.split(':');
+    const client = connector === 'jira' ? 'scripts/jira-client.js' : `scripts/adapters/${connector === 'google-workspace' ? 'gws' : connector}-client.js`;
+    const gate = `aegis-test-gate-${gates.size + 1}`;
+    fs.appendFileSync(file, `\n## ${gate}\n\n<!-- SAFETY GATE [${gate}] -->\n- **Reversibility:** R2 (a test gate)\n\n\`\`\`bash\nnode ${client} ${command}${flags ? ` ${flags}` : ''} --change [CHANGE_ID] --execute\n\`\`\`\n`);
+    const bound = { command: 'aegis-test', gate };
+    gates.set(readBack, bound);
+    return bound;
+  };
+}
+
 // t: the node:test context (its after() removes the folder).
 function changeTrail(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-runbook-trail-'));
@@ -21,6 +45,7 @@ function changeTrail(t) {
   const procedure = path.join(dir, 'procedure.md');
   fs.writeFileSync(procedure, 'The gated change a runbook line proves, for [UPN].\n');
   const sink = audit.auditSink(env);
+  const gateFor = testRunbooks(dir);
   const opened = new Map();
   const call = (argv) => {
     const out = [];
@@ -34,9 +59,8 @@ function changeTrail(t) {
   function changeFor(kind, argv = []) {
     const readBack = audit.readBackFor(kind, argv);
     if (opened.has(readBack)) return opened.get(readBack);
-    // a gate whose runbook binds no read-back, so any connector's read-back can be named (a gate
-    // that binds read-backs takes only those, security review 1 of the batch G3 close-out 3)
-    const o = call(['open', '--command', 'printer-issue', '--gate', 'print-queue-delete-portal', '--r-class', 'R3', '--target', '[DEVICE_NAME]', '--read-back', readBack, '--procedure-file', procedure]);
+    const g = gateFor(readBack);
+    const o = call(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
     call(['approve', '--change', o.change, '--ref', 'IT-123', '--procedure-sha256', o.procedure_sha256]);
     opened.set(readBack, o.change);
     return o.change;
@@ -44,4 +68,4 @@ function changeTrail(t) {
   return { sink, changeFor };
 }
 
-module.exports = { changeTrail };
+module.exports = { changeTrail, testRunbooks };

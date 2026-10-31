@@ -54,6 +54,12 @@ const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 // names the command as a key. Read as text, never loaded, so this module opens no network
 // module.
 const ROOT = path.resolve(__dirname, '..', '..');
+// The runbooks open reads its gates and their bound read-backs from. Only the connector tests'
+// change helpers change it, in their own process, to a folder of test gates
+// (useRunbooksForTests); the CLI never does (code review round 1 of the batch G3 close-out 3,
+// finding 13: the helpers had opened their changes on a real gate that binds no read-back).
+let RUNBOOKS = path.join(ROOT, '.claude', 'commands');
+function useRunbooksForTests(dir) { RUNBOOKS = dir; }
 const CONNECTOR_FILES = Object.freeze({
   fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js',
   'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js',
@@ -99,8 +105,8 @@ function checkReadBack(readBack) {
 // way). A named read-back must be one of those lines' read-backs, in the form the line runs, so
 // a removal gate whose line runs with --absent is never opened for a presence read, of its own
 // command or of another connector's (batch G3 close-out 3, owner decision H1, and security review
-// 1). A gate whose runbook binds no read-back is not compared: the runbooks name none for it, and
-// whether open should refuse it is an owner decision in PR #9.
+// 1). A gate whose runbook binds no read-back takes no change record (code review round 1,
+// finding 5).
 const RUNBOOK_LINE = /node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-z0-9-]+)([^`\n]*)/;
 const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
 // the gates a comment names a read-back for: "read-back of [a]", or of several, "[a], [b] or
@@ -158,9 +164,11 @@ const lineForm = (l) => (hasOwn(audit.PASS_FLAGS, l.kind)
   ? [l.kind, ...[...lineFlags(l.kind, l.argv)].sort(([a], [b]) => (a < b ? -1 : 1)).map(([n, v]) => (v === null ? `--${n}` : `--${n} ${v}`))].join(' ')
   : l.kind);
 function checkGateReadBack(command, gate, parsed) {
-  const text = fs.readFileSync(path.join(ROOT, '.claude', 'commands', `${command}.md`), 'utf8');
+  const text = fs.readFileSync(path.join(RUNBOOKS, `${command}.md`), 'utf8');
   const bound = gateReadBacks(text, gate);
-  if (!bound.length) return;
+  // a gate whose runbook binds no read-back takes no change record: its proof is the read its
+  // runbook names (code review round 1 of the batch G3 close-out 3, finding 5)
+  if (!bound.length) throw new InputError(`gate ${gate} in .claude/commands/${command}.md binds no read-back: a change record is opened only for a gate whose runbook names its read-back with --change [CHANGE_ID]; this gate's proof is the read its runbook names`);
   const lines = bound.filter((l) => l.kind === parsed.kind);
   if (lines.length && (!hasOwn(audit.PASS_FLAGS, parsed.kind) || lines.some((l) => sameForm(parsed, l)))) return;
   const forms = [...new Set(bound.map(lineForm))];
@@ -174,7 +182,7 @@ function checkGateReadBack(command, gate, parsed) {
 // COMMAND), so it cannot leave .claude/commands/.
 function checkGate(command, gate) {
   if (!audit.COMMAND.test(command)) throw new InputError('--command is a runbook name, such as fleet-device-actions');
-  const file = path.join(ROOT, '.claude', 'commands', `${command}.md`);
+  const file = path.join(RUNBOOKS, `${command}.md`);
   let text;
   try { text = fs.readFileSync(file, 'utf8'); } catch { throw new InputError(`no runbook .claude/commands/${command}.md`); }
   if (!text.includes(`<!-- SAFETY GATE [${gate}] -->`) && !text.split('\n').includes(`# SAFETY GATE [${gate}]`)) {
@@ -480,6 +488,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, main, COUNTED_GATES };
+module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, useRunbooksForTests, main, COUNTED_GATES };
 
 if (require.main === module) process.exitCode = main();

@@ -28,7 +28,7 @@
 //   node scripts/audit/audit-log.js status [--since 24h]    failures by connector and state
 //   node scripts/audit/audit-log.js procedure --command C --gate G --r-class R2 --target [UPN] [--procedure-sha256 H]
 //     (a change record is opened with change-record.js open instead)
-//   node scripts/audit/audit-log.js approval --ref IT-123 --gate G --procedure-sha256 H --change chg-...
+//   (an approval is recorded with change-record.js approve only: batch G4, task A2)
 // Exit codes: 0 ok; 1 input error or a refused entry; 2 the chain is broken or unreadable.
 
 const crypto = require('node:crypto');
@@ -591,13 +591,16 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       out(`recorded procedure as audit entry ${r.seq}\n`);
       return 0;
     }
+    // Batch G4, task A2: this command wrote an approval for any change id, one change-record.js
+    // approve refuses (code review round 3 of the batch G3 close-out 3, finding 5). It is removed,
+    // so change-record.js approve is the one writer: it checks that the change is open, the gate it
+    // names, the digest of the procedure issued for it and that no approval came first, all under
+    // the trail's write lock. This module cannot load change-record.js (that module loads this one),
+    // and a second copy of those checks here would drift from the first.
     if (command === 'approval') {
-      only(flags, ['ref', 'gate', 'procedure-sha256', 'change']);
-      const r = log.append({ kind: 'approval', ref: flags.ref, gate: flags.gate, procedure_sha256: flags['procedure-sha256'], change: flags.change });
-      out(`recorded approval reference as audit entry ${r.seq}; it authorizes a person's procedure and makes no change\n`);
-      return 0;
+      throw new AuditRefused('an approval is recorded only with node scripts/audit/change-record.js approve --change chg-... --ref ISSUE-KEY --procedure-sha256 H, which checks the change, its gate and the digest of its procedure; nothing was recorded');
     }
-    throw new AuditRefused('usage: audit-log.js verify | status [--since 24h] | procedure ... | approval ...');
+    throw new AuditRefused('usage: audit-log.js verify | status [--since 24h] | procedure ... (an approval: change-record.js approve)');
   } catch (error) {
     if (error instanceof AuditRefused) { err(`audit-log: ${error.message}\n`); return 1; }
     if (error instanceof AuditBroken) { err(`audit-log: ${error.message}\n`); return 2; }

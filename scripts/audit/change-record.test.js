@@ -96,11 +96,14 @@ test('an approval of another digest is refused at approve and nothing is recorde
   assert.ok(st.json.missing.some((m) => /approval/i.test(m)));
 });
 
+// Batch G4, task A2: audit-log.js approval no longer writes (the A2 tests below), so the
+// mismatched approval is written around both CLIs, as an older trail may hold one.
 test('an approval written straight into the trail with a mismatched digest still leaves the change not done', (t) => {
   const s = setup(t);
   const o = openChange(s);
   const w = s.run(AUDIT_CLI, ['approval', '--ref', 'IT-124', '--gate', 'okta-mfa-reset-selected-portal', '--procedure-sha256', 'c'.repeat(64), '--change', o.json.change]);
-  assert.equal(w.code, 0, w.stderr);
+  assert.equal(w.code, 1, w.stdout);
+  s.log.append({ kind: 'approval', ref: 'IT-124', gate: 'okta-mfa-reset-selected-portal', procedure_sha256: 'c'.repeat(64), change: o.json.change });
   const v = verifyEntry(s, true);
   s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]);
   const st = s.run(CLI, ['status', '--change', o.json.change]);

@@ -6,7 +6,7 @@ Aegis advises; humans execute (`PRODUCT_CONTRACT.md`). This folder records what 
 
 | file | what it is |
 |---|---|
-| `audit-log.js` | The one module that writes the trail, and its CLI (`verify`, `status`, `procedure`, `approval`). |
+| `audit-log.js` | The one module that writes the trail, and its CLI (`verify`, `status`, `procedure`). Since batch G4 (task A2) it records no approval: `approval` is refused, and `change-record.js approve` is the one writer. |
 | `change-record.js` | Change records for R2 and R3 procedures: the issued digest, the approval reference and the `verify-*` read-back, joined by a change id. |
 
 The trail lives in `.aegis-state/audit/` (gitignored), or in `AEGIS_AUDIT_DIR`: `audit.jsonl` (one entry per line), `audit.head` (the last seq and hash) and, while a write is in progress, `audit.lock`.
@@ -36,7 +36,7 @@ No body, no response data, no free text, no secret, no token and no personal val
 A change record for an R2 or R3 procedure runs in this order, and only people run the procedure itself:
 
 1. `node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --read-back CONNECTOR:verify-... --procedure-file FILE` records the issued procedure's digest and prints the change id (`[CHANGE_ID]` in the runbooks, `chg-` and 12 lower-case hex characters).
-2. `change-record.js approve --change [CHANGE_ID] --ref ISSUE-123 --procedure-sha256 H` records the ticket's approval of exactly that digest. It authorizes a person's procedure and triggers no write.
+2. `change-record.js approve --change [CHANGE_ID] --ref ISSUE-123 --procedure-sha256 H` records the ticket's approval of exactly that digest. It authorizes a person's procedure and triggers no write. It is the one approval writer (batch G4, task A2): it refuses a change the trail does not hold, a stale change record, a digest other than the issued one, and a second approval of the same change (checked under the trail's write lock, so two approvals raced from two processes record one), and a refusal writes nothing. `audit-log.js approval` used to write an approval for any change id; it was removed rather than given the same checks, because `audit-log.js` cannot load `change-record.js` (that module loads it) and a second copy of the checks would drift.
 3. A person runs the procedure.
 4. The read-back runs with `--change [CHANGE_ID] --execute`. Before any read, dry or live, the `verify-*` command (any of the nine connectors: Fleet, GitHub, Google Workspace, Jamf Pro, Linear, Microsoft Graph, Okta, Slack, Jira) checks the id's form and that this trail holds the change, opened for this connector and command, with an approval of its procedure recorded after it (`change-record.js` `bindRefusal`); otherwise it refuses with exit 1 and reads nothing. Its `verify` entry records the change id.
 5. `change-record.js link --change [CHANGE_ID] --verify-seq N` joins that entry to the change (N is the entry's seq, which a bound read-back that verified prints as `audit_seq`, or in Jira's "Recorded as audit entry N" line; an unbound or unverified one prints none, since `link` would refuse it); `status --change [CHANGE_ID]` reports done only when the digest, the approval and a verified read-back bound to this change match, in that order.

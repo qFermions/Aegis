@@ -524,7 +524,12 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (flags['procedure-sha256'] !== view.procedure.procedure_sha256) {
         throw new NotDone('the approved digest does not match the procedure Aegis issued; nothing was recorded. Approve the issued procedure, or open a new change for the new text');
       }
-      const r = log.append({ kind: 'approval', ref: flags.ref, gate: view.procedure.gate, procedure_sha256: flags['procedure-sha256'], change: flags.change });
+      // one approval per change, checked under the write lock so two approvals raced from two
+      // processes cannot both be recorded (batch G4, task A2)
+      const r = log.append({ kind: 'approval', ref: flags.ref, gate: view.procedure.gate, procedure_sha256: flags['procedure-sha256'], change: flags.change }, { guard: (all) => {
+        const earlier = all.find((e) => e.kind === 'approval' && e.change === flags.change);
+        if (earlier) throw new NotDone(`change ${flags.change} already has an approval (audit seq ${earlier.seq}, ${earlier.ref}); one approval per change. Nothing was recorded`);
+      } });
       out(`${JSON.stringify({ ok: true, change: flags.change, ref: flags.ref, audit_seq: r.seq, note: 'The approval authorizes a person\'s procedure. Aegis makes no change: a person runs it, then the verify-* read-back proves it.' }, null, 2)}\n`);
       return 0;
     }

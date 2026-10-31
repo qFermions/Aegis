@@ -275,11 +275,10 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
       const namedFor = (lines[i - 1] || '').match(/^# [^\n]*\bread-back of (\[[a-z0-9-]+\](?:(?:,? or |,? and |, )\[[a-z0-9-]+\])*)/);
       const namedClasses = namedFor ? [...namedFor[1].matchAll(/\[([a-z0-9-]+)\]/g)].map((x) => classOf.get(x[1])).filter(Boolean) : [];
       const cls = namedClasses.length ? namedClasses.sort().pop() : rClass;
-      // a read that checks another object than the change's proof (a pilot Mac that keeps a
-      // profile the change removes elsewhere) runs unbound and says so: under the change it would
-      // be refused, since the change names one read-back with its flags (batch G3 close-out 3, H1)
-      const notProof = /not this change's proof/.test(lines[i - 1] || '');
-      const wantBound = (cls === 'R2' || cls === 'R3') && !notProof;
+      // every read-back line under an R2 or R3 gate is bound, with no exception (code review round
+      // 1 of the batch G3 close-out 3, finding 9: H1 had exempted a line whose comment said "not
+      // this change's proof"; the Jamf pilot read it covered now points to Phase C's read-back)
+      const wantBound = cls === 'R2' || cls === 'R3';
       assert.equal(/--change \[CHANGE_ID\] --execute/.test(l), wantBound, `${file}:${i + 1} (${cls || 'no gate'}): ${l.trim().slice(0, 120)}`);
       if (wantBound) { bound += 1; has = true; } else unbound += 1;
     }

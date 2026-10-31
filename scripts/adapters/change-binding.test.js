@@ -108,7 +108,7 @@ function trail(t) {
   const procedure = path.join(dir, 'procedure.md');
   fs.writeFileSync(procedure, 'Phase B: the gated change for [UPN].\nType exactly: CHANGE [UPN]\n');
   const sink = audit.auditSink(env);
-  const gateFor = testRunbooks(dir);
+  const gateFor = testRunbooks(dir, t);
   const record = (argv) => {
     const out = [];
     const err = [];

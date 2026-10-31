@@ -58,8 +58,11 @@ const ROOT = path.resolve(__dirname, '..', '..');
 // change helpers change it, in their own process, to a folder of test gates
 // (useRunbooksForTests); the CLI never does (code review round 1 of the batch G3 close-out 3,
 // finding 13: the helpers had opened their changes on a real gate that binds no read-back).
-let RUNBOOKS = path.join(ROOT, '.claude', 'commands');
-function useRunbooksForTests(dir) { RUNBOOKS = dir; }
+const REAL_RUNBOOKS = path.join(ROOT, '.claude', 'commands');
+let RUNBOOKS = REAL_RUNBOOKS;
+// dir: the test gates' folder, or null to read the real runbooks again (code review round 2,
+// finding 7: the helpers now point it back when their test ends)
+function useRunbooksForTests(dir) { RUNBOOKS = dir || REAL_RUNBOOKS; }
 const CONNECTOR_FILES = Object.freeze({
   fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js',
   'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js',

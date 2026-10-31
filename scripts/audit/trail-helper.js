@@ -16,13 +16,15 @@ const changes = require('./change-record.js');
 // A folder of test gates, each binding one read-back with --change, which change-record.js reads
 // instead of .claude/commands in this test process (code review round 1 of the batch G3
 // close-out 3, finding 13: open refuses a gate whose runbook binds no read-back, and a real gate
-// binds only its own). Returns gateFor(readBack): the runbook and gate that bind it.
-function testRunbooks(dir) {
+// binds only its own). Returns gateFor(readBack): the runbook and gate that bind it. When the test
+// ends, change-record.js reads the real runbooks again (code review round 2, finding 7).
+function testRunbooks(dir, t) {
   const folder = path.join(dir, 'commands');
   fs.mkdirSync(folder, { recursive: true });
   const file = path.join(folder, 'aegis-test.md');
   fs.writeFileSync(file, '# Test gates for the connector tests\n');
   changes.useRunbooksForTests(folder);
+  t.after(() => changes.useRunbooksForTests(null));
   const gates = new Map();
   return (readBack) => {
     if (gates.has(readBack)) return gates.get(readBack);
@@ -45,7 +47,7 @@ function changeTrail(t) {
   const procedure = path.join(dir, 'procedure.md');
   fs.writeFileSync(procedure, 'The gated change a runbook line proves, for [UPN].\n');
   const sink = audit.auditSink(env);
-  const gateFor = testRunbooks(dir);
+  const gateFor = testRunbooks(dir, t);
   const opened = new Map();
   const call = (argv) => {
     const out = [];

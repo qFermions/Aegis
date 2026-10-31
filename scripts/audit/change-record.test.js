@@ -941,6 +941,21 @@ test('a second count wrapped in Markdown (bold, a task box, a table cell, italic
   assert.equal(s.log.entries().length, 0, 'nothing recorded');
 });
 
+// Code review round 3 of the batch G3 close-out 3, finding 4: links, HTML, strikethrough,
+// escaped emphasis, a later table cell, other bullets and an invisible prefix still hid a second
+// count. Any line where the word count is followed by a colon is now a count line.
+test('a second count in any line where the word count meets a colon is refused', (t) => {
+  const s = setup(t);
+  for (const extra of ['[Count: 50](#)', '<b>Count:</b> 50', '~~Count: 50~~', '\\*\\*Count\\*\\*: 50', '| Hosts | Count: 50 |', '\u2022 Count: 50', 'a) Count: 50', '\u200bCount: 50', 'Count\uff1a 50']) {
+    const file = path.join(s.dir, 'procedure-any.md');
+    fs.writeFileSync(file, `${fs.readFileSync(countedProcedure(s, 5), 'utf8')}${extra}\n`);
+    const r = openBatch(s, file, 5);
+    assert.equal(r.code, 1, `${JSON.stringify(extra)}: ${r.stdout}`);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  assert.equal(openBatch(s, countedProcedure(s, 5), 5).code, 0, 'the one plain Count line still opens');
+});
+
 test('an approval given for one N does not cover a different N', (t) => {
   const s = setup(t);
   const twelve = openBatch(s, countedProcedure(s, 12), 12);

@@ -794,6 +794,29 @@ test('a counted removal counts only --absent reads: a presence read is listed as
   assert.equal(status(s, change).json.done, true);
 });
 
+// Code review round 1 of the batch G3 close-out 3, finding 2: a change record opened before this
+// batch names its read-back bare (okta:verify-group-member) even for a removal, and a bare name
+// now means the presence form, so an in-flight removal change would be proved by a presence read
+// and its --absent read refused. The --change check, link and status re-check the change's
+// read-back against its gate's runbook, so such a change proves nothing and says to open a new one.
+test('a change whose read-back its gate no longer binds in that form (opened before this batch, or written around the CLI) is never done and refuses its read', (t) => {
+  const s = setup(t);
+  const change = 'chg-0123456789ab';
+  const digest = changes.procedureDigest(fs.readFileSync(s.procedure, 'utf8'));
+  const old = s.log.append({ kind: 'procedure', command: H1.removePerson.command, gate: H1.removePerson.gate, r_class: 'R2', target: '[UPN]', read_back: 'okta:verify-group-member', procedure_sha256: digest, change });
+  s.log.append({ kind: 'approval', ref: 'IT-123', gate: H1.removePerson.gate, procedure_sha256: digest, change });
+  const refusal = changes.bindRefusal(s.log, change, 'okta:verify-group-member');
+  assert.match(String(refusal), /okta-group-membership-remove-person-portal/, 'the presence read is refused before any read');
+  assert.match(String(refusal), /open a new change/);
+  const presence = personRead(s, change, true, '');
+  assert.ok(presence.seq > old.seq);
+  const l = link(s, change, presence.seq);
+  assert.equal(l.code, 2, l.stdout);
+  const st = status(s, change);
+  assert.equal(st.json.done, false, st.stdout);
+  assert.ok(st.json.missing.some((m) => /open a new change/.test(m)), st.stdout);
+});
+
 // ── Batch G3 close-out 3, owner decision H2: the approval covers N ─────────────────────────────
 // A counted gate's saved procedure carries its count on one line, Count: N; open refuses an
 // --expected that differs from it, and a procedure without one, so the digest the approval names

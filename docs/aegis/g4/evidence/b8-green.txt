@@ -1,0 +1,16 @@
+# command: node --test scripts/eval/judged/thresholds.test.js
+# commit: 0441be5 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:45Z  node: v24.22.1
+✔ flags are parsed in range and refused out of range (3.315529ms)
+✔ a thresholds file outside the repository is read; a flag wins over it (3.471729ms)
+✔ a thresholds file inside the repository, with an unknown key, out of range, or not an object is refused (3.641763ms)
+✔ the run verdict: PASS, FAIL, and never PASS without a threshold (0.949167ms)
+✔ the agreement verdict compares the overall kappa with the agreement threshold (0.298587ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97.8656
+# exit: 0  finished: 2026-10-31T23:57:45Z

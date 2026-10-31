@@ -642,4 +642,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { SPEC, run, WRITE_MUTATIONS, checkDocuments, normaliseBody, noteDigest, defaultNoteRoots };
+module.exports = { SPEC, run, WRITE_MUTATIONS, checkDocuments, normaliseBody, noteDigest, defaultNoteRoots, COMMANDS };

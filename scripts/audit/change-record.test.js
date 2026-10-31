@@ -179,7 +179,8 @@ test('open needs the read-back that proves the change; link refuses another kind
   assert.equal(o.code, 0, o.stderr);
   s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
   // a verified read-back of another connector, and of another okta command
-  const fleet = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-checked-in', verified: true, state: 'OK', change: null });
+  // its time bound is a pass flag since batch G4 (task A3), so the entry records its flags
+  const fleet = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-checked-in', verified: true, state: 'OK', change: null, flags: '' });
   const status = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-status', verified: true, state: 'OK', change: null, flags: '--status SUSPENDED' });
   for (const v of [fleet, status]) {
     const before = s.log.entries().length;
@@ -712,13 +713,14 @@ test('a read-back named for several gates in one comment binds each of them', (t
   const s = setup(t);
   const open = (command, gate, readBack) => s.run(CLI, ['open', '--command', command, '--gate', gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure]);
   const named = [
-    ['password-reset', 'password-reset-cloud-portal', 'msgraph:verify-password-changed'],
-    ['password-reset', 'password-cloud-reset', 'msgraph:verify-password-changed'],
-    ['password-reset', 'password-reset-synced-portal', 'msgraph:verify-password-changed'],
-    ['password-reset', 'password-session-revoke-portal', 'msgraph:verify-sessions-revoked'],
-    ['password-reset', 'password-session-revoke', 'msgraph:verify-sessions-revoked'],
-    ['security-alert-triage', 'security-session-revoke-portal', 'msgraph:verify-sessions-revoked'],
-    ['security-alert-triage', 'security-session-revoke', 'msgraph:verify-sessions-revoked'],
+    // since batch G4 (task A3) a time-bounded read-back is named with its bound, bare
+    ['password-reset', 'password-reset-cloud-portal', 'msgraph:verify-password-changed --not-before'],
+    ['password-reset', 'password-cloud-reset', 'msgraph:verify-password-changed --not-before'],
+    ['password-reset', 'password-reset-synced-portal', 'msgraph:verify-password-changed --not-before'],
+    ['password-reset', 'password-session-revoke-portal', 'msgraph:verify-sessions-revoked --not-before'],
+    ['password-reset', 'password-session-revoke', 'msgraph:verify-sessions-revoked --not-before'],
+    ['security-alert-triage', 'security-session-revoke-portal', 'msgraph:verify-sessions-revoked --not-before'],
+    ['security-alert-triage', 'security-session-revoke', 'msgraph:verify-sessions-revoked --not-before'],
   ];
   for (const [command, gate, readBack] of named) {
     const other = open(command, gate, 'msgraph:verify-group-member');
@@ -1157,8 +1159,8 @@ test('A2: two approvals of one change raced from two processes: exactly one is r
 // A time bound (--not-before) is recorded with its read-back: the change names it bare (its value is
 // chosen after the approval), the verify entry records the value in UTC, and a --not-before earlier
 // than the change's approval never proves the change, since it could pass on a change made before
-// the approval. Closed-set flags newly declared (--method, --factor-type) and the digest and type
-// flags count only with the same value.
+// the approval. The closed-set flag newly declared (--method) and the digest and type flags count
+// only with the same value.
 const { testRunbooks } = require('./trail-helper.js');
 const DIGEST_A = 'a'.repeat(64);
 const DIGEST_B = 'b'.repeat(64);
@@ -1267,7 +1269,9 @@ test('A3: a change whose read-back takes a time bound is not opened without it, 
   assert.match(good.json.next.join(' '), /--not-before at or after the approval/);
 });
 
-test('A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done', (t) => {
+// --factor-type stays not a pass flag (scripts/adapters/verify-flags.js gives the reason), so it is
+// not among these cases.
+test('A3: a mismatched --expect-sha256, --type or --method is not done', (t) => {
   const cases = [
     ['slack:verify-posted', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
     ['linear:verify-comment', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
@@ -1275,7 +1279,6 @@ test('A3: a mismatched --expect-sha256, --type, --method or --factor-type is not
     ['jamf:verify-command', '--not-before --type INSTALL_PROFILE', (ms) => `--not-before ${iso(ms)} --type REMOVE_PROFILE`],
     ['slack:verify-guest', '--type single', () => '--type multi'],
     ['msgraph:verify-mfa-method', '--method microsoftAuthenticator', () => '--method phone'],
-    ['okta:verify-factor-reset', '--factor-type push', () => '--factor-type sms'],
   ];
   for (const [kind, named, other] of cases) {
     const tr = inProcessTrail(t);

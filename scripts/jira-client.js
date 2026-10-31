@@ -1001,6 +1001,7 @@ if (require.main === module) {
 
 module.exports = {
   EXIT_VERIFY_DRY_RUN,
+  VERIFY_FLAGS,
   JIRA_SPEC,
   REQUEST_TIMEOUT_MS,
   TRANSITION_PAGE_LIMIT,

@@ -148,7 +148,8 @@ function lineFlags(kind, argv) {
   const flags = new Map();
   for (let i = 1; i < argv.length; i += 1) {
     const name = argv[i].startsWith('--') ? argv[i].slice(2) : null;
-    if (name && hasOwn(rules, name)) flags.set(name, rules[name] === audit.SWITCH ? null : argv[i + 1]);
+    // a time bound is named bare: its value is chosen when the read-back runs (batch G4, task A3)
+    if (name && hasOwn(rules, name)) flags.set(name, rules[name] === audit.SWITCH || rules[name] === audit.TIME ? null : argv[i + 1]);
   }
   return flags;
 }
@@ -268,6 +269,25 @@ function checkCount(text, expected) {
 class InputError extends Error {}
 class NotDone extends Error {}
 
+// The first time bound a read-back ran with that is earlier than the change's approval, or null
+// (batch G4, task A3; D10 on PR #9). A read with --not-before before the approval could pass on a
+// change made before it, so it never proves the change.
+function earlyBound(entry, approval) {
+  if (!approval || typeof approval.at !== 'string') return null;
+  const approvedMs = Date.parse(approval.at);
+  for (const [name, ms] of audit.timeBounds(entry)) {
+    if (ms < approvedMs) return { flag: name, value: new Date(ms).toISOString(), approvedAt: approval.at };
+  }
+  return null;
+}
+const earlyReason = (e) => `ran with --${e.flag} ${e.value}, earlier than the approval at ${e.approvedAt}, so it could pass on a change made before the approval; run it again with --${e.flag} at or after ${e.approvedAt}`;
+// whether a named read-back carries a time bound, so the steps say when it may start
+const timeBoundOf = (readBack) => {
+  const { kind, values } = audit.parseReadBack(readBack);
+  const rules = audit.PASS_FLAGS[kind] || {};
+  return [...values.keys()].find((name) => rules[name] === audit.TIME) || null;
+};
+
 // The digest of an issued procedure: CR LF to LF, trailing spaces and tabs removed from
 // each line, trailing newlines removed, so a copy saved by another editor still matches.
 function procedureDigest(text) {
@@ -329,7 +349,7 @@ function changeView(log, change, entries = null) {
   if (view.stale) view.missing.push(view.stale);
   const approvals = all.filter((e) => e.kind === 'approval' && e.change === change && e.seq > procedure.seq);
   const approval = approvals.find((e) => e.procedure_sha256 === procedure.procedure_sha256);
-  if (approval) view.approval = { seq: approval.seq, ref: approval.ref, matches: true };
+  if (approval) view.approval = { seq: approval.seq, ref: approval.ref, at: approval.at, matches: true };
   else if (approvals.length) {
     view.approval = { seq: approvals[0].seq, ref: approvals[0].ref, matches: false };
     view.missing.push('the approved digest does not match the procedure Aegis issued, so the approval does not cover it');
@@ -347,13 +367,15 @@ function changeView(log, change, entries = null) {
   // the same read-back run with the same pass flags (batch G3 close-out 3, owner decision H1)
   const ofKind = linked.filter((e) => readBackOf(e) === procedure.read_back);
   const readBacks = ofKind.filter((e) => e.change === change);
-  const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq);
+  const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq && !earlyBound(e, approval));
+  const early = approval ? readBacks.filter((e) => e.verified === true && e.seq > approval.seq).map((e) => earlyBound(e, approval)).find(Boolean) : null;
   if (proving) view.readBack = { seq: proving.seq, connector: proving.connector, command: proving.command, verified: true };
   else if (!readBacks.length && !linked.length && taken.length) view.missing.push(`the linked read-back already proves ${owner.get(taken[0].verify_seq)}; one read-back proves one change`);
   else if (!readBacks.length && ofKind.length) view.missing.push(`the linked read-back was not run with --change ${change}, so it is not bound to this change`);
   else if (!readBacks.length && linked.length) view.missing.push(`the linked read-back is not the one this change names (${procedure.read_back})`);
   else if (!readBacks.length) view.missing.push(`no ${procedure.read_back} read-back is linked to this change`);
   else if (!readBacks.some((e) => e.verified === true)) view.missing.push('the linked read-back did not verify the change');
+  else if (early) view.missing.push(`the linked read-back ${earlyReason(early)}`);
   else if (approval) view.missing.push('the linked read-back ran before the approval, so it does not prove the approved change');
   // with no matching approval, the missing approval above is the reason; no read-back reason
   view.done = view.missing.length === 0;
@@ -398,7 +420,10 @@ function countedView(view, all, change, procedure, approval) {
   // blocks (code review round 3 of the batch G3 close-out 2, finding 1)
   const answered = [];
   for (const e of bound) {
-    if (e.verified !== true && e.state !== 'OK') uncounted.push({ ...brief(e), reason: 'the read got no answer, so it proves nothing about any object' });
+    const early = earlyBound(e, approval);
+    // a time bound earlier than the approval proves nothing about this change (batch G4, task A3)
+    if (early) uncounted.push({ ...brief(e), reason: `it ${earlyReason(early)}` });
+    else if (e.verified !== true && e.state !== 'OK') uncounted.push({ ...brief(e), reason: 'the read got no answer, so it proves nothing about any object' });
     else answered.push(e);
   }
   if (runKind) {
@@ -480,7 +505,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   const out = io.out || ((s) => process.stdout.write(s));
   const err = io.err || ((s) => process.stderr.write(s));
   const [command, ...rest] = argv;
-  const log = audit.openAuditLog({ dir: audit.defaultAuditDir(env) });
+  // io.now: a clock for the tests that run the CLI in their own process; the command line never sets it
+  const log = audit.openAuditLog({ dir: audit.defaultAuditDir(env), ...(typeof io.now === 'function' ? { now: io.now } : {}) });
   try {
     const flags = parseFlags(rest);
     if (command === 'open') {
@@ -511,6 +537,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
           : expected
             ? `Run the ${named.readBack} read-back with --change ${change} (it refuses to read until this change is approved) and read each of the ${expected} objects once: a re-read of the same object is not detected. status --change ${change} reports "verified k of ${expected}" and is done only when exactly ${expected} read-backs passed after the approval and none failed`
             : `Run the ${named.readBack} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
+        // batch G4, task A3: a time bound is chosen after the approval
+        ...(timeBoundOf(named.readBack) ? [`Give the read-back --${timeBoundOf(named.readBack)} at or after the approval's time, which approve prints: a read bounded earlier never proves this change`] : []),
       ] }, null, 2)}\n`);
       return 0;
     }
@@ -530,7 +558,9 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
         const earlier = all.find((e) => e.kind === 'approval' && e.change === flags.change);
         if (earlier) throw new NotDone(`change ${flags.change} already has an approval (audit seq ${earlier.seq}, ${earlier.ref}); one approval per change. Nothing was recorded`);
       } });
-      out(`${JSON.stringify({ ok: true, change: flags.change, ref: flags.ref, audit_seq: r.seq, note: 'The approval authorizes a person\'s procedure. Aegis makes no change: a person runs it, then the verify-* read-back proves it.' }, null, 2)}\n`);
+      const bound = timeBoundOf(view.procedure.read_back);
+      out(`${JSON.stringify({ ok: true, change: flags.change, ref: flags.ref, audit_seq: r.seq, approved_at: r.at, note: 'The approval authorizes a person\'s procedure. Aegis makes no change: a person runs it, then the verify-* read-back proves it.',
+        ...(bound ? { next: `Run the ${view.procedure.read_back} read-back with --change ${flags.change} and --${bound} at or after ${r.at}, the approval's time: a read bounded earlier never proves this change` } : {}) }, null, 2)}\n`);
       return 0;
     }
     if (command === 'link') {
@@ -553,6 +583,9 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       // batch G3 close-out (owner decision 1): only a read-back run with --change <this id>
       if (target.change === null) throw new NotDone(`that read-back was run without --change, so it is not bound to any change; run it again with --change ${flags.change}. Nothing was recorded`);
       if (target.change !== flags.change) throw new NotDone(`that read-back was recorded for ${target.change}. Nothing was recorded`);
+      // a time bound earlier than the approval (batch G4, task A3)
+      const early = earlyBound(target, view.approval);
+      if (early) throw new NotDone(`that read-back ${earlyReason(early)}. Nothing was recorded`);
       // checked under the write lock, so two links of one read-back cannot both succeed
       const r = log.append({ kind: 'change-link', change: flags.change, verify_seq: seq }, { guard: (all) => {
         const earlier = all.find((e) => e.kind === 'change-link' && e.verify_seq === seq);

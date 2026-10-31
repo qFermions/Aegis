@@ -38,12 +38,13 @@ const NOT_PASS_ANY = Object.freeze({
   channel: OBJECT, device: OBJECT, 'profile-id': OBJECT, 'profile-identifier': OBJECT, 'role-id': OBJECT,
   'management-id': OBJECT, 'execution-id': OBJECT, identifier: OBJECT, 'app-id': OBJECT, 'comment-id': OBJECT,
   'issue-id': OBJECT, author: OBJECT, target: OBJECT, 'method-id': OBJECT,
-  'not-before': TIME, 'from-version': TIME,
+  // batch G4, task A3: --not-before is a pass flag now (D10 on PR #9); the version bound stays here
+  'from-version': TIME,
 });
 const NOT_PASS = Object.freeze({
   'okta:verify-app-assigned --app': OBJECT,
   'okta:verify-factor-reset --factor-type': `${OBJECT}: which factor`,
-  'msgraph:verify-mfa-method --method': `${OBJECT}: which method`,
+  // batch G4, task A3: msgraph verify-mfa-method --method is a pass flag now (the owner's minimum)
   'linear:verify-state --state': `${FREE}: a workflow state`,
   'linear:verify-labels --has': `${FREE}: a label`,
   'jira:verify-transition --to-status': `${FREE}: a status`,
@@ -92,7 +93,9 @@ test('each pass flag is a flag its connector takes, and every value rule is a cl
     for (const [flag, rule] of Object.entries(flags)) {
       assert.ok(src.includes(`'${flag}'`) || src.includes(`${flag}:`), `${kind} --${flag}: the connector takes the flag`);
       if (rule === 'switch') continue;
-      assert.ok(rule instanceof RegExp, `${kind} --${flag}: a switch or a value rule`);
+      // batch G4, task A3: a time bound is its own rule (a UTC time, checked in audit-log.js)
+      if (rule === 'time') { assert.equal(flag, 'not-before', `${kind} --${flag}: only --not-before is a time bound`); continue; }
+      assert.ok(rule instanceof RegExp, `${kind} --${flag}: a switch, a time bound or a value rule`);
       assert.ok(!rule.test('two words') && !rule.test(''), `${kind} --${flag}: no free text, no empty value`);
     }
   }

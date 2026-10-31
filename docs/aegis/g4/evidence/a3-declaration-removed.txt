@@ -1,0 +1,85 @@
+# command: node --test scripts/adapters/verify-flags.test.js
+# commit: fb00f3d (plus uncommitted changes in the working tree)  started: 2026-10-31T23:48:30Z  node: v24.22.1
+# the run above was made with one declaration removed: msgraph verify-sessions-revoked --not-before (the line read "verify-sessions-revoked: { user: OBJECT }"), then restored
+✖ every verify-* command of the nine connectors declares every flag it takes, and nothing it does not take (25.885028ms)
+✖ a declaration removed, or a flag a connector takes that no declaration names, is caught (1.389064ms)
+✖ the owner's minimum is a pass flag wherever a command takes it: --not-before, --absent, --expect-sha256, --type, --method, --expect (1.685303ms)
+✔ every flag that is not a pass flag says why, and the trail's PASS_FLAGS are exactly the declared pass flags (1.328942ms)
+✔ the declarations module loads no connector and no network module (0.339332ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 110.578939
+
+✖ failing tests:
+
+test at scripts/adapters/verify-flags.test.js:53:1
+✖ every verify-* command of the nine connectors declares every flag it takes, and nothing it does not take (25.885028ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'msgraph verify-sessions-revoked --not-before: taken, not declared'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-flags.test.js:58:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'msgraph verify-sessions-revoked --not-before: taken, not declared' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-flags.test.js:61:1
+✖ a declaration removed, or a flag a connector takes that no declaration names, is caught (1.389064ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'msgraph verify-sessions-revoked --not-before: taken, not declared',
+      'okta verify-status --since: taken, not declared'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-flags.test.js:68:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'msgraph verify-sessions-revoked --not-before: taken, not declared', 'okta verify-status --since: taken, not declared' ],
+    expected: [ 'okta verify-status --since: taken, not declared' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-flags.test.js:76:1
+✖ the owner's minimum is a pass flag wherever a command takes it: --not-before, --absent, --expect-sha256, --type, --method, --expect (1.685303ms)
+  AssertionError [ERR_ASSERTION]: msgraph verify-sessions-revoked --not-before is a pass flag
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-flags.test.js:83:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T23:48:30Z

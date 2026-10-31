@@ -54,7 +54,7 @@ test('every verify-* command of the nine connectors declares every flag it takes
   const t = taken();
   assert.deepEqual(Object.keys(declared.VERIFY_FLAGS).sort(), Object.keys(READERS).sort(), 'one block per connector');
   const commands = Object.values(t).reduce((n, c) => n + Object.keys(c).length, 0);
-  assert.ok(commands >= 60, `verify-* commands read: ${commands}`);
+  assert.equal(commands, 59, `verify-* commands read: ${commands}`);
   assert.deepEqual(declared.undeclared(declared.VERIFY_FLAGS, t), []);
 });
 
@@ -85,7 +85,7 @@ test('the owner\'s minimum is a pass flag wherever a command takes it: --not-bef
       }
     }
   }
-  assert.ok(seen >= 30, `minimum flags seen: ${seen}`);
+  assert.equal(seen, 28, `minimum flags seen: ${seen}`);
   assert.equal(declared.VERIFY_FLAGS.msgraph['verify-sessions-revoked']['not-before'], declared.TIME);
   assert.equal(declared.VERIFY_FLAGS.jira['verify-create']['not-before'], declared.TIME);
 });

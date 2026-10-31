@@ -777,4 +777,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { SPEC, run, KEY_LIKE, SECRET_PATH, stripKeyLike, checkRoutes };
+module.exports = { SPEC, run, KEY_LIKE, SECRET_PATH, stripKeyLike, checkRoutes, COMMANDS };

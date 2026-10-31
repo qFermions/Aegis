@@ -707,4 +707,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { SPEC, run, makeSpec, SCOPES, READ_ONLY_SCOPE_NAMES, checkScopes, collectTenant };
+module.exports = { SPEC, run, makeSpec, SCOPES, READ_ONLY_SCOPE_NAMES, checkScopes, collectTenant, COMMANDS };

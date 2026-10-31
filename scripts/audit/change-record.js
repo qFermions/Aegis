@@ -11,7 +11,7 @@
 // The approval authorizes a person's procedure; it never triggers a write by Aegis: this
 // module writes the local audit trail and nothing else.
 //
-//   node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --read-back CONNECTOR:verify-... --procedure-file FILE
+//   node scripts/audit/change-record.js open --command C --gate G --r-class R2|R3 --target [UPN] --read-back CONNECTOR:verify-... --procedure-file FILE [--expected N]
 //   node scripts/audit/change-record.js approve --change chg-... --ref IT-123 --procedure-sha256 H
 //   node scripts/audit/change-record.js link --change chg-... --verify-seq N
 //   node scripts/audit/change-record.js status --change chg-...
@@ -20,6 +20,11 @@
 // this trail holds the change opened for that connector and command with an approval of its
 // procedure (bindRefusal below); its verify entry then carries the change id, and link accepts
 // only a read-back recorded under this change.
+// Batch G3 close-out 2 (owner decision 2): a gate whose required confirmation names a count of
+// objects, each proved by its own read-back (COUNTED_GATES), is a counted batch change: open
+// takes --expected N, the number written in the ticket, and status reports "verified k of N",
+// lists each failed read-back, and is done only when N distinct bound read-backs passed after
+// the approval; anything less is partial. A gate without a count keeps the one-read-back rule.
 // Exit codes: 0 done (status) or recorded; 1 input error or refused; 2 not done, a digest
 // that does not match, or a broken trail.
 
@@ -49,6 +54,18 @@ const CONNECTOR_FILES = Object.freeze({
   linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js',
   okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js',
 });
+// Gates whose required confirmation names a count of objects the change acts on, each object
+// proved by its own verify-* read-back (batch G3 close-out 2, owner decision 2), with the
+// placeholder that holds the count. Every other gate that names a number is listed with its
+// reason in counted-gates.test.js, which holds this table equal to the runbooks.
+const COUNTED_GATES = Object.freeze({
+  'fleet-device-actions-batch-script-portal': '[HOST_COUNT]',
+  'github-security-alerts-dependabot-bulk-dismiss-portal': '[ALERT_COUNT]',
+  'okta-group-membership-bulk-add-portal': '[N]',
+  'okta-group-membership-bulk-remove-portal': '[N]',
+});
+const EXPECTED = /^[1-9][0-9]{0,4}$/;
+
 // A command is a key line of a command table: two spaces, the quoted name, a colon.
 const hasCommandKey = (source, command) => new RegExp(`^  '${command}': `, 'm').test(source);
 
@@ -97,8 +114,8 @@ function parseFlags(argv) {
   return flags;
 }
 
-function need(flags, names) {
-  for (const key of Object.keys(flags)) if (!names.includes(key)) throw new InputError(`unknown flag --${key.slice(0, 40)}`);
+function need(flags, names, optional = []) {
+  for (const key of Object.keys(flags)) if (!names.includes(key) && !optional.includes(key)) throw new InputError(`unknown flag --${key.slice(0, 40)}`);
   for (const name of names) if (flags[name] === undefined) throw new InputError(`--${name} is required`);
 }
 
@@ -135,6 +152,7 @@ function changeView(log, change, entries = null) {
   const linked = links.filter((l) => owner.get(l.verify_seq) === change).map((l) => bySeq.get(l.verify_seq)).filter((e) => e && e.kind === 'verify');
   // only a read-back recorded under this change counts (batch G3 close-out), so one linked
   // around the CLI, unbound or bound to another change, never makes the change done
+  if (Number.isInteger(procedure.expected)) return countedView(view, all, change, procedure, approval);
   const ofKind = linked.filter((e) => kindOf(e) === procedure.read_back);
   const readBacks = ofKind.filter((e) => e.change === change);
   const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq);
@@ -147,6 +165,44 @@ function changeView(log, change, entries = null) {
   else if (approval) view.missing.push('the linked read-back ran before the approval, so it does not prove the approved change');
   // with no matching approval, the missing approval above is the reason; no read-back reason
   view.done = view.missing.length === 0;
+  return view;
+}
+
+// A counted batch change (batch G3 close-out 2, owner decision 2): N objects, each proved by its
+// own read-back. Only bound read-backs of the named kind recorded after the approval count (a
+// bound read-back carries this change id, so it needs no link). Where the read-back records a
+// run id (a job id), each run counts once and a run that failed and later passed counts as
+// passed; where it records none, each bound read-back counts and a repeated read of the same
+// object is not detected. Done only when exactly N passed and none is still failed.
+// approval: the approval entry of the issued digest, or undefined (changeView already says why)
+function countedView(view, all, change, procedure, approval) {
+  const expected = procedure.expected;
+  const bound = approval
+    ? all.filter((e) => e.kind === 'verify' && e.change === change && kindOf(e) === procedure.read_back && e.seq > approval.seq)
+    : [];
+  const runs = new Map();
+  const unrun = [];
+  for (const e of bound) {
+    if (typeof e.run !== 'string') { unrun.push(e); continue; }
+    const r = runs.get(e.run) || { passed: false, failed: [] };
+    if (e.verified === true) r.passed = true; else r.failed.push(e);
+    runs.set(e.run, r);
+  }
+  const passed = [...runs.values()].filter((r) => r.passed).length + unrun.filter((e) => e.verified === true).length;
+  const failed = [...[...runs.values()].filter((r) => !r.passed).flatMap((r) => r.failed), ...unrun.filter((e) => e.verified !== true)]
+    .sort((a, b) => a.seq - b.seq);
+  view.expected = expected;
+  view.verified = passed;
+  view.summary = `verified ${passed} of ${expected}`;
+  view.failed = failed.map((e) => ({ seq: e.seq, run: typeof e.run === 'string' ? e.run : null, state: e.state }));
+  if (unrun.length) view.note = `${procedure.read_back} records no run id, so each bound read-back that passed counts once and a repeated read of the same object is not detected`;
+  if (approval) {
+    for (const f of view.failed) view.missing.push(`the read-back at audit seq ${f.seq}${f.run ? ` (run ${f.run})` : ''} did not verify (${f.state}); that object is not proven`);
+    if (passed < expected) view.missing.push(`verified ${passed} of ${expected}: ${expected - passed} more bound ${procedure.read_back} read-back(s) must pass`);
+    if (passed > expected) view.missing.push(`verified ${passed} of ${expected}: more than the ${expected} the ticket names; check the batch against the ticket`);
+  }
+  view.done = view.missing.length === 0;
+  view.result = view.done ? 'done' : 'partial';
   return view;
 }
 
@@ -171,16 +227,23 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   try {
     const flags = parseFlags(rest);
     if (command === 'open') {
-      need(flags, ['command', 'gate', 'r-class', 'target', 'read-back', 'procedure-file']);
+      need(flags, ['command', 'gate', 'r-class', 'target', 'read-back', 'procedure-file'], ['expected']);
       if (flags['r-class'] !== 'R2' && flags['r-class'] !== 'R3') throw new InputError('a change record is for an R2 or R3 procedure; R0 and R1 need none');
+      const count = Object.prototype.hasOwnProperty.call(COUNTED_GATES, flags.gate) ? COUNTED_GATES[flags.gate] : null;
+      if (flags.expected !== undefined && !EXPECTED.test(flags.expected)) throw new InputError('--expected is the number of objects written in the ticket, a whole number from 1 to 99999');
+      if (count && flags.expected === undefined) throw new InputError(`gate ${flags.gate} names a count (${count}): open it with --expected N, the number written in the ticket`);
+      if (!count && flags.expected !== undefined) throw new InputError(`gate ${flags.gate} names no count; a change without a count is proved by one read-back, so --expected is not taken`);
+      const expected = count ? Number(flags.expected) : null;
       checkReadBack(flags['read-back']);
       const digest = procedureDigest(readProcedure(flags['procedure-file']));
       const change = `chg-${crypto.createHash('sha256').update(`${flags.gate}\n${digest}\n${Date.now()}\n${crypto.randomBytes(8).toString('hex')}`).digest('hex').slice(0, 12)}`;
-      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: flags['read-back'], procedure_sha256: digest, change });
+      const r = log.append({ kind: 'procedure', command: flags.command, gate: flags.gate, r_class: flags['r-class'], target: flags.target, read_back: flags['read-back'], procedure_sha256: digest, change, expected });
       out(`${JSON.stringify({ ok: true, change, procedure_sha256: digest, audit_seq: r.seq, next: [
         'A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>',
         'A person runs the procedure (Aegis does not)',
-        `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
+        expected
+          ? `Run the ${flags['read-back']} read-back with --change ${change} once for each of the ${expected} objects (it refuses to read until this change is approved); status --change ${change} reports "verified k of ${expected}" and is done only when ${expected} distinct read-backs passed after the approval`
+          : `Run the ${flags['read-back']} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
       ] }, null, 2)}\n`);
       return 0;
     }
@@ -237,6 +300,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, main };
+module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, main, COUNTED_GATES };
 
 if (require.main === module) process.exitCode = main();

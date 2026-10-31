@@ -73,6 +73,9 @@ const PLACEHOLDER = /^\[(?:@Aegion_[A-Za-z0-9_]{1,40}|[A-Z][A-Z0-9_]{0,39}|USER@
 const ISSUE_KEY = /^[A-Z][A-Z0-9]{0,9}-[1-9][0-9]{0,6}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const CHANGE_ID = /^chg-[0-9a-f]{12}$/;
+// A run id a read-back recorded (batch G3 close-out 2): a job id such as Fleet's script
+// execution id, the same shape as a request id, so it holds no space and no mail address.
+const RUN_ID = REQUEST_ID;
 
 // Credential shapes refused in any value, whatever its field allows (defence in depth):
 // Slack, GitHub, OpenAI-style, Google, GitLab and Okta tokens, a JWT, a bearer or basic
@@ -92,13 +95,15 @@ const KINDS = Object.freeze({
   procedure: {
     command: matches(COMMAND), gate: nullable(matches(GATE)), r_class: matches(R_CLASS), target: matches(PLACEHOLDER),
     read_back: nullable(matches(READ_BACK)), procedure_sha256: nullable(matches(SHA256)), change: nullable(matches(CHANGE_ID)),
+    // the number of objects a counted batch change acts on, as written in the ticket
+    expected: nullable(isInt(1, 99999)),
   },
   approval: {
     ref: matches(ISSUE_KEY), gate: matches(GATE), procedure_sha256: matches(SHA256), change: matches(CHANGE_ID),
   },
   verify: {
     connector: matches(NAME), command: matches(VERIFY_COMMAND), verified: (v) => typeof v === 'boolean', state: oneOf(STATES),
-    change: nullable(matches(CHANGE_ID)),
+    change: nullable(matches(CHANGE_ID)), run: nullable(matches(RUN_ID)),
   },
   // joins a verify-* result already in the trail (its seq) to a change record
   'change-link': {
@@ -130,6 +135,7 @@ function checkEntry(entry) {
       throw new AuditRefused('a procedure under a change id needs its read-back, digest and gate, and an R2 or R3 class');
     }
   }
+  if (kind === 'procedure' && fields.expected !== null && fields.change === null) throw new AuditRefused('a count is recorded only on a change record');
   return fields;
 }
 

@@ -98,10 +98,20 @@ function changeRefusal(connector, command, bound, audit) {
 // finding 6).
 const verdictState = (state) => (AUDITED_STATES.has(state) ? state : 'INVALID_RESPONSE');
 
-function recordVerdict(audit, connector, output, change) {
+// Read-backs that take a job id (batch G3 close-out 2, owner decision 2): connector:command to
+// the flag that holds it. The id is recorded as the verify entry's run, so a counted batch
+// change (change-record.js) counts each run once. Only a job id belongs here, never a user,
+// email, device name or serial.
+const RUN_ID_FLAGS = Object.freeze({ 'fleet:verify-script': 'execution-id' });
+const runIdOf = (connector, command, args) => {
+  const flag = RUN_ID_FLAGS[`${connector}:${command}`];
+  return flag && args && typeof args[flag] === 'string' ? args[flag] : null;
+};
+
+function recordVerdict(audit, connector, output, change, run = null) {
   if (!audit || !output || typeof output.verified !== 'boolean' || typeof output.command !== 'string' || !VERIFY_COMMAND.test(output.command)) return output;
   try {
-    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null });
+    const written = audit({ kind: 'verify', connector, command: output.command, verified: output.verified, state: verdictState(output.state), change: typeof change === 'string' ? change : null, run: typeof run === 'string' ? run : null });
     const linkable = typeof change === 'string' && output.verified === true && written && Number.isInteger(written.seq);
     return linkable ? { ...output, audit_seq: written.seq } : output;
   } catch {
@@ -109,4 +119,4 @@ function recordVerdict(audit, connector, output, change) {
   }
 }
 
-module.exports = { cliDeps, recordVerdict, takeChange, changeRefusal, verdictState, NOT_A_READ_BACK };
+module.exports = { cliDeps, recordVerdict, takeChange, changeRefusal, verdictState, runIdOf, RUN_ID_FLAGS, NOT_A_READ_BACK };

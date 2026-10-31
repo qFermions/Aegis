@@ -426,7 +426,9 @@ test('every connector with a verify-* command takes --change out of argv, checks
       // each call's arguments, with parentheses nested up to two levels
       const calls = [...src.matchAll(/recordVerdict\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)\)/g)].map((m) => m[1]);
       assert.ok(calls.length >= 1, `${name}: records its verdicts`);
-      for (const call of calls) assert.match(call, /,\s*bound\.change\s*$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change last`);
+      // bound.change is the fourth argument; a read-back that takes a job id adds its run id after
+      // it (batch G3 close-out 2, owner decision 2)
+      for (const call of calls) assert.match(call, /,\s*bound\.change\s*(?:,\s*runIdOf\('[a-z-]+', name, args\)\s*)?$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change fourth`);
     }
   }
   assert.equal(checked, 9, 'the nine connectors with read-backs');

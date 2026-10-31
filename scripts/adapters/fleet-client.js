@@ -32,7 +32,7 @@
 const {
   STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
 } = require('./readonly-contract.js');
-const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
+const { cliDeps, recordVerdict, takeChange, changeRefusal, runIdOf } = require('./cli-support.js');
 
 // ── Validators ───────────────────────────────────────────────────────────────
 const ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software title ids
@@ -640,7 +640,7 @@ async function run(argv, env = process.env, deps = {}) {
     if (outcome.note) output.note = outcome.note;
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
-  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change), { out, err, secrets });
+  return emit(recordVerdict(cli.audit, 'fleet', output, bound.change, runIdOf('fleet', name, args)), { out, err, secrets });
 }
 
 // Read only after the client has used it, so printed output can be redacted

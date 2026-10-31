@@ -233,6 +233,8 @@ node scripts/adapters/okta-client.js group-members --group [OKTA_GROUP_ID] --exe
 
 ### Phase E1: Add the listed people
 
+**Counted change:** open the change record for [okta-group-membership-bulk-add-portal] with `--expected [N]`, the number of people on the list in the ticket. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N" over the bound `verify-group-member` read-backs, one per person, lists any that failed, and reads done only when all [N] passed; anything less reads partial. The read-back records no run id, so a repeated read of the same person is not detected: read each person on the list once.
+
 <!-- SAFETY GATE [okta-group-membership-bulk-add-portal] -->
 - **Target:** [N] people on the change list and [GROUP_NAME]
 - **Effect:** assign every person on the change list to one Okta group; each gets every app the group is assigned
@@ -253,6 +255,8 @@ node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event group.use
 ```
 
 ### Phase E2: Remove the listed people
+
+**Counted change:** open the change record for [okta-group-membership-bulk-remove-portal] with `--expected [N]`, the number of people on the list in the ticket. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N" over the bound `verify-group-member --absent` read-backs, one per person, lists any that failed, and reads done only when all [N] passed; anything less reads partial. The read-back records no run id, so a repeated read of the same person is not detected: read each person on the list once.
 
 <!-- SAFETY GATE [okta-group-membership-bulk-remove-portal] -->
 - **Target:** [N] people on the change list and [GROUP_NAME]

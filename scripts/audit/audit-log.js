@@ -73,9 +73,10 @@ const PLACEHOLDER = /^\[(?:@Aegion_[A-Za-z0-9_]{1,40}|[A-Z][A-Z0-9_]{0,39}|USER@
 const ISSUE_KEY = /^[A-Z][A-Z0-9]{0,9}-[1-9][0-9]{0,6}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const CHANGE_ID = /^chg-[0-9a-f]{12}$/;
-// A run id a read-back recorded (batch G3 close-out 2): a job id such as Fleet's script
-// execution id, the same shape as a request id, so it holds no space and no mail address.
-const RUN_ID = REQUEST_ID;
+// A run id a read-back recorded (batch G3 close-out 2): a job id, today Fleet's script
+// execution id, which Fleet documents as a UUID. Only a UUID is taken, so a serial, a host name
+// or a user name typed in its place is refused (security review 1 of that batch).
+const RUN_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 // Credential shapes refused in any value, whatever its field allows (defence in depth):
 // Slack, GitHub, OpenAI-style, Google, GitLab and Okta tokens, a JWT, a bearer or basic

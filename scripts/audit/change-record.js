@@ -211,10 +211,53 @@ const COUNT_LINE = /^Count: ([1-9][0-9]{0,4})$/;
 // one, and it must be exactly Count: N. A script comment that says count: is refused too, the
 // fail-safe side (code review round 1 of the batch G3 close-out 3, finding 12; round 2, finding 5;
 // round 3, finding 4: a list of shapes to strip always missed one).
-const COUNT_ANY = /(?<![a-z0-9])count(?![a-z0-9])[^a-z0-9\n]{0,8}:/i;
-const visible = (l) => l.normalize('NFKC').replace(/[\u200b-\u200f\u2060\ufeff]/g, '');
+const COUNT_ANY = /(?<![a-z0-9])count(?![a-z0-9])[^a-z0-9\n]{0,8}:/gi;
+// Batch G4, task A1 (security review 2's O1 on PR #9): a format character, a combining mark or a
+// look-alike letter disguised a count line, and a real count hidden in an HTML comment was the one
+// read. The text is folded before matching: compatibility decomposition, every \p{Cf} (format:
+// zero width, soft hyphen, bidi, tag), \p{Mn} and \p{Me} (combining marks) character removed, then
+// composed again, so a mark is dropped before it can merge with its letter (NFKC alone turns o plus
+// a diaeresis into one letter that is not o). Colons Unicode lists as confusable and NFKC leaves
+// alone are read as colons.
+const fold = (s) => s.normalize('NFKD').replace(/[\p{Cf}\p{Mn}\p{Me}]/gu, '').normalize('NFKC')
+  .replace(/[\u02d0\u02f8\u0589\u05c3\u16ec\u2236\ua789]/g, ':');
+// A five-letter word before a colon, with a letter outside A to Z where every A to Z letter is the
+// letter of "count" at its place (Cyrillic or Greek look-alikes, a small capital), is a disguised
+// count keyword: refused, never read as a count (the fail-safe side: a five-letter word wholly in
+// another script before a colon is refused too).
+const WORD_BEFORE_COLON = /(?<![\p{L}\p{N}])(\p{L}{5})(?![\p{L}\p{N}])[^\p{L}\p{N}\n]{0,8}:/gu;
+const disguisedCount = (word) => {
+  const letters = [...word];
+  return letters.length === 5 && letters.some((c) => !/[A-Za-z]/.test(c))
+    && letters.every((c, i) => !/[A-Za-z]/.test(c) || c.toLowerCase() === 'count'[i]);
+};
+// Regions a reader of the rendered procedure does not see: an HTML comment (to its end, or to the end
+// of the text when it is not closed), a template, script, style or noscript element, an element
+// marked hidden or styled display: none or visibility: hidden, and a Markdown reference line used
+// as a comment ([//]: # (...)). A count in one is refused, so the count is always in view.
+const HIDDEN = [
+  /<!--[\s\S]*?(?:-->|$(?![\s\S]))/g,
+  /<(template|script|style|noscript)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$(?![\s\S]))/gi,
+  /<([a-z][a-z0-9-]*)\b[^>]*?(?:\shidden\b|\sstyle\s*=\s*["'][^"']*(?:display\s*:\s*none|visibility\s*:\s*hidden))[^>]*>[\s\S]*?(?:<\/\1\s*>|$(?![\s\S]))/gi,
+  /^[ \t]{0,3}\[[^\]\n]*\]:[ \t]*(?:#|<>)[^\n]*$/gm,
+];
 function checkCount(text, expected) {
-  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => COUNT_ANY.test(visible(l)));
+  const raw = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, ''));
+  const folded = fold(raw.join('\n'));
+  const hidden = HIDDEN.flatMap((re) => [...folded.matchAll(re)].map((m) => [m.index, m.index + m[0].length]));
+  const lineAt = (i) => folded.slice(0, i).split('\n').length - 1;
+  const found = new Set();
+  for (const m of folded.matchAll(COUNT_ANY)) found.add(m.index);
+  const disguised = [...folded.matchAll(WORD_BEFORE_COLON)].filter((m) => disguisedCount(m[1])).map((m) => m.index);
+  // a hidden count first: in the O1 case the hidden line is the one that would have been read
+  for (const at of [...found, ...disguised]) {
+    if (hidden.some(([from, to]) => at >= from && at < to)) {
+      throw new InputError(`line ${lineAt(at) + 1} of the saved procedure holds a count inside an HTML comment or another hidden region, where the approver does not see it; the count is the one visible line Count: N`);
+    }
+  }
+  if (disguised.length) throw new InputError(`line ${lineAt(disguised[0]) + 1} of the saved procedure is a count line whose keyword holds a letter outside the Latin letters A to Z (a look-alike of Count); write the count as the one visible line Count: N`);
+  const lineNumbers = new Set([...found].map(lineAt));
+  const lines = [...lineNumbers].map((n) => raw[n]);
   if (lines.length !== 1 || !COUNT_LINE.test(lines[0])) {
     throw new InputError('the saved procedure of a counted gate carries one line Count: N, the number in the ticket, so the approval covers it');
   }

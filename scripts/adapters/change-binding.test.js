@@ -236,6 +236,34 @@ test('a verify-* with --change and no audit trail to check it against is refused
 // The runbooks: every read-back of a gate marked R2 or R3 passes --change [CHANGE_ID]; no other
 // read-back does (open refuses an R0 or R1 change record, so such a read-back could never
 // run); each runbook with one says where the id comes from; the dictionary registers it.
+// Code review round 2 of the batch G3 close-out 3, finding 1: open refuses a gate whose runbook
+// binds no read-back (round 1, finding 5), so a change-record paragraph that told the operator to
+// open one before every R2 or R3 gate sent them to a refusal; each paragraph now covers only the
+// gates with a read-back named for them. Finding 3: a scripted gate whose portal twin binds a
+// read-back binds it too, so open takes it on either path.
+test('runbooks: a change-record paragraph covers only gates with a read-back named for them, and a scripted gate binds its portal twin\'s read-back', () => {
+  const dir = path.join(__dirname, '..', '..', '.claude', 'commands');
+  let paragraphs = 0;
+  for (const file of fs.readdirSync(dir).filter((n) => n.endsWith('.md'))) {
+    const text = fs.readFileSync(path.join(dir, file), 'utf8');
+    const para = (text.match(/^\*\*Change record \([^)]*\):\*\* [^\n]*/m) || [null])[0];
+    if (para) {
+      paragraphs += 1;
+      assert.match(para, /before a gate whose reversibility is (?:R2 or R3|R2|R3) and that has a read-back named for it/, `${file}: the paragraph covers only gates with a read-back`);
+      assert.match(para, /takes no change record/, `${file}: the paragraph says a gate with no read-back takes none`);
+    }
+    const bound = new Set(changes.boundReadBacks(text).flatMap((b) => b.gates));
+    for (const [, gate] of text.matchAll(/^# SAFETY GATE \[([^\]]+)\]/gm)) {
+      if (bound.has(`${gate}-portal`)) assert.ok(bound.has(gate), `${file}: ${gate} binds the read-back of ${gate}-portal`);
+    }
+  }
+  assert.ok(paragraphs >= 20, `${paragraphs} change-record paragraphs`);
+  const okta = fs.readFileSync(path.join(dir, 'okta-mfa-reset.md'), 'utf8');
+  assert.ok(changes.boundReadBacks(okta).some((b) => b.gates.includes('okta-mfa-reset-factor')), 'the API reset of one factor binds verify-factor-reset');
+  // the rollback after an exception: Phase B's and C's gates have a read-back, D's and E's do not
+  assert.match(fs.readFileSync(path.join(dir, 'github-branch-protection.md'), 'utf8'), /for Phase D's or Phase E's gate, which takes no change record, `rulesets` must show the Phase A state again/);
+});
+
 test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID], no other does, and [CHANGE_ID] is registered', () => {
   const dir = path.join(__dirname, '..', '..', '.claude', 'commands');
   const VERIFY = /node scripts\/(?:adapters\/)?[a-z]+-client\.js verify-[a-z0-9-]+/;

@@ -1,0 +1,145 @@
+# command: node --test --test-name-pattern=A1 scripts/audit/change-record.test.js
+# commit: 1bac55b (plus uncommitted changes in the working tree)  started: 2026-10-31T23:32:20Z  node: v24.22.1
+✖ A1: a format character inside the keyword (zero width, soft hyphen, bidi, variation selector, tag) makes a count line, so a second count is refused (159.121085ms)
+✖ A1: a combining mark on a letter of the keyword or on the number makes a count line, so a second count is refused (48.324397ms)
+✖ A1: a look-alike letter outside A to Z in the keyword (Cyrillic, Greek, a small capital) is refused, alone or beside the real line (73.815015ms)
+✔ A1: a full-width digit or letter is a count line but not the accepted form (429.962677ms)
+✖ A1 (O1): a real count hidden in an HTML comment next to a disguised visible one is refused, for either number (137.82433ms)
+✔ A1: the plain visible line Count: N still opens, beside comments, hidden regions and words that only look near it (142.633028ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 2
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1072.245945
+
+✖ failing tests:
+
+test at scripts/audit/change-record.test.js:999:1
+✖ A1: a format character inside the keyword (zero width, soft hyphen, bidi, variation selector, tag) makes a count line, so a second count is refused (159.121085ms)
+  AssertionError [ERR_ASSERTION]: "Cou­nt: 50" beside the real line: {
+    "ok": true,
+    "change": "chg-3e2930dd76c6",
+    "procedure_sha256": "10b9945e3c0daa4c0bc2d6dfae8d8ce3590bd443b8ea368eddb6ea8fee8f319d",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-3e2930dd76c6 once for each of the 5 objects (it refuses to read until this change is approved); status --change chg-3e2930dd76c6 reports \"verified k of 5\" and is done only when 5 distinct runs passed after the approval and none still failed"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1004:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1012:1
+✖ A1: a combining mark on a letter of the keyword or on the number makes a count line, so a second count is refused (48.324397ms)
+  AssertionError [ERR_ASSERTION]: "Cöunt: 50": {
+    "ok": true,
+    "change": "chg-8e5639cc3c7e",
+    "procedure_sha256": "40c06178a16d88d916d7b3ab996da0c7072be89ad647cdee911766be532340c1",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-8e5639cc3c7e once for each of the 5 objects (it refuses to read until this change is approved); status --change chg-8e5639cc3c7e reports \"verified k of 5\" and is done only when 5 distinct runs passed after the approval and none still failed"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1016:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1022:1
+✖ A1: a look-alike letter outside A to Z in the keyword (Cyrillic, Greek, a small capital) is refused, alone or beside the real line (73.815015ms)
+  AssertionError [ERR_ASSERTION]: "Cоunt: 50" beside the real line: {
+    "ok": true,
+    "change": "chg-34cd68374669",
+    "procedure_sha256": "341566488d3222571d9bb1894ae05af4371c79e4b288e9f4ceef3a3031c0f441",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-34cd68374669 once for each of the 5 objects (it refuses to read until this change is approved); status --change chg-34cd68374669 reports \"verified k of 5\" and is done only when 5 distinct runs passed after the approval and none still failed"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1026:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1046:1
+✖ A1 (O1): a real count hidden in an HTML comment next to a disguised visible one is refused, for either number (137.82433ms)
+  AssertionError [ERR_ASSERTION]: ["Cоunt: 5","<!--","Count: 50","-->"] --expected 50: {
+    "ok": true,
+    "change": "chg-c5ca4eeec32f",
+    "procedure_sha256": "f7adc035fa797eccd6e23fd3c6be96e28272f40cca31430ea77492e73604d385",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-c5ca4eeec32f once for each of the 50 objects (it refuses to read until this change is approved); status --change chg-c5ca4eeec32f reports \"verified k of 50\" and is done only when 50 distinct runs passed after the approval and none still failed"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1065:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T23:32:21Z

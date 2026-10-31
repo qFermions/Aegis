@@ -982,3 +982,104 @@ test('a gate without a count keeps today\'s rule: no Count line needed, and --ex
   assert.equal(expected.code, 1);
   assert.match(expected.stderr, /names no count/);
 });
+
+// ── Batch G4, task A1: security review 2's O1, a disguised count line ──────────────────────────
+// A count line disguised with a format character or a look-alike letter, next to a real count hidden
+// in an HTML comment, passed checkCount: the approver saw Count: 5 and the change opened for 50.
+// Before matching, the text is folded (compatibility decomposition, every \p{Cf}, \p{Mn} and \p{Me}
+// character removed, composed again); a count line whose keyword holds a letter outside A to Z is
+// refused; a count line inside an HTML comment or another hidden region is refused; the one
+// accepted form stays the visible line Count: N.
+const withLines = (s, name, extra) => {
+  const file = path.join(s.dir, `procedure-${name}.md`);
+  fs.writeFileSync(file, `${fs.readFileSync(s.procedure, 'utf8').replace(/\s+$/, '')}\n${extra.join('\n')}\n`);
+  return file;
+};
+
+test('A1: a format character inside the keyword (zero width, soft hyphen, bidi, variation selector, tag) makes a count line, so a second count is refused', (t) => {
+  const s = setup(t);
+  for (const inside of ['​', '­', '‮', '⁦', '️', '\u{e0041}', '⁠']) {
+    const disguised = `Cou${inside}nt: 50`;
+    const beside = openBatch(s, withLines(s, 'format', ['Count: 5', disguised]), 5);
+    assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+    assert.match(beside.stderr, /one line Count: N/, JSON.stringify(disguised));
+    const alone = openBatch(s, withLines(s, 'format-alone', [disguised]), 50);
+    assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: a combining mark on a letter of the keyword or on the number makes a count line, so a second count is refused', (t) => {
+  const s = setup(t);
+  for (const disguised of ['Cöunt: 50', 'Çount: 50', 'Count́: 50', 'Count: 5⃝0', 'Coun̶t: 50']) {
+    const r = openBatch(s, withLines(s, 'mark', ['Count: 5', disguised]), 5);
+    assert.equal(r.code, 1, `${JSON.stringify(disguised)}: ${r.stdout}`);
+    assert.match(r.stderr, /one line Count: N/, JSON.stringify(disguised));
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: a look-alike letter outside A to Z in the keyword (Cyrillic, Greek, a small capital) is refused, alone or beside the real line', (t) => {
+  const s = setup(t);
+  for (const disguised of ['Cоunt: 50', 'Сount: 50', 'Cοunt: 50', 'Counт: 50', 'ᴄount: 50', 'Соипт: 50']) {
+    const beside = openBatch(s, withLines(s, 'script', ['Count: 5', disguised]), 5);
+    assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+    assert.match(beside.stderr, /outside the Latin letters A to Z/, JSON.stringify(disguised));
+    const alone = openBatch(s, withLines(s, 'script-alone', [disguised]), 50);
+    assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+    assert.match(alone.stderr, /outside the Latin letters A to Z/, JSON.stringify(disguised));
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: a full-width digit or letter is a count line but not the accepted form', (t) => {
+  const s = setup(t);
+  for (const disguised of ['Count: ５', 'Ｃount: 5', 'Count: ５０', 'Count：5']) {
+    const alone = openBatch(s, withLines(s, 'wide', [disguised]), 5);
+    assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+    const beside = openBatch(s, withLines(s, 'wide-beside', ['Count: 5', disguised]), 5);
+    assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1 (O1): a real count hidden in an HTML comment next to a disguised visible one is refused, for either number', (t) => {
+  const s = setup(t);
+  const hidden = [
+    ['<!--', 'Count: 50', '-->'],
+    ['<!-- Count: 50 -->'],
+    ['<!--', 'Count: 50'],
+    ['<div hidden>', 'Count: 50', '</div>'],
+    ['<span style="display: none">', 'Count: 50', '</span>'],
+    ['<p style="visibility:hidden">', 'Count: 50', '</p>'],
+    ['<template>', 'Count: 50', '</template>'],
+    ['<script>', 'Count: 50', '</script>'],
+    ['<style>', 'Count: 50', '</style>'],
+    ['<noscript>', 'Count: 50', '</noscript>'],
+    ['[//]: # (Count: 50)'],
+  ];
+  for (const visible of ['Cоunt: 5', 'Cou​nt: 5', 'Cöunt: 5', 'Count: 5']) {
+    for (const region of hidden) {
+      for (const expected of [5, 50]) {
+        const r = openBatch(s, withLines(s, 'hidden', [visible, ...region]), expected);
+        assert.equal(r.code, 1, `${JSON.stringify([visible, ...region])} --expected ${expected}: ${r.stdout}`);
+      }
+    }
+  }
+  // the O1 case itself names the hidden region
+  const o1 = openBatch(s, withLines(s, 'o1', ['Cоunt: 5', '<!--', 'Count: 50', '-->']), 50);
+  assert.match(o1.stderr, /HTML comment or another hidden region/);
+  const plainHidden = openBatch(s, withLines(s, 'plain-hidden', ['Count: 5', '<!--', 'Count: 50', '-->']), 5);
+  assert.match(plainHidden.stderr, /HTML comment or another hidden region/);
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: the plain visible line Count: N still opens, beside comments, hidden regions and words that only look near it', (t) => {
+  const s = setup(t);
+  const plain = openBatch(s, withLines(s, 'plain', ['Count: 5']), 5);
+  assert.equal(plain.code, 0, plain.stderr);
+  const around = openBatch(s, withLines(s, 'around', ['<!-- reviewed by [ADMIN_NAME] -->', 'Count: 5', '<details><summary>Script</summary>', 'Write-Host "[HOST_COUNT] hosts"', '</details>', 'Mount: /dev/[DEVICE_NAME]', 'Court: none', 'Accounts: 5 (see the ticket)']), 5);
+  assert.equal(around.code, 0, around.stderr);
+  assert.equal(s.log.entries().length, 2);
+  assert.equal(s.log.entries()[1].expected, 5);
+});

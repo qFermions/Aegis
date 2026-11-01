@@ -325,8 +325,10 @@ const DEPENDABOT = (state, reason) => ['verify-dependabot-alert', '--repo', 'doc
 test('code review round 1, finding 6: github verify-dependabot-alert --state fixed --reason: dismissed_reason null (not dismissed) is a failed object (exit 2)', async () => {
   assertFailedObject(await verdictOf('github', DEPENDABOT('fixed', 'tolerable_risk'), [ok({ number: 9, state: 'fixed', dismissed_reason: null })]));
 });
-test('code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is a failed object (exit 2)', async () => {
-  assertFailedObject(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed', dismissed_reason: null })]));
+// changed by code review round 2, finding 7: on an alert the answer calls dismissed, null
+// contradicts the state, so it proves nothing either way (it was a failed object, exit 2)
+test('code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is INCONCLUSIVE (exit 5, round 2 finding 7)', async () => {
+  assertInconclusive(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed', dismissed_reason: null })]));
 });
 test('code review round 1, finding 6: github verify-dependabot-alert --reason: dismissed_reason left out of the answer is INCONCLUSIVE (exit 5)', async () => {
   assertInconclusive(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed' })]));
@@ -672,4 +674,17 @@ test('code review round 2, finding 6: fleet verify-wipe on Windows: a doWipe wit
   const r = await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('200')], { has_next_results: true })]);
   assert.equal(r.code, EXIT.OK, r.text);
   assert.deepEqual(r.entry, [[true, 'OK']], r.text);
+});
+
+// Finding 7: with --state dismissed --reason, an alert the answer calls dismissed whose
+// dismissed_reason is null contradicts itself (GitHub gives null for an alert not dismissed), so
+// it proves nothing either way (INCONCLUSIVE, exit 5), where it was reported as "not dismissed"
+// (exit 2). With --state fixed --reason, null stays a failed object (round 1, finding 6, above).
+test('code review round 2, finding 7: github verify-dependabot-alert --state dismissed --reason: a dismissed alert with dismissed_reason null is INCONCLUSIVE and says the answer contradicts itself', async () => {
+  for (const reason of ['tolerable_risk', 'no_bandwidth']) {
+    const r = await verdictOf('github', DEPENDABOT('dismissed', reason), [ok({ number: 9, state: 'dismissed', dismissed_reason: null })]);
+    assertInconclusive(r);
+    assert.match(r.json.reason, /dismissed/, r.text);
+    assert.doesNotMatch(r.json.reason, /was not dismissed/, r.text);
+  }
 });

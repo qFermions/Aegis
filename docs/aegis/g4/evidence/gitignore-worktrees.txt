@@ -1,0 +1,6 @@
+# with two subagent worktrees under .claude/worktrees and .claude/worktrees/ gitignored
+ℹ tests 13
+ℹ pass 13
+ℹ fail 0
+⚠️  216 warning(s) found — review the flagged lines above.
+scanner exit 0

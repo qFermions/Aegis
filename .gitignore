@@ -35,6 +35,7 @@ replacements.txt
 
 # Local-only agent/artifact scratch space
 .agents/
+.claude/worktrees/
 .aegis-state/
 tasks/checkpoints/
 security-audit-*.md

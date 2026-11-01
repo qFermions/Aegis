@@ -1,0 +1,14 @@
+PASS  snapshot readable (3328 bytes)
+PASS  section present: ## Identity
+PASS  section present: ## Repo ground truth
+PASS  section present: ## Component state
+PASS  section present: ## Active work
+PASS  section present: ## Next actions
+PASS  section present: ## Verification
+STALE HEAD in snapshot b9acd99 != live 103834e -- refresh the snapshot
+PASS  Snapshot-Date present
+PASS  all 20 referenced repo paths exist
+
+RESULT: STALE -- structure OK but HEAD moved; refresh the snapshot (0 warning(s))
+exit 2
+# capture edited after the run: U+2014 written as "--" (2), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

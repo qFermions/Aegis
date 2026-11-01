@@ -9,3 +9,4 @@
 ℹ todo 0
 ℹ duration_ms 106404.419007
 exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

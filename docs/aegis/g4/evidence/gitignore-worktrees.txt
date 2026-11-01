@@ -2,5 +2,6 @@
 ℹ tests 13
 ℹ pass 13
 ℹ fail 0
-⚠️  216 warning(s) found — review the flagged lines above.
+⚠️  216 warning(s) found -- review the flagged lines above.
 scanner exit 0
+# capture edited after the run: U+2014 written as "--" (1), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

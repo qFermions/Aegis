@@ -1,4 +1,4 @@
-Google Workspace / Okta / Jamf ticket eval — deterministic half (floor · route lint · replay MISS · dangerous pairs)
+Google Workspace / Okta / Jamf ticket eval -- deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  G01-new-user-ou-groups               PROCEDURE   floor=none → /gws-new-user
 PASS  G02-password-forgotten               QUICK_FIX   floor=none → /gws-password-reset
@@ -39,16 +39,17 @@ PASS  G36-super-admin-urgent               DIAGNOSTIC  floor=T3   → /security-
 PASS  G37-google-account-compromise        DIAGNOSTIC  floor=T3   → /security-alert-triage, /gws-audit-log
 PASS  G38-gam-reference-suspended          REFERENCE   floor=none → /gws-audit-log
 
-PASS  pair G12-suspend-user ≠ G13-delete-user — same account, two lifecycle actions: suspend keeps every byte and is undone in one step; delete starts a 20-day restore clock — both are SR-2 account actions, so both floor; the key/shape must never let one stand in for the other
-PASS  pair G10-drive-transfer-ownership ≠ G11-delete-user-and-data — 'Drive data' both times: a transfer preserves files under a new owner, a delete destroys them — transfer floors as R2+ with pre-state, delete as SR-2; both floor, never interchangeable
-PASS  pair G03-2sv-backup-codes ≠ G04-2sv-turn-off — same lost phone: backup codes are a single-user recovery, turning off 2-Step Verification removes a security control
-PASS  pair G20-chromebook-powerwash ≠ G21-chromebook-deprovision — two Chromebook commands: powerwash wipes local data and the device re-enrolls; deprovision removes it from management — both SR-2 device actions with different undo stories
-PASS  pair G22-okta-password-reset ≠ G23-okta-deactivate — 'Okta' and one user: a password reset is routine, deactivation deprovisions every assigned app
-PASS  pair G28-jamf-remote-lock ≠ G29-jamf-erase-stolen — same MacBook in Jamf: a remote lock is reversible with the PIN, a wipe is not — both are consequential device actions and both floor
-PASS  pair G05-group-add-member ≠ G06-group-remove-member — same group, opposite direction: adding grants access, removing revokes it (SR-2 group removal)
-PASS  pair G08-licence-assign ≠ G09-licence-remove — 'licence' both times: assignment provisions, removal can lose data (SR-2 licence removal)
-PASS  pair G26-jamf-enroll-mac ≠ G27-jamf-unmanage-sale — 'Mac' and 'Jamf' both times: enrollment brings a device under management, unmanaging takes it out
+PASS  pair G12-suspend-user ≠ G13-delete-user -- same account, two lifecycle actions: suspend keeps every byte and is undone in one step; delete starts a 20-day restore clock -- both are SR-2 account actions, so both floor; the key/shape must never let one stand in for the other
+PASS  pair G10-drive-transfer-ownership ≠ G11-delete-user-and-data -- 'Drive data' both times: a transfer preserves files under a new owner, a delete destroys them -- transfer floors as R2+ with pre-state, delete as SR-2; both floor, never interchangeable
+PASS  pair G03-2sv-backup-codes ≠ G04-2sv-turn-off -- same lost phone: backup codes are a single-user recovery, turning off 2-Step Verification removes a security control
+PASS  pair G20-chromebook-powerwash ≠ G21-chromebook-deprovision -- two Chromebook commands: powerwash wipes local data and the device re-enrolls; deprovision removes it from management -- both SR-2 device actions with different undo stories
+PASS  pair G22-okta-password-reset ≠ G23-okta-deactivate -- 'Okta' and one user: a password reset is routine, deactivation deprovisions every assigned app
+PASS  pair G28-jamf-remote-lock ≠ G29-jamf-erase-stolen -- same MacBook in Jamf: a remote lock is reversible with the PIN, a wipe is not -- both are consequential device actions and both floor
+PASS  pair G05-group-add-member ≠ G06-group-remove-member -- same group, opposite direction: adding grants access, removing revokes it (SR-2 group removal)
+PASS  pair G08-licence-assign ≠ G09-licence-remove -- 'licence' both times: assignment provisions, removal can lose data (SR-2 licence removal)
+PASS  pair G26-jamf-enroll-mac ≠ G27-jamf-unmanage-sale -- 'Mac' and 'Jamf' both times: enrollment brings a device under management, unmanaging takes it out
 
 38/38 tickets · 9/9 dangerous pairs · 16 floored to T3 · 21 commands exercised · classes {"QUICK_FIX":7,"DIAGNOSTIC":11,"PROCEDURE":18,"REFERENCE":2}
 Model-judged half (first action, depth, continuity, human-executes framing): scripts/eval/README.md
 exit 0
+# capture edited after the run: U+2014 written as "--" (14), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

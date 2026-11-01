@@ -69,3 +69,4 @@ credential-shape pass over added lines: 0 hit(s)
 URL hosts in added lines (12): support.google.com 18, raw.githubusercontent.com 17, learn.jamf.com 14, developer.jamf.com 11, www.googleapis.com 7, support.jamf.com 5, example.invalid 3, developers.google.com 2, docs.github.com 2, docs.slack.dev 1, fleetdm.com 1, learn.microsoft.com 1
 mail domains in added lines (3): domain.com 55, domain.c 2, example.com 2
 exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

@@ -13,3 +13,4 @@ files whose SAFETY GATE count fell since 1f6647c: 0
 files added since 1f6647c holding U+2014: 0
 added lines since 1f6647c holding U+2014: 0
 exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

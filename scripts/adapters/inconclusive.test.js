@@ -779,3 +779,30 @@ test('code review round 3, finding 3: fleet verify-wipe on a Mac: the query is u
   assert.equal(notWiping.code, EXIT.READ_FAILED, notWiping.text);
   assert.deepEqual(notWiping.entry, [[false, 'OK']], notWiping.text);
 });
+
+// Finding 7: on a host not wiping or wiped, the paging return gave exit 2 with a note that said
+// "not proof either way" and dropped the Windows OMA-DM caveat the normal path prints. The host
+// record already shows the wipe not done, so it is the normal failed-object result: exit 2, the
+// Windows caveat note, no "not proof either way". Only a host wiping or wiped takes the paging
+// INCONCLUSIVE.
+const NOT_WIPING_MORE = [
+  ['a Windows host not wiping, no doWipe on a page that says more follow', [windowsNotWiping, commandsPage([lock(1)], { has_next_results: true })]],
+  ['a Windows host not wiping, a doWipe with status 200 on a full page with no meta', [windowsNotWiping, commandsPage([...fullPage.slice(1), doWipe('200')])]],
+  ['a Windows host not wiping, a failed doWipe on a page that says more follow', [windowsNotWiping, commandsPage([doWipe('500')], { has_next_results: true })]],
+];
+for (const [why, replies] of NOT_WIPING_MORE) {
+  test(`code review round 3, finding 7: fleet verify-wipe: ${why} is the normal failed object, with the OMA-DM caveat and no "not proof either way"`, async () => {
+    const r = await verdictOf('fleet', WIPE, replies);
+    assertFailedObject(r);
+    assert.doesNotMatch(r.json.note, /not proof either way/, r.text);
+    assert.match(r.json.note, /OMA-DM code/, r.text);
+  });
+}
+test('code review round 3, finding 7: fleet verify-wipe: a Mac not wiping, an EraseDevice page that says more follow, is the normal failed object with no "not proof either way"', async () => {
+  const r = await verdictOf('fleet', WIPE, [macNotWiping, commandsPage([acked()], { has_next_results: true })]);
+  assert.equal(r.code, EXIT.READ_FAILED, r.text);
+  assert.equal(r.json.state, 'OK', r.text);
+  assert.equal(r.json.verified, false, r.text);
+  assert.deepEqual(r.entry, [[false, 'OK']], r.text);
+  assert.doesNotMatch(String(r.json.note), /not proof either way/, r.text);
+});

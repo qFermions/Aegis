@@ -53,7 +53,8 @@
 //
 // Exit codes: 0 read or verified; 1 refused, input error, missing credentials or a
 // write-scoped token; 2 the read failed or a verify-* read did not prove the write; 4 a
-// verify-* dry run (nothing was read, so nothing is verified).
+// verify-* dry run (nothing was read, so nothing is verified); 5 a verify-* answer that proves
+// nothing either way (INCONCLUSIVE, batch G4 task D1).
 //
 // Facts this file relies on that section A3 does not state (or marks UNCONFIRMED), and the
 // safer reading taken:
@@ -81,7 +82,7 @@ const crypto = require('node:crypto');
 
 const {
   STATES, EXIT, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime, dryRunExit,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
@@ -453,6 +454,13 @@ function verdict(command, verified, expected, observed, reason, extra = {}) {
   return { ...out, ...extra };
 }
 
+// An answer that proves nothing either way (batch G4, task D1): INCONCLUSIVE (exit 5), never a
+// pass and never a failed object. Before D1 each of these was a verdict with state OK and
+// verified false (exit 2), which a counted change took for a failed object.
+function unproven(command, expected, observed, reason, extra = {}) {
+  return { ...inconclusive({ state: STATES.OK, ok: true, command, verified: false, expected, observed }, reason), ...extra };
+}
+
 const NOT_THE_USER = 'the user record read is not the user asked for';
 const idOf = (record) => (isObject(record) && typeof record.id === 'string' ? record.id : null);
 
@@ -465,8 +473,8 @@ async function verifyStatus(client, a) {
   if (!r.ok) return failed(command, r);
   const observed = { user: idOf(r.data), status: isObject(r.data) && typeof r.data.status === 'string' ? r.data.status : null };
   if (observed.user !== a.user) return verdict(command, false, expected, observed, NOT_THE_USER, rd.extra());
-  const reason = observed.status === null ? 'the user record carries no status' : `the user's status is ${observed.status}, not ${a.status}`;
-  return verdict(command, observed.status === a.status, expected, observed, reason, rd.extra());
+  if (observed.status === null) return unproven(command, expected, observed, 'the user record carries no status, so this is not proof either way', rd.extra());
+  return verdict(command, observed.status === a.status, expected, observed, `the user's status is ${observed.status}, not ${a.status}`, rd.extra());
 }
 
 // The user read comes first, so a credential that cannot see the user never proves a reset.
@@ -479,17 +487,20 @@ async function factorsVerdict(client, a, command, judge) {
   if (observed.user !== a.user) return verdict(command, false, expected, observed, NOT_THE_USER, rd.extra());
   const fr = await rd.get(factorsRequest(a.user), maskFactors);
   if (!fr.ok) return failed(command, fr);
-  if (!Array.isArray(fr.data)) return verdict(command, false, expected, observed, 'the factor read did not return a list', rd.extra());
+  if (!Array.isArray(fr.data)) return unproven(command, expected, observed, 'the factor read did not return a list, so this is not proof either way', rd.extra());
   const types = fr.data.map((f) => (isObject(f) && typeof f.factorType === 'string' ? f.factorType : null));
   observed.factorsRead = fr.data.length;
   observed.factorTypes = [...new Set(types.filter((t) => t !== null))];
-  const [verified, reason] = judge(types);
+  const [verified, reason, notProof] = judge(types);
+  if (notProof) return unproven(command, expected, observed, reason, rd.extra());
   return verdict(command, verified, expected, observed, reason, rd.extra());
 }
 
+// judge: [verified, reason, proves nothing either way]
 const verifyFactorReset = (client, a) => factorsVerdict(client, a, 'verify-factor-reset', (types) => {
-  if (types.includes(null)) return [false, 'a listed factor carries no factorType, so the type cannot be ruled out'];
+  // a factor of that type still listed is an answer, whatever else the list holds
   if (types.includes(a.factorType)) return [false, `a ${a.factorType} factor is still listed for the user`];
+  if (types.includes(null)) return [false, 'a listed factor carries no factorType, so the type cannot be ruled out either way', true];
   return [true, ''];
 });
 
@@ -514,7 +525,7 @@ async function eventVerdict(client, a, command, eventType) {
   const r = await rd.get(logsRequest(a.notBefore, logFilter(eventType, a.user)));
   if (!r.ok) return failed(command, r);
   const observed = { eventsRead: null, match: null, eventsSinceNotBefore: [], morePages: false };
-  if (!Array.isArray(r.data)) return verdict(command, false, expected, observed, 'the System Log read did not return a list of events', rd.extra());
+  if (!Array.isArray(r.data)) return unproven(command, expected, observed, 'the System Log read did not return a list of events, so this is not proof either way', rd.extra());
   observed.eventsRead = r.data.length;
   observed.morePages = r.data.length === LOGS_PAGE;
   const notBeforeMs = Date.parse(a.notBefore);
@@ -531,8 +542,8 @@ async function eventVerdict(client, a, command, eventType) {
     }
     if (observed.eventsSinceNotBefore.length < 20) observed.eventsSinceNotBefore.push(summary);
   }
-  let reason = `no ${eventType} event with outcome SUCCESS for ${a.user} at or after ${a.notBefore} among the ${r.data.length} event(s) read`;
-  if (observed.morePages) reason += '; the read returned a full page, so this is not proof either way';
+  const reason = `no ${eventType} event with outcome SUCCESS for ${a.user} at or after ${a.notBefore} among the ${r.data.length} event(s) read`;
+  if (observed.morePages) return unproven(command, expected, observed, `${reason}; the read returned a full page, so this is not proof either way`, rd.extra());
   return verdict(command, false, expected, observed, reason, rd.extra());
 }
 
@@ -555,11 +566,11 @@ async function verifyGroupMember(client, a) {
     const r = await rd.get(membersRequest(a.group, after), maskUsers);
     if (!r.ok) return failed(command, r);
     observed.pagesRead = n;
-    if (!Array.isArray(r.data)) return verdict(command, false, expected, observed, 'the member read did not return a list', rd.extra());
+    if (!Array.isArray(r.data)) return unproven(command, expected, observed, 'the member read did not return a list, so this is not proof either way', rd.extra());
     for (const m of r.data) {
       const id = idOf(m);
-      if (id === null) return verdict(command, false, expected, observed, 'a listed member carries no id, so the list cannot be judged', rd.extra());
-      if (seen.has(id)) return verdict(command, false, expected, observed, `page ${n} repeated a member already read, so the paging cannot be trusted`, rd.extra());
+      if (id === null) return unproven(command, expected, observed, 'a listed member carries no id, so the list cannot be judged either way', rd.extra());
+      if (seen.has(id)) return unproven(command, expected, observed, `page ${n} repeated a member already read, so the paging cannot be trusted either way`, rd.extra());
       seen.add(id);
       observed.membersRead += 1;
       if (id === a.user) {
@@ -575,7 +586,7 @@ async function verifyGroupMember(client, a) {
   }
   observed.morePages = true;
   const reason = `the group has more than ${MAX_PAGES} pages of ${MEMBERS_PAGE} members (${observed.membersRead} read) and the user was not on them, so this read proves nothing either way; check the membership in the Admin Console`;
-  return verdict(command, false, expected, observed, reason, rd.extra());
+  return unproven(command, expected, observed, reason, rd.extra());
 }
 
 const ASSIGNED = Object.freeze(['ACTIVE', 'PROVISIONED']);
@@ -599,6 +610,7 @@ async function verifyAppAssigned(client, a) {
     observed.appUserStatus = typeof record.status === 'string' ? record.status : null;
     if (a.absent === true) return verdict(command, false, expected, observed, `the app-user read found an assignment (status ${observed.appUserStatus || 'not stated'})`, rd.extra());
     if (idOf(record) !== a.user) return verdict(command, false, expected, observed, 'the app-user record read is not the user asked for', rd.extra());
+    if (observed.appUserStatus === null) return unproven(command, expected, observed, 'the assignment carries no status, so this is not proof either way', rd.extra());
     return verdict(command, ASSIGNED.includes(observed.appUserStatus), expected, observed, `the assignment's status is ${observed.appUserStatus || 'not stated'}, not ACTIVE or PROVISIONED`, rd.extra());
   }
   if (r.state === STATES.HTTP_ERROR && r.status === 404) {

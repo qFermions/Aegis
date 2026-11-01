@@ -25,7 +25,7 @@ const { auditSink, defaultAuditDir, CHANGE_ID, VERIFY_COMMAND, RUN_ID, RUN_IDS, 
 const { bindRefusal } = require('../audit/change-record.js');
 
 const AUDITED_STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
-  'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED']);
+  'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED', 'INCONCLUSIVE']);
 
 function cliDeps(deps = {}, env = process.env) {
   const injected = typeof deps.transport === 'function';

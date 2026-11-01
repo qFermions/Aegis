@@ -32,6 +32,7 @@ function whatHappened(res, who) {
     case 'INVALID_RESPONSE': return `${who} answered with something Aegis could not read as the expected data`;
     case 'SCOPE_REFUSED': return `The ${who} credential holds write permissions beyond the read-only scope manifest`;
     case 'AUDIT_FAILED': return 'The audit trail could not record this read';
+    case 'INCONCLUSIVE': return `${who} answered, but the answer proves nothing either way about the change (INCONCLUSIVE, exit 5)`;
     case 'HTTP_ERROR': {
       const s = res.status;
       if (s === 401) return `${who} rejected the credential (HTTP 401)`;
@@ -52,6 +53,7 @@ function notDone(res) {
   if (res.state === 'TENANT_MISMATCH') return 'Nothing was returned or kept, and nothing was changed';
   if (res.state === 'AUDIT_FAILED') return 'Its answer was withheld, and nothing was changed';
   if (res.state === 'SCOPE_REFUSED') return 'Aegis did not use the credential, nothing was read and nothing was changed';
+  if (res.state === 'INCONCLUSIVE') return 'The change is neither proven nor disproven: it is not reported done, and a counted change lists this read as uncounted, not as a failed object';
   return 'Nothing was read and nothing was changed';
 }
 
@@ -66,6 +68,7 @@ function nextStep(res, who) {
     case 'INVALID_RESPONSE': return `Run the read again; if it repeats, read the same item in the ${who} console`;
     case 'SCOPE_REFUSED': return 'Ask the credential owner for a read-only credential with exactly the scopes in docs/aegis/g3/scope-manifest.md, then run the read again';
     case 'AUDIT_FAILED': return 'Run node scripts/audit/audit-log.js verify, fix the trail, then run the read again';
+    case 'INCONCLUSIVE': return `Read the reason in the result and check the item in the ${who} console; reading again returns the same answer until the reason changes`;
     case 'OK': return 'Read the reason in the result, check the change in the console, and run the read-back again after the person finishes';
     case 'HTTP_ERROR': {
       const s = res.status;

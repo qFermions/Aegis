@@ -22,7 +22,8 @@
 // connection. Exit codes (shared by every adapter): 0 read or verified; 1 refused
 // input or missing credentials; 2 the read failed or a verify-* read did not
 // prove the write; 3 a record from another tenant (never raised here, see above); 4 a
-// verify-* dry run (nothing was read, so nothing is verified).
+// verify-* dry run (nothing was read, so nothing is verified); 5 a verify-* read whose answer
+// proves nothing either way (INCONCLUSIVE, batch G4 task D1).
 //
 // Vendor facts come from Fleet's own docs source (fleetdm/fleet on GitHub, read
 // 2026-10-27): the REST API reference, the lock and wipe guide, the enroll guide
@@ -30,7 +31,7 @@
 // session that wrote this file.
 
 const {
-  STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
+  STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal, runIdOf } = require('./cli-support.js');
 
@@ -276,6 +277,11 @@ function deviceStatusVerify(wantStatus) {
     };
     const expected = { 'host.id': [Number(args.id)], 'host.mdm.device_status': [wantStatus], 'host.mdm.pending_action': [''] };
     const verified = Object.keys(expected).every((k) => expected[k].includes(observed[k]));
+    // Fleet never shows Locked for an Android host, so verify-lock cannot judge one: proves
+    // nothing either way (batch G4, task D1)
+    if (wantStatus === 'locked' && observed['host.platform'] === 'android' && observed['host.id'] === Number(args.id)) {
+      return { inconclusive: true, verified: false, observed, expected, note: 'verify-lock cannot pass for an Android host, so this is not proof either way: Fleet never shows Locked there (vendor docs). Prove the request with the locked_host entry in host-activities, and confirm the lock on the device.' };
+    }
     const notes = [];
     if (observed['host.platform'] === 'android') {
       notes.push(wantStatus === 'locked'
@@ -309,10 +315,12 @@ async function verifyWipe(read, args) {
       ? 'A company-owned Android wipe is not an EraseDevice or doWipe command, so prove it with mdm.device_status (wiping, then wiped) in host --id and the wiped_host entry in host-activities.'
       : 'Fleet wipes a Linux host with a script and shows no Wipe badge for it, so prove that wipe with verify-script --execution-id [EXECUTION_ID] (the id is in host-activities).';
     return {
+      // a record of another host is an answer (not this host); this host's platform is one the read cannot judge
+      inconclusive: observed['host.id'] === Number(args.id),
       verified: false,
       observed,
       expected,
-      note: `This read proves Apple (EraseDevice) and Windows (doWipe) wipes only. ${how} Platform read: ${JSON.stringify(platform)}.`,
+      note: `This read proves Apple (EraseDevice) and Windows (doWipe) wipes only, so this is not proof either way. ${how} Platform read: ${JSON.stringify(platform)}.`,
     };
   }
   const serial = field(host, 'hardware_serial');
@@ -321,7 +329,7 @@ async function verifyWipe(read, args) {
   observed['commands host_identifier'] = identifier;
   if (!identifier) {
     observed['wipe command'] = null;
-    return { verified: false, observed, expected, note: 'The host record has no serial or UUID usable as a host_identifier, so its wipe command cannot be read.' };
+    return { inconclusive: observed['host.id'] === Number(args.id), verified: false, observed, expected, note: 'The host record has no serial or UUID usable as a host_identifier, so its wipe command cannot be read: this is not proof either way.' };
   }
   const query = apple ? { host_identifier: identifier, request_type: 'EraseDevice' } : { host_identifier: identifier, per_page: '100' };
   const c = await read('mdmCommands', {}, query);
@@ -358,6 +366,11 @@ async function verifyScript(read, args) {
   // case (round 3, finding 2): an id typed in upper case that Fleet answers in lower case passes.
   const idOk = typeof observed.execution_id === 'string' && observed.execution_id.toLowerCase() === args['execution-id'].toLowerCase();
   const verified = idOk && observed.exit_code === 0 && observed.host_timeout === false;
+  // a run of this execution that has not reported yet proves nothing either way (batch G4,
+  // task D1); an answer that names another execution, or none, stays a failure (round 2, finding 6)
+  if (idOk && observed.exit_code === null && observed.host_timeout !== true) {
+    return { inconclusive: true, verified: false, observed, expected, note: 'exit_code null: the host has not reported the result yet (vendor docs), so this is not proof either way; read again later.' };
+  }
   const note = observed.exit_code === null ? 'exit_code null: the host has not reported the result yet (vendor docs).' : undefined;
   return { verified, observed, expected, note };
 }
@@ -394,6 +407,7 @@ async function verifyDeleted(read, args) {
   let other = null;
   let pages = 0;
   let reachedNotBefore = false;
+  let more = false;
   // Activities come newest first (order_key=created_at, order_direction=desc), so
   // the search stops at the first activity older than --not-before.
   while (pages < DELETED_PAGES && !manual && !reachedNotBefore) {
@@ -410,7 +424,7 @@ async function verifyDeleted(read, args) {
       if (d.triggered_by === 'manual') { manual = a; break; }
       if (!other) other = a;
     }
-    const more = isObject(r.data) && isObject(r.data.meta) && r.data.meta.has_next_results === true;
+    more = isObject(r.data) && isObject(r.data.meta) && r.data.meta.has_next_results === true;
     if (!more) break;
   }
   const found = manual || other;
@@ -421,6 +435,9 @@ async function verifyDeleted(read, args) {
   };
   if (!manual) {
     const why = other ? 'the deleted_host activity for this serial was not a manual deletion' : `no deleted_host activity for this serial at or after --not-before in the ${pages} newest page(s) read (at most ${DELETED_PAGES} of ${DELETED_PER_PAGE})`;
+    // activities not read back to --not-before, with more behind them, prove nothing either way
+    // (batch G4, task D1)
+    if (!other && more && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and more activities after --not-before were not read, so this is not proof either way` };
     return { verified: false, observed, expected, note: why };
   }
   const deletedId = isObject(manual.details) ? field(manual.details, 'host_id') : null;
@@ -433,11 +450,14 @@ async function verifyDeleted(read, args) {
   const nowId = field(hostOf(h.data), 'id');
   observed['host lookup by identifier'] = { 'host.id': nowId };
   const reenrolled = deletedId !== null && nowId !== null && nowId !== deletedId;
+  if (deletedId === null || nowId === null) {
+    return { inconclusive: true, verified: false, observed, expected, note: 'The serial still resolves to a host, and the deleted and current host ids cannot be compared, so this is not proof either way.' };
+  }
   return {
     verified: reenrolled,
     observed,
     expected,
-    note: reenrolled ? 'The serial now resolves to a new host id: the device re-enrolled after the deletion.' : 'The serial still resolves to the deleted host id (or the ids cannot be compared).',
+    note: reenrolled ? 'The serial now resolves to a new host id: the device re-enrolled after the deletion.' : 'The serial still resolves to the deleted host id.',
   };
 }
 
@@ -461,6 +481,7 @@ async function verifyCheckedIn(read, args) {
   const checkedIn = Date.parse(observed['host.last_mdm_checked_in_at']);
   if (observed['host.id'] !== Number(args.id)) return { verified: false, observed, expected, note: 'the response is not the host asked for' };
   if (!enrolled) return { verified: false, observed, expected, note: 'the host is not enrolled in MDM, so it has no MDM check-in: read host.seen_time and host.status for the agent instead' };
+  if (!Number.isFinite(checkedIn)) return { inconclusive: true, verified: false, observed, expected, note: 'the host record shows no last_mdm_checked_in_at time, so this is not proof either way' };
   const verified = Number.isFinite(checkedIn) && checkedIn >= Date.parse(args['not-before']);
   return { verified, observed, expected, note: verified ? undefined : `the last MDM check-in is not at or after ${args['not-before']}; ask the person to open the device and check in, then read again` };
 }
@@ -550,7 +571,7 @@ function helpText() {
     'Reads:',
   ];
   for (const [name, c] of Object.entries(READS)) lines.push(`  ${name} ${c.usage}`.trimEnd(), `      ${c.summary}`);
-  lines.push('', 'Read-backs (exit 0 verified, 2 not verified, 4 a dry run: it reads nothing, so it proves nothing):');
+  lines.push('', 'Read-backs (exit 0 verified, 2 not verified, 4 a dry run: it reads nothing, so it proves nothing; 5 inconclusive: the answer proves nothing either way):');
   for (const [name, c] of Object.entries(VERIFIES)) lines.push(`  ${name} ${c.usage}`, `      ${c.summary}`);
   lines.push(
     '',
@@ -558,7 +579,7 @@ function helpText() {
     'transfer, live reports and the secret reads (disk encryption key, Recovery Lock password,',
     'managed account password) are refused; each write is a HUMAN-RUN step in a runbook, proved',
     'afterwards with a verify-* read.',
-    'Exit codes: 0 read or verified; 1 refused input or missing credentials; 2 read failed or not verified; 4 a verify-* dry run.',
+    'Exit codes: 0 read or verified; 1 refused input or missing credentials; 2 read failed or not verified; 4 a verify-* dry run; 5 a verify-* answer that proves nothing either way.',
   );
   return `${lines.join('\n')}\n`;
 }
@@ -647,6 +668,8 @@ async function run(argv, env = process.env, deps = {}) {
   } else {
     output = { command: name, state: STATES.OK, verified: outcome.verified === true, observed: outcome.observed, expected: outcome.expected, reads };
     if (outcome.note) output.note = outcome.note;
+    // an answer that proves nothing either way (batch G4, task D1): the note is its reason
+    if (outcome.inconclusive) output = inconclusive(output, outcome.note);
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
   return emit(recordVerdict(cli.audit, 'fleet', output, bound.change, runIdOf('fleet', name, args, outcome.failed ? null : output.observed.execution_id), bound.argv), { out, err, secrets });

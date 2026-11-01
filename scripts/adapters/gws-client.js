@@ -55,7 +55,8 @@
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
 // 2 the read failed or a verify-* read did not prove the write; 3 another customer; 4 a
-// verify-* dry run (nothing was read, so nothing is verified).
+// verify-* dry run (nothing was read, so nothing is verified); 5 a verify-* answer that proves
+// nothing either way (INCONCLUSIVE, batch G4 task D1).
 //
 // Requests are built here as raw paths and pass the contract's own allow-list door
 // (checkRequest for a dry run, client.send for a read), which tests each value as
@@ -77,7 +78,8 @@
 //     verify-2sv-enforced and verify-2sv-not-enforced read the user's isEnforcedIn2Sv
 //     field instead. "Not enforced" is its own read-back, never the failure exit of
 //     verify-2sv-enforced: that exit (2) also means a failed read (403, 404, timeout) or a
-//     record for another user, so it proves nothing.
+//     record for another user, so it proves nothing. A user record that leaves the field out
+//     is INCONCLUSIVE (exit 5, batch G4 task D1) in either read-back.
 //   - Rate limits and error codes are unconfirmed; the contract retries a read on 429 or
 //     5xx at most twice and never repeats the token exchange.
 
@@ -85,7 +87,7 @@ const crypto = require('node:crypto');
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime, dryRunExit,
+  defineAdapter, createClient, checkRequest, renderResult, exitCodeFor, parseArgs, redactDeep, realCalendarTime, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
@@ -455,6 +457,12 @@ function sameUser(record, wanted, ctx) {
 
 const NOT_THE_USER = 'the user record read is not the user asked for';
 
+// An answer that proves nothing either way (batch G4, task D1): INCONCLUSIVE (exit 5), never a
+// pass and never a failed object. A field a verdict reads that the answer leaves out, or a list
+// with another page that does not hold what was looked for, proves nothing.
+const unproven = (observed, reason, caveat) => ({ inconclusive: true, verified: false, observed, reason, ...(caveat ? { caveat } : {}) });
+const notShown = (field) => `the user record does not show ${field} as true or false, so this is not proof either way`;
+
 // An activity event's parameters, as printed: each one's name with its value or
 // multiValue (the string forms the Reports API returns; other value kinds are listed by
 // name only).
@@ -480,21 +488,25 @@ const JUDGES = Object.freeze({
   'verify-suspended': (a, [user], ctx) => {
     const observed = { user: orNull(isObject(user) ? user.primaryEmail : undefined), suspended: orNull(isObject(user) ? user.suspended : undefined), suspensionReason: orNull(isObject(user) ? user.suspensionReason : undefined) };
     if (!sameUser(user, a.user, ctx)) return { verified: false, observed, reason: NOT_THE_USER };
+    if (typeof user.suspended !== 'boolean') return unproven(observed, notShown('suspended'));
     return { verified: user.suspended === true, observed, reason: 'the user is not suspended' };
   },
   'verify-2sv-enforced': (a, [user], ctx) => {
     const observed = { user: orNull(isObject(user) ? user.primaryEmail : undefined), isEnforcedIn2Sv: orNull(isObject(user) ? user.isEnforcedIn2Sv : undefined), isEnrolledIn2Sv: orNull(isObject(user) ? user.isEnrolledIn2Sv : undefined) };
     if (!sameUser(user, a.user, ctx)) return { verified: false, observed, reason: NOT_THE_USER };
+    if (typeof user.isEnforcedIn2Sv !== 'boolean') return unproven(observed, notShown('isEnforcedIn2Sv'));
     return { verified: user.isEnforcedIn2Sv === true, observed, reason: '2-Step Verification is not enforced for the user (isEnforcedIn2Sv is not true)' };
   },
   'verify-2sv-not-enforced': (a, [user], ctx) => {
     const observed = { user: orNull(isObject(user) ? user.primaryEmail : undefined), isEnforcedIn2Sv: orNull(isObject(user) ? user.isEnforcedIn2Sv : undefined), isEnrolledIn2Sv: orNull(isObject(user) ? user.isEnrolledIn2Sv : undefined) };
     if (!sameUser(user, a.user, ctx)) return { verified: false, observed, reason: NOT_THE_USER };
+    if (typeof user.isEnforcedIn2Sv !== 'boolean') return unproven(observed, notShown('isEnforcedIn2Sv'));
     return { verified: user.isEnforcedIn2Sv === false, observed, reason: 'the read does not show 2-Step Verification as not enforced for the user (isEnforcedIn2Sv is not false)' };
   },
   'verify-ou': (a, [user], ctx) => {
     const observed = { user: orNull(isObject(user) ? user.primaryEmail : undefined), orgUnitPath: orNull(isObject(user) ? user.orgUnitPath : undefined) };
     if (!sameUser(user, a.user, ctx)) return { verified: false, observed, reason: NOT_THE_USER };
+    if (typeof user.orgUnitPath !== 'string') return unproven(observed, 'the user record does not show orgUnitPath, so this is not proof either way');
     return { verified: user.orgUnitPath === a.ou, observed, reason: 'the user is not in the organizational unit given (paths match exactly, case included)' };
   },
   'verify-admin-role-removed': (a, [user, list], ctx) => {
@@ -512,7 +524,7 @@ const JUDGES = Object.freeze({
     const caveat = 'This read lists direct assignments only (includeIndirectRoleAssignments is not on the lane\'s allow-list): a role held through a group is not shown. Check the groups that hold the role with group-members.';
     if (!sameUser(user, a.user, ctx)) return { verified: false, observed, reason: NOT_THE_USER, caveat };
     if (held.includes(a.roleId)) return { verified: false, observed, reason: 'the user still holds a direct assignment of the role', caveat };
-    if (morePages) return { verified: false, observed, reason: 'the assignments list has another page, so the role missing from the first page is not proof', caveat };
+    if (morePages) return unproven(observed, 'the assignments list has another page, so the role missing from the first page is not proof either way', caveat);
     return { verified: true, observed, caveat };
   },
   'verify-event': (a, [feed], ctx) => {
@@ -542,7 +554,7 @@ const JUDGES = Object.freeze({
     }
     const about = a.target === undefined ? '' : ` whose parameters name ${a.target}`;
     let reason = `no ${a.app} event named ${a.event} by the user${about} at or after ${a.notBefore} among the ${items.length} record(s) read`;
-    if (morePages) reason += '; the read has another page, so this is not proof either way';
+    if (morePages) return unproven(observed, `${reason}; the read has another page, so this is not proof either way`);
     return { verified: false, observed, reason };
   },
 });
@@ -602,8 +614,9 @@ function withholdRecovery(f) {
 
 function verdictOutput(command, def, a, results, ctx) {
   const judged = JUDGES[command](a, results.map((r) => r.data), ctx);
-  const out = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed };
-  if (!out.verified) out.reason = judged.reason;
+  let out = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed };
+  if (judged.inconclusive) out = inconclusive(out, judged.reason);
+  else if (!out.verified) out.reason = judged.reason;
   if (judged.caveat) out.caveat = judged.caveat;
   if (JSON.stringify(judged.observed).includes(REDACTED)) {
     out.redactedNote = 'an address equal to GWS_ADMIN_SUBJECT or GWS_SA_CLIENT_EMAIL is printed as [REDACTED]';

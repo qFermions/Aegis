@@ -52,6 +52,12 @@ const STATES = Object.freeze({
   // not record the request
   SCOPE_REFUSED: 'SCOPE_REFUSED',
   AUDIT_FAILED: 'AUDIT_FAILED',
+  // batch G4 (task D1): a verify-* read-back got a readable answer that proves nothing either
+  // way (the object is absent from a list cut short, a field the verdict depends on is missing
+  // or not in its form, or the read cannot judge the object). It is never a pass (verified is
+  // false) and never a failed object: a counted change lists it as uncounted. Every connector
+  // gives it the same exit code, EXIT.INCONCLUSIVE.
+  INCONCLUSIVE: 'INCONCLUSIVE',
 });
 
 // The named states a read ends in when it gives up retrying (batch G3).
@@ -931,7 +937,9 @@ function renderResult(res, { secrets = [], platform, operation } = {}) {
 // Exit codes shared by every adapter CLI and the Jira client. VERIFY_DRY_RUN (batch G3
 // close-out, owner decision 2): a verify-* dry run reads nothing, so it proves nothing, and it
 // never exits with 0, the code of a passed read-back.
-const EXIT = Object.freeze({ OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4 });
+// INCONCLUSIVE (batch G4, task D1): a read-back whose answer proves nothing either way; it is
+// neither the 0 of a pass nor the 2 of a change the read showed not done.
+const EXIT = Object.freeze({ OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4, INCONCLUSIVE: 5 });
 const NOT_VERIFIED_DRY_RUN = 'NOT VERIFIED: a dry run reads nothing, so it proves nothing (exit 4).';
 const isVerifyCommand = (command) => typeof command === 'string' && /^verify-[a-z0-9-]{1,48}$/.test(command);
 
@@ -946,10 +954,17 @@ function dryRunExit(command, err) {
 
 function exitCodeFor(res) {
   if (!res) return EXIT.READ_FAILED;
+  if (res.state === STATES.INCONCLUSIVE) return EXIT.INCONCLUSIVE;
   if (res.state === STATES.OK) return res.verified === false ? EXIT.READ_FAILED : EXIT.OK;
   if (res.state === STATES.REFUSED || res.state === STATES.NO_CREDENTIALS || res.state === STATES.SCOPE_REFUSED) return EXIT.INPUT;
   if (res.state === STATES.TENANT_MISMATCH) return EXIT.TENANT;
   return EXIT.READ_FAILED;
+}
+
+// A read-back verdict that proves nothing either way (batch G4, task D1): the connectors build
+// their INCONCLUSIVE verdicts with it, so each one has the same state, ok and verified fields.
+function inconclusive(verdict, reason) {
+  return { ...verdict, state: STATES.INCONCLUSIVE, ok: false, verified: false, reason };
 }
 
 // Minimal flag parser for adapter CLIs: --name value pairs and the bare --execute.
@@ -975,5 +990,5 @@ module.exports = {
   RefusedError, TripwireError,
   defineAdapter, createClient, checkRequest, assertQueryOnly, scanUntrusted, markersIn,
   renderResult, exitCodeFor, parseArgs, redactDeep, httpsTransport, makeHttpsTransport, realCalendarTime,
-  NOT_VERIFIED_DRY_RUN, isVerifyCommand, dryRunExit,
+  NOT_VERIFIED_DRY_RUN, isVerifyCommand, dryRunExit, inconclusive,
 };

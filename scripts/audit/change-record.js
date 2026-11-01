@@ -423,6 +423,9 @@ function countedView(view, all, change, procedure, approval) {
     const early = earlyBound(e, approval);
     // a time bound earlier than the approval proves nothing about this change (batch G4, task A3)
     if (early) uncounted.push({ ...brief(e), reason: `it ${earlyReason(early)}` });
+    // an answer that proves nothing either way (batch G4, task D1) is neither a pass nor a failed
+    // object, whatever the kind
+    else if (e.verified !== true && e.state === 'INCONCLUSIVE') uncounted.push({ ...brief(e), reason: 'the read got an answer that proves nothing either way (INCONCLUSIVE), so it is neither a pass nor a failed object' });
     else if (e.verified !== true && e.state !== 'OK') uncounted.push({ ...brief(e), reason: 'the read got no answer, so it proves nothing about any object' });
     else answered.push(e);
   }

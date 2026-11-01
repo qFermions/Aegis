@@ -28,7 +28,7 @@
 //                                          with admin.apps:read), team_id = SLACK_TEAM_ID
 //     access-logs [--count 1-1000] [--page 1-100]
 //                                          auth.test, then team.accessLogs (paid plans)
-//   Read-backs (exit 0 verified, 2 not verified, 4 a dry run):
+//   Read-backs (exit 0 verified, 2 not verified, 4 a dry run, 5 inconclusive):
 //     verify-deactivated --user [USER_ID]  users.info: deleted is true
 //     verify-reactivated --user [USER_ID]  users.info: deleted is false or absent
 //     verify-guest --user [USER_ID] --type single|multi
@@ -82,7 +82,8 @@
 // a browser redirect and a code a person approves.
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
-// 2 read failed or not verified; 3 a record from another workspace; 4 a verify-* dry run.
+// 2 read failed or not verified; 3 a record from another workspace; 4 a verify-* dry run;
+// 5 a verify-* answer that proves nothing either way (INCONCLUSIVE, batch G4 task D1).
 //
 // Vendor facts (read 2026-10-27, docs/aegis/lanes/g2.md): method names, the
 // https://slack.com/api/ base and the Bearer header from Slack's SDK source; user and
@@ -99,7 +100,7 @@ const path = require('node:path');
 
 const {
   STATES, EXIT, RefusedError, TRIPWIRE_MESSAGE,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
@@ -573,12 +574,20 @@ function verdict(command, verified, expected, observed, reason, flags) {
   return res;
 }
 
+// An answer that proves nothing either way (batch G4, task D1): INCONCLUSIVE (exit 5), never a
+// pass and never a failed object.
+function unproven(command, expected, observed, reason, flags) {
+  return inconclusive(verdict(command, false, expected, observed, reason, flags), reason);
+}
+
 function notProven(command, outcome, expected) {
   return { ...failure(command, outcome), verified: false, expected, observed: {}, reason: 'the read did not complete, so the change is not proven' };
 }
 
+// an answer without the record proves nothing either way (before batch G4, task D1, it was
+// INVALID_RESPONSE)
 function unreadable(command, message, expected) {
-  return { ...invalid(message), command, verified: false, expected, observed: {}, reason: 'the answer did not hold the record, so the change is not proven' };
+  return { ...unproven(command, expected, {}, `${message}, so this is not proof either way`), error: message };
 }
 
 const orNull = (record, key) => (has(record, key) ? record[key] : null);
@@ -603,14 +612,24 @@ function verifyUser(kind) {
     };
     const problems = [];
     if (u.id !== target) problems.push('users.info answered for another user');
-    if (kind === 'deactivated' && u.deleted !== true) problems.push('deleted is not true: the account is still active');
+    if (kind === 'deactivated' && u.deleted === false) problems.push('deleted is false: the account is still active');
     if (kind !== 'deactivated' && u.deleted === true) problems.push('deleted is true: the account is deactivated');
-    if (kind === 'guest' && args.type === 'single' && u.is_ultra_restricted !== true) problems.push('is_ultra_restricted is not true: not a single-channel guest');
+    if (kind === 'guest' && args.type === 'single' && u.is_ultra_restricted === false) problems.push('is_ultra_restricted is false: not a single-channel guest');
     if (kind === 'guest' && args.type === 'multi') {
-      if (u.is_restricted !== true) problems.push('is_restricted is not true: not a guest');
+      if (u.is_restricted === false) problems.push('is_restricted is false: not a guest');
       if (u.is_ultra_restricted === true) problems.push('is_ultra_restricted is true: a single-channel guest, not multi-channel');
     }
-    return verdict(command, problems.length === 0, expected, observed, problems.join('; '), outcome.flags);
+    if (problems.length) return verdict(command, false, expected, observed, problems.join('; '), outcome.flags);
+    // a field the verdict needs to be true that is not true or false proves nothing either way.
+    // deleted left out still reads as an active account for verify-reactivated and verify-guest,
+    // as before (the tests pin it); a deleted that is there but not true or false proves nothing.
+    let needed = ['deleted'];
+    if (kind === 'reactivated') needed = [];
+    else if (kind === 'guest') needed = args.type === 'single' ? ['is_ultra_restricted'] : ['is_restricted'];
+    const unshown = needed.filter((key) => typeof u[key] !== 'boolean');
+    if (kind !== 'deactivated' && has(u, 'deleted') && u.deleted !== undefined && typeof u.deleted !== 'boolean') unshown.push('deleted');
+    if (unshown.length) return unproven(command, expected, observed, `users.info does not show ${unshown.join(', ')} as true or false, so this is not proof either way`, outcome.flags);
+    return verdict(command, true, expected, observed, '', outcome.flags);
   };
 }
 
@@ -623,8 +642,10 @@ async function verifyArchived(command, args, ctx, client, steps) {
   const observed = { channel: orNull(ch, 'id'), is_archived: orNull(ch, 'is_archived') };
   const problems = [];
   if (ch.id !== args.channel) problems.push('conversations.info answered for another channel');
-  if (ch.is_archived !== true) problems.push('is_archived is not true: the channel is not archived');
-  return verdict(command, problems.length === 0, expected, observed, problems.join('; '), outcome.flags);
+  if (ch.is_archived === false) problems.push('is_archived is false: the channel is not archived');
+  if (problems.length) return verdict(command, false, expected, observed, problems.join('; '), outcome.flags);
+  if (ch.is_archived !== true) return unproven(command, expected, observed, 'conversations.info does not show is_archived as true or false, so this is not proof either way', outcome.flags);
+  return verdict(command, true, expected, observed, '', outcome.flags);
 }
 
 async function verifyPosted(command, args, ctx, client, steps) {
@@ -649,12 +670,12 @@ async function verifyPosted(command, args, ctx, client, steps) {
   }
   const hasMore = body.has_more === true;
   const observed = { channel: args.channel, messages_read: body.messages.length, plain_messages_after_not_before: plainAfter, has_more: hasMore, matched_ts: matched };
-  let reason = '';
-  if (matched === null) {
-    reason = hasMore
-      ? `Slack returned ${body.messages.length} messages after --not-before and says more exist (has_more); none of the ${HISTORY_LIMIT} read is a person's plain message (no subtype, bot_id or app_id) with the expected SHA-256, so the read cannot prove the post: use a --not-before closer to the post or confirm it in the channel`
-      : 'no message posted after --not-before in this channel without a subtype, bot_id or app_id has the expected SHA-256; an edited or reformatted message does not match, and a message carrying a subtype, bot_id or app_id is skipped';
+  if (matched === null && hasMore) {
+    return unproven(command, expected, observed, `Slack returned ${body.messages.length} messages after --not-before and says more exist (has_more); none of the ${HISTORY_LIMIT} read is a person's plain message (no subtype, bot_id or app_id) with the expected SHA-256, so the read cannot prove the post either way: use a --not-before closer to the post or confirm it in the channel`, outcome.flags);
   }
+  const reason = matched === null
+    ? 'no message posted after --not-before in this channel without a subtype, bot_id or app_id has the expected SHA-256; an edited or reformatted message does not match, and a message carrying a subtype, bot_id or app_id is skipped'
+    : '';
   return verdict(command, matched !== null, expected, observed, reason, outcome.flags);
 }
 
@@ -674,7 +695,8 @@ async function scanAppList(client, route, key, team, appId) {
     pages += 1;
     flags.push(...withPrefix(withholdPersonal(res.flags, route), route));
     const list = res.data[key];
-    if (!Array.isArray(list)) return { failed: invalid(`${route} answered without ${key}`), step: route };
+    // a page without the list leaves the rest of the list unknown (batch G4, task D1)
+    if (!Array.isArray(list)) { note = `${route} answered without ${key}`; break; }
     if (list.some((e) => isObject(e) && isObject(e.app) && e.app.id === appId)) found = true;
     const next = nextCursor(res.data);
     if (!next) { complete = true; break; }
@@ -701,11 +723,18 @@ async function verifyAppApproved(command, args, ctx, client) {
     requests_list_complete: requests.complete,
     requests_pages_read: requests.pages,
   };
+  const flags = [...approved.flags, ...requests.flags];
+  // what the lists show: not approved (the approved list read to the end), or still requested
   const problems = [];
-  if (!approved.found) problems.push(`the app is not in admin.apps.approved.list${approved.note ? ` (${approved.note})` : ''}`);
+  if (!approved.found && approved.complete) problems.push('the app is not in admin.apps.approved.list');
   if (requests.found) problems.push('the app is still in admin.apps.requests.list: the request is pending');
-  else if (!requests.complete) problems.push(`admin.apps.requests.list was not read to the end (${requests.note}), so the request is not proven gone`);
-  return verdict(command, problems.length === 0, expected, observed, problems.join('; '), [...approved.flags, ...requests.flags]);
+  if (problems.length) return verdict(command, false, expected, observed, problems.join('; '), flags);
+  // a list not read to the end, without what was looked for, proves nothing either way
+  const unknown = [];
+  if (!approved.found) unknown.push(`the app is not in the part of admin.apps.approved.list read (${approved.note})`);
+  if (!requests.complete) unknown.push(`admin.apps.requests.list was not read to the end (${requests.note}), so the request is not proven gone`);
+  if (unknown.length) return unproven(command, expected, observed, `${unknown.join('; ')}; this is not proof either way`, flags);
+  return verdict(command, true, expected, observed, '', flags);
 }
 
 async function verifyAppRestricted(command, args, ctx, client) {
@@ -714,7 +743,8 @@ async function verifyAppRestricted(command, args, ctx, client) {
   const restricted = await scanAppList(client, 'admin.apps.restricted.list', 'restricted_apps', ctx.team, appId);
   if (restricted.failed) return notProven(command, restricted, expected);
   const observed = { app_id: appId, in_restricted_list: restricted.found, restricted_list_complete: restricted.complete, restricted_pages_read: restricted.pages };
-  const reason = restricted.found ? '' : `the app is not in admin.apps.restricted.list${restricted.note ? ` (${restricted.note})` : ''}`;
+  if (!restricted.found && !restricted.complete) return unproven(command, expected, observed, `the app is not in the part of admin.apps.restricted.list read (${restricted.note}), so this is not proof either way`, restricted.flags);
+  const reason = restricted.found ? '' : 'the app is not in admin.apps.restricted.list';
   return verdict(command, restricted.found, expected, observed, reason, restricted.flags);
 }
 

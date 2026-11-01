@@ -54,7 +54,7 @@ class AuditBroken extends Error {
 
 // ── What may be written ──────────────────────────────────────────────────────
 const STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
-  'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED']);
+  'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED', 'INCONCLUSIVE']);
 const HANDOFFS = new Set(['RETRIES_EXHAUSTED', 'RETRY_AFTER_TOO_LONG', 'RETRY_BUDGET_SPENT', 'RATE_LIMITED']);
 const NAME = /^[a-z][a-z0-9-]{1,30}$/;
 // a route or query name: short words joined by dots, dashes or underscores (no word over

@@ -37,7 +37,8 @@
 //
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
 // 2 the read failed or a verify-* read did not prove the write; 3 another workspace; 4 a
-// verify-* dry run (nothing was read, so nothing is verified).
+// verify-* dry run (nothing was read, so nothing is verified); 5 a verify-* answer that proves
+// nothing either way (INCONCLUSIVE, batch G4 task D1).
 //
 // Facts the lane could not confirm (vendor pages unreachable, docs/aegis/lanes/g2.md),
 // and the safer reading taken here:
@@ -57,7 +58,7 @@ const path = require('node:path');
 
 const {
   STATES, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
@@ -422,6 +423,15 @@ function verdict(command, verified, expected, observed, reason, flags) {
   return out;
 }
 
+// An answer that proves nothing either way (batch G4, task D1): INCONCLUSIVE (exit 5), never a
+// pass and never a failed object. A judge or a page walk marks one with notProof.
+function unproven(command, expected, observed, reason, flags) {
+  return inconclusive(verdict(command, false, expected, observed, reason, flags), reason);
+}
+const settle = (command, expected, observed, walk) => (walk.notProof
+  ? unproven(command, expected, observed, walk.reason, walk.flags)
+  : verdict(command, walk.verified === true, expected, observed, walk.reason, walk.flags));
+
 const sameIssue = (node, issue) => typeof node.identifier === 'string' && node.identifier.toUpperCase() === issue.toUpperCase();
 const orNull = (value) => (value === undefined ? null : value);
 
@@ -431,11 +441,11 @@ async function issueVerify(client, command, a, judge) {
   const res = await readOnce(client, command, 'AegisIssue', { id: a.issue });
   if (!res.ok) return res;
   const node = res.data.issue;
-  if (!node || typeof node !== 'object') return verdict(command, false, expected, { issue: null }, 'the response holds no issue', res.flags);
-  const { verified, observed, reason } = judge(node);
+  if (!node || typeof node !== 'object') return unproven(command, expected, { issue: null }, 'the response holds no issue, so this is not proof either way', res.flags);
+  const { verified, observed, reason, notProof } = judge(node);
   const seen = { issue: orNull(node.identifier), ...observed };
   if (!sameIssue(node, a.issue)) return verdict(command, false, expected, seen, 'the issue in the response is not the issue asked for', res.flags);
-  return verdict(command, verified, expected, seen, reason, res.flags);
+  return settle(command, expected, seen, { verified, reason, notProof, flags: res.flags });
 }
 
 // Read a connection page by page (at most MAX_PAGES), stopping when visit() says so.
@@ -450,10 +460,11 @@ async function paged(client, command, document, baseVariables, visit) {
     if (step.done) return { flags, ...step };
     const info = step.pageInfo || {};
     if (info.hasNextPage !== true) return { flags, done: false, reason: step.lastReason };
-    if (typeof info.endCursor !== 'string' || !CURSOR.test(info.endCursor)) return { flags, done: false, reason: 'the response gave no usable cursor for the next page' };
+    // a list not read to the end proves nothing either way (batch G4, task D1)
+    if (typeof info.endCursor !== 'string' || !CURSOR.test(info.endCursor)) return { flags, done: false, notProof: true, reason: 'the response gave no usable cursor for the next page, so this is not proof either way' };
     after = info.endCursor;
   }
-  return { flags, done: false, reason: `stopped after ${MAX_PAGES} pages without proof` };
+  return { flags, done: false, notProof: true, reason: `stopped after ${MAX_PAGES} pages without proof either way` };
 }
 
 async function verifyComment(client, a) {
@@ -464,7 +475,7 @@ async function verifyComment(client, a) {
   const walk = await paged(client, command, 'AegisIssueComments', { id: a.issue }, (data, page) => {
     observed.pagesRead = page;
     const issue = data.issue;
-    if (!issue || typeof issue !== 'object') return { done: true, verified: false, reason: 'the response holds no issue' };
+    if (!issue || typeof issue !== 'object') return { done: true, verified: false, notProof: true, reason: 'the response holds no issue, so this is not proof either way' };
     observed.issue = orNull(issue.identifier);
     if (!sameIssue(issue, a.issue)) return { done: true, verified: false, reason: 'the issue in the response is not the issue asked for' };
     const conn = issue.comments || {};
@@ -487,7 +498,7 @@ async function verifyComment(client, a) {
     return { done: false, pageInfo: conn.pageInfo, lastReason: `no comment created at or after ${a.notBefore}${by} has the expected SHA-256` };
   });
   if (walk.failed) return walk.failed;
-  return verdict(command, walk.verified === true, expected, observed, walk.reason, walk.flags);
+  return settle(command, expected, observed, walk);
 }
 
 async function verifySuspended(client, a) {
@@ -503,7 +514,8 @@ async function verifySuspended(client, a) {
       if (n.id !== a.user) continue;
       Object.assign(observed, { found: true, active: orNull(n.active), admin: orNull(n.admin), guest: orNull(n.guest), owner: orNull(n.owner) });
       if (n.active === false) return { done: true, verified: true };
-      return { done: true, verified: false, reason: n.active === true ? 'the member is active' : 'the read gave no active value for the member' };
+      if (n.active === true) return { done: true, verified: false, reason: 'the member is active' };
+      return { done: true, verified: false, notProof: true, reason: 'the read gave no active value for the member, so this is not proof either way' };
     }
     return {
       done: false, pageInfo: conn.pageInfo,
@@ -511,7 +523,7 @@ async function verifySuspended(client, a) {
     };
   });
   if (walk.failed) return walk.failed;
-  return verdict(command, walk.verified === true, expected, observed, walk.reason, walk.flags);
+  return settle(command, expected, observed, walk);
 }
 
 const VERIFY = {
@@ -519,8 +531,8 @@ const VERIFY = {
   'verify-suspended': verifySuspended,
   'verify-state': (client, a) => issueVerify(client, 'verify-state', a, (n) => {
     const state = n.state && typeof n.state === 'object' ? { name: orNull(n.state.name), type: orNull(n.state.type) } : null;
-    const verified = !!state && state.name === a.state;
-    return { verified, observed: { state }, reason: 'the issue is not in the expected state (names match exactly)' };
+    if (!state || typeof state.name !== 'string') return { verified: false, notProof: true, observed: { state }, reason: 'the issue read shows no state name, so this is not proof either way' };
+    return { verified: state.name === a.state, observed: { state }, reason: 'the issue is not in the expected state (names match exactly)' };
   }),
   'verify-labels': (client, a) => issueVerify(client, 'verify-labels', a, (n) => {
     const conn = n.labels && typeof n.labels === 'object' ? n.labels : {};
@@ -529,13 +541,17 @@ const VERIFY = {
     const verified = labels.includes(a.label);
     return {
       verified, observed: { labels, moreLabelPages: more },
-      reason: more ? 'the label is not among the first 100 labels and the issue has more; check it on screen' : 'the issue does not carry the label (names match exactly)',
+      ...(!verified && more ? { notProof: true } : {}),
+      reason: more ? 'the label is not among the first 100 labels and the issue has more, so this is not proof either way; check it on screen' : 'the issue does not carry the label (names match exactly)',
     };
   }),
+  // trashed is null or false for an issue not in the trash (schema: Boolean, nullable); a value
+  // that is not one of those proves nothing either way
   'verify-trashed': (client, a) => issueVerify(client, 'verify-trashed', a, (n) => ({
     verified: n.trashed === true,
     observed: { trashed: orNull(n.trashed), archivedAt: orNull(n.archivedAt) },
-    reason: 'the issue is not in the trash',
+    ...(n.trashed !== true && n.trashed !== false && n.trashed !== null ? { notProof: true } : {}),
+    reason: n.trashed === true || n.trashed === false || n.trashed === null ? 'the issue is not in the trash' : 'the issue read shows no trashed value, so this is not proof either way',
   })),
   // A snooze is proved by Issue.snoozedUntilAt ("the time until an issue will be snoozed
   // in Triage view", schema) being later than the moment of the read. The person then
@@ -544,10 +560,17 @@ const VERIFY = {
     const readAtMs = Math.floor(now());
     const until = typeof n.snoozedUntilAt === 'string' && ISO_DATE_TIME.test(n.snoozedUntilAt) ? Date.parse(n.snoozedUntilAt) : NaN;
     const state = n.state && typeof n.state === 'object' ? { name: orNull(n.state.name), type: orNull(n.state.type) } : null;
+    // snoozedUntilAt null is an answer (not snoozed); left out of the answer, or text that is not
+    // a time, it proves nothing either way (batch G4, task D1)
+    const unreadable = n.snoozedUntilAt === undefined || (n.snoozedUntilAt !== null && !Number.isFinite(until));
+    let reason = 'snoozedUntilAt is not a time later than the read';
+    if (n.snoozedUntilAt === null) reason = 'the issue is not snoozed (snoozedUntilAt is empty)';
+    else if (unreadable) reason = 'the issue read shows no snoozedUntilAt time, so this is not proof either way';
     return {
       verified: Number.isFinite(until) && until > readAtMs,
       observed: { snoozedUntilAt: orNull(n.snoozedUntilAt), readAt: new Date(readAtMs).toISOString(), state },
-      reason: n.snoozedUntilAt === null || n.snoozedUntilAt === undefined ? 'the issue is not snoozed (snoozedUntilAt is empty)' : 'snoozedUntilAt is not a time later than the read',
+      ...(unreadable ? { notProof: true } : {}),
+      reason,
     };
   }),
 };

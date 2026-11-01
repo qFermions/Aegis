@@ -1290,3 +1290,58 @@ test('A3: a mismatched --expect-sha256, --type or --method is not done', (t) => 
     assert.equal(tr.record(['status', '--change', change]).json.done, false, kind);
   }
 });
+
+// ── Batch G4, task D1: one INCONCLUSIVE verdict state ─────────────────────────────────────────
+// A read-back whose answer proves nothing either way is recorded with state INCONCLUSIVE and
+// verified false. A counted change lists it under uncounted with that reason: it neither counts
+// toward N nor keeps the change partial, with or without a run id, and link refuses it as a
+// proof like any read-back that did not verify.
+const inconclusiveRead = (s, entry) => s.log.append({ kind: 'verify', verified: false, state: 'INCONCLUSIVE', ...entry });
+
+test('D1: an INCONCLUSIVE read-back is uncounted with its reason, never a pass and never a failed object (no run id)', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  const unsure = inconclusiveRead(s, { connector: 'okta', command: 'verify-group-member', change, flags: '' });
+  personRead(s, change);
+  const v = status(s, change);
+  assert.equal(v.code, 2, v.stdout);
+  assert.equal(v.json.done, false);
+  assert.equal(v.json.summary, 'verified 1 of 2');
+  assert.deepEqual(v.json.failed, [], 'an INCONCLUSIVE read is not a failed object');
+  assert.deepEqual(v.json.uncounted.map((u) => [u.seq, u.state]), [[unsure.seq, 'INCONCLUSIVE']]);
+  assert.match(v.json.uncounted[0].reason, /proves nothing either way \(INCONCLUSIVE\)/);
+  assert.match(v.json.uncounted[0].reason, /neither a pass nor a failed object/);
+  personRead(s, change);
+  const done = status(s, change);
+  assert.equal(done.json.done, true, done.stdout);
+  assert.equal(done.json.summary, 'verified 2 of 2');
+});
+
+test('D1: an INCONCLUSIVE read of a run is uncounted, and a later pass of the same run counts once', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 1);
+  const pending = inconclusiveRead(s, { connector: 'fleet', command: 'verify-script', change, run: uuid(1) });
+  const before = status(s, change);
+  assert.equal(before.json.done, false);
+  assert.equal(before.json.summary, 'verified 0 of 1');
+  assert.deepEqual(before.json.failed, []);
+  assert.deepEqual(before.json.uncounted.map((u) => [u.seq, u.run, u.state]), [[pending.seq, uuid(1), 'INCONCLUSIVE']]);
+  assert.match(before.json.uncounted[0].reason, /proves nothing either way/);
+  runRead(s, change, uuid(1));
+  const after = status(s, change);
+  assert.equal(after.json.done, true, after.stdout);
+  assert.equal(after.json.summary, 'verified 1 of 1');
+});
+
+test('D1: link refuses an INCONCLUSIVE read-back as the proof of a change', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  assert.equal(o.code, 0, o.stderr);
+  const change = o.json.change;
+  assert.equal(s.run(CLI, ['approve', '--change', change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
+  const unsure = inconclusiveRead(s, { connector: 'okta', command: 'verify-factor-reset', change });
+  const l = s.run(CLI, ['link', '--change', change, '--verify-seq', String(unsure.seq)]);
+  assert.equal(l.code, 2, l.stdout);
+  assert.match(l.stderr, /did not verify/);
+  assert.equal(status(s, change).json.done, false);
+});

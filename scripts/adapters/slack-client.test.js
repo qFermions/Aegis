@@ -586,7 +586,7 @@ test('verify-posted passes only on a plain message after --not-before whose norm
     assert.match(r.res.reason, /subtype, bot_id or app_id/, `${label}: the reason names what is skipped`);
   }
   const busy = await verdict(argv, [authBody(), historyBody([other], true)]);
-  assert.equal(busy.code, 2);
+  assert.equal(busy.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(busy.res.observed.has_more, true);
   assert.match(busy.res.reason, /50/);
 
@@ -623,7 +623,7 @@ test('verify-app-approved needs the app in the approved list and out of the pend
   // a pending list longer than the page bound does not prove the request is gone
   const endless = Array.from({ length: 10 }, (_, i) => appsBody('app_requests', [], `more${i}`));
   const unbounded = await verdict(approvedArgv, [appsBody('approved_apps', [APP]), ...endless]);
-  assert.equal(unbounded.code, 2);
+  assert.equal(unbounded.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(unbounded.res.observed.requests_list_complete, false);
   assert.equal(unbounded.run.transport.calls.length, 11, 'one approved page and at most 10 request pages');
 

@@ -459,7 +459,7 @@ test('verify-wipe on Windows reads the host\'s commands and needs a doWipe comma
   assert.equal(failedCmd.json.verified, false);
 
   const linux = await cli(['verify-wipe', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'wiped', pending_action: '' }, { platform: 'ubuntu' })), ok({ results: [] })] });
-  assert.equal(linux.code, 2, 'a Linux wipe is a script: this read cannot prove it');
+  assert.equal(linux.code, 5, 'a Linux wipe is a script: this read cannot prove it (batch G4, task D1: INCONCLUSIVE)');
   assert.equal(linux.json.verified, false);
   assert.equal(linux.transport.calls.length, 1);
   assert.match(linux.json.note, /verify-script/);
@@ -468,7 +468,7 @@ test('verify-wipe on Windows reads the host\'s commands and needs a doWipe comma
 
 test('verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script', async () => {
   const android = await cli(['verify-wipe', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'wiped', pending_action: '' }, { platform: 'android' })), ok({ results: [] })] });
-  assert.equal(android.code, 2, 'an Android wipe is not an EraseDevice or doWipe command: this read cannot prove it');
+  assert.equal(android.code, 5, 'an Android wipe is not an EraseDevice or doWipe command: this read cannot prove it (batch G4, task D1: INCONCLUSIVE)');
   assert.equal(android.json.verified, false);
   assert.equal(android.transport.calls.length, 1, 'no commands read follows for Android');
   assert.match(android.json.note, /Android/);
@@ -479,7 +479,7 @@ test('verify-wipe on Android cannot pass and names the Android proof (device_sta
 
 test('verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check', async () => {
   const android = await cli(['verify-lock', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'unlocked', pending_action: '' }, { platform: 'android' }))] });
-  assert.equal(android.code, 2);
+  assert.equal(android.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(android.json.verified, false);
   assert.match(android.json.note, /verify-lock cannot pass for an Android host/);
   assert.match(android.json.note, /locked_host entry in host-activities/);
@@ -497,7 +497,7 @@ test('verify-script: exit_code 0 without a timeout is verified; an empty exit co
   assert.deepEqual(yes.json.expected.exit_code, [0]);
   for (const body of [{ exit_code: null, host_timeout: false }, { exit_code: 1, host_timeout: false }, { exit_code: 0, host_timeout: true }, { exit_code: '0', host_timeout: false }]) {
     const no = await cli(['verify-script', '--execution-id', EXECUTION, '--execute'], { replies: [ok({ execution_id: EXECUTION, host_id: 7, output: '', ...body })] });
-    assert.equal(no.code, 2, JSON.stringify(body));
+    assert.equal(no.code, body.exit_code === null ? 5 : 2, JSON.stringify(body)); // batch G4, task D1: a result not reported yet is INCONCLUSIVE
     assert.equal(no.json.verified, false, JSON.stringify(body));
   }
 });
@@ -551,7 +551,7 @@ test('verify-deleted: a manual deleted_host activity for the serial after --not-
 
   const busy = Array.from({ length: 12 }, () => feed([{ id: 1, type: 'ran_script', created_at: '2026-10-27T11:00:00Z', details: {} }], true));
   const bounded = await cli(argv, { replies: busy });
-  assert.equal(bounded.code, 2);
+  assert.equal(bounded.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(bounded.transport.calls.length, 10, 'the search is bounded to 10 pages of 100 activities');
 });
 

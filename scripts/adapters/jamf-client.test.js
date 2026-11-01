@@ -388,8 +388,8 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
     assert.equal(typeof no.json.reason, 'string', label);
   }
   const shapeless = await cli(VC, { replies: [tokenReply(), ok({ nothing: true })] });
-  assert.equal(shapeless.code, 2);
-  assert.equal(shapeless.json.state, STATES.INVALID_RESPONSE);
+  assert.equal(shapeless.code, 5); // batch G4, task D1: an answer with no results list is INCONCLUSIVE
+  assert.equal(shapeless.json.state, STATES.INCONCLUSIVE);
 });
 
 test('verify-command reads further pages while a page is full, and stops after ten pages without proof', async () => {
@@ -402,7 +402,7 @@ test('verify-command reads further pages while a page is full, and stops after t
   assert.equal(second.transport.calls[2].path, commandsPath(1, 'INSTALL_PROFILE', PIDS[7]));
 
   const bounded = await cli(VC, { replies: [tokenReply(), ...Array.from({ length: 12 }, (_, n) => full(n))] });
-  assert.equal(bounded.code, 2);
+  assert.equal(bounded.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(bounded.json.verified, false);
   assert.equal(bounded.transport.calls.length, 11, 'one token exchange and at most ten pages');
   assert.match(bounded.json.reason, /10 pages/);
@@ -437,7 +437,7 @@ test('verify-profile: the Mac, confirmed by serial number, lists the profile id;
   assert.equal(still.json.verified, false);
 
   const unnamed = await cli(VP('9', '--absent'), { replies: [tokenReply(), hardware([mac()]), profilesOf([{ displayName: 'Wi-Fi' }])] });
-  assert.equal(unnamed.code, 2, 'an entry without an id means absence is not proven');
+  assert.equal(unnamed.code, 5, 'an entry without an id means absence is not proven (batch G4, task D1: INCONCLUSIVE)');
   assert.match(unnamed.json.reason, /no id/);
 });
 
@@ -452,7 +452,7 @@ test('verify-profile: another Mac, no Mac, two Macs or an unreadable list is nev
   for (const [label, replies, calls] of cases) {
     for (const extra of [[], ['--absent']]) {
       const res = await cli(VP('9', ...extra), { replies: [tokenReply(), ...replies] });
-      assert.equal(res.code, 2, `${label} ${extra.join(' ')}`);
+      assert.equal(res.code, label === 'another serial number' ? 2 : 5, `${label} ${extra.join(' ')}`); // batch G4, task D1: another Mac is a failed answer; the rest prove nothing either way (INCONCLUSIVE)
       assert.equal(res.json.verified, false, label);
       assert.equal(res.transport.calls.length, calls, `${label}: reads stop at the first failed proof`);
     }
@@ -462,10 +462,10 @@ test('verify-profile: another Mac, no Mac, two Macs or an unreadable list is nev
 test('profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier', async () => {
   // presence needs one entry whose id and profileIdentifier both match
   const otherIdentifier = await cli(VP('7'), { replies: [tokenReply(), hardware([mac()]), profilesOf([{ id: '7', displayName: 'Wi-Fi', profileIdentifier: PIDS[8] }])] });
-  assert.equal(otherIdentifier.code, 2, 'the same id with another identifier may be another profile');
+  assert.equal(otherIdentifier.code, 5, 'the same id with another identifier may be another profile (batch G4, task D1: INCONCLUSIVE)');
   assert.match(otherIdentifier.json.reason, /carries this id but not this profile identifier/);
   const otherId = await cli(VP('7'), { replies: [tokenReply(), hardware([mac()]), profilesOf([{ id: '70', displayName: 'Wi-Fi', profileIdentifier: PIDS[7] }])] });
-  assert.equal(otherId.code, 2, 'an inventory id that differs from the console ID is not proof either');
+  assert.equal(otherId.code, 5, 'an inventory id that differs from the console ID is not proof either (batch G4, task D1: INCONCLUSIVE)');
   assert.match(otherId.json.reason, /under another id/);
 
   // --absent: neither the id nor the identifier may still be listed
@@ -473,12 +473,12 @@ test('profile read-backs name the profile: an id or an identifier alone is never
   assert.equal(stillByIdentifier.code, 2, 'the profile is still listed under another inventory id');
   assert.match(stillByIdentifier.json.reason, /still lists the profile/);
   const noIdentifiers = await cli(VP('9', '--absent'), { replies: [tokenReply(), hardware([mac()]), profilesOf([{ id: '7', displayName: 'Wi-Fi' }, { id: 8, displayName: 'FileVault' }])] });
-  assert.equal(noIdentifiers.code, 2, 'a list without identifiers cannot prove absence');
+  assert.equal(noIdentifiers.code, 5, 'a list without identifiers cannot prove absence (batch G4, task D1: INCONCLUSIVE)');
   assert.match(noIdentifiers.json.reason, /2 of 2 listed profile\(s\) carry no profileIdentifier/);
   const oneMissing = await cli(VP('9', '--absent'), { replies: [tokenReply(), hardware([mac()]), profilesOf([...PROFILES, { id: 11, displayName: 'VPN' }])] });
-  assert.equal(oneMissing.code, 2, 'one entry without an identifier may be the profile');
+  assert.equal(oneMissing.code, 5, 'one entry without an identifier may be the profile (batch G4, task D1: INCONCLUSIVE)');
   const empty = await cli(VP('9', '--absent'), { replies: [tokenReply(), hardware([mac()]), profilesOf([])] });
-  assert.equal(empty.code, 2, 'an empty list proves nothing');
+  assert.equal(empty.code, 5, 'an empty list proves nothing (batch G4, task D1: INCONCLUSIVE)');
   assert.match(empty.json.reason, /the list is empty/);
 
   // verify-command needs the identifier for a profile command, and refuses it for any other type
@@ -517,9 +517,9 @@ test('verify-group-count: the member count equals --expect; a paged or unknown s
   assert.equal(two.code, 2, 'more members than predicted is a wider blast radius, not proof');
 
   const paged = await cli(VG('3'), { replies: [tokenReply(), ok({ totalCount: 5, results: [1, 2, 3] })] });
-  assert.equal(paged.code, 2, 'three listed of five is not a count of three');
+  assert.equal(paged.code, 5, 'three listed of five is not a count of three (batch G4, task D1: INCONCLUSIVE)');
   const unknown = await cli(VG('3'), { replies: [tokenReply(), ok({ count: 3 })] });
-  assert.equal(unknown.code, 2);
+  assert.equal(unknown.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(unknown.json.verified, false);
 });
 
@@ -554,7 +554,7 @@ test('verify-filevault: FileVault ENCRYPTED and personal key validation VALID is
   ];
   for (const [label, de] of cases) {
     const no = await cli(VF, { replies: [tokenReply(), hardware([mac()]), diskOf(de)] });
-    assert.equal(no.code, 2, label);
+    assert.equal(no.code, /^no (validation|state) field$/.test(label) ? 5 : 2, label); // batch G4, task D1: a missing field is INCONCLUSIVE
     assert.equal(no.json.verified, false, label);
   }
   for (const res of [yes, await cli(VF, { replies: [tokenReply(), hardware([mac()]), diskOf(DE('ENCRYPTED', KEY_VALUE))] })]) {
@@ -609,7 +609,7 @@ test('verify-policy: every property asked for matches on the policy asked for; t
   }
   assert.equal((await cli(VPOL('--enabled', 'false'), { replies: [tokenReply(), policyOf({ enabled: false })] })).code, 0, 'a disabled policy reads back as disabled');
   const noEnabled = await cli(VPOL('--enabled', 'false'), { replies: [tokenReply(), policyOf({ enabled: 'false' })] });
-  assert.equal(noEnabled.code, 2, 'enabled must be a yes/no value, not text');
+  assert.equal(noEnabled.code, 5, 'enabled must be a yes/no value, not text (batch G4, task D1: INCONCLUSIVE)');
 
   // --no-triggers: a Self Service-only policy has every trigger_ field false and trigger_other empty
   const selfServiceOnly = { trigger: 'USER_INITIATED', trigger_checkin: false, trigger_startup: false, trigger_login: false, trigger_other: '' };
@@ -625,7 +625,7 @@ test('verify-policy: every property asked for matches on the policy asked for; t
   ];
   for (const [label, general, reason] of notClear) {
     const res = await cli(VPOL('--no-triggers'), { replies: [tokenReply(), policyOf(general)] });
-    assert.equal(res.code, 2, label);
+    assert.equal(res.code, /ticked|custom event$/.test(label) ? 2 : 5, label); // batch G4, task D1: a ticked trigger fails; a field not shown or unreadable is INCONCLUSIVE
     assert.match(res.json.reason, reason, label);
   }
 
@@ -634,10 +634,10 @@ test('verify-policy: every property asked for matches on the policy asked for; t
   assert.equal(another.code, 2);
   assert.equal(another.json.verified, false);
   const noId = await cli(VPOL('--frequency', 'Once per computer'), { replies: [tokenReply(), policyOf({ id: undefined })] });
-  assert.equal(noId.code, 2, 'a response without general.id cannot be tied to the policy asked for');
+  assert.equal(noId.code, 5, 'a response without general.id cannot be tied to the policy asked for (batch G4, task D1: INCONCLUSIVE)');
   assert.match(noId.json.reason, /no general\.id/);
   const none = await cli(VPOL('--enabled', 'true'), { replies: [tokenReply(), ok({})] });
-  assert.equal(none.code, 2);
+  assert.equal(none.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(none.json.verified, false);
 });
 

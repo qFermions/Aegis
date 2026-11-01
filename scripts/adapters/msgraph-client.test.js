@@ -182,7 +182,7 @@ test('verify read-backs for the password-reset and MFA runbooks', async () => {
   r = await v(['verify-group-member', '--group', 'bbbbbbbb-0000-4000-8000-000000000002', '--user', U, '--absent'], { value: [{ id: U }] });
   assert.equal(r.code, 2);
   r = await v(['verify-group-member', '--group', 'bbbbbbbb-0000-4000-8000-000000000002', '--user', U, '--absent'], { value: [], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/groups/x/members?$skiptoken=y' });
-  assert.equal(r.code, 2, 'absence on a first page with more pages is not proof');
+  assert.equal(r.code, 5, 'absence on a first page with more pages is not proof (batch G4, task D1: INCONCLUSIVE)');
 });
 
 test('a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token', async () => {
@@ -216,10 +216,10 @@ test('verify-sessions-revoked: passes when the sessions are valid only from --no
   assert.equal(before.code, 2);
   assert.match(before.json.reason, /before 2026-10-28T09:00:00Z/);
   const missing = await v([ok({ id: U })]);
-  assert.equal(missing.code, 2);
+  assert.equal(missing.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.match(missing.json.reason, /not in the answer/);
   const malformed = await v([ok({ id: U, signInSessionsValidFromDateTime: 'yesterday' })]);
-  assert.equal(malformed.code, 2);
+  assert.equal(malformed.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.match(malformed.json.reason, /not a time/);
   // a failed read prints its state and no verdict, and exits 2 (the contract's shape)
   const denied = await v([{ status: 403, body: { error: { code: 'Authorization_RequestDenied' } } }]);
@@ -249,10 +249,10 @@ test('verify-method-absent: passes when the method id is no longer listed; fails
   assert.equal(still.code, 2);
   assert.match(still.json.reason, /still listed/);
   const missing = await v([ok({})]);
-  assert.equal(missing.code, 2);
+  assert.equal(missing.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.match(missing.json.reason, /no method list/);
   const paged = await v([ok({ value: [other], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/users/x/authentication/methods?$skiptoken=y' })]);
-  assert.equal(paged.code, 2, 'absence on a page with more pages behind it is not proof');
+  assert.equal(paged.code, 5, 'absence on a page with more pages behind it is not proof (batch G4, task D1: INCONCLUSIVE)');
   const denied = await v([{ status: 403, body: { error: { code: 'Authorization_RequestDenied' } } }]);
   assert.equal(denied.code, 2);
   assert.equal(denied.json.state, 'HTTP_ERROR');
@@ -269,20 +269,20 @@ test('verify-method-absent: passes when the method id is no longer listed; fails
 
 // Code review round 1 of the batch G3 close-out 3, finding 7: an answer that proves nothing either
 // way (no method list, or another page behind it) was recorded as a read that got an answer and
-// failed, so it kept the counted MFA clear partial for good. It is now INVALID_RESPONSE, a read
-// with no usable answer, which a counted change lists as uncounted; it still never passes.
-test('verify-method-absent: an answer that proves nothing either way is recorded as INVALID_RESPONSE, never as a failed object', async () => {
+// failed, so it kept the counted MFA clear partial for good. It was then INVALID_RESPONSE, a read
+// with no usable answer; since batch G4 (task D1) it is INCONCLUSIVE (exit 5), which a counted change lists as uncounted; it still never passes.
+test('verify-method-absent: an answer that proves nothing either way is recorded as INCONCLUSIVE, never as a failed object', async () => {
   const U = 'aaaaaaaa-0000-4000-8000-000000000001';
   const ID = '3179e48a-750b-4051-897c-87b9720928f7';
   const recorded = [];
   const v = (body) => cli(['verify-method-absent', '--user', U, '--method-id', ID, '--execute'], { replies: [token(), ok(body)], extra: { audit: (e) => { recorded.push(e); return { seq: recorded.length }; } } });
   for (const body of [{}, { value: [{ id: '28c10230-6103-485e-b985-444c60001490' }], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/users/x/authentication/methods?$skiptoken=y' }]) {
     const r = await v(body);
-    assert.equal(r.code, 2, r.text);
-    assert.equal(r.json.state, 'INVALID_RESPONSE', r.text);
+    assert.equal(r.code, 5, r.text);
+    assert.equal(r.json.state, 'INCONCLUSIVE', r.text);
     assert.notEqual(r.json.verified, true);
   }
-  assert.deepEqual(recorded.filter((e) => e.kind === 'verify').map((e) => [e.state, e.verified]), [['INVALID_RESPONSE', false], ['INVALID_RESPONSE', false]]);
+  assert.deepEqual(recorded.filter((e) => e.kind === 'verify').map((e) => [e.state, e.verified]), [['INCONCLUSIVE', false], ['INCONCLUSIVE', false]]);
   const still = await v({ value: [{ id: ID }] });
   assert.equal(still.json.state, 'OK', 'a method still listed is an answer: the object failed');
 });

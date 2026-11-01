@@ -717,6 +717,21 @@ function assertNotProof(res, label) {
   return printed;
 }
 
+// Batch G4, task D1: an answer that proves nothing either way is the INCONCLUSIVE verdict, exit
+// 5, held to the same shape as assertVerdict's not-verified case: before D1 these cases were
+// pinned to state OK and exit 2, which a counted change read as a failed object.
+function assertInconclusive(res, label) {
+  assert.equal(res.code, 5, `${label}: ${res.stdout}${res.stderr}`);
+  const printed = firstJson(res.stdout);
+  assert.equal(printed.state, STATES.INCONCLUSIVE, label);
+  assert.equal(printed.verified, false, label);
+  assert.equal(typeof printed.expected, 'object', label);
+  assert.equal(typeof printed.observed, 'object', label);
+  assert.equal(typeof printed.reason, 'string', label);
+  assertTwoParts(res.stdout, 'INCONCLUSIVE', label);
+  return printed;
+}
+
 test('verify-status: exactly the status given (O-21) on a record of the user asked for', async () => {
   const yes = assertVerdict(await verify(['verify-status', '--user', USER_ID, '--status', 'SUSPENDED'], [ok(userRecord({ status: 'SUSPENDED' }))]), true, 'suspended');
   assert.deepEqual(yes.expected, { user: USER_ID, status: 'SUSPENDED' });
@@ -725,7 +740,7 @@ test('verify-status: exactly the status given (O-21) on a record of the user ask
   assertVerdict(await verify(['verify-status', '--user', USER_ID, '--status', 'DEPROVISIONED'], [ok(userRecord({ status: 'SUSPENDED' }))]), false, 'suspended is not deprovisioned');
   const other = assertVerdict(await verify(['verify-status', '--user', USER_ID, '--status', 'SUSPENDED'], [ok(userRecord({ id: OTHER_USER_ID, status: 'SUSPENDED' }))]), false, 'another user');
   assert.match(other.reason, /not the user/);
-  assertVerdict(await verify(['verify-status', '--user', USER_ID, '--status', 'ACTIVE'], [ok(userRecord({ status: undefined }))]), false, 'no status field');
+  assertInconclusive(await verify(['verify-status', '--user', USER_ID, '--status', 'ACTIVE'], [ok(userRecord({ status: undefined }))]), 'no status field');
   assertNotProof(await verify(['verify-status', '--user', USER_ID, '--status', 'SUSPENDED'], [status(404)]), 'no such user');
   for (const s of ['ACTIVE', 'SUSPENDED', 'DEPROVISIONED', 'LOCKED_OUT', 'PASSWORD_EXPIRED', 'PROVISIONED', 'RECOVERY', 'STAGED']) {
     assertVerdict(await verify(['verify-status', '--user', USER_ID, '--status', s], [ok(userRecord({ status: s }))]), true, s);
@@ -737,8 +752,8 @@ test('verify-factor-reset and verify-factors-reset-all: the user read succeeds f
   assert.deepEqual(one.expected, { user: USER_ID, factorType: 'sms', enrolled: false });
   assert.deepEqual(one.observed.factorTypes, ['push', 'token:software:totp']);
   assertVerdict(await verify(['verify-factor-reset', '--user', USER_ID, '--factor-type', 'sms'], [ok(userRecord()), ok([factor('push'), factor('sms', { status: 'PENDING_ACTIVATION' })])]), false, 'sms still listed');
-  assertVerdict(await verify(['verify-factor-reset', '--user', USER_ID, '--factor-type', 'sms'], [ok(userRecord()), ok({ factors: [] })]), false, 'not a list');
-  assertVerdict(await verify(['verify-factor-reset', '--user', USER_ID, '--factor-type', 'sms'], [ok(userRecord()), ok([{ id: FACTOR_ID, status: 'ACTIVE' }])]), false, 'a factor with no factorType');
+  assertInconclusive(await verify(['verify-factor-reset', '--user', USER_ID, '--factor-type', 'sms'], [ok(userRecord()), ok({ factors: [] })]), 'not a list');
+  assertInconclusive(await verify(['verify-factor-reset', '--user', USER_ID, '--factor-type', 'sms'], [ok(userRecord()), ok([{ id: FACTOR_ID, status: 'ACTIVE' }])]), 'a factor with no factorType');
   const other = await verify(['verify-factor-reset', '--user', USER_ID, '--factor-type', 'sms'], [ok(userRecord({ id: OTHER_USER_ID })), ok([])]);
   assertVerdict(other, false, 'another user');
   assert.equal(other.transport.calls.length, 2, 'the factors are not read for another user\'s record');
@@ -779,7 +794,7 @@ test('verify-sessions-cleared and verify-password-reset: an event of that type f
       ['no events', []],
     ];
     for (const [label, events] of notProof) assertVerdict(await verify(argv, [ok(events)]), false, `${command}: ${label}`);
-    assertVerdict(await verify(argv, [ok({ events: [] })]), false, `${command}: not a list`);
+    assertInconclusive(await verify(argv, [ok({ events: [] })]), `${command}: not a list`);
     assertNotProof(await verify(argv, [status(403)]), `${command}: logs 403`);
   }
 });
@@ -805,14 +820,14 @@ test('verify-group-member: the user read succeeds first; present on any page pro
   const full = Array.from({ length: 10 }, (_, i) => ok(page(i * 200, 200)));
   for (const isAbsent of [true, false]) {
     const res = await run(isAbsent, [ok(userRecord()), ...full.map((r) => ({ ...r }))]);
-    const printed = assertVerdict(res, false, `ten full pages, absent=${isAbsent}`);
+    const printed = assertInconclusive(res, `ten full pages, absent=${isAbsent}`);
     assert.match(printed.reason, /more than 10 pages/);
     assert.equal(res.transport.calls.length, 12, 'the token, the user read and ten pages, no eleventh');
   }
-  const repeated = assertVerdict(await run(true, [ok(userRecord()), ok(page(0, 200)), ok(page(0, 200))]), false, 'a page that repeats');
+  const repeated = assertInconclusive(await run(true, [ok(userRecord()), ok(page(0, 200)), ok(page(0, 200))]), 'a page that repeats');
   assert.match(repeated.reason, /repeat/);
-  assertVerdict(await run(true, [ok(userRecord()), ok([{ status: 'ACTIVE' }])]), false, 'a member with no id');
-  assertVerdict(await run(true, [ok(userRecord()), ok({ users: [] })]), false, 'not a list');
+  assertInconclusive(await run(true, [ok(userRecord()), ok([{ status: 'ACTIVE' }])]), 'a member with no id');
+  assertInconclusive(await run(true, [ok(userRecord()), ok({ users: [] })]), 'not a list');
 
   // a credential that sees nothing never proves "absent"
   const noUser = await run(true, [status(404), ok([])]);

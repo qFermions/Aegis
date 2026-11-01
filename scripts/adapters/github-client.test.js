@@ -212,7 +212,7 @@ test('verify-collaborator-removed: absent from every page of direct collaborator
   assert.equal(still.code, 2);
   assert.equal(still.json.verified, false);
   const long = await cli(['verify-collaborator-removed', '--repo', 'docs', '--user', 'leaver', '--execute'], { replies: Array.from({ length: 10 }, (_, i) => fullPage(`p${i}-`)) });
-  assert.equal(long.code, 2);
+  assert.equal(long.code, 5); // batch G4, task D1: INCONCLUSIVE, the answer proves nothing either way
   assert.match(long.json.reason, /not proof/);
   assert.equal(long.transport.calls.length, 10);
 });
@@ -254,7 +254,7 @@ test('verify-team-member, verify-protection, verify-2fa-required, verify-secret-
   const twoFa = await cli(['verify-2fa-required', '--execute'], { replies: [ok({ login: 'org-a', repos_url: 'https://api.github.com/orgs/org-a/repos', two_factor_requirement_enabled: true })] });
   assert.equal(twoFa.json.verified, true, twoFa.text);
   const hidden = await cli(['verify-2fa-required', '--execute'], { replies: [ok({ login: 'org-a', repos_url: 'https://api.github.com/orgs/org-a/repos' })] });
-  assert.equal(hidden.code, 2);
+  assert.equal(hidden.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.match(hidden.json.reason, /owner/);
 
   const sec = await cli(['verify-secret-alert', '--repo', 'docs', '--number', '3', '--state', 'resolved', '--resolution', 'revoked', '--execute'], { replies: [ok({ number: 3, state: 'resolved', resolution: 'revoked' })] });
@@ -281,7 +281,7 @@ test('a failure prints the two-part message for GitHub, with no body and no toke
 
 test('verify-team-member --absent: absence on a list longer than 10 full pages is not proof', async () => {
   const long = await cli(['verify-team-member', '--team', 'docs', '--user', 'leaver', '--absent', '--execute'], { replies: Array.from({ length: 10 }, (_, i) => fullPage(`t${i}-`)) });
-  assert.equal(long.code, 2, long.text);
+  assert.equal(long.code, 5, long.text); // batch G4, task D1: INCONCLUSIVE
   assert.equal(long.json.verified, false);
   assert.match(long.json.reason, /not proof/);
 });

@@ -91,7 +91,7 @@ test('Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and
   assert.equal(old.code, 2);
   assert.equal(old.json.verified, false);
   const none = await cli(jamf, ['verify-checked-in', '--serial', SERIAL, '--not-before', NOT_BEFORE, '--execute'], JAMF_ENV, jamfReplies({}));
-  assert.equal(none.code, 2);
+  assert.equal(none.code, 5); // batch G4, task D1: no lastContactTime is INCONCLUSIVE
   const dry = await cli(jamf, ['verify-checked-in', '--serial', SERIAL, '--not-before', NOT_BEFORE], { JAMF_URL: 'jamf.example.invalid' }, []);
   assert.equal(dry.code, 4, dry.text);
   assert.equal(dry.transport.calls.length, 0);

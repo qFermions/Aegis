@@ -607,11 +607,13 @@ async function verifyCommand(client, a) {
       // a command the Mac has not answered yet proves nothing either way, as a Fleet run not
       // reported yet does; a failed command, or none, is a failed object (code review round 1
       // of batch G4, finding 12)
-      if (pending) return unproven(command, expected, observed, `${none}, and ${pending} still read${pending === 1 ? 's' : ''} Pending: the Mac has not answered yet, so this is not proof either way; read again after its next check-in`, flags);
-      if (undated) {
-        observed.undatedCommands = undated;
-        return unproven(command, expected, observed, `${none}, and ${undated} Acknowledged or Pending command${undated === 1 ? '' : 's'} for this Mac ha${undated === 1 ? 's' : 've'} a dateSent that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the command asked for: this is not proof either way`, flags);
-      }
+      // the undated count is set whenever undated records exist, and the reason names both a
+      // Pending command and an undated one when both are seen (code review round 3 of batch G4,
+      // finding 15)
+      if (undated) observed.undatedCommands = undated;
+      const undatedWhy = `${undated} Acknowledged or Pending command${undated === 1 ? '' : 's'} for this Mac ha${undated === 1 ? 's' : 've'} a dateSent that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the command asked for`;
+      if (pending) return unproven(command, expected, observed, `${none}, and ${pending} still read${pending === 1 ? 's' : ''} Pending: the Mac has not answered yet${undated ? `; and ${undatedWhy}` : ''}, so this is not proof either way; read again after its next check-in`, flags);
+      if (undated) return unproven(command, expected, observed, `${none}, and ${undatedWhy}: this is not proof either way`, flags);
       return verdict(command, false, expected, observed, none, flags);
     }
   }

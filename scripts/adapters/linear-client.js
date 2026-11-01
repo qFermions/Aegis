@@ -458,7 +458,10 @@ async function paged(client, command, document, baseVariables, visit) {
     for (const f of res.flags || []) flags.push({ ...f, path: `page ${page} ${f.path}` });
     const step = visit(res.data, page);
     if (step.done) return { flags, ...step };
-    const info = step.pageInfo || {};
+    // a page with no pageInfo, or no true or false hasNextPage, does not say the list ended:
+    // not proof either way (code review round 1 of batch G4, finding 8)
+    const info = step.pageInfo;
+    if (!info || typeof info !== 'object' || typeof info.hasNextPage !== 'boolean') return { flags, done: false, notProof: true, reason: 'the response gives no page information, so the list may go on and this is not proof either way' };
     if (info.hasNextPage !== true) return { flags, done: false, reason: step.lastReason };
     // a list not read to the end proves nothing either way (batch G4, task D1)
     if (typeof info.endCursor !== 'string' || !CURSOR.test(info.endCursor)) return { flags, done: false, notProof: true, reason: 'the response gave no usable cursor for the next page, so this is not proof either way' };
@@ -479,7 +482,9 @@ async function verifyComment(client, a) {
     observed.issue = orNull(issue.identifier);
     if (!sameIssue(issue, a.issue)) return { done: true, verified: false, reason: 'the issue in the response is not the issue asked for' };
     const conn = issue.comments || {};
-    for (const c of Array.isArray(conn.nodes) ? conn.nodes : []) {
+    // a connection with no nodes list is not an empty list (code review round 1 of batch G4, finding 8)
+    if (!Array.isArray(conn.nodes)) return { done: true, verified: false, notProof: true, reason: 'the response holds no comment list, so this is not proof either way' };
+    for (const c of conn.nodes) {
       if (!c || typeof c !== 'object') continue;
       observed.commentsRead += 1;
       const created = typeof c.createdAt === 'string' ? Date.parse(c.createdAt) : NaN;
@@ -508,7 +513,9 @@ async function verifySuspended(client, a) {
   const walk = await paged(client, command, 'AegisMembers', {}, (data, page) => {
     observed.pagesRead = page;
     const conn = data.users || {};
-    for (const n of Array.isArray(conn.nodes) ? conn.nodes : []) {
+    // a connection with no nodes list is not an empty list (code review round 1 of batch G4, finding 8)
+    if (!Array.isArray(conn.nodes)) return { done: true, verified: false, notProof: true, reason: 'the response holds no member list, so this is not proof either way' };
+    for (const n of conn.nodes) {
       if (!n || typeof n !== 'object') continue;
       observed.membersRead += 1;
       if (n.id !== a.user) continue;

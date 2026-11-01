@@ -334,7 +334,14 @@ async function verifyWipe(read, args) {
   const query = apple ? { host_identifier: identifier, request_type: 'EraseDevice' } : { host_identifier: identifier, per_page: '100' };
   const c = await read('mdmCommands', {}, query);
   if (!c.ok) return { failed: c, observed };
-  const list = isObject(c.data) && Array.isArray(c.data.results) ? c.data.results.filter(isObject) : [];
+  // an answer with no results list is not an empty list: it proves nothing either way, unless
+  // the host record already shows the wipe not done or another host (code review round 1 of
+  // batch G4, finding 8)
+  if (!isObject(c.data) || !Array.isArray(c.data.results)) {
+    observed['wipe command'] = null;
+    return { inconclusive: statusOk, verified: false, observed, expected, note: 'The MDM commands answer has no results list, so the wipe command cannot be read: this is not proof either way.' };
+  }
+  const list = c.data.results.filter(isObject);
   const matching = apple
     ? list.filter((x) => x.request_type === 'EraseDevice')
     : list.filter((x) => typeof x.request_type === 'string' && /doWipe/.test(x.request_type));
@@ -408,13 +415,17 @@ async function verifyDeleted(read, args) {
   let pages = 0;
   let reachedNotBefore = false;
   let more = false;
+  let noList = false;
   // Activities come newest first (order_key=created_at, order_direction=desc), so
   // the search stops at the first activity older than --not-before.
   while (pages < DELETED_PAGES && !manual && !reachedNotBefore) {
     const r = await read('activities', {}, { page: String(pages), per_page: DELETED_PER_PAGE });
     pages += 1;
     if (!r.ok) return { failed: r };
-    const list = isObject(r.data) && Array.isArray(r.data.activities) ? r.data.activities.filter(isObject) : [];
+    // a page with no activities list is not an empty page (code review round 1 of batch G4,
+    // finding 8)
+    if (!isObject(r.data) || !Array.isArray(r.data.activities)) { noList = true; break; }
+    const list = r.data.activities.filter(isObject);
     for (const a of list) {
       const t = Date.parse(field(a, 'created_at'));
       if (!Number.isFinite(t)) continue;
@@ -438,6 +449,7 @@ async function verifyDeleted(read, args) {
     // activities not read back to --not-before, with more behind them, prove nothing either way
     // (batch G4, task D1), also when a deletion that was not manual was found: the manual one
     // may sit on the pages not read (code review round 1 of batch G4, finding 7)
+    if (noList) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and activity page ${pages} has no activities list, so this is not proof either way` };
     if (more && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and more activities after --not-before were not read, so this is not proof either way` };
     return { verified: false, observed, expected, note: why };
   }

@@ -1,0 +1,126 @@
+# command: node --test scripts/audit/early-time-bound.test.js
+# run in: <repo>  commit: 5f09f91  started: 2026-11-01T02:14:05Z  node: v24.22.1
+✖ F4: bindRefusal refuses a --not-before earlier than the approval, before any read, for every read-back with a time bound (17.090857ms)
+✖ F4: a time bound in epoch milliseconds is judged the same way before the read (7.300305ms)
+✖ F4: called for a read-back with a time bound but without the run's arguments, the check fails closed (6.997182ms)
+✖ F4: changeRefusal, the check every verify-* CLI runs before any read, refuses an early --not-before for each connector (7.443244ms)
+✖ F4: fleet verify-checked-in with an early --not-before exits 1 with no transport call and nothing recorded (15.075362ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147.531187
+
+✖ failing tests:
+
+test at scripts/audit/early-time-bound.test.js:78:1
+✖ F4: bindRefusal refuses a --not-before earlier than the approval, before any read, for every read-back with a time bound (17.090857ms)
+  AssertionError [ERR_ASSERTION]: fleet:verify-checked-in: names the bound
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:86:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'null',
+    expected: /--not-before 2026-10-28T07:59:00\.000Z/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/early-time-bound.test.js:95:1
+✖ F4: a time bound in epoch milliseconds is judged the same way before the read (7.300305ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /earlier than the approval/. Input:
+  
+  'null'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:100:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'null',
+    expected: /earlier than the approval/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/early-time-bound.test.js:104:1
+✖ F4: called for a read-back with a time bound but without the run's arguments, the check fails closed (6.997182ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--not-before/. Input:
+  
+  'null'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:108:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'null',
+    expected: /--not-before/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/early-time-bound.test.js:114:1
+✖ F4: changeRefusal, the check every verify-* CLI runs before any read, refuses an early --not-before for each connector (7.443244ms)
+  AssertionError [ERR_ASSERTION]: fleet:verify-checked-in: null
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:120:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'null',
+    expected: /earlier than the approval/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/early-time-bound.test.js:128:1
+✖ F4: fleet verify-checked-in with an early --not-before exits 1 with no transport call and nothing recorded (15.075362ms)
+  AssertionError [ERR_ASSERTION]: dry: {
+    "command": "verify-checked-in",
+    "state": "OK",
+    "dry_run": true,
+    "requests": [
+      {
+        "method": "GET",
+        "host": "fleet.example.invalid",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true"
+      }
+    ],
+    "note": "dry run: no credentials read, no network. Add the bare --execute flag to perform the read."
+  }
+  
+  NOT VERIFIED: a dry run reads nothing, so it proves nothing (exit 4).
+  
+  
+  4 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:149:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1

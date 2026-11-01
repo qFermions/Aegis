@@ -134,10 +134,11 @@ and writes a report with every measure's numerator and denominator. Every page i
 carries the label "simulated: model-judged on a case file, no real tenant". The terminal
 shows case ids, verdicts and scores, never case text or answers.
 
-**Commands.** The case file and the results stay outside the repository.
+**Commands.** The case file and the results stay outside the repository. To try the DEV set,
+first copy `scripts/eval/judged/dev-cases.jsonl` to a file outside the repository, for example
+`/tmp/aegis-dev-cases.jsonl`.
 
 ```bash
-cp scripts/eval/judged/dev-cases.jsonl /tmp/aegis-dev-cases.jsonl
 node scripts/eval/judged-eval.js run --cases /tmp/aegis-dev-cases.jsonl
 node scripts/eval/judged-eval.js run --cases /tmp/aegis-dev-cases.jsonl --results-dir /tmp/aegis-eval-results --execute
 node scripts/eval/judged-eval.js calibrate --sheet <filled sheet.csv> --run <results.json>

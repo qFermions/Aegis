@@ -265,3 +265,37 @@ test('F11: link refuses a time-bounded read-back when the approval\'s time is mi
     assert.equal(tr.record(['link', '--change', change, '--verify-seq', String(v.seq)]).code, 0, `${label}: linked when the time is readable`);
   }
 });
+
+// Code review round 3 of batch G4, finding 9: the unreadable-approval message said to run
+// node scripts/audit/audit-log.js verify, but every check that gives it reads the trail only after
+// verify reported the chain intact (changeView), so verify has nothing to add. The approval of this
+// change can never be shown, so the way forward is a new change: the message names it, with the
+// command that opens one, at every check that gives it (the pre-read check, status of a
+// one-read-back change and of a counted change, link).
+const NEW_CHANGE = /open a new change with node scripts\/audit\/change-record\.js open/;
+const VERIFY_REMEDY = /audit-log\.js verify/;
+test('round 3 F9: the unreadable-approval message says to open a new change, not to run audit-log.js verify', (t) => {
+  for (const [label, at] of BAD_TIMES) {
+    const tr = trail(t);
+    const change = tr.open(TIMED_READ_BACK);
+    const v = timedVerify(tr, change);
+    const messages = [];
+    messages.push(['pre-read check', String(changes.bindRefusal(withApprovalAt(tr.sink.log, at), change, TIMED_READ_BACK, ['verify-sessions-revoked', '--not-before', LATE]))]);
+    const counted = (e) => (e.kind === 'procedure' && e.change === change ? { ...e, expected: 1 } : e);
+    messages.push(['counted status', changes.changeView(withApprovalAt(tr.sink.log, at, counted), change).uncounted.map((u) => u.reason).join(' | ')]);
+    const real = audit.openAuditLog;
+    audit.openAuditLog = (options) => withApprovalAt(real(options), at);
+    try {
+      messages.push(['link', tr.record(['link', '--change', change, '--verify-seq', String(v.seq)]).text]);
+    } finally {
+      audit.openAuditLog = real;
+    }
+    tr.sink.log.append({ kind: 'change-link', change, verify_seq: v.seq });
+    messages.push(['status', changes.changeView(withApprovalAt(tr.sink.log, at), change).missing.join(' | ')]);
+    for (const [where, text] of messages) {
+      assert.match(text, UNREADABLE, `${label}, ${where}: ${text}`);
+      assert.match(text, NEW_CHANGE, `${label}, ${where}: names the new change and how to open it: ${text}`);
+      assert.doesNotMatch(text, VERIFY_REMEDY, `${label}, ${where}: no longer points to audit-log.js verify: ${text}`);
+    }
+  }
+});

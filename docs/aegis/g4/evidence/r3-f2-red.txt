@@ -1,0 +1,508 @@
+$ node --test scripts/adapters/inconclusive-r3.test.js scripts/adapters/gws-client.test.js scripts/adapters/okta-client.test.js scripts/adapters/msgraph-client.test.js scripts/adapters/slack-client.test.js
+(Node v24.22.1, at abd9dc4 plus the working tree: the finding 2 tests, before the fix)
+
+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant (2.744595ms)
+✔ the scopes are exactly the seven read-only scopes; admin.directory.user.security and every other scope is refused (0.957897ms)
+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (63.123633ms)
+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment (3.460632ms)
+✔ the token exchange is never retried, and one token serves every read of a run (6.107014ms)
+✔ a private key that is not an RSA private key in PEM form is refused before the transport, and is never printed (7.027997ms)
+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called (3.587152ms)
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0 (4 for a verify-*) (5.745707ms)
+✔ --execute with a mock transport prints the data; a missing credential is NO_CREDENTIALS (exit 1) and a missing GWS_CUSTOMER_ID is refused (exit 1), with nothing sent (3.882482ms)
+✔ tenant: a record whose customerId names another customer exits 3 with no data; a user record with no customerId returns no data (11.279195ms)
+✔ verify-suspended, verify-2sv-enforced and verify-ou: verified true exits 0, false exits 2, and a record for another user is never proof (22.341132ms)
+✔ verify-2sv-not-enforced: exit 0 only on a successful read of the named user whose isEnforcedIn2Sv is exactly false; a failed read, a missing field or another user is never proof (16.952851ms)
+✔ user and users print recoveryEmail and recoveryPhone as set or missing, never their values (7.751065ms)
+✔ a verify-* read of a user withholds a flagged recovery detail too, as the user read does (5.041282ms)
+✔ verify-admin-role-removed: reads the user, then its role assignments; proof only when no direct assignment of the role is listed and no page follows (9.808372ms)
+✔ verify-event: an event of that name, in that application, by that user, at or after --not-before (14.908556ms)
+✔ verify-event --target: the matched event must name the target in a parameter value; the same admin acting on another account is never proof (14.237678ms)
+✔ credentials never appear in stdout, stderr or results, also when the transport error or the response echoes them (9.60484ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it (3.788517ms)
+✔ bad input is refused with exit 1 before anything is read or sent (1.747368ms)
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it (1.842136ms)
+✔ the file run directly exits with the code run() returns, and its dry run reads nothing and opens no socket (205.818239ms)
+✔ the adapter source reads no file, never logs, and asks for no write scope (1.362939ms)
+✔ user and users print every personal field as set or missing (names, phones, addresses, other emails, IDs, relations, organizations, locations), and a flag on one withholds its text (4.898146ms)
+✔ user and users print aliases and nonEditableAliases as set or missing, like the other addresses, and a flag on one withholds its text (round 2, finding 6) (4.316789ms)
+✖ code review round 3, finding 2: gws verify-event: a matching event whose id.time is not a time is INCONCLUSIVE (exit 5), not skipped (21.770594ms)
+✖ code review round 3, finding 2: gws verify-event: a matching event with no id.time is INCONCLUSIVE (exit 5), not skipped (4.327151ms)
+✖ code review round 3, finding 2: okta verify-sessions-cleared: a matching SUCCESS event whose published is not a time is INCONCLUSIVE (exit 5), not skipped (7.307387ms)
+✖ code review round 3, finding 2: okta verify-sessions-cleared: a matching SUCCESS event with no published is INCONCLUSIVE (exit 5), not skipped (3.773164ms)
+✖ code review round 3, finding 2: okta verify-password-reset: a matching SUCCESS event whose published is not a time is INCONCLUSIVE (exit 5), not skipped (3.18789ms)
+✖ code review round 3, finding 2: okta verify-password-reset: a matching SUCCESS event with no published is INCONCLUSIVE (exit 5), not skipped (2.577529ms)
+✖ code review round 3, finding 2: msgraph verify-signin: a successful sign-in whose createdDateTime is not a time is INCONCLUSIVE (exit 5), not skipped (6.06706ms)
+✖ code review round 3, finding 2: msgraph verify-signin: a successful sign-in with no createdDateTime is INCONCLUSIVE (exit 5), not skipped (1.963849ms)
+✖ code review round 3, finding 2: slack verify-posted: a plain message with the expected text whose ts is malformed is INCONCLUSIVE (exit 5), not skipped (6.895163ms)
+✖ code review round 3, finding 2: slack verify-posted: a plain message with the expected text and no ts is INCONCLUSIVE (exit 5), not skipped (1.512817ms)
+✔ code review round 3, finding 2: gws verify-event: an undated matching event beside a dated one passes: another record proves the change (4.298641ms)
+✔ code review round 3, finding 2: okta verify-sessions-cleared: an undated matching event beside a dated one passes: another record proves the change (1.904351ms)
+✔ code review round 3, finding 2: okta verify-password-reset: an undated matching event beside a dated one passes: another record proves the change (2.011807ms)
+✔ code review round 3, finding 2: msgraph verify-signin: an undated successful sign-in beside a dated one passes: another record proves the change (1.61737ms)
+✔ code review round 3, finding 2: slack verify-posted: a matching message with a malformed ts beside one with a good ts passes: another record proves the change (1.059663ms)
+✔ code review round 3, finding 2: gws verify-event: an undated event of another name stays a failed object (exit 2) (2.974712ms)
+✔ code review round 3, finding 2: okta verify-sessions-cleared: an undated event with outcome FAILURE stays a failed object (exit 2) (1.855274ms)
+✔ code review round 3, finding 2: okta verify-password-reset: an undated event with outcome FAILURE stays a failed object (exit 2) (1.866639ms)
+✔ code review round 3, finding 2: msgraph verify-signin: an undated failed sign-in stays a failed object (exit 2) (1.509796ms)
+✔ code review round 3, finding 2: slack verify-posted: an undated message with other text stays a failed object (exit 2) (0.649188ms)
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (5.31236ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (13.304129ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (13.16549ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (2.503172ms)
+✔ verify read-backs for the password-reset and MFA runbooks (30.030928ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (1.998087ms)
+✔ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (9.529008ms)
+✔ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (11.265354ms)
+✔ verify-method-absent: an answer that proves nothing either way is recorded as INCONCLUSIVE, never as a failed object (5.120055ms)
+✔ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case (5.704619ms)
+✔ every --not-before takes the approved_at form with milliseconds and compares at millisecond precision (15.394245ms)
+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable (2.215222ms)
+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed (0.76569ms)
+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources (0.718071ms)
+✔ every write and every path off the allow-list is refused through client.send before an OKTA_ credential is read or the transport is called (18.391495ms)
+✔ a second Okta org is refused before any credential is read: another request host, or an OKTA_ORG_URL with a scheme, path, port or a second name (6.442591ms)
+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header (50.830185ms)
+✔ a full page says more may follow: group-members at 200 members, logs at 100 events (26.596579ms)
+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti (5.596709ms)
+✔ the token exchange is never retried, and one token serves every read of a run (7.05519ms)
+✔ a private key that is not an RSA private key in PEM form, or a client ID or key ID of the wrong shape, is refused before the transport and never printed (2.116663ms)
+✔ --execute with a missing credential is NO_CREDENTIALS (exit 1), named, with nothing sent (0.465847ms)
+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read (10.954196ms)
+✔ scope preflight through the contract: the refusal holds for the client, is one audit entry, and no second request is sent (2.765926ms)
+✔ dry run by default: each read and verify-* prints the exact planned request(s), reads no credential, calls no transport and exits 0 (2.948814ms)
+✔ verify-status: exactly the status given (O-21) on a record of the user asked for (19.748656ms)
+✔ verify-factor-reset and verify-factors-reset-all: the user read succeeds first, then the factor list proves the type (or every factor) is gone (20.418791ms)
+✔ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS (29.209894ms)
+✔ verify-group-member: the user read succeeds first; present on any page proves membership; --absent needs every page read, at most 10 pages of 200 (83.136737ms)
+✔ verify-app-assigned: present is a 200 with status ACTIVE or PROVISIONED; absent is a 404 on the app-user read after a successful read of the same user (19.781028ms)
+✔ every failure state prints the two-part message for platform Okta, with no stack trace, raw body or credential (71.560236ms)
+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them (9.96985ms)
+✔ personal fields print as set or missing: a user's profile except login and its credentials, a factor's profile, an app user's profile and credentials; a flag on one keeps its path and withholds its text (10.928476ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it (3.064178ms)
+✔ with an audit sink each request is one connector-call entry and each verify-* verdict one verify entry; a sink that fails withholds the verdict (7.188524ms)
+✔ bad input is refused with exit 1 before anything is read or sent (1.97973ms)
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it (1.811621ms)
+✔ the file run directly exits with the code run() returns, and its dry run reads no credential and opens no socket (199.410414ms)
+✔ the connector source reads no file, never logs, asks for .read scopes only, and has no em-dash (1.629343ms)
+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange (2.100093ms)
+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header (16.62ms)
+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs (6.437174ms)
+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes (3.796337ms)
+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called (3.573167ms)
+✔ the CLI dry run prints the exact planned requests, reads no credential and calls no transport (1.589296ms)
+✔ only the bare --execute flag performs the read; any other spelling is refused and nothing is sent (1.538428ms)
+✔ digest is offline: the SHA-256 of the whitespace-normalised draft, a not-before time and the exact verify-posted line (3.492532ms)
+✔ --execute prints the data; user and users print state fields only, never a profile (1.520754ms)
+✔ an HTTP 200 answer with ok:false is a failed read reported with the error code only (2.45622ms)
+✔ verify-deactivated, verify-reactivated and verify-guest pass only on the matching user state (2.841267ms)
+✔ verify-archived passes only when the channel read is the one asked for and is archived (1.521857ms)
+✔ verify-posted passes only on a plain message after --not-before whose normalised text has the expected digest (3.998765ms)
+✔ verify-app-approved needs the app in the approved list and out of the pending requests; verify-app-restricted needs it in the restricted list (3.539183ms)
+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it (3.187357ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it (1.050057ms)
+✔ a user, member, team or channel record from another workspace, or with no team id, is refused (exit 3) and prints none of its data (1.819082ms)
+✔ input validation runs before any credential or network: IDs, limits and cursors outside their patterns are refused (1.639785ms)
+✔ without an injected transport the default one throws the network tripwire; no socket is opened (0.861416ms)
+✔ a flag on a personal profile field names its path and withholds the text: user, users, a user read-back and an app requester (1.046319ms)
+✔ verify-app-approved withholds a flagged requester name in the pending list, as app-requests does (round 2, finding 3) (0.495781ms)
+✔ a flag on a person's name outside the user reads withholds the quote: access-logs username, a message author profile; a message's own text keeps its quote (round 2, finding 4) (1.62361ms)
+✔ outside the user reads a flag keeps its quote only on a field that read exists to show: attachment authors and other unlisted fields are withheld (round 3, finding 8) (1.60698ms)
+ℹ tests 107
+ℹ suites 0
+ℹ pass 97
+ℹ fail 10
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1025.201574
+
+✖ failing tests:
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: gws verify-event: a matching event whose id.time is not a time is INCONCLUSIVE (exit 5), not skipped (21.770594ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-event",
+    "verified": false,
+    "expected": {
+      "app": "admin",
+      "event": "CHANGE_PASSWORD",
+      "user": "person@example.com",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "recordsRead": 1,
+      "match": null,
+      "recordsSinceNotBefore": [],
+      "morePages": false
+    },
+    "reason": "no admin event named CHANGE_PASSWORD by the user at or after 2026-10-28T09:00:00Z among the 1 record(s) read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=google-workspace operation=verify-event state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: gws verify-event: a matching event with no id.time is INCONCLUSIVE (exit 5), not skipped (4.327151ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-event",
+    "verified": false,
+    "expected": {
+      "app": "admin",
+      "event": "CHANGE_PASSWORD",
+      "user": "person@example.com",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "recordsRead": 1,
+      "match": null,
+      "recordsSinceNotBefore": [],
+      "morePages": false
+    },
+    "reason": "no admin event named CHANGE_PASSWORD by the user at or after 2026-10-28T09:00:00Z among the 1 record(s) read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=google-workspace operation=verify-event state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: okta verify-sessions-cleared: a matching SUCCESS event whose published is not a time is INCONCLUSIVE (exit 5), not skipped (7.307387ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-sessions-cleared",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "eventType": "user.session.clear",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "eventsRead": 1,
+      "match": null,
+      "eventsSinceNotBefore": [],
+      "morePages": false
+    },
+    "reason": "no user.session.clear event with outcome SUCCESS for 00u1abcd2EFGH3ijk4x7 at or after 2026-10-28T09:00:00Z among the 1 event(s) read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-sessions-cleared state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: okta verify-sessions-cleared: a matching SUCCESS event with no published is INCONCLUSIVE (exit 5), not skipped (3.773164ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-sessions-cleared",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "eventType": "user.session.clear",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "eventsRead": 1,
+      "match": null,
+      "eventsSinceNotBefore": [],
+      "morePages": false
+    },
+    "reason": "no user.session.clear event with outcome SUCCESS for 00u1abcd2EFGH3ijk4x7 at or after 2026-10-28T09:00:00Z among the 1 event(s) read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-sessions-cleared state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: okta verify-password-reset: a matching SUCCESS event whose published is not a time is INCONCLUSIVE (exit 5), not skipped (3.18789ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-password-reset",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "eventType": "user.account.reset_password",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "eventsRead": 1,
+      "match": null,
+      "eventsSinceNotBefore": [],
+      "morePages": false
+    },
+    "reason": "no user.account.reset_password event with outcome SUCCESS for 00u1abcd2EFGH3ijk4x7 at or after 2026-10-28T09:00:00Z among the 1 event(s) read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-password-reset state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: okta verify-password-reset: a matching SUCCESS event with no published is INCONCLUSIVE (exit 5), not skipped (2.577529ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-password-reset",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "eventType": "user.account.reset_password",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "eventsRead": 1,
+      "match": null,
+      "eventsSinceNotBefore": [],
+      "morePages": false
+    },
+    "reason": "no user.account.reset_password event with outcome SUCCESS for 00u1abcd2EFGH3ijk4x7 at or after 2026-10-28T09:00:00Z among the 1 event(s) read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-password-reset state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: msgraph verify-signin: a successful sign-in whose createdDateTime is not a time is INCONCLUSIVE (exit 5), not skipped (6.06706ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-signin",
+    "verified": false,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "successful_sign_in": "at or after 2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "sign_ins_read": 1,
+      "error_codes": [
+        0
+      ]
+    },
+    "reason": "no successful sign-in at or after 2026-10-28T09:00:00Z among the 1 read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=msgraph operation=verify-signin state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: msgraph verify-signin: a successful sign-in with no createdDateTime is INCONCLUSIVE (exit 5), not skipped (1.963849ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-signin",
+    "verified": false,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "successful_sign_in": "at or after 2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "sign_ins_read": 1,
+      "error_codes": [
+        0
+      ]
+    },
+    "reason": "no successful sign-in at or after 2026-10-28T09:00:00Z among the 1 read",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=msgraph operation=verify-signin state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: slack verify-posted: a plain message with the expected text whose ts is malformed is INCONCLUSIVE (exit 5), not skipped (6.895163ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-posted",
+    "verified": false,
+    "expected": {
+      "channel": "C0TEST0001",
+      "sha256": "68b0de3e9b788274c9ab6ede4f4c0eb3939d4fa0dab285680271a6f63373d78a",
+      "posted_after": "2026-10-28T09:00:00.000Z",
+      "plain_message": true
+    },
+    "observed": {
+      "channel": "C0TEST0001",
+      "messages_read": 1,
+      "plain_messages_after_not_before": 0,
+      "has_more": false,
+      "matched_ts": null
+    },
+    "reason": "no message posted after --not-before in this channel without a subtype, bot_id or app_id has the expected SHA-256; an edited or reformatted message does not match, and a message carrying a subtype, bot_id or app_id is skipped",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=slack operation=verify-posted state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive-r3.test.js:137:3
+✖ code review round 3, finding 2: slack verify-posted: a plain message with the expected text and no ts is INCONCLUSIVE (exit 5), not skipped (1.512817ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-posted",
+    "verified": false,
+    "expected": {
+      "channel": "C0TEST0001",
+      "sha256": "68b0de3e9b788274c9ab6ede4f4c0eb3939d4fa0dab285680271a6f63373d78a",
+      "posted_after": "2026-10-28T09:00:00.000Z",
+      "plain_message": true
+    },
+    "observed": {
+      "channel": "C0TEST0001",
+      "messages_read": 1,
+      "plain_messages_after_not_before": 0,
+      "has_more": false,
+      "matched_ts": null
+    },
+    "reason": "no message posted after --not-before in this channel without a subtype, bot_id or app_id has the expected SHA-256; an edited or reformatted message does not match, and a message carrying a subtype, bot_id or app_id is skipped",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=slack operation=verify-posted state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive-r3.test.js:62:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive-r3.test.js:138:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

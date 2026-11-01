@@ -443,3 +443,49 @@ for (const [why, results] of JAMF_STILL_FAILS) {
   });
 }
 
+// ── Code review round 2 of batch G4 ──────────────────────────────────────────
+// Finding 1: GitHub verify-protection read enforce_admins, allow_force_pushes and allow_deletions
+// through one helper that turned an object without a true or false enabled into false, and a
+// missing object into null. So allow_force_pushes: {} passed --no-force-push (a false pass), and
+// a missing object was a failed object (exit 2). Each of the three settings a flag asks about
+// must show a true or false enabled: when it does not, the answer proves nothing either way
+// (INCONCLUSIVE, exit 5). A definite value against the flag stays a failed object (exit 2), also
+// beside a setting that is not shown; definite matching values pass, and a setting no flag asks
+// about is not read.
+const PROTECTION = ['verify-protection', '--repo', 'docs', '--branch', 'main'];
+const protectionBody = (over = {}) => ({ url: 'https://api.github.com/repos/example-org/docs/branches/main/protection', required_pull_request_reviews: { required_approving_review_count: 2 }, enforce_admins: { url: 'https://api.github.com/repos/example-org/docs/branches/main/protection/enforce_admins', enabled: true }, allow_force_pushes: { enabled: false }, allow_deletions: { enabled: false }, ...over });
+const withoutKey = (key) => { const body = protectionBody(); delete body[key]; return body; };
+const PROTECTION_UNSHOWN = [
+  ['--no-force-push, allow_force_pushes {} (it used to pass)', ['--no-force-push'], protectionBody({ allow_force_pushes: {} })],
+  ['--no-deletions, allow_deletions {} (it used to pass)', ['--no-deletions'], protectionBody({ allow_deletions: {} })],
+  ['--no-force-push, allow_force_pushes left out', ['--no-force-push'], withoutKey('allow_force_pushes')],
+  ['--no-deletions, allow_deletions left out', ['--no-deletions'], withoutKey('allow_deletions')],
+  ['--no-force-push, allow_force_pushes.enabled null', ['--no-force-push'], protectionBody({ allow_force_pushes: { enabled: null } })],
+  ['--no-deletions, allow_deletions not an object', ['--no-deletions'], protectionBody({ allow_deletions: false })],
+  ['--enforce-admins, enforce_admins without enabled', ['--enforce-admins'], protectionBody({ enforce_admins: { url: 'https://api.github.com/repos/example-org/docs/branches/main/protection/enforce_admins' } })],
+  ['--enforce-admins, enforce_admins left out', ['--enforce-admins'], withoutKey('enforce_admins')],
+  ['--enforce-admins, enforce_admins.enabled the text "true"', ['--enforce-admins'], protectionBody({ enforce_admins: { enabled: 'true' } })],
+  ['all three flags, each setting matching but allow_deletions {}', ['--enforce-admins', '--no-force-push', '--no-deletions'], protectionBody({ allow_deletions: {} })],
+];
+for (const [why, flags, body] of PROTECTION_UNSHOWN) {
+  test(`code review round 2, finding 1: github verify-protection ${why} is INCONCLUSIVE (exit 5)`, async () => {
+    assertInconclusive(await verdictOf('github', [...PROTECTION, ...flags], [ok(body)]));
+  });
+}
+test('code review round 2, finding 1: github verify-protection: a definite value against the flag stays a failed object (exit 2), also beside a setting not shown', async () => {
+  assertFailedObject(await verdictOf('github', [...PROTECTION, '--no-force-push'], [ok(protectionBody({ allow_force_pushes: { enabled: true } }))]));
+  assertFailedObject(await verdictOf('github', [...PROTECTION, '--no-deletions'], [ok(protectionBody({ allow_deletions: { enabled: true } }))]));
+  assertFailedObject(await verdictOf('github', [...PROTECTION, '--enforce-admins'], [ok(protectionBody({ enforce_admins: { enabled: false } }))]));
+  const mixed = await verdictOf('github', [...PROTECTION, '--no-force-push', '--no-deletions'], [ok(protectionBody({ allow_force_pushes: { enabled: true }, allow_deletions: {} }))]);
+  assertFailedObject(mixed);
+  assert.match(mixed.json.reason, /force pushes are allowed/, mixed.text);
+});
+test('code review round 2, finding 1: github verify-protection: definite matching values pass; a setting no flag asks about is not read', async () => {
+  const all = await verdictOf('github', [...PROTECTION, '--reviews', '2', '--enforce-admins', '--no-force-push', '--no-deletions'], [ok(protectionBody())]);
+  assert.equal(all.code, EXIT.OK, all.text);
+  assert.deepEqual(all.entry, [[true, 'OK']], all.text);
+  const reviewsOnly = await verdictOf('github', [...PROTECTION, '--reviews', '2'], [ok(protectionBody({ enforce_admins: {}, allow_force_pushes: {}, allow_deletions: {} }))]);
+  assert.equal(reviewsOnly.code, EXIT.OK, reviewsOnly.text);
+  assert.deepEqual(reviewsOnly.entry, [[true, 'OK']], reviewsOnly.text);
+});
+

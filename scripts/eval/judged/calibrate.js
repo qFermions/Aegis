@@ -8,7 +8,8 @@
 //   the answer cell holds both turns. Cells are quoted per RFC 4180, and a cell that a
 //   spreadsheet would read as a formula (= + - @ at the start) gets a leading apostrophe.
 // - readSheet() parses the owner's filled sheet: a score cell is 0, 1, 2, or blank / NA
-//   for not scored; anything else is refused with its line and column.
+//   for not scored; anything else is refused with its line and column. A case_id cell written
+//   with the formula guard's apostrophe (an id that starts with -) reads as the id itself.
 // - agreement() compares the sheet with the run's judge scores (Correctness is the
 //   computed one): per row and overall, exact agreement (matching pairs over pairs both
 //   scored) and unweighted Cohen's kappa over the categories 0, 1, 2 (null when there are
@@ -107,7 +108,10 @@ function readSheet(text) {
   if (!cols.length) throw new Error('calibration sheet: no rubric column');
   const out = new Map();
   for (const row of rows.slice(1)) {
-    const id = (row[idCol] || '').trim();
+    // the formula guard's own apostrophe comes off: a case id may start with - (cases.js ID_RE), so
+    // csvCell writes it as '-... (code review round 1 of batch G4, finding 10); a spreadsheet that
+    // drops the apostrophe on save writes the bare id, which reads the same
+    const id = (row[idCol] || '').trim().replace(/^'(?=-)/, '');
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw new Error(`calibration sheet: line ${row.line}: case_id is not a case id`);
     if (out.has(id)) throw new Error(`calibration sheet: line ${row.line}: case ${id} appears twice`);
     const scores = {};

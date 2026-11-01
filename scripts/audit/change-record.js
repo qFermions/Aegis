@@ -572,13 +572,39 @@ function staleReadBack(change, procedure) {
     return `change ${change} was not opened by change-record.js open as it now checks (an entry from before the batch G3 close-out 3, or one written around the CLI), and its read-back ${procedure.read_back} fails that check: ${why}; nothing proves it, so open a new change`;
   }
 }
-function bindRefusal(log, change, readBack) {
+// argv: the run's arguments without --change (takeChange's argv). A read-back named with a time
+// bound is refused before any read when a bound it would run with is earlier than the change's
+// approval, and when its arguments are not given, so the bound cannot be checked (batch G4, code
+// review round 1, finding 4: the bare form readBack carries no value, so such a read ran, was
+// recorded verified and was printed as linkable, and only link and status refused it afterwards;
+// those checks stay).
+function bindRefusal(log, change, readBack, argv = null) {
   const view = changeView(log, change);
   if (view.chain !== 'intact') return view.missing[0];
   if (!view.procedure) return `the audit trail holds no change ${change}; open it with node scripts/audit/change-record.js open before the change`;
   if (view.stale) return view.stale;
   if (view.procedure.read_back !== readBack) return `change ${change} is proved by ${view.procedure.read_back}, not by ${readBack}`;
   if (!view.approval || !view.approval.matches) return `change ${change} has no approval of its procedure yet; record it with node scripts/audit/change-record.js approve first`;
+  const bound = timeBoundOf(readBack);
+  if (bound) {
+    if (!Array.isArray(argv)) return `change ${change} is proved by ${readBack}, and the check was not given the run's arguments, so its --${bound} could not be checked against the approval; the read-back is refused`;
+    const early = earlyRunBound(kindOfReadBack(readBack), argv.map(String), view.approval);
+    if (early) return `the read-back would run with --${early.flag} ${early.value}, earlier than the approval of change ${change} at ${early.approvedAt}, so it could pass on a change made before the approval and never proves it; run it with --${early.flag} at or after ${early.approvedAt}. Nothing was read or recorded`;
+  }
+  return null;
+}
+// The first time bound a run's arguments carry that is earlier than the approval, or null: each
+// occurrence of each time flag, read as the trail records it (passFlags), so a repeated flag cannot
+// hide an early value behind a later one.
+function earlyRunBound(kind, argv, approval) {
+  const rules = audit.PASS_FLAGS[kind] || {};
+  const [connector, command] = kind.split(':');
+  for (let i = 0; i < argv.length; i += 1) {
+    const name = argv[i].startsWith('--') ? argv[i].slice(2) : null;
+    if (!name || !hasOwn(rules, name) || rules[name] !== audit.TIME) continue;
+    const early = earlyBound({ connector, command, flags: audit.passFlags(kind, [argv[i], argv[i + 1]]) }, approval);
+    if (early) return early;
+  }
   return null;
 }
 

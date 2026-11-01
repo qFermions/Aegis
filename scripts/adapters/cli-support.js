@@ -88,8 +88,10 @@ function changeRefusal(connector, command, bound, audit) {
   if (!log || typeof log.entries !== 'function' || typeof log.verify !== 'function') return '--change needs the audit trail the read-back is recorded in, and none is open for this run';
   try {
     // the read-back with the flags it would run with that change what its pass means, so a read
-    // in another form is refused before any read (batch G3 close-out 3, owner decision H1)
-    return bindRefusal(log, change, readBackFor(`${connector}:${command}`, bound.argv));
+    // in another form is refused before any read (batch G3 close-out 3, owner decision H1); the
+    // argv too, so a time bound earlier than the approval is refused before any read (batch G4,
+    // code review round 1, finding 4)
+    return bindRefusal(log, change, readBackFor(`${connector}:${command}`, bound.argv), bound.argv);
   } catch {
     return 'the audit trail could not be read, so the change could not be checked';
   }

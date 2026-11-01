@@ -42,6 +42,10 @@ function testRunbooks(dir, t) {
   };
 }
 
+// The time changeTrail's approvals are recorded at: before every [NOT_BEFORE] value the runbook
+// tests fill in.
+const APPROVED_AT = Date.parse('2026-10-27T11:00:00.000Z');
+
 // t: the node:test context (its after() removes the folder).
 function changeTrail(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-runbook-trail-'));
@@ -55,7 +59,10 @@ function changeTrail(t) {
   const call = (argv) => {
     const out = [];
     const err = [];
-    const code = changes.main(argv, env, { out: (s) => out.push(s), err: (s) => err.push(s) });
+    // the change is approved before the earliest [NOT_BEFORE] the runbook tests fill in, as in use:
+    // a time bound earlier than the approval is refused before any read (batch G4, code review
+    // round 1, finding 4)
+    const code = changes.main(argv, env, { out: (s) => out.push(s), err: (s) => err.push(s), now: () => APPROVED_AT });
     if (code !== 0) throw new Error(`change-record ${argv[0]} failed: ${err.join('')}`);
     return JSON.parse(out.join(''));
   };

@@ -1184,7 +1184,7 @@ test('A2: change-record.js approve refuses an unknown change, a change not yet o
   assert.equal(st.json.approval.ref, 'IT-123');
 });
 
-test('A2: two approvals of one change raced from two processes: exactly one is recorded', async (t) => {
+test('A2: four approvals of one change raced from four processes: exactly one is recorded', async (t) => {
   const s = setup(t);
   const o = openChange(s);
   const { spawn } = require('node:child_process');

@@ -47,3 +47,25 @@ After round 1's fixes: battery at `82cbae5`, `node --test` 1745/1745 and the sam
 | 15 | `scripts/audit/change-record.js:603` | `earlyRunBound` walks repeated flags that every parser already refuses | C: defense in depth at the trust boundary; no behavior difference while the parsers refuse repeats |
 
 After round 2's fixes: battery at `cf8b914`, `node --test` 1818/1818 and the same under the socket tripwire, the four evals, lint, release boundary and scanner (0 BLOCK) pass (`docs/aegis/g4/evidence/r2-battery/`).
+
+## Round 3 (the last): `9ea0f2b..74fe5db` (diff only: round 2's fixes)
+
+15 findings; none re-reports a closed one.
+
+| # | file:line | finding | disposition |
+|---|---|---|---|
+| 1 | `scripts/adapters/fleet-client.js:355` | Windows `verify-wipe`: a 200 doWipe on page 0 passes when more pages may follow, though a newer doWipe (the current wipe, still pending) may be on page 1; a false pass on an R3 read-back | F |
+| 2 | `scripts/adapters/gws-client.js:539`, `okta-client.js:535`, `msgraph-client.js:215`, `slack-client.js:666` | round 2 finding 4's class (a record that would prove the change but whose time cannot be read is skipped) in four more connectors (pre-existing, in files the diff does not touch) | F |
+| 3 | `scripts/adapters/fleet-client.js:335` | the Apple branch of `verify-wipe` never checks `meta.has_next_results` | F |
+| 4 | `scripts/adapters/fleet-client.js:360` | altitude: a Windows host with a long command history can never prove its wipe, since the read takes no page; ask newest first or walk pages | C: Fleet's ordering parameters for this endpoint are not in the vendor facts; INCONCLUSIVE is the safe direction (never a false pass); listed for the owner as a decision and a real-tenant question |
+| 5 | `scripts/audit/time-bound-capture.test.js:90` | a runbook whose change-bound time flags are all literal gets no per-file test; any sentence containing `approved_at` passes | F |
+| 6 | `scripts/adapters/fleet-client.js:358` | Windows: a page not full with no boolean `has_next_results` read as the last page, while `verify-deleted` reads it as unknown | C: the read asks for 100 per page, so a page of fewer is the last unless the server ignores `per_page`, which no vendor fact says; `verify-deleted` asks for no page size, so it cannot judge fullness; noted under vendor fact F-13 for the owner |
+| 7 | `scripts/adapters/fleet-client.js:360` | the paging return on a host not wiping gives exit 2 with a note that says "not proof either way" and drops the Windows status caveat | F |
+| 8 | `scripts/adapters/fleet-client.js:360` | the note names `--page 1` without `--per-page 100`, so the hand read does not continue page 0 | F |
+| 9 | `scripts/audit/change-record.js:375` | the unreadable-approval message points to `audit-log.js verify`, which already reported the chain intact; the README's claim about how such a trail arises is wrong | F |
+| 10 | `docs/aegis/owner/vendor-facts-priority.md:99` | F-13 matters to /fleet-device-actions' R3 gates but is filed under facts no gate rests on | F |
+| 11 | `PROJECT_STATE.md:178` | "22 fixed test first": three of them were doc-only | F |
+| 12 | `progress.md:8` | progress.md stale after round 2's fixes | F |
+| 13 | `scripts/adapters/github-client.js:312` | the reviews miss is removed by matching its text prefix; a reworded message makes `splice(-1, 1)` drop another miss | F |
+| 14 | `scripts/adapters/fleet-client.js:369` | the Windows pending test is written twice | F |
+| 15 | `scripts/adapters/jamf-client.js:612` | with both a Pending and an undated command, the undated count is left out of the output | F |

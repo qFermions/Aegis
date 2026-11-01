@@ -29,7 +29,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by separately re-enabling the AD account
 - **Required confirmation:** Type exactly `DISABLE AD ACCOUNT [first.last] MAPPED TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (on-premises Active Directory: no connector reads it)
+- **Read-back:** none (on-premises Active Directory: no connector reads it, and Graph verify-account-enabled --enabled false also passes after the separate cloud sign-in block, so it cannot prove this change)
 **PORTAL ACTION [offboard-ad-disable-portal]:** Only after the exact match, ADUC (`dsa.msc`) → `[first.last]` → right-click → **Disable Account**, then read back the disabled state (Account tab shows the account disabled).
 
 <!-- SAFETY GATE [offboard-cloud-block-portal] -->
@@ -183,7 +183,7 @@ node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, CA and licensing changes): restore the exact captured assignments and disabled-plan state from `$licenseCheckpointId` before service-data retention expires
 - **Required confirmation:** Render the reviewed count, full set digest, and checkpoint ID, then type exactly `REMOVE $licenseCount LICENSES SET SHA256 $licenseSetHash FROM [UPN] USING CHECKPOINT $licenseCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (the Graph connector has no license read)
+- **Read-back:** none (the Graph connector has no license read: its user read selects no license field)
 **PORTAL ACTION [offboard-license-remove-portal]:** Capture each direct SKU ID plus disabled-plan state in no-clobber checkpoint `$licenseCheckpointId`; sort the SKU IDs and display full SHA-256 `$licenseSetHash`. Verify Steps 5–6, then re-query immediately before the first removal and stop unless count and digest are identical. Remove only frozen SKU IDs one at a time; after each, require read-back to equal the frozen set minus verified completions. On failure report completed IDs, current ID as UNKNOWN/POSSIBLY CHANGED, and not-attempted IDs. Group-based licensing requires a separate group-membership action and is not authorized here.
 
 ✅ Verify: license count freed in admin center → Billing → Licenses; shared mailbox still works.
@@ -202,7 +202,7 @@ node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the count can pass 10, so the higher class): restore the captured immutable memberships from `$groupCheckpointId`
 - **Required confirmation:** Render the reviewed count, full set digest, and checkpoint ID, then type exactly `REMOVE [UPN] FROM $groupCount ACCESS GROUPS SET SHA256 $groupSetHash USING CHECKPOINT $groupCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (on-premises AD groups and distribution lists: Graph verify-group-member --absent sees only those synced to Entra, after a sync, so it is not written as their proof)
+- **Read-back:** none (on-premises AD groups: Graph verify-group-member --absent reads one Entra group per run, only after a sync, never one outside the sync scope and not by the AD IDs the frozen set holds, so one pass would not prove the set: left unbound in batch G4 D3)
 **PORTAL ACTION [offboard-group-strip-portal]:** Export immutable group IDs and pre-state to no-clobber `$groupCheckpointId`, sort the IDs, and display full SHA-256 `$groupSetHash`. Re-query immediately before the first change and stop on count or digest drift. Remove frozen IDs one at a time; after each, require the remaining set to equal frozen minus verified completions. On failure report completed IDs, current ID as UNKNOWN/POSSIBLY CHANGED, and not-attempted IDs.
 
 <!-- SAFETY GATE [offboard-dl-strip-portal] -->
@@ -212,7 +212,7 @@ node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the count can pass 10, so the higher class): restore the captured immutable memberships from `$distributionListCheckpointId`
 - **Required confirmation:** Render the reviewed count, full set digest, and checkpoint ID, then type exactly `REMOVE [UPN] FROM $distributionListCount DISTRIBUTION LISTS SET SHA256 $distributionListSetHash USING CHECKPOINT $distributionListCheckpointId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (on-premises AD groups and distribution lists: Graph verify-group-member --absent sees only those synced to Entra, after a sync, so it is not written as their proof)
+- **Read-back:** none (on-premises AD distribution lists: Graph verify-group-member --absent reads one Entra group per run, only after a sync, never one outside the sync scope and not by the AD IDs the frozen set holds, so one pass would not prove the set: left unbound in batch G4 D3)
 **PORTAL ACTION [offboard-dl-strip-portal]:** Capture immutable list IDs and membership pre-state in no-clobber `$distributionListCheckpointId`, sort IDs, and display full SHA-256 `$distributionListSetHash`. Re-query before the first removal and stop on any drift. Remove frozen IDs one at a time with exact remaining-set read-back; report completed, UNKNOWN/POSSIBLY CHANGED current, and not-attempted IDs on the first failure.
 
 <!-- SAFETY GATE [offboard-mailbox-delegation-strip-portal] -->
@@ -251,7 +251,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "Wipe"): irreversible; data requires a separate backup
 - **Required confirmation:** Render the displayed ID as `$deviceId`, then type exactly `FULL WIPE [DEVICE_NAME] WITH ID $deviceId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (Intune wipe: the Graph connector reads a managed device but has no wipe read-back)
+- **Read-back:** none (Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes)
 **PORTAL ACTION [offboard-device-wipe-portal]:** Use `/device-wipe` and only the exact Full Wipe phrase for the displayed corporate device. Retire is a different action; neither choice authorizes later object deletion.
 
 - **Wipe** (factory reset) — corporate-owned devices
@@ -272,7 +272,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "Wipe"): irreversible; data requires a separate verified backup
 - **Required confirmation:** Render the displayed ID as `$deviceId`, then type exactly `WIPE WORK PHONE [DEVICE_NAME] WITH ID $deviceId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (Intune wipe: the Graph connector reads a managed device but has no wipe read-back)
+- **Read-back:** none (Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes)
 **PORTAL ACTION [offboard-work-phone-wipe-portal]:** Capture evidence/backup state and verify corporate ownership, name, and `$deviceId`. Only after the exact match, issue the wipe and verify its status. This phrase does not authorize group removal or device-object deletion.
 
 <!-- SAFETY GATE [offboard-work-phone-group-remove-portal] -->
@@ -398,7 +398,7 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, the hard-to-undo change; one object and one move back, but a move out of the sync scope takes the cloud object out of Entra, so the higher class): reversible by moving the object back to its recorded source OU
 - **Required confirmation:** Type exactly `MOVE [first.last] TO DISABLED USERS OU`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (on-premises Active Directory: no connector reads it)
+- **Read-back:** none (on-premises Active Directory: no connector reads it, and the Graph user read selects no on-premises location)
 **PORTAL ACTION [offboard-disabled-ou-portal]:** Record the source OU and verify whether the target is outside sync scope. Only after the exact match, move the disabled account; this does not authorize account deletion.
 > **PREVIEW ONLY [offboard-jira-closure-portal]:** Posting the closure trail is a separate Jira write. Prepare verified timestamps and route the note through `/jira-update`; the OU-move phrase cannot post or close a ticket.
 2. Prepare the verified step/timestamp closure note for that separate Jira action.

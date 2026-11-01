@@ -1,0 +1,9 @@
+# command: node docs/aegis/g3/evidence/tools/inventory-diff.js 1f6647c
+# commit: 2b16a70 (plus uncommitted changes in the working tree)  started: 2026-11-01T01:39:19Z  node: v24.22.1
+examples: 728 at 1f6647c, 728 now; added 0, removed 0, mode changed 0
+  added by mode: {}
+  entries present at both with another field changed: {"impactCategories":2}
+clientBoundaries: 9 at 1f6647c, 9 now; added 0, removed 0, mode changed 0
+  added by mode: {}
+  entries present at both with another field changed: {}
+# exit: 0  finished: 2026-11-01T01:39:20Z

@@ -99,7 +99,7 @@ if (-not $adUser.Enabled) { throw "The authoritative AD account is already disab
 # Effect: disables the synchronized identity at its on-premises source of authority
 # Scope: one exact AD identity; no cloud write is authorized by this phrase
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible through a separately reviewed Enable-ADAccount action
-# Read-back: none, on-premises Active Directory: no connector reads it
+# Read-back: none, on-premises Active Directory: no connector reads it, and Graph verify-account-enabled --enabled false also passes after the separate cloud-gap block, so it cannot prove this change
 $requiredConfirmation = "DISABLE AUTHORITATIVE AD USER $($adUser.UserPrincipalName) GUID $($adUser.ObjectGuid)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

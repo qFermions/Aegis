@@ -6251,7 +6251,8 @@
       "sinks": [],
       "impactCategories": [
         "external-system mutation",
-        "identity-related"
+        "identity-related",
+        "security-sensitive"
       ]
     },
     {

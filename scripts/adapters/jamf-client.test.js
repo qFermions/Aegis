@@ -370,7 +370,6 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
   assert.equal(yes.transport.calls[1].path, commandsPath(0, 'INSTALL_PROFILE', PIDS[7]), 'the filter names the profile');
 
   const notProof = [
-    ['still pending', [command({ status: 'Pending' })]],
     ['sent before --not-before', [command({ dateSent: '2026-10-27T08:59:59Z' })]],
     ['another Mac', [command({ clientManagementId: 'another-management-id' })]],
     ['another command type', [command({ command: 'DEVICE_LOCK' })]],
@@ -387,6 +386,15 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
     assert.equal(no.json.observed.match, null, label);
     assert.equal(typeof no.json.reason, 'string', label);
   }
+  // code review round 1 of batch G4, finding 12: a matching command still Pending (not yet
+  // acknowledged, not failed) proves nothing either way, as a Fleet run not reported yet does:
+  // INCONCLUSIVE (exit 5, state INCONCLUSIVE); it was exit 2 with state OK in the list above
+  const pending = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ status: 'Pending' })] })] });
+  assert.equal(pending.code, 5, 'still pending');
+  assert.equal(pending.json.state, STATES.INCONCLUSIVE, 'still pending');
+  assert.equal(pending.json.verified, false, 'still pending');
+  assert.equal(pending.json.observed.match, null, 'still pending');
+  assert.equal(typeof pending.json.reason, 'string', 'still pending');
   const shapeless = await cli(VC, { replies: [tokenReply(), ok({ nothing: true })] });
   assert.equal(shapeless.code, 5); // batch G4, task D1: an answer with no results list is INCONCLUSIVE
   assert.equal(shapeless.json.state, STATES.INCONCLUSIVE);

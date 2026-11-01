@@ -1,0 +1,252 @@
+$ node --test scripts/adapters/inconclusive.test.js scripts/adapters/jamf-client.test.js
+(Node v24.22.1, at c3b1f46 plus the working tree: the finding 12 tests, before the fix)
+
+✔ the contract names INCONCLUSIVE and its own exit code, 5, used by no other outcome (2.885642ms)
+✔ inconclusive() builds the verdict every connector prints: state INCONCLUSIVE, ok false, verified false, the reason (2.305106ms)
+✔ renderResult prints the two-part message for INCONCLUSIVE: an answer that proves nothing either way, nothing reported done (0.947728ms)
+✔ the audit trail accepts a verify entry with state INCONCLUSIVE and verified false; cli-support records the state as it is (1.421987ms)
+✔ fleet verify-checked-in: no last MDM check-in time on an enrolled host is INCONCLUSIVE (exit 5), never a pass and never a failed object (9.125547ms)
+✔ fleet verify-lock: verify-lock cannot judge an Android host is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.369161ms)
+✔ fleet verify-wipe: verify-wipe cannot judge a Linux host is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.295098ms)
+✔ fleet verify-script: a script run that has not reported yet is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.924111ms)
+✔ fleet verify-deleted: ten pages of activities, none older than --not-before, more behind them is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.104234ms)
+✔ github verify-2fa-required: the 2FA requirement is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.545252ms)
+✔ github verify-team-member: absent from a list longer than ten pages is INCONCLUSIVE (exit 5), never a pass and never a failed object (16.056119ms)
+✔ github verify-collaborator-removed: a collaborator list answer that is not a list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.960852ms)
+✔ github verify-collaborator: the role is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.94911ms)
+✔ github verify-secret-alert: the alert state is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.443271ms)
+✔ gws verify-suspended: the user record leaves suspended out is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.684015ms)
+✔ gws verify-2sv-enforced: the user record leaves isEnforcedIn2Sv out is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.222052ms)
+✔ gws verify-event: the event feed has another page without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.933941ms)
+✔ jamf verify-checked-in: no lastContactTime on the Mac is INCONCLUSIVE (exit 5), never a pass and never a failed object (8.823235ms)
+✔ jamf verify-checked-in: the serial filter returned two records is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.743079ms)
+✔ jamf verify-group-count: a paged member list is not a count is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.01211ms)
+✔ linear verify-state: the issue read shows no state is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.793403ms)
+✔ linear verify-labels: the label is not on the first page of labels and more follow is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.972964ms)
+✔ msgraph verify-account-enabled: accountEnabled is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (10.076128ms)
+✔ msgraph verify-group-member: a member list answer with no list (it used to pass for --absent) is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.749672ms)
+✔ msgraph verify-mfa-cleared: a method list answer with no list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.524888ms)
+✔ msgraph verify-method-absent: absent from a method list with another page is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.74655ms)
+✔ okta verify-status: the user record carries no status is INCONCLUSIVE (exit 5), never a pass and never a failed object (8.296117ms)
+✔ okta verify-sessions-cleared: a full page of System Log events without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (9.609732ms)
+✔ slack verify-deactivated: users.info does not show deleted is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.468869ms)
+✔ slack verify-deactivated: users.info answered without a user record is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.745918ms)
+✔ msgraph verify-mfa-cleared: a method still listed, with another page behind it is still a failed object (exit 2, state OK) (3.060139ms)
+✔ github verify-team-member: still a member, on a list longer than ten pages is still a failed object (exit 2, state OK) (19.706316ms)
+✔ fleet verify-checked-in: a host checked in before --not-before is still a failed object (exit 2, state OK) (1.498102ms)
+✔ gws verify-suspended: a user not suspended is still a failed object (exit 2, state OK) (5.65261ms)
+✔ jamf verify-checked-in: a Mac whose last contact is before --not-before is still a failed object (exit 2, state OK) (1.108975ms)
+✔ linear verify-state: an issue in another state is still a failed object (exit 2, state OK) (0.631071ms)
+✔ okta verify-status: a user in another status is still a failed object (exit 2, state OK) (2.546028ms)
+✔ slack verify-deactivated: a user not deactivated is still a failed object (exit 2, state OK) (0.767867ms)
+✔ jira verify-transition: an answer with no status version is INCONCLUSIVE (exit 5), recorded as such (7.431348ms)
+✔ jira verify-comment: a comment read-back with no body text is INCONCLUSIVE (exit 5); another comment id stays a failure (exit 2) (1.949699ms)
+✔ jira verify-transition: a status other than the one expected stays a failure (exit 2, state OK) (0.857592ms)
+✔ every connector takes INCONCLUSIVE and its exit code from the shared contract (3.07826ms)
+✔ code review round 1, finding 3: fleet verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.80846ms)
+✔ code review round 1, finding 3: fleet verify-deleted takes --not-before as approved_at prints it, with milliseconds (0.414145ms)
+✔ code review round 1, finding 3: gws verify-event takes --not-before as approved_at prints it, with milliseconds (1.061111ms)
+✔ code review round 1, finding 3: jamf verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.522953ms)
+✔ code review round 1, finding 3: jamf verify-command takes --not-before as approved_at prints it, with milliseconds (0.958311ms)
+✔ code review round 1, finding 3: linear verify-comment takes --not-before as approved_at prints it, with milliseconds (0.677267ms)
+✔ code review round 1, finding 3: msgraph verify-password-changed takes --not-before as approved_at prints it, with milliseconds (0.554834ms)
+✔ code review round 1, finding 3: msgraph verify-signin takes --not-before as approved_at prints it, with milliseconds (0.726094ms)
+✔ code review round 1, finding 3: msgraph verify-device-synced takes --not-before as approved_at prints it, with milliseconds (0.518952ms)
+✔ code review round 1, finding 3: msgraph verify-sessions-revoked takes --not-before as approved_at prints it, with milliseconds (0.39327ms)
+✔ code review round 1, finding 3: okta verify-sessions-cleared takes --not-before as approved_at prints it, with milliseconds (0.744361ms)
+✔ code review round 1, finding 3: okta verify-password-reset takes --not-before as approved_at prints it, with milliseconds (0.624764ms)
+✔ code review round 1, finding 3: slack verify-posted takes --not-before as approved_at prints it, with milliseconds (0.757155ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --state fixed --reason: dismissed_reason null (not dismissed) is a failed object (exit 2) (1.165641ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is a failed object (exit 2) (0.543669ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: dismissed_reason left out of the answer is INCONCLUSIVE (exit 5) (0.741716ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: a dismissed_reason that is neither null nor text is INCONCLUSIVE (exit 5) (1.417426ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: another reason stays a failed object and the same reason passes (1.334487ms)
+✔ code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, more pages unread past the ten read, is INCONCLUSIVE (exit 5) (2.302033ms)
+✔ code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, the feed read to its end or back to --not-before, stays a failed object (exit 2) (1.347065ms)
+✔ code review round 1, finding 8: fleet verify-deleted: an activities answer with no activities list is INCONCLUSIVE (exit 5), not an empty list (0.685765ms)
+✔ code review round 1, finding 8: fleet verify-deleted: an activities list that is null is INCONCLUSIVE (exit 5), not an empty list (0.799913ms)
+✔ code review round 1, finding 8: fleet verify-deleted: a later activities page with no list is INCONCLUSIVE (exit 5), not an empty list (0.821019ms)
+✔ code review round 1, finding 8: fleet verify-wipe on a Mac: an MDM commands answer with no results list is INCONCLUSIVE (exit 5), not an empty list (1.110342ms)
+✔ code review round 1, finding 8: fleet verify-wipe on Windows: an MDM commands results list that is null is INCONCLUSIVE (exit 5), not an empty list (0.734659ms)
+✔ code review round 1, finding 8: linear verify-comment: a comments connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (1.544385ms)
+✔ code review round 1, finding 8: linear verify-comment: an issue with no comments connection is INCONCLUSIVE (exit 5), not an empty list (0.920108ms)
+✔ code review round 1, finding 8: linear verify-comment: a comments connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (0.570161ms)
+✔ code review round 1, finding 8: linear verify-suspended: a users connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (1.20598ms)
+✔ code review round 1, finding 8: linear verify-suspended: an answer with no users connection is INCONCLUSIVE (exit 5), not an empty list (0.478741ms)
+✔ code review round 1, finding 8: linear verify-suspended: a users connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (0.821954ms)
+✔ code review round 1, finding 8: fleet verify-deleted: an empty activities list, the feed at its end stays a failed object (exit 2) (1.72799ms)
+✔ code review round 1, finding 8: fleet verify-wipe on a Mac: an empty results list stays a failed object (exit 2) (0.790857ms)
+✔ code review round 1, finding 8: fleet verify-wipe: a host not wiping, whatever the commands answer holds stays a failed object (exit 2) (0.514608ms)
+✔ code review round 1, finding 8: linear verify-comment: an empty comments list on its last page stays a failed object (exit 2) (0.587766ms)
+✔ code review round 1, finding 8: linear verify-suspended: the member not on the last page stays a failed object (exit 2) (0.393514ms)
+✖ code review round 1, finding 12: jamf verify-command: a matching command sent after --not-before, still Pending, is INCONCLUSIVE (exit 5) (2.913699ms)
+✖ code review round 1, finding 12: jamf verify-command: a Pending command beside a failed one is still INCONCLUSIVE; an acknowledged one passes (1.403575ms)
+✔ code review round 1, finding 12: jamf verify-command: a matching command that failed stays a failed object (exit 2) (0.74785ms)
+✔ code review round 1, finding 12: jamf verify-command: no matching command stays a failed object (exit 2) (0.568758ms)
+✔ code review round 1, finding 12: jamf verify-command: a Pending command sent before --not-before stays a failed object (exit 2) (0.888983ms)
+✔ code review round 1, finding 12: jamf verify-command: a Pending command for another Mac stays a failed object (exit 2) (0.792665ms)
+✔ code review round 1, finding 12: jamf verify-command: a Pending command of another type stays a failed object (exit 2) (0.892254ms)
+✔ the allow-list holds exactly the lane spec's Jamf Pro reads, each a GET, on JAMF_URL, with no tenant variable (4.673304ms)
+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (15.499724ms)
+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (22.015361ms)
+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (3.317341ms)
+✔ the CLI dry run prints the exact planned request, reads no credential and calls no transport (4.210631ms)
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (7.307401ms)
+✔ verify-command reads further pages while a page is full, and stops after ten pages without proof (77.842044ms)
+✔ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not (4.245858ms)
+✔ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof (3.344582ms)
+✔ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier (4.225395ms)
+✔ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof (2.130929ms)
+✔ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed (5.655837ms)
+✔ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused (15.808708ms)
+✔ key-like fields are stripped from every response before it is printed, and the instruction scan runs on what is left (1.71212ms)
+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (4.988295ms)
+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (4.375493ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (2.073575ms)
+✔ Jamf Pro binds no tenant variable: one server per tenant, bound by JAMF_URL; any other host is refused (0.799375ms)
+✔ bad input, unknown or write-shaped commands and misplaced flags exit 1 before anything is read or sent (3.201187ms)
+✔ missing credentials exit 1 and name the variable, never a value; nothing is sent (0.575142ms)
+✔ a failed read exits 2 and withholds the body; a network tripwire is never swallowed (2.562158ms)
+✔ the adapter has no file, socket or console access of its own, and runs as a CLI (dry run and refusal only) (241.69593ms)
+ℹ tests 107
+ℹ suites 0
+ℹ pass 104
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 547.727775
+
+✖ failing tests:
+
+test at scripts/adapters/inconclusive.test.js:421:1
+✖ code review round 1, finding 12: jamf verify-command: a matching command sent after --not-before, still Pending, is INCONCLUSIVE (exit 5) (2.913699ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-command",
+    "verified": false,
+    "expected": {
+      "managementId": "0a1b2c3d-0000-4000-8000-00000000abcd",
+      "commandType": "DEVICE_LOCK",
+      "profileIdentifier": null,
+      "status": "Acknowledged",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "managementId": "0a1b2c3d-0000-4000-8000-00000000abcd",
+      "commandType": "DEVICE_LOCK",
+      "profileIdentifier": null,
+      "pagesRead": 1,
+      "commandsRead": 1,
+      "match": null,
+      "sameTypeSinceNotBefore": [
+        {
+          "uuid": "cmd-1",
+          "command": "DEVICE_LOCK",
+          "profileIdentifier": null,
+          "status": "Pending",
+          "dateSent": "2026-10-28T09:30:00Z",
+          "dateCompleted": null
+        }
+      ],
+      "otherProfileCommands": 0
+    },
+    "reason": "no DEVICE_LOCK command for this Mac sent at or after 2026-10-28T09:00:00Z reads Acknowledged",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=jamf operation=verify-command state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:423:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:427:1
+✖ code review round 1, finding 12: jamf verify-command: a Pending command beside a failed one is still INCONCLUSIVE; an acknowledged one passes (1.403575ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-command",
+    "verified": false,
+    "expected": {
+      "managementId": "0a1b2c3d-0000-4000-8000-00000000abcd",
+      "commandType": "DEVICE_LOCK",
+      "profileIdentifier": null,
+      "status": "Acknowledged",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "managementId": "0a1b2c3d-0000-4000-8000-00000000abcd",
+      "commandType": "DEVICE_LOCK",
+      "profileIdentifier": null,
+      "pagesRead": 1,
+      "commandsRead": 2,
+      "match": null,
+      "sameTypeSinceNotBefore": [
+        {
+          "uuid": "cmd-2",
+          "command": "DEVICE_LOCK",
+          "profileIdentifier": null,
+          "status": "Error",
+          "dateSent": "2026-10-28T09:30:00Z",
+          "dateCompleted": null
+        },
+        {
+          "uuid": "cmd-1",
+          "command": "DEVICE_LOCK",
+          "profileIdentifier": null,
+          "status": "Pending",
+          "dateSent": "2026-10-28T09:30:00Z",
+          "dateCompleted": null
+        }
+      ],
+      "otherProfileCommands": 0
+    },
+    "reason": "no DEVICE_LOCK command for this Mac sent at or after 2026-10-28T09:00:00Z reads Acknowledged",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=jamf operation=verify-command state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:428:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:364:1
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (7.307401ms)
+  AssertionError [ERR_ASSERTION]: still pending
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/jamf-client.test.js:393:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

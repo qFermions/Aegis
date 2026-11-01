@@ -410,3 +410,36 @@ for (const [why, c, argv, replies] of EMPTY_LIST) {
   });
 }
 
+// Finding 12: a Jamf Pro MDM command of the type asked for, for this Mac, sent after
+// --not-before and still Pending (not yet acknowledged, not failed) was a failed object, while
+// Fleet reads a script run not reported yet as INCONCLUSIVE. It proves nothing either way: the
+// Mac may still acknowledge it. A failed command, or none, stays a failed object.
+const JAMF_MID = '0a1b2c3d-0000-4000-8000-00000000abcd';
+const JAMF_COMMAND = ['verify-command', '--management-id', JAMF_MID, '--type', 'DEVICE_LOCK', '--not-before', NOT_BEFORE];
+const jamfCommand = (over = {}) => ({ uuid: 'cmd-1', clientManagementId: JAMF_MID, command: 'DEVICE_LOCK', status: 'Acknowledged', dateSent: '2026-10-28T09:30:00Z', ...over });
+const jamfCommands = (results) => ok({ totalCount: results.length, results });
+test('code review round 1, finding 12: jamf verify-command: a matching command sent after --not-before, still Pending, is INCONCLUSIVE (exit 5)', async () => {
+  const r = await verdictOf('jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ status: 'Pending', dateCompleted: null })])]);
+  assertInconclusive(r);
+  assert.equal(r.json.observed.match, null, r.text);
+  assert.match(r.json.reason, /Pending/, r.text);
+});
+test('code review round 1, finding 12: jamf verify-command: a Pending command beside a failed one is still INCONCLUSIVE; an acknowledged one passes', async () => {
+  assertInconclusive(await verdictOf('jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ uuid: 'cmd-2', status: 'Error' }), jamfCommand({ status: 'Pending' })])]));
+  const pass = await verdictOf('jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ uuid: 'cmd-2', status: 'Pending' }), jamfCommand()])]);
+  assert.equal(pass.code, EXIT.OK, pass.text);
+  assert.deepEqual(pass.entry, [[true, 'OK']], pass.text);
+});
+const JAMF_STILL_FAILS = [
+  ['a matching command that failed', [jamfCommand({ status: 'Error' })]],
+  ['no matching command', []],
+  ['a Pending command sent before --not-before', [jamfCommand({ status: 'Pending', dateSent: '2026-10-28T08:59:59Z' })]],
+  ['a Pending command for another Mac', [jamfCommand({ status: 'Pending', clientManagementId: 'another-management-id' })]],
+  ['a Pending command of another type', [jamfCommand({ status: 'Pending', command: 'ERASE_DEVICE' })]],
+];
+for (const [why, results] of JAMF_STILL_FAILS) {
+  test(`code review round 1, finding 12: jamf verify-command: ${why} stays a failed object (exit 2)`, async () => {
+    assertFailedObject(await verdictOf('jamf', JAMF_COMMAND, [token(), jamfCommands(results)]));
+  });
+}
+

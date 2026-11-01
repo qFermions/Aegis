@@ -806,3 +806,26 @@ test('code review round 3, finding 7: fleet verify-wipe: a Mac not wiping, an Er
   assert.deepEqual(r.entry, [[false, 'OK']], r.text);
   assert.doesNotMatch(String(r.json.note), /not proof either way/, r.text);
 });
+
+// Finding 8: the Windows paging note said to look at "--page 1 and on" without --per-page 100,
+// so the hand read it pointed to (Fleet's default page is 10 commands) does not continue the
+// page of 100 that verify-wipe read. The note names the exact continuation read, with the
+// commands read's real flag names, and that read is one the connector accepts.
+const CONTINUATION = 'commands --host-identifier [SERIAL_NUMBER] --per-page 100 --page 1';
+test('code review round 3, finding 8: fleet verify-wipe on Windows: the paging INCONCLUSIVE names the exact continuation read, with --per-page 100', async () => {
+  for (const replies of [
+    [windowsWiping, commandsPage([lock(1)], { has_next_results: true })],
+    [windowsWiped, commandsPage([...fullPage.slice(1), doWipe('200')])],
+  ]) {
+    const r = await verdictOf('fleet', WIPE, replies);
+    assertInconclusive(r);
+    assert.ok(r.json.reason.includes(CONTINUATION), r.text);
+    assert.doesNotMatch(r.json.reason, /--page 1 and on/, r.text);
+  }
+});
+test('code review round 3, finding 8: the continuation read the note names is a commands read the Fleet connector accepts, asking for page 1 of 100', async () => {
+  const argv = CONTINUATION.replace('[SERIAL_NUMBER]', SERIAL).split(' ');
+  const r = await runDry('fleet', argv);
+  assert.equal(r.code, EXIT.OK, r.text);
+  assert.match(r.text, new RegExp(`/api/v1/fleet/commands\\?host_identifier=${SERIAL}&page=1&per_page=100`), r.text);
+});

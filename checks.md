@@ -59,4 +59,4 @@ Branch `feat/g4-eval-and-closeout` on qFermions/Aegis, base `main` at `1f6647c` 
 
 | id | deviation | reason | evidence |
 |---|---|---|---|
-| V1 | The charter asks for Fable 5.1 at high; this session runs on Opus 5.5 at xhigh, and every subagent starts on Opus 5.5 at high | the owner's note during the session: keep going, do not switch models, record it here and in the report | the owner's message in this session |
+| V1 | The charter asks for Fable 5.1 at high. The first session of this batch ran on Opus 5.5 at xhigh; the resumed session (from `ad9759a`) runs on Opus 5.5 at high. Every subagent in both sessions starts on Opus 5.5 at high | the owner's note in the first session (keep going, do not switch models, record it) and the owner's resume note, item 6 | the owner's messages in both sessions |

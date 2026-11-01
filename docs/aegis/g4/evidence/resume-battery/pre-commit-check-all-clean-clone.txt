@@ -1,0 +1,6 @@
+# fresh clone of ad9759a
+⚠️  216 warning(s) found — review the flagged lines above.
+   These are dangerous cmdlets in scripts. Confirm they are intentional.
+   Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
+
+exit 0

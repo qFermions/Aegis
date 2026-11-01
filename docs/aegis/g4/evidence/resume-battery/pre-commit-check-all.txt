@@ -1,0 +1,4 @@
+pre-commit-check: --all mode — scanning 1091 tracked and non-ignored files.
+pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals to enable.
+pre-commit-check: ERROR — unable to read tracked file .claude/worktrees/agent-a1e7620cbbfde204e/.
+exit 2

@@ -436,8 +436,9 @@ async function verifyDeleted(read, args) {
   if (!manual) {
     const why = other ? 'the deleted_host activity for this serial was not a manual deletion' : `no deleted_host activity for this serial at or after --not-before in the ${pages} newest page(s) read (at most ${DELETED_PAGES} of ${DELETED_PER_PAGE})`;
     // activities not read back to --not-before, with more behind them, prove nothing either way
-    // (batch G4, task D1)
-    if (!other && more && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and more activities after --not-before were not read, so this is not proof either way` };
+    // (batch G4, task D1), also when a deletion that was not manual was found: the manual one
+    // may sit on the pages not read (code review round 1 of batch G4, finding 7)
+    if (more && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and more activities after --not-before were not read, so this is not proof either way` };
     return { verified: false, observed, expected, note: why };
   }
   const deletedId = isObject(manual.details) ? field(manual.details, 'host_id') : null;

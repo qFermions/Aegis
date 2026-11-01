@@ -77,7 +77,13 @@ test('the child runs from the repository root with a scrubbed environment (names
   assert.equal(seen[0].cwd, REPO_ROOT);
   const [call] = f.calls();
   assert.equal(fs.realpathSync(call.cwd), fs.realpathSync(REPO_ROOT));
-  for (const gone of ['AEGIS_TEST_TOKEN', 'FLEET_URL', 'OKTA_PRIVATE_KEY', 'AEGIS_TEST_SECRET', 'AEGIS_TEST_PASSWORD', 'AEGIS_NETWORK_TRIPWIRE']) assert.ok(!call.env.includes(gone), gone);
+  // the environment handed to spawn is the scrub itself; the child's own report is checked too,
+  // except for AEGIS_NETWORK_TRIPWIRE, which a child sets itself when NODE_OPTIONS preloads the
+  // socket tripwire (the declared tripwire run of the suite does)
+  for (const gone of ['AEGIS_TEST_TOKEN', 'FLEET_URL', 'OKTA_PRIVATE_KEY', 'AEGIS_TEST_SECRET', 'AEGIS_TEST_PASSWORD', 'AEGIS_NETWORK_TRIPWIRE']) {
+    assert.ok(!Object.prototype.hasOwnProperty.call(seen[0].env, gone), `${gone} is not handed to the child`);
+    if (gone !== 'AEGIS_NETWORK_TRIPWIRE') assert.ok(!call.env.includes(gone), `${gone} is not in the child's environment`);
+  }
   assert.ok(call.env.includes('AEGIS_KEEP_NAME'));
   assert.ok(call.env.some((n) => n.toUpperCase() === 'PATH'), 'PATH is kept');
 });

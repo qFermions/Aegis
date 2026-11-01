@@ -375,7 +375,6 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
     ['another command type', [command({ command: 'DEVICE_LOCK' })]],
     ['another profile, acknowledged', [command({ profileIdentifier: PIDS[8] })]],
     ['a profile command that names no profile', [command({ profileIdentifier: undefined })]],
-    ['no send time', [command({ dateSent: undefined })]],
     ['no commands', []],
   ];
   for (const [label, results] of notProof) {
@@ -395,6 +394,15 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
   assert.equal(pending.json.verified, false, 'still pending');
   assert.equal(pending.json.observed.match, null, 'still pending');
   assert.equal(typeof pending.json.reason, 'string', 'still pending');
+  // code review round 2 of batch G4, finding 4: an acknowledged command with no send time may be
+  // the one asked for, sent after --not-before: INCONCLUSIVE (exit 5, state INCONCLUSIVE); it was
+  // exit 2 with state OK in the list above
+  const undated = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ dateSent: undefined })] })] });
+  assert.equal(undated.code, 5, 'no send time');
+  assert.equal(undated.json.state, STATES.INCONCLUSIVE, 'no send time');
+  assert.equal(undated.json.verified, false, 'no send time');
+  assert.equal(undated.json.observed.match, null, 'no send time');
+  assert.equal(typeof undated.json.reason, 'string', 'no send time');
   const shapeless = await cli(VC, { replies: [tokenReply(), ok({ nothing: true })] });
   assert.equal(shapeless.code, 5); // batch G4, task D1: an answer with no results list is INCONCLUSIVE
   assert.equal(shapeless.json.state, STATES.INCONCLUSIVE);

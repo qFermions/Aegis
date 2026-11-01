@@ -569,6 +569,7 @@ async function verifyCommand(client, a) {
   const flags = [];
   // a matching command still Pending (not yet acknowledged, not failed) may yet be acknowledged
   let pending = 0;
+  let undated = 0;
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const r = await read(client, 'mdmCommands', {}, { filter: commandFilter(a.managementId, a.type, a.profileIdentifier), page: String(page) });
     if (!r.ok) return failed(command, r);
@@ -585,7 +586,13 @@ async function verifyCommand(client, a) {
       // even when the server ignores the profileIdentifier part of the filter.
       if (a.profileIdentifier && c.profileIdentifier !== a.profileIdentifier) { observed.otherProfileCommands += 1; continue; }
       const sent = typeof c.dateSent === 'string' ? Date.parse(c.dateSent) : NaN;
-      if (!Number.isFinite(sent) || sent < notBefore) continue;
+      // an Acknowledged or Pending command whose dateSent cannot be read may be the one asked
+      // for: it is counted, not skipped (code review round 2 of batch G4, finding 4)
+      if (!Number.isFinite(sent)) {
+        if (typeof c.status === 'string' && /^(?:acknowledged|pending)$/i.test(c.status)) undated += 1;
+        continue;
+      }
+      if (sent < notBefore) continue;
       const summary = { uuid: orNull(c.uuid), command: c.command, profileIdentifier: orNull(c.profileIdentifier), status: orNull(c.status), dateSent: c.dateSent, dateCompleted: orNull(c.dateCompleted) };
       if (typeof c.status === 'string' && /^acknowledged$/i.test(c.status)) {
         observed.match = summary;
@@ -601,6 +608,10 @@ async function verifyCommand(client, a) {
       // reported yet does; a failed command, or none, is a failed object (code review round 1
       // of batch G4, finding 12)
       if (pending) return unproven(command, expected, observed, `${none}, and ${pending} still read${pending === 1 ? 's' : ''} Pending: the Mac has not answered yet, so this is not proof either way; read again after its next check-in`, flags);
+      if (undated) {
+        observed.undatedCommands = undated;
+        return unproven(command, expected, observed, `${none}, and ${undated} Acknowledged or Pending command${undated === 1 ? '' : 's'} for this Mac ha${undated === 1 ? 's' : 've'} a dateSent that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the command asked for: this is not proof either way`, flags);
+      }
       return verdict(command, false, expected, observed, none, flags);
     }
   }

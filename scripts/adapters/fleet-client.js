@@ -422,6 +422,7 @@ async function verifyDeleted(read, args) {
   let more = false;
   let noList = false;
   let pagingUnknown = false;
+  let undated = null;
   // Activities come newest first (order_key=created_at, order_direction=desc), so
   // the search stops at the first activity older than --not-before.
   while (pages < DELETED_PAGES && !manual && !reachedNotBefore) {
@@ -434,11 +435,14 @@ async function verifyDeleted(read, args) {
     const list = r.data.activities.filter(isObject);
     for (const a of list) {
       const t = Date.parse(field(a, 'created_at'));
-      if (!Number.isFinite(t)) continue;
-      if (t < notBefore) { reachedNotBefore = true; break; }
       const d = isObject(a.details) ? a.details : {};
+      const manualHere = a.type === 'deleted_host' && d.host_serial === identifier && d.triggered_by === 'manual';
+      // a manual deletion of this serial whose time cannot be read may be the one asked for: it
+      // is kept, not skipped (code review round 2 of batch G4, finding 4)
+      if (!Number.isFinite(t)) { if (manualHere && !undated) undated = a; continue; }
+      if (t < notBefore) { reachedNotBefore = true; break; }
       if (a.type !== 'deleted_host' || d.host_serial !== identifier) continue;
-      if (d.triggered_by === 'manual') { manual = a; break; }
+      if (manualHere) { manual = a; break; }
       if (!other) other = a;
     }
     // a page with no true or false meta.has_next_results does not say the feed ended (code
@@ -448,13 +452,14 @@ async function verifyDeleted(read, args) {
     more = meta.has_next_results === true;
     if (!more) break;
   }
-  const found = manual || other;
+  const found = manual || undated || other;
   const observed = { 'deleted_host activity': found ? activityView(found) : null, 'activity pages read': pages };
   const expected = {
     'deleted_host activity': { type: 'deleted_host', 'details.host_serial': identifier, 'details.triggered_by': 'manual', created_at: `at or after ${args['not-before']}` },
     'host lookup by identifier': 'HTTP 404 (not found), or a host id other than the deleted one (the device re-enrolled)',
   };
   if (!manual) {
+    if (undated) return { inconclusive: true, verified: false, observed, expected, note: 'a manual deleted_host activity for this serial has a created_at that is not a time, so it may be the deletion asked for: this is not proof either way' };
     const why = other ? 'the deleted_host activity for this serial was not a manual deletion' : `no deleted_host activity for this serial at or after --not-before in the ${pages} newest page(s) read (at most ${DELETED_PAGES} of ${DELETED_PER_PAGE})`;
     // activities not read back to --not-before, with more behind them, prove nothing either way
     // (batch G4, task D1), also when a deletion that was not manual was found: the manual one

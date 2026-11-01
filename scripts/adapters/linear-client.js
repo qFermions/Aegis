@@ -462,7 +462,7 @@ async function paged(client, command, document, baseVariables, visit) {
     // not proof either way (code review round 1 of batch G4, finding 8)
     const info = step.pageInfo;
     if (!info || typeof info !== 'object' || typeof info.hasNextPage !== 'boolean') return { flags, done: false, notProof: true, reason: 'the response gives no page information, so the list may go on and this is not proof either way' };
-    if (info.hasNextPage !== true) return { flags, done: false, reason: step.lastReason };
+    if (info.hasNextPage !== true) return { flags, done: false, reason: step.lastReason, ...(step.lastNotProof ? { notProof: true } : {}) };
     // a list not read to the end proves nothing either way (batch G4, task D1)
     if (typeof info.endCursor !== 'string' || !CURSOR.test(info.endCursor)) return { flags, done: false, notProof: true, reason: 'the response gave no usable cursor for the next page, so this is not proof either way' };
     after = info.endCursor;
@@ -474,7 +474,7 @@ async function verifyComment(client, a) {
   const command = 'verify-comment';
   const expected = COMMANDS[command].expected(a);
   const notBeforeMs = Date.parse(a.notBefore);
-  const observed = { issue: null, pagesRead: 0, commentsRead: 0, match: null, commentsSinceNotBefore: [] };
+  const observed = { issue: null, pagesRead: 0, commentsRead: 0, match: null, commentsSinceNotBefore: [], undatedMatches: 0 };
   const walk = await paged(client, command, 'AegisIssueComments', { id: a.issue }, (data, page) => {
     observed.pagesRead = page;
     const issue = data.issue;
@@ -488,19 +488,25 @@ async function verifyComment(client, a) {
       if (!c || typeof c !== 'object') continue;
       observed.commentsRead += 1;
       const created = typeof c.createdAt === 'string' ? Date.parse(c.createdAt) : NaN;
-      if (!Number.isFinite(created) || created < notBeforeMs) continue;
       const summary = { id: orNull(c.id), createdAt: c.createdAt, userId: c.user && c.user.id !== undefined ? c.user.id : null, sha256: typeof c.body === 'string' ? noteDigest(c.body) : null };
       // With --author, a comment by anyone else, or by no user (Comment.user is null
       // for comments created by integrations or bots, schema), is listed but is never
       // proof, even with the right text.
-      if (summary.sha256 === a.sha256 && (!a.author || summary.userId === a.author)) {
+      const matches = summary.sha256 === a.sha256 && (!a.author || summary.userId === a.author);
+      // a matching comment whose createdAt cannot be read may be the one asked for: it is
+      // counted, not skipped (code review round 2 of batch G4, finding 4)
+      if (!Number.isFinite(created)) { if (matches) observed.undatedMatches += 1; continue; }
+      if (created < notBeforeMs) continue;
+      if (matches) {
         observed.match = summary;
         return { done: true, verified: true };
       }
       if (observed.commentsSinceNotBefore.length < MAX_LISTED) observed.commentsSinceNotBefore.push(summary);
     }
     const by = a.author ? ` by ${a.author}` : '';
-    return { done: false, pageInfo: conn.pageInfo, lastReason: `no comment created at or after ${a.notBefore}${by} has the expected SHA-256` };
+    const none = `no comment created at or after ${a.notBefore}${by} has the expected SHA-256`;
+    if (observed.undatedMatches) return { done: false, pageInfo: conn.pageInfo, lastNotProof: true, lastReason: `${none}, and ${observed.undatedMatches} comment(s)${by} with it have a createdAt that is not a time, so one may be the comment asked for: this is not proof either way` };
+    return { done: false, pageInfo: conn.pageInfo, lastReason: none };
   });
   if (walk.failed) return walk.failed;
   return settle(command, expected, observed, walk);

@@ -1,0 +1,84 @@
+# command: node --test scripts/audit/runbook-exit-codes.test.js
+# run in: <repo>  commit: 87a707d  started: 2026-11-01T02:24:47Z  node: v24.22.1
+✔ F1: the check finds the lines the reviewer named, in every named runbook (21.399005ms)
+✖ F1: every runbook line that names exit 2 for a verify-* read-back says any other exit is not a pass and names exit 5 as INCONCLUSIVE (19.87152ms)
+✖ F1: no runbook line gives exit 2 for a read-back field that is missing or malformed (exit 5 since D1) (15.587437ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 1
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 142.516724
+
+✖ failing tests:
+
+test at scripts/audit/runbook-exit-codes.test.js:68:1
+✖ F1: every runbook line that names exit 2 for a verify-* read-back says any other exit is not a pass and names exit 5 as INCONCLUSIVE (19.87152ms)
+  AssertionError [ERR_ASSERTION]: name the one exit that counts ("any exit other than 0 ...") and exit 5 INCONCLUSIVE, proves nothing either way, beside exit 2
+  + actual - expected
+  
+  + [
+  +   'github-branch-protection.md:65: # the baseline in one read, exit 0 when every flag holds, exit 2 with the reason when one does not',
+  +   'github-offboard-member.md:164: **Verification checkpoint:** [ ] `verify-offboarded` exits 2 with the reason "now an outside collaborator" · [ ] each kept repository shows the role the ticket ',
+  +   'github-offboard-member.md:240: - [ ] Converted: `verify-offboarded` exits 2 saying "now an outside collaborator"; each kept repository\'s role matches the ticket.',
+  +   'github-repo-access.md:40: - **The connector is read only.** Without `--execute` it prints the planned GET and sends nothing. Each `verify-*` read prints verified true or false: exit 0 ve',
+  +   'github-security-alerts.md:38: - **The connector is read only.** `verify-secret-alert` and `verify-dependabot-alert` print verified true or false: exit 0 verified, exit 2 not verified. Withou',
+  +   'gws-2sv-enforcement.md:337: Exit 2 from a `verify-*` read is never a pass: it also means the read failed (a 403 from missing delegation, a 404, a timeout) or returned another user. Only ex',
+  +   "jamf-filevault.md:26: **Stop conditions:** a Mac you are about to put in a FileVault profile's scope already lists a FileVault or escrow profile (Phase A step 5): change that profile",
+  +   'jamf-filevault.md:74: # proves FileVault is enabled and the personal recovery key is Valid; exit 2 means it is not',
+  +   'jamf-filevault.md:219: # proves the new-key policy is enabled on Recurring Check-in, Once per computer, as the gate created it; exit 2 means it is not',
+  +   "jamf-patch-management.md:22: **Stop conditions:** the group's member count differs from the count in the ticket (`verify-group-count` exits 2) · the pilot read-back shows Failed or Unqualif",
+  +   'jamf-patch-management.md:73: # proves the group holds exactly the count recorded in the ticket; exit 2 means stop',
+  +   'jamf-policies-self-service.md:225: # proves the policy reads disabled (general.enabled false; exit 2 while it is still enabled or the field is missing)',
+  +   'jira-create.md:68: - `verify-create` without `--execute`: dry run, zero network, exit 4 (NOT VERIFIED: a dry run proves nothing). With it: one GET; any mismatch in key, immutable ',
+  +   'jira-update.md:98: - A read-back that does not prove the write (different ID, different body or visibility, created before the preview, unchanged status, a different status than e',
+  +   'jira-update.md:111: - Transition: `verify-transition` proved the same immutable issue ID changed status since the preflight and now sits in the expected status. If it exits 2, do n',
+  +   'slack-app-approval.md:106: # read-only, Enterprise only: proves [APP_ID] is in admin.apps.approved.list; exit 2 means not proved',
+  +   'slack-app-approval.md:126: # read-only, Enterprise only: proves [APP_ID] is in admin.apps.restricted.list; exit 2 means not proved',
+  +   'slack-guests-connect.md:95: # read-only: proves users.info shows deleted true for [USER_ID]; exit 2 means not yet deactivated or a failed read',
+  +   'slack-guests-connect.md:213: # read-only: proves conversations.info shows is_archived true for [CHANNEL_ID]; exit 2 means not archived or a failed read'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/runbook-exit-codes.test.js:70:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'github-branch-protection.md:65: # the baseline in one read, exit 0 when every flag holds, exit 2 with the reason when one does not', 'github-offboard-member.md:164: **Verification checkpoint:** [ ] `verify-offboarded` exits 2 with the reason "now an outside collaborator" · [ ] each kept repository shows the role the ticket ', 'github-offboard-member.md:240: - [ ] Converted: `verify-offboarded` exits 2 saying "now an outside collaborator"; each kept repository\'s role matches the ticket.', 'github-repo-access.md:40: - **The connector is read only.** Without `--execute` it prints the planned GET and sends nothing. Each `verify-*` read prints verified true or false: exit 0 ve', 'github-security-alerts.md:38: - **The connector is read only.** `verify-secret-alert` and `verify-dependabot-alert` print verified true or false: exit 0 verified, exit 2 not verified. Withou', 'gws-2sv-enforcement.md:337: Exit 2 from a `verify-*` read is never a pass: it also means the read failed (a 403 from missing delegation, a 404, a timeout) or returned another user. Only ex', "jamf-filevault.md:26: **Stop conditions:** a Mac you are about to put in a FileVault profile's scope already lists a FileVault or escrow profile (Phase A step 5): change that profile", 'jamf-filevault.md:74: # proves FileVault is enabled and the personal recovery key is Valid; exit 2 means it is not', 'jamf-filevault.md:219: # proves the new-key policy is enabled on Recurring Check-in, Once per computer, as the gate created it; exit 2 means it is not', "jamf-patch-management.md:22: **Stop conditions:** the group's member count differs from the count in the ticket (`verify-group-count` exits 2) · the pilot read-back shows Failed or Unqualif", 'jamf-patch-management.md:73: # proves the group holds exactly the count recorded in the ticket; exit 2 means stop', 'jamf-policies-self-service.md:225: # proves the policy reads disabled (general.enabled false; exit 2 while it is still enabled or the field is missing)', 'jira-create.md:68: - `verify-create` without `--execute`: dry run, zero network, exit 4 (NOT VERIFIED: a dry run proves nothing). With it: one GET; any mismatch in key, immutable ', 'jira-update.md:98: - A read-back that does not prove the write (different ID, different body or visibility, created before the preview, unchanged status, a different status than e', 'jira-update.md:111: - Transition: `verify-transition` proved the same immutable issue ID changed status since the preflight and now sits in the expected status. If it exits 2, do n', 'slack-app-approval.md:106: # read-only, Enterprise only: proves [APP_ID] is in admin.apps.approved.list; exit 2 means not proved', 'slack-app-approval.md:126: # read-only, Enterprise only: proves [APP_ID] is in admin.apps.restricted.list; exit 2 means not proved', 'slack-guests-connect.md:95: # read-only: proves users.info shows deleted true for [USER_ID]; exit 2 means not yet deactivated or a failed read', 'slack-guests-connect.md:213: # read-only: proves conversations.info shows is_archived true for [CHANNEL_ID]; exit 2 means not archived or a failed read' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/runbook-exit-codes.test.js:74:1
+✖ F1: no runbook line gives exit 2 for a read-back field that is missing or malformed (exit 5 since D1) (15.587437ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'jamf-policies-self-service.md:225: # proves the policy reads disabled (general.enabled false; exit 2 while it is still enabled or the field is missing)'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/runbook-exit-codes.test.js:76:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'jamf-policies-self-service.md:225: # proves the policy reads disabled (general.enabled false; exit 2 while it is still enabled or the field is missing)' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1

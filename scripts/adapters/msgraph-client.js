@@ -23,7 +23,11 @@
 //     verify-device-synced    --device [DEVICE_ID] --not-before T   (Intune lastSyncDateTime at or after T)
 //     verify-group-member     --group [GROUP_ID] --user [USER_ID] [--absent]
 //     verify-sessions-revoked --user [USER_ID] --not-before T   (signInSessionsValidFromDateTime at or
-//                                         after T: Revoke sessions resets it; vendor facts M-26, M-27)
+//                                         after T: Revoke sessions resets it; vendor facts M-26, M-27).
+//                                         Known limit (batch G4, task A4): Microsoft does not document
+//                                         whether a password reset moves signInSessionsValidFromDateTime,
+//                                         so after a reset in the same ticket a pass may not be a
+//                                         revocation (vendor fact M-28)
 //     verify-method-absent    --user [USER_ID] --method-id [METHOD_ID]   (that method id no longer
 //                                         listed in the user's authentication methods)
 //
@@ -136,6 +140,7 @@ const COMMANDS = Object.freeze({
 const USAGE = `Usage: node scripts/adapters/msgraph-client.js <command> [flags] [--execute]
   Commands: ${Object.keys(COMMANDS).join(' | ')}
   MS_TENANT_ID names the tenant; the credentials are read only with --execute.
+  Known limit, verify-sessions-revoked: Microsoft does not document whether a password reset moves signInSessionsValidFromDateTime, so on a ticket that also reset the password this read-back may pass without a revocation (vendor fact M-28).
 `;
 
 function validate(command, def, args) {
@@ -306,4 +311,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { makeSpec, ROUTES, COMMANDS, run, CLEARED_BY_REREGISTER, METHODS };
+module.exports = { makeSpec, ROUTES, COMMANDS, run, CLEARED_BY_REREGISTER, METHODS, USAGE };

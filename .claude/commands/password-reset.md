@@ -142,6 +142,8 @@ node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID]
 node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
 ```
 
+**Known limit (session revocation):** Microsoft does not document whether a password reset moves `signInSessionsValidFromDateTime`, so on a ticket that also reset the password this read-back may pass without a revocation: the reset may move it too. Record in the ticket whether the password was reset in the same ticket, and if it was, prove the revocation by the Revoke sessions entry in the user's audit log as well. The question is vendor fact M-28 (`docs/aegis/g3/vendor-facts-to-check.md`), checked on a test tenant (`docs/aegis/owner/test-tenant-runbook.md`).
+
 ## ⚠️ Risk warning
 - `Revoke-MgUserSignInSession` invalidates Entra refresh tokens and browser cookies after propagation; current access tokens and app-issued sessions can persist until expiry.
 - For a synced user, a cloud-side reset can be overwritten at next sync — always reset **on-prem** for synced users.

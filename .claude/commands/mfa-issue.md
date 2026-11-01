@@ -109,6 +109,8 @@ node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --met
 node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
 ```
 
+**Known limit (session revocation):** Microsoft does not document whether a password reset moves `signInSessionsValidFromDateTime`, so on a ticket that also reset the password this read-back may pass without a revocation: the reset may move it too. Record in the ticket whether the password was reset in the same ticket, and if it was, prove the revocation by the Revoke sessions entry in the user's audit log as well. The question is vendor fact M-28 (`docs/aegis/g3/vendor-facts-to-check.md`), checked on a test tenant (`docs/aegis/owner/test-tenant-runbook.md`).
+
 ## ⚠️ Risk warning
 - **Never disable MFA org-wide** as a "fix." Per-user temporary exclusion only, time-boxed, documented, reverted.
 - The CA exclusion is a real security gap while open — re-add the user immediately after registration. Route through independent plan review if it touches a broad policy.

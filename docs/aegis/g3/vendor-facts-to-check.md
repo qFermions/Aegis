@@ -14,6 +14,7 @@ console or a support case before production; until then the code takes the safer
 | G-34, G-35 | a self-introspection call for installation tokens and fine-grained PATs | none is used | GitHub connector |
 | O-11 | whether an Okta service app must use DPoP | the connector does not send DPoP; a vendor refusal ends in HTTP_ERROR with a plain next step | Okta connector |
 | O-30 | Okta's Retry-After on 429 | the contract honours Retry-After when present; otherwise backoff | Okta connector |
+| M-28 | whether a password reset (portal or Graph) moves the user's `signInSessionsValidFromDateTime`, as Revoke sessions does (M-26); Microsoft's pages describe the property and the revocation, not the reset (D9 on PR #9) | on a ticket that also reset the password, `verify-sessions-revoked` may pass without a revocation: `/mfa-issue` and `/password-reset` say so, and ask for the Revoke sessions audit entry as well (batch G4, task A4) | `msgraph-client.js verify-sessions-revoked`; `/mfa-issue`; `/password-reset` |
 | M-02 | whether Entra still accepts the legacy SHA-1 `x5t` header | the connector sends `x5t#S256` only | Microsoft Graph connector |
 | F-03 | the API role string for Fleet's Technician role | any role other than observer is refused | Fleet preflight |
 | F-10 | a prose definition of `last_mdm_checked_in_at` | shown as the vendor's field, not reinterpreted | endpoint MDM sync runbook |

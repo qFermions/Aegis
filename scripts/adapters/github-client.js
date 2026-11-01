@@ -316,8 +316,12 @@ async function judge(command, a, client, steps) {
       const observed = { state: d.state === undefined ? null : d.state, [field]: d[field] === undefined ? null : d[field] };
       if (typeof d.state !== 'string') return unproven(observed, 'the answer does not show the alert\'s state, so this is not proof either way');
       if (d.state !== a.state) return { verified: false, observed, reason: `the alert is ${d.state}, not ${a.state}` };
-      if (want && (d[field] === undefined || d[field] === null)) return unproven(observed, `the answer does not show the ${field}, so this is not proof either way`);
-      if (want && d[field] !== want) return { verified: false, observed, reason: `the ${field} is ${d[field]}, not ${want}` };
+      // dismissed_reason null is GitHub's own value for an alert that was not dismissed, an answer
+      // that shows the change not done; only a field left out, or one that is neither null nor
+      // text, proves nothing either way (code review round 1 of batch G4, finding 6)
+      const shown = command === 'verify-dependabot-alert' ? (v) => v === null || typeof v === 'string' : (v) => v !== undefined && v !== null;
+      if (want && !shown(d[field])) return unproven(observed, `the answer does not show the ${field}, so this is not proof either way`);
+      if (want && d[field] !== want) return { verified: false, observed, reason: d[field] === null ? `the ${field} is null (the alert was not dismissed), not ${want}` : `the ${field} is ${d[field]}, not ${want}` };
       return { verified: true, observed };
     }
     default:

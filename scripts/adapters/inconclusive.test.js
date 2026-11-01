@@ -744,3 +744,38 @@ test('code review round 3, finding 1: fleet verify-wipe on Windows: a doWipe wit
     assert.deepEqual(r.entry, [[true, 'OK']], r.text);
   }
 });
+
+// Finding 3: Fleet verify-wipe on a Mac asks for the host's EraseDevice commands with no per_page
+// and never read meta.has_next_results. When the answer says more pages follow, the newest
+// EraseDevice on the page may not be the newest overall, so on a host wiping or wiped it is
+// INCONCLUSIVE (exit 5) whatever the page holds: an Acknowledged one (which passed), none, or one
+// that errored (each exit 2). With no meta, or has_next_results false, the page is judged as
+// before (the page size is unknown, so its fullness cannot be judged); a host not wiping or wiped
+// stays a failed object.
+const acked = (updatedAt = '2026-10-28T10:00:00Z') => erase('Acknowledged', updatedAt);
+const APPLE_MORE = [
+  ['an Acknowledged EraseDevice on a page that says more follow', [macWiping, commandsPage([acked('2026-10-01T10:00:00Z')], { has_next_results: true })]],
+  ['no EraseDevice on a page that says more follow', [macWiped, commandsPage([], { has_next_results: true })]],
+  ['an EraseDevice that errored on a page that says more follow', [macWiping, commandsPage([erase('Error')], { has_next_results: true })]],
+];
+for (const [why, replies] of APPLE_MORE) {
+  test(`code review round 3, finding 3: fleet verify-wipe on a Mac wiping or wiped: ${why} is INCONCLUSIVE (exit 5)`, async () => {
+    const r = await verdictOf('fleet', WIPE, replies);
+    assertInconclusive(r);
+    assert.match(r.json.reason, /more commands may follow/, r.text);
+  });
+}
+test('code review round 3, finding 3: fleet verify-wipe on a Mac: the query is unchanged, and a page with no meta or that says it is the last is judged as before', async () => {
+  const pass = await verdictOf('fleet', WIPE, [macWiping, commandsPage([acked()], { has_next_results: false })]);
+  assert.equal(pass.code, EXIT.OK, pass.text);
+  assert.deepEqual(pass.entry, [[true, 'OK']], pass.text);
+  assert.equal(pass.json.reads[1].path, `/api/v1/fleet/commands?host_identifier=${SERIAL}&request_type=EraseDevice`, pass.text);
+  const noMeta = await verdictOf('fleet', WIPE, [macWiped, commandsPage([acked()])]);
+  assert.equal(noMeta.code, EXIT.OK, noMeta.text);
+  const errored = await verdictOf('fleet', WIPE, [macWiping, commandsPage([erase('Error')], { has_next_results: false })]);
+  assert.equal(errored.code, EXIT.READ_FAILED, errored.text);
+  assert.deepEqual(errored.entry, [[false, 'OK']], errored.text);
+  const notWiping = await verdictOf('fleet', WIPE, [macNotWiping, commandsPage([acked()], { has_next_results: true })]);
+  assert.equal(notWiping.code, EXIT.READ_FAILED, notWiping.text);
+  assert.deepEqual(notWiping.entry, [[false, 'OK']], notWiping.text);
+});

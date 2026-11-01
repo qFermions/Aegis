@@ -298,7 +298,11 @@ const COUNT_ANY = /(?<![a-z0-9])count(?![a-z0-9])[^a-z0-9\n]{0,8}:/gi;
 // composed again, so a mark is dropped before it can merge with its letter (NFKC alone turns o plus
 // a diaeresis into one letter that is not o). Colons Unicode lists as confusable and NFKC leaves
 // alone are read as colons.
-const fold = (s) => s.normalize('NFKD').replace(/[\p{Cf}\p{Mn}\p{Me}]/gu, '').normalize('NFKC')
+// Code review round 1 of batch G4, finding 11: every \p{Default_Ignorable_Code_Point} character is
+// removed too, as format characters are. Those that are neither format characters nor marks (the
+// Hangul fillers U+3164, U+115F, U+1160 and U+FFA0, which are letters, and the unassigned ones such
+// as U+2065 and U+FFF0) render as nothing, and survived the fold inside a disguised count keyword.
+const fold = (s) => s.normalize('NFKD').replace(/[\p{Cf}\p{Mn}\p{Me}\p{Default_Ignorable_Code_Point}]/gu, '').normalize('NFKC')
   .replace(/[\u02d0\u02f8\u0589\u05c3\u16ec\u2236\ua789]/g, ':');
 // A five-letter word before a colon, with a letter outside A to Z where every A to Z letter is the
 // letter of "count" at its place (Cyrillic or Greek look-alikes, a small capital), is a disguised

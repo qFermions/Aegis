@@ -1,0 +1,26 @@
+# command: node --test scripts/eval/owner-kits.test.js scripts/eval/vendor-facts-priority.test.js
+# commit: edb90f8 (plus uncommitted changes in the working tree)  started: 2026-11-01T00:03:01Z  node: v24.22.1
+✔ every bash block is the dry run, then the same line with the bare --execute (1.778414ms)
+✔ each dry run is accepted with fake values: a read exits 0, a verify-* exits 4, nothing is sent (81.611057ms)
+✔ the page runs every read and verify-* each connector exports, and the Jira reads and read-backs (2.144696ms)
+✔ every connector in scope-manifest.json has its own section (0.978767ms)
+✔ the Microsoft Graph password-reset question is on the page word for word (0.418511ms)
+✔ every Markdown link in the owner pages that points into the repository resolves (1.57927ms)
+✔ no real-name shapes: only bracketed email placeholders, no phone number, no U+2014, registered [@Aegion_*] tokens only (4.918644ms)
+✔ the fixture page equals the expected fixture exactly (5.894539ms)
+✔ order: R3, then R2, then R1 or R0, then no gate; G3 before G2 inside a group (1.261656ms)
+✔ a gate takes the highest R class on its Reversibility line, and its section runs past a fence to the next heading (0.604803ms)
+✔ a G2 row is found by its text after its line moved; a removed line and a script line rest on no gate (0.951187ms)
+✔ the extraction matches the G2 list's own cells on the real repo for every runbook row (133.273105ms)
+✔ the page quotes no gate or preview marker as written (156.186603ms)
+✔ --check exits 1 on a stale page and 0 after a plain run (4.016237ms)
+✔ on the real repo, the committed page is current (--check exits 0) (229.057666ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 630.937991
+# exit: 0  finished: 2026-11-01T00:03:02Z

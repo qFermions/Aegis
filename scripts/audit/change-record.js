@@ -720,6 +720,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, namedGates, gateFields, readBackProblems, useRunbooksForTests, main, COUNTED_GATES };
+module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, sameForm, namedGates, gateFields, readBackProblems, useRunbooksForTests, main, COUNTED_GATES };
 
 if (require.main === module) process.exitCode = main();

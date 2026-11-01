@@ -1,0 +1,53 @@
+# command: node --test scripts/audit/runbook-change-examples.test.js
+# run in: <repo>  commit: be389c5 (plus uncommitted changes in the working tree)  started: 2026-11-01T02:34:17Z  node: v24.22.1
+✔ F5: the check finds read-back examples in each runbook the reviewer named (45.473137ms)
+✖ F5: every read-back a runbook names in backticks is one change-record.js open accepts for a line of that runbook (40.534667ms)
+✔ F5: the example parser reads the forms open takes and refuses the ones it refuses (0.597434ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 168.48619
+
+✖ failing tests:
+
+test at scripts/audit/runbook-change-examples.test.js:97:1
+✖ F5: every read-back a runbook names in backticks is one change-record.js open accepts for a line of that runbook (40.534667ms)
+  AssertionError [ERR_ASSERTION]: name the read-back with the pass flags its line runs, a time bound bare
+  + actual - expected
+  
+  + [
+  +   'github-branch-protection.md:14: github:verify-protection: open refuses it: the lines run github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions',
+  +   'github-repo-access.md:14: github:verify-collaborator: open refuses it: the lines run github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME]',
+  +   'github-security-alerts.md:14: github:verify-dependabot-alert: open refuses it: the lines run github-client.js verify-dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER] --state dismissed --reason [DISMISS_REASON]',
+  +   'gws-account-containment.md:14: google-workspace:verify-event --app admin --event CHANGE_PASSWORD: open refuses it: the lines run gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM]',
+  +   'gws-admin-roles.md:14: google-workspace:verify-event: open refuses it: the lines run gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM]',
+  +   'gws-admin-roles.md:14: google-workspace:verify-event --app admin --event ASSIGN_ROLE: open refuses it: the lines run gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM]',
+  +   'gws-drive-sharing.md:14: google-workspace:verify-event: open refuses it: the lines run gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]"',
+  +   'gws-drive-sharing.md:14: google-workspace:verify-event --app drive --event change_user_access: open refuses it: the lines run gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]"',
+  +   'jamf-config-profiles.md:14: jamf:verify-group-count: open refuses it: the lines run jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT]',
+  +   'jamf-inventory-groups.md:14: jamf:verify-group-count: open refuses it: the lines run jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT]',
+  +   'jamf-policies-self-service.md:14: jamf:verify-policy: open refuses it: the lines run jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --enabled true --no-triggers or jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once every day" --enabled true',
+  +   'mfa-issue.md:12: msgraph:verify-sessions-revoked: open refuses it: the lines run msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE]',
+  +   'okta-user-lifecycle.md:14: okta:verify-status: open refuses it: the lines run okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/runbook-change-examples.test.js:99:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'github-branch-protection.md:14: github:verify-protection: open refuses it: the lines run github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions', 'github-repo-access.md:14: github:verify-collaborator: open refuses it: the lines run github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME]', 'github-security-alerts.md:14: github:verify-dependabot-alert: open refuses it: the lines run github-client.js verify-dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER] --state dismissed --reason [DISMISS_REASON]', 'gws-account-containment.md:14: google-workspace:verify-event --app admin --event CHANGE_PASSWORD: open refuses it: the lines run gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM]', 'gws-admin-roles.md:14: google-workspace:verify-event: open refuses it: the lines run gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM]', 'gws-admin-roles.md:14: google-workspace:verify-event --app admin --event ASSIGN_ROLE: open refuses it: the lines run gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM]', 'gws-drive-sharing.md:14: google-workspace:verify-event: open refuses it: the lines run gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]"', 'gws-drive-sharing.md:14: google-workspace:verify-event --app drive --event change_user_access: open refuses it: the lines run gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]"', 'jamf-config-profiles.md:14: jamf:verify-group-count: open refuses it: the lines run jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT]', 'jamf-inventory-groups.md:14: jamf:verify-group-count: open refuses it: the lines run jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT]', 'jamf-policies-self-service.md:14: jamf:verify-policy: open refuses it: the lines run jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --enabled true --no-triggers or jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once every day" --enabled true', 'mfa-issue.md:12: msgraph:verify-sessions-revoked: open refuses it: the lines run msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE]', 'okta-user-lifecycle.md:14: okta:verify-status: open refuses it: the lines run okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1

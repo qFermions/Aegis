@@ -1,0 +1,31 @@
+# /alpha (fixture runbook, not a real command)
+
+Two lines were added above the facts since the G2 list was made, so its line numbers are 2 short.
+
+## Phase A: Read (R0)
+
+A read with no gate rests on `alpha read` (search excerpt).
+
+## Phase B: Erase (R3)
+
+<!-- SAFETY GATE [alpha-erase-portal] -->
+- **Target:** [DEVICE_NAME]
+- **Reversibility:** R3: not reversible once it runs
+The erase waits for `alpha erase status` (search excerpt) and fact X-01 says when.
+
+## Phase C: Run a script (R1 to R3)
+
+<!-- SAFETY GATE [alpha-script-portal] -->
+- **Target:** [SCRIPT_NAME]
+- **Reversibility:** R1 to R3 by script content
+The script result shows in `alpha script result` (vendor repo).
+
+## Phase D: Note (R1)
+
+<!-- SAFETY GATE [alpha-note-portal] -->
+- **Reversibility:** R1: delete the note
+The note is listed under `alpha notes list` (search excerpt).
+
+## Sources
+
+**Sources (checked 2026-10-28):** example.invalid/alpha-guide (search excerpt, the erase and script pages) · example.invalid/alpha-api (vendor repo: the status field)

@@ -1,0 +1,15 @@
+# /beta (fixture runbook, not a real command)
+
+## Phase A: Move one group (R2)
+
+```bash
+# SAFETY GATE [beta-move-cli]
+# Reversibility: R2: move it back from the saved pre-state
+# fact X-03 names the field the move changes
+```
+
+After the fence the gate's section goes on to the next heading: fact Y-01 is cited here.
+
+## Phase B: After
+
+Fact Y-01 again, outside any gate.

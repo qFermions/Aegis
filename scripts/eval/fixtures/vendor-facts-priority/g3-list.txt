@@ -1,0 +1,11 @@
+# Vendor facts to check (fixture of the G3 list)
+
+| ID | What is not confirmed | What Aegis does meanwhile | Where it matters |
+|---|---|---|---|
+| X-01 | the erase status field name | reads it as the vendor names it | alpha runbook |
+| X-02, X-03 | the move field \| written with a pipe | keeps the pre-state | beta runbook |
+| Y-01 | a fact the beta gate cites after its fence | none | beta runbook |
+| Z note | a row with a label and no fact id | none | contract |
+| Y-02 | a fact no runbook cites | backoff | `demo.js` |
+
+Text after the table is not a fact.

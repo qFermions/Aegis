@@ -1,0 +1,12 @@
+# Vendor facts (fixture)
+
+### A1. Demo
+
+- X-01. The erase status field. | https://example.invalid/docs/erase | 2026-10-28 | vendor docs page | "status"
+- X-02. The move field. | same URL | 2026-10-28 | vendor docs page | "field"
+- X-03. The move field's pipe. UNCONFIRMED.
+- Y-01. The beta fact. UNCONFIRMED.
+
+### A2. Demo two
+
+- Y-02. A fact under a new heading, so "same URL" has nothing above it. | same URL | 2026-10-28 | vendor docs page | "none"

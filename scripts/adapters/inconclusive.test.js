@@ -638,3 +638,38 @@ for (const [why, replies] of WIPE_STILL_FAILS) {
   });
 }
 
+// Finding 6: Fleet verify-wipe on Windows reads one page of the host's commands (per_page 100)
+// and never asked whether more follow. With no doWipe on the page, the doWipe may sit on a later
+// page when the answer says more pages follow (meta.has_next_results true), or when the page is
+// full and the answer gives no true or false has_next_results: INCONCLUSIVE (exit 5). A page
+// that says it is the last, or one not full without paging, stays exit 2, as does a host that is
+// not wiping or wiped; a doWipe with status 200 on the page passes.
+const lock = (i) => ({ command_uuid: `l-${i}`, request_type: './Device/Vendor/MSFT/RemoteLock/Lock', status: '200', updated_at: '2026-10-28T09:30:00Z' });
+const fullPage = Array.from({ length: 100 }, (_, i) => lock(i));
+const commandsPage = (results, meta) => ok(meta === undefined ? { results } : { results, meta });
+const WINDOWS_MORE = [
+  ['no doWipe on a page that says more pages follow', [windowsWiping, commandsPage([lock(1)], { has_next_results: true })]],
+  ['no doWipe on a full page with no meta', [windowsWiping, commandsPage(fullPage)]],
+  ['no doWipe on a full page whose meta has no has_next_results', [windowsWiped, commandsPage(fullPage, {})]],
+];
+for (const [why, replies] of WINDOWS_MORE) {
+  test(`code review round 2, finding 6: fleet verify-wipe on Windows: ${why} is INCONCLUSIVE (exit 5)`, async () => {
+    assertInconclusive(await verdictOf('fleet', WIPE, replies));
+  });
+}
+const WINDOWS_LAST_PAGE = [
+  ['no doWipe on a page not full, with no meta', [windowsWiping, commandsPage([lock(1)])]],
+  ['no doWipe on an empty page with no meta', [windowsWiping, commandsPage([])]],
+  ['no doWipe on a full page that says it is the last', [windowsWiping, commandsPage(fullPage, { has_next_results: false })]],
+  ['a host not wiping, no doWipe on a page that says more follow', [windowsNotWiping, commandsPage([lock(1)], { has_next_results: true })]],
+];
+for (const [why, replies] of WINDOWS_LAST_PAGE) {
+  test(`code review round 2, finding 6: fleet verify-wipe on Windows: ${why} stays a failed object (exit 2)`, async () => {
+    assertFailedObject(await verdictOf('fleet', WIPE, replies));
+  });
+}
+test('code review round 2, finding 6: fleet verify-wipe on Windows: a doWipe with status 200 on a page that says more follow passes', async () => {
+  const r = await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('200')], { has_next_results: true })]);
+  assert.equal(r.code, EXIT.OK, r.text);
+  assert.deepEqual(r.entry, [[true, 'OK']], r.text);
+});

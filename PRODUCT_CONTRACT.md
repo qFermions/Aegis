@@ -249,3 +249,24 @@ note that tokens may take a few minutes more, H3).
   only with one of those read-backs; `open` marks its entries, and an older or hand-written entry
   that fails `open`'s check proves nothing. Reason: security review 1 and code review rounds 1 to
   3 of PR #9. It narrows how a change is proved; it adds no read and no write.
+
+Batch G4 (2026-10-31, branch `feat/g4-eval-and-closeout`, base `main` at `1f6647c`). Nothing was
+removed and no sentence above changed; the boundary paragraph is as at `1f6647c`, and every gate that
+existed there still exists (343 runbook SAFETY GATEs).
+
+- Changed: how a change is proved, not what Aegis may do. A count line disguised with a format
+  character, a combining mark or a look-alike letter, or hidden in an HTML comment, is refused
+  (security review 2's O1 on PR #9); an approval is recorded only by `change-record.js approve`, one
+  per change (`audit-log.js approval` is removed); every flag of every `verify-*` command is declared
+  in `scripts/adapters/verify-flags.js`, and a read-back bounded by `--not-before` earlier than the
+  change's approval never proves the change (D10 on PR #9). Reason: the owner's answers on PR #9's
+  open items. No read or write path is added (`docs/aegis/boundary-audit.md` rows 31, 36 and 37).
+- Added: a model-judged evaluation runner (`scripts/eval/judged-eval.js`, capability-map row 26).
+  It runs Aegis headless with read-only tools on a case file kept outside the repository and grades
+  each answer with a separate judge that has no tools; it writes only its own results, outside the
+  repository or in the gitignored `.aegis-state/`, and never edits the readiness gate. Reason: the
+  batch G4 milestone; answer quality was unmeasured on every platform. It runs nothing against a
+  tenant, and the system under test holds no shell.
+- Added: a stated limit in `/mfa-issue` and `/password-reset`: Microsoft does not document whether a
+  password reset moves `signInSessionsValidFromDateTime`, so after a reset in the same ticket
+  `verify-sessions-revoked` may pass without a revocation (vendor fact M-28). Reason: D9 on PR #9.

@@ -2,7 +2,8 @@
 
 > Dev-facing state file, rewritten by batch 1 on 2026-10-27 to match the repo as it is, and
 > updated by batch G2 and batch G3 on 2026-10-28 (sections "Changed by batch G2" and "Changed by
-> batch G3") and by the batch G3 close-out on 2026-10-30 ("Changed by the batch G3 close-out"). Every "verified" line below names a check that ran in that session and the
+> batch G3") and by the batch G3 close-out on 2026-10-30 ("Changed by the batch G3 close-out"), and by
+> batch G4 on 2026-10-31 ("Changed by batch G4"). Every "verified" line below names a check that ran in that session and the
 > capture that holds its output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
 
@@ -157,6 +158,22 @@ owner decisions from PR #6's report, each landed test first; captures in
   "Require re-register MFA", an MFA change (R3 in CLAUDE.md's table) that the runbook does not
   gate, so its read-backs stay unbound until those gates are classed.
 
+## Changed by batch G4
+
+Branch `feat/g4-eval-and-closeout`, one draft pull request against `main` (base `1f6647c`, the merge
+of PR #9). Captures in `docs/aegis/g4/baseline/` (Phase 0) and `docs/aegis/g4/evidence/`; the
+acceptance table in `checks.md`; the owner's one-page view in `docs/explainers/g4-eval-and-closeout.md`.
+
+| Task | What changed | Proof (command and count) |
+|---|---|---|
+| A1, a disguised count line (O1) | the text is folded (NFKD, `\p{Cf}`, `\p{Mn}`, `\p{Me}` removed, NFKC) before a count line is read; a keyword with a letter outside A to Z, or a count in a hidden region, is refused | `node --test scripts/audit/change-record.test.js` and the audit suites: 83/83 (`a1-green.txt`) |
+| A2, one approval writer | `audit-log.js approval` removed; `change-record.js approve` refuses a second approval of a change, under the write lock | 170/170 (`a2-green.txt`) |
+| A3, every flag that decides what a pass means | `scripts/adapters/verify-flags.js` declares every flag of the 59 `verify-*` commands; `--not-before` and Graph's `--method` are pass flags; a time bound earlier than the approval never proves the change | 180/180 (`a3-green.txt`); the enumeration test fails with one declaration removed (`a3-declaration-removed.txt`) |
+| B1 to B11, the model-judged runner | `scripts/eval/judged-eval.js` and `scripts/eval/judged/` (schema, locations, backends, checks, judge, report, calibration, thresholds), 8 DEV cases, README section 2d, readiness row 9, capability row 26 implemented but unverified, a CI dry run | 66 tests on mock backends (`b1-green.txt` to `b10-green.txt`); the smoke was not run, the CLI has no stored login here (`b11-smoke.md`) |
+| A4, the session-revocation limit | stated in `/mfa-issue`, `/password-reset` and the Graph connector's help; vendor fact M-28 | 569/569 (`a4-green.txt`) |
+| C1 to C4, owner kits | `docs/aegis/owner/`: the test-tenant runbook, the vendor-facts priority page and its script, operator validation and its template, the shadow pilot | check C 15/15 (`c-green.txt`) |
+| D1 to D3 | not reached (the pull request body says why) | none |
+
 ## Changed by the batch G3 close-out 3
 
 Branch `fix/g3-closeout-3`, draft PR #9 against `main` (base `0a5feb7`, the merge of PR #8).
@@ -204,12 +221,13 @@ analyzer and hash checker (row 15, no tests); PowerShell and GAM procedure corre
 bootstrap, with a stale continuity snapshot (row 29); injection and wrong-customer cases beyond
 the deterministic edges (rows 34, 35). Implemented but unverified: Google answer quality and
 real-tenant procedure evidence (row 5), and answer quality and vendor-fact currency for each G2
-platform (rows 38, 43, 48, 53, 58) and for GitHub (row 66, batch G3).
+platform (rows 38, 43, 48, 53, 58) and for GitHub (row 66, batch G3); the model-judged runner (row 26,
+batch G4: built and tested on mock backends, never run on real cases).
 
 ## Missing
 
-Infrastructure as code for Azure and for Google Cloud; an
-automated runner for the model-judged eval half (the rubric is a document only).
+Infrastructure as code for Azure and for Google Cloud. (The automated runner for the model-judged
+eval half exists since batch G4, capability-map row 26, implemented but unverified: no real run yet.)
 
 ## Open risks
 
@@ -228,8 +246,9 @@ automated runner for the model-judged eval half (the rubric is a document only).
 
 Batch 1's pull request (#4) and batch G2's (#5) were merged into `main` on 2026-10-28 (`f185071`,
 read from the GitHub pull request API); batch G3's (#6) was merged on 2026-10-30 (`01dcb37`); the
-batch G3 close-out's (#7) on 2026-10-30 (`f086c88`); the batch G3 close-out 2's draft pull
-request (#8) is open against `main`.
+batch G3 close-out's (#7) on 2026-10-30 (`f086c88`); the batch G3 close-out 2's (#8) and close-out
+3's (#9) on 2026-10-31 (`0a5feb7`, `1f6647c`). Batch G4's draft pull request is open against `main`
+(branch `feat/g4-eval-and-closeout`).
 `node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
 (`docs/aegis/evidence/claim-list.txt`).
 

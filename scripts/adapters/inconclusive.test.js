@@ -829,3 +829,28 @@ test('code review round 3, finding 8: the continuation read the note names is a 
   assert.equal(r.code, EXIT.OK, r.text);
   assert.match(r.text, new RegExp(`/api/v1/fleet/commands\\?host_identifier=${SERIAL}&page=1&per_page=100`), r.text);
 });
+
+// Finding 13 (no behavior change): GitHub verify-protection --reviews pushed the reviews miss and
+// then took it out again by matching its text prefix, so a reworded message would make the splice
+// drop another miss. Whether the count is shown is decided before any miss is pushed now. The
+// behavior this pins is the same before and after: beside a reviews count not shown, every other
+// definite miss survives in the reason (exit 2), the count not shown is never reported as a miss,
+// and a count not shown alone is INCONCLUSIVE.
+test('code review round 3, finding 13: github verify-protection: beside a reviews count not shown, the other misses all survive and the count is not one of them', async () => {
+  const flags = ['--reviews', '1', '--enforce-admins', '--no-force-push', '--no-deletions'];
+  for (const count of [null, '2', 2.5]) {
+    const body = protectionBody({ required_pull_request_reviews: { required_approving_review_count: count }, enforce_admins: { enabled: false }, allow_force_pushes: { enabled: true }, allow_deletions: { enabled: true } });
+    const r = await verdictOf('github', [...PROTECTION, ...flags], [ok(body)]);
+    assertFailedObject(r);
+    assert.equal(r.json.reason, 'admins are not included; force pushes are allowed; deletions are allowed', r.text);
+  }
+  const one = await verdictOf('github', [...PROTECTION, ...flags], [ok(protectionBody({ required_pull_request_reviews: {}, allow_deletions: { enabled: true } }))]);
+  assertFailedObject(one);
+  assert.equal(one.json.reason, 'deletions are allowed', one.text);
+  const alone = await verdictOf('github', [...PROTECTION, ...flags], [ok(protectionBody({ required_pull_request_reviews: { required_approving_review_count: null } }))]);
+  assertInconclusive(alone);
+  assert.match(alone.json.reason, /required_approving_review_count as a whole number/, alone.text);
+  const low = await verdictOf('github', [...PROTECTION, ...flags], [ok(protectionBody({ required_pull_request_reviews: { required_approving_review_count: 0 }, allow_deletions: { enabled: true } }))]);
+  assertFailedObject(low);
+  assert.equal(low.json.reason, 'required reviews 0, expected at least 1; deletions are allowed', low.text);
+});

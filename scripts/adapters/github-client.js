@@ -295,7 +295,12 @@ async function judge(command, a, client, steps) {
       const observed = { protected: true, required_approving_review_count: reviews === undefined ? null : reviews, enforce_admins: enabled(d.enforce_admins), allow_force_pushes: enabled(d.allow_force_pushes), allow_deletions: enabled(d.allow_deletions) };
       const misses = [];
       const unshown = [];
-      if (a.reviews !== undefined && !(Number.isInteger(reviews) && reviews >= Number(a.reviews))) misses.push(`required reviews ${reviews === undefined ? 'off' : reviews}, expected at least ${a.reviews}`);
+      // a reviews object whose count is not an integer does not show the count (code review round
+      // 2 of batch G4, finding 1's class); no reviews object is "reviews off", as GitHub leaves it
+      // out. Decided before any miss is pushed, so no miss is taken out again by its text (code
+      // review round 3 of batch G4, finding 13)
+      const reviewsUnshown = a.reviews !== undefined && isObject(d.required_pull_request_reviews) && !Number.isInteger(reviews);
+      if (a.reviews !== undefined && !reviewsUnshown && !(Number.isInteger(reviews) && reviews >= Number(a.reviews))) misses.push(`required reviews ${reviews === undefined ? 'off' : reviews}, expected at least ${a.reviews}`);
       // a setting a flag asks about that is not shown proves nothing either way; a definite value
       // against the flag is a failed object, also beside a setting not shown
       const check = (flag, key, want, miss) => {
@@ -306,12 +311,7 @@ async function judge(command, a, client, steps) {
       check('enforce-admins', 'enforce_admins', true, 'admins are not included');
       check('no-force-push', 'allow_force_pushes', false, 'force pushes are allowed');
       check('no-deletions', 'allow_deletions', false, 'deletions are allowed');
-      // a reviews object whose count is not an integer does not show the count (code review round
-      // 2 of batch G4, finding 1's class); no reviews object is "reviews off", as GitHub leaves it out
-      if (a.reviews !== undefined && isObject(d.required_pull_request_reviews) && !Number.isInteger(reviews)) {
-        misses.splice(misses.findIndex((m) => m.startsWith('required reviews ')), 1);
-        unshown.push('required_pull_request_reviews.required_approving_review_count');
-      }
+      if (reviewsUnshown) unshown.push('required_pull_request_reviews.required_approving_review_count');
       if (misses.length) return { verified: false, observed, reason: misses.join('; ') };
       if (unshown.length) return unproven(observed, `the answer does not show ${unshown.map((k) => (k.includes('.') ? `${k} as a whole number` : `${k}.enabled as true or false`)).join(', ')}, so this is not proof either way`);
       return { verified: true, observed };

@@ -55,6 +55,25 @@ Branch `feat/g4-eval-and-closeout` on qFermions/Aegis, base `main` at `1f6647c` 
 | K7 held-out separation | unresolved | not yet run | |
 | K8 canon files current, CLAUDE.md under 20,000 bytes | unresolved | not yet run | |
 
+## Review rounds
+
+| round | range | result | record |
+|---|---|---|---|
+| `/security-review` 1 | `1f6647c..8492bee` (the whole branch) | no findings at confidence 8 or above; two observations below the bar kept for the owner (O1 CSV cells after a full-width equals sign or a leading line feed; O2 the system under test's Agent tool and repo agents with wider tools) | `docs/aegis/g4/evidence/security-review-1.md` |
+| `/code-review xhigh` round 1 | `origin/main...8492bee` | 15 found: 10 fixed, each test first in its own pair of commits (findings 1, 3, 4, 5, 6, 7, 8, 10, 11, 12; finding 12's class also fixed in Fleet), 5 closed (below) | `docs/aegis/g4/evidence/code-review-rounds.md` round 1 |
+| `/code-review xhigh` round 2 | `5f09f91..af47dc3` (diff only) | 15 found: 12 fixed (findings 1 to 9, 11, 12, 13), 3 closed (below) | `docs/aegis/g4/evidence/code-review-rounds.md` round 2 |
+
+Closed findings, one line each:
+
+- R1-2 (`scripts/audit/audit-log.js:231`, a change record opened before A3 no longer matches): production is not deployed, so no such trail exists; the mismatch fails closed; the audit README says to open a new change (`82cbae5`).
+- R1-9 (`scripts/audit/change-record.js:639`, the one-approval guard counts an earlier mismatched approval): only the removed `audit-log.js approval` could write one; no deployed trail holds one; such a change is reopened.
+- R1-13 (`scripts/adapters/github-client.js:239`, a small unproven helper per connector): quality only, no behavior; a shared helper is a refactor for a later batch.
+- R1-14 (`scripts/adapters/github-client.js:250`, dead branches after D1's guards): quality only; removing them changes no behavior.
+- R1-15 (`scripts/eval/vendor-facts-priority.js:184`, repeated extraction): efficiency only, on repo-sized inputs.
+- R2-10 (`scripts/adapters/fleet-client.js:340`, `results: null` may be Go's empty list): shape not confirmed; INCONCLUSIVE is the safe direction (exit 5, never a pass); added to the owner's real-tenant questions.
+- R2-14 (`scripts/adapters/msgraph-client.js:59`, the ISO time pattern written four times): quality only; every connector's time bound is tested with the printed form, which catches a drift.
+- R2-15 (`scripts/audit/change-record.js:603`, `earlyRunBound` walks repeated flags): defense in depth at the trust boundary; no behavior difference while the parsers refuse repeats.
+
 ## Deviations
 
 | id | deviation | reason | evidence |

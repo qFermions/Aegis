@@ -360,3 +360,53 @@ test('code review round 1, finding 7: fleet verify-deleted: a non-manual deletio
   assertFailedObject(await verdictOf('fleet', DELETED, [activityPage([deletion('expiration'), { id: 1, type: 'edited_script', created_at: '2026-10-28T08:00:00Z', details: {} }], true)]));
 });
 
+// Finding 8: a list answer with no list was read as an empty list, a failed object (exit 2), in
+// Fleet verify-deleted (no activities list) and verify-wipe (no results list of MDM commands) and
+// in Linear verify-comment and verify-suspended (no nodes or no pageInfo). It proves nothing
+// either way (INCONCLUSIVE, exit 5), as D1 made it for GitHub and Microsoft Graph. An empty list
+// that is a list stays an answer.
+const WIPE = ['verify-wipe', '--id', '7'];
+const macWiping = fleetHost({ platform: 'darwin', hardware_serial: SERIAL, mdm: { device_status: 'wiping', pending_action: 'wipe' } });
+const windowsWiped = fleetHost({ platform: 'windows', hardware_serial: SERIAL, mdm: { device_status: 'wiped', pending_action: '' } });
+const linearData = (data) => ok({ data: { ...data, organization: { urlKey: 'org-under-test' } } });
+const COMMENT = ['verify-comment', '--issue', 'IT-123', '--expect-sha256', 'a'.repeat(64), '--not-before', NOT_BEFORE];
+const SUSPENDED = ['verify-suspended', '--user', 'user-7'];
+const NO_LIST = [
+  ['fleet verify-deleted: an activities answer with no activities list', 'fleet', DELETED, [ok({ meta: { has_next_results: false } })]],
+  ['fleet verify-deleted: an activities list that is null', 'fleet', DELETED, [ok({ activities: null, meta: { has_next_results: false } })]],
+  ['fleet verify-deleted: a later activities page with no list', 'fleet', DELETED, [fleetActivities(0), ok({ meta: { has_next_results: false } })]],
+  ['fleet verify-wipe on a Mac: an MDM commands answer with no results list', 'fleet', WIPE, [macWiping, ok({})]],
+  ['fleet verify-wipe on Windows: an MDM commands results list that is null', 'fleet', WIPE, [windowsWiped, ok({ results: null })]],
+  ['linear verify-comment: a comments connection with no nodes', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123', comments: { pageInfo: { hasNextPage: false, endCursor: null } } } })]],
+  ['linear verify-comment: an issue with no comments connection', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123' } })]],
+  ['linear verify-comment: a comments connection with no pageInfo', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123', comments: { nodes: [] } } })]],
+  ['linear verify-suspended: a users connection with no nodes', 'linear', SUSPENDED, [linearData({ users: { pageInfo: { hasNextPage: false, endCursor: null } } })]],
+  ['linear verify-suspended: an answer with no users connection', 'linear', SUSPENDED, [linearData({})]],
+  ['linear verify-suspended: a users connection with no pageInfo', 'linear', SUSPENDED, [linearData({ users: { nodes: [{ id: 'user-1', active: true }] } })]],
+];
+for (const [why, c, argv, replies] of NO_LIST) {
+  test(`code review round 1, finding 8: ${why} is INCONCLUSIVE (exit 5), not an empty list`, async () => {
+    assertInconclusive(await verdictOf(c, argv, replies));
+  });
+}
+const EMPTY_LIST = [
+  ['fleet verify-deleted: an empty activities list, the feed at its end', 'fleet', DELETED, [ok({ activities: [], meta: { has_next_results: false } })]],
+  ['fleet verify-wipe on a Mac: an empty results list', 'fleet', WIPE, [macWiping, ok({ results: [] })]],
+  ['fleet verify-wipe: a host not wiping, whatever the commands answer holds', 'fleet', WIPE, [fleetHost({ platform: 'darwin', hardware_serial: SERIAL, mdm: { device_status: 'unlocked', pending_action: '' } }), ok({})]],
+  ['linear verify-comment: an empty comments list on its last page', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123', comments: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } } })]],
+  ['linear verify-suspended: the member not on the last page', 'linear', SUSPENDED, [linearData({ users: { nodes: [{ id: 'user-1', active: true }], pageInfo: { hasNextPage: false, endCursor: null } } })]],
+];
+for (const [why, c, argv, replies] of EMPTY_LIST) {
+  test(`code review round 1, finding 8: ${why} stays a failed object (exit 2)`, async () => {
+    const r = await verdictOf(c, argv, replies);
+    // Fleet verify-wipe prints no reason on a Mac that fails (it shows observed against
+    // expected), so the reason is checked where the read-back gives one
+    if (argv[0] === 'verify-wipe') {
+      assert.equal(r.code, EXIT.READ_FAILED, r.text);
+      assert.equal(r.json.state, 'OK', r.text);
+      assert.equal(r.json.verified, false, r.text);
+      assert.deepEqual(r.entry, [[false, 'OK']], r.text);
+    } else assertFailedObject(r);
+  });
+}
+

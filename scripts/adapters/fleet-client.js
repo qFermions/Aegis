@@ -421,6 +421,7 @@ async function verifyDeleted(read, args) {
   let reachedNotBefore = false;
   let more = false;
   let noList = false;
+  let pagingUnknown = false;
   // Activities come newest first (order_key=created_at, order_direction=desc), so
   // the search stops at the first activity older than --not-before.
   while (pages < DELETED_PAGES && !manual && !reachedNotBefore) {
@@ -440,7 +441,11 @@ async function verifyDeleted(read, args) {
       if (d.triggered_by === 'manual') { manual = a; break; }
       if (!other) other = a;
     }
-    more = isObject(r.data) && isObject(r.data.meta) && r.data.meta.has_next_results === true;
+    // a page with no true or false meta.has_next_results does not say the feed ended (code
+    // review round 2 of batch G4, finding 3)
+    const meta = isObject(r.data.meta) ? r.data.meta : {};
+    if (typeof meta.has_next_results !== 'boolean') { pagingUnknown = true; break; }
+    more = meta.has_next_results === true;
     if (!more) break;
   }
   const found = manual || other;
@@ -456,6 +461,7 @@ async function verifyDeleted(read, args) {
     // may sit on the pages not read (code review round 1 of batch G4, finding 7)
     if (noList) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and activity page ${pages} has no activities list, so this is not proof either way` };
     if (more && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and more activities after --not-before were not read, so this is not proof either way` };
+    if (pagingUnknown && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and activity page ${pages} does not say whether more activities follow (no true or false meta.has_next_results), so this is not proof either way` };
     return { verified: false, observed, expected, note: why };
   }
   const deletedId = isObject(manual.details) ? field(manual.details, 'host_id') : null;

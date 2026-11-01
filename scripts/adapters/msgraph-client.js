@@ -52,8 +52,12 @@ const ASSERTION_LIFETIME_SECONDS = 300;
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const USER = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[A-Za-z0-9._%+'-]{1,64}@[A-Za-z0-9.-]{1,190})$/i;
-const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
-const SIGNIN_FILTER = /^userId eq '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' and createdDateTime ge \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/i;
+// An ISO UTC time, with 1 to 3 fractional digits or none: change-record.js approve prints
+// approved_at with milliseconds, and a read-back runs with --not-before at or after it, so the
+// printed value is taken as it is and compared at millisecond precision (code review round 1 of
+// batch G4, finding 3; Okta, Google Workspace, Jamf Pro and Linear take the same form)
+const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
+const SIGNIN_FILTER = /^userId eq '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' and createdDateTime ge \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/i;
 const METHODS = ['microsoftAuthenticator', 'phone', 'fido2', 'softwareOath', 'windowsHelloForBusiness', 'email', 'temporaryAccessPass'];
 // "Require re-register MFA" deletes these (vendor fact B-18)
 const CLEARED_BY_REREGISTER = ['microsoftAuthenticator', 'phone', 'softwareOath'];

@@ -358,11 +358,14 @@ async function verifyWipe(read, args) {
   // Apple's EraseDevice query names no per_page, so the page size is unknown and a page's fullness
   // cannot be judged: only a has_next_results true says more follow; with no meta the page is
   // judged as it stands (code review round 3 of batch G4, finding 3).
+  // Only a host wiping or wiped takes this paging INCONCLUSIVE: on another, the host record already
+  // shows the wipe not done, so it is the normal failed-object result below (code review round 3
+  // of batch G4, finding 7).
   const meta = isObject(c.data.meta) ? c.data.meta : {};
   const more = apple
     ? meta.has_next_results === true
     : (typeof meta.has_next_results === 'boolean' ? meta.has_next_results : c.data.results.length >= Number(WINDOWS_COMMANDS_PER_PAGE));
-  if (more) {
+  if (statusOk && more) {
     let what;
     let page;
     let next;
@@ -379,7 +382,7 @@ async function verifyWipe(read, args) {
       page = `on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read`;
       next = 'Look for the doWipe on the next pages of the commands read (--page 1 and on), or in the host\'s activity in Fleet.';
     }
-    return { inconclusive: statusOk, verified: false, observed, expected, note: `${what} ${page}, and more commands may follow, so the newest ${apple ? 'EraseDevice' : 'doWipe'} may be on a later page: this is not proof either way. ${next}` };
+    return { inconclusive: true, verified: false, observed, expected, note: `${what} ${page}, and more commands may follow, so the newest ${apple ? 'EraseDevice' : 'doWipe'} may be on a later page: this is not proof either way. ${next}` };
   }
   const commandOk = command !== null && (apple ? command.status === 'Acknowledged' : String(command.status) === '200');
   // a host wiping or wiped whose newest wipe command is not answered yet is not proved either way

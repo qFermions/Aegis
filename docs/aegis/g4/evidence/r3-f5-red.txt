@@ -1,0 +1,70 @@
+$ node --test scripts/audit/time-bound-capture.test.js
+(Node v24.22.1, at 4cc5a75 plus the working tree: the finding 5 self-test cases, before the fix)
+
+✔ F9: the check finds the change-bound read-backs with a time bound (it is not vacuous) (5.320768ms)
+✔ F9: the check refuses a bound taken before the gate, at the start of the work, or nowhere, and accepts approved_at or a step of the change (1.516127ms)
+✖ round 3 F5: a runbook whose change-bound time flags all take a literal value is selected for its own test, and fails it (1.019884ms)
+✖ round 3 F5: a sentence that holds approved_at without saying to take or use it is refused; the forms the runbooks use are accepted (0.457758ms)
+✔ F9: fleet-device-actions.md takes the time bound of each change-bound read-back at or after the approval (0.879961ms)
+✔ F9: gws-account-containment.md takes the time bound of each change-bound read-back at or after the approval (0.554672ms)
+✔ F9: gws-admin-roles.md takes the time bound of each change-bound read-back at or after the approval (0.512902ms)
+✔ F9: gws-drive-sharing.md takes the time bound of each change-bound read-back at or after the approval (0.540044ms)
+✔ F9: jamf-config-profiles.md takes the time bound of each change-bound read-back at or after the approval (1.318ms)
+✔ F9: mfa-issue.md takes the time bound of each change-bound read-back at or after the approval (0.556766ms)
+✔ F9: offboard.md takes the time bound of each change-bound read-back at or after the approval (0.756218ms)
+✔ F9: password-reset.md takes the time bound of each change-bound read-back at or after the approval (0.514884ms)
+✔ F9: security-alert-triage.md takes the time bound of each change-bound read-back at or after the approval (0.348435ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 11
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 134.291905
+
+✖ failing tests:
+
+test at scripts/audit/time-bound-capture.test.js:120:1
+✖ round 3 F5: a runbook whose change-bound time flags all take a literal value is selected for its own test, and fails it (1.019884ms)
+  AssertionError [ERR_ASSERTION]: the runbook gets its own test
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:124:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:127:1
+✖ round 3 F5: a sentence that holds approved_at without saying to take or use it is refused; the forms the runbooks use are accepted (0.457758ms)
+  AssertionError [ERR_ASSERTION]: Take as `[NOT_BEFORE]` the time the work started, not the `approved_at` that `change-record.js approve` prints.
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:137:35)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

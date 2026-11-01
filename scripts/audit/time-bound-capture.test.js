@@ -86,8 +86,11 @@ function captureProblems(text) {
   return { problems, checked };
 }
 
+// whether a runbook gets its own test below
+const selected = (text) => captureProblems(text).checked.length > 0;
+
 const runbooks = fs.readdirSync(COMMANDS).filter((f) => f.endsWith('.md')).sort();
-const withTimed = runbooks.filter((f) => captureProblems(fs.readFileSync(path.join(COMMANDS, f), 'utf8')).checked.length);
+const withTimed = runbooks.filter((f) => selected(fs.readFileSync(path.join(COMMANDS, f), 'utf8')));
 
 test('F9: the check finds the change-bound read-backs with a time bound (it is not vacuous)', () => {
   const lines = withTimed.reduce((n, f) => n + captureProblems(fs.readFileSync(path.join(COMMANDS, f), 'utf8')).checked.length, 0);
@@ -106,6 +109,40 @@ test('F9: the check refuses a bound taken before the gate, at the start of the w
   assert.equal(captureProblems(doc('Nothing here.')).problems.length, 1, 'taken nowhere');
   assert.deepEqual(captureProblems(doc('Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints.')).problems, [], 'approved_at');
   assert.deepEqual(captureProblems(doc('Write down `[NOT_BEFORE]` now.', '1. Click **Revoke**. Write the save time as `[NOT_BEFORE]`.')).problems, [], 'a step of the change');
+});
+
+// Code review round 3 of batch G4, finding 5: (a) a runbook whose change-bound time flags all
+// take a literal value got no test of its own, so its "not a placeholder" problem could never
+// fail; every runbook with a change-bound time flag gets one. (b) Any sentence that merely held
+// the word approved_at passed; only a sentence that says to take or use the approved_at does (the
+// forms the runbooks use: "take as [NOT_BEFORE] the approved_at that ...", "use the approved_at
+// ... as [NOT_BEFORE]", or a definition "[NOT_BEFORE] (the time ...: the approved_at that ...").
+test('round 3 F5: a runbook whose change-bound time flags all take a literal value is selected for its own test, and fails it', () => {
+  const run = 'node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before 2026-10-28T09:00:00Z --change [CHANGE_ID] --execute';
+  const doc = `# t\n\n<!-- SAFETY GATE [t-revoke-portal] -->\n- **Reversibility:** R2 (test)\n- **Read-back:** \`${run.replace(/^node scripts\/adapters\//, '')}\`\n\n\`\`\`bash\n${run}\n\`\`\`\n`;
+  assert.equal(captureProblems(doc).problems.length, 1, 'the literal is a problem');
+  assert.equal(selected(doc), true, 'the runbook gets its own test');
+});
+
+test('round 3 F5: a sentence that holds approved_at without saying to take or use it is refused; the forms the runbooks use are accepted', () => {
+  const run = 'node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute';
+  const field = run.replace(/^node scripts\/adapters\//, '');
+  const doc = (before) => `# t\n\n${before}\n\n<!-- SAFETY GATE [t-revoke-portal] -->\n- **Reversibility:** R2 (test)\n- **Read-back:** \`${field}\`\n**PORTAL ACTION [t-revoke-portal]:** Only after the exact match:\n1. Click **Revoke**.\n\n\`\`\`bash\n${run}\n\`\`\`\n`;
+  const refused = [
+    'Take as `[NOT_BEFORE]` the time the work started, not the `approved_at` that `change-record.js approve` prints.',
+    'Use the time the work started as `[NOT_BEFORE]`; the `approved_at` comes later.',
+    'Write down `[NOT_BEFORE]` now, before the approved_at exists.',
+    '`[NOT_BEFORE]` (the time the work started, not the `approved_at` that `change-record.js approve` prints).',
+  ];
+  for (const s of refused) assert.equal(captureProblems(doc(s)).problems.length, 1, s);
+  const accepted = [
+    'Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate\'s change, and write it in the ticket.',
+    'For a read-back run with `--change [CHANGE_ID]`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back\'s change.',
+    'Use the `approved_at` that `change-record.js approve` printed as `[NOT_BEFORE]`.',
+    '`[NOT_BEFORE]` (the UTC time, ISO 8601, every read-back starts from: under a change record, the `approved_at` that `change-record.js approve` prints; otherwise the time you write down just before a change).',
+    '`[NOT_BEFORE]` (the time a read-back starts from: for one run with `--change [CHANGE_ID]`, the `approved_at` that `change-record.js approve` printed for that change).',
+  ];
+  for (const s of accepted) assert.deepEqual(captureProblems(doc(s)).problems, [], s);
 });
 
 for (const f of withTimed) {

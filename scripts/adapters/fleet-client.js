@@ -348,10 +348,16 @@ async function verifyWipe(read, args) {
   const command = newest(matching);
   observed['wipe command'] = commandView(command);
   const commandOk = command !== null && (apple ? command.status === 'Acknowledged' : String(command.status) === '200');
-  // a host wiping or wiped whose newest EraseDevice is still Pending is not yet proved either way
-  // (code review round 1 of batch G4, finding 12's class, as Jamf's Pending command)
-  if (statusOk && apple && command !== null && command.status === 'Pending') {
-    return { inconclusive: true, verified: false, observed, expected, note: 'The EraseDevice command is still Pending, so the wipe is not proved yet: this is not proof either way. Read it again after the Mac acknowledges the command.' };
+  // a host wiping or wiped whose newest wipe command is not answered yet is not proved either way
+  // (code review round 1 of batch G4, finding 12's class, as Jamf's Pending command): an Apple
+  // EraseDevice Pending, or NotNow (Apple MDM's deferral status, which Fleet passes through), and
+  // a Windows doWipe whose status is pending, the documented command_status value (COMMAND_STATUS;
+  // the exact form of that status in the commands answer is not in the vendor facts, so any case
+  // is taken) (code review round 2 of batch G4, finding 5)
+  const notAnswered = command !== null && (apple ? command.status === 'Pending' || command.status === 'NotNow' : typeof command.status === 'string' && command.status.toLowerCase() === 'pending');
+  if (statusOk && notAnswered) {
+    const what = apple ? `The EraseDevice command is still ${command.status}` : 'The doWipe command is still pending';
+    return { inconclusive: true, verified: false, observed, expected, note: `${what}, so the wipe is not proved yet: this is not proof either way. Read it again after the ${apple ? 'device acknowledges' : 'host answers'} the command.` };
   }
   const note = windows ? 'Windows command status is an OMA-DM code (vendor docs); the doWipe request_type shape is read from the vendor\'s wipe options and is unverified, so only a doWipe command with status 200 counts.' : undefined;
   return { verified: statusOk && commandOk, observed, expected, note };

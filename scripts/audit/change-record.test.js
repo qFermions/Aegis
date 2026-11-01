@@ -1089,6 +1089,48 @@ test('A1: the plain visible line Count: N still opens, beside comments, hidden r
   assert.equal(s.log.entries()[1].expected, 5);
 });
 
+// ── Batch G4, code review round 1, finding 11: an invisible filler inside the keyword ────────────
+// A Default_Ignorable_Code_Point character that is not a format character or a mark survived the
+// fold: the Hangul fillers (U+3164, U+115F, U+1160, U+FFA0) are letters, and unassigned default
+// ignorable code points (U+2065, U+FFF0, U+E0080, U+E0FFF) are in no class the fold removed. Both
+// render as nothing, so Cou<filler>nt: 999 read as Count: 999 beside the real Count: 5 was not seen
+// as a second count. Every \p{Default_Ignorable_Code_Point} character is removed before matching,
+// as format characters are; the visible plain Count: N stays the only accepted form.
+const FILLERS = { hangul: ['ㅤ', 'ᅟ', 'ᅠ', 'ﾠ'], unassigned: ['⁥', '￰', '\u{e0080}', '\u{e0fff}'] };
+for (const [label, chars] of Object.entries(FILLERS)) {
+  test(`F11: an invisible ${label} default ignorable character inside the keyword makes a count line, so a second count is refused`, (t) => {
+    const s = setup(t);
+    for (const inside of chars) {
+      for (const disguised of [`Cou${inside}nt: 999`, `${inside}Count: 999`, `C${inside}o${inside}u${inside}n${inside}t: 999`]) {
+        const beside = openBatch(s, withLines(s, 'filler', ['Count: 5', disguised]), 5);
+        assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+        assert.match(beside.stderr, /one line Count: N/, JSON.stringify(disguised));
+        const alone = openBatch(s, withLines(s, 'filler-alone', [disguised]), 999);
+        assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+      }
+    }
+    assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  });
+}
+
+test('F11: a count whose keyword holds a filler inside a hidden region is refused as hidden', (t) => {
+  const s = setup(t);
+  for (const inside of [...FILLERS.hangul, ...FILLERS.unassigned]) {
+    const r = openBatch(s, withLines(s, 'filler-hidden', ['Count: 5', `<!-- Cou${inside}nt: 999 -->`]), 5);
+    assert.equal(r.code, 1, `${JSON.stringify(inside)}: ${r.stdout}`);
+    assert.match(r.stderr, /HTML comment or another hidden region/, JSON.stringify(inside));
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('F11: the plain visible Count: N still opens when a filler sits elsewhere in the text', (t) => {
+  const s = setup(t);
+  const r = openBatch(s, withLines(s, 'filler-elsewhere', ['Count: 5', `Note:${FILLERS.hangul[0]} the hosts are in the ticket`, `Mount${FILLERS.unassigned[0]}: none`]), 5);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(s.log.entries().length, 1);
+  assert.equal(s.log.entries()[0].expected, 5);
+});
+
 // ── Batch G4, task A2: one approval writer ───────────────────────────────────────────────────────
 // audit-log.js approval wrote an approval for any change id (round 3 of the batch G3 close-out 3,
 // finding 5). It is removed from the CLI: change-record.js approve is the one writer, and it checks

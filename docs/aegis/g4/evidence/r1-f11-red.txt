@@ -1,0 +1,112 @@
+# command: node --test --test-name-pattern=F11 scripts/audit/change-record.test.js
+# run in: <repo>  commit: 8ae497b (plus uncommitted changes in the working tree)  started: 2026-11-01T02:19:34Z  node: v24.22.1
+✖ F11: an invisible hangul default ignorable character inside the keyword makes a count line, so a second count is refused (88.145847ms)
+✖ F11: an invisible unassigned default ignorable character inside the keyword makes a count line, so a second count is refused (63.808269ms)
+✖ F11: a count whose keyword holds a filler inside a hidden region is refused as hidden (80.162253ms)
+✔ F11: the plain visible Count: N still opens when a filler sits elsewhere in the text (66.630041ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 416.662238
+
+✖ failing tests:
+
+test at scripts/audit/change-record.test.js:1101:3
+✖ F11: an invisible hangul default ignorable character inside the keyword makes a count line, so a second count is refused (88.145847ms)
+  AssertionError [ERR_ASSERTION]: "Cou\u3164nt: 999" beside the real line: {
+    "ok": true,
+    "change": "chg-f8608272b332",
+    "procedure_sha256": "d7b36a98ea165244456d9d15c0f96cafdc64dbd253f66ffde478c0a355e67cb9",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-f8608272b332 once for each of the 5 objects (it refuses to read until this change is approved); status --change chg-f8608272b332 reports \"verified k of 5\" and is done only when 5 distinct runs passed after the approval and none still failed"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1106:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1101:3
+✖ F11: an invisible unassigned default ignorable character inside the keyword makes a count line, so a second count is refused (63.808269ms)
+  AssertionError [ERR_ASSERTION]: "Cou\u2065nt: 999" beside the real line: {
+    "ok": true,
+    "change": "chg-182acbab12c3",
+    "procedure_sha256": "905fa6096f3ebd4987a44380bcb86b7e754abef8f09e84f6a728ec77b2155544",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-182acbab12c3 once for each of the 5 objects (it refuses to read until this change is approved); status --change chg-182acbab12c3 reports \"verified k of 5\" and is done only when 5 distinct runs passed after the approval and none still failed"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1106:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1116:1
+✖ F11: a count whose keyword holds a filler inside a hidden region is refused as hidden (80.162253ms)
+  AssertionError [ERR_ASSERTION]: "\u3164": {
+    "ok": true,
+    "change": "chg-b33694202330",
+    "procedure_sha256": "24b566ca530dfa27ca22b939f45d4caa205b63e9d1bd50d728e3f048f8840351",
+    "audit_seq": 1,
+    "next": [
+      "A person approves this exact procedure in the ticket; record the reference with: approve --change <id> --ref <ISSUE-KEY> --procedure-sha256 <digest>",
+      "A person runs the procedure (Aegis does not)",
+      "Run the fleet:verify-script read-back with --change chg-b33694202330 once for each of the 5 objects (it refuses to read until this change is approved); status --change chg-b33694202330 reports \"verified k of 5\" and is done only when 5 distinct runs passed after the approval and none still failed"
+    ]
+  }
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1120:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1
+# note: 3 invisible default ignorable character(s) in the output above are written as \u escapes

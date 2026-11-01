@@ -688,3 +688,24 @@ test('code review round 2, finding 7: github verify-dependabot-alert --state dis
     assert.doesNotMatch(r.json.reason, /was not dismissed/, r.text);
   }
 });
+
+// Code review round 2, the same classes as findings 1 and 6, two instances the round's fixes left:
+// (a) GitHub verify-protection --reviews: a required_pull_request_reviews object whose
+// required_approving_review_count is not an integer does not show the count, so it proves nothing
+// either way (INCONCLUSIVE, exit 5); no reviews object stays "reviews off" (exit 2), since GitHub
+// leaves it out when reviews are off. (b) Fleet verify-wipe on Windows: a doWipe on the page that
+// failed, when more pages may follow, may have a newer doWipe on a later page (INCONCLUSIVE).
+test('code review round 2, finding 1\'s class: github verify-protection --reviews with a count that is not an integer is INCONCLUSIVE (exit 5)', async () => {
+  for (const count of [undefined, null, '2', 2.5]) {
+    const body = protectionBody({ required_pull_request_reviews: count === undefined ? {} : { required_approving_review_count: count } });
+    assertInconclusive(await verdictOf('github', [...PROTECTION, '--reviews', '1'], [ok(body)]));
+  }
+  assertFailedObject(await verdictOf('github', [...PROTECTION, '--reviews', '1'], [ok(withoutKey('required_pull_request_reviews'))]));
+  assertFailedObject(await verdictOf('github', [...PROTECTION, '--reviews', '3'], [ok(protectionBody())]));
+});
+test('code review round 2, finding 6\'s class: fleet verify-wipe on Windows: a failed doWipe on a page that may have more behind it is INCONCLUSIVE (exit 5)', async () => {
+  assertInconclusive(await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('500')], { has_next_results: true })]));
+  assertInconclusive(await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([...fullPage.slice(1), doWipe('500')])]));
+  assertFailedObject(await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('500')], { has_next_results: false })]));
+  assertFailedObject(await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('500')])]));
+});

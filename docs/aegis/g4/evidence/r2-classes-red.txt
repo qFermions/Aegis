@@ -1,0 +1,10 @@
+# command: node --test scripts/adapters/inconclusive.test.js
+# commit: 34b68c8 plus this test change
+✖ code review round 2, finding 1's class: github verify-protection --reviews with a count that is not an integer is INCONCLUSIVE (exit 5) (2.359235ms)
+✖ code review round 2, finding 6's class: fleet verify-wipe on Windows: a failed doWipe on a page that may have more behind it is INCONCLUSIVE (exit 5) (1.166354ms)
+ℹ tests 143
+ℹ pass 141
+ℹ fail 2
+✖ failing tests:
+✖ code review round 2, finding 1's class: github verify-protection --reviews with a count that is not an integer is INCONCLUSIVE (exit 5) (2.359235ms)
+✖ code review round 2, finding 6's class: fleet verify-wipe on Windows: a failed doWipe on a page that may have more behind it is INCONCLUSIVE (exit 5) (1.166354ms)

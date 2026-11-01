@@ -427,7 +427,7 @@ test('verify-unlock: unlocked with nothing pending is verified; still locked is 
   assert.deepEqual(no.json.expected['host.mdm.device_status'], ['unlocked']);
 });
 
-test('verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command or no wipe status is not', async () => {
+test('verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command is INCONCLUSIVE; no wipe status or an errored command is not verified', async () => {
   const commandsPath = `/api/v1/fleet/commands?host_identifier=${SERIAL}&request_type=EraseDevice`;
   const acked = { results: [{ command_uuid: 'c-1', request_type: 'EraseDevice', status: 'Acknowledged', updated_at: '2026-10-27T10:00:00Z' }] };
   for (const status of ['wiping', 'wiped']) {
@@ -439,8 +439,15 @@ test('verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is ver
     assert.equal(yes.json.observed['wipe command'].status, 'Acknowledged');
   }
   const pending = await cli(['verify-wipe', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'wiping', pending_action: 'wipe' })), ok({ results: [{ command_uuid: 'c-1', request_type: 'EraseDevice', status: 'Pending' }] })] });
-  assert.equal(pending.code, 2);
+  // code review round 1 of batch G4, finding 12's class: a host wiping with its EraseDevice still
+  // Pending is not yet proved either way (INCONCLUSIVE, exit 5), as Jamf's Pending command is
+  assert.equal(pending.code, 5, pending.stdout);
   assert.equal(pending.json.verified, false);
+  assert.equal(pending.json.state, 'INCONCLUSIVE');
+  const pendingNotWiping = await cli(['verify-wipe', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'unlocked', pending_action: '' })), ok({ results: [{ command_uuid: 'c-1', request_type: 'EraseDevice', status: 'Pending' }] })] });
+  assert.equal(pendingNotWiping.code, 2, 'a host that is not wiping shows the wipe not done, whatever the command');
+  const errored = await cli(['verify-wipe', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'wiping', pending_action: 'wipe' })), ok({ results: [{ command_uuid: 'c-1', request_type: 'EraseDevice', status: 'Error' }] })] });
+  assert.equal(errored.code, 2, 'an EraseDevice that errored is a failed object');
   const notWiping = await cli(['verify-wipe', '--id', '7', '--execute'], { replies: [ok(hostBody({ device_status: 'unlocked', pending_action: '' })), ok(acked)] });
   assert.equal(notWiping.code, 2);
   assert.equal(notWiping.json.verified, false);

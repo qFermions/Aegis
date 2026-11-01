@@ -1,0 +1,8 @@
+# command: node --test scripts/adapters/fleet-client.test.js
+# commit: 4d03e44 plus this test change
+✖ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command is INCONCLUSIVE; no wipe status or an errored command is not verified (2.37928ms)
+ℹ tests 29
+ℹ pass 28
+ℹ fail 1
+✖ failing tests:
+✖ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command is INCONCLUSIVE; no wipe status or an errored command is not verified (2.37928ms)

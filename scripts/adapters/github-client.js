@@ -289,14 +289,26 @@ async function judge(command, a, client, steps) {
       }
       const d = isObject(res.data) ? res.data : {};
       const reviews = isObject(d.required_pull_request_reviews) ? d.required_pull_request_reviews.required_approving_review_count : undefined;
-      const enabled = (o) => (isObject(o) ? o.enabled === true : null);
+      // a setting shows its value only as a true or false enabled; an object without one, or no
+      // object, is null: not shown (code review round 2 of batch G4, finding 1)
+      const enabled = (o) => (isObject(o) && typeof o.enabled === 'boolean' ? o.enabled : null);
       const observed = { protected: true, required_approving_review_count: reviews === undefined ? null : reviews, enforce_admins: enabled(d.enforce_admins), allow_force_pushes: enabled(d.allow_force_pushes), allow_deletions: enabled(d.allow_deletions) };
       const misses = [];
+      const unshown = [];
       if (a.reviews !== undefined && !(Number.isInteger(reviews) && reviews >= Number(a.reviews))) misses.push(`required reviews ${reviews === undefined ? 'off' : reviews}, expected at least ${a.reviews}`);
-      if (a['enforce-admins'] && observed.enforce_admins !== true) misses.push('admins are not included');
-      if (a['no-force-push'] && observed.allow_force_pushes !== false) misses.push('force pushes are allowed');
-      if (a['no-deletions'] && observed.allow_deletions !== false) misses.push('deletions are allowed');
-      return misses.length ? { verified: false, observed, reason: misses.join('; ') } : { verified: true, observed };
+      // a setting a flag asks about that is not shown proves nothing either way; a definite value
+      // against the flag is a failed object, also beside a setting not shown
+      const check = (flag, key, want, miss) => {
+        if (!a[flag]) return;
+        if (observed[key] === null) unshown.push(key);
+        else if (observed[key] !== want) misses.push(miss);
+      };
+      check('enforce-admins', 'enforce_admins', true, 'admins are not included');
+      check('no-force-push', 'allow_force_pushes', false, 'force pushes are allowed');
+      check('no-deletions', 'allow_deletions', false, 'deletions are allowed');
+      if (misses.length) return { verified: false, observed, reason: misses.join('; ') };
+      if (unshown.length) return unproven(observed, `the answer does not show ${unshown.map((k) => `${k}.enabled`).join(', ')} as true or false, so this is not proof either way`);
+      return { verified: true, observed };
     }
     case 'verify-2fa-required': {
       const res = await one(steps[0]);

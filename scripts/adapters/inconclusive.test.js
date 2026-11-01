@@ -854,3 +854,28 @@ test('code review round 3, finding 13: github verify-protection: beside a review
   assertFailedObject(low);
   assert.equal(low.json.reason, 'required reviews 0, expected at least 1; deletions are allowed', low.text);
 });
+
+// Finding 15: Jamf Pro verify-command, with both a Pending command and an undated command seen,
+// returned the Pending reason first and left observed.undatedCommands out. It is set whenever
+// undated records exist, and the reason names both.
+test('code review round 3, finding 15: jamf verify-command: a Pending command beside an undated one is INCONCLUSIVE, counts the undated one and names both in the reason', async () => {
+  for (const results of [
+    [jamfCommand({ uuid: 'cmd-2', status: 'Pending' }), jamfCommand({ uuid: 'cmd-0', dateSent: 'not a time' })],
+    [jamfCommand({ uuid: 'cmd-0', status: 'Pending', dateSent: '28/10/2026' }), jamfCommand({ uuid: 'cmd-2', status: 'Pending' })],
+  ]) {
+    const r = await verdictOf('jamf', JAMF_COMMAND, [token(), jamfCommands(results)]);
+    assertInconclusive(r);
+    assert.equal(r.json.observed.undatedCommands, 1, r.text);
+    assert.match(r.json.reason, /1 still reads Pending/, r.text);
+    assert.match(r.json.reason, /dateSent that is not a time/, r.text);
+  }
+  // each alone reads as before: Pending alone has no undated count, undated alone names no Pending
+  const pending = await verdictOf('jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ status: 'Pending' })])]);
+  assertInconclusive(pending);
+  assert.equal('undatedCommands' in pending.json.observed, false, pending.text);
+  assert.doesNotMatch(pending.json.reason, /not a time/, pending.text);
+  const undated = await verdictOf('jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ dateSent: 'not a time' })])]);
+  assertInconclusive(undated);
+  assert.equal(undated.json.observed.undatedCommands, 1, undated.text);
+  assert.doesNotMatch(undated.json.reason, /reads? Pending/, undated.text);
+});

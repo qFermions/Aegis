@@ -243,6 +243,7 @@ const READS = {
 const APPLE = new Set(['darwin', 'ios', 'ipados']);
 const DELETED_PAGES = 10;
 const DELETED_PER_PAGE = '100';
+const WINDOWS_COMMANDS_PER_PAGE = '100'; // verify-wipe on Windows reads one page of this size
 
 function hostOf(data) {
   return isObject(data) && isObject(data.host) ? data.host : {};
@@ -331,7 +332,7 @@ async function verifyWipe(read, args) {
     observed['wipe command'] = null;
     return { inconclusive: observed['host.id'] === Number(args.id), verified: false, observed, expected, note: 'The host record has no serial or UUID usable as a host_identifier, so its wipe command cannot be read: this is not proof either way.' };
   }
-  const query = apple ? { host_identifier: identifier, request_type: 'EraseDevice' } : { host_identifier: identifier, per_page: '100' };
+  const query = apple ? { host_identifier: identifier, request_type: 'EraseDevice' } : { host_identifier: identifier, per_page: WINDOWS_COMMANDS_PER_PAGE };
   const c = await read('mdmCommands', {}, query);
   if (!c.ok) return { failed: c, observed };
   // an answer with no results list is not an empty list: it proves nothing either way, unless
@@ -347,6 +348,14 @@ async function verifyWipe(read, args) {
     : list.filter((x) => typeof x.request_type === 'string' && /doWipe/.test(x.request_type));
   const command = newest(matching);
   observed['wipe command'] = commandView(command);
+  // Windows reads one page of the host's commands: with no doWipe on it, the doWipe may sit on a
+  // later page when the answer says more follow, or when the page is full and gives no true or
+  // false has_next_results (code review round 2 of batch G4, finding 6)
+  if (windows && command === null) {
+    const meta = isObject(c.data.meta) ? c.data.meta : {};
+    const more = typeof meta.has_next_results === 'boolean' ? meta.has_next_results : c.data.results.length >= Number(WINDOWS_COMMANDS_PER_PAGE);
+    if (more) return { inconclusive: statusOk, verified: false, observed, expected, note: `No doWipe command is on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read, and more commands may follow, so this is not proof either way. Look for the doWipe on the next pages of the commands read (--page 1 and on), or in the host's activity in Fleet.` };
+  }
   const commandOk = command !== null && (apple ? command.status === 'Acknowledged' : String(command.status) === '200');
   // a host wiping or wiped whose newest wipe command is not answered yet is not proved either way
   // (code review round 1 of batch G4, finding 12's class, as Jamf's Pending command): an Apple

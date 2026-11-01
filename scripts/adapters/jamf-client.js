@@ -567,6 +567,8 @@ async function verifyCommand(client, a) {
   const notBefore = Date.parse(a.notBefore);
   const observed = { managementId: a.managementId, commandType: a.type, profileIdentifier: a.profileIdentifier || null, pagesRead: 0, commandsRead: 0, match: null, sameTypeSinceNotBefore: [], otherProfileCommands: 0 };
   const flags = [];
+  // a matching command still Pending (not yet acknowledged, not failed) may yet be acknowledged
+  let pending = 0;
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const r = await read(client, 'mdmCommands', {}, { filter: commandFilter(a.managementId, a.type, a.profileIdentifier), page: String(page) });
     if (!r.ok) return failed(command, r);
@@ -589,11 +591,17 @@ async function verifyCommand(client, a) {
         observed.match = summary;
         return verdict(command, true, expected, observed, null, flags);
       }
+      if (typeof c.status === 'string' && /^pending$/i.test(c.status)) pending += 1;
       if (observed.sameTypeSinceNotBefore.length < MAX_SUMMARIES) observed.sameTypeSinceNotBefore.push(summary);
     }
     if (list.length < PAGE_SIZE) {
       const forProfile = a.profileIdentifier ? ` for profile ${a.profileIdentifier}` : '';
-      return verdict(command, false, expected, observed, `no ${a.type} command${forProfile} for this Mac sent at or after ${a.notBefore} reads Acknowledged`, flags);
+      const none = `no ${a.type} command${forProfile} for this Mac sent at or after ${a.notBefore} reads Acknowledged`;
+      // a command the Mac has not answered yet proves nothing either way, as a Fleet run not
+      // reported yet does; a failed command, or none, is a failed object (code review round 1
+      // of batch G4, finding 12)
+      if (pending) return unproven(command, expected, observed, `${none}, and ${pending} still read${pending === 1 ? 's' : ''} Pending: the Mac has not answered yet, so this is not proof either way; read again after its next check-in`, flags);
+      return verdict(command, false, expected, observed, none, flags);
     }
   }
   return unproven(command, expected, observed, `stopped after ${MAX_PAGES} pages without proof either way`, flags);

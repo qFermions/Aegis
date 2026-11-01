@@ -19,7 +19,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Every change lands at each Mac's next check-in or on the plan's schedule; the console only queues it. Not done until the read-back proves it.
 - Aegis reads Jamf Pro through `scripts/adapters/jamf-client.js`, whose API client holds read privileges only. It never creates a title, policy, plan or deployment.
 
-**Stop conditions:** the group's member count differs from the count in the ticket (`verify-group-count` exits 2) · the pilot read-back shows Failed or Unqualified, or Macs not at the target version · a Mac in a macOS plan runs macOS 27 or later (Phase E) · the patch report never appears (Jamf Pro cannot reach the patch server on port 443).
+**Stop conditions:** the group's member count differs from the count in the ticket or cannot be read (`verify-group-count` gives any exit other than 0: exit 2, the count differs or the read failed, or exit 5, INCONCLUSIVE: proves nothing either way) · the pilot read-back shows Failed or Unqualified, or Macs not at the target version · a Mac in a macOS plan runs macOS 27 or later (Phase E) · the patch report never appears (Jamf Pro cannot reach the patch server on port 443).
 
 ## Inputs needed
 
@@ -70,7 +70,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
 # lists the members of that group
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
-# proves the group holds exactly the count recorded in the ticket; exit 2 means stop
+# proves the group holds exactly the count recorded in the ticket, any exit other than 0 means stop: exit 2 means the count differs, exit 5 INCONCLUSIVE means the answer proves nothing either way
 node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --execute
 ```
 </details>

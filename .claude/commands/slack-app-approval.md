@@ -103,7 +103,7 @@ Exit 0 is a read; exit 2 is a failed read with Slack's error code only (for exam
 2. GUI read-back: the app's page in Slack Marketplace now shows it as approved (the exact status label was not in the sources read).
 
 ```bash
-# read-only, Enterprise only: proves [APP_ID] is in admin.apps.approved.list; exit 2 means not proved
+# read-only, Enterprise only: proves [APP_ID] is in admin.apps.approved.list, any exit other than 0 means not proved: exit 2, or exit 5 INCONCLUSIVE, the answer proves nothing either way
 node scripts/adapters/slack-client.js verify-app-approved --app-id [APP_ID] --execute
 # read-only, Enterprise only: the pending list should no longer hold the request
 node scripts/adapters/slack-client.js app-requests --execute
@@ -123,7 +123,7 @@ node scripts/adapters/slack-client.js app-requests --execute
 2. GUI read-back: the app's page in Slack Marketplace now shows it as restricted (the exact status label was not in the sources read).
 
 ```bash
-# read-only, Enterprise only: proves [APP_ID] is in admin.apps.restricted.list; exit 2 means not proved
+# read-only, Enterprise only: proves [APP_ID] is in admin.apps.restricted.list, any exit other than 0 means not proved: exit 2, or exit 5 INCONCLUSIVE, the answer proves nothing either way
 node scripts/adapters/slack-client.js verify-app-restricted --app-id [APP_ID] --execute
 ```
 

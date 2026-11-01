@@ -23,7 +23,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Roles needed:** View Disk Encryption Recovery Key for Phase C (the privilege that shows the key) · the configuration profile privileges for Phase B and the policy privileges for Phase D (their English names were not in this batch's sources; a custom privilege set needs privileges on both the computer and the object the task changes). The adapter's own API client holds read privileges only and must never hold View Disk Encryption Recovery Key.
 
-**Stop conditions:** a Mac you are about to put in a FileVault profile's scope already lists a FileVault or escrow profile (Phase A step 5): change that profile's scope with `/jamf-config-profiles` instead, because a second FileVault payload on the same Mac fails or conflicts · the requester for a key cannot be verified · Personal Recovery Key Validation is not Valid before Phase C (the shown key may not unlock the Mac) · the group's member count differs from the count in the ticket (`verify-group-count` exits 2) · the new-key policy logs "Authentication error" (the escrowed key is invalid; fix escrow first).
+**Stop conditions:** a Mac you are about to put in a FileVault profile's scope already lists a FileVault or escrow profile (Phase A step 5): change that profile's scope with `/jamf-config-profiles` instead, because a second FileVault payload on the same Mac fails or conflicts · the requester for a key cannot be verified · Personal Recovery Key Validation is not Valid before Phase C (the shown key may not unlock the Mac) · the group's member count differs from the count in the ticket or cannot be read (`verify-group-count` gives any exit other than 0: exit 2, the count differs or the read failed, or exit 5, INCONCLUSIVE: proves nothing either way) · the new-key policy logs "Authentication error" (the escrowed key is invalid; fix escrow first).
 
 ## Inputs needed
 
@@ -71,7 +71,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 # HUMAN-RUN, read-only, nothing here changes anything, and no read returns a key
 # reads the Disk Encryption section of one Mac with key-like fields stripped by the adapter; the stripping also hides the Personal Recovery Key Validation field, so verify-filevault below is the read that shows it
 node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section DISK_ENCRYPTION --execute
-# proves FileVault is enabled and the personal recovery key is Valid; exit 2 means it is not
+# proves FileVault is enabled and the personal recovery key is Valid, any exit other than 0 means it is not proved: exit 2 means it is not, exit 5 INCONCLUSIVE means the answer proves nothing either way
 node scripts/adapters/jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --execute
 # finds a smart group by name and prints its ID, for a group-wide read
 node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
@@ -216,7 +216,7 @@ Prerequisites: macOS 10.14 or later; the Mac has a valid escrowed key or a FileV
 <summary>Read-back through the adapter (HUMAN-RUN, read-only)</summary>
 
 ```bash
-# proves the new-key policy is enabled on Recurring Check-in, Once per computer, as the gate created it; exit 2 means it is not
+# proves the new-key policy is enabled on Recurring Check-in, Once per computer, as the gate created it, any exit other than 0 means it is not proved: exit 2 means it is not, exit 5 INCONCLUSIVE means the answer proves nothing either way
 node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once per computer" --enabled true --change [CHANGE_ID] --execute
 # reads the policy logs of the Mac; the new-key policy should show as completed, not as an authentication error
 node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLogs --execute

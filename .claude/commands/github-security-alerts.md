@@ -35,7 +35,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Dependabot alert states:** open, dismissed, fixed or auto_dismissed; a dismissed alert carries a reason: fix_started, inaccurate, no_bandwidth, not_used or tolerable_risk (G-24).
 - **Where they are:** the repository's **Security and quality** tab (the old "Security" tab name is gone, B-08): secret scanning under "Vulnerability alerts", Dependabot under "Findings" (B-08, B-10).
 - **Removing the secret from the code does not make it safe.** Anyone who cloned the repository before has it. Revocation at the issuer is the fix; a history rewrite is a separate repository change outside this runbook.
-- **The connector is read only.** `verify-secret-alert` and `verify-dependabot-alert` print verified true or false: exit 0 verified, exit 2 not verified. Without `--execute` they exit 4 and print NOT VERIFIED: a dry run proves nothing.
+- **The connector is read only.** `verify-secret-alert` and `verify-dependabot-alert` print verified true or false: exit 0 verified, and any exit other than 0 is not a pass: exit 2 not verified (the answer shows the change not done, or the read failed), exit 5 (INCONCLUSIVE: the answer proves nothing either way). Without `--execute` they exit 4 and print NOT VERIFIED: a dry run proves nothing.
 
 ## Fast path
 

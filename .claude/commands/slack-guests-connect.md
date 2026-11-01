@@ -92,7 +92,7 @@ node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type multi
 **WAIT UNTIL** the date in the ticket has passed, then prove Slack deactivated the guest:
 
 ```bash
-# read-only: proves users.info shows deleted true for [USER_ID]; exit 2 means not yet deactivated or a failed read
+# read-only: proves users.info shows deleted true for [USER_ID], any exit other than 0 means not proved: exit 2 means not yet deactivated or a failed read, exit 5 INCONCLUSIVE means the answer proves nothing either way
 node scripts/adapters/slack-client.js verify-deactivated --user [USER_ID] --execute
 ```
 
@@ -210,7 +210,7 @@ Before the gate: the Phase A member list is in the ticket, the channel is not `#
 2. GUI read-back: Slack → Directories → filter to archived channels → `#[CHANNEL_NAME]` is listed.
 
 ```bash
-# read-only: proves conversations.info shows is_archived true for [CHANNEL_ID]; exit 2 means not archived or a failed read
+# read-only: proves conversations.info shows is_archived true for [CHANNEL_ID], any exit other than 0 means not proved: exit 2 means not archived or a failed read, exit 5 INCONCLUSIVE means the answer proves nothing either way
 node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --change [CHANGE_ID] --execute
 ```
 

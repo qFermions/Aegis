@@ -62,7 +62,7 @@ node scripts/adapters/github-client.js protection --repo [REPO_NAME] --branch [B
 node scripts/adapters/github-client.js rulesets --repo [REPO_NAME] --execute
 # the active rules on the branch only, Evaluate and Disabled rulesets are left out
 node scripts/adapters/github-client.js branch-rules --repo [REPO_NAME] --branch [BRANCH_NAME] --execute
-# the baseline in one read, exit 0 when every flag holds, exit 2 with the reason when one does not
+# the baseline in one read, exit 0 when every flag holds, exit 2 with the reason when one does not, exit 5 INCONCLUSIVE when the answer proves nothing either way: any exit other than 0 is not a pass
 node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews 1 --enforce-admins --no-force-push --no-deletions --execute
 ```
 

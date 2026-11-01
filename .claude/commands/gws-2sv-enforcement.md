@@ -334,7 +334,7 @@ The Reporting enforcement column catches up within 48 hours (search excerpt).
 
 **Verification checkpoint**: [ ] `verify-2sv-enforced` exit 0 for each sample user · [ ] `verify-2sv-not-enforced` exit 0 for an exception-group member · [ ] nobody in the unit is both not enrolled and outside the exception group.
 
-Exit 2 from a `verify-*` read is never a pass: it also means the read failed (a 403 from missing delegation, a 404, a timeout) or returned another user. Only exit 0 from the read-back that names the expected state counts.
+Exit 2 from a `verify-*` read is never a pass: it also means the read failed (a 403 from missing delegation, a 404, a timeout) or returned another user, and exit 5 (INCONCLUSIVE: the answer proves nothing either way) is never a pass either: only exit 0 from the read-back that names the expected state counts, and any exit other than 0 is not a pass.
 
 **Gotcha**: the new-user enrollment period gives an account created after the start date that much time before enforcement applies (search excerpt); `/gws-new-user` creates the account, and the new hire enrolls inside the window.
 

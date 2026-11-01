@@ -222,7 +222,7 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 
 ```bash
 # HUMAN-RUN - read-only
-# proves the policy reads disabled (general.enabled false; exit 2 while it is still enabled or the field is missing)
+# proves the policy reads disabled, general.enabled false. Any exit other than 0 means stop: exit 2 while it is still enabled. While the field is missing, exit 5 INCONCLUSIVE, the answer proves nothing either way
 node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --enabled false --execute
 # the policy logs of a sample Mac in scope - no new run after the time the policy was disabled
 node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLogs --execute

@@ -543,13 +543,21 @@ const VERIFY = {
   }),
   'verify-labels': (client, a) => issueVerify(client, 'verify-labels', a, (n) => {
     const conn = n.labels && typeof n.labels === 'object' ? n.labels : {};
-    const labels = (Array.isArray(conn.nodes) ? conn.nodes : []).map((l) => (l && typeof l.name === 'string' ? l.name : null)).filter((name) => name !== null);
-    const more = !!(conn.pageInfo && conn.pageInfo.hasNextPage === true);
+    // a label connection with no nodes list is not an empty list, and a page with no true or
+    // false hasNextPage does not say the list ended (code review round 2 of batch G4, finding 2)
+    const listed = Array.isArray(conn.nodes);
+    const labels = (listed ? conn.nodes : []).map((l) => (l && typeof l.name === 'string' ? l.name : null)).filter((name) => name !== null);
+    const paging = conn.pageInfo && typeof conn.pageInfo === 'object' && typeof conn.pageInfo.hasNextPage === 'boolean' ? conn.pageInfo.hasNextPage : null;
+    const more = paging === true;
     const verified = labels.includes(a.label);
+    let reason = 'the issue does not carry the label (names match exactly)';
+    if (!listed) reason = 'the issue read holds no label list, so this is not proof either way';
+    else if (paging === null) reason = 'the issue read does not say whether more labels follow, so the label may be on a later page and this is not proof either way; check it on screen';
+    else if (more) reason = 'the label is not among the first 100 labels and the issue has more, so this is not proof either way; check it on screen';
     return {
-      verified, observed: { labels, moreLabelPages: more },
-      ...(!verified && more ? { notProof: true } : {}),
-      reason: more ? 'the label is not among the first 100 labels and the issue has more, so this is not proof either way; check it on screen' : 'the issue does not carry the label (names match exactly)',
+      verified, observed: { labels: listed ? labels : null, moreLabelPages: paging },
+      ...(!verified && (!listed || paging !== false) ? { notProof: true } : {}),
+      reason,
     };
   }),
   // trashed is null or false for an issue not in the trash (schema: Boolean, nullable); a value

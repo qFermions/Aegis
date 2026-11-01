@@ -4,7 +4,7 @@ For the owner. One page. Details: `checks.md`, `scripts/eval/README.md` section 
 
 ## The short version
 
-- Aegis still advises and people still execute. Nothing in this batch adds a write path; the boundary sentence, every human-run gate and the 343 runbook SAFETY GATEs are as they were at `1f6647c`.
+- Aegis still advises and people still execute. Nothing in this batch adds a write path; the boundary sentence and every human-run gate are as they were at `1f6647c`; each of the 343 runbook SAFETY GATEs gained one `Read-back:` line and lost nothing.
 - Production-ready is **not** claimed: the readiness gate still reads NOT PASSED. Rows 4, 9, 10, 11 and 12 are still yours; this batch gives you a kit for each.
 - Answer quality can now be measured, but has not been: no real run on your cases happened here.
 
@@ -24,6 +24,12 @@ For the owner. One page. Details: `checks.md`, `scripts/eval/README.md` section 
 - Calibration compares your blind scores with the judge's (exact agreement and Cohen's kappa).
 - PASS or FAIL is printed only against thresholds you give. Without them it prints NO VERDICT.
 - A case file inside the repository is refused, even through a symlink. The 8 DEV cases are for development only.
+
+## Read-backs: inconclusive answers and named proofs (D1 to D3)
+
+- An answer that proves nothing either way is INCONCLUSIVE, exit 5, in all nine connectors. It is never a pass and never counts as a failed object.
+- Every SAFETY GATE has a `Read-back:` line naming the command that proves it, or `none` with the reason. Change records bind from that line.
+- None of the 31 R2 and R3 gates without a read-back gained one: no existing connector read proves their change. The reason is in each gate.
 
 ## Owner kits (`docs/aegis/owner/`)
 

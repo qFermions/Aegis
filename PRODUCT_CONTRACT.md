@@ -252,7 +252,7 @@ note that tokens may take a few minutes more, H3).
 
 Batch G4 (2026-10-31, branch `feat/g4-eval-and-closeout`, base `main` at `1f6647c`). Nothing was
 removed and no sentence above changed; the boundary paragraph is as at `1f6647c`, and every gate that
-existed there still exists (343 runbook SAFETY GATEs).
+existed there still exists (343 runbook SAFETY GATEs, each with one added `Read-back:` line).
 
 - Changed: how a change is proved, not what Aegis may do. A count line disguised with a format
   character, a combining mark or a look-alike letter, or hidden in an HTML comment, is refused
@@ -270,3 +270,11 @@ existed there still exists (343 runbook SAFETY GATEs).
 - Added: a stated limit in `/mfa-issue` and `/password-reset`: Microsoft does not document whether a
   password reset moves `signInSessionsValidFromDateTime`, so after a reset in the same ticket
   `verify-sessions-revoked` may pass without a revocation (vendor fact M-28). Reason: D9 on PR #9.
+- Changed: what a read-back's answer means. An answer that proves nothing either way (an object
+  absent from a list cut short, a decisive field missing or malformed, a command not yet answered)
+  is INCONCLUSIVE, exit 5, in all nine connectors: never a pass and never a failed object (task D1).
+  Reason: the owner's answer on PR #9's shared inconclusive state.
+- Added: a `Read-back:` line in every SAFETY GATE naming the `verify-*` command that proves it, or
+  `none (<reason>)`; change records bind a read-back from that line (task D2). None of the 31 R2 and
+  R3 gates without a read-back gained one: no existing connector read proves their change (task D3,
+  each reason in the gate). Reason: the owner's answers on PR #9. No gate's other text changed.

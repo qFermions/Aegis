@@ -172,7 +172,10 @@ acceptance table in `checks.md`; the owner's one-page view in `docs/explainers/g
 | B1 to B11, the model-judged runner | `scripts/eval/judged-eval.js` and `scripts/eval/judged/` (schema, locations, backends, checks, judge, report, calibration, thresholds), 8 DEV cases, README section 2d, readiness row 9, capability row 26 implemented but unverified, a CI dry run | 66 tests on mock backends (`b1-green.txt` to `b10-green.txt`); the smoke was not run, the CLI has no stored login here (`b11-smoke.md`) |
 | A4, the session-revocation limit | stated in `/mfa-issue`, `/password-reset` and the Graph connector's help; vendor fact M-28 | 569/569 (`a4-green.txt`) |
 | C1 to C4, owner kits | `docs/aegis/owner/`: the test-tenant runbook, the vendor-facts priority page and its script, operator validation and its template, the shadow pilot | check C 15/15 (`c-green.txt`) |
-| D1 to D3 | not reached (the pull request body says why) | none |
+| D1, one INCONCLUSIVE state | an answer that proves nothing either way is INCONCLUSIVE, exit 5, in all nine connectors; a counted change lists it as uncounted | `scripts/adapters/inconclusive.test.js` and the audit tests: 370/370 (`d1-green.txt`) |
+| D2, a `Read-back:` line in every gate | all 343 runbook gates name their read-back or `none (<reason>)`; change records bind from that line; a test fails when an R2 or R3 gate has neither | 6/6 and `node --test` 1608/1608 (`d2-green.txt`); one field removed fails naming the gate (`d2-field-removed.txt`) |
+| D3, the 31 R2 and R3 gates without a read-back | none bound: no existing connector read proves their change; 11 reasons now say why the nearest read is not a proof | 32/32 (`d3-green.txt`); the bound and unbound pin unchanged at 89 and 76 |
+| Review | `/security-review` 1: no findings; `/code-review xhigh` rounds 1 and 2: 30 findings, 22 fixed test first, 8 closed with reasons | `checks.md` Review rounds; `docs/aegis/g4/evidence/code-review-rounds.md` |
 
 ## Changed by the batch G3 close-out 3
 

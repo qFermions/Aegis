@@ -489,3 +489,35 @@ test('code review round 2, finding 1: github verify-protection: definite matchin
   assert.deepEqual(reviewsOnly.entry, [[true, 'OK']], reviewsOnly.text);
 });
 
+// Finding 2: Linear verify-labels read a missing labels connection or nodes list as no labels,
+// and a missing pageInfo as the last page, so the label not found was a failed object (exit 2).
+// A label list that is not there, or a page that does not say whether more labels follow,
+// proves nothing either way (INCONCLUSIVE, exit 5), as verify-comment and verify-suspended
+// already read them (round 1, finding 8). The label found on the page passes whatever the
+// paging says; the label absent from a page that says it is the last stays exit 2.
+const LABELS = ['verify-labels', '--issue', 'IT-123', '--has', 'Priority'];
+const labelIssue = (labels) => linearIssue({ state: { name: 'Done', type: 'completed' }, ...(labels === undefined ? {} : { labels }) });
+const LABELS_UNPROVEN = [
+  ['an issue read with no labels connection', labelIssue(undefined)],
+  ['a labels connection with no nodes list', labelIssue({ pageInfo: { hasNextPage: false } })],
+  ['a labels nodes list that is null', labelIssue({ nodes: null, pageInfo: { hasNextPage: false } })],
+  ['the label not on a page with no pageInfo', labelIssue({ nodes: [{ id: 'l1', name: 'Other' }] })],
+  ['the label not on a page whose hasNextPage is not true or false', labelIssue({ nodes: [{ id: 'l1', name: 'Other' }], pageInfo: {} })],
+];
+for (const [why, reply] of LABELS_UNPROVEN) {
+  test(`code review round 2, finding 2: linear verify-labels: ${why} is INCONCLUSIVE (exit 5)`, async () => {
+    assertInconclusive(await verdictOf('linear', LABELS, [reply]));
+  });
+}
+test('code review round 2, finding 2: linear verify-labels: the label absent from the last page stays a failed object (exit 2)', async () => {
+  assertFailedObject(await verdictOf('linear', LABELS, [labelIssue({ nodes: [{ id: 'l1', name: 'Other' }], pageInfo: { hasNextPage: false } })]));
+  assertFailedObject(await verdictOf('linear', LABELS, [labelIssue({ nodes: [], pageInfo: { hasNextPage: false } })]));
+});
+test('code review round 2, finding 2: linear verify-labels: the label found on the page passes, whatever the paging says', async () => {
+  for (const pageInfo of [undefined, { hasNextPage: true }, { hasNextPage: false }]) {
+    const r = await verdictOf('linear', LABELS, [labelIssue({ nodes: [{ id: 'l2', name: 'Priority' }], ...(pageInfo ? { pageInfo } : {}) })]);
+    assert.equal(r.code, EXIT.OK, r.text);
+    assert.deepEqual(r.entry, [[true, 'OK']], r.text);
+  }
+});
+

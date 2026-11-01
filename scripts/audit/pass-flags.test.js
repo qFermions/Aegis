@@ -43,7 +43,7 @@ const NOT_PASS_ANY = Object.freeze({
 });
 const NOT_PASS = Object.freeze({
   'okta:verify-app-assigned --app': OBJECT,
-  'okta:verify-factor-reset --factor-type': `${OBJECT}: which factor`,
+  // the A3 fix on branch fix/g4-a3-factor-type: okta verify-factor-reset --factor-type is a pass flag now
   // batch G4, task A3: msgraph verify-mfa-method --method is a pass flag now (the owner's minimum)
   'linear:verify-state --state': `${FREE}: a workflow state`,
   'linear:verify-labels --has': `${FREE}: a label`,
@@ -82,6 +82,7 @@ test('every flag a runbook passes to a read-back is classified: a pass flag, or 
     assert.equal(audit.PASS_FLAGS[kind].absent, 'switch', kind);
   }
   assert.ok(audit.PASS_FLAGS['jamf:verify-group-count'].expect, '--expect style flags are pass flags');
+  assert.ok(audit.PASS_FLAGS['okta:verify-factor-reset']['factor-type'] instanceof RegExp, 'which factor type a reset removed is a pass flag');
 });
 
 test('each pass flag is a flag its connector takes, and every value rule is a closed set, a number or a digest', () => {

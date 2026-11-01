@@ -38,6 +38,11 @@ const changes = require('./change-record.js');
 
 const CLI = path.join(__dirname, 'change-record.js');
 const AUDIT_CLI = path.join(__dirname, 'audit-log.js');
+// the read-back of the gate these tests open, okta-mfa-reset-selected-portal, as its runbook line
+// runs it: --factor-type is a pass flag since the A3 fix on branch fix/g4-a3-factor-type, so the
+// change names it and the verify entry records it
+const FACTOR_READ_BACK = 'okta:verify-factor-reset --factor-type push';
+const FACTOR_FLAGS = '--factor-type push';
 
 function setup(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-change-test-'));
@@ -56,10 +61,10 @@ function setup(t) {
 }
 
 function openChange(s, rClass = 'R2') {
-  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', rClass, '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', s.procedure]);
+  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', rClass, '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', s.procedure]);
   return r;
 }
-const verifyEntry = (s, verified, change = null) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified, state: 'OK', change });
+const verifyEntry = (s, verified, change = null) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified, state: 'OK', change, flags: FACTOR_FLAGS });
 
 test('open, approve, a passing verify-* read-back and link: the change is done (exit 0)', (t) => {
   const s = setup(t);
@@ -195,7 +200,7 @@ test('open needs the read-back that proves the change; link refuses another kind
   assert.equal(st.code, 2);
   assert.equal(st.json.done, false);
   assert.ok(st.json.missing.some((m) => /okta:verify-factor-reset/.test(m)), st.stdout);
-  assert.equal(st.json.procedure.read_back, 'okta:verify-factor-reset');
+  assert.equal(st.json.procedure.read_back, FACTOR_READ_BACK);
 });
 
 // Code review round 2, finding 8: with no matching approval, a verified read-back of the
@@ -243,7 +248,7 @@ test('open refuses a read-back the connector does not have (a typo or an unknown
     assert.match(r.stderr, /no such read-back|no connector/, bad);
   }
   assert.equal(s.log.entries().length, 0, 'nothing recorded');
-  assert.equal(open('okta:verify-factor-reset').code, 0);
+  assert.equal(open(FACTOR_READ_BACK).code, 0);
   // read-backs the connectors have pass the connector check; this gate's runbook binds Okta
   // read-backs only, so open refuses them for the gate (security review 1 of the batch G3
   // close-out 3)
@@ -251,7 +256,7 @@ test('open refuses a read-back the connector does not have (a typo or an unknown
     const r = open(other);
     assert.equal(r.code, 1, other);
     assert.doesNotMatch(r.stderr, /no such read-back|no connector/, other);
-    assert.match(r.stderr, /gate okta-mfa-reset-selected-portal's read-back in \.claude\/commands\/okta-mfa-reset\.md runs as okta:verify-factor-reset, not as /, other);
+    assert.match(r.stderr, /gate okta-mfa-reset-selected-portal's read-back in \.claude\/commands\/okta-mfa-reset\.md runs as okta:verify-factor-reset --factor-type push, not as /, other);
   }
 });
 
@@ -336,13 +341,16 @@ test('status never counts a read-back that was not recorded under this change, e
 
 test('bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved', (t) => {
   const s = setup(t);
-  assert.match(changes.bindRefusal(s.log, 'chg-0123456789ab', 'okta:verify-factor-reset'), /holds no change/);
+  assert.match(changes.bindRefusal(s.log, 'chg-0123456789ab', FACTOR_READ_BACK), /holds no change/);
   const o = openChange(s);
-  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), /no approval/);
+  assert.match(changes.bindRefusal(s.log, o.json.change, FACTOR_READ_BACK), /no approval/);
   s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
-  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-status'), /proved by okta:verify-factor-reset/);
-  assert.match(changes.bindRefusal(s.log, o.json.change, 'github:verify-factor-reset'), /proved by okta:verify-factor-reset/);
-  assert.equal(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), null);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-status'), /proved by okta:verify-factor-reset --factor-type push/);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'github:verify-factor-reset'), /proved by okta:verify-factor-reset --factor-type push/);
+  // another factor type, or none, is another read-back (the A3 fix on branch fix/g4-a3-factor-type)
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset --factor-type signed_nonce'), /proved by okta:verify-factor-reset --factor-type push/);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), /proved by okta:verify-factor-reset --factor-type push/);
+  assert.equal(changes.bindRefusal(s.log, o.json.change, FACTOR_READ_BACK), null);
 });
 
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
@@ -418,7 +426,7 @@ test('a counted gate opened without --expected is refused at open, and nothing i
 
 test('a gate without a count refuses --expected and keeps the one-read-back rule', (t) => {
   const s = setup(t);
-  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', s.procedure, '--expected', '3']);
+  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', s.procedure, '--expected', '3']);
   assert.equal(r.code, 1);
   assert.match(r.stderr, /names no count/);
   const o = openChange(s);
@@ -981,9 +989,9 @@ test('an approval given for one N does not cover a different N', (t) => {
 test('a gate without a count keeps today\'s rule: no Count line needed, and --expected still refused', (t) => {
   const s = setup(t);
   assert.equal(openChange(s).code, 0, 'an uncounted gate opens with a procedure that has no Count line');
-  const withCount = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', countedProcedure(s, 2)]);
+  const withCount = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', countedProcedure(s, 2)]);
   assert.equal(withCount.code, 0, 'a Count line on an uncounted gate is only text');
-  const expected = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', countedProcedure(s, 2), '--expected', '2']);
+  const expected = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', countedProcedure(s, 2), '--expected', '2']);
   assert.equal(expected.code, 1);
   assert.match(expected.stderr, /names no count/);
 });
@@ -1405,7 +1413,7 @@ test('D1: link refuses an INCONCLUSIVE read-back as the proof of a change', (t) 
   assert.equal(o.code, 0, o.stderr);
   const change = o.json.change;
   assert.equal(s.run(CLI, ['approve', '--change', change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
-  const unsure = inconclusiveRead(s, { connector: 'okta', command: 'verify-factor-reset', change });
+  const unsure = inconclusiveRead(s, { connector: 'okta', command: 'verify-factor-reset', change, flags: FACTOR_FLAGS });
   const l = s.run(CLI, ['link', '--change', change, '--verify-seq', String(unsure.seq)]);
   assert.equal(l.code, 2, l.stdout);
   assert.match(l.stderr, /did not verify/);

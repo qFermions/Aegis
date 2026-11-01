@@ -40,9 +40,10 @@ function freshDir(t) {
 }
 
 const CALL = { kind: 'connector-call', connector: 'fleet', operation: 'host', state: 'OK', attempts: 1, status: 200, request_id: null, handoff: null, duration_ms: 12 };
-const PROCEDURE = { kind: 'procedure', command: 'okta-mfa-reset', gate: 'okta-mfa-reset-selected-portal', r_class: 'R2', target: '[UPN]', read_back: 'okta:verify-factor-reset', procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' };
+const PROCEDURE = { kind: 'procedure', command: 'okta-mfa-reset', gate: 'okta-mfa-reset-selected-portal', r_class: 'R2', target: '[UPN]', read_back: 'okta:verify-factor-reset --factor-type push', procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' };
 const APPROVAL = { kind: 'approval', ref: 'IT-123', gate: 'okta-mfa-reset-selected-portal', procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' };
-const VERIFY = { kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified: true, state: 'OK', change: null };
+// --factor-type is a pass flag since the A3 fix on branch fix/g4-a3-factor-type, so the entry records it
+const VERIFY = { kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified: true, state: 'OK', change: null, flags: '--factor-type push' };
 
 function seeded(t, n = 4) {
   const dir = freshDir(t);
@@ -358,9 +359,13 @@ test('a verify entry records the flags that change what its pass means, in one f
   assert.equal(log.append(read('okta', 'verify-group-member', '--absent')).seq, 1);
   assert.equal(log.append(read('okta', 'verify-group-member', '')).seq, 2, 'a presence read records no flag');
   assert.equal(log.append(read('github', 'verify-protection', '--enforce-admins --no-force-push --reviews 2')).seq, 3);
-  assert.equal(log.append(read('okta', 'verify-factor-reset')).seq, 4, 'a read-back with no pass flag records none');
+  // okta verify-factors-reset-all stands for a read-back with no pass flag since okta verify-factor-reset
+  // --factor-type became one (the A3 fix on branch fix/g4-a3-factor-type)
+  assert.equal(log.append(read('okta', 'verify-factors-reset-all')).seq, 4, 'a read-back with no pass flag records none');
   assert.throws(() => log.append(read('okta', 'verify-group-member')), audit.AuditRefused, 'a read-back with a pass flag says which ran');
-  assert.throws(() => log.append(read('okta', 'verify-factor-reset', '--absent')), audit.AuditRefused, 'no flags on a read-back that has none');
+  assert.throws(() => log.append(read('okta', 'verify-factors-reset-all', '--absent')), audit.AuditRefused, 'no flags on a read-back that has none');
+  assert.throws(() => log.append(read('okta', 'verify-factor-reset')), audit.AuditRefused, 'a factor reset says which factor type it read');
+  assert.throws(() => log.append(read('okta', 'verify-factor-reset', '--factor-type Push Factor')), audit.AuditRefused, 'a factor type is never free text');
   assert.throws(() => log.append(read('okta', 'verify-group-member', '--group 00g1')), audit.AuditRefused, 'an object flag is not a pass flag');
   assert.throws(() => log.append(read('okta', 'verify-status', '--status GONE')), audit.AuditRefused, 'a value outside the flag\'s set');
   assert.throws(() => log.append(read('github', 'verify-protection', '--reviews 2 --enforce-admins')), audit.AuditRefused, 'one canonical order');
@@ -368,9 +373,11 @@ test('a verify entry records the flags that change what its pass means, in one f
   assert.equal(audit.passFlags('okta:verify-group-member', ['verify-group-member', '--group', '00g1', '--user', '00u1', '--absent', '--execute']), '--absent');
   assert.equal(audit.passFlags('okta:verify-group-member', ['verify-group-member', '--group', '00g1', '--user', '00u1']), '');
   assert.equal(audit.passFlags('github:verify-protection', ['verify-protection', '--no-force-push', '--repo', 'r', '--reviews', '2', '--enforce-admins']), '--enforce-admins --no-force-push --reviews 2');
-  assert.equal(audit.passFlags('okta:verify-factor-reset', ['verify-factor-reset', '--factor-type', 'push']), null, 'no pass flags: null');
+  assert.equal(audit.passFlags('okta:verify-factors-reset-all', ['verify-factors-reset-all', '--user', '00u1']), null, 'no pass flags: null');
+  assert.equal(audit.passFlags('okta:verify-factor-reset', ['verify-factor-reset', '--user', '00u1', '--factor-type', 'push']), '--factor-type push');
   assert.equal(audit.readBackFor('okta:verify-group-member', ['verify-group-member', '--absent']), 'okta:verify-group-member --absent');
-  assert.equal(audit.readBackFor('okta:verify-factor-reset', ['verify-factor-reset', '--factor-type', 'push']), 'okta:verify-factor-reset');
+  assert.equal(audit.readBackFor('okta:verify-factors-reset-all', ['verify-factors-reset-all', '--user', '00u1']), 'okta:verify-factors-reset-all');
+  assert.equal(audit.readBackFor('okta:verify-factor-reset', ['verify-factor-reset', '--factor-type', 'push']), 'okta:verify-factor-reset --factor-type push');
   // a change record names its read-back with the same flags
   const proc = (readBack) => ({ kind: 'procedure', command: 'okta-group-membership', gate: 'okta-group-membership-remove-person-portal', r_class: 'R2', target: '[UPN]', read_back: readBack, procedure_sha256: 'a'.repeat(64), change: 'chg-0123456789ab' });
   assert.equal(log.append(proc('okta:verify-group-member --absent')).seq, 5);

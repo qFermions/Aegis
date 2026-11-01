@@ -5,9 +5,10 @@
 // Each flag a verify-* command takes is one of two kinds:
 // - a pass flag, with its rule: it changes what the read's pass proves (--absent flips it,
 //   --not-before bounds it in time, --expect-sha256 names the text it must find, --type and
-//   --method name what must be there). The audit trail records it with every verify entry, a change
-//   record names its read-back with it, and a read-back counts for a change only with the same
-//   ones (scripts/audit/audit-log.js PASS_FLAGS, built from this file). A rule is SWITCH, TIME (an
+//   --method name what must be there, --factor-type names which factor must be gone). The audit
+//   trail records it with every verify entry, a change record names its read-back with it, and a
+//   read-back counts for a change only with the same ones (scripts/audit/audit-log.js PASS_FLAGS,
+//   built from this file). A rule is SWITCH, TIME (an
 //   ISO 8601 time with a zone or epoch milliseconds, recorded in UTC; named bare at open, and never
 //   earlier than the change's approval), or a pattern that admits only a closed set, a number or a
 //   digest, never free text.
@@ -27,7 +28,6 @@ const not = (reason) => Object.freeze({ reason });
 const OBJECT = not('names the object the read checks; which object was read is object-level binding, parked by the owner (decision 3 on PR #7)');
 const RUN = not('names the job run the read checks; it is recorded as the verify entry\'s run id (audit-log.js RUN_IDS), which a counted change counts once');
 const FREE = not('free text the operator chooses; the trail records no free text, so a read with another value is not told apart (an owner decision: record a digest of the value)');
-const FACTOR = not('names which enrolled factor the read checks, as PR #9 classed it; making it a pass flag changes how four Okta gates name their read-back (an owner decision, with a recommendation in the batch G4 report)');
 const VERSION = not('the issue status version the preflight printed: which state of this one issue the read compares against, object-level binding, parked by the owner');
 
 const VERIFY_FLAGS = Object.freeze({
@@ -92,7 +92,8 @@ const VERIFY_FLAGS = Object.freeze({
   okta: Object.freeze({
     // okta-client.js STATUSES
     'verify-status': { user: OBJECT, status: /^(?:ACTIVE|DEPROVISIONED|LOCKED_OUT|PASSWORD_EXPIRED|PROVISIONED|RECOVERY|STAGED|SUSPENDED)$/ },
-    'verify-factor-reset': { user: OBJECT, 'factor-type': FACTOR },
+    // okta-client.js FACTOR_TYPE: which factor type the reset must have removed
+    'verify-factor-reset': { user: OBJECT, 'factor-type': /^[a-z][a-z0-9_]{0,40}(?::[a-z0-9_]{1,40}){0,3}$/ },
     'verify-factors-reset-all': { user: OBJECT },
     'verify-sessions-cleared': { user: OBJECT, 'not-before': TIME },
     'verify-password-reset': { user: OBJECT, 'not-before': TIME },

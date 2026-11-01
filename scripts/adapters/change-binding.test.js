@@ -250,7 +250,7 @@ test('after a test trail ends, open reads the real runbooks again', async (t) =>
   const procedure = path.join(dir, 'procedure.md');
   fs.writeFileSync(procedure, 'The reset for [UPN].\n');
   const err = [];
-  const code = changes.main(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', procedure], { AEGIS_AUDIT_DIR: path.join(dir, 'audit') }, { out: () => {}, err: (x) => err.push(x) });
+  const code = changes.main(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset --factor-type push', '--procedure-file', procedure], { AEGIS_AUDIT_DIR: path.join(dir, 'audit') }, { out: () => {}, err: (x) => err.push(x) });
   assert.equal(code, 0, err.join(''));
 });
 

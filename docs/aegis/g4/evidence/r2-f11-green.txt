@@ -1,0 +1,21 @@
+# command: node --test scripts/audit/early-time-bound.test.js
+# run in: <repo>  commit: 5ee1307 (working tree: the fix)  started: 2026-11-01T03:10:40Z  node: v24.22.1
+✔ F4: bindRefusal refuses a --not-before earlier than the approval, before any read, for every read-back with a time bound (160.901961ms)
+✔ F4: a time bound in epoch milliseconds is judged the same way before the read (7.118151ms)
+✔ F4: called for a read-back with a time bound but without the run's arguments, the check fails closed (13.358567ms)
+✔ F4: changeRefusal, the check every verify-* CLI runs before any read, refuses an early --not-before for each connector (96.022225ms)
+✔ F4: fleet verify-checked-in with an early --not-before exits 1 with no transport call and nothing recorded (28.995686ms)
+✔ F11: with the approval's time missing or unreadable, the pre-read check refuses a time-bounded read-back and writes nothing (45.597635ms)
+✔ F11: status never counts a time-bounded read-back when the approval's time is missing or unreadable (40.522283ms)
+✔ F11: a counted change lists a time-bounded read-back as uncounted when the approval's time is missing or unreadable (40.385021ms)
+✔ F11: link refuses a time-bounded read-back when the approval's time is missing or unreadable, writing nothing (43.527383ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 579.303366
+# exit: 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

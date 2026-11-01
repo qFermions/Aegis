@@ -353,16 +353,27 @@ class NotDone extends Error {}
 
 // The first time bound a read-back ran with that is earlier than the change's approval, or null
 // (batch G4, task A3; D10 on PR #9). A read with --not-before before the approval could pass on a
-// change made before it, so it never proves the change.
+// change made before it, so it never proves the change. An approval whose time is missing or does
+// not parse shows no bound to be at or after it, so the first bound is returned with approvedAt
+// null and never proves the change either (code review round 2 of batch G4, finding 11: such an
+// approval used to let any bound through).
+function approvalMs(approval) {
+  const ms = approval && typeof approval.at === 'string' ? Date.parse(approval.at) : NaN;
+  return Number.isFinite(ms) ? ms : null;
+}
 function earlyBound(entry, approval) {
-  if (!approval || typeof approval.at !== 'string') return null;
-  const approvedMs = Date.parse(approval.at);
+  if (!approval) return null;
+  const approvedMs = approvalMs(approval);
   for (const [name, ms] of audit.timeBounds(entry)) {
+    if (approvedMs === null) return { flag: name, value: new Date(ms).toISOString(), approvedAt: null };
     if (ms < approvedMs) return { flag: name, value: new Date(ms).toISOString(), approvedAt: approval.at };
   }
   return null;
 }
-const earlyReason = (e) => `ran with --${e.flag} ${e.value}, earlier than the approval at ${e.approvedAt}, so it could pass on a change made before the approval; run it again with --${e.flag} at or after ${e.approvedAt}`;
+const UNREADABLE_APPROVAL = 'the approval\'s time could not be read from the trail';
+const earlyReason = (e) => (e.approvedAt === null
+  ? `ran with --${e.flag} ${e.value}, but ${UNREADABLE_APPROVAL}, so nothing shows the bound to be at or after the approval and it never proves the change; run node scripts/audit/audit-log.js verify`
+  : `ran with --${e.flag} ${e.value}, earlier than the approval at ${e.approvedAt}, so it could pass on a change made before the approval; run it again with --${e.flag} at or after ${e.approvedAt}`);
 // whether a named read-back carries a time bound, so the steps say when it may start
 const timeBoundOf = (readBack) => {
   const { kind, values } = audit.parseReadBack(readBack);
@@ -592,6 +603,9 @@ function bindRefusal(log, change, readBack, argv = null) {
   const bound = timeBoundOf(readBack);
   if (bound) {
     if (!Array.isArray(argv)) return `change ${change} is proved by ${readBack}, and the check was not given the run's arguments, so its --${bound} could not be checked against the approval; the read-back is refused`;
+    // fail closed: with no readable approval time no bound can be shown to be at or after it
+    // (code review round 2 of batch G4, finding 11)
+    if (approvalMs(view.approval) === null) return `change ${change} is proved by ${readBack}, but ${UNREADABLE_APPROVAL}, so its --${bound} cannot be checked against the approval and the read-back never proves it; run node scripts/audit/audit-log.js verify. Nothing was read or recorded`;
     const early = earlyRunBound(kindOfReadBack(readBack), argv.map(String), view.approval);
     if (early) return `the read-back would run with --${early.flag} ${early.value}, earlier than the approval of change ${change} at ${early.approvedAt}, so it could pass on a change made before the approval and never proves it; run it with --${early.flag} at or after ${early.approvedAt}. Nothing was read or recorded`;
   }

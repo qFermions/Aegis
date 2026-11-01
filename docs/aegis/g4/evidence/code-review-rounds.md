@@ -23,3 +23,25 @@
 | 15 | `scripts/eval/vendor-facts-priority.js:184` | repeated extraction per G2 row; gates parsed three times in `readBackProblems` | C: efficiency only, on repo-sized inputs (under a second) |
 
 After round 1's fixes: battery at `82cbae5`, `node --test` 1745/1745 and the same under the socket tripwire, the four evals, lint, release boundary and scanner (0 BLOCK) pass (`docs/aegis/g4/evidence/r1-battery/`).
+
+## Round 2: `5f09f91..af47dc3` (diff only: round 1's fixes)
+
+15 findings; none re-reports a closed one.
+
+| # | file:line | finding | disposition |
+|---|---|---|---|
+| 1 | `scripts/adapters/github-client.js:292` | `verify-protection`: `allow_force_pushes: {}` or `allow_deletions: {}` (no boolean `enabled`) passes `--no-force-push` and `--no-deletions`, a false pass; a missing object gives exit 2 where D1 asks for 5 (pre-existing, in a touched function) | F |
+| 2 | `scripts/adapters/linear-client.js:546` | `verify-labels` reads missing `labels.nodes` as empty and missing `pageInfo` as the last page (finding 8's class, one instance left) | F |
+| 3 | `scripts/adapters/fleet-client.js:443` | `verify-deleted` treats a page with no `meta.has_next_results` boolean as the last page | F |
+| 4 | `scripts/adapters/fleet-client.js:436`, `jamf-client.js:588`, `linear-client.js:491` | an unparseable time field is skipped as if absent, so exit 2 where D1 asks for 5 | F |
+| 5 | `scripts/adapters/fleet-client.js:353` | finding 12's Fleet fix covers an Apple `Pending` only; a Windows doWipe pending and an Apple `NotNow` still give exit 2 | F |
+| 6 | `scripts/adapters/fleet-client.js:334` | `verify-wipe` on Windows reads one page of commands and never checks for more (finding 7's class; pre-existing, in a touched function) | F |
+| 7 | `scripts/adapters/github-client.js:324` | `--state dismissed` with `dismissed_reason: null` is a self-contradicting answer reported as "not dismissed", exit 2 | F |
+| 8 | `scripts/adapters/README.md:54` | the new sentence says every connector's `--not-before` takes `approved_at` as printed; Jira's takes epoch ms | F |
+| 9 | `.claude/commands/gws-drive-sharing.md:102` | `[NOT_BEFORE]` written down before the change is opened and approved, so round 1 finding 4's pre-read check always refuses the R2 read-back | F |
+| 10 | `scripts/adapters/fleet-client.js:340` | `results: null` treated as no list; Go may encode an empty list as null (low confidence) | C: the shape is not confirmed; INCONCLUSIVE is the safe direction (exit 5, never a pass); added to the owner's real-tenant questions |
+| 11 | `scripts/audit/change-record.js:358` | the pre-read time check allows any bound when the approval's `at` is missing or unparseable; every other part of the check fails closed | F |
+| 12 | `checks.md:64` | round 1's closed findings have their reasons only in the rounds file, not in checks.md | F |
+| 13 | `progress.md:6` | progress.md stale (D1 to D3 not reached, next action security review, V2 to V5) | F |
+| 14 | `scripts/adapters/msgraph-client.js:59` | the ISO time pattern now written four times | C: quality only; the four copies are identical and each connector's time bound is tested with the printed form (round 1 finding 3's tests), which catches a drift |
+| 15 | `scripts/audit/change-record.js:603` | `earlyRunBound` walks repeated flags that every parser already refuses | C: defense in depth at the trust boundary; no behavior difference while the parsers refuse repeats |

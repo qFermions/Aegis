@@ -160,7 +160,9 @@ test('every R2 and R3 gate in /mfa-issue has a read-back bound to its change', (
     assert.match(lines[i - 1], new RegExp(`^# HUMAN-RUN read-only read-back of \\[${gate}\\]`), gate);
   }
   const para = lines.find((l) => l.startsWith('**Change record (R2 and R3 gates):**'));
-  for (const rb of ['msgraph:verify-sessions-revoked', 'msgraph:verify-method-absent', 'msgraph:verify-mfa-cleared']) assert.ok(para.includes(`\`${rb}\``), rb);
+  // the session read-back is named with its time bound, bare, as open takes it since batch G4 (task
+  // A3; code review round 1 of batch G4, finding 5)
+  for (const rb of ['msgraph:verify-sessions-revoked --not-before', 'msgraph:verify-method-absent', 'msgraph:verify-mfa-cleared']) assert.ok(para.includes(`\`${rb}\``), rb);
   assert.doesNotMatch(PAGE, /take no change record/);
   assert.match(PAGE, /^- \[ \] Session revocation: `verify-sessions-revoked` passed under its change/m);
   const facts = read('docs', 'aegis', 'g3', 'vendor-facts.md');

@@ -24,6 +24,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
+// no test here opens a socket: the tripwire fails any that tries (batch G4, K4)
+require('../adapters/socket-tripwire.js');
+
 const audit = require('./audit-log.js');
 const changes = require('./change-record.js');
 

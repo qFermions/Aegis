@@ -23,6 +23,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
+// no test here opens a socket: the tripwire fails any that tries (batch G4, K4)
+require('../adapters/socket-tripwire.js');
+
 const DIR = path.join(__dirname, '..', '..', '.claude', 'commands');
 const EXIT_2 = /\bexit(?:s|ed)?(?: code)? `?2`?(?![0-9])/i;
 const VERIFY = /\bverify-(?:[a-z]|\*)/;

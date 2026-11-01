@@ -136,7 +136,8 @@ test('the page runs every read and verify-* each connector exports, and the Jira
     'fleet-client.js': [...Object.keys(fleet.READS), ...Object.keys(fleet.VERIFIES)],
     'jira-client.js': ['list-desks', 'list-types', 'get', 'transition', 'verify-create', 'verify-comment', 'verify-transition'],
   };
-  for (const f of ['github-client.js', 'msgraph-client.js', 'okta-client.js', 'slack-client.js']) {
+  // all nine connectors (the evidence review of batch G4: gws, jamf and linear were missing)
+  for (const f of ['github-client.js', 'gws-client.js', 'jamf-client.js', 'linear-client.js', 'msgraph-client.js', 'okta-client.js', 'slack-client.js']) {
     const table = require(`../adapters/${f}`).COMMANDS;
     expected[f] = Object.keys(table).filter((n) => table[n].kind !== 'offline');
   }

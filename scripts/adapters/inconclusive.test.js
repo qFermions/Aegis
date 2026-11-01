@@ -671,10 +671,12 @@ for (const [why, replies] of WINDOWS_LAST_PAGE) {
     assertFailedObject(await verdictOf('fleet', WIPE, replies));
   });
 }
-test('code review round 2, finding 6: fleet verify-wipe on Windows: a doWipe with status 200 on a page that says more follow passes', async () => {
+// a doWipe with status 200 on a page that says more follow passed here until code review round 3,
+// finding 1: the newest doWipe on page 0 may not be the newest overall, so on a host wiping it is
+// INCONCLUSIVE (exit 5) now
+test('code review round 2, finding 6: fleet verify-wipe on Windows: a doWipe with status 200 on a page that says more follow is INCONCLUSIVE (code review round 3, finding 1)', async () => {
   const r = await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('200')], { has_next_results: true })]);
-  assert.equal(r.code, EXIT.OK, r.text);
-  assert.deepEqual(r.entry, [[true, 'OK']], r.text);
+  assertInconclusive(r);
 });
 
 // Finding 7: with --state dismissed --reason, an alert the answer calls dismissed whose
@@ -709,4 +711,36 @@ test('code review round 2, finding 6\'s class: fleet verify-wipe on Windows: a f
   assertInconclusive(await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([...fullPage.slice(1), doWipe('500')])]));
   assertFailedObject(await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('500')], { has_next_results: false })]));
   assertFailedObject(await verdictOf('fleet', WIPE, [windowsWiping, commandsPage([lock(1), doWipe('500')])]));
+});
+
+// ── Code review round 3 (the last) ───────────────────────────────────────────
+// Finding 1: Fleet verify-wipe on Windows reads one page of the host's commands. When more pages
+// may follow (meta.has_next_results true, or no true or false has_next_results on a full page of
+// 100), the newest doWipe on that page may not be the newest overall: the current wipe may sit on
+// a later page, still pending or failed. On a host wiping or wiped, more pages possible is
+// INCONCLUSIVE (exit 5) whatever the page holds, an old doWipe with status 200 included; that
+// 200 passed (exit 0), a false pass on an R3 read-back. A page that says it is the last, or one
+// not full with no true or false has_next_results (round 3, finding 6, closed), still passes on a
+// 200.
+const WINDOWS_MORE_WITH_200 = [
+  ['an old doWipe with status 200 on a page that says more follow', [windowsWiping, commandsPage([lock(1), doWipe('200', '2026-10-01T10:00:00Z')], { has_next_results: true })]],
+  ['a doWipe with status 200 on a full page with no meta', [windowsWiping, commandsPage([...fullPage.slice(1), doWipe('200')])]],
+  ['a doWipe with status 200 on a full page whose meta has no has_next_results', [windowsWiped, commandsPage([...fullPage.slice(1), doWipe('200')], {})]],
+];
+for (const [why, replies] of WINDOWS_MORE_WITH_200) {
+  test(`code review round 3, finding 1: fleet verify-wipe on Windows, a host wiping or wiped: ${why} is INCONCLUSIVE (exit 5), not a pass`, async () => {
+    const r = await verdictOf('fleet', WIPE, replies);
+    assertInconclusive(r);
+    assert.match(r.json.reason, /more commands may follow/, r.text);
+  });
+}
+test('code review round 3, finding 1: fleet verify-wipe on Windows: a doWipe with status 200 on a page that is the last still passes', async () => {
+  for (const replies of [
+    [windowsWiping, commandsPage([lock(1), doWipe('200')], { has_next_results: false })],
+    [windowsWiped, commandsPage([lock(1), doWipe('200')])],
+  ]) {
+    const r = await verdictOf('fleet', WIPE, replies);
+    assert.equal(r.code, EXIT.OK, r.text);
+    assert.deepEqual(r.entry, [[true, 'OK']], r.text);
+  }
 });

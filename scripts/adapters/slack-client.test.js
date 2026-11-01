@@ -576,7 +576,6 @@ test('verify-posted passes only on a plain message after --not-before whose norm
     ['a bot or system message', [message(text, TS_AFTER, { subtype: 'bot_message' })]],
     ['an app post with bot_id and no subtype', [message(text, TS_AFTER, { bot_id: 'B0BOT00001' })]],
     ['an app post with app_id and no subtype', [message(text, TS_AFTER, { app_id: 'A0APP00001' })]],
-    ['a malformed ts', [message(text, 'soon')]],
     ['no messages', []],
   ];
   for (const [label, messages] of notVerified) {
@@ -585,6 +584,13 @@ test('verify-posted passes only on a plain message after --not-before whose norm
     assert.equal(r.res.verified, false, label);
     assert.match(r.res.reason, /subtype, bot_id or app_id/, `${label}: the reason names what is skipped`);
   }
+  // a plain message with the expected text and a malformed ts may be the post: it proves nothing
+  // either way (code review round 3 of batch G4, finding 2; before it, exit 2)
+  const malformed = await verdict(argv, [authBody(), historyBody([message(text, 'soon')])]);
+  assert.equal(malformed.code, 5, 'a malformed ts');
+  assert.equal(malformed.res.state, 'INCONCLUSIVE', 'a malformed ts');
+  assert.equal(malformed.res.verified, false, 'a malformed ts');
+  assert.match(malformed.res.reason, /subtype, bot_id or app_id/, 'a malformed ts: the reason names what is skipped');
   const busy = await verdict(argv, [authBody(), historyBody([other], true)]);
   assert.equal(busy.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(busy.res.observed.has_more, true);

@@ -216,6 +216,10 @@ function judge(command, a, data) {
       if (good) return { verified: true, observed: { createdDateTime: good.createdDateTime, errorCode: 0 } };
       const codes = items.slice(0, 10).map((s) => (isObject(s.status) ? s.status.errorCode : null));
       if (morePages(d)) return unproven({ sign_ins_read: items.length, error_codes: codes }, `no successful sign-in at or after ${a['not-before']} among the ${items.length} read, and the list has another page, so this is not proof either way`);
+      // a successful sign-in whose createdDateTime cannot be read may be the sign-in asked for:
+      // it is counted, not skipped (code review round 3 of batch G4, finding 2)
+      const undated = items.filter((s) => timeOf(s.createdDateTime) === null && isObject(s.status) && s.status.errorCode === 0).length;
+      if (undated) return unproven({ sign_ins_read: items.length, error_codes: codes, undated_successful: undated }, `no successful sign-in at or after ${a['not-before']} among the ${items.length} read, and ${undated} successful sign-in${undated === 1 ? '' : 's'} ha${undated === 1 ? 's' : 've'} a createdDateTime that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the sign-in asked for: this is not proof either way`);
       return { verified: false, observed: { sign_ins_read: items.length, error_codes: codes }, reason: `no successful sign-in at or after ${a['not-before']} among the ${items.length} read` };
     }
     case 'verify-device-synced': {

@@ -529,14 +529,19 @@ async function eventVerdict(client, a, command, eventType) {
   observed.eventsRead = r.data.length;
   observed.morePages = r.data.length === LOGS_PAGE;
   const notBeforeMs = Date.parse(a.notBefore);
+  let undated = 0;
   for (const e of r.data) {
     if (!isObject(e)) continue;
     const t = typeof e.published === 'string' ? Date.parse(e.published) : NaN;
-    if (!Number.isFinite(t) || t < notBeforeMs) continue;
+    if (Number.isFinite(t) && t < notBeforeMs) continue;
     const summary = summariseEvent(e);
     const forTarget = Array.isArray(e.target) && e.target.some((x) => isObject(x) && x.id === a.user);
     const succeeded = isObject(e.outcome) && e.outcome.result === 'SUCCESS';
-    if (e.eventType === eventType && forTarget && succeeded) {
+    const matches = e.eventType === eventType && forTarget && succeeded;
+    // a matching event whose published cannot be read may be the event asked for: it is
+    // counted, not skipped (code review round 3 of batch G4, finding 2)
+    if (!Number.isFinite(t)) { if (matches) undated += 1; continue; }
+    if (matches) {
       observed.match = summary;
       return verdict(command, true, expected, observed, '', rd.extra());
     }
@@ -544,6 +549,10 @@ async function eventVerdict(client, a, command, eventType) {
   }
   const reason = `no ${eventType} event with outcome SUCCESS for ${a.user} at or after ${a.notBefore} among the ${r.data.length} event(s) read`;
   if (observed.morePages) return unproven(command, expected, observed, `${reason}; the read returned a full page, so this is not proof either way`, rd.extra());
+  if (undated) {
+    observed.undatedMatches = undated;
+    return unproven(command, expected, observed, `${reason}, and ${undated} matching event${undated === 1 ? '' : 's'} ha${undated === 1 ? 's' : 've'} a published that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the event asked for: this is not proof either way`, rd.extra());
+  }
   return verdict(command, false, expected, observed, reason, rd.extra());
 }
 

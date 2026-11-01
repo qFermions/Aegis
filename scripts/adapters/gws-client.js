@@ -532,11 +532,12 @@ const JUDGES = Object.freeze({
     const items = isObject(feed) && Array.isArray(feed.items) ? feed.items : [];
     const morePages = isObject(feed) && typeof feed.nextPageToken === 'string' && feed.nextPageToken !== '';
     const observed = { recordsRead: items.length, match: null, recordsSinceNotBefore: [], morePages };
+    let undated = 0;
     for (const item of items) {
       if (!isObject(item) || !isObject(item.id)) continue;
       const time = typeof item.id.time === 'string' ? item.id.time : null;
       const t = time === null ? NaN : Date.parse(time);
-      if (!Number.isFinite(t) || t < notBeforeMs) continue;
+      if (Number.isFinite(t) && t < notBeforeMs) continue;
       const events = Array.isArray(item.events) ? item.events.filter(isObject) : [];
       const names = events.map((e) => e.name).filter((n) => typeof n === 'string');
       const named = events.filter((e) => e.name === a.event);
@@ -546,6 +547,9 @@ const JUDGES = Object.freeze({
       const sameApp = item.id.applicationName === undefined || item.id.applicationName === a.app;
       const sameActor = NUMERIC_ID.test(a.user) ? actor.profileId === a.user : identityMatches(actor.email, a.user, ctx);
       const hit = named.find((e) => a.target === undefined || eventNamesTarget(e, a.target, ctx));
+      // a matching record whose id.time cannot be read may be the event asked for: it is
+      // counted, not skipped (code review round 3 of batch G4, finding 2)
+      if (!Number.isFinite(t)) { if (sameApp && sameActor && hit) undated += 1; continue; }
       if (sameApp && sameActor && hit) {
         observed.match = { ...summary, parameters: parametersOf(hit) };
         return { verified: true, observed };
@@ -555,6 +559,10 @@ const JUDGES = Object.freeze({
     const about = a.target === undefined ? '' : ` whose parameters name ${a.target}`;
     let reason = `no ${a.app} event named ${a.event} by the user${about} at or after ${a.notBefore} among the ${items.length} record(s) read`;
     if (morePages) return unproven(observed, `${reason}; the read has another page, so this is not proof either way`);
+    if (undated) {
+      observed.undatedMatches = undated;
+      return unproven(observed, `${reason}, and ${undated} matching record${undated === 1 ? '' : 's'} ha${undated === 1 ? 's' : 've'} an id.time that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the event asked for: this is not proof either way`);
+    }
     return { verified: false, observed, reason };
   },
 });

@@ -658,20 +658,29 @@ async function verifyPosted(command, args, ctx, client, steps) {
   const oldest = tsToMicros(ctx.oldest);
   let plainAfter = 0;
   let matched = null;
+  let undated = 0;
   for (const m of body.messages) {
     // A person's plain message: no subtype, and no bot_id or app_id (an app posting with
     // a bot token may carry those without a subtype). bot_id and app_id were not in the
     // sources read; skipping them can only turn a pass into "not verified".
     if (!isObject(m) || m.type !== 'message' || has(m, 'subtype') || has(m, 'bot_id') || has(m, 'app_id')) continue;
     const ts = tsToMicros(m.ts);
-    if (ts === null || ts <= oldest) continue;
+    const same = typeof m.text === 'string' && sha256Hex(normaliseText(m.text)) === want;
+    // a plain message with the expected text whose ts cannot be read may be the post asked for:
+    // it is counted, not skipped (code review round 3 of batch G4, finding 2)
+    if (ts === null) { if (same) undated += 1; continue; }
+    if (ts <= oldest) continue;
     plainAfter += 1;
-    if (matched === null && typeof m.text === 'string' && sha256Hex(normaliseText(m.text)) === want) matched = m.ts;
+    if (matched === null && same) matched = m.ts;
   }
   const hasMore = body.has_more === true;
   const observed = { channel: args.channel, messages_read: body.messages.length, plain_messages_after_not_before: plainAfter, has_more: hasMore, matched_ts: matched };
   if (matched === null && hasMore) {
     return unproven(command, expected, observed, `Slack returned ${body.messages.length} messages after --not-before and says more exist (has_more); none of the ${HISTORY_LIMIT} read is a person's plain message (no subtype, bot_id or app_id) with the expected SHA-256, so the read cannot prove the post either way: use a --not-before closer to the post or confirm it in the channel`, outcome.flags);
+  }
+  if (matched === null && undated) {
+    observed.undated_matches = undated;
+    return unproven(command, expected, observed, `no message posted after --not-before in this channel without a subtype, bot_id or app_id has the expected SHA-256 and a readable ts, and ${undated} such message${undated === 1 ? '' : 's'} with the expected SHA-256 ha${undated === 1 ? 's' : 've'} a ts that is not in Slack's form, so ${undated === 1 ? 'it' : 'one'} may be the post asked for: this is not proof either way; confirm it in the channel`, outcome.flags);
   }
   const reason = matched === null
     ? 'no message posted after --not-before in this channel without a subtype, bot_id or app_id has the expected SHA-256; an edited or reformatted message does not match, and a message carrying a subtype, bot_id or app_id is skipped'

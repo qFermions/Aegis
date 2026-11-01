@@ -1,0 +1,6 @@
+$ node scripts/eval/vendor-facts-priority.js --check
+(Node v24.22.1, at 723aa7f plus the working tree: F-13 cited in two gate sections of fleet-device-actions.md, the page regenerated)
+
+docs/aegis/owner/vendor-facts-priority.md is current.
+exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

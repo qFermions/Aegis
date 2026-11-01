@@ -521,3 +521,28 @@ test('code review round 2, finding 2: linear verify-labels: the label found on t
   }
 });
 
+// Finding 3: Fleet verify-deleted treated an activities page without a true or false
+// meta.has_next_results as the last page, so no manual deletion found was a failed object
+// (exit 2). Such a page does not say the feed ended: unless a manual deletion was already found,
+// or the feed was read back to --not-before, it proves nothing either way (INCONCLUSIVE, exit 5).
+const newerActivity = { id: 95, type: 'ran_script', created_at: '2026-10-28T11:00:00Z', details: {} };
+const olderActivity = { id: 1, type: 'edited_script', created_at: '2026-10-28T08:00:00Z', details: {} };
+const DELETED_PAGING_UNKNOWN = [
+  ['a page with no meta', ok({ activities: [newerActivity] })],
+  ['a page whose meta has no has_next_results', ok({ activities: [newerActivity], meta: {} })],
+  ['a page whose has_next_results is the text "false"', ok({ activities: [newerActivity], meta: { has_next_results: 'false' } })],
+  ['an empty page with meta null', ok({ activities: [], meta: null })],
+  ['a non-manual deletion found on a page with no meta', ok({ activities: [deletion('expiration')] })],
+];
+for (const [why, page] of DELETED_PAGING_UNKNOWN) {
+  test(`code review round 2, finding 3: fleet verify-deleted: ${why}, no manual deletion found, is INCONCLUSIVE (exit 5)`, async () => {
+    assertInconclusive(await verdictOf('fleet', DELETED, [page]));
+  });
+}
+test('code review round 2, finding 3: fleet verify-deleted: a page with no meta read back to --not-before stays a failed object (exit 2); a manual deletion found on it passes', async () => {
+  assertFailedObject(await verdictOf('fleet', DELETED, [ok({ activities: [newerActivity, olderActivity] })]));
+  const pass = await verdictOf('fleet', DELETED, [ok({ activities: [deletion('manual')] }), { status: 404, headers: {}, body: '{"message":"not found"}' }]);
+  assert.equal(pass.code, EXIT.OK, pass.text);
+  assert.deepEqual(pass.entry, [[true, 'OK']], pass.text);
+});
+

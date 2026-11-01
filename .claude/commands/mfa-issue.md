@@ -98,7 +98,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 </details>
 
 ## 🔎 Read-back (read-only, after the person finishes)
-The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `User.Read.All`, `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`) proves each step. Use the user's object ID as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `User.Read.All`, `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`) proves each step. Use the user's object ID as `[USER_ID]`. For a read-back run with `--change [CHANGE_ID]`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back's change, because a bound earlier than the approval is refused before the read; for `verify-signin`, which runs without a change, use the time the work started (UTC).
 
 ```bash
 # HUMAN-RUN read-only read-back of [mfa-session-revoke-portal] or [mfa-session-revoke] (Revoke sessions): passes only when the user's sessions are valid only from [NOT_BEFORE] on (signInSessionsValidFromDateTime, which the revocation resets; vendor fact M-26)

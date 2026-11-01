@@ -175,7 +175,7 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 
 **Written rollback (in the ticket before the change):** remove the role again under Phase D1 (Super Admin, `REMOVE SUPER ADMIN ROLE FROM [USER@DOMAIN.COM]`) or Phase D2 (a delegated role, `REMOVE ADMIN ROLE [ROLE_NAME] FROM [USER@DOMAIN.COM]`), back to the recorded pre-state; what the user did with the role in the meantime is read in Admin log events with the user as the actor.
 
-Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
+Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket: the change is opened and approved before the gate, and a bound earlier than the approval is refused before the read.
 
 **Role needed:** Super Admin (assigning admin roles needs a super admin; search excerpt, support.google.com/a/answer/9807615).
 

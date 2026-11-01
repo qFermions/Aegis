@@ -164,7 +164,7 @@ Get-Mailbox "[UPN]" | Select ForwardingSmtpAddress,DeliverToMailboxAndForward  #
 </details>
 
 ## 🔎 Read-back (read-only, after the person finishes)
-The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves the Entra steps. Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves the Entra steps. Use the object ID of `[UPN]` as `[USER_ID]`. For the read-back run with `--change [CHANGE_ID]` and `--not-before`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back's change (UTC), because a bound earlier than the approval is refused before the read.
 
 ```bash
 # HUMAN-RUN read-only read-back of [security-session-revoke-portal] or [security-session-revoke]: passes only when the sessions are valid only from [NOT_BEFORE] on (vendor fact M-26)

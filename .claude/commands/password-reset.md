@@ -136,7 +136,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 </details>
 
 ## 🔎 Read-back (read-only, after the person finishes)
-The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `User.Read.All` and `AuditLog.Read.All`) proves the reset. Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user's object ID as `[USER_ID]`.
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `User.Read.All` and `AuditLog.Read.All`) proves the reset. Use the user's object ID as `[USER_ID]`. For each read-back run with `--change [CHANGE_ID]`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back's change, because a bound earlier than the approval is refused before the read; for `verify-signin`, which runs without a change, use the time the reset started (UTC).
 
 ```bash
 # HUMAN-RUN read-only read-back of [password-reset-cloud-portal], [password-cloud-reset] or [password-reset-synced-portal]: passes only when Entra shows a password change at or after [NOT_BEFORE]; for a synced user, run it after the next sync

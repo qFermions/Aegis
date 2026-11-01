@@ -105,7 +105,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ### Phase A read-backs (read-only, after the person finishes)
 
-The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves four Phase A steps. Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves four Phase A steps. Use the object ID of `[UPN]` as `[USER_ID]`. For each read-back run with `--change [CHANGE_ID]` and `--not-before`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back's change (UTC), because a bound earlier than the approval is refused before the read.
 
 ```bash
 # HUMAN-RUN read-only read-back of [offboard-cloud-block-portal]: passes only when Entra shows sign-in blocked

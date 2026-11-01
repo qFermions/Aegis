@@ -117,7 +117,7 @@ node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --
 
 **Purpose**: the password the attacker knows must never work again. Reset it while the account is still suspended, so the new password is first used at Phase F. Whether the console offers the reset on a suspended account is not stated in the sources: if it does not, run this gate immediately before Phase F's reactivation instead.
 
-Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
+Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket: the change is opened and approved before the gate, and a bound earlier than the approval is refused before the read.
 
 **Role needed:** Super Admin, or an admin role that can reset user passwords (the exact privilege name is not confirmed in the sources); a Super Admin when `[USER@DOMAIN.COM]` holds an admin role.
 

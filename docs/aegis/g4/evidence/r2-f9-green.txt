@@ -1,0 +1,23 @@
+# command: node --test scripts/audit/time-bound-capture.test.js
+# run in: <repo>  commit: 5f3f181 (working tree: the runbook fix)  started: 2026-11-01T03:18:14Z  node: v24.22.1
+✔ F9: the check finds the change-bound read-backs with a time bound (it is not vacuous) (5.084053ms)
+✔ F9: the check refuses a bound taken before the gate, at the start of the work, or nowhere, and accepts approved_at or a step of the change (1.365701ms)
+✔ F9: fleet-device-actions.md takes the time bound of each change-bound read-back at or after the approval (0.820313ms)
+✔ F9: gws-account-containment.md takes the time bound of each change-bound read-back at or after the approval (0.669526ms)
+✔ F9: gws-admin-roles.md takes the time bound of each change-bound read-back at or after the approval (0.490525ms)
+✔ F9: gws-drive-sharing.md takes the time bound of each change-bound read-back at or after the approval (0.471409ms)
+✔ F9: jamf-config-profiles.md takes the time bound of each change-bound read-back at or after the approval (1.126009ms)
+✔ F9: mfa-issue.md takes the time bound of each change-bound read-back at or after the approval (0.39215ms)
+✔ F9: offboard.md takes the time bound of each change-bound read-back at or after the approval (0.727897ms)
+✔ F9: password-reset.md takes the time bound of each change-bound read-back at or after the approval (0.59137ms)
+✔ F9: security-alert-triage.md takes the time bound of each change-bound read-back at or after the approval (0.419953ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.238307
+# exit: 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

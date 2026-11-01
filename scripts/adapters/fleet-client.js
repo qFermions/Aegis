@@ -380,7 +380,9 @@ async function verifyWipe(read, args) {
       else if (command !== null && typeof command.status === 'string' && command.status.toLowerCase() === 'pending') what = 'The newest doWipe command read, still pending, is';
       else if (command !== null) what = 'Only a doWipe command that did not succeed is';
       page = `on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read`;
-      next = 'Look for the doWipe on the next pages of the commands read (--page 1 and on), or in the host\'s activity in Fleet.';
+      // the hand read continues this page of 100 only with the same page size (code review round 3
+      // of batch G4, finding 8)
+      next = `Look for the newest doWipe on the next pages (commands --host-identifier [SERIAL_NUMBER] --per-page ${WINDOWS_COMMANDS_PER_PAGE} --page 1, and on), or in the host's activity in Fleet.`;
     }
     return { inconclusive: true, verified: false, observed, expected, note: `${what} ${page}, and more commands may follow, so the newest ${apple ? 'EraseDevice' : 'doWipe'} may be on a later page: this is not proof either way. ${next}` };
   }

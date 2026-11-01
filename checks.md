@@ -63,6 +63,7 @@ Branch `feat/g4-eval-and-closeout` on qFermions/Aegis, base `main` at `1f6647c` 
 | `/code-review xhigh` round 1 | `origin/main...8492bee` | 15 found: 10 fixed, each test first in its own pair of commits (findings 1, 3, 4, 5, 6, 7, 8, 10, 11, 12; finding 12's class also fixed in Fleet), 5 closed (below) | `docs/aegis/g4/evidence/code-review-rounds.md` round 1 |
 | `/code-review xhigh` round 2 | `5f09f91..af47dc3` (diff only) | 15 found: 12 fixed (findings 1 to 9, 11, 12, 13), 3 closed (below); two more instances of findings 1's and 6's classes fixed test first (`926d46a`, `a6e3027`) | `docs/aegis/g4/evidence/code-review-rounds.md` round 2 |
 | `/code-review xhigh` round 3 (the last) | `9ea0f2b..74fe5db` (diff only) | 15 found: 13 fixed (findings 1, 2, 3, 5, 7, 8, 9, 15 test first; 13 and 14 refactors with no behavior change; 10, 11, 12 doc-only), 2 closed (below); none left open | `docs/aegis/g4/evidence/code-review-rounds.md` round 3 |
+| `/security-review` 2 | `8492bee..9671ebb` (every change after security review 1) | no findings at confidence 8 or above; two pre-existing observations outside the range kept for the owner (Fleet `verify-wipe` on Apple has no time bound; Jira's time flag declared though no gate binds a Jira read-back) | `docs/aegis/g4/evidence/security-review-2.md` |
 
 Closed findings, one line each:
 

@@ -170,9 +170,11 @@ test('F4: fleet verify-checked-in with an early --not-before exits 1 with no tra
 //   status (a one-read-back change and a counted change) never counts such a read-back; link
 //   refuses it, writing nothing. Before the fix earlyBound read such an approval as "no bound is
 //   early", so any bound passed every check.
-// - The trail itself refuses an entry whose at does not parse (audit-log.js verify), so only a
-//   trail written around it, or a caller that hands the checks its own log, can hold one; the
-//   tests hand the checks a view of a real trail in which the approval's at is replaced.
+// - The trail itself refuses an entry whose at does not parse (audit-log.js verify), so a trail
+//   written around it fails verify first; only entries read apart from the ones verify checked (a
+//   file changed between the two reads, or a caller that hands the checks its own log) can hold
+//   one (corrected in code review round 3, finding 9); the tests hand the checks a view of a real
+//   trail in which the approval's at is replaced.
 // - A read-back without a time bound does not use the approval's time, so it is judged as before.
 
 const BAD_TIMES = [['missing', undefined], ['empty', ''], ['not a time', 'not-a-time'], ['a number', APPROVED_AT]];

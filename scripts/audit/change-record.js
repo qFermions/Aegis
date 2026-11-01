@@ -372,7 +372,7 @@ function earlyBound(entry, approval) {
 }
 const UNREADABLE_APPROVAL = 'the approval\'s time could not be read from the trail';
 const earlyReason = (e) => (e.approvedAt === null
-  ? `ran with --${e.flag} ${e.value}, but ${UNREADABLE_APPROVAL}, so nothing shows the bound to be at or after the approval and it never proves the change; run node scripts/audit/audit-log.js verify`
+  ? `ran with --${e.flag} ${e.value}, but ${UNREADABLE_APPROVAL}, so nothing shows the bound to be at or after the approval and it never proves the change; open a new change with node scripts/audit/change-record.js open`
   : `ran with --${e.flag} ${e.value}, earlier than the approval at ${e.approvedAt}, so it could pass on a change made before the approval; run it again with --${e.flag} at or after ${e.approvedAt}`);
 // whether a named read-back carries a time bound, so the steps say when it may start
 const timeBoundOf = (readBack) => {
@@ -605,7 +605,7 @@ function bindRefusal(log, change, readBack, argv = null) {
     if (!Array.isArray(argv)) return `change ${change} is proved by ${readBack}, and the check was not given the run's arguments, so its --${bound} could not be checked against the approval; the read-back is refused`;
     // fail closed: with no readable approval time no bound can be shown to be at or after it
     // (code review round 2 of batch G4, finding 11)
-    if (approvalMs(view.approval) === null) return `change ${change} is proved by ${readBack}, but ${UNREADABLE_APPROVAL}, so its --${bound} cannot be checked against the approval and the read-back never proves it; run node scripts/audit/audit-log.js verify. Nothing was read or recorded`;
+    if (approvalMs(view.approval) === null) return `change ${change} is proved by ${readBack}, but ${UNREADABLE_APPROVAL}, so its --${bound} cannot be checked against the approval and the read-back never proves it; open a new change with node scripts/audit/change-record.js open. Nothing was read or recorded`;
     const early = earlyRunBound(kindOfReadBack(readBack), argv.map(String), view.approval);
     if (early) return `the read-back would run with --${early.flag} ${early.value}, earlier than the approval of change ${change} at ${early.approvedAt}, so it could pass on a change made before the approval and never proves it; run it with --${early.flag} at or after ${early.approvedAt}. Nothing was read or recorded`;
   }

@@ -1,0 +1,19 @@
+# command: node --test scripts/eval/vendor-facts-priority.test.js
+# commit: f79472c (plus uncommitted changes in the working tree)  started: 2026-11-01T00:03:00Z  node: v24.22.1
+✔ the fixture page equals the expected fixture exactly (4.400751ms)
+✔ order: R3, then R2, then R1 or R0, then no gate; G3 before G2 inside a group (1.462489ms)
+✔ a gate takes the highest R class on its Reversibility line, and its section runs past a fence to the next heading (0.493826ms)
+✔ a G2 row is found by its text after its line moved; a removed line and a script line rest on no gate (0.947771ms)
+✔ the extraction matches the G2 list's own cells on the real repo for every runbook row (159.737774ms)
+✔ the page quotes no gate or preview marker as written (155.83132ms)
+✔ --check exits 1 on a stale page and 0 after a plain run (3.268524ms)
+✔ on the real repo, the committed page is current (--check exits 0) (226.071184ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 643.023341
+# exit: 0  finished: 2026-11-01T00:03:01Z

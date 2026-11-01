@@ -108,6 +108,7 @@ gh api repos/[@Aegion_GITHUB_ORG]/[REPO_NAME]/dependabot/alerts/[ALERT_NUMBER]
 - **Reversibility:** R1: undo is [github-security-alerts-secret-reopen-portal]
 - **Required confirmation:** Type exactly `CHANGE SECRET ALERT [ALERT_NUMBER] IN [REPO_NAME] TO REVOKED`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-security-alerts-secret-revoked-portal]:** Only after the issuer-side proof and its time are in the ticket, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Security and quality → (Vulnerability alerts) Secret scanning → alert `[ALERT_NUMBER]` (B-08).
 2. Open the "Close as" dropdown and pick the reason that means revoked [unconfirmed: check in the GitHub UI: its label] (B-09).
@@ -137,6 +138,7 @@ node scripts/adapters/github-client.js verify-secret-alert --repo [REPO_NAME] --
 - **Reversibility:** R1: undo is [github-security-alerts-secret-reopen-portal]
 - **Required confirmation:** Type exactly `CHANGE SECRET ALERT [ALERT_NUMBER] IN [REPO_NAME] TO FALSE POSITIVE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-security-alerts-secret-false-positive-portal]:** Only after the repository owner's statement is in the ticket, the stop check, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Security and quality → (Vulnerability alerts) Secret scanning → alert `[ALERT_NUMBER]` (B-08).
 2. Open the "Close as" dropdown and pick the reason that means false positive [unconfirmed: check in the GitHub UI: its label] (B-09).
@@ -156,6 +158,7 @@ node scripts/adapters/github-client.js verify-secret-alert --repo [REPO_NAME] --
 - **Reversibility:** R1: undo is [github-security-alerts-secret-reopen-portal]
 - **Required confirmation:** Type exactly `CHANGE SECRET ALERT [ALERT_NUMBER] IN [REPO_NAME] TO USED IN TESTS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-security-alerts-secret-used-in-tests-portal]:** Only after the issuer owner's statement is in the ticket, the stop check, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Security and quality → (Vulnerability alerts) Secret scanning → alert `[ALERT_NUMBER]` (B-08).
 2. Open the "Close as" dropdown and pick the reason that means used in tests [unconfirmed: check in the GitHub UI: its label] (B-09).
@@ -183,6 +186,7 @@ node scripts/adapters/github-client.js verify-secret-alert --repo [REPO_NAME] --
 - **Reversibility:** R1: undo is closing it again under the gate for the right reason ([github-security-alerts-secret-revoked-portal], [github-security-alerts-secret-false-positive-portal] or [github-security-alerts-secret-used-in-tests-portal])
 - **Required confirmation:** Type exactly `CHANGE SECRET ALERT [ALERT_NUMBER] IN [REPO_NAME] BACK TO OPEN`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-security-alerts-secret-reopen-portal]:** Only after the reason for reopening is in the ticket and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Security and quality → (Vulnerability alerts) Secret scanning → the closed alerts → alert `[ALERT_NUMBER]` → its reopen control [unconfirmed: check in the GitHub UI: the closed-alerts filter and the reopen control].
 
@@ -219,6 +223,7 @@ node scripts/adapters/github-client.js verify-dependabot-alert --repo [REPO_NAME
 - **Reversibility:** R1: undo is [github-security-alerts-dependabot-reopen-portal]
 - **Required confirmation:** Type exactly `CHANGE DEPENDABOT ALERT [ALERT_NUMBER] IN [REPO_NAME] TO DISMISSED AS [DISMISS_REASON]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-security-alerts-dependabot-dismiss-portal]:** Only after the reason (and the approval when the stop rule needs it) is in the ticket and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Security and quality → (Findings) Dependabot dropdown → Vulnerabilities → alert `[ALERT_NUMBER]` (B-10).
 2. Open the "Dismiss" dropdown and pick the reason that means `[DISMISS_REASON]` [unconfirmed: check in the GitHub UI: its label]; then click **Dismiss alert** (B-10).
@@ -245,6 +250,7 @@ node scripts/adapters/github-client.js verify-dependabot-alert --repo [REPO_NAME
 - **Reversibility:** R1: undo is dismissing it again under [github-security-alerts-dependabot-dismiss-portal]
 - **Required confirmation:** Type exactly `CHANGE DEPENDABOT ALERT [ALERT_NUMBER] IN [REPO_NAME] BACK TO OPEN`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-security-alerts-dependabot-reopen-portal]:** Only after the reason for reopening is in the ticket and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Security and quality → (Findings) Dependabot dropdown → Vulnerabilities → the closed alerts → alert `[ALERT_NUMBER]` → its reopen control [unconfirmed: check in the GitHub UI: the closed-alerts filter and the reopen control].
 
@@ -274,6 +280,7 @@ node scripts/adapters/github-client.js dependabot-alert --repo [REPO_NAME] --num
 - **Reversibility:** R3 (mass operation): rollback is [github-security-alerts-dependabot-reopen-portal] for each listed alert, from the saved list
 - **Required confirmation:** Type exactly `CHANGE [ALERT_COUNT] DEPENDABOT ALERTS IN [REPO_NAME] TO DISMISSED AS [DISMISS_REASON]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER] --state dismissed --reason [DISMISS_REASON] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-security-alerts-dependabot-bulk-dismiss-portal]:** Only after the saved list, the rollback path, the review, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Security and quality → (Findings) Dependabot dropdown → Vulnerabilities (B-10).
 2. Tick exactly the listed alerts; the selected count must read `[ALERT_COUNT]` [unconfirmed: check in the GitHub UI: the selection boxes and the bulk "Dismiss" control].

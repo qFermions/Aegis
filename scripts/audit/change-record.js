@@ -108,40 +108,118 @@ function checkReadBack(readBack) {
   }
 }
 
-// The read-back lines a gate's runbook runs under --change: in the gate's section, or named
-// "read-back of [gate]" in the comment above (the change-binding pin test reads them the same
-// way). A named read-back must be one of those lines' read-backs, in the form the line runs, so
-// a removal gate whose line runs with --absent is never opened for a presence read, of its own
-// command or of another connector's (batch G3 close-out 3, owner decision H1, and security review
-// 1). A gate whose runbook binds no read-back takes no change record (code review round 1,
-// finding 5).
+// The read-back lines a gate's runbook runs under --change. A named read-back must be one of those
+// lines' read-backs, in the form the line runs, so a removal gate whose line runs with --absent is
+// never opened for a presence read, of its own command or of another connector's (batch G3
+// close-out 3, owner decision H1, and security review 1). A gate whose runbook binds no read-back
+// takes no change record (code review round 1, finding 5).
+// Since batch G4 (task D2, the owner's words: "Change records read that line instead of inferring
+// the binding from where a line sits") a gate binds exactly the commands its own Read-back field
+// names; the section a line sits in and a "read-back of [gate]" comment above it bind nothing. The
+// field names each command as its runbook line runs it, from the client file to `--execute`
+// (`okta-client.js verify-group-member ... --absent --change [CHANGE_ID] --execute`): the line
+// without its `node scripts/` path, so no check that reads the lines a runbook runs (this module's,
+// the change-binding pin's, the adapters' dry runs) reads a field as one. The field is the last
+// field line of the gate: `- **Read-back:** \`cmd\`; \`cmd\`` or `- **Read-back:** none (<reason>)` in
+// the portal form, `# Read-back: cmd` or `# Read-back: none, <reason>` in the fenced form, where a
+// comment in a gated bash fence may hold no backtick, semicolon or parenthesis
+// (command-safety-gates.test.js). readBackProblems names what breaks that contract.
 const RUNBOOK_LINE = /node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-z0-9-]+)([^`\n]*)/;
 const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
 // the gates a comment names a read-back for: "read-back of [a]", or of several, "[a], [b] or
-// [c]" (code review round 1 of the batch G3 close-out 3, finding 1: only the first was read)
+// [c]" (code review round 1 of the batch G3 close-out 3, finding 1: only the first was read). Since
+// D2 it binds nothing; the change-binding pin test still reads the comment to class a line.
 const NAMED_FOR = /^# [^\n]*\bread-back of (\[[a-z0-9-]+\](?:(?:,? or |,? and |, )\[[a-z0-9-]+\])*)/;
 const namedGates = (comment) => {
   const m = String(comment || '').match(NAMED_FOR);
   return m ? [...m[1].matchAll(/\[([a-z0-9-]+)\]/g)].map((x) => x[1]) : null;
 };
-// every read-back line a runbook binds with --change, with the gates it proves: the gates its
-// comment names, else the gate whose section it sits in (pass-flags.test.js reads them the same way)
-function boundReadBacks(text) {
+const GATE_MARK = /^<!-- SAFETY GATE \[([^\]]+)\] -->$|^# SAFETY GATE \[([^\]]+)\]$/;
+const PORTAL_FIELD = /^- \*\*([A-Za-z -]+):\*\* (.*)$/;
+const FENCED_FIELD = /^# ([A-Z][A-Za-z -]+): (.*)$/;
+const COMMAND = /^[a-z]+-client\.js verify-[a-z0-9-]+ [^`]* --execute$/;
+// how a field names a line's command: without its `node scripts/` path
+const fieldFormOf = (command) => command.replace(/^node scripts\/(?:adapters\/)?/, '');
+// a gate's Read-back field names commands; it is not a line that runs one
+const READ_BACK_FIELD = /^(?:- \*\*Read-back:\*\* |# Read-back: )/;
+const PORTAL_NONE = /^none \((.+)\)$/;
+const FENCED_NONE = /^none, (.+)$/;
+// the class a Reversibility line gives: the highest R before any mention of a separate gate
+// (gate-r-class.test.js reads it the same way)
+const rClassOf = (rev) => (rev === null ? null : (rev.split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null);
+// a Read-back field's value: { none: reason } or { commands: [...] }, or null when it is in neither form
+function parseReadBackField(value, portal) {
+  const none = value.match(portal ? PORTAL_NONE : FENCED_NONE);
+  if (none) return { none: none[1], commands: [] };
+  const commands = portal ? (/^`[^`]+`(?:; `[^`]+`)*$/.test(value) ? value.slice(1, -1).split('`; `') : null) : [value];
+  return commands && commands.every((c) => COMMAND.test(c)) ? { none: null, commands } : null;
+}
+// every SAFETY GATE of a runbook: id, line, form, R class and its Read-back field (null when it has
+// none; { line, none, commands, malformed } otherwise), read from the gate's consecutive field lines
+function gateFields(text) {
   const lines = text.split('\n');
-  const found = [];
-  let current = null;
+  const gates = [];
   lines.forEach((l, i) => {
-    if (/^## /.test(l)) current = null;
-    const g = l.match(/<!-- SAFETY GATE \[([^\]]+)\] -->|^# SAFETY GATE \[([^\]]+)\]/);
-    if (g) current = g[1] || g[2];
+    const m = l.match(GATE_MARK);
+    if (!m) return;
+    const portal = Boolean(m[1]);
+    const gate = { id: m[1] || m[2], line: i + 1, portal, rClass: null, readBack: null, readBacks: 0 };
+    let rev = null;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const f = lines[j].match(portal ? PORTAL_FIELD : FENCED_FIELD);
+      if (!f) break;
+      if (f[1] === 'Reversibility') rev = f[2];
+      if (f[1] !== 'Read-back') continue;
+      gate.readBacks += 1;
+      const parsed = parseReadBackField(f[2], portal);
+      gate.readBack = { line: j + 1, value: f[2], malformed: !parsed, none: parsed ? parsed.none : null, commands: parsed ? parsed.commands : [] };
+    }
+    gate.rClass = rClassOf(rev);
+    gates.push(gate);
+  });
+  return gates;
+}
+// the read-back a runbook line runs, from its `node scripts/` to `--execute` (to the end of the
+// span when it has no --execute, so it matches no field); a prose line may name a plain read first
+function commandOf(line) {
+  const rest = line.slice(line.match(RUNBOOK_LINE).index);
+  const end = rest.indexOf(' --execute');
+  return end >= 0 ? rest.slice(0, end + ' --execute'.length) : rest.split('`')[0].trim();
+}
+// every read-back line a runbook binds with --change, with the gates it proves: the gates whose
+// Read-back field names its command (pass-flags.test.js reads them through this function)
+function boundReadBacks(text) {
+  const named = new Map();
+  for (const g of gateFields(text)) for (const c of g.readBack ? g.readBack.commands : []) named.set(c, [...(named.get(c) || []), g.id]);
+  const found = [];
+  text.split('\n').forEach((l, i) => {
     const m = l.match(RUNBOOK_LINE);
-    if (!m || !/--change \[CHANGE_ID\]/.test(l)) return;
-    const gates = namedGates(lines[i - 1]) || (current ? [current] : []);
-    found.push({ line: i + 1, gates, kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)] });
+    if (!m || !/--change \[CHANGE_ID\]/.test(l) || READ_BACK_FIELD.test(l)) return;
+    const command = commandOf(l);
+    found.push({ line: i + 1, gates: named.get(fieldFormOf(command)) || [], command, kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)] });
   });
   return found;
 }
 const gateReadBacks = (text, gate) => boundReadBacks(text).filter((b) => b.gates.includes(gate));
+// What breaks the Read-back contract in one runbook (batch G4, task D2), one sentence each: a gate
+// with no Read-back field or with two, a field in neither form, an R0 or R1 gate whose field names a
+// command (an R1 change takes no change record), a field naming a command no line of the runbook
+// runs with --change, and a line run with --change that no gate's field names.
+function readBackProblems(text) {
+  const problems = [];
+  const gates = gateFields(text);
+  const runs = new Set(boundReadBacks(text).map((b) => fieldFormOf(b.command)));
+  for (const g of gates) {
+    const at = `${g.id} (${g.rClass || 'no class'}, line ${g.line})`;
+    if (!g.readBack) { problems.push(`${at}: no Read-back field; name the verify-* read-back that proves it, or none with the reason`); continue; }
+    if (g.readBacks > 1) problems.push(`${at}: ${g.readBacks} Read-back fields; a gate has one`);
+    if (g.readBack.malformed) { problems.push(`${at}: its Read-back field is not one of the two forms (${g.portal ? '`cmd`; `cmd` or none (<reason>)' : 'one command or none, <reason>'}): ${g.readBack.value.slice(0, 120)}`); continue; }
+    if (g.readBack.commands.length && g.rClass !== 'R2' && g.rClass !== 'R3') problems.push(`${at}: its Read-back field names a command, but an ${g.rClass || 'unclassed'} change takes no change record; write none (${g.rClass}: no change record)`);
+    for (const c of g.readBack.commands) if (!runs.has(c)) problems.push(`${at}: its Read-back field names ${c}, which no line of the runbook runs with --change [CHANGE_ID]`);
+  }
+  for (const b of boundReadBacks(text)) if (!b.gates.length) problems.push(`line ${b.line}: ${b.command} runs with --change [CHANGE_ID], but no gate's Read-back field names it`);
+  return problems;
+}
 // a runbook line's pass flags: name to the value it writes (null for a switch)
 function lineFlags(kind, argv) {
   const rules = audit.PASS_FLAGS[kind];
@@ -612,6 +690,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, namedGates, useRunbooksForTests, main, COUNTED_GATES };
+module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, namedGates, gateFields, readBackProblems, useRunbooksForTests, main, COUNTED_GATES };
 
 if (require.main === module) process.exitCode = main();

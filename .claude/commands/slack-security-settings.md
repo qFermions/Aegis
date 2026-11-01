@@ -97,6 +97,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Reversibility:** R3 (security control): turning it off again goes only through Phase C [slack-security-settings-2fa-off-portal]; members signed out in the meantime sign back in once they set up two-factor
 - **Required confirmation:** Type exactly `REQUIRE TWO-FACTOR AUTHENTICATION FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-security-settings-2fa-require-portal]:** Only after the Phase A record, the announcement to members, and the exact match:
 1. Slack → Admin → Workspace settings → Security → Two-factor authentication for email sign-in → **Edit** → turn on the requirement for members, leaving the allowed methods as Phase A recorded them → **Save** (the final control labels were not in the sources read; confirm them on screen).
 2. Enterprise: Slack → Organization settings → Security → Security settings → Two-factor authentication for email sign-in → **Edit** → the same choice, with the methods as Phase A recorded them.
@@ -134,6 +135,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Reversibility:** R3 (security control off): reversible through Phase B under its own phrase [slack-security-settings-2fa-require-portal], but the exposure while it is off cannot be undone
 - **Required confirmation:** Type exactly `TURN OFF TWO-FACTOR REQUIREMENT FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-security-settings-2fa-off-portal]:** Only after the requester is verified out of band, the written approval and the expiry are in the ticket, the independent review, and the exact match:
 1. Slack → Admin → Workspace settings → Security → Two-factor authentication for email sign-in → **Edit** → turn the requirement off → **Save**.
 2. Put the expiry in `[ISSUE_ID]` and book Phase B for that time.
@@ -156,6 +158,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Reversibility:** R3 (security control with lock-out risk): the Phase A value is the checkpoint; returning SSO to optional reopens email-and-password sign-in for every member, so it is a separately reviewed change [slack-security-settings-saml-optional-preview], made by the Owner kept able to sign in with email and password; its path was not described in the sources read
 - **Required confirmation:** Type exactly `REQUIRE SAML SSO FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-security-settings-saml-require-portal]:** Only after the test sign-in through Okta, the Phase A record, the independent review (Okta and Slack together make it a multi-system change), and the exact match:
 1. Slack → Admin → Workspace settings → Security → SSO & authentication → enter the identity provider's SAML values → test → make SSO required for members → **Save** (the required-or-optional labels were not in the sources read; confirm them on screen).
 2. **WAIT UNTIL** members sign in again through Okta. Slack's own session duration (Phase E), not Okta's, decides when existing sessions end.
@@ -184,6 +187,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Reversibility:** R3 (a sign-in control for every member): the Phase A value is the checkpoint; restore it through this same gate [slack-security-settings-session-duration-portal] with a new typed confirmation; sessions that already ended stay ended and those members sign in again
 - **Required confirmation:** Type exactly `SET SLACK SESSION DURATION FOR [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-security-settings-session-duration-portal]:** Only after the Phase A value is recorded and the exact match:
 1. Slack → Admin → Workspace settings → Security → Desktop session duration (or Mobile session duration) → **Edit** → pick the duration from the ticket → **Save**.
 2. **WAIT UNTIL** the chosen period has passed; sessions end gradually, not at once.
@@ -204,6 +208,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Reversibility:** R3 (who can join the workspace): the Phase A list is the checkpoint; restore it through this same gate [slack-security-settings-approved-domains-portal] with a new typed confirmation; anyone who joined while a domain was listed keeps the account until it is reviewed with `/slack-user-lifecycle`
 - **Required confirmation:** Type exactly `CHANGE SLACK APPROVED EMAIL DOMAINS FOR [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-security-settings-approved-domains-portal]:** Only after the Phase A list is recorded and the exact match:
 1. Slack → Admin → Workspace settings → expand the setting that lets people with approved email domains join → enter the domains from the ticket → **Save**.
 2. GUI read-back: the setting lists exactly the intended domains, and the sign-in page shows them.
@@ -223,6 +228,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Reversibility:** R3 (a sharing control for the whole workspace): the Phase A value is the checkpoint; turning public file sharing back on reopens public links, so it is a separately reviewed change [slack-security-settings-file-sharing-on-preview]
 - **Required confirmation:** Type exactly `DISABLE PUBLIC FILE SHARING FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-security-settings-file-sharing-portal]:** Only after the Phase A value is recorded and the exact match:
 1. Slack → Admin → Workspace settings → Permissions → Public File Sharing → Expand → untick the checkbox → **Save**.
 2. GUI read-back: Public File Sharing shows off. Test one existing public link from a signed-out browser and record the result, because the sources read do not say whether old links stop working.
@@ -250,6 +256,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - **Reversibility:** R3 (security control with lock-out risk): the Phase A value is the checkpoint; allowing SMS again weakens two-factor, so it is a separately reviewed change [slack-security-settings-sms-allow-preview]; a member locked out in the meantime goes to [org gap: who restores a member locked out of two-factor], which is no reason to undo the block
 - **Required confirmation:** Type exactly `BLOCK SMS TWO-FACTOR FOR SLACK WORKSPACE [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-security-settings-sms-block-portal]:** Only after Phase B reads required, the Phase A value, the warning to members, the notice period recorded in the ticket has passed, and the exact match:
 1. Slack → Admin → Workspace settings → Security → Two-factor authentication for email sign-in → **Edit** → turn off SMS as an allowed method, changing nothing else → **Save**. A search excerpt says paid plans can block SMS; the control's label was not in the sources read, so if the dialog shows no such control, stop.
 2. Enterprise: Slack → Organization settings → Security → Security settings → Two-factor authentication for email sign-in → **Edit** → the same choice.

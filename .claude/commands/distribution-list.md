@@ -26,6 +26,7 @@ disable-model-invocation: true
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, the change of a sending control; it widens who may send to the list and fits no closer row, so the higher class): reversible by requiring authenticated senders again
 - **Required confirmation:** Type exactly `ALLOW EXTERNAL SENDERS TO [DL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (Exchange settings and permissions: no Exchange connector)
 **PORTAL ACTION [distribution-external-senders-portal]:** Only after the exact match, open `[DL_NAME]` → Settings → enable **Allow external senders to email this group**, then verify moderation and delivery restrictions.
 > **PREVIEW ONLY [distribution-delivery-management-portal]:** Restricting senders or requiring moderation is a separate mail-flow policy change with different scope. Prepare it in a separate reviewed runbook; the external-sender phrase cannot change moderation or delivery restrictions.
 5. **Delivery management / moderation:** document the proposed sender restrictions or owner-approval rule for that separate review.

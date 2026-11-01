@@ -97,6 +97,7 @@ Exit 0 is a read; exit 2 is a failed read with Slack's error code only (for exam
 - **Reversibility:** R1: restrict the app under its own gate [slack-app-approval-restrict-portal]; data it read while approved cannot be recalled, and token removal on restrict is not confirmed
 - **Required confirmation:** Type exactly `APPROVE SLACK APP [APP_NAME] [APP_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-app-approval-approve-portal]:** Only after the Phase B recommendation says approve, any needed sign-off is recorded, and the exact match:
 1. Slack admin → Slack Marketplace → Browse → `[APP_NAME]` → **Approve**.
 2. GUI read-back: the app's page in Slack Marketplace now shows it as approved (the exact status label was not in the sources read).
@@ -116,6 +117,7 @@ node scripts/adapters/slack-client.js app-requests --execute
 - **Reversibility:** R1: approve the app under its own gate [slack-app-approval-approve-portal]
 - **Required confirmation:** Type exactly `RESTRICT SLACK APP [APP_NAME] [APP_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-app-approval-restrict-portal]:** Only after the Phase B recommendation says restrict and the exact match:
 1. Slack admin → Slack Marketplace → Browse → `[APP_NAME]` → **Restrict**.
 2. GUI read-back: the app's page in Slack Marketplace now shows it as restricted (the exact status label was not in the sources read).
@@ -141,6 +143,7 @@ Read Phase A step 1 first: if **Require approved apps** is already on, skip this
 - **Reversibility:** R3 (a security control for the whole workspace): the Phase A value is the checkpoint; turning the setting off is a separately reviewed change [slack-app-approval-require-off-preview]; while it is off, members can install apps with no review
 - **Required confirmation:** Type exactly `REQUIRE APPROVED APPS IN SLACK WORKSPACE [@Aegion_SLACK_TEAM_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a workspace setting no Slack verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [slack-app-approval-require-portal]:** Only after the Phase A value is in the ticket and the exact match:
 1. Slack admin → Slack Marketplace → App Management Settings → **Require approved apps** → Edit → choose the option that limits installs to pre-approved apps → Save.
 2. Leave the request policy (whether members may request unapproved apps) and the request managers as Phase A recorded them: this gate changes neither. If the page asks for either, keep the recorded value; if it cannot be kept, stop. Granting request management is Phase E.
@@ -166,6 +169,7 @@ Read Phase A step 1 first: the request managers it recorded are the pre-state. W
 - **Reversibility:** R2 (a privilege grant): the Phase A list of request managers is the pre-state; take the role back under its own gate [slack-app-approval-request-managers-remove-portal]; apps the member approved while holding it stay approved until each is restricted under [slack-app-approval-restrict-portal]
 - **Required confirmation:** Type exactly `GRANT SLACK APP REQUEST MANAGEMENT TO [MANAGER_USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command reads who manages app requests: its proof is the read its step names)
 **PORTAL ACTION [slack-app-approval-request-managers-grant-portal]:** Only after the Phase A record, the sign-off of the request-management approver named in Inputs, and the exact match:
 1. Slack admin → Slack Marketplace → App Management Settings → the request-management setting → add the member whose profile shows member ID `[MANAGER_USER_ID]` → Save. Confirm each label on screen.
 2. GUI read-back: App Management Settings lists that member among the request managers, and the other managers match the Phase A record.
@@ -178,6 +182,7 @@ Read Phase A step 1 first: the request managers it recorded are the pre-state. W
 - **Reversibility:** R1: grant it again under its own gate [slack-app-approval-request-managers-grant-portal]
 - **Required confirmation:** Type exactly `REMOVE [MANAGER_USER_ID] FROM SLACK APP REQUEST MANAGERS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-app-approval-request-managers-remove-portal]:** Only after the exact match:
 1. Slack admin → Slack Marketplace → App Management Settings → the request-management setting → remove the member whose profile shows member ID `[MANAGER_USER_ID]` → Save. Confirm each label on screen.
 2. GUI read-back: App Management Settings no longer lists that member among the request managers.

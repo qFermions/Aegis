@@ -41,6 +41,7 @@ disable-model-invocation: true
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): the prior Spooler state is restored; deleted jobs cannot be restored and must be resubmitted
 - **Required confirmation:** Use the adjacent read-only manifest routine to render both values, then type exactly `STOP SPOOLER DELETE $queueFileCount LOCAL PRINT JOB FILES SET SHA256 $queueSetHash RESTORE SPOOLER RUNNING`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a local spool folder on one workstation: no connector, its own read is the proof)
 **PORTAL ACTION [print-queue-delete-portal]:** Do not use File Explorer count alone. First run only the adjacent read-only resolution/manifest portion and review every name, length, file SHA-256, and the resulting `$queueSetHash`. Only after the exact match, stop the local Spooler, recompute and require the identical manifest, delete only those exact files, verify each absence, and restore Running even if deletion fails. Any drift or restoration failure stops the workflow and is reported as partial/unknown state.
 
 1. On the affected machine, use the validated manifest routine below; stop if the Spooler is not currently Running or any file is a reparse point.
@@ -88,6 +89,7 @@ $queueManifest.Records | ForEach-Object { Write-Host "  $($_.Name); bytes=$($_.L
 # Effect: stops the Spooler, permanently deletes the displayed files, and restores its prior state
 # Scope: exactly the approved name/length/content hashes directly inside PRINTERS; never subdirectories or a drifted set
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): prior service state is restored; deleted jobs cannot be restored
+# Read-back: none, a local spool folder on one workstation: no connector, its own read is the proof
 $requiredConfirmation = "STOP SPOOLER DELETE $queueFileCount LOCAL PRINT JOB FILES SET SHA256 $queueSetHash RESTORE SPOOLER RUNNING"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

@@ -47,6 +47,7 @@ Two different tickets hide under "mail problems":
 - **Reversibility:** R2 — copy the current MX records into the ticket first (the pre-state); the previous set can be re-entered at the DNS host under its own phrase, and either direction can take up to 72 hours to propagate
 - **Required confirmation:** Type exactly `CHANGE MX RECORDS FOR [@Aegion_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (DNS records at the domain host: no connector reads DNS)
 **PORTAL ACTION [gws-gmail-delivery-mx-change-portal]:** Only after the pre-state is in the ticket and the exact match, and only by the human administrator signed in at the DNS host:
 1. At the DNS host, open the DNS records for `[@Aegion_DOMAIN]` and replace the MX record set with the Google MX values shown on Google's "Set up MX records for Google Workspace" page.
 2. Save, then **WAIT UNTIL** Check MX reports Google's MX records (up to 72 hours).
@@ -71,6 +72,7 @@ Two different tickets hide under "mail problems":
 - **Reversibility:** R2 — record the current TXT value first; re-entering it under its own phrase restores the old behavior after DNS propagation (allow 48 hours)
 - **Required confirmation:** Type exactly `CHANGE SPF RECORD FOR [@Aegion_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (DNS records at the domain host: no connector reads DNS)
 **PORTAL ACTION [gws-gmail-delivery-spf-change-portal]:** Only after the pre-state is in the ticket and the exact match:
 1. At the DNS host, edit the SPF TXT record for `[@Aegion_DOMAIN]` so it includes Google (`v=spf1 include:_spf.google.com ~all` is Google's own example) plus the mechanism for the device or third-party sender. Nothing is needed in the Admin console for SPF.
 2. Save, then **WAIT UNTIL** Check MX reports the new SPF record; allow 48 hours before judging results.
@@ -82,6 +84,7 @@ Two different tickets hide under "mail problems":
 - **Reversibility:** R1 — an unpublished, unstarted key changes nothing; generating again replaces the pending value
 - **Required confirmation:** Type exactly `CREATE DKIM KEY FOR [@Aegion_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-gmail-delivery-dkim-generate-portal]:** Only after the exact match:
 1. Admin console → Apps → Google Workspace → Gmail → **Authenticate email** → select `[@Aegion_DOMAIN]` → **Generate New Record** → choose the 2048-bit key if the DNS host supports it, keep the default `google` prefix selector → **Generate**.
 2. Copy the TXT record name (`google._domainkey` by default) and the TXT record value shown. Do not click Start Authentication yet.
@@ -93,6 +96,7 @@ Two different tickets hide under "mail problems":
 - **Reversibility:** R1 — delete the TXT record at the DNS host under its own phrase
 - **Required confirmation:** Type exactly `ADD DKIM TXT RECORD FOR [@Aegion_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-gmail-delivery-dkim-dns-portal]:** Only after the exact match, by the human administrator at the DNS host:
 1. At the DNS host, add a TXT record with the name and value copied from the Authenticate email page.
 2. Save, then **WAIT UNTIL** the record resolves. Google says DKIM authentication can take up to 48 hours to start working after the key is added, and the Admin console may keep showing "You must update the DNS records" for up to 48 hours.
@@ -104,6 +108,7 @@ Two different tickets hide under "mail problems":
 - **Reversibility:** R1 — signing can be turned off again from the same Authenticate email page under its own phrase, after which receivers evaluate SPF alone [unverified: the fetched page does not quote the stop control]
 - **Required confirmation:** Type exactly `ENABLE DKIM SIGNING AND START AUTHENTICATION FOR [@Aegion_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-gmail-delivery-dkim-start-portal]:** Only after the TXT record resolves and the exact match:
 1. Admin console → Apps → Google Workspace → Gmail → **Authenticate email** → select `[@Aegion_DOMAIN]` → **Start Authentication**.
 2. Read-back: the page's status shows the domain authenticating, and a fresh test message's Show original reads DKIM PASS for `[@Aegion_DOMAIN]`.
@@ -115,6 +120,7 @@ Two different tickets hide under "mail problems":
 - **Reversibility:** R1 — delete the TXT record at the DNS host under its own phrase
 - **Required confirmation:** Type exactly `ADD DMARC RECORD FOR [@Aegion_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-gmail-delivery-dmarc-add-portal]:** Only after SPF and DKIM have been authenticating for at least 48 hours (Google's prerequisite) and the exact match:
 1. At the DNS host, add a TXT record at `_dmarc.[@Aegion_DOMAIN]` built from Google's "Set up DMARC" page — start with `v=DMARC1; p=none;` and a reporting address you control.
 2. Save, then read-back: the `dig` query below returns the record, and a fresh test message's Show original reads DMARC PASS.

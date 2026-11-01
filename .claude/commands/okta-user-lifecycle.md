@@ -113,6 +113,7 @@ node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
 - **Reversibility:** R1: there is no undo as such; a new reset replaces it and the user sets the password they will use
 - **Required confirmation:** Type exactly `RESET OKTA PASSWORD FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [okta-user-lifecycle-reset-password-portal]:** Only after identity is verified out of band and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **Reset or Remove password**.
 2. Pick **Send a password reset email** (the link goes to the primary and secondary email and expires in one hour) or **Create a temporary password** (the account is marked expired and the user must change it at sign-in); tick **Sign out user** to end their sessions on every device and browser; click **Reset password**.
@@ -140,6 +141,7 @@ If it fails, read Reports → System Log for `[UPN]` before anything else and ne
 - **Reversibility:** R1: not reversible and none needed; the user authenticates again on the next request
 - **Required confirmation:** Type exactly `CLEAR OKTA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [okta-user-lifecycle-clear-sessions-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Clear User Sessions**.
 2. In the **Clear sessions and revoke tokens** dialog, tick **Also include logout enabled apps and Okta API tokens** when the tokens must go too, then click **Clear and revoke**.
@@ -163,6 +165,7 @@ node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_I
 - **Reversibility:** R1: undo is the Phase E unsuspend gate under its own phrase
 - **Required confirmation:** Type exactly `SUSPEND OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [okta-user-lifecycle-suspend-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Suspend**.
 2. Confirm in the dialog, then read the status back as **Suspended**.
@@ -185,6 +188,7 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 - **Reversibility:** R1: suspend again under the Phase D phrase
 - **Required confirmation:** Type exactly `REACTIVATE SUSPENDED OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [okta-user-lifecycle-unsuspend-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → **Suspended** (left menu) → `[UPN]` → **Activate**.
 2. Read the status back as **Active**.
@@ -205,6 +209,7 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 - **Reversibility:** R3: Okta Activate brings the account back, but app assignments may have to be re-assigned and the Okta password is permanently deleted; data an app destroys on deprovisioning (email, files) is not recovered by Okta
 - **Required confirmation:** Type exactly `DEACTIVATE OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-user-lifecycle-deactivate-portal]:** Only after the Phase A read-backs, the independent review for a multi-system offboarding, and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Deactivate**.
 2. Confirm in the **Deactivate Person** dialog, then read the status back as **Deactivated** (deactivation runs as a background task; admins receive an email listing users deactivated in the past 30 minutes).
@@ -231,6 +236,7 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 - **Reversibility:** R1: one account; the access it grants is undone by suspending it under the Phase D phrase (deactivating again is the separate R3 Phase F gate); the user has no password until they complete the activation email, so the account sits at Pending user action until then
 - **Required confirmation:** Type exactly `ACTIVATE OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [okta-user-lifecycle-activate-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → filter the **Status** menu to **Deactivated** → `[UPN]` → **Activate** on the profile page.
 2. Confirm in the **Activate Person** dialog, then read the status back as **Active** (or **Pending user action** until the user finishes the activation email).
@@ -260,6 +266,7 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 - **Reversibility:** R3: none; the deletion cannot be undone, and the username becomes reusable
 - **Required confirmation:** Type exactly `DELETE OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Okta verify-* command proves a deleted user, verify-status reads a live one: its proof is the read its step names)
 **PORTAL ACTION [okta-user-lifecycle-delete-portal]:** Only after the status reads Deactivated, the retention decision and the independent out-of-session review are in the ticket, and the exact match:
 1. Okta Admin Console → Directory → People → filter the **Status** menu to **Deactivated** → `[UPN]` → **Delete**.
 2. Click **Delete** in the **Delete Person** dialog, then read back: `[UPN]` no longer appears on the People page.
@@ -286,6 +293,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Reversibility: R1: no undo as such, a new reset replaces it. For an AD-sourced user the original AD password does not expire
 # Required confirmation: type exactly "RESET OKTA PASSWORD FOR [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="RESET OKTA PASSWORD FOR [USER_ID]"
 # shows the phrase
@@ -313,6 +321,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Reversibility: R1: not reversible and none needed, the user authenticates again
 # Required confirmation: type exactly "CLEAR OKTA SESSIONS FOR [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="CLEAR OKTA SESSIONS FOR [USER_ID]"
 # shows the phrase
@@ -340,6 +349,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Reversibility: R1: undo with the separate unsuspend gate below under its own phrase
 # Required confirmation: type exactly "SUSPEND OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="SUSPEND OKTA USER [USER_ID]"
 # shows the phrase
@@ -367,6 +377,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Reversibility: R1: suspend again under the suspend phrase
 # Required confirmation: type exactly "UNSUSPEND OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="UNSUSPEND OKTA USER [USER_ID]"
 # shows the phrase
@@ -394,6 +405,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Reversibility: R3: activation may need app assignments re-created, the Okta password is permanently deleted, app data destroyed by deprovisioning is not recovered
 # Required confirmation: type exactly "DEACTIVATE OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="DEACTIVATE OKTA USER [USER_ID]"
 # shows the phrase
@@ -421,6 +433,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Reversibility: R1: suspend under the suspend phrase undoes the access. Deactivating again is the separate R3 gate. The user has no password until they complete the activation link
 # Required confirmation: type exactly "ACTIVATE OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="ACTIVATE OKTA USER [USER_ID]"
 # shows the phrase
@@ -448,6 +461,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Reversibility: R3: none, the deletion cannot be undone
 # Required confirmation: type exactly "DELETE OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no Okta verify-* command proves a deleted user, verify-status reads a live one: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="DELETE OKTA USER [USER_ID]"
 # shows the phrase

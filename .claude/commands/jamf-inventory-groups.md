@@ -92,6 +92,7 @@ node scripts/adapters/jamf-client.js computer-detail --id [DEVICE_ID] --execute
 - **Reversibility:** R1: no Mac is touched; the undo is deleting the saved search, whose control is not in the sources read (confirm it on screen)
 - **Required confirmation:** Type exactly `CREATE SAVED SEARCH [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-inventory-groups-saved-search-portal]:** Only after the exact match:
 1. Jamf Pro → Computers → Search Inventory → **New** → name the search after `[ISSUE_ID]`.
 2. Criteria: the extension attribute (for Phase C step 3, the new criteria from the change record, in order); Display: the attribute, model, macOS version and last inventory update → **Save** → read the results and their number.
@@ -123,6 +124,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 # Reversibility: R1 - the inventory needs no undo since the next scheduled inventory replaces the values, but what a membership change set off is not undone by it - compare the GROUP_MEMBERSHIPS reads before and after
 # Required confirmation: type exactly "SUBMIT INVENTORY UPDATE FROM [SERIAL_NUMBER]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="SUBMIT INVENTORY UPDATE FROM [SERIAL_NUMBER]"
 # shows the phrase
@@ -193,6 +195,7 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 - **Reversibility:** R1: an unused group can be deleted again under Phase E's gate, and nothing on any Mac changed
 - **Required confirmation:** Type exactly `CREATE SMART GROUP [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-inventory-groups-smart-create-portal]:** Only after the predicted count is in the ticket and the exact match:
 1. Jamf Pro → Computers → Smart Computer Groups → **New** → display name `[SMART_GROUP]`.
 2. Criteria → **Add** → each criterion, operator and value from the change record, in order (criteria evaluate top to bottom) → **Save**. Write the save time as `[NOT_BEFORE]`.
@@ -220,6 +223,7 @@ node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --
 - **Reversibility:** R2 when nothing names the group and it holds 10 Macs or fewer, R3 otherwise: re-enter the old criteria from the ticket under a fresh run of this gate; installs, removals and policy runs already done downstream are not undone by restoring the criteria
 - **Required confirmation:** Type exactly `CHANGE CRITERIA OF SMART GROUP [SMART_GROUP] TO REACH [MEMBER_COUNT] MACS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-inventory-groups-smart-criteria-portal]:** Only after the pre-state, the list of uses, the predicted count, (for R3) the independent review, and the exact match:
 1. Jamf Pro → Computers → Smart Computer Groups → `[SMART_GROUP]` → **Edit** → Criteria → enter the criteria from the change record → **Save**. Write the save time as `[NOT_BEFORE]`.
 
@@ -256,6 +260,7 @@ node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execu
 - **Reversibility:** R2 up to 10 Macs, R3 above: restore the member list from the ticket under a fresh run of this gate; what a profile or policy already did on a Mac is not undone by restoring the list
 - **Required confirmation:** Type exactly `ADD [ADD_COUNT] AND REMOVE [REMOVE_COUNT] MACS IN STATIC GROUP [SMART_GROUP] TO REACH [MEMBER_COUNT] MACS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (each Mac is read with the computer read, not a verify-* command)
 **PORTAL ACTION [jamf-inventory-groups-static-members-portal]:** Only after the pre-state, the count, (for R3) the independent review, and the exact match:
 1. Jamf Pro → Computers → Static Computer Groups → `[SMART_GROUP]` → **Edit** → Assignments → tick or untick exactly the Macs the change record names → **Save**. Write the save time as `[NOT_BEFORE]`.
 
@@ -298,6 +303,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 - **Reversibility:** R3: not reversible; a group rebuilt from the criteria in the ticket gets a new ID and is attached to no scope until each scope is edited again
 - **Required confirmation:** Type exactly `DELETE SMART GROUP [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command proves a deleted group: its proof is the read its step names)
 **PORTAL ACTION [jamf-inventory-groups-delete-portal]:** Only after every use is removed and read back, the independent review, and the exact match:
 1. Jamf Pro → Computers → Smart Computer Groups → `[SMART_GROUP]` → **Delete** (the button and its dialog are not in the sources read; confirm both on screen).
 2. Confirm the dialog only if it names `[SMART_GROUP]`. Write the time as `[NOT_BEFORE]`.

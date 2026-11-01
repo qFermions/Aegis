@@ -78,6 +78,7 @@ Exit 0 is a read; exit 2 is a failed read (Slack answers `ok: false` and the ada
 - **Reversibility:** R1: set a different date through this same gate [slack-guests-connect-time-limit-portal] before the date (clearing the limit is not covered by this gate); after the date the guest is deactivated, and bringing it back is a reactivation in the Slack user lifecycle runbook [slack-user-lifecycle-reactivate-portal]
 - **Required confirmation:** Type exactly `SET TIME LIMIT FOR SLACK GUEST [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-guests-connect-time-limit-portal]:** Only after the Phase A read-back and the exact match:
 1. Slack → workspace name → Tools & settings → Manage members → ⋮ next to `[USER_ID]` → Change account type.
 2. Keep the guest's current type (Multi-channel guest or Single-channel guest) → Next → set the time limit to the date in the ticket → confirm with the Make multi-channel guest or Make single-channel guest button. This path was read from a search excerpt; if the dialog offers no time limit for an existing guest, stop.
@@ -116,6 +117,7 @@ The member who received the invitation accepts it in Slack and chooses the chann
 - **Reversibility:** R2: Slack's mechanics allow removing the organization later, but that removal is itself R3 [slack-guests-connect-remove-org-portal] and anything posted while connected has already been seen by the partner
 - **Required confirmation:** Type exactly `APPROVE SLACK CONNECT INVITATION FROM [EXTERNAL_DOMAIN] TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command reads a Slack Connect organization or invitation: its proof is the read its step names)
 **PORTAL ACTION [slack-guests-connect-approve-invitation-portal]:** Only after steps 1 to 4 and the exact match:
 1. Slack admin → Slack Connect settings → the pending request from `[EXTERNAL_DOMAIN]` for `#[CHANNEL_NAME]` → **Approve**. The request screen's exact path was not confirmed in the sources read; if it does not name this partner and this channel, stop.
 2. GUI read-back: Slack → `#[CHANNEL_NAME]` → click the channel name in the header → Settings → Organizations lists `[EXTERNAL_DOMAIN]`.
@@ -135,6 +137,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 - **Reversibility:** R1: the partner can send a new invitation, which comes back through the approve gate [slack-guests-connect-approve-invitation-portal] (a search excerpt says the inviter must send a new one; not confirmed on the page itself)
 - **Required confirmation:** Type exactly `DECLINE SLACK CONNECT INVITATION FROM [EXTERNAL_DOMAIN] TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-guests-connect-decline-invitation-portal]:** Only after the exact match:
 1. Slack admin → Slack Connect settings → the pending request from `[EXTERNAL_DOMAIN]` for `#[CHANNEL_NAME]` → **Decline**.
 2. Read-back: the request is no longer pending, and the Phase A `channel` read, run again, shows `is_pending_ext_shared` false and `is_ext_shared` unchanged from the Phase A read (true when the channel already shares with another organization; expected values, not confirmed on Slack's page).
@@ -157,6 +160,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 - **Reversibility:** R3: no undo is documented; sharing again needs a new invitation (from a search excerpt, unverified), and the files it shared stay inaccessible
 - **Required confirmation:** Type exactly `REMOVE ORGANIZATION [EXTERNAL_DOMAIN] FROM SLACK CHANNEL [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command reads a Slack Connect organization or invitation: its proof is the read its step names)
 **PORTAL ACTION [slack-guests-connect-remove-org-portal]:** Only after the independent review, the step 1 record and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → click the channel name in the header → Settings → Organizations → hover over `[EXTERNAL_DOMAIN]` → ⋮ → **Remove** → **Remove Organization**.
 2. GUI read-back: Settings → Organizations no longer lists `[EXTERNAL_DOMAIN]`.
@@ -174,6 +178,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 - **Reversibility:** R3: Slack's help says a disconnect cannot be undone; a new connection would need new invitations (unverified)
 - **Required confirmation:** Type exactly `DISCONNECT SLACK FROM ORGANIZATION [EXTERNAL_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command reads a Slack Connect organization or invitation: its proof is the read its step names)
 **PORTAL ACTION [slack-guests-connect-disconnect-org-portal]:** Only after the independent review, the step 1 record and the exact match:
 1. Slack → workspace name → Tools & settings → Workspace settings → Administration → Slack Connect connections → ⋮ next to `[EXTERNAL_DOMAIN]` → **Disconnect** `[EXTERNAL_DOMAIN]` → **Disconnect**.
 2. GUI read-back: Slack Connect connections no longer lists `[EXTERNAL_DOMAIN]`.
@@ -199,6 +204,7 @@ Before the gate: the Phase A member list is in the ticket, the channel is not `#
 - **Reversibility:** R2: unarchive under its own gate [slack-guests-connect-unarchive-portal], then add the recorded members back under [slack-guests-connect-readd-members-portal]; the members may not come back with the unarchive alone (Slack's page versions disagree), so the member list in the ticket is the pre-state
 - **Required confirmation:** Type exactly `ARCHIVE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `slack-client.js verify-archived --channel [CHANNEL_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [slack-guests-connect-archive-portal]:** Only after the member list is in the ticket and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → click the channel name in the header → Settings → **Archive channel** → confirm. These labels were read from a search excerpt; confirm them on screen.
 2. GUI read-back: Slack → Directories → filter to archived channels → `#[CHANNEL_NAME]` is listed.
@@ -216,6 +222,7 @@ node scripts/adapters/slack-client.js verify-archived --channel [CHANNEL_ID] --c
 - **Reversibility:** R1: archive it again under the archive gate [slack-guests-connect-archive-portal]
 - **Required confirmation:** Type exactly `UNARCHIVE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-guests-connect-unarchive-portal]:** Only after the exact match:
 1. Slack → Directories → filter to archived channels → `#[CHANNEL_NAME]` → click the channel name in the header → Settings → **Unarchive channel**. The label was not confirmed in the sources read.
 2. Read-back: compare the channel's members with the list in the ticket and write the missing members and their number in the ticket; that number is `$memberCount` for the re-add gate below. Nobody is added under this gate.
@@ -237,6 +244,7 @@ Before the re-add gate: the list in the ticket was written before the archive, p
 - **Reversibility:** R1 for one member, R2 for 2 to 10 members, R3 above 10 (a mass operation under SR-2, after the independent out-of-session review): the recorded list is the checkpoint; a person added by mistake comes out again under [slack-user-lifecycle-channel-remove-portal], having already seen the history
 - **Required confirmation:** Render the number of missing members as `$memberCount`, then type exactly `ADD $memberCount RECORDED MEMBERS BACK TO SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (proved in the GUI, the Slack connector reads no channel membership)
 **PORTAL ACTION [slack-guests-connect-readd-members-portal]:** Only after the unarchive read-back, the account read of each listed member with anyone left out written in the ticket, the missing members and their number in the ticket, for more than 10 members the independent out-of-session review of that list, and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → click the channel name in the header → the member list → add each member on the list, one by one (the add control's label was not in the sources read; confirm it on screen). Stop at the first person who is not on the list, and stop if the list no longer has `$memberCount` names.
 2. GUI read-back: the member list of `#[CHANNEL_NAME]` matches the recorded list. The adapter does not read channel membership, so this GUI read-back is the proof.

@@ -98,6 +98,7 @@ Before the gate: a request that is only a duplicate or a mistake keeps its histo
 - **Reversibility:** R3 (a delete): restorable from Recently deleted issues for 30 days (current docs and the schema; a 2021 changelog said 14, so restore within 14 days to be safe), then permanently removed; `Cmd/Ctrl Z` undoes it at once (search excerpt); the written rollback path is the restore gate below
 - **Required confirmation:** Type exactly `DELETE LINEAR ISSUE [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `linear-client.js verify-trashed --issue [ISSUE_ID] --change [CHANGE_ID] --execute`
 
 **Role needed:** Linear's pages as indexed do not say which role may delete an issue (unverified); take the safer reading and have a workspace Admin delete it.
 
@@ -119,6 +120,7 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → Archives → Recently
 - **Reversibility:** R1: deleting it again under the delete phrase
 - **Required confirmation:** Type exactly `RESTORE LINEAR ISSUE [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 
 **Role needed:** the same as for the delete: not stated by Linear (unverified), so a workspace Admin.
 
@@ -154,6 +156,7 @@ Capture the pre-state (R0):
 - **Reversibility:** R3 (more than 10 objects): no bulk undo is documented; reversal is moving each issue back to the status recorded beside it in [FILE_NAME], as its own reviewed change
 - **Required confirmation:** Type exactly `MOVE ISSUES LISTED IN [FILE_NAME] IN TEAM [@Aegion_LINEAR_TEAM] TO [STATE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --change [CHANGE_ID] --execute`
 
 **Role needed:** Linear documents no role for bulk edits (unverified); take the safer reading: a workspace Admin makes the change, after the independent review.
 
@@ -176,6 +179,7 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → the list filtered on 
 - **Reversibility:** R3: each issue is restorable for 30 days (14 by a 2021 changelog; restore early) with no documented bulk restore, then permanently removed; the written rollback path is a bulk restore of every identifier in [FILE_NAME], its own R3 change: [FILE_NAME] is its pre-state, it gets the independent review, each issue is restored under RESTORE LINEAR ISSUE [ISSUE_ID] and read back with the issue read, the restored count must equal the line count of [FILE_NAME], and it finishes before the last restore day
 - **Required confirmation:** Type exactly `DELETE ISSUES LISTED IN [FILE_NAME] IN TEAM [@Aegion_LINEAR_TEAM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `linear-client.js verify-trashed --issue [ISSUE_ID] --change [CHANGE_ID] --execute`
 
 **Role needed:** Linear does not state which role may delete issues (unverified); take the safer reading: a workspace Admin, after the independent review.
 
@@ -206,6 +210,7 @@ node scripts/adapters/linear-client.js verify-trashed --issue [ISSUE_ID] --chang
 - **Reversibility:** R3 (a security control that acts at once): unsuspending restores access (the schema's `userUnsuspend`); with SCIM on, only the identity provider can
 - **Required confirmation:** Type exactly `SUSPEND LINEAR MEMBER [USER@DOMAIN.COM] ID [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `linear-client.js verify-suspended --user [USER_ID] --change [CHANGE_ID] --execute`
 
 **Role needed:** a workspace Admin or Owner in Linear (the schema's `userSuspend` can only be called by a workspace admin or owner). A Member or Guest cannot suspend anyone and there is no workaround: escalate to an Admin with `/escalation-note`.
 
@@ -227,6 +232,7 @@ GUI read-back: Linear → Settings → Administration → Members → filtered o
 - **Reversibility:** R2: suspending again under the suspend phrase
 - **Required confirmation:** Type exactly `UNSUSPEND LINEAR MEMBER [USER@DOMAIN.COM] ID [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (verify-suspended passes only for a suspended member, so it cannot prove an unsuspend: its proof is the read its step names)
 
 **Role needed:** a workspace Admin or Owner (the schema's `userUnsuspend` "can only be called by a workspace admin or owner", the same rule as `userSuspend`).
 
@@ -254,6 +260,7 @@ node scripts/adapters/linear-client.js members --execute
 - **Reversibility:** R3: not reversible; a downloaded file cannot be recalled, so where it is stored and when it is destroyed is the only control
 - **Required confirmation:** Type exactly `EXPORT LINEAR WORKSPACE [@Aegion_LINEAR_ORG] DATA`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an export to the administrator computer leaves no state a read-back reads)
 
 **Role needed:** a workspace Owner (Linear's exporting-data page as indexed says Owners; whether that holds on every plan or only Enterprise is unclear, search excerpt). An Admin who is not an Owner stops here.
 

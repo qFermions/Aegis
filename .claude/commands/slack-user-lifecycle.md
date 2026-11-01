@@ -101,6 +101,7 @@ node scripts/adapters/slack-client.js users --limit 100 --execute
 - **Reversibility:** R1: an unaccepted invitation expires after 30 days; how to revoke a pending invitation was not in the sources read
 - **Required confirmation:** Type exactly `SEND SLACK INVITATION TO [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-user-lifecycle-invite-portal]:** Only after Phase A shows no existing account for the address and the exact match:
 1. Slack → the workspace name → Invite people to the workspace → enter `[USER@DOMAIN.COM]` → **Send** → Done.
 2. **WAIT UNTIL** the person accepts (30 days at most); then read `[USER_ID]` from Manage members.
@@ -127,6 +128,7 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 - **Reversibility:** R1: take the member out again under its own gate [slack-user-lifecycle-channel-remove-portal]; what the member read while in the channel stays read
 - **Required confirmation:** Type exactly `ADD SLACK MEMBER [USER_ID] TO CHANNEL [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-user-lifecycle-channel-add-portal]:** Only after the channel is on the ticket's list (or on the Phase A list for a returner) and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → channel name in the header → the member list → add `[USER@DOMAIN.COM]` (the add control's label was not in the sources read; confirm it on screen).
 2. Read-back: the member list of `#[CHANNEL_NAME]` shows the person. The adapter does not read channel membership, so this GUI read-back is the proof.
@@ -140,6 +142,7 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 - **Reversibility:** R1: add the member back under its own gate [slack-user-lifecycle-channel-add-portal]; what the member read while in the channel stays read
 - **Required confirmation:** Type exactly `REMOVE SLACK MEMBER [USER_ID] FROM CHANNEL [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-user-lifecycle-channel-remove-portal]:** Only after the ticket names the channel the person must leave (for example an add made by mistake) and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → channel name in the header → the member list → `[USER@DOMAIN.COM]` → remove them from the channel. The remove control's label was not in the sources read: confirm it on screen, and if there is none, stop.
 2. Read-back: the member list of `#[CHANNEL_NAME]` no longer shows the person. The adapter does not read channel membership, so this GUI read-back is the proof.
@@ -161,6 +164,7 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 - **Reversibility:** R3 by Aegis policy (an account disable): the account can be reactivated (Phase E, [slack-user-lifecycle-reactivate-portal]), but channel memberships do not come back and must be rebuilt from the Phase A list (Phase C, [slack-user-lifecycle-channel-add-portal])
 - **Required confirmation:** Type exactly `DEACTIVATE SLACK MEMBER [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `slack-client.js verify-deactivated --user [USER_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [slack-user-lifecycle-deactivate-portal]:** Only after the Phase A pre-state is in the ticket, the independent review for a multi-system offboarding, and the exact match:
 1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → **Deactivate account** → confirm.
 2. Newer layout (labels unconfirmed): Slack → Admin → Workspace settings → People → ⋮ next to `[USER@DOMAIN.COM]` → **Deactivate account** → confirm.
@@ -189,6 +193,7 @@ node scripts/adapters/slack-client.js verify-deactivated --user [USER_ID] --chan
 - **Reversibility:** R1: deactivate again through Phase D and its own gate [slack-user-lifecycle-deactivate-portal]
 - **Required confirmation:** Type exactly `REACTIVATE SLACK MEMBER [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-user-lifecycle-reactivate-portal]:** Only after the ticket confirms the return and the exact match:
 1. Workspace (newer layout, labels unconfirmed): Slack → Admin → Workspace settings → People → ⋮ next to `[USER@DOMAIN.COM]` → **Activate account**.
 2. Enterprise: Slack → the organization name → Tools & settings → Organization settings → People → Members → View Deactivated Members → tick `[USER@DOMAIN.COM]` → pick **Member**, or the guest type the Phase A record shows.
@@ -218,6 +223,7 @@ node scripts/adapters/slack-client.js verify-reactivated --user [USER_ID] --exec
 - **Reversibility:** R2 (narrows access): change it back under the gate for the type the Phase A record shows ([slack-user-lifecycle-to-multi-guest-portal] or [slack-user-lifecycle-to-member-portal]); channels lost here are rebuilt from the Phase A list under [slack-user-lifecycle-channel-add-portal]
 - **Required confirmation:** Type exactly `CONVERT SLACK ACCOUNT [USER_ID] TO SINGLE-CHANNEL GUEST`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `slack-client.js verify-guest --user [USER_ID] --type single --change [CHANGE_ID] --execute`
 **PORTAL ACTION [slack-user-lifecycle-to-single-guest-portal]:** Only after the Phase A record is in the ticket, the stop check, and the exact match:
 1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → Change account type → **Single-channel guest** → Next.
 2. Set the one channel and the optional time limit in the dialog, then **Make single-channel guest**.
@@ -236,6 +242,7 @@ node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type singl
 - **Reversibility:** R2 (narrows a member's access, widens a single-channel guest's): change it back under the gate for the type the Phase A record shows ([slack-user-lifecycle-to-single-guest-portal] or [slack-user-lifecycle-to-member-portal]); channels a member loses here are rebuilt from the Phase A list under [slack-user-lifecycle-channel-add-portal]
 - **Required confirmation:** Type exactly `CONVERT SLACK ACCOUNT [USER_ID] TO MULTI-CHANNEL GUEST`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `slack-client.js verify-guest --user [USER_ID] --type multi --change [CHANGE_ID] --execute`
 **PORTAL ACTION [slack-user-lifecycle-to-multi-guest-portal]:** Only after the Phase A record is in the ticket, the stop check, and the exact match:
 1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → Change account type → **Multi-channel guest** → Next.
 2. Set the channels and the optional time limit in the dialog, then **Make multi-channel guest**.
@@ -254,6 +261,7 @@ node scripts/adapters/slack-client.js verify-guest --user [USER_ID] --type multi
 - **Reversibility:** R2 (widens access): convert it back under the gate for the guest type the Phase A record shows ([slack-user-lifecycle-to-single-guest-portal] or [slack-user-lifecycle-to-multi-guest-portal]); what the person read as a member stays read
 - **Required confirmation:** Type exactly `CONVERT SLACK ACCOUNT [USER_ID] TO REGULAR MEMBER`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (verify-guest passes only for a guest, so no Slack verify-* command proves a member: its proof is the read its step names)
 **PORTAL ACTION [slack-user-lifecycle-to-member-portal]:** Only after the Phase A record and the business owner's approval for full membership are in the ticket, and the exact match:
 1. Slack → the workspace name → Tools & settings → Manage members → ⋮ next to `[USER@DOMAIN.COM]` → Change account type → **Regular member** → Next, then confirm the dialog (its final label was not in the sources read; confirm it on screen).
 
@@ -281,6 +289,7 @@ node scripts/adapters/slack-client.js user --user [USER_ID] --execute
 - **Reversibility:** R3 (mass action): no undo, and none is needed for data, since nothing is lost; every affected member is interrupted and must sign in again
 - **Required confirmation:** Type exactly `RESET ALL SLACK SSO SESSIONS FOR [@Aegion_SLACK_URL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command reads sessions: its proof is the read its step names)
 **PORTAL ACTION [slack-user-lifecycle-session-reset-portal]:** Only after a ticket from a verified requester, the independent review, a warning to members, and the exact match:
 1. Slack → Admin → Workspace settings → Security → SSO & authentication → Force session reset → pick the group in the dialog → **Reset**.
 2. **WAIT UNTIL** members sign in again; on paid plans the access logs show sign-ins after the reset time.

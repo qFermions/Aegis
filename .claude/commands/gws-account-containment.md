@@ -101,6 +101,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R2: blocks all access and resets sign-in cookies and OAuth tokens; Phase F reactivates under its own phrase `REACTIVATE GOOGLE ACCOUNT [USER@DOMAIN.COM]`, but the reset tokens do not come back: the user signs in again and grants apps again
 - **Required confirmation:** Type exactly `SUSPEND COMPROMISED GOOGLE ACCOUNT [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-account-containment-suspend-portal]:** Only after the `user` read for `[USER@DOMAIN.COM]` (status, organizational unit and `isAdmin`) is in the ticket and the exact match:
 1. Admin console → Directory → Users → point to `[USER@DOMAIN.COM]` → **More options** → **Suspend user** (the path `/gws-offboard` records; the containment page itself was read only as a search excerpt).
 2. In the dialog, click **Suspend**, then read the status banner as Suspended.
@@ -127,6 +128,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R2: forward-only; the old password cannot be restored, and a reset does not invalidate an access token an attacker already holds (Google Cloud guidance, search excerpt)
 - **Required confirmation:** Type exactly `RESET PASSWORD OF COMPROMISED GOOGLE ACCOUNT [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-account-containment-password-portal]:** Only after Phase B's read-back and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **Password** → **Reset password** (search excerpt, support.google.com/a/answer/2537800).
 2. Pick an automatically generated password, turn on the option that asks the user to change it at the next sign-in, then click **Reset**.
@@ -158,6 +160,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R1: not undoable; the user creates a new app password after Phase F if one is still needed and still allowed
 - **Required confirmation:** Type exactly `REVOKE ALL APP PASSWORDS OF [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-account-containment-app-passwords-portal]:** Only after the app password names and count are in the ticket and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **App passwords** → read the list.
 2. Click **Revoke** on each entry (the label comes from a third-party source; confirm it on screen), then read the panel back as empty.
@@ -181,6 +184,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R1: not undoable by an admin; the user can grant the app again if API controls still allow it
 - **Required confirmation:** Type exactly `REVOKE OAUTH GRANT [APP_ID] FOR [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-account-containment-oauth-portal]:** Only after the app name and client ID are in the ticket and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **Connected applications** → `[APP_NAME]` → **Revoke** (labels from a third-party source; confirm them on screen).
 2. Read the Connected applications list back without `[APP_NAME]`.
@@ -235,6 +239,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R1: suspend again under the Phase B gate and its own phrase `SUSPEND COMPROMISED GOOGLE ACCOUNT [USER@DOMAIN.COM]`
 - **Required confirmation:** Type exactly `REACTIVATE GOOGLE ACCOUNT [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-account-containment-reactivate-portal]:** Only after the prerequisites and the exact match:
 1. Admin console → Directory → Users → filter User status on Suspended → point to `[USER@DOMAIN.COM]` → **More options** → **Reactivate** (the path `/gws-offboard` records).
 2. Confirm, then hand `[TEMP_PASSWORD]` to the real user through the verified channel; never the ticket, never a reply to the alert.
@@ -274,6 +279,7 @@ gam report login user "[USER@DOMAIN.COM]" start -7d   # sign-in events of the ac
 # Reversibility: R1: not undoable, the user creates a new app password if one is still needed
 # Required confirmation: type exactly "REVOKE ALL APP PASSWORDS OF [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="REVOKE ALL APP PASSWORDS OF [USER@DOMAIN.COM]"
 # shows the phrase
@@ -301,6 +307,7 @@ gam user "[USER@DOMAIN.COM]" print asps
 # Reversibility: R1: not undoable by an admin, the user can grant the app again if API controls allow it
 # Required confirmation: type exactly "REVOKE OAUTH GRANT [APP_ID] FOR [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="REVOKE OAUTH GRANT [APP_ID] FOR [USER@DOMAIN.COM]"
 # shows the phrase

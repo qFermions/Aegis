@@ -108,6 +108,7 @@ gh api --paginate orgs/[@Aegion_GITHUB_ORG]/teams/[TEAM_SLUG]/members
 - **Reversibility:** R1: undo is removing the direct grant under [github-repo-access-remove-portal]; code the person already read or cloned stays with them
 - **Required confirmation:** Type exactly `ADD [GITHUB_USER] TO [REPO_NAME] AS [ROLE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-repo-access-add-portal]:** Only after the Phase A reads are in the ticket, `[ROLE_NAME]` is read, triage or write, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Access) Collaborators & teams.
 2. Click **Add people** → choose `[GITHUB_USER]`.
@@ -139,6 +140,7 @@ node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --
 - **Reversibility:** R3 (privilege grant): the rollback path is written before step 1: [github-repo-access-change-role-portal] back to the Phase A role, or [github-repo-access-remove-portal] when Phase A showed no access; changes the person makes while holding the role are not undone by either
 - **Required confirmation:** Type exactly `GRANT [ROLE_NAME] ON [REPO_NAME] TO [GITHUB_USER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-repo-access-grant-portal]:** Only after the pre-state is saved, the approval and rollback path are in the ticket, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Access) Collaborators & teams.
 2. **New collaborator:** Click **Add people** → choose `[GITHUB_USER]` → under "Choose a role", pick `[ROLE_NAME]` → click **Add [GITHUB_USER] to [REPO_NAME]** (B-01).
@@ -168,6 +170,7 @@ node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --
 - **Reversibility:** R1 when the Phase A role was read, triage or write: undo is [github-repo-access-change-role-portal] again with the Phase A role; R2 when the Phase A role was maintain or admin: the Phase A reads are saved to tasks/checkpoints/ first, and the undo is [github-repo-access-grant-portal]
 - **Required confirmation:** Type exactly `CHANGE ROLE OF [GITHUB_USER] ON [REPO_NAME] TO [ROLE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-repo-access-change-role-portal]:** Only after the Phase A role is in the ticket (and saved to `tasks/checkpoints/` when it was maintain or admin) and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Access) Collaborators & teams.
 2. Next to `[GITHUB_USER]`, open the Role dropdown → pick `[ROLE_NAME]` (B-02).
@@ -194,6 +197,7 @@ node scripts/adapters/github-client.js verify-collaborator --repo [REPO_NAME] --
 - **Reversibility:** R2: re-add with the role saved in tasks/checkpoints/, under [github-repo-access-add-portal] for read, triage or write, or [github-repo-access-grant-portal] for maintain or admin
 - **Required confirmation:** Type exactly `REMOVE [GITHUB_USER] FROM [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-collaborator-removed --repo [REPO_NAME] --user [GITHUB_USER] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-repo-access-remove-portal]:** Only after the Phase A reads are saved to `tasks/checkpoints/` and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Access) Collaborators & teams.
 2. Next to `[GITHUB_USER]`, use the remove control, then confirm [unconfirmed: check in the GitHub UI: the control's label and its confirmation dialog].
@@ -222,6 +226,7 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 - **Reversibility:** R2 for read, triage or write on a team of 10 members or fewer; R3 for maintain or admin, or more than 10 members; undo is [github-repo-access-team-remove-portal], or this gate again with the Phase A role when the team already had access
 - **Required confirmation:** Type exactly `GRANT [ROLE_NAME] ON [REPO_NAME] TO TEAM [TEAM_SLUG] WITH [MEMBER_COUNT] MEMBERS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-collaborator --repo [REPO_NAME] --user [GITHUB_USER] --role [ROLE_NAME] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-repo-access-team-grant-portal]:** Only after `[MEMBER_COUNT]` is saved, the R3 rollback path when it applies, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Access) Collaborators & teams.
 2. Open the control that adds a team [unconfirmed: check in the GitHub UI: its label] → choose `[TEAM_SLUG]` → under "Choose a role", pick `[ROLE_NAME]` → click **Add [TEAM_SLUG] to [REPO_NAME]** (B-01).
@@ -241,6 +246,7 @@ The spot check proves the grant only for a member whose Phase A role was lower t
 - **Reversibility:** R2: give the team its Phase A role back under [github-repo-access-team-grant-portal]
 - **Required confirmation:** Type exactly `REMOVE TEAM [TEAM_SLUG] FROM [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads the access of a team to a repository, verify-team-member reads team membership: its proof is the read its step names)
 **PORTAL ACTION [github-repo-access-team-remove-portal]:** Only after the team's Phase A role and `[MEMBER_COUNT]` are saved to `tasks/checkpoints/` and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Access) Collaborators & teams.
 2. Next to `[TEAM_SLUG]`, use the remove control, then confirm [unconfirmed: check in the GitHub UI: the control's label].
@@ -267,6 +273,7 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 - **Reversibility:** R1: undo is [github-repo-access-team-member-remove-portal]
 - **Required confirmation:** Type exactly `ADD [GITHUB_USER] TO TEAM [TEAM_SLUG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-repo-access-team-member-add-portal]:** Only after the Phase A team list is in the ticket, the person is not already listed, and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → Teams → `[TEAM_SLUG]` → Members → add `[GITHUB_USER]` [unconfirmed: check in the GitHub UI: the Members tab and its add control].
 
@@ -284,6 +291,7 @@ node scripts/adapters/github-client.js verify-team-member --team [TEAM_SLUG] --u
 - **Reversibility:** R2: add them back under [github-repo-access-team-member-add-portal]
 - **Required confirmation:** Type exactly `REMOVE [GITHUB_USER] FROM TEAM [TEAM_SLUG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-team-member --team [TEAM_SLUG] --user [GITHUB_USER] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-repo-access-team-member-remove-portal]:** Only after the Phase A `team-members` read is saved to `tasks/checkpoints/` and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → Teams → `[TEAM_SLUG]` → Members → `[GITHUB_USER]` → the remove control [unconfirmed: check in the GitHub UI: its label].
 

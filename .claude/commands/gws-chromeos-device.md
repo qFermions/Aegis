@@ -69,6 +69,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 - **Reversibility:** R1 — the Phase C gate disables it again (Disable selected devices) under its own phrase
 - **Required confirmation:** Type exactly `RE-ENABLE CHROMEBOOK [DEVICE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-chromeos-device-reenable-portal]:** Only after the Admin log events read and the exact match:
 1. Admin console → Devices → Chrome → Devices → filter by status **Disabled** → check the box next to `[DEVICE_ID]`.
 2. At the top, click **Re-enable selected devices**, then click **Enable** to confirm.
@@ -88,6 +89,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 - **Reversibility:** R1 — Phase B (Re-enable selected devices) under its own phrase; a device enrolled into another organization in the meantime can no longer be disabled or re-enabled by you
 - **Required confirmation:** Type exactly `DISABLE CHROMEBOOK [DEVICE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-chromeos-device-disable-portal]:** Only after the exact match:
 1. Admin console → Devices → Chrome → Devices → filter by the current status → check the box next to `[DEVICE_ID]`.
 2. At the top, click **Disable selected devices** → choose **Disable with lock screen** → click **Disable**.
@@ -107,6 +109,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 - **Reversibility:** R3 — Google's dialog states the removed data cannot be undone; no re-enrollment is needed afterwards
 - **Required confirmation:** Type exactly `RESET CHROMEBOOK [DEVICE_ID] AND CLEAR USER PROFILES`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ChromeOS device: its proof is the device read its step names)
 **PORTAL ACTION [gws-chromeos-device-clear-profiles-portal]:** Only after the pre-state is recorded and the exact match:
 1. Admin console → Devices → Chrome → Devices → click the serial number of `[DEVICE_ID]` → Device details → **Reset**.
 2. Select **Clear User Profiles**, tick **I understand this will remove data from the device and cannot be undone**, then click **Reset** again.
@@ -120,6 +123,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 - **Reversibility:** R3 — cannot be undone; with forced re-enrollment off the device comes back unmanaged and must be enrolled manually (physical access needed)
 - **Required confirmation:** Type exactly `POWERWASH CHROMEBOOK [DEVICE_ID] BY FACTORY RESET`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ChromeOS device: its proof is the device read its step names)
 **PORTAL ACTION [gws-chromeos-device-powerwash-portal]:** Only after the forced re-enrollment value and the pre-state are recorded and the exact match:
 1. Admin console → Devices → Chrome → Devices → click the serial number of `[DEVICE_ID]` → Device details → **Reset**.
 2. Select **Factory Reset**, tick **I understand this will remove data from the device and cannot be undone**, then click **Reset** again.
@@ -139,6 +143,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 - **Reversibility:** R3 — no undo; to manage it again, wipe it (if it was not factory reset) and enroll it manually with an available upgrade — physical access, every time
 - **Required confirmation:** Type exactly `DEPROVISION CHROMEBOOK [DEVICE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ChromeOS device: its proof is the device read its step names)
 **PORTAL ACTION [gws-chromeos-device-deprovision-portal]:** Only after the independent review and the exact match:
 1. Admin console → Devices → Chrome → Devices → filter by the current status → check the box next to `[DEVICE_ID]` (devices with different reasons go in separate batches).
 2. At the top, click **Deprovision selected devices** → choose **Yes, factory reset** (resale, donation) or **No, keep existing data** (repair, RMA) → tick the box confirming you understand what re-enrolling takes.
@@ -160,6 +165,7 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 # Reversibility: R1 — the separate disable procedure under its own phrase
 # Required confirmation: type exactly "RE-ENABLE CHROMEBOOK [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="RE-ENABLE CHROMEBOOK [DEVICE_ID]"
 # shows the phrase
@@ -187,6 +193,7 @@ gam info cros "[DEVICE_ID]" fields status,lastsync
 # Reversibility: R1 — the separate re-enable procedure under its own phrase
 # Required confirmation: type exactly "DISABLE CHROMEBOOK [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="DISABLE CHROMEBOOK [DEVICE_ID]"
 # shows the phrase
@@ -214,6 +221,7 @@ gam info cros "[DEVICE_ID]" fields status,lastsync
 # Reversibility: R3 — the removed data cannot be recovered — no re-enrollment is needed
 # Required confirmation: type exactly "CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads a ChromeOS device: its proof is the device read its step names
 # the exact phrase to type
 required_confirmation="CLEAR USER PROFILES ON CHROMEBOOK [DEVICE_ID]"
 # shows the phrase
@@ -241,6 +249,7 @@ gam info cros "[DEVICE_ID]" fields status,lastsync,recentusers
 # Reversibility: R3 — cannot be undone — with forced re-enrollment off the device comes back unmanaged and must be enrolled manually
 # Required confirmation: type exactly "POWERWASH CHROMEBOOK [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads a ChromeOS device: its proof is the device read its step names
 # the exact phrase to type
 required_confirmation="POWERWASH CHROMEBOOK [DEVICE_ID]"
 # shows the phrase
@@ -268,6 +277,7 @@ gam info cros "[DEVICE_ID]" fields status,lastsync,lastenrollmenttime
 # Reversibility: R3 — no undo — wipe the device and enroll it manually to manage it again
 # Required confirmation: type exactly "DEPROVISION CHROMEBOOK [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads a ChromeOS device: its proof is the device read its step names
 # the exact phrase to type
 required_confirmation="DEPROVISION CHROMEBOOK [DEVICE_ID]"
 # shows the phrase

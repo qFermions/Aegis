@@ -77,6 +77,7 @@ node scripts/adapters/okta-client.js app-user --app [APP_ID] --user [OKTA_USER_I
 - **Reversibility:** R1: undo is the Phase D unassign gate under its own phrase; when Deactivate User provisioning is on, that undo deactivates the external account, so it is not a free undo
 - **Required confirmation:** Type exactly `ASSIGN [APP_NAME] TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [okta-app-assignment-assign-person-portal]:** Only after the exact match:
 1. Okta Admin Console → Applications and Resources → Applications → `[APP_NAME]` → **Assignments** → **Assign** → **Assign to People**.
 2. In the dialog, click **Assign** in the row for `[UPN]`, confirm the attribute values, click **Save and Go Back**, then **Done**.
@@ -106,6 +107,7 @@ It passes for a Group assignment too, so the **Type** column above decides Indiv
 - **Reversibility:** R2: unassigning the app from the group removes it from every member at once and is a separate reviewed change (Phase E preview); with Deactivate User provisioning on, that removal deactivates every member's external account
 - **Required confirmation:** Type exactly `ASSIGN [APP_NAME] TO GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-app-assignment-assign-group-portal]:** Only after the member count is recorded and the exact match:
 1. Okta Admin Console → Applications and Resources → Applications → `[APP_NAME]` → **Assignments** → **Assign** → **Assign to Groups**.
 2. Click **Assign** in the row for `[GROUP_EMAIL]`, click **Save and go back**, then **Done**.
@@ -131,6 +133,7 @@ If the spot check fails right after the save, **WAIT UNTIL** the Assignments tab
 - **Reversibility:** R2: reassigning under the Phase B phrase restores access and, with Deactivate User on, reactivates the external account; the app profile itself cannot be recovered (API warning), so R3 when the app's deprovisioning destroys data
 - **Required confirmation:** Type exactly `UNASSIGN [APP_NAME] FROM [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-app-assignment-unassign-person-portal]:** Only after the Type reads Individual, the Deactivate User setting is recorded, and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **Applications** tab.
 2. Click **X** next to `[APP_NAME]`, then **OK** in the **Unassign Application** dialog.
@@ -171,6 +174,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/groups/${GROUP_ID}/users?limit=2
 # Reversibility: R1: undo is the separate unassign gate below under its own phrase. With Deactivate User on, that undo deactivates the external account
 # Required confirmation: type exactly "ASSIGN [APP_NAME] TO [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="ASSIGN [APP_NAME] TO [USER_ID]"
 # shows the phrase
@@ -198,6 +202,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" 
 # Reversibility: R2: unassigning the app from the group is a separate reviewed change that removes it from every member
 # Required confirmation: type exactly "ASSIGN [APP_NAME] TO GROUP [GROUP_EMAIL]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="ASSIGN [APP_NAME] TO GROUP [GROUP_EMAIL]"
 # shows the phrase
@@ -225,6 +230,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/groups/${GROUP_ID
 # Reversibility: R2: reassigning under the assign phrase reactivates the external account, but the app profile is not recoverable. R3 when the app’s deprovisioning destroys data
 # Required confirmation: type exactly "UNASSIGN [APP_NAME] FROM [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="UNASSIGN [APP_NAME] FROM [USER_ID]"
 # shows the phrase

@@ -105,6 +105,7 @@ Before the gate: `verify-group-count` passes for the pilot group, Phase A step 5
 - **Reversibility:** R3: a security control on every pilot Mac; the written rollback is `/jamf-config-profiles` Phase G's first gate (the pilot group out of Targets), and whether that decrypts the disk was not confirmed in this batch's sources (safer reading: it does not, and it only stops enforcement)
 - **Required confirmation:** Type exactly `CREATE AND SCOPE FILEVAULT PROFILE [PROFILE_NAME] TO [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute`; `jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-filevault-pilot-profile-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, no pilot Mac lists another FileVault or escrow profile, the pre-state (each pilot Mac's Phase A reads; no FileVault profile yet) and the rollback gate named in the ticket, and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → New → General: name `[PROFILE_NAME]`, computer level.
 2. In the FileVault payload, turn FileVault on with a personal recovery key and escrow it to Jamf Pro (payload labels unverified in this batch; the fields `/mac-troubleshoot` Branch B reads are the ones to set).
@@ -138,6 +139,7 @@ Rollout stage, after the pilot read-back passed for every pilot Mac and an indep
 - **Reversibility:** R3: a security control across the fleet; the written rollback is `/jamf-config-profiles` Phase G's third gate (the rollout group, more than 10 Macs, out of Targets, after its own review), and decryption is not confirmed to follow
 - **Required confirmation:** Type exactly `SCOPE AND DISTRIBUTE FILEVAULT PROFILE [PROFILE_NAME] TO [SMART_GROUP] TO TURN ON FILEVAULT`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
 **PORTAL ACTION [jamf-filevault-widen-profile-portal]:** Only after the pilot read-back, the profile's current scope in the ticket and the rollback gate named, the independent review, `verify-group-count` on the rollout group and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → Edit → Scope → Targets → `[SMART_GROUP]` (the rollout group) beside the pilot group, which stays in Targets → Save. Replacing the pilot group would remove the profile from pilot Macs outside the rollout group.
 2. When Jamf Pro asks how to distribute the change, choose **Distribute to Newly Assigned Devices Only**. The other choice sends a remove command and then reinstalls the profile on every Mac that already has it.
@@ -157,6 +159,7 @@ One Mac that needs the profile and is in neither group (Phase D's prerequisite, 
 - **Reversibility:** R3: a security control on one Mac; the written rollback is `/jamf-config-profiles` Phase E's exclusion gate, and decryption is not confirmed to follow
 - **Required confirmation:** Type exactly `ADD [SERIAL_NUMBER] TO FILEVAULT PROFILE [PROFILE_NAME] SCOPE AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
 **PORTAL ACTION [jamf-filevault-one-mac-scope-portal]:** Only after the pre-state and the written rollback are in the ticket, the Mac lists no other FileVault or escrow profile (Phase A step 5), and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → Edit → Scope → Targets → **Add** → `[SERIAL_NUMBER]` → Save. Whether the Targets picker lists single computers was not in this batch's sources: if it does not, stop; a one-Mac group is a separately reviewed change.
 2. When Jamf Pro asks how to distribute the change, choose **Distribute to Newly Assigned Devices Only**, so no other Mac gets a remove and a reinstall.
@@ -178,6 +181,7 @@ Before the gate: the requester is verified **[org gap]**, Phase A read Personal 
 - **Reversibility:** R3: a disclosure cannot be undone; the only remedy is Phase D, which replaces the key once the Mac is back with its user and the new password is set
 - **Required confirmation:** Type exactly `SHOW FILEVAULT KEY FOR [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a key shown on screen leaves no state a read-back reads)
 **PORTAL ACTION [jamf-filevault-show-key-portal]:** Only after the requester is verified and the exact match:
 1. Jamf Pro → Computers → Search Inventory → `[SERIAL_NUMBER]` → Inventory → Disk Encryption → Personal Recovery Key → **Show Key**.
 2. Read the key to the person at the Mac through the channel set in Inputs needed; they type it where the Mac asks for the recovery key and set a new password. The on-Mac steps are in Jamf's support article "How to Reset Passwords with the FileVault Recovery Key in Jamf Pro" (this batch read only its search excerpt). Then close the record.
@@ -201,6 +205,7 @@ Prerequisites: macOS 10.14 or later; the Mac has a valid escrowed key or a FileV
 - **Reversibility:** R2: the previous key cannot be restored; a failed run is fixed (escrow first) and run again under this same gate
 - **Required confirmation:** Type exactly `CREATE POLICY [POLICY_NAME] TO ISSUE NEW FILEVAULT KEY FOR [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once per computer" --enabled true --change [CHANGE_ID] --execute`; `jamf-client.js verify-filevault --serial [SERIAL_NUMBER] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-filevault-new-key-portal]:** Only after the prerequisites read true and the exact match:
 1. Jamf Pro → Computers → Policies → New → General: name `[POLICY_NAME]`, trigger Recurring Check-in, execution frequency Once per computer.
 2. Disk Encryption payload → Configure → Action: Issue New Recovery Key (Individual) → Scope → `[SERIAL_NUMBER]` → Save.

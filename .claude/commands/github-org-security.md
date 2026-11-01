@@ -127,6 +127,7 @@ gh api --paginate orgs/[@Aegion_GITHUB_ORG]/outside_collaborators
 - **Reversibility:** R3 (security control, mass removal): no undo for a removal; a removed person comes back only by a new invitation after turning 2FA on, planned in [github-org-security-2fa-rollback-preview]; turning the requirement off is a separate R3 change and re-adds nobody [unconfirmed: check in the GitHub UI]
 - **Required confirmation:** Type exactly `ENABLE 2FA REQUIREMENT FOR [@Aegion_GITHUB_ORG] AND REMOVE [MEMBER_COUNT] MEMBERS WITHOUT 2FA`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-2fa-required --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-org-security-2fa-require-portal]:** Only after steps 1 to 5 above, the review when it applies, and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → Settings → (Security) Authentication security (B-05).
 2. Select **Require two-factor authentication for everyone in your organization**, under "Two-factor authentication", then click **Save** (B-05).
@@ -163,6 +164,7 @@ node scripts/adapters/github-client.js members --filter 2fa_disabled --execute
 - **Reversibility:** R2: undo is [github-org-security-owner-grant-portal], an R3 grant
 - **Required confirmation:** Type exactly `CHANGE [GITHUB_USER] IN [@Aegion_GITHUB_ORG] FROM OWNER TO MEMBER`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads an organization role: its proof is the read its step names)
 **PORTAL ACTION [github-org-security-owner-demote-portal]:** Only after the pre-state is saved, the stop check, and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → People → tick `[GITHUB_USER]` only.
 2. Open the **X members selected...** dropdown (B-06); its count must read 1.
@@ -184,6 +186,7 @@ node scripts/adapters/github-client.js members --role admin --execute
 - **Reversibility:** R3 (privilege grant): the rollback path is written before step 1: [github-org-security-owner-demote-portal]; settings the person changes while an owner are not undone by it
 - **Required confirmation:** Type exactly `GRANT OWNER ROLE IN [@Aegion_GITHUB_ORG] TO [GITHUB_USER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads an organization role: its proof is the read its step names)
 **PORTAL ACTION [github-org-security-owner-grant-portal]:** Only after the pre-state is saved, the approval and rollback path are in the ticket, and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → People → tick `[GITHUB_USER]` only.
 2. Open the **X members selected...** dropdown (B-06); its count must read 1.

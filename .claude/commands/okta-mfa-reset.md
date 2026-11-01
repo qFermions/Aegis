@@ -69,6 +69,7 @@ node scripts/adapters/okta-client.js factors --user [OKTA_USER_ID] --execute
 - **Reversibility:** R2: not reversible; Okta states the action cannot be undone, and the only way back is the user's own re-enrollment
 - **Required confirmation:** Type exactly `RESET SELECTED OKTA AUTHENTICATORS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-mfa-reset-selected-portal]:** Only after identity is verified out of band and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Reset Authenticators**.
 2. Tick only **Okta Verify** (the old phone's enrollment), click **Reset Selected Authenticators**, then **Reset** in the confirmation prompt.
@@ -98,6 +99,7 @@ If Phase A also listed `signed_nonce` (FastPass), run the same read with `--fact
 - **Reversibility:** R3: not reversible; the action cannot be undone and the user re-enrolls from scratch
 - **Required confirmation:** Type exactly `RESET ALL OKTA AUTHENTICATORS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-mfa-reset-all-portal]:** Only after the triage decision is recorded in the ticket and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Reset Authenticators**.
 2. Tick every listed authenticator, click **Reset Selected Authenticators**, then **Reset**.
@@ -132,6 +134,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Reversibility: R2: not reversible. The enrollment is gone and the user enrolls again. The call is refused on a deactivated user
 # Required confirmation: type exactly "UNENROLL OKTA FACTOR FOR [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="UNENROLL OKTA FACTOR FOR [USER_ID]"
 # shows the phrase
@@ -159,6 +162,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Reversibility: R3: not reversible, the user enrolls every factor again
 # Required confirmation: type exactly "RESET ALL OKTA FACTORS FOR [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="RESET ALL OKTA FACTORS FOR [USER_ID]"
 # shows the phrase

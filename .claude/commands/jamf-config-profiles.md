@@ -120,6 +120,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 - **Reversibility:** R2: Phase G's first gate takes [SMART_GROUP] out of Targets, and each member gets a remove command at its next check-in; the profile's settings stay in force on a Mac until it applies that removal
 - **Required confirmation:** Type exactly `ADD [SMART_GROUP] TO PROFILE [PROFILE_NAME] SCOPE AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --change [CHANGE_ID] --execute`; `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute`; `jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`; `jamf-client.js verify-profile --serial "$serial" --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-pilot-scope-portal]:** Only after the count reads 10 or fewer, the pre-state is in the ticket, and the exact match:
 1. A new profile: Jamf Pro → Computers → Configuration Profiles → **New** → General: name `[PROFILE_NAME]`, level Computer, the distribution method the change record names; then the payload and its settings from the change record.
 2. An existing profile: open `[PROFILE_NAME]` → **Edit** and go straight to Scope. Change no payload or setting here: a payload change on a deployed profile is Phase F, under its own gate.
@@ -179,6 +180,7 @@ done < pilot-serials.txt
 - **Reversibility:** R3: Phase G's second gate takes All Computers out of Targets and every Mac outside the pilot gets a remove command at its next check-in; a Mac that stays offline keeps the profile until it checks in, and there is no faster undo
 - **Required confirmation:** Type exactly `ADD ALL COMPUTERS TO PROFILE [PROFILE_NAME] SCOPE AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute`; `jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-all-computers-portal]:** Only after the independent review, the fleet count, the written rollback and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Targets → choose **All Computers** (the selector's label is not in the sources read; confirm it on screen) → **Save**. Write the save time as `[NOT_BEFORE]`.
 2. If Jamf Pro asks how to distribute, choose **Distribute to Newly Assigned Devices Only**, so the pilot Macs keep the copy they already have.
@@ -218,6 +220,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 - **Reversibility:** R2: the next gate takes the exclusion away and the profile installs again at the next check-in; while excluded the Mac runs without the profile's settings
 - **Required confirmation:** Type exactly `ADD [SERIAL_NUMBER] TO PROFILE [PROFILE_NAME] EXCLUSIONS AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-exclude-portal]:** Only after the network check and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Exclusions → **Add** → pick `[SERIAL_NUMBER]` → **Save**. The Mac itself, never a group: if the picker does not list it, stop (step 3).
 2. If Jamf Pro asks how to distribute, choose **Distribute to Newly Assigned Devices Only**. Write the save time as `[NOT_BEFORE]`.
@@ -241,6 +244,7 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 - **Reversibility:** R2: the previous gate's phrase excludes it again
 - **Required confirmation:** Type exactly `REMOVE [SERIAL_NUMBER] FROM PROFILE [PROFILE_NAME] EXCLUSIONS AND DISTRIBUTE TO NEWLY ASSIGNED ONLY`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute`; `jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-unexclude-portal]:** Only after the `--absent` read-back passed and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Exclusions → **Remove** beside `[SERIAL_NUMBER]` → **Save**. Write the save time as `[NOT_BEFORE]`.
 2. If Jamf Pro asks how to distribute, choose **Distribute to Newly Assigned Devices Only**.
@@ -278,6 +282,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 - **Reversibility:** R2 or R3 as Scope says: re-enter the old values from the pre-state and run this gate again; each Mac goes through a second remove and reinstall, with a short gap without the profile each time
 - **Required confirmation:** Type exactly `DISTRIBUTE CHANGED PROFILE [PROFILE_NAME] TO ALL`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --change [CHANGE_ID] --execute`; `jamf-client.js verify-command --management-id [DEVICE_ID] --type INSTALL_PROFILE --profile-identifier [PROFILE_IDENTIFIER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-distribute-all-portal]:** Only after the pre-state, the count, (above 10 Macs) the independent review, and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → change only the payload values the change record names → **Save**.
 2. When Jamf Pro asks, choose **Distribute to All**. Write the time as `[NOT_BEFORE]`.
@@ -317,6 +322,7 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 - **Reversibility:** R2: Phase C's gate scopes the group again
 - **Required confirmation:** Type exactly `REMOVE [SMART_GROUP] FROM PROFILE [PROFILE_NAME] SCOPE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-remove-pilot-portal]:** Only after `verify-group-count` reads `[MEMBER_COUNT]` of 10 or fewer, the profile's current scope is in the ticket, and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Targets → **Remove** beside `[SMART_GROUP]` → **Save**. Write the save time as `[NOT_BEFORE]`.
 
@@ -341,6 +347,7 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 - **Reversibility:** R3: Phase D's gate widens the scope again, after its own review
 - **Required confirmation:** Type exactly `REMOVE ALL COMPUTERS FROM PROFILE [PROFILE_NAME] SCOPE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-remove-all-computers-portal]:** Only after the exact match; this rollback was part of Phase D's reviewed plan:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Targets → choose **Specific Computers** and keep the pilot group in the list (label not in the sources read; confirm on screen) → **Save**. Write the save time as `[NOT_BEFORE]`.
 
@@ -366,6 +373,7 @@ node scripts/adapters/jamf-client.js verify-profile --serial [SERIAL_NUMBER] --p
 - **Reversibility:** R3: adding the group back is its own reviewed change, and a member that applied the removal runs without the profile's settings until then
 - **Required confirmation:** Type exactly `REMOVE [SMART_GROUP] OF [MEMBER_COUNT] MACS FROM PROFILE [PROFILE_NAME] SCOPE AFTER REVIEW`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-profile --serial [SERIAL_NUMBER] --profile-id [PROFILE_ID] --profile-identifier [PROFILE_IDENTIFIER] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-config-profiles-remove-group-portal]:** Only after `verify-group-count` reads `[MEMBER_COUNT]`, the profile's current scope is in the ticket with this gate named as its way back, the independent out-of-session review, and the exact match:
 1. Jamf Pro → Computers → Configuration Profiles → `[PROFILE_NAME]` → **Edit** → Scope → Targets → **Remove** beside `[SMART_GROUP]` → **Save**. Write the save time as `[NOT_BEFORE]`.
 

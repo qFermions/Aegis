@@ -127,6 +127,7 @@ node scripts/adapters/slack-client.js digest --file [NOTE_FILE]
 - **Reversibility:** R1: a wrong or outdated update is answered by a correction, posted as a new message through this same gate [slack-incident-comms-status-post-portal] with its own draft, digest and phrase; taking the post down is a deletion, a separately reviewed change [slack-incident-comms-delete-post-preview]; anyone who already read it has read it
 - **Required confirmation:** Type exactly `SEND INCIDENT UPDATE TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-incident-comms-status-post-portal]:** Only after Phase A, the digest, and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → message box → paste the text of `[NOTE_FILE]` unchanged → **Send**.
 2. Do not edit the message afterwards; an edit changes the text and the read-back fails. A correction is a new post through this phase.
@@ -167,6 +168,7 @@ If `verify-posted` fails while the message is visible, the posted text differs f
 - **Reversibility:** R1: a wrong follow-up is answered by a correction, posted as a new message through this same gate [slack-incident-comms-resolved-post-portal] with its own draft, digest and phrase; taking the post down is a deletion, a separately reviewed change [slack-incident-comms-delete-post-preview]; anyone who already read it has read it
 - **Required confirmation:** Type exactly `SEND RESOLVED UPDATE TO [CHANNEL_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [slack-incident-comms-resolved-post-portal]:** Only after the fix is verified in the ticket, the digest, and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → message box → paste the text of `[NOTE_FILE]` unchanged → **Send**.
 2. GUI read-back: the message shows in `#[CHANNEL_NAME]` with the poster's name and time.

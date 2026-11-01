@@ -79,6 +79,7 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed   # baseline for the ne
 - **Reversibility:** R2 — not reversible from the Admin console; no undo is documented; a reverse transfer in the other direction is a new R2 with its own pre-state, and the Phase 1 counts plus the shared-items CSV are the only record of what moved
 - **Required confirmation:** Type exactly `TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names)
 **PORTAL ACTION [gws-drive-transfer-drive-portal]:** Only after the Phase 1 pre-state is in the ticket and the exact match:
 1. Admin console → Apps → Google Workspace → Drive and Docs → **Transfer ownership**.
 2. For **From user** enter `[USER@DOMAIN.COM]` and pick it from the results; for **To user** enter `[MANAGER_UPN]` and pick it from the results.
@@ -99,6 +100,7 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed   # baseline for the ne
 - **Reversibility:** R2 — not reversible from the Admin console; a user on litigation hold has nothing transferred; record the upcoming-event count with the user first
 - **Required confirmation:** Type exactly `TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names)
 **PORTAL ACTION [gws-drive-transfer-calendar-portal]:** Only after the exact match:
 1. Admin console → Apps → Google Workspace → Calendar → **Event and Secondary calendar management** → **Events transfer** → enter `[USER@DOMAIN.COM]`.
 2. Tick **Transfer events to other user** → enter `[MANAGER_UPN]` → **Transfer Events** → **Done**.
@@ -130,6 +132,7 @@ Two routes, different defaults: GAM's own per-file transfer leaves the source wi
 # Reversibility: R2 — not reversible — the Phase 1 counts and the shared-items CSV are the only record
 # Required confirmation: type exactly "TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="TRANSFER DRIVE OWNERSHIP FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
 # shows the phrase
@@ -159,6 +162,7 @@ gam user "[MANAGER_UPN]" print filecounts excludetrashed
 # Reversibility: R2 — not reversible from the Admin console — the Phase 1 counts are the only record
 # Required confirmation: type exactly "TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="TRANSFER ALL DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
 # shows the phrase
@@ -186,6 +190,7 @@ gam print datatransfers oldowner "[USER@DOMAIN.COM]"
 # Reversibility: R2 — not reversible from the Admin console — record the upcoming-event count first
 # Required confirmation: type exactly "TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="TRANSFER CALENDAR EVENTS OF [USER@DOMAIN.COM] TO [MANAGER_UPN] WITH GAM"
 # shows the phrase

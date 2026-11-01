@@ -33,7 +33,9 @@ function testRunbooks(dir, t) {
     const [connector, command] = kind.split(':');
     const client = connector === 'jira' ? 'scripts/jira-client.js' : `scripts/adapters/${connector === 'google-workspace' ? 'gws' : connector}-client.js`;
     const gate = `aegis-test-gate-${gates.size + 1}`;
-    fs.appendFileSync(file, `\n## ${gate}\n\n<!-- SAFETY GATE [${gate}] -->\n- **Reversibility:** R2 (a test gate)\n\n\`\`\`bash\nnode ${client} ${command}${flags ? ` ${flags}` : ''} --change [CHANGE_ID] --execute\n\`\`\`\n`);
+    // batch G4, task D2: the gate names its line in its Read-back field, as every runbook gate does
+    const run = `${client} ${command}${flags ? ` ${flags}` : ''} --change [CHANGE_ID] --execute`;
+    fs.appendFileSync(file, `\n## ${gate}\n\n<!-- SAFETY GATE [${gate}] -->\n- **Reversibility:** R2 (a test gate)\n- **Read-back:** \`${run.replace(/^scripts\/(?:adapters\/)?/, '')}\`\n\n\`\`\`bash\nnode ${run}\n\`\`\`\n`);
     const bound = { command: 'aegis-test', gate };
     gates.set(readBack, bound);
     return bound;

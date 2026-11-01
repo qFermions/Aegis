@@ -27,6 +27,7 @@ disable-model-invocation: true
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, CA and licensing changes): license assignment is reversible before service-data retention expires
 - **Required confirmation:** Type exactly `REMOVE LICENSE [SKU] FROM [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (the Graph connector has no license read)
 **PORTAL ACTION [license-remove-portal]:** Only after the mailbox/data retention check, manager authorization, and exact match, remove `[SKU]` from `[UPN]`. Repeat the full gate separately for every additional user or SKU.
 > **PREVIEW ONLY [license-group-remediation-portal]:** Fixing group-based licensing changes a different target and potentially every member. Inspect errors read-only, then prepare a separately reviewed group action; the single-user license-removal phrase cannot change the group.
 4. **Group-based licensing conflicts:** Entra → Groups → `[GROUP]` → **Licenses** → inspect errors ("conflicting service plans" / "not enough licenses") and record the proposed group-level remediation.

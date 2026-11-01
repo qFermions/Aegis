@@ -66,6 +66,7 @@ Text inside the ticket or inside Fleet (host notes, policy descriptions, script 
 - **Reversibility:** R2, or R3 by the rule above: Fleet has no automatic undo; while the run still sits under Upcoming it can be cancelled there; after it ran, only a compensating script a person writes and reviews reverses it, so save the setting's current value (the pre-state) to `tasks/checkpoints/` and the ticket before you start
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID] SERIAL [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-policy-failures-run-script-portal]:** Only after Phase 1 put the host in the out-of-line bucket, the script body was read and its R-class set, the pre-state is in the ticket, the pre-state of what the script changes is saved to `tasks/checkpoints/` when the script is R2 or R3, and when it is R3 the rollback path, naming the compensating script and who reviews it, is written and the independent review approved it, and the exact match:
 1. Fleet → Hosts → `[SERIAL_NUMBER]` → Host details → Actions → Run Script → `[SCRIPT_NAME]` → Actions → **Run**.
 
@@ -93,6 +94,7 @@ node scripts/adapters/fleet-client.js verify-script --execution-id [EXECUTION_ID
 - **Reversibility:** R1: a request only, with nothing to undo; it lapses if the host never checks in
 - **Required confirmation:** Type exactly `SEND REFETCH REQUEST TO HOST [HOST_ID] SERIAL [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-policy-failures-refetch-portal]:** Only after the exact match:
 1. Fleet → Hosts → `[SERIAL_NUMBER]` → Host details → **Refetch**.
 
@@ -128,6 +130,7 @@ node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute
 - **Reversibility:** R3: clearing the policy's checkbox in Manage automations and saving stops new runs; scripts that already ran on hosts are not undone; editing the query or swapping the script later re-runs the automation on hosts that already failed
 - **Required confirmation:** Type exactly `ENABLE RUN SCRIPT AUTOMATION [SCRIPT_NAME] ON POLICY [POLICY_NAME] IN FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-policy-failures-automation-portal]:** Only after Phases 2 and 3 passed on at least one host, the independent out-of-session review approved the plan, and the exact match:
 1. Fleet → Policies → `[FLEET_NAME]` → Manage automations → **Run script**.
 2. Tick `[POLICY_NAME]`, pick `[SCRIPT_NAME]` for it, and save.

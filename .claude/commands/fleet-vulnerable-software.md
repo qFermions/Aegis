@@ -60,6 +60,7 @@ CVSS scores, EPSS and the known-exploited flag are Fleet Premium. A fixed false 
 - **Reversibility:** R1: the title's Library entry can be deleted under its own phrase, which removes the offer; deleting does not uninstall from hosts, except on Android, where it does
 - **Required confirmation:** Type exactly `ADD SOFTWARE [APP_NAME] TO FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-vulnerable-software-add-software-portal]:** Only after Phase 1 and the exact match:
 1. Fleet → Software → `[FLEET_NAME]` → Add software → `[APP_NAME]` on the Fleet-maintained apps list → leave the install mode on manual, with any automatic install and self-service option off → **Add**.
 2. For a custom package instead, the same gate covers Fleet → Software → `[FLEET_NAME]` → Add software → Advanced options; read the version against `resolved_in_version`, and leave any automatic install and self-service option off, before saving.
@@ -87,6 +88,7 @@ node scripts/adapters/fleet-client.js activities --page 0 --per-page 20 --execut
 - **Reversibility:** R1: while pending, Host details → Activity → Upcoming → Cancel stops it; once installed, uninstalling is its own change under its own phrase and leaves the host without the app, so a failed patch is fixed forward, never by putting the vulnerable version back
 - **Required confirmation:** Type exactly `INSTALL [APP_NAME] ON HOST [HOST_ID] SERIAL [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-vulnerable-software-install-host-portal]:** Only after Phase 2 and the exact match:
 1. Fleet → Hosts → `[SERIAL_NUMBER]` → Host details → Software → Library → Available for install → `[APP_NAME]` → **Install**.
 
@@ -114,6 +116,7 @@ node scripts/adapters/fleet-client.js host-software --id [HOST_ID] --vulnerable 
 - **Reversibility:** R1: delete the policy under its own phrase; no host changes either way
 - **Required confirmation:** Type exactly `CREATE PATCH POLICY [POLICY_NAME] FOR [APP_NAME] IN FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-vulnerable-software-patch-policy-portal]:** Only after Phase 3 passed, the independent out-of-session review approved both Phase 4 gates together, and the exact match:
 1. For every title, a Fleet-maintained app included: Fleet → Policies → `[FLEET_NAME]` → **Add policy** → create your own policy with a version check a second person has read → Save → Save policy.
 2. Read the new policy's query under Fleet → Policies → `[FLEET_NAME]` → `[POLICY_NAME]`: it must fail on the exposed hosts and pass on the pilot host.
@@ -134,6 +137,7 @@ node scripts/adapters/fleet-client.js policies --fleet-id [FLEET_ID] --execute
 - **Reversibility:** R3: clearing the policy's checkbox in Manage automations and saving stops new installs; installs already done stay; removing the app from a host is a per-host uninstall under its own phrase
 - **Required confirmation:** Type exactly `ENABLE INSTALL SOFTWARE AUTOMATION [APP_NAME] ON POLICY [POLICY_NAME] IN FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Fleet verify-* command reads a policy automation: its proof is the read its step names)
 **PORTAL ACTION [fleet-vulnerable-software-install-automation-portal]:** Only after the policy read back as described, under the same independent review, and the exact match:
 1. Fleet → Policies → `[FLEET_NAME]` → Manage automations → **Install software**.
 2. Tick `[POLICY_NAME]`, pick `[APP_NAME]` for it, and save.

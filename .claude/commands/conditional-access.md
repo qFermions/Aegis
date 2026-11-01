@@ -145,6 +145,7 @@ Step 2 — Create the CA policy:
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, CA and licensing changes): reversible by disabling the policy with a verified emergency-access account
 - **Required confirmation:** Render the displayed immutable ID as `$policyId`, then type exactly `ENABLE CONDITIONAL ACCESS POLICY [POLICY_NAME] WITH ID $policyId`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (the Graph connector reads no Conditional Access policy)
 **PORTAL ACTION [conditional-access-enable-portal]:** After the 24–48 hour review, break-glass check, written rollback, and second-admin checkpoint, re-open the policy and verify both `[POLICY_NAME]` and `$policyId`. Only the exact match authorizes changing that exact policy from **Report-only** to **On** and saving.
 
 ---
@@ -207,6 +208,7 @@ if ([string]$candidate.Name -cne $moduleName -or [string]$candidate.Version -cne
 # Effect: installs one local PowerShell module without changing tenant policy
 # Scope: CurrentUser on this workstation
 # Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible through a separately reviewed Uninstall-Module action
+# Read-back: none, R1: no change record
 $requiredConfirmation = "INSTALL POWERSHELL MODULE $moduleName VERSION $moduleVersionText FROM $repositoryName"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm the local CurrentUser install"
 if ($confirmation -ceq $requiredConfirmation) {

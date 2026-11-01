@@ -63,6 +63,7 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 - **Reversibility:** R2 — one Mac, but unlocking needs [LOCK_PIN], data that must be captured before the command is sent (it is the pre-state): reversible by typing [LOCK_PIN] on the Mac; the PIN lives in the password manager, never in the ticket; on Apple silicon with macOS 11.4 or earlier the passcode is not set and the Mac boots to Recovery's Activation screen instead
 - **Required confirmation:** Type exactly `LOCK MAC [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
 **PORTAL ACTION [jamf-lock-erase-lock-portal]:** Only after `[LOCK_PIN]` is stored in the password manager and the exact match:
 1. Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → Management → **Lock Computer**.
 2. Enter the six-digit `[LOCK_PIN]` and an optional message with `[PHONE_NUMBER]`, then click **Lock Computer**.
@@ -82,6 +83,7 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 - **Reversibility:** R3 — not reversible; the data is gone unless it lives elsewhere; Activation Lock may still block reuse, and on a Mac the bypass code is entered through Recovery Assistant's "Activate with MDM key" option when Jamf Pro holds it
 - **Required confirmation:** Type exactly `WIPE MAC [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
 **PORTAL ACTION [jamf-lock-erase-wipe-portal]:** Only after the independent review, the Phase A read-back and the exact match:
 1. Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → Management → **Wipe Computer**.
 2. If the Remote Wipe Passcode field appears, enter six random digits on a T2 or Apple silicon Mac (no passcode is set on those; the field only applies to Macs that do not support Activation Lock), then click **Wipe Computer**.
@@ -108,6 +110,7 @@ Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → General �
 # Reversibility: R3 — only by enrolling the Mac again — Automated Device Enrollment or user-initiated enrollment
 # Required confirmation: type exactly "UNMANAGE MAC [SERIAL_NUMBER]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
 # the exact phrase to type
 required_confirmation="UNMANAGE MAC [SERIAL_NUMBER]"
 # shows the phrase
@@ -134,6 +137,7 @@ sudo profiles show
 - **Reversibility:** R3 — only by enrolling the Mac again; the settings those profiles carried are gone with them
 - **Required confirmation:** Type exactly `REMOVE MDM PROFILE FROM MAC [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
 **PORTAL ACTION [jamf-lock-erase-remove-mdm-portal]:** Only after the framework-removal read-back and the exact match:
 1. Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → Management → **Remove MDM Profile**.
 2. Confirm the dialog. The profile is removed at the next check-in; read it back on the Mac under System Settings → General → Device Management.
@@ -155,6 +159,7 @@ sudo profiles show
 - **Reversibility:** R1 — the Disable Lost Mode command in the same place; with a passcode set, Data Protection can cut network access after 48 hours or a restart, and a device that cannot receive the disable command may have to be erased
 - **Required confirmation:** Type exactly `ENABLE LOST MODE ON DEVICE [DEVICE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-lock-erase-lost-mode-portal]:** Only after the exact match:
 1. Jamf Pro → Devices → Search inventory → `[DEVICE_ID]` → Management → **Enable/Disable Lost Mode**.
 2. Choose the displayed information, enter the message and `[PHONE_NUMBER]`, optionally tick **Always enforce Lost Mode** and **Lost Mode Sound**, then click **Enable Lost Mode**.
@@ -180,6 +185,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 # Reversibility: R2 — reversible only by typing [LOCK_PIN] on the Mac — the PIN is pre-state: store it in the password manager first
 # Required confirmation: type exactly "LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
 # the exact phrase to type
 required_confirmation="LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # shows the phrase
@@ -207,6 +213,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 # Reversibility: R3 — not reversible — the data is gone unless it lives elsewhere
 # Required confirmation: type exactly "WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
 # the exact phrase to type
 required_confirmation="WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # shows the phrase

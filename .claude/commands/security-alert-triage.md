@@ -28,6 +28,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [security-session-revoke-portal]:** Only the separate exact match authorizes Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. Verify after propagation.
 
 **2. Contain (if account likely compromised):**
@@ -65,6 +66,7 @@ if (-not $user.AccountEnabled) { throw "The account is already blocked. No chang
 # Effect: blocks Microsoft Entra sign-in for that cloud-only account
 # Scope: one verified cloud-only user account
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by a separate reviewed re-enable action
+# Read-back: msgraph-client.js verify-account-enabled --user [USER_ID] --enabled false --change [CHANGE_ID] --execute
 $requiredConfirmation = "BLOCK CLOUD-ONLY SIGN-IN FOR $($user.UserPrincipalName) ID $($user.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -97,6 +99,7 @@ if (-not $adUser.Enabled) { throw "The authoritative AD account is already disab
 # Effect: disables the synchronized identity at its on-premises source of authority
 # Scope: one exact AD identity; no cloud write is authorized by this phrase
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible through a separately reviewed Enable-ADAccount action
+# Read-back: none, on-premises Active Directory: no connector reads it
 $requiredConfirmation = "DISABLE AUTHORITATIVE AD USER $($adUser.UserPrincipalName) GUID $($adUser.ObjectGuid)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -112,6 +115,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 # Effect: blocks cloud sign-in during the directory-sync propagation gap
 # Scope: one verified Entra identity after authoritative AD disable read-back
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by a separate reviewed cloud re-enable after AD recovery
+# Read-back: msgraph-client.js verify-account-enabled --user [USER_ID] --enabled false --change [CHANGE_ID] --execute
 $requiredConfirmation = "BLOCK CLOUD SYNC GAP FOR $($cloudUser.UserPrincipalName) ID $($cloudUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -137,6 +141,7 @@ if ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUs
 # Effect: invalidates Entra refresh tokens and browser session cookies
 # Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
+# Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 $requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

@@ -68,6 +68,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** R1 as a creation — the undo is the separate delete-user procedure (its own R3 gate; a super admin can restore for 20 days); a mistyped address is fixed with Rename user, not with a delete
 - **Required confirmation:** Type exactly `CREATE GOOGLE USER [USER@DOMAIN.COM] IN [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-new-user-create-portal]:** Only after Phase A confirmed Path B and the exact match:
 1. Admin console → Directory → Users → **Add new user**.
 2. Enter `[FIRST_NAME]`, `[LAST_NAME]` and the primary email `[USER@DOMAIN.COM]` (pick the domain from the drop-down if `[@Aegion]` has more than one); a secondary email only if the user has a current address that can receive their account details.
@@ -103,6 +104,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** R1 — the undo is the remove-member procedure in `/gws-group-membership` under its own phrase `REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]`
 - **Required confirmation:** Type exactly `ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-new-user-group-add-portal]:** Only after the exact match:
 1. Admin console → Directory → Groups → `[GROUP_EMAIL]` → **Members** → **Add members**.
 2. Enter the first characters of `[USER@DOMAIN.COM]`, select the match, then click **Add To Group**.
@@ -133,6 +135,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 # Reversibility: R1 as a creation — the undo is the separate delete-user procedure — 20-day restore window
 # Required confirmation: type exactly "CREATE GOOGLE USER [USER@DOMAIN.COM] IN [OU_PATH]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="CREATE GOOGLE USER [USER@DOMAIN.COM] IN [OU_PATH]"
 # shows the phrase
@@ -160,6 +163,7 @@ gam info user "[USER@DOMAIN.COM]"
 # Reversibility: R1 — the undo is the separate remove-member procedure under its own phrase
 # Required confirmation: type exactly "ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
 # shows the phrase

@@ -85,6 +85,7 @@ Prerequisites: GAM approved and authorized **[org gap]**; the folder from Inputs
 # Reversibility: R1, delete the local file, it holds real addresses so it never goes into Git or the ticket
 # Required confirmation: type exactly "WRITE GAM USERS EXPORT [FILE_NAME]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="WRITE GAM USERS EXPORT [FILE_NAME]"
 # shows the phrase
@@ -119,6 +120,7 @@ wc -l "[FILE_NAME]"
 # Reversibility: R1, delete the local file, it names every administrator so it never goes into Git or the ticket
 # Required confirmation: type exactly "WRITE GAM ADMINS EXPORT [FILE_NAME]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="WRITE GAM ADMINS EXPORT [FILE_NAME]"
 # shows the phrase
@@ -240,6 +242,7 @@ Read first: Admin console → Apps → Google Workspace → Gmail → End User A
 - **Reversibility:** R3: tick the box again under E2's own phrase `ALLOW AUTOMATIC FORWARDING FOR OU [OU_PATH]`; on a child unit whose captured value was Inherited, clicking Inherit is the exact undo, but it has no gate here, so it is a separate reviewed change
 - **Required confirmation:** Type exactly `TURN OFF AUTOMATIC FORWARDING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organizational unit setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-security-posture-forwarding-off-portal]:** Only after the current value and the approver are in the ticket and the exact match:
 1. Admin console → Apps → Google Workspace → Gmail → End User Access → pick `[OU_PATH]` on the left → **Automatic forwarding**.
 2. Clear the tick in **Allow users to automatically forward email to another address**, then click **Save** (on a child unit the button reads **Override**).
@@ -268,6 +271,7 @@ Automatic forwarding is a path for mail to leave the organization: the ticket na
 - **Reversibility:** R3: clear the tick again under E1's own phrase `TURN OFF AUTOMATIC FORWARDING FOR OU [OU_PATH]`; on a child unit whose captured value was Inherited, clicking Inherit is the exact undo, but it has no gate here, so it is a separate reviewed change; forwarding that users set up while it was allowed is the clean-up list, because the lane's sources do not confirm that turning it off stops it at once
 - **Required confirmation:** Type exactly `ALLOW AUTOMATIC FORWARDING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organizational unit setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-security-posture-forwarding-allow-portal]:** Only after the approver and the business reason are in the ticket and the exact match:
 1. Admin console → Apps → Google Workspace → Gmail → End User Access → pick `[OU_PATH]` on the left → **Automatic forwarding** → **Allow users to automatically forward email to another address** (tick it) → **Save** (on a child unit, **Override**).
 
@@ -295,6 +299,7 @@ Read first: Admin console → Security → Access and data control → API contr
 - **Reversibility:** R3: the rollback, setting the captured access level back for the same scope, is not authorized here: when that level is Trusted or Limited it opens access to Google Workspace data again, which is the separate reviewed change the app-trust preview below describes, with the captured level, the app's scopes, its user count and the approver; that written rollback path goes into the ticket before this gate runs
 - **Required confirmation:** Type exactly `BLOCK THIRD-PARTY APP [APP_NAME] ID [APP_ID] IN OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an app access setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-security-posture-app-block-portal]:** Only after the current access level, the user count, the approver and the written rollback path are in the ticket and the exact match:
 1. Admin console → Security → Access and data control → API controls → Manage Third-Party App Access → `[APP_NAME]` → **Change access** → scope `[OU_PATH]` → **Blocked** → confirm (the labels come partly from a search excerpt: confirm them on screen, and stop if they differ).
 

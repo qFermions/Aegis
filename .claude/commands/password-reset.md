@@ -25,6 +25,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): not reversible; another verified AD reset is required
 - **Required confirmation:** Type exactly `RESET AD PASSWORD FOR [first.last] MAPPED TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [password-reset-synced-portal]:** Only the exact match authorizes the synced-user branch. Never reset both copies of a synced identity.
 
 **Synced user (on-prem AD is authority):**
@@ -43,6 +44,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): not reversible; another verified cloud reset is required
 - **Required confirmation:** Type exactly `RESET CLOUD PASSWORD FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [password-reset-cloud-portal]:** Only the exact match authorizes the cloud-only branch. Stop if on-premises sync is enabled.
 1. **Microsoft 365 admin center** → Users → Active users → `[UPN]` → **Reset password**.
 2. Auto-generate or set temp; check **"Require this user to change their password"**.
@@ -54,6 +56,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [password-session-revoke-portal]:** Only after the separate exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. A password-reset confirmation never authorizes this effect; verify after propagation.
 
 **Combo case — MFA-locked too (new phone + forgotten password):** order matters.
@@ -86,6 +89,7 @@ if ($user.OnPremisesSyncEnabled -eq $true) {
 # Effect: replaces the cloud password and forces a change at next sign-in
 # Scope: one user account
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): not reversible; another verified reset is required
+# Read-back: msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 $requiredConfirmation = "RESET CLOUD PASSWORD FOR $($user.UserPrincipalName) WITH ID $($user.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -119,6 +123,7 @@ if ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUs
 # Effect: invalidates Entra refresh tokens and browser session cookies
 # Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
+# Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 $requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

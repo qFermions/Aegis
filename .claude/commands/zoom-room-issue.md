@@ -49,6 +49,7 @@ A room shows **offline** when it stops sending heartbeats to Zoom's cloud — al
 - **Reversibility:** R1 — the app starts again on its own; nothing is deleted, but a dropped meeting cannot be resumed
 - **Required confirmation:** Type exactly `RESTART ZOOM ROOMS APP IN [DEVICE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [zoom-room-restart-app-portal]:** Only after confirming no meeting is running in the room and the exact match:
 1. Zoom admin → Room Management → Zoom Rooms → `[DEVICE_NAME]` → **Edit** → **Devices** → **Restart Zoom Rooms App**.
 2. Confirm **Restart**, then **WAIT UNTIL** the room reads online in the portal.
@@ -60,6 +61,7 @@ A room shows **offline** when it stops sending heartbeats to Zoom's cloud — al
 - **Reversibility:** R1 — the computer boots back on its own; nothing is deleted
 - **Required confirmation:** Type exactly `RESTART ZOOM ROOMS COMPUTER IN [DEVICE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [zoom-room-restart-computer-portal]:** Only when the app restart did not help, and only after this separate exact match:
 1. Zoom admin → Room Management → Zoom Rooms → `[DEVICE_NAME]` → **Edit** → **Devices** → **Restart Zoom Rooms Computer**.
 2. Confirm **Restart**, then **WAIT UNTIL** the room reads online in the portal (allow the full boot time).

@@ -62,6 +62,7 @@ gam info user "[USER@DOMAIN.COM]"   # prints status, OU, suspension and 2SV enro
 - **Reversibility:** R1 — the old password cannot be restored; the undo is another reset under a fresh phrase, and the user replaces the temporary password at next sign-in anyway
 - **Required confirmation:** Type exactly `RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-password-reset-password-portal]:** Only after Phase A and the exact match:
 1. Admin console → Directory → Users → point to `[USER@DOMAIN.COM]` → **Reset password**.
 2. In the Reset password box pick **Automatically generate a password** (or **Create password** to type `[TEMP_PASSWORD]` for a phone handover), tick **Ask the user to change their password**, then click **Reset**.
@@ -84,6 +85,7 @@ gam info user "[USER@DOMAIN.COM]"   # prints status, OU, suspension and 2SV enro
 - **Reversibility:** R1 — nothing is deleted; the user signs back in with the new password. Under Okta SSO the Okta session can sign them straight back in, so end the Okta session first (Okta user-lifecycle procedure)
 - **Required confirmation:** Type exactly `RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-password-reset-cookies-portal]:** Only after the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **Sign-in cookies** → **Reset**.
 2. Click **Done**.
@@ -104,6 +106,7 @@ gam info user "[USER@DOMAIN.COM]"   # prints status, OU, suspension and 2SV enro
 # Reversibility: R1 — the old password cannot be restored — another reset under a fresh phrase is the only undo
 # Required confirmation: type exactly "RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]"
 # shows the phrase
@@ -131,6 +134,7 @@ gam info user "[USER@DOMAIN.COM]"
 # Reversibility: R1 — nothing is deleted — the user signs in again
 # Required confirmation: type exactly "RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]"
 # shows the phrase

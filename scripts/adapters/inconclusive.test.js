@@ -546,3 +546,50 @@ test('code review round 2, finding 3: fleet verify-deleted: a page with no meta 
   assert.deepEqual(pass.entry, [[true, 'OK']], pass.text);
 });
 
+// Finding 4: a record whose time could not be read was skipped as if it were not there, so an
+// otherwise matching record (Fleet verify-deleted created_at, Jamf Pro verify-command dateSent,
+// Linear verify-comment createdAt) gave exit 2. It may be the change asked for, sent after
+// --not-before: the answer proves nothing either way (INCONCLUSIVE, exit 5), unless another
+// record already proves the pass. A record that would not pass whatever its time is still left
+// out (a deletion that was not manual, a command that failed, a comment with other text).
+const HOST_GONE = { status: 404, headers: {}, body: '{"message":"not found"}' };
+const UNDATED = [
+  ['fleet verify-deleted: a manual deletion of this serial whose created_at is not a time', 'fleet', DELETED, [activityPage([deletion('manual', 'yesterday')], false)]],
+  ['fleet verify-deleted: a manual deletion of this serial with no created_at', 'fleet', DELETED, [activityPage([{ ...deletion('manual'), created_at: undefined }], false)]],
+  ['jamf verify-command: an Acknowledged command whose dateSent is not a time', 'jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ dateSent: 'not a time' })])]],
+  ['jamf verify-command: an Acknowledged command with no dateSent', 'jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ dateSent: null })])]],
+  ['jamf verify-command: a Pending command whose dateSent is not a time', 'jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ status: 'Pending', dateSent: '28/10/2026' })])]],
+  ['linear verify-comment: a comment with the expected text whose createdAt is not a time', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123', comments: { nodes: [{ id: 'c-1', body: 'expected note', createdAt: 'soon', user: { id: 'u' } }], pageInfo: { hasNextPage: false, endCursor: null } } } })]],
+  ['linear verify-comment: a comment with the expected text and no createdAt', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123', comments: { nodes: [{ id: 'c-1', body: 'expected note', user: { id: 'u' } }], pageInfo: { hasNextPage: false, endCursor: null } } } })]],
+];
+// the Linear cases need the digest of their body as --expect-sha256
+const LINEAR_NOTE_SHA = crypto.createHash('sha256').update('expected note').digest('hex');
+const withNoteSha = (argv) => argv.map((v) => (v === 'a'.repeat(64) ? LINEAR_NOTE_SHA : v));
+for (const [why, c, argv, replies] of UNDATED) {
+  test(`code review round 2, finding 4: ${why} is INCONCLUSIVE (exit 5), not skipped`, async () => {
+    assertInconclusive(await verdictOf(c, c === 'linear' ? withNoteSha(argv) : argv, replies));
+  });
+}
+const UNDATED_BESIDE_PROOF = [
+  ['fleet verify-deleted: an undated manual deletion beside a dated one', 'fleet', DELETED, [activityPage([deletion('manual', 'yesterday'), deletion('manual')], false), HOST_GONE]],
+  ['jamf verify-command: an undated Acknowledged command beside a dated one', 'jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ uuid: 'cmd-0', dateSent: 'not a time' }), jamfCommand()])]],
+  ['linear verify-comment: an undated matching comment beside a dated one', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123', comments: { nodes: [{ id: 'c-0', body: 'expected note', createdAt: 'soon', user: { id: 'u' } }, { id: 'c-1', body: 'expected note', createdAt: '2026-10-28T09:30:00Z', user: { id: 'u' } }], pageInfo: { hasNextPage: false, endCursor: null } } } })]],
+];
+for (const [why, c, argv, replies] of UNDATED_BESIDE_PROOF) {
+  test(`code review round 2, finding 4: ${why} passes: another record proves the change`, async () => {
+    const r = await verdictOf(c, c === 'linear' ? withNoteSha(argv) : argv, replies);
+    assert.equal(r.code, EXIT.OK, r.text);
+    assert.deepEqual(r.entry, [[true, 'OK']], r.text);
+  });
+}
+const UNDATED_NEVER_PROOF = [
+  ['fleet verify-deleted: an undated deletion that was not manual', 'fleet', DELETED, [activityPage([deletion('expiration', 'yesterday')], false)]],
+  ['jamf verify-command: an undated command that failed', 'jamf', JAMF_COMMAND, [token(), jamfCommands([jamfCommand({ status: 'Error', dateSent: 'not a time' })])]],
+  ['linear verify-comment: an undated comment with other text', 'linear', COMMENT, [linearData({ issue: { identifier: 'IT-123', comments: { nodes: [{ id: 'c-1', body: 'other note', createdAt: 'soon', user: { id: 'u' } }], pageInfo: { hasNextPage: false, endCursor: null } } } })]],
+];
+for (const [why, c, argv, replies] of UNDATED_NEVER_PROOF) {
+  test(`code review round 2, finding 4: ${why} stays a failed object (exit 2)`, async () => {
+    assertFailedObject(await verdictOf(c, c === 'linear' ? withNoteSha(argv) : argv, replies));
+  });
+}
+

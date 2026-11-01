@@ -101,6 +101,33 @@ test('readSheet takes 0, 1, 2, blank and NA, and refuses anything else with line
   assert.throws(() => calibrate.readSheet('ticket,answer\n'), /no case_id column/);
 });
 
+// Code review round 1 of batch G4, finding 10: a case id may start with '-' (cases.js ID_RE), the
+// formula guard gives that cell a leading apostrophe, and readSheet then refused the id it wrote.
+// Every valid id survives writeSheet then readSheet, with the guard kept and the apostrophe a
+// spreadsheet drops on save accepted too.
+test('a case id that starts with - survives the sheet round trip, guarded against formulas', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-judged-cal-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const ids = ['-DEV01', '-', '--x_9', `-${'a'.repeat(39)}`, 'DEV02'];
+  const res = ids.map((id) => ({ id, sut: { state: 'OK', answer: `answer of ${id}`, follow_up_answer: null } }));
+  const byId = new Map(ids.map((id) => [id, { id, ticket: `ticket of ${id}`, evidence: '', follow_up: '' }]));
+  const { file, count } = calibrate.writeSheet(dir, res, byId, ids.length, 'run-1');
+  assert.equal(count, ids.length);
+  const text = fs.readFileSync(file, 'utf8');
+  assert.match(text, /^'-DEV01,/m, 'the formula guard stays on the written cell');
+  const sheet = calibrate.readSheet(text);
+  assert.deepEqual([...sheet.keys()].sort(), [...ids].sort());
+  // a spreadsheet that drops the apostrophe on save writes the bare id, which reads the same
+  const saved = calibrate.readSheet(text.replace(/^'-/gm, '-'));
+  assert.deepEqual([...saved.keys()].sort(), [...ids].sort());
+  // only the guard's own apostrophe is taken off: an id that is not a case id is still refused
+  const header = calibrate.HEADER.join(',');
+  const blanks = calibrate.SCORE_COLUMNS.map(() => '').join(',');
+  for (const bad of ["'DEV01", "''-DEV01", "'=DEV01", "'-DEV 01"]) {
+    assert.throws(() => calibrate.readSheet(`${header}\n${bad},ticket,answer,${blanks}\n`), /case_id is not a case id/, bad);
+  }
+});
+
 test('agreement per row and overall, with counts, against the run\'s judge rows', () => {
   const sheet = new Map([
     ['DEV01', { classification: 2, risk: 0, correctness: 1, privacy: null }],

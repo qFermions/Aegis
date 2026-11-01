@@ -348,6 +348,11 @@ async function verifyWipe(read, args) {
     : list.filter((x) => typeof x.request_type === 'string' && /doWipe/.test(x.request_type));
   const command = newest(matching);
   observed['wipe command'] = commandView(command);
+  // a Windows doWipe whose status is pending, the documented command_status value (COMMAND_STATUS;
+  // the exact form of that status in the commands answer is not in the vendor facts, so any case
+  // is taken); one test for the paging note and the not-answered check below (code review round 3
+  // of batch G4, finding 14)
+  const windowsPending = windows && command !== null && typeof command.status === 'string' && command.status.toLowerCase() === 'pending';
   // The read takes one page of the host's commands. When more may follow, the wipe command may sit
   // on a later page (code review round 2 of batch G4, finding 6), and so may a newer one than the
   // newest on this page, whatever its status: a 200 or an Acknowledged here may be an older
@@ -377,7 +382,7 @@ async function verifyWipe(read, args) {
     } else {
       what = 'No doWipe command is';
       if (command !== null && String(command.status) === '200') what = 'The newest doWipe command read, with status 200, is';
-      else if (command !== null && typeof command.status === 'string' && command.status.toLowerCase() === 'pending') what = 'The newest doWipe command read, still pending, is';
+      else if (windowsPending) what = 'The newest doWipe command read, still pending, is';
       else if (command !== null) what = 'Only a doWipe command that did not succeed is';
       page = `on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read`;
       // the hand read continues this page of 100 only with the same page size (code review round 3
@@ -390,10 +395,8 @@ async function verifyWipe(read, args) {
   // a host wiping or wiped whose newest wipe command is not answered yet is not proved either way
   // (code review round 1 of batch G4, finding 12's class, as Jamf's Pending command): an Apple
   // EraseDevice Pending, or NotNow (Apple MDM's deferral status, which Fleet passes through), and
-  // a Windows doWipe whose status is pending, the documented command_status value (COMMAND_STATUS;
-  // the exact form of that status in the commands answer is not in the vendor facts, so any case
-  // is taken) (code review round 2 of batch G4, finding 5)
-  const notAnswered = command !== null && (apple ? command.status === 'Pending' || command.status === 'NotNow' : typeof command.status === 'string' && command.status.toLowerCase() === 'pending');
+  // a Windows doWipe pending (windowsPending, above) (code review round 2 of batch G4, finding 5)
+  const notAnswered = apple ? command !== null && (command.status === 'Pending' || command.status === 'NotNow') : windowsPending;
   if (statusOk && notAnswered) {
     const what = apple ? `The EraseDevice command is still ${command.status}` : 'The doWipe command is still pending';
     return { inconclusive: true, verified: false, observed, expected, note: `${what}, so the wipe is not proved yet: this is not proof either way. Read it again after the ${apple ? 'device acknowledges' : 'host answers'} the command.` };

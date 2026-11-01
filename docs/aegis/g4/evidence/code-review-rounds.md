@@ -54,18 +54,24 @@ After round 2's fixes: battery at `cf8b914`, `node --test` 1818/1818 and the sam
 
 | # | file:line | finding | disposition |
 |---|---|---|---|
-| 1 | `scripts/adapters/fleet-client.js:355` | Windows `verify-wipe`: a 200 doWipe on page 0 passes when more pages may follow, though a newer doWipe (the current wipe, still pending) may be on page 1; a false pass on an R3 read-back | F |
-| 2 | `scripts/adapters/gws-client.js:539`, `okta-client.js:535`, `msgraph-client.js:215`, `slack-client.js:666` | round 2 finding 4's class (a record that would prove the change but whose time cannot be read is skipped) in four more connectors (pre-existing, in files the diff does not touch) | F |
-| 3 | `scripts/adapters/fleet-client.js:335` | the Apple branch of `verify-wipe` never checks `meta.has_next_results` | F |
+| 1 | `scripts/adapters/fleet-client.js:355` | Windows `verify-wipe`: a 200 doWipe on page 0 passes when more pages may follow, though a newer doWipe (the current wipe, still pending) may be on page 1; a false pass on an R3 read-back || F: red `14241e9`, green `30dd405` (the red run showed the false pass: exit 0 on an old 200 with more pages) |
+| 2 | `scripts/adapters/gws-client.js:539`, `okta-client.js:535`, `msgraph-client.js:215`, `slack-client.js:666` | round 2 finding 4's class (a record that would prove the change but whose time cannot be read is skipped) in four more connectors (pre-existing, in files the diff does not touch) || F: red `55689c0`, green `d7cb9bf` (tests in `scripts/adapters/inconclusive-r3.test.js`) |
+| 3 | `scripts/adapters/fleet-client.js:335` | the Apple branch of `verify-wipe` never checks `meta.has_next_results` || F: red `fb69ed9`, green `52bc6b5` (the red run showed a second false pass: an Acknowledged EraseDevice on a page that says more follow gave exit 0) |
 | 4 | `scripts/adapters/fleet-client.js:360` | altitude: a Windows host with a long command history can never prove its wipe, since the read takes no page; ask newest first or walk pages | C: Fleet's ordering parameters for this endpoint are not in the vendor facts; INCONCLUSIVE is the safe direction (never a false pass); listed for the owner as a decision and a real-tenant question |
-| 5 | `scripts/audit/time-bound-capture.test.js:90` | a runbook whose change-bound time flags are all literal gets no per-file test; any sentence containing `approved_at` passes | F |
+| 5 | `scripts/audit/time-bound-capture.test.js:90` | a runbook whose change-bound time flags are all literal gets no per-file test; any sentence containing `approved_at` passes || F: red `61e8514`, green `c37665f` |
 | 6 | `scripts/adapters/fleet-client.js:358` | Windows: a page not full with no boolean `has_next_results` read as the last page, while `verify-deleted` reads it as unknown | C: the read asks for 100 per page, so a page of fewer is the last unless the server ignores `per_page`, which no vendor fact says; `verify-deleted` asks for no page size, so it cannot judge fullness; noted under vendor fact F-13 for the owner |
-| 7 | `scripts/adapters/fleet-client.js:360` | the paging return on a host not wiping gives exit 2 with a note that says "not proof either way" and drops the Windows status caveat | F |
-| 8 | `scripts/adapters/fleet-client.js:360` | the note names `--page 1` without `--per-page 100`, so the hand read does not continue page 0 | F |
-| 9 | `scripts/audit/change-record.js:375` | the unreadable-approval message points to `audit-log.js verify`, which already reported the chain intact; the README's claim about how such a trail arises is wrong | F |
-| 10 | `docs/aegis/owner/vendor-facts-priority.md:99` | F-13 matters to /fleet-device-actions' R3 gates but is filed under facts no gate rests on | F |
-| 11 | `PROJECT_STATE.md:178` | "22 fixed test first": three of them were doc-only | F |
-| 12 | `progress.md:8` | progress.md stale after round 2's fixes | F |
-| 13 | `scripts/adapters/github-client.js:312` | the reviews miss is removed by matching its text prefix; a reworded message makes `splice(-1, 1)` drop another miss | F |
-| 14 | `scripts/adapters/fleet-client.js:369` | the Windows pending test is written twice | F |
-| 15 | `scripts/adapters/jamf-client.js:612` | with both a Pending and an undated command, the undated count is left out of the output | F |
+| 7 | `scripts/adapters/fleet-client.js:360` | the paging return on a host not wiping gives exit 2 with a note that says "not proof either way" and drops the Windows status caveat || F: red `58c3002`, green `25e591c` |
+| 8 | `scripts/adapters/fleet-client.js:360` | the note names `--page 1` without `--per-page 100`, so the hand read does not continue page 0 || F: red `cf143ff`, green `6d848bc` |
+| 9 | `scripts/audit/change-record.js:375` | the unreadable-approval message points to `audit-log.js verify`, which already reported the chain intact; the README's claim about how such a trail arises is wrong || F: red `4cbdd19`, green `054a201` |
+| 10 | `docs/aegis/owner/vendor-facts-priority.md:99` | F-13 matters to /fleet-device-actions' R3 gates but is filed under facts no gate rests on || F: `25ed44d` (F-13 cited in the two R3 gate sections; the priority page files it under R3, `--check` exits 0) |
+| 11 | `PROJECT_STATE.md:178` | "22 fixed test first": three of them were doc-only || F: PROJECT_STATE.md Review row (this commit) |
+| 12 | `progress.md:8` | progress.md stale after round 2's fixes || F: progress.md (this commit) |
+| 13 | `scripts/adapters/github-client.js:312` | the reviews miss is removed by matching its text prefix; a reworded message makes `splice(-1, 1)` drop another miss || F: test `e0a2265` (passes at once: no behavior change), refactor `5f9d47c` |
+| 14 | `scripts/adapters/fleet-client.js:369` | the Windows pending test is written twice || F: refactor `f4981e6` (the suite is the check) |
+| 15 | `scripts/adapters/jamf-client.js:612` | with both a Pending and an undated command, the undated count is left out of the output || F: red `1f3370f`, green `3967486` |
+
+After round 3's fixes: battery at `25ed44d`, `node --test` 1857/1857 and the same under the socket tripwire, the four evals, lint, release boundary and scanner (0 BLOCK) pass (`docs/aegis/g4/evidence/r3-battery/`). No finding is left open after round 3.
+
+## Totals
+
+45 findings in three rounds: 35 fixed (27 with a red test first, two refactors with no behavior change, six doc-only), 10 closed with a reason; two further instances of round 1 finding 12's and round 2 findings 1 and 6's classes fixed test first by the lead. Three of the fixes closed false passes: round 2 finding 1 (GitHub `verify-protection` on `{}`), round 3 findings 1 and 3 (Fleet `verify-wipe` on a page with more behind it, Windows and Apple).

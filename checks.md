@@ -61,7 +61,8 @@ Branch `feat/g4-eval-and-closeout` on qFermions/Aegis, base `main` at `1f6647c` 
 |---|---|---|---|
 | `/security-review` 1 | `1f6647c..8492bee` (the whole branch) | no findings at confidence 8 or above; two observations below the bar kept for the owner (O1 CSV cells after a full-width equals sign or a leading line feed; O2 the system under test's Agent tool and repo agents with wider tools) | `docs/aegis/g4/evidence/security-review-1.md` |
 | `/code-review xhigh` round 1 | `origin/main...8492bee` | 15 found: 10 fixed, each test first in its own pair of commits (findings 1, 3, 4, 5, 6, 7, 8, 10, 11, 12; finding 12's class also fixed in Fleet), 5 closed (below) | `docs/aegis/g4/evidence/code-review-rounds.md` round 1 |
-| `/code-review xhigh` round 2 | `5f09f91..af47dc3` (diff only) | 15 found: 12 fixed (findings 1 to 9, 11, 12, 13), 3 closed (below) | `docs/aegis/g4/evidence/code-review-rounds.md` round 2 |
+| `/code-review xhigh` round 2 | `5f09f91..af47dc3` (diff only) | 15 found: 12 fixed (findings 1 to 9, 11, 12, 13), 3 closed (below); two more instances of findings 1's and 6's classes fixed test first (`926d46a`, `a6e3027`) | `docs/aegis/g4/evidence/code-review-rounds.md` round 2 |
+| `/code-review xhigh` round 3 (the last) | `9ea0f2b..74fe5db` (diff only) | 15 found: 13 fixed (findings 1, 2, 3, 5, 7, 8, 9, 15 test first; 13 and 14 refactors with no behavior change; 10, 11, 12 doc-only), 2 closed (below); none left open | `docs/aegis/g4/evidence/code-review-rounds.md` round 3 |
 
 Closed findings, one line each:
 
@@ -73,6 +74,8 @@ Closed findings, one line each:
 - R2-10 (`scripts/adapters/fleet-client.js:340`, `results: null` may be Go's empty list): shape not confirmed; INCONCLUSIVE is the safe direction (exit 5, never a pass); added to the owner's real-tenant questions.
 - R2-14 (`scripts/adapters/msgraph-client.js:59`, the ISO time pattern written four times): quality only; every connector's time bound is tested with the printed form, which catches a drift.
 - R2-15 (`scripts/audit/change-record.js:603`, `earlyRunBound` walks repeated flags): defense in depth at the trust boundary; no behavior difference while the parsers refuse repeats.
+- R3-4 (`scripts/adapters/fleet-client.js:360`, a Windows host with a long command history can never prove its wipe): Fleet's ordering parameters for this endpoint are not in the vendor facts; INCONCLUSIVE is the safe direction; for the owner as a decision and a real-tenant question.
+- R3-6 (`scripts/adapters/fleet-client.js:358`, a Windows page under 100 with no paging flag read as the last): the read asks for 100 per page, so fewer is the last page unless the server ignores `per_page`, which no vendor fact says; noted under vendor fact F-13.
 
 ## Deviations
 

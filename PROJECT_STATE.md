@@ -175,7 +175,7 @@ acceptance table in `checks.md`; the owner's one-page view in `docs/explainers/g
 | D1, one INCONCLUSIVE state | an answer that proves nothing either way is INCONCLUSIVE, exit 5, in all nine connectors; a counted change lists it as uncounted | `scripts/adapters/inconclusive.test.js` and the audit tests: 370/370 (`d1-green.txt`) |
 | D2, a `Read-back:` line in every gate | all 343 runbook gates name their read-back or `none (<reason>)`; change records bind from that line; a test fails when an R2 or R3 gate has neither | 6/6 and `node --test` 1608/1608 (`d2-green.txt`); one field removed fails naming the gate (`d2-field-removed.txt`) |
 | D3, the 31 R2 and R3 gates without a read-back | none bound: no existing connector read proves their change; 11 reasons now say why the nearest read is not a proof | 32/32 (`d3-green.txt`); the bound and unbound pin unchanged at 89 and 76 |
-| Review | `/security-review` 1: no findings; `/code-review xhigh` rounds 1 and 2: 30 findings, 22 fixed test first, 8 closed with reasons | `checks.md` Review rounds; `docs/aegis/g4/evidence/code-review-rounds.md` |
+| Review | `/security-review` 1: no findings; `/code-review xhigh` rounds 1 to 3: 45 findings, 35 fixed (27 with a red test first, 2 refactors, 6 doc-only), 10 closed with reasons; three fixes closed false passes (GitHub `verify-protection` on `{}`, Fleet `verify-wipe` on a page with more behind it, Windows and Apple) | `checks.md` Review rounds; `docs/aegis/g4/evidence/code-review-rounds.md` |
 
 ## Changed by the batch G3 close-out 3
 

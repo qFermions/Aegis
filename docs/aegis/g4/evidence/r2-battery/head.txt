@@ -1,0 +1,2 @@
+HEAD cf8b914 node v24.22.1 PowerShell 7.6.9
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

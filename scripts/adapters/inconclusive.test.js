@@ -265,8 +265,9 @@ test('every connector takes INCONCLUSIVE and its exit code from the shared contr
 
 // ── Code review round 1 of batch G4 ──────────────────────────────────────────
 // Finding 3: change-record.js approve prints approved_at with milliseconds, and the runbooks say
-// to run the read-back with --not-before at or after it. Every connector's time bound takes that
-// printed form (Microsoft Graph's comparison is tested in msgraph-client.test.js): a dry run of
+// to run the read-back with --not-before at or after it. Every connector's time bound but Jira's takes that
+// printed form (Jira's is the preview time its own client prints in ms, and no gate binds a Jira
+// read-back to a change; Microsoft Graph's comparison is tested in msgraph-client.test.js): a dry run of
 // each time-bounded read-back with it is a dry run (exit 4), not an input error (exit 1).
 const APPROVED_AT = '2026-10-28T09:00:00.412Z';
 async function runDry(c, argv) {

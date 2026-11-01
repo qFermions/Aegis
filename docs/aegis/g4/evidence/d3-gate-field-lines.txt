@@ -1,0 +1,7 @@
+# command: node docs/aegis/g3-closeout-3/evidence/tools/gate-field-lines.js ad9759a 209e120
+# commit: 209e120  started: 2026-11-01T01:39:55Z  node: v24.22.1
+gates at ad9759a: 343; at 209e120: 343
+gates removed: 0; gates added: 0
+gates whose only change is an R class put first on the Reversibility line: 0
+any other change to a gate field or PORTAL ACTION line: 0
+# exit: 0  finished: 2026-11-01T01:39:56Z

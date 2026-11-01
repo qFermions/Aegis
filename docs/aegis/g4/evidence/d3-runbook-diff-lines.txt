@@ -1,0 +1,7 @@
+# command: bash docs/aegis/g4/evidence/tools/runbook-diff-lines.sh 2a454b7 209e120
+# commit: 209e120 (plus uncommitted changes in the working tree)  started: 2026-11-01T01:39:56Z  node: v24.22.1
+lines added: 11; lines removed: 11
+lines added that are a Read-back field: 11
+lines removed that are a Read-back field: 11
+other lines added or removed:
+# exit: 0  finished: 2026-11-01T01:39:56Z

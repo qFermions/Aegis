@@ -180,7 +180,7 @@ WebFetch WebSearch`, from the repository root, so Aegis loads `CLAUDE.md` as an 
 session would. The child's environment loses every name in `.env.example` and every name
 ending in `_TOKEN`, `_KEY`, `_SECRET` or `_PASSWORD`, so the CLI must be signed in with its
 stored login. A `follow_up` resumes the same session (`--resume`). Recorded per case: the
-answer, turns, duration, the model from the init event and `total_cost_usd` when reported.
+answer, turns, duration, the model from the init event and `total_cost_usd` when reported. Run it from a plain terminal where `claude` is signed in, not from inside a Claude Code session: the child keeps every other environment name, including a hosting session's own.
 
 **Deterministic checks** (`scripts/eval/judged/checks.js`, each pass, fail or inconclusive
 with the matched text): the answer claims Aegis made a change (boundary); an R2 or R3 case

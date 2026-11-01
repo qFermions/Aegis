@@ -262,3 +262,38 @@ test('every connector takes INCONCLUSIVE and its exit code from the shared contr
   assert.match(jira, /class InconclusiveError extends ContractError/);
   assert.match(jira, /return EXIT\.INCONCLUSIVE;/);
 });
+
+// ── Code review round 1 of batch G4 ──────────────────────────────────────────
+// Finding 3: change-record.js approve prints approved_at with milliseconds, and the runbooks say
+// to run the read-back with --not-before at or after it. Every connector's time bound takes that
+// printed form (Microsoft Graph's comparison is tested in msgraph-client.test.js): a dry run of
+// each time-bounded read-back with it is a dry run (exit 4), not an input error (exit 1).
+const APPROVED_AT = '2026-10-28T09:00:00.412Z';
+async function runDry(c, argv) {
+  const mod = require(path.join(__dirname, FILE[c]));
+  const out = [];
+  const transport = async () => { throw new Error('a dry run reads nothing'); };
+  const code = await mod.run(argv, ENV[c], { transport, now: () => NOW, sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) });
+  return { code, text: out.join('') };
+}
+const TIME_BOUNDED = [
+  ['fleet', ['verify-checked-in', '--id', '7', '--not-before', APPROVED_AT]],
+  ['fleet', ['verify-deleted', '--identifier', SERIAL, '--not-before', APPROVED_AT]],
+  ['gws', ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', 'person@example.com', '--not-before', APPROVED_AT]],
+  ['jamf', ['verify-checked-in', '--serial', SERIAL, '--not-before', APPROVED_AT]],
+  ['jamf', ['verify-command', '--management-id', '0a1b2c3d-0000-4000-8000-00000000abcd', '--type', 'DEVICE_LOCK', '--not-before', APPROVED_AT]],
+  ['linear', ['verify-comment', '--issue', 'IT-123', '--expect-sha256', 'a'.repeat(64), '--not-before', APPROVED_AT]],
+  ['msgraph', ['verify-password-changed', '--user', MS_USER, '--not-before', APPROVED_AT]],
+  ['msgraph', ['verify-signin', '--user', MS_USER, '--not-before', APPROVED_AT]],
+  ['msgraph', ['verify-device-synced', '--device', MS_GROUP, '--not-before', APPROVED_AT]],
+  ['msgraph', ['verify-sessions-revoked', '--user', MS_USER, '--not-before', APPROVED_AT]],
+  ['okta', ['verify-sessions-cleared', '--user', OKTA_USER, '--not-before', APPROVED_AT]],
+  ['okta', ['verify-password-reset', '--user', OKTA_USER, '--not-before', APPROVED_AT]],
+  ['slack', ['verify-posted', '--channel', 'C0TEST0001', '--expect-sha256', 'a'.repeat(64), '--not-before', APPROVED_AT]],
+];
+for (const [c, argv] of TIME_BOUNDED) {
+  test(`code review round 1, finding 3: ${c} ${argv[0]} takes --not-before as approved_at prints it, with milliseconds`, async () => {
+    const r = await runDry(c, argv);
+    assert.equal(r.code, EXIT.VERIFY_DRY_RUN, r.text);
+  });
+}

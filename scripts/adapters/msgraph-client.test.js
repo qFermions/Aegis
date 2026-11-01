@@ -304,3 +304,52 @@ test('verify-method-absent: a GUID method id still listed in another case is sti
   const otherCase = await v(key.toLowerCase(), [key]);
   assert.equal(otherCase.code, 0, `a base64url id in another case is another id: ${otherCase.text}`);
 });
+
+// Code review round 1 of batch G4, finding 3: change-record.js approve prints approved_at with
+// milliseconds (2026-11-01T10:00:00.412Z) and the runbooks say to run the read-back with
+// --not-before at or after the approval. --not-before took whole seconds only, so the printed
+// value was refused, and cutting it to whole seconds landed before the approval. Every
+// --not-before (and --since, which shares its rule and the sign-in filter) now takes an ISO UTC
+// time with 1 to 3 fractional digits, compared at millisecond precision, and the audit entry
+// records it in the same form approved_at has.
+test('every --not-before takes the approved_at form with milliseconds and compares at millisecond precision', async () => {
+  const U = 'aaaaaaaa-0000-4000-8000-000000000001';
+  const D = 'cccccccc-0000-4000-8000-000000000003';
+  const T = '2026-10-28T09:00:00.412Z';
+  const BEFORE = '2026-10-28T09:00:00.411Z';
+  const recorded = [];
+  const audit = (e) => { recorded.push(e); return { seq: recorded.length }; };
+  const v = (argv, body) => cli([...argv, '--execute'], { replies: [token(), ok(body)], extra: { audit } });
+  const cases = [
+    [['verify-password-changed', '--user', U, '--not-before', T], (t) => ({ id: U, lastPasswordChangeDateTime: t })],
+    [['verify-signin', '--user', U, '--not-before', T], (t) => ({ value: [{ createdDateTime: t, status: { errorCode: 0 } }] })],
+    [['verify-device-synced', '--device', D, '--not-before', T], (t) => ({ id: D, lastSyncDateTime: t })],
+    [['verify-sessions-revoked', '--user', U, '--not-before', T], (t) => ({ id: U, signInSessionsValidFromDateTime: t })],
+  ];
+  for (const [argv, body] of cases) {
+    const at = await v(argv, body(T));
+    assert.equal(at.code, 0, `${argv[0]} at the bound: ${at.text}`);
+    assert.equal(at.json.verified, true, at.text);
+    const early = await v(argv, body(BEFORE));
+    assert.equal(early.code, 2, `${argv[0]} one millisecond before the bound: ${early.text}`);
+    assert.equal(early.json.state, 'OK', early.text);
+  }
+  // the audit entry records the bound as approved_at prints it
+  const verifies = recorded.filter((e) => e.kind === 'verify');
+  assert.equal(verifies.length, 8);
+  for (const e of verifies) assert.equal(e.flags, `--not-before ${T}`, JSON.stringify(e));
+  // the sign-in filter carries the bound as given
+  const signin = await v(cases[1][0], cases[1][1](T));
+  assert.ok(signin.transport.calls[1].path.includes(`createdDateTime+ge+${T.replace(/:/g, '%3A')}`), signin.transport.calls[1].path);
+  // one, two or three fractional digits; --since takes the same form
+  for (const t of ['2026-10-28T09:00:00.4Z', '2026-10-28T09:00:00.41Z', T]) {
+    assert.equal((await cli(['verify-password-changed', '--user', U, '--not-before', t])).code, 4, t);
+    assert.equal((await cli(['sign-ins', '--user', U, '--since', t])).code, 0, t);
+  }
+  // anything else is still refused before any read
+  for (const t of ['2026-10-28T09:00:00.4123Z', '2026-10-28T09:00:00.Z', '2026-10-28T09:00Z', '2026-10-28T09:00:00.412+00:00']) {
+    const r = await cli(['verify-password-changed', '--user', U, '--not-before', t, '--execute'], { replies: [token(), ok({})] });
+    assert.equal(r.code, 1, t);
+    assert.equal(r.transport.calls.length, 0, t);
+  }
+});

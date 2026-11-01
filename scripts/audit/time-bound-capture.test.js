@@ -50,6 +50,20 @@ function captureIn(line, p) {
   return null;
 }
 
+// whether a capture sentence says to take or use the approved_at as placeholder p (code review
+// round 3 of batch G4, finding 5): "take as [P] the approved_at ...", "use the approved_at ... as
+// [P]", or a definition "[P] (the time ...: the approved_at that ..."; a sentence that merely
+// holds the word (", not the approved_at") does not
+function takesApprovedAt(sentence, p) {
+  const q = `\`?${escape(p)}\`?`;
+  const at = '`?approved_at`?';
+  return [
+    new RegExp(`\\b(?:take|takes|use|uses)\\s+as\\s+${q}\\s+the\\s+${at}`, 'i'),
+    new RegExp(`\\b(?:take|takes|use|uses)\\s+the\\s+${at}(?:[^.;]|\\.(?!\\s))*?\\bas\\s+${q}`, 'i'),
+    new RegExp(`${q}\\s+\\((?:the\\s+)?(?:UTC\\s+)?time\\b[^)]*?[:,]\\s+the\\s+${at}\\s+that\\b`, 'i'),
+  ].some((f) => f.test(sentence));
+}
+
 // What breaks the ordering in one runbook, one sentence each.
 function captureProblems(text) {
   const lines = text.split('\n');
@@ -64,12 +78,14 @@ function captureProblems(text) {
   const isCommand = (l) => /^\s*node scripts\//.test(l) || /^- \*\*Read-back:\*\*/.test(l) || /^#\s*Read-back:/.test(l);
   const problems = [];
   const checked = [];
+  const timed = [];
   for (const b of changes.boundReadBacks(text)) {
     const rules = audit.PASS_FLAGS[b.kind] || {};
     for (let i = 1; i < b.argv.length; i += 1) {
       const name = b.argv[i].startsWith('--') ? b.argv[i].slice(2) : null;
       if (!name || rules[name] !== audit.TIME) continue;
       const p = b.argv[i + 1];
+      timed.push({ line: b.line, flag: name, value: p });
       if (!/^\[[A-Z0-9_]+\]$/.test(p || '')) { problems.push(`line ${b.line}: --${name} takes ${p}, not a placeholder whose capture can be checked`); continue; }
       checked.push({ line: b.line, flag: name, p });
       let found = null;
@@ -79,15 +95,16 @@ function captureProblems(text) {
         if (sentence) found = { at: j, sentence };
       }
       if (!found) { problems.push(`line ${b.line}: --${name} ${p} on a line run with --change, but no line above it says when ${p} is taken; take it as the approved_at that change-record.js approve prints`); continue; }
-      if (/approved_at/.test(found.sentence) || portal.has(found.at)) continue;
+      if (takesApprovedAt(found.sentence, p) || portal.has(found.at)) continue;
       problems.push(`line ${b.line}: --${name} ${p} on a line run with --change is taken at line ${found.at + 1} ("${found.sentence.slice(0, 140)}"), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself`);
     }
   }
-  return { problems, checked };
+  return { problems, checked, timed };
 }
 
-// whether a runbook gets its own test below
-const selected = (text) => captureProblems(text).checked.length > 0;
+// whether a runbook gets its own test below: every runbook with a change-bound time flag, a
+// literal value included (code review round 3 of batch G4, finding 5)
+const selected = (text) => captureProblems(text).timed.length > 0;
 
 const runbooks = fs.readdirSync(COMMANDS).filter((f) => f.endsWith('.md')).sort();
 const withTimed = runbooks.filter((f) => selected(fs.readFileSync(path.join(COMMANDS, f), 'utf8')));
@@ -138,7 +155,7 @@ test('round 3 F5: a sentence that holds approved_at without saying to take or us
   const accepted = [
     'Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate\'s change, and write it in the ticket.',
     'For a read-back run with `--change [CHANGE_ID]`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back\'s change.',
-    'Use the `approved_at` that `change-record.js approve` printed as `[NOT_BEFORE]`.',
+    'Use the `approved_at` that the approve command printed as `[NOT_BEFORE]`.',
     '`[NOT_BEFORE]` (the UTC time, ISO 8601, every read-back starts from: under a change record, the `approved_at` that `change-record.js approve` prints; otherwise the time you write down just before a change).',
     '`[NOT_BEFORE]` (the time a read-back starts from: for one run with `--change [CHANGE_ID]`, the `approved_at` that `change-record.js approve` printed for that change).',
   ];

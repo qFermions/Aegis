@@ -333,6 +333,9 @@ async function judge(command, a, client, steps) {
       // text, proves nothing either way (code review round 1 of batch G4, finding 6)
       const shown = command === 'verify-dependabot-alert' ? (v) => v === null || typeof v === 'string' : (v) => v !== undefined && v !== null;
       if (want && !shown(d[field])) return unproven(observed, `the answer does not show the ${field}, so this is not proof either way`);
+      // on an alert the answer calls dismissed, a dismissed_reason null contradicts the state, so
+      // it proves nothing either way (code review round 2 of batch G4, finding 7)
+      if (want && command === 'verify-dependabot-alert' && d.state === 'dismissed' && d[field] === null) return unproven(observed, 'the answer calls the alert dismissed but gives no dismissed_reason (null), so it contradicts itself and this is not proof either way');
       if (want && d[field] !== want) return { verified: false, observed, reason: d[field] === null ? `the ${field} is null (the alert was not dismissed), not ${want}` : `the ${field} is ${d[field]}, not ${want}` };
       return { verified: true, observed };
     }

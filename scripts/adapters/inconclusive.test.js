@@ -341,3 +341,22 @@ test('code review round 1, finding 6: github verify-dependabot-alert --reason: a
   assert.equal(pass.code, EXIT.OK, pass.text);
   assert.deepEqual(pass.entry, [[true, 'OK']], pass.text);
 });
+
+// Finding 7: Fleet verify-deleted reads at most ten pages of activities. When more pages exist
+// past those read and no manual deletion was found, the manual deletion may sit on the unread
+// pages, so the answer proves nothing either way, also when a newer deletion that was not manual
+// (an expiration, say) was found on the pages read.
+const DELETED = ['verify-deleted', '--identifier', SERIAL, '--not-before', NOT_BEFORE];
+const deletion = (triggeredBy, createdAt = '2026-10-28T11:30:00Z') => ({ id: 90, type: 'deleted_host', created_at: createdAt, details: { host_id: 7, host_serial: SERIAL, triggered_by: triggeredBy } });
+const activityPage = (activities, more) => ok({ activities, meta: { has_next_results: more } });
+test('code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, more pages unread past the ten read, is INCONCLUSIVE (exit 5)', async () => {
+  const pages = [activityPage([deletion('expiration')], true), ...Array.from({ length: 9 }, (_, i) => fleetActivities(i + 1))];
+  const r = await verdictOf('fleet', DELETED, pages);
+  assertInconclusive(r);
+  assert.equal(r.json.observed['activity pages read'], 10, r.text);
+});
+test('code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, the feed read to its end or back to --not-before, stays a failed object (exit 2)', async () => {
+  assertFailedObject(await verdictOf('fleet', DELETED, [activityPage([deletion('expiration')], false)]));
+  assertFailedObject(await verdictOf('fleet', DELETED, [activityPage([deletion('expiration'), { id: 1, type: 'edited_script', created_at: '2026-10-28T08:00:00Z', details: {} }], true)]));
+});
+

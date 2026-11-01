@@ -348,19 +348,38 @@ async function verifyWipe(read, args) {
     : list.filter((x) => typeof x.request_type === 'string' && /doWipe/.test(x.request_type));
   const command = newest(matching);
   observed['wipe command'] = commandView(command);
-  // Windows reads one page of the host's commands. When more may follow (the answer says so, or
-  // the page is full and gives no true or false has_next_results), the doWipe may sit on a later
-  // page (code review round 2 of batch G4, finding 6), and so may a newer doWipe than the newest
-  // on this page, whatever its status: a 200 here may be an older wipe's, the current one still
-  // pending or failed on a later page (code review round 3 of batch G4, finding 1)
-  if (windows) {
-    const meta = isObject(c.data.meta) ? c.data.meta : {};
-    const more = typeof meta.has_next_results === 'boolean' ? meta.has_next_results : c.data.results.length >= Number(WINDOWS_COMMANDS_PER_PAGE);
-    let what = 'No doWipe command is';
-    if (command !== null && String(command.status) === '200') what = 'The newest doWipe command read, with status 200, is';
-    else if (command !== null && typeof command.status === 'string' && command.status.toLowerCase() === 'pending') what = 'The newest doWipe command read, still pending, is';
-    else if (command !== null) what = 'Only a doWipe command that did not succeed is';
-    if (more) return { inconclusive: statusOk, verified: false, observed, expected, note: `${what} on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read, and more commands may follow, so the newest doWipe may be on a later page: this is not proof either way. Look for the doWipe on the next pages of the commands read (--page 1 and on), or in the host's activity in Fleet.` };
+  // The read takes one page of the host's commands. When more may follow, the wipe command may sit
+  // on a later page (code review round 2 of batch G4, finding 6), and so may a newer one than the
+  // newest on this page, whatever its status: a 200 or an Acknowledged here may be an older
+  // wipe's, the current one still pending or failed on a later page (code review round 3 of batch
+  // G4, findings 1 and 3).
+  // Windows asks for 100 per page: more may follow when the answer says so, or when the page is
+  // full and gives no true or false has_next_results.
+  // Apple's EraseDevice query names no per_page, so the page size is unknown and a page's fullness
+  // cannot be judged: only a has_next_results true says more follow; with no meta the page is
+  // judged as it stands (code review round 3 of batch G4, finding 3).
+  const meta = isObject(c.data.meta) ? c.data.meta : {};
+  const more = apple
+    ? meta.has_next_results === true
+    : (typeof meta.has_next_results === 'boolean' ? meta.has_next_results : c.data.results.length >= Number(WINDOWS_COMMANDS_PER_PAGE));
+  if (more) {
+    let what;
+    let page;
+    let next;
+    if (apple) {
+      what = 'No EraseDevice command is';
+      if (command !== null) what = command.status === 'Acknowledged' ? 'The newest EraseDevice command read, Acknowledged, is' : 'The newest EraseDevice command read, not Acknowledged, is';
+      page = 'on the first page of EraseDevice commands read';
+      next = 'Look for the newest EraseDevice on the next pages (commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --page 1, and on), or in the host\'s activity in Fleet.';
+    } else {
+      what = 'No doWipe command is';
+      if (command !== null && String(command.status) === '200') what = 'The newest doWipe command read, with status 200, is';
+      else if (command !== null && typeof command.status === 'string' && command.status.toLowerCase() === 'pending') what = 'The newest doWipe command read, still pending, is';
+      else if (command !== null) what = 'Only a doWipe command that did not succeed is';
+      page = `on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read`;
+      next = 'Look for the doWipe on the next pages of the commands read (--page 1 and on), or in the host\'s activity in Fleet.';
+    }
+    return { inconclusive: statusOk, verified: false, observed, expected, note: `${what} ${page}, and more commands may follow, so the newest ${apple ? 'EraseDevice' : 'doWipe'} may be on a later page: this is not proof either way. ${next}` };
   }
   const commandOk = command !== null && (apple ? command.status === 'Acknowledged' : String(command.status) === '200');
   // a host wiping or wiped whose newest wipe command is not answered yet is not proved either way

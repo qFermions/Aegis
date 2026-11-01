@@ -1311,9 +1311,10 @@ test('A3: a change whose read-back takes a time bound is not opened without it, 
   assert.match(good.json.next.join(' '), /--not-before at or after the approval/);
 });
 
-// --factor-type stays not a pass flag (scripts/adapters/verify-flags.js gives the reason), so it is
-// not among these cases.
-test('A3: a mismatched --expect-sha256, --type or --method is not done', (t) => {
+// --factor-type is a pass flag (the A3 fix on branch fix/g4-a3-factor-type): which factor was reset
+// is what an Okta verify-factor-reset pass proves, so a read of another factor type never proves
+// the change, and a read of the same one does.
+test('A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done', (t) => {
   const cases = [
     ['slack:verify-posted', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
     ['linear:verify-comment', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
@@ -1321,6 +1322,7 @@ test('A3: a mismatched --expect-sha256, --type or --method is not done', (t) => 
     ['jamf:verify-command', '--not-before --type INSTALL_PROFILE', (ms) => `--not-before ${iso(ms)} --type REMOVE_PROFILE`],
     ['slack:verify-guest', '--type single', () => '--type multi'],
     ['msgraph:verify-mfa-method', '--method microsoftAuthenticator', () => '--method phone'],
+    ['okta:verify-factor-reset', '--factor-type push', () => '--factor-type signed_nonce'],
   ];
   for (const [kind, named, other] of cases) {
     const tr = inProcessTrail(t);
@@ -1331,6 +1333,28 @@ test('A3: a mismatched --expect-sha256, --type or --method is not done', (t) => 
     assert.match(l.text, /this change is proved only by/, kind);
     assert.equal(tr.record(['status', '--change', change]).json.done, false, kind);
   }
+});
+
+test('A3: an Okta verify-factor-reset read-back of the factor type the change names is done; another type is not', (t) => {
+  const tr = inProcessTrail(t);
+  const kind = 'okta:verify-factor-reset';
+  const named = audit.parseReadBack(`${kind} --factor-type push`);
+  assert.equal(named.readBack, `${kind} --factor-type push`, 'the change names the factor type with its value');
+  assert.equal(audit.readBackFor(kind, ['verify-factor-reset', '--user', '00u1abcd2EFGH3ijk4x7', '--factor-type', 'push']), `${kind} --factor-type push`);
+  assert.equal(audit.passFlags(kind, ['verify-factor-reset', '--factor-type', 'token:software:totp']), '--factor-type token:software:totp');
+  assert.throws(() => audit.parseReadBack(`${kind} --factor-type Push Factor`), audit.AuditRefused, 'free text is not a factor type');
+  const { change } = tr.approvedChange(named.readBack);
+  const other = tr.read(kind, change, '--factor-type signed_nonce');
+  const l1 = tr.record(['link', '--change', change, '--verify-seq', String(other.seq)]);
+  assert.equal(l1.code, 2, l1.text);
+  assert.match(l1.text, /this change is proved only by okta:verify-factor-reset --factor-type push/);
+  assert.equal(tr.record(['status', '--change', change]).json.done, false);
+  const same = tr.read(kind, change, '--factor-type push');
+  const l2 = tr.record(['link', '--change', change, '--verify-seq', String(same.seq)]);
+  assert.equal(l2.code, 0, l2.text);
+  const st = tr.record(['status', '--change', change]);
+  assert.equal(st.code, 0, st.text);
+  assert.equal(st.json.done, true);
 });
 
 // ── Batch G4, task D1: one INCONCLUSIVE verdict state ─────────────────────────────────────────

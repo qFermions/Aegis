@@ -10,7 +10,9 @@
 // - The flags each command takes are read from the connector's own command table, so a flag added
 //   to a connector and not declared fails here; a declaration removed fails here too.
 // - The owner's minimum is declared as pass flags wherever a command takes it: --not-before,
-//   --absent, --expect-sha256, --type, --method and --expect.
+//   --absent, --expect-sha256, --type, --method and --expect, and --factor-type, which names the
+//   factor an Okta verify-factor-reset pass proves was reset (the A3 fix on branch
+//   fix/g4-a3-factor-type).
 // - The audit trail's PASS_FLAGS are built from these declarations and from nothing else.
 // Run: node --test scripts/adapters/verify-flags.test.js
 
@@ -73,21 +75,36 @@ test('a declaration removed, or a flag a connector takes that no declaration nam
   assert.ok(declared.undeclared(declared.VERIFY_FLAGS, fewer).includes('jamf verify-policy: declared, not a command'));
 });
 
-test('the owner\'s minimum is a pass flag wherever a command takes it: --not-before, --absent, --expect-sha256, --type, --method, --expect', () => {
+test('the owner\'s minimum is a pass flag wherever a command takes it: --not-before, --absent, --expect-sha256, --type, --method, --expect, --factor-type', () => {
   const t = taken();
   let seen = 0;
   for (const [connector, commands] of Object.entries(t)) {
     for (const [command, flags] of Object.entries(commands)) {
-      for (const flag of flags.filter((f) => ['not-before', 'absent', 'expect-sha256', 'type', 'method', 'expect'].includes(f))) {
+      for (const flag of flags.filter((f) => ['not-before', 'absent', 'expect-sha256', 'type', 'method', 'expect', 'factor-type'].includes(f))) {
         const rule = declared.VERIFY_FLAGS[connector][command][flag];
         assert.ok(declared.isPassRule(rule), `${connector} ${command} --${flag} is a pass flag`);
         seen += 1;
       }
     }
   }
-  assert.equal(seen, 28, `minimum flags seen: ${seen}`);
+  // 28 before the A3 fix on branch fix/g4-a3-factor-type, plus okta verify-factor-reset --factor-type
+  assert.equal(seen, 29, `minimum flags seen: ${seen}`);
   assert.equal(declared.VERIFY_FLAGS.msgraph['verify-sessions-revoked']['not-before'], declared.TIME);
   assert.equal(declared.VERIFY_FLAGS.jira['verify-create']['not-before'], declared.TIME);
+});
+
+test('okta verify-factor-reset --factor-type is a pass flag whose rule is the factor type the Okta connector accepts', () => {
+  const rule = declared.VERIFY_FLAGS.okta['verify-factor-reset']['factor-type'];
+  assert.ok(rule instanceof RegExp, 'a value rule, not a reason');
+  assert.ok(declared.isPassRule(rule));
+  assert.equal(audit.PASS_FLAGS['okta:verify-factor-reset']['factor-type'], rule, 'the trail reads the same rule');
+  // the same pattern okta-client.js checks --factor-type against before any read
+  const src = require('node:fs').readFileSync(require.resolve('./okta-client.js'), 'utf8');
+  const m = src.match(/^const FACTOR_TYPE = \/(.+)\/;$/m);
+  assert.ok(m, 'okta-client.js declares FACTOR_TYPE');
+  assert.equal(rule.source, m[1]);
+  for (const ok of ['push', 'sms', 'signed_nonce', 'token:software:totp', 'webauthn']) assert.ok(rule.test(ok), ok);
+  for (const bad of ['', 'Push Factor', 'push ', 'push;sms', 'PUSH', 'a:b:c:d:e']) assert.ok(!rule.test(bad), JSON.stringify(bad));
 });
 
 test('every flag that is not a pass flag says why, and the trail\'s PASS_FLAGS are exactly the declared pass flags', () => {

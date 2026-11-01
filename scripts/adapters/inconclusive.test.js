@@ -593,3 +593,48 @@ for (const [why, c, argv, replies] of UNDATED_NEVER_PROOF) {
   });
 }
 
+// Finding 5: round 1 finding 12's Fleet rule (a host wiping or wiped whose newest wipe command
+// is not answered yet proves nothing either way) covered an Apple EraseDevice in Pending only.
+// Apple MDM's NotNow (the device deferred the command, which Fleet passes through) and a Windows
+// doWipe whose status is pending (the documented command_status value, in any case) are not
+// answered yet either: INCONCLUSIVE (exit 5). A command that errored or failed stays a failed
+// object (exit 2), and so does any command on a host that is not wiping or wiped.
+const windowsWiping = fleetHost({ platform: 'windows', hardware_serial: SERIAL, mdm: { device_status: 'wiping', pending_action: 'wipe' } });
+const macWiped = fleetHost({ platform: 'darwin', hardware_serial: SERIAL, mdm: { device_status: 'wiped', pending_action: '' } });
+const macNotWiping = fleetHost({ platform: 'darwin', hardware_serial: SERIAL, mdm: { device_status: 'unlocked', pending_action: '' } });
+const windowsNotWiping = fleetHost({ platform: 'windows', hardware_serial: SERIAL, mdm: { device_status: 'unlocked', pending_action: '' } });
+const erase = (status, updatedAt = '2026-10-28T10:00:00Z') => ({ command_uuid: `e-${status}`, request_type: 'EraseDevice', status, updated_at: updatedAt });
+const doWipe = (status, updatedAt = '2026-10-28T10:00:00Z') => ({ command_uuid: `w-${status}`, request_type: './Device/Vendor/MSFT/RemoteWipe/doWipeProtected', status, updated_at: updatedAt });
+const commands = (results) => ok({ results });
+const WIPE_NOT_ANSWERED = [
+  ['a Mac wiping, its EraseDevice NotNow', [macWiping, commands([erase('NotNow')])]],
+  ['a Mac wiped, its newest EraseDevice NotNow after an older error', [macWiped, commands([erase('Error', '2026-10-28T09:10:00Z'), erase('NotNow')])]],
+  ['a Windows host wiping, its doWipe pending', [windowsWiping, commands([doWipe('pending')])]],
+  ['a Windows host wiped, its doWipe Pending', [windowsWiped, commands([doWipe('Pending')])]],
+];
+for (const [why, replies] of WIPE_NOT_ANSWERED) {
+  test(`code review round 2, finding 5: fleet verify-wipe: ${why} is INCONCLUSIVE (exit 5)`, async () => {
+    const r = await verdictOf('fleet', WIPE, replies);
+    assert.equal(r.code, EXIT.INCONCLUSIVE, r.text);
+    assert.equal(r.json.state, 'INCONCLUSIVE', r.text);
+    assert.equal(r.json.verified, false, r.text);
+    assert.deepEqual(r.entry, [[false, 'INCONCLUSIVE']], r.text);
+  });
+}
+const WIPE_STILL_FAILS = [
+  ['a Mac wiping, its EraseDevice errored', [macWiping, commands([erase('Error')])]],
+  ['a Mac not wiping, its EraseDevice NotNow', [macNotWiping, commands([erase('NotNow')])]],
+  ['a Windows host wiping, its doWipe failed with 500', [windowsWiping, commands([doWipe('500')])]],
+  ['a Windows host wiping, its doWipe failed', [windowsWiping, commands([doWipe('failed')])]],
+  ['a Windows host not wiping, its doWipe pending', [windowsNotWiping, commands([doWipe('pending')])]],
+];
+for (const [why, replies] of WIPE_STILL_FAILS) {
+  test(`code review round 2, finding 5: fleet verify-wipe: ${why} stays a failed object (exit 2)`, async () => {
+    const r = await verdictOf('fleet', WIPE, replies);
+    assert.equal(r.code, EXIT.READ_FAILED, r.text);
+    assert.equal(r.json.state, 'OK', r.text);
+    assert.equal(r.json.verified, false, r.text);
+    assert.deepEqual(r.entry, [[false, 'OK']], r.text);
+  });
+}
+

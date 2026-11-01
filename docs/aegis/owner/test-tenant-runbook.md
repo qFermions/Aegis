@@ -264,6 +264,12 @@ Good result: dry run exit 4; on a host that still exists, exit 2 (no `deleted_ho
   on the test server, run the scope check with its token, and record the role string in the refusal.
 - F-10: what `last_mdm_checked_in_at` means. Compare it with the host's last MDM check-in in the UI
   after a check-in you trigger on the test host.
+- F-13: whether Fleet answers an empty list as `[]` or as `null`. On the test host, read
+  `commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` (a host never
+  wiped has no such command) and `host-activities --id [HOST_ID] --page 99 --execute` and
+  `activities --page 99 --execute` (pages past the end), and record whether `results` and
+  `activities` come back as `[]` or `null`. Until then the read-backs read `null` as no list:
+  INCONCLUSIVE, exit 5, never a pass.
 
 ## GitHub (`github`)
 

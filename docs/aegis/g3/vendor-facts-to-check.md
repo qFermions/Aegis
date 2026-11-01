@@ -19,6 +19,7 @@ console or a support case before production; until then the code takes the safer
 | F-03 | the API role string for Fleet's Technician role | any role other than observer is refused | Fleet preflight |
 | F-10 | a prose definition of `last_mdm_checked_in_at` | shown as the vendor's field, not reinterpreted | endpoint MDM sync runbook |
 | F-11 | whether every Fleet endpoint sends `retry-after` on 429 | honoured when present | contract |
+| F-13 | whether Fleet's API answers an empty list as `[]` or as `null`: `results` from GET /api/v1/fleet/commands, and `activities` from GET /api/v1/fleet/activities and a host's activities (GET /api/v1/fleet/hosts/:id/activities); Fleet is written in Go, which can encode an empty list as `null` (code review round 2 of batch G4, finding 10) | `null` is read as no list: the read-back is INCONCLUSIVE (exit 5), never a pass and never a failed object | `fleet-client.js verify-wipe` and `verify-deleted`; `/fleet-device-actions` |
 | J-01 | the canonical Jamf Pro token path: `/api/v1/oauth/token` (current reference) or `/api/oauth/token` (what `jamf-client.js` sends, and older docs) | unchanged: `/api/oauth/token`; a 404 on the exchange ends in HTTP_ERROR, never a retry | `jamf-client.js` tokenExchange |
 | J-04 | whether `GET /api/v1/auth` lists privileges for an API client token | Jamf Pro is treated as not exposing scopes (`scope_notice`) | Jamf preflight |
 | J-05 | the full list of Jamf Pro action privileges | the manifest names the read privileges to grant, not a deny list | `scope-manifest.json` jamf |

@@ -7,9 +7,14 @@
 //   inferring the binding from where a line sits; a test fails when an R2 or R3 gate has neither."
 // - Each gate has one Read-back field after its last field line: `- **Read-back:** ...` in the
 //   portal form, `# Read-back: ...` in the fenced form. A gate that binds read-backs names each
-//   command exactly as its runbook line runs it, from `node scripts/` to `--execute` (portal: in
-//   backticks, several separated by "; "; fenced: one plain command, since a comment in a gated
-//   bash fence may hold no backtick or semicolon). Any other gate says none with a reason (portal:
+//   command exactly as its runbook line runs it, from the client file to `--execute`
+//   (`okta-client.js verify-... --change [CHANGE_ID] --execute`, portal: in backticks, several
+//   separated by "; "; fenced: one plain command, since a comment in a gated bash fence may hold no
+//   backtick or semicolon). Revised after the first red run: the first tests named the command from
+//   `node scripts/`, and with that path a field reads as a line the runbook runs to the checks that
+//   dry-run every such line (92 tests failed), so the field leaves the path out. The test that
+//   removed a fenced field also needed the portal twin's field removed (both name the line), and the
+//   R1 test now reads a runbook that has an R1 gate. Any other gate says none with a reason (portal:
 //   `none (<reason>)`; fenced: `none, <reason>`, since such a comment may hold no parenthesis); an
 //   R1 gate's reason is "R1: no change record".
 // - change-record.js binds a runbook line run with --change [CHANGE_ID] to the gates whose field
@@ -66,7 +71,7 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {
   const portal = read('offboard.md');
-  const field = portal.split('\n').find((l) => l.startsWith('- **Read-back:** `node scripts/adapters/msgraph-client.js verify-account-enabled'));
+  const field = portal.split('\n').find((l) => l.startsWith('- **Read-back:** `msgraph-client.js verify-account-enabled'));
   assert.ok(field, 'the sign-in block names its read-back');
   const problems = changes.readBackProblems(without(portal, field));
   assert.ok(problems.some((p) => p.includes('offboard-cloud-block-portal') && p.includes('R3') && /no Read-back field/.test(p)), problems.join('\n'));
@@ -82,30 +87,38 @@ test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and it
 
 test('D2: a field naming a command the runbook does not run fails, and so does a line run under a change that no field names', () => {
   const text = read('okta-mfa-reset.md');
-  const run = 'node scripts/adapters/okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute';
-  const field = text.split('\n').find((l) => l === `# Read-back: ${run}`);
-  assert.ok(field, 'the fenced reset of all factors names its read-back');
-  // the field names a command the runbook does not run
-  const wrong = text.replace(field, '# Read-back: node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status ACTIVE --change [CHANGE_ID] --execute');
+  const run = 'okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute';
+  const fenced = `# Read-back: ${run}`;
+  const portal = `- **Read-back:** \`${run}\``;
+  // the reset of all factors and its portal twin both name the line
+  assert.ok(text.split('\n').includes(fenced) && text.split('\n').includes(portal), 'both forms of the reset of all factors name its read-back');
+  assert.ok(text.split('\n').includes(`node scripts/adapters/${run}`), 'the runbook runs it');
+  // the fields name a command the runbook does not run
+  const other = 'okta-client.js verify-status --user [OKTA_USER_ID] --status ACTIVE --change [CHANGE_ID] --execute';
+  const wrong = text.replace(fenced, `# Read-back: ${other}`).replace(portal, `- **Read-back:** \`${other}\``);
   const problems = changes.readBackProblems(wrong);
-  assert.ok(problems.some((p) => p.includes('okta-mfa-reset-all') && p.includes('verify-status --user [OKTA_USER_ID] --status ACTIVE') && /no line of the runbook runs/.test(p)), problems.join('\n'));
-  // and the line it should have named is now named by no field
-  assert.ok(problems.some((p) => p.includes(run) && /no gate's Read-back field names it/.test(p)), problems.join('\n'));
+  for (const gate of ['okta-mfa-reset-all ', 'okta-mfa-reset-all-portal ']) {
+    assert.ok(problems.some((p) => p.includes(gate) && p.includes(other) && /no line of the runbook runs/.test(p)), `${gate}\n${problems.join('\n')}`);
+  }
+  // and the line they should have named is now named by no field
+  assert.ok(problems.some((p) => p.includes(`node scripts/adapters/${run}`) && /no gate's Read-back field names it/.test(p)), problems.join('\n'));
   // a field whose command differs from its line in one flag is a different command
-  const flag = text.replace(field, `# Read-back: ${run.replace(' --change', ' --absent --change')}`);
-  assert.ok(changes.readBackProblems(flag).some((p) => p.includes('okta-mfa-reset-all') && /no line of the runbook runs/.test(p)));
+  const flag = text.replace(fenced, `# Read-back: ${run.replace(' --change', ' --absent --change')}`);
+  assert.ok(changes.readBackProblems(flag).some((p) => p.includes('okta-mfa-reset-all ') && /no line of the runbook runs/.test(p)));
+  // a field that names the line with its `node scripts/` path is in neither form
+  const path_ = text.replace(fenced, `# Read-back: node scripts/adapters/${run}`);
+  assert.ok(changes.readBackProblems(path_).some((p) => p.includes('okta-mfa-reset-all ') && /not one of the two forms/.test(p)));
 });
 
 test('D2: an R1 gate whose field names a command fails; a field in neither form fails', () => {
-  const text = read('okta-mfa-reset.md');
-  const r1 = changes.gateFields(text).find((g) => g.rClass === 'R1');
-  assert.ok(r1, 'an R1 gate in the runbook');
+  const text = read('gws-group-membership.md');
+  const r1 = changes.gateFields(text).find((g) => g.rClass === 'R1' && g.portal);
+  assert.ok(r1, 'an R1 portal gate in the runbook');
   const lines = text.split('\n');
-  const run = 'node scripts/adapters/okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute';
-  lines[r1.readBack.line - 1] = r1.portal ? `- **Read-back:** \`${run}\`` : `# Read-back: ${run}`;
+  lines[r1.readBack.line - 1] = '- **Read-back:** `gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`';
   assert.ok(changes.readBackProblems(lines.join('\n')).some((p) => p.includes(r1.id) && /R1/.test(p) && /takes no change record/.test(p)));
-  for (const bad of ['- **Read-back:** none', '- **Read-back:** nothing to read', '- **Read-back:** none, a reason in the fenced form', '- **Read-back:** node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --change [CHANGE_ID] --execute']) {
-    const portal = changes.gateFields(text).find((g) => g.portal);
+  for (const bad of ['- **Read-back:** none', '- **Read-back:** nothing to read', '- **Read-back:** none, a reason in the fenced form', '- **Read-back:** okta-client.js verify-status --user [OKTA_USER_ID] --change [CHANGE_ID] --execute', '- **Read-back:** `okta-client.js verify-status --user [OKTA_USER_ID] --change [CHANGE_ID]`']) {
+    const portal = r1;
     const copy = text.split('\n');
     copy[portal.readBack.line - 1] = bad;
     assert.ok(changes.readBackProblems(copy.join('\n')).some((p) => p.includes(portal.id) && /not one of the two forms/.test(p)), bad);
@@ -129,7 +142,7 @@ const FIXTURE = [
   '<!-- SAFETY GATE [aegis-d2-b] -->',
   '- **Target:** [UPN]',
   '- **Reversibility:** R2 (a test gate)',
-  '- **Read-back:** `node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute`', '',
+  '- **Read-back:** `okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute`', '',
 ].join('\n');
 
 test('D2: the binding comes from the Read-back field, not the section a line sits in or the gate its comment names', () => {

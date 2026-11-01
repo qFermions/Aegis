@@ -348,6 +348,11 @@ async function verifyWipe(read, args) {
   const command = newest(matching);
   observed['wipe command'] = commandView(command);
   const commandOk = command !== null && (apple ? command.status === 'Acknowledged' : String(command.status) === '200');
+  // a host wiping or wiped whose newest EraseDevice is still Pending is not yet proved either way
+  // (code review round 1 of batch G4, finding 12's class, as Jamf's Pending command)
+  if (statusOk && apple && command !== null && command.status === 'Pending') {
+    return { inconclusive: true, verified: false, observed, expected, note: 'The EraseDevice command is still Pending, so the wipe is not proved yet: this is not proof either way. Read it again after the Mac acknowledges the command.' };
+  }
   const note = windows ? 'Windows command status is an OMA-DM code (vendor docs); the doWipe request_type shape is read from the vendor\'s wipe options and is unverified, so only a doWipe command with status 200 counts.' : undefined;
   return { verified: statusOk && commandOk, observed, expected, note };
 }

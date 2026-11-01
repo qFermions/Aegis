@@ -1,0 +1,4 @@
+# command: node --test scripts/adapters/fleet-client.test.js scripts/adapters/inconclusive.test.js
+ℹ tests 114
+ℹ pass 114
+ℹ fail 0

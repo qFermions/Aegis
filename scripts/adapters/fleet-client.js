@@ -348,16 +348,19 @@ async function verifyWipe(read, args) {
     : list.filter((x) => typeof x.request_type === 'string' && /doWipe/.test(x.request_type));
   const command = newest(matching);
   observed['wipe command'] = commandView(command);
-  // Windows reads one page of the host's commands: with no doWipe on it, the doWipe may sit on a
-  // later page when the answer says more follow, or when the page is full and gives no true or
-  // false has_next_results (code review round 2 of batch G4, finding 6)
-  // a doWipe on the page that failed may have a newer one on a later page too (finding 6's class)
-  const windowsFailed = windows && command !== null && String(command.status) !== '200' && !(typeof command.status === 'string' && command.status.toLowerCase() === 'pending');
-  if (windows && (command === null || windowsFailed)) {
+  // Windows reads one page of the host's commands. When more may follow (the answer says so, or
+  // the page is full and gives no true or false has_next_results), the doWipe may sit on a later
+  // page (code review round 2 of batch G4, finding 6), and so may a newer doWipe than the newest
+  // on this page, whatever its status: a 200 here may be an older wipe's, the current one still
+  // pending or failed on a later page (code review round 3 of batch G4, finding 1)
+  if (windows) {
     const meta = isObject(c.data.meta) ? c.data.meta : {};
     const more = typeof meta.has_next_results === 'boolean' ? meta.has_next_results : c.data.results.length >= Number(WINDOWS_COMMANDS_PER_PAGE);
-    const what = command === null ? 'No doWipe command is' : 'Only a doWipe command that did not succeed is';
-    if (more) return { inconclusive: statusOk, verified: false, observed, expected, note: `${what} on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read, and more commands may follow, so this is not proof either way. Look for the doWipe on the next pages of the commands read (--page 1 and on), or in the host's activity in Fleet.` };
+    let what = 'No doWipe command is';
+    if (command !== null && String(command.status) === '200') what = 'The newest doWipe command read, with status 200, is';
+    else if (command !== null && typeof command.status === 'string' && command.status.toLowerCase() === 'pending') what = 'The newest doWipe command read, still pending, is';
+    else if (command !== null) what = 'Only a doWipe command that did not succeed is';
+    if (more) return { inconclusive: statusOk, verified: false, observed, expected, note: `${what} on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read, and more commands may follow, so the newest doWipe may be on a later page: this is not proof either way. Look for the doWipe on the next pages of the commands read (--page 1 and on), or in the host's activity in Fleet.` };
   }
   const commandOk = command !== null && (apple ? command.status === 'Acknowledged' : String(command.status) === '200');
   // a host wiping or wiped whose newest wipe command is not answered yet is not proved either way

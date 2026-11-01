@@ -297,3 +297,47 @@ for (const [c, argv] of TIME_BOUNDED) {
     assert.equal(r.code, EXIT.VERIFY_DRY_RUN, r.text);
   });
 }
+
+// One read-back's verdict, with what it printed and the verify entry it recorded.
+async function verdictOf(c, argv, replies) {
+  const r = await runConnector(c, argv, replies);
+  return { ...r, entry: r.verifies.map((e) => [e.verified, e.state]) };
+}
+function assertFailedObject(r) {
+  assert.equal(r.code, EXIT.READ_FAILED, r.text);
+  assert.equal(r.json.state, 'OK', r.text);
+  assert.equal(r.json.verified, false, r.text);
+  assert.equal(typeof r.json.reason === 'string' || typeof r.json.note === 'string', true, r.text);
+  assert.deepEqual(r.entry, [[false, 'OK']], r.text);
+}
+function assertInconclusive(r) {
+  assert.equal(r.code, EXIT.INCONCLUSIVE, r.text);
+  assert.equal(r.json.state, 'INCONCLUSIVE', r.text);
+  assert.equal(r.json.verified, false, r.text);
+  assert.equal(typeof r.json.reason, 'string', r.text);
+  assert.deepEqual(r.entry, [[false, 'INCONCLUSIVE']], r.text);
+}
+
+// Finding 6: dismissed_reason null is GitHub's own value for an alert that was not dismissed, so
+// with --reason it is an answer that shows the change not done (exit 2), not INCONCLUSIVE. Only a
+// field left out of the answer, or one that is neither null nor text, proves nothing either way.
+const DEPENDABOT = (state, reason) => ['verify-dependabot-alert', '--repo', 'docs', '--number', '9', '--state', state, '--reason', reason];
+test('code review round 1, finding 6: github verify-dependabot-alert --state fixed --reason: dismissed_reason null (not dismissed) is a failed object (exit 2)', async () => {
+  assertFailedObject(await verdictOf('github', DEPENDABOT('fixed', 'tolerable_risk'), [ok({ number: 9, state: 'fixed', dismissed_reason: null })]));
+});
+test('code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is a failed object (exit 2)', async () => {
+  assertFailedObject(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed', dismissed_reason: null })]));
+});
+test('code review round 1, finding 6: github verify-dependabot-alert --reason: dismissed_reason left out of the answer is INCONCLUSIVE (exit 5)', async () => {
+  assertInconclusive(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed' })]));
+});
+test('code review round 1, finding 6: github verify-dependabot-alert --reason: a dismissed_reason that is neither null nor text is INCONCLUSIVE (exit 5)', async () => {
+  assertInconclusive(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed', dismissed_reason: 42 })]));
+  assertInconclusive(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed', dismissed_reason: { reason: 'tolerable_risk' } })]));
+});
+test('code review round 1, finding 6: github verify-dependabot-alert --reason: another reason stays a failed object and the same reason passes', async () => {
+  assertFailedObject(await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed', dismissed_reason: 'no_bandwidth' })]));
+  const pass = await verdictOf('github', DEPENDABOT('dismissed', 'tolerable_risk'), [ok({ number: 9, state: 'dismissed', dismissed_reason: 'tolerable_risk' })]);
+  assert.equal(pass.code, EXIT.OK, pass.text);
+  assert.deepEqual(pass.entry, [[true, 'OK']], pass.text);
+});

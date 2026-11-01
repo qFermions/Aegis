@@ -22,7 +22,7 @@
 //     dependabot-alerts [--state ...] [--severity ...] [--page N] | dependabot-alert --repo [REPO_NAME] --number [ALERT_NUMBER]
 //     issue --repo [REPO_NAME] --number N (the issue and its first 100 comments: the JSON
 //       scripts/intake/intake.js imports as a GitHub issue)
-//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run):
+//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run, 5 inconclusive):
 //     verify-collaborator --repo R --user U --role read|triage|write|maintain|admin
 //     verify-collaborator-removed --repo R --user U
 //     verify-offboarded --user U
@@ -46,7 +46,7 @@
 // neither signal is still a permission refusal.
 
 const {
-  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit,
+  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
@@ -214,14 +214,17 @@ const same = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLow
 const loginsOf = (list) => (Array.isArray(list) ? list.filter(isObject).map((u) => u.login).filter((l) => typeof l === 'string') : []);
 
 // Every page of a list read, while pages are full, up to MAX_PAGES. Returns the records
-// and whether the list may go on past the last page read.
+// and whether the list may go on past the last page read. A page that is not a list stops the
+// read with more set, since the records after it are unknown (batch G4, task D1: before, it
+// read as an empty last page, so a removal could pass on an answer that listed nothing).
 async function readPages(client, s) {
   const records = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
     const query = page === 1 ? s.query : { ...s.query, page: String(page) };
     const res = await client.get(s.route, s.params, query);
     if (!res.ok) return { failed: res };
-    const items = Array.isArray(res.data) ? res.data : [];
+    if (!Array.isArray(res.data)) return { records, more: true, notList: true, flags: res.flags || [] };
+    const items = res.data;
     records.push(...items);
     if (items.length < Number(PER_PAGE)) return { records, more: false, flags: res.flags || [] };
   }
@@ -229,6 +232,11 @@ async function readPages(client, s) {
 }
 
 const NOT_PROOF = `the list is longer than ${MAX_PAGES} pages of ${PER_PAGE}, so this is not proof either way; check in the GitHub UI`;
+const NOT_A_LIST = 'a page of the list is not a list, so this is not proof either way; check in the GitHub UI';
+const notProof = (...reads) => (reads.some((r) => r.notList) ? NOT_A_LIST : NOT_PROOF);
+// An answer that proves nothing either way (batch G4, task D1): INCONCLUSIVE (exit 5), never a
+// pass and never a failed object.
+const unproven = (observed, reason) => ({ inconclusive: true, verified: false, observed, reason });
 
 // steps: the command's reads with the organization from GITHUB_ORG already bound
 async function judge(command, a, client, steps) {
@@ -238,6 +246,7 @@ async function judge(command, a, client, steps) {
       const res = await one(steps[0]);
       if (!res.ok) return { failed: res };
       const role = isObject(res.data) ? res.data.role_name : undefined;
+      if (typeof role !== 'string') return unproven({ role_name: null }, `the answer does not show the role on ${a.repo}, so this is not proof either way`);
       return role === a.role ? { verified: true, observed: { role_name: role } } : { verified: false, observed: { role_name: role === undefined ? null : role }, reason: `the role on ${a.repo} is ${role === undefined ? 'not shown' : role}, not ${a.role}` };
     }
     case 'verify-collaborator-removed': {
@@ -245,7 +254,7 @@ async function judge(command, a, client, steps) {
       if (r.failed) return { failed: r.failed };
       const present = loginsOf(r.records).some((l) => same(l, a.user));
       if (present) return { verified: false, observed: { direct_collaborator: true }, reason: `${a.user} is still a direct collaborator on ${a.repo}` };
-      if (r.more) return { verified: false, observed: { records_read: r.records.length }, reason: NOT_PROOF };
+      if (r.more) return unproven({ records_read: r.records.length }, notProof(r));
       return { verified: true, observed: { direct_collaborator: false, records_read: r.records.length } };
     }
     case 'verify-offboarded': {
@@ -260,7 +269,7 @@ async function judge(command, a, client, steps) {
       const outside = await readPages(client, steps[3]);
       if (outside.failed) return { failed: outside.failed };
       if (loginsOf(outside.records).some((l) => same(l, a.user))) return { verified: false, observed: { member: false, pending_invitation: false, outside_collaborator: true }, reason: `${a.user} is now an outside collaborator, so they still reach repositories` };
-      if (inv.more || outside.more) return { verified: false, observed: { member: false }, reason: NOT_PROOF };
+      if (inv.more || outside.more) return unproven({ member: false }, notProof(inv, outside));
       return { verified: true, observed: { member: false, pending_invitation: false, outside_collaborator: false } };
     }
     case 'verify-team-member': {
@@ -268,7 +277,7 @@ async function judge(command, a, client, steps) {
       if (r.failed) return { failed: r.failed };
       const present = loginsOf(r.records).some((l) => same(l, a.user));
       // absence on a list longer than the pages read proves nothing, either way
-      if (!present && r.more) return { verified: false, observed: { member: false }, reason: NOT_PROOF };
+      if (!present && r.more) return unproven({ member: false }, notProof(r));
       if (present === !a.absent) return { verified: true, observed: { member: present } };
       return { verified: false, observed: { member: present }, reason: present ? `${a.user} is still in ${a.team}` : `${a.user} is not in ${a.team}` };
     }
@@ -280,21 +289,39 @@ async function judge(command, a, client, steps) {
       }
       const d = isObject(res.data) ? res.data : {};
       const reviews = isObject(d.required_pull_request_reviews) ? d.required_pull_request_reviews.required_approving_review_count : undefined;
-      const enabled = (o) => (isObject(o) ? o.enabled === true : null);
+      // a setting shows its value only as a true or false enabled; an object without one, or no
+      // object, is null: not shown (code review round 2 of batch G4, finding 1)
+      const enabled = (o) => (isObject(o) && typeof o.enabled === 'boolean' ? o.enabled : null);
       const observed = { protected: true, required_approving_review_count: reviews === undefined ? null : reviews, enforce_admins: enabled(d.enforce_admins), allow_force_pushes: enabled(d.allow_force_pushes), allow_deletions: enabled(d.allow_deletions) };
       const misses = [];
-      if (a.reviews !== undefined && !(Number.isInteger(reviews) && reviews >= Number(a.reviews))) misses.push(`required reviews ${reviews === undefined ? 'off' : reviews}, expected at least ${a.reviews}`);
-      if (a['enforce-admins'] && observed.enforce_admins !== true) misses.push('admins are not included');
-      if (a['no-force-push'] && observed.allow_force_pushes !== false) misses.push('force pushes are allowed');
-      if (a['no-deletions'] && observed.allow_deletions !== false) misses.push('deletions are allowed');
-      return misses.length ? { verified: false, observed, reason: misses.join('; ') } : { verified: true, observed };
+      const unshown = [];
+      // a reviews object whose count is not an integer does not show the count (code review round
+      // 2 of batch G4, finding 1's class); no reviews object is "reviews off", as GitHub leaves it
+      // out. Decided before any miss is pushed, so no miss is taken out again by its text (code
+      // review round 3 of batch G4, finding 13)
+      const reviewsUnshown = a.reviews !== undefined && isObject(d.required_pull_request_reviews) && !Number.isInteger(reviews);
+      if (a.reviews !== undefined && !reviewsUnshown && !(Number.isInteger(reviews) && reviews >= Number(a.reviews))) misses.push(`required reviews ${reviews === undefined ? 'off' : reviews}, expected at least ${a.reviews}`);
+      // a setting a flag asks about that is not shown proves nothing either way; a definite value
+      // against the flag is a failed object, also beside a setting not shown
+      const check = (flag, key, want, miss) => {
+        if (!a[flag]) return;
+        if (observed[key] === null) unshown.push(key);
+        else if (observed[key] !== want) misses.push(miss);
+      };
+      check('enforce-admins', 'enforce_admins', true, 'admins are not included');
+      check('no-force-push', 'allow_force_pushes', false, 'force pushes are allowed');
+      check('no-deletions', 'allow_deletions', false, 'deletions are allowed');
+      if (reviewsUnshown) unshown.push('required_pull_request_reviews.required_approving_review_count');
+      if (misses.length) return { verified: false, observed, reason: misses.join('; ') };
+      if (unshown.length) return unproven(observed, `the answer does not show ${unshown.map((k) => (k.includes('.') ? `${k} as a whole number` : `${k}.enabled as true or false`)).join(', ')}, so this is not proof either way`);
+      return { verified: true, observed };
     }
     case 'verify-2fa-required': {
       const res = await one(steps[0]);
       if (!res.ok) return { failed: res };
       const v = isObject(res.data) ? res.data.two_factor_requirement_enabled : undefined;
       if (v === true) return { verified: true, observed: { two_factor_requirement_enabled: true } };
-      if (v === undefined) return { verified: false, observed: { two_factor_requirement_enabled: null }, reason: 'the answer does not show the 2FA requirement: only an organization owner\'s credential can see it (vendor fact G-14)' };
+      if (typeof v !== 'boolean') return unproven({ two_factor_requirement_enabled: null }, 'the answer does not show the 2FA requirement, so this is not proof either way: only an organization owner\'s credential can see it (vendor fact G-14)');
       return { verified: false, observed: { two_factor_requirement_enabled: v }, reason: 'the organization does not require two-factor authentication' };
     }
     case 'verify-secret-alert':
@@ -305,8 +332,17 @@ async function judge(command, a, client, steps) {
       const field = command === 'verify-secret-alert' ? 'resolution' : 'dismissed_reason';
       const want = command === 'verify-secret-alert' ? a.resolution : a.reason;
       const observed = { state: d.state === undefined ? null : d.state, [field]: d[field] === undefined ? null : d[field] };
-      if (d.state !== a.state) return { verified: false, observed, reason: `the alert is ${d.state === undefined ? 'in no stated state' : d.state}, not ${a.state}` };
-      if (want && d[field] !== want) return { verified: false, observed, reason: `the ${field} is ${d[field] === undefined ? 'not shown' : d[field]}, not ${want}` };
+      if (typeof d.state !== 'string') return unproven(observed, 'the answer does not show the alert\'s state, so this is not proof either way');
+      if (d.state !== a.state) return { verified: false, observed, reason: `the alert is ${d.state}, not ${a.state}` };
+      // dismissed_reason null is GitHub's own value for an alert that was not dismissed, an answer
+      // that shows the change not done; only a field left out, or one that is neither null nor
+      // text, proves nothing either way (code review round 1 of batch G4, finding 6)
+      const shown = command === 'verify-dependabot-alert' ? (v) => v === null || typeof v === 'string' : (v) => v !== undefined && v !== null;
+      if (want && !shown(d[field])) return unproven(observed, `the answer does not show the ${field}, so this is not proof either way`);
+      // on an alert the answer calls dismissed, a dismissed_reason null contradicts the state, so
+      // it proves nothing either way (code review round 2 of batch G4, finding 7)
+      if (want && command === 'verify-dependabot-alert' && d.state === 'dismissed' && d[field] === null) return unproven(observed, 'the answer calls the alert dismissed but gives no dismissed_reason (null), so it contradicts itself and this is not proof either way');
+      if (want && d[field] !== want) return { verified: false, observed, reason: d[field] === null ? `the ${field} is null (the alert was not dismissed), not ${want}` : `the ${field} is ${d[field]}, not ${want}` };
       return { verified: true, observed };
     }
     default:
@@ -373,8 +409,9 @@ async function run(argv, env = process.env, deps = {}) {
       const judged = await judge(command, a, client, steps);
       if (judged.failed) res = { command, ...judged.failed };
       else {
-        const verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed };
-        if (!verdict.verified) verdict.reason = judged.reason;
+        let verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed };
+        if (judged.inconclusive) verdict = inconclusive(verdict, judged.reason);
+        else if (!verdict.verified) verdict.reason = judged.reason;
         res = recordVerdict(cli.audit, 'github', verdict, bound.change, null, bound.argv);
       }
     }

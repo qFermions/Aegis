@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet's search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host's display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item's ID: an MDM command's UUID, or a queued script's execution ID) · `[NOT_BEFORE]` (the time a read-back starts from) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.
+**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet's search does not take the ID) · `[SERIAL_NUMBER]` (the hardware serial, the safest way to find a host) · `[DEVICE_NAME]` (the host's display name; flag it when it does not follow `DT-FirstName,LastName` or `LT-FirstName,LastName`) · `[FLEET_NAME]` (a Fleet "fleet", called a team before Fleet 4.82.0) · `[SCRIPT_NAME]` (a script saved in Fleet) · `[HOST_COUNT]` (the number of hosts written in the ticket before a batch) · `[FILE_NAME]` (a local script file for the CLI) · `[EXECUTION_ID]` (one script run) · `[PENDING_ACTION]` (the one queued item to cancel, named as Upcoming lists it: a lock, Lost Mode, a wipe or the `[SCRIPT_NAME]` run) · `[PENDING_ACTION_ID]` (that item's ID: an MDM command's UUID, or a queued script's execution ID) · `[NOT_BEFORE]` (the time a read-back starts from: for one run with `--change [CHANGE_ID]`, the `approved_at` that `change-record.js approve` printed for that change, since a bound earlier than the approval is refused before the read) · `[ISSUE_ID]` · `[ADMIN_NAME]` · `[@Aegion_FLEET_URL]` (the Fleet server) · org values from `modules/security/placeholder-dictionary.md`.
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `fleet:verify-lock`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 ## ⚠️ Admin / safety gate
 
@@ -91,6 +91,7 @@ Before the gate: an iPhone or iPad can be locked only when it is supervised (com
 - **Reversibility:** R2: Unlock (Phase C) reverses it, remotely on Windows, Linux, iPhone and iPad, and on a Mac only when someone types the PIN on the Mac; while still pending, a macOS lock, an iPhone or iPad Lost Mode command and a Windows or Linux lock script can be cancelled (Phase G), an Android lock cannot; a locked iPhone that is off or restarted cannot be unlocked remotely without USB network sharing
 - **Required confirmation:** Type exactly `LOCK HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-lock --id [HOST_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-device-actions-lock-portal]:** Only after the Phase A pre-state is saved and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Lock**.
 2. If Fleet asks for confirmation, confirm.
@@ -117,6 +118,7 @@ Before the gate: an iPhone or iPad can be locked only when it is supervised (com
 - **Reversibility:** R1: Lock again under the Phase B gate
 - **Required confirmation:** Type exactly `UNLOCK HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-device-actions-unlock-portal]:** Only after the person holding the device is confirmed and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Unlock** (one section of Fleet's guide calls this page Host Overview, another Host details).
 2. On a Mac: read the PIN Fleet shows to the person at the Mac; they type it on the lock screen.
@@ -142,6 +144,7 @@ Before the gate: the independent out-of-session review has the Phase A pre-state
 - **Reversibility:** R3: not reversible once the host runs it; cancellable while still pending only for a Mac, iPhone or iPad (EraseDevice) and for the Linux wipe script, never for Windows or Android; an Apple device that already fetched the command wipes even if the command is cancelled
 - **Required confirmation:** Type exactly `WIPE HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-wipe --id [HOST_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-device-actions-wipe-portal]:** Only after the independent review, the Phase A pre-state and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Wipe** (Fleet's guide calls this page Host Overview).
 2. If Fleet asks for confirmation, confirm. The unprotected Windows wipe (doWipe) is offered through the API only and is not part of this runbook.
@@ -150,7 +153,7 @@ Before the gate: the independent out-of-session review has the Phase A pre-state
 
 **Read-back, by platform:**
 
-- Mac, iPhone, iPad and Windows: `node scripts/adapters/fleet-client.js verify-wipe --id [HOST_ID] --change [CHANGE_ID] --execute` passes on `wiping` or `wiped` with the EraseDevice or doWipe command acknowledged; for an Apple device, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` shows the command's status.
+- Mac, iPhone, iPad and Windows: `node scripts/adapters/fleet-client.js verify-wipe --id [HOST_ID] --change [CHANGE_ID] --execute` passes on `wiping` or `wiped` with the EraseDevice or doWipe command acknowledged; for an Apple device, `node scripts/adapters/fleet-client.js commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --execute` shows the command's status. A commands answer whose `results` is `null` is read as no list, never as an empty one, so `verify-wipe` does not pass on it (exit 5, INCONCLUSIVE, unless the host record already shows the wipe not done); whether Fleet answers an empty list as `null` is unconfirmed (F-13).
 - Company-owned Android: `verify-wipe` cannot pass here, because it proves only an Apple EraseDevice or a Windows doWipe command. The proof is `node scripts/adapters/fleet-client.js host --id [HOST_ID] --execute` showing `mdm.device_status` `wiping` and then `wiped`, plus the wiped_host entry in `node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute`.
 - Linux: `verify-wipe` cannot pass here either (the guides do not say whether a Linux host ever reports `wiped`; unverified). The proof is the wiped_host entry plus the wipe script's result under Host details → Activity → Past; `verify-script --execution-id [EXECUTION_ID]` reads that result when the same `host-activities` read lists the run's execution ID (whether it does is not in the sources read; unverified), and while the wipe is still queued, `host-upcoming --id [HOST_ID]` lists the wipe script with its execution ID (Phase G step 2). The wipe halts the host, and the sources do not say whether its result reaches Fleet before the halt (unverified): if no exit code arrives, the ticket records the Linux wipe as sent and not proven, with the wiped_host entry, and uses the partial-state note.
 
@@ -176,6 +179,7 @@ Do not delete the host until it reads wiped: deleting removes Fleet's record of 
 - **Reversibility:** R1 to R3 by script content, set in step 1; while still in Upcoming it can be cancelled (Phase G); after it runs Fleet has no undo, only a compensating script that a human writes and runs under this gate
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-device-actions-run-script-portal]:** Only after step 1, the current value of what the script changes is in the ticket, the pre-state of what the script changes is saved to `tasks/checkpoints/` when the script is R2 or R3, and when it is R3 the rollback path, naming the compensating script and who reviews it, is written and the independent review approved it, and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Run Script** → `[SCRIPT_NAME]` → Actions → **Run**.
 
@@ -198,6 +202,7 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 - **Reversibility:** R3: Fleet has no undo on any host; hosts that have not run it yet can be cancelled only through Fleet's API batch cancel (the console path for a batch cancel is not in the guides read); a compensating script is its own gated batch
 - **Required confirmation:** Type exactly `RUN SCRIPT [SCRIPT_NAME] ON [HOST_COUNT] CHECKED HOSTS IN FLEET [FLEET_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-device-actions-batch-script-portal]:** Only after the pilot passed, the pre-state of what the script changes is saved to `tasks/checkpoints/` and the rollback path is written, the independent review, the host count in the ticket and the exact match:
 1. Fleet → Hosts → select `[FLEET_NAME]` → check the hosts → **Run script** → choose `[SCRIPT_NAME]`.
 
@@ -224,6 +229,7 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 - **Reversibility:** R3: undone only by enrolling the device in Fleet MDM again, which needs the end user or Apple Business; the per-OS re-enrollment steps were not in the guides read (unverified)
 - **Required confirmation:** Type exactly `TURN OFF MDM AND UNENROLL HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-mdm-off --id [HOST_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-device-actions-mdm-off-portal]:** Only after the independent review and the exact match:
 1. On a Mac: Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Turn off MDM**.
 2. On an iPhone, iPad or personally owned Android: Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Unenroll**.
@@ -248,11 +254,12 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 - **Reversibility:** R3: Fleet cannot restore a deleted record; the record comes back only if the agent or MDM re-enrolls the device, and then as a new record with a new host ID, while the old record's history and labels are lost for good
 - **Required confirmation:** Type exactly `DELETE HOST [HOST_ID] SERIAL [SERIAL_NUMBER] FROM FLEET`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `fleet-client.js verify-deleted --identifier [SERIAL_NUMBER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [fleet-device-actions-delete-portal]:** Only when nothing is pending for the host (never while a wipe is pending), a wiped host already reads Wiped, the Phase A pre-state is saved to `tasks/checkpoints/`, the rollback path is written in the ticket before step 1 (the record comes back only if the agent or MDM re-enrolls the device, as a new record; its history and labels are lost), `[NOT_BEFORE]` is noted, and after the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Actions → **Delete**.
 2. If Fleet asks for confirmation, confirm.
 
-**Read-back:** `node scripts/adapters/fleet-client.js verify-deleted --identifier [SERIAL_NUMBER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute` passes when a deleted_host activity for that serial exists after `[NOT_BEFORE]`; `host --identifier [SERIAL_NUMBER]` then answers not found, or a new host ID if the device re-enrolled.
+**Read-back:** `node scripts/adapters/fleet-client.js verify-deleted --identifier [SERIAL_NUMBER] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute` passes when a deleted_host activity for that serial exists after `[NOT_BEFORE]`; `host --identifier [SERIAL_NUMBER]` then answers not found, or a new host ID if the device re-enrolled. An activities page whose `activities` is `null` is read as no list, never as an empty page, so `verify-deleted` does not pass on it (exit 5, INCONCLUSIVE) unless an earlier page already shows the deletion; whether Fleet answers an empty list as `null` is unconfirmed (F-13).
 
 **Verification checkpoint**: [ ] the F1 read-back for the platform passed: `verify-mdm-off` (Mac), mdm_unenrolled plus enrollment Off (iPhone, iPad, Android) · [ ] `verify-deleted` passed (F2) · [ ] the Apple Business decision is in the ticket.
 
@@ -276,6 +283,7 @@ Before the gate, name the one item. A host can hold several queued items (a wipe
 - **Reversibility:** R1: send the action again under its own gate; if an Apple device already fetched the command, the cancel is not honoured and the device still locks or wipes
 - **Required confirmation:** Type exactly `STOP PENDING [PENDING_ACTION] [PENDING_ACTION_ID] ON HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-device-actions-cancel-portal]:** Only after the item and its ID are written in the ticket, the before list from steps 1 to 3 is in the ticket, and the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → Activity → Upcoming → **Cancel** on `[PENDING_ACTION]` (`[PENDING_ACTION_ID]`) only.
 
@@ -295,6 +303,7 @@ fleetctl must already be signed in (`fleetctl login` keeps the token in `~/.flee
 # Reversibility: R2: reversible with Unlock, on a Mac only with the six-digit PIN that Fleet shows at Unlock
 # Required confirmation: type exactly "LOCK HOST [SERIAL_NUMBER]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: fleet-client.js verify-lock --id [HOST_ID] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="LOCK HOST [SERIAL_NUMBER]"
 # shows the phrase
@@ -325,6 +334,7 @@ node scripts/adapters/fleet-client.js host-activities --id [HOST_ID] --execute
 # Reversibility: R1 to R3 by what the script does, Fleet has no undo after it runs, only a compensating script under its own gate
 # Required confirmation: type exactly "RUN SCRIPT [FILE_NAME] ON HOST [SERIAL_NUMBER]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: fleet-client.js verify-script --execution-id [EXECUTION_ID] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="RUN SCRIPT [FILE_NAME] ON HOST [SERIAL_NUMBER]"
 # shows the phrase

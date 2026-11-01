@@ -19,7 +19,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Every change lands at each Mac's next check-in or on the plan's schedule; the console only queues it. Not done until the read-back proves it.
 - Aegis reads Jamf Pro through `scripts/adapters/jamf-client.js`, whose API client holds read privileges only. It never creates a title, policy, plan or deployment.
 
-**Stop conditions:** the group's member count differs from the count in the ticket (`verify-group-count` exits 2) · the pilot read-back shows Failed or Unqualified, or Macs not at the target version · a Mac in a macOS plan runs macOS 27 or later (Phase E) · the patch report never appears (Jamf Pro cannot reach the patch server on port 443).
+**Stop conditions:** the group's member count differs from the count in the ticket or cannot be read (`verify-group-count` gives any exit other than 0: exit 2, the count differs or the read failed, or exit 5, INCONCLUSIVE: proves nothing either way) · the pilot read-back shows Failed or Unqualified, or Macs not at the target version · a Mac in a macOS plan runs macOS 27 or later (Phase E) · the patch report never appears (Jamf Pro cannot reach the patch server on port 443).
 
 ## Inputs needed
 
@@ -70,7 +70,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 node scripts/adapters/jamf-client.js smart-groups --name "[SMART_GROUP]" --execute
 # lists the members of that group
 node scripts/adapters/jamf-client.js group-members --id [SMART_GROUP_ID] --execute
-# proves the group holds exactly the count recorded in the ticket; exit 2 means stop
+# proves the group holds exactly the count recorded in the ticket, any exit other than 0 means stop: exit 2 means the count differs, exit 5 INCONCLUSIVE means the answer proves nothing either way
 node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --expect [MEMBER_COUNT] --execute
 ```
 </details>
@@ -90,6 +90,7 @@ node scripts/adapters/jamf-client.js verify-group-count --id [SMART_GROUP_ID] --
 - **Reversibility:** R1: no Mac is touched; taking the title out again is its own change (what that does to the report was not in this batch's sources)
 - **Required confirmation:** Type exactly `ADD PATCH TITLE [APP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-patch-management-add-title-portal]:** Only after Phase A and the exact match:
 1. Jamf Pro → Computers → Patch Management → New → pick `[APP_NAME]` from the list → Save.
 2. Open the title → Edit → map the target version to the package that installs it → Save. The tab that holds this mapping was not named in this batch's sources; Jamf's "Configuring a Patch Management Software Title" page shows it.
@@ -125,6 +126,7 @@ node scripts/adapters/jamf-client.js patch-report --id [PATCH_TITLE_ID] --execut
 - **Reversibility:** R2: the app cannot be downgraded through a patch policy; Phase G stops further installs, and going back means redeploying the older package through a regular policy
 - **Required confirmation:** Type exactly `CREATE PATCH POLICY [POLICY_NAME] TO INSTALL [APP_NAME] ON [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads a patch policy, verify-policy reads a policy: its proof is the read its step names)
 **PORTAL ACTION [jamf-patch-management-pilot-policy-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, and the exact match:
 1. Jamf Pro → Computers → Patch Management → `[APP_NAME]` → Patch Policies → New (labels from a search excerpt; confirm on screen).
 2. Name it `[POLICY_NAME]`, pick the target version, the distribution method (automatic, or Self Service with an optional Notification Center prompt) and the update deadline, then Scope → `[SMART_GROUP]` → Save.
@@ -162,6 +164,7 @@ GUI read-back: Jamf Pro → Computers → Patch Management → `[APP_NAME]` → 
 - **Reversibility:** R3: no downgrade through the patch policy; Phase G stops further installs, and Macs already updated need the older package through a regular policy
 - **Required confirmation:** Type exactly `SCOPE PATCH POLICY [POLICY_NAME] TO INSTALL [APP_NAME] ON [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads a patch policy, verify-policy reads a policy: its proof is the read its step names)
 **PORTAL ACTION [jamf-patch-management-widen-policy-portal]:** Only after the pilot read-back, the independent review, `verify-group-count` on the rollout group and the exact match:
 1. Jamf Pro → Computers → Patch Management → `[APP_NAME]` → Patch Policies → `[POLICY_NAME]` → Edit → Scope → `[SMART_GROUP]` as the target in place of the pilot group → Save.
 
@@ -189,6 +192,7 @@ Before either gate:
 - **Reversibility:** R3: macOS cannot be downgraded; cancelling a deployed plan was not confirmed in this batch's sources
 - **Required confirmation:** Type exactly `CREATE UPDATE PLAN TO INSTALL MACOS ON [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads a Managed Software Update plan: its proof is the read its step names)
 **PORTAL ACTION [jamf-patch-management-pilot-plan-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, no target Mac runs macOS 27 or later, users have the restart notice, and the exact match:
 1. Jamf Pro → Computers → Managed Software Updates → New (menu location from a search excerpt; confirm on screen).
 2. Target the computer group `[SMART_GROUP]`, pick the macOS version recorded in Phase A, the update action (only "Download and schedule to install" uses declarative device management) and the schedule, then Save. Field labels are unverified; read each one on screen.
@@ -219,6 +223,7 @@ GUI read-back: Jamf Pro → Computers → Managed Software Updates → the plan 
 - **Reversibility:** R3: no macOS downgrade and no confirmed cancel; the only containment is a narrow, reviewed group and a pilot that passed
 - **Required confirmation:** Type exactly `CREATE FLEET UPDATE PLAN TO INSTALL MACOS ON [SMART_GROUP] AFTER REVIEW`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads a Managed Software Update plan: its proof is the read its step names)
 **PORTAL ACTION [jamf-patch-management-fleet-plan-portal]:** Only after the pilot read-back passed, the independent out-of-session review is recorded, `verify-group-count` passes on the rollout group, and the exact match:
 1. Jamf Pro → Computers → Managed Software Updates → New.
 2. Target the computer group `[SMART_GROUP]` (the rollout group) with the same version and update action the pilot used, then Save.
@@ -243,6 +248,7 @@ GUI read-back: Jamf Pro → Computers → Managed Software Updates → the plan 
 - **Reversibility:** R2: whether taking the deployment away uninstalls the app was not confirmed in this batch's sources; treat installed copies as staying
 - **Required confirmation:** Type exactly `CREATE APP INSTALLER TO INSTALL [APP_NAME] ON [SMART_GROUP]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads an App Installers deployment: its proof is the read its step names)
 **PORTAL ACTION [jamf-patch-management-app-installer-portal]:** Only after `verify-group-count` passes, `[MEMBER_COUNT]` is 10 or fewer, and the exact match:
 1. Jamf Pro → Computers → App Installers → New (menu location unverified).
 2. Pick `[APP_NAME]` from the Jamf App Catalog, the target group `[SMART_GROUP]` (the pilot group) and the distribution method (automatic, or available in Self Service), then Save.
@@ -269,6 +275,7 @@ Rollout stage, after the pilot read-back passed for every pilot Mac: read the ro
 - **Reversibility:** R3: whether taking the deployment away uninstalls the app was not confirmed in this batch's sources, so treat installed copies as staying; pointing the deployment back at the pilot group only stops new installs, as its own reviewed change
 - **Required confirmation:** Type exactly `SCOPE APP INSTALLER FOR [APP_NAME] TO INSTALL ON [SMART_GROUP] AFTER REVIEW`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads an App Installers deployment: its proof is the read its step names)
 **PORTAL ACTION [jamf-patch-management-app-installer-rollout-portal]:** Only after the pilot read-back, the pre-state, the independent review, `verify-group-count` on the rollout group and the exact match:
 1. Jamf Pro → Computers → App Installers → the `[APP_NAME]` deployment → Edit → target group `[SMART_GROUP]` (the rollout group) in place of the pilot group → Save. Whether a deployment's target group can be changed was not in this batch's sources: if the screen does not offer it, stop. A second deployment of the same app conflicts on every Mac in both groups (one of them reads Unqualified), so that is a separately reviewed change.
 
@@ -289,6 +296,7 @@ Rollout stage, after the pilot read-back passed for every pilot Mac: read the ro
 - **Reversibility:** R1: turning Enabled back on resumes the policy under its own phrase
 - **Required confirmation:** Type exactly `DISABLE PATCH POLICY [POLICY_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-patch-management-stop-policy-portal]:** Only after the exact match:
 1. Jamf Pro → Computers → Patch Management → `[APP_NAME]` → Patch Policies → `[POLICY_NAME]` → Edit → General → turn Enabled off → Save. The Enabled control was read for regular policies in this batch's sources; confirm it on the patch policy screen.
 

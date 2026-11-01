@@ -1,0 +1,658 @@
+$ node --test scripts/adapters/inconclusive.test.js scripts/adapters/fleet-client.test.js scripts/adapters/linear-client.test.js
+(Node v24.22.1, at 9bd4b97 plus the working tree: the finding 8 tests, before the fix)
+
+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (2.761655ms)
+✔ every read command sends the exact method, host and path, and the credential only in the Authorization header (13.73446ms)
+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (1.769397ms)
+✔ every method but GET is refused on every allow-listed read path (7.016667ms)
+✔ the dry run prints the exact planned request, reads no credential and calls no transport (3.39276ms)
+✔ only the bare --execute flag performs a read (0.911673ms)
+✔ --execute prints the vendor data through renderResult (2.155518ms)
+✔ input errors exit 1 before any credential or network: unknown command, missing or extra flags, bad values (5.394351ms)
+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (1.092829ms)
+✔ a failed read exits 2: HTTP 404 once, HTTP 503 after the bounded retries (1.078963ms)
+✔ verify-lock: locked with nothing pending is verified (exit 0); locking, or locked with an unlock pending, is not (exit 2) (1.412129ms)
+✔ verify-unlock: unlocked with nothing pending is verified; still locked is not (0.574512ms)
+✔ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command or no wipe status is not (2.492314ms)
+✔ verify-wipe on Windows reads the host's commands and needs a doWipe command with status 200; Linux cannot be proven by this read (2.123708ms)
+✔ verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script (0.513595ms)
+✔ verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check (1.190451ms)
+✔ verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not (1.151748ms)
+✔ verify-mdm-off: an empty MDM read and an enrollment that no longer reads On is verified; On is not (1.282099ms)
+✔ verify-deleted: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolving to that host, is verified (3.514929ms)
+✔ no credential value appears in stdout, stderr or a result, also when the transport or the vendor echoes it (3.194496ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (0.832652ms)
+✔ tenant: Fleet binds no tenant id; the configured FLEET_URL is the only host a request can reach (0.810886ms)
+✔ host-upcoming reads one host's queued items (an Observer read) and nothing else: no deeper path, no order or filter keys, no write (0.820078ms)
+✔ the lane spec's Fleet table lists every route on the allow-list, with its method and path (0.76134ms)
+✔ activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit (1.472838ms)
+✔ vulnerability: HTTP 204 means Fleet knows the CVE and nothing is affected (exit 0, no data) (0.640352ms)
+✔ the default transport is the contract's, and the tripwire stops it in tests (0.904185ms)
+✔ help prints the commands; run directly, the CLI exits with run()'s code (249.741664ms)
+✔ verify-deleted says whether --not-before is malformed or an impossible date (round 2, finding 14) (0.444022ms)
+✔ the contract names INCONCLUSIVE and its own exit code, 5, used by no other outcome (3.359187ms)
+✔ inconclusive() builds the verdict every connector prints: state INCONCLUSIVE, ok false, verified false, the reason (0.895313ms)
+✔ renderResult prints the two-part message for INCONCLUSIVE: an answer that proves nothing either way, nothing reported done (0.775841ms)
+✔ the audit trail accepts a verify entry with state INCONCLUSIVE and verified false; cli-support records the state as it is (1.398077ms)
+✔ fleet verify-checked-in: no last MDM check-in time on an enrolled host is INCONCLUSIVE (exit 5), never a pass and never a failed object (10.056214ms)
+✔ fleet verify-lock: verify-lock cannot judge an Android host is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.024034ms)
+✔ fleet verify-wipe: verify-wipe cannot judge a Linux host is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.942548ms)
+✔ fleet verify-script: a script run that has not reported yet is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.887206ms)
+✔ fleet verify-deleted: ten pages of activities, none older than --not-before, more behind them is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.430964ms)
+✔ github verify-2fa-required: the 2FA requirement is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.19092ms)
+✔ github verify-team-member: absent from a list longer than ten pages is INCONCLUSIVE (exit 5), never a pass and never a failed object (11.154324ms)
+✔ github verify-collaborator-removed: a collaborator list answer that is not a list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.769809ms)
+✔ github verify-collaborator: the role is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.634533ms)
+✔ github verify-secret-alert: the alert state is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.652925ms)
+✔ gws verify-suspended: the user record leaves suspended out is INCONCLUSIVE (exit 5), never a pass and never a failed object (7.29096ms)
+✔ gws verify-2sv-enforced: the user record leaves isEnforcedIn2Sv out is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.146921ms)
+✔ gws verify-event: the event feed has another page without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.442489ms)
+✔ jamf verify-checked-in: no lastContactTime on the Mac is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.458876ms)
+✔ jamf verify-checked-in: the serial filter returned two records is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.57095ms)
+✔ jamf verify-group-count: a paged member list is not a count is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.859104ms)
+✔ linear verify-state: the issue read shows no state is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.985927ms)
+✔ linear verify-labels: the label is not on the first page of labels and more follow is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.731619ms)
+✔ msgraph verify-account-enabled: accountEnabled is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.717725ms)
+✔ msgraph verify-group-member: a member list answer with no list (it used to pass for --absent) is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.794829ms)
+✔ msgraph verify-mfa-cleared: a method list answer with no list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.615255ms)
+✔ msgraph verify-method-absent: absent from a method list with another page is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.812967ms)
+✔ okta verify-status: the user record carries no status is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.627186ms)
+✔ okta verify-sessions-cleared: a full page of System Log events without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.880487ms)
+✔ slack verify-deactivated: users.info does not show deleted is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.355246ms)
+✔ slack verify-deactivated: users.info answered without a user record is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.4558ms)
+✔ msgraph verify-mfa-cleared: a method still listed, with another page behind it is still a failed object (exit 2, state OK) (1.86161ms)
+✔ github verify-team-member: still a member, on a list longer than ten pages is still a failed object (exit 2, state OK) (7.678821ms)
+✔ fleet verify-checked-in: a host checked in before --not-before is still a failed object (exit 2, state OK) (0.6407ms)
+✔ gws verify-suspended: a user not suspended is still a failed object (exit 2, state OK) (1.646376ms)
+✔ jamf verify-checked-in: a Mac whose last contact is before --not-before is still a failed object (exit 2, state OK) (0.63282ms)
+✔ linear verify-state: an issue in another state is still a failed object (exit 2, state OK) (0.474343ms)
+✔ okta verify-status: a user in another status is still a failed object (exit 2, state OK) (1.695415ms)
+✔ slack verify-deactivated: a user not deactivated is still a failed object (exit 2, state OK) (0.348097ms)
+✔ jira verify-transition: an answer with no status version is INCONCLUSIVE (exit 5), recorded as such (3.949715ms)
+✔ jira verify-comment: a comment read-back with no body text is INCONCLUSIVE (exit 5); another comment id stays a failure (exit 2) (1.21385ms)
+✔ jira verify-transition: a status other than the one expected stays a failure (exit 2, state OK) (0.489607ms)
+✔ every connector takes INCONCLUSIVE and its exit code from the shared contract (2.375706ms)
+✔ code review round 1, finding 3: fleet verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.483707ms)
+✔ code review round 1, finding 3: fleet verify-deleted takes --not-before as approved_at prints it, with milliseconds (0.339568ms)
+✔ code review round 1, finding 3: gws verify-event takes --not-before as approved_at prints it, with milliseconds (0.471061ms)
+✔ code review round 1, finding 3: jamf verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.335786ms)
+✔ code review round 1, finding 3: jamf verify-command takes --not-before as approved_at prints it, with milliseconds (0.452503ms)
+✔ code review round 1, finding 3: linear verify-comment takes --not-before as approved_at prints it, with milliseconds (0.326303ms)
+✔ code review round 1, finding 3: msgraph verify-password-changed takes --not-before as approved_at prints it, with milliseconds (0.284007ms)
+✔ code review round 1, finding 3: msgraph verify-signin takes --not-before as approved_at prints it, with milliseconds (0.323195ms)
+✔ code review round 1, finding 3: msgraph verify-device-synced takes --not-before as approved_at prints it, with milliseconds (0.380354ms)
+✔ code review round 1, finding 3: msgraph verify-sessions-revoked takes --not-before as approved_at prints it, with milliseconds (0.268256ms)
+✔ code review round 1, finding 3: okta verify-sessions-cleared takes --not-before as approved_at prints it, with milliseconds (0.47164ms)
+✔ code review round 1, finding 3: okta verify-password-reset takes --not-before as approved_at prints it, with milliseconds (0.355916ms)
+✔ code review round 1, finding 3: slack verify-posted takes --not-before as approved_at prints it, with milliseconds (0.470242ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --state fixed --reason: dismissed_reason null (not dismissed) is a failed object (exit 2) (0.749184ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is a failed object (exit 2) (0.330112ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: dismissed_reason left out of the answer is INCONCLUSIVE (exit 5) (0.458917ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: a dismissed_reason that is neither null nor text is INCONCLUSIVE (exit 5) (0.499739ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: another reason stays a failed object and the same reason passes (0.944695ms)
+✔ code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, more pages unread past the ten read, is INCONCLUSIVE (exit 5) (1.255993ms)
+✔ code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, the feed read to its end or back to --not-before, stays a failed object (exit 2) (0.836797ms)
+✖ code review round 1, finding 8: fleet verify-deleted: an activities answer with no activities list is INCONCLUSIVE (exit 5), not an empty list (1.328822ms)
+✖ code review round 1, finding 8: fleet verify-deleted: an activities list that is null is INCONCLUSIVE (exit 5), not an empty list (0.704798ms)
+✖ code review round 1, finding 8: fleet verify-deleted: a later activities page with no list is INCONCLUSIVE (exit 5), not an empty list (0.443326ms)
+✖ code review round 1, finding 8: fleet verify-wipe on a Mac: an MDM commands answer with no results list is INCONCLUSIVE (exit 5), not an empty list (1.530682ms)
+✖ code review round 1, finding 8: fleet verify-wipe on Windows: an MDM commands results list that is null is INCONCLUSIVE (exit 5), not an empty list (0.466429ms)
+✖ code review round 1, finding 8: linear verify-comment: a comments connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (0.938195ms)
+✖ code review round 1, finding 8: linear verify-comment: an issue with no comments connection is INCONCLUSIVE (exit 5), not an empty list (0.555263ms)
+✖ code review round 1, finding 8: linear verify-comment: a comments connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (1.335967ms)
+✖ code review round 1, finding 8: linear verify-suspended: a users connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (0.867224ms)
+✖ code review round 1, finding 8: linear verify-suspended: an answer with no users connection is INCONCLUSIVE (exit 5), not an empty list (0.467884ms)
+✖ code review round 1, finding 8: linear verify-suspended: a users connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (0.415477ms)
+✔ code review round 1, finding 8: fleet verify-deleted: an empty activities list, the feed at its end stays a failed object (exit 2) (0.414643ms)
+✔ code review round 1, finding 8: fleet verify-wipe on a Mac: an empty results list stays a failed object (exit 2) (0.311442ms)
+✔ code review round 1, finding 8: fleet verify-wipe: a host not wiping, whatever the commands answer holds stays a failed object (exit 2) (0.274599ms)
+✔ code review round 1, finding 8: linear verify-comment: an empty comments list on its last page stays a failed object (exit 2) (0.423069ms)
+✔ code review round 1, finding 8: linear verify-suspended: the member not on the last page stays a failed object (exit 2) (0.285132ms)
+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation (3.726663ms)
+✔ every read and verify-* sends POST api.linear.app/graphql with its named document byte-equal, and the key only in the Authorization header (17.935166ms)
+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called (3.702472ms)
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0 (4 for a verify-*) (4.117828ms)
+✔ --execute with a mock transport prints the data; a missing key is NO_CREDENTIALS (exit 1) and nothing is sent (0.648533ms)
+✔ tenant: LINEAR_ORG is required before any read, and a record from another workspace exits 3 with no data (1.467667ms)
+✔ note is offline: it prints the exact body, its SHA-256 over the normalised body, a not-before time, the HUMAN-RUN posting steps and the exact verify-comment line (10.490882ms)
+✔ note and digest read only a .md or .txt note outside key and settings folders, and refuse a body the commit scanner blocks; a refused file is never printed (10.158302ms)
+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed (3.462957ms)
+✔ note and digest refuse a line carrying the tenant's own domain or name (SR-8), read from the same environment names the commit scanner reads, and never print it (3.230389ms)
+✔ verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2) (3.390523ms)
+✔ verify-state, verify-labels and verify-trashed print verified, observed and expected values; exit 0 when the read proves the write, 2 when it does not (3.797543ms)
+✔ verify-snoozed: the issue read carries snoozedUntilAt, and a time later than the read proves the snooze (exit 0); empty, past, now, unreadable or another issue is not proof (exit 2) (2.349245ms)
+✔ verify-suspended: the member's active is false (exit 0); active, or not found on any page, is not proof (exit 2) (6.874717ms)
+✔ the key never appears in stdout, stderr or results, also when the transport error or the response echoes it (4.332779ms)
+✔ a 200 response carrying GraphQL errors returns no data and exits 2, printing only the error type codes (0.80788ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it (1.050985ms)
+✔ bad input is refused with exit 1 before anything is read or sent (1.244489ms)
+✔ a network tripwire is never swallowed: run() rejects with it (0.472393ms)
+✔ a repo file outside tasks/ is refused even when the repo sits inside the temporary folder; a note in tasks/ is still read (2.76077ms)
+ℹ tests 127
+ℹ suites 0
+ℹ pass 116
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 421.644138
+
+✖ failing tests:
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: fleet verify-deleted: an activities answer with no activities list is INCONCLUSIVE (exit 5), not an empty list (1.328822ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-deleted",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "deleted_host activity": null,
+      "activity pages read": 1
+    },
+    "expected": {
+      "deleted_host activity": {
+        "type": "deleted_host",
+        "details.host_serial": "C02TEST0001",
+        "details.triggered_by": "manual",
+        "created_at": "at or after 2026-10-28T09:00:00Z"
+      },
+      "host lookup by identifier": "HTTP 404 (not found), or a host id other than the deleted one (the device re-enrolled)"
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=0&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "no deleted_host activity for this serial at or after --not-before in the 1 newest page(s) read (at most 10 of 100)",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-deleted state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: fleet verify-deleted: an activities list that is null is INCONCLUSIVE (exit 5), not an empty list (0.704798ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-deleted",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "deleted_host activity": null,
+      "activity pages read": 1
+    },
+    "expected": {
+      "deleted_host activity": {
+        "type": "deleted_host",
+        "details.host_serial": "C02TEST0001",
+        "details.triggered_by": "manual",
+        "created_at": "at or after 2026-10-28T09:00:00Z"
+      },
+      "host lookup by identifier": "HTTP 404 (not found), or a host id other than the deleted one (the device re-enrolled)"
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=0&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "no deleted_host activity for this serial at or after --not-before in the 1 newest page(s) read (at most 10 of 100)",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-deleted state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: fleet verify-deleted: a later activities page with no list is INCONCLUSIVE (exit 5), not an empty list (0.443326ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-deleted",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "deleted_host activity": null,
+      "activity pages read": 2
+    },
+    "expected": {
+      "deleted_host activity": {
+        "type": "deleted_host",
+        "details.host_serial": "C02TEST0001",
+        "details.triggered_by": "manual",
+        "created_at": "at or after 2026-10-28T09:00:00Z"
+      },
+      "host lookup by identifier": "HTTP 404 (not found), or a host id other than the deleted one (the device re-enrolled)"
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=0&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=1&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "no deleted_host activity for this serial at or after --not-before in the 2 newest page(s) read (at most 10 of 100)",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-deleted state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: fleet verify-wipe on a Mac: an MDM commands answer with no results list is INCONCLUSIVE (exit 5), not an empty list (1.530682ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-wipe",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "darwin",
+      "host.mdm.device_status": "wiping",
+      "host.mdm.pending_action": "wipe",
+      "commands host_identifier": "C02TEST0001",
+      "wipe command": null
+    },
+    "expected": {
+      "host.id": [
+        7
+      ],
+      "host.mdm.device_status": [
+        "wiping",
+        "wiped"
+      ],
+      "wipe command": {
+        "request_type": "EraseDevice",
+        "status": [
+          "Acknowledged"
+        ]
+      }
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/commands?host_identifier=C02TEST0001&request_type=EraseDevice",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-wipe state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: fleet verify-wipe on Windows: an MDM commands results list that is null is INCONCLUSIVE (exit 5), not an empty list (0.466429ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-wipe",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "windows",
+      "host.mdm.device_status": "wiped",
+      "host.mdm.pending_action": "",
+      "commands host_identifier": "C02TEST0001",
+      "wipe command": null
+    },
+    "expected": {
+      "host.id": [
+        7
+      ],
+      "host.mdm.device_status": [
+        "wiping",
+        "wiped"
+      ],
+      "wipe command": {
+        "request_type": "a Windows RemoteWipe doWipe command (doWipe, doWipeProtected and similar)",
+        "status": [
+          "200"
+        ]
+      }
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/commands?host_identifier=C02TEST0001&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "Windows command status is an OMA-DM code (vendor docs); the doWipe request_type shape is read from the vendor's wipe options and is unverified, so only a doWipe command with status 200 counts.",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-wipe state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: linear verify-comment: a comments connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (0.938195ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-comment",
+    "verified": false,
+    "expected": {
+      "issue": "IT-123",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "issue": "IT-123",
+      "pagesRead": 1,
+      "commentsRead": 0,
+      "match": null,
+      "commentsSinceNotBefore": []
+    },
+    "reason": "no comment created at or after 2026-10-28T09:00:00Z has the expected SHA-256",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-comment state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: linear verify-comment: an issue with no comments connection is INCONCLUSIVE (exit 5), not an empty list (0.555263ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-comment",
+    "verified": false,
+    "expected": {
+      "issue": "IT-123",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "issue": "IT-123",
+      "pagesRead": 1,
+      "commentsRead": 0,
+      "match": null,
+      "commentsSinceNotBefore": []
+    },
+    "reason": "no comment created at or after 2026-10-28T09:00:00Z has the expected SHA-256",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-comment state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: linear verify-comment: a comments connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (1.335967ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-comment",
+    "verified": false,
+    "expected": {
+      "issue": "IT-123",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "issue": "IT-123",
+      "pagesRead": 1,
+      "commentsRead": 0,
+      "match": null,
+      "commentsSinceNotBefore": []
+    },
+    "reason": "no comment created at or after 2026-10-28T09:00:00Z has the expected SHA-256",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-comment state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: linear verify-suspended: a users connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (0.867224ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-suspended",
+    "verified": false,
+    "expected": {
+      "user": "user-7",
+      "active": false
+    },
+    "observed": {
+      "user": "user-7",
+      "found": false,
+      "active": null,
+      "admin": null,
+      "guest": null,
+      "owner": null,
+      "pagesRead": 1,
+      "membersRead": 0
+    },
+    "reason": "the user is not among the 0 member record(s) read; a member missing from the list is not proof of suspension",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-suspended state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: linear verify-suspended: an answer with no users connection is INCONCLUSIVE (exit 5), not an empty list (0.467884ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-suspended",
+    "verified": false,
+    "expected": {
+      "user": "user-7",
+      "active": false
+    },
+    "observed": {
+      "user": "user-7",
+      "found": false,
+      "active": null,
+      "admin": null,
+      "guest": null,
+      "owner": null,
+      "pagesRead": 1,
+      "membersRead": 0
+    },
+    "reason": "the user is not among the 0 member record(s) read; a member missing from the list is not proof of suspension",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-suspended state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:388:3
+✖ code review round 1, finding 8: linear verify-suspended: a users connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (0.415477ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-suspended",
+    "verified": false,
+    "expected": {
+      "user": "user-7",
+      "active": false
+    },
+    "observed": {
+      "user": "user-7",
+      "found": false,
+      "active": null,
+      "admin": null,
+      "guest": null,
+      "owner": null,
+      "pagesRead": 1,
+      "membersRead": 1
+    },
+    "reason": "the user is not among the 1 member record(s) read; a member missing from the list is not proof of suspension",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-suspended state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:389:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

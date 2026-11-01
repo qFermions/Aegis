@@ -1,0 +1,3 @@
+RELEASE BOUNDARY: PASS -- 0 boundary paths clean, private stores ignored, workflows secret-free
+exit 0
+# capture edited after the run: U+2014 written as "--" (1), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

@@ -1,0 +1,137 @@
+# command: node --test --test-name-pattern=A3 scripts/audit/change-record.test.js scripts/adapters/verify-flags.test.js
+# commit: 2417beb (plus uncommitted changes in the working tree)  started: 2026-10-31T23:39:25Z  node: v24.22.1
+node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module './verify-flags.js'
+Require stack:
+- <repo>/scripts/adapters/verify-flags.test.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    at Module._load (node:internal/modules/cjs/loader:1341:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12)
+    at require (node:internal/modules/helpers:157:16)
+    at Object.<anonymous> (<repo>/scripts/adapters/verify-flags.test.js:22:18)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '<repo>/scripts/adapters/verify-flags.test.js' ]
+}
+
+Node.js v24.22.1
+✖ scripts/adapters/verify-flags.test.js (50.68806ms)
+✖ A3: each read-back with a time bound is named with --not-before; one earlier than the approval is not done, one at or after it is done when it passes (3.429308ms)
+✖ A3: an early time bound linked around the CLI still never makes the change done (2.841559ms)
+✖ A3: a time bound in epoch milliseconds is recorded in UTC and judged the same way (1.745945ms)
+✖ A3: a change whose read-back takes a time bound is not opened without it, and the bound is named without a value (1.575136ms)
+✖ A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done (1.743375ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.750405
+
+✖ failing tests:
+
+test at scripts/adapters/verify-flags.test.js:1:1
+✖ scripts/adapters/verify-flags.test.js (50.68806ms)
+  'test failed'
+
+test at scripts/audit/change-record.test.js:1210:1
+✖ A3: each read-back with a time bound is named with --not-before; one earlier than the approval is not done, one at or after it is done when it passes (3.429308ms)
+  AssertionError [ERR_ASSERTION]: every command with a time bound is covered here
+  + actual - expected
+  
+  + []
+  - [
+  -   'fleet:verify-checked-in',
+  -   'fleet:verify-deleted',
+  -   'google-workspace:verify-event',
+  -   'jamf:verify-checked-in',
+  -   'jamf:verify-command',
+  -   'jira:verify-comment',
+  -   'jira:verify-create',
+  -   'linear:verify-comment',
+  -   'msgraph:verify-device-synced',
+  -   'msgraph:verify-password-changed',
+  -   'msgraph:verify-sessions-revoked',
+  -   'msgraph:verify-signin',
+  -   'okta:verify-password-reset',
+  -   'okta:verify-sessions-cleared',
+  -   'slack:verify-posted'
+  - ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1212:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'fleet:verify-checked-in', 'fleet:verify-deleted', 'google-workspace:verify-event', 'jamf:verify-checked-in', 'jamf:verify-command', 'jira:verify-comment', 'jira:verify-create', 'linear:verify-comment', 'msgraph:verify-device-synced', 'msgraph:verify-password-changed', 'msgraph:verify-sessions-revoked', 'msgraph:verify-signin', 'okta:verify-password-reset', 'okta:verify-sessions-cleared', 'slack:verify-posted' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1235:1
+✖ A3: an early time bound linked around the CLI still never makes the change done (2.841559ms)
+  AuditRefused: no flag changes what msgraph:verify-sessions-revoked's pass means, so it is named without flags
+      at Object.parseReadBack (<repo>/scripts/audit/audit-log.js:172:21)
+      at <repo>/scripts/audit/trail-helper.js:32:35
+      at Object.approvedChange (<repo>/scripts/audit/change-record.test.js:1194:15)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1238:37)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at scripts/audit/change-record.test.js:1246:1
+✖ A3: a time bound in epoch milliseconds is recorded in UTC and judged the same way (1.745945ms)
+  AuditRefused: --not-before does not change what jira:verify-create's pass means; name the read-back with only --expect-sha256
+      at Object.parseReadBack (<repo>/scripts/audit/audit-log.js:181:13)
+      at <repo>/scripts/audit/trail-helper.js:32:35
+      at Object.approvedChange (<repo>/scripts/audit/change-record.test.js:1194:15)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1249:37)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:1257:1
+✖ A3: a change whose read-back takes a time bound is not opened without it, and the bound is named without a value (1.575136ms)
+  AuditRefused: no flag changes what msgraph:verify-sessions-revoked's pass means, so it is named without flags
+      at Object.parseReadBack (<repo>/scripts/audit/audit-log.js:172:21)
+      at Object.gateFor (<repo>/scripts/audit/trail-helper.js:32:35)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1259:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:1270:1
+✖ A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done (1.743375ms)
+  AuditRefused: --not-before does not change what slack:verify-posted's pass means; name the read-back with only --expect-sha256
+      at Object.parseReadBack (<repo>/scripts/audit/audit-log.js:181:13)
+      at <repo>/scripts/audit/trail-helper.js:32:35
+      at Object.approvedChange (<repo>/scripts/audit/change-record.test.js:1194:15)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1282:39)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+# exit: 1  finished: 2026-10-31T23:39:25Z

@@ -1,0 +1,269 @@
+# command: node --test scripts/eval/judged/wiring.test.js
+# commit: 999f094 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:58:42Z  node: v24.22.1
+✖ the eval README has a section on the runner with its commands, locations and label (2.796856ms)
+✖ readiness row 9 names the runner and the calibration step, stays owner only, and the gate reads NOT PASSED (0.638114ms)
+✖ capability-map row 26 reads implemented but unverified and names the runner (0.515588ms)
+✖ CI dry-runs the runner on the DEV set copied out of the repository, and runs node --test (0.776287ms)
+✖ the explainer exists and is under 60 lines (0.292633ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 109.206832
+
+✖ failing tests:
+
+test at scripts/eval/judged/wiring.test.js:25:1
+✖ the eval README has a section on the runner with its commands, locations and label (2.796856ms)
+  AssertionError [ERR_ASSERTION]: a 2d section
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/wiring.test.js:28:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/wiring.test.js:35:1
+✖ readiness row 9 names the runner and the calibration step, stays owner only, and the gate reads NOT PASSED (0.638114ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /`node scripts\/eval\/judged-eval\.js run --cases [^`]+ --execute`/. Input:
+  
+  "| 9 | Model-judged run on the owner's held-out cases | the owner runs the model-judged rubric (`scripts/eval/README.md`) on held-out cases kept outside this repository | owner only | at or above the threshold the owner sets; held-out cases never enter this repository |"
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/wiring.test.js:40:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "| 9 | Model-judged run on the owner's held-out cases | the owner runs the model-judged rubric (`scripts/eval/README.md`) on held-out cases kept outside this repository | owner only | at or above the threshold the owner sets; held-out cases never enter this repository |",
+    expected: /`node scripts\/eval\/judged-eval\.js run --cases [^`]+ --execute`/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/wiring.test.js:45:1
+✖ capability-map row 26 reads implemented but unverified and names the runner (0.515588ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\| implemented but unverified \|/. Input:
+  
+  '| 26 | 5. Agent development: automated model-judged eval runner | Platform-neutral | missing | `scripts/eval/README.md:35` (judged half is run by hand inside Claude Code); `docs/aegis/evidence/find-tests-and-iac.txt` (no judge or rubric runner script) | The rubric is a document; nothing runs it, records scores or compares runs. |'
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/wiring.test.js:48:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '| 26 | 5. Agent development: automated model-judged eval runner | Platform-neutral | missing | `scripts/eval/README.md:35` (judged half is run by hand inside Claude Code); `docs/aegis/evidence/find-tests-and-iac.txt` (no judge or rubric runner script) | The rubric is a document; nothing runs it, records scores or compares runs. |',
+    expected: /\| implemented but unverified \|/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/wiring.test.js:52:1
+✖ CI dry-runs the runner on the DEV set copied out of the repository, and runs node --test (0.776287ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /cp scripts\/eval\/judged\/dev-cases\.jsonl "\$RUNNER_TEMP\/dev-cases\.jsonl"/. Input:
+  
+  'name: CI\n' +
+    '\n' +
+    '# Every declared check on every pull request and on every push to main (REVIEW.md, CLAUDE.md "Review").\n' +
+    '# Pattern-only by design: no secret value reaches any job. The release-gate workflow keeps the\n' +
+    '# two-OS test and scanner run; this workflow adds the rest of the declared battery and the risk tier.\n' +
+    '\n' +
+    'on:\n' +
+    '  pull_request:\n' +
+    '  push:\n' +
+    '    branches: [main]\n' +
+    '\n' +
+    'permissions:\n' +
+    '  contents: read\n' +
+    '\n' +
+    'concurrency:\n' +
+    '  group: ci-${{ github.workflow }}-${{ github.ref }}\n' +
+    "  cancel-in-progress: ${{ github.event_name == 'pull_request' }}\n" +
+    '\n' +
+    'jobs:\n' +
+    '  verify:\n' +
+    '    name: verify\n' +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 15\n' +
+    '    steps:\n' +
+    '      - name: Check out\n' +
+    '        uses: actions/checkout@v7\n' +
+    '\n' +
+    '      - name: Set up Node.js (version from .nvmrc)\n' +
+    '        uses: actions/setup-node@v6\n' +
+    '        with:\n' +
+    '          node-version-file: .nvmrc\n' +
+    '          package-manager-cache: false\n' +
+    '\n' +
+    '      - name: Install\n' +
+    '        # The repository declares no package manifest today. The day one lands, npm ci installs from its\n' +
+    '        # lockfile with lifecycle scripts off (pattern-only CI). A manifest without a lockfile fails\n' +
+    '        # closed: dependency manifests and lockfiles are tier C (REVIEW.md) and npm install would\n' +
+    '        # write an untracked lockfile that the release-boundary step rejects.\n' +
+    '        run: |\n' +
+    '          if [ -f package-lock.json ]; then npm ci --ignore-scripts\n' +
+    '          elif [ -f package.json ]; then echo "::error::package.json without package-lock.json: commit the lockfile (REVIEW.md, tier C)"; exit 1\n' +
+    '          else echo "no package manifest, nothing to install"; fi\n' +
+    '\n' +
+    '      - name: Prerequisite check (PowerShell is required by the safety-gate tests)\n' +
+    "        run: pwsh -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.ToString()'\n" +
+    '\n' +
+    '      - name: Test suite\n' +
+    '        run: node --test\n' +
+    '\n' +
+    '      - name: Command structure lint\n' +
+    '        run: node scripts/lint/command-structure.js\n' +
+    '\n' +
+    '      - name: Full-tree scan (PII, credentials, secret formats)\n' +
+    '        run: node scripts/pre-commit-check.js --all\n' +
+    '\n' +
+    '      - name: Release boundary\n' +
+    '        run: node scripts/harness/release-boundary-check.js\n' +
+    '\n' +
+    '  risk-tier:\n' +
+    '    name: risk-tier\n' +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 5\n' +
+    '    steps:\n' +
+    '      - name: Check out with full history\n' +
+    '        uses: actions/checkout@v7\n' +
+    '        with:\n' +
+    '          fetch-depth: 0\n' +
+    '\n' +
+    '      - name: Set up Node.js (version from .nvmrc)\n' +
+    '        uses: actions/setup-node@v6\n' +
+    '        with:\n' +
+    '          node-version-file: .nvmrc\n' +
+    '          package-manager-cache: false\n' +
+    '\n' +
+    '      - name: Compute the risk tier against the base\n' +
+    '        # Pull request: the target branch. Push: the commit before the push, so a merge to main\n' +
+    '        # reports the tier of what landed. When that commit is unreachable (history rewritten,\n' +
+    '        # shallow checkout, first commit) there is no trustworthy base and the job fails closed,\n' +
+    '        # as it does on any script error (missing base, unreadable tier file).\n' +
+    '        env:\n' +
+    '          EVENT: ${{ github.event_name }}\n' +
+    '          BASE_REF: ${{ github.base_ref }}\n' +
+    '          BEFORE: ${{ github.event.before }}\n' +
+    '          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          if [ "$EVENT" = pull_request ]; then\n' +
+    '            base="origin/${BASE_REF}"\n' +
+    '          elif [ -n "$BEFORE" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then\n' +
+    '            base="$BEFORE"\n' +
+    '          else\n' +
+    '            echo "::error::risk-tier: the pushed-from commit (${BEFORE:-unset}) is unreachable on ${DEFAULT_BRANCH} (history rewrite, shallow checkout or first commit); no trustworthy base, failing closed"\n' +
+    '            exit 1\n' +
+    '          fi\n' +
+    '          out="$(node scripts/risk_tier.mjs "$base")"\n' +
+    `          printf '%s\\n' "$out"\n` +
+    '          {\n' +
+    '            echo "## Risk tier (base: ${base})"\n' +
+    '            echo\n' +
+    "            echo '```'\n" +
+    `            printf '%s\\n' "$out"\n` +
+    "            echo '```'\n" +
+    '            echo\n' +
+    "            echo 'Tiers are defined in .github/risk-tiers.json and explained in REVIEW.md.'\n" +
+    '          } >> "$GITHUB_STEP_SUMMARY"\n' +
+    '\n' +
+    '  detect:\n' +
+    '    name: detect\n' +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 5\n' +
+    '    outputs:\n' +
+    '      has_evals: ${{ steps.probe.outputs.has_evals }}\n' +
+    '    steps:\n' +
+    '      - name: Check out\n' +
+    '        uses: actions/checkout@v7\n' +
+    '\n' +
+    '      - name: Probe for the eval scripts\n' +
+    '        id: probe\n' +
+    '        run: |\n' +
+    '          if [ -f scripts/eval/ms-ticket-eval.js ] && [ -f scripts/eval/gws-ticket-eval.js ] && [ -f scripts/eval/g2-ticket-eval.js ] && [ -f scripts/eval/g3-ticket-eval.js ] && [ -f scripts/replay/replay-demo.js ]; then\n' +
+    '            echo "has_evals=true" >> "$GITHUB_OUTPUT"\n' +
+    '          else\n' +
+    '            echo "has_evals=false" >> "$GITHUB_OUTPUT"\n' +
+    '          fi\n' +
+    '\n' +
+    '  evals:\n' +
+    '    name: "${{ needs.detect.outputs.has_evals == \'true\' && \'evals\' || \'evals (skipped - eval scripts missing)\' }}"\n' +
+    '    needs: [verify, detect]\n' +
+    "    if: needs.detect.outputs.has_evals == 'true'\n" +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 30\n' +
+    '    steps:\n' +
+    '      - name: Check out\n' +
+    '        uses: actions/checkout@v7\n' +
+    '\n' +
+    '      - name: Set up Node.js (version from .nvmrc)\n' +
+    '        uses: actions/setup-node@v6\n' +
+    '        with:\n' +
+    '          node-version-file: .nvmrc\n' +
+    '          package-manager-cache: false\n' +
+    '\n' +
+    '      - name: Microsoft ticket eval\n' +
+    '        run: node scripts/eval/ms-ticket-eval.js\n' +
+    '\n' +
+    '      - name: Google Workspace / Okta / Jamf ticket eval\n' +
+    '        run: node scripts/eval/gws-ticket-eval.js\n' +
+    '\n' +
+    '      - name: G2 ticket eval (Google Workspace, Fleet, Jamf, Slack, Linear; counts per platform)\n' +
+    '        run: node scripts/eval/g2-ticket-eval.js\n' +
+    '\n' +
+    '      - name: G3 ticket eval (Okta, Microsoft 365, ambiguous tickets, the four intake sources; minimums)\n' +
+    '        run: node scripts/eval/g3-ticket-eval.js\n' +
+    '\n' +
+    '      - name: Replay lifecycle demo\n' +
+    '        run: node scripts/replay/replay-demo.js\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/wiring.test.js:55:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'name: CI\n\n# Every declared check on every pull request and on every push to main (REVIEW.md, CLAUDE.md "Review").\n# Pattern-only by design: no secret value reaches any job. The release-gate workflow keeps the\n# two-OS test and scanner run; this workflow adds the rest of the declared battery and the risk tier.\n\non:\n  pull_request:\n  push:\n    branches: [main]\n\npermissions:\n  contents: read\n\nconcurrency:\n  group: ci-${{ github.workflow }}-${{ github.ref }}\n  cancel-in-progress: ${{ github.event_name == \'pull_request\' }}\n\njobs:\n  verify:\n    name: verify\n    runs-on: ubuntu-latest\n    timeout-minutes: 15\n    steps:\n      - name: Check out\n        uses: actions/checkout@v7\n\n      - name: Set up Node.js (version from .nvmrc)\n        uses: actions/setup-node@v6\n        with:\n          node-version-file: .nvmrc\n          package-manager-cache: false\n\n      - name: Install\n        # The repository declares no package manifest today. The day one lands, npm ci installs from its\n        # lockfile with lifecycle scripts off (pattern-only CI). A manifest without a lockfile fails\n        # closed: dependency manifests and lockfiles are tier C (REVIEW.md) and npm install would\n        # write an untracked lockfile that the release-boundary step rejects.\n        run: |\n          if [ -f package-lock.json ]; then npm ci --ignore-scripts\n          elif [ -f package.json ]; then echo "::error::package.json without package-lock.json: commit the lockfile (REVIEW.md, tier C)"; exit 1\n          else echo "no package manifest, nothing to install"; fi\n\n      - name: Prerequisite check (PowerShell is required by the safety-gate tests)\n        run: pwsh -NoProfile -NonInteractive -Command \'$PSVersionTable.PSVersion.ToString()\'\n\n      - name: Test suite\n        run: node --test\n\n      - name: Command structure lint\n        run: node scripts/lint/command-structure.js\n\n      - name: Full-tree scan (PII, credentials, secret formats)\n        run: node scripts/pre-commit-check.js --all\n\n      - name: Release boundary\n        run: node scripts/harness/release-boundary-check.js\n\n  risk-tier:\n    name: risk-tier\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - name: Check out with full history\n        uses: actions/checkout@v7\n        with:\n          fetch-depth: 0\n\n      - name: Set up Node.js (version from .nvmrc)\n        uses: actions/setup-node@v6\n        with:\n          node-version-file: .nvmrc\n          package-manager-cache: false\n\n      - name: Compute the risk tier against the base\n        # Pull request: the target branch. Push: the commit before the push, so a merge to main\n        # reports the tier of what landed. When that commit is unreachable (history rewritten,\n        # shallow checkout, first commit) there is no trustworthy base and the job fails closed,\n        # as it does on any script error (missing base, unreadable tier file).\n        env:\n          EVENT: ${{ github.event_name }}\n          BASE_REF: ${{ github.base_ref }}\n          BEFORE: ${{ github.event.before }}\n          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}\n        run: |\n          set -euo pipefail\n          if [ "$EVENT" = pull_request ]; then\n            base="origin/${BASE_REF}"\n          elif [ -n "$BEFORE" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then\n            base="$BEFORE"\n          else\n            echo "::error::risk-tier: the pushed-from commit (${BEFORE:-unset}) is unreachable on ${DEFAULT_BRANCH} (history rewrite, shallow checkout or first commit); no trustworthy base, failing closed"\n            exit 1\n          fi\n          out="$(node scripts/risk_tier.mjs "$base")"\n          printf \'%s\\n\' "$out"\n          {\n            echo "## Risk tier (base: ${base})"\n            echo\n            echo \'```\'\n            printf \'%s\\n\' "$out"\n            echo \'```\'\n            echo\n            echo \'Tiers are defined in .github/risk-tiers.json and explained in REVIEW.md.\'\n          } >> "$GITHUB_STEP_SUMMARY"\n\n  detect:\n    name: detect\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    outputs:\n      has_evals: ${{ steps.probe.outputs.has_evals }}\n    steps:\n      - name: Check out\n        uses: actions/checkout@v7\n\n      - name: Probe for the eval scripts\n        id: probe\n        run: |\n          if [ -f scripts/eval/ms-ticket-eval.js ] && [ -f scripts/eval/gws-ticket-eval.js ] && [ -f scripts/eval/g2-ticket-eval.js ] && [ -f scripts/eval/g3-ticket-eval.js ] && [ -f scripts/replay/replay-demo.js ]; then\n            echo "has_evals=true" >> "$GITHUB_OUTPUT"\n          else\n            echo "has_evals=false" >> "$GITHUB_OUTPUT"\n          fi\n\n  evals:\n    name: "${{ needs.detect.outputs.has_evals == \'true\' && \'evals\' || \'evals (skipped - eval scripts missing)\' }}"\n    needs: [verify, detect]\n    if: needs.detect.outputs.has_evals == \'true\'\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    steps:\n      - name: Check out\n        uses: actions/checkout@v7\n\n      - name: Set up Node.js (version from .nvmrc)\n        uses: actions/setup-node@v6\n        with:\n          node-version-file: .nvmrc\n          package-manager-cache: false\n\n      - name: Microsoft ticket eval\n        run: node scripts/eval/ms-ticket-eval.js\n\n      - name: Google Workspace / Okta / Jamf ticket eval\n        run: node scripts/eval/gws-ticket-eval.js\n\n      - name: G2 ticket eval (Google Workspace, Fleet, Jamf, Slack, Linear; counts per platform)\n        run: node scripts/eval/g2-ticket-eval.js\n\n      - name: G3 ticket eval (Okta, Microsoft 365, ambiguous tickets, the four intake sources; minimums)\n        run: node scripts/eval/g3-ticket-eval.js\n\n      - name: Replay lifecycle demo\n        run: node scripts/replay/replay-demo.js\n',
+    expected: /cp scripts\/eval\/judged\/dev-cases\.jsonl "\$RUNNER_TEMP\/dev-cases\.jsonl"/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/wiring.test.js:60:1
+✖ the explainer exists and is under 60 lines (0.292633ms)
+  Error: ENOENT: no such file or directory, open '<repo>/docs/explainers/g4-eval-and-closeout.md'
+      at Object.readFileSync (node:fs:483:20)
+      at read (<repo>/scripts/eval/judged/wiring.test.js:23:24)
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/wiring.test.js:61:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/docs/explainers/g4-eval-and-closeout.md'
+  }
+# exit: 1  finished: 2026-10-31T23:58:42Z

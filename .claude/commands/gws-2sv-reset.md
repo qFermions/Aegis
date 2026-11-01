@@ -72,6 +72,7 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 - **Reversibility:** R1 — the old set cannot be brought back, but generating again under a fresh phrase issues another set; the user stays protected by 2SV throughout
 - **Required confirmation:** Type exactly `REPLACE BACKUP CODES FOR [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-2sv-reset-backup-codes-portal]:** Only when the existing codes are used up or suspected stolen, and after the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **2-step verification** → **Get Backup Verification Codes**.
 2. Click **Generate new codes**; the previous set becomes inactive at once.
@@ -96,6 +97,7 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 - **Reversibility:** R2 — not reversible from the console: the key itself is gone, and a replacement has to be enrolled again (the user adds a passkey or key, or an admin adds a 2SV-only security key with the key in hand); the recorded table is the record of what was removed
 - **Required confirmation:** Type exactly `REMOVE SECURITY KEY OR PASSKEY FROM [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads security keys or passkeys: its proof is the read its step names)
 **PORTAL ACTION [gws-2sv-reset-key-remove-portal]:** Only after the pre-state is recorded and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **Passkeys & security keys** → read the key table.
 2. Scroll the table all the way to the right, hover over the lost key's row and click **Remove**.
@@ -116,6 +118,7 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 - **Reversibility:** R1 — it expires on its own after 10 minutes; nothing to undo
 - **Required confirmation:** Type exactly `DISABLE LOGIN CHALLENGE FOR [USER@DOMAIN.COM] FOR 10 MINUTES`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-2sv-reset-challenge-portal]:** Only after the requester is verified and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **Login challenge** → **Turn Off For 10 Minutes**.
 2. Tell the user to sign in now; the window closes after 10 minutes.
@@ -135,6 +138,7 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 - **Reversibility:** R3 — security-control change; an admin cannot turn 2SV back on, only the user can, so the rollback is the user re-enrolling at the recorded date with the pre-state as the reference for which methods to restore
 - **Required confirmation:** Type exactly `DISABLE 2-STEP VERIFICATION FOR [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads 2-Step Verification enrollment, the 2SV read-backs read enforcement: its proof is the read its step names)
 **PORTAL ACTION [gws-2sv-reset-turn-off-portal]:** Only after Phases B–D are exhausted, the pre-state and justification are in the ticket, and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **2-step verification** → read that 2SV shows on and not enforced.
 2. Use the card's turn-off control for this user [control label unverified: the official page confirms the option exists on this card but does not print its label]; it is unavailable when 2SV is enforced org-wide or the account is suspended.
@@ -156,6 +160,7 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 # Reversibility: R1 — the old set cannot be restored — another run under a fresh phrase issues another set
 # Required confirmation: type exactly "REPLACE BACKUP CODES FOR [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="REPLACE BACKUP CODES FOR [USER@DOMAIN.COM]"
 # shows the phrase
@@ -183,6 +188,7 @@ gam user "[USER@DOMAIN.COM]" show backupcodes
 # Reversibility: R3 — only the user can turn 2SV back on — the recorded pre-state is the reference for re-enrollment
 # Required confirmation: type exactly "DISABLE 2-STEP VERIFICATION FOR [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads 2-Step Verification enrollment, the 2SV read-backs read enforcement: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="DISABLE 2-STEP VERIFICATION FOR [USER@DOMAIN.COM]"
 # shows the phrase

@@ -1,0 +1,23 @@
+# K checks at 9671ebb, 2026-11-01T04:23Z, base 1f6647c
+## K1 test titles: base 1486 passing titles, head (r3-battery at 25ed44d) 1844; titles at base missing at head: 2
+  missing: verify-method-absent: an answer that proves nothing either way is recorded as INVALID_RESPONSE, never as a failed object
+  missing: verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command or no wipe status is not
+## K2 leak grep: charter grep: 3064 hit lines (case-insensitive) in 196 files; by keyword: {"secret":571,"password":957,"token":1458,"/users/":76,"api_key":2} hits by file (path: lines): credential-shape pass over added lines: 0 hit(s) URL hosts in added lines (14): learn.jamf.com 28, support.google.com 18, developer.jamf.com 17, raw.githubusercontent.com 17, support.jamf.com 10, www.googleapis.com 7, api.github.com 4, example.invalid 3, developers.google.com 2, docs.github.com 2, graph.microsoft.com 2, docs.slack.dev 1, fleetdm.com 1, learn.microsoft.com 1 mail domains in added lines (3): domain.com 180, example.com 18, domain.c 4 
+## K2 env-file and key shapes in added lines: 0
+## K2 personal paths in added lines: 0
+## K3 U+2014: files added 0, added lines 0, commit messages 0
+## K4 socket: the suite under the tripwire, r3-battery/node-test-tripwire.txt: ℹ tests 1857 ℹ fail 0 
+## K5 package manifests or lockfiles in the tree: 0
+## K6 inventory diff against the base:
+examples: 728 at 1f6647c, 728 now; added 0, removed 0, mode changed 0
+  added by mode: {}
+  entries present at both with another field changed: {"impactCategories":2}
+clientBoundaries: 9 at 1f6647c, 9 now; added 0, removed 0, mode changed 0
+  added by mode: {}
+  entries present at both with another field changed: {}
+## K6 gate counts: boundary sentences: 'AEGIS ADVISES. HUMAN ADMINISTRATORS EXECUTE.' in PRODUCT_CONTRACT.md 1 (at 1f6647c 1); 'AEGIS ADVISES; HUMAN ADMINISTRATORS' in CLAUDE.md 1
+SAFETY GATE markers in .claude, modules and docs: 578 at 1f6647c, 658 here
+files whose SAFETY GATE count fell since 1f6647c: 0
+## K6 runbook gates (marker lines in .claude/commands): base 343, head 343
+## K7 held-out files or folders: 0; .aegis-state ignored: yes; DEV ids: "id":"DEV01" "id":"DEV02" "id":"DEV03" "id":"DEV04" "id":"DEV05" "id":"DEV06" "id":"DEV07" "id":"DEV08" 
+## K8 CLAUDE.md 19202 bytes; explainer 45 lines; readiness: Status: NOT PASSED; contract section: 1

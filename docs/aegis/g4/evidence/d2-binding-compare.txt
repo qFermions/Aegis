@@ -1,0 +1,4 @@
+# command: node docs/aegis/g4/evidence/tools/d2-binding-compare.js ad9759a
+# commit: d91d81c (plus uncommitted changes in the working tree)  started: 2026-11-01T01:31:40Z  node: v24.22.1
+gates now: 343; gates binding a read-back now: 89; gates whose bound commands differ from ad9759a: 0
+# exit: 0  finished: 2026-11-01T01:31:41Z

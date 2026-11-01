@@ -1,0 +1,110 @@
+# command: node --test scripts/audit/early-time-bound.test.js
+# run in: <repo>  commit: 9ea0f2b (working tree: the red test)  started: 2026-11-01T03:08:59Z  node: v24.22.1
+✔ F4: bindRefusal refuses a --not-before earlier than the approval, before any read, for every read-back with a time bound (254.142026ms)
+✔ F4: a time bound in epoch milliseconds is judged the same way before the read (8.169407ms)
+✔ F4: called for a read-back with a time bound but without the run's arguments, the check fails closed (20.337559ms)
+✔ F4: changeRefusal, the check every verify-* CLI runs before any read, refuses an early --not-before for each connector (194.256828ms)
+✔ F4: fleet verify-checked-in with an early --not-before exits 1 with no transport call and nothing recorded (70.006237ms)
+✖ F11: with the approval's time missing or unreadable, the pre-read check refuses a time-bounded read-back and writes nothing (71.45427ms)
+✖ F11: status never counts a time-bounded read-back when the approval's time is missing or unreadable (13.449798ms)
+✖ F11: a counted change lists a time-bounded read-back as uncounted when the approval's time is missing or unreadable (19.457011ms)
+✖ F11: link refuses a time-bounded read-back when the approval's time is missing or unreadable, writing nothing (44.878744ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 5
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 852.224753
+
+✖ failing tests:
+
+test at scripts/audit/early-time-bound.test.js:194:1
+✖ F11: with the approval's time missing or unreadable, the pre-read check refuses a time-bounded read-back and writes nothing (71.45427ms)
+  AssertionError [ERR_ASSERTION]: missing: bindRefusal says the approval's time could not be read: null
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:204:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'null',
+    expected: /the approval's time could not be read/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/early-time-bound.test.js:214:1
+✖ F11: status never counts a time-bounded read-back when the approval's time is missing or unreadable (13.449798ms)
+  AssertionError [ERR_ASSERTION]: missing: not done
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:222:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/early-time-bound.test.js:228:1
+✖ F11: a counted change lists a time-bounded read-back as uncounted when the approval's time is missing or unreadable (19.457011ms)
+  AssertionError [ERR_ASSERTION]: missing: not done
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:237:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/early-time-bound.test.js:244:1
+✖ F11: link refuses a time-bounded read-back when the approval's time is missing or unreadable, writing nothing (44.878744ms)
+  AssertionError [ERR_ASSERTION]: missing: refused: {
+    "ok": true,
+    "change": "chg-35194a861a7f",
+    "verify_seq": 3,
+    "audit_seq": 4
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/early-time-bound.test.js:260:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

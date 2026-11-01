@@ -1,0 +1,2622 @@
+$ node --test scripts/adapters/inconclusive.test.js scripts/adapters/verify-dry-run.test.js scripts/adapters/endpoint-sync.test.js scripts/adapters/fleet-client.test.js scripts/adapters/github-client.test.js scripts/adapters/gws-client.test.js scripts/adapters/jamf-client.test.js scripts/adapters/linear-client.test.js scripts/adapters/msgraph-client.test.js scripts/adapters/okta-client.test.js scripts/adapters/slack-client.test.js scripts/audit/change-record.test.js scripts/jira-client.test.js
+(Node v24.22.1, at ad9759a plus the working tree)
+
+✔ Fleet verify-checked-in: the MDM check-in after --not-before passes; an older one, MDM off, or another host does not
+✖ Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and the output names the field it used
+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable
+✔ every read command sends the exact method, host and path, and the credential only in the Authorization header
+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport
+✔ every method but GET is refused on every allow-listed read path
+✔ the dry run prints the exact planned request, reads no credential and calls no transport
+✔ only the bare --execute flag performs a read
+✔ --execute prints the vendor data through renderResult
+✔ input errors exit 1 before any credential or network: unknown command, missing or extra flags, bad values
+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing
+✔ a failed read exits 2: HTTP 404 once, HTTP 503 after the bounded retries
+✔ verify-lock: locked with nothing pending is verified (exit 0); locking, or locked with an unlock pending, is not (exit 2)
+✔ verify-unlock: unlocked with nothing pending is verified; still locked is not
+✔ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command or no wipe status is not
+✖ verify-wipe on Windows reads the host's commands and needs a doWipe command with status 200; Linux cannot be proven by this read
+✖ verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script
+✖ verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check
+✖ verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not
+✔ verify-mdm-off: an empty MDM read and an enrollment that no longer reads On is verified; On is not
+✖ verify-deleted: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolving to that host, is verified
+✔ no credential value appears in stdout, stderr or a result, also when the transport or the vendor echoes it
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows
+✔ tenant: Fleet binds no tenant id; the configured FLEET_URL is the only host a request can reach
+✔ host-upcoming reads one host's queued items (an Observer read) and nothing else: no deeper path, no order or filter keys, no write
+✔ the lane spec's Fleet table lists every route on the allow-list, with its method and path
+✔ activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit
+✔ vulnerability: HTTP 204 means Fleet knows the CVE and nothing is affected (exit 0, no data)
+✔ the default transport is the contract's, and the tripwire stops it in tests
+✔ help prints the commands; run directly, the CLI exits with run()'s code
+✔ verify-deleted says whether --not-before is malformed or an impossible date (round 2, finding 14)
+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes
+✔ a non-GET request is refused before the credential is read; no org flag exists
+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization
+✔ issue reads the issue and its comments and prints the {issue, comments} shape the intake imports
+✔ a dry run prints the planned GET, reads no credential and sends nothing
+✔ bad values are refused before anything is sent
+✔ a response that names another organization is TENANT_MISMATCH and nothing is returned
+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice
+✔ verify-collaborator: the role_name must equal the expected role
+✖ verify-collaborator-removed: absent from every page of direct collaborators; a list past 10 pages is not proof
+✔ verify-offboarded: the org read must succeed first; then no membership, no invitation, not an outside collaborator
+✖ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert
+✔ a failure prints the two-part message for GitHub, with no body and no token
+✖ verify-team-member --absent: absence on a list longer than 10 full pages is not proof
+✔ the spec: a fixed host, the lane's nine GET reads and nothing else, the token exchange at oauth2.googleapis.com/token with exactly grant_type and assertion, and GWS_CUSTOMER_ID as the tenant
+✔ the scopes are exactly the seven read-only scopes; admin.directory.user.security and every other scope is refused
+✔ every read and verify-* sends the exact method, host and path after one token exchange, with the access token only in the Authorization header
+✔ the token exchange: a form-encoded POST of exactly grant_type and an RS256 JWT with iss, sub, scope, aud, iat and exp = iat + 3600, signed by the key from the environment
+✔ the token exchange is never retried, and one token serves every read of a run
+✔ a private key that is not an RSA private key in PEM form is refused before the transport, and is never printed
+✔ every write and secret read the lane names is refused through client.send before a GWS_ variable is read or the transport is called
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no GWS_ variable, calls no transport and exits 0 (4 for a verify-*)
+✔ --execute with a mock transport prints the data; a missing credential is NO_CREDENTIALS (exit 1) and a missing GWS_CUSTOMER_ID is refused (exit 1), with nothing sent
+✔ tenant: a record whose customerId names another customer exits 3 with no data; a user record with no customerId returns no data
+✔ verify-suspended, verify-2sv-enforced and verify-ou: verified true exits 0, false exits 2, and a record for another user is never proof
+✖ verify-2sv-not-enforced: exit 0 only on a successful read of the named user whose isEnforcedIn2Sv is exactly false; a failed read, a missing field or another user is never proof
+✔ user and users print recoveryEmail and recoveryPhone as set or missing, never their values
+✔ a verify-* read of a user withholds a flagged recovery detail too, as the user read does
+✖ verify-admin-role-removed: reads the user, then its role assignments; proof only when no direct assignment of the role is listed and no page follows
+✔ verify-event: an event of that name, in that application, by that user, at or after --not-before
+✔ verify-event --target: the matched event must name the target in a parameter value; the same admin acting on another account is never proof
+✔ credentials never appear in stdout, stderr or results, also when the transport error or the response echoes them
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it
+✔ bad input is refused with exit 1 before anything is read or sent
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it
+✔ the file run directly exits with the code run() returns, and its dry run reads nothing and opens no socket
+✔ the adapter source reads no file, never logs, and asks for no write scope
+✔ user and users print every personal field as set or missing (names, phones, addresses, other emails, IDs, relations, organizations, locations), and a flag on one withholds its text
+✔ user and users print aliases and nonEditableAliases as set or missing, like the other addresses, and a flag on one withholds its text (round 2, finding 6)
+✖ the contract names INCONCLUSIVE and its own exit code, 5, used by no other outcome
+✖ inconclusive() builds the verdict every connector prints: state INCONCLUSIVE, ok false, verified false, the reason
+✖ renderResult prints the two-part message for INCONCLUSIVE: an answer that proves nothing either way, nothing reported done
+✖ the audit trail accepts a verify entry with state INCONCLUSIVE and verified false; cli-support records the state as it is
+✖ fleet verify-checked-in: no last MDM check-in time on an enrolled host is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ fleet verify-lock: verify-lock cannot judge an Android host is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ fleet verify-wipe: verify-wipe cannot judge a Linux host is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ fleet verify-script: a script run that has not reported yet is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ fleet verify-deleted: ten pages of activities, none older than --not-before, more behind them is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ github verify-2fa-required: the 2FA requirement is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ github verify-team-member: absent from a list longer than ten pages is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ github verify-collaborator-removed: a collaborator list answer that is not a list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ github verify-collaborator: the role is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ github verify-secret-alert: the alert state is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ gws verify-suspended: the user record leaves suspended out is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ gws verify-2sv-enforced: the user record leaves isEnforcedIn2Sv out is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ gws verify-event: the event feed has another page without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ jamf verify-checked-in: no lastContactTime on the Mac is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ jamf verify-checked-in: the serial filter returned two records is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ jamf verify-group-count: a paged member list is not a count is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ linear verify-state: the issue read shows no state is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ linear verify-labels: the label is not on the first page of labels and more follow is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ msgraph verify-account-enabled: accountEnabled is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ msgraph verify-group-member: a member list answer with no list (it used to pass for --absent) is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ msgraph verify-mfa-cleared: a method list answer with no list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ msgraph verify-method-absent: absent from a method list with another page is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ okta verify-status: the user record carries no status is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ okta verify-sessions-cleared: a full page of System Log events without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ slack verify-deactivated: users.info does not show deleted is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✖ slack verify-deactivated: users.info answered without a user record is INCONCLUSIVE (exit 5), never a pass and never a failed object
+✔ msgraph verify-mfa-cleared: a method still listed, with another page behind it is still a failed object (exit 2, state OK)
+✔ github verify-team-member: still a member, on a list longer than ten pages is still a failed object (exit 2, state OK)
+✔ fleet verify-checked-in: a host checked in before --not-before is still a failed object (exit 2, state OK)
+✔ gws verify-suspended: a user not suspended is still a failed object (exit 2, state OK)
+✔ jamf verify-checked-in: a Mac whose last contact is before --not-before is still a failed object (exit 2, state OK)
+✔ linear verify-state: an issue in another state is still a failed object (exit 2, state OK)
+✔ okta verify-status: a user in another status is still a failed object (exit 2, state OK)
+✔ slack verify-deactivated: a user not deactivated is still a failed object (exit 2, state OK)
+✖ jira verify-transition: an answer with no status version is INCONCLUSIVE (exit 5), recorded as such
+✖ jira verify-comment: a comment read-back with no body text is INCONCLUSIVE (exit 5); another comment id stays a failure (exit 2)
+✔ jira verify-transition: a status other than the one expected stays a failure (exit 2, state OK)
+✖ every connector takes INCONCLUSIVE and its exit code from the shared contract
+✔ the allow-list holds exactly the lane spec's Jamf Pro reads, each a GET, on JAMF_URL, with no tenant variable
+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header
+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried
+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called
+✔ the CLI dry run prints the exact planned request, reads no credential and calls no transport
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not
+✖ verify-command reads further pages while a page is full, and stops after ten pages without proof
+✖ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not
+✖ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof
+✖ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier
+✖ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof
+✖ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed
+✖ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused
+✔ key-like fields are stripped from every response before it is printed, and the instruction scan runs on what is left
+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes
+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows
+✔ Jamf Pro binds no tenant variable: one server per tenant, bound by JAMF_URL; any other host is refused
+✔ bad input, unknown or write-shaped commands and misplaced flags exit 1 before anything is read or sent
+✔ missing credentials exit 1 and name the variable, never a value; nothing is sent
+✔ a failed read exits 2 and withholds the body; a network tripwire is never swallowed
+✔ the adapter has no file, socket or console access of its own, and runs as a CLI (dry run and refusal only)
+✔ the spec: eight named documents, a fixed host, one POST path, no GET route, no token exchange; every document reads organization { urlKey } and names no write mutation
+✔ every read and verify-* sends POST api.linear.app/graphql with its named document byte-equal, and the key only in the Authorization header
+✔ every write and secret read the lane names is refused through client.send before the key is read or the transport is called
+✔ dry run by default: each read and verify-* prints the exact planned request, reads no Linear variable, calls no transport and exits 0 (4 for a verify-*)
+✔ --execute with a mock transport prints the data; a missing key is NO_CREDENTIALS (exit 1) and nothing is sent
+✔ tenant: LINEAR_ORG is required before any read, and a record from another workspace exits 3 with no data
+✔ note is offline: it prints the exact body, its SHA-256 over the normalised body, a not-before time, the HUMAN-RUN posting steps and the exact verify-comment line
+✔ note and digest read only a .md or .txt note outside key and settings folders, and refuse a body the commit scanner blocks; a refused file is never printed
+✔ note and digest read a note only from this repo's tasks/ folder or the system temporary folder; a plain-text secret anywhere else is refused before it is read and never printed
+✔ note and digest refuse a line carrying the tenant's own domain or name (SR-8), read from the same environment names the commit scanner reads, and never print it
+✔ verify-comment: a comment created at or after --not-before whose normalised body has the expected SHA-256 verifies (exit 0); anything else does not (exit 2)
+✔ verify-state, verify-labels and verify-trashed print verified, observed and expected values; exit 0 when the read proves the write, 2 when it does not
+✖ verify-snoozed: the issue read carries snoozedUntilAt, and a time later than the read proves the snooze (exit 0); empty, past, now, unreadable or another issue is not proof (exit 2)
+✖ verify-suspended: the member's active is false (exit 0); active, or not found on any page, is not proof (exit 2)
+✔ the key never appears in stdout, stderr or results, also when the transport error or the response echoes it
+✔ a 200 response carrying GraphQL errors returns no data and exits 2, printing only the error type codes
+✔ instruction text in a response field is flagged and quoted in the CLI output, and nothing follows from it
+✔ bad input is refused with exit 1 before anything is read or sent
+✔ a network tripwire is never swallowed: run() rejects with it
+✔ a repo file outside tasks/ is refused even when the repo sits inside the temporary folder; a note in tasks/ is still read
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token
+✔ each read sends one GET to its path; user and device reads carry a fixed $select
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent
+✖ verify read-backs for the password-reset and MFA runbooks
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token
+✖ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404
+✖ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404
+✖ verify-method-absent: an answer that proves nothing either way is recorded as INCONCLUSIVE, never as a failed object
+✔ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case
+✔ the spec: host from OKTA_ORG_URL, eight GET routes and nothing else, the token exchange at /oauth2/v1/token with exactly the four private_key_jwt fields, a token scopes block and no tenant variable
+✔ the scopes block: manifest okta, kind token, granted from the token response scope split on spaces, and only okta.<resource>.read scopes allowed
+✔ the manifest entry okta: the four read scopes, the READ_ONLY_ADMIN role, write scopes refused, exposure kind token, A3 facts and dated vendor sources
+✔ every write and every path off the allow-list is refused through client.send before an OKTA_ credential is read or the transport is called
+✔ a second Okta org is refused before any credential is read: another request host, or an OKTA_ORG_URL with a scheme, path, port or a second name
+✔ every read sends the exact method, host and path after one token exchange, with the access token only in the Authorization header
+✔ a full page says more may follow: group-members at 200 members, logs at 100 events
+✔ the token exchange: a form-encoded POST to /oauth2/v1/token on the org host with exactly grant_type, scope, client_assertion_type and client_assertion, an RS256 JWT with iss = sub = the client ID, aud = the token URL, iat, exp = iat + 300 and a random jti
+✔ the token exchange is never retried, and one token serves every read of a run
+✔ a private key that is not an RSA private key in PEM form, or a client ID or key ID of the wrong shape, is refused before the transport and never printed
+✔ --execute with a missing credential is NO_CREDENTIALS (exit 1), named, with nothing sent
+✔ scope preflight: a token that grants okta.users.manage, or any scope not ending in .read, is SCOPE_REFUSED after the one token exchange and before any read
+✔ scope preflight through the contract: the refusal holds for the client, is one audit entry, and no second request is sent
+✔ dry run by default: each read and verify-* prints the exact planned request(s), reads no credential, calls no transport and exits 0
+✖ verify-status: exactly the status given (O-21) on a record of the user asked for
+✖ verify-factor-reset and verify-factors-reset-all: the user read succeeds first, then the factor list proves the type (or every factor) is gone
+✖ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS
+✖ verify-group-member: the user read succeeds first; present on any page proves membership; --absent needs every page read, at most 10 pages of 200
+✔ verify-app-assigned: present is a 200 with status ACTIVE or PROVISIONED; absent is a 404 on the app-user read after a successful read of the same user
+✔ every failure state prints the two-part message for platform Okta, with no stack trace, raw body or credential
+✔ credentials, the signed assertion and the issued token never appear in stdout, stderr or results, also when an error or a response echoes them
+✔ personal fields print as set or missing: a user's profile except login and its credentials, a factor's profile, an app user's profile and credentials; a flag on one keeps its path and withholds its text
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it
+✔ with an audit sink each request is one connector-call entry and each verify-* verdict one verify entry; a sink that fails withholds the verdict
+✔ bad input is refused with exit 1 before anything is read or sent
+✔ a network tripwire is never swallowed: with no transport injected, run() rejects with it
+✔ the file run directly exits with the code run() returns, and its dry run reads no credential and opens no socket
+✔ the connector source reads no file, never logs, asks for .read scopes only, and has no em-dash
+✔ the allow-list is exactly the ten read methods in the lane spec, each a GET to slack.com/api/<method>, with no token exchange
+✔ every route sends the exact method, host and path, and puts the token only in the Authorization header
+✔ SLACK_TOKEN never needs the admin scope: access-logs reads only SLACK_ACCESS_LOGS_TOKEN, no other command reads it, and SPEC refuses team.accessLogs
+✔ every command has a scope entry, and the adapter header, its README and the lane spec list the same token and scopes
+✔ every write and secret path named in the lane spec is refused through client.send before the token is read or the transport is called
+✔ the CLI dry run prints the exact planned requests, reads no credential and calls no transport
+✔ only the bare --execute flag performs the read; any other spelling is refused and nothing is sent
+✔ digest is offline: the SHA-256 of the whitespace-normalised draft, a not-before time and the exact verify-posted line
+✔ --execute prints the data; user and users print state fields only, never a profile
+✔ an HTTP 200 answer with ok:false is a failed read reported with the error code only
+✔ verify-deactivated, verify-reactivated and verify-guest pass only on the matching user state
+✔ verify-archived passes only when the channel read is the one asked for and is archived
+✖ verify-posted passes only on a plain message after --not-before whose normalised text has the expected digest
+✖ verify-app-approved needs the app in the approved list and out of the pending requests; verify-app-restricted needs it in the restricted list
+✔ the token never appears in stdout, stderr or a result, also when the transport error or the response echoes it
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no request follows from it
+✔ a user, member, team or channel record from another workspace, or with no team id, is refused (exit 3) and prints none of its data
+✔ input validation runs before any credential or network: IDs, limits and cursors outside their patterns are refused
+✔ without an injected transport the default one throws the network tripwire; no socket is opened
+✔ a flag on a personal profile field names its path and withholds the text: user, users, a user read-back and an app requester
+✔ verify-app-approved withholds a flagged requester name in the pending list, as app-requests does (round 2, finding 3)
+✔ a flag on a person's name outside the user reads withholds the quote: access-logs username, a message author profile; a message's own text keeps its quote (round 2, finding 4)
+✔ outside the user reads a flag keeps its quote only on a field that read exists to show: attachment authors and other unlisted fields are withheld (round 3, finding 8)
+✖ the shared contract names the verify-* dry-run exit code 4 beside the other four
+✔ fleet: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ github: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ google-workspace: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ jamf: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ linear: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ msgraph: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ okta: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ slack: a verify-* dry run exits 4 and says NOT VERIFIED; a plain read dry run exits 0 without it; neither sends anything
+✔ a verify-* dry run that the connector refuses (bad input) still exits 1, not 4
+✔ jira: the verify-* dry run uses the shared constant (4) and prints the same NOT VERIFIED line; get dry run exits 0
+✔ fleet: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ github: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ google-workspace: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ jamf: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ linear: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ msgraph: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ okta: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ slack: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ jira: a live verify-* that proves the change exits 0, and one that does not exits 2
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one
+✔ with no approval, status names the missing approval and never says the read-back ran before it
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved
+✔ the change-record module writes only the local audit trail: no network module, no child process
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints
+✔ a counted gate opened without --expected is refused at open, and nothing is recorded
+✔ a gate without a count refuses --expected and keeps the one-read-back rule
+✔ k below N reads partial and never done; k equal to N reads done
+✔ one failed host keeps the change not done and names that read-back
+✔ the same execution id read twice counts once
+✔ a read-back that records no run id counts bound read-backs and says a repeated read is not detected
+✔ only bound read-backs of the named kind recorded after the approval count toward k
+✔ the audit trail takes a run id that is a job id and refuses one that is not job-shaped
+✔ a Fleet read with no run id is listed as uncounted: one that got no answer does not block, a passing one does not count
+✔ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial
+✔ open refuses a command with no runbook, and checks the gate before the count
+✔ a Fleet failure with an answer but no run id blocks; open's next step and the trail follow the run-id rule
+✔ open refuses a gate the named runbook does not have
+✔ a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward
+✔ open names the read-back with its pass flags, in one form, and refuses a flag that does not change what a pass means
+✔ open refuses a removal gate named without --absent, and an add gate named with it
+✔ open refuses a read-back the gate's runbook does not bind for it: another connector's or command's read never proves a removal
+✔ a read-back named for several gates in one comment binds each of them
+✔ open refuses a gate whose runbook binds no read-back: its proof is the read its runbook names, never a change record
+✔ an exception gate that weakens protection is never opened for the read that passes when protection is on
+✔ a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change
+✔ an add change is not done by an --absent read
+✔ a counted removal counts only --absent reads: a presence read is listed as uncounted
+✔ a change whose read-back its gate no longer binds in that form (opened before this batch, or written around the CLI) is never done and refuses its read
+✔ a done change stays done after its runbook changes; only a read-back named without its line's pass flags is stale
+✔ approve refuses a change whose read-back is named without its gate's pass flags, and records nothing
+✔ an entry from before this batch is judged by open's whole check; a change open marked is never re-judged
+✔ a counted gate's procedure carries its count, and open refuses an N that differs from it or a procedure without one
+✔ a second count written in another shape (indented, a bullet, a quote, a heading, another case) is refused
+✔ a second count wrapped in Markdown (bold, a task box, a table cell, italics, backticks) is refused
+✔ a second count in any line where the word count meets a colon is refused
+✔ an approval given for one N does not cover a different N
+✔ a gate without a count keeps today's rule: no Count line needed, and --expected still refused
+✔ A1: a format character inside the keyword (zero width, soft hyphen, bidi, variation selector, tag) makes a count line, so a second count is refused
+✔ A1: a combining mark on a letter of the keyword or on the number makes a count line, so a second count is refused
+✔ A1: a look-alike letter outside A to Z in the keyword (Cyrillic, Greek, a small capital) is refused, alone or beside the real line
+✔ A1: a full-width digit or letter is a count line but not the accepted form
+✔ A1 (O1): a real count hidden in an HTML comment next to a disguised visible one is refused, for either number
+✔ A1: the plain visible line Count: N still opens, beside comments, hidden regions and words that only look near it
+✔ A2: audit-log.js approval writes nothing: an unknown change id, a change not yet opened, a mismatched digest, a second approval
+✔ A2: change-record.js approve refuses an unknown change, a change not yet opened, a mismatched digest and a second approval, and writes nothing
+✔ A2: two approvals of one change raced from two processes: exactly one is recorded
+✔ A3: each read-back with a time bound is named with --not-before; one earlier than the approval is not done, one at or after it is done when it passes
+✔ A3: an early time bound linked around the CLI still never makes the change done
+✔ A3: a time bound in epoch milliseconds is recorded in UTC and judged the same way
+✔ A3: a change whose read-back takes a time bound is not opened without it, and the bound is named without a value
+✔ A3: a mismatched --expect-sha256, --type or --method is not done
+✖ D1: an INCONCLUSIVE read-back is uncounted with its reason, never a pass and never a failed object (no run id)
+✖ D1: an INCONCLUSIVE read of a run is uncounted, and a later pass of the same run counts once
+✖ D1: link refuses an INCONCLUSIVE read-back as the proof of a change
+✔ site validation accepts and canonicalizes one Atlassian tenant label
+✔ site validation rejects schemes, paths, ports, userinfo, suffix tricks, and controls
+✔ direct apiRequest validates the destination before invoking the transport
+✔ argument parser requires --confirm VALUE while execute/public remain bare booleans
+✔ argument parser rejects duplicate, malformed, and unknown flags
+✔ issue keys are normalized but paths and placeholder text are rejected
+✔ create payload is exact, numeric-id-bound, and deterministically serialized
+✔ create confirmation contains a full SHA-256 and changes with every material field
+✔ create dry run and missing/wrong confirmations use zero credentials and zero network
+✔ the exact create phrase is refused too: zero credentials, zero network, and the procedure carries the exact payload
+▶ verify-create proves the human-created request by an independent GET and fails closed on any mismatch
+  ✔ match
+  ✔ different issue key
+  ✖ missing immutable id
+  ✔ different request type
+  ✔ different service desk
+  ✔ drifted summary
+  ✔ drifted description
+  ✔ an older request with the same text (created before the preview)
+  ✖ no creation time
+  ✔ read failure
+✖ verify-create proves the human-created request by an independent GET and fails closed on any mismatch
+✔ invalid create destination fails before credentials/network and is not echoed
+✔ comment confirmations bind issue, visibility, site, and full payload digest
+✔ comment missing/wrong confirmation is inert for both INTERNAL and PUBLIC modes
+✔ exact INTERNAL and PUBLIC phrases are refused, and each procedure names the visibility the human chose
+▶ verify-comment proves the comment id, body and visibility and fails closed on any mismatch
+  ✔ match
+  ✔ different id
+  ✔ drifted body
+  ✔ wrong visibility
+  ✔ an older comment with the same body (created before the preview)
+  ✖ malformed
+  ✔ read failure
+  ✔ a non-numeric comment id is an input error before credentials or network
+✖ verify-comment proves the comment id, body and visibility and fails closed on any mismatch
+✔ transition local preview calls neither credentials nor Jira
+✔ transition --execute performs paginated read-only preflight and prints immutable confirmation
+✔ any transition --confirm, exact or not, is refused before credentials or network
+▶ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+  ✔ duplicate selected names
+  ✔ duplicate ids across pages
+  ✔ no match
+  ✔ non-progressing page
+  ✔ wrong page start
+  ✔ missing current-state version
+✔ transition preflight rejects duplicate names, duplicate ids, no match, and malformed pagination without POST
+✔ the transition preflight prints a HUMAN-RUN procedure bound to the resolved id and sends zero POSTs
+✔ a status version that is not a plain timestamp is refused before anything is printed to paste
+✔ a status version that does not start with a digit is refused, so the printed verify line always parses
+▶ verify-transition proves the same immutable request left the preflight status and fails closed otherwise
+  ✔ moved to the expected status
+  ✔ unchanged since the preflight
+  ✔ moved, but to another status (an automation, not this transition)
+  ✔ different immutable id
+  ✔ read failure
+  ✔ the printed placeholder status is an input error before credentials or network
+✔ verify-transition proves the same immutable request left the preflight status and fails closed otherwise
+✔ the transport refuses every method but GET, and any payload, before touching the network
+✔ no write command reaches the network with anything but GET, under any flag combination
+✔ printed procedures never carry the token, make curl prompt for it, and quote text for the shell
+▶ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed)
+  ✔ PowerShell 7
+  ✔ bash
+✔ the printed bash and PowerShell lines hand each shell the exact payload (network commands stubbed)
+✔ verify commands refuse a free-text flag instead of ignoring it, before credentials or network
+✔ verify commands without --execute are dry runs with zero credentials and zero network
+✔ API failures with bodies fail closed and never disclose response content
+✔ apiRequest timeout is finite, destroys the request, and rejects
+✔ verify-comment accepts the posted body after whitespace normalisation and still refuses a changed word
+✔ a verify-* that passes but cannot be recorded prints no Verified line, only that the verdict is withheld (exit 2)
+✔ a verify-* whose read fails is recorded with the failure state; one that read and did not match is recorded OK
+✔ a verify-* whose answer has no status is recorded INVALID_RESPONSE, by the adapters' own rule
+ℹ tests 370
+ℹ suites 0
+ℹ pass 297
+ℹ fail 73
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+
+✖ failing tests:
+
+test at scripts/adapters/endpoint-sync.test.js:81:1
+✖ Jamf Pro verify-checked-in: lastContactTime after --not-before passes, and the output names the field it used
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/endpoint-sync.test.js:94:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/fleet-client.test.js:451:1
+✖ verify-wipe on Windows reads the host's commands and needs a doWipe command with status 200; Linux cannot be proven by this read
+  AssertionError [ERR_ASSERTION]: a Linux wipe is a script: this read cannot prove it (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/fleet-client.test.js:462:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/fleet-client.test.js:469:1
+✖ verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script
+  AssertionError [ERR_ASSERTION]: an Android wipe is not an EraseDevice or doWipe command: this read cannot prove it (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/fleet-client.test.js:471:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/fleet-client.test.js:480:1
+✖ verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/fleet-client.test.js:482:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/fleet-client.test.js:490:1
+✖ verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not
+  AssertionError [ERR_ASSERTION]: {"exit_code":null,"host_timeout":false}
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/fleet-client.test.js:500:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/fleet-client.test.js:524:1
+✖ verify-deleted: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolving to that host, is verified
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/fleet-client.test.js:554:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/github-client.test.js:205:1
+✖ verify-collaborator-removed: absent from every page of direct collaborators; a list past 10 pages is not proof
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/github-client.test.js:215:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/github-client.test.js:239:1
+✖ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/github-client.test.js:257:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/github-client.test.js:282:1
+✖ verify-team-member --absent: absence on a list longer than 10 full pages is not proof
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-team-member",
+    "verified": false,
+    "expected": {
+      "team": "docs",
+      "user": "leaver",
+      "member": false
+    },
+    "observed": {
+      "member": false
+    },
+    "reason": "the list is longer than 10 pages of 100, so this is not proof either way; check in the GitHub UI",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=github operation=verify-team-member state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/github-client.test.js:284:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/gws-client.test.js:616:1
+✖ verify-2sv-not-enforced: exit 0 only on a successful read of the named user whose isEnforcedIn2Sv is exactly false; a failed read, a missing field or another user is never proof
+  AssertionError [ERR_ASSERTION]: the field is missing: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-2sv-not-enforced",
+    "verified": false,
+    "expected": {
+      "user": "user@example.com",
+      "isEnforcedIn2Sv": false
+    },
+    "observed": {
+      "user": "user@example.com",
+      "isEnforcedIn2Sv": null,
+      "isEnrolledIn2Sv": true
+    },
+    "reason": "the read does not show 2-Step Verification as not enforced for the user (isEnforcedIn2Sv is not false)",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=google-workspace operation=verify-2sv-not-enforced state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/gws-client.test.js:639:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/gws-client.test.js:691:1
+✖ verify-admin-role-removed: reads the user, then its role assignments; proof only when no direct assignment of the role is listed and no page follows
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/gws-client.test.js:712:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:45:1
+✖ the contract names INCONCLUSIVE and its own exit code, 5, used by no other outcome
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'INCONCLUSIVE'
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:46:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'INCONCLUSIVE',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:57:1
+✖ inconclusive() builds the verdict every connector prints: state INCONCLUSIVE, ok false, verified false, the reason
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:58:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:63:1
+✖ renderResult prints the two-part message for INCONCLUSIVE: an answer that proves nothing either way, nothing reported done
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^Okta answered, but the answer proves nothing either way about the change \(INCONCLUSIVE, exit 5\)\./. Input:
+  
+  'The read from Okta did not complete. Nothing was read and nothing was changed. Run the read again; if it repeats, hand the ticket to a person with console access.'
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:65:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'The read from Okta did not complete. Nothing was read and nothing was changed. Run the read again; if it repeats, hand the ticket to a person with console access.',
+    expected: /^Okta answered, but the answer proves nothing either way about the change \(INCONCLUSIVE, exit 5\)\./,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:71:1
+✖ the audit trail accepts a verify entry with state INCONCLUSIVE and verified false; cli-support records the state as it is
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "field state of verify is missing or not in its allowed form"
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:72:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: AuditRefused: field state of verify is missing or not in its allowed form
+        at Object.checkEntry (scripts/audit/audit-log.js:291:30)
+        at scripts/adapters/inconclusive.test.js:72:35
+        at getActual (node:assert:611:5)
+        at strict.doesNotThrow (node:assert:779:32)
+        at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:72:10)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ fleet verify-checked-in: no last MDM check-in time on an enrolled host is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-checked-in",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "darwin",
+      "host.status": null,
+      "host.seen_time": null,
+      "host.last_mdm_checked_in_at": null,
+      "host.mdm.enrollment_status": "On (automatic)"
+    },
+    "expected": {
+      "host.id": 7,
+      "host.mdm.enrollment_status": "On (...)",
+      "host.last_mdm_checked_in_at": "at or after 2026-10-28T09:00:00Z"
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "the last MDM check-in is not at or after 2026-10-28T09:00:00Z; ask the person to open the device and check in, then read again",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-checked-in state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ fleet verify-lock: verify-lock cannot judge an Android host is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-lock",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "android",
+      "host.mdm.device_status": "unlocked",
+      "host.mdm.pending_action": ""
+    },
+    "expected": {
+      "host.id": [
+        7
+      ],
+      "host.mdm.device_status": [
+        "locked"
+      ],
+      "host.mdm.pending_action": [
+        ""
+      ]
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "verify-lock cannot pass for an Android host: Fleet never shows Locked there (vendor docs). Prove the request with the locked_host entry in host-activities, and confirm the lock on the device.",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-lock state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ fleet verify-wipe: verify-wipe cannot judge a Linux host is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-wipe",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "ubuntu",
+      "host.mdm.device_status": "unlocked",
+      "host.mdm.pending_action": ""
+    },
+    "expected": {
+      "host.id": [
+        7
+      ],
+      "host.mdm.device_status": [
+        "wiping",
+        "wiped"
+      ],
+      "wipe command": {
+        "request_type": "a Windows RemoteWipe doWipe command (doWipe, doWipeProtected and similar)",
+        "status": [
+          "200"
+        ]
+      }
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "This read proves Apple (EraseDevice) and Windows (doWipe) wipes only. Fleet wipes a Linux host with a script and shows no Wipe badge for it, so prove that wipe with verify-script --execution-id [EXECUTION_ID] (the id is in host-activities). Platform read: \"ubuntu\".",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-wipe state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ fleet verify-script: a script run that has not reported yet is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-script",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "execution_id": "3f2a9c1e-77b0-4c2b-9d1e-000000000001",
+      "host_id": 7,
+      "exit_code": null,
+      "host_timeout": false,
+      "output": "",
+      "message": ""
+    },
+    "expected": {
+      "execution_id": [
+        "3f2a9c1e-77b0-4c2b-9d1e-000000000001"
+      ],
+      "exit_code": [
+        0
+      ],
+      "host_timeout": [
+        false
+      ]
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/scripts/results/3f2a9c1e-77b0-4c2b-9d1e-000000000001",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "exit_code null: the host has not reported the result yet (vendor docs).",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-script state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ fleet verify-deleted: ten pages of activities, none older than --not-before, more behind them is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-deleted",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "deleted_host activity": null,
+      "activity pages read": 10
+    },
+    "expected": {
+      "deleted_host activity": {
+        "type": "deleted_host",
+        "details.host_serial": "C02TEST0001",
+        "details.triggered_by": "manual",
+        "created_at": "at or after 2026-10-28T09:00:00Z"
+      },
+      "host lookup by identifier": "HTTP 404 (not found), or a host id other than the deleted one (the device re-enrolled)"
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=0&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=1&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=2&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=3&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=4&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=5&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=6&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=7&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=8&per_page=100",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/activities?order_key=created_at&order_direction=desc&page=9&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "no deleted_host activity for this serial at or after --not-before in the 10 newest page(s) read (at most 10 of 100)",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-deleted state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ github verify-2fa-required: the 2FA requirement is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-2fa-required",
+    "verified": false,
+    "expected": {
+      "two_factor_requirement_enabled": true
+    },
+    "observed": {
+      "two_factor_requirement_enabled": null
+    },
+    "reason": "the answer does not show the 2FA requirement: only an organization owner's credential can see it (vendor fact G-14)",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=github operation=verify-2fa-required state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ github verify-team-member: absent from a list longer than ten pages is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-team-member",
+    "verified": false,
+    "expected": {
+      "team": "docs",
+      "user": "leaver",
+      "member": false
+    },
+    "observed": {
+      "member": false
+    },
+    "reason": "the list is longer than 10 pages of 100, so this is not proof either way; check in the GitHub UI",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=github operation=verify-team-member state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ github verify-collaborator-removed: a collaborator list answer that is not a list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-collaborator-removed",
+    "verified": true,
+    "expected": {
+      "repo": "docs",
+      "user": "leaver",
+      "direct_collaborator": false
+    },
+    "observed": {
+      "direct_collaborator": false,
+      "records_read": 0
+    }
+  }
+  
+  
+  0 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ github verify-collaborator: the role is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-collaborator",
+    "verified": false,
+    "expected": {
+      "repo": "docs",
+      "user": "member1",
+      "role_name": "write"
+    },
+    "observed": {
+      "role_name": null
+    },
+    "reason": "the role on docs is not shown, not write",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=github operation=verify-collaborator state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ github verify-secret-alert: the alert state is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-secret-alert",
+    "verified": false,
+    "expected": {
+      "repo": "docs",
+      "number": "3",
+      "state": "resolved"
+    },
+    "observed": {
+      "state": null,
+      "resolution": null
+    },
+    "reason": "the alert is in no stated state, not resolved",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=github operation=verify-secret-alert state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ gws verify-suspended: the user record leaves suspended out is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-suspended",
+    "verified": false,
+    "expected": {
+      "user": "person@example.com",
+      "suspended": true
+    },
+    "observed": {
+      "user": "person@example.com",
+      "suspended": null,
+      "suspensionReason": null
+    },
+    "reason": "the user is not suspended",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=google-workspace operation=verify-suspended state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ gws verify-2sv-enforced: the user record leaves isEnforcedIn2Sv out is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-2sv-enforced",
+    "verified": false,
+    "expected": {
+      "user": "person@example.com",
+      "isEnforcedIn2Sv": true
+    },
+    "observed": {
+      "user": "person@example.com",
+      "isEnforcedIn2Sv": null,
+      "isEnrolledIn2Sv": null
+    },
+    "reason": "2-Step Verification is not enforced for the user (isEnforcedIn2Sv is not true)",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=google-workspace operation=verify-2sv-enforced state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ gws verify-event: the event feed has another page without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-event",
+    "verified": false,
+    "expected": {
+      "app": "admin",
+      "event": "CHANGE_PASSWORD",
+      "user": "person@example.com",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "recordsRead": 0,
+      "match": null,
+      "recordsSinceNotBefore": [],
+      "morePages": true
+    },
+    "reason": "no admin event named CHANGE_PASSWORD by the user at or after 2026-10-28T09:00:00Z among the 0 record(s) read; the read has another page, so this is not proof either way",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=google-workspace operation=verify-event state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ jamf verify-checked-in: no lastContactTime on the Mac is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-checked-in",
+    "verified": false,
+    "expected": {
+      "serial": "C02TEST0001",
+      "lastContactTime": "at or after 2026-10-28T09:00:00Z",
+      "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"
+    },
+    "observed": {
+      "serial": "C02TEST0001",
+      "computerId": "7",
+      "lastContactTime": null,
+      "reportDate": null,
+      "mdmCapable": null
+    },
+    "reason": "the record shows no lastContactTime",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=jamf operation=verify-checked-in state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ jamf verify-checked-in: the serial filter returned two records is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-checked-in",
+    "verified": false,
+    "expected": {
+      "serial": "C02TEST0001",
+      "lastContactTime": "at or after 2026-10-28T09:00:00Z",
+      "field": "general.lastContactTime (Jamf Pro defines no last MDM check-in field)"
+    },
+    "observed": {
+      "serial": null,
+      "computerId": null,
+      "lastContactTime": null,
+      "reportDate": null,
+      "mdmCapable": null
+    },
+    "reason": "the serial number filter returned 2 computer record(s); exactly one is proof",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=jamf operation=verify-checked-in state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ jamf verify-group-count: a paged member list is not a count is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-group-count",
+    "verified": false,
+    "expected": {
+      "groupId": "12",
+      "members": 2
+    },
+    "observed": {
+      "groupId": "12",
+      "members": 2,
+      "listField": "members",
+      "totalCount": 5
+    },
+    "reason": "the response is paged (totalCount 5, 2 listed); a partial list is not a count",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=jamf operation=verify-group-count state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ linear verify-state: the issue read shows no state is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-state",
+    "verified": false,
+    "expected": {
+      "issue": "IT-123",
+      "state": "Done"
+    },
+    "observed": {
+      "issue": "IT-123",
+      "state": null
+    },
+    "reason": "the issue is not in the expected state (names match exactly)",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-state state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ linear verify-labels: the label is not on the first page of labels and more follow is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-labels",
+    "verified": false,
+    "expected": {
+      "issue": "IT-123",
+      "label": "Priority"
+    },
+    "observed": {
+      "issue": "IT-123",
+      "labels": [
+        "Other"
+      ],
+      "moreLabelPages": true
+    },
+    "reason": "the label is not among the first 100 labels and the issue has more; check it on screen",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=linear operation=verify-labels state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ msgraph verify-account-enabled: accountEnabled is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-account-enabled",
+    "verified": false,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "accountEnabled": false
+    },
+    "observed": {
+      "accountEnabled": null
+    },
+    "reason": "accountEnabled is not shown, not false",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=msgraph operation=verify-account-enabled state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ msgraph verify-group-member: a member list answer with no list (it used to pass for --absent) is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-group-member",
+    "verified": true,
+    "expected": {
+      "group": "bbbbbbbb-0000-4000-8000-000000000002",
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "member": false
+    },
+    "observed": {
+      "member": false
+    }
+  }
+  
+  
+  0 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ msgraph verify-mfa-cleared: a method list answer with no list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-mfa-cleared",
+    "verified": true,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "none_of": [
+        "microsoftAuthenticator",
+        "phone",
+        "softwareOath"
+      ]
+    },
+    "observed": {
+      "methods": []
+    }
+  }
+  
+  
+  0 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ msgraph verify-method-absent: absent from a method list with another page is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "command": "verify-method-absent",
+    "verified": false,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "method_id": "3179e48a-750b-4051-897c-87b9720928f7",
+      "listed": false
+    },
+    "observed": {
+      "listed": false
+    },
+    "reason": "the method list has another page, so this is not proof either way",
+    "operator_message": "Microsoft Graph answered with something Aegis could not read as the expected data. Nothing was read and nothing was changed. Run the read again; if it repeats, read the same item in the Microsoft Graph console.",
+    "admin_detail": "platform=msgraph operation=verify-method-absent state=INVALID_RESPONSE status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ okta verify-status: the user record carries no status is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-status",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "status": "SUSPENDED"
+    },
+    "observed": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "status": null
+    },
+    "reason": "the user record carries no status",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-status state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ okta verify-sessions-cleared: a full page of System Log events without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-sessions-cleared",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijk4x7",
+      "eventType": "user.session.clear",
+      "notBefore": "2026-10-28T09:00:00Z"
+    },
+    "observed": {
+      "eventsRead": 100,
+      "match": null,
+      "eventsSinceNotBefore": [
+        {
+          "uuid": "e0",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e1",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e2",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e3",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e4",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e5",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e6",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e7",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e8",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e9",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e10",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e11",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e12",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e13",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e14",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e15",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e16",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e17",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e18",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        },
+        {
+          "uuid": "e19",
+          "published": "2026-10-28T09:30:00.000Z",
+          "eventType": "user.account.update_profile",
+          "outcome": "SUCCESS",
+          "actor": null,
+          "targets": [
+            {
+              "id": "someone-else",
+              "type": "User"
+            }
+          ]
+        }
+      ],
+      "morePages": true
+    },
+    "reason": "no user.session.clear event with outcome SUCCESS for 00u1abcd2EFGH3ijk4x7 at or after 2026-10-28T09:00:00Z among the 100 event(s) read; the read returned a full page, so this is not proof either way",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-sessions-cleared state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ slack verify-deactivated: users.info does not show deleted is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-deactivated",
+    "verified": false,
+    "expected": {
+      "user": "U0TEST0001",
+      "deleted": true
+    },
+    "observed": {
+      "user": "U0TEST0001",
+      "deleted": null,
+      "is_restricted": null,
+      "is_ultra_restricted": null
+    },
+    "reason": "deleted is not true: the account is still active",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=slack operation=verify-deactivated state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:180:3
+✖ slack verify-deactivated: users.info answered without a user record is INCONCLUSIVE (exit 5), never a pass and never a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "error": "users.info answered without a user record",
+    "command": "verify-deactivated",
+    "verified": false,
+    "expected": {
+      "user": "U0TEST0001",
+      "deleted": true
+    },
+    "observed": {},
+    "reason": "the answer did not hold the record, so the change is not proven",
+    "operator_message": "Slack answered with something Aegis could not read as the expected data. Nothing was read and nothing was changed. Run the read again; if it repeats, read the same item in the Slack console.",
+    "admin_detail": "platform=slack operation=verify-deactivated state=INVALID_RESPONSE status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:182:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:228:1
+✖ jira verify-transition: an answer with no status version is INCONCLUSIVE (exit 5), recorded as such
+  AssertionError [ERR_ASSERTION]: Jira preflight/read-back contract failed: Jira returned no valid current-status version. This client sends no writes.
+  Aegis: The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.
+  admin detail: platform=jira operation=verify-transition state=OK status=- attempts=- request_id=- handoff=-
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:230:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:236:1
+✖ jira verify-comment: a comment read-back with no body text is INCONCLUSIVE (exit 5); another comment id stays a failure (exit 2)
+  AssertionError [ERR_ASSERTION]: Jira preflight/read-back contract failed: Comment read-back did not prove the approved id, body, and visibility. This client sends no writes.
+  Aegis: The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.
+  admin detail: platform=jira operation=verify-comment state=OK status=- attempts=- request_id=- handoff=-
+  
+  2 !== undefined
+  
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:239:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:254:1
+✖ every connector takes INCONCLUSIVE and its exit code from the shared contract
+  AssertionError [ERR_ASSERTION]: fleet-client.js imports inconclusive() from the contract
+      at TestContext.<anonymous> (scripts/adapters/inconclusive.test.js:257:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\'use strict\';\n// fleet-client.js: the read-only Fleet adapter (lane G2), built on the shared\n// contract in readonly-contract.js. Tests: fleet-client.test.js. Allow-list and\n// sources: the Fleet section of docs/aegis/lanes/g2.md.\n//\n// Aegis advises; humans execute (PRODUCT_CONTRACT.md). This CLI reads a Fleet\n// server and never writes to it. Lock, unlock, wipe, run a script, turn off MDM\n// and delete a host are HUMAN-RUN steps in a runbook; the verify-* commands here\n// prove them afterwards with reads.\n//\n//   node scripts/adapters/fleet-client.js <command> [flags] [--execute]\n//   node scripts/adapters/fleet-client.js help\n//\n// Environment: FLEET_URL (the Fleet server\'s bare hostname, no scheme or path) and\n// FLEET_API_TOKEN (an API-only user\'s token, sent as "Authorization: Bearer").\n// There is no token exchange: Fleet\'s POST /api/v1/fleet/login is a password\n// login and is refused. There is no tenant variable: one Fleet server serves one\n// tenant, so the configured host is the binding.\n//\n// Dry run by default: without the bare --execute flag the CLI prints the exact\n// request(s) it would send (method, host, path), reads no credential and opens no\n// connection. Exit codes (shared by every adapter): 0 read or verified; 1 refused\n// input or missing credentials; 2 the read failed or a verify-* read did not\n// prove the write; 3 a record from another tenant (never raised here, see above); 4 a\n// verify-* dry run (nothing was read, so nothing is verified).\n//\n// Vendor facts come from Fleet\'s own docs source (fleetdm/fleet on GitHub, read\n// 2026-10-27): the REST API reference, the lock and wipe guide, the enroll guide\n// and the audit-log activity list. fleetdm.com itself could not be opened from the\n// session that wrote this file.\n\nconst {\n  STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,\n} = require(\'./readonly-contract.js\');\nconst { cliDeps, recordVerdict, takeChange, changeRefusal, runIdOf } = require(\'./cli-support.js\');\n\n// ── Validators ───────────────────────────────────────────────────────────────\nconst ID = /^[1-9][0-9]{0,9}$/; // host, policy, fleet, report and software title ids\nconst PAGE = /^(?:0|[1-9][0-9]{0,4})$/; // Fleet pages start at 0\nconst PER_PAGE = /^(?:[1-9][0-9]{0,2}|1000)$/; // 1 to 1000\nconst IDENTIFIER = /^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$/; // serial, UUID or hostname\nconst CVE = /^CVE-[0-9]{4}-[0-9]{4,7}$/; // the path always carries the upper-case form\n// The CLI also takes the lower-case form Fleet\'s own examples use (cve-...). Without\n// the u flag, i never folds a non-ASCII letter into an ASCII one, so a look-alike\n// character is still refused.\nconst CVE_ANY_CASE = /^cve-[0-9]{4}-[0-9]{4,7}$/i;\n// A script execution id is a UUID (docs/aegis/g3/vendor-facts.md F-12), the form the audit trail\n// takes as a run (audit-log.js RUN_ID), so verify-script cannot pass on an id the trail would not\n// record and a serial or host name typed in its place is refused before any read (code review\n// round 3 of the batch G3 close-out 2, finding 5).\nconst EXECUTION_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;\nconst HOST_STATUS = /^(?:new|online|offline|mia|missing)$/;\nconst POLICY_RESPONSE = /^(?:passing|failing)$/;\nconst COMMAND_STATUS = /^(?:ran|pending|failed)$/; // the documented command_status values\nconst REQUEST_TYPE = /^[A-Za-z0-9./_-]{1,200}$/; // Apple names (EraseDevice) and Windows LocURIs\nconst TRUE_ONLY = /^true$/;\nconst TIMESTAMP = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(?::[0-9]{2}(?:\\.[0-9]{1,9})?)?(?:Z|[+-][0-9]{2}:[0-9]{2})$/;\n\nconst NEWEST_FIRST = Object.freeze({ order_key: \'created_at\', order_direction: \'desc\' });\n\n// ── The allow-list: exactly the reads in the lane spec\'s Fleet table ─────────\n// Route order matters for raw paths: hosts/identifier/:identifier is matched\n// before hosts/:id/mdm and the other six-segment host routes.\nconst SPEC = defineAdapter({\n  platform: \'fleet\',\n  host: { env: \'FLEET_URL\' },\n  credentials: [\'FLEET_API_TOKEN\'],\n  auth: (creds) => ({ Authorization: `Bearer ${creds.FLEET_API_TOKEN}` }),\n  routes: {\n    me: { method: \'GET\', path: \'/api/v1/fleet/me\' },\n    version: { method: \'GET\', path: \'/api/v1/fleet/version\' },\n    // exclude_software=true: Fleet\'s own load guidance for host reads.\n    hostByIdentifier: { method: \'GET\', path: \'/api/v1/fleet/hosts/identifier/:identifier\', params: { identifier: IDENTIFIER }, fixedQuery: { exclude_software: \'true\' } },\n    host: { method: \'GET\', path: \'/api/v1/fleet/hosts/:id\', params: { id: ID }, fixedQuery: { exclude_software: \'true\' } },\n    hosts: {\n      method: \'GET\',\n      path: \'/api/v1/fleet/hosts\',\n      query: { status: HOST_STATUS, policy_id: ID, policy_response: POLICY_RESPONSE, software_title_id: ID, page: PAGE, per_page: PER_PAGE },\n    },\n    hostMdm: { method: \'GET\', path: \'/api/v1/fleet/hosts/:id/mdm\', params: { id: ID } },\n    hostSoftware: { method: \'GET\', path: \'/api/v1/fleet/hosts/:id/software\', params: { id: ID }, query: { vulnerable: TRUE_ONLY, page: PAGE, per_page: PER_PAGE } },\n    hostActivities: { method: \'GET\', path: \'/api/v1/fleet/hosts/:id/activities\', params: { id: ID }, fixedQuery: NEWEST_FIRST, query: { page: PAGE, per_page: PER_PAGE } },\n    // Queued work on one host (an Observer read): the only read that names a queued\n    // script\'s execution id before it runs, which the cancel gate needs. The vendor\n    // reference documents it with the per-host activity reads and their paging; it\n    // gives no order parameters for it, so none is sent.\n    hostUpcoming: { method: \'GET\', path: \'/api/v1/fleet/hosts/:id/activities/upcoming\', params: { id: ID }, query: { page: PAGE, per_page: PER_PAGE } },\n    globalPolicies: { method: \'GET\', path: \'/api/v1/fleet/global/policies\' },\n    fleetPolicies: { method: \'GET\', path: \'/api/v1/fleet/fleets/:id/policies\', params: { id: ID } },\n    softwareTitles: { method: \'GET\', path: \'/api/v1/fleet/software/titles\', query: { vulnerable: TRUE_ONLY, fleet_id: ID, page: PAGE, per_page: PER_PAGE } },\n    vulnerability: { method: \'GET\', path: \'/api/v1/fleet/vulnerabilities/:cve\', params: { cve: CVE } },\n    scriptResult: { method: \'GET\', path: \'/api/v1/fleet/scripts/results/:executionId\', params: { executionId: EXECUTION_ID } },\n    // Fleet\'s default page is 10 commands: the commands read pages with --page and\n    // --per-page, and verify-wipe on Windows asks for 100.\n    mdmCommands: { method: \'GET\', path: \'/api/v1/fleet/commands\', query: { host_identifier: IDENTIFIER, request_type: REQUEST_TYPE, command_status: COMMAND_STATUS, page: PAGE, per_page: PER_PAGE } },\n    activities: { method: \'GET\', path: \'/api/v1/fleet/activities\', fixedQuery: NEWEST_FIRST, query: { page: PAGE, per_page: PER_PAGE } },\n    reportResults: { method: \'GET\', path: \'/api/v1/fleet/reports/:id/report\', params: { id: ID } },\n  },\n  // batch G3: the scope preflight reads the API user\'s roles from /me first (Fleet REST API,\n  // fleetdm/fleet docs, read 2026-10-28); only the observer role passes, globally or per\n  // team (Fleet calls teams fleets too). observer_plus can run live reports on hosts, and\n  // maintainer, admin, technician and gitops can change hosts, so each is refused.\n  scopes: {\n    manifest: \'fleet\', kind: \'route\', vendor: \'Fleet\', route: \'me\',\n    granted: (body) => {\n      const user = body && body.user;\n      if (!user || typeof user !== \'object\') return null;\n      const roles = new Set();\n      if (typeof user.global_role === \'string\' && user.global_role) roles.add(`global:${user.global_role}`);\n      for (const list of [user.teams, user.fleets]) for (const t of Array.isArray(list) ? list : []) if (t && typeof t.role === \'string\') roles.add(`team:${t.role}`);\n      return [...roles];\n    },\n    allowed: (role) => role === \'global:observer\' || role === \'team:observer\',\n  },\n});\n\n// ── Small helpers ────────────────────────────────────────────────────────────\nconst has = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);\nconst isObject = (v) => v !== null && typeof v === \'object\' && !Array.isArray(v);\nconst field = (obj, key) => (isObject(obj) && has(obj, key) && obj[key] !== undefined ? obj[key] : null);\n\nfunction requireFlags(args, names) {\n  for (const name of names) if (!has(args, name)) throw new RefusedError(`--${name} is required`);\n}\n\nfunction exactlyOne(args, a, b) {\n  if (has(args, a) === has(args, b)) throw new RefusedError(`give exactly one of --${a} or --${b}`);\n}\n\nfunction together(args, a, b) {\n  if (has(args, a) !== has(args, b)) throw new RefusedError(`--${a} and --${b} go together`);\n}\n\n// Build a query object in a fixed order from CLI flags: [flag, query key] pairs.\nfunction queryFrom(args, pairs) {\n  const query = {};\n  for (const [flag, key] of pairs) {\n    if (!has(args, flag)) continue;\n    query[key] = args[flag] === true ? \'true\' : args[flag];\n  }\n  return query;\n}\n\nconst PAGING = [[\'page\', \'page\'], [\'per-page\', \'per_page\']];\n\n// Fleet\'s activity reads return up to 10,000 records when page and per_page are left\n// out (vendor docs), which can pass the contract\'s 5 MB response limit on a busy host\n// or server. host-activities, host-upcoming and activities therefore always send both:\n// page 0 of 100 unless --page or --per-page says otherwise.\nconst ACTIVITY_PAGE = Object.freeze({ page: \'0\', per_page: \'100\' });\nfunction activityPage(args) {\n  return {\n    page: has(args, \'page\') ? args.page : ACTIVITY_PAGE.page,\n    per_page: has(args, \'per-page\') ? args[\'per-page\'] : ACTIVITY_PAGE.per_page,\n  };\n}\n\n// ── Read commands: one request each ──────────────────────────────────────────\nconst READS = {\n  me: { summary: \'the adapter token\\\'s own user and role (an API-only Observer is expected); it is not the operator\\\'s role\', usage: \'\', request: () => [\'me\'] },\n  version: { summary: \'the Fleet server version\', usage: \'\', request: () => [\'version\'] },\n  host: {\n   '... 27993 more characters,
+    expected: /\binconclusive,\s*\n?\s*\} = require\('\.\/readonly-contract\.js'\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:364:1
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:391:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:395:1
+✖ verify-command reads further pages while a page is full, and stops after ten pages without proof
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:405:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:418:1
+✖ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not
+  AssertionError [ERR_ASSERTION]: an entry without an id means absence is not proven (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:440:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:444:1
+✖ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof
+  AssertionError [ERR_ASSERTION]: no record 
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:455:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:462:1
+✖ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier
+  AssertionError [ERR_ASSERTION]: the same id with another identifier may be another profile (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:465:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:503:1
+✖ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof
+  AssertionError [ERR_ASSERTION]: three listed of five is not a count of three (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:520:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:539:1
+✖ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed
+  AssertionError [ERR_ASSERTION]: no validation field
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:557:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/jamf-client.test.js:576:1
+✖ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused
+  AssertionError [ERR_ASSERTION]: enabled must be a yes/no value, not text (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/jamf-client.test.js:612:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/linear-client.test.js:707:1
+✖ verify-snoozed: the issue read carries snoozedUntilAt, and a time later than the read proves the snooze (exit 0); empty, past, now, unreadable or another issue is not proof (exit 2)
+  AssertionError [ERR_ASSERTION]: field missing
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/linear-client.test.js:733:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/linear-client.test.js:742:1
+✖ verify-suspended: the member's active is false (exit 0); active, or not found on any page, is not proof (exit 2)
+  AssertionError [ERR_ASSERTION]: a member read with no active value is not proof of suspension (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/linear-client.test.js:774:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/msgraph-client.test.js:151:1
+✖ verify read-backs for the password-reset and MFA runbooks
+  AssertionError [ERR_ASSERTION]: absence on a first page with more pages is not proof (batch G4, task D1: INCONCLUSIVE)
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/msgraph-client.test.js:185:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/msgraph-client.test.js:205:1
+✖ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/msgraph-client.test.js:219:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/msgraph-client.test.js:238:1
+✖ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/msgraph-client.test.js:252:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/msgraph-client.test.js:274:1
+✖ verify-method-absent: an answer that proves nothing either way is recorded as INCONCLUSIVE, never as a failed object
+  AssertionError [ERR_ASSERTION]: {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "command": "verify-method-absent",
+    "verified": false,
+    "expected": {
+      "user": "aaaaaaaa-0000-4000-8000-000000000001",
+      "method_id": "3179e48a-750b-4051-897c-87b9720928f7",
+      "listed": false
+    },
+    "observed": {
+      "listed": null
+    },
+    "reason": "the answer has no method list, so this is not proof either way",
+    "operator_message": "Microsoft Graph answered with something Aegis could not read as the expected data. Nothing was read and nothing was changed. Run the read again; if it repeats, read the same item in the Microsoft Graph console.",
+    "admin_detail": "platform=msgraph operation=verify-method-absent state=INVALID_RESPONSE status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/msgraph-client.test.js:281:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/okta-client.test.js:735:1
+✖ verify-status: exactly the status given (O-21) on a record of the user asked for
+  AssertionError [ERR_ASSERTION]: no status field: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-status",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijkl4m",
+      "status": "ACTIVE"
+    },
+    "observed": {
+      "user": "00u1abcd2EFGH3ijkl4m",
+      "status": null
+    },
+    "reason": "the user record carries no status",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-status state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (scripts/adapters/okta-client.test.js:724:10)
+      at TestContext.<anonymous> (scripts/adapters/okta-client.test.js:743:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/okta-client.test.js:750:1
+✖ verify-factor-reset and verify-factors-reset-all: the user read succeeds first, then the factor list proves the type (or every factor) is gone
+  AssertionError [ERR_ASSERTION]: not a list: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-factor-reset",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijkl4m",
+      "factorType": "sms",
+      "enrolled": false
+    },
+    "observed": {
+      "user": "00u1abcd2EFGH3ijkl4m",
+      "factorsRead": null,
+      "factorTypes": []
+    },
+    "reason": "the factor read did not return a list",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-factor-reset state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (scripts/adapters/okta-client.test.js:724:10)
+      at TestContext.<anonymous> (scripts/adapters/okta-client.test.js:755:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/okta-client.test.js:776:1
+✖ verify-sessions-cleared and verify-password-reset: an event of that type for that target at or after --not-before with outcome SUCCESS
+  AssertionError [ERR_ASSERTION]: verify-sessions-cleared: not a list: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-sessions-cleared",
+    "verified": false,
+    "expected": {
+      "user": "00u1abcd2EFGH3ijkl4m",
+      "eventType": "user.session.clear",
+      "notBefore": "2026-10-27T11:50:00.000Z"
+    },
+    "observed": {
+      "eventsRead": null,
+      "match": null,
+      "eventsSinceNotBefore": [],
+      "morePages": false
+    },
+    "reason": "the System Log read did not return a list of events",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-sessions-cleared state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (scripts/adapters/okta-client.test.js:724:10)
+      at TestContext.<anonymous> (scripts/adapters/okta-client.test.js:797:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/okta-client.test.js:802:1
+✖ verify-group-member: the user read succeeds first; present on any page proves membership; --absent needs every page read, at most 10 pages of 200
+  AssertionError [ERR_ASSERTION]: ten full pages, absent=true: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-group-member",
+    "verified": false,
+    "expected": {
+      "group": "00g1abcd2EFGH3ijkl4m",
+      "user": "00u1abcd2EFGH3ijkl4m",
+      "member": false
+    },
+    "observed": {
+      "user": "00u1abcd2EFGH3ijkl4m",
+      "group": "00g1abcd2EFGH3ijkl4m",
+      "pagesRead": 10,
+      "membersRead": 2000,
+      "member": null,
+      "morePages": true
+    },
+    "reason": "the group has more than 10 pages of 200 members (2000 read) and the user was not on them, so this read proves nothing either way; check the membership in the Admin Console",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=okta operation=verify-group-member state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (scripts/adapters/okta-client.test.js:724:10)
+      at TestContext.<anonymous> (scripts/adapters/okta-client.test.js:823:21)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/slack-client.test.js:558:1
+✖ verify-posted passes only on a plain message after --not-before whose normalised text has the expected digest
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/slack-client.test.js:589:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/slack-client.test.js:608:1
+✖ verify-app-approved needs the app in the approved list and out of the pending requests; verify-app-restricted needs it in the restricted list
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/adapters/slack-client.test.js:626:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-dry-run.test.js:75:1
+✖ the shared contract names the verify-* dry-run exit code 4 beside the other four
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  -   INCONCLUSIVE: 5,
+      INPUT: 1,
+      OK: 0,
+      READ_FAILED: 2,
+      TENANT: 3,
+      VERIFY_DRY_RUN: 4
+  
+      at TestContext.<anonymous> (scripts/adapters/verify-dry-run.test.js:77:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4 },
+    expected: { OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4, INCONCLUSIVE: 5 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1301:1
+✖ D1: an INCONCLUSIVE read-back is uncounted with its reason, never a pass and never a failed object (no run id)
+  AuditRefused: field state of verify is missing or not in its allowed form
+      at checkEntry (scripts/audit/audit-log.js:291:30)
+      at Object.append (scripts/audit/audit-log.js:499:31)
+      at inconclusiveRead (scripts/audit/change-record.test.js:1299:46)
+      at TestContext.<anonymous> (scripts/audit/change-record.test.js:1304:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:1320:1
+✖ D1: an INCONCLUSIVE read of a run is uncounted, and a later pass of the same run counts once
+  AuditRefused: field state of verify is missing or not in its allowed form
+      at checkEntry (scripts/audit/audit-log.js:291:30)
+      at Object.append (scripts/audit/audit-log.js:499:31)
+      at inconclusiveRead (scripts/audit/change-record.test.js:1299:46)
+      at TestContext.<anonymous> (scripts/audit/change-record.test.js:1323:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:1336:1
+✖ D1: link refuses an INCONCLUSIVE read-back as the proof of a change
+  AuditRefused: field state of verify is missing or not in its allowed form
+      at checkEntry (scripts/audit/audit-log.js:291:30)
+      at Object.append (scripts/audit/audit-log.js:499:31)
+      at inconclusiveRead (scripts/audit/change-record.test.js:1299:46)
+      at TestContext.<anonymous> (scripts/audit/change-record.test.js:1342:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/jira-client.test.js:309:13
+✖ missing immutable id
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/jira-client.test.js:312:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (scripts/jira-client.test.js:309:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/jira-client.test.js:309:13
+✖ no creation time
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/jira-client.test.js:312:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (scripts/jira-client.test.js:309:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/jira-client.test.js:406:13
+✖ malformed
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 5
+  
+      at TestContext.<anonymous> (scripts/jira-client.test.js:409:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (scripts/jira-client.test.js:406:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

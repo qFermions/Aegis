@@ -730,7 +730,7 @@ test('verify-snoozed: the issue read carries snoozedUntilAt, and a time later th
   ];
   for (const [label, node] of misses) {
     const res = await cli(args, { replies: [reply({ issue: node })] });
-    assert.equal(res.code, 2, label);
+    assert.equal(res.code, label === 'field missing' || label === 'not a time' ? 5 : 2, label); // batch G4, task D1: a field left out or not a time is INCONCLUSIVE
     const n = firstJson(res.stdout);
     assert.equal(n.verified, false, label);
     assert.ok(typeof n.reason === 'string' && n.reason.length > 0, label);
@@ -771,13 +771,13 @@ test('verify-suspended: the member\'s active is false (exit 0); active, or not f
   assert.equal(m.observed.found, false);
 
   const noValue = await cli(args, { replies: [membersPage([{ id: 'user-7', admin: false, guest: false, owner: false }])] });
-  assert.equal(noValue.code, 2, 'a member read with no active value is not proof of suspension');
+  assert.equal(noValue.code, 5, 'a member read with no active value is not proof of suspension (batch G4, task D1: INCONCLUSIVE)');
   const nv = firstJson(noValue.stdout);
   assert.equal(nv.observed.found, true);
   assert.equal(nv.observed.active, null);
 
   const badCursor = await cli(args, { replies: [membersPage([member('user-1', true)], { hasNextPage: true, endCursor: 'bad cursor\nX' })] });
-  assert.equal(badCursor.code, 2, 'an unusable cursor ends the read without proof');
+  assert.equal(badCursor.code, 5, 'an unusable cursor ends the read without proof (batch G4, task D1: INCONCLUSIVE)');
   assert.equal(badCursor.transport.calls.length, 1);
 });
 

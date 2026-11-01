@@ -103,6 +103,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: an MFA setting on a whole unit; reversible by the Phase B rollback gate under its own phrase `TURN OFF 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]` only while no user in the unit reads `isEnrolledIn2Sv` true; after that the written rollback is to leave the box ticked with Enforcement Off, because what unticking does to users who already enrolled is not stated in the sources
 - **Required confirmation:** Type exactly `ALLOW 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organizational unit setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-2sv-enforcement-allow-portal]:** Only after the Phase A pre-state is in the ticket and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick `[OU_PATH]` → **Allow users to turn on 2-Step Verification**: tick the box → leave **Enforcement** at **Off** → **Save** (labels from a search excerpt; confirm them on screen).
 2. Read back in the GUI: reopen the page for `[OU_PATH]` and read the box ticked and Enforcement Off.
@@ -142,6 +143,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: an MFA setting on a whole unit; reversible by Phase B under its own phrase `ALLOW 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]`
 - **Required confirmation:** Type exactly `TURN OFF 2-STEP VERIFICATION ENROLLMENT FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organizational unit setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-2sv-enforcement-allow-rollback-portal]:** Only after the enrolled-users read for `[OU_PATH]` succeeded with nobody listed and is in the ticket, with no stop condition true, and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick `[OU_PATH]`, then clear the tick in **Allow users to turn on 2-Step Verification**, leave **Enforcement** at **Off** and click **Save** (labels from a search excerpt; confirm them on screen).
 2. Read back in the GUI: reopen the page for `[OU_PATH]` and read the box cleared and Enforcement Off.
@@ -172,6 +174,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security-control exception; reversible by Phase C4 under its own phrase `ENABLE 2-STEP VERIFICATION ENFORCEMENT FOR GROUP [GROUP_EMAIL]`, which puts enforcement back on every member at once and so runs only once every member reads `isEnrolledIn2Sv` true
 - **Required confirmation:** Type exactly `DISABLE 2-STEP VERIFICATION ENFORCEMENT FOR GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (a group setting no verify-* command reads, the 2SV read-backs read one user: Phase C2 proves each member with verify-2sv-not-enforced)
 **PORTAL ACTION [gws-2sv-enforcement-exception-portal]:** Only after the prerequisites and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick the group `[GROUP_EMAIL]` beside the organization tree → set **Enforcement** to **Off** → **Save** (the group view and its labels are not confirmed in the sources; confirm them on screen).
 2. Read back in the GUI: reopen the page for `[GROUP_EMAIL]` and read Enforcement Off.
@@ -202,6 +205,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security-control exception for one person; reversible by Phase C3 under its own phrase `REMOVE [USER@DOMAIN.COM] FROM 2-STEP VERIFICATION EXCEPTION GROUP [GROUP_EMAIL]`, which is allowed only once the person reads `isEnrolledIn2Sv` true, because a person taken out before enrolling is locked out (search excerpt); sign-ins made with a password alone in the meantime are not undone
 - **Required confirmation:** Type exactly `ADD [USER@DOMAIN.COM] TO 2-STEP VERIFICATION EXCEPTION GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-2sv-enforcement-exempt-portal]:** Only after the approver and the end date for `[USER@DOMAIN.COM]` are in the ticket, with no stop condition true, and the exact match:
 1. Admin console → Directory → Groups → `[GROUP_EMAIL]` → **Members** → **Add members** (the path the G1 group runbook records; for this group only the gate and phrase here apply).
 2. Enter the first characters of `[USER@DOMAIN.COM]`, pick the match, then click **Add To Group**.
@@ -240,6 +244,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security-control change for one person; a person removed before enrolling is locked out (search excerpt), which is why the `user` read must show `isEnrolledIn2Sv` true first; reversible by Phase C2 under its own phrase `ADD [USER@DOMAIN.COM] TO 2-STEP VERIFICATION EXCEPTION GROUP [GROUP_EMAIL]`, with a new approver and end date
 - **Required confirmation:** Type exactly `REMOVE [USER@DOMAIN.COM] FROM 2-STEP VERIFICATION EXCEPTION GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-2sv-enforcement-end-exemption-portal]:** Only after the `user` read in the ticket shows `isEnrolledIn2Sv` true, with no stop condition true, and the exact match:
 1. Admin console → Directory → Groups → `[GROUP_EMAIL]` → **Members** → point to `[USER@DOMAIN.COM]` → **Remove**.
 2. Click **Remove Members** to confirm.
@@ -280,6 +285,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security-control change on a whole group; reversible by Phase C1 under its own phrase `DISABLE 2-STEP VERIFICATION ENFORCEMENT FOR GROUP [GROUP_EMAIL]`
 - **Required confirmation:** Type exactly `ENABLE 2-STEP VERIFICATION ENFORCEMENT FOR GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-2sv-enforcement-group-reenforce-portal]:** Only after a `user` read for every member shows `isEnrolledIn2Sv` true in the ticket, with no stop condition true, and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick the group `[GROUP_EMAIL]` beside the organization tree → set **Enforcement** back to the value recorded before Phase C1 → **Save** (the group view and its labels are not confirmed in the sources; when the group carried no value of its own before Phase C1, the control that removes a group's value is not confirmed either: confirm it on screen, and stop if it differs).
 2. Read back in the GUI: reopen the page for `[GROUP_EMAIL]` and read the restored value.
@@ -310,6 +316,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security control on a whole unit; reversible for the unit by Phase F under its own phrase `DISABLE 2-STEP VERIFICATION ENFORCEMENT FOR OU [OU_PATH]`; one locked-out user gets a backup code an admin generates in `/gws-2sv-reset`
 - **Required confirmation:** Type exactly `ENABLE 2-STEP VERIFICATION ENFORCEMENT FOR OU [OU_PATH] FROM [START_DATE]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-2sv-enforcement-enforce-portal]:** Only after the prerequisites, with no stop condition true, and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick `[OU_PATH]` → set **Enforcement** to **Turn on enforcement from** `[START_DATE]` (or **On** when the start is today) → **New user enrollment period** → the recorded value → **Methods** → the recorded option → **Save** (labels from a search excerpt; confirm them on screen).
 2. Read back in the GUI: reopen the page and read Enforcement, the date, the new-user period and Methods for `[OU_PATH]`.
@@ -327,7 +334,7 @@ The Reporting enforcement column catches up within 48 hours (search excerpt).
 
 **Verification checkpoint**: [ ] `verify-2sv-enforced` exit 0 for each sample user · [ ] `verify-2sv-not-enforced` exit 0 for an exception-group member · [ ] nobody in the unit is both not enrolled and outside the exception group.
 
-Exit 2 from a `verify-*` read is never a pass: it also means the read failed (a 403 from missing delegation, a 404, a timeout) or returned another user. Only exit 0 from the read-back that names the expected state counts.
+Exit 2 from a `verify-*` read is never a pass: it also means the read failed (a 403 from missing delegation, a 404, a timeout) or returned another user, and exit 5 (INCONCLUSIVE: the answer proves nothing either way) is never a pass either: only exit 0 from the read-back that names the expected state counts, and any exit other than 0 is not a pass.
 
 **Gotcha**: the new-user enrollment period gives an account created after the start date that much time before enforcement applies (search excerpt); `/gws-new-user` creates the account, and the new hire enrolls inside the window.
 
@@ -348,6 +355,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: reversible by the Phase E rollback under its own phrase `RESTORE 2-STEP VERIFICATION METHODS FOR OU [OU_PATH]`, back to the Phase A Methods value; during the grace period an admin must generate backup codes, because users cannot generate their own under this policy (search excerpt)
 - **Required confirmation:** Type exactly `RESTRICT 2-STEP VERIFICATION TO SECURITY KEYS FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-2sv-enforcement-keys-only-portal]:** Only after the prerequisites and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick `[OU_PATH]` → restrict **Methods** to **Only security key** → **2-Step Verification policy suspension grace period** → the recorded value → **Save** (labels from a search excerpt; confirm them on screen).
 2. Read back in the GUI: reopen the page and read Methods for `[OU_PATH]`.
@@ -384,6 +392,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security control on a whole unit; reversible by Phase E under its own phrase `RESTRICT 2-STEP VERIFICATION TO SECURITY KEYS FOR OU [OU_PATH]`
 - **Required confirmation:** Type exactly `RESTORE 2-STEP VERIFICATION METHODS FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-2sv-enforcement-methods-restore-portal]:** Only after the Phase A Methods value and the approver are in the ticket, with no stop condition true, and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick `[OU_PATH]` → **Methods** → the Phase A value → **Save** (labels from a search excerpt; confirm them on screen).
 2. Read back in the GUI: reopen the page and read Methods for `[OU_PATH]` as the Phase A value.
@@ -416,6 +425,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: removes a security control from a whole unit; reversible by running Phase D's gate again under its own phrase `ENABLE 2-STEP VERIFICATION ENFORCEMENT FOR OU [OU_PATH] FROM [START_DATE]` with a new start date; sign-ins made with a password alone in the meantime are not undone
 - **Required confirmation:** Type exactly `DISABLE 2-STEP VERIFICATION ENFORCEMENT FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-2sv-not-enforced --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-2sv-enforcement-off-portal]:** Only after the temporary-exception record is complete, with no stop condition true, and the exact match:
 1. Admin console → Security → Authentication → 2-step verification → pick `[OU_PATH]` → set **Enforcement** to **Off** → **Save**.
 2. Read back in the GUI: reopen the page for `[OU_PATH]` and read Enforcement Off.

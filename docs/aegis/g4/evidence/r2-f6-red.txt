@@ -1,0 +1,376 @@
+$ node --test scripts/adapters/inconclusive.test.js scripts/adapters/fleet-client.test.js
+(Node v24.22.1, at f430de1 plus the working tree: the finding 6 tests, before the fix)
+
+✔ the spec is the lane allow-list exactly: GET routes only, one Bearer credential, no token exchange, no tenant variable (2.123665ms)
+✔ every read command sends the exact method, host and path, and the credential only in the Authorization header (11.236804ms)
+✔ every write and secret read the lane spec names is refused through client.send before credentials or transport (1.554041ms)
+✔ every method but GET is refused on every allow-listed read path (4.109783ms)
+✔ the dry run prints the exact planned request, reads no credential and calls no transport (2.724494ms)
+✔ only the bare --execute flag performs a read (0.779481ms)
+✔ --execute prints the vendor data through renderResult (2.112816ms)
+✔ input errors exit 1 before any credential or network: unknown command, missing or extra flags, bad values (4.265781ms)
+✔ missing FLEET_API_TOKEN gives NO_CREDENTIALS with exit 1, names the variable and sends nothing (0.998424ms)
+✔ a failed read exits 2: HTTP 404 once, HTTP 503 after the bounded retries (0.977596ms)
+✔ verify-lock: locked with nothing pending is verified (exit 0); locking, or locked with an unlock pending, is not (exit 2) (1.292213ms)
+✔ verify-unlock: unlocked with nothing pending is verified; still locked is not (0.535064ms)
+✔ verify-wipe on a Mac: wiping or wiped with EraseDevice acknowledged is verified; a pending command is INCONCLUSIVE; no wipe status or an errored command is not verified (2.72116ms)
+✔ verify-wipe on Windows reads the host's commands and needs a doWipe command with status 200; Linux cannot be proven by this read (1.599935ms)
+✔ verify-wipe on Android cannot pass and names the Android proof (device_status and wiped_host), not the Linux script (0.437777ms)
+✔ verify-lock on Android says it cannot pass and names the locked_host entry and the on-device check (0.654346ms)
+✔ verify-script: exit_code 0 without a timeout is verified; an empty exit code, a failure or a timeout is not (1.115568ms)
+✔ verify-mdm-off: an empty MDM read and an enrollment that no longer reads On is verified; On is not (0.987024ms)
+✔ verify-deleted: a manual deleted_host activity for the serial after --not-before, and the serial no longer resolving to that host, is verified (4.05744ms)
+✔ no credential value appears in stdout, stderr or a result, also when the transport or the vendor echoes it (2.20661ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (0.829849ms)
+✔ tenant: Fleet binds no tenant id; the configured FLEET_URL is the only host a request can reach (0.843127ms)
+✔ host-upcoming reads one host's queued items (an Observer read) and nothing else: no deeper path, no order or filter keys, no write (0.749303ms)
+✔ the lane spec's Fleet table lists every route on the allow-list, with its method and path (0.74324ms)
+✔ activity reads never go out unpaged: Fleet returns up to 10,000 records without page and per_page, past the 5 MB read limit (1.014779ms)
+✔ vulnerability: HTTP 204 means Fleet knows the CVE and nothing is affected (exit 0, no data) (0.423817ms)
+✔ the default transport is the contract's, and the tripwire stops it in tests (0.886456ms)
+✔ help prints the commands; run directly, the CLI exits with run()'s code (255.138988ms)
+✔ verify-deleted says whether --not-before is malformed or an impossible date (round 2, finding 14) (0.542923ms)
+✔ the contract names INCONCLUSIVE and its own exit code, 5, used by no other outcome (3.045378ms)
+✔ inconclusive() builds the verdict every connector prints: state INCONCLUSIVE, ok false, verified false, the reason (0.967422ms)
+✔ renderResult prints the two-part message for INCONCLUSIVE: an answer that proves nothing either way, nothing reported done (0.781346ms)
+✔ the audit trail accepts a verify entry with state INCONCLUSIVE and verified false; cli-support records the state as it is (1.233808ms)
+✔ fleet verify-checked-in: no last MDM check-in time on an enrolled host is INCONCLUSIVE (exit 5), never a pass and never a failed object (10.179802ms)
+✔ fleet verify-lock: verify-lock cannot judge an Android host is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.146479ms)
+✔ fleet verify-wipe: verify-wipe cannot judge a Linux host is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.022302ms)
+✔ fleet verify-script: a script run that has not reported yet is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.989247ms)
+✔ fleet verify-deleted: ten pages of activities, none older than --not-before, more behind them is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.949471ms)
+✔ github verify-2fa-required: the 2FA requirement is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.854925ms)
+✔ github verify-team-member: absent from a list longer than ten pages is INCONCLUSIVE (exit 5), never a pass and never a failed object (11.813464ms)
+✔ github verify-collaborator-removed: a collaborator list answer that is not a list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.907799ms)
+✔ github verify-collaborator: the role is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.634066ms)
+✔ github verify-secret-alert: the alert state is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.573816ms)
+✔ gws verify-suspended: the user record leaves suspended out is INCONCLUSIVE (exit 5), never a pass and never a failed object (7.671632ms)
+✔ gws verify-2sv-enforced: the user record leaves isEnforcedIn2Sv out is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.006635ms)
+✔ gws verify-event: the event feed has another page without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.127539ms)
+✔ jamf verify-checked-in: no lastContactTime on the Mac is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.367729ms)
+✔ jamf verify-checked-in: the serial filter returned two records is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.511772ms)
+✔ jamf verify-group-count: a paged member list is not a count is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.770919ms)
+✔ linear verify-state: the issue read shows no state is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.023727ms)
+✔ linear verify-labels: the label is not on the first page of labels and more follow is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.768232ms)
+✔ msgraph verify-account-enabled: accountEnabled is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.843681ms)
+✔ msgraph verify-group-member: a member list answer with no list (it used to pass for --absent) is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.930985ms)
+✔ msgraph verify-mfa-cleared: a method list answer with no list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.606009ms)
+✔ msgraph verify-method-absent: absent from a method list with another page is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.715219ms)
+✔ okta verify-status: the user record carries no status is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.798601ms)
+✔ okta verify-sessions-cleared: a full page of System Log events without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.031401ms)
+✔ slack verify-deactivated: users.info does not show deleted is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.793923ms)
+✔ slack verify-deactivated: users.info answered without a user record is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.651021ms)
+✔ msgraph verify-mfa-cleared: a method still listed, with another page behind it is still a failed object (exit 2, state OK) (2.029292ms)
+✔ github verify-team-member: still a member, on a list longer than ten pages is still a failed object (exit 2, state OK) (9.340655ms)
+✔ fleet verify-checked-in: a host checked in before --not-before is still a failed object (exit 2, state OK) (1.962649ms)
+✔ gws verify-suspended: a user not suspended is still a failed object (exit 2, state OK) (1.835949ms)
+✔ jamf verify-checked-in: a Mac whose last contact is before --not-before is still a failed object (exit 2, state OK) (0.665635ms)
+✔ linear verify-state: an issue in another state is still a failed object (exit 2, state OK) (0.387818ms)
+✔ okta verify-status: a user in another status is still a failed object (exit 2, state OK) (1.905657ms)
+✔ slack verify-deactivated: a user not deactivated is still a failed object (exit 2, state OK) (0.353492ms)
+✔ jira verify-transition: an answer with no status version is INCONCLUSIVE (exit 5), recorded as such (4.066584ms)
+✔ jira verify-comment: a comment read-back with no body text is INCONCLUSIVE (exit 5); another comment id stays a failure (exit 2) (1.258033ms)
+✔ jira verify-transition: a status other than the one expected stays a failure (exit 2, state OK) (0.488309ms)
+✔ every connector takes INCONCLUSIVE and its exit code from the shared contract (2.159091ms)
+✔ code review round 1, finding 3: fleet verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.500366ms)
+✔ code review round 1, finding 3: fleet verify-deleted takes --not-before as approved_at prints it, with milliseconds (0.283014ms)
+✔ code review round 1, finding 3: gws verify-event takes --not-before as approved_at prints it, with milliseconds (0.525838ms)
+✔ code review round 1, finding 3: jamf verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.306573ms)
+✔ code review round 1, finding 3: jamf verify-command takes --not-before as approved_at prints it, with milliseconds (0.546737ms)
+✔ code review round 1, finding 3: linear verify-comment takes --not-before as approved_at prints it, with milliseconds (0.346713ms)
+✔ code review round 1, finding 3: msgraph verify-password-changed takes --not-before as approved_at prints it, with milliseconds (0.36184ms)
+✔ code review round 1, finding 3: msgraph verify-signin takes --not-before as approved_at prints it, with milliseconds (0.409149ms)
+✔ code review round 1, finding 3: msgraph verify-device-synced takes --not-before as approved_at prints it, with milliseconds (0.268347ms)
+✔ code review round 1, finding 3: msgraph verify-sessions-revoked takes --not-before as approved_at prints it, with milliseconds (0.317368ms)
+✔ code review round 1, finding 3: okta verify-sessions-cleared takes --not-before as approved_at prints it, with milliseconds (0.491403ms)
+✔ code review round 1, finding 3: okta verify-password-reset takes --not-before as approved_at prints it, with milliseconds (0.352627ms)
+✔ code review round 1, finding 3: slack verify-posted takes --not-before as approved_at prints it, with milliseconds (0.490438ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --state fixed --reason: dismissed_reason null (not dismissed) is a failed object (exit 2) (0.748748ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is a failed object (exit 2) (0.336465ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: dismissed_reason left out of the answer is INCONCLUSIVE (exit 5) (0.522696ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: a dismissed_reason that is neither null nor text is INCONCLUSIVE (exit 5) (0.645408ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: another reason stays a failed object and the same reason passes (0.627719ms)
+✔ code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, more pages unread past the ten read, is INCONCLUSIVE (exit 5) (2.131506ms)
+✔ code review round 1, finding 7: fleet verify-deleted: a non-manual deletion found, the feed read to its end or back to --not-before, stays a failed object (exit 2) (0.792773ms)
+✔ code review round 1, finding 8: fleet verify-deleted: an activities answer with no activities list is INCONCLUSIVE (exit 5), not an empty list (0.479996ms)
+✔ code review round 1, finding 8: fleet verify-deleted: an activities list that is null is INCONCLUSIVE (exit 5), not an empty list (0.50236ms)
+✔ code review round 1, finding 8: fleet verify-deleted: a later activities page with no list is INCONCLUSIVE (exit 5), not an empty list (0.358122ms)
+✔ code review round 1, finding 8: fleet verify-wipe on a Mac: an MDM commands answer with no results list is INCONCLUSIVE (exit 5), not an empty list (0.528319ms)
+✔ code review round 1, finding 8: fleet verify-wipe on Windows: an MDM commands results list that is null is INCONCLUSIVE (exit 5), not an empty list (0.523712ms)
+✔ code review round 1, finding 8: linear verify-comment: a comments connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (1.002645ms)
+✔ code review round 1, finding 8: linear verify-comment: an issue with no comments connection is INCONCLUSIVE (exit 5), not an empty list (0.456827ms)
+✔ code review round 1, finding 8: linear verify-comment: a comments connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (0.423736ms)
+✔ code review round 1, finding 8: linear verify-suspended: a users connection with no nodes is INCONCLUSIVE (exit 5), not an empty list (0.669489ms)
+✔ code review round 1, finding 8: linear verify-suspended: an answer with no users connection is INCONCLUSIVE (exit 5), not an empty list (0.301125ms)
+✔ code review round 1, finding 8: linear verify-suspended: a users connection with no pageInfo is INCONCLUSIVE (exit 5), not an empty list (0.307402ms)
+✔ code review round 1, finding 8: fleet verify-deleted: an empty activities list, the feed at its end stays a failed object (exit 2) (0.420429ms)
+✔ code review round 1, finding 8: fleet verify-wipe on a Mac: an empty results list stays a failed object (exit 2) (0.467538ms)
+✔ code review round 1, finding 8: fleet verify-wipe: a host not wiping, whatever the commands answer holds stays a failed object (exit 2) (0.360809ms)
+✔ code review round 1, finding 8: linear verify-comment: an empty comments list on its last page stays a failed object (exit 2) (0.403187ms)
+✔ code review round 1, finding 8: linear verify-suspended: the member not on the last page stays a failed object (exit 2) (0.258377ms)
+✔ code review round 1, finding 12: jamf verify-command: a matching command sent after --not-before, still Pending, is INCONCLUSIVE (exit 5) (1.13673ms)
+✔ code review round 1, finding 12: jamf verify-command: a Pending command beside a failed one is still INCONCLUSIVE; an acknowledged one passes (1.053978ms)
+✔ code review round 1, finding 12: jamf verify-command: a matching command that failed stays a failed object (exit 2) (0.570634ms)
+✔ code review round 1, finding 12: jamf verify-command: no matching command stays a failed object (exit 2) (0.455001ms)
+✔ code review round 1, finding 12: jamf verify-command: a Pending command sent before --not-before stays a failed object (exit 2) (0.478455ms)
+✔ code review round 1, finding 12: jamf verify-command: a Pending command for another Mac stays a failed object (exit 2) (0.445161ms)
+✔ code review round 1, finding 12: jamf verify-command: a Pending command of another type stays a failed object (exit 2) (0.402141ms)
+✔ code review round 2, finding 1: github verify-protection --no-force-push, allow_force_pushes {} (it used to pass) is INCONCLUSIVE (exit 5) (0.841339ms)
+✔ code review round 2, finding 1: github verify-protection --no-deletions, allow_deletions {} (it used to pass) is INCONCLUSIVE (exit 5) (0.347138ms)
+✔ code review round 2, finding 1: github verify-protection --no-force-push, allow_force_pushes left out is INCONCLUSIVE (exit 5) (0.370696ms)
+✔ code review round 2, finding 1: github verify-protection --no-deletions, allow_deletions left out is INCONCLUSIVE (exit 5) (0.247932ms)
+✔ code review round 2, finding 1: github verify-protection --no-force-push, allow_force_pushes.enabled null is INCONCLUSIVE (exit 5) (0.206411ms)
+✔ code review round 2, finding 1: github verify-protection --no-deletions, allow_deletions not an object is INCONCLUSIVE (exit 5) (0.329406ms)
+✔ code review round 2, finding 1: github verify-protection --enforce-admins, enforce_admins without enabled is INCONCLUSIVE (exit 5) (0.319028ms)
+✔ code review round 2, finding 1: github verify-protection --enforce-admins, enforce_admins left out is INCONCLUSIVE (exit 5) (0.297725ms)
+✔ code review round 2, finding 1: github verify-protection --enforce-admins, enforce_admins.enabled the text "true" is INCONCLUSIVE (exit 5) (0.706192ms)
+✔ code review round 2, finding 1: github verify-protection all three flags, each setting matching but allow_deletions {} is INCONCLUSIVE (exit 5) (0.393774ms)
+✔ code review round 2, finding 1: github verify-protection: a definite value against the flag stays a failed object (exit 2), also beside a setting not shown (1.074865ms)
+✔ code review round 2, finding 1: github verify-protection: definite matching values pass; a setting no flag asks about is not read (0.768467ms)
+✔ code review round 2, finding 2: linear verify-labels: an issue read with no labels connection is INCONCLUSIVE (exit 5) (0.407869ms)
+✔ code review round 2, finding 2: linear verify-labels: a labels connection with no nodes list is INCONCLUSIVE (exit 5) (0.246572ms)
+✔ code review round 2, finding 2: linear verify-labels: a labels nodes list that is null is INCONCLUSIVE (exit 5) (1.408275ms)
+✔ code review round 2, finding 2: linear verify-labels: the label not on a page with no pageInfo is INCONCLUSIVE (exit 5) (0.368655ms)
+✔ code review round 2, finding 2: linear verify-labels: the label not on a page whose hasNextPage is not true or false is INCONCLUSIVE (exit 5) (0.236574ms)
+✔ code review round 2, finding 2: linear verify-labels: the label absent from the last page stays a failed object (exit 2) (0.738594ms)
+✔ code review round 2, finding 2: linear verify-labels: the label found on the page passes, whatever the paging says (0.955306ms)
+✔ code review round 2, finding 3: fleet verify-deleted: a page with no meta, no manual deletion found, is INCONCLUSIVE (exit 5) (0.454222ms)
+✔ code review round 2, finding 3: fleet verify-deleted: a page whose meta has no has_next_results, no manual deletion found, is INCONCLUSIVE (exit 5) (0.293249ms)
+✔ code review round 2, finding 3: fleet verify-deleted: a page whose has_next_results is the text "false", no manual deletion found, is INCONCLUSIVE (exit 5) (0.238338ms)
+✔ code review round 2, finding 3: fleet verify-deleted: an empty page with meta null, no manual deletion found, is INCONCLUSIVE (exit 5) (0.188767ms)
+✔ code review round 2, finding 3: fleet verify-deleted: a non-manual deletion found on a page with no meta, no manual deletion found, is INCONCLUSIVE (exit 5) (0.29369ms)
+✔ code review round 2, finding 3: fleet verify-deleted: a page with no meta read back to --not-before stays a failed object (exit 2); a manual deletion found on it passes (1.010325ms)
+✔ code review round 2, finding 4: fleet verify-deleted: a manual deletion of this serial whose created_at is not a time is INCONCLUSIVE (exit 5), not skipped (0.374104ms)
+✔ code review round 2, finding 4: fleet verify-deleted: a manual deletion of this serial with no created_at is INCONCLUSIVE (exit 5), not skipped (0.366551ms)
+✔ code review round 2, finding 4: jamf verify-command: an Acknowledged command whose dateSent is not a time is INCONCLUSIVE (exit 5), not skipped (0.484785ms)
+✔ code review round 2, finding 4: jamf verify-command: an Acknowledged command with no dateSent is INCONCLUSIVE (exit 5), not skipped (0.418887ms)
+✔ code review round 2, finding 4: jamf verify-command: a Pending command whose dateSent is not a time is INCONCLUSIVE (exit 5), not skipped (0.459759ms)
+✔ code review round 2, finding 4: linear verify-comment: a comment with the expected text whose createdAt is not a time is INCONCLUSIVE (exit 5), not skipped (0.646613ms)
+✔ code review round 2, finding 4: linear verify-comment: a comment with the expected text and no createdAt is INCONCLUSIVE (exit 5), not skipped (0.445875ms)
+✔ code review round 2, finding 4: fleet verify-deleted: an undated manual deletion beside a dated one passes: another record proves the change (0.534893ms)
+✔ code review round 2, finding 4: jamf verify-command: an undated Acknowledged command beside a dated one passes: another record proves the change (0.434288ms)
+✔ code review round 2, finding 4: linear verify-comment: an undated matching comment beside a dated one passes: another record proves the change (0.489735ms)
+✔ code review round 2, finding 4: fleet verify-deleted: an undated deletion that was not manual stays a failed object (exit 2) (0.405531ms)
+✔ code review round 2, finding 4: jamf verify-command: an undated command that failed stays a failed object (exit 2) (0.385057ms)
+✔ code review round 2, finding 4: linear verify-comment: an undated comment with other text stays a failed object (exit 2) (0.424727ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Mac wiping, its EraseDevice NotNow is INCONCLUSIVE (exit 5) (0.553457ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Mac wiped, its newest EraseDevice NotNow after an older error is INCONCLUSIVE (exit 5) (0.416731ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Windows host wiping, its doWipe pending is INCONCLUSIVE (exit 5) (0.368057ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Windows host wiped, its doWipe Pending is INCONCLUSIVE (exit 5) (0.718081ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Mac wiping, its EraseDevice errored stays a failed object (exit 2) (0.537215ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Mac not wiping, its EraseDevice NotNow stays a failed object (exit 2) (0.371151ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Windows host wiping, its doWipe failed with 500 stays a failed object (exit 2) (1.923749ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Windows host wiping, its doWipe failed stays a failed object (exit 2) (0.605335ms)
+✔ code review round 2, finding 5: fleet verify-wipe: a Windows host not wiping, its doWipe pending stays a failed object (exit 2) (0.412201ms)
+✖ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a page that says more pages follow is INCONCLUSIVE (exit 5) (1.470397ms)
+✖ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a full page with no meta is INCONCLUSIVE (exit 5) (2.432204ms)
+✖ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a full page whose meta has no has_next_results is INCONCLUSIVE (exit 5) (1.409763ms)
+✔ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a page not full, with no meta stays a failed object (exit 2) (0.403514ms)
+✔ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on an empty page with no meta stays a failed object (exit 2) (0.337807ms)
+✔ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a full page that says it is the last stays a failed object (exit 2) (1.066025ms)
+✔ code review round 2, finding 6: fleet verify-wipe on Windows: a host not wiping, no doWipe on a page that says more follow stays a failed object (exit 2) (0.307183ms)
+✔ code review round 2, finding 6: fleet verify-wipe on Windows: a doWipe with status 200 on a page that says more follow passes (0.392548ms)
+ℹ tests 169
+ℹ suites 0
+ℹ pass 166
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 422.583933
+
+✖ failing tests:
+
+test at scripts/adapters/inconclusive.test.js:656:3
+✖ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a page that says more pages follow is INCONCLUSIVE (exit 5) (1.470397ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-wipe",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "windows",
+      "host.mdm.device_status": "wiping",
+      "host.mdm.pending_action": "wipe",
+      "commands host_identifier": "C02TEST0001",
+      "wipe command": null
+    },
+    "expected": {
+      "host.id": [
+        7
+      ],
+      "host.mdm.device_status": [
+        "wiping",
+        "wiped"
+      ],
+      "wipe command": {
+        "request_type": "a Windows RemoteWipe doWipe command (doWipe, doWipeProtected and similar)",
+        "status": [
+          "200"
+        ]
+      }
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/commands?host_identifier=C02TEST0001&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "Windows command status is an OMA-DM code (vendor docs); the doWipe request_type shape is read from the vendor's wipe options and is unverified, so only a doWipe command with status 200 counts.",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-wipe state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:657:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:656:3
+✖ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a full page with no meta is INCONCLUSIVE (exit 5) (2.432204ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-wipe",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "windows",
+      "host.mdm.device_status": "wiping",
+      "host.mdm.pending_action": "wipe",
+      "commands host_identifier": "C02TEST0001",
+      "wipe command": null
+    },
+    "expected": {
+      "host.id": [
+        7
+      ],
+      "host.mdm.device_status": [
+        "wiping",
+        "wiped"
+      ],
+      "wipe command": {
+        "request_type": "a Windows RemoteWipe doWipe command (doWipe, doWipeProtected and similar)",
+        "status": [
+          "200"
+        ]
+      }
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/commands?host_identifier=C02TEST0001&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "Windows command status is an OMA-DM code (vendor docs); the doWipe request_type shape is read from the vendor's wipe options and is unverified, so only a doWipe command with status 200 counts.",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-wipe state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:657:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:656:3
+✖ code review round 2, finding 6: fleet verify-wipe on Windows: no doWipe on a full page whose meta has no has_next_results is INCONCLUSIVE (exit 5) (1.409763ms)
+  AssertionError [ERR_ASSERTION]: {
+    "command": "verify-wipe",
+    "state": "OK",
+    "verified": false,
+    "observed": {
+      "host.id": 7,
+      "host.platform": "windows",
+      "host.mdm.device_status": "wiped",
+      "host.mdm.pending_action": "",
+      "commands host_identifier": "C02TEST0001",
+      "wipe command": null
+    },
+    "expected": {
+      "host.id": [
+        7
+      ],
+      "host.mdm.device_status": [
+        "wiping",
+        "wiped"
+      ],
+      "wipe command": {
+        "request_type": "a Windows RemoteWipe doWipe command (doWipe, doWipeProtected and similar)",
+        "status": [
+          "200"
+        ]
+      }
+    },
+    "reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/hosts/7?exclude_software=true",
+        "state": "OK",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/fleet/commands?host_identifier=C02TEST0001&per_page=100",
+        "state": "OK",
+        "status": 200
+      }
+    ],
+    "note": "Windows command status is an OMA-DM code (vendor docs); the doWipe request_type shape is read from the vendor's wipe options and is unverified, so only a doWipe command with status 200 counts.",
+    "flags": [],
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=fleet operation=verify-wipe state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:657:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

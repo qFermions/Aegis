@@ -13,7 +13,7 @@
 //     user --user [USER_ID]|[UPN] | auth-methods --user ... | member-of --user ...
 //     group-members --group [GROUP_ID] | sign-ins --user [USER_ID] --since [NOT_BEFORE]
 //     managed-device --device [DEVICE_ID]
-//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run):
+//   Read-backs (verified true or false; exit 0 verified, 2 not verified, 4 a dry run, 5 inconclusive):
 //     verify-password-changed --user U --not-before T   (lastPasswordChangeDateTime at or after T)
 //     verify-account-enabled  --user U --enabled true|false
 //     verify-mfa-method       --user U --method microsoftAuthenticator|phone|fido2|softwareOath|windowsHelloForBusiness|email|temporaryAccessPass
@@ -23,7 +23,11 @@
 //     verify-device-synced    --device [DEVICE_ID] --not-before T   (Intune lastSyncDateTime at or after T)
 //     verify-group-member     --group [GROUP_ID] --user [USER_ID] [--absent]
 //     verify-sessions-revoked --user [USER_ID] --not-before T   (signInSessionsValidFromDateTime at or
-//                                         after T: Revoke sessions resets it; vendor facts M-26, M-27)
+//                                         after T: Revoke sessions resets it; vendor facts M-26, M-27).
+//                                         Known limit (batch G4, task A4): Microsoft does not document
+//                                         whether a password reset moves signInSessionsValidFromDateTime,
+//                                         so after a reset in the same ticket a pass may not be a
+//                                         revocation (vendor fact M-28)
 //     verify-method-absent    --user [USER_ID] --method-id [METHOD_ID]   (that method id no longer
 //                                         listed in the user's authentication methods)
 //
@@ -36,7 +40,7 @@
 
 const crypto = require('node:crypto');
 const {
-  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit,
+  STATES, RefusedError, TripwireError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, redactDeep, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
@@ -48,8 +52,12 @@ const ASSERTION_LIFETIME_SECONDS = 300;
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const USER = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[A-Za-z0-9._%+'-]{1,64}@[A-Za-z0-9.-]{1,190})$/i;
-const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
-const SIGNIN_FILTER = /^userId eq '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' and createdDateTime ge \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/i;
+// An ISO UTC time, with 1 to 3 fractional digits or none: change-record.js approve prints
+// approved_at with milliseconds, and a read-back runs with --not-before at or after it, so the
+// printed value is taken as it is and compared at millisecond precision (code review round 1 of
+// batch G4, finding 3; Okta, Google Workspace, Jamf Pro and Linear take the same form)
+const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
+const SIGNIN_FILTER = /^userId eq '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' and createdDateTime ge \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/i;
 const METHODS = ['microsoftAuthenticator', 'phone', 'fido2', 'softwareOath', 'windowsHelloForBusiness', 'email', 'temporaryAccessPass'];
 // "Require re-register MFA" deletes these (vendor fact B-18)
 const CLEARED_BY_REREGISTER = ['microsoftAuthenticator', 'phone', 'softwareOath'];
@@ -136,6 +144,7 @@ const COMMANDS = Object.freeze({
 const USAGE = `Usage: node scripts/adapters/msgraph-client.js <command> [flags] [--execute]
   Commands: ${Object.keys(COMMANDS).join(' | ')}
   MS_TENANT_ID names the tenant; the credentials are read only with --execute.
+  Known limit, verify-sessions-revoked: Microsoft does not document whether a password reset moves signInSessionsValidFromDateTime, so on a ticket that also reset the password this read-back may pass without a revocation (vendor fact M-28).
 `;
 
 function validate(command, def, args) {
@@ -156,47 +165,76 @@ const atOrAfter = (value, iso) => typeof value === 'string' && Number.isFinite(D
 const methodsOf = (data) => (isObject(data) && Array.isArray(data.value) ? data.value : []).filter(isObject)
   .map((m) => (typeof m['@odata.type'] === 'string' ? (/^#microsoft\.graph\.([A-Za-z0-9]+)AuthenticationMethod$/.exec(m['@odata.type']) || [])[1] : undefined)).filter(Boolean);
 
+// An answer that proves nothing either way (batch G4, task D1) is INCONCLUSIVE (exit 5): never a
+// pass and never a failed object. Before D1 these were "verified false" (exit 2), or
+// INVALID_RESPONSE for verify-method-absent (code review round 1 of the batch G3 close-out 3,
+// finding 7). A list read with no value list at all proves nothing either: before D1,
+// verify-mfa-cleared and verify-group-member --absent read it as an empty list and passed.
+const unproven = (observed, reason) => ({ inconclusive: true, verified: false, observed, reason });
+const morePages = (d) => typeof d['@odata.nextLink'] === 'string';
+const NO_LIST = 'the answer has no value list, so this is not proof either way';
+const timeOf = (value) => (typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null);
+
 function judge(command, a, data) {
   const d = isObject(data) ? data : {};
   switch (command) {
-    case 'verify-password-changed':
-      return atOrAfter(d.lastPasswordChangeDateTime, a['not-before'])
-        ? { verified: true, observed: { lastPasswordChangeDateTime: d.lastPasswordChangeDateTime } }
-        : { verified: false, observed: { lastPasswordChangeDateTime: d.lastPasswordChangeDateTime === undefined ? null : d.lastPasswordChangeDateTime }, reason: `the password was last changed ${d.lastPasswordChangeDateTime || 'at no stated time'}, before ${a['not-before']}` };
+    case 'verify-password-changed': {
+      const value = timeOf(d.lastPasswordChangeDateTime);
+      if (value === null) return unproven({ lastPasswordChangeDateTime: null }, 'lastPasswordChangeDateTime is not a time in the answer, so this is not proof either way');
+      return atOrAfter(value, a['not-before'])
+        ? { verified: true, observed: { lastPasswordChangeDateTime: value } }
+        : { verified: false, observed: { lastPasswordChangeDateTime: value }, reason: `the password was last changed ${value}, before ${a['not-before']}` };
+    }
     case 'verify-account-enabled': {
       const want = a.enabled === 'true';
+      if (typeof d.accountEnabled !== 'boolean') return unproven({ accountEnabled: null }, 'accountEnabled is not shown as true or false, so this is not proof either way');
       return d.accountEnabled === want
         ? { verified: true, observed: { accountEnabled: d.accountEnabled } }
-        : { verified: false, observed: { accountEnabled: d.accountEnabled === undefined ? null : d.accountEnabled }, reason: `accountEnabled is ${d.accountEnabled === undefined ? 'not shown' : d.accountEnabled}, not ${want}` };
+        : { verified: false, observed: { accountEnabled: d.accountEnabled }, reason: `accountEnabled is ${d.accountEnabled}, not ${want}` };
     }
     case 'verify-mfa-method': {
+      if (!Array.isArray(d.value)) return unproven({ methods: null }, NO_LIST);
       const methods = methodsOf(d);
-      return methods.includes(a.method)
-        ? { verified: true, observed: { methods } }
-        : { verified: false, observed: { methods }, reason: `no ${a.method} method is registered` };
+      if (methods.includes(a.method)) return { verified: true, observed: { methods } };
+      // absence on a page with more pages behind it proves nothing
+      if (morePages(d)) return unproven({ methods }, 'the method list has another page, so this is not proof either way');
+      return { verified: false, observed: { methods }, reason: `no ${a.method} method is registered` };
     }
     case 'verify-mfa-cleared': {
+      if (!Array.isArray(d.value)) return unproven({ methods: null }, NO_LIST);
       const methods = methodsOf(d);
       const left = methods.filter((m) => CLEARED_BY_REREGISTER.includes(m));
-      if (isObject(d) && typeof d['@odata.nextLink'] === 'string') return { verified: false, observed: { methods }, reason: 'the method list has another page, so this is not proof either way' };
-      return left.length ? { verified: false, observed: { methods }, reason: `still registered: ${left.join(', ')}` } : { verified: true, observed: { methods } };
+      // a method still listed is an answer, whatever pages come after it
+      if (left.length) return { verified: false, observed: { methods }, reason: `still registered: ${left.join(', ')}` };
+      if (morePages(d)) return unproven({ methods }, 'the method list has another page, so this is not proof either way');
+      return { verified: true, observed: { methods } };
     }
     case 'verify-signin': {
-      const items = (Array.isArray(d.value) ? d.value : []).filter(isObject);
+      if (!Array.isArray(d.value)) return unproven({ sign_ins_read: null }, NO_LIST);
+      const items = d.value.filter(isObject);
       const good = items.find((s) => atOrAfter(s.createdDateTime, a['not-before']) && isObject(s.status) && s.status.errorCode === 0);
       if (good) return { verified: true, observed: { createdDateTime: good.createdDateTime, errorCode: 0 } };
       const codes = items.slice(0, 10).map((s) => (isObject(s.status) ? s.status.errorCode : null));
+      if (morePages(d)) return unproven({ sign_ins_read: items.length, error_codes: codes }, `no successful sign-in at or after ${a['not-before']} among the ${items.length} read, and the list has another page, so this is not proof either way`);
+      // a successful sign-in whose createdDateTime cannot be read may be the sign-in asked for:
+      // it is counted, not skipped (code review round 3 of batch G4, finding 2)
+      const undated = items.filter((s) => timeOf(s.createdDateTime) === null && isObject(s.status) && s.status.errorCode === 0).length;
+      if (undated) return unproven({ sign_ins_read: items.length, error_codes: codes, undated_successful: undated }, `no successful sign-in at or after ${a['not-before']} among the ${items.length} read, and ${undated} successful sign-in${undated === 1 ? '' : 's'} ha${undated === 1 ? 's' : 've'} a createdDateTime that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the sign-in asked for: this is not proof either way`);
       return { verified: false, observed: { sign_ins_read: items.length, error_codes: codes }, reason: `no successful sign-in at or after ${a['not-before']} among the ${items.length} read` };
     }
-    case 'verify-device-synced':
-      return atOrAfter(d.lastSyncDateTime, a['not-before'])
-        ? { verified: true, observed: { lastSyncDateTime: d.lastSyncDateTime, complianceState: d.complianceState === undefined ? null : d.complianceState } }
-        : { verified: false, observed: { lastSyncDateTime: d.lastSyncDateTime === undefined ? null : d.lastSyncDateTime }, reason: `the device last synced ${d.lastSyncDateTime || 'at no stated time'}, before ${a['not-before']}` };
+    case 'verify-device-synced': {
+      const value = timeOf(d.lastSyncDateTime);
+      if (value === null) return unproven({ lastSyncDateTime: null }, 'lastSyncDateTime is not a time in the answer, so this is not proof either way');
+      return atOrAfter(value, a['not-before'])
+        ? { verified: true, observed: { lastSyncDateTime: value, complianceState: d.complianceState === undefined ? null : d.complianceState } }
+        : { verified: false, observed: { lastSyncDateTime: value }, reason: `the device last synced ${value}, before ${a['not-before']}` };
+    }
     case 'verify-group-member': {
-      const ids = (Array.isArray(d.value) ? d.value : []).filter(isObject).map((m) => String(m.id || '').toLowerCase());
+      if (!Array.isArray(d.value)) return unproven({ member: null }, NO_LIST);
+      const ids = d.value.filter(isObject).map((m) => String(m.id || '').toLowerCase());
       const present = ids.includes(a.user.toLowerCase());
       // absence on a page with more pages behind it proves nothing, either way
-      if (!present && typeof d['@odata.nextLink'] === 'string') return { verified: false, observed: { member: false }, reason: 'the member list has another page, so this is not proof either way; check in the Entra admin center' };
+      if (!present && morePages(d)) return unproven({ member: false }, 'the member list has another page, so this is not proof either way; check in the Entra admin center');
       if (present === !a.absent) return { verified: true, observed: { member: present } };
       return { verified: false, observed: { member: present }, reason: present ? 'the user is still a member' : 'the user is not a member' };
     }
@@ -204,17 +242,17 @@ function judge(command, a, data) {
       // Revoke sessions resets signInSessionsValidFromDateTime to the time of the revocation
       // (vendor fact M-26); Microsoft notes tokens may take a few minutes more to be revoked
       const value = d.signInSessionsValidFromDateTime;
-      if (value === undefined || value === null) return { verified: false, observed: { signInSessionsValidFromDateTime: null }, reason: 'signInSessionsValidFromDateTime is not in the answer, so this is not proof either way' };
-      if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) return { verified: false, observed: { signInSessionsValidFromDateTime: null }, reason: 'signInSessionsValidFromDateTime is not a time, so this is not proof either way' };
+      if (value === undefined || value === null) return unproven({ signInSessionsValidFromDateTime: null }, 'signInSessionsValidFromDateTime is not in the answer, so this is not proof either way');
+      if (timeOf(value) === null) return unproven({ signInSessionsValidFromDateTime: null }, 'signInSessionsValidFromDateTime is not a time, so this is not proof either way');
       return atOrAfter(value, a['not-before'])
         ? { verified: true, observed: { signInSessionsValidFromDateTime: value } }
         : { verified: false, observed: { signInSessionsValidFromDateTime: value }, reason: `sessions are valid from ${value}, before ${a['not-before']}: they were not revoked since` };
     }
     case 'verify-method-absent': {
-      // an answer that proves nothing either way is no usable answer (INVALID_RESPONSE), so a
-      // counted change lists it as uncounted rather than as a failed object (code review round 1
-      // of the batch G3 close-out 3, finding 7)
-      if (!isObject(data) || !Array.isArray(data.value)) return { verified: false, state: STATES.INVALID_RESPONSE, observed: { listed: null }, reason: 'the answer has no method list, so this is not proof either way' };
+      // an answer that proves nothing either way is INCONCLUSIVE, so a counted change lists it as
+      // uncounted rather than as a failed object (code review round 1 of the batch G3 close-out
+      // 3, finding 7; batch G4, task D1)
+      if (!isObject(data) || !Array.isArray(data.value)) return unproven({ listed: null }, 'the answer has no method list, so this is not proof either way');
       const ids = data.value.filter(isObject).map((m) => String(m.id || ''));
       // a GUID is the same id in any case; any other id (base64url, a FIDO2 key's) keeps its case
       // (security review 1 of the batch G3 close-out 3)
@@ -222,7 +260,7 @@ function judge(command, a, data) {
       const same = GUID.test(want) ? (id) => id.toLowerCase() === want.toLowerCase() : (id) => id === want;
       if (ids.some(same)) return { verified: false, observed: { listed: true }, reason: 'the method is still listed' };
       // absence on a page with more pages behind it proves nothing
-      if (typeof data['@odata.nextLink'] === 'string') return { verified: false, state: STATES.INVALID_RESPONSE, observed: { listed: false }, reason: 'the method list has another page, so this is not proof either way' };
+      if (morePages(data)) return unproven({ listed: false }, 'the method list has another page, so this is not proof either way');
       return { verified: true, observed: { listed: false, methods_read: ids.length } };
     }
     default:
@@ -279,9 +317,9 @@ async function run(argv, env = process.env, deps = {}) {
       if (isObject(r.data) && typeof r.data['@odata.nextLink'] === 'string') { res.morePages = true; res.note = 'more records exist: narrow the read (a later --since) or read the rest in the admin center'; }
     } else {
       const judged = judge(command, a, r.data);
-      const state = judged.state || STATES.OK;
-      const verdict = { state, ok: state === STATES.OK, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed, ...(r.scope_notice ? { scope_notice: r.scope_notice } : {}) };
-      if (!verdict.verified) verdict.reason = judged.reason;
+      let verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed, ...(r.scope_notice ? { scope_notice: r.scope_notice } : {}) };
+      if (judged.inconclusive) verdict = inconclusive(verdict, judged.reason);
+      else if (!verdict.verified) verdict.reason = judged.reason;
       res = recordVerdict(cli.audit, 'msgraph', verdict, bound.change, null, bound.argv);
     }
     const shown = redactDeep(res, secrets());
@@ -306,4 +344,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { makeSpec, ROUTES, COMMANDS, run, CLEARED_BY_REREGISTER, METHODS };
+module.exports = { makeSpec, ROUTES, COMMANDS, run, CLEARED_BY_REREGISTER, METHODS, USAGE };

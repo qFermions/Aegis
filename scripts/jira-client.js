@@ -100,6 +100,10 @@ class ApiError extends Error {
   }
 }
 class ContractError extends Error {}
+// batch G4 (task D1): an answer that proves nothing either way (a field the check reads is
+// missing or not in its form). In a verify-* read-back it is the INCONCLUSIVE verdict (exit 5),
+// never a pass and never a failed object; anywhere else it is an ordinary contract failure.
+class InconclusiveError extends ContractError {}
 
 const defaultOut = (message) => process.stdout.write(`${message}\n`);
 const defaultErr = (message) => process.stderr.write(`${message}\n`);
@@ -486,7 +490,7 @@ function requireNotBefore(args) {
 // The creation time Jira stamped on a request or comment, in epoch milliseconds.
 function createdMillis(json, field, label) {
   const stamp = json && json[field];
-  if (!stamp || !Number.isInteger(stamp.epochMillis)) throw new ContractError(`${label} read-back carries no creation time.`);
+  if (!stamp || !Number.isInteger(stamp.epochMillis)) throw new InconclusiveError(`${label} read-back carries no creation time, so this is not proof either way.`);
   return stamp.epochMillis;
 }
 
@@ -535,12 +539,12 @@ function printProcedure(runtime, lines) {
 }
 
 function normalizeWriteReceipt(json, label) {
-  if (!json || typeof json !== 'object') throw new ContractError(`Malformed ${label} receipt.`);
+  if (!json || typeof json !== 'object') throw new InconclusiveError(`Malformed ${label} receipt.`);
   let issueKey;
   try { issueKey = normalizeIssueKey(json.issueKey); }
-  catch { throw new ContractError(`Malformed issue key in ${label} receipt.`); }
+  catch { throw new InconclusiveError(`Malformed issue key in ${label} receipt.`); }
   const issueId = String(json.issueId === undefined ? '' : json.issueId);
-  if (!/^[1-9][0-9]*$/.test(issueId)) throw new ContractError(`Invalid immutable issue id in ${label} receipt.`);
+  if (!/^[1-9][0-9]*$/.test(issueId)) throw new InconclusiveError(`Invalid immutable issue id in ${label} receipt.`);
   return { issueKey, issueId };
 }
 
@@ -552,10 +556,10 @@ function createDigest({ serviceDeskId, requestTypeId, summary, description }) {
 }
 
 function requestFieldText(json, fieldId, { optional = false } = {}) {
-  if (!Array.isArray(json.requestFieldValues)) throw new ContractError('Request read-back has no field collection.');
+  if (!Array.isArray(json.requestFieldValues)) throw new InconclusiveError('Request read-back has no field collection.');
   const matches = json.requestFieldValues.filter((field) => field && field.fieldId === fieldId);
   if (optional && matches.length === 0) return '';
-  if (matches.length !== 1 || typeof matches[0].value !== 'string') throw new ContractError(`Request read-back did not carry exactly one ${fieldId}.`);
+  if (matches.length !== 1 || typeof matches[0].value !== 'string') throw new InconclusiveError(`Request read-back did not carry exactly one ${fieldId}.`);
   return matches[0].value;
 }
 
@@ -574,7 +578,7 @@ function verifyCreatedRequestReadBack(json, issueKey, expectSha256) {
     serviceDeskId = normalizePositiveId(json.serviceDeskId, 'read-back serviceDeskId');
     requestTypeId = normalizePositiveId(json.requestTypeId, 'read-back requestTypeId');
   } catch {
-    throw new ContractError('Create read-back returned invalid request type identity.');
+    throw new InconclusiveError('Create read-back returned invalid request type identity.');
   }
   const fields = {
     serviceDeskId,
@@ -589,25 +593,26 @@ function verifyCreatedRequestReadBack(json, issueKey, expectSha256) {
 }
 
 function verifyCommentReadBack(json, commentId, expectSha256) {
-  if (!json || typeof json !== 'object') throw new ContractError('Malformed comment read-back.');
+  if (!json || typeof json !== 'object') throw new InconclusiveError('Malformed comment read-back.');
   const id = String(json.id === undefined ? '' : json.id);
-  if (id !== commentId || typeof json.body !== 'string' || typeof json.public !== 'boolean' ||
-      commentDigest({ body: json.body, public: json.public }) !== expectSha256) {
+  if (id !== commentId) throw new ContractError('Comment read-back did not prove the approved id, body, and visibility.');
+  if (typeof json.body !== 'string' || typeof json.public !== 'boolean') throw new InconclusiveError('Comment read-back carries no body text or no visibility, so this is not proof either way.');
+  if (commentDigest({ body: json.body, public: json.public }) !== expectSha256) {
     throw new ContractError('Comment read-back did not prove the approved id, body, and visibility.');
   }
   return { id };
 }
 
 function normalizeCustomerRequest(json, expectedIssueKey) {
-  if (!json || typeof json !== 'object') throw new ContractError('Malformed customer request response.');
+  if (!json || typeof json !== 'object') throw new InconclusiveError('Malformed customer request response.');
   let issueKey;
-  try { issueKey = normalizeIssueKey(json.issueKey); } catch { throw new ContractError('Malformed issue key in response.'); }
+  try { issueKey = normalizeIssueKey(json.issueKey); } catch { throw new InconclusiveError('Malformed issue key in response.'); }
   if (issueKey !== expectedIssueKey) throw new ContractError('Jira returned a different issue key.');
   const issueId = String(json.issueId === undefined ? '' : json.issueId);
-  if (!/^[1-9][0-9]*$/.test(issueId)) throw new ContractError('Jira returned an invalid immutable issue id.');
+  if (!/^[1-9][0-9]*$/.test(issueId)) throw new InconclusiveError('Jira returned an invalid immutable issue id.');
   const status = json.currentStatus && json.currentStatus.status;
   if (typeof status !== 'string' || status.length === 0 || /[\x00-\x1f\x7f]/.test(status)) {
-    throw new ContractError('Jira returned an invalid current status.');
+    throw new InconclusiveError('Jira returned an invalid current status.');
   }
   const date = json.currentStatus.statusDate || {};
   let statusVersion = '';
@@ -616,7 +621,7 @@ function normalizeCustomerRequest(json, expectedIssueKey) {
   // it must be a timestamp and nothing else ($, backticks or spaces would be shell),
   // starting with a digit so the pasted line never reads it as a flag.
   else if (typeof date.iso8601 === 'string' && /^\d[0-9A-Za-z:.+-]{0,63}$/.test(date.iso8601)) statusVersion = date.iso8601;
-  if (statusVersion.length === 0) throw new ContractError('Jira returned no valid current-status version.');
+  if (statusVersion.length === 0) throw new InconclusiveError('Jira returned no valid current-status version.');
   return { issueKey, issueId, currentStatus: status, statusVersion };
 }
 
@@ -960,6 +965,18 @@ async function run(argv = process.argv.slice(2), env = process.env, dependencies
       printFailure(runtime, 'AUDIT_FAILED', {}, op);
       return 2;
     }
+    // a read-back whose answer proves nothing either way is the INCONCLUSIVE verdict (batch G4,
+    // task D1): recorded as such, never a pass and never a failed object, exit 5
+    if (op && /^verify-/.test(op) && error instanceof InconclusiveError) {
+      try { recordJiraVerdict(runtime, op, false, STATES.INCONCLUSIVE); } catch {
+        runtime.err('Jira operation stopped: the audit trail could not record this read-back, so its verdict is withheld.');
+        printFailure(runtime, 'AUDIT_FAILED', {}, op);
+        return 2;
+      }
+      runtime.err(`Jira read-back inconclusive: ${error.message} This client sends no writes.`);
+      printFailure(runtime, STATES.INCONCLUSIVE, { verified: false }, op);
+      return EXIT.INCONCLUSIVE;
+    }
     // a read-back that ran and did not prove the write is a verdict, recorded as such
     if (op && /^verify-/.test(op) && (error instanceof ContractError || error instanceof ApiError)) {
       // the read's own state (an HTTP status without one is HTTP_ERROR), mapped by the adapters' rule
@@ -1001,6 +1018,7 @@ if (require.main === module) {
 
 module.exports = {
   EXIT_VERIFY_DRY_RUN,
+  VERIFY_FLAGS,
   JIRA_SPEC,
   REQUEST_TIMEOUT_MS,
   TRANSITION_PAGE_LIMIT,

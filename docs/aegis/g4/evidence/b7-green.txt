@@ -1,0 +1,17 @@
+# command: node --test scripts/eval/judged/calibrate.test.js
+# commit: 336564e (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:44Z  node: v24.22.1
+✔ Cohen's kappa matches the two worked examples (1.224841ms)
+✔ kappa is null with no pairs or an expected agreement of 1 (0.204609ms)
+✔ CSV quoting survives a round trip; a formula-looking cell is defused (1.167809ms)
+✔ the sheet is blind, deterministic from the run id, and samples only cases that ran (4.147049ms)
+✔ readSheet takes 0, 1, 2, blank and NA, and refuses anything else with line and column (1.825397ms)
+✔ agreement per row and overall, with counts, against the run's judge rows (0.759756ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.266097
+# exit: 0  finished: 2026-10-31T23:57:44Z

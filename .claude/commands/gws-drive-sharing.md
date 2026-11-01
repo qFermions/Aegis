@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[OU_PATH]` (the organizational unit whose sharing setting is read or changed) · `[GROUP_EMAIL]` (a configuration group that carries its own sharing value) · `[FILE_NAME]` (the file shared outside) · `[USER@DOMAIN.COM]` (the file's owner) · `[EXTERNAL_DOMAIN]` (the partner domain outside `[@Aegion_DOMAIN]`) · `[UPN]` (your own administrator sign-in address; the audit log records it as the actor) · `[NOT_BEFORE]` (the UTC time, ISO 8601, you write down just before a change; every read-back starts there) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear ticket note) · `[ADMIN_NAME]` (the next owner in a partial-state note) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[OU_PATH]` (the organizational unit whose sharing setting is read or changed) · `[GROUP_EMAIL]` (a configuration group that carries its own sharing value) · `[FILE_NAME]` (the file shared outside) · `[USER@DOMAIN.COM]` (the file's owner) · `[EXTERNAL_DOMAIN]` (the partner domain outside `[@Aegion_DOMAIN]`) · `[UPN]` (your own administrator sign-in address; the audit log records it as the actor) · `[NOT_BEFORE]` (the UTC time, ISO 8601, every read-back starts from: under a change record, the `approved_at` that `change-record.js approve` prints; otherwise the time you write down just before a change) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear ticket note) · `[ADMIN_NAME]` (the next owner in a partial-state note) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-event`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `google-workspace:verify-event --app drive --event change_user_access`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-event --app drive --event change_user_access --not-before`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `google-workspace:verify-event --app drive --event change_user_access --not-before`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 ## ⚠️ Admin / safety gate
 
@@ -99,7 +99,7 @@ gam user "[USER@DOMAIN.COM]" print filelist fields id,name,mimetype,basicpermiss
 
 **Role needed:** Super Admin, or a custom admin role with the Security center administrator privilege (the investigation tool and its Audit File Permissions action).
 
-Prerequisites: the Phase B role is in the ticket; the file is in My Drive. Write down `[NOT_BEFORE]` now.
+Prerequisites: the Phase B role is in the ticket; the file is in My Drive. For one file (R1, no change record), write down `[NOT_BEFORE]` now; for 2 to 10 files (R2), take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for the change, because the change is opened and approved before this gate and a bound earlier than the approval is refused before the read.
 
 <!-- SAFETY GATE [gws-drive-sharing-remove-access-portal] -->
 - **Target:** [FILE_NAME] owned by [USER@DOMAIN.COM]; the one external account at [EXTERNAL_DOMAIN] recorded in Phase B
@@ -108,6 +108,7 @@ Prerequisites: the Phase B role is in the ticket; the file is in My Drive. Write
 - **Reversibility:** R1 for one file (R2 for 2 to 10 files, each with its own pre-state): the file can be shared again with the same account and the role recorded in Phase B; nothing restores it automatically
 - **Required confirmation:** Type exactly `REMOVE [EXTERNAL_DOMAIN] ACCOUNT FROM [FILE_NAME] OWNED BY [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-event --app drive --event change_user_access --user [UPN] --not-before [NOT_BEFORE] --target "[FILE_NAME]" --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-drive-sharing-remove-access-portal]:** Only after the Phase B role is in the ticket and the exact match:
 1. Admin console → Security → Security center → Investigation tool → your Phase B search → tick the rows for `[FILE_NAME]` → **Actions** → **Audit File Permissions** → **People**.
 2. Open the external account at `[EXTERNAL_DOMAIN]` → `[FILE_NAME]` → **Remove access** (the control's label comes from a search excerpt: confirm it on screen, and stop if it differs).
@@ -149,6 +150,7 @@ Prerequisites: `[EXTERNAL_DOMAIN]` is the partner's verified Google Workspace do
 - **Reversibility:** R2: the Phase D rollback removes the domain from the same list under its own phrase `REMOVE ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`; whether files shared with the domain while it was listed lose access when it is removed is not confirmed in the lane's sources, so treat them as still shared and check them in Phase B
 - **Required confirmation:** Type exactly `ADD ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organization sharing setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-drive-sharing-allowlist-add-portal]:** Only after the approver is named, the Phase A allowlist is in the ticket and the exact match:
 1. Admin console → Account → Domains → Allowlisted domains → add `[EXTERNAL_DOMAIN]` to the list and save (the control labels on this page are not in the lane's sources: confirm them on screen).
 
@@ -178,6 +180,7 @@ Prerequisites: the allowlist before the change is in the ticket; the approver is
 - **Reversibility:** R2: reversible by Phase D under its own phrase `ADD ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`
 - **Required confirmation:** Type exactly `REMOVE ALLOWLISTED DOMAIN [EXTERNAL_DOMAIN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organization sharing setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-drive-sharing-allowlist-remove-portal]:** Only after the allowlist and the approver are in the ticket and the exact match:
 1. Admin console → Account → Domains → Allowlisted domains → remove `[EXTERNAL_DOMAIN]` from the list and save (the control labels on this page are not in the lane's sources: confirm them on screen).
 
@@ -204,6 +207,7 @@ Write down `[NOT_BEFORE]` now.
 - **Reversibility:** R3: put the Phase A value back for [OU_PATH] under the gate for that value, `ALLOW EXTERNAL SHARING FOR OU [OU_PATH]` (On) or `TURN OFF EXTERNAL SHARING FOR OU [OU_PATH]` (Off), each its own phrase; each direction can take up to 24 hours, with the old and the new setting both enforced at times in that window (search excerpt); whether existing external shares stop working is not confirmed in the lane's sources, so check them in Phase B afterwards
 - **Required confirmation:** Type exactly `RESTRICT EXTERNAL SHARING FOR OU [OU_PATH] TO ALLOWLISTED DOMAINS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organization sharing setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-drive-sharing-restrict-portal]:** Only after the approver is named, the Phase A pre-state is in the ticket and the exact match:
 1. Admin console → Apps → Google Workspace → Drive and Docs → Sharing settings → Sharing options → pick `[OU_PATH]` on the left.
 2. Under **Sharing outside of [@Aegion]** choose **Allowlisted Domains**, tick the warning for files shared with allowlisted domains if the approver asked for it, and click **Save** (on a child unit the button may read **Override**; Inherit and Override are confirmed in the lane's sources only for Gmail settings).
@@ -223,6 +227,7 @@ Write down `[NOT_BEFORE]` now.
 - **Reversibility:** R3: put the Phase A value back for [OU_PATH] under the gate for that value, `ALLOW EXTERNAL SHARING FOR OU [OU_PATH]` (On) or `RESTRICT EXTERNAL SHARING FOR OU [OU_PATH] TO ALLOWLISTED DOMAINS` (Allowlisted Domains), each its own phrase; up to 24 hours each way (search excerpt); whether existing external shares stop working is not confirmed in the lane's sources
 - **Required confirmation:** Type exactly `TURN OFF EXTERNAL SHARING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organization sharing setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-drive-sharing-turn-off-portal]:** Only after the approver is named, the Phase A pre-state is in the ticket and the exact match:
 1. Admin console → Apps → Google Workspace → Drive and Docs → Sharing settings → Sharing options → pick `[OU_PATH]` on the left.
 2. Under **Sharing outside of [@Aegion]** choose **Off** and click **Save** (or **Override** on a child unit).
@@ -242,6 +247,7 @@ Opening external sharing is the change most likely to leak data: the ticket name
 - **Reversibility:** R3: put the Phase A value back for [OU_PATH] under the gate for that value, `TURN OFF EXTERNAL SHARING FOR OU [OU_PATH]` (Off) or `RESTRICT EXTERNAL SHARING FOR OU [OU_PATH] TO ALLOWLISTED DOMAINS` (Allowlisted Domains), each its own phrase; up to 24 hours each way (search excerpt); files shared outside while it was open stay a Phase B and Phase C clean-up, because the lane's sources do not confirm that restricting again removes existing shares
 - **Required confirmation:** Type exactly `ALLOW EXTERNAL SHARING FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organization sharing setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-drive-sharing-allow-portal]:** Only after the approver and the business reason are in the ticket, the Phase A pre-state is recorded and the exact match:
 1. Admin console → Apps → Google Workspace → Drive and Docs → Sharing settings → Sharing options → pick `[OU_PATH]` on the left.
 2. Under **Sharing outside of [@Aegion]** choose **On** and click **Save** (or **Override** on a child unit).

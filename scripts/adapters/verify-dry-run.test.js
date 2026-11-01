@@ -73,7 +73,8 @@ async function dry(file, argv, env) {
 }
 
 test('the shared contract names the verify-* dry-run exit code 4 beside the other four', () => {
-  assert.deepEqual({ ...contract.EXIT }, { OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4 });
+  // batch G4, task D1: the map holds one more code, INCONCLUSIVE 5; the dry run keeps 4
+  assert.deepEqual({ ...contract.EXIT }, { OK: 0, INPUT: 1, READ_FAILED: 2, TENANT: 3, VERIFY_DRY_RUN: 4, INCONCLUSIVE: 5 });
   assert.match(contract.NOT_VERIFIED_DRY_RUN, LINE);
 });
 

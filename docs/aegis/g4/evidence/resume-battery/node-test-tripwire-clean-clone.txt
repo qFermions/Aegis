@@ -1,0 +1,12 @@
+# fresh clone of ad9759a (the session's subagent worktrees under .claude/worktrees are untracked directories the working-tree readers cannot read)
+✔ C17 a lookup that marks a case stale never binds an unbound replay store to the reader's tenant (277.385207ms)
+ℹ tests 1602
+ℹ suites 0
+ℹ pass 1602
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106404.419007
+exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

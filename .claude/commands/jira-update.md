@@ -95,7 +95,7 @@ It passes only when the same immutable request changed status since the prefligh
 - Transition `--execute` without `--confirm`: read-only GET preflight; zero POST.
 - Any `--confirm` on `comment` or `transition`, and `--execute` on `comment`: refusal, zero credentials, zero network, exit 1.
 - Duplicate transition names, duplicate transition IDs, missing match, malformed pages, or non-progressing pagination: exit 2.
-- A read-back that does not prove the write (different ID, different body or visibility, created before the preview, unchanged status, a different status than expected, read failure): exit 2, and the write is not proven.
+- A read-back that does not prove the write (different ID, different body or visibility, created before the preview, unchanged status, a different status than expected, read failure): exit 2, and the write is not proven. A read-back whose answer proves nothing either way (no creation time, no body or visibility, a malformed receipt, no valid current status): exit 5 (INCONCLUSIVE), and the write is not proven either. Any exit other than 0 is not a pass.
 - API response bodies are withheld from terminal errors.
 
 ## Risk warning
@@ -108,5 +108,5 @@ It passes only when the same immutable request changed status since the prefligh
 ## Verification
 
 - Comment: `verify-comment` proved the immutable comment ID, the exact body, and the intended visibility by one independent GET. Inspect the comment in JSM before reporting downstream effects.
-- Transition: `verify-transition` proved the same immutable issue ID changed status since the preflight and now sits in the expected status. If it exits 2, do not claim completion; inspect the actual Jira state.
+- Transition: `verify-transition` proved the same immutable issue ID changed status since the preflight and now sits in the expected status. If it gives any exit other than 0 (exit 2: not done or a failed read; exit 5: INCONCLUSIVE, proves nothing either way), do not claim completion; inspect the actual Jira state.
 - Record the verified change in the local ticket thread so the work-up stays synchronized with `[JIRA-###]`.

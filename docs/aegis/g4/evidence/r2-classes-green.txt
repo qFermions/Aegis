@@ -1,0 +1,4 @@
+# command: node --test scripts/adapters/inconclusive.test.js scripts/adapters/github-client.test.js scripts/adapters/fleet-client.test.js
+ℹ tests 186
+ℹ pass 186
+ℹ fail 0

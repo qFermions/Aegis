@@ -1,0 +1,22 @@
+# Vendor facts to check by hand (fixture of the G2 list)
+
+Rows as the G2 page writes them. Line numbers are as listed when the list was made: the runbook has moved two lines since.
+
+Total: 8 marked lines.
+
+## Demo (8 lines)
+
+| where | how read | breadcrumb, command or API path on the line |
+|---|---|---|
+| `commands/alpha.runbook:5` | search excerpt | alpha read |
+| `commands/alpha.runbook:12` | search excerpt | alpha erase status |
+| `commands/alpha.runbook:19` | vendor repository | alpha script result |
+| `commands/alpha.runbook:25` | search excerpt | alpha notes list |
+| `commands/alpha.runbook:29` | search excerpt | example.invalid/alpha-guide: the erase and script pages |
+| `commands/alpha.runbook:29` | vendor repository | example.invalid/alpha-api: the status field |
+| `commands/alpha.runbook:40` | search excerpt | alpha text that was since removed |
+| `scripts/demo.js:5` | vendor repository | demo script fact |
+
+## How this list was made
+
+| `commands/alpha.runbook:1` | search excerpt | a row after the tables is not a fact |

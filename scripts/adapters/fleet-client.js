@@ -22,7 +22,8 @@
 // connection. Exit codes (shared by every adapter): 0 read or verified; 1 refused
 // input or missing credentials; 2 the read failed or a verify-* read did not
 // prove the write; 3 a record from another tenant (never raised here, see above); 4 a
-// verify-* dry run (nothing was read, so nothing is verified).
+// verify-* dry run (nothing was read, so nothing is verified); 5 a verify-* read whose answer
+// proves nothing either way (INCONCLUSIVE, batch G4 task D1).
 //
 // Vendor facts come from Fleet's own docs source (fleetdm/fleet on GitHub, read
 // 2026-10-27): the REST API reference, the lock and wipe guide, the enroll guide
@@ -30,7 +31,7 @@
 // session that wrote this file.
 
 const {
-  STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
+  STATES, EXIT, RefusedError, defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal, runIdOf } = require('./cli-support.js');
 
@@ -242,6 +243,7 @@ const READS = {
 const APPLE = new Set(['darwin', 'ios', 'ipados']);
 const DELETED_PAGES = 10;
 const DELETED_PER_PAGE = '100';
+const WINDOWS_COMMANDS_PER_PAGE = '100'; // verify-wipe on Windows reads one page of this size
 
 function hostOf(data) {
   return isObject(data) && isObject(data.host) ? data.host : {};
@@ -276,6 +278,11 @@ function deviceStatusVerify(wantStatus) {
     };
     const expected = { 'host.id': [Number(args.id)], 'host.mdm.device_status': [wantStatus], 'host.mdm.pending_action': [''] };
     const verified = Object.keys(expected).every((k) => expected[k].includes(observed[k]));
+    // Fleet never shows Locked for an Android host, so verify-lock cannot judge one: proves
+    // nothing either way (batch G4, task D1)
+    if (wantStatus === 'locked' && observed['host.platform'] === 'android' && observed['host.id'] === Number(args.id)) {
+      return { inconclusive: true, verified: false, observed, expected, note: 'verify-lock cannot pass for an Android host, so this is not proof either way: Fleet never shows Locked there (vendor docs). Prove the request with the locked_host entry in host-activities, and confirm the lock on the device.' };
+    }
     const notes = [];
     if (observed['host.platform'] === 'android') {
       notes.push(wantStatus === 'locked'
@@ -309,10 +316,12 @@ async function verifyWipe(read, args) {
       ? 'A company-owned Android wipe is not an EraseDevice or doWipe command, so prove it with mdm.device_status (wiping, then wiped) in host --id and the wiped_host entry in host-activities.'
       : 'Fleet wipes a Linux host with a script and shows no Wipe badge for it, so prove that wipe with verify-script --execution-id [EXECUTION_ID] (the id is in host-activities).';
     return {
+      // a record of another host is an answer (not this host); this host's platform is one the read cannot judge
+      inconclusive: observed['host.id'] === Number(args.id),
       verified: false,
       observed,
       expected,
-      note: `This read proves Apple (EraseDevice) and Windows (doWipe) wipes only. ${how} Platform read: ${JSON.stringify(platform)}.`,
+      note: `This read proves Apple (EraseDevice) and Windows (doWipe) wipes only, so this is not proof either way. ${how} Platform read: ${JSON.stringify(platform)}.`,
     };
   }
   const serial = field(host, 'hardware_serial');
@@ -321,18 +330,77 @@ async function verifyWipe(read, args) {
   observed['commands host_identifier'] = identifier;
   if (!identifier) {
     observed['wipe command'] = null;
-    return { verified: false, observed, expected, note: 'The host record has no serial or UUID usable as a host_identifier, so its wipe command cannot be read.' };
+    return { inconclusive: observed['host.id'] === Number(args.id), verified: false, observed, expected, note: 'The host record has no serial or UUID usable as a host_identifier, so its wipe command cannot be read: this is not proof either way.' };
   }
-  const query = apple ? { host_identifier: identifier, request_type: 'EraseDevice' } : { host_identifier: identifier, per_page: '100' };
+  const query = apple ? { host_identifier: identifier, request_type: 'EraseDevice' } : { host_identifier: identifier, per_page: WINDOWS_COMMANDS_PER_PAGE };
   const c = await read('mdmCommands', {}, query);
   if (!c.ok) return { failed: c, observed };
-  const list = isObject(c.data) && Array.isArray(c.data.results) ? c.data.results.filter(isObject) : [];
+  // an answer with no results list is not an empty list: it proves nothing either way, unless
+  // the host record already shows the wipe not done or another host (code review round 1 of
+  // batch G4, finding 8)
+  if (!isObject(c.data) || !Array.isArray(c.data.results)) {
+    observed['wipe command'] = null;
+    return { inconclusive: statusOk, verified: false, observed, expected, note: 'The MDM commands answer has no results list, so the wipe command cannot be read: this is not proof either way.' };
+  }
+  const list = c.data.results.filter(isObject);
   const matching = apple
     ? list.filter((x) => x.request_type === 'EraseDevice')
     : list.filter((x) => typeof x.request_type === 'string' && /doWipe/.test(x.request_type));
   const command = newest(matching);
   observed['wipe command'] = commandView(command);
+  // a Windows doWipe whose status is pending, the documented command_status value (COMMAND_STATUS;
+  // the exact form of that status in the commands answer is not in the vendor facts, so any case
+  // is taken); one test for the paging note and the not-answered check below (code review round 3
+  // of batch G4, finding 14)
+  const windowsPending = windows && command !== null && typeof command.status === 'string' && command.status.toLowerCase() === 'pending';
+  // The read takes one page of the host's commands. When more may follow, the wipe command may sit
+  // on a later page (code review round 2 of batch G4, finding 6), and so may a newer one than the
+  // newest on this page, whatever its status: a 200 or an Acknowledged here may be an older
+  // wipe's, the current one still pending or failed on a later page (code review round 3 of batch
+  // G4, findings 1 and 3).
+  // Windows asks for 100 per page: more may follow when the answer says so, or when the page is
+  // full and gives no true or false has_next_results.
+  // Apple's EraseDevice query names no per_page, so the page size is unknown and a page's fullness
+  // cannot be judged: only a has_next_results true says more follow; with no meta the page is
+  // judged as it stands (code review round 3 of batch G4, finding 3).
+  // Only a host wiping or wiped takes this paging INCONCLUSIVE: on another, the host record already
+  // shows the wipe not done, so it is the normal failed-object result below (code review round 3
+  // of batch G4, finding 7).
+  const meta = isObject(c.data.meta) ? c.data.meta : {};
+  const more = apple
+    ? meta.has_next_results === true
+    : (typeof meta.has_next_results === 'boolean' ? meta.has_next_results : c.data.results.length >= Number(WINDOWS_COMMANDS_PER_PAGE));
+  if (statusOk && more) {
+    let what;
+    let page;
+    let next;
+    if (apple) {
+      what = 'No EraseDevice command is';
+      if (command !== null) what = command.status === 'Acknowledged' ? 'The newest EraseDevice command read, Acknowledged, is' : 'The newest EraseDevice command read, not Acknowledged, is';
+      page = 'on the first page of EraseDevice commands read';
+      next = 'Look for the newest EraseDevice on the next pages (commands --host-identifier [SERIAL_NUMBER] --request-type EraseDevice --page 1, and on), or in the host\'s activity in Fleet.';
+    } else {
+      what = 'No doWipe command is';
+      if (command !== null && String(command.status) === '200') what = 'The newest doWipe command read, with status 200, is';
+      else if (windowsPending) what = 'The newest doWipe command read, still pending, is';
+      else if (command !== null) what = 'Only a doWipe command that did not succeed is';
+      page = `on the first page of ${WINDOWS_COMMANDS_PER_PAGE} commands read`;
+      // the hand read continues this page of 100 only with the same page size (code review round 3
+      // of batch G4, finding 8)
+      next = `Look for the newest doWipe on the next pages (commands --host-identifier [SERIAL_NUMBER] --per-page ${WINDOWS_COMMANDS_PER_PAGE} --page 1, and on), or in the host's activity in Fleet.`;
+    }
+    return { inconclusive: true, verified: false, observed, expected, note: `${what} ${page}, and more commands may follow, so the newest ${apple ? 'EraseDevice' : 'doWipe'} may be on a later page: this is not proof either way. ${next}` };
+  }
   const commandOk = command !== null && (apple ? command.status === 'Acknowledged' : String(command.status) === '200');
+  // a host wiping or wiped whose newest wipe command is not answered yet is not proved either way
+  // (code review round 1 of batch G4, finding 12's class, as Jamf's Pending command): an Apple
+  // EraseDevice Pending, or NotNow (Apple MDM's deferral status, which Fleet passes through), and
+  // a Windows doWipe pending (windowsPending, above) (code review round 2 of batch G4, finding 5)
+  const notAnswered = apple ? command !== null && (command.status === 'Pending' || command.status === 'NotNow') : windowsPending;
+  if (statusOk && notAnswered) {
+    const what = apple ? `The EraseDevice command is still ${command.status}` : 'The doWipe command is still pending';
+    return { inconclusive: true, verified: false, observed, expected, note: `${what}, so the wipe is not proved yet: this is not proof either way. Read it again after the ${apple ? 'device acknowledges' : 'host answers'} the command.` };
+  }
   const note = windows ? 'Windows command status is an OMA-DM code (vendor docs); the doWipe request_type shape is read from the vendor\'s wipe options and is unverified, so only a doWipe command with status 200 counts.' : undefined;
   return { verified: statusOk && commandOk, observed, expected, note };
 }
@@ -358,6 +426,11 @@ async function verifyScript(read, args) {
   // case (round 3, finding 2): an id typed in upper case that Fleet answers in lower case passes.
   const idOk = typeof observed.execution_id === 'string' && observed.execution_id.toLowerCase() === args['execution-id'].toLowerCase();
   const verified = idOk && observed.exit_code === 0 && observed.host_timeout === false;
+  // a run of this execution that has not reported yet proves nothing either way (batch G4,
+  // task D1); an answer that names another execution, or none, stays a failure (round 2, finding 6)
+  if (idOk && observed.exit_code === null && observed.host_timeout !== true) {
+    return { inconclusive: true, verified: false, observed, expected, note: 'exit_code null: the host has not reported the result yet (vendor docs), so this is not proof either way; read again later.' };
+  }
   const note = observed.exit_code === null ? 'exit_code null: the host has not reported the result yet (vendor docs).' : undefined;
   return { verified, observed, expected, note };
 }
@@ -394,33 +467,54 @@ async function verifyDeleted(read, args) {
   let other = null;
   let pages = 0;
   let reachedNotBefore = false;
+  let more = false;
+  let noList = false;
+  let pagingUnknown = false;
+  let undated = null;
   // Activities come newest first (order_key=created_at, order_direction=desc), so
   // the search stops at the first activity older than --not-before.
   while (pages < DELETED_PAGES && !manual && !reachedNotBefore) {
     const r = await read('activities', {}, { page: String(pages), per_page: DELETED_PER_PAGE });
     pages += 1;
     if (!r.ok) return { failed: r };
-    const list = isObject(r.data) && Array.isArray(r.data.activities) ? r.data.activities.filter(isObject) : [];
+    // a page with no activities list is not an empty page (code review round 1 of batch G4,
+    // finding 8)
+    if (!isObject(r.data) || !Array.isArray(r.data.activities)) { noList = true; break; }
+    const list = r.data.activities.filter(isObject);
     for (const a of list) {
       const t = Date.parse(field(a, 'created_at'));
-      if (!Number.isFinite(t)) continue;
-      if (t < notBefore) { reachedNotBefore = true; break; }
       const d = isObject(a.details) ? a.details : {};
+      const manualHere = a.type === 'deleted_host' && d.host_serial === identifier && d.triggered_by === 'manual';
+      // a manual deletion of this serial whose time cannot be read may be the one asked for: it
+      // is kept, not skipped (code review round 2 of batch G4, finding 4)
+      if (!Number.isFinite(t)) { if (manualHere && !undated) undated = a; continue; }
+      if (t < notBefore) { reachedNotBefore = true; break; }
       if (a.type !== 'deleted_host' || d.host_serial !== identifier) continue;
-      if (d.triggered_by === 'manual') { manual = a; break; }
+      if (manualHere) { manual = a; break; }
       if (!other) other = a;
     }
-    const more = isObject(r.data) && isObject(r.data.meta) && r.data.meta.has_next_results === true;
+    // a page with no true or false meta.has_next_results does not say the feed ended (code
+    // review round 2 of batch G4, finding 3)
+    const meta = isObject(r.data.meta) ? r.data.meta : {};
+    if (typeof meta.has_next_results !== 'boolean') { pagingUnknown = true; break; }
+    more = meta.has_next_results === true;
     if (!more) break;
   }
-  const found = manual || other;
+  const found = manual || undated || other;
   const observed = { 'deleted_host activity': found ? activityView(found) : null, 'activity pages read': pages };
   const expected = {
     'deleted_host activity': { type: 'deleted_host', 'details.host_serial': identifier, 'details.triggered_by': 'manual', created_at: `at or after ${args['not-before']}` },
     'host lookup by identifier': 'HTTP 404 (not found), or a host id other than the deleted one (the device re-enrolled)',
   };
   if (!manual) {
+    if (undated) return { inconclusive: true, verified: false, observed, expected, note: 'a manual deleted_host activity for this serial has a created_at that is not a time, so it may be the deletion asked for: this is not proof either way' };
     const why = other ? 'the deleted_host activity for this serial was not a manual deletion' : `no deleted_host activity for this serial at or after --not-before in the ${pages} newest page(s) read (at most ${DELETED_PAGES} of ${DELETED_PER_PAGE})`;
+    // activities not read back to --not-before, with more behind them, prove nothing either way
+    // (batch G4, task D1), also when a deletion that was not manual was found: the manual one
+    // may sit on the pages not read (code review round 1 of batch G4, finding 7)
+    if (noList) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and activity page ${pages} has no activities list, so this is not proof either way` };
+    if (more && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and more activities after --not-before were not read, so this is not proof either way` };
+    if (pagingUnknown && !reachedNotBefore) return { inconclusive: true, verified: false, observed, expected, note: `${why}, and activity page ${pages} does not say whether more activities follow (no true or false meta.has_next_results), so this is not proof either way` };
     return { verified: false, observed, expected, note: why };
   }
   const deletedId = isObject(manual.details) ? field(manual.details, 'host_id') : null;
@@ -433,11 +527,14 @@ async function verifyDeleted(read, args) {
   const nowId = field(hostOf(h.data), 'id');
   observed['host lookup by identifier'] = { 'host.id': nowId };
   const reenrolled = deletedId !== null && nowId !== null && nowId !== deletedId;
+  if (deletedId === null || nowId === null) {
+    return { inconclusive: true, verified: false, observed, expected, note: 'The serial still resolves to a host, and the deleted and current host ids cannot be compared, so this is not proof either way.' };
+  }
   return {
     verified: reenrolled,
     observed,
     expected,
-    note: reenrolled ? 'The serial now resolves to a new host id: the device re-enrolled after the deletion.' : 'The serial still resolves to the deleted host id (or the ids cannot be compared).',
+    note: reenrolled ? 'The serial now resolves to a new host id: the device re-enrolled after the deletion.' : 'The serial still resolves to the deleted host id.',
   };
 }
 
@@ -461,6 +558,7 @@ async function verifyCheckedIn(read, args) {
   const checkedIn = Date.parse(observed['host.last_mdm_checked_in_at']);
   if (observed['host.id'] !== Number(args.id)) return { verified: false, observed, expected, note: 'the response is not the host asked for' };
   if (!enrolled) return { verified: false, observed, expected, note: 'the host is not enrolled in MDM, so it has no MDM check-in: read host.seen_time and host.status for the agent instead' };
+  if (!Number.isFinite(checkedIn)) return { inconclusive: true, verified: false, observed, expected, note: 'the host record shows no last_mdm_checked_in_at time, so this is not proof either way' };
   const verified = Number.isFinite(checkedIn) && checkedIn >= Date.parse(args['not-before']);
   return { verified, observed, expected, note: verified ? undefined : `the last MDM check-in is not at or after ${args['not-before']}; ask the person to open the device and check in, then read again` };
 }
@@ -550,7 +648,7 @@ function helpText() {
     'Reads:',
   ];
   for (const [name, c] of Object.entries(READS)) lines.push(`  ${name} ${c.usage}`.trimEnd(), `      ${c.summary}`);
-  lines.push('', 'Read-backs (exit 0 verified, 2 not verified, 4 a dry run: it reads nothing, so it proves nothing):');
+  lines.push('', 'Read-backs (exit 0 verified, 2 not verified, 4 a dry run: it reads nothing, so it proves nothing; 5 inconclusive: the answer proves nothing either way):');
   for (const [name, c] of Object.entries(VERIFIES)) lines.push(`  ${name} ${c.usage}`, `      ${c.summary}`);
   lines.push(
     '',
@@ -558,7 +656,7 @@ function helpText() {
     'transfer, live reports and the secret reads (disk encryption key, Recovery Lock password,',
     'managed account password) are refused; each write is a HUMAN-RUN step in a runbook, proved',
     'afterwards with a verify-* read.',
-    'Exit codes: 0 read or verified; 1 refused input or missing credentials; 2 read failed or not verified; 4 a verify-* dry run.',
+    'Exit codes: 0 read or verified; 1 refused input or missing credentials; 2 read failed or not verified; 4 a verify-* dry run; 5 a verify-* answer that proves nothing either way.',
   );
   return `${lines.join('\n')}\n`;
 }
@@ -647,6 +745,8 @@ async function run(argv, env = process.env, deps = {}) {
   } else {
     output = { command: name, state: STATES.OK, verified: outcome.verified === true, observed: outcome.observed, expected: outcome.expected, reads };
     if (outcome.note) output.note = outcome.note;
+    // an answer that proves nothing either way (batch G4, task D1): the note is its reason
+    if (outcome.inconclusive) output = inconclusive(output, outcome.note);
   }
   output.flags = scanUntrusted(output.observed, '$.observed');
   return emit(recordVerdict(cli.audit, 'fleet', output, bound.change, runIdOf('fleet', name, args, outcome.failed ? null : output.observed.execution_id), bound.argv), { out, err, secrets });

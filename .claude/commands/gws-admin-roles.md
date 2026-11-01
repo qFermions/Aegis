@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[USER@DOMAIN.COM]` (the admin being checked, or whose role changes) · `[ROLE_NAME]` (the admin role, for example Super Admin or a custom role) · `[ROLE_ID]` (the numeric roleId the read-only `roles` read prints for `[ROLE_NAME]`) · `[GROUP_EMAIL]` (a group that holds a role) · `[OU_PATH]` (the organizational unit a setting applies to) · `[UPN]` (your own administrator address: the actor that Admin log events records) · `[MANAGER_UPN]` (the approver named in the ticket) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]`, `[NOT_BEFORE]` (the Linear ticket, its prepared note, the note's digest, and the time a read-back starts from) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-event`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `google-workspace:verify-event --app admin --event ASSIGN_ROLE`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `google-workspace:verify-event --app admin --event ASSIGN_ROLE --not-before`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `google-workspace:verify-event --app admin --event ASSIGN_ROLE --not-before`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 ## ⚠️ Admin / safety gate
 
@@ -120,6 +120,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security-control change; reversible by Phase B2 under its own phrase `TURN OFF SUPER ADMIN ACCOUNT RECOVERY FOR OU [OU_PATH]`, back to the step 1 value recorded in the ticket
 - **Required confirmation:** Type exactly `ALLOW SUPER ADMIN ACCOUNT RECOVERY FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organizational unit setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-admin-roles-recovery-allow-portal]:** Only after the prerequisites, with no stop condition true, and the exact match:
 1. Admin console → Security → Authentication → Account recovery → **Super admin account recovery** → pick `[OU_PATH]` → **Allow super admins to recover their account**: tick the box → **Save** (path and labels from a search excerpt; confirm them on screen).
 2. Read back in the GUI: reopen the panel and read the box ticked for `[OU_PATH]`.
@@ -150,6 +151,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: a security-control change; reversible by Phase B1 under its own phrase `ALLOW SUPER ADMIN ACCOUNT RECOVERY FOR OU [OU_PATH]`, back to the step 1 value recorded in the ticket
 - **Required confirmation:** Type exactly `TURN OFF SUPER ADMIN ACCOUNT RECOVERY FOR OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an organizational unit setting no verify-* command reads: its proof is the read its step names)
 **PORTAL ACTION [gws-admin-roles-recovery-off-portal]:** Only after the prerequisites, with no stop condition true, and the exact match:
 1. Admin console → Security → Authentication → Account recovery → **Super admin account recovery** → pick `[OU_PATH]`, then clear the tick in **Allow super admins to recover their account** and click **Save** (path and labels from a search excerpt; confirm them on screen).
 2. Read back in the GUI: reopen the panel and read the box cleared for `[OU_PATH]`.
@@ -173,7 +175,7 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 
 **Written rollback (in the ticket before the change):** remove the role again under Phase D1 (Super Admin, `REMOVE SUPER ADMIN ROLE FROM [USER@DOMAIN.COM]`) or Phase D2 (a delegated role, `REMOVE ADMIN ROLE [ROLE_NAME] FROM [USER@DOMAIN.COM]`), back to the recorded pre-state; what the user did with the role in the meantime is read in Admin log events with the user as the actor.
 
-Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
+Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket: the change is opened and approved before the gate, and a bound earlier than the approval is refused before the read.
 
 **Role needed:** Super Admin (assigning admin roles needs a super admin; search excerpt, support.google.com/a/answer/9807615).
 
@@ -184,6 +186,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3 for every role (Super Admin is full control of the tenant; for a delegated role this is the safer reading of the source conflict above): reversible by removing the role under the Phase D1 phrase `REMOVE SUPER ADMIN ROLE FROM [USER@DOMAIN.COM]` or the Phase D2 phrase `REMOVE ADMIN ROLE [ROLE_NAME] FROM [USER@DOMAIN.COM]`, back to the recorded pre-state; anything the user does with the role in the meantime is not undone by the removal
 - **Required confirmation:** Type exactly `ASSIGN ADMIN ROLE [ROLE_NAME] TO [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-event --app admin --event ASSIGN_ROLE --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-admin-roles-assign-portal]:** Only after the prerequisites above, the written rollback in the ticket and the exact match:
 1. Admin console → Account → Admin roles → `[ROLE_NAME]` → **Admins** → **Assign users** (button labels from a search excerpt; confirm them on screen).
 2. Enter `[USER@DOMAIN.COM]`, pick the scope recorded in the ticket, then confirm the assignment.
@@ -221,6 +224,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R3: removes full control of the tenant from one account; reversible by assigning the role again under the Phase C gate and its own phrase `ASSIGN ADMIN ROLE [ROLE_NAME] TO [USER@DOMAIN.COM]`, using the recorded pre-state; the removed admin receives a confirmation email, and with multi-party approval on the request waits for a second super admin and expires after 3 days (search excerpts)
 - **Required confirmation:** Type exactly `REMOVE SUPER ADMIN ROLE FROM [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-admin-roles-remove-super-admin-portal]:** Only after the prerequisites, with no stop condition true, and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Admin roles and privileges** → remove the role: turn the **Super Admin** slider off → **Save** (labels from a search excerpt; confirm them on screen).
 2. Where multi-party approval is on, **WAIT UNTIL** a second super admin approves (within 3 days) before the read-back.
@@ -253,6 +257,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 - **Reversibility:** R2: reversible by assigning the role again under the Phase C gate and its own phrase `ASSIGN ADMIN ROLE [ROLE_NAME] TO [USER@DOMAIN.COM]`; the scope must be re-entered from the pre-state recorded with `role-assignments --user`
 - **Required confirmation:** Type exactly `REMOVE ADMIN ROLE [ROLE_NAME] FROM [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `gws-client.js verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-admin-roles-remove-role-portal]:** Only after the pre-state is in the ticket and the exact match:
 1. Admin console → Account → Admin roles → `[ROLE_NAME]` → **Admins** → tick `[USER@DOMAIN.COM]` → **Unassign role** (labels from a search excerpt; confirm them on screen).
 

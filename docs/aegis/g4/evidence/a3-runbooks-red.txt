@@ -1,0 +1,37 @@
+# command: node --test scripts/audit/pass-flags.test.js
+# commit: 7a8b9f9 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:49:46Z  node: v24.22.1
+✔ every flag a runbook passes to a read-back is classified: a pass flag, or not one with its reason (27.941904ms)
+✔ each pass flag is a flag its connector takes, and every value rule is a closed set, a number or a digest (5.956816ms)
+✔ each runbook with a bound read-back that has a pass flag says to name the read-back with it; each counted gate names it (18.990704ms)
+✔ a bound read-back under a removal gate proves the removal: no bound presence read of the same kind sits beside an --absent one (17.19582ms)
+✔ no read-back is named under a change for an object the change does not touch, and the audit README says so (0.498459ms)
+✖ each runbook that binds a time-bounded read-back says to name its bound bare and to run it at or after the approval (10.366537ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 177.223435
+
+✖ failing tests:
+
+test at scripts/audit/pass-flags.test.js:166:1
+✖ each runbook that binds a time-bounded read-back says to name its bound bare and to run it at or after the approval (10.366537ms)
+  AssertionError [ERR_ASSERTION]: fleet-device-actions.md: the change-record paragraph names the time bound
+      at TestContext.<anonymous> (<repo>/scripts/audit/pass-flags.test.js:172:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T23:49:46Z

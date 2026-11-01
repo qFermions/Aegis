@@ -33,12 +33,18 @@ function testRunbooks(dir, t) {
     const [connector, command] = kind.split(':');
     const client = connector === 'jira' ? 'scripts/jira-client.js' : `scripts/adapters/${connector === 'google-workspace' ? 'gws' : connector}-client.js`;
     const gate = `aegis-test-gate-${gates.size + 1}`;
-    fs.appendFileSync(file, `\n## ${gate}\n\n<!-- SAFETY GATE [${gate}] -->\n- **Reversibility:** R2 (a test gate)\n\n\`\`\`bash\nnode ${client} ${command}${flags ? ` ${flags}` : ''} --change [CHANGE_ID] --execute\n\`\`\`\n`);
+    // batch G4, task D2: the gate names its line in its Read-back field, as every runbook gate does
+    const run = `${client} ${command}${flags ? ` ${flags}` : ''} --change [CHANGE_ID] --execute`;
+    fs.appendFileSync(file, `\n## ${gate}\n\n<!-- SAFETY GATE [${gate}] -->\n- **Reversibility:** R2 (a test gate)\n- **Read-back:** \`${run.replace(/^scripts\/(?:adapters\/)?/, '')}\`\n\n\`\`\`bash\nnode ${run}\n\`\`\`\n`);
     const bound = { command: 'aegis-test', gate };
     gates.set(readBack, bound);
     return bound;
   };
 }
+
+// The time changeTrail's approvals are recorded at: before every [NOT_BEFORE] value the runbook
+// tests fill in.
+const APPROVED_AT = Date.parse('2026-10-27T11:00:00.000Z');
 
 // t: the node:test context (its after() removes the folder).
 function changeTrail(t) {
@@ -53,7 +59,10 @@ function changeTrail(t) {
   const call = (argv) => {
     const out = [];
     const err = [];
-    const code = changes.main(argv, env, { out: (s) => out.push(s), err: (s) => err.push(s) });
+    // the change is approved before the earliest [NOT_BEFORE] the runbook tests fill in, as in use:
+    // a time bound earlier than the approval is refused before any read (batch G4, code review
+    // round 1, finding 4)
+    const code = changes.main(argv, env, { out: (s) => out.push(s), err: (s) => err.push(s), now: () => APPROVED_AT });
     if (code !== 0) throw new Error(`change-record ${argv[0]} failed: ${err.join('')}`);
     return JSON.parse(out.join(''));
   };

@@ -84,6 +84,7 @@ Exit 0 is a read; exit 2 is a failed read with Slack's error code only (for exam
 - **Reversibility:** R1 to create: the hold only adds protection; taking it back (removing the custodian, narrowing the hold or releasing it) lets the held data fall under retention deletion, so it is a separately reviewed R3 change [slack-retention-export-legal-hold-release-preview] whose path was not confirmed in the sources read
 - **Required confirmation:** Type exactly `CREATE LEGAL HOLD [ISSUE_ID] FOR CUSTODIAN [USER_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command reads a legal hold: its proof is the read its step names)
 **PORTAL ACTION [slack-retention-export-legal-hold-portal]:** Only after the written approval is in the ticket and the exact match:
 1. Slack → org name → Tools & settings → Organization settings → Security → Legal Holds → **Create Legal Hold** → name it `[ISSUE_ID]` → choose the conversations and the date range → **Add Custodians** → `[USER_ID]` → **Add** → Save.
 2. GUI read-back: Legal Holds lists `[ISSUE_ID]` with custodian `[USER_ID]`. The adapter has no legal-hold read (Slack's Legal Holds API is not on its allow-list), so the GUI is the read-back.
@@ -106,6 +107,7 @@ Before either gate: the written approval names the purpose and the date range, t
 - **Reversibility:** R3 (an irreversible disclosure): once downloaded the data cannot be recalled; only who starts it, who receives the link and where the zip is kept can be controlled
 - **Required confirmation:** Type exactly `START EXPORT OF PUBLIC CHANNELS FROM SLACK WORKSPACE [@Aegion_SLACK_TEAM_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an export to the administrator computer leaves no state a read-back reads)
 **PORTAL ACTION [slack-retention-export-public-export-portal]:** Only after the approval, the evidence store and the independent review are in the ticket, and the exact match:
 1. Slack admin → Workspace settings → Security → Import & export data → **Export** → choose the date range from the approval → **Start Export**. Older layout: Slack → workspace name → Workspace settings → Import/Export Data → **Export** tab → the date range → **Start Export**.
 2. **WAIT UNTIL** the export page shows Ready for download and the email with the link reaches the person who started it.
@@ -126,6 +128,7 @@ shasum -a 256 [FILE_NAME]
 - **Reversibility:** R3: private conversations leave Slack and cannot be recalled; only who holds the file can be controlled
 - **Required confirmation:** Type exactly `EXPORT ALL SLACK CONVERSATIONS FROM WORKSPACE [@Aegion_SLACK_TEAM_ID] FOR [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an export to the administrator computer leaves no state a read-back reads)
 **PORTAL ACTION [slack-retention-export-all-conversations-portal]:** Only after Slack's approval, the legal sign-off and the independent review are in the ticket, and the exact match:
 1. Slack → org name → Tools & settings → Organization settings → Security → Exports → **Export** next to All channels and conversations → choose `[@Aegion_SLACK_TEAM_ID]`, not the entire organization unless the approval says so → choose the date range from the approval and confirm.
 2. **WAIT UNTIL** the export is ready, then download it straight into the evidence store and record its SHA-256 with the `shasum` read above.
@@ -147,6 +150,7 @@ Before the gate: the written approval names the period; Phase A shows no org-lev
 - **Reversibility:** R3: the deletion is permanent; lengthening retention afterwards does not bring back what was deleted, and the next daily run can start within a day, so there is no undo window to rely on
 - **Required confirmation:** Type exactly `SET SHORTER SLACK RETENTION FOR WORKSPACE [@Aegion_SLACK_TEAM_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command reads a retention setting: its proof is the read its step names)
 **PORTAL ACTION [slack-retention-export-shorten-retention-portal]:** Only after the review, the holds check and any export, and the exact match:
 1. Slack → workspace name → Tools & settings → Workspace settings → Message history (Data retention in some versions) → Expand → set the custom period written in the approval for messages, and for files if the approval covers them → Save. The newer layout's path to this setting was not in the sources read.
 2. GUI read-back: the page shows the new period. Slack exposes no confirmed read API for retention, so the adapter cannot read this setting and the GUI is the read-back.
@@ -174,6 +178,7 @@ Before the gate:
 - **Reversibility:** R3: deletion is permanent with no undo; the desktop unsend within 15 seconds belongs to the author, not to an administrator deleting someone else's message
 - **Required confirmation:** Type exactly `DELETE MESSAGES BY [USER_ID] IN SLACK CHANNEL [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command proves a deleted message: its proof is the read its step names)
 **PORTAL ACTION [slack-retention-export-delete-messages-portal]:** Only after the review, the holds check and any export, and the exact match, one conversation per phrase:
 1. Slack → `#[CHANNEL_NAME]` → open each listed message → hover over it → ⋮ → **Delete message** → confirm.
 2. Tick each message off the ticket's list as it goes; stop at the first message that does not match the list.
@@ -202,6 +207,7 @@ Before the gate:
 - **Reversibility:** R3: permanent with no undo; only an export made beforehand keeps the content
 - **Required confirmation:** Type exactly `DELETE SLACK CHANNEL [CHANNEL_NAME] [CHANNEL_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Slack verify-* command proves a deleted channel, verify-archived reads an archived one: its proof is the read its step names)
 **PORTAL ACTION [slack-retention-export-delete-channel-portal]:** Only after the review, the export decision and the exact match:
 1. Slack → `#[CHANNEL_NAME]` → click the channel name in the header → Settings → **Delete channel** → confirm. These labels were read from a search excerpt; confirm them on screen.
 2. GUI read-back: Slack → Directories → search for `[CHANNEL_NAME]` with archived channels included → no result.

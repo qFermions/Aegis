@@ -32,6 +32,7 @@ const { testRunbooks } = require('../audit/trail-helper.js');
 const TOKEN = ['sentinel', 'binding', 'credential', String(7 * 919)].join('-');
 const NOW = Date.parse('2026-10-28T12:00:00Z');
 const NOT_BEFORE = '2026-10-28T09:00:00Z';
+const APPROVED_AT = Date.parse('2026-10-28T08:00:00Z');
 const at = (user, domain) => [user, domain].join('@');
 const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });
@@ -112,7 +113,10 @@ function trail(t) {
   const record = (argv) => {
     const out = [];
     const err = [];
-    const code = changes.main(argv, env, { out: (s) => out.push(s), err: (s) => err.push(s) });
+    // the trail's clock reads before NOT_BEFORE, so the approval comes before the read-backs' time
+    // bound, as in use: a --not-before earlier than the approval never proves the change (batch G4,
+    // task A3)
+    const code = changes.main(argv, env, { out: (s) => out.push(s), err: (s) => err.push(s), now: () => APPROVED_AT });
     let json = null;
     try { json = JSON.parse(out.join('')); } catch { /* not JSON */ }
     return { code, json, text: out.join('') + err.join('') };
@@ -246,7 +250,7 @@ test('after a test trail ends, open reads the real runbooks again', async (t) =>
   const procedure = path.join(dir, 'procedure.md');
   fs.writeFileSync(procedure, 'The reset for [UPN].\n');
   const err = [];
-  const code = changes.main(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', procedure], { AEGIS_AUDIT_DIR: path.join(dir, 'audit') }, { out: () => {}, err: (x) => err.push(x) });
+  const code = changes.main(['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset --factor-type push', '--procedure-file', procedure], { AEGIS_AUDIT_DIR: path.join(dir, 'audit') }, { out: () => {}, err: (x) => err.push(x) });
   assert.equal(code, 0, err.join(''));
 });
 
@@ -640,7 +644,10 @@ test('every connector records the flags that change what its read-back passes on
   }
   assert.equal(verifies(tr).find((e) => e.connector === 'msgraph').flags, '--enabled false');
   assert.equal(verifies(tr).find((e) => e.connector === 'okta').flags, '--status SUSPENDED');
-  assert.equal(verifies(tr).find((e) => e.connector === 'fleet').flags, null);
+  // fleet's time bound is a pass flag since batch G4 (task A3), recorded in UTC; a read-back with no
+  // pass flag records none
+  assert.equal(verifies(tr).find((e) => e.connector === 'fleet').flags, '--not-before 2026-10-28T09:00:00.000Z');
+  assert.equal(verifies(tr).find((e) => e.connector === 'github').flags, null);
 });
 
 // Per command with --absent: under a removal change a read without --absent is refused before any

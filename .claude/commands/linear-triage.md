@@ -102,6 +102,7 @@ node scripts/adapters/linear-client.js labels --execute
 - **Reversibility:** R1: the old priority and labels come from the `issue` read and go into the ticket first; setting them back on the same issue page restores it, under its own phrase
 - **Required confirmation:** Type exactly `SET PRIORITY [PRIORITY_LEVEL] AND ADD LABEL [LABEL_NAME] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team. Linear's pages as indexed name no narrower triage role (unverified); a Guest who is not on the team stops here, and creating a new label may be limited to admins, so pick an existing one.
 
@@ -125,6 +126,7 @@ GUI read-back: Linear → `[ISSUE_ID]` shows `[PRIORITY_LEVEL]` and `[LABEL_NAME
 - **Reversibility:** R1: Linear documents no one-step un-accept; setting the status back to Triage reverses it, under its own phrase; an emailed comment cannot be recalled
 - **Required confirmation:** Type exactly `ACCEPT [ISSUE_ID] FROM TRIAGE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team (no narrower triage role found; unverified).
 
@@ -152,6 +154,7 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` team → Triage no longer list
 - **Reversibility:** R2: Linear documents no one-step undo; reversal means setting [ISSUE_ID]'s status back and moving each attachment back by hand, so the attachment list read on the issue page is the pre-state and goes into the ticket first
 - **Required confirmation:** Type exactly `MARK [ISSUE_ID] AS DUPLICATE OF [CANONICAL_ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --change [CHANGE_ID] --execute`
 
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team who can also see `[CANONICAL_ISSUE_ID]` (no narrower role found; unverified).
 
@@ -171,6 +174,7 @@ node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "
 - **Reversibility:** R1: the issue is canceled, not deleted; setting its status back to Triage or an active status reverses it, under its own phrase; an emailed comment cannot be recalled
 - **Required confirmation:** Type exactly `DECLINE [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team (no narrower triage role found; unverified).
 
@@ -190,6 +194,7 @@ node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "
 - **Reversibility:** R1: unsnoozing it, or the chosen time passing, brings it back
 - **Required confirmation:** Type exactly `SET SNOOZE ON [ISSUE_ID] UNTIL [DATE_TIME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team (no narrower triage role found; unverified).
 
@@ -224,6 +229,7 @@ GUI read-back: the Triage view no longer shows `[ISSUE_ID]`, and the issue page 
 - **Reversibility:** R1: the old priority from the `issue` read goes into the ticket first; setting it back on the same issue page restores it, under its own phrase; whether lowering a priority stops a clock that already started is not documented in the sources read
 - **Required confirmation:** Type exactly `SET PRIORITY [PRIORITY_LEVEL] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 
 **Role needed:** a Member of the `[@Aegion_LINEAR_TEAM]` team (no narrower role found; unverified).
 

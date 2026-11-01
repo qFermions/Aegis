@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 **Verdict:** In a hybrid environment, **on-prem AD is the source of authority for synced users** — reset there, then let Entra Connect sync. Cloud-only users reset directly in Entra. Use `[FIRST_NAME]` / `[UPN]` — never the real name.
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below (the resets and the session revocation), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and that read-back as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below (the resets and the session revocation), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and that read-back as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 ## What to check first
 - **Synced or cloud-only?** Entra → Users → `[UPN]` → "On-premises sync enabled" = Yes → synced.
@@ -25,6 +25,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): not reversible; another verified AD reset is required
 - **Required confirmation:** Type exactly `RESET AD PASSWORD FOR [first.last] MAPPED TO [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [password-reset-synced-portal]:** Only the exact match authorizes the synced-user branch. Never reset both copies of a synced identity.
 
 **Synced user (on-prem AD is authority):**
@@ -43,6 +44,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): not reversible; another verified cloud reset is required
 - **Required confirmation:** Type exactly `RESET CLOUD PASSWORD FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [password-reset-cloud-portal]:** Only the exact match authorizes the cloud-only branch. Stop if on-premises sync is enabled.
 1. **Microsoft 365 admin center** → Users → Active users → `[UPN]` → **Reset password**.
 2. Auto-generate or set temp; check **"Require this user to change their password"**.
@@ -54,6 +56,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [password-session-revoke-portal]:** Only after the separate exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. A password-reset confirmation never authorizes this effect; verify after propagation.
 
 **Combo case — MFA-locked too (new phone + forgotten password):** order matters.
@@ -86,6 +89,7 @@ if ($user.OnPremisesSyncEnabled -eq $true) {
 # Effect: replaces the cloud password and forces a change at next sign-in
 # Scope: one user account
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): not reversible; another verified reset is required
+# Read-back: msgraph-client.js verify-password-changed --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 $requiredConfirmation = "RESET CLOUD PASSWORD FOR $($user.UserPrincipalName) WITH ID $($user.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -119,6 +123,7 @@ if ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUs
 # Effect: invalidates Entra refresh tokens and browser session cookies
 # Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
+# Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 $requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -131,7 +136,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 </details>
 
 ## 🔎 Read-back (read-only, after the person finishes)
-The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `User.Read.All` and `AuditLog.Read.All`) proves the reset. Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user's object ID as `[USER_ID]`.
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only, a certificate credential with `User.Read.All` and `AuditLog.Read.All`) proves the reset. Use the user's object ID as `[USER_ID]`. For each read-back run with `--change [CHANGE_ID]`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back's change, because a bound earlier than the approval is refused before the read; for `verify-signin`, which runs without a change, use the time the reset started (UTC).
 
 ```bash
 # HUMAN-RUN read-only read-back of [password-reset-cloud-portal], [password-cloud-reset] or [password-reset-synced-portal]: passes only when Entra shows a password change at or after [NOT_BEFORE]; for a synced user, run it after the next sync
@@ -141,6 +146,8 @@ node scripts/adapters/msgraph-client.js verify-sessions-revoked --user [USER_ID]
 # HUMAN-RUN read-only read-back: passes only when the sign-in logs show a successful sign-in at or after [NOT_BEFORE] (Entra ID P1 or P2)
 node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
 ```
+
+**Known limit (session revocation):** Microsoft does not document whether a password reset moves `signInSessionsValidFromDateTime`, so on a ticket that also reset the password this read-back may pass without a revocation: the reset may move it too. Record in the ticket whether the password was reset in the same ticket, and if it was, prove the revocation by the Revoke sessions entry in the user's audit log as well. The question is vendor fact M-28 (`docs/aegis/g3/vendor-facts-to-check.md`), checked on a test tenant (`docs/aegis/owner/test-tenant-runbook.md`).
 
 ## ⚠️ Risk warning
 - `Revoke-MgUserSignInSession` invalidates Entra refresh tokens and browser cookies after propagation; current access tokens and app-issued sessions can persist until expiry.

@@ -70,6 +70,7 @@ Four tickets, one starting point: read the Jamf Pro inventory record — last ch
 - **Reversibility:** R1 — FileVault can be turned off again from the same pane under its own phrase, and only with a documented reason, because an unencrypted Mac fails compliance
 - **Required confirmation:** Type exactly `ENABLE FILEVAULT ON [DEVICE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [mac-troubleshoot-filevault-enable-portal]:** Only when the escrow profile is installed (so the key goes to Jamf Pro, not to a sticky note) and after the exact match:
 1. On the Mac: System Settings → Privacy & Security → FileVault → **Turn On** → authenticate as the local user.
 2. Read-back in Jamf Pro after the next inventory update: Personal Recovery Key Validation = Valid.
@@ -93,6 +94,7 @@ Four tickets, one starting point: read the Jamf Pro inventory record — last ch
 - **Reversibility:** R1 — the Mac rejoins with the password, or the Wi-Fi profile re-adds the network at the next Jamf check-in
 - **Required confirmation:** Type exactly `REMOVE SAVED OFFICE WIFI NETWORK FROM [DEVICE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [mac-troubleshoot-wifi-forget-portal]:** Only after steps 1–3 point at a stale saved network and the exact match:
 1. On the Mac: System Settings → Wi-Fi → the office network → **Details** → **Forget This Network** → confirm.
 2. Join the network again; if a profile supplies it, **WAIT UNTIL** the next Jamf check-in re-adds it. Done when: System Settings → Wi-Fi shows the office network connected and the read-back below names it.
@@ -115,6 +117,7 @@ Four tickets, one starting point: read the Jamf Pro inventory record — last ch
 - **Reversibility:** R1 — nothing to undo; the commands that then run are the ones already visible under Pending Commands
 - **Required confirmation:** Type exactly `SEND BLANK PUSH TO [DEVICE_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [mac-troubleshoot-blank-push-portal]:** Only after step 2 shows the Mac online and the exact match:
 1. Jamf Pro → Computers → Search inventory → `[DEVICE_NAME]` → **Management** → **Send Blank Push**.
 2. **WAIT UNTIL** History → Management History moves the command from pending to completed; then System Settings → General → Device Management shows the profile.
@@ -147,6 +150,7 @@ log show --last 1h --info --predicate 'process == "mdmclient"'   # reads the las
 # Reversibility: R2 — not reversible — the previous key is invalidated — the new key is the only one Jamf Pro holds
 # Required confirmation: type exactly "REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
 # the exact phrase to type
 required_confirmation="REPLACE FILEVAULT RECOVERY KEY ON [DEVICE_NAME]"
 # shows the phrase
@@ -176,6 +180,7 @@ sudo fdesetup status
 # Reversibility: R1 — nothing to undo for the check-in itself — whatever a policy installs is governed by that policy’s own undo
 # Required confirmation: type exactly "SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="SEND JAMF CHECK-IN REQUEST FROM [DEVICE_NAME]"
 # shows the phrase

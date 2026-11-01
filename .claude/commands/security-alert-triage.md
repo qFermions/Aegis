@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 > **Execution boundary:** Read-only diagnostics remain available. Every state-changing line below is a non-executing preview unless an immediately adjacent `SAFETY GATE` names the target, effect, scope, reversibility, and exact confirmation. Unmarked mutations must move to a separate reviewed runbook before execution; do not click, paste, or run them from this command.
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below (the session revocation and the cloud sign-in blocks), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and that read-back as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `msgraph:verify-account-enabled --enabled false`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. The on-premises AD disable has no read-back in a read-only connector, so it takes no change record (`open` refuses it): its proof is the AD read its procedure names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below (the session revocation and the cloud sign-in blocks), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and that read-back as `--read-back`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `msgraph:verify-account-enabled --enabled false`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. The on-premises AD disable has no read-back in a read-only connector, so it takes no change record (`open` refuses it): its proof is the AD read its procedure names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 **Verdict:** Work it as an incident: **assess severity → contain the account/device → investigate scope → remediate → document.** For a likely account compromise, containment (block sign-in + revoke sessions + reset) comes before deep investigation — stop the bleeding first.
 
@@ -28,6 +28,7 @@ disable-model-invocation: true
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
 - **Required confirmation:** Type exactly `REVOKE ENTRA SESSIONS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [security-session-revoke-portal]:** Only the separate exact match authorizes Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. Verify after propagation.
 
 **2. Contain (if account likely compromised):**
@@ -65,6 +66,7 @@ if (-not $user.AccountEnabled) { throw "The account is already blocked. No chang
 # Effect: blocks Microsoft Entra sign-in for that cloud-only account
 # Scope: one verified cloud-only user account
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by a separate reviewed re-enable action
+# Read-back: msgraph-client.js verify-account-enabled --user [USER_ID] --enabled false --change [CHANGE_ID] --execute
 $requiredConfirmation = "BLOCK CLOUD-ONLY SIGN-IN FOR $($user.UserPrincipalName) ID $($user.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -97,6 +99,7 @@ if (-not $adUser.Enabled) { throw "The authoritative AD account is already disab
 # Effect: disables the synchronized identity at its on-premises source of authority
 # Scope: one exact AD identity; no cloud write is authorized by this phrase
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible through a separately reviewed Enable-ADAccount action
+# Read-back: none, on-premises Active Directory: no connector reads it, and Graph verify-account-enabled --enabled false also passes after the separate cloud-gap block, so it cannot prove this change
 $requiredConfirmation = "DISABLE AUTHORITATIVE AD USER $($adUser.UserPrincipalName) GUID $($adUser.ObjectGuid)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -112,6 +115,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 # Effect: blocks cloud sign-in during the directory-sync propagation gap
 # Scope: one verified Entra identity after authoritative AD disable read-back
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "disable"): reversible by a separate reviewed cloud re-enable after AD recovery
+# Read-back: msgraph-client.js verify-account-enabled --user [USER_ID] --enabled false --change [CHANGE_ID] --execute
 $requiredConfirmation = "BLOCK CLOUD SYNC GAP FOR $($cloudUser.UserPrincipalName) ID $($cloudUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -137,6 +141,7 @@ if ([string]::IsNullOrWhiteSpace([string]$sessionUser.Id) -or [string]$sessionUs
 # Effect: invalidates Entra refresh tokens and browser session cookies
 # Scope: Entra-managed refresh tokens and browser cookies for one user; other app sessions can persist until expiry
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy: a revocation fits no row cleanly, one object but no undo command, so it takes the higher of the two rows it touches, the multi-object or hard-to-reverse row): not reversible; the user must authenticate again
+# Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 $requiredConfirmation = "REVOKE ENTRA SESSIONS FOR $($sessionUser.UserPrincipalName) ID $($sessionUser.Id)"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -159,7 +164,7 @@ Get-Mailbox "[UPN]" | Select ForwardingSmtpAddress,DeliverToMailboxAndForward  #
 </details>
 
 ## 🔎 Read-back (read-only, after the person finishes)
-The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves the Entra steps. Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC).
+The read-only Microsoft Graph connector (`scripts/adapters/msgraph-client.js`, GET only) proves the Entra steps. Use the object ID of `[UPN]` as `[USER_ID]`. For the read-back run with `--change [CHANGE_ID]` and `--not-before`, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` printed for that read-back's change (UTC), because a bound earlier than the approval is refused before the read.
 
 ```bash
 # HUMAN-RUN read-only read-back of [security-session-revoke-portal] or [security-session-revoke]: passes only when the sessions are valid only from [NOT_BEFORE] on (vendor fact M-26)

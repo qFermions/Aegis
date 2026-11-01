@@ -1,0 +1,86 @@
+# command: node --test --test-name-pattern=A2 scripts/audit/change-record.test.js
+# commit: 3d66d78 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:34:38Z  node: v24.22.1
+✖ A2: audit-log.js approval writes nothing: an unknown change id, a change not yet opened, a mismatched digest, a second approval (190.023712ms)
+✖ A2: change-record.js approve refuses an unknown change, a change not yet opened, a mismatched digest and a second approval, and writes nothing (339.633564ms)
+✖ A2: two approvals of one change raced from two processes: exactly one is recorded (143.289426ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 753.684399
+
+✖ failing tests:
+
+test at scripts/audit/change-record.test.js:1092:1
+✖ A2: audit-log.js approval writes nothing: an unknown change id, a change not yet opened, a mismatched digest, a second approval (190.023712ms)
+  AssertionError [ERR_ASSERTION]: an unknown change id
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1110:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'audit-log: field change of approval is missing or not in its allowed form\n',
+    expected: /change-record\.js approve/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1116:1
+✖ A2: change-record.js approve refuses an unknown change, a change not yet opened, a mismatched digest and a second approval, and writes nothing (339.633564ms)
+  AssertionError [ERR_ASSERTION]: {
+    "ok": true,
+    "change": "chg-49faafbe9d5d",
+    "ref": "IT-125",
+    "audit_seq": 3,
+    "note": "The approval authorizes a person's procedure. Aegis makes no change: a person runs it, then the verify-* read-back proves it."
+  }
+  
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1129:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1140:1
+✖ A2: two approvals of one change raced from two processes: exactly one is recorded (143.289426ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      0,
+  +   0,
+  +   0,
+  +   0
+  -   2,
+  -   2,
+  -   2
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1149:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 0, 0, 0, 0 ],
+    expected: [ 0, 2, 2, 2 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-10-31T23:34:39Z

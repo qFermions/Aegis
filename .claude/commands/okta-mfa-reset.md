@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-factor-reset`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-factor-reset --factor-type push`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-factor-reset --factor-type push`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -69,6 +69,7 @@ node scripts/adapters/okta-client.js factors --user [OKTA_USER_ID] --execute
 - **Reversibility:** R2: not reversible; Okta states the action cannot be undone, and the only way back is the user's own re-enrollment
 - **Required confirmation:** Type exactly `RESET SELECTED OKTA AUTHENTICATORS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-mfa-reset-selected-portal]:** Only after identity is verified out of band and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Reset Authenticators**.
 2. Tick only **Okta Verify** (the old phone's enrollment), click **Reset Selected Authenticators**, then **Reset** in the confirmation prompt.
@@ -81,7 +82,7 @@ Run the connector read-back now, before the user re-enrolls: once Okta Verify is
 node scripts/adapters/okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute
 ```
 
-If Phase A also listed `signed_nonce` (FastPass), run the same read with `--factor-type signed_nonce`. The read judges by factor type only: if Phase A listed one type twice, it cannot tell the two apart, so the dialog read-back above decides.
+If Phase A also listed `signed_nonce` (FastPass), also run the same read with `--factor-type signed_nonce` and without `--change`: the change is named for its `push` read-back, and a read under it with another factor type is refused before it reads. The read judges by factor type only: if Phase A listed one type twice, it cannot tell the two apart, so the dialog read-back above decides.
 
 **WAIT UNTIL** the user signs in on the new phone, sets up Okta Verify again when Okta prompts for it (the old enrollment is gone), and completes one full sign-in.
 
@@ -98,6 +99,7 @@ If Phase A also listed `signed_nonce` (FastPass), run the same read with `--fact
 - **Reversibility:** R3: not reversible; the action cannot be undone and the user re-enrolls from scratch
 - **Required confirmation:** Type exactly `RESET ALL OKTA AUTHENTICATORS FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-mfa-reset-all-portal]:** Only after the triage decision is recorded in the ticket and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Reset Authenticators**.
 2. Tick every listed authenticator, click **Reset Selected Authenticators**, then **Reset**.
@@ -132,6 +134,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Reversibility: R2: not reversible. The enrollment is gone and the user enrolls again. The call is refused on a deactivated user
 # Required confirmation: type exactly "UNENROLL OKTA FACTOR FOR [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="UNENROLL OKTA FACTOR FOR [USER_ID]"
 # shows the phrase
@@ -159,6 +162,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Reversibility: R3: not reversible, the user enrolls every factor again
 # Required confirmation: type exactly "RESET ALL OKTA FACTORS FOR [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: okta-client.js verify-factors-reset-all --user [OKTA_USER_ID] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="RESET ALL OKTA FACTORS FOR [USER_ID]"
 # shows the phrase

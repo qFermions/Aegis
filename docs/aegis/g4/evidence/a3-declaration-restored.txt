@@ -1,0 +1,16 @@
+# command: node --test scripts/adapters/verify-flags.test.js
+# commit: fb00f3d (plus uncommitted changes in the working tree)  started: 2026-10-31T23:48:30Z  node: v24.22.1
+✔ every verify-* command of the nine connectors declares every flag it takes, and nothing it does not take (23.697467ms)
+✔ a declaration removed, or a flag a connector takes that no declaration names, is caught (2.57336ms)
+✔ the owner's minimum is a pass flag wherever a command takes it: --not-before, --absent, --expect-sha256, --type, --method, --expect (0.780369ms)
+✔ every flag that is not a pass flag says why, and the trail's PASS_FLAGS are exactly the declared pass flags (1.065627ms)
+✔ the declarations module loads no connector and no network module (0.420997ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.223853
+# exit: 0  finished: 2026-10-31T23:48:30Z

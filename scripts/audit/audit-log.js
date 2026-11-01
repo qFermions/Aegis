@@ -28,7 +28,7 @@
 //   node scripts/audit/audit-log.js status [--since 24h]    failures by connector and state
 //   node scripts/audit/audit-log.js procedure --command C --gate G --r-class R2 --target [UPN] [--procedure-sha256 H]
 //     (a change record is opened with change-record.js open instead)
-//   node scripts/audit/audit-log.js approval --ref IT-123 --gate G --procedure-sha256 H --change chg-...
+//   (an approval is recorded with change-record.js approve only: batch G4, task A2)
 // Exit codes: 0 ok; 1 input error or a refused entry; 2 the chain is broken or unreadable.
 
 const crypto = require('node:crypto');
@@ -54,7 +54,7 @@ class AuditBroken extends Error {
 
 // ── What may be written ──────────────────────────────────────────────────────
 const STATES = new Set(['OK', 'REFUSED', 'NO_CREDENTIALS', 'HTTP_ERROR', 'TIMEOUT', 'NETWORK_ERROR', 'TENANT_MISMATCH',
-  'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED']);
+  'INVALID_RESPONSE', 'SCOPE_REFUSED', 'AUDIT_FAILED', 'INCONCLUSIVE']);
 const HANDOFFS = new Set(['RETRIES_EXHAUSTED', 'RETRY_AFTER_TOO_LONG', 'RETRY_BUDGET_SPENT', 'RATE_LIMITED']);
 const NAME = /^[a-z][a-z0-9-]{1,30}$/;
 // a route or query name: short words joined by dots, dashes or underscores (no word over
@@ -93,39 +93,16 @@ const recordsRunId = (readBack) => Object.prototype.hasOwnProperty.call(RUN_IDS,
 // switch, or the closed set, number or digest its connector takes (the connector checks the value
 // first; the rule here keeps free text out of the trail). A verify entry records the ones it ran
 // with in one form (passFlags), and a change record names its read-back with them (readBackFor),
-// so a read-back counts only for a change whose flags match. Flags that name the object read,
-// bound the time or carry free text are not here; scripts/audit/pass-flags.test.js lists each
-// with its reason.
-const SWITCH = 'switch';
-const DIGEST = /^[0-9a-f]{64}$/;
-const BOOL = /^(?:true|false)$/;
-const PASS_FLAGS = Object.freeze({
-  'okta:verify-group-member': Object.freeze({ absent: SWITCH }),
-  'okta:verify-app-assigned': Object.freeze({ absent: SWITCH }),
-  // okta-client.js STATUSES
-  'okta:verify-status': Object.freeze({ status: /^(?:ACTIVE|DEPROVISIONED|LOCKED_OUT|PASSWORD_EXPIRED|PROVISIONED|RECOVERY|STAGED|SUSPENDED)$/ }),
-  'github:verify-team-member': Object.freeze({ absent: SWITCH }),
-  // github-client.js ROLES, the alert commands' stateRule, resolutionRule and reasonRule, and its reviews rule
-  'github:verify-collaborator': Object.freeze({ role: /^(?:read|triage|write|maintain|admin)$/ }),
-  'github:verify-secret-alert': Object.freeze({ state: /^resolved$/, resolution: /^(?:revoked|false_positive|wont_fix|used_in_tests)$/ }),
-  'github:verify-dependabot-alert': Object.freeze({ state: /^(?:dismissed|fixed)$/, reason: /^(?:fix_started|inaccurate|no_bandwidth|not_used|tolerable_risk)$/ }),
-  'github:verify-protection': Object.freeze({ reviews: /^[0-6]$/, 'enforce-admins': SWITCH, 'no-force-push': SWITCH, 'no-deletions': SWITCH }),
-  'msgraph:verify-group-member': Object.freeze({ absent: SWITCH }),
-  'msgraph:verify-account-enabled': Object.freeze({ enabled: BOOL }),
-  'jamf:verify-profile': Object.freeze({ absent: SWITCH }),
-  // jamf-client.js COUNT and COMMAND_TYPE
-  'jamf:verify-group-count': Object.freeze({ expect: /^(?:0|[1-9][0-9]{0,6})$/ }),
-  'jamf:verify-command': Object.freeze({ type: /^[A-Z][A-Z0-9_]{1,63}$/ }),
-  'jamf:verify-policy': Object.freeze({ enabled: BOOL, 'no-triggers': SWITCH }),
-  // gws-client.js APPS and EVENT_NAME
-  'google-workspace:verify-event': Object.freeze({ app: /^(?:admin|login|drive|token|saml|user_accounts)$/, event: /^[A-Za-z][A-Za-z0-9_]{0,99}$/ }),
-  'slack:verify-guest': Object.freeze({ type: /^(?:single|multi)$/ }),
-  // the digest of the text the read must find: the --expect style flags
-  'slack:verify-posted': Object.freeze({ 'expect-sha256': DIGEST }),
-  'linear:verify-comment': Object.freeze({ 'expect-sha256': DIGEST }),
-  'jira:verify-create': Object.freeze({ 'expect-sha256': DIGEST }),
-  'jira:verify-comment': Object.freeze({ 'expect-sha256': DIGEST }),
-});
+// so a read-back counts only for a change whose flags match. Flags that name the object read or
+// carry free text are not pass flags; scripts/adapters/verify-flags.js gives each its reason.
+// Batch G4, task A3: the rules live in scripts/adapters/verify-flags.js, one block per connector,
+// where every flag of every verify-* command is declared as a pass flag or as not one with its
+// reason, and a test holds the declarations equal to each connector's own command table. A time
+// bound (--not-before) is a pass flag since this batch (D10 on PR #9): the entry records its value
+// in UTC, the change record names it bare (its value is chosen when the read-back runs), and
+// change-record.js never counts one earlier than the change's approval.
+const DECLARED = require('../adapters/verify-flags.js');
+const { SWITCH, TIME, DIGEST, PASS_FLAGS } = DECLARED;
 const passFlagRules = (kind) => (Object.prototype.hasOwnProperty.call(PASS_FLAGS, kind) ? PASS_FLAGS[kind] : null);
 // one form: each flag once, by name, a switch alone and a value after its flag
 const joinFlags = (found) => [...found.keys()].sort().map((name) => found.get(name)).join(' ');
@@ -133,7 +110,17 @@ const joinFlags = (found) => [...found.keys()].sort().map((name) => found.get(na
 // A pass flag's value in the one form the trail records: a digest in lower case, any other value
 // as written. passFlags and parseReadBack both use it, so a run and its change record agree on one
 // value (code review round 3 of the batch G3 close-out 3, finding 10).
-const flagValue = (rule, value) => (rule === DIGEST ? value.toLowerCase() : value);
+const flagValue = (rule, value) => (rule === DIGEST ? value.toLowerCase() : rule === TIME ? utcTime(value) : value);
+// A time bound in the one form the trail records: an ISO 8601 time with a zone, or epoch
+// milliseconds (the Jira and Slack read-backs take them), as UTC with milliseconds; null when it is
+// neither, which the connector refuses before any read.
+const TIME_TEXT = /^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(?::[0-9]{2}(?:\.[0-9]{1,9})?)?(?:Z|[+-][0-9]{2}:[0-9]{2})|[1-9][0-9]{9,15})$/;
+function utcTime(value) {
+  if (typeof value !== 'string' || !TIME_TEXT.test(value)) return null;
+  const ms = /^[0-9]+$/.test(value) ? Number(value) : Date.parse(value);
+  return Number.isFinite(ms) && ms >= 0 && ms <= 8.64e15 ? new Date(ms).toISOString() : null;
+}
+const isUtcTime = (value) => typeof value === 'string' && utcTime(value) === value;
 
 // The pass flags a read-back ran with, from its argv, in one form ('' for none), or null for a
 // read-back none of whose flags changes what its pass means. A digest is recorded in lower case,
@@ -152,18 +139,49 @@ function passFlags(kind, argv) {
     if (rules[name] === SWITCH) found.set(name, `--${name}`);
     else if (typeof list[i + 1] === 'string') {
       const value = flagValue(rules[name], list[i + 1]);
-      if (rules[name].test(value)) found.set(name, `--${name} ${value}`);
+      if (rules[name] === TIME ? value !== null : rules[name].test(value)) found.set(name, `--${name} ${value}`);
     }
   }
   return joinFlags(found);
 }
-// The read-back a change record names for kind run with argv: kind, then its pass flags.
+// The pass flags as a change record names them: a time bound bare, every other flag as recorded.
+function namedFlags(kind, flags) {
+  const rules = passFlagRules(kind);
+  if (!rules || !flags) return flags;
+  const words = flags.split(' ');
+  const out = [];
+  for (let i = 0; i < words.length; i += 1) {
+    out.push(words[i]);
+    const name = words[i].slice(2);
+    if (Object.prototype.hasOwnProperty.call(rules, name) && rules[name] !== SWITCH) {
+      if (rules[name] !== TIME) out.push(words[i + 1]);
+      i += 1;
+    }
+  }
+  return out.join(' ');
+}
+// The read-back a change record names for kind run with argv: kind, then its pass flags, a time
+// bound named without its value.
 function readBackFor(kind, argv) {
-  const flags = passFlags(kind, argv);
+  const flags = namedFlags(kind, passFlags(kind, argv));
   return flags ? `${kind} ${flags}` : kind;
 }
+// The time bounds a verify entry recorded, flag name to epoch milliseconds (batch G4, task A3).
+function timeBounds(entry) {
+  const rules = passFlagRules(`${entry.connector}:${entry.command}`);
+  const bounds = new Map();
+  if (!rules || typeof entry.flags !== 'string' || !entry.flags) return bounds;
+  const words = entry.flags.split(' ');
+  for (let i = 0; i < words.length; i += 1) {
+    const name = words[i].slice(2);
+    if (rules[name] === TIME && isUtcTime(words[i + 1])) bounds.set(name, Date.parse(words[i + 1]));
+  }
+  return bounds;
+}
 // A read-back named with its pass flags, held to one form; AuditRefused names what is wrong.
-function parseReadBack(text) {
+// recorded: the form a verify entry records, where a time bound carries its UTC value; otherwise the
+// form a change record names, where a time bound is named bare (batch G4, task A3).
+function parseReadBack(text, { recorded = false } = {}) {
   if (typeof text !== 'string') throw new AuditRefused('a read-back is the connector, its verify-* command and its pass flags');
   const [kind, ...rest] = text.split(' ');
   if (!READ_BACK.test(kind)) throw new AuditRefused('a read-back names the connector and its verify-* command, such as okta:verify-group-member');
@@ -182,6 +200,19 @@ function parseReadBack(text) {
     }
     if (found.has(name)) throw new AuditRefused(`--${name} may appear once`);
     if (rules[name] === SWITCH) { found.set(name, token); values.set(name, null); continue; }
+    if (rules[name] === TIME && !recorded) {
+      if (typeof rest[i + 1] === 'string' && !rest[i + 1].startsWith('--')) throw new AuditRefused(`--${name} is a time bound: name it without its value; the read-back runs with --${name} at or after the change's approval`);
+      found.set(name, token);
+      values.set(name, null);
+      continue;
+    }
+    if (rules[name] === TIME) {
+      if (!isUtcTime(rest[i + 1])) throw new AuditRefused(`--${name} is recorded as a UTC time with milliseconds`);
+      found.set(name, `${token} ${rest[i + 1]}`);
+      values.set(name, rest[i + 1]);
+      i += 1;
+      continue;
+    }
     // the value as passFlags records it (code review round 2, finding 11; round 3, finding 10)
     const value = typeof rest[i + 1] === 'string' ? flagValue(rules[name], rest[i + 1]) : rest[i + 1];
     if (typeof value !== 'string' || !rules[name].test(value)) throw new AuditRefused(`--${name} needs the value ${kind}'s read-back takes`);
@@ -198,7 +229,9 @@ function readBackOf(entry) {
   const kind = `${entry.connector}:${entry.command}`;
   if (!passFlagRules(kind)) return kind;
   if (typeof entry.flags !== 'string') return null;
-  return entry.flags ? `${kind} ${entry.flags}` : kind;
+  // named as a change record names it: a time bound without its value (batch G4, task A3)
+  const flags = namedFlags(kind, entry.flags);
+  return flags ? `${kind} ${flags}` : kind;
 }
 
 // Credential shapes refused in any value, whatever its field allows (defence in depth):
@@ -285,7 +318,7 @@ function checkWrite(fields) {
     const rules = passFlagRules(kind);
     if (!rules && fields.flags !== null) throw new AuditRefused(`no flag changes what ${kind}'s pass means, so it records none`);
     if (rules && fields.flags === null) throw new AuditRefused(`${kind} records the flags it ran with that change what its pass means ('' for none)`);
-    if (rules && fields.flags !== '' && parseReadBack(`${kind} ${fields.flags}`).flags !== fields.flags) throw new AuditRefused('the pass flags are written in one form: each once, by name');
+    if (rules && fields.flags !== '' && parseReadBack(`${kind} ${fields.flags}`, { recorded: true }).flags !== fields.flags) throw new AuditRefused('the pass flags are written in one form: each once, by name');
   }
   // a change record names its read-back with its pass flags, in one form
   if (fields.kind === 'procedure' && fields.read_back !== null && parseReadBack(fields.read_back).readBack !== fields.read_back) {
@@ -474,7 +507,7 @@ function openAuditLog({ dir = defaultAuditDir(), now = Date.now } = {}) {
       const fd = fs.openSync(logFile, 'a', 0o600);
       try { fs.writeSync(fd, `${JSON.stringify(ordered)}\n`); fs.fsyncSync(fd); } finally { fs.closeSync(fd); }
       writeAtomic(headFile, `${JSON.stringify({ seq: record.seq, hash: record.hash })}\n`);
-      return { seq: record.seq, hash: record.hash };
+      return { seq: record.seq, hash: record.hash, at: record.at };
     });
   }
 
@@ -591,13 +624,16 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       out(`recorded procedure as audit entry ${r.seq}\n`);
       return 0;
     }
+    // Batch G4, task A2: this command wrote an approval for any change id, one change-record.js
+    // approve refuses (code review round 3 of the batch G3 close-out 3, finding 5). It is removed,
+    // so change-record.js approve is the one writer: it checks that the change is open, the gate it
+    // names, the digest of the procedure issued for it and that no approval came first, all under
+    // the trail's write lock. This module cannot load change-record.js (that module loads this one),
+    // and a second copy of those checks here would drift from the first.
     if (command === 'approval') {
-      only(flags, ['ref', 'gate', 'procedure-sha256', 'change']);
-      const r = log.append({ kind: 'approval', ref: flags.ref, gate: flags.gate, procedure_sha256: flags['procedure-sha256'], change: flags.change });
-      out(`recorded approval reference as audit entry ${r.seq}; it authorizes a person's procedure and makes no change\n`);
-      return 0;
+      throw new AuditRefused('an approval is recorded only with node scripts/audit/change-record.js approve --change chg-... --ref ISSUE-KEY --procedure-sha256 H, which checks the change, its gate and the digest of its procedure; nothing was recorded');
     }
-    throw new AuditRefused('usage: audit-log.js verify | status [--since 24h] | procedure ... | approval ...');
+    throw new AuditRefused('usage: audit-log.js verify | status [--since 24h] | procedure ... (an approval: change-record.js approve)');
   } catch (error) {
     if (error instanceof AuditRefused) { err(`audit-log: ${error.message}\n`); return 1; }
     if (error instanceof AuditBroken) { err(`audit-log: ${error.message}\n`); return 2; }
@@ -608,7 +644,7 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
 
 module.exports = {
   LOG_FILE, HEAD_FILE, GENESIS, KINDS, READ_BACK, CHANGE_ID, COMMAND, VERIFY_COMMAND, RUN_ID, RUN_IDS, recordsRunId,
-  PASS_FLAGS, SWITCH, passFlags, readBackFor, parseReadBack, readBackOf, AuditRefused, AuditBroken,
+  PASS_FLAGS, SWITCH, TIME, passFlags, readBackFor, parseReadBack, readBackOf, timeBounds, AuditRefused, AuditBroken,
   openAuditLog, auditSink, defaultAuditDir, checkEntry, entryHash, canonicalJson, main,
 };
 

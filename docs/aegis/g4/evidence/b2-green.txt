@@ -1,0 +1,17 @@
+# command: node --test scripts/eval/judged/paths.test.js
+# commit: e0b58a8 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:41Z  node: v24.22.1
+✔ a case file inside the repository is refused, by its given path and by a relative path (2.208728ms)
+✔ a symlink outside the repository that points into it is refused (1.343639ms)
+✔ a copy outside the repository is accepted; a missing file is refused (1.116524ms)
+✔ results: outside allowed, ignored allowed, not-ignored refused, ignored-but-tracked refused, the root refused (45.935439ms)
+✔ results: a symlink outside the repository that points into a tracked folder is refused (19.306651ms)
+✔ the default results directory is under .aegis-state/evals and is ignored in this repository (13.015876ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 152.471025
+# exit: 0  finished: 2026-10-31T23:57:41Z

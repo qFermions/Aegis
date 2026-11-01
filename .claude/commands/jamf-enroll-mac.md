@@ -54,6 +54,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** R1 — Unassign Device Management in the same menu, under its own phrase; Release from Organization is a different, irreversible action and is never part of this runbook
 - **Required confirmation:** Type exactly `ASSIGN MAC [SERIAL_NUMBER] TO JAMF DEVICE MANAGEMENT`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-enroll-mac-assign-portal]:** Only after the exact match:
 1. Apple Business → Devices → Inventory → select `[SERIAL_NUMBER]` → **Assign Device Management** → choose the Jamf Pro device management service.
 2. Click **Continue**, read the dialog, then click **Confirm**. Apple Business creates an activity.
@@ -81,6 +82,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** R1 — untick the device on the Scope tab and Save, under its own phrase; moving a Mac to another PreStage means removing it from the first scope, then adding it to the second
 - **Required confirmation:** Type exactly `ADD MAC [SERIAL_NUMBER] TO PRESTAGE SCOPE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-enroll-mac-prestage-portal]:** Only after the exact match:
 1. Jamf Pro → Computers → PreStage enrollments → select the new-hire PreStage → **Edit**.
 2. Scope tab → tick `[SERIAL_NUMBER]` → **Save**. The settings sync with Apple; device information in the PreStage updates after the next two-minute sync.
@@ -122,6 +124,7 @@ System Settings → General → Device Management → read whether an MDM profil
 # Reversibility: R1 — nothing is deleted — on macOS 14 or later the user sees a full-screen prompt and may choose Not now once
 # Required confirmation: type exactly "RESET ENROLLMENT ON MAC [SERIAL_NUMBER]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="RESET ENROLLMENT ON MAC [SERIAL_NUMBER]"
 # shows the phrase
@@ -161,6 +164,7 @@ Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → History �
 # Reversibility: R1 — nothing is deleted — whatever a policy changes is that policy’s own change, not this gate’s
 # Required confirmation: type exactly "SUBMIT INVENTORY FROM MAC [SERIAL_NUMBER]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="SUBMIT INVENTORY FROM MAC [SERIAL_NUMBER]"
 # shows the phrase

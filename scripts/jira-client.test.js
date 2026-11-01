@@ -309,7 +309,7 @@ test('verify-create proves the human-created request by an independent GET and f
     await t.test(name, async () => {
       const queue = queuedFetch([response]);
       const result = await invoke(argv, { fetch: queue.fetch });
-      assert.equal(result.code, 2);
+      assert.equal(result.code, name === 'missing immutable id' || name === 'no creation time' ? 5 : 2); // batch G4, task D1: a field left out is INCONCLUSIVE
       assert.equal(queue.calls.length, 1);
       assert.equal(queue.calls[0].method, 'GET');
       assert.doesNotMatch(result.stdout, /Verified/);
@@ -406,7 +406,7 @@ test('verify-comment proves the comment id, body and visibility and fails closed
     await t.test(name, async () => {
       const queue = queuedFetch([response]);
       const result = await invoke(argv, { fetch: queue.fetch });
-      assert.equal(result.code, 2);
+      assert.equal(result.code, name === 'malformed' ? 5 : 2); // batch G4, task D1: an answer that is not a comment is INCONCLUSIVE
       assert.equal(queue.calls.length, 1);
       assert.doesNotMatch(result.stdout + result.stderr, /synthetic-comment-sentinel/);
       assert.doesNotMatch(result.stdout, /Verified/);

@@ -67,6 +67,7 @@ Options presented:
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the recipient count can pass 10 and delivery cannot be recalled, so the higher class): delivery cannot be recalled reliably
 - **Required confirmation:** Render the displayed integer as `$recipientCount`, then type exactly `RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO ALL $recipientCount LISTED RECIPIENTS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (Defender quarantine: no connector reads it)
 **PORTAL ACTION [quarantine-release-all-portal]:** Re-open the item and stop if the displayed recipient identities or `$recipientCount` drift. Only the exact match authorizes **Release to all recipients** for that list. A single-recipient release uses the separate gate below; neither phrase authorizes the other scope or the reporting option.
 
 <!-- SAFETY GATE [quarantine-release-one-portal] -->
@@ -76,6 +77,7 @@ Options presented:
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): delivery cannot be recalled reliably
 - **Required confirmation:** Type exactly `RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (Defender quarantine: no connector reads it)
 **PORTAL ACTION [quarantine-release-one-portal]:** Only the exact match authorizes **Release to specific recipients** for the named recipient. It never authorizes Release to all.
 
 Allow 5–10 minutes for delivery to the recipient's inbox.
@@ -109,6 +111,7 @@ See `/email-whitelist` for a full comparison of all allow methods and their trad
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): irreversible; the message cannot be released afterward
 - **Required confirmation:** Type exactly `DELETE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (Defender quarantine: no connector reads it)
 **PORTAL ACTION [quarantine-delete-portal]:** For a reviewed phish or malware item, only the exact match authorizes **Delete permanently**. Capture needed evidence first.
 
 ### 7. Set up quarantine notifications (so users get alerted automatically)
@@ -141,6 +144,7 @@ if ([string]$candidate.Name -cne $moduleName -or [string]$candidate.Version -cne
 # Effect: installs one local PowerShell module without changing quarantine state
 # Scope: CurrentUser on this workstation
 # Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible through a separately reviewed Uninstall-Module action
+# Read-back: none, R1: no change record
 $requiredConfirmation = "INSTALL POWERSHELL MODULE $moduleName VERSION $moduleVersionText FROM $repositoryName"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm the local CurrentUser install"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -183,6 +187,7 @@ Write-Host "Recipient-set SHA256: $recipientSetHash"
 # Effect: delivers the reviewed quarantined message to every original recipient
 # Scope: exactly the displayed recipient count for one message identity
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the recipient count can pass 10 and delivery cannot be recalled, so the higher class): delivery cannot be recalled reliably
+# Read-back: none, Defender quarantine: no connector reads it
 $requiredConfirmation = "RELEASE QUARANTINED MESSAGE $messageIdentity TO $($recipients.Count) RECIPIENTS SET SHA256 $recipientSetHash"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm after header and recipient review"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -216,6 +221,7 @@ Write-Host "Message: $messageIdentity; recipient: $recipient"
 # Effect: delivers the reviewed quarantined message to one recipient
 # Scope: one message identity and one verified original recipient
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): delivery cannot be recalled reliably
+# Read-back: none, Defender quarantine: no connector reads it
 $requiredConfirmation = "RELEASE QUARANTINED MESSAGE $messageIdentity TO $recipient"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm after header review"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -245,6 +251,7 @@ Write-Host "Delete target: $($message.Identity); subject and sender reviewed in 
 # Effect: permanently deletes the quarantined message
 # Scope: one reviewed quarantine item
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): irreversible; the message cannot be released afterward
+# Read-back: none, Defender quarantine: no connector reads it
 $requiredConfirmation = "DELETE QUARANTINED MESSAGE $messageIdentity"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

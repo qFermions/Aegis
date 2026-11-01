@@ -1,0 +1,19 @@
+# command: node --test scripts/eval/judged/judge.test.js
+# commit: 9ec6356 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:43Z  node: v24.22.1
+✔ case text and answers appear only inside the data block, between the nonce delimiters (1.334297ms)
+✔ the nonce is redrawn while any case text contains it (0.273611ms)
+✔ schema: the exact shape passes, bare or in a json fence; anything else is refused (0.949834ms)
+✔ correctness is computed from the items: 2, 1 or 0 (0.233155ms)
+✔ caseVerdict: PASS only when every condition holds; each failure is named (0.520843ms)
+✔ invalid judge output is retried exactly once, then INCONCLUSIVE; a valid retry is accepted (180.811587ms)
+✔ the judge runs from a fresh temporary directory outside the repository, removed after, with no tools and its model recorded (40.485723ms)
+✔ the schema description names every rubric row, and the 13 rows hold the README rows in order (0.585815ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 289.047269
+# exit: 0  finished: 2026-10-31T23:57:44Z

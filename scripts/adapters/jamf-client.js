@@ -61,7 +61,8 @@
 // Exit codes: 0 read or verified; 1 refused, input error or missing credentials;
 // 2 the read failed or a verify-* read did not prove the write. Jamf Pro serves one
 // tenant per server and is bound by JAMF_URL, so no read returns exit 3. 4 a verify-* dry
-// run (nothing was read, so nothing is verified).
+// run (nothing was read, so nothing is verified); 5 a verify-* answer that proves nothing
+// either way (INCONCLUSIVE, batch G4 task D1).
 //
 // Facts the lane could not confirm (vendor pages unreachable, docs/aegis/lanes/g2.md),
 // and the safer reading taken here:
@@ -89,7 +90,7 @@
 
 const {
   STATES, EXIT, RefusedError, TripwireError,
-  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit,
+  defineAdapter, createClient, renderResult, exitCodeFor, parseArgs, scanUntrusted, realCalendarTime, dryRunExit, inconclusive,
 } = require('./readonly-contract.js');
 const { cliDeps, recordVerdict, takeChange, changeRefusal } = require('./cli-support.js');
 
@@ -419,8 +420,10 @@ function verdict(command, verified, expected, observed, reason, flags, extra = {
   return out;
 }
 
-function invalid(command, r, error) {
-  return { state: STATES.INVALID_RESPONSE, ok: false, command, status: r.status, attempts: r.attempts, error };
+// An answer that proves nothing either way (batch G4, task D1): INCONCLUSIVE (exit 5), never a
+// pass and never a failed object. Before D1 each was a verdict with verified false (exit 2).
+function unproven(command, expected, observed, reason, flags) {
+  return inconclusive(verdict(command, false, expected, observed, reason, flags), reason);
 }
 
 const isObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -441,23 +444,24 @@ async function readMac(client, command, serial, section, observed, flags) {
   if (!first.ok) return { failure: failed(command, first) };
   flags.push(...first.flags.map((f) => ({ ...f, path: `HARDWARE read ${f.path}` })));
   const list = isObject(first.raw) && Array.isArray(first.raw.results) ? first.raw.results : null;
-  if (!list) return { failure: invalid(command, first, 'the inventory response holds no results list') };
-  if (list.length !== 1) return { reason: `the serial number filter returned ${list.length} computer record(s); exactly one is proof` };
+  if (!list) return { notProof: true, reason: 'the inventory response holds no results list, so this is not proof either way' };
+  if (list.length !== 1) return { notProof: true, reason: `the serial number filter returned ${list.length} computer record(s); exactly one is proof, so this is not proof either way` };
   const rec = isObject(list[0]) ? list[0] : {};
   const seen = isObject(rec.hardware) && typeof rec.hardware.serialNumber === 'string' ? rec.hardware.serialNumber : null;
   observed.serial = seen;
-  if (!seen || seen.toUpperCase() !== serial.toUpperCase()) return { reason: 'the record in the response is not the Mac asked for (its hardware.serialNumber differs or is missing)' };
+  if (!seen) return { notProof: true, reason: 'the record in the response carries no hardware.serialNumber, so this is not proof either way' };
+  if (seen.toUpperCase() !== serial.toUpperCase()) return { reason: 'the record in the response is not the Mac asked for (its hardware.serialNumber differs)' };
   const id = idOf(rec.id);
-  if (!id) return { reason: 'the record carries no computer id' };
+  if (!id) return { notProof: true, reason: 'the record carries no computer id, so this is not proof either way' };
   observed.computerId = id;
 
   const second = await read(client, 'inventory', {}, inventoryQuery(serial, section));
   if (!second.ok) return { failure: failed(command, second) };
   flags.push(...second.flags.map((f) => ({ ...f, path: `${section} read ${f.path}` })));
   const list2 = isObject(second.raw) && Array.isArray(second.raw.results) ? second.raw.results : null;
-  if (!list2) return { failure: invalid(command, second, 'the inventory response holds no results list') };
+  if (!list2) return { notProof: true, reason: 'the inventory response holds no results list, so this is not proof either way' };
   if (list2.length !== 1 || !isObject(list2[0]) || idOf(list2[0].id) !== id) {
-    return { reason: `the ${section} read did not return the same single computer record` };
+    return { notProof: true, reason: `the ${section} read did not return the same single computer record, so this is not proof either way` };
   }
   return { record: list2[0] };
 }
@@ -469,9 +473,9 @@ async function verifyProfile(client, a) {
   const flags = [];
   const mac = await readMac(client, command, a.serial, 'CONFIGURATION_PROFILES', observed, flags);
   if (mac.failure) return mac.failure;
-  if (mac.reason) return verdict(command, false, expected, observed, mac.reason, flags);
+  if (mac.reason) return mac.notProof ? unproven(command, expected, observed, mac.reason, flags) : verdict(command, false, expected, observed, mac.reason, flags);
   const list = mac.record.configurationProfiles;
-  if (!Array.isArray(list)) return verdict(command, false, expected, observed, 'the record holds no configurationProfiles list', flags);
+  if (!Array.isArray(list)) return unproven(command, expected, observed, 'the record holds no configurationProfiles list, so this is not proof either way', flags);
   // Whether the inventory's configurationProfiles[].id is the console profile ID is not
   // confirmed, so an entry is this profile only when its id and its profileIdentifier
   // both match; either one still listed means the profile is not provably gone.
@@ -487,18 +491,19 @@ async function verifyProfile(client, a) {
   observed.identifierListed = entries.some((e) => e.profileIdentifier === a.profileIdentifier);
   observed.listed = entries.some((e) => e.id === a.profileId && e.profileIdentifier === a.profileIdentifier);
   if (!a.absent) {
-    let reason = 'the Mac lists no profile with this id and this profile identifier';
-    if (observed.identifierListed && !observed.listed) reason = 'an entry carries this profile identifier under another id (whether the inventory id is the console profile ID is not confirmed); check the Mac\'s record on screen';
-    else if (observed.idListed && !observed.listed) reason = 'an entry carries this id but not this profile identifier, so it may be another profile';
-    return verdict(command, observed.listed, expected, observed, reason, flags);
+    // an entry with only one of the two (the id or the identifier) may or may not be this
+    // profile, so it proves nothing either way
+    if (!observed.listed && observed.identifierListed) return unproven(command, expected, observed, 'an entry carries this profile identifier under another id (whether the inventory id is the console profile ID is not confirmed), so this is not proof either way; check the Mac\'s record on screen', flags);
+    if (!observed.listed && observed.idListed) return unproven(command, expected, observed, 'an entry carries this id but not this profile identifier, so it may be another profile: this is not proof either way', flags);
+    return verdict(command, observed.listed, expected, observed, 'the Mac lists no profile with this id and this profile identifier', flags);
   }
   if (observed.idListed || observed.identifierListed) return verdict(command, false, expected, observed, 'the Mac still lists the profile (an entry carries its id or its profile identifier)', flags);
   if (observed.entriesWithoutId > 0) {
-    return verdict(command, false, expected, observed, `${observed.entriesWithoutId} listed profile(s) carry no id, so absence is not proven; check the Mac's record on screen`, flags);
+    return unproven(command, expected, observed, `${observed.entriesWithoutId} listed profile(s) carry no id, so absence is not proven either way; check the Mac's record on screen`, flags);
   }
   if (!entries.length || observed.entriesWithoutIdentifier > 0) {
     const counted = entries.length ? `${observed.entriesWithoutIdentifier} of ${entries.length} listed profile(s) carry no profileIdentifier` : 'the list is empty, so no entry carries a profileIdentifier';
-    return verdict(command, false, expected, observed, `${counted}; absence is proven only by a list whose every entry carries one. Check the Mac's record on screen`, flags);
+    return unproven(command, expected, observed, `${counted}; absence is proven only by a list whose every entry carries one, so this is not proof either way. Check the Mac's record on screen`, flags);
   }
   return verdict(command, true, expected, observed, null, flags);
 }
@@ -524,19 +529,19 @@ async function verifyFileVault(client, a) {
   const flags = [];
   const mac = await readMac(client, command, a.serial, 'DISK_ENCRYPTION', observed, flags);
   if (mac.failure) return mac.failure;
-  if (mac.reason) return verdict(command, false, expected, observed, mac.reason, flags);
+  if (mac.reason) return mac.notProof ? unproven(command, expected, observed, mac.reason, flags) : verdict(command, false, expected, observed, mac.reason, flags);
   const de = mac.record.diskEncryption;
-  if (!isObject(de)) return verdict(command, false, expected, observed, 'the record holds no diskEncryption section', flags);
+  if (!isObject(de)) return unproven(command, expected, observed, 'the record holds no diskEncryption section, so this is not proof either way', flags);
   const states = findFields(de, isStateKey, 'diskEncryption', []);
   const validations = findFields(de, isValidationKey, 'diskEncryption', []);
   if (states.length === 1) Object.assign(observed, { fileVaultState: statusWord(states[0].value), fileVaultStateField: states[0].field });
   if (validations.length === 1) Object.assign(observed, { keyValidation: statusWord(validations[0].value), keyValidationField: validations[0].field });
-  if (states.length !== 1) return verdict(command, false, expected, observed, `found ${states.length} FileVault state field(s); exactly one is proof (field names are not confirmed, check Disk Encryption on screen)`, flags);
-  if (validations.length !== 1) return verdict(command, false, expected, observed, `found ${validations.length} personal recovery key validation field(s); exactly one is proof (check Personal Recovery Key Validation on screen)`, flags);
-  const enabled = /^encrypted$/i.test(states[0].value);
+  if (states.length !== 1) return unproven(command, expected, observed, `found ${states.length} FileVault state field(s); exactly one is proof, so this is not proof either way (field names are not confirmed, check Disk Encryption on screen)`, flags);
+  // a state that is not ENCRYPTED is an answer, whatever the key fields show
+  if (!/^encrypted$/i.test(states[0].value)) return verdict(command, false, expected, observed, 'FileVault is not reported as ENCRYPTED', flags);
+  if (validations.length !== 1) return unproven(command, expected, observed, `found ${validations.length} personal recovery key validation field(s); exactly one is proof, so this is not proof either way (check Personal Recovery Key Validation on screen)`, flags);
   const valid = /^valid$/i.test(validations[0].value);
-  const reason = !enabled ? 'FileVault is not reported as ENCRYPTED' : 'the personal recovery key is not reported as VALID (it is escrowed at an inventory update)';
-  return verdict(command, enabled && valid, expected, observed, reason, flags);
+  return verdict(command, valid, expected, observed, 'the personal recovery key is not reported as VALID (it is escrowed at an inventory update)', flags);
 }
 
 async function verifyCheckedIn(client, a) {
@@ -546,12 +551,12 @@ async function verifyCheckedIn(client, a) {
   const flags = [];
   const mac = await readMac(client, command, a.serial, 'GENERAL', observed, flags);
   if (mac.failure) return mac.failure;
-  if (mac.reason) return verdict(command, false, expected, observed, mac.reason, flags);
+  if (mac.reason) return mac.notProof ? unproven(command, expected, observed, mac.reason, flags) : verdict(command, false, expected, observed, mac.reason, flags);
   const g = mac.record.general;
-  if (!isObject(g)) return verdict(command, false, expected, observed, 'the record holds no general section', flags);
+  if (!isObject(g)) return unproven(command, expected, observed, 'the record holds no general section, so this is not proof either way', flags);
   const time = (v) => (typeof v === 'string' && Number.isFinite(Date.parse(v)) ? v : null);
   Object.assign(observed, { lastContactTime: time(g.lastContactTime), reportDate: time(g.reportDate), mdmCapable: isObject(g.mdmCapable) && typeof g.mdmCapable.capable === 'boolean' ? g.mdmCapable.capable : null });
-  if (!observed.lastContactTime) return verdict(command, false, expected, observed, 'the record shows no lastContactTime', flags);
+  if (!observed.lastContactTime) return unproven(command, expected, observed, 'the record shows no lastContactTime, so this is not proof either way', flags);
   const ok = Date.parse(observed.lastContactTime) >= Date.parse(a.notBefore);
   return verdict(command, ok, expected, observed, `the last contact is not at or after ${a.notBefore}; ask the person to open the Mac and run a check-in, then read again`, flags);
 }
@@ -562,12 +567,15 @@ async function verifyCommand(client, a) {
   const notBefore = Date.parse(a.notBefore);
   const observed = { managementId: a.managementId, commandType: a.type, profileIdentifier: a.profileIdentifier || null, pagesRead: 0, commandsRead: 0, match: null, sameTypeSinceNotBefore: [], otherProfileCommands: 0 };
   const flags = [];
+  // a matching command still Pending (not yet acknowledged, not failed) may yet be acknowledged
+  let pending = 0;
+  let undated = 0;
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const r = await read(client, 'mdmCommands', {}, { filter: commandFilter(a.managementId, a.type, a.profileIdentifier), page: String(page) });
     if (!r.ok) return failed(command, r);
     flags.push(...r.flags.map((f) => ({ ...f, path: `page ${page} ${f.path}` })));
     const list = isObject(r.raw) && Array.isArray(r.raw.results) ? r.raw.results : null;
-    if (!list) return invalid(command, r, 'the MDM command response holds no results list');
+    if (!list) return unproven(command, expected, observed, 'the MDM command response holds no results list, so this is not proof either way', flags);
     observed.pagesRead = page + 1;
     for (const c of list) {
       if (!isObject(c)) continue;
@@ -578,20 +586,38 @@ async function verifyCommand(client, a) {
       // even when the server ignores the profileIdentifier part of the filter.
       if (a.profileIdentifier && c.profileIdentifier !== a.profileIdentifier) { observed.otherProfileCommands += 1; continue; }
       const sent = typeof c.dateSent === 'string' ? Date.parse(c.dateSent) : NaN;
-      if (!Number.isFinite(sent) || sent < notBefore) continue;
+      // an Acknowledged or Pending command whose dateSent cannot be read may be the one asked
+      // for: it is counted, not skipped (code review round 2 of batch G4, finding 4)
+      if (!Number.isFinite(sent)) {
+        if (typeof c.status === 'string' && /^(?:acknowledged|pending)$/i.test(c.status)) undated += 1;
+        continue;
+      }
+      if (sent < notBefore) continue;
       const summary = { uuid: orNull(c.uuid), command: c.command, profileIdentifier: orNull(c.profileIdentifier), status: orNull(c.status), dateSent: c.dateSent, dateCompleted: orNull(c.dateCompleted) };
       if (typeof c.status === 'string' && /^acknowledged$/i.test(c.status)) {
         observed.match = summary;
         return verdict(command, true, expected, observed, null, flags);
       }
+      if (typeof c.status === 'string' && /^pending$/i.test(c.status)) pending += 1;
       if (observed.sameTypeSinceNotBefore.length < MAX_SUMMARIES) observed.sameTypeSinceNotBefore.push(summary);
     }
     if (list.length < PAGE_SIZE) {
       const forProfile = a.profileIdentifier ? ` for profile ${a.profileIdentifier}` : '';
-      return verdict(command, false, expected, observed, `no ${a.type} command${forProfile} for this Mac sent at or after ${a.notBefore} reads Acknowledged`, flags);
+      const none = `no ${a.type} command${forProfile} for this Mac sent at or after ${a.notBefore} reads Acknowledged`;
+      // a command the Mac has not answered yet proves nothing either way, as a Fleet run not
+      // reported yet does; a failed command, or none, is a failed object (code review round 1
+      // of batch G4, finding 12)
+      // the undated count is set whenever undated records exist, and the reason names both a
+      // Pending command and an undated one when both are seen (code review round 3 of batch G4,
+      // finding 15)
+      if (undated) observed.undatedCommands = undated;
+      const undatedWhy = `${undated} Acknowledged or Pending command${undated === 1 ? '' : 's'} for this Mac ha${undated === 1 ? 's' : 've'} a dateSent that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the command asked for`;
+      if (pending) return unproven(command, expected, observed, `${none}, and ${pending} still read${pending === 1 ? 's' : ''} Pending: the Mac has not answered yet${undated ? `; and ${undatedWhy}` : ''}, so this is not proof either way; read again after its next check-in`, flags);
+      if (undated) return unproven(command, expected, observed, `${none}, and ${undatedWhy}: this is not proof either way`, flags);
+      return verdict(command, false, expected, observed, none, flags);
     }
   }
-  return verdict(command, false, expected, observed, `stopped after ${MAX_PAGES} pages without proof`, flags);
+  return unproven(command, expected, observed, `stopped after ${MAX_PAGES} pages without proof either way`, flags);
 }
 
 async function verifyGroupCount(client, a) {
@@ -606,13 +632,13 @@ async function verifyGroupCount(client, a) {
   if (Array.isArray(json)) candidates.push(['(the response)', json]);
   else if (isObject(json)) for (const key of ['members', 'results', 'computers']) if (Array.isArray(json[key])) candidates.push([key, json[key]]);
   if (candidates.length !== 1) {
-    return verdict(command, false, expected, observed, `found ${candidates.length} member list(s) in the response; exactly one is proof (the response shape is not confirmed)`, r.flags);
+    return unproven(command, expected, observed, `found ${candidates.length} member list(s) in the response; exactly one is proof, so this is not proof either way (the response shape is not confirmed)`, r.flags);
   }
   const [field, list] = candidates[0];
   Object.assign(observed, { members: list.length, listField: field });
   if (isObject(json) && json.totalCount !== undefined) observed.totalCount = json.totalCount;
   if (observed.totalCount !== null && observed.totalCount !== list.length) {
-    return verdict(command, false, expected, observed, `the response is paged (totalCount ${observed.totalCount}, ${list.length} listed); a partial list is not a count`, r.flags);
+    return unproven(command, expected, observed, `the response is paged (totalCount ${observed.totalCount}, ${list.length} listed); a partial list is not a count, so this is not proof either way`, r.flags);
   }
   return verdict(command, list.length === a.expect, expected, observed, `the group has ${list.length} member(s), not ${a.expect}`, r.flags);
 }
@@ -639,7 +665,7 @@ async function verifyPolicy(client, a) {
   const r = await read(client, 'policy', { id: a.id }, {});
   if (!r.ok) return failed(command, r);
   const policy = isObject(r.data) && isObject(r.data.policy) ? r.data.policy : null;
-  if (!policy) return verdict(command, false, expected, observed, 'the response holds no policy', r.flags);
+  if (!policy) return unproven(command, expected, observed, 'the response holds no policy, so this is not proof either way', r.flags);
   const general = isObject(policy.general) ? policy.general : {};
   observed.policyId = idOf(general.id);
   observed.enabled = typeof general.enabled === 'boolean' ? general.enabled : null;
@@ -648,9 +674,12 @@ async function verifyPolicy(client, a) {
     if (/^trigger/i.test(key) && (typeof value === 'string' || typeof value === 'boolean')) observed.triggers[key] = value;
   }
   observed.scope = summariseScope(policy.scope);
-  if (observed.policyId === null) return verdict(command, false, expected, observed, `the response carries no general.id, so it cannot be tied to policy ${a.id}`, r.flags);
+  if (observed.policyId === null) return unproven(command, expected, observed, `the response carries no general.id, so it cannot be tied to policy ${a.id}: this is not proof either way`, r.flags);
   if (observed.policyId !== a.id) return verdict(command, false, expected, observed, 'the policy in the response is not the policy asked for', r.flags);
+  // reasons: what the policy shows is not as expected; unknown: what it does not show, which
+  // proves nothing either way unless a shown value already fails (batch G4, task D1)
   const reasons = [];
+  const unknown = [];
   if (a.trigger) {
     const want = triggerKey(a.trigger);
     const hit = Object.entries(observed.triggers).some(([key, value]) => (typeof value === 'string' && value === a.trigger) || (value === true && key.toLowerCase() === want));
@@ -658,26 +687,34 @@ async function verifyPolicy(client, a) {
   }
   if (a.frequency && observed.frequency !== a.frequency) reasons.push(`the frequency is not "${a.frequency}" (names match exactly)`);
   if (a.enabled !== undefined && observed.enabled !== a.enabled) {
-    reasons.push(observed.enabled === null ? 'the policy carries no general.enabled yes/no value' : `the policy is ${observed.enabled ? 'enabled' : 'disabled'}, not ${a.enabled ? 'enabled' : 'disabled'}`);
+    if (observed.enabled === null) unknown.push('the policy carries no general.enabled yes/no value');
+    else reasons.push(`the policy is ${observed.enabled ? 'enabled' : 'disabled'}, not ${a.enabled ? 'enabled' : 'disabled'}`);
   }
-  if (a.noTriggers) reasons.push(...noTriggerReasons(general));
-  return verdict(command, reasons.length === 0, expected, observed, reasons.join('; '), r.flags);
+  if (a.noTriggers) {
+    const t = noTriggerReasons(general);
+    reasons.push(...t.reasons);
+    unknown.push(...t.unknown);
+  }
+  if (!reasons.length && unknown.length) return unproven(command, expected, observed, `${unknown.join('; ')}; this is not proof either way`, r.flags);
+  return verdict(command, reasons.length === 0, expected, observed, [...reasons, ...unknown].join('; '), r.flags);
 }
 
 // "No trigger ticked" (a Self Service-only policy): every trigger_ yes/no field is false
 // and trigger_other, the custom event, is present and empty. A missing field is not
 // proof, because a ticked trigger turns a Self Service item into an automatic install.
+// reasons: a ticked trigger, which the policy shows; unknown: a field it does not show or that
+// cannot be read, which proves nothing either way (batch G4, task D1).
 function noTriggerReasons(general) {
   const fields = Object.entries(general).filter(([key]) => /^trigger_/i.test(key));
-  const reasons = [];
-  if (!fields.some(([, value]) => typeof value === 'boolean')) reasons.push('the policy carries no trigger_ yes/no fields, so "no trigger ticked" is not proven');
+  const unknown = [];
+  if (!fields.some(([, value]) => typeof value === 'boolean')) unknown.push('the policy carries no trigger_ yes/no fields, so "no trigger ticked" is not proven');
   const other = fields.find(([key]) => key.toLowerCase() === 'trigger_other');
-  if (!other || typeof other[1] !== 'string') reasons.push('the policy carries no trigger_other text, so a custom event trigger cannot be ruled out');
+  if (!other || typeof other[1] !== 'string') unknown.push('the policy carries no trigger_other text, so a custom event trigger cannot be ruled out');
   const unreadable = fields.filter(([, value]) => typeof value !== 'boolean' && typeof value !== 'string').map(([key]) => key);
-  if (unreadable.length) reasons.push(`trigger field(s) ${unreadable.join(', ')} hold neither yes/no nor text`);
+  if (unreadable.length) unknown.push(`trigger field(s) ${unreadable.join(', ')} hold neither yes/no nor text`);
   const ticked = fields.filter(([, value]) => value === true || (typeof value === 'string' && value.trim() !== '')).map(([key]) => key);
-  if (ticked.length) reasons.push(`trigger(s) ticked: ${ticked.join(', ')}`);
-  return reasons;
+  const reasons = ticked.length ? [`trigger(s) ticked: ${ticked.join(', ')}`] : [];
+  return { reasons, unknown };
 }
 
 const VERIFY = Object.freeze({
@@ -777,4 +814,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { SPEC, run, KEY_LIKE, SECRET_PATH, stripKeyLike, checkRoutes };
+module.exports = { SPEC, run, KEY_LIKE, SECRET_PATH, stripKeyLike, checkRoutes, COMMANDS };

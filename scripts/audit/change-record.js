@@ -108,47 +108,126 @@ function checkReadBack(readBack) {
   }
 }
 
-// The read-back lines a gate's runbook runs under --change: in the gate's section, or named
-// "read-back of [gate]" in the comment above (the change-binding pin test reads them the same
-// way). A named read-back must be one of those lines' read-backs, in the form the line runs, so
-// a removal gate whose line runs with --absent is never opened for a presence read, of its own
-// command or of another connector's (batch G3 close-out 3, owner decision H1, and security review
-// 1). A gate whose runbook binds no read-back takes no change record (code review round 1,
-// finding 5).
+// The read-back lines a gate's runbook runs under --change. A named read-back must be one of those
+// lines' read-backs, in the form the line runs, so a removal gate whose line runs with --absent is
+// never opened for a presence read, of its own command or of another connector's (batch G3
+// close-out 3, owner decision H1, and security review 1). A gate whose runbook binds no read-back
+// takes no change record (code review round 1, finding 5).
+// Since batch G4 (task D2, the owner's words: "Change records read that line instead of inferring
+// the binding from where a line sits") a gate binds exactly the commands its own Read-back field
+// names; the section a line sits in and a "read-back of [gate]" comment above it bind nothing. The
+// field names each command as its runbook line runs it, from the client file to `--execute`
+// (`okta-client.js verify-group-member ... --absent --change [CHANGE_ID] --execute`): the line
+// without its `node scripts/` path, so no check that reads the lines a runbook runs (this module's,
+// the change-binding pin's, the adapters' dry runs) reads a field as one. The field is the last
+// field line of the gate: `- **Read-back:** \`cmd\`; \`cmd\`` or `- **Read-back:** none (<reason>)` in
+// the portal form, `# Read-back: cmd` or `# Read-back: none, <reason>` in the fenced form, where a
+// comment in a gated bash fence may hold no backtick, semicolon or parenthesis
+// (command-safety-gates.test.js). readBackProblems names what breaks that contract.
 const RUNBOOK_LINE = /node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-z0-9-]+)([^`\n]*)/;
 const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
 // the gates a comment names a read-back for: "read-back of [a]", or of several, "[a], [b] or
-// [c]" (code review round 1 of the batch G3 close-out 3, finding 1: only the first was read)
+// [c]" (code review round 1 of the batch G3 close-out 3, finding 1: only the first was read). Since
+// D2 it binds nothing; the change-binding pin test still reads the comment to class a line.
 const NAMED_FOR = /^# [^\n]*\bread-back of (\[[a-z0-9-]+\](?:(?:,? or |,? and |, )\[[a-z0-9-]+\])*)/;
 const namedGates = (comment) => {
   const m = String(comment || '').match(NAMED_FOR);
   return m ? [...m[1].matchAll(/\[([a-z0-9-]+)\]/g)].map((x) => x[1]) : null;
 };
-// every read-back line a runbook binds with --change, with the gates it proves: the gates its
-// comment names, else the gate whose section it sits in (pass-flags.test.js reads them the same way)
-function boundReadBacks(text) {
+const GATE_MARK = /^<!-- SAFETY GATE \[([^\]]+)\] -->$|^# SAFETY GATE \[([^\]]+)\]$/;
+const PORTAL_FIELD = /^- \*\*([A-Za-z -]+):\*\* (.*)$/;
+const FENCED_FIELD = /^# ([A-Z][A-Za-z -]+): (.*)$/;
+const COMMAND = /^[a-z]+-client\.js verify-[a-z0-9-]+ [^`]* --execute$/;
+// how a field names a line's command: without its `node scripts/` path
+const fieldFormOf = (command) => command.replace(/^node scripts\/(?:adapters\/)?/, '');
+// a gate's Read-back field names commands; it is not a line that runs one
+const READ_BACK_FIELD = /^(?:- \*\*Read-back:\*\* |# Read-back: )/;
+const PORTAL_NONE = /^none \((.+)\)$/;
+const FENCED_NONE = /^none, (.+)$/;
+// the class a Reversibility line gives: the highest R before any mention of a separate gate
+// (gate-r-class.test.js reads it the same way)
+const rClassOf = (rev) => (rev === null ? null : (rev.split(/\bseparate\b/)[0].match(/\bR[0-3]\b/g) || []).sort().pop() || null);
+// a Read-back field's value: { none: reason } or { commands: [...] }, or null when it is in neither form
+function parseReadBackField(value, portal) {
+  const none = value.match(portal ? PORTAL_NONE : FENCED_NONE);
+  if (none) return { none: none[1], commands: [] };
+  const commands = portal ? (/^`[^`]+`(?:; `[^`]+`)*$/.test(value) ? value.slice(1, -1).split('`; `') : null) : [value];
+  return commands && commands.every((c) => COMMAND.test(c)) ? { none: null, commands } : null;
+}
+// every SAFETY GATE of a runbook: id, line, form, R class and its Read-back field (null when it has
+// none; { line, none, commands, malformed } otherwise), read from the gate's consecutive field lines
+function gateFields(text) {
   const lines = text.split('\n');
-  const found = [];
-  let current = null;
+  const gates = [];
   lines.forEach((l, i) => {
-    if (/^## /.test(l)) current = null;
-    const g = l.match(/<!-- SAFETY GATE \[([^\]]+)\] -->|^# SAFETY GATE \[([^\]]+)\]/);
-    if (g) current = g[1] || g[2];
+    const m = l.match(GATE_MARK);
+    if (!m) return;
+    const portal = Boolean(m[1]);
+    const gate = { id: m[1] || m[2], line: i + 1, portal, rClass: null, readBack: null, readBacks: 0 };
+    let rev = null;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const f = lines[j].match(portal ? PORTAL_FIELD : FENCED_FIELD);
+      if (!f) break;
+      if (f[1] === 'Reversibility') rev = f[2];
+      if (f[1] !== 'Read-back') continue;
+      gate.readBacks += 1;
+      const parsed = parseReadBackField(f[2], portal);
+      gate.readBack = { line: j + 1, value: f[2], malformed: !parsed, none: parsed ? parsed.none : null, commands: parsed ? parsed.commands : [] };
+    }
+    gate.rClass = rClassOf(rev);
+    gates.push(gate);
+  });
+  return gates;
+}
+// the read-back a runbook line runs, from its `node scripts/` to `--execute` (to the end of the
+// span when it has no --execute, so it matches no field); a prose line may name a plain read first
+function commandOf(line) {
+  const rest = line.slice(line.match(RUNBOOK_LINE).index);
+  const end = rest.indexOf(' --execute');
+  return end >= 0 ? rest.slice(0, end + ' --execute'.length) : rest.split('`')[0].trim();
+}
+// every read-back line a runbook binds with --change, with the gates it proves: the gates whose
+// Read-back field names its command (pass-flags.test.js reads them through this function)
+function boundReadBacks(text) {
+  const named = new Map();
+  for (const g of gateFields(text)) for (const c of g.readBack ? g.readBack.commands : []) named.set(c, [...(named.get(c) || []), g.id]);
+  const found = [];
+  text.split('\n').forEach((l, i) => {
     const m = l.match(RUNBOOK_LINE);
-    if (!m || !/--change \[CHANGE_ID\]/.test(l)) return;
-    const gates = namedGates(lines[i - 1]) || (current ? [current] : []);
-    found.push({ line: i + 1, gates, kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)] });
+    if (!m || !/--change \[CHANGE_ID\]/.test(l) || READ_BACK_FIELD.test(l)) return;
+    const command = commandOf(l);
+    found.push({ line: i + 1, gates: named.get(fieldFormOf(command)) || [], command, kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)] });
   });
   return found;
 }
 const gateReadBacks = (text, gate) => boundReadBacks(text).filter((b) => b.gates.includes(gate));
+// What breaks the Read-back contract in one runbook (batch G4, task D2), one sentence each: a gate
+// with no Read-back field or with two, a field in neither form, an R0 or R1 gate whose field names a
+// command (an R1 change takes no change record), a field naming a command no line of the runbook
+// runs with --change, and a line run with --change that no gate's field names.
+function readBackProblems(text) {
+  const problems = [];
+  const gates = gateFields(text);
+  const runs = new Set(boundReadBacks(text).map((b) => fieldFormOf(b.command)));
+  for (const g of gates) {
+    const at = `${g.id} (${g.rClass || 'no class'}, line ${g.line})`;
+    if (!g.readBack) { problems.push(`${at}: no Read-back field; name the verify-* read-back that proves it, or none with the reason`); continue; }
+    if (g.readBacks > 1) problems.push(`${at}: ${g.readBacks} Read-back fields; a gate has one`);
+    if (g.readBack.malformed) { problems.push(`${at}: its Read-back field is not one of the two forms (${g.portal ? '`cmd`; `cmd` or none (<reason>)' : 'one command or none, <reason>'}): ${g.readBack.value.slice(0, 120)}`); continue; }
+    if (g.readBack.commands.length && g.rClass !== 'R2' && g.rClass !== 'R3') problems.push(`${at}: its Read-back field names a command, but an ${g.rClass || 'unclassed'} change takes no change record; write none (${g.rClass}: no change record)`);
+    for (const c of g.readBack.commands) if (!runs.has(c)) problems.push(`${at}: its Read-back field names ${c}, which no line of the runbook runs with --change [CHANGE_ID]`);
+  }
+  for (const b of boundReadBacks(text)) if (!b.gates.length) problems.push(`line ${b.line}: ${b.command} runs with --change [CHANGE_ID], but no gate's Read-back field names it`);
+  return problems;
+}
 // a runbook line's pass flags: name to the value it writes (null for a switch)
 function lineFlags(kind, argv) {
   const rules = audit.PASS_FLAGS[kind];
   const flags = new Map();
   for (let i = 1; i < argv.length; i += 1) {
     const name = argv[i].startsWith('--') ? argv[i].slice(2) : null;
-    if (name && hasOwn(rules, name)) flags.set(name, rules[name] === audit.SWITCH ? null : argv[i + 1]);
+    // a time bound is named bare: its value is chosen when the read-back runs (batch G4, task A3)
+    if (name && hasOwn(rules, name)) flags.set(name, rules[name] === audit.SWITCH || rules[name] === audit.TIME ? null : argv[i + 1]);
   }
   return flags;
 }
@@ -211,10 +290,57 @@ const COUNT_LINE = /^Count: ([1-9][0-9]{0,4})$/;
 // one, and it must be exactly Count: N. A script comment that says count: is refused too, the
 // fail-safe side (code review round 1 of the batch G3 close-out 3, finding 12; round 2, finding 5;
 // round 3, finding 4: a list of shapes to strip always missed one).
-const COUNT_ANY = /(?<![a-z0-9])count(?![a-z0-9])[^a-z0-9\n]{0,8}:/i;
-const visible = (l) => l.normalize('NFKC').replace(/[\u200b-\u200f\u2060\ufeff]/g, '');
+const COUNT_ANY = /(?<![a-z0-9])count(?![a-z0-9])[^a-z0-9\n]{0,8}:/gi;
+// Batch G4, task A1 (security review 2's O1 on PR #9): a format character, a combining mark or a
+// look-alike letter disguised a count line, and a real count hidden in an HTML comment was the one
+// read. The text is folded before matching: compatibility decomposition, every \p{Cf} (format:
+// zero width, soft hyphen, bidi, tag), \p{Mn} and \p{Me} (combining marks) character removed, then
+// composed again, so a mark is dropped before it can merge with its letter (NFKC alone turns o plus
+// a diaeresis into one letter that is not o). Colons Unicode lists as confusable and NFKC leaves
+// alone are read as colons.
+// Code review round 1 of batch G4, finding 11: every \p{Default_Ignorable_Code_Point} character is
+// removed too, as format characters are. Those that are neither format characters nor marks (the
+// Hangul fillers U+3164, U+115F, U+1160 and U+FFA0, which are letters, and the unassigned ones such
+// as U+2065 and U+FFF0) render as nothing, and survived the fold inside a disguised count keyword.
+const fold = (s) => s.normalize('NFKD').replace(/[\p{Cf}\p{Mn}\p{Me}\p{Default_Ignorable_Code_Point}]/gu, '').normalize('NFKC')
+  .replace(/[\u02d0\u02f8\u0589\u05c3\u16ec\u2236\ua789]/g, ':');
+// A five-letter word before a colon, with a letter outside A to Z where every A to Z letter is the
+// letter of "count" at its place (Cyrillic or Greek look-alikes, a small capital), is a disguised
+// count keyword: refused, never read as a count (the fail-safe side: a five-letter word wholly in
+// another script before a colon is refused too).
+const WORD_BEFORE_COLON = /(?<![\p{L}\p{N}])(\p{L}{5})(?![\p{L}\p{N}])[^\p{L}\p{N}\n]{0,8}:/gu;
+const disguisedCount = (word) => {
+  const letters = [...word];
+  return letters.length === 5 && letters.some((c) => !/[A-Za-z]/.test(c))
+    && letters.every((c, i) => !/[A-Za-z]/.test(c) || c.toLowerCase() === 'count'[i]);
+};
+// Regions a reader of the rendered procedure does not see: an HTML comment (to its end, or to the end
+// of the text when it is not closed), a template, script, style or noscript element, an element
+// marked hidden or styled display: none or visibility: hidden, and a Markdown reference line used
+// as a comment ([//]: # (...)). A count in one is refused, so the count is always in view.
+const HIDDEN = [
+  /<!--[\s\S]*?(?:-->|$(?![\s\S]))/g,
+  /<(template|script|style|noscript)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$(?![\s\S]))/gi,
+  /<([a-z][a-z0-9-]*)\b[^>]*?(?:\shidden\b|\sstyle\s*=\s*["'][^"']*(?:display\s*:\s*none|visibility\s*:\s*hidden))[^>]*>[\s\S]*?(?:<\/\1\s*>|$(?![\s\S]))/gi,
+  /^[ \t]{0,3}\[[^\]\n]*\]:[ \t]*(?:#|<>)[^\n]*$/gm,
+];
 function checkCount(text, expected) {
-  const lines = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, '')).filter((l) => COUNT_ANY.test(visible(l)));
+  const raw = String(text).replace(/\r\n?/g, '\n').split('\n').map((l) => l.replace(/[ \t]+$/, ''));
+  const folded = fold(raw.join('\n'));
+  const hidden = HIDDEN.flatMap((re) => [...folded.matchAll(re)].map((m) => [m.index, m.index + m[0].length]));
+  const lineAt = (i) => folded.slice(0, i).split('\n').length - 1;
+  const found = new Set();
+  for (const m of folded.matchAll(COUNT_ANY)) found.add(m.index);
+  const disguised = [...folded.matchAll(WORD_BEFORE_COLON)].filter((m) => disguisedCount(m[1])).map((m) => m.index);
+  // a hidden count first: in the O1 case the hidden line is the one that would have been read
+  for (const at of [...found, ...disguised]) {
+    if (hidden.some(([from, to]) => at >= from && at < to)) {
+      throw new InputError(`line ${lineAt(at) + 1} of the saved procedure holds a count inside an HTML comment or another hidden region, where the approver does not see it; the count is the one visible line Count: N`);
+    }
+  }
+  if (disguised.length) throw new InputError(`line ${lineAt(disguised[0]) + 1} of the saved procedure is a count line whose keyword holds a letter outside the Latin letters A to Z (a look-alike of Count); write the count as the one visible line Count: N`);
+  const lineNumbers = new Set([...found].map(lineAt));
+  const lines = [...lineNumbers].map((n) => raw[n]);
   if (lines.length !== 1 || !COUNT_LINE.test(lines[0])) {
     throw new InputError('the saved procedure of a counted gate carries one line Count: N, the number in the ticket, so the approval covers it');
   }
@@ -224,6 +350,36 @@ function checkCount(text, expected) {
 
 class InputError extends Error {}
 class NotDone extends Error {}
+
+// The first time bound a read-back ran with that is earlier than the change's approval, or null
+// (batch G4, task A3; D10 on PR #9). A read with --not-before before the approval could pass on a
+// change made before it, so it never proves the change. An approval whose time is missing or does
+// not parse shows no bound to be at or after it, so the first bound is returned with approvedAt
+// null and never proves the change either (code review round 2 of batch G4, finding 11: such an
+// approval used to let any bound through).
+function approvalMs(approval) {
+  const ms = approval && typeof approval.at === 'string' ? Date.parse(approval.at) : NaN;
+  return Number.isFinite(ms) ? ms : null;
+}
+function earlyBound(entry, approval) {
+  if (!approval) return null;
+  const approvedMs = approvalMs(approval);
+  for (const [name, ms] of audit.timeBounds(entry)) {
+    if (approvedMs === null) return { flag: name, value: new Date(ms).toISOString(), approvedAt: null };
+    if (ms < approvedMs) return { flag: name, value: new Date(ms).toISOString(), approvedAt: approval.at };
+  }
+  return null;
+}
+const UNREADABLE_APPROVAL = 'the approval\'s time could not be read from the trail';
+const earlyReason = (e) => (e.approvedAt === null
+  ? `ran with --${e.flag} ${e.value}, but ${UNREADABLE_APPROVAL}, so nothing shows the bound to be at or after the approval and it never proves the change; open a new change with node scripts/audit/change-record.js open`
+  : `ran with --${e.flag} ${e.value}, earlier than the approval at ${e.approvedAt}, so it could pass on a change made before the approval; run it again with --${e.flag} at or after ${e.approvedAt}`);
+// whether a named read-back carries a time bound, so the steps say when it may start
+const timeBoundOf = (readBack) => {
+  const { kind, values } = audit.parseReadBack(readBack);
+  const rules = audit.PASS_FLAGS[kind] || {};
+  return [...values.keys()].find((name) => rules[name] === audit.TIME) || null;
+};
 
 // The digest of an issued procedure: CR LF to LF, trailing spaces and tabs removed from
 // each line, trailing newlines removed, so a copy saved by another editor still matches.
@@ -286,7 +442,7 @@ function changeView(log, change, entries = null) {
   if (view.stale) view.missing.push(view.stale);
   const approvals = all.filter((e) => e.kind === 'approval' && e.change === change && e.seq > procedure.seq);
   const approval = approvals.find((e) => e.procedure_sha256 === procedure.procedure_sha256);
-  if (approval) view.approval = { seq: approval.seq, ref: approval.ref, matches: true };
+  if (approval) view.approval = { seq: approval.seq, ref: approval.ref, at: approval.at, matches: true };
   else if (approvals.length) {
     view.approval = { seq: approvals[0].seq, ref: approvals[0].ref, matches: false };
     view.missing.push('the approved digest does not match the procedure Aegis issued, so the approval does not cover it');
@@ -304,13 +460,15 @@ function changeView(log, change, entries = null) {
   // the same read-back run with the same pass flags (batch G3 close-out 3, owner decision H1)
   const ofKind = linked.filter((e) => readBackOf(e) === procedure.read_back);
   const readBacks = ofKind.filter((e) => e.change === change);
-  const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq);
+  const proving = readBacks.find((e) => e.verified === true && approval && e.seq > approval.seq && !earlyBound(e, approval));
+  const early = approval ? readBacks.filter((e) => e.verified === true && e.seq > approval.seq).map((e) => earlyBound(e, approval)).find(Boolean) : null;
   if (proving) view.readBack = { seq: proving.seq, connector: proving.connector, command: proving.command, verified: true };
   else if (!readBacks.length && !linked.length && taken.length) view.missing.push(`the linked read-back already proves ${owner.get(taken[0].verify_seq)}; one read-back proves one change`);
   else if (!readBacks.length && ofKind.length) view.missing.push(`the linked read-back was not run with --change ${change}, so it is not bound to this change`);
   else if (!readBacks.length && linked.length) view.missing.push(`the linked read-back is not the one this change names (${procedure.read_back})`);
   else if (!readBacks.length) view.missing.push(`no ${procedure.read_back} read-back is linked to this change`);
   else if (!readBacks.some((e) => e.verified === true)) view.missing.push('the linked read-back did not verify the change');
+  else if (early) view.missing.push(`the linked read-back ${earlyReason(early)}`);
   else if (approval) view.missing.push('the linked read-back ran before the approval, so it does not prove the approved change');
   // with no matching approval, the missing approval above is the reason; no read-back reason
   view.done = view.missing.length === 0;
@@ -355,7 +513,13 @@ function countedView(view, all, change, procedure, approval) {
   // blocks (code review round 3 of the batch G3 close-out 2, finding 1)
   const answered = [];
   for (const e of bound) {
-    if (e.verified !== true && e.state !== 'OK') uncounted.push({ ...brief(e), reason: 'the read got no answer, so it proves nothing about any object' });
+    const early = earlyBound(e, approval);
+    // a time bound earlier than the approval proves nothing about this change (batch G4, task A3)
+    if (early) uncounted.push({ ...brief(e), reason: `it ${earlyReason(early)}` });
+    // an answer that proves nothing either way (batch G4, task D1) is neither a pass nor a failed
+    // object, whatever the kind
+    else if (e.verified !== true && e.state === 'INCONCLUSIVE') uncounted.push({ ...brief(e), reason: 'the read got an answer that proves nothing either way (INCONCLUSIVE), so it is neither a pass nor a failed object' });
+    else if (e.verified !== true && e.state !== 'OK') uncounted.push({ ...brief(e), reason: 'the read got no answer, so it proves nothing about any object' });
     else answered.push(e);
   }
   if (runKind) {
@@ -423,13 +587,42 @@ function staleReadBack(change, procedure) {
     return `change ${change} was not opened by change-record.js open as it now checks (an entry from before the batch G3 close-out 3, or one written around the CLI), and its read-back ${procedure.read_back} fails that check: ${why}; nothing proves it, so open a new change`;
   }
 }
-function bindRefusal(log, change, readBack) {
+// argv: the run's arguments without --change (takeChange's argv). A read-back named with a time
+// bound is refused before any read when a bound it would run with is earlier than the change's
+// approval, and when its arguments are not given, so the bound cannot be checked (batch G4, code
+// review round 1, finding 4: the bare form readBack carries no value, so such a read ran, was
+// recorded verified and was printed as linkable, and only link and status refused it afterwards;
+// those checks stay).
+function bindRefusal(log, change, readBack, argv = null) {
   const view = changeView(log, change);
   if (view.chain !== 'intact') return view.missing[0];
   if (!view.procedure) return `the audit trail holds no change ${change}; open it with node scripts/audit/change-record.js open before the change`;
   if (view.stale) return view.stale;
   if (view.procedure.read_back !== readBack) return `change ${change} is proved by ${view.procedure.read_back}, not by ${readBack}`;
   if (!view.approval || !view.approval.matches) return `change ${change} has no approval of its procedure yet; record it with node scripts/audit/change-record.js approve first`;
+  const bound = timeBoundOf(readBack);
+  if (bound) {
+    if (!Array.isArray(argv)) return `change ${change} is proved by ${readBack}, and the check was not given the run's arguments, so its --${bound} could not be checked against the approval; the read-back is refused`;
+    // fail closed: with no readable approval time no bound can be shown to be at or after it
+    // (code review round 2 of batch G4, finding 11)
+    if (approvalMs(view.approval) === null) return `change ${change} is proved by ${readBack}, but ${UNREADABLE_APPROVAL}, so its --${bound} cannot be checked against the approval and the read-back never proves it; open a new change with node scripts/audit/change-record.js open. Nothing was read or recorded`;
+    const early = earlyRunBound(kindOfReadBack(readBack), argv.map(String), view.approval);
+    if (early) return `the read-back would run with --${early.flag} ${early.value}, earlier than the approval of change ${change} at ${early.approvedAt}, so it could pass on a change made before the approval and never proves it; run it with --${early.flag} at or after ${early.approvedAt}. Nothing was read or recorded`;
+  }
+  return null;
+}
+// The first time bound a run's arguments carry that is earlier than the approval, or null: each
+// occurrence of each time flag, read as the trail records it (passFlags), so a repeated flag cannot
+// hide an early value behind a later one.
+function earlyRunBound(kind, argv, approval) {
+  const rules = audit.PASS_FLAGS[kind] || {};
+  const [connector, command] = kind.split(':');
+  for (let i = 0; i < argv.length; i += 1) {
+    const name = argv[i].startsWith('--') ? argv[i].slice(2) : null;
+    if (!name || !hasOwn(rules, name) || rules[name] !== audit.TIME) continue;
+    const early = earlyBound({ connector, command, flags: audit.passFlags(kind, [argv[i], argv[i + 1]]) }, approval);
+    if (early) return early;
+  }
   return null;
 }
 
@@ -437,7 +630,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   const out = io.out || ((s) => process.stdout.write(s));
   const err = io.err || ((s) => process.stderr.write(s));
   const [command, ...rest] = argv;
-  const log = audit.openAuditLog({ dir: audit.defaultAuditDir(env) });
+  // io.now: a clock for the tests that run the CLI in their own process; the command line never sets it
+  const log = audit.openAuditLog({ dir: audit.defaultAuditDir(env), ...(typeof io.now === 'function' ? { now: io.now } : {}) });
   try {
     const flags = parseFlags(rest);
     if (command === 'open') {
@@ -468,6 +662,8 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
           : expected
             ? `Run the ${named.readBack} read-back with --change ${change} (it refuses to read until this change is approved) and read each of the ${expected} objects once: a re-read of the same object is not detected. status --change ${change} reports "verified k of ${expected}" and is done only when exactly ${expected} read-backs passed after the approval and none failed`
             : `Run the ${named.readBack} read-back with --change ${change} (it refuses to read until this change is approved), then: link --change ${change} --verify-seq <the audit_seq it prints, or N from Jira's "Recorded as audit entry N" line>; status --change ${change} reports done only when all three match`,
+        // batch G4, task A3: a time bound is chosen after the approval
+        ...(timeBoundOf(named.readBack) ? [`Give the read-back --${timeBoundOf(named.readBack)} at or after the approval's time, which approve prints: a read bounded earlier never proves this change`] : []),
       ] }, null, 2)}\n`);
       return 0;
     }
@@ -481,8 +677,15 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       if (flags['procedure-sha256'] !== view.procedure.procedure_sha256) {
         throw new NotDone('the approved digest does not match the procedure Aegis issued; nothing was recorded. Approve the issued procedure, or open a new change for the new text');
       }
-      const r = log.append({ kind: 'approval', ref: flags.ref, gate: view.procedure.gate, procedure_sha256: flags['procedure-sha256'], change: flags.change });
-      out(`${JSON.stringify({ ok: true, change: flags.change, ref: flags.ref, audit_seq: r.seq, note: 'The approval authorizes a person\'s procedure. Aegis makes no change: a person runs it, then the verify-* read-back proves it.' }, null, 2)}\n`);
+      // one approval per change, checked under the write lock so two approvals raced from two
+      // processes cannot both be recorded (batch G4, task A2)
+      const r = log.append({ kind: 'approval', ref: flags.ref, gate: view.procedure.gate, procedure_sha256: flags['procedure-sha256'], change: flags.change }, { guard: (all) => {
+        const earlier = all.find((e) => e.kind === 'approval' && e.change === flags.change);
+        if (earlier) throw new NotDone(`change ${flags.change} already has an approval (audit seq ${earlier.seq}, ${earlier.ref}); one approval per change. Nothing was recorded`);
+      } });
+      const bound = timeBoundOf(view.procedure.read_back);
+      out(`${JSON.stringify({ ok: true, change: flags.change, ref: flags.ref, audit_seq: r.seq, approved_at: r.at, note: 'The approval authorizes a person\'s procedure. Aegis makes no change: a person runs it, then the verify-* read-back proves it.',
+        ...(bound ? { next: `Run the ${view.procedure.read_back} read-back with --change ${flags.change} and --${bound} at or after ${r.at}, the approval's time: a read bounded earlier never proves this change` } : {}) }, null, 2)}\n`);
       return 0;
     }
     if (command === 'link') {
@@ -505,6 +708,9 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
       // batch G3 close-out (owner decision 1): only a read-back run with --change <this id>
       if (target.change === null) throw new NotDone(`that read-back was run without --change, so it is not bound to any change; run it again with --change ${flags.change}. Nothing was recorded`);
       if (target.change !== flags.change) throw new NotDone(`that read-back was recorded for ${target.change}. Nothing was recorded`);
+      // a time bound earlier than the approval (batch G4, task A3)
+      const early = earlyBound(target, view.approval);
+      if (early) throw new NotDone(`that read-back ${earlyReason(early)}. Nothing was recorded`);
       // checked under the write lock, so two links of one read-back cannot both succeed
       const r = log.append({ kind: 'change-link', change: flags.change, verify_seq: seq }, { guard: (all) => {
         const earlier = all.find((e) => e.kind === 'change-link' && e.verify_seq === seq);
@@ -528,6 +734,6 @@ function main(argv = process.argv.slice(2), env = process.env, io = {}) {
   }
 }
 
-module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, namedGates, useRunbooksForTests, main, COUNTED_GATES };
+module.exports = { procedureDigest, changeView, bindRefusal, hasCommandKey, boundReadBacks, sameForm, namedGates, gateFields, readBackProblems, useRunbooksForTests, main, COUNTED_GATES };
 
 if (require.main === module) process.exitCode = main();

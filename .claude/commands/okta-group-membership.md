@@ -98,6 +98,7 @@ Write in the ticket: whether `[UPN]` is a member today, the member count, every 
 - **Reversibility:** R1: undo is the Phase C remove gate under its own phrase; with Deactivate User provisioning on an app the group grants, that undo deactivates the person's account in that app, so it is not a free undo
 - **Required confirmation:** Type exactly `ASSIGN [UPN] TO OKTA GROUP [GROUP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [okta-group-membership-add-person-portal]:** Only after the Phase A pre-state is in the ticket and the exact match:
 1. Okta Admin Console → Directory → Groups → `[GROUP_NAME]` → **Assign people**.
 2. Search for `[UPN]`, use **Assign** in that row, then **Done**.
@@ -133,6 +134,7 @@ node scripts/adapters/okta-client.js verify-app-assigned --app [APP_ID] --user [
 - **Reversibility:** R2: re-adding under the Phase B phrase restores the group's apps, but with Deactivate User provisioning on, the person's account in each such app is deactivated on removal and comes back only when the app is assigned again
 - **Required confirmation:** Type exactly `REMOVE [UPN] FROM OKTA GROUP [GROUP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute`; `okta-client.js verify-app-assigned --app [APP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-group-membership-remove-person-portal]:** Only after Phase A shows no rule naming the group, the checkpoint is saved, and the exact match:
 1. Okta Admin Console → Directory → Groups → `[GROUP_NAME]` → find `[UPN]` among the members → remove the person from the group **[unconfirmed: check in the Okta Admin Console; the help page for this step was not found, so confirm the control's label and the dialog on screen]**.
 
@@ -167,6 +169,7 @@ If the person also holds that app individually or through another group, this re
 - **Reversibility:** R3: deactivating the rule (Phase D3) stops it adding people; whether the people it added stay in the group is **[unconfirmed: check in the Okta Admin Console]**, and with Deactivate User provisioning on, a removal deactivates their external accounts
 - **Required confirmation:** Type exactly `CREATE AND ACTIVATE OKTA GROUP RULE FOR [GROUP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-group-membership-rule-create-portal]:** Only after the prediction, the checkpoint, the written rollback and the independent review are in the ticket, and the exact match:
 1. Okta Admin Console → Directory → Groups → **Rules** tab → **Add Rule**.
 2. Name the rule, set its condition, pick `[GROUP_NAME]` as the group it assigns people to, and save it **[unconfirmed: check in the Okta Admin Console; the field labels were not in the pages read]**.
@@ -192,6 +195,7 @@ This is also the path for taking one person out of a rule-managed group: exclude
 - **Reversibility:** R3: the old condition, saved in the checkpoint, goes back under this same gate with a new review; people moved in between gain or lose the group's apps, and with Deactivate User provisioning on, a removal deactivates their external accounts
 - **Required confirmation:** Type exactly `CHANGE OKTA GROUP RULE [RULE_ID] FOR [GROUP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute`; `okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-group-membership-rule-change-portal]:** Only after both conditions, both counts, the checkpoint, the written rollback and the independent review are in the ticket, and the exact match:
 1. Okta Admin Console → Directory → Groups → **Rules** tab → `[RULE_ID]` → update its condition, target group or exclusions and save **[unconfirmed: check in the Okta Admin Console; the edit control, and whether an active rule must be deactivated before an edit, were not in the pages read]**.
 
@@ -217,6 +221,7 @@ node scripts/adapters/okta-client.js verify-group-member --group [OKTA_GROUP_ID]
 - **Reversibility:** R3: activating the rule again is a new change with a new review; anyone who left the group in between lost its apps, and with Deactivate User provisioning on, their external accounts were deactivated
 - **Required confirmation:** Type exactly `DEACTIVATE OKTA GROUP RULE [RULE_ID] FOR [GROUP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Okta verify-* command reads a group rule: its proof is the read its step names)
 **PORTAL ACTION [okta-group-membership-rule-deactivate-portal]:** Only after the member count, the checkpoint, the written rollback and the independent review are in the ticket, and the exact match:
 1. Okta Admin Console → Directory → Groups → **Rules** tab → `[RULE_ID]` → **Deactivate** **[unconfirmed: check in the Okta Admin Console; the control's label and place were not in the pages read]**.
 
@@ -246,6 +251,7 @@ node scripts/adapters/okta-client.js group-members --group [OKTA_GROUP_ID] --exe
 - **Reversibility:** R3: the rollback is Phase E2 for the same list under its own phrase; with Deactivate User provisioning on an app the group grants, that rollback deactivates each listed person's account in that app
 - **Required confirmation:** Type exactly `ASSIGN [N] PEOPLE TO OKTA GROUP [GROUP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-group-membership-bulk-add-portal]:** Only after the list, `[N]`, the checkpoint, the written rollback and the independent review are in the ticket, and the exact match:
 1. Okta Admin Console → Directory → Groups → `[GROUP_NAME]` → **Assign people**.
 2. Search for each person on the list in turn and click **Assign** in their row, then **Done**; whether the dialog takes several people at once is **[unconfirmed: check in the Okta Admin Console]**.
@@ -269,6 +275,7 @@ node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event group.use
 - **Reversibility:** R3: the rollback is Phase E1 for the same list under its own phrase; with Deactivate User provisioning on, each listed person's account in that app is deactivated on removal and comes back only when the app is assigned again
 - **Required confirmation:** Type exactly `REMOVE [N] PEOPLE FROM OKTA GROUP [GROUP_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `okta-client.js verify-group-member --group [OKTA_GROUP_ID] --user [OKTA_USER_ID] --absent --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-group-membership-bulk-remove-portal]:** Only after the list, `[N]`, the checkpoint, the written rollback and the independent review are in the ticket, and the exact match:
 1. Okta Admin Console → Directory → Groups → `[GROUP_NAME]` → remove each person on the list in turn **[unconfirmed: check in the Okta Admin Console; the help page for removing people from a group was not found]**.
 2. Stop at the first person who cannot be removed: write who was removed and who was not, and go no further.

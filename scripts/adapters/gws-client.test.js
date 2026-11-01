@@ -636,7 +636,7 @@ test('verify-2sv-not-enforced: exit 0 only on a successful read of the named use
   ];
   for (const [label, replies] of notProof) {
     const res = await cli(['verify-2sv-not-enforced', '--user', USER, '--execute'], { replies });
-    assert.equal(res.code, 2, `${label}: ${res.stdout}${res.stderr}`);
+    assert.equal(res.code, /^the field is/.test(label) ? 5 : 2, `${label}: ${res.stdout}${res.stderr}`); // batch G4, task D1: a field left out or not a boolean is INCONCLUSIVE (exit 5)
     const printed = firstJson(res.stdout + res.stderr);
     assert.notEqual(printed.verified, true, `${label}: never verified`);
   }
@@ -709,7 +709,7 @@ test('verify-admin-role-removed: reads the user, then its role assignments; proo
   assert.equal(numeric.code, 2, 'a role ID sent as a JSON number is still the role asked for');
 
   const more = await run([userRecord(), assignmentsList([], { nextPageToken: 'NEXTpage_3' })]);
-  assert.equal(more.code, 2);
+  assert.equal(more.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.match(firstJson(more.stdout).reason, /page/);
 
   const other = await run([userRecord({ primaryEmail: OTHER_USER }), assignmentsList([])]);

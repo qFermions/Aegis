@@ -1,0 +1,24 @@
+# battery for the D2 green commit: run at d91d81c plus the D2 change in the working tree, 2026-11-01T01:31Z, node v24.22.1
+# steps: node --test; the same under NODE_OPTIONS="--require scripts/adapters/socket-tripwire.js"; node scripts/lint/command-structure.js;
+# node scripts/pre-commit-check.js --all; node scripts/harness/release-boundary-check.js; node scripts/eval/{ms,gws,g2,g3}-ticket-eval.js;
+# CLAUDE.md size; SAFETY GATE marker lines (git grep -c over .claude, modules, docs); runbook gates; U+2014 in added lines.
+# The 4 marker lines over the 592 at ad9759a are the two D2 red captures quoting the test names (d2-red.txt, d2-red-2.txt, 2 each);
+# the per-file marker counts in .claude/commands are unchanged. 0 of the 216 WARN lines is on a Read-back field line.
+node-test: exit 0
+tests 1608, pass 1608, fail 0
+node-test-tripwire: exit 0
+tests 1608, pass 1608, fail 0
+lint: exit 0
+clean, structural GUI-first contract holds for every operational/troubleshooting command
+precommit: exit 0
+BLOCK lines 0, WARN lines 216
+release-boundary: exit 0
+RELEASE BOUNDARY: PASS
+eval-ms: exit 0, 28/28 tickets, 6/6 dangerous pairs
+eval-gws: exit 0, 38/38 tickets, 9/9 dangerous pairs
+eval-g2: exit 0, 65/65 tickets, 13/13 dangerous pairs
+eval-g3: exit 0, 44/44 tickets, 8/8 dangerous pairs
+CLAUDE.md bytes: 19202
+SAFETY GATE marker lines in .claude, modules, docs: 596 (592 at ad9759a)
+runbook gates: 343 (343 at ad9759a)
+U+2014 in lines added: 0

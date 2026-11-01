@@ -1,0 +1,72 @@
+charter grep: 550 hit lines (case-insensitive) in 63 files; by keyword: {"token":245,"password":204,"secret":95,"api_key":1,"/users/":5}
+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 1
+  12645: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 0
+hits by file (path: lines):
+  docs/aegis/g4/baseline/node-test-under-tripwire.txt: 108
+  docs/aegis/g4/baseline/node-test.txt: 108
+  docs/aegis/owner/test-tenant-runbook.md: 53
+  docs/aegis/owner/vendor-facts-priority.md: 36
+  docs/aegis/g4/evidence/a4-green.txt: 27
+  docs/aegis/g4/evidence/a3-runbooks-green.txt: 22
+  checks.md: 13
+  scripts/audit/change-record.test.js: 13
+  docs/aegis/g4/baseline/pre-commit-check-all.txt: 11
+  scripts/eval/judged/backends.test.js: 8
+  .claude/commands/password-reset.md: 8
+  scripts/adapters/session-revocation-limit.test.js: 8
+  scripts/eval/judged/cases.test.js: 8
+  docs/review/batches/g3-closeout-3-checks.md: 7
+  scripts/audit/audit-log.js: 6
+  docs/aegis/g4/baseline/g3-ticket-eval.txt: 6
+  docs/aegis/g4/baseline/ms-ticket-eval.txt: 6
+  docs/aegis/owner/operator-validation.md: 5
+  scripts/eval/owner-kits.test.js: 5
+  scripts/adapters/verify-flags.js: 5
+  docs/aegis/production-readiness.md: 4
+  scripts/eval/README.md: 4
+  scripts/adapters/README.md: 4
+  docs/aegis/g4/baseline/gws-ticket-eval.txt: 4
+  PRODUCT_CONTRACT.md: 3
+  docs/aegis/boundary-audit.md: 3
+  docs/aegis/g4/evidence/b10-red.txt: 3
+  scripts/eval/judged/backends.js: 3
+  scripts/eval/judged/cases.js: 3
+  .claude/commands/gws-account-containment.md: 3
+  docs/aegis/g4/evidence/a3-red.txt: 3
+  docs/aegis/g4/baseline/replay-demo.txt: 3
+  progress.md: 2
+  docs/aegis/g4/evidence/c-green.txt: 2
+  docs/aegis/g3/vendor-facts-to-check.md: 2
+  scripts/adapters/msgraph-client.js: 2
+  docs/aegis/g4/evidence/a4-red.txt: 2
+  docs/explainers/g4-eval-and-closeout.md: 2
+  scripts/eval/judged/cli.test.js: 2
+  scripts/eval/judged/calibrate.test.js: 2
+  scripts/eval/judged/report.test.js: 2
+  scripts/eval/judged/checks.test.js: 2
+  scripts/eval/judged/dev-cases.jsonl: 2
+  docs/aegis/g4/evidence/a3-d7-test-diff.txt: 2
+  .claude/commands/offboard.md: 2
+  scripts/adapters/jamf-client.js: 2
+  scripts/audit/README.md: 2
+  docs/aegis/g4/baseline/runbook-gate-markers.txt: 2
+  PROJECT_STATE.md: 1
+  docs/aegis/owner/operator-sample-template.csv: 1
+  (commit 83d533b header and message): 1
+  .claude/commands/mfa-issue.md: 1
+  (commit 37d6761 header and message): 1
+  docs/aegis/g4/evidence/b11-smoke.md: 1
+  scripts/eval/judged/checks.js: 1
+  docs/aegis/g4/evidence/b3-green.txt: 1
+  scripts/audit/pass-flags.test.js: 1
+  docs/aegis/g4/evidence/a3-green.txt: 1
+  scripts/adapters/change-binding.test.js: 1
+  docs/aegis/g4/evidence/a2-green.txt: 1
+  docs/aegis/g4/evidence/a1-green.txt: 1
+  docs/aegis/g4/baseline/leak-grep.txt: 1
+  docs/aegis/g4/baseline/release-boundary-check.txt: 1
+credential-shape pass over added lines: 0 hit(s)
+URL hosts in added lines (12): support.google.com 18, raw.githubusercontent.com 17, learn.jamf.com 14, developer.jamf.com 11, www.googleapis.com 7, support.jamf.com 5, example.invalid 3, developers.google.com 2, docs.github.com 2, docs.slack.dev 1, fleetdm.com 1, learn.microsoft.com 1
+mail domains in added lines (3): domain.com 55, domain.c 2, example.com 2
+exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

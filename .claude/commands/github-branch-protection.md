@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[REPO_NAME]` (one repository in `[@Aegion_GITHUB_ORG]`) · `[BRANCH_NAME]` (the branch, usually the default branch such as main) · `[RULESET_NAME]` (one ruleset's name, as the `rulesets` read prints it) · `[TEAM_SLUG]` (the one team a ruleset bypass goes to) · `[N]` (a number of required approving reviews, 0 to 6) · `[JIRA-###]` or `[ISSUE_ID]` (the ticket) · `[ADMIN_NAME]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `github:verify-protection`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `github:verify-protection --enforce-admins --no-deletions --no-force-push --reviews [N]`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `github:verify-protection --enforce-admins --no-deletions --no-force-push --reviews [N]`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `github:verify-protection --enforce-admins --no-deletions --no-force-push --reviews [N]`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -62,7 +62,7 @@ node scripts/adapters/github-client.js protection --repo [REPO_NAME] --branch [B
 node scripts/adapters/github-client.js rulesets --repo [REPO_NAME] --execute
 # the active rules on the branch only, Evaluate and Disabled rulesets are left out
 node scripts/adapters/github-client.js branch-rules --repo [REPO_NAME] --branch [BRANCH_NAME] --execute
-# the baseline in one read, exit 0 when every flag holds, exit 2 with the reason when one does not
+# the baseline in one read, exit 0 when every flag holds, exit 2 with the reason when one does not, exit 5 INCONCLUSIVE when the answer proves nothing either way: any exit other than 0 is not a pass
 node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews 1 --enforce-admins --no-force-push --no-deletions --execute
 ```
 
@@ -96,6 +96,7 @@ gh api repos/[@Aegion_GITHUB_ORG]/[REPO_NAME]/rules/branches/[BRANCH_NAME]
 - **Reversibility:** R2: undo is [github-branch-protection-delete-rule-portal], an R3 change of its own
 - **Required confirmation:** Type exactly `ADD CLASSIC BRANCH PROTECTION RULE FOR [BRANCH_NAME] IN [REPO_NAME] WITH [N] REVIEWS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-branch-protection-add-rule-portal]:** Only after the Phase A reads are saved to `tasks/checkpoints/` and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Branches.
 2. Click **Add classic branch protection rule**, under "Branch protection rules" (B-03).
@@ -124,6 +125,7 @@ node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --br
 - **Reversibility:** R2: going back to a weaker Phase A setting is an R3 exception under the matching Phase F gate ([github-branch-protection-allow-force-push-portal], [github-branch-protection-allow-deletion-portal], [github-branch-protection-lower-reviews-portal] or [github-branch-protection-admin-bypass-portal])
 - **Required confirmation:** Type exactly `SET BASELINE PROTECTION ON [BRANCH_NAME] IN [REPO_NAME] WITH [N] REVIEWS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-protection --repo [REPO_NAME] --branch [BRANCH_NAME] --reviews [N] --enforce-admins --no-force-push --no-deletions --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-branch-protection-strengthen-rule-portal]:** Only after the Phase A reads are saved to `tasks/checkpoints/` and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Branches → the rule for `[BRANCH_NAME]` → its edit control [unconfirmed: check in the GitHub UI].
 2. Raise approving reviews to [N] if lower; include administrators; turn force pushes and deletions off [unconfirmed: check in the GitHub UI: each setting's label]. Change nothing else.
@@ -149,6 +151,7 @@ node scripts/adapters/github-client.js verify-protection --repo [REPO_NAME] --br
 - **Reversibility:** R2: undo is [github-branch-protection-disable-ruleset-portal], an R3 change of its own
 - **Required confirmation:** Type exactly `CREATE ACTIVE BRANCH RULESET [RULESET_NAME] FOR [BRANCH_NAME] IN [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ruleset, verify-protection reads the classic rule: its proof is the rulesets read its step names)
 **PORTAL ACTION [github-branch-protection-create-ruleset-portal]:** Only after the Phase A reads are saved to `tasks/checkpoints/`, no ruleset named `[RULESET_NAME]` exists, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Rules → Rulesets → **New ruleset** → **New branch ruleset** (B-04).
 2. Name it `[RULESET_NAME]`; set enforcement to Active; target `[BRANCH_NAME]`; leave the bypass list empty [unconfirmed: check in the GitHub UI: the target and bypass controls].
@@ -169,6 +172,7 @@ node scripts/adapters/github-client.js branch-rules --repo [REPO_NAME] --branch 
 - **Reversibility:** R2: undo is [github-branch-protection-disable-ruleset-portal], an R3 change of its own
 - **Required confirmation:** Type exactly `SET RULESET [RULESET_NAME] IN [REPO_NAME] TO ACTIVE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ruleset, verify-protection reads the classic rule: its proof is the rulesets read its step names)
 **PORTAL ACTION [github-branch-protection-activate-ruleset-portal]:** Only after the Phase A reads show `[RULESET_NAME]` in Evaluate or Disabled, its targets are in the ticket, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Rules → Rulesets → `[RULESET_NAME]`.
 2. Set enforcement status to Active; change nothing else; save [unconfirmed: check in the GitHub UI: the status control and save button].
@@ -197,6 +201,7 @@ node scripts/adapters/github-client.js branch-rules --repo [REPO_NAME] --branch 
 - **Reversibility:** R2: putting the team back is the R3 exception [github-branch-protection-add-bypass-portal]
 - **Required confirmation:** Type exactly `REMOVE [TEAM_SLUG] FROM BYPASS OF [RULESET_NAME] IN [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ruleset, verify-protection reads the classic rule: its proof is the rulesets read its step names)
 **PORTAL ACTION [github-branch-protection-remove-bypass-portal]:** Only after the Phase A read of the bypass list is saved to `tasks/checkpoints/` and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Rules → Rulesets → `[RULESET_NAME]`.
 2. In the bypass list, take `[TEAM_SLUG]` off; change nothing else; save [unconfirmed: check in the GitHub UI: the bypass list controls].
@@ -229,6 +234,7 @@ If the `rulesets` read does not print the bypass list, the GUI bypass list is th
 - **Reversibility:** R3: rollback is [github-branch-protection-strengthen-rule-portal] at the end time; history rewritten in the meantime is not restored by it
 - **Required confirmation:** Type exactly `ALLOW FORCE PUSHES TO [BRANCH_NAME] IN [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (verify-protection passes only while protection is on, so it cannot prove a loosening: its proof is the read its step names)
 **PORTAL ACTION [github-branch-protection-allow-force-push-portal]:** Only after the exception block, the saved Phase A reads and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Branches → the rule for `[BRANCH_NAME]` → its edit control.
 2. Turn force pushes on, nothing else, and save [unconfirmed: check in the GitHub UI: the setting's label].
@@ -240,6 +246,7 @@ If the `rulesets` read does not print the bypass list, the GUI bypass list is th
 - **Reversibility:** R3: rollback is [github-branch-protection-strengthen-rule-portal] at the end time; a branch deleted in the meantime is not restored by it
 - **Required confirmation:** Type exactly `ALLOW DELETION OF [BRANCH_NAME] IN [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (verify-protection passes only while protection is on, so it cannot prove a loosening: its proof is the read its step names)
 **PORTAL ACTION [github-branch-protection-allow-deletion-portal]:** Only after the exception block, the saved Phase A reads and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Branches → the rule for `[BRANCH_NAME]` → its edit control.
 2. Turn deletions on, nothing else, and save [unconfirmed: check in the GitHub UI: the setting's label].
@@ -251,6 +258,7 @@ If the `rulesets` read does not print the bypass list, the GUI bypass list is th
 - **Reversibility:** R3: rollback is [github-branch-protection-strengthen-rule-portal] with the Phase A number at the end time; merges made with fewer reviews stay merged
 - **Required confirmation:** Type exactly `CHANGE REQUIRED REVIEWS ON [BRANCH_NAME] IN [REPO_NAME] TO [N]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (verify-protection passes only while protection is on, so it cannot prove a loosening: its proof is the read its step names)
 **PORTAL ACTION [github-branch-protection-lower-reviews-portal]:** Only after the exception block, the saved Phase A reads and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Branches → the rule for `[BRANCH_NAME]` → its edit control.
 2. Set approving reviews to [N] (or turn the review requirement off for 0), nothing else, and save [unconfirmed: check in the GitHub UI: the setting's label].
@@ -262,6 +270,7 @@ If the `rulesets` read does not print the bypass list, the GUI bypass list is th
 - **Reversibility:** R3: rollback is [github-branch-protection-strengthen-rule-portal] at the end time; what administrators merged in the meantime stays merged
 - **Required confirmation:** Type exactly `ALLOW ADMINS TO BYPASS PROTECTION ON [BRANCH_NAME] IN [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (verify-protection passes only while protection is on, so it cannot prove a loosening: its proof is the read its step names)
 **PORTAL ACTION [github-branch-protection-admin-bypass-portal]:** Only after the exception block, the saved Phase A reads and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Branches → the rule for `[BRANCH_NAME]` → its edit control.
 2. Turn off the setting that includes administrators, nothing else, and save [unconfirmed: check in the GitHub UI: the setting's label].
@@ -273,6 +282,7 @@ If the `rulesets` read does not print the bypass list, the GUI bypass list is th
 - **Reversibility:** R3: rollback is [github-branch-protection-remove-bypass-portal] at the end time
 - **Required confirmation:** Type exactly `GRANT BYPASS OF [RULESET_NAME] IN [REPO_NAME] TO [TEAM_SLUG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ruleset, verify-protection reads the classic rule: its proof is the rulesets read its step names)
 **PORTAL ACTION [github-branch-protection-add-bypass-portal]:** Only after the exception block, the saved Phase A reads, the team's member count in the ticket, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Rules → Rulesets → `[RULESET_NAME]`.
 2. Put `[TEAM_SLUG]` on the bypass list, nothing else, and save [unconfirmed: check in the GitHub UI: the bypass list controls, and whether a team can be a bypass entry].
@@ -284,6 +294,7 @@ If the `rulesets` read does not print the bypass list, the GUI bypass list is th
 - **Reversibility:** R3: rollback is [github-branch-protection-add-rule-portal] with the settings saved in tasks/checkpoints/ at the end time
 - **Required confirmation:** Type exactly `DELETE CLASSIC BRANCH PROTECTION RULE FOR [BRANCH_NAME] IN [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (verify-protection passes only while protection is on, so it cannot prove a loosening: its proof is the read its step names)
 **PORTAL ACTION [github-branch-protection-delete-rule-portal]:** Only after the exception block, every setting of the rule saved to `tasks/checkpoints/`, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Branches → the rule for `[BRANCH_NAME]`.
 2. Use the rule's delete control and confirm [unconfirmed: check in the GitHub UI: its label and dialog].
@@ -295,6 +306,7 @@ If the `rulesets` read does not print the bypass list, the GUI bypass list is th
 - **Reversibility:** R3: rollback is [github-branch-protection-activate-ruleset-portal] at the end time
 - **Required confirmation:** Type exactly `DISABLE RULESET [RULESET_NAME] IN [REPO_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a ruleset, verify-protection reads the classic rule: its proof is the rulesets read its step names)
 **PORTAL ACTION [github-branch-protection-disable-ruleset-portal]:** Only after the exception block, the ruleset's targets saved to `tasks/checkpoints/`, and the exact match:
 1. github.com → `[@Aegion_GITHUB_ORG]/[REPO_NAME]` → Settings → (Code, planning, and automation) Rules → Rulesets → `[RULESET_NAME]`.
 2. Set enforcement status to Disabled, nothing else, and save [unconfirmed: check in the GitHub UI: the status control and save button].

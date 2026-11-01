@@ -38,6 +38,11 @@ const changes = require('./change-record.js');
 
 const CLI = path.join(__dirname, 'change-record.js');
 const AUDIT_CLI = path.join(__dirname, 'audit-log.js');
+// the read-back of the gate these tests open, okta-mfa-reset-selected-portal, as its runbook line
+// runs it: --factor-type is a pass flag since the A3 fix on branch fix/g4-a3-factor-type, so the
+// change names it and the verify entry records it
+const FACTOR_READ_BACK = 'okta:verify-factor-reset --factor-type push';
+const FACTOR_FLAGS = '--factor-type push';
 
 function setup(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-change-test-'));
@@ -56,10 +61,10 @@ function setup(t) {
 }
 
 function openChange(s, rClass = 'R2') {
-  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', rClass, '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', s.procedure]);
+  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', rClass, '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', s.procedure]);
   return r;
 }
-const verifyEntry = (s, verified, change = null) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified, state: 'OK', change });
+const verifyEntry = (s, verified, change = null) => s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-factor-reset', verified, state: 'OK', change, flags: FACTOR_FLAGS });
 
 test('open, approve, a passing verify-* read-back and link: the change is done (exit 0)', (t) => {
   const s = setup(t);
@@ -96,11 +101,14 @@ test('an approval of another digest is refused at approve and nothing is recorde
   assert.ok(st.json.missing.some((m) => /approval/i.test(m)));
 });
 
+// Batch G4, task A2: audit-log.js approval no longer writes (the A2 tests below), so the
+// mismatched approval is written around both CLIs, as an older trail may hold one.
 test('an approval written straight into the trail with a mismatched digest still leaves the change not done', (t) => {
   const s = setup(t);
   const o = openChange(s);
   const w = s.run(AUDIT_CLI, ['approval', '--ref', 'IT-124', '--gate', 'okta-mfa-reset-selected-portal', '--procedure-sha256', 'c'.repeat(64), '--change', o.json.change]);
-  assert.equal(w.code, 0, w.stderr);
+  assert.equal(w.code, 1, w.stdout);
+  s.log.append({ kind: 'approval', ref: 'IT-124', gate: 'okta-mfa-reset-selected-portal', procedure_sha256: 'c'.repeat(64), change: o.json.change });
   const v = verifyEntry(s, true);
   s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]);
   const st = s.run(CLI, ['status', '--change', o.json.change]);
@@ -176,7 +184,8 @@ test('open needs the read-back that proves the change; link refuses another kind
   assert.equal(o.code, 0, o.stderr);
   s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
   // a verified read-back of another connector, and of another okta command
-  const fleet = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-checked-in', verified: true, state: 'OK', change: null });
+  // its time bound is a pass flag since batch G4 (task A3), so the entry records its flags
+  const fleet = s.log.append({ kind: 'verify', connector: 'fleet', command: 'verify-checked-in', verified: true, state: 'OK', change: null, flags: '' });
   const status = s.log.append({ kind: 'verify', connector: 'okta', command: 'verify-status', verified: true, state: 'OK', change: null, flags: '--status SUSPENDED' });
   for (const v of [fleet, status]) {
     const before = s.log.entries().length;
@@ -191,7 +200,7 @@ test('open needs the read-back that proves the change; link refuses another kind
   assert.equal(st.code, 2);
   assert.equal(st.json.done, false);
   assert.ok(st.json.missing.some((m) => /okta:verify-factor-reset/.test(m)), st.stdout);
-  assert.equal(st.json.procedure.read_back, 'okta:verify-factor-reset');
+  assert.equal(st.json.procedure.read_back, FACTOR_READ_BACK);
 });
 
 // Code review round 2, finding 8: with no matching approval, a verified read-back of the
@@ -239,7 +248,7 @@ test('open refuses a read-back the connector does not have (a typo or an unknown
     assert.match(r.stderr, /no such read-back|no connector/, bad);
   }
   assert.equal(s.log.entries().length, 0, 'nothing recorded');
-  assert.equal(open('okta:verify-factor-reset').code, 0);
+  assert.equal(open(FACTOR_READ_BACK).code, 0);
   // read-backs the connectors have pass the connector check; this gate's runbook binds Okta
   // read-backs only, so open refuses them for the gate (security review 1 of the batch G3
   // close-out 3)
@@ -247,7 +256,7 @@ test('open refuses a read-back the connector does not have (a typo or an unknown
     const r = open(other);
     assert.equal(r.code, 1, other);
     assert.doesNotMatch(r.stderr, /no such read-back|no connector/, other);
-    assert.match(r.stderr, /gate okta-mfa-reset-selected-portal's read-back in \.claude\/commands\/okta-mfa-reset\.md runs as okta:verify-factor-reset, not as /, other);
+    assert.match(r.stderr, /gate okta-mfa-reset-selected-portal's read-back in \.claude\/commands\/okta-mfa-reset\.md runs as okta:verify-factor-reset --factor-type push, not as /, other);
   }
 });
 
@@ -332,13 +341,16 @@ test('status never counts a read-back that was not recorded under this change, e
 
 test('bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved', (t) => {
   const s = setup(t);
-  assert.match(changes.bindRefusal(s.log, 'chg-0123456789ab', 'okta:verify-factor-reset'), /holds no change/);
+  assert.match(changes.bindRefusal(s.log, 'chg-0123456789ab', FACTOR_READ_BACK), /holds no change/);
   const o = openChange(s);
-  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), /no approval/);
+  assert.match(changes.bindRefusal(s.log, o.json.change, FACTOR_READ_BACK), /no approval/);
   s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
-  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-status'), /proved by okta:verify-factor-reset/);
-  assert.match(changes.bindRefusal(s.log, o.json.change, 'github:verify-factor-reset'), /proved by okta:verify-factor-reset/);
-  assert.equal(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), null);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-status'), /proved by okta:verify-factor-reset --factor-type push/);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'github:verify-factor-reset'), /proved by okta:verify-factor-reset --factor-type push/);
+  // another factor type, or none, is another read-back (the A3 fix on branch fix/g4-a3-factor-type)
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset --factor-type signed_nonce'), /proved by okta:verify-factor-reset --factor-type push/);
+  assert.match(changes.bindRefusal(s.log, o.json.change, 'okta:verify-factor-reset'), /proved by okta:verify-factor-reset --factor-type push/);
+  assert.equal(changes.bindRefusal(s.log, o.json.change, FACTOR_READ_BACK), null);
 });
 
 test('the change-record module writes only the local audit trail: no network module, no child process', () => {
@@ -414,7 +426,7 @@ test('a counted gate opened without --expected is refused at open, and nothing i
 
 test('a gate without a count refuses --expected and keeps the one-read-back rule', (t) => {
   const s = setup(t);
-  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', s.procedure, '--expected', '3']);
+  const r = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', s.procedure, '--expected', '3']);
   assert.equal(r.code, 1);
   assert.match(r.stderr, /names no count/);
   const o = openChange(s);
@@ -709,13 +721,14 @@ test('a read-back named for several gates in one comment binds each of them', (t
   const s = setup(t);
   const open = (command, gate, readBack) => s.run(CLI, ['open', '--command', command, '--gate', gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', s.procedure]);
   const named = [
-    ['password-reset', 'password-reset-cloud-portal', 'msgraph:verify-password-changed'],
-    ['password-reset', 'password-cloud-reset', 'msgraph:verify-password-changed'],
-    ['password-reset', 'password-reset-synced-portal', 'msgraph:verify-password-changed'],
-    ['password-reset', 'password-session-revoke-portal', 'msgraph:verify-sessions-revoked'],
-    ['password-reset', 'password-session-revoke', 'msgraph:verify-sessions-revoked'],
-    ['security-alert-triage', 'security-session-revoke-portal', 'msgraph:verify-sessions-revoked'],
-    ['security-alert-triage', 'security-session-revoke', 'msgraph:verify-sessions-revoked'],
+    // since batch G4 (task A3) a time-bounded read-back is named with its bound, bare
+    ['password-reset', 'password-reset-cloud-portal', 'msgraph:verify-password-changed --not-before'],
+    ['password-reset', 'password-cloud-reset', 'msgraph:verify-password-changed --not-before'],
+    ['password-reset', 'password-reset-synced-portal', 'msgraph:verify-password-changed --not-before'],
+    ['password-reset', 'password-session-revoke-portal', 'msgraph:verify-sessions-revoked --not-before'],
+    ['password-reset', 'password-session-revoke', 'msgraph:verify-sessions-revoked --not-before'],
+    ['security-alert-triage', 'security-session-revoke-portal', 'msgraph:verify-sessions-revoked --not-before'],
+    ['security-alert-triage', 'security-session-revoke', 'msgraph:verify-sessions-revoked --not-before'],
   ];
   for (const [command, gate, readBack] of named) {
     const other = open(command, gate, 'msgraph:verify-group-member');
@@ -976,9 +989,433 @@ test('an approval given for one N does not cover a different N', (t) => {
 test('a gate without a count keeps today\'s rule: no Count line needed, and --expected still refused', (t) => {
   const s = setup(t);
   assert.equal(openChange(s).code, 0, 'an uncounted gate opens with a procedure that has no Count line');
-  const withCount = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', countedProcedure(s, 2)]);
+  const withCount = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', countedProcedure(s, 2)]);
   assert.equal(withCount.code, 0, 'a Count line on an uncounted gate is only text');
-  const expected = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'okta:verify-factor-reset', '--procedure-file', countedProcedure(s, 2), '--expected', '2']);
+  const expected = s.run(CLI, ['open', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--read-back', FACTOR_READ_BACK, '--procedure-file', countedProcedure(s, 2), '--expected', '2']);
   assert.equal(expected.code, 1);
   assert.match(expected.stderr, /names no count/);
+});
+
+// ── Batch G4, task A1: security review 2's O1, a disguised count line ──────────────────────────
+// A count line disguised with a format character or a look-alike letter, next to a real count hidden
+// in an HTML comment, passed checkCount: the approver saw Count: 5 and the change opened for 50.
+// Before matching, the text is folded (compatibility decomposition, every \p{Cf}, \p{Mn} and \p{Me}
+// character removed, composed again); a count line whose keyword holds a letter outside A to Z is
+// refused; a count line inside an HTML comment or another hidden region is refused; the one
+// accepted form stays the visible line Count: N.
+const withLines = (s, name, extra) => {
+  const file = path.join(s.dir, `procedure-${name}.md`);
+  fs.writeFileSync(file, `${fs.readFileSync(s.procedure, 'utf8').replace(/\s+$/, '')}\n${extra.join('\n')}\n`);
+  return file;
+};
+
+test('A1: a format character inside the keyword (zero width, soft hyphen, bidi, variation selector, tag) makes a count line, so a second count is refused', (t) => {
+  const s = setup(t);
+  for (const inside of ['​', '­', '‮', '⁦', '️', '\u{e0041}', '⁠']) {
+    const disguised = `Cou${inside}nt: 50`;
+    const beside = openBatch(s, withLines(s, 'format', ['Count: 5', disguised]), 5);
+    assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+    assert.match(beside.stderr, /one line Count: N/, JSON.stringify(disguised));
+    const alone = openBatch(s, withLines(s, 'format-alone', [disguised]), 50);
+    assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: a combining mark on a letter of the keyword or on the number makes a count line, so a second count is refused', (t) => {
+  const s = setup(t);
+  for (const disguised of ['Cöunt: 50', 'Çount: 50', 'Count́: 50', 'Count: 5⃝0', 'Coun̶t: 50']) {
+    const r = openBatch(s, withLines(s, 'mark', ['Count: 5', disguised]), 5);
+    assert.equal(r.code, 1, `${JSON.stringify(disguised)}: ${r.stdout}`);
+    assert.match(r.stderr, /one line Count: N/, JSON.stringify(disguised));
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: a look-alike letter outside A to Z in the keyword (Cyrillic, Greek, a small capital) is refused, alone or beside the real line', (t) => {
+  const s = setup(t);
+  for (const disguised of ['Cоunt: 50', 'Сount: 50', 'Cοunt: 50', 'Counт: 50', 'ᴄount: 50', 'Соипт: 50']) {
+    const beside = openBatch(s, withLines(s, 'script', ['Count: 5', disguised]), 5);
+    assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+    assert.match(beside.stderr, /outside the Latin letters A to Z/, JSON.stringify(disguised));
+    const alone = openBatch(s, withLines(s, 'script-alone', [disguised]), 50);
+    assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+    assert.match(alone.stderr, /outside the Latin letters A to Z/, JSON.stringify(disguised));
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: a full-width digit or letter is a count line but not the accepted form', (t) => {
+  const s = setup(t);
+  for (const disguised of ['Count: ５', 'Ｃount: 5', 'Count: ５０', 'Count：5']) {
+    const alone = openBatch(s, withLines(s, 'wide', [disguised]), 5);
+    assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+    const beside = openBatch(s, withLines(s, 'wide-beside', ['Count: 5', disguised]), 5);
+    assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1 (O1): a real count hidden in an HTML comment next to a disguised visible one is refused, for either number', (t) => {
+  const s = setup(t);
+  const hidden = [
+    ['<!--', 'Count: 50', '-->'],
+    ['<!-- Count: 50 -->'],
+    ['<!--', 'Count: 50'],
+    ['<div hidden>', 'Count: 50', '</div>'],
+    ['<span style="display: none">', 'Count: 50', '</span>'],
+    ['<p style="visibility:hidden">', 'Count: 50', '</p>'],
+    ['<template>', 'Count: 50', '</template>'],
+    ['<script>', 'Count: 50', '</script>'],
+    ['<style>', 'Count: 50', '</style>'],
+    ['<noscript>', 'Count: 50', '</noscript>'],
+    ['[//]: # (Count: 50)'],
+  ];
+  for (const visible of ['Cоunt: 5', 'Cou​nt: 5', 'Cöunt: 5', 'Count: 5']) {
+    for (const region of hidden) {
+      for (const expected of [5, 50]) {
+        const r = openBatch(s, withLines(s, 'hidden', [visible, ...region]), expected);
+        assert.equal(r.code, 1, `${JSON.stringify([visible, ...region])} --expected ${expected}: ${r.stdout}`);
+      }
+    }
+  }
+  // the O1 case itself names the hidden region
+  const o1 = openBatch(s, withLines(s, 'o1', ['Cоunt: 5', '<!--', 'Count: 50', '-->']), 50);
+  assert.match(o1.stderr, /HTML comment or another hidden region/);
+  const plainHidden = openBatch(s, withLines(s, 'plain-hidden', ['Count: 5', '<!--', 'Count: 50', '-->']), 5);
+  assert.match(plainHidden.stderr, /HTML comment or another hidden region/);
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('A1: the plain visible line Count: N still opens, beside comments, hidden regions and words that only look near it', (t) => {
+  const s = setup(t);
+  const plain = openBatch(s, withLines(s, 'plain', ['Count: 5']), 5);
+  assert.equal(plain.code, 0, plain.stderr);
+  const around = openBatch(s, withLines(s, 'around', ['<!-- reviewed by [ADMIN_NAME] -->', 'Count: 5', '<details><summary>Script</summary>', 'Write-Host "[HOST_COUNT] hosts"', '</details>', 'Mount: /dev/[DEVICE_NAME]', 'Court: none', 'Accounts: 5 (see the ticket)']), 5);
+  assert.equal(around.code, 0, around.stderr);
+  assert.equal(s.log.entries().length, 2);
+  assert.equal(s.log.entries()[1].expected, 5);
+});
+
+// ── Batch G4, code review round 1, finding 11: an invisible filler inside the keyword ────────────
+// A Default_Ignorable_Code_Point character that is not a format character or a mark survived the
+// fold: the Hangul fillers (U+3164, U+115F, U+1160, U+FFA0) are letters, and unassigned default
+// ignorable code points (U+2065, U+FFF0, U+E0080, U+E0FFF) are in no class the fold removed. Both
+// render as nothing, so Cou<filler>nt: 999 read as Count: 999 beside the real Count: 5 was not seen
+// as a second count. Every \p{Default_Ignorable_Code_Point} character is removed before matching,
+// as format characters are; the visible plain Count: N stays the only accepted form.
+const FILLERS = { hangul: ['ㅤ', 'ᅟ', 'ᅠ', 'ﾠ'], unassigned: ['⁥', '￰', '\u{e0080}', '\u{e0fff}'] };
+for (const [label, chars] of Object.entries(FILLERS)) {
+  test(`F11: an invisible ${label} default ignorable character inside the keyword makes a count line, so a second count is refused`, (t) => {
+    const s = setup(t);
+    for (const inside of chars) {
+      for (const disguised of [`Cou${inside}nt: 999`, `${inside}Count: 999`, `C${inside}o${inside}u${inside}n${inside}t: 999`]) {
+        const beside = openBatch(s, withLines(s, 'filler', ['Count: 5', disguised]), 5);
+        assert.equal(beside.code, 1, `${JSON.stringify(disguised)} beside the real line: ${beside.stdout}`);
+        assert.match(beside.stderr, /one line Count: N/, JSON.stringify(disguised));
+        const alone = openBatch(s, withLines(s, 'filler-alone', [disguised]), 999);
+        assert.equal(alone.code, 1, `${JSON.stringify(disguised)} alone: ${alone.stdout}`);
+      }
+    }
+    assert.equal(s.log.entries().length, 0, 'nothing recorded');
+  });
+}
+
+test('F11: a count whose keyword holds a filler inside a hidden region is refused as hidden', (t) => {
+  const s = setup(t);
+  for (const inside of [...FILLERS.hangul, ...FILLERS.unassigned]) {
+    const r = openBatch(s, withLines(s, 'filler-hidden', ['Count: 5', `<!-- Cou${inside}nt: 999 -->`]), 5);
+    assert.equal(r.code, 1, `${JSON.stringify(inside)}: ${r.stdout}`);
+    assert.match(r.stderr, /HTML comment or another hidden region/, JSON.stringify(inside));
+  }
+  assert.equal(s.log.entries().length, 0, 'nothing recorded');
+});
+
+test('F11: the plain visible Count: N still opens when a filler sits elsewhere in the text', (t) => {
+  const s = setup(t);
+  const r = openBatch(s, withLines(s, 'filler-elsewhere', ['Count: 5', `Note:${FILLERS.hangul[0]} the hosts are in the ticket`, `Mount${FILLERS.unassigned[0]}: none`]), 5);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(s.log.entries().length, 1);
+  assert.equal(s.log.entries()[0].expected, 5);
+});
+
+// ── Batch G4, task A2: one approval writer ───────────────────────────────────────────────────────
+// audit-log.js approval wrote an approval for any change id (round 3 of the batch G3 close-out 3,
+// finding 5). It is removed from the CLI: change-record.js approve is the one writer, and it checks
+// that the change is open, the gate it names, the digest of the procedure issued for it, and that
+// the change has no earlier approval; a refusal writes nothing.
+test('A2: audit-log.js approval writes nothing: an unknown change id, a change not yet opened, a mismatched digest, a second approval', (t) => {
+  const s = setup(t);
+  const procedureOnly = s.run(AUDIT_CLI, ['procedure', '--command', 'okta-mfa-reset', '--gate', 'okta-mfa-reset-selected-portal', '--r-class', 'R2', '--target', '[UPN]', '--procedure-sha256', 'd'.repeat(64)]);
+  assert.equal(procedureOnly.code, 0, procedureOnly.stderr);
+  const o = openChange(s);
+  assert.equal(o.code, 0, o.stderr);
+  const first = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(first.code, 0, first.stderr);
+  const before = s.log.entries().length;
+  const cases = [
+    ['an unknown change id', ['--change', 'chg-zz', '--procedure-sha256', o.json.procedure_sha256]],
+    ['a change not yet opened', ['--change', 'chg-0123456789ab', '--procedure-sha256', 'd'.repeat(64)]],
+    ['a mismatched digest', ['--change', o.json.change, '--procedure-sha256', 'c'.repeat(64)]],
+    ['a second approval', ['--change', o.json.change, '--procedure-sha256', o.json.procedure_sha256]],
+  ];
+  for (const [label, rest] of cases) {
+    const r = s.run(AUDIT_CLI, ['approval', '--ref', 'IT-124', '--gate', 'okta-mfa-reset-selected-portal', ...rest]);
+    assert.equal(r.code, 1, `${label}: ${r.stdout}`);
+    assert.match(r.stderr, /change-record\.js approve/, label);
+    assert.equal(s.log.entries().length, before, `${label}: nothing recorded`);
+  }
+  assert.doesNotMatch(fs.readFileSync(AUDIT_CLI, 'utf8').split('\n').slice(0, 40).join('\n'), /audit-log\.js approval --ref/, 'the header no longer offers the approval command');
+});
+
+test('A2: change-record.js approve refuses an unknown change, a change not yet opened, a mismatched digest and a second approval, and writes nothing', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  assert.equal(s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
+  const before = s.log.entries().length;
+  const unknown = s.run(CLI, ['approve', '--change', 'chg-zz', '--ref', 'IT-124', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.notEqual(unknown.code, 0, unknown.stdout);
+  const notOpened = s.run(CLI, ['approve', '--change', 'chg-0123456789ab', '--ref', 'IT-124', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(notOpened.code, 2, notOpened.stdout);
+  assert.match(notOpened.stderr, /no procedure was issued/);
+  const mismatch = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-124', '--procedure-sha256', 'c'.repeat(64)]);
+  assert.equal(mismatch.code, 2, mismatch.stdout);
+  const second = s.run(CLI, ['approve', '--change', o.json.change, '--ref', 'IT-125', '--procedure-sha256', o.json.procedure_sha256]);
+  assert.equal(second.code, 2, second.stdout);
+  assert.match(second.stderr, /already has an approval \(audit seq \d+, IT-123\); one approval per change\. Nothing was recorded/);
+  assert.equal(s.log.entries().length, before, 'nothing recorded');
+  // the supported path still makes the change done
+  const v = verifyEntry(s, true, o.json.change);
+  assert.equal(s.run(CLI, ['link', '--change', o.json.change, '--verify-seq', String(v.seq)]).code, 0);
+  const st = s.run(CLI, ['status', '--change', o.json.change]);
+  assert.equal(st.code, 0, st.stdout);
+  assert.equal(st.json.approval.ref, 'IT-123');
+});
+
+test('A2: four approvals of one change raced from four processes: exactly one is recorded', async (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  const { spawn } = require('node:child_process');
+  const once = (ref) => new Promise((resolve) => {
+    const c = spawn(process.execPath, [CLI, 'approve', '--change', o.json.change, '--ref', ref, '--procedure-sha256', o.json.procedure_sha256], { env: s.env });
+    c.on('close', (code) => resolve(code));
+  });
+  const codes = await Promise.all(['IT-201', 'IT-202', 'IT-203', 'IT-204'].map(once));
+  assert.deepEqual(codes.sort(), [0, 2, 2, 2]);
+  assert.equal(s.log.entries().filter((e) => e.kind === 'approval').length, 1);
+});
+
+// ── Batch G4, task A3: every flag that decides what a pass means (D10 on PR #9) ───────────────────
+// A time bound (--not-before) is recorded with its read-back: the change names it bare (its value is
+// chosen after the approval), the verify entry records the value in UTC, and a --not-before earlier
+// than the change's approval never proves the change, since it could pass on a change made before
+// the approval. The closed-set flag newly declared (--method) and the digest and type flags count
+// only with the same value.
+const { testRunbooks } = require('./trail-helper.js');
+const DIGEST_A = 'a'.repeat(64);
+const DIGEST_B = 'b'.repeat(64);
+// every verify-* command that takes a time bound, with the other pass flags it is named with
+const TIMED = {
+  'fleet:verify-checked-in': '', 'fleet:verify-deleted': '',
+  'google-workspace:verify-event': '--app admin --event CHANGE_PASSWORD',
+  'jamf:verify-command': '--type INSTALL_PROFILE', 'jamf:verify-checked-in': '',
+  'linear:verify-comment': `--expect-sha256 ${DIGEST_A}`,
+  'msgraph:verify-password-changed': '', 'msgraph:verify-signin': '', 'msgraph:verify-device-synced': '', 'msgraph:verify-sessions-revoked': '',
+  'okta:verify-sessions-cleared': '', 'okta:verify-password-reset': '',
+  'slack:verify-posted': `--expect-sha256 ${DIGEST_A}`,
+  'jira:verify-create': `--expect-sha256 ${DIGEST_A}`, 'jira:verify-comment': `--expect-sha256 ${DIGEST_A}`,
+};
+
+function inProcessTrail(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-a3-test-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const env = { AEGIS_AUDIT_DIR: path.join(dir, 'audit') };
+  const procedure = path.join(dir, 'procedure.md');
+  fs.writeFileSync(procedure, 'Phase B: the gated change for [UPN].\n');
+  const gateFor = testRunbooks(dir, t);
+  const log = audit.openAuditLog({ dir: env.AEGIS_AUDIT_DIR });
+  const record = (argv) => {
+    const out = [];
+    const err = [];
+    const code = changes.main(argv, env, { out: (x) => out.push(x), err: (x) => err.push(x) });
+    let json = null;
+    try { json = JSON.parse(out.join('')); } catch { /* not JSON */ }
+    return { code, json, text: out.join('') + err.join('') };
+  };
+  const approvedChange = (readBack) => {
+    const g = gateFor(readBack);
+    const o = record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', readBack, '--procedure-file', procedure]);
+    assert.equal(o.code, 0, o.text);
+    const a = record(['approve', '--change', o.json.change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]);
+    assert.equal(a.code, 0, a.text);
+    const approval = log.entries().find((e) => e.kind === 'approval' && e.change === o.json.change);
+    return { change: o.json.change, approvalAt: Date.parse(approval.at), approve: a };
+  };
+  const read = (kind, change, flags, verified = true) => {
+    const [connector, command] = kind.split(':');
+    return log.append({ kind: 'verify', connector, command, verified, state: 'OK', change, run: null, flags });
+  };
+  return { record, approvedChange, read, log, gateFor, procedure };
+}
+const iso = (ms) => new Date(ms).toISOString();
+
+test('A3: each read-back with a time bound is named with --not-before; one earlier than the approval is not done, one at or after it is done when it passes', (t) => {
+  const declaredTimed = Object.entries(audit.PASS_FLAGS).filter(([, f]) => f['not-before']).map(([k]) => k).sort();
+  assert.deepEqual(declaredTimed, Object.keys(TIMED).sort(), 'every command with a time bound is covered here');
+  for (const [kind, others] of Object.entries(TIMED)) {
+    const tr = inProcessTrail(t);
+    const named = audit.parseReadBack([kind, others, '--not-before'].filter(Boolean).join(' ')).readBack;
+    const { change, approvalAt, approve } = tr.approvedChange(named);
+    assert.match(approve.json.next || approve.text, /--not-before at or after/, `${kind}: approve names the earliest time bound`);
+    const flagsFor = (ms) => audit.passFlags(kind, [kind.split(':')[1], ...others.split(' ').filter(Boolean), '--not-before', iso(ms)]);
+    assert.match(flagsFor(approvalAt), /--not-before \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/, `${kind}: the value is recorded in UTC`);
+    const early = tr.read(kind, change, flagsFor(approvalAt - 3600 * 1000));
+    const l1 = tr.record(['link', '--change', change, '--verify-seq', String(early.seq)]);
+    assert.equal(l1.code, 2, `${kind}: ${l1.text}`);
+    assert.match(l1.text, /earlier than the approval/, kind);
+    const st1 = tr.record(['status', '--change', change]);
+    assert.equal(st1.json.done, false, `${kind}: an early time bound never proves the change`);
+    const onTime = tr.read(kind, change, flagsFor(approvalAt));
+    const l2 = tr.record(['link', '--change', change, '--verify-seq', String(onTime.seq)]);
+    assert.equal(l2.code, 0, `${kind}: ${l2.text}`);
+    const st2 = tr.record(['status', '--change', change]);
+    assert.equal(st2.code, 0, `${kind}: ${st2.text}`);
+    assert.equal(st2.json.done, true, kind);
+  }
+});
+
+test('A3: an early time bound linked around the CLI still never makes the change done', (t) => {
+  const tr = inProcessTrail(t);
+  const kind = 'msgraph:verify-sessions-revoked';
+  const { change, approvalAt } = tr.approvedChange(`${kind} --not-before`);
+  const early = tr.read(kind, change, audit.passFlags(kind, ['verify-sessions-revoked', '--not-before', iso(approvalAt - 60000)]));
+  tr.log.append({ kind: 'change-link', change, verify_seq: early.seq });
+  const st = tr.record(['status', '--change', change]);
+  assert.equal(st.json.done, false);
+  assert.match(st.json.missing.join(' '), /earlier than the approval/);
+});
+
+test('A3: a time bound in epoch milliseconds is recorded in UTC and judged the same way', (t) => {
+  const tr = inProcessTrail(t);
+  const kind = 'jira:verify-create';
+  const { change, approvalAt } = tr.approvedChange(`${kind} --expect-sha256 ${DIGEST_A} --not-before`);
+  const flags = audit.passFlags(kind, ['verify-create', '--expect-sha256', DIGEST_A, '--not-before', String(approvalAt + 1000)]);
+  assert.equal(flags, `--expect-sha256 ${DIGEST_A} --not-before ${iso(approvalAt + 1000)}`);
+  const v = tr.read(kind, change, flags);
+  assert.equal(tr.record(['link', '--change', change, '--verify-seq', String(v.seq)]).code, 0);
+  assert.equal(tr.record(['status', '--change', change]).json.done, true);
+});
+
+test('A3: a change whose read-back takes a time bound is not opened without it, and the bound is named without a value', (t) => {
+  const tr = inProcessTrail(t);
+  const g = tr.gateFor('msgraph:verify-sessions-revoked --not-before');
+  for (const bad of ['msgraph:verify-sessions-revoked', 'msgraph:verify-sessions-revoked --not-before 2026-10-28T09:00:00Z']) {
+    const r = tr.record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', bad, '--procedure-file', tr.procedure]);
+    assert.equal(r.code, 1, `${bad}: ${r.text}`);
+    assert.match(r.text, /--not-before/, bad);
+  }
+  const good = tr.record(['open', '--command', g.command, '--gate', g.gate, '--r-class', 'R2', '--target', '[UPN]', '--read-back', 'msgraph:verify-sessions-revoked --not-before', '--procedure-file', tr.procedure]);
+  assert.equal(good.code, 0, good.text);
+  assert.match(good.json.next.join(' '), /--not-before at or after the approval/);
+});
+
+// --factor-type is a pass flag (the A3 fix on branch fix/g4-a3-factor-type): which factor was reset
+// is what an Okta verify-factor-reset pass proves, so a read of another factor type never proves
+// the change, and a read of the same one does.
+test('A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done', (t) => {
+  const cases = [
+    ['slack:verify-posted', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
+    ['linear:verify-comment', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
+    ['jira:verify-comment', `--expect-sha256 ${DIGEST_A} --not-before`, (ms) => `--expect-sha256 ${DIGEST_B} --not-before ${iso(ms)}`],
+    ['jamf:verify-command', '--not-before --type INSTALL_PROFILE', (ms) => `--not-before ${iso(ms)} --type REMOVE_PROFILE`],
+    ['slack:verify-guest', '--type single', () => '--type multi'],
+    ['msgraph:verify-mfa-method', '--method microsoftAuthenticator', () => '--method phone'],
+    ['okta:verify-factor-reset', '--factor-type push', () => '--factor-type signed_nonce'],
+  ];
+  for (const [kind, named, other] of cases) {
+    const tr = inProcessTrail(t);
+    const { change, approvalAt } = tr.approvedChange(`${kind} ${named}`);
+    const v = tr.read(kind, change, other(approvalAt + 1000));
+    const l = tr.record(['link', '--change', change, '--verify-seq', String(v.seq)]);
+    assert.equal(l.code, 2, `${kind}: ${l.text}`);
+    assert.match(l.text, /this change is proved only by/, kind);
+    assert.equal(tr.record(['status', '--change', change]).json.done, false, kind);
+  }
+});
+
+test('A3: an Okta verify-factor-reset read-back of the factor type the change names is done; another type is not', (t) => {
+  const tr = inProcessTrail(t);
+  const kind = 'okta:verify-factor-reset';
+  const named = audit.parseReadBack(`${kind} --factor-type push`);
+  assert.equal(named.readBack, `${kind} --factor-type push`, 'the change names the factor type with its value');
+  assert.equal(audit.readBackFor(kind, ['verify-factor-reset', '--user', '00u1abcd2EFGH3ijk4x7', '--factor-type', 'push']), `${kind} --factor-type push`);
+  assert.equal(audit.passFlags(kind, ['verify-factor-reset', '--factor-type', 'token:software:totp']), '--factor-type token:software:totp');
+  assert.throws(() => audit.parseReadBack(`${kind} --factor-type Push Factor`), audit.AuditRefused, 'free text is not a factor type');
+  const { change } = tr.approvedChange(named.readBack);
+  const other = tr.read(kind, change, '--factor-type signed_nonce');
+  const l1 = tr.record(['link', '--change', change, '--verify-seq', String(other.seq)]);
+  assert.equal(l1.code, 2, l1.text);
+  assert.match(l1.text, /this change is proved only by okta:verify-factor-reset --factor-type push/);
+  assert.equal(tr.record(['status', '--change', change]).json.done, false);
+  const same = tr.read(kind, change, '--factor-type push');
+  const l2 = tr.record(['link', '--change', change, '--verify-seq', String(same.seq)]);
+  assert.equal(l2.code, 0, l2.text);
+  const st = tr.record(['status', '--change', change]);
+  assert.equal(st.code, 0, st.text);
+  assert.equal(st.json.done, true);
+});
+
+// ── Batch G4, task D1: one INCONCLUSIVE verdict state ─────────────────────────────────────────
+// A read-back whose answer proves nothing either way is recorded with state INCONCLUSIVE and
+// verified false. A counted change lists it under uncounted with that reason: it neither counts
+// toward N nor keeps the change partial, with or without a run id, and link refuses it as a
+// proof like any read-back that did not verify.
+const inconclusiveRead = (s, entry) => s.log.append({ kind: 'verify', verified: false, state: 'INCONCLUSIVE', ...entry });
+
+test('D1: an INCONCLUSIVE read-back is uncounted with its reason, never a pass and never a failed object (no run id)', (t) => {
+  const s = setup(t);
+  const change = approved(s, OKTA_BULK, 2);
+  const unsure = inconclusiveRead(s, { connector: 'okta', command: 'verify-group-member', change, flags: '' });
+  personRead(s, change);
+  const v = status(s, change);
+  assert.equal(v.code, 2, v.stdout);
+  assert.equal(v.json.done, false);
+  assert.equal(v.json.summary, 'verified 1 of 2');
+  assert.deepEqual(v.json.failed, [], 'an INCONCLUSIVE read is not a failed object');
+  assert.deepEqual(v.json.uncounted.map((u) => [u.seq, u.state]), [[unsure.seq, 'INCONCLUSIVE']]);
+  assert.match(v.json.uncounted[0].reason, /proves nothing either way \(INCONCLUSIVE\)/);
+  assert.match(v.json.uncounted[0].reason, /neither a pass nor a failed object/);
+  personRead(s, change);
+  const done = status(s, change);
+  assert.equal(done.json.done, true, done.stdout);
+  assert.equal(done.json.summary, 'verified 2 of 2');
+});
+
+test('D1: an INCONCLUSIVE read of a run is uncounted, and a later pass of the same run counts once', (t) => {
+  const s = setup(t);
+  const change = approved(s, FLEET_BATCH, 1);
+  const pending = inconclusiveRead(s, { connector: 'fleet', command: 'verify-script', change, run: uuid(1) });
+  const before = status(s, change);
+  assert.equal(before.json.done, false);
+  assert.equal(before.json.summary, 'verified 0 of 1');
+  assert.deepEqual(before.json.failed, []);
+  assert.deepEqual(before.json.uncounted.map((u) => [u.seq, u.run, u.state]), [[pending.seq, uuid(1), 'INCONCLUSIVE']]);
+  assert.match(before.json.uncounted[0].reason, /proves nothing either way/);
+  runRead(s, change, uuid(1));
+  const after = status(s, change);
+  assert.equal(after.json.done, true, after.stdout);
+  assert.equal(after.json.summary, 'verified 1 of 1');
+});
+
+test('D1: link refuses an INCONCLUSIVE read-back as the proof of a change', (t) => {
+  const s = setup(t);
+  const o = openChange(s);
+  assert.equal(o.code, 0, o.stderr);
+  const change = o.json.change;
+  assert.equal(s.run(CLI, ['approve', '--change', change, '--ref', 'IT-123', '--procedure-sha256', o.json.procedure_sha256]).code, 0);
+  const unsure = inconclusiveRead(s, { connector: 'okta', command: 'verify-factor-reset', change, flags: FACTOR_FLAGS });
+  const l = s.run(CLI, ['link', '--change', change, '--verify-seq', String(unsure.seq)]);
+  assert.equal(l.code, 2, l.stdout);
+  assert.match(l.stderr, /did not verify/);
+  assert.equal(status(s, change).json.done, false);
 });

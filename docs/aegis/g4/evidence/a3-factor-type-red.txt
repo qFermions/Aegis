@@ -1,0 +1,153 @@
+# command: node --test scripts/audit/change-record.test.js scripts/adapters/verify-flags.test.js
+# commit: 7a9ba17 (plus uncommitted changes in the working tree)  started: 2026-11-01T04:36:24Z  node: v24.22.1
+✔ every verify-* command of the nine connectors declares every flag it takes, and nothing it does not take (31.941853ms)
+✔ a declaration removed, or a flag a connector takes that no declaration names, is caught (1.927518ms)
+✖ the owner's minimum is a pass flag wherever a command takes it: --not-before, --absent, --expect-sha256, --type, --method, --expect, --factor-type (3.341532ms)
+✖ okta verify-factor-reset --factor-type is a pass flag whose rule is the factor type the Okta connector accepts (0.251011ms)
+✔ every flag that is not a pass flag says why, and the trail's PASS_FLAGS are exactly the declared pass flags (1.387248ms)
+✔ the declarations module loads no connector and no network module (0.459083ms)
+✔ open, approve, a passing verify-* read-back and link: the change is done (exit 0) (257.545461ms)
+✔ an approval of another digest is refused at approve and nothing is recorded; the change is not done (174.091323ms)
+✔ an approval written straight into the trail with a mismatched digest still leaves the change not done (228.198308ms)
+✔ missing approval, missing read-back, a read-back that did not verify, or a read-back before the approval: not done (1083.848161ms)
+✔ R0 and R1 procedures are refused at open; an unknown change is not done; a broken trail is not done (486.035078ms)
+✔ open needs the read-back that proves the change; link refuses another kind, and status never counts one (431.72795ms)
+✔ with no approval, status names the missing approval and never says the read-back ran before it (179.22056ms)
+✔ one read-back proves one change: a second link is refused, and one written around the CLI does not count (490.954232ms)
+✔ open refuses a read-back the connector does not have (a typo or an unknown connector); a real one is accepted (397.97321ms)
+✔ open names a read-back by the connector name its verify entries carry (google-workspace), never by a file name (131.352115ms)
+✔ a read-back command counts only as a command-table key, never as a mention in a comment or a string (0.34032ms)
+✔ link refuses a read-back that cannot prove the change: no approval, before the approval, not verified, or recorded for another change (466.550498ms)
+✔ link refuses a read-back recorded without --change and says to run it again with --change; nothing is recorded (267.785319ms)
+✔ status never counts a read-back that was not recorded under this change, even one linked around the CLI (296.857215ms)
+✔ bindRefusal: the verify-* CLIs may run under a change only when it is open for exactly that read-back and approved (147.518966ms)
+✔ the change-record module writes only the local audit trail: no network module, no child process (0.55318ms)
+✔ open tells the operator to run the read-back with --change <id> and to link the audit_seq it prints (64.058043ms)
+✔ a counted gate opened without --expected is refused at open, and nothing is recorded (324.912179ms)
+✔ a gate without a count refuses --expected and keeps the one-read-back rule (188.787633ms)
+✔ k below N reads partial and never done; k equal to N reads done (250.838792ms)
+✔ one failed host keeps the change not done and names that read-back (271.59114ms)
+✔ the same execution id read twice counts once (277.019296ms)
+✔ a read-back that records no run id counts bound read-backs and says a repeated read is not detected (249.399254ms)
+✔ only bound read-backs of the named kind recorded after the approval count toward k (187.234367ms)
+✔ the audit trail takes a run id that is a job id and refuses one that is not job-shaped (4.445702ms)
+✔ a Fleet read with no run id is listed as uncounted: one that got no answer does not block, a passing one does not count (257.048828ms)
+✔ a read-back with no run id: a failed read keeps the change not done, and more passes than N read partial (364.80377ms)
+✔ open refuses a command with no runbook, and checks the gate before the count (170.4282ms)
+✔ a Fleet failure with an answer but no run id blocks; open's next step and the trail follow the run-id rule (261.396585ms)
+✔ open refuses a gate the named runbook does not have (56.714392ms)
+✔ a read with no answer is uncounted for a read-back with no run id too; an answered Fleet failure with no run id names the way forward (406.550655ms)
+✔ open names the read-back with its pass flags, in one form, and refuses a flag that does not change what a pass means (189.873084ms)
+✔ open refuses a removal gate named without --absent, and an add gate named with it (227.461298ms)
+✔ open refuses a read-back the gate's runbook does not bind for it: another connector's or command's read never proves a removal (429.240393ms)
+✔ a read-back named for several gates in one comment binds each of them (857.01258ms)
+✔ open refuses a gate whose runbook binds no read-back: its proof is the read its runbook names, never a change record (236.8383ms)
+✔ an exception gate that weakens protection is never opened for the read that passes when protection is on (126.229045ms)
+✔ a removal change is not done by a passing read without --absent, and is done by a passing --absent read under its change (403.017232ms)
+✔ an add change is not done by an --absent read (393.299099ms)
+✔ a counted removal counts only --absent reads: a presence read is listed as uncounted (281.109034ms)
+✔ a change whose read-back its gate no longer binds in that form (opened before this batch, or written around the CLI) is never done and refuses its read (146.396753ms)
+✔ a done change stays done after its runbook changes; only a read-back named without its line's pass flags is stale (22.635169ms)
+✔ approve refuses a change whose read-back is named without its gate's pass flags, and records nothing (83.828501ms)
+✔ an entry from before this batch is judged by open's whole check; a change open marked is never re-judged (15.854567ms)
+✔ a counted gate's procedure carries its count, and open refuses an N that differs from it or a procedure without one (294.007612ms)
+✔ a second count written in another shape (indented, a bullet, a quote, a heading, another case) is refused (708.469703ms)
+✔ a second count wrapped in Markdown (bold, a task box, a table cell, italics, backticks) is refused (480.944399ms)
+✔ a second count in any line where the word count meets a colon is refused (697.585473ms)
+✔ an approval given for one N does not cover a different N (347.936578ms)
+✔ a gate without a count keeps today's rule: no Count line needed, and --expected still refused (227.010518ms)
+✔ A1: a format character inside the keyword (zero width, soft hyphen, bidi, variation selector, tag) makes a count line, so a second count is refused (951.107925ms)
+✔ A1: a combining mark on a letter of the keyword or on the number makes a count line, so a second count is refused (321.715837ms)
+✔ A1: a look-alike letter outside A to Z in the keyword (Cyrillic, Greek, a small capital) is refused, alone or beside the real line (825.321889ms)
+✔ A1: a full-width digit or letter is a count line but not the accepted form (487.500251ms)
+✔ A1 (O1): a real count hidden in an HTML comment next to a disguised visible one is refused, for either number (5470.882266ms)
+✔ A1: the plain visible line Count: N still opens, beside comments, hidden regions and words that only look near it (133.232031ms)
+✔ F11: an invisible hangul default ignorable character inside the keyword makes a count line, so a second count is refused (1539.409654ms)
+✔ F11: an invisible unassigned default ignorable character inside the keyword makes a count line, so a second count is refused (1564.413349ms)
+✔ F11: a count whose keyword holds a filler inside a hidden region is refused as hidden (505.529552ms)
+✔ F11: the plain visible Count: N still opens when a filler sits elsewhere in the text (65.084311ms)
+✔ A2: audit-log.js approval writes nothing: an unknown change id, a change not yet opened, a mismatched digest, a second approval (383.733354ms)
+✔ A2: change-record.js approve refuses an unknown change, a change not yet opened, a mismatched digest and a second approval, and writes nothing (455.005323ms)
+✔ A2: two approvals of one change raced from two processes: exactly one is recorded (195.158721ms)
+✔ A3: each read-back with a time bound is named with --not-before; one earlier than the approval is not done, one at or after it is done when it passes (178.13068ms)
+✔ A3: an early time bound linked around the CLI still never makes the change done (5.735191ms)
+✔ A3: a time bound in epoch milliseconds is recorded in UTC and judged the same way (6.188491ms)
+✔ A3: a change whose read-back takes a time bound is not opened without it, and the bound is named without a value (4.068707ms)
+✖ A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done (44.835827ms)
+✖ A3: an Okta verify-factor-reset read-back of the factor type the change names is done; another type is not (2.630034ms)
+✔ D1: an INCONCLUSIVE read-back is uncounted with its reason, never a pass and never a failed object (no run id) (235.484057ms)
+✔ D1: an INCONCLUSIVE read of a run is uncounted, and a later pass of the same run counts once (262.258803ms)
+✔ D1: link refuses an INCONCLUSIVE read-back as the proof of a change (222.872743ms)
+ℹ tests 78
+ℹ suites 0
+ℹ pass 74
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28529.341791
+
+✖ failing tests:
+
+test at scripts/adapters/verify-flags.test.js:78:1
+✖ the owner's minimum is a pass flag wherever a command takes it: --not-before, --absent, --expect-sha256, --type, --method, --expect, --factor-type (3.341532ms)
+  AssertionError [ERR_ASSERTION]: okta verify-factor-reset --factor-type is a pass flag
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-flags.test.js:85:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/verify-flags.test.js:96:1
+✖ okta verify-factor-reset --factor-type is a pass flag whose rule is the factor type the Okta connector accepts (0.251011ms)
+  AssertionError [ERR_ASSERTION]: a value rule, not a reason
+      at TestContext.<anonymous> (<repo>/scripts/adapters/verify-flags.test.js:98:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/audit/change-record.test.js:1317:1
+✖ A3: a mismatched --expect-sha256, --type, --method or --factor-type is not done (44.835827ms)
+  AuditRefused: no flag changes what okta:verify-factor-reset's pass means, so it is named without flags
+      at Object.parseReadBack (<repo>/scripts/audit/audit-log.js:190:21)
+      at <repo>/scripts/audit/trail-helper.js:32:35
+      at Object.approvedChange (<repo>/scripts/audit/change-record.test.js:1238:15)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1329:39)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/audit/change-record.test.js:1338:1
+✖ A3: an Okta verify-factor-reset read-back of the factor type the change names is done; another type is not (2.630034ms)
+  AuditRefused: no flag changes what okta:verify-factor-reset's pass means, so it is named without flags
+      at Object.parseReadBack (<repo>/scripts/audit/audit-log.js:190:21)
+      at TestContext.<anonymous> (<repo>/scripts/audit/change-record.test.js:1341:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

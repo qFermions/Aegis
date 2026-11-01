@@ -1,0 +1,237 @@
+# command: node --test scripts/audit/time-bound-capture.test.js
+# run in: <repo>  commit: 57a09eb (working tree: the red test)  started: 2026-11-01T03:15:09Z  node: v24.22.1
+✔ F9: the check finds the change-bound read-backs with a time bound (it is not vacuous) (8.650354ms)
+✔ F9: the check refuses a bound taken before the gate, at the start of the work, or nowhere, and accepts approved_at or a step of the change (1.588301ms)
+✖ F9: fleet-device-actions.md takes the time bound of each change-bound read-back at or after the approval (2.126063ms)
+✖ F9: gws-account-containment.md takes the time bound of each change-bound read-back at or after the approval (0.955286ms)
+✖ F9: gws-admin-roles.md takes the time bound of each change-bound read-back at or after the approval (0.720145ms)
+✖ F9: gws-drive-sharing.md takes the time bound of each change-bound read-back at or after the approval (0.692623ms)
+✔ F9: jamf-config-profiles.md takes the time bound of each change-bound read-back at or after the approval (0.725081ms)
+✖ F9: mfa-issue.md takes the time bound of each change-bound read-back at or after the approval (0.95476ms)
+✖ F9: offboard.md takes the time bound of each change-bound read-back at or after the approval (1.093876ms)
+✖ F9: password-reset.md takes the time bound of each change-bound read-back at or after the approval (0.815286ms)
+✖ F9: security-alert-triage.md takes the time bound of each change-bound read-back at or after the approval (0.715126ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 3
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 152.592885
+
+✖ failing tests:
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: fleet-device-actions.md takes the time bound of each change-bound read-back at or after the approval (2.126063ms)
+  AssertionError [ERR_ASSERTION]: fleet-device-actions.md:
+  line 262: --not-before [NOT_BEFORE] on a line run with --change is taken at line 12 ("**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet"), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 262: --not-before [NOT_BEFORE] on a line run with --change is taken at line 12 ("**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet"), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 262: --not-before [NOT_BEFORE] on a line run with --change is taken at line 12 ("**Placeholders:** `[HOST_ID]` (the Fleet host ID; in a breadcrumb it stands for that host, opened from a search on its serial, because Fleet"), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: gws-account-containment.md takes the time bound of each change-bound read-back at or after the approval (0.955286ms)
+  AssertionError [ERR_ASSERTION]: gws-account-containment.md:
+  line 139: --not-before [NOT_BEFORE] on a line run with --change is taken at line 120 ("Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 139: --not-before [NOT_BEFORE] on a line run with --change is taken at line 120 ("Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 139: --not-before [NOT_BEFORE] on a line run with --change is taken at line 120 ("Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: gws-admin-roles.md takes the time bound of each change-bound read-back at or after the approval (0.720145ms)
+  AssertionError [ERR_ASSERTION]: gws-admin-roles.md:
+  line 199: --not-before [NOT_BEFORE] on a line run with --change is taken at line 178 ("Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 199: --not-before [NOT_BEFORE] on a line run with --change is taken at line 178 ("Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 199: --not-before [NOT_BEFORE] on a line run with --change is taken at line 178 ("Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: gws-drive-sharing.md takes the time bound of each change-bound read-back at or after the approval (0.692623ms)
+  AssertionError [ERR_ASSERTION]: gws-drive-sharing.md:
+  line 122: --not-before [NOT_BEFORE] on a line run with --change is taken at line 102 ("Write down `[NOT_BEFORE]` now."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 122: --not-before [NOT_BEFORE] on a line run with --change is taken at line 102 ("Write down `[NOT_BEFORE]` now."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 122: --not-before [NOT_BEFORE] on a line run with --change is taken at line 102 ("Write down `[NOT_BEFORE]` now."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: mfa-issue.md takes the time bound of each change-bound read-back at or after the approval (0.95476ms)
+  AssertionError [ERR_ASSERTION]: mfa-issue.md:
+  line 105: --not-before [NOT_BEFORE] on a line run with --change is taken at line 101 ("Use the user's object ID as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 105: --not-before [NOT_BEFORE] on a line run with --change is taken at line 101 ("Use the user\'s object ID as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 105: --not-before [NOT_BEFORE] on a line run with --change is taken at line 101 ("Use the user\'s object ID as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: offboard.md takes the time bound of each change-bound read-back at or after the approval (1.093876ms)
+  AssertionError [ERR_ASSERTION]: offboard.md:
+  line 114: --not-before [NOT_BEFORE] on a line run with --change is taken at line 108 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  line 116: --not-before [NOT_BEFORE] on a line run with --change is taken at line 108 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 114: --not-before [NOT_BEFORE] on a line run with --change is taken at line 108 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself',
+  +   'line 116: --not-before [NOT_BEFORE] on a line run with --change is taken at line 108 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 114: --not-before [NOT_BEFORE] on a line run with --change is taken at line 108 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself', 'line 116: --not-before [NOT_BEFORE] on a line run with --change is taken at line 108 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: password-reset.md takes the time bound of each change-bound read-back at or after the approval (0.815286ms)
+  AssertionError [ERR_ASSERTION]: password-reset.md:
+  line 143: --not-before [NOT_BEFORE] on a line run with --change is taken at line 139 ("Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user's object ID as `[USER_ID]`."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  line 145: --not-before [NOT_BEFORE] on a line run with --change is taken at line 139 ("Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user's object ID as `[USER_ID]`."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 143: --not-before [NOT_BEFORE] on a line run with --change is taken at line 139 ("Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user\'s object ID as `[USER_ID]`."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself',
+  +   'line 145: --not-before [NOT_BEFORE] on a line run with --change is taken at line 139 ("Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user\'s object ID as `[USER_ID]`."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 143: --not-before [NOT_BEFORE] on a line run with --change is taken at line 139 ("Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user\'s object ID as `[USER_ID]`."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself', 'line 145: --not-before [NOT_BEFORE] on a line run with --change is taken at line 139 ("Write the time the reset started as `[NOT_BEFORE]` (UTC) and use the user\'s object ID as `[USER_ID]`."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/time-bound-capture.test.js:112:3
+✖ F9: security-alert-triage.md takes the time bound of each change-bound read-back at or after the approval (0.715126ms)
+  AssertionError [ERR_ASSERTION]: security-alert-triage.md:
+  line 171: --not-before [NOT_BEFORE] on a line run with --change is taken at line 167 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change's approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself
+  + actual - expected
+  
+  + [
+  +   'line 171: --not-before [NOT_BEFORE] on a line run with --change is taken at line 167 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/time-bound-capture.test.js:114:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'line 171: --not-before [NOT_BEFORE] on a line run with --change is taken at line 167 ("Use the object ID of `[UPN]` as `[USER_ID]` and the time the work started as `[NOT_BEFORE]` (UTC)."), which is not at or after the change\'s approval: the bound is refused before the read; take it as the approved_at that change-record.js approve prints, or as a step of the change itself' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+# exit: 1
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

@@ -1,0 +1,19 @@
+# command: node --test scripts/eval/judged/cases.test.js
+# commit: 27a40f8 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:40Z  node: v24.22.1
+✔ a valid file parses; blank lines are skipped and line numbers are kept (2.798298ms)
+✔ an unknown top-level field and an unknown field inside expected are refused with line and name (0.59279ms)
+✔ a missing field is refused, at the top level and inside expected (0.227825ms)
+✔ a bad enum value is refused without echoing the value (0.581503ms)
+✔ a duplicate id is refused with both line numbers (0.190546ms)
+✔ a wrong type is refused: string fields, arrays, items, the expected object, a non-object line (0.324263ms)
+✔ invalid JSON is refused with its line number and never echoes the line text (0.208601ms)
+✔ the DEV set: 8 placeholder-only cases DEV01..DEV08 with the required coverage (0.797049ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.499208
+# exit: 0  finished: 2026-10-31T23:57:41Z

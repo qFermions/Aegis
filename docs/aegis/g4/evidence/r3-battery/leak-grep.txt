@@ -1,0 +1,224 @@
+charter grep: 2766 hit lines (case-insensitive) in 187 files; by keyword: {"token":1316,"password":872,"secret":522,"/users/":54,"api_key":2}
+a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 29
+  6805: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 15
+  6806: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  6707: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 7
+  6807: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  6708: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  10018: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +a personal path or mail on any line (/Users
+  6810: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  6711: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  10021: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  28327: docs/aegis/g4/baseline/leak-grep.t
+  6811: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  6712: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  26933: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +a personal path or mail on any line (/
+  6812: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  6713: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  26934: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +  12645: docs/aegis/g4/baseline/leak-g
+  6813: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  6714: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  43482: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\User
+  6814: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  21615: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 3
+  6815: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  21616: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  11778: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +a personal path or mail on any line (/
+  6816: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  21617: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  11779: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +  12645: docs/aegis/g4/baseline/leak-g
+  6817: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  21618: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  28327: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\User
+  6818: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  38530: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 1
+  6819: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  38531: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +  12645: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:
+  6820: docs/aegis/g4/evidence/r2-battery/leak-grep.txt: +  55079: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 0
+  18389: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 7
+  18390: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  10018: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 3
+  18391: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  10019: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  11778: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +a personal path or mail on any line (/
+  18392: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  10020: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  11779: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +  12645: docs/aegis/g4/baseline/leak-g
+  18393: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  10021: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  28327: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\User
+  18394: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  26933: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 1
+  18395: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  26934: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +  12645: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:
+  18396: docs/aegis/g4/evidence/r1-battery/leak-grep.txt: +  43482: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 0
+  33297: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 3
+  33298: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  11778: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 1
+  33299: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  11779: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +  12645: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:
+  33300: docs/aegis/g4/evidence/d-battery/leak-grep.txt: +  28327: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 0
+  50212: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 1
+  50213: docs/aegis/g4/evidence/resume-battery/leak-grep.txt: +  12645: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 0
+  66761: docs/aegis/g4/baseline/leak-grep.txt: +a personal path or mail on any line (/Users/; C:\Users or C:\\Users in any case; @gmail): 0
+hits by file (path: lines):
+  docs/aegis/g4/evidence/r1-connectors-full-tripwire.txt: 126
+  docs/aegis/g4/evidence/r1-connectors-full.txt: 126
+  docs/aegis/g4/evidence/resume-battery/node-test-tripwire.txt: 124
+  docs/aegis/g4/evidence/resume-battery/node-test.txt: 123
+  docs/aegis/g4/evidence/r2-battery/node-test-tripwire.txt: 116
+  docs/aegis/g4/evidence/r2-battery/node-test.txt: 116
+  docs/aegis/g4/evidence/r1-battery/node-test-tripwire.txt: 115
+  docs/aegis/g4/evidence/r1-battery/node-test.txt: 115
+  docs/aegis/g4/evidence/d-battery/node-test-tripwire.txt: 113
+  docs/aegis/g4/evidence/d-battery/node-test.txt: 113
+  docs/aegis/g4/baseline/node-test-under-tripwire.txt: 108
+  docs/aegis/g4/baseline/node-test.txt: 108
+  docs/aegis/owner/vendor-facts-priority.md: 89
+  docs/aegis/owner/test-tenant-runbook.md: 54
+  docs/aegis/g4/evidence/d1-red.txt: 51
+  docs/aegis/g4/evidence/r3-f2-red.txt: 42
+  docs/aegis/g4/evidence/d1-green.txt: 42
+  scripts/adapters/inconclusive.test.js: 40
+  .claude/commands/password-reset.md: 30
+  docs/aegis/g4/evidence/r3-f2-green.txt: 28
+  docs/aegis/g4/evidence/a4-green.txt: 27
+  docs/aegis/g4/evidence/r3-f10-green.txt: 25
+  .claude/commands/github-security-alerts.md: 24
+  .claude/commands/gws-account-containment.md: 23
+  scripts/adapters/jamf-client.test.js: 23
+  docs/aegis/g4/evidence/r1-f5-green.txt: 22
+  docs/aegis/g4/evidence/r1-f1-green.txt: 22
+  docs/aegis/g4/evidence/a3-runbooks-green.txt: 22
+  .claude/commands/okta-user-lifecycle.md: 21
+  docs/aegis/g4/evidence/r2-battery/leak-grep.txt: 17
+  checks.md: 16
+  docs/aegis/g4/evidence/r2-f4-green.txt: 14
+  docs/aegis/g4/evidence/r2-f4-red.txt: 14
+  scripts/adapters/msgraph-client.js: 14
+  scripts/adapters/README.md: 13
+  .claude/commands/gws-password-reset.md: 13
+  scripts/audit/change-record.test.js: 13
+  docs/aegis/g4/evidence/resume-battery/ms-ticket-eval.txt: 12
+  scripts/audit/README.md: 11
+  scripts/adapters/inconclusive-r3.test.js: 11
+  docs/aegis/g4/evidence/r2-battery/pre-commit-check-all.txt: 11
+  docs/aegis/g4/evidence/r1-battery/leak-grep.txt: 11
+  docs/aegis/g4/evidence/r1-battery/pre-commit-check-all.txt: 11
+  docs/aegis/g4/evidence/r1-f3-red.txt: 11
+  docs/aegis/g4/evidence/d-battery/pre-commit-check-all.txt: 11
+  docs/aegis/g4/baseline/pre-commit-check-all.txt: 11
+  scripts/adapters/msgraph-client.test.js: 10
+  docs/aegis/g4/evidence/resume-battery/g3-ticket-eval.txt: 10
+  docs/aegis/g4/evidence/r1-f8-green.txt: 9
+  docs/aegis/g4/evidence/r1-f8-red.txt: 9
+  docs/aegis/g4/evidence/r3-f15-green.txt: 8
+  docs/aegis/g4/evidence/r3-f15-red.txt: 8
+  docs/aegis/g4/evidence/r3-f13-green.txt: 8
+  docs/aegis/g4/evidence/r3-f13-red.txt: 8
+  docs/aegis/g4/evidence/r2-f7-green.txt: 8
+  docs/aegis/g4/evidence/r2-f7-red.txt: 8
+  docs/aegis/g4/evidence/r2-f1-green.txt: 8
+  docs/aegis/g4/evidence/r2-f1-red.txt: 8
+  docs/aegis/g4/evidence/r1-f12-green.txt: 8
+  docs/aegis/g4/evidence/r1-f12-red.txt: 8
+  docs/aegis/g4/evidence/r1-f6-green.txt: 8
+  docs/aegis/g4/evidence/r1-f6-red.txt: 8
+  scripts/eval/judged/backends.test.js: 8
+  scripts/adapters/session-revocation-limit.test.js: 8
+  scripts/eval/judged/cases.test.js: 8
+  docs/aegis/g4/evidence/r1-f3-green.txt: 7
+  docs/aegis/g4/evidence/d-battery/leak-grep.txt: 7
+  docs/aegis/g4/evidence/resume-battery/gws-ticket-eval.txt: 7
+  docs/review/batches/g3-closeout-3-checks.md: 7
+  docs/aegis/g4/evidence/r3-f14-green.txt: 6
+  docs/aegis/g4/evidence/r3-f8-green.txt: 6
+  docs/aegis/g4/evidence/r3-f8-red.txt: 6
+  docs/aegis/g4/evidence/r3-f7-green.txt: 6
+  docs/aegis/g4/evidence/r3-f7-red.txt: 6
+  docs/aegis/g4/evidence/r3-f3-green.txt: 6
+  docs/aegis/g4/evidence/r3-f3-red.txt: 6
+  docs/aegis/g4/evidence/r3-f1-green.txt: 6
+  docs/aegis/g4/evidence/r3-f1-red.txt: 6
+  docs/aegis/g4/evidence/r2-battery/g3-ticket-eval.txt: 6
+  docs/aegis/g4/evidence/r2-battery/ms-ticket-eval.txt: 6
+  docs/aegis/g4/evidence/r2-f6-green.txt: 6
+  docs/aegis/g4/evidence/r2-f6-red.txt: 6
+  docs/aegis/g4/evidence/r2-f5-green.txt: 6
+  docs/aegis/g4/evidence/r2-f5-red.txt: 6
+  docs/aegis/g4/evidence/r2-f3-green.txt: 6
+  docs/aegis/g4/evidence/r2-f3-red.txt: 6
+  docs/aegis/g4/evidence/r2-f2-green.txt: 6
+  docs/aegis/g4/evidence/r2-f2-red.txt: 6
+  PRODUCT_CONTRACT.md: 6
+  docs/aegis/g4/evidence/r1-battery/g3-ticket-eval.txt: 6
+  docs/aegis/g4/evidence/r1-battery/ms-ticket-eval.txt: 6
+  docs/aegis/g4/evidence/r1-f7-green.txt: 6
+  docs/aegis/g4/evidence/r1-f7-red.txt: 6
+  docs/aegis/g4/evidence/d-battery/g3-ticket-eval.txt: 6
+  docs/aegis/g4/evidence/d-battery/ms-ticket-eval.txt: 6
+  docs/aegis/g4/evidence/resume-battery/replay-demo.txt: 6
+  .claude/commands/offboard.md: 6
+  scripts/audit/audit-log.js: 6
+  docs/aegis/g4/baseline/g3-ticket-eval.txt: 6
+  docs/aegis/g4/baseline/ms-ticket-eval.txt: 6
+  .claude/commands/jamf-lock-erase.md: 5
+  docs/aegis/owner/operator-validation.md: 5
+  scripts/eval/owner-kits.test.js: 5
+  scripts/adapters/verify-flags.js: 5
+  docs/aegis/g4/evidence/r2-battery/gws-ticket-eval.txt: 4
+  docs/aegis/g3/vendor-facts-to-check.md: 4
+  progress.md: 4
+  docs/aegis/g4/evidence/r1-battery/gws-ticket-eval.txt: 4
+  scripts/audit/early-time-bound.test.js: 4
+  docs/aegis/g4/evidence/d-battery/gws-ticket-eval.txt: 4
+  .claude/commands/mfa-issue.md: 4
+  scripts/adapters/okta-client.test.js: 4
+  docs/aegis/g4/evidence/resume-battery/leak-grep.txt: 4
+  docs/aegis/production-readiness.md: 4
+  scripts/eval/README.md: 4
+  docs/aegis/g4/baseline/gws-ticket-eval.txt: 4
+  docs/aegis/g4/evidence/r2-battery/replay-demo.txt: 3
+  docs/aegis/g4/evidence/r2-f9-red.txt: 3
+  docs/explainers/g4-eval-and-closeout.md: 3
+  docs/aegis/g4/evidence/r1-battery/replay-demo.txt: 3
+  docs/aegis/g4/evidence/r1-f4-green.txt: 3
+  docs/aegis/g4/evidence/d-battery/replay-demo.txt: 3
+  docs/aegis/g4/evidence/resume-battery/release-boundary-check.txt: 3
+  .claude/commands/gws-offboard.md: 3
+  scripts/adapters/fleet-client.js: 3
+  scripts/adapters/github-client.js: 3
+  docs/aegis/boundary-audit.md: 3
+  docs/aegis/g4/evidence/b10-red.txt: 3
+  scripts/eval/judged/backends.js: 3
+  scripts/eval/judged/cases.js: 3
+  docs/aegis/g4/evidence/a3-red.txt: 3
+  docs/aegis/g4/baseline/replay-demo.txt: 3
+  scripts/adapters/gws-client.js: 2
+  PROJECT_STATE.md: 2
+  docs/aegis/g4/evidence/r1-f5-red.txt: 2
+  docs/aegis/g4/evidence/r1-f1-red.txt: 2
+  docs/aegis/g4/evidence/security-review-1.md: 2
+  .claude/commands/email-to-spam.md: 2
+  .claude/commands/gws-2sv-enforcement.md: 2
+  .claude/commands/jamf-filevault.md: 2
+  .claude/commands/okta-mfa-reset.md: 2
+  .claude/commands/security-alert-triage.md: 2
+  scripts/adapters/github-client.test.js: 2
+  docs/aegis/g4/evidence/c-green.txt: 2
+  docs/aegis/g4/evidence/a4-red.txt: 2
+  scripts/eval/judged/cli.test.js: 2
+  scripts/eval/judged/calibrate.test.js: 2
+  scripts/eval/judged/report.test.js: 2
+  scripts/eval/judged/checks.test.js: 2
+  scripts/eval/judged/dev-cases.jsonl: 2
+  docs/aegis/g4/evidence/a3-d7-test-diff.txt: 2
+  scripts/adapters/jamf-client.js: 2
+  docs/aegis/g4/baseline/runbook-gate-markers.txt: 2
+  docs/aegis/g4/evidence/r3-f5-green.txt: 1
+  docs/aegis/g4/evidence/r3-f5-red.txt: 1
+  (commit d7cb9bf header and message): 1
+  scripts/adapters/slack-client.js: 1
+  (commit 55689c0 header and message): 1
+  docs/aegis/g4/evidence/r2-battery/release-boundary-check.txt: 1
+  (commit 89f2edf header and message): 1
+  docs/aegis/g4/evidence/r2-f9-green.txt: 1
+  (commit f514f14 header and message): 1
+  docs/aegis/g4/evidence/r1-battery/release-boundary-check.txt: 1
+  (commit 537ef3b header and message): 1
+  docs/aegis/g4/evidence/d-battery/release-boundary-check.txt: 1
+  .claude/commands/fleet-device-actions.md: 1
+  .claude/commands/linear-intake.md: 1
+  .claude/commands/mac-troubleshoot.md: 1
+  .claude/commands/okta-app-assignment.md: 1
+  .claude/commands/slack-app-approval.md: 1
+  .claude/commands/slack-security-settings.md: 1
+  scripts/adapters/okta-client.js: 1
+  scripts/adapters/readonly-contract.js: 1
+  scripts/adapters/gws-client.test.js: 1
+  docs/aegis/owner/operator-sample-template.csv: 1
+  (commit 83d533b header and message): 1
+  (commit 37d6761 header and message): 1
+  docs/aegis/g4/evidence/b11-smoke.md: 1
+  scripts/eval/judged/checks.js: 1
+  docs/aegis/g4/evidence/b3-green.txt: 1
+  scripts/audit/pass-flags.test.js: 1
+  docs/aegis/g4/evidence/a3-green.txt: 1
+  scripts/adapters/change-binding.test.js: 1
+  docs/aegis/g4/evidence/a2-green.txt: 1
+  docs/aegis/g4/evidence/a1-green.txt: 1
+  docs/aegis/g4/baseline/leak-grep.txt: 1
+  docs/aegis/g4/baseline/release-boundary-check.txt: 1
+credential-shape pass over added lines: 0 hit(s)
+URL hosts in added lines (14): learn.jamf.com 28, support.google.com 18, developer.jamf.com 17, raw.githubusercontent.com 17, support.jamf.com 10, www.googleapis.com 7, api.github.com 4, example.invalid 3, developers.google.com 2, docs.github.com 2, graph.microsoft.com 2, docs.slack.dev 1, fleetdm.com 1, learn.microsoft.com 1
+mail domains in added lines (3): domain.com 165, example.com 18, domain.c 4
+exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

@@ -90,7 +90,8 @@ test('Require re-register MFA is gated R3 as the alternative to the one-method d
 
 test('verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named', () => {
   const lines = PAGE.split('\n');
-  const i = lines.findIndex((l) => /msgraph-client\.js verify-mfa-cleared /.test(l));
+  // the line the runbook runs, not the gate's Read-back field that names it (batch G4, task D2)
+  const i = lines.findIndex((l) => /^node scripts\/adapters\/msgraph-client\.js verify-mfa-cleared /.test(l));
   assert.ok(i > 0, 'the verify-mfa-cleared line');
   assert.match(lines[i - 1], /^# HUMAN-RUN read-only read-back of \[mfa-require-reregister-portal\]/);
   assert.equal(lines[i], 'node scripts/adapters/msgraph-client.js verify-mfa-cleared --user [USER_ID] --change [CHANGE_ID] --execute');
@@ -129,7 +130,7 @@ test('/mfa-issue R2 and R3 actions capture pre-state and a rollback path, and ea
   const re = PAGE.split('\n').find((l) => l.startsWith('**PORTAL ACTION [mfa-require-reregister-portal]:**'));
   assert.match(re, /right away, before the user registers again \(step 2\)/);
   const lines = PAGE.split('\n');
-  const i = lines.findIndex((l) => /msgraph-client\.js verify-mfa-cleared /.test(l));
+  const i = lines.findIndex((l) => /^node scripts\/adapters\/msgraph-client\.js verify-mfa-cleared /.test(l));
   assert.match(lines[i - 1], /run it right after that gate, before the user registers again/);
   assert.match(PAGE, /^- \[ \] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration$/m);
   // code review round 3, finding 8: the raw read holds phone numbers and device names, so it stays
@@ -159,7 +160,9 @@ test('every R2 and R3 gate in /mfa-issue has a read-back bound to its change', (
     assert.match(lines[i - 1], new RegExp(`^# HUMAN-RUN read-only read-back of \\[${gate}\\]`), gate);
   }
   const para = lines.find((l) => l.startsWith('**Change record (R2 and R3 gates):**'));
-  for (const rb of ['msgraph:verify-sessions-revoked', 'msgraph:verify-method-absent', 'msgraph:verify-mfa-cleared']) assert.ok(para.includes(`\`${rb}\``), rb);
+  // the session read-back is named with its time bound, bare, as open takes it since batch G4 (task
+  // A3; code review round 1 of batch G4, finding 5)
+  for (const rb of ['msgraph:verify-sessions-revoked --not-before', 'msgraph:verify-method-absent', 'msgraph:verify-mfa-cleared']) assert.ok(para.includes(`\`${rb}\``), rb);
   assert.doesNotMatch(PAGE, /take no change record/);
   assert.match(PAGE, /^- \[ \] Session revocation: `verify-sessions-revoked` passed under its change/m);
   const facts = read('docs', 'aegis', 'g3', 'vendor-facts.md');

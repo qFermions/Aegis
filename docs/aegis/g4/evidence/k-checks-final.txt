@@ -1,0 +1,9 @@
+# K checks at 6b1742e, 2026-11-01T05:02Z, base 1f6647c
+K2 credential-shape pass: credential-shape pass over added lines: 0 hit(s)
+K2 key shapes in added lines: 0
+K2 personal paths in added lines: 0
+K3 U+2014: files added 0, added lines 0, commit messages 0
+K6 inventory: examples: 728 at 1f6647c, 728 now; added 0, removed 0, mode changed 0
+K6 runbook gates: base 343, head 343
+K7 held-out paths: 0
+K8 CLAUDE.md 19202 bytes; explainer 45 lines

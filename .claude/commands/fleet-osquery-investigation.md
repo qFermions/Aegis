@@ -92,6 +92,7 @@ SELECT u.username, s.command, s.time FROM users u CROSS JOIN shell_history s USI
 - **Reversibility:** R1: delete the report under its own phrase when the ticket closes (planning note at the end of Phase 6); the activity feed keeps the record that it existed
 - **Required confirmation:** Type exactly `CREATE REPORT [REPORT_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-osquery-investigation-add-report-portal]:** Only after the Phase 2 check and the exact match:
 1. Fleet → Reports → **Add report**.
 2. Paste the one `SELECT`, name it `[REPORT_NAME]`, read the scheduling, storage and automation settings and leave them off, then save.
@@ -113,6 +114,7 @@ Read-back: Fleet → Reports lists `[REPORT_NAME]` with the SQL you pasted, and 
 - **Reversibility:** R1: nothing on the hosts to undo; the run itself cannot be taken back, because the activity feed records it as `live_query` with the SQL and the number of targets; Fleet expires a run that is never closed after up to 24 hours
 - **Required confirmation:** Type exactly `RUN LIVE REPORT [REPORT_NAME] ON ALL HOSTS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-osquery-investigation-live-report-portal]:** Only after Phase 3 and the exact match:
 1. Fleet → Reports → `[REPORT_NAME]` → Live report → All hosts → **Run**.
 2. Read the rows as they arrive; each row names its host. Write the count of hosts that answered and the count targeted in the ticket.
@@ -143,6 +145,7 @@ node scripts/adapters/fleet-client.js hosts --status offline --page 0 --per-page
 - **Reversibility:** R2 (confidentiality): a downloaded file cannot be called back; it goes to the evidence store **[org gap]** and is deleted from the download folder; the ticket gets its location, never its rows
 - **Required confirmation:** Type exactly `EXPORT RESULTS OF REPORT [REPORT_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (an export to the administrator computer leaves no state a read-back reads)
 **PORTAL ACTION [fleet-osquery-investigation-export-portal]:** Only after the evidence store is named and the exact match:
 1. Fleet → Reports → `[REPORT_NAME]` → **Export results**.
 2. Put the CSV in the evidence store and write its location in the ticket.

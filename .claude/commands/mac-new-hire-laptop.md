@@ -59,6 +59,7 @@ If the row already names the Jamf device management service, skip the gate and g
 - **Reversibility:** R1 — Apple Business → Devices → Inventory → the same device → Unassign Device Management, or reassign it to another service, under its own phrase; never Release from Organization, which cannot be undone
 - **Required confirmation:** Type exactly `ASSIGN [SERIAL_NUMBER] TO JAMF DEVICE MANAGEMENT`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [mac-new-hire-laptop-assign-portal]:** Only after the exact match:
 1. Apple Business → Devices → Inventory → select `[SERIAL_NUMBER]` → **Assign Device Management** → choose the Jamf device management service → **Continue** → **Confirm**.
 2. Read the row back: the device management column now names the Jamf service.
@@ -86,6 +87,7 @@ If the row already names the Jamf device management service, skip the gate and g
 - **Reversibility:** R1 — Jamf Pro → Computers → PreStage enrollments → the same PreStage → Edit → Scope → untick the device → Save, under its own phrase; the next Apple sync reflects it within minutes
 - **Required confirmation:** Type exactly `ADD [SERIAL_NUMBER] TO PRESTAGE SCOPE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [mac-new-hire-laptop-prestage-scope-portal]:** Only after the exact match:
 1. Jamf Pro → Computers → PreStage enrollments → the new-hire PreStage → **Edit** → **Scope** → tick `[SERIAL_NUMBER]` → **Save**.
 2. Read the Scope tab back: `[SERIAL_NUMBER]` is listed. Saving syncs the settings with Apple.

@@ -122,6 +122,7 @@ Write one line in the ticket before any gate:
 - **Reversibility:** R1: undo is a new invitation, planned in [github-offboard-member-reinstate-preview]
 - **Required confirmation:** Type exactly `REVOKE PENDING INVITATION OF [GITHUB_USER] TO [@Aegion_GITHUB_ORG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [github-offboard-member-revoke-invitation-portal]:** Only after the Phase A `invitations` read lists the person and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → People → the pending invitations list → the invitation for `[GITHUB_USER]` → its cancel control [unconfirmed: check in the GitHub UI: the list's location and the control's label].
 
@@ -147,6 +148,7 @@ node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --
 - **Reversibility:** R2: back to member is a new invitation and the saved teams, planned in [github-offboard-member-reinstate-preview]; removal at the end date is [github-offboard-member-remove-outside-portal]
 - **Required confirmation:** Type exactly `CONVERT [GITHUB_USER] TO OUTSIDE COLLABORATOR IN [@Aegion_GITHUB_ORG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-offboard-member-convert-portal]:** Only after the Phase A pre-state is saved to `tasks/checkpoints/`, the approval, repository list and end date are in the ticket, and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → People → tick `[GITHUB_USER]` only.
 2. Open the **X members selected...** dropdown (B-07); its count must read 1.
@@ -159,7 +161,7 @@ node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --
 node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GITHUB_USER] --execute
 ```
 
-**Verification checkpoint:** [ ] `verify-offboarded` exits 2 with the reason "now an outside collaborator" · [ ] each kept repository shows the role the ticket names; anything more is trimmed with `/github-repo-access` · [ ] the end date is on the ticket for Phase F.
+**Verification checkpoint:** [ ] `verify-offboarded` exits 2 with the reason "now an outside collaborator", the answer a conversion expects: any exit other than 2 with that reason, exit 5 (INCONCLUSIVE: proves nothing either way) among them, does not prove the conversion · [ ] each kept repository shows the role the ticket names; anything more is trimmed with `/github-repo-access` · [ ] the end date is on the ticket for Phase F.
 
 ## Phase E: Remove a member from the organization (R3, inside /offboard)
 
@@ -176,6 +178,7 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 - **Reversibility:** R3 (account removal): no one-click undo; the way back is a new invitation and the teams and roles saved in tasks/checkpoints/, planned in [github-offboard-member-reinstate-preview]
 - **Required confirmation:** Type exactly `REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-offboard-member-remove-portal]:** Only after the independent review, the saved pre-state, the written rollback path, and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → People → tick `[GITHUB_USER]` only.
 2. Open the **X members selected...** dropdown (B-06); its count must read 1, and any other number means stop.
@@ -209,6 +212,7 @@ node scripts/adapters/github-client.js audit-log --phrase "action:org.remove_mem
 - **Reversibility:** R3: no one-click undo; the way back is re-adding each repository from tasks/checkpoints/ under `/github-repo-access`, planned in [github-offboard-member-reinstate-preview]
 - **Required confirmation:** Type exactly `REMOVE OUTSIDE COLLABORATOR [GITHUB_USER] FROM ALL REPOSITORIES IN [@Aegion_GITHUB_ORG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [github-offboard-member-remove-outside-portal]:** Only after the saved pre-state, the written rollback path, the review when part of `/offboard`, and the exact match:
 1. github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → People → Outside collaborators → `[GITHUB_USER]` → the control that removes them from every repository, then confirm [unconfirmed: check in the GitHub UI: the tab, the control and its dialog].
 
@@ -233,7 +237,7 @@ node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --
 
 - [ ] Phase A pre-state is in the ticket and saved to `tasks/checkpoints/`; every stop is cleared.
 - [ ] Invitation revoked: `verify-offboarded` exits 0.
-- [ ] Converted: `verify-offboarded` exits 2 saying "now an outside collaborator"; each kept repository's role matches the ticket.
+- [ ] Converted: `verify-offboarded` exits 2 saying "now an outside collaborator" (any exit other than 2 with that reason, exit 5 INCONCLUSIVE among them, does not prove it); each kept repository's role matches the ticket.
 - [ ] Removed from the organization: `verify-offboarded` exits 0; People no longer lists the person; on Enterprise Cloud the audit log shows the removal after `[NOT_BEFORE]`.
 - [ ] Outside collaborator removed: `verify-offboarded` exits 0.
 - [ ] The `/offboard` ticket records the GitHub step and its read-back.

@@ -38,12 +38,13 @@ const NOT_PASS_ANY = Object.freeze({
   channel: OBJECT, device: OBJECT, 'profile-id': OBJECT, 'profile-identifier': OBJECT, 'role-id': OBJECT,
   'management-id': OBJECT, 'execution-id': OBJECT, identifier: OBJECT, 'app-id': OBJECT, 'comment-id': OBJECT,
   'issue-id': OBJECT, author: OBJECT, target: OBJECT, 'method-id': OBJECT,
-  'not-before': TIME, 'from-version': TIME,
+  // batch G4, task A3: --not-before is a pass flag now (D10 on PR #9); the version bound stays here
+  'from-version': TIME,
 });
 const NOT_PASS = Object.freeze({
   'okta:verify-app-assigned --app': OBJECT,
-  'okta:verify-factor-reset --factor-type': `${OBJECT}: which factor`,
-  'msgraph:verify-mfa-method --method': `${OBJECT}: which method`,
+  // the A3 fix on branch fix/g4-a3-factor-type: okta verify-factor-reset --factor-type is a pass flag now
+  // batch G4, task A3: msgraph verify-mfa-method --method is a pass flag now (the owner's minimum)
   'linear:verify-state --state': `${FREE}: a workflow state`,
   'linear:verify-labels --has': `${FREE}: a label`,
   'jira:verify-transition --to-status': `${FREE}: a status`,
@@ -81,6 +82,7 @@ test('every flag a runbook passes to a read-back is classified: a pass flag, or 
     assert.equal(audit.PASS_FLAGS[kind].absent, 'switch', kind);
   }
   assert.ok(audit.PASS_FLAGS['jamf:verify-group-count'].expect, '--expect style flags are pass flags');
+  assert.ok(audit.PASS_FLAGS['okta:verify-factor-reset']['factor-type'] instanceof RegExp, 'which factor type a reset removed is a pass flag');
 });
 
 test('each pass flag is a flag its connector takes, and every value rule is a closed set, a number or a digest', () => {
@@ -92,7 +94,9 @@ test('each pass flag is a flag its connector takes, and every value rule is a cl
     for (const [flag, rule] of Object.entries(flags)) {
       assert.ok(src.includes(`'${flag}'`) || src.includes(`${flag}:`), `${kind} --${flag}: the connector takes the flag`);
       if (rule === 'switch') continue;
-      assert.ok(rule instanceof RegExp, `${kind} --${flag}: a switch or a value rule`);
+      // batch G4, task A3: a time bound is its own rule (a UTC time, checked in audit-log.js)
+      if (rule === 'time') { assert.equal(flag, 'not-before', `${kind} --${flag}: only --not-before is a time bound`); continue; }
+      assert.ok(rule instanceof RegExp, `${kind} --${flag}: a switch, a time bound or a value rule`);
       assert.ok(!rule.test('two words') && !rule.test(''), `${kind} --${flag}: no free text, no empty value`);
     }
   }
@@ -154,4 +158,19 @@ test('no read-back is named under a change for an object the change does not tou
   const readme = fs.readFileSync(path.join(ROOT, 'scripts', 'audit', 'README.md'), 'utf8');
   assert.doesNotMatch(readme, /runs without `--change`, and its runbook says so/);
   assert.match(readme, /every read-back line under an R2 or R3 gate is bound to that gate's change/);
+});
+
+// Batch G4, task A3: a read-back bounded in time (--not-before) is named with its bound, bare, and
+// runs with a bound at or after the approval's time; each runbook that binds one under a change says
+// so in its change-record paragraph.
+const TIME_SENTENCE = 'A read-back whose line has `--not-before` is named with it and no value';
+test('each runbook that binds a time-bounded read-back says to name its bound bare and to run it at or after the approval', () => {
+  const timed = readBackLines().filter((r) => r.bound && r.flags.includes('not-before'));
+  const files = [...new Set(timed.map((r) => r.file))].sort();
+  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'jamf-config-profiles.md', 'mfa-issue.md', 'offboard.md', 'password-reset.md', 'security-alert-triage.md']);
+  for (const file of files) {
+    const paragraph = fs.readFileSync(path.join(DIR, file), 'utf8').split('\n').find((l) => l.startsWith('**Change record'));
+    assert.ok(paragraph && paragraph.includes(TIME_SENTENCE), `${file}: the change-record paragraph names the time bound`);
+    assert.match(paragraph, /at or after the approval's time, which `approve` prints/, file);
+  }
 });

@@ -1,0 +1,7 @@
+# fresh clone of ad9759a
+⚠️  216 warning(s) found -- review the flagged lines above.
+   These are dangerous cmdlets in scripts. Confirm they are intentional.
+   Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
+
+exit 0
+# capture edited after the run: U+2014 written as "--" (1), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

@@ -88,6 +88,7 @@ node scripts/adapters/linear-client.js states --team [@Aegion_LINEAR_TEAM] --exe
 - **Reversibility:** R1, a mistaken issue is declined or canceled from triage (a status change the team can undo); never delete it to undo intake, because deletion is a floored action and a deleted issue restores only from Recently deleted issues for 30 days (a 2021 changelog said 14)
 - **Required confirmation:** Type exactly `CREATE LINEAR ISSUE IN TEAM [@Aegion_LINEAR_TEAM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [linear-intake-create-portal]:** Only after the Phase A duplicate check and the exact match:
 1. Linear → `[@Aegion_LINEAR_TEAM]` → the new-issue control (its label is not in the sources read for this runbook; confirm it on screen) → pick the IT request template if the team has one.
 2. Title: one line naming the thing and the place, for example "Conference room screen shows no picture". Description: the sanitized request (what, where, since when, how many people), no names, no email addresses, no secrets. Status: `[STATE_NAME]`.
@@ -117,6 +118,7 @@ GUI read-back: Linear → `[@Aegion_LINEAR_TEAM]` → Triage (or the team's view
 - **Reversibility:** R1, remove the label or set the previous priority under a new phrase; whether lowering the priority stops an SLA clock that already started is not documented in the sources read
 - **Required confirmation:** Type exactly `SET PRIORITY [PRIORITY_LEVEL] AND ADD LABEL [LABEL_NAME] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [linear-intake-label-priority-portal]:** Only after Phase B's read-back (or Phase A's read of an Asks issue) and the exact match:
 1. Linear → `[ISSUE_ID]` → Labels → pick `[LABEL_NAME]` from the list. Never type a "Group/Label" name into Add label: that shorthand creates the group and the label (search excerpt).
 2. Linear → `[ISSUE_ID]` → the priority property → pick `[PRIORITY_LEVEL]`, the level typed in the phrase (the property's on-screen label is not in the sources read; confirm it).

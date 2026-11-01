@@ -68,6 +68,7 @@ gam show licenses   # prints licence counts for every Google product
 - **Reversibility:** R1 — undo in the same place by switching the licence back off under the Phase 3 phrase `REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]`; the freed seat may take up to 24 hours before it can be reassigned
 - **Required confirmation:** Type exactly `ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-license-assign-assign-portal]:** Only after the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → scroll down → **Licenses**.
 2. Open the `[LICENSE_TYPE]` service to show the on/off switches → in the **Status** column flip the switch on → **Save**.
@@ -92,6 +93,7 @@ Archiving is the vendor's data-keeping alternative: an Archived User licence kee
 - **Reversibility:** R3 — re-assigning restores the services under the Phase 2 phrase `ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]`, but data lost in between is not restored by re-assigning, and the seat may be unavailable for up to 24 hours; the Phase 1 record (SKU, Drive and Gmail footprint) is the only pre-state
 - **Required confirmation:** Type exactly `REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads a Google Workspace licence: its proof is the read its step names)
 **PORTAL ACTION [gws-license-assign-remove-portal]:** Only after the Phase 1 pre-state is recorded, the archive-or-remove decision is in the ticket, and the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → scroll down → **Licenses**.
 2. Open the `[LICENSE_TYPE]` service to show the on/off switches → in the **Status** column flip the switch off → **Save**.
@@ -115,6 +117,7 @@ In GAM, licence commands take the SKU as `[LICENSE_TYPE]` (a SKU ID or one of GA
 # Reversibility: R1 — undo with the separate removal gate under its own phrase
 # Required confirmation: type exactly "ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="ASSIGN LICENSE [LICENSE_TYPE] TO [USER@DOMAIN.COM]"
 # shows the phrase
@@ -142,6 +145,7 @@ gam info user "[USER@DOMAIN.COM]" licenses
 # Reversibility: R3 — re-assigning does not restore data lost in between — the Phase 1 record is the only pre-state
 # Required confirmation: type exactly "REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads a Google Workspace licence: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="REMOVE LICENSE [LICENSE_TYPE] FROM [USER@DOMAIN.COM]"
 # shows the phrase

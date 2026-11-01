@@ -1,0 +1,17 @@
+# command: node --test scripts/eval/judged/report.test.js
+# commit: 1cb1984 (plus uncommitted changes in the working tree)  started: 2026-10-31T23:57:44Z  node: v24.22.1
+✔ every measure has the hand-computed numerator and denominator (3.321156ms)
+✔ a judge Boundary of 0 is a violation too, and a denominator of 0 gives rate null (0.422929ms)
+✔ regressions: passed in the baseline and not now, over ids in both (0.413852ms)
+✔ one row per platform and per scenario, with counts, denominators and the small-platform note (0.533671ms)
+✔ results.json and report.md carry the label; the terminal line shows id, verdict and score only (2.698267ms)
+✔ nearest-rank percentile and the baseline reader (1.496681ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.243513
+# exit: 0  finished: 2026-10-31T23:57:44Z

@@ -576,7 +576,6 @@ test('verify-posted passes only on a plain message after --not-before whose norm
     ['a bot or system message', [message(text, TS_AFTER, { subtype: 'bot_message' })]],
     ['an app post with bot_id and no subtype', [message(text, TS_AFTER, { bot_id: 'B0BOT00001' })]],
     ['an app post with app_id and no subtype', [message(text, TS_AFTER, { app_id: 'A0APP00001' })]],
-    ['a malformed ts', [message(text, 'soon')]],
     ['no messages', []],
   ];
   for (const [label, messages] of notVerified) {
@@ -585,8 +584,15 @@ test('verify-posted passes only on a plain message after --not-before whose norm
     assert.equal(r.res.verified, false, label);
     assert.match(r.res.reason, /subtype, bot_id or app_id/, `${label}: the reason names what is skipped`);
   }
+  // a plain message with the expected text and a malformed ts may be the post: it proves nothing
+  // either way (code review round 3 of batch G4, finding 2; before it, exit 2)
+  const malformed = await verdict(argv, [authBody(), historyBody([message(text, 'soon')])]);
+  assert.equal(malformed.code, 5, 'a malformed ts');
+  assert.equal(malformed.res.state, 'INCONCLUSIVE', 'a malformed ts');
+  assert.equal(malformed.res.verified, false, 'a malformed ts');
+  assert.match(malformed.res.reason, /subtype, bot_id or app_id/, 'a malformed ts: the reason names what is skipped');
   const busy = await verdict(argv, [authBody(), historyBody([other], true)]);
-  assert.equal(busy.code, 2);
+  assert.equal(busy.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(busy.res.observed.has_more, true);
   assert.match(busy.res.reason, /50/);
 
@@ -623,7 +629,7 @@ test('verify-app-approved needs the app in the approved list and out of the pend
   // a pending list longer than the page bound does not prove the request is gone
   const endless = Array.from({ length: 10 }, (_, i) => appsBody('app_requests', [], `more${i}`));
   const unbounded = await verdict(approvedArgv, [appsBody('approved_apps', [APP]), ...endless]);
-  assert.equal(unbounded.code, 2);
+  assert.equal(unbounded.code, 5); // batch G4, task D1: INCONCLUSIVE
   assert.equal(unbounded.res.observed.requests_list_complete, false);
   assert.equal(unbounded.run.transport.calls.length, 11, 'one approved page and at most 10 request pages');
 

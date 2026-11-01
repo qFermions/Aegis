@@ -1,0 +1,32 @@
+# command: node --test scripts/eval/judged/calibrate.test.js
+# run in: <repo>  commit: b48be56 (plus uncommitted changes in the working tree)  started: 2026-11-01T02:21:37Z  node: v24.22.1
+✔ Cohen's kappa matches the two worked examples (1.562428ms)
+✔ kappa is null with no pairs or an expected agreement of 1 (0.745943ms)
+✔ CSV quoting survives a round trip; a formula-looking cell is defused (1.669997ms)
+✔ the sheet is blind, deterministic from the run id, and samples only cases that ran (4.667074ms)
+✔ readSheet takes 0, 1, 2, blank and NA, and refuses anything else with line and column (1.407823ms)
+✖ a case id that starts with - survives the sheet round trip, guarded against formulas (1.693386ms)
+✔ agreement per row and overall, with counts, against the run's judge rows (0.635568ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 116.605807
+
+✖ failing tests:
+
+test at scripts/eval/judged/calibrate.test.js:108:1
+✖ a case id that starts with - survives the sheet round trip, guarded against formulas (1.693386ms)
+  Error: calibration sheet: line 2: case_id is not a case id
+      at Object.readSheet (<repo>/scripts/eval/judged/calibrate.js:111:50)
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/calibrate.test.js:118:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+# exit: 1

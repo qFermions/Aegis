@@ -67,6 +67,7 @@ gam info ou "[OU_PATH]" nousers   # prints the destination unit without listing 
 - **Reversibility:** R2 — a policy change whose undo needs the pre-state: a second move back to the source OU recorded in Phase 1, in the same place (Admin console → Directory → Users → tick the user → More → Change organizational unit), under its own exact phrase that names the recorded source path
 - **Required confirmation:** Type exactly `MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
 **PORTAL ACTION [gws-ou-move-user-portal]:** Only after the Phase 1 pre-state is in the ticket and the exact match:
 1. Admin console → Directory → Users → tick the box for `[USER@DOMAIN.COM]` → at the top, **More** → **Change organizational unit**.
 2. Pick `[OU_PATH]` in the dialog → **Continue** → read the confirmation message about moving the user → **Change**.
@@ -99,6 +100,7 @@ gam info ou "[OU_PATH]" nousers   # prints the destination unit without listing 
 # Reversibility: R2 — a second move back to the source path recorded as pre-state, under its own phrase
 # Required confirmation: type exactly "MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
 # the exact phrase to type
 required_confirmation="MOVE GOOGLE USER [USER@DOMAIN.COM] TO OU [OU_PATH]"
 # shows the phrase

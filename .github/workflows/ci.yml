@@ -153,3 +153,13 @@ jobs:
 
       - name: Replay lifecycle demo
         run: node scripts/replay/replay-demo.js
+
+      - name: Judged-eval runner dry run (the DEV set copied out of the repository; no model is started)
+        run: |
+          cp scripts/eval/judged/dev-cases.jsonl "$RUNNER_TEMP/dev-cases.jsonl"
+          set +e
+          node scripts/eval/judged-eval.js run --cases "$RUNNER_TEMP/dev-cases.jsonl"
+          code=$?
+          set -e
+          echo "exit $code (4 is a dry run)"
+          test "$code" -eq 4

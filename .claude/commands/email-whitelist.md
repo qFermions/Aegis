@@ -124,6 +124,7 @@ if ([string]$candidate.Name -cne $moduleName -or [string]$candidate.Version -cne
 # Effect: installs one local PowerShell module without changing mail policy
 # Scope: CurrentUser on this workstation
 # Reversibility: R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible through a separately reviewed Uninstall-Module action
+# Read-back: none, R1: no change record
 $requiredConfirmation = "INSTALL POWERSHELL MODULE $moduleName VERSION $moduleVersionText FROM $repositoryName"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm the local CurrentUser install"
 if ($confirmation -ceq $requiredConfirmation) {

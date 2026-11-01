@@ -52,6 +52,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** R3 — Okta Activate brings the account back, but app assignments may have to be re-assigned and the Okta password is permanently deleted
 - **Required confirmation:** Type exactly `DEACTIVATE OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
 **PORTAL ACTION [gws-offboard-okta-deactivate-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Deactivate**.
 2. Confirm in the dialog, then read the status back as **Deactivated**.
@@ -71,6 +72,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Reversibility:** R1 — undo in the same place: Admin console → Directory → Users → filter User status = Suspended → More options → Reactivate, under its own exact phrase `REACTIVATE GOOGLE USER [USER@DOMAIN.COM]`
 - **Required confirmation:** Type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-offboard-suspend-portal]:** Only after the exact match:
 1. Admin console → Directory → Users → point to `[USER@DOMAIN.COM]` → **More options** → **Suspend user**.
 2. In the dialog, click **Suspend**, then read the status back as **Suspended**.
@@ -97,6 +99,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 - **Reversibility:** R2 — not reversible from the Admin console — no undo is documented; the previous owner keeps edit access unless removed, so the recorded pre-state is the only record of what moved
 - **Required confirmation:** Type exactly `TRANSFER DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names)
 **PORTAL ACTION [gws-offboard-drive-transfer-portal]:** Only after the pre-state is recorded and the exact match:
 1. Admin console → Apps → Google Workspace → Drive and Docs → **Transfer ownership**.
 2. Enter From user `[USER@DOMAIN.COM]` and To user `[MANAGER_UPN]`, then click **Transfer Files**.
@@ -110,6 +113,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 - **Reversibility:** R2 — not reversible from the Admin console; record the event count first
 - **Required confirmation:** Type exactly `TRANSFER CALENDAR EVENTS FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names)
 **PORTAL ACTION [gws-offboard-calendar-transfer-portal]:** Only after the exact match:
 1. Admin console → Apps → Google Workspace → Calendar → **Event and Secondary calendar management** → **Events transfer**.
 2. Enter `[USER@DOMAIN.COM]` and `[MANAGER_UPN]` and start the transfer. It starts about 10 minutes later and can run for about 15 minutes.
@@ -127,6 +131,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 - **Reversibility:** R3 — a super admin can restore the account for 20 days (Directory → Users → More options → Recently deleted users → Recover); after 20 days the data is gone, and a user with data on a Vault hold cannot be deleted at all
 - **Required confirmation:** Type exactly `DELETE GOOGLE USER [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command proves a deleted account: its proof is the read its step names)
 **PORTAL ACTION [gws-offboard-delete-portal]:** Only after the Phase C read-backs, the independent review and the exact match:
 1. Admin console → Directory → Users → point to `[USER@DOMAIN.COM]` → **More options** → **Delete user**.
 2. Next to **Data in other apps**, choose **Don't transfer data** (Phase C already moved it), then confirm the deletion.
@@ -153,6 +158,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 # Reversibility: R3 — reactivation may need app assignments re-created — the Okta password is permanently deleted
 # Required confirmation: type exactly "DEACTIVATE OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
 # the exact phrase to type
 required_confirmation="DEACTIVATE OKTA USER [USER_ID]"
 # shows the phrase
@@ -180,6 +186,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Reversibility: R1 — undo with the separate unsuspend procedure under its own phrase
 # Required confirmation: type exactly "SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
 # shows the phrase
@@ -207,6 +214,7 @@ gam info user "[USER@DOMAIN.COM]"
 # Reversibility: R2 — not reversible from the Admin console — the recorded file count is the only pre-state
 # Required confirmation: type exactly "TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"
 # shows the phrase
@@ -234,6 +242,7 @@ gam print datatransfers
 # Reversibility: R3 — a super admin can restore it for 20 days, then the data is gone
 # Required confirmation: type exactly "DELETE GOOGLE USER [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command proves a deleted account: its proof is the read its step names
 # the exact phrase to type
 required_confirmation="DELETE GOOGLE USER [USER@DOMAIN.COM]"
 # shows the phrase

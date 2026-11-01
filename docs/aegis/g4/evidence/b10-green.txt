@@ -1,0 +1,27 @@
+# command: node --test scripts/eval/judged/wiring.test.js scripts/readiness-gate.test.js scripts/eval/g3-ticket-eval.test.js
+# commit: c342287 (plus uncommitted changes in the working tree)  started: 2026-11-01T00:00:39Z  node: v24.22.1
+✔ every G3 ticket passes the core checks and its expected decision; every pair holds (2437.740694ms)
+✔ the corpus meets the charter minimums, and the minimums are the charter numbers (2303.307733ms)
+✔ each intake ticket is read from its fixture: ACCEPTED, and the case text is the ticket text (2275.63951ms)
+✔ clarify.js: exactly one question for each CLARIFY ticket, of the expected kind, and none for any other ticket (0.875303ms)
+✔ the scorer judges the implementation: a changed expectation or a changed ticket fails (2264.600459ms)
+✔ CI runs the G3 eval beside the other ticket evals (0.359312ms)
+✔ the report title names every group the minimums score, built from MINIMUMS (2429.43864ms)
+✔ the eval README has a section on the runner with its commands, locations and label (0.85583ms)
+✔ readiness row 9 names the runner and the calibration step, stays owner only, and the gate reads NOT PASSED (1.384335ms)
+✔ capability-map row 26 reads implemented but unverified and names the runner (0.290578ms)
+✔ CI dry-runs the runner on the DEV set copied out of the repository, and runs node --test (0.318939ms)
+✔ the explainer exists and is under 60 lines (0.273767ms)
+✔ every criterion names a command, a file or an owner action, and who runs it (1.85137ms)
+✔ the charter criteria are all there, and the five that need the owner, and only those, are labeled owner only (1.357298ms)
+✔ every repository path the page names exists (2.836074ms)
+✔ the page never marks the gate passed (0.375051ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11823.159918
+# exit: 0  finished: 2026-11-01T00:00:51Z

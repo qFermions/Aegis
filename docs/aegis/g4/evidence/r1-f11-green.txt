@@ -1,0 +1,15 @@
+# command: node --test --test-name-pattern=F11 scripts/audit/change-record.test.js
+# run in: <repo>  commit: 29e0a1e (plus uncommitted changes in the working tree)  started: 2026-11-01T02:20:26Z  node: v24.22.1
+✔ F11: an invisible hangul default ignorable character inside the keyword makes a count line, so a second count is refused (1467.49416ms)
+✔ F11: an invisible unassigned default ignorable character inside the keyword makes a count line, so a second count is refused (1566.074618ms)
+✔ F11: a count whose keyword holds a filler inside a hidden region is refused as hidden (491.061225ms)
+✔ F11: the plain visible Count: N still opens when a filler sits elsewhere in the text (64.230313ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3713.40032
+# exit: 0

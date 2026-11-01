@@ -58,6 +58,7 @@ gam info member "[USER@DOMAIN.COM]" "[GROUP_EMAIL]"   # the user's membership re
 - **Reversibility:** R1 — the undo is Phase C of this runbook (Directory → Groups → the group → Members → point to the member → Remove → Remove Members) under its own phrase `REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]`
 - **Required confirmation:** Type exactly `ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [gws-group-membership-add-portal]:** Only after the exact match:
 1. Admin console → Directory → Groups → `[GROUP_EMAIL]` → **Members** → **Add members**.
 2. Enter the first characters of `[USER@DOMAIN.COM]`, select the match, then click **Add To Group**.
@@ -80,6 +81,7 @@ gam info member "[USER@DOMAIN.COM]" "[GROUP_EMAIL]"   # the user's membership re
 - **Reversibility:** R2 — SR-2 group removal; re-adding under the Phase B phrase `ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]` restores membership with the Member role only, so a former Manager or Owner role has to be set again by hand — the captured pre-state is the record of what it was
 - **Required confirmation:** Type exactly `REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Google Workspace verify-* command reads group membership, group-members is a read: its proof is that read)
 **PORTAL ACTION [gws-group-membership-remove-portal]:** Only after the pre-state is in the ticket and the exact match:
 1. Admin console → Directory → Groups → `[GROUP_EMAIL]` → **Members** → point to `[USER@DOMAIN.COM]` → **Remove**.
 2. Click **Remove Members** to confirm.
@@ -101,6 +103,7 @@ gam info member "[USER@DOMAIN.COM]" "[GROUP_EMAIL]"   # the user's membership re
 # Reversibility: R1 — the undo is the separate remove-member gate below under its own phrase
 # Required confirmation: type exactly "ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
 # the exact phrase to type
 required_confirmation="ADD [USER@DOMAIN.COM] TO GROUP [GROUP_EMAIL]"
 # shows the phrase
@@ -128,6 +131,7 @@ gam print group-members group "[GROUP_EMAIL]"
 # Reversibility: R2 — SR-2 group removal — the separate add gate restores membership as Member only, so the captured role is the record
 # Required confirmation: type exactly "REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no Google Workspace verify-* command reads group membership, group-members is a read: its proof is that read
 # the exact phrase to type
 required_confirmation="REMOVE [USER@DOMAIN.COM] FROM GROUP [GROUP_EMAIL]"
 # shows the phrase

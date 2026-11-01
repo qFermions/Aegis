@@ -1,0 +1,199 @@
+$ node --test scripts/adapters/inconclusive.test.js scripts/adapters/github-client.test.js
+(Node v24.22.1, at fa655fc plus the working tree: the finding 6 tests, before the fix)
+
+✔ SPEC: fixed host, GET-only routes, one bearer credential with GitHub headers, no token exchange, header scopes (2.270669ms)
+✔ a non-GET request is refused before the credential is read; no org flag exists (1.91374ms)
+✔ each read sends one GET to the path built from GITHUB_ORG, with the token only in Authorization (13.897409ms)
+✔ issue reads the issue and its comments and prints the {issue, comments} shape the intake imports (2.149541ms)
+✔ a dry run prints the planned GET, reads no credential and sends nothing (1.465078ms)
+✔ bad values are refused before anything is sent (0.87782ms)
+✔ a response that names another organization is TENANT_MISMATCH and nothing is returned (0.965126ms)
+✔ scope preflight: a classic token with a write scope is refused on the first answer; read:* passes; no header gets a notice (1.489137ms)
+✔ verify-collaborator: the role_name must equal the expected role (1.837422ms)
+✔ verify-collaborator-removed: absent from every page of direct collaborators; a list past 10 pages is not proof (17.432138ms)
+✔ verify-offboarded: the org read must succeed first; then no membership, no invitation, not an outside collaborator (5.815735ms)
+✔ verify-team-member, verify-protection, verify-2fa-required, verify-secret-alert, verify-dependabot-alert (2.289681ms)
+✔ a failure prints the two-part message for GitHub, with no body and no token (1.34707ms)
+✔ verify-team-member --absent: absence on a list longer than 10 full pages is not proof (18.727114ms)
+✔ the contract names INCONCLUSIVE and its own exit code, 5, used by no other outcome (2.672574ms)
+✔ inconclusive() builds the verdict every connector prints: state INCONCLUSIVE, ok false, verified false, the reason (1.146396ms)
+✔ renderResult prints the two-part message for INCONCLUSIVE: an answer that proves nothing either way, nothing reported done (0.895235ms)
+✔ the audit trail accepts a verify entry with state INCONCLUSIVE and verified false; cli-support records the state as it is (1.470187ms)
+✔ fleet verify-checked-in: no last MDM check-in time on an enrolled host is INCONCLUSIVE (exit 5), never a pass and never a failed object (10.682705ms)
+✔ fleet verify-lock: verify-lock cannot judge an Android host is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.305805ms)
+✔ fleet verify-wipe: verify-wipe cannot judge a Linux host is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.212018ms)
+✔ fleet verify-script: a script run that has not reported yet is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.889908ms)
+✔ fleet verify-deleted: ten pages of activities, none older than --not-before, more behind them is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.132209ms)
+✔ github verify-2fa-required: the 2FA requirement is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.529442ms)
+✔ github verify-team-member: absent from a list longer than ten pages is INCONCLUSIVE (exit 5), never a pass and never a failed object (17.890226ms)
+✔ github verify-collaborator-removed: a collaborator list answer that is not a list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.152203ms)
+✔ github verify-collaborator: the role is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.906049ms)
+✔ github verify-secret-alert: the alert state is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.796778ms)
+✔ gws verify-suspended: the user record leaves suspended out is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.655989ms)
+✔ gws verify-2sv-enforced: the user record leaves isEnforcedIn2Sv out is INCONCLUSIVE (exit 5), never a pass and never a failed object (2.767824ms)
+✔ gws verify-event: the event feed has another page without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.291663ms)
+✔ jamf verify-checked-in: no lastContactTime on the Mac is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.022627ms)
+✔ jamf verify-checked-in: the serial filter returned two records is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.570246ms)
+✔ jamf verify-group-count: a paged member list is not a count is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.756279ms)
+✔ linear verify-state: the issue read shows no state is INCONCLUSIVE (exit 5), never a pass and never a failed object (5.476623ms)
+✔ linear verify-labels: the label is not on the first page of labels and more follow is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.711117ms)
+✔ msgraph verify-account-enabled: accountEnabled is not shown is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.548843ms)
+✔ msgraph verify-group-member: a member list answer with no list (it used to pass for --absent) is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.774411ms)
+✔ msgraph verify-mfa-cleared: a method list answer with no list (it used to pass) is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.622234ms)
+✔ msgraph verify-method-absent: absent from a method list with another page is INCONCLUSIVE (exit 5), never a pass and never a failed object (1.7886ms)
+✔ okta verify-status: the user record carries no status is INCONCLUSIVE (exit 5), never a pass and never a failed object (4.557536ms)
+✔ okta verify-sessions-cleared: a full page of System Log events without the event is INCONCLUSIVE (exit 5), never a pass and never a failed object (6.834139ms)
+✔ slack verify-deactivated: users.info does not show deleted is INCONCLUSIVE (exit 5), never a pass and never a failed object (3.440458ms)
+✔ slack verify-deactivated: users.info answered without a user record is INCONCLUSIVE (exit 5), never a pass and never a failed object (0.479102ms)
+✔ msgraph verify-mfa-cleared: a method still listed, with another page behind it is still a failed object (exit 2, state OK) (1.937792ms)
+✔ github verify-team-member: still a member, on a list longer than ten pages is still a failed object (exit 2, state OK) (8.690808ms)
+✔ fleet verify-checked-in: a host checked in before --not-before is still a failed object (exit 2, state OK) (2.802573ms)
+✔ gws verify-suspended: a user not suspended is still a failed object (exit 2, state OK) (1.742715ms)
+✔ jamf verify-checked-in: a Mac whose last contact is before --not-before is still a failed object (exit 2, state OK) (1.090074ms)
+✔ linear verify-state: an issue in another state is still a failed object (exit 2, state OK) (0.381196ms)
+✔ okta verify-status: a user in another status is still a failed object (exit 2, state OK) (1.715634ms)
+✔ slack verify-deactivated: a user not deactivated is still a failed object (exit 2, state OK) (0.475131ms)
+✔ jira verify-transition: an answer with no status version is INCONCLUSIVE (exit 5), recorded as such (3.576452ms)
+✔ jira verify-comment: a comment read-back with no body text is INCONCLUSIVE (exit 5); another comment id stays a failure (exit 2) (1.415227ms)
+✔ jira verify-transition: a status other than the one expected stays a failure (exit 2, state OK) (0.444114ms)
+✔ every connector takes INCONCLUSIVE and its exit code from the shared contract (2.105737ms)
+✔ code review round 1, finding 3: fleet verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.534345ms)
+✔ code review round 1, finding 3: fleet verify-deleted takes --not-before as approved_at prints it, with milliseconds (0.277916ms)
+✔ code review round 1, finding 3: gws verify-event takes --not-before as approved_at prints it, with milliseconds (0.502651ms)
+✔ code review round 1, finding 3: jamf verify-checked-in takes --not-before as approved_at prints it, with milliseconds (0.294393ms)
+✔ code review round 1, finding 3: jamf verify-command takes --not-before as approved_at prints it, with milliseconds (0.539783ms)
+✔ code review round 1, finding 3: linear verify-comment takes --not-before as approved_at prints it, with milliseconds (0.357983ms)
+✔ code review round 1, finding 3: msgraph verify-password-changed takes --not-before as approved_at prints it, with milliseconds (0.260828ms)
+✔ code review round 1, finding 3: msgraph verify-signin takes --not-before as approved_at prints it, with milliseconds (0.400229ms)
+✔ code review round 1, finding 3: msgraph verify-device-synced takes --not-before as approved_at prints it, with milliseconds (0.250062ms)
+✔ code review round 1, finding 3: msgraph verify-sessions-revoked takes --not-before as approved_at prints it, with milliseconds (0.229909ms)
+✔ code review round 1, finding 3: okta verify-sessions-cleared takes --not-before as approved_at prints it, with milliseconds (0.618682ms)
+✔ code review round 1, finding 3: okta verify-password-reset takes --not-before as approved_at prints it, with milliseconds (0.340163ms)
+✔ code review round 1, finding 3: slack verify-posted takes --not-before as approved_at prints it, with milliseconds (0.526142ms)
+✖ code review round 1, finding 6: github verify-dependabot-alert --state fixed --reason: dismissed_reason null (not dismissed) is a failed object (exit 2) (1.455378ms)
+✖ code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is a failed object (exit 2) (0.719064ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: dismissed_reason left out of the answer is INCONCLUSIVE (exit 5) (0.603241ms)
+✖ code review round 1, finding 6: github verify-dependabot-alert --reason: a dismissed_reason that is neither null nor text is INCONCLUSIVE (exit 5) (0.502357ms)
+✔ code review round 1, finding 6: github verify-dependabot-alert --reason: another reason stays a failed object and the same reason passes (0.65898ms)
+ℹ tests 74
+ℹ suites 0
+ℹ pass 71
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 327.144973
+
+✖ failing tests:
+
+test at scripts/adapters/inconclusive.test.js:325:1
+✖ code review round 1, finding 6: github verify-dependabot-alert --state fixed --reason: dismissed_reason null (not dismissed) is a failed object (exit 2) (1.455378ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "INCONCLUSIVE",
+    "ok": false,
+    "command": "verify-dependabot-alert",
+    "verified": false,
+    "expected": {
+      "repo": "docs",
+      "number": "9",
+      "state": "fixed",
+      "dismissed_reason": "tolerable_risk"
+    },
+    "observed": {
+      "state": "fixed",
+      "dismissed_reason": null
+    },
+    "reason": "the answer does not show the dismissed_reason, so this is not proof either way",
+    "operator_message": "GitHub answered, but the answer proves nothing either way about the change (INCONCLUSIVE, exit 5). The change is neither proven nor disproven: it is not reported done, and a counted change lists this read as uncounted, not as a failed object. Read the reason in the result and check the item in the GitHub console; reading again returns the same answer until the reason changes.",
+    "admin_detail": "platform=github operation=verify-dependabot-alert state=INCONCLUSIVE status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  5 !== 2
+  
+      at assertFailedObject (<repo>/scripts/adapters/inconclusive.test.js:307:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:326:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:328:1
+✖ code review round 1, finding 6: github verify-dependabot-alert --state dismissed --reason: dismissed_reason null is a failed object (exit 2) (0.719064ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "INCONCLUSIVE",
+    "ok": false,
+    "command": "verify-dependabot-alert",
+    "verified": false,
+    "expected": {
+      "repo": "docs",
+      "number": "9",
+      "state": "dismissed",
+      "dismissed_reason": "tolerable_risk"
+    },
+    "observed": {
+      "state": "dismissed",
+      "dismissed_reason": null
+    },
+    "reason": "the answer does not show the dismissed_reason, so this is not proof either way",
+    "operator_message": "GitHub answered, but the answer proves nothing either way about the change (INCONCLUSIVE, exit 5). The change is neither proven nor disproven: it is not reported done, and a counted change lists this read as uncounted, not as a failed object. Read the reason in the result and check the item in the GitHub console; reading again returns the same answer until the reason changes.",
+    "admin_detail": "platform=github operation=verify-dependabot-alert state=INCONCLUSIVE status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  5 !== 2
+  
+      at assertFailedObject (<repo>/scripts/adapters/inconclusive.test.js:307:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:329:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/inconclusive.test.js:334:1
+✖ code review round 1, finding 6: github verify-dependabot-alert --reason: a dismissed_reason that is neither null nor text is INCONCLUSIVE (exit 5) (0.502357ms)
+  AssertionError [ERR_ASSERTION]: {
+    "state": "OK",
+    "ok": true,
+    "command": "verify-dependabot-alert",
+    "verified": false,
+    "expected": {
+      "repo": "docs",
+      "number": "9",
+      "state": "dismissed",
+      "dismissed_reason": "tolerable_risk"
+    },
+    "observed": {
+      "state": "dismissed",
+      "dismissed_reason": 42
+    },
+    "reason": "the dismissed_reason is 42, not tolerable_risk",
+    "operator_message": "The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.",
+    "admin_detail": "platform=github operation=verify-dependabot-alert state=OK status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  2 !== 5
+  
+      at assertInconclusive (<repo>/scripts/adapters/inconclusive.test.js:314:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/inconclusive.test.js:335:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

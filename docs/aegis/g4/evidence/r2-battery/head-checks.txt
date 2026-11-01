@@ -1,0 +1,16 @@
+node scripts/eval/ms-ticket-eval.js: exit 0; 28/28 tickets · 6/6 dangerous pairs
+node scripts/eval/gws-ticket-eval.js: exit 0; 38/38 tickets · 9/9 dangerous pairs
+node scripts/eval/g2-ticket-eval.js: exit 0; 65/65 tickets · 13/13 dangerous pairs
+node scripts/eval/g3-ticket-eval.js: exit 0; 44/44 tickets · 8/8 dangerous pairs
+node scripts/lint/command-structure.js: exit 0; 108 commands; clean
+node scripts/pre-commit-check.js --all: exit 0; BLOCK lines 0, WARN lines 216
+node scripts/harness/release-boundary-check.js: exit 0; RELEASE BOUNDARY: PASS
+CLAUDE.md: 19202 bytes; lines changed since 1f6647c: 0
+PRODUCT_CONTRACT.md lines removed since 1f6647c:
+boundary sentences: 'AEGIS ADVISES. HUMAN ADMINISTRATORS EXECUTE.' in PRODUCT_CONTRACT.md 1 (at 1f6647c 1); 'AEGIS ADVISES; HUMAN ADMINISTRATORS' in CLAUDE.md 1
+SAFETY GATE markers in .claude, modules and docs: 578 at 1f6647c, 642 here
+files whose SAFETY GATE count fell since 1f6647c: 0
+files added since 1f6647c holding U+2014: 0
+added lines since 1f6647c holding U+2014: 0
+exit 0
+# capture edited after the run: U+2014 written as "--" (0), ANSI colour codes removed, the repository path written as <repo> and temporary paths as <tmp>; line numbers unchanged

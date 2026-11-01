@@ -82,6 +82,7 @@ node scripts/adapters/fleet-client.js verify-checked-in --id [HOST_ID] --not-bef
 - **Reversibility:** R1: nothing to undo; the request only asks the host to report again
 - **Required confirmation:** Type exactly `SEND REFETCH REQUEST TO HOST [HOST_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [fleet-host-health-refetch-portal]:** Only after the exact match:
 1. Fleet → Hosts → `[HOST_ID]` → Host details → **Refetch**.
 

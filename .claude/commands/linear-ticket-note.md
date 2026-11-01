@@ -108,6 +108,7 @@ node scripts/adapters/linear-client.js note --issue [ISSUE_ID] --body-file [NOTE
 - **Reversibility:** R1, the comment can be edited or deleted from its "..." menu under the Phase F gates; an email copy that Asks already sent cannot be recalled
 - **Required confirmation:** Type exactly `POST NOTE [NOTE_SHA256] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [linear-ticket-note-post-portal]:** Only after Phase C printed the digest and the exact match:
 1. Linear → `[ISSUE_ID]` → Leave a comment… → paste the body exactly as `note` printed it: no retyping, no reformatting.
 2. Click **Comment** or press Cmd/Ctrl+Enter (labels from Linear's search-indexed comments page; confirm them on screen).
@@ -151,6 +152,7 @@ Without `--author` (the line `note` prints), any author counts: compare the prin
 - **Reversibility:** R1, edit the comment again; the earlier text stays in the working notes and in the comments read from Phase E
 - **Required confirmation:** Type exactly `REPLACE TEXT OF COMMENT [COMMENT_ID] ON [ISSUE_ID] WITH [NOTE_SHA256]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [linear-ticket-note-replace-portal]:** Only after the Phase E comparison and the exact match:
 1. Linear → `[ISSUE_ID]` → the comment whose posted time matches the `createdAt` the comments read printed for `[COMMENT_ID]` (if two comments show the same time on screen, stop: do not guess) → "..." → Edit → paste the body exactly as `note` printed it over the old text.
 2. Save the edit (Edit and Save are the labels on Linear's search-indexed comments page; confirm them on screen).
@@ -174,6 +176,7 @@ Without `--author` (the line `note` prints), any author counts: compare the prin
 - **Reversibility:** R3 (a delete with no documented restore), capture the pre-state first (save the Phase E comments read); no restore for a deleted comment is documented in the sources read, so the written rollback path is posting the text from [NOTE_FILE] again under the Phase D gate with a fresh [NOT_BEFORE]; an email copy is not recalled
 - **Required confirmation:** Type exactly `DELETE NOTE COPY [COMMENT_ID] ON [ISSUE_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Linear verify-* command proves a deleted comment: its proof is the read its step names)
 **PORTAL ACTION [linear-ticket-note-delete-portal]:** Only after the pre-state is saved, the written rollback path is in the ticket, and the exact match:
 1. Linear → `[ISSUE_ID]` → the copy whose posted time matches the `createdAt` the comments read printed for `[COMMENT_ID]` (if two copies show the same time on screen, stop: do not guess) → "..." → **Delete**.
 2. Read-back: the `comments` read lists one copy fewer, and on the right issue `verify-comment` still passes for the copy that stays.

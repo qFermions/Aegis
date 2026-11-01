@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[POLICY_NAME]` / `[POLICY_ID]` (the policy as Jamf Pro lists it, and its ID) · `[SMART_GROUP]` (the computer group the policy is scoped to; after a Phase D change, every target group it leaves, all named) · `[TRIGGERS]` / `[FREQUENCY]` (the triggers left ticked after a Phase D change, as Jamf Pro names them, or NO TRIGGER, and the execution frequency as Jamf Pro writes it) · `[MEMBER_COUNT]` (the number of Macs the policy reaches after that change, the Phase D step 2 count) · `[SERIAL_NUMBER]` (one Mac) · `[DEVICE_ID]` (that Mac's Jamf Pro computer ID, the `id` the inventory read returns) · `[NOT_BEFORE]` (the time the change was made; a read-back ignores anything older) · `[ISSUE_ID]`, `[NOTE_FILE]`, `[NOTE_SHA256]` (the Linear issue and its note) · `[ADMIN_NAME]` · `[@Aegion_JAMF_URL]` (the Jamf Pro server; the adapter reads it from `JAMF_URL`) · org values from `modules/security/placeholder-dictionary.md`.
 
-**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-policy`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `jamf:verify-policy --enabled true --no-triggers`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-policy --enabled true --no-triggers`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `jamf:verify-policy --enabled true --no-triggers`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -113,6 +113,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 - **Reversibility:** R2: Phase D's disable gate withdraws the offer at once; installs already done stay, and removing the app is app-specific **[org gap: the app's own uninstaller]**
 - **Required confirmation:** Type exactly `CREATE SELF SERVICE POLICY [POLICY_NAME] AND ADD [SMART_GROUP] TO ITS SCOPE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-policy --id [POLICY_ID] --frequency "Once per computer" --enabled true --no-triggers --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-policies-self-service-create-portal]:** Only after the approval record, the package check, the count and the exact match:
 1. Jamf Pro → Computers → Policies → **New** → General: display name `[POLICY_NAME]`, Enabled ticked, the category from the change record, no trigger ticked (an item with no trigger runs only from Self Service; that pattern is not spelled out in the sources read, so confirm on screen that every trigger box is clear), Execution Frequency: Once per computer.
 2. Packages → Configure → **Add** beside the approved package (the Packages payload is not in the sources read; confirm its labels on screen).
@@ -142,6 +143,7 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 - **Reversibility:** R1: removing the app is app-specific **[org gap: the app's own uninstaller]**; with Once per computer the item will not run again on this Mac until its log is flushed (Phase E)
 - **Required confirmation:** Type exactly `INSTALL [POLICY_NAME] ON [SERIAL_NUMBER] FROM SELF SERVICE`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-policies-self-service-test-install-portal]:** Only after the item shows in Self Service on the test Mac and the exact match:
 1. On the test Mac: Self Service → the category from the change record → `[POLICY_NAME]` → **Install**. Write the time as `[NOT_BEFORE]`.
 2. Keep Self Service open until it reports the item finished.
@@ -180,6 +182,7 @@ node scripts/adapters/jamf-client.js computer --serial [SERIAL_NUMBER] --section
 - **Reversibility:** R2 or R3 as step 3 says: re-enter the pre-state from the ticket under a fresh run of this gate; runs that already happened (packages, scripts) are not undone
 - **Required confirmation:** Type exactly `CHANGE POLICY [POLICY_NAME] TO [TRIGGERS] [FREQUENCY] AND ADD OR REMOVE TARGETS TO LEAVE [SMART_GROUP] REACHING [MEMBER_COUNT] MACS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `jamf-client.js verify-policy --id [POLICY_ID] --trigger checkin --frequency "Once every day" --enabled true --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-policies-self-service-change-portal]:** Only after the pre-state, the count, (for R3) the independent review, and the exact match:
 1. Jamf Pro → Computers → Policies → `[POLICY_NAME]` → **Edit** → General → leave exactly `[TRIGGERS]` ticked and pick `[FREQUENCY]` as the Execution Frequency.
 2. Scope → Targets → **Add** or **Remove** groups until Targets lists exactly `[SMART_GROUP]`.
@@ -208,6 +211,7 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 - **Reversibility:** R1 for the setting itself: enabling it again is a separate change, classed by what the policy then runs (an automatic trigger on more than 10 Macs is R3) and written into the ticket with its own gate
 - **Required confirmation:** Type exactly `DISABLE POLICY [POLICY_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
 **PORTAL ACTION [jamf-policies-self-service-disable-portal]:** Only after the pre-state and the exact match:
 1. Jamf Pro → Computers → Policies → `[POLICY_NAME]` → **Edit** → General → untick **Enabled** → **Save**. Write the time as `[NOT_BEFORE]`.
 
@@ -218,7 +222,7 @@ node scripts/adapters/jamf-client.js policy --id [POLICY_ID] --execute
 
 ```bash
 # HUMAN-RUN - read-only
-# proves the policy reads disabled (general.enabled false; exit 2 while it is still enabled or the field is missing)
+# proves the policy reads disabled, general.enabled false. Any exit other than 0 means stop: exit 2 while it is still enabled. While the field is missing, exit 5 INCONCLUSIVE, the answer proves nothing either way
 node scripts/adapters/jamf-client.js verify-policy --id [POLICY_ID] --enabled false --execute
 # the policy logs of a sample Mac in scope - no new run after the time the policy was disabled
 node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLogs --execute
@@ -244,6 +248,7 @@ node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLog
 - **Reversibility:** R2: the flushed entries cannot be restored (they are copied into the ticket first); the rerun itself is the policy's own effect
 - **Required confirmation:** Type exactly `FLUSH [POLICY_NAME] LOG FOR [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads a policy log: its proof is the read its step names)
 **PORTAL ACTION [jamf-policies-self-service-flush-one-portal]:** Only after the entries are in the ticket and the exact match:
 1. Jamf Pro → Computers → Policies → `[POLICY_NAME]` → Logs → the row for `[SERIAL_NUMBER]` → **Flush**. Write the time as `[NOT_BEFORE]`.
 
@@ -266,6 +271,7 @@ node scripts/adapters/jamf-client.js history --id [DEVICE_ID] --subset PolicyLog
 - **Reversibility:** R3: the history cannot be restored and the reruns cannot be called back; narrowing the scope or disabling the policy before the flush is the only brake
 - **Required confirmation:** Type exactly `FLUSH ALL LOGS OF POLICY [POLICY_NAME]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no Jamf verify-* command reads a policy log: its proof is the read its step names)
 **PORTAL ACTION [jamf-policies-self-service-flush-all-portal]:** Only after the entries are in the ticket, the count, (above 10 Macs) the independent review, and the exact match:
 1. Jamf Pro → Computers → Policies → `[POLICY_NAME]` → Logs → **Flush All**. Write the time as `[NOT_BEFORE]`.
 

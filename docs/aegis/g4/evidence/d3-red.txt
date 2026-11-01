@@ -1,0 +1,298 @@
+# command: node --test scripts/audit/newly-classed-read-backs.test.js
+# commit: fbe0e06 (plus uncommitted changes in the working tree)  started: 2026-11-01T01:33:56Z  node: v24.22.1
+✔ D3: the 31 gates are the H4 table's, each R2 or R3 (1.678878ms)
+✔ D3: conditional-access-enable-portal keeps Read-back none, with the reason the review found (1.036042ms)
+✖ D3: device-full-wipe-portal keeps Read-back none, with the reason the review found (1.200357ms)
+✖ D3: device-full-wipe keeps Read-back none, with the reason the review found (0.360779ms)
+✖ D3: offboard-device-wipe-portal keeps Read-back none, with the reason the review found (0.298952ms)
+✖ D3: offboard-work-phone-wipe-portal keeps Read-back none, with the reason the review found (0.171714ms)
+✔ D3: distribution-external-senders-portal keeps Read-back none, with the reason the review found (0.216229ms)
+✔ D3: offboard-mailbox-delegation-strip-portal keeps Read-back none, with the reason the review found (0.095408ms)
+✔ D3: quarantine-release-all-portal keeps Read-back none, with the reason the review found (0.120472ms)
+✔ D3: quarantine-release-all keeps Read-back none, with the reason the review found (1.672624ms)
+✔ D3: quarantine-delete-portal keeps Read-back none, with the reason the review found (0.151641ms)
+✔ D3: quarantine-permanent-delete keeps Read-back none, with the reason the review found (0.078841ms)
+✔ D3: quarantine-release-one-portal keeps Read-back none, with the reason the review found (0.651427ms)
+✔ D3: quarantine-release-one keeps Read-back none, with the reason the review found (0.117604ms)
+✔ D3: restricted-entity-unblock-portal keeps Read-back none, with the reason the review found (0.683508ms)
+✔ D3: restricted-entity-unblock keeps Read-back none, with the reason the review found (0.094101ms)
+✖ D3: license-remove-portal keeps Read-back none, with the reason the review found (0.221ms)
+✖ D3: offboard-license-remove-portal keeps Read-back none, with the reason the review found (0.133458ms)
+✖ D3: offboard-ad-disable-portal keeps Read-back none, with the reason the review found (0.227683ms)
+✖ D3: offboard-disabled-ou-portal keeps Read-back none, with the reason the review found (0.150212ms)
+✖ D3: security-synced-ad-disable keeps Read-back none, with the reason the review found (0.177574ms)
+✖ D3: offboard-group-strip-portal keeps Read-back none, with the reason the review found (0.37936ms)
+✖ D3: offboard-dl-strip-portal keeps Read-back none, with the reason the review found (0.176244ms)
+✔ D3: offboard-voip-deactivate-portal keeps Read-back none, with the reason the review found (0.091694ms)
+✔ D3: offboard-voicemail-clear-portal keeps Read-back none, with the reason the review found (0.049027ms)
+✔ D3: offboard-voip-reclaim-extension-portal keeps Read-back none, with the reason the review found (0.040022ms)
+✔ D3: offboard-zoom-portal keeps Read-back none, with the reason the review found (0.036787ms)
+✔ D3: offboard-adobe-portal keeps Read-back none, with the reason the review found (0.042717ms)
+✔ D3: offboard-vpn-portal keeps Read-back none, with the reason the review found (0.039481ms)
+✔ D3: offboard-physical-portal keeps Read-back none, with the reason the review found (0.084149ms)
+✔ D3: print-queue-delete-portal keeps Read-back none, with the reason the review found (0.0354ms)
+✔ D3: print-queue-delete keeps Read-back none, with the reason the review found (0.045109ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 21
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 156.101525
+
+✖ failing tests:
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: device-full-wipe-portal keeps Read-back none, with the reason the review found (1.200357ms)
+  AssertionError [ERR_ASSERTION]: device-full-wipe-portal (device-wipe.md)
+  + actual - expected
+  
+  + 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back'
+  - 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back',
+    expected: 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: device-full-wipe keeps Read-back none, with the reason the review found (0.360779ms)
+  AssertionError [ERR_ASSERTION]: device-full-wipe (device-wipe.md)
+  + actual - expected
+  
+  + 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back'
+  - 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back',
+    expected: 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: offboard-device-wipe-portal keeps Read-back none, with the reason the review found (0.298952ms)
+  AssertionError [ERR_ASSERTION]: offboard-device-wipe-portal (offboard.md)
+  + actual - expected
+  
+  + 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back'
+  - 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back',
+    expected: 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: offboard-work-phone-wipe-portal keeps Read-back none, with the reason the review found (0.171714ms)
+  AssertionError [ERR_ASSERTION]: offboard-work-phone-wipe-portal (offboard.md)
+  + actual - expected
+  
+  + 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back'
+  - 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Intune wipe: the Graph connector reads a managed device but has no wipe read-back',
+    expected: 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: license-remove-portal keeps Read-back none, with the reason the review found (0.221ms)
+  AssertionError [ERR_ASSERTION]: license-remove-portal (license-audit.md)
+  + actual - expected
+  
+  + 'the Graph connector has no license read'
+  - 'the Graph connector has no license read: its user read selects no license field'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'the Graph connector has no license read',
+    expected: 'the Graph connector has no license read: its user read selects no license field',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: offboard-license-remove-portal keeps Read-back none, with the reason the review found (0.133458ms)
+  AssertionError [ERR_ASSERTION]: offboard-license-remove-portal (offboard.md)
+  + actual - expected
+  
+  + 'the Graph connector has no license read'
+  - 'the Graph connector has no license read: its user read selects no license field'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'the Graph connector has no license read',
+    expected: 'the Graph connector has no license read: its user read selects no license field',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: offboard-ad-disable-portal keeps Read-back none, with the reason the review found (0.227683ms)
+  AssertionError [ERR_ASSERTION]: offboard-ad-disable-portal (offboard.md)
+  + actual - expected
+  
+  + 'on-premises Active Directory: no connector reads it'
+  - 'on-premises Active Directory: no connector reads it, and Graph verify-account-enabled --enabled false also passes after the separate cloud sign-in block, so it cannot prove this change'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'on-premises Active Directory: no connector reads it',
+    expected: 'on-premises Active Directory: no connector reads it, and Graph verify-account-enabled --enabled false also passes after the separate cloud sign-in block, so it cannot prove this change',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: offboard-disabled-ou-portal keeps Read-back none, with the reason the review found (0.150212ms)
+  AssertionError [ERR_ASSERTION]: offboard-disabled-ou-portal (offboard.md)
+  + actual - expected
+  
+  + 'on-premises Active Directory: no connector reads it'
+  - 'on-premises Active Directory: no connector reads it, and the Graph user read selects no on-premises location'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'on-premises Active Directory: no connector reads it',
+    expected: 'on-premises Active Directory: no connector reads it, and the Graph user read selects no on-premises location',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: security-synced-ad-disable keeps Read-back none, with the reason the review found (0.177574ms)
+  AssertionError [ERR_ASSERTION]: security-synced-ad-disable (security-alert-triage.md)
+  + actual - expected
+  
+  + 'on-premises Active Directory: no connector reads it'
+  - 'on-premises Active Directory: no connector reads it, and Graph verify-account-enabled --enabled false also passes after the separate cloud-gap block, so it cannot prove this change'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'on-premises Active Directory: no connector reads it',
+    expected: 'on-premises Active Directory: no connector reads it, and Graph verify-account-enabled --enabled false also passes after the separate cloud-gap block, so it cannot prove this change',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: offboard-group-strip-portal keeps Read-back none, with the reason the review found (0.37936ms)
+  AssertionError [ERR_ASSERTION]: offboard-group-strip-portal (offboard.md)
+  + actual - expected
+  
+  + 'on-premises AD groups and distribution lists: Graph verify-group-member --absent sees only those synced to Entra, after a sync, so it is not written as their proof'
+  - 'on-premises AD groups: Graph verify-group-member --absent reads one Entra group per run, only after a sync, never one outside the sync scope and not by the AD IDs the frozen set holds, so one pass would not prove the set: left unbound in batch G4 D3'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'on-premises AD groups and distribution lists: Graph verify-group-member --absent sees only those synced to Entra, after a sync, so it is not written as their proof',
+    expected: 'on-premises AD groups: Graph verify-group-member --absent reads one Entra group per run, only after a sync, never one outside the sync scope and not by the AD IDs the frozen set holds, so one pass would not prove the set: left unbound in batch G4 D3',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/audit/newly-classed-read-backs.test.js:93:3
+✖ D3: offboard-dl-strip-portal keeps Read-back none, with the reason the review found (0.176244ms)
+  AssertionError [ERR_ASSERTION]: offboard-dl-strip-portal (offboard.md)
+  + actual - expected
+  
+  + 'on-premises AD groups and distribution lists: Graph verify-group-member --absent sees only those synced to Entra, after a sync, so it is not written as their proof'
+  - 'on-premises AD distribution lists: Graph verify-group-member --absent reads one Entra group per run, only after a sync, never one outside the sync scope and not by the AD IDs the frozen set holds, so one pass would not prove the set: left unbound in batch G4 D3'
+  
+      at TestContext.<anonymous> (<repo>/scripts/audit/newly-classed-read-backs.test.js:97:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'on-premises AD groups and distribution lists: Graph verify-group-member --absent sees only those synced to Entra, after a sync, so it is not written as their proof',
+    expected: 'on-premises AD distribution lists: Graph verify-group-member --absent reads one Entra group per run, only after a sync, never one outside the sync scope and not by the AD IDs the frozen set holds, so one pass would not prove the set: left unbound in batch G4 D3',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+# exit: 1  finished: 2026-11-01T01:33:56Z

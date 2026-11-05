@@ -130,7 +130,11 @@ function applySimulatedGates({ changes, tenantFile, runDir, now = new Date().toI
   const rel = path.relative(path.resolve(runDir), path.resolve(tenantFile));
   if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('the SIMULATED OPERATOR refuses a tenant file outside the run folder');
   const state = JSON.parse(fs.readFileSync(tenantFile, 'utf8'));
-  for (const { entry, target } of changes) entry.apply(state, target, now);
+  for (const { entry, target } of changes) {
+    const before = JSON.stringify(state);
+    entry.apply(state, target, now);
+    if (JSON.stringify(state) === before) throw new Error(`"${entry.effect}" changes nothing in the simulated tenant, so a read-back would prove nothing`);
+  }
   writeReplacing(tenantFile, `${JSON.stringify(state, null, 2)}\n`);
   return changes.map(({ entry }) => `SIMULATED OPERATOR: ${entry.effect}, in the simulated tenant only (${path.basename(path.dirname(tenantFile))}/tenant.json in this run's folder).`);
 }

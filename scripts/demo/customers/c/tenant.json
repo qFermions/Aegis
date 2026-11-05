@@ -13,7 +13,7 @@
         "signInSessionsValidFromDateTime": "2026-01-10T09:00:00Z"
       }
     },
-    "methods": { "c1000000-0000-4000-8000-000000000001": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" } ] },
+    "methods": { "c1000000-0000-4000-8000-000000000001": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" }, { "@odata.type": "#microsoft.graph.microsoftAuthenticatorAuthenticationMethod", "id": "c2000000-0000-4000-8000-000000000001" } ] },
     "groups": {}
   }
 }

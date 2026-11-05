@@ -18,8 +18,8 @@
       }
     },
     "methods": {
-      "e1000000-0000-4000-8000-000000000001": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" } ],
-      "e1000000-0000-4000-8000-000000000002": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" } ]
+      "e1000000-0000-4000-8000-000000000001": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" }, { "@odata.type": "#microsoft.graph.microsoftAuthenticatorAuthenticationMethod", "id": "e2000000-0000-4000-8000-000000000001" } ],
+      "e1000000-0000-4000-8000-000000000002": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" }, { "@odata.type": "#microsoft.graph.microsoftAuthenticatorAuthenticationMethod", "id": "e2000000-0000-4000-8000-000000000002" } ]
     },
     "groups": {}
   }

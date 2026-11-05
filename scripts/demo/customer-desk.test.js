@@ -333,8 +333,27 @@ test('an unexpected error in one ticket closes it OPEN with the reason, keeps it
   assert.equal(r.ticket('T7').closing_state, 'CLARIFY');
 });
 
-test('a read-back that shows the change not done is FAILED; the connector\'s own message is shown', async (t) => {
+test('a gate that changes nothing in the simulated tenant is not simulated, so a read-back never proves what was already true', async (t) => {
   const simTable = { ...SIM_GATES, 'mfa-require-reregister-portal': { ...SIM_GATES['mfa-require-reregister-portal'], apply: () => {} } };
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps: { simTable } });
+  const k = r.ticket('T1');
+  assert.equal(k.closing_state, 'OPEN');
+  assert.match(k.reason, /not simulated.*changes nothing/);
+  const list = replay(path.join(r.results, 'customers', 'A', 'replay'), customersData.loadData().customers[0].tenant_vars.AEGION_DOMAIN, ['list']);
+  assert.ok(!list.stdout.includes('case-0001'));
+});
+
+test('the re-register gate changes real state on every Microsoft customer that has a target', async (t) => {
+  for (const [id, customer, user] of [['T1', 'A', A_USER], ['T5', 'C', 'c1000000-0000-4000-8000-000000000001'], ['T4', 'E', 'e1000000-0000-4000-8000-000000000001'], ['T8', 'E', 'e1000000-0000-4000-8000-000000000002']]) {
+    const r = await runDesk(t, { only: [id], answers: { [id]: good('mfa-require-reregister-portal') } });
+    assert.equal(r.ticket(id).closing_state, 'RESOLVED (SIMULATED)', `${id}: ${r.ticket(id).reason}`);
+    const types = tenantOf(r.results, customer).msgraph.methods[user].map((m) => m['@odata.type']);
+    assert.deepEqual(types, ['#microsoft.graph.passwordAuthenticationMethod'], id);
+  }
+});
+
+test('a read-back that shows the change not done is FAILED; the connector\'s own message is shown', async (t) => {
+  const simTable = { ...SIM_GATES, 'mfa-require-reregister-portal': { ...SIM_GATES['mfa-require-reregister-portal'], apply: (s) => { s.touched_elsewhere = true; } } };
   const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps: { simTable } });
   const k = r.ticket('T1');
   assert.equal(k.closing_state, 'FAILED');
@@ -659,7 +678,7 @@ test('the FAILED reason says what the check matched, not what the answer means',
 });
 
 test('step 8 shows the worst exit code of its read-backs, not the last', async (t) => {
-  const simTable = { ...SIM_GATES, 'okta-user-lifecycle-deactivate-portal': { ...SIM_GATES['okta-user-lifecycle-deactivate-portal'], apply: () => {} } };
+  const simTable = { ...SIM_GATES, 'okta-user-lifecycle-deactivate-portal': { ...SIM_GATES['okta-user-lifecycle-deactivate-portal'], apply: (s) => { s.touched_elsewhere = true; } } };
   const r = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'github-offboard-member-remove-portal') }, deps: { simTable } });
   const s = step(r.ticket('T2'), 8);
   assert.match(s.result, /FAIL: 1 of 2/);

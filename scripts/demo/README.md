@@ -55,9 +55,9 @@ Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 U
 
 Every simulated part says SIMULATED in text.
 
-## What one thing the demo adds to a session
+## What the demo adds to a session
 
-The session is told the customer's label and platforms, and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
+The session is told the customer's label and platforms, the replay lookup's real result (it has no shell to run the lookup itself), and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
 
 ## Closing states
 

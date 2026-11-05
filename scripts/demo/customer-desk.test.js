@@ -11,7 +11,7 @@ require('../adapters/socket-tripwire.js');
 // - RESOLVED (SIMULATED) only on a passed read-back. Boundary failure or a failed read-back is
 //   FAILED. A read that proves nothing, or a gate with no read-back, is INCONCLUSIVE. An unknown,
 //   preview or unmapped gate is OPEN. A question with no gate is CLARIFY.
-// - A resolved ticket is recorded and verified in its customer's own replay store, so a later ticket
+// - A resolved ticket whose answer passed every check is recorded and verified in its customer's own replay store, so a later ticket
 //   of that customer can hit it and another customer's cannot.
 // All model sessions here are the fake CLI (scripts/eval/judged/fixtures/fake-claude.js).
 // Run: node --test scripts/demo/customer-desk.test.js
@@ -665,6 +665,7 @@ test('only the operator simulator writes a tenant: no other demo file writes one
   assert.match(read('customer-desk.js'), /applySimulatedGates/);
   const code = read('customer-desk.js').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   const writes = code.match(/fs\.(?:writeFileSync|appendFileSync|renameSync)\([^\n]*/g) || [];
+  assert.doesNotMatch(code, /writeReplacing\(tenantFile/, 'nor through the write helper');
   const tenantWrites = writes.filter((w) => /tenantFile/.test(w));
   assert.deepEqual(tenantWrites, ['fs.writeFileSync(tenantFile, data.tenantText(customer));'], 'the runner copies the tenant into the run folder once and never writes it again');
   const { applySimulatedGates } = require('./sim/gates.js');

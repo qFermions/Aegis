@@ -507,7 +507,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   // The read-back proves the simulated change, not the answer, so an answer enters the store only when
   // every check that applies to it passed. Only verified solutions replay.
   const unsettled = results.filter((r) => r.applies && r.verdict !== 'pass').map((r) => `${r.check} ${r.verdict}`);
-  if (unsettled.length) return close('RESOLVED (SIMULATED)', `the read-back passed, but the answer did not pass these checks: ${unsettled.join(', ')}`, 'Resolved, and not stored in the replay cache: an answer enters it only when every check passed.');
+  if (unsettled.length && !rec.cache_hit) return close('RESOLVED (SIMULATED)', `the read-back passed, but the answer did not pass these checks: ${unsettled.join(', ')}`, 'Resolved, and not stored in the replay cache: an answer enters it only when every check passed.');
   const stored = rec.cache_hit ? 'Answered from the replay cache, so nothing new is stored.' : storeVerified(rec, answerFile, gates, verdicts.map((v) => v.evidence), { customer, customerDir }, ctx);
   return close('RESOLVED (SIMULATED)', null, stored);
 }

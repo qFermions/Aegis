@@ -90,7 +90,12 @@ function personNames(text) {
 function writeReplacing(file, text) {
   const tmp = `${file}.${crypto.randomBytes(6).toString('hex')}.tmp`;
   fs.writeFileSync(tmp, text, { flag: 'wx' });
-  fs.renameSync(tmp, file);
+  try {
+    fs.renameSync(tmp, file);
+  } catch (e) {
+    fs.rmSync(tmp, { force: true });
+    throw e;
+  }
 }
 
 module.exports = { writeReplacing, DATA_DIR, DOMAIN_TOKEN, loadData, fill, rawItem, tenantVars, tenantText, loadTenant, targetsFor, foreignDomains, personNames };

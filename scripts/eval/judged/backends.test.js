@@ -112,7 +112,7 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
     // beyond the charter's list, from code reviews 1 and 2: the demo's own tests and table hold passing answers
     // and ticket-to-gate pairs; scripts/eval holds the grader, the ticket corpora and their expected routes;
     // docs/evidence holds scored answers; a judged run saves its grades
-    repo('scripts/demo/**'), repo('scripts/eval/**'), repo('docs/evidence/**'), repo('.aegis-state/**'),
+    repo('scripts/demo/**'), repo('scripts/eval/**'), repo('docs/evidence/**'), repo('docs/aegis/**/evidence/**'), repo('.aegis-state/**'),
     abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
   ];
   const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);

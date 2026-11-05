@@ -386,9 +386,47 @@ test('an internal error exits 1, never 0, and its reason holds no absolute home 
   const deps = { transportFor: () => { throw new Error(`cannot open ${os.homedir()}/some-place`); } };
   const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps });
   assert.equal(r.code, 1);
-  assert.equal(r.ticket('T1').closing_state, 'OPEN');
   assert.ok(!JSON.stringify(r.run).includes(os.homedir()), 'no home path in run.json');
-  assert.match(r.ticket('T1').reason, /~\/some-place/);
+  assert.match(step(r.ticket('T1'), 8).output, /~\/some-place/);
+});
+
+test('a read that shows a failure is kept when a later read-back cannot run: the ticket is FAILED', async (t) => {
+  const { transportFor } = require('./sim/vendors.js');
+  const simTable = { ...SIM_GATES, 'okta-user-lifecycle-deactivate-portal': { ...SIM_GATES['okta-user-lifecycle-deactivate-portal'], apply: (s) => { s.touched_elsewhere = true; } } };
+  const deps = { simTable, transportFor: (c, f) => { if (c === 'github') throw new Error('seam failed'); return transportFor(c, f); } };
+  const r = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'github-offboard-member-remove-portal') }, deps });
+  const k = r.ticket('T2');
+  assert.equal(k.closing_state, 'FAILED');
+  assert.match(step(k, 8).output, /okta:verify-status: exit 2/);
+  assert.match(step(k, 8).output, /could not run.*seam failed/);
+});
+
+test('exit 2 wins over exit 1: a run holding a FAILED ticket says so even when another ticket had a fault', async (t) => {
+  const deps = { transportFor: () => { throw new Error('seam failed'); } };
+  const r = await runDesk(t, { only: ['T1', 'T7'], answers: { T1: good('mfa-require-reregister-portal'), T7: 'I reset the password.\nGate: none' }, deps });
+  assert.equal(r.ticket('T7').closing_state, 'FAILED');
+  assert.equal(r.code, 2);
+});
+
+test('the tripwire keeps what ran: the ticket, the cost and a marker that the run stopped', async (t) => {
+  const { NetworkTripwireError } = require('../adapters/socket-tripwire.js');
+  const dir = path.join(tmp(t), 'run');
+  const deps = { transportFor: () => async () => { throw new NetworkTripwireError(); } };
+  await assert.rejects(runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps, dir }), /Network tripwire fired/);
+  const run = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8'));
+  assert.match(run.aborted, /tripwire/);
+  assert.equal(run.summary.total_cost_usd, 0.5);
+  assert.equal(run.tickets[0].id, 'T1');
+  assert.match(fs.readFileSync(path.join(dir, 'desk.html'), 'utf8'), /tripwire/);
+});
+
+test('an error message loses this machine\'s paths at a path boundary only, and HOME=/ leaves it readable', async (t) => {
+  const deps = { transportFor: () => { throw new Error('cannot open /etc/some/place'); } };
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps, env: { HOME: '/' } });
+  assert.match(step(r.ticket('T1'), 8).output, /cannot open \/etc\/some\/place/);
+  const inRepo = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps: { transportFor: () => { throw new Error(`bad ${REPO}/x and ${REPO}-other`); } } });
+  assert.match(step(inRepo.ticket('T1'), 8).output, /bad <repo>\/x and /);
+  assert.ok(step(inRepo.ticket('T1'), 8).output.includes(`${path.basename(REPO)}-other`), 'a longer name is not cut');
 });
 
 test('a step that throws is recorded as failed with what it knew: a paid session keeps its cost', async (t) => {
@@ -416,11 +454,12 @@ test('a note that cannot be saved does not change a decided closing state', asyn
   assert.equal(r.code, 0);
 });
 
-test('an unexpected error in one ticket closes it OPEN with the reason, keeps its steps and lets the run finish', async (t) => {
+test('a read-back that cannot run is recorded in its step, keeps the ticket\'s steps and lets the run finish', async (t) => {
   const r = await runDesk(t, { only: ['T1', 'T7'], answers: { T1: good('mfa-require-reregister-portal'), T7: 'Which site?\nGate: none' }, deps: { transportFor: () => { throw new Error('seam failed'); } } });
   const k = r.ticket('T1');
-  assert.equal(k.closing_state, 'OPEN');
-  assert.match(k.reason, /could not finish.*seam failed/);
+  assert.equal(k.closing_state, 'INCONCLUSIVE', 'a read that could not run proves nothing');
+  assert.match(step(k, 8).output, /could not run.*seam failed/);
+  assert.equal(r.code, 1, 'and the run says the desk had a fault');
   assert.equal(step(k, 4).cost_usd, 0.5, 'the session already paid for stays in the record');
   assert.deepEqual(k.steps.map((s) => s.n), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
   assert.equal(r.ticket('T7').closing_state, 'CLARIFY');

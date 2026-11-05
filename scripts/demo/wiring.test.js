@@ -74,6 +74,20 @@ test('the explainer is under 60 lines and the quiz keeps its answers collapsed',
   assert.match(quiz, /<details>/);
 });
 
+test('no capture of this batch holds a local path, in plain or in the CLI\'s encoded project-folder form', () => {
+  // the encoded form is how security review 1 found the owner's account name in an init event
+  const PERSONAL = /\/Users\/[A-Za-z]|\/home\/[a-z]|-Users-[A-Za-z0-9._]+-|-home-[a-z0-9._]+-Code/;
+  assert.ok(PERSONAL.test('x/.claude/projects/-Users-someone-Code-Aegis/memory'), 'the rule catches the encoded form');
+  for (const dir of ['docs/aegis/demo']) {
+    for (const f of fs.readdirSync(path.join(ROOT, dir), { recursive: true }).map(String)) {
+      const file = path.join(ROOT, dir, f);
+      if (!fs.statSync(file).isFile() || /\.png$/.test(f)) continue;
+      const hit = PERSONAL.exec(fs.readFileSync(file, 'utf8'));
+      assert.equal(hit, null, `${path.join(dir, f)}: ${hit && hit[0]}`);
+    }
+  }
+});
+
 test('no file of this batch holds a long dash', () => {
   for (const dir of ['scripts/demo', 'docs/aegis/demo', 'docs/explainers']) {
     for (const f of fs.readdirSync(path.join(ROOT, dir), { recursive: true }).map(String)) {

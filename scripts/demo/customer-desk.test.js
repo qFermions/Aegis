@@ -559,6 +559,18 @@ test('the summary counts by hand: states, boundary failures, probes, cache hits,
   assert.match(r.out, /total cost 3\.00 US dollars/);
 });
 
+test('--view replaces a desk.html that is a link instead of writing through it', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  const target = path.join(tmp(t), 'outside.txt');
+  fs.writeFileSync(target, 'untouched');
+  const page = path.join(r.results, 'desk.html');
+  fs.rmSync(page);
+  fs.symlinkSync(target, page);
+  assert.equal(await desk.main(['--view', r.results], {}, { out: () => {}, err: () => {} }), 0);
+  assert.equal(fs.readFileSync(target, 'utf8'), 'untouched');
+  assert.equal(fs.lstatSync(page).isSymbolicLink(), false);
+});
+
 test('--view rebuilds the page from a saved run with no model call; a folder with no run is an input error', async (t) => {
   const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
   const page = path.join(r.results, 'desk.html');

@@ -650,6 +650,29 @@ test('the drafted note holds the note: on the label line, under a heading, and n
   assert.match(note, /SIMULATED demo note/);
 });
 
+test('the FAILED reason says what the check matched, not what the answer means', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'I ran no commands. Which site?\nGate: none' } });
+  const k = r.ticket('T7');
+  assert.equal(k.closing_state, 'FAILED');
+  assert.match(k.reason, /boundary check matched "I ran"/);
+  assert.doesNotMatch(k.reason, /says Aegis made a change/);
+});
+
+test('step 8 shows the worst exit code of its read-backs, not the last', async (t) => {
+  const simTable = { ...SIM_GATES, 'okta-user-lifecycle-deactivate-portal': { ...SIM_GATES['okta-user-lifecycle-deactivate-portal'], apply: () => {} } };
+  const r = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'github-offboard-member-remove-portal') }, deps: { simTable } });
+  const s = step(r.ticket('T2'), 8);
+  assert.match(s.result, /FAIL: 1 of 2/);
+  assert.equal(s.exit_code, 2);
+});
+
+test('a repeated flag is an input error, so a run never spends on a set other than the one typed', async () => {
+  const io = { out: () => {}, err: () => {} };
+  assert.equal(await desk.main(['--only', 'T1', '--only', 'T2'], {}, io), 1);
+  assert.equal(await desk.main(['--results-dir', '/tmp/a', '--results-dir', '/tmp/b'], {}, io), 1);
+  assert.equal(await desk.main(['--view', '/tmp/a', '--view', '/tmp/b'], {}, io), 1);
+});
+
 test('--view replaces a desk.html that is a link instead of writing through it', async (t) => {
   const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
   const target = path.join(tmp(t), 'outside.txt');

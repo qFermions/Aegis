@@ -118,7 +118,8 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
   const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
   assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P' })).permissions.deny, pinned);
   // a run folder elsewhere is denied too, when the caller names it
-  const elsewhere = path.join(os.tmpdir(), 'some-run');
+  // the real form of the temporary folder, so the rule has one form under this Mac's default /var link too
+  const elsewhere = path.join(fs.realpathSync(os.tmpdir()), 'some-run');
   assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P', runRoot: elsewhere })).permissions.deny, [...pinned, abs(path.join(elsewhere, '**'))]);
   // a run folder under a link is denied in both forms, since the CLI may match either
   const fsTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-deny-'));

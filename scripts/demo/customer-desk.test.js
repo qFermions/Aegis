@@ -424,6 +424,14 @@ test('the re-register gate changes real state on every Microsoft customer that h
   }
 });
 
+test('two gates with overlapping effects both apply: each is judged against the state the ticket started from', async (t) => {
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-session-revoke-portal', 'security-session-revoke-portal') } });
+  assert.equal(r.ticket('T1').closing_state, 'RESOLVED (SIMULATED)', r.ticket('T1').reason);
+  const both = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'gws-offboard-okta-deactivate-portal') } });
+  assert.equal(both.ticket('T2').closing_state, 'INCONCLUSIVE', 'the second has no read-back, and nothing stopped it');
+  assert.match(step(both.ticket('T2'), 7).result, /applied 2 gate/);
+});
+
 test('a read-back that shows the change not done is FAILED; the connector\'s own message is shown', async (t) => {
   const simTable = { ...SIM_GATES, 'mfa-require-reregister-portal': { ...SIM_GATES['mfa-require-reregister-portal'], apply: (s) => { s.touched_elsewhere = true; } } };
   const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps: { simTable } });

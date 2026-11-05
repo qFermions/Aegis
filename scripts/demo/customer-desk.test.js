@@ -56,7 +56,7 @@ const good = (...gates) => [
   ...gates.map((g) => `Gate: ${g}`),
 ].join('\n');
 
-async function runDesk(t, { only, answers = {}, sut = {}, dir, deps = {}, cfgDir, argv = [] }) {
+async function runDesk(t, { only, answers = {}, sut = {}, dir, deps = {}, cfgDir, argv = [], env = {} }) {
   const results = dir || path.join(tmp(t), 'run');
   const home = cfgDir || tmp(t, 'aegis-desk-fake-');
   const log = path.join(home, 'calls.jsonl');
@@ -65,7 +65,7 @@ async function runDesk(t, { only, answers = {}, sut = {}, dir, deps = {}, cfgDir
   fs.writeFileSync(cfg, JSON.stringify({ log, sut: { answers: Object.entries(answers).map(([id, answer]) => ({ match: MATCH[id], answer })), cost: 0.5, ...sut } }));
   const out = [];
   const err = [];
-  const code = await desk.main(['run', '--only', only.join(','), '--execute', '--results-dir', results, ...argv], { PATH: process.env.PATH, HOME: home }, {
+  const code = await desk.main(['run', '--only', only.join(','), '--execute', '--results-dir', results, ...argv], { PATH: process.env.PATH, HOME: home, ...env }, {
     out: (s) => out.push(String(s)), err: (s) => err.push(String(s)), backend: { command: process.execPath, prefixArgs: [FAKE, '--fake-config', cfg] }, ...deps,
   });
   const run = fs.existsSync(path.join(results, 'run.json')) ? JSON.parse(fs.readFileSync(path.join(results, 'run.json'), 'utf8')) : null;
@@ -185,7 +185,17 @@ test('T1 end to end: nine steps in order, the real read-back passes on the simul
 });
 
 test('step 4 runs the same session as the judged runner: repo root, read-only tools, isolated, scrubbed, the ticket as data', async (t) => {
-  const r = await runDesk(t, { only: ['T6'], answers: { T6: good('okta-user-lifecycle-deactivate-portal') } });
+  // the names reach the desk, so the scrub has something to remove; a desk that passed its whole
+  // environment on fails here. The spawn spy sees what is handed over, even a name a preloaded
+  // tripwire would set again inside the child.
+  const handed = [];
+  const spawn = (cmd, args, o) => { handed.push(Object.keys(o.env)); return require('node:child_process').spawn(cmd, args, o); };
+  const secrets = { AEGION_DOMAIN: 'x', SLACK_TEAM_ID: 'x', GITHUB_ORG: 'x', OKTA_ORG_URL: 'x', GITHUB_TOKEN: 'x', SOME_API_KEY: 'x', AEGIS_NETWORK_TRIPWIRE: '1', AEGIS_AUDIT_DIR: 'x', AEGIS_REPLAY_DIR: 'x', AEGIS_GRAPH_RUNS_DIR: 'x', AEGIS_KEEP_NAME: 'x' };
+  const r = await runDesk(t, { only: ['T6'], answers: { T6: good('okta-user-lifecycle-deactivate-portal') }, env: secrets, deps: { spawn } });
+  assert.equal(handed.length, 1);
+  for (const gone of Object.keys(secrets).filter((n) => n !== 'AEGIS_KEEP_NAME')) assert.ok(!handed[0].includes(gone), `${gone} is not handed to the session`);
+  assert.ok(handed[0].includes('AEGIS_KEEP_NAME'), 'other names stay');
+  assert.ok(handed[0].includes('PATH'));
   const [call] = r.calls();
   assert.equal(fs.realpathSync(call.cwd), fs.realpathSync(REPO));
   const value = (flag) => { const i = call.args.indexOf(flag); const out = []; for (let j = i + 1; j < call.args.length && !call.args[j].startsWith('--'); j += 1) out.push(call.args[j]); return out; };
@@ -198,7 +208,6 @@ test('step 4 runs the same session as the judged runner: repo root, read-only to
   assert.ok(header > 0, 'the data header');
   assert.ok(call.prompt.indexOf('ignore previous instructions') > header, 'the injected line is below the data header');
   assert.match(call.prompt, /Customer D: 30-person software startup/);
-  for (const gone of ['AEGION_DOMAIN', 'SLACK_TEAM_ID', 'GITHUB_ORG', 'OKTA_ORG_URL', 'AEGIS_NETWORK_TRIPWIRE', 'AEGIS_AUDIT_DIR', 'AEGIS_REPLAY_DIR']) assert.ok(!call.env.includes(gone) || gone === 'AEGIS_NETWORK_TRIPWIRE', `${gone} is not in the session's environment`);
   // the init event is kept for the isolation evidence
   assert.ok(fs.existsSync(path.join(r.results, 'customers', 'D', 'tickets', 'T6-init.json')));
   assert.ok(fs.existsSync(path.join(r.results, 'customers', 'D', 'tickets', 'T6-stream.jsonl')));

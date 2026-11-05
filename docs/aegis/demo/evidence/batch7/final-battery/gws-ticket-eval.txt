@@ -1,4 +1,4 @@
-$ node scripts/eval/gws-ticket-eval.js   (HEAD c2ca749, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+$ node scripts/eval/gws-ticket-eval.js   (HEAD 1f78a38, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
 Google Workspace / Okta / Jamf ticket eval - deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  G01-new-user-ou-groups               PROCEDURE   floor=none → /gws-new-user

@@ -1,4 +1,4 @@
-$ node scripts/pre-commit-check.js --all   (HEAD c2ca749, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+$ node scripts/pre-commit-check.js --all   (HEAD 1f78a38, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
 pre-commit-check: --all mode - scanning 1412 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
 
@@ -339,72 +339,12 @@ pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals t
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: docs/aegis/demo/evidence/full-run-1/desk-run-2.html
-    🔴 BLOCK  Line 70: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 71: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 74: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 550: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 551: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 554: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 709: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 710: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 713: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 837: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 838: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 841: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 1232: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 1233: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 1236: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
     ⚠️  WARN  Line 1038: Prompt-injection marker (ignore-previous-instructions)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
     ⚠️  WARN  Line 1093: Prompt-injection marker (ignore-previous-instructions)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: docs/aegis/demo/evidence/full-run-1/desk.html
-    🔴 BLOCK  Line 72: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 73: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 76: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 552: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 553: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 556: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 711: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 712: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 715: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 839: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 840: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 843: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 1376: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 1377: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
-    🔴 BLOCK  Line 1380: Real email address detected (use [USER@DOMAIN.COM] placeholder)
-      Guidance: Replace the value with the canonical placeholder for this data category.
     ⚠️  WARN  Line 1040: Prompt-injection marker (ignore-previous-instructions)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
     ⚠️  WARN  Line 1095: Prompt-injection marker (ignore-previous-instructions)
@@ -752,7 +692,8 @@ pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals t
     ⚠️  WARN  Line 150: Prompt-injection marker (ignore-previous-instructions)
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
-🔴 COMMIT BLOCKED - 30 critical issue(s) found.
-   Fix the issues above, then re-stage and commit.
+⚠️  260 warning(s) found - review the flagged lines above.
+   These are dangerous cmdlets in scripts. Confirm they are intentional.
+   Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
 
-exit 1
+exit 0

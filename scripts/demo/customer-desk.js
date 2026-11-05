@@ -437,14 +437,16 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const prompt = backends.buildSutPrompt(kase);
       if (backends.promptTooLong(prompt)) { sessionReason = 'session did not finish: the prompt is too long for one argument'; return { result: sessionReason, model_session: false }; }
       const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd);
-      Object.assign(known, { exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: turn.exit_code !== null || Boolean(init), turns: turn.num_turns, model: turn.model });
+      // killed at the timeout or the output cap, with no cost reported: what it spent is unknown
+      const costUnknown = (turn.state === 'TIMEOUT' || /larger than the cap/.test(turn.reason || '')) && typeof turn.cost_usd !== 'number';
+      Object.assign(known, { exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: turn.exit_code !== null || Boolean(init), turns: turn.num_turns, model: turn.model, cost_unknown: costUnknown });
       fs.writeFileSync(path.join(tickets, `${ticket.id}-stream.jsonl`), stdout);
       if (init) fs.writeFileSync(path.join(tickets, `${ticket.id}-init.json`), `${JSON.stringify(init, null, 2)}\n`);
       if (turn.state === 'OK') answer = turn.answer;
       else sessionReason = `session did not finish (${turn.state}${turn.reason ? `: ${turn.reason}` : ''}${turn.exit_code ? `, exit ${turn.exit_code}` : ''})`;
       const started = turn.exit_code !== null || Boolean(init);
       return {
-        exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: started,
+        exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: started, cost_unknown: costUnknown,
         turns: turn.num_turns, model: turn.model, session_id: turn.session_id, session_state: turn.state, session_reason: turn.reason,
         result: answer ? `answered: ${turn.model || 'model'}, ${turn.num_turns} turns, ${turn.cost_usd === null ? 'cost not reported' : `${Number(turn.cost_usd.toFixed(4))} US dollars`}` : sessionReason,
         output: answer || lastResultText(stdout),
@@ -598,7 +600,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
     for (const [i, t] of selected.entries()) {
       if (typeof deps.budget === 'number' && (costUnknown || spent + likelyUsd(t.id) > deps.budget)) {
         const reason = costUnknown
-          ? `a session was stopped at its timeout, so what it spent is unknown and the limit of ${deps.budget.toFixed(2)} US dollars cannot be held`
+          ? `a session was stopped with no cost reported, so what it spent is unknown and the limit of ${deps.budget.toFixed(2)} US dollars cannot be held`
           : `${spent.toFixed(2)} spent, and ${t.id} could cost about ${likelyUsd(t.id).toFixed(2)}, past the limit of ${deps.budget.toFixed(2)} US dollars`;
         run.not_run = selected.slice(i).map((k) => ({ id: k.id, reason }));
         break;
@@ -609,7 +611,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
       run.tickets.push(record);
       const session = record.steps.find((s) => s.n === 4);
       if (session && (session.model_session || session.cost_usd !== null)) spent += typeof session.cost_usd === 'number' ? session.cost_usd : likelyUsd(t.id);
-      if (session && session.session_state === 'TIMEOUT') costUnknown = true;
+      if (session && session.cost_unknown) costUnknown = true;
       run.summary = render.summarize(run.tickets, ctx.counts);
       saveRun(run, runDir);
     }

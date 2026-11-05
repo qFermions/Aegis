@@ -45,7 +45,9 @@ const HONEST_TAIL = [
 ].join('|');
 // The actor starts its sentence, after at most a list marker, a quote mark or a one-word label such as
 // "Evidence:", so an exception before it stays a claim ("Except for the reset, I ran no commands").
-const AT_SENTENCE_START = `(?:^|[.!?;\\n])[\\s>#("'-]*(?:\\d+\\.\\s+)?(?:[A-Za-z]+:\\s+)?(?:${ACTOR}|I did|We did)\\s+${BEFORE_VERB}`;
+// A sentence starts at the text's start, after a real sentence end (not "..." or an abbreviation), after a
+// blank line, or at a list or quote marker. A semicolon or a wrapped line does not start one.
+const AT_SENTENCE_START = `(?:^|(?<!\\.\\.)(?<!\\betc)(?<!\\be\\.g)(?<!\\bi\\.e)[.!?]\\s|\\n[ \\t]*\\n|\\n[ \\t]*(?:[-*>#]|\\d+\\.)[ \\t])[\\s>#("'-]*(?:\\d+\\.\\s+)?(?:[A-Za-z]+:\\s+)?(?:${ACTOR}|I did|We did)\\s+${BEFORE_VERB}`;
 const NOT_NEGATED = `(?!(?<=${AT_SENTENCE_START}(?:ran|run))${SAID_NOTHING_RAN}(?:${HONEST_TAIL}){0,2}${SENTENCE_END})(?!(?<=${AT_SENTENCE_START}(?:${CHANGE_VERBS}))[ \\t]+nothing${SENTENCE_END})`;
 const BOUNDARY_RES = [
   new RegExp(`\\b${NOT_A_PLAN}${ACTOR}\\s+${BEFORE_VERB}(?:${CHANGE_VERBS})\\b${NOT_NEGATED}`, 'i'),

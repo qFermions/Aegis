@@ -24,7 +24,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { REPO_ROOT } = require('./paths.js');
+const { REPO_ROOT, effectivePath } = require('./paths.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
@@ -47,26 +47,27 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
   return [...dirs].flatMap((d) => [path.join(d, 'CLAUDE.md'), path.join(d, 'CLAUDE.local.md'), path.join(d, '.claude', 'CLAUDE.md'), path.join(d, '.claude', 'rules', '**')]);
 }
 
-// What a session may not read: this work's own records, the demo's code and expected answers, the grader,
-// the DEV cases, and the run folders the CLI can name, so it answers from Aegis's runbooks and not from its
-// own grading material. A run saved under a custom folder by an earlier command is not on the list. Read
+// What a session may not read: this work's own records, the demo's code and expected answers, the grader and
+// ticket corpora under scripts/eval, scored answers under docs/evidence, and the run folders the CLI can name,
+// so it answers from Aegis's runbooks and not from its own grading material. A run saved under a custom folder
+// by an earlier command is not on the list, nor a judged run's custom --results-dir. Read
 // rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and Glob.
 // That the CLI loads them: docs/aegis/demo/evidence/batch7/isolation-probe.txt. That it refuses a read is
 // shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
-const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/judged/**', '.aegis-state/**']);
+const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', '.aegis-state/**']);
 const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.
 const absoluteReadRule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
 
 function readDenyRules(runRoot = null) {
-  const rules = [...READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p))), absoluteReadRule(path.join(os.homedir(), DEFAULT_RUN_ROOT, '**'))];
-  if (runRoot) {
-    const given = path.resolve(runRoot);
-    rules.push(absoluteReadRule(path.join(given, '**')));
-    let real = given;
-    try { real = fs.realpathSync(given); } catch { /* not created yet, as in a dry run */ }
-    if (real !== given) rules.push(absoluteReadRule(path.join(real, '**')));
+  const rules = READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p)));
+  // both forms of a folder behind a link, since the CLI may match either; effectivePath resolves the nearest
+  // folder that exists, so a dry run lists what the real run will
+  for (const root of [path.join(os.homedir(), DEFAULT_RUN_ROOT), ...(runRoot ? [path.resolve(runRoot)] : [])]) {
+    rules.push(absoluteReadRule(path.join(root, '**')));
+    const real = effectivePath(root);
+    if (real !== root) rules.push(absoluteReadRule(path.join(real, '**')));
   }
   return rules;
 }

@@ -47,11 +47,13 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
   return [...dirs].flatMap((d) => [path.join(d, 'CLAUDE.md'), path.join(d, 'CLAUDE.local.md'), path.join(d, '.claude', 'CLAUDE.md'), path.join(d, '.claude', 'rules', '**')]);
 }
 
-// What a session may not read: this work's own records, the demo's expected answers, the runner's DEV
-// cases and every run folder, so it answers from Aegis's runbooks and not from its own grading material.
-// Read rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and
-// Glob. Proof the rules apply: docs/aegis/demo/evidence/batch7/isolation-probe.txt.
-const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl']);
+// What a session may not read: this work's own records, the demo's code and expected answers, the grader,
+// the DEV cases, and the run folders the CLI can name, so it answers from Aegis's runbooks and not from its
+// own grading material. A run saved under a custom folder by an earlier command is not on the list. Read
+// rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and Glob.
+// That the CLI loads them: docs/aegis/demo/evidence/batch7/isolation-probe.txt. That it refuses a read is
+// shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
+const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/judged/**', '.aegis-state/**']);
 const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.
@@ -59,7 +61,13 @@ const absoluteReadRule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^
 
 function readDenyRules(runRoot = null) {
   const rules = [...READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p))), absoluteReadRule(path.join(os.homedir(), DEFAULT_RUN_ROOT, '**'))];
-  if (runRoot) rules.push(absoluteReadRule(path.join(path.resolve(runRoot), '**')));
+  if (runRoot) {
+    const given = path.resolve(runRoot);
+    rules.push(absoluteReadRule(path.join(given, '**')));
+    let real = given;
+    try { real = fs.realpathSync(given); } catch { /* not created yet, as in a dry run */ }
+    if (real !== given) rules.push(absoluteReadRule(path.join(real, '**')));
+  }
   return rules;
 }
 

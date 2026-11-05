@@ -1,4 +1,4 @@
-$ node scripts/replay/replay-demo.js   (HEAD 506bd5b, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+$ node scripts/replay/replay-demo.js   (HEAD f8b88fb, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
 Aegis replay demo - sandboxed store: <tmp>
 
  1. first occurrence → MISS, routed to the adaptive (model) path

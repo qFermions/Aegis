@@ -7,6 +7,10 @@ require('../../adapters/socket-tripwire.js');
 //   --max-turns N --tools Read Grep Glob Agent --allowedTools (same) --disallowedTools Bash
 //   WebFetch WebSearch; --web moves WebFetch and WebSearch to the allowed set. The judge's is
 //   one turn, --tools "", --no-session-persistence, plus --model when given.
+// - Batch 6, task 9: both sessions load only this repository's settings: --setting-sources project
+//   --strict-mcp-config (no user-level CLAUDE.md, plugin, skill, hook or MCP server). --bare is not
+//   used: it never reads the stored login. A wrong implementation this catches: a session that
+//   drops either flag, for either role.
 // - The prompt is the ticket, plus the evidence after a header saying it is pasted evidence.
 // - The child runs from the repository root, without a shell, with an environment that has
 //   no .env.example name and no *_TOKEN, *_KEY, *_SECRET or *_PASSWORD name (PATH stays).
@@ -40,14 +44,30 @@ function fake(t, config) {
 const kase = (over = {}) => ({ id: 'B1', ticket: 'Ticket text for [UPN].', evidence: '', follow_up: '', ...over });
 
 test('the SUT and judge command lines match the spec; --web moves the web tools to the allowed set', () => {
-  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch']);
+  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', '--setting-sources', 'project', '--strict-mcp-config']);
   const web = backends.sutArgs({ prompt: 'P', maxTurns: 5, web: true });
   assert.deepEqual(web.slice(web.indexOf('--allowedTools'), web.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch']);
-  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash']);
+  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', '--setting-sources', 'project', '--strict-mcp-config']);
   assert.deepEqual(backends.sutArgs({ prompt: 'F', resume: 'sess-1' }).slice(0, 4), ['-p', 'F', '--resume', 'sess-1']);
-  assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence']);
+  assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', '--setting-sources', 'project', '--strict-mcp-config']);
   assert.deepEqual(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }).slice(-2), ['--model', 'judge-x']);
   assert.equal(backends.sutArgs({ prompt: '--looks-like-a-flag' })[1], ' --looks-like-a-flag', 'a prompt never reads as an option');
+});
+
+test('both sessions load only the repository\'s own settings, also when resumed, on the web, or with a judge model (batch 6, task 9)', () => {
+  const isolated = (args, label) => {
+    const at = args.indexOf('--setting-sources');
+    assert.ok(at > 0, `${label}: --setting-sources`);
+    assert.equal(args[at + 1], 'project', `${label}: project settings only, so no user-level CLAUDE.md, plugin, skill or hook`);
+    assert.ok(args.includes('--strict-mcp-config'), `${label}: --strict-mcp-config, so no MCP server`);
+    assert.ok(!args.includes('--mcp-config'), `${label}: no MCP file is given`);
+    assert.ok(!args.includes('--bare'), `${label}: --bare never reads the stored login`);
+  };
+  isolated(backends.sutArgs({ prompt: 'P' }), 'system under test');
+  isolated(backends.sutArgs({ prompt: 'P', resume: 'sess-1' }), 'follow-up turn');
+  isolated(backends.sutArgs({ prompt: 'P', web: true }), 'system under test with the web tools');
+  isolated(backends.judgeArgs({ prompt: 'J' }), 'judge');
+  isolated(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }), 'judge with a model');
 });
 
 test('the prompt is the ticket, plus the evidence after the pasted-evidence header', () => {

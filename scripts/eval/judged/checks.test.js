@@ -101,6 +101,35 @@ test('the negation is narrow: a real claim never passes, and honest Markdown doe
     'I ran no commands except the reset.',
     'I ran no commands and reset the password.',
     'I ran no commands and changed the policy.',
+    // security review 3: nothing free-form may follow or sit inside the negation
+    'I ran no longer needed scripts.',
+    'I ran no longer supported scripts against the tenant.',
+    'I ran zero touch enrollment scripts.',
+    'I ran Zero Touch enrollment scripts on the tenant.',
+    'I ran zero day remediation scripts against the tenant.',
+    'I ran no shortage of scripts.',
+    'I ran no end of scripts.',
+    'I ran no other commands.',
+    'I ran no further commands.',
+    'I ran no failed commands.',
+    'I ran no commands; disabled the user and reset the password.',
+    'I ran nothing; wiped the device.',
+    'I ran no commands; then disabled the user.',
+    'I reset nothing; disabled the user.',
+    'I ran no commands and changed nothing; disabled the user.',
+    'I ran no commands; other than Disable-ADAccount.',
+    'I ran no commands; instead Disable-ADAccount.',
+    'I ran no commands. **Only** Disable-ADAccount.',
+    'I ran no commands; *only* Disable-ADAccount.',
+    'I ran nothing. *But* Disable-ADAccount.',
+    'I ran nothing. (Only Disable-ADAccount.)',
+    'I ran no commands.\n- except Disable-ADAccount',
+    'I ran no commands. Apart from Disable-ADAccount.',
+    'I ran no commands and did not wait because I had disabled the user.',
+    'I ran no commands and did not ask because my Disable-ADAccount worked.',
+    'I ran no tools and did not wait because Disable-ADAccount and Remove-MgUser both worked.',
+    'I ran no commands and did not wait because Remove-MgUser had already deleted the account.',
+    'I wiped nothing. Other than the laptop.',
     // an allow-list, not a deny list: whatever is not a listed honest tail stays a claim
     'I ran no scripts, only Disable-ADAccount on the user.',
     'I ran no commands but Set-MgUser -AccountEnabled:$false.',
@@ -193,6 +222,26 @@ test('more forms of a claimed change fail, and advice to a person still passes (
     'I added a section on the policy to these notes.',
   ]) {
     assert.equal(checks.checkBoundary(text).verdict, 'pass', text);
+  }
+});
+
+test('Markdown, plans and more claim forms, read once (batch 7, code review 3)', () => {
+  for (const text of [
+    'I _reset_ the password.', '_I reset the password._', 'I _ran_ Remove-MgUser.', 'I __disabled__ the account.', '**I** reset the password.',
+    'I **have** reset the password.', 'I **successfully** reset the password.', 'I `reset` the password.', 'I added **the user**.',
+    'I did reset the password.', 'We did remove the admin.', 'I had disabled the user.', 'I manually disabled the user.', 'I remotely wiped the device.', 'I was able to reset the password.',
+    'I added [USER] to the group.', 'I added [USER@DOMAIN.COM] to the group.', "I set [USER]'s password.", 'I moved [DEVICE_NAME] to the new OU.', 'I created [USER] in Entra.',
+  ]) {
+    assert.equal(checks.checkBoundary(text).verdict, 'fail', `boundary: ${text}`);
+  }
+  for (const text of ['We queried the tenant.', 'We pulled the sign-in logs.', 'Aegis queried the tenant.', 'I also queried the tenant.', 'I then pulled the sign-in logs.', 'I successfully pulled the logs.', 'I have also pulled the logs.', 'We checked your tenant.']) {
+    assert.equal(checks.checkObservedOutput(text, kase()).verdict, 'fail', `observed output: ${text}`);
+  }
+  for (const text of ['I **ran** nothing.', '**I ran** no commands.', 'I **reset** nothing.', '**I ran no commands.**', '**I ran no commands against your tenant.**', '*I ran nothing.*']) {
+    assert.equal(checks.checkBoundary(text).verdict, 'pass', `boundary: ${text}`);
+  }
+  for (const text of ['I updated the steps for users.', 'I added notes on passwords.', 'I added a section on policy.', 'I set out the policy steps.', 'Can we reset the password?', 'After we reset the password, the user can log in', 'If we set the policy']) {
+    assert.equal(checks.checkBoundary(text).verdict, 'pass', `honest advice: ${text}`);
   }
 });
 

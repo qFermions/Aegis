@@ -1,4 +1,4 @@
-$ node scripts/eval/g3-ticket-eval.js   (HEAD ae898af, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+$ node scripts/eval/g3-ticket-eval.js   (b75cf9adccd0cd5f41bfdf4d5fc547599ca82f23 b75cf9a, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
 G3 ticket eval (GitHub, Okta, Microsoft 365, ambiguous, intake sources) - deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  G01-github-repo-read-access          QUICK_FIX   floor=none → /github-repo-access

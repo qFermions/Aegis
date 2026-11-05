@@ -102,6 +102,31 @@ test('the exclusions cover the judge\'s temporary folder too, and never the repo
   assert.ok(homeCheckout.includes(path.join('/h', 'CLAUDE.md')));
 });
 
+test('the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4)', () => {
+  const os = require('node:os');
+  const abs = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
+  const repo = (p) => abs(path.join(REPO_ROOT, p));
+  const pinned = [
+    repo('progress.md'), repo('checks.md'), repo('docs/review/**'), repo('docs/aegis/demo/**'), repo('docs/explainers/**'),
+    repo('scripts/demo/customers/**'), repo('scripts/eval/judged/dev-cases.jsonl'), abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
+  ];
+  const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
+  assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P' })).permissions.deny, pinned);
+  // a run folder elsewhere is denied too, when the caller names it
+  const elsewhere = path.join(os.tmpdir(), 'some-run');
+  assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P', runRoot: elsewhere })).permissions.deny, [...pinned, abs(path.join(elsewhere, '**'))]);
+  // only Read rules: the CLI's own warning says a Glob(path) rule is not matched and Read rules cover Grep and Glob
+  for (const rule of pinned) assert.match(rule, /^Read\(\/\//);
+  // a wrong list that denied a parent folder would hide what Aegis must read
+  for (const readable of ['CLAUDE.md', 'PRODUCT_CONTRACT.md', 'docs/aegis/workflow.md', 'modules/security/security-doctrine.md', '.claude/commands/mfa-issue.md', 'tasks/lessons.md']) {
+    const target = repo(readable).slice(0, -1);
+    for (const rule of pinned) {
+      const base = rule.slice(0, -1).replace(/\/\*\*$/, '');
+      assert.ok(target !== base && !target.startsWith(`${base}/`), `${readable} stays readable under ${rule}`);
+    }
+  }
+});
+
 test('the prompt is the ticket, plus the evidence after the pasted-evidence header', () => {
   assert.equal(backends.buildSutPrompt(kase()), 'Ticket text for [UPN].');
   assert.equal(backends.buildSutPrompt(kase({ evidence: 'line 1' })), `Ticket text for [UPN].\n\n${backends.EVIDENCE_HEADER}\nline 1`);

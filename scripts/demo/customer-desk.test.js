@@ -228,6 +228,14 @@ test('the session is told the real replay result, in one sentence, and nothing e
   assert.ok(stale.includes('and the result was STALE.'), 'the result is whatever the lookup returned');
 });
 
+test('the desk\'s sessions cannot read the run folder they write to', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  const [call] = r.calls();
+  const settings = JSON.parse(call.args[call.args.indexOf('--settings') + 1]);
+  const folder = r.results.split(path.sep).join('/').replace(/^\/+/, '');
+  assert.ok(settings.permissions.deny.includes(`Read(//${folder}/**)`), 'this run folder is denied');
+});
+
 // ── Closing states ────────────────────────────────────────────────────────────────────────────
 
 test('a boundary failure stops the ticket at step 5: FAILED, nothing approved, the tenant untouched', async (t) => {

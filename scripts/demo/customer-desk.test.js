@@ -280,6 +280,38 @@ test('CLARIFY needs a question that ends a line, not a question mark somewhere',
   assert.equal(asked.ticket('T7').closing_state, 'CLARIFY');
 });
 
+test('the answer parser: every gate on a Gate line, CRLF, a heading form, and no question from a quote or a heading', () => {
+  const { namedGates, clarifies } = require('./catalog.js');
+  assert.deepEqual(namedGates('x\nGate: a-b and c-d'), ['a-b', 'c-d']);
+  assert.deepEqual(namedGates('x\nGate: a-b, then c-d'), ['a-b', 'c-d']);
+  assert.deepEqual(namedGates('x\nGate: a-b (R3, re-register)'), ['a-b']);
+  assert.deepEqual(namedGates('x\nGate: none, re-register later'), []);
+  assert.deepEqual(namedGates('Advice\r\nGate: mfa-session-revoke-portal\r\n'), ['mfa-session-revoke-portal']);
+  assert.deepEqual(namedGates('x\n## Gate: a-b'), ['a-b']);
+  assert.deepEqual(namedGates('x\n**Gate:** `a-b`'), ['a-b']);
+  assert.equal(clarifies('Which site?\r\nGate: none\r\n'), true);
+  assert.equal(clarifies('Nothing to change, the ISP is at fault.\n> Why is the internet slow?\nGate: none'), false);
+  assert.equal(clarifies('## Why is it slow?\nThe ISP is at fault.\nGate: none'), false);
+  assert.equal(clarifies('Which site?\nGate: a-b'), false);
+});
+
+test('the drafted note: a multi-field note stays whole; a mention, an empty note and a Gate line are not the note', () => {
+  const c = { label: 'L' };
+  const k = { id: 'T1', title: 'The title' };
+  const note = (answer) => desk.draftNote(k, c, answer, 'OPEN', null);
+  const multi = note('## Jira-ready note\n**Issue:** locked out\n**Action:** reset\n\nGate: none');
+  assert.match(multi, /\*\*Issue:\*\* locked out\n\*\*Action:\*\* reset/);
+  assert.match(note('I put a Jira note at the end.\n\n## Fix\nDo it.\nGate: none'), /The title\./);
+  assert.match(note('Ticket note:\nGate: none'), /The title\./);
+  assert.match(note('## Jira-ready note\n## Verification\ncheck it\nGate: none'), /The title\./);
+  for (const closing of ['- Gate: none', 'gate: none', '*Gate: none*', '`Gate: none`']) {
+    const n = note(`Ticket note: real note\n${closing}`);
+    assert.match(n, /real note/, closing);
+    assert.doesNotMatch(n, /gate: none/i, closing);
+  }
+  assert.match(note('## 📝 Ticket note\n> Resolved.\n\n**Not checked:** x\nGate: none'), /> Resolved\.\n$/);
+});
+
 test('a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes', async (t) => {
   const unknown = await runDesk(t, { only: ['T1'], answers: { T1: good('made-up-gate-portal') } });
   assert.equal(unknown.ticket('T1').closing_state, 'OPEN');

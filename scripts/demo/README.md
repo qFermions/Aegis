@@ -27,7 +27,7 @@ Rebuild the page from a saved run, with no model call:
 node scripts/demo/customer-desk.js --view ~/aegis-demo-runs/<run-id>
 ```
 
-Results go to `~/aegis-demo-runs/<run-id>/` (the `claude` CLI also keeps its own record of each session under `~/.claude/projects/`), or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
+Results go to `~/aegis-demo-runs/<run-id>/`, or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
 
 Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED, which wins over 1; 4 dry run; 1 an input error, a refused folder, or the desk could not finish a ticket. If the network tripwire fires, the run stops, exits 1 and marks `run.json` and the page.
 
@@ -57,7 +57,7 @@ Every simulated part says SIMULATED in text.
 
 ## What the demo adds to a session
 
-The session is told the customer's label and platforms, the replay lookup's real result (it has no shell to run the lookup itself), and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
+Desk sessions run with `--max-turns 40` and `--no-session-persistence`. The session is told the customer's label and platforms, the replay lookup's real result (it has no shell to run the lookup itself), and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
 
 ## Closing states
 

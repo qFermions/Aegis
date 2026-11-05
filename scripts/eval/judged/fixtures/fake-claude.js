@@ -5,8 +5,8 @@
 //
 // Its own options come first, before the real CLI arguments:
 //   --fake-config <file.json>   behaviour, as { "log": <file>, "sut": {...}, "judge": {...} }
-// A call with --no-session-persistence is a judge call; any other is a system-under-test
-// call. Each role's settings:
+// A call with --tools "" is a judge call; any other is a system-under-test call (the Customer
+// Desk's sessions also run with --no-session-persistence). Each role's settings:
 //   mode         normal | slow | ignore-term | invalid | error   (default normal)
 //   sleep_ms     how long slow / ignore-term wait before answering
 //   answer       the SUT answer text (default DEFAULT_ANSWER)
@@ -38,7 +38,7 @@ if (args[0] === '--fake-config') {
   config = JSON.parse(fs.readFileSync(args[1], 'utf8'));
   args.splice(0, 2);
 }
-const role = args.includes('--no-session-persistence') ? 'judge' : 'sut';
+const role = args.includes('--tools') && args[args.indexOf('--tools') + 1] === '' ? 'judge' : 'sut';
 const settings = config[role] || {};
 const valueAfter = (flag) => { const i = args.indexOf(flag); return i === -1 ? null : args[i + 1]; };
 const prompt = valueAfter('-p') || '';

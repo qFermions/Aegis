@@ -104,11 +104,13 @@ function buildSutPrompt(c) {
   return c.evidence !== '' ? `${c.ticket}\n\n${EVIDENCE_HEADER}\n${c.evidence}` : c.ticket;
 }
 
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null }) {
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, persist = true }) {
+  if (resume && !persist) throw new Error('a session with no persistence cannot resume');
   const tools = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
+  if (!persist) args.push('--no-session-persistence');
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
     '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot }));
   return args;

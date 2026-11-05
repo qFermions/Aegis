@@ -1,0 +1,3 @@
+$ node scripts/harness/release-boundary-check.js   (HEAD ae898af, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+RELEASE BOUNDARY: PASS - 0 boundary paths clean, private stores ignored, workflows secret-free
+exit 0

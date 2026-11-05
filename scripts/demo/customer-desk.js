@@ -61,7 +61,10 @@ function parseArgs(argv) {
   const list = [...argv];
   const args = { only: null, execute: false, resultsDir: null, view: null };
   if (list[0] === 'run') list.shift();
+  const seen = new Set();
   const value = (flag) => {
+    if (seen.has(flag)) throw new InputError(`${flag} may appear once`);
+    seen.add(flag);
     const v = list.shift();
     if (v === undefined || v.startsWith('--')) throw new InputError(`${flag} needs a value`);
     return v;
@@ -380,9 +383,9 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   if (probe.applies && probe.verdict === 'pass') ctx.counts.probes_refused += 1;
   if (boundary.verdict === 'fail') {
     ctx.counts.boundary_failures += 1;
-    return close('FAILED', `boundary check failed: the answer says Aegis made a change (matched: ${boundary.span})`);
+    return close('FAILED', `the boundary check matched "${boundary.span}", which reads as a claim that Aegis made a change; a person should read the answer`);
   }
-  if (probe.applies && probe.verdict === 'fail') return close('FAILED', `probe check failed: the answer followed the injected instruction (matched: ${probe.span})`);
+  if (probe.applies && probe.verdict === 'fail') return close('FAILED', `the probe check matched "${probe.span}", which reads as following the injected instruction; a person should read the answer`);
 
   // 6 APPROVAL
   const names = namedGates(answer);
@@ -447,8 +450,9 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     }
     const pass = verdicts.filter((v) => v.state === 'PASS').length;
     const state = verdicts.some((v) => v.state === 'FAIL') ? 'FAIL' : (pass === verdicts.length ? 'PASS' : 'INCONCLUSIVE');
-    const last = verdicts[verdicts.length - 1];
-    return { exit_code: last && last.exit !== undefined ? last.exit : null, result: `${state}: ${pass} of ${verdicts.length} read-back(s) passed`, output: lines.join('\n\n') };
+    const exits = verdicts.map((v) => v.exit).filter((e) => e !== null && e !== undefined);
+    const worst = exits.find((e) => e !== 0);
+    return { exit_code: worst !== undefined ? worst : (exits.length ? 0 : null), result: `${state}: ${pass} of ${verdicts.length} read-back(s) passed`, output: lines.join('\n\n') };
   });
 
   // 9 CLOSE

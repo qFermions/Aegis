@@ -303,9 +303,9 @@ test('a session that reports no cost counts at its likely cost, so the guard is 
 });
 
 test('a session killed at its timeout has an unknown cost, so the guard stops the run', async (t) => {
-  const r = await runDesk(t, { only: ['T7', 'T1'], sut: { mode: 'slow', sleep_ms: 60000 }, deps: { sessionTimeoutMs: 100 }, argv: ['--budget-usd', '20'] });
-  assert.deepEqual(r.run.tickets.map((k) => k.id), ['T7']);
-  assert.deepEqual(r.run.not_run.map((n) => n.id), ['T1']);
+  const r = await runDesk(t, { only: ['T1', 'T7'], sut: { mode: 'slow', sleep_ms: 60000 }, deps: { sessionTimeoutMs: 100 }, argv: ['--budget-usd', '20'] });
+  assert.deepEqual(r.run.tickets.map((k) => k.id), ['T1']);
+  assert.deepEqual(r.run.not_run.map((n) => n.id), ['T7']);
   assert.match(r.run.not_run[0].reason, /unknown/);
   assert.equal(r.code, 3);
 });

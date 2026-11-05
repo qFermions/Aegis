@@ -594,9 +594,12 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   const run = { schema: SCHEMA, run_id: runId, started_at: new Date().toISOString(), tickets: [], summary: null };
   try {
     let spent = deps.spent || 0;
+    let costUnknown = false;
     for (const [i, t] of selected.entries()) {
-      if (typeof deps.budget === 'number' && spent + likelyUsd(t.id) > deps.budget) {
-        const reason = `${spent.toFixed(2)} spent, and ${t.id} could cost about ${likelyUsd(t.id).toFixed(2)}, past the limit of ${deps.budget.toFixed(2)} US dollars`;
+      if (typeof deps.budget === 'number' && (costUnknown || spent + likelyUsd(t.id) > deps.budget)) {
+        const reason = costUnknown
+          ? `a session was stopped at its timeout, so what it spent is unknown and the limit of ${deps.budget.toFixed(2)} US dollars cannot be held`
+          : `${spent.toFixed(2)} spent, and ${t.id} could cost about ${likelyUsd(t.id).toFixed(2)}, past the limit of ${deps.budget.toFixed(2)} US dollars`;
         run.not_run = selected.slice(i).map((k) => ({ id: k.id, reason }));
         break;
       }
@@ -606,6 +609,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
       run.tickets.push(record);
       const session = record.steps.find((s) => s.n === 4);
       if (session && (session.model_session || session.cost_usd !== null)) spent += typeof session.cost_usd === 'number' ? session.cost_usd : likelyUsd(t.id);
+      if (session && session.session_state === 'TIMEOUT') costUnknown = true;
       run.summary = render.summarize(run.tickets, ctx.counts);
       saveRun(run, runDir);
     }

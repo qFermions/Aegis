@@ -333,6 +333,7 @@ test('a session that fails or errors stops OPEN with the reason, no change and n
 // runbooks have no such gate for a shared-mailbox grant: the next test pins that.
 function fixtureDesk(t) {
   const dir = tmp(t, 'aegis-desk-runbooks-');
+  fs.cpSync(path.join(REPO, '.claude', 'commands'), dir, { recursive: true }); // the real gates stay known
   const groupId = 'e2000000-0000-4000-8000-000000000001';
   fs.writeFileSync(path.join(dir, 'fixture-mailbox.md'), [
     '# fixture',
@@ -447,7 +448,8 @@ test('only the operator simulator writes a tenant: no other demo file writes one
   assert.match(read('customer-desk.js'), /applySimulatedGate/);
   const code = read('customer-desk.js').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   const writes = code.match(/fs\.(?:writeFileSync|appendFileSync|renameSync)\([^\n]*/g) || [];
-  for (const w of writes) assert.doesNotMatch(w, /tenantFile/, `the runner copies the tenant once and never writes it again: ${w}`);
+  const tenantWrites = writes.filter((w) => /tenantFile/.test(w));
+  assert.deepEqual(tenantWrites, ['fs.writeFileSync(tenantFile, data.tenantText(customer));'], 'the runner copies the tenant into the run folder once and never writes it again');
   const { applySimulatedGate } = require('./sim/gates.js');
   assert.throws(() => applySimulatedGate({ entry: SIM_GATES['jamf-lock-erase-lock-portal'], tenantFile: path.join(REPO, 'scripts', 'demo', 'customers', 'b', 'tenant.json'), runDir: path.join(os.tmpdir(), 'elsewhere'), target: {} }), /outside the run folder/);
 });

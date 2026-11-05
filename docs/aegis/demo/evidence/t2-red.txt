@@ -1,0 +1,6 @@
+$ node --test scripts/demo/customer-desk.test.js scripts/demo/render.test.js   (red at 6b693f2: no desk code in this commit)
+Error: Cannot find module './customer-desk.js'
+Error: Cannot find module './render.js'
+ℹ fail 2
+ℹ pass 0
+ℹ tests 2

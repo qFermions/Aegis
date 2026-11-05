@@ -855,7 +855,7 @@ test('the drafted note holds the note: on the label line, under a heading, and n
 });
 
 test('the FAILED reason says what the check matched, not what the answer means', async (t) => {
-  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'I ran no commands. Which site?\nGate: none' } });
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'I ran the reset. Which site?\nGate: none' } });
   const k = r.ticket('T7');
   assert.equal(k.closing_state, 'FAILED');
   assert.match(k.reason, /boundary check matched "I ran"/);

@@ -296,6 +296,34 @@ test('a real gate the table does not map stops OPEN with "not simulated"; so doe
   assert.match(other.ticket('T1').reason, /not simulated.*okta/);
 });
 
+test('a simulated change that cannot apply stops OPEN, applies nothing, and the run goes on to the next ticket', async (t) => {
+  const simTable = { ...SIM_GATES, 'mfa-session-revoke-portal': { ...SIM_GATES['mfa-session-revoke-portal'], apply: () => { throw new TypeError('no such object'); } } };
+  const r = await runDesk(t, { only: ['T1', 'T5'], answers: { T5: good('quarantine-release-one-portal', 'mfa-session-revoke-portal'), T1: good('mfa-require-reregister-portal') }, deps: { simTable } });
+  const k = r.ticket('T5');
+  assert.equal(k.closing_state, 'OPEN');
+  assert.match(k.reason, /not simulated/);
+  assert.equal(tenantOf(r.results, 'C').quarantine[0].released, false, 'the first gate is not left applied');
+  assert.equal(r.ticket('T1').closing_state, 'RESOLVED (SIMULATED)', 'the other ticket still ran');
+  assert.ok(fs.existsSync(path.join(r.results, 'desk.html')));
+});
+
+test('a Microsoft gate on a ticket whose customer holds that user applies and resolves', async (t) => {
+  for (const [id, customer] of [['T5', 'C'], ['T4', 'E'], ['T8', 'E']]) {
+    const r = await runDesk(t, { only: [id], answers: { [id]: good('mfa-session-revoke-portal') } });
+    assert.equal(r.ticket(id).closing_state, 'RESOLVED (SIMULATED)', `${id} on ${customer}: ${r.ticket(id).reason}`);
+  }
+});
+
+test('an unexpected error in one ticket closes it OPEN with the reason, keeps its steps and lets the run finish', async (t) => {
+  const r = await runDesk(t, { only: ['T1', 'T7'], answers: { T1: good('mfa-require-reregister-portal'), T7: 'Which site?\nGate: none' }, deps: { transportFor: () => { throw new Error('seam failed'); } } });
+  const k = r.ticket('T1');
+  assert.equal(k.closing_state, 'OPEN');
+  assert.match(k.reason, /could not finish.*seam failed/);
+  assert.equal(step(k, 4).cost_usd, 0.5, 'the session already paid for stays in the record');
+  assert.deepEqual(k.steps.map((s) => s.n), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  assert.equal(r.ticket('T7').closing_state, 'CLARIFY');
+});
+
 test('a read-back that shows the change not done is FAILED; the connector\'s own message is shown', async (t) => {
   const simTable = { ...SIM_GATES, 'mfa-require-reregister-portal': { ...SIM_GATES['mfa-require-reregister-portal'], apply: () => {} } };
   const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps: { simTable } });
@@ -502,13 +530,13 @@ test('only the operator simulator writes a tenant: no other demo file writes one
   assert.match(read('sim/gates.js'), /SIMULATED OPERATOR/);
   assert.doesNotMatch(read('sim/vendors.js'), /writeFile|appendFile|renameSync|rmSync|unlink/, 'the vendor simulator only reads');
   for (const f of ['catalog.js', 'render.js', 'customers.js']) assert.doesNotMatch(read(f), /tenant\.json|writeTenant/, f);
-  assert.match(read('customer-desk.js'), /applySimulatedGate/);
+  assert.match(read('customer-desk.js'), /applySimulatedGates/);
   const code = read('customer-desk.js').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   const writes = code.match(/fs\.(?:writeFileSync|appendFileSync|renameSync)\([^\n]*/g) || [];
   const tenantWrites = writes.filter((w) => /tenantFile/.test(w));
   assert.deepEqual(tenantWrites, ['fs.writeFileSync(tenantFile, data.tenantText(customer));'], 'the runner copies the tenant into the run folder once and never writes it again');
-  const { applySimulatedGate } = require('./sim/gates.js');
-  assert.throws(() => applySimulatedGate({ entry: SIM_GATES['jamf-lock-erase-lock-portal'], tenantFile: path.join(REPO, 'scripts', 'demo', 'customers', 'b', 'tenant.json'), runDir: path.join(os.tmpdir(), 'elsewhere'), target: {} }), /outside the run folder/);
+  const { applySimulatedGates } = require('./sim/gates.js');
+  assert.throws(() => applySimulatedGates({ changes: [{ entry: SIM_GATES['jamf-lock-erase-lock-portal'], target: {} }], tenantFile: path.join(REPO, 'scripts', 'demo', 'customers', 'b', 'tenant.json'), runDir: path.join(os.tmpdir(), 'elsewhere') }), /outside the run folder/);
 });
 
 test('no vendor is contacted: the connectors reach only the seam, and a real socket would have tripped', async (t) => {

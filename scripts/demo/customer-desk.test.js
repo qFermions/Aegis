@@ -333,6 +333,14 @@ test('the drafted note: a multi-field note stays whole; a mention, an empty note
   assert.match(note('Ticket note: real\nGate: a-b\nThanks.\nGate: none'), /real\n$/);
 });
 
+test('a Gate line that says none and names a gate contradicts itself: nothing is applied and the ticket stops OPEN', async (t) => {
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good().concat('\nGate: none, see mfa-require-reregister-portal') } });
+  const k = r.ticket('T1');
+  assert.equal(k.closing_state, 'OPEN');
+  assert.match(k.reason, /contradict/);
+  assert.equal(tenantOf(r.results, 'A').msgraph.methods[A_USER].length, 3);
+});
+
 test('a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes', async (t) => {
   const unknown = await runDesk(t, { only: ['T1'], answers: { T1: good('made-up-gate-portal') } });
   assert.equal(unknown.ticket('T1').closing_state, 'OPEN');
@@ -418,6 +426,11 @@ test('the tripwire keeps what ran: the ticket, the cost and a marker that the ru
   assert.equal(run.summary.total_cost_usd, 0.5);
   assert.equal(run.tickets[0].id, 'T1');
   assert.match(fs.readFileSync(path.join(dir, 'desk.html'), 'utf8'), /tripwire/);
+});
+
+test('an error message that quotes a path loses it too', async (t) => {
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps: { transportFor: () => { throw new Error(`EACCES: open '${REPO}'`); } } });
+  assert.match(step(r.ticket('T1'), 8).output, /EACCES: open '<repo>'/);
 });
 
 test('an error message loses this machine\'s paths at a path boundary only, and HOME=/ leaves it readable', async (t) => {

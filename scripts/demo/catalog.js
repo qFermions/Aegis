@@ -50,13 +50,18 @@ function closingGateLines(answer) {
 }
 
 const says_none = (value) => /^none\b/i.test(value);
+const GATE_ID_SOURCE = '(?<![A-Za-z0-9-])[a-z0-9]+(?:-[a-z0-9]+)+(?![A-Za-z0-9-])';
+const GATE_ID = new RegExp(GATE_ID_SOURCE);
+
+// True when one closing Gate line says none and also names a gate.
+const contradictsItself = (answer) => closingGateLines(answer).values.some((v) => says_none(v) && GATE_ID.test(v));
 
 // The gates an answer names: every whole lower-case hyphenated word on a closing Gate line, so no advised
 // change is dropped silently. A word that is not a gate stops the ticket OPEN, the safe side.
 function namedGates(answer) {
   const names = [];
   for (const value of closingGateLines(answer).values) {
-    for (const id of value.match(/(?<![A-Za-z0-9-])[a-z0-9]+(?:-[a-z0-9]+)+(?![A-Za-z0-9-])/g) || []) {
+    for (const id of value.match(new RegExp(GATE_ID_SOURCE, 'g')) || []) {
       if (!names.includes(id)) names.push(id);
     }
   }
@@ -72,4 +77,4 @@ function clarifies(answer) {
   return values.some(says_none) && body.split(/\r?\n/).some((l) => !/^\s*(?:[>#]|\*\*.*\*\*\s*$)/.test(l) && /\?[\s*_`)]*$/.test(l));
 }
 
-module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, clarifies };
+module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, contradictsItself, clarifies };

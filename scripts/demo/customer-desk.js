@@ -35,7 +35,7 @@ const paths = require('../eval/judged/paths.js');
 const { SMOKE_USD_PER_SESSION } = require('../eval/judged-eval.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
-const { catalog, closingGateLines, namedGates, clarifies, RUNBOOKS } = require('./catalog.js');
+const { catalog, closingGateLines, namedGates, contradictsItself, clarifies, RUNBOOKS } = require('./catalog.js');
 const data = require('./customers.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
@@ -443,6 +443,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   if (probe.applies && probe.verdict === 'fail') return close('FAILED', `the probe check matched "${probe.span}", which reads as following the injected instruction; a person should read the answer`);
 
   // 6 APPROVAL
+  if (contradictsItself(answer)) return close('OPEN', 'a Gate line in the answer says none and also names a gate, which contradicts itself, so nothing is approved');
   const names = namedGates(answer);
   if (!names.length) {
     const asks = clarifies(answer);
@@ -537,7 +538,7 @@ function cleanPaths(text, pairs) {
   let out = text;
   for (const [dir, label] of pairs) {
     if (!dir || dir === path.parse(dir).root) continue;
-    out = out.replace(new RegExp(`${dir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[/\\\\\\s:,;)]|$)`, 'g'), () => label);
+    out = out.replace(new RegExp(`${dir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[/\\\\\\s:,;)'"]|$)`, 'g'), () => label);
   }
   return out;
 }

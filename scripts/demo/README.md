@@ -57,7 +57,7 @@ Every simulated part says SIMULATED in text.
 
 ## What one thing the demo adds to a session
 
-The session is told the customer's label and platforms, and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the Gate lines that close the answer count, so a line quoted from the ticket or mentioned in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
+The session is told the customer's label and platforms, and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
 
 ## Closing states
 

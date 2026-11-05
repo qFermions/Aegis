@@ -1,5 +1,5 @@
-$ node scripts/pre-commit-check.js --all   (HEAD 1f78a38, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
-pre-commit-check: --all mode - scanning 1412 tracked and non-ignored files.
+$ node scripts/pre-commit-check.js --all   (HEAD 506bd5b, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+pre-commit-check: --all mode - scanning 1415 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
 
 ╔══════════════════════════════════════════════╗
@@ -253,7 +253,7 @@ pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals t
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: checks.md
-    ⚠️  WARN  Line 50: Disable-* - account/object disable
+    ⚠️  WARN  Line 54: Disable-* - account/object disable
       Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
 
   File: docs/adr/ADR-001-blast-radius-classes.md

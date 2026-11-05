@@ -127,6 +127,13 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
   }
 });
 
+test('sutArgs takes no persistence only when asked, and the judge never persists (batch 7, task 5)', () => {
+  assert.ok(!backends.sutArgs({ prompt: 'P' }).includes('--no-session-persistence'));
+  assert.ok(backends.sutArgs({ prompt: 'P', persist: false }).includes('--no-session-persistence'));
+  assert.throws(() => backends.sutArgs({ prompt: 'P', persist: false, resume: 'sess-1' }), /cannot resume/);
+  assert.ok(backends.judgeArgs({ prompt: 'J' }).includes('--no-session-persistence'));
+});
+
 test('the prompt is the ticket, plus the evidence after the pasted-evidence header', () => {
   assert.equal(backends.buildSutPrompt(kase()), 'Ticket text for [UPN].');
   assert.equal(backends.buildSutPrompt(kase({ evidence: 'line 1' })), `Ticket text for [UPN].\n\n${backends.EVIDENCE_HEADER}\nline 1`);

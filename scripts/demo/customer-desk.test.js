@@ -25,6 +25,7 @@ const { test } = require('node:test');
 
 const audit = require('../audit/audit-log.js');
 const intake = require('../intake/intake.js');
+const backends = require('../eval/judged/backends.js');
 const customersData = require('./customers.js');
 const desk = require('./customer-desk.js');
 const render = require('./render.js');
@@ -234,6 +235,21 @@ test('the desk\'s sessions cannot read the run folder they write to', async (t) 
   const settings = JSON.parse(call.args[call.args.indexOf('--settings') + 1]);
   const folder = r.results.split(path.sep).join('/').replace(/^\/+/, '');
   assert.ok(settings.permissions.deny.includes(`Read(//${folder}/**)`), 'this run folder is denied');
+});
+
+test('the desk runs 40 turns with no session persistence, and the judged runner keeps 24 and persistence (batch 7, task 5)', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  const [call] = r.calls();
+  assert.equal(call.role, 'sut');
+  assert.equal(call.args[call.args.indexOf('--max-turns') + 1], '40');
+  assert.ok(call.args.includes('--no-session-persistence'));
+  const judged = backends.sutArgs({ prompt: 'P' });
+  assert.equal(judged[judged.indexOf('--max-turns') + 1], '24');
+  assert.ok(!judged.includes('--no-session-persistence'), 'its follow-up turns resume a session');
+  const out = [];
+  await desk.main(['--only', 'T7'], {}, { out: (s) => out.push(s), err: () => {} });
+  assert.match(out.join(''), /--max-turns 40 /);
+  assert.match(out.join(''), /--no-session-persistence/);
 });
 
 // ── Closing states ────────────────────────────────────────────────────────────────────────────

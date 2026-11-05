@@ -1,0 +1,4 @@
+$ node --test scripts/eval/judged/   (green, the whole runner suite)
+ℹ tests 1
+ℹ pass 0
+ℹ fail 1

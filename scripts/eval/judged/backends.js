@@ -11,6 +11,10 @@
 //   event's `result`, else the last assistant text.
 // - A case's follow_up, when non-empty, is a second turn in the same session (--resume
 //   with the session id the first turn reported).
+// - Both sessions load only this repository's settings, CLAUDE.md, commands and skills, never a
+//   user-level CLAUDE.md, plugin, skill, hook or MCP server, so a run measures Aegis and not what
+//   is installed on the machine that day (batch 6, task 9). --bare is not used: it never reads the
+//   stored login.
 // Nothing here reads a value from the environment beyond passing it on to the child.
 
 const childProcess = require('node:child_process');
@@ -21,6 +25,7 @@ const { REPO_ROOT } = require('./paths.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
+const ISOLATION_ARGS = Object.freeze(['--setting-sources', 'project', '--strict-mcp-config']);
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
 const DEFAULT_GRACE_MS = 5000;
@@ -65,12 +70,12 @@ function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = n
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed);
+    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...ISOLATION_ARGS);
   return args;
 }
 
 function judgeArgs({ prompt, model = null }) {
-  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence'];
+  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...ISOLATION_ARGS];
   if (model) args.push('--model', model);
   return args;
 }
@@ -212,7 +217,7 @@ function sutRecord(turns, c) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  SUT_TOOLS, WEB_TOOLS, ISOLATION_ARGS, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
   envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn,
   runChild, runTurn, runSut, promptTooLong,
 };

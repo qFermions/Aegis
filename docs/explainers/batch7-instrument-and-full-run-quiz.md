@@ -1,0 +1,19 @@
+# Batch 7 quiz: the instrument and the full run
+
+Answer all five before you merge. The answers are collapsed below.
+
+1. What did this batch change, and what did it leave alone on purpose?
+2. In `scripts/eval/judged/checks.js`, why does the negation count only when the actor starts the sentence? Give a sentence that this rule catches.
+3. T2 closed INCONCLUSIVE even though the simulated operator applied all 4 gates. Why, and which one line would change that?
+4. How do you undo this batch, and what does the undo leave behind?
+5. Name one thing this work did not verify.
+
+<details>
+<summary>Answers</summary>
+
+1. It fixed the instrument: the grader's false positive, the sessions' read limits, the replay sentence in the prompt, 40 turns with no session record, tier C for `scripts/demo/**`, the account name in the tree, and the stale temp folder in the tripwire. It then ran all eight tickets. It left the runbooks, `CLAUDE.md`, `PRODUCT_CONTRACT.md` and the connectors' behavior alone, so the run is the honest "before" picture.
+2. The check reads forward from the verb, so without this rule an exception placed before the actor is invisible. "Except for the reset, I ran no commands." claims a change, and it failed at `e56f0ab` but passed one version of tonight's fix until security review 4 caught it.
+3. Three read-backs passed; `gws-offboard-suspend-portal` says `Read-back: none (R1: no change record)` at `.claude/commands/gws-offboard.md:75`, and a change no read-back can prove cannot close as resolved. The connector already has `verify-suspended` (`scripts/adapters/gws-client.js:303`), so naming it there would change that. Nothing was changed tonight, because that is Aegis's side.
+4. Close PR #12 before a merge, or `git revert -m 1 <merge commit>` after one. The commit that put the account name in the tree stays in pushed history either way. Run folders stay in `~/aegis-demo-runs/`, outside the repository.
+5. Any of: answer quality, since the builder wrote the tickets; any fix proposed in `causes.md`, none of which was built; a real vendor, since every answer comes from the simulated tenant; the grader sentences listed in `checks.md` that still pass; a judged run's custom `--results-dir`, which is not denied; the 41 PowerShell tests on this Mac (CI runs them).
+</details>

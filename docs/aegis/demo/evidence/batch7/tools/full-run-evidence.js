@@ -15,7 +15,7 @@ const clean = (s) => String(s)
   .replace(/\/(?:private\/)?(?:tmp|var\/folders)\/[^\s"'\]]*/g, '<tmp>')
   .replace(new RegExp(`-Users-${account}-`, 'g'), '-Users-<account>-')
   .replace(new RegExp(`\\b${account}\\b`, 'g'), '<account>')
-  .replaceAll('—', '-');
+  .replaceAll('\u2014', '-');
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));

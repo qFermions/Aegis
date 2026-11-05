@@ -14,8 +14,8 @@
 //        [--budget-usd N [--spent-usd N]]
 //   node scripts/demo/customer-desk.js --view <run-dir>
 // Default is a dry run: the plan and an allowance estimate, exit 4, no model. Exit codes: 0 the run
-// finished with no ticket FAILED; 2 a ticket FAILED, which wins over 1; 4 dry run; 1 input error, a refused
-// folder, or the desk could not finish a ticket.
+// finished with no ticket FAILED; 2 a ticket FAILED, which wins over 1; 3 the allowance guard stopped the
+// run before every ticket ran; 4 dry run; 1 input error, a refused folder, or the desk could not finish a ticket.
 // More: scripts/demo/README.md.
 
 // No Node socket can open from this process: the connectors reach only the simulated transport, and
@@ -128,7 +128,7 @@ function dryRun(selected, customers, dir, io, args) {
     io.out(`${t.id}  ${c.label}: ${t.title}\n    expected: ${t.expected_path}\n`);
   }
   io.out(`Allowance: up to ${sessions} Aegis sessions on your subscription, about ${(sessions * USD_PER_SESSION).toFixed(2)} US dollars of allowance at the ${USD_PER_SESSION.toFixed(2)} per session in docs/evidence/runtime-smoke.md. A cache hit starts no session.\n`);
-  io.out(`Each session: claude ${sessionArgs('<ticket>', dir).join(' ')}\n`);
+  io.out(`Each session: claude ${sessionArgs('<ticket>', dir, '<ticket folder>/<ticket>-debug.log', args.budget === null ? null : '<what is left>').join(' ')}\n`);
   if (args.budget !== null) io.out(`Limit: ${args.budget.toFixed(2)} US dollars, ${(args.spent || 0).toFixed(2)} already spent. The run stops before a ticket that could pass it.\n`);
   io.out(`${render.SENTENCE}\n`);
   return 4;
@@ -160,11 +160,15 @@ function sessionEnv(env) {
 
 // The desk's session: more turns than the judged runner (T6 used all 24 in the first real run) and no
 // session record, since the desk never resumes one.
-const sessionArgs = (prompt, runRoot) => backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false });
+// Each session keeps a debug log, the proof of what the CLI applied, and is capped at what is left of a limit.
+function sessionArgs(prompt, runRoot, debugFile, maxUsd) {
+  const args = [...backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false }), '--debug-file', debugFile];
+  return maxUsd === null ? args : [...args, '--max-budget-usd', maxUsd];
+}
 
-async function askAegis(prompt, ctx, debugFile) {
+async function askAegis(prompt, ctx, debugFile, maxUsd) {
   const backend = ctx.backend;
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: [...sessionArgs(prompt, ctx.runDir), '--debug-file', debugFile], cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
   const stream = backends.parseStream(run.stdout);
   return { turn: backends.summarizeTurn(stream, run), stdout: run.stdout, init: stream.init };
 }
@@ -432,7 +436,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const kase = sessionCase(text, customer, lookup.json ? lookup.json.result : `refused (exit ${lookup.code})`);
       const prompt = backends.buildSutPrompt(kase);
       if (backends.promptTooLong(prompt)) { sessionReason = 'session did not finish: the prompt is too long for one argument'; return { result: sessionReason, model_session: false }; }
-      const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`));
+      const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd);
       Object.assign(known, { exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: turn.exit_code !== null || Boolean(init), turns: turn.num_turns, model: turn.model });
       fs.writeFileSync(path.join(tickets, `${ticket.id}-stream.jsonl`), stdout);
       if (init) fs.writeFileSync(path.join(tickets, `${ticket.id}-init.json`), `${JSON.stringify(init, null, 2)}\n`);
@@ -596,6 +600,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
         run.not_run = selected.slice(i).map((k) => ({ id: k.id, reason }));
         break;
       }
+      ctx.maxUsd = typeof deps.budget === 'number' ? (deps.budget - spent).toFixed(2) : null;
       io.out(`\n=== ${t.id}: ${t.title} ===\n`);
       const record = await workTicket(t, ctx);
       run.tickets.push(record);
@@ -623,7 +628,8 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   if (run.not_run) io.out(`Did not run: ${run.not_run.map((n) => n.id).join(', ')}, because ${run.not_run[0].reason}.\n`);
   io.out(`Saved: ${path.join(runDir, 'run.json')}\nOpen in a browser: ${path.join(runDir, 'desk.html')}\n`);
   if (run.tickets.some((t) => t.closing_state === 'FAILED')) return 2;
-  return run.tickets.some((t) => t.internal_error) ? 1 : 0;
+  if (run.tickets.some((t) => t.internal_error)) return 1;
+  return run.not_run ? 3 : 0;
 }
 
 function view(dir, io) {

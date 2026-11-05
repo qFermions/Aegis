@@ -29,11 +29,11 @@ node scripts/demo/customer-desk.js --view ~/aegis-demo-runs/<run-id>
 
 Results go to `~/aegis-demo-runs/<run-id>/`, or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
 
-Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED, which wins over 1; 4 dry run; 1 an input error, a refused folder, or the desk could not finish a ticket. If the network tripwire fires, the run stops, exits 1 and marks `run.json` and the page.
+Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED, which wins over 1; 3 the allowance guard stopped the run before every ticket ran; 4 dry run; 1 an input error, a refused folder, or the desk could not finish a ticket. If the network tripwire fires, the run stops, exits 1 and marks `run.json` and the page.
 
 ## What it costs
 
-`--budget-usd N` stops the run before a ticket that could pass N, counting `--spent-usd N` from earlier commands, and names the tickets that did not run. It reads the likely cost of a ticket from `LIKELY_USD` in `customer-desk.js`: 2 US dollars, 4 for T2.
+`--budget-usd N` stops the run before a ticket that could pass N, counting `--spent-usd N` from earlier commands, and names the tickets that did not run. It reads the likely cost of a ticket from `LIKELY_USD` in `customer-desk.js`: 2 US dollars, 4 for T2. Each session also gets `--max-budget-usd` with what is left, because a session can cost more than its likely figure.
 
 Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 US dollars of allowance per session, the figure in `docs/evidence/runtime-smoke.md`; the full set is at most 8 sessions, about 20.00 US dollars. Each real session's `total_cost_usd` is shown under step 4 and added up in the summary. A cache hit starts no session.
 

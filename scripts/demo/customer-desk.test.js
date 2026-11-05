@@ -284,8 +284,15 @@ test('the answer parser: every gate on a Gate line, CRLF, a heading form, and no
   const { namedGates, clarifies } = require('./catalog.js');
   assert.deepEqual(namedGates('x\nGate: a-b and c-d'), ['a-b', 'c-d']);
   assert.deepEqual(namedGates('x\nGate: a-b, then c-d'), ['a-b', 'c-d']);
-  assert.deepEqual(namedGates('x\nGate: a-b (R3, re-register)'), ['a-b']);
-  assert.deepEqual(namedGates('x\nGate: none, re-register later'), []);
+  // every hyphenated word counts, so a gate in parentheses or after a stray none is never dropped; a
+  // word that is no gate stops the ticket OPEN
+  assert.deepEqual(namedGates('x\nGate: a-b (and also c-d)'), ['a-b', 'c-d']);
+  assert.deepEqual(namedGates('x\nGate: None; mfa-require-reregister-portal'), ['mfa-require-reregister-portal']);
+  assert.deepEqual(namedGates('x\nGate: none'), []);
+  assert.deepEqual(namedGates('x\nGate: none (no change)'), []);
+  // a whole word only: a capitalized word is not cut into a false id
+  assert.deepEqual(namedGates('x\nGate: a-b Read-back'), ['a-b']);
+  assert.deepEqual(namedGates('x\nGate: Okta-user-lifecycle-suspend-portal'), []);
   assert.deepEqual(namedGates('Advice\r\nGate: mfa-session-revoke-portal\r\n'), ['mfa-session-revoke-portal']);
   assert.deepEqual(namedGates('x\n## Gate: a-b'), ['a-b']);
   assert.deepEqual(namedGates('x\n**Gate:** `a-b`'), ['a-b']);
@@ -293,6 +300,9 @@ test('the answer parser: every gate on a Gate line, CRLF, a heading form, and no
   assert.equal(clarifies('Nothing to change, the ISP is at fault.\n> Why is the internet slow?\nGate: none'), false);
   assert.equal(clarifies('## Why is it slow?\nThe ISP is at fault.\nGate: none'), false);
   assert.equal(clarifies('Which site?\nGate: a-b'), false);
+  assert.equal(clarifies('**Why is it slow?**\nThe ISP is at fault.\nGate: none'), false, 'a bold line is a heading');
+  assert.equal(clarifies('Nothing to change.\n**Did I miss anything?**\nNo.\nGate: none'), false);
+  assert.equal(clarifies('1. **Is it one site or all sites?**\nGate: none'), true, 'a numbered question is asked');
 });
 
 test('the drafted note: a multi-field note stays whole; a mention, an empty note and a Gate line are not the note', () => {
@@ -310,6 +320,17 @@ test('the drafted note: a multi-field note stays whole; a mention, an empty note
     assert.doesNotMatch(n, /gate: none/i, closing);
   }
   assert.match(note('## 📝 Ticket note\n> Resolved.\n\n**Not checked:** x\nGate: none'), /> Resolved\.\n$/);
+  // the label is a heading or says "label:"; the last one wins, since the note closes an answer
+  assert.match(note('- [ ] Ticket note posted\n- [ ] User confirms\n## 📝 Jira-ready note\n> The real note.\nGate: none'), /> The real note\.\n$/);
+  assert.match(note('Jira note below.\nGate: none'), /The title\./);
+  assert.match(note('## 📝 Jira-ready notes\nPlural.\nGate: none'), /Plural\.\n$/);
+  assert.match(note('**Ticket Notes:** Bold.\nGate: none'), /Bold\.\n$/);
+  assert.match(note('Suggested Jira note: Qualified.\nGate: none'), /Qualified\.\n$/);
+  assert.match(note('**Jira-ready note (paste this):** Parenthesis.\nGate: none'), /\n\nParenthesis\.\n$/);
+  // later sections stay out
+  const later = note('## Jira-ready note\n> real\n\n**Verification:** run it\n**Did I miss anything?** no\nNot checked: live\nGate: none');
+  assert.match(later, /> real\n$/);
+  assert.match(note('Ticket note: real\nGate: a-b\nThanks.\nGate: none'), /real\n$/);
 });
 
 test('a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes', async (t) => {

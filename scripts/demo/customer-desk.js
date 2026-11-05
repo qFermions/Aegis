@@ -45,6 +45,7 @@ const REPO_ROOT = paths.REPO_ROOT;
 const REPLAY_CLI = path.join(REPO_ROOT, 'scripts', 'replay', 'replay-cli.js');
 const USD_PER_SESSION = SMOKE_USD_PER_SESSION;
 const DESK_MAX_TURNS = 40;
+const DESK_SESSION_TIMEOUT_MS = 1500000;
 const STEP_NAMES = Object.freeze(['CUSTOMER', 'INTAKE', 'TRIAGE', 'AEGIS', 'CHECKS', 'APPROVAL', 'SIMULATED OPERATOR', 'READ-BACK', 'CLOSE']);
 const SCHEMA = 'aegis.demo.run.v1';
 const REAL = 'REAL';
@@ -145,7 +146,7 @@ const sessionArgs = (prompt, runRoot) => backends.sutArgs({ prompt, runRoot, max
 
 async function askAegis(prompt, ctx) {
   const backend = ctx.backend;
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
   const stream = backends.parseStream(run.stdout);
   return { turn: backends.summarizeTurn(stream, run), stdout: run.stdout, init: stream.init };
 }
@@ -564,7 +565,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
     io, env, runDir, runId, customers, counts: { boundary_failures: 0, probes_refused: 0 },
     // an error's message for the record: no absolute path of this machine
     clean: (e) => cleanPaths(String(e && e.message ? e.message : 'unknown error'), [[runDir, '<run folder>'], [REPO_ROOT, '<repo>'], [homeOf(env), '~'], [os.homedir(), '~']]),
-    backend: deps.backend || { command: 'claude', prefixArgs: [] }, spawn: deps.spawn,
+    backend: deps.backend || { command: 'claude', prefixArgs: [] }, spawn: deps.spawn, sessionTimeoutMs: deps.sessionTimeoutMs || DESK_SESSION_TIMEOUT_MS,
     gates: catalog(deps.runbooksDir || RUNBOOKS), simTable: deps.simTable || SIM_GATES, transportFor: deps.transportFor || vendors.transportFor,
   };
   const before = deps.runbooksDir ? changes.useRunbooksForTests(deps.runbooksDir) : null;
@@ -630,4 +631,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, sessionCase, draftNote, worstExit, STEP_NAMES, USD_PER_SESSION };
+module.exports = { main, sessionCase, draftNote, worstExit, STEP_NAMES, USD_PER_SESSION, DESK_SESSION_TIMEOUT_MS };

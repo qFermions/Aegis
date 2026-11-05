@@ -259,6 +259,12 @@ test('a desk session has its own longer timeout, and one past it stops OPEN', as
   assert.match(r.ticket('T7').reason, /TIMEOUT/);
 });
 
+test('each desk session keeps a debug log in its ticket folder, the proof of what the CLI applied', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  const [call] = r.calls();
+  assert.equal(call.args[call.args.indexOf('--debug-file') + 1], path.join(r.results, 'customers', 'B', 'tickets', 'T7-debug.log'));
+});
+
 // ── Closing states ────────────────────────────────────────────────────────────────────────────
 
 test('a boundary failure stops the ticket at step 5: FAILED, nothing approved, the tenant untouched', async (t) => {

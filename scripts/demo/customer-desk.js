@@ -13,8 +13,8 @@
 //   node scripts/demo/customer-desk.js [run] [--only T4,T6] [--execute] [--results-dir <dir>]
 //   node scripts/demo/customer-desk.js --view <run-dir>
 // Default is a dry run: the plan and an allowance estimate, exit 4, no model. Exit codes: 0 the run
-// finished with no ticket FAILED; 2 a ticket FAILED; 4 dry run; 1 input error, a refused folder, or the
-// desk could not finish a ticket.
+// finished with no ticket FAILED; 2 a ticket FAILED, which wins over 1; 4 dry run; 1 input error, a refused
+// folder, or the desk could not finish a ticket.
 // More: scripts/demo/README.md.
 
 // No Node socket can open from this process: the connectors reach only the simulated transport, and
@@ -271,8 +271,8 @@ const NOTE_LABEL = /^\s*(#{1,6}\s+)?[^A-Za-z0-9]*(?:[A-Za-z-]+\s+){0,2}?(?:jira[
 const isNoteLabel = (line) => { const m = NOTE_LABEL.exec(line); return Boolean(m && (m[1] || m[2])); };
 const NOTE_END = /^\s*(?:#{1,6} |---|<details|[\s*_`-]*Gate:|(?:\*\*)?(?:Not checked|Verification|Review notes|Did I miss|Evidence|Decisions|Quiz)\b)/i;
 
-// The exit code a step with several read-backs shows: 2 (shown not done) over any other failure, then
-// the first failure, then 0; null when nothing ran.
+// The exit code a step with several read-backs shows: 2 over any other failure, then the first failure,
+// then 0; null when nothing ran. The step's result says which verdict each read reached.
 function worstExit(codes) {
   const ran = codes.filter((e) => e !== null && e !== undefined);
   if (!ran.length) return null;
@@ -338,7 +338,11 @@ async function workTicket(ticket, ctx) {
   try {
     return await ticketSteps({ ticket, customer, customerDir, tenantFile, tickets, vars, rec, timed, close }, ctx);
   } catch (e) {
-    if (e && e.message === tripwire.MESSAGE) throw e;
+    if (e && e.message === tripwire.MESSAGE) {
+      await close('OPEN', 'the network tripwire fired: a request missed the simulated transport, so the run stopped');
+      e.ticketRecord = rec;
+      throw e;
+    }
     rec.internal_error = true;
     return close('OPEN', `the desk could not finish this ticket: ${ctx.clean(e)}`);
   }
@@ -494,7 +498,14 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
         continue;
       }
       for (const change of a.changes) {
-        const v = await readBack(change, { customer, customerDir, tenantFile, values: valuesFor(g).values }, ctx);
+        let v;
+        try {
+          v = await readBack(change, { customer, customerDir, tenantFile, values: valuesFor(g).values }, ctx);
+        } catch (e) {
+          if (e && e.message === tripwire.MESSAGE) throw e;
+          rec.internal_error = true;
+          v = { state: 'INCONCLUSIVE', exit: null, output: `${change.read_back.kind}: the read-back could not run: ${ctx.clean(e)}` };
+        }
         verdicts.push(v);
         lines.push(`${a.gate}: ${v.state}\n${v.output}`);
       }
@@ -510,15 +521,25 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   // The read-back proves the simulated change, not the answer, so an answer enters the store only when
   // every check that applies to it passed. Only verified solutions replay.
   const unsettled = results.filter((r) => r.applies && r.verdict !== 'pass').map((r) => `${r.check} ${r.verdict}`);
-  if (unsettled.length && !rec.cache_hit) return close('RESOLVED (SIMULATED)', `the read-back passed, but the answer did not pass these checks: ${unsettled.join(', ')}`, 'Resolved, and not stored in the replay cache: an answer enters it only when every check passed.');
-  const stored = rec.cache_hit ? 'Answered from the replay cache, so nothing new is stored.' : storeVerified(rec, answerFile, gates, verdicts.map((v) => v.evidence), { customer, customerDir }, ctx);
-  return close('RESOLVED (SIMULATED)', null, stored);
+  let stored = 'Answered from the replay cache, so nothing new is stored.';
+  if (!rec.cache_hit) stored = unsettled.length ? 'Resolved, and not stored in the replay cache: an answer enters it only when every check passed.' : storeVerified(rec, answerFile, gates, verdicts.map((v) => v.evidence), { customer, customerDir }, ctx);
+  return close('RESOLVED (SIMULATED)', unsettled.length ? `the read-back passed, but the answer did not pass these checks: ${unsettled.join(', ')}` : null, stored);
 }
 
 // The result event's text, for a session that ended in an error: what the CLI itself said.
 function lastResultText(stdout) {
   const s = backends.parseStream(stdout);
   return s.result && typeof s.result.result === 'string' ? s.result.result : '';
+}
+
+// Each path, only where it ends at a path boundary, and never the root folder (HOME can be /).
+function cleanPaths(text, pairs) {
+  let out = text;
+  for (const [dir, label] of pairs) {
+    if (!dir || dir === path.parse(dir).root) continue;
+    out = out.replace(new RegExp(`${dir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[/\\\\\\s:,;)]|$)`, 'g'), () => label);
+  }
+  return out;
 }
 
 // ── A run ─────────────────────────────────────────────────────────────────────────────────────
@@ -534,7 +555,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   const ctx = {
     io, env, runDir, runId, customers, counts: { boundary_failures: 0, probes_refused: 0 },
     // an error's message for the record: no absolute path of this machine
-    clean: (e) => String(e && e.message ? e.message : 'unknown error').split(runDir).join('<run folder>').split(homeOf(env)).join('~').split(os.homedir()).join('~'),
+    clean: (e) => cleanPaths(String(e && e.message ? e.message : 'unknown error'), [[runDir, '<run folder>'], [REPO_ROOT, '<repo>'], [homeOf(env), '~'], [os.homedir(), '~']]),
     backend: deps.backend || { command: 'claude', prefixArgs: [] }, spawn: deps.spawn,
     gates: catalog(deps.runbooksDir || RUNBOOKS), simTable: deps.simTable || SIM_GATES, transportFor: deps.transportFor || vendors.transportFor,
   };
@@ -547,14 +568,23 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
       run.summary = render.summarize(run.tickets, ctx.counts);
       saveRun(run, runDir);
     }
+  } catch (e) {
+    if (e && e.ticketRecord) {
+      run.tickets.push(e.ticketRecord);
+      run.aborted = 'the network tripwire fired and the run stopped; the tickets after this one did not run';
+      run.summary = render.summarize(run.tickets, ctx.counts);
+      saveRun(run, runDir);
+      data.writeReplacing(path.join(runDir, 'desk.html'), render.html(run));
+    }
+    throw e;
   } finally {
     if (deps.runbooksDir) changes.useRunbooksForTests(before);
   }
   data.writeReplacing(path.join(runDir, 'desk.html'), render.html(run));
   io.out(`\n=== Summary ===\n${render.summaryLines(run.summary).join('\n')}\n`);
   io.out(`Saved: ${path.join(runDir, 'run.json')}\nOpen in a browser: ${path.join(runDir, 'desk.html')}\n`);
-  if (run.tickets.some((t) => t.internal_error)) return 1;
-  return run.tickets.some((t) => t.closing_state === 'FAILED') ? 2 : 0;
+  if (run.tickets.some((t) => t.closing_state === 'FAILED')) return 2;
+  return run.tickets.some((t) => t.internal_error) ? 1 : 0;
 }
 
 function view(dir, io) {
@@ -593,4 +623,3 @@ if (require.main === module) {
 }
 
 module.exports = { main, sessionCase, draftNote, worstExit, STEP_NAMES, USD_PER_SESSION };
-

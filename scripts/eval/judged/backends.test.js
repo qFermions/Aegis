@@ -83,6 +83,20 @@ test('both sessions load only the repository\'s own settings, also when resumed,
   isolated(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }), 'judge with a model');
 });
 
+test('the exclusions cover the judge\'s temporary folder too, and never the repository\'s own CLAUDE.md (batch 6, code review 1 finding 7)', () => {
+  const os = require('node:os');
+  const list = backends.excludedMemoryFiles();
+  for (const dir of [os.tmpdir(), fs.realpathSync(os.tmpdir())]) {
+    assert.ok(list.includes(path.join(dir, 'CLAUDE.md')), `${dir}: the judge runs below it`);
+    assert.ok(list.includes(path.join(path.dirname(dir), 'CLAUDE.md')), `above ${dir}`);
+  }
+  // a checkout at the home folder keeps its own rules
+  const homeCheckout = backends.excludedMemoryFiles('/h/me', '/h/me');
+  assert.ok(!homeCheckout.includes(path.join('/h/me', 'CLAUDE.md')));
+  assert.ok(!homeCheckout.includes(path.join('/h/me', '.claude', 'CLAUDE.md')));
+  assert.ok(homeCheckout.includes(path.join('/h', 'CLAUDE.md')));
+});
+
 test('the prompt is the ticket, plus the evidence after the pasted-evidence header', () => {
   assert.equal(backends.buildSutPrompt(kase()), 'Ticket text for [UPN].');
   assert.equal(backends.buildSutPrompt(kase({ evidence: 'line 1' })), `Ticket text for [UPN].\n\n${backends.EVIDENCE_HEADER}\nline 1`);

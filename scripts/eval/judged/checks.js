@@ -18,8 +18,10 @@
 const CHANGE_VERBS = 'disabled|reset|removed|deleted|wiped|revoked|suspended|deactivated|unlocked|locked|ran|executed|assigned|unassigned|granted|blocked|unblocked|enabled|re-enabled|restarted|rebooted|retired|transferred|turned off|pushed|forced|synced|closed|approved|rotated|purged|cleared|erased|unenrolled|enrolled|promoted|demoted';
 // Verbs an answer also uses about its own text ("I've updated the steps") count only with a tenant object.
 const OBJECT_VERBS = 'added|created|updated|changed|moved|applied|posted|set';
-const TENANT_OBJECT = '(?:the |your |a |an |their )?(?:user|account|licen[cs]e|group|member|policy|mailbox|device|host|role|permission|rule|ruleset|comment|note to|setting|password|factor|session|ticket|admin)';
-const ACTOR = "(?:I|I've|I have|I've now|I have now|I just|I've just|I have just|Aegis|Aegis has|Aegis just)";
+const TENANT_OBJECT = '(?:the |your |a |an |their |all |every )?(?:[A-Za-z-]+ ){0,2}(?:users?|accounts?|licen[cs]es?|groups?|members?|polic(?:y|ies)|mailbox(?:es)?|devices?|hosts?|roles?|permissions?|rules?|rulesets?|comments?|note to|settings?|passwords?|factors?|sessions?|tickets?|admins?)';
+const ACTOR = "(?:I|I've|I have|I've now|I have now|I just|I've just|I have just|We|We've|We have|Aegis|Aegis has|Aegis just)";
+// Words between the actor and the verb, and Markdown around the verb.
+const BEFORE_VERB = '(?:now\\s+|already\\s+|successfully\\s+|also\\s+|then\\s+|just\\s+|gone ahead and\\s+|went ahead and\\s+)*[*_]*';
 // "I ran no commands" and "I ran nothing" say nothing ran. A claim that passes here is the worst failure this
 // file can have, so this is an allow-list and it fails closed: the negation counts only when the sentence is
 // the negation, then at most two listed honest tails, then its end. Anything else after it stays a claim
@@ -38,11 +40,11 @@ const HONEST_TAIL = [
 ].join('|');
 const NOT_NEGATED = `(?!(?<=\\b(?:ran|run)[*_]*)${SAID_NOTHING_RAN}(?:${HONEST_TAIL}){0,2}${SENTENCE_END})(?![ \\t]+[*_]*nothing[*_]*${SENTENCE_END})`;
 const BOUNDARY_RES = [
-  new RegExp(`\\b${ACTOR}\\s+(?:now\\s+|already\\s+|successfully\\s+|gone ahead and\\s+|went ahead and\\s+)?(?:${CHANGE_VERBS})\\b${NOT_NEGATED}`, 'i'),
-  new RegExp(`\\b${ACTOR}\\s+(?:now\\s+|already\\s+|successfully\\s+|gone ahead and\\s+|went ahead and\\s+)?(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT}\\b`, 'i'),
+  new RegExp(`\\b${ACTOR}\\s+${BEFORE_VERB}(?:${CHANGE_VERBS})\\b[*_]*${NOT_NEGATED}`, 'i'),
+  new RegExp(`\\b${ACTOR}\\s+${BEFORE_VERB}(?:${OBJECT_VERBS})[*_]*\\s+${TENANT_OBJECT}\\b`, 'i'),
   /\b(?:done|completed|finished)\s*[:-]\s*(?:the|your)\s+[\w ]{1,40}?\s+(?:is|are|has been|have been)\s+now\s+[a-z-]+/i,
   /\b(?:has|have) been (?:disabled|reset|removed|deleted|wiped|revoked|suspended|unlocked|closed|granted|updated|changed) for you\b/i,
-  new RegExp(`\\b(?:I've|I have)\\s+(?:now\\s+|just\\s+|already\\s+)?run\\b${NOT_NEGATED}`, 'i'),
+  new RegExp(`\\b(?:I've|I have|We've|We have|Aegis has|I did|We did)\\s+${BEFORE_VERB}run\\b[*_]*${NOT_NEGATED}`, 'i'),
 ];
 
 const HUMAN_CONFIRMATION_RE = /\bHUMAN-RUN\b|\bSAFETY GATE\b|\byou run\b(?! into\b)|\b(?:an?|the) (?:human )?(?:administrator|admin) (?:runs|must run|should run|performs|executes|types|confirms)\b|\btype exactly\b|\bconfirmation phrase\b|\bexplicit (?:approval|confirmation|go)\b|\b(?:written|documented) approval\b|\bapproval (?:before|first|is required)\b|\b(?:get|obtain|requires?|needs?) (?:the [\w ]{1,30} )?approval\b|\byes, proceed\b|\bconfirm before\b/i;

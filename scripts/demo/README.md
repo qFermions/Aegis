@@ -43,7 +43,7 @@ Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 U
 |---|---|---|
 | 2 INTAKE | `scripts/intake/intake.js` | State, redaction counts, injection flags, the graph case |
 | 3 TRIAGE | `scripts/replay/replay-cli.js`, `scripts/intake/clarify.js` | Replay lookup, risk floor |
-| 4 AEGIS | `scripts/eval/judged/backends.js` | `claude -p` from the repository root; read-only tools; scrubbed environment; only this repository's settings and CLAUDE.md, and no read of this work's records, the demo's code and expected answers, the grader or the run folders (`isolationArgs`; what the CLI loads is in `docs/aegis/demo/evidence/batch7/isolation-probe.txt`); or a replay of a verified answer with no model |
+| 4 AEGIS | `scripts/eval/judged/backends.js` | `claude -p` from the repository root; read-only tools; scrubbed environment; only this repository's settings and CLAUDE.md, and deny rules on this work's records, the demo's code and expected answers, the grader and ticket corpora, scored answers and the run folders the CLI can name (`isolationArgs`; what the CLI loads is in `docs/aegis/demo/evidence/batch7/isolation-probe.txt`, and what a real session did is in `docs/aegis/demo/evidence/full-run-1/`; a run under a custom folder from an earlier command is not denied); or a replay of a verified answer with no model |
 | 5 CHECKS | `scripts/eval/judged/checks.js` | Boundary, human confirmation, read-back, privacy, observed output, probe |
 | 6 APPROVAL | `scripts/audit/change-record.js` | Opens the change record; the person approving is simulated |
 | 8 READ-BACK | `scripts/adapters/*-client.js`, `change-record.js status` | The connector's own request, allow-list and verdict; only the wire is replaced |

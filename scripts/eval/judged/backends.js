@@ -16,7 +16,7 @@
 //   is installed on the machine that day (batch 6, task 9). --setting-sources project is not enough
 //   alone: the CLI walks up from the repository and loads ~/.claude/CLAUDE.md as a Project file, so
 //   every such file above the repository is excluded by name, and auto memory is off. --bare is not
-//   used: it never reads the stored login. Proof: docs/aegis/demo/evidence/isolation-probe.txt.
+//   used: it never reads the stored login. Proof: docs/aegis/demo/evidence/batch7/isolation-probe.txt.
 // Nothing here reads a value from the environment beyond passing it on to the child.
 
 const childProcess = require('node:child_process');

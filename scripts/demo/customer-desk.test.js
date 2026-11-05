@@ -273,12 +273,27 @@ test('the allowance guard stops before a ticket that could pass the limit, and r
   assert.match(r.out, /Did not run: T2, T3/);
   assert.match(fs.readFileSync(path.join(r.results, 'desk.html'), 'utf8'), /Did not run: T2, T3/);
   assert.equal(r.calls().length, 1);
-  assert.equal(r.code, 0);
+  assert.equal(r.code, 3, 'a run the guard stopped says so');
   // money spent before this command counts
   const earlier = await runDesk(t, { only: ['T1'], argv: ['--budget-usd', '20', '--spent-usd', '18.5'] });
   assert.deepEqual(earlier.run.tickets, []);
   assert.deepEqual(earlier.run.not_run.map((n) => n.id), ['T1']);
   assert.ok(fs.existsSync(path.join(earlier.results, 'desk.html')), 'the page is written even with nothing run');
+});
+
+test('each session is capped at what is left of the limit, and the dry run shows the real command line', async (t) => {
+  const r = await runDesk(t, { only: ['T1', 'T7'], answers: { T1: good('mfa-require-reregister-portal'), T7: 'Which site?\nGate: none' }, argv: ['--budget-usd', '20', '--spent-usd', '2'] });
+  const calls = r.calls();
+  const cap = (c) => c.args[c.args.indexOf('--max-budget-usd') + 1];
+  assert.equal(cap(calls[0]), '18.00');
+  assert.equal(cap(calls[1]), '17.50', 'the 0.50 the first session cost is gone');
+  const free = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  assert.ok(!free.calls()[0].args.includes('--max-budget-usd'), 'no limit, no cap');
+  const out = [];
+  await desk.main(['--only', 'T7', '--budget-usd', '20'], {}, { out: (s) => out.push(s), err: () => {} });
+  const line = out.join('').split('\n').find((l) => l.startsWith('Each session:'));
+  assert.match(line, /--debug-file <ticket folder>\/<ticket>-debug\.log/);
+  assert.match(line, /--max-budget-usd <what is left>/);
 });
 
 test('a session that reports no cost counts at its likely cost, so the guard is never blind', async (t) => {

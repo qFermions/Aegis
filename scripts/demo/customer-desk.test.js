@@ -233,7 +233,8 @@ test('the desk\'s sessions cannot read the run folder they write to', async (t) 
   const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
   const [call] = r.calls();
   const settings = JSON.parse(call.args[call.args.indexOf('--settings') + 1]);
-  const folder = r.results.split(path.sep).join('/').replace(/^\/+/, '');
+  // the rule's own form: on Windows the drive letter is lower case with no colon
+  const folder = r.results.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase());
   assert.ok(settings.permissions.deny.includes(`Read(//${folder}/**)`), 'this run folder is denied');
 });
 

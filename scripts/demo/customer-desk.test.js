@@ -446,6 +446,22 @@ test('a read-back that proves nothing either way is INCONCLUSIVE, not resolved, 
   assert.ok(!list.stdout.includes('case-0001'), 'an unproved answer never enters the store');
 });
 
+test('a read that never ran is INCONCLUSIVE, not proof the change was not done', async (t) => {
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps: { transportFor: () => async () => { throw new Error('connection reset'); } } });
+  const k = r.ticket('T1');
+  assert.equal(k.closing_state, 'INCONCLUSIVE', k.reason);
+  assert.match(step(k, 8).result, /INCONCLUSIVE/);
+  assert.equal(r.code, 0);
+});
+
+test('worstExit: a shown failure wins over an inconclusive read, in either order', () => {
+  assert.equal(desk.worstExit([5, 2]), 2);
+  assert.equal(desk.worstExit([2, 5]), 2);
+  assert.equal(desk.worstExit([0, 5]), 5);
+  assert.equal(desk.worstExit([0, 0]), 0);
+  assert.equal(desk.worstExit([null, undefined]), null);
+});
+
 test('T3: a gate whose runbook names no read-back is simulated, then INCONCLUSIVE with the runbook\'s reason, never resolved', async (t) => {
   const r = await runDesk(t, { only: ['T3'], answers: { T3: good('jamf-lock-erase-lock-portal') } });
   const k = r.ticket('T3');

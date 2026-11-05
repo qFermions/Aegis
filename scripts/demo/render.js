@@ -129,7 +129,7 @@ function html(run) {
 <header>
 <h1>Customer Desk run</h1>
 <p class="note">Run ${esc(run.run_id)}, started ${esc(run.started_at)}.</p>
-<p class="note">${esc(SENTENCE)}</p>${run.aborted ? `\n<p class="note reason">${esc(run.aborted)}</p>` : ''}
+<p class="note">${esc(SENTENCE)}</p>${run.aborted ? `\n<p class="note reason">${esc(run.aborted)}</p>` : ''}${run.not_run && run.not_run.length ? `\n<p class="note reason">Did not run: ${esc(run.not_run.map((n) => n.id).join(', '))}, because ${esc(run.not_run[0].reason)}.</p>` : ''}
 <ul class="counts">${counts}</ul>
 </header>
 <div class="layout">

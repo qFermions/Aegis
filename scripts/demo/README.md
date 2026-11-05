@@ -33,6 +33,8 @@ Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED, wh
 
 ## What it costs
 
+`--budget-usd N` stops the run before a ticket that could pass N, counting `--spent-usd N` from earlier commands, and names the tickets that did not run. It reads the likely cost of a ticket from `LIKELY_USD` in `customer-desk.js`: 2 US dollars, 4 for T2.
+
 Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 US dollars of allowance per session, the figure in `docs/evidence/runtime-smoke.md`; the full set is at most 8 sessions, about 20.00 US dollars. Each real session's `total_cost_usd` is shown under step 4 and added up in the summary. A cache hit starts no session.
 
 ## What is real

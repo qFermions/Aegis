@@ -11,6 +11,7 @@
 //
 // Usage:
 //   node scripts/demo/customer-desk.js [run] [--only T4,T6] [--execute] [--results-dir <dir>]
+//        [--budget-usd N [--spent-usd N]]
 //   node scripts/demo/customer-desk.js --view <run-dir>
 // Default is a dry run: the plan and an allowance estimate, exit 4, no model. Exit codes: 0 the run
 // finished with no ticket FAILED; 2 a ticket FAILED, which wins over 1; 4 dry run; 1 input error, a refused
@@ -45,6 +46,12 @@ const REPO_ROOT = paths.REPO_ROOT;
 const REPLAY_CLI = path.join(REPO_ROOT, 'scripts', 'replay', 'replay-cli.js');
 const USD_PER_SESSION = SMOKE_USD_PER_SESSION;
 const DESK_MAX_TURNS = 40;
+// What a session will likely cost, from the first real run (1.00 and 2.07 US dollars) and a guess that a
+// four-system offboarding costs about twice that. Used only to stop before a limit, never reported as spent
+// unless a session reports no cost.
+const LIKELY_USD = Object.freeze({ T2: 4 });
+const LIKELY_USD_DEFAULT = 2;
+const likelyUsd = (id) => LIKELY_USD[id] || LIKELY_USD_DEFAULT;
 const DESK_SESSION_TIMEOUT_MS = 1500000;
 const STEP_NAMES = Object.freeze(['CUSTOMER', 'INTAKE', 'TRIAGE', 'AEGIS', 'CHECKS', 'APPROVAL', 'SIMULATED OPERATOR', 'READ-BACK', 'CLOSE']);
 const SCHEMA = 'aegis.demo.run.v1';
@@ -53,6 +60,7 @@ const SIM = 'SIMULATED';
 
 const USAGE = `Usage:
   node scripts/demo/customer-desk.js [run] [--only T4,T6] [--execute] [--results-dir <dir>]
+       [--budget-usd N [--spent-usd N]]
   node scripts/demo/customer-desk.js --view <run-dir>
 Default is a dry run: it prints the plan and an allowance estimate, starts no model and exits 4.
 `;
@@ -60,9 +68,15 @@ Default is a dry run: it prints the plan and an allowance estimate, starts no mo
 // ── Arguments ─────────────────────────────────────────────────────────────────────────────────
 class InputError extends Error {}
 
+function usdValue(flag, text) {
+  const n = Number(text);
+  if (!/^[0-9]+(?:\.[0-9]+)?$/.test(text) || !Number.isFinite(n)) throw new InputError(`${flag} takes an amount in US dollars`);
+  return n;
+}
+
 function parseArgs(argv) {
   const list = [...argv];
-  const args = { only: null, execute: false, resultsDir: null, view: null };
+  const args = { only: null, execute: false, resultsDir: null, view: null, budget: null, spent: null };
   if (list[0] === 'run') list.shift();
   const seen = new Set();
   const value = (flag) => {
@@ -78,9 +92,12 @@ function parseArgs(argv) {
     else if (t === '--only') args.only = value(t).split(',').map((s) => s.trim());
     else if (t === '--results-dir') args.resultsDir = value(t);
     else if (t === '--view') args.view = value(t);
+    else if (t === '--budget-usd') args.budget = usdValue(t, value(t));
+    else if (t === '--spent-usd') args.spent = usdValue(t, value(t));
     else if (t === '--help' || t === '-h') args.help = true;
     else throw new InputError(`unknown argument ${JSON.stringify(t).slice(0, 40)}`);
   }
+  if (args.spent !== null && args.budget === null) throw new InputError('--spent-usd needs --budget-usd');
   return args;
 }
 
@@ -102,7 +119,7 @@ function resultsDirFor(args, env) {
   return path.resolve(dir);
 }
 
-function dryRun(selected, customers, dir, io) {
+function dryRun(selected, customers, dir, io, args) {
   const sessions = selected.length;
   io.out(`DRY RUN: nothing is started and no folder is created. Add --execute to run.\n`);
   io.out(`Results would go to ${dir}\n`);
@@ -112,6 +129,7 @@ function dryRun(selected, customers, dir, io) {
   }
   io.out(`Allowance: up to ${sessions} Aegis sessions on your subscription, about ${(sessions * USD_PER_SESSION).toFixed(2)} US dollars of allowance at the ${USD_PER_SESSION.toFixed(2)} per session in docs/evidence/runtime-smoke.md. A cache hit starts no session.\n`);
   io.out(`Each session: claude ${sessionArgs('<ticket>', dir).join(' ')}\n`);
+  if (args.budget !== null) io.out(`Limit: ${args.budget.toFixed(2)} US dollars, ${(args.spent || 0).toFixed(2)} already spent. The run stops before a ticket that could pass it.\n`);
   io.out(`${render.SENTENCE}\n`);
   return 4;
 }
@@ -571,12 +589,23 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   const before = deps.runbooksDir ? changes.useRunbooksForTests(deps.runbooksDir) : null;
   const run = { schema: SCHEMA, run_id: runId, started_at: new Date().toISOString(), tickets: [], summary: null };
   try {
-    for (const t of selected) {
+    let spent = deps.spent || 0;
+    for (const [i, t] of selected.entries()) {
+      if (typeof deps.budget === 'number' && spent + likelyUsd(t.id) > deps.budget) {
+        const reason = `${spent.toFixed(2)} spent, and ${t.id} could cost about ${likelyUsd(t.id).toFixed(2)}, past the limit of ${deps.budget.toFixed(2)} US dollars`;
+        run.not_run = selected.slice(i).map((k) => ({ id: k.id, reason }));
+        break;
+      }
       io.out(`\n=== ${t.id}: ${t.title} ===\n`);
-      run.tickets.push(await workTicket(t, ctx));
+      const record = await workTicket(t, ctx);
+      run.tickets.push(record);
+      const session = record.steps.find((s) => s.n === 4);
+      if (session && (session.model_session || session.cost_usd !== null)) spent += typeof session.cost_usd === 'number' ? session.cost_usd : likelyUsd(t.id);
       run.summary = render.summarize(run.tickets, ctx.counts);
       saveRun(run, runDir);
     }
+    if (!run.summary) run.summary = render.summarize(run.tickets, ctx.counts);
+    saveRun(run, runDir);
   } catch (e) {
     if (e && e.ticketRecord) {
       run.tickets.push(e.ticketRecord);
@@ -591,6 +620,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   }
   data.writeReplacing(path.join(runDir, 'desk.html'), render.html(run));
   io.out(`\n=== Summary ===\n${render.summaryLines(run.summary).join('\n')}\n`);
+  if (run.not_run) io.out(`Did not run: ${run.not_run.map((n) => n.id).join(', ')}, because ${run.not_run[0].reason}.\n`);
   io.out(`Saved: ${path.join(runDir, 'run.json')}\nOpen in a browser: ${path.join(runDir, 'desk.html')}\n`);
   if (run.tickets.some((t) => t.closing_state === 'FAILED')) return 2;
   return run.tickets.some((t) => t.internal_error) ? 1 : 0;
@@ -616,8 +646,8 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     const { customers, tickets } = data.loadData();
     const selected = selectTickets(args.only, tickets);
     const dir = resultsDirFor(args, env);
-    if (!args.execute) return dryRun(selected, customers, dir, io);
-    return await deskRun(selected, customers, dir, deps, env, io);
+    if (!args.execute) return dryRun(selected, customers, dir, io, args);
+    return await deskRun(selected, customers, dir, { ...deps, budget: args.budget, spent: args.spent || 0 }, env, io);
   } catch (e) {
     if (e instanceof InputError || e instanceof paths.PathRefused) { io.err(`customer-desk: ${e.message}\n`); return 1; }
     throw e;

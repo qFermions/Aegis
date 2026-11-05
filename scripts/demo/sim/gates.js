@@ -14,6 +14,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const { writeReplacing } = require('../customers.js');
+
 const AUTHENTICATOR_LIKE = /(?:microsoftAuthenticator|phone|softwareOath)AuthenticationMethod$/;
 
 const SIM_GATES = Object.freeze({
@@ -129,9 +131,7 @@ function applySimulatedGates({ changes, tenantFile, runDir, now = new Date().toI
   if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('the SIMULATED OPERATOR refuses a tenant file outside the run folder');
   const state = JSON.parse(fs.readFileSync(tenantFile, 'utf8'));
   for (const { entry, target } of changes) entry.apply(state, target, now);
-  const tmp = `${tenantFile}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(state, null, 2)}\n`);
-  fs.renameSync(tmp, tenantFile);
+  writeReplacing(tenantFile, `${JSON.stringify(state, null, 2)}\n`);
   return changes.map(({ entry }) => `SIMULATED OPERATOR: ${entry.effect}, in the simulated tenant only (${path.basename(path.dirname(tenantFile))}/tenant.json in this run's folder).`);
 }
 

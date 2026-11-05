@@ -6,6 +6,7 @@
 // AEGION_DOMAIN in its place when the customer sends the item, or when the simulated tenant is
 // copied into a run folder. Nothing here reads a real tenant, a credential or the network.
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -84,4 +85,12 @@ function personNames(text) {
   return found;
 }
 
-module.exports = { DATA_DIR, DOMAIN_TOKEN, loadData, fill, rawItem, tenantVars, tenantText, loadTenant, targetsFor, foreignDomains, personNames };
+// Written beside the target under a random name that must not exist yet, then renamed, so a link at
+// either name is replaced or refused, never written through.
+function writeReplacing(file, text) {
+  const tmp = `${file}.${crypto.randomBytes(6).toString('hex')}.tmp`;
+  fs.writeFileSync(tmp, text, { flag: 'wx' });
+  fs.renameSync(tmp, file);
+}
+
+module.exports = { writeReplacing, DATA_DIR, DOMAIN_TOKEN, loadData, fill, rawItem, tenantVars, tenantText, loadTenant, targetsFor, foreignDomains, personNames };

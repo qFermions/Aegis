@@ -473,15 +473,8 @@ function lastResultText(stdout) {
 }
 
 // ── A run ─────────────────────────────────────────────────────────────────────────────────────
-// Written beside the target and renamed, so a link at the target is replaced, never written through.
-function writeReplacing(file, text) {
-  const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, text);
-  fs.renameSync(tmp, file);
-}
-
 function saveRun(run, runDir) {
-  writeReplacing(path.join(runDir, 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
+  data.writeReplacing(path.join(runDir, 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
 }
 
 async function deskRun(selected, customers, runDir, deps, env, io) {
@@ -506,7 +499,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   } finally {
     if (deps.runbooksDir) changes.useRunbooksForTests(before);
   }
-  writeReplacing(path.join(runDir, 'desk.html'), render.html(run));
+  data.writeReplacing(path.join(runDir, 'desk.html'), render.html(run));
   io.out(`\n=== Summary ===\n${render.summaryLines(run.summary).join('\n')}\n`);
   io.out(`Saved: ${path.join(runDir, 'run.json')}\nOpen in a browser: ${path.join(runDir, 'desk.html')}\n`);
   return run.tickets.some((t) => t.closing_state === 'FAILED') ? 2 : 0;
@@ -518,7 +511,7 @@ function view(dir, io) {
   try { run = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')); } catch { throw new InputError('that folder holds no readable run.json'); }
   if (!run || run.schema !== SCHEMA || !Array.isArray(run.tickets) || !run.summary) throw new InputError(`run.json is not a ${SCHEMA} run`);
   const page = path.join(dir, 'desk.html');
-  writeReplacing(page, render.html(run));
+  data.writeReplacing(page, render.html(run));
   io.out(`Rebuilt with no model call. Open in a browser: ${page}\n`);
   return 0;
 }

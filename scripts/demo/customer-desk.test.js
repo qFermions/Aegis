@@ -685,6 +685,15 @@ test('--view replaces a desk.html that is a link instead of writing through it',
   assert.equal(fs.lstatSync(page).isSymbolicLink(), false);
 });
 
+test('--view does not write through a link at a predictable temporary name either', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  const target = path.join(tmp(t), 'outside.txt');
+  fs.writeFileSync(target, 'untouched');
+  fs.symlinkSync(target, path.join(r.results, `desk.html.${process.pid}.tmp`));
+  assert.equal(await desk.main(['--view', r.results], {}, { out: () => {}, err: () => {} }), 0);
+  assert.equal(fs.readFileSync(target, 'utf8'), 'untouched');
+});
+
 test('--view rebuilds the page from a saved run with no model call; a folder with no run is an input error', async (t) => {
   const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
   const page = path.join(r.results, 'desk.html');

@@ -241,8 +241,10 @@ async function readBack(change, c, ctx) {
 }
 
 function draftNote(ticket, customer, answer, closing, reason) {
-  const m = /(?:jira[- ]?ready note|jira note|ticket note)[^\n]*\n?([\s\S]{0,1500})/i.exec(answer || '');
-  const body = m && m[1].trim() ? m[1].trim() : `${ticket.title}. ${reason || ''}`.trim();
+  // from after the label, on its line or under it, to the next heading, bold label or Gate line
+  const m = /(?:jira[- ]?ready note|jira note|ticket note)[*:\s]*([\s\S]{0,1500})/i.exec(answer || '');
+  const drafted = m ? m[1].split(/\n\s*(?:#{1,6} |\*\*[A-Z]|---|<details|Gate:)/)[0].trim() : '';
+  const body = drafted || `${ticket.title}. ${reason || ''}`.trim();
   return `SIMULATED demo note, ${customer.label}, ${ticket.id}, closing state ${closing}.\n\n${body}\n`;
 }
 

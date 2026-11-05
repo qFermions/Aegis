@@ -1,0 +1,26 @@
+{
+  "note": "SIMULATED tenant of Customer D. Fictional. Read back through the real connector code; never a real system.",
+  "users": [ { "role": "departing engineer", "upn": "departing.engineer@[@Aegion_DOMAIN]" }, { "role": "reporting user", "upn": "reporting.user@[@Aegion_DOMAIN]" } ],
+  "groups": [ { "name": "engineering", "members": ["departing.engineer@[@Aegion_DOMAIN]"] } ],
+  "devices": [ { "role": "departing engineer's laptop", "name": "LT-Departing,Engineer", "serial": "C02DEMOD0001", "platform": "macOS", "managed_by": "Fleet" } ],
+  "mailboxes": [ { "address": "departing.engineer@[@Aegion_DOMAIN]", "type": "user" } ],
+  "okta": {
+    "users": {
+      "00u1dem0dEPARTx7y8z9": { "id": "00u1dem0dEPARTx7y8z9", "status": "ACTIVE", "profile": { "login": "departing.engineer@[@Aegion_DOMAIN]" } },
+      "00u1dem0dREPORTa1b2c": { "id": "00u1dem0dREPORTa1b2c", "status": "ACTIVE", "profile": { "login": "reporting.user@[@Aegion_DOMAIN]" } }
+    },
+    "factors": {
+      "00u1dem0dEPARTx7y8z9": [ { "id": "opf1dem0d0000000001", "factorType": "push", "status": "ACTIVE" } ],
+      "00u1dem0dREPORTa1b2c": [ { "id": "opf1dem0d0000000002", "factorType": "push", "status": "ACTIVE" } ]
+    },
+    "logs": []
+  },
+  "github": { "org": "startup-d-demo", "members": { "departing-engineer-demo": { "state": "active", "role": "member" } }, "invitations": [], "outside_collaborators": [] },
+  "gws": {
+    "users": {
+      "departing.engineer@[@Aegion_DOMAIN]": { "kind": "admin#directory#user", "id": "100000000000000000d01", "primaryEmail": "departing.engineer@[@Aegion_DOMAIN]", "customerId": "C0demod01", "orgUnitPath": "/Engineering", "suspended": false },
+      "reporting.user@[@Aegion_DOMAIN]": { "kind": "admin#directory#user", "id": "100000000000000000d02", "primaryEmail": "reporting.user@[@Aegion_DOMAIN]", "customerId": "C0demod01", "orgUnitPath": "/Staff", "suspended": false }
+    }
+  },
+  "linear": { "urlKey": "startup-d-demo", "users": [ { "id": "d1000000-0000-4000-8000-000000000001", "active": true, "admin": false, "guest": false, "owner": false } ] }
+}

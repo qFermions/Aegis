@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "messages": [
+    { "type": "message", "user": "U0DEMOD001", "team": "T0DEMOD001", "ts": "1793700100.000100", "thread_ts": "1793700100.000100", "text": "One of our engineers, [FIRST_NAME], leaves on Friday. Please remove their access everywhere when the day ends: Okta, GitHub, Google Workspace and Linear." },
+    { "type": "message", "user": "U0DEMOD002", "team": "T0DEMOD001", "ts": "1793700100.000200", "thread_ts": "1793700100.000100", "text": "Their manager confirmed the date. Their sign-in is [UPN] and on GitHub they are [GITHUB_USER]." }
+  ]
+}

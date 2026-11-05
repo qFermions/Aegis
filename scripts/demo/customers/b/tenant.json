@@ -1,0 +1,7 @@
+{
+  "note": "SIMULATED tenant of Customer B. Fictional. Read back through the real connector code; never a real system.",
+  "users": [ { "role": "studio manager", "upn": "studio.manager@[@Aegion_DOMAIN]" }, { "role": "designer", "upn": "designer@[@Aegion_DOMAIN]" } ],
+  "groups": [ { "name": "studio", "members": ["studio.manager@[@Aegion_DOMAIN]", "designer@[@Aegion_DOMAIN]"] } ],
+  "devices": [ { "role": "designer's MacBook", "name": "LT-Studio,Designer", "serial": "C02DEMOB0001", "platform": "macOS", "managed_by": "Jamf Pro", "lock_state": "unlocked", "wipe_state": "none" } ],
+  "mailboxes": [ { "address": "studio.manager@[@Aegion_DOMAIN]", "type": "user" } ]
+}

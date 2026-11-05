@@ -1,0 +1,27 @@
+{
+  "note": "SIMULATED tenant of Customer A. Fictional. Read back through the real connector code; never a real system.",
+  "users": [
+    { "role": "front desk lead", "upn": "front.desk@[@Aegion_DOMAIN]" },
+    { "role": "office manager", "upn": "office.manager@[@Aegion_DOMAIN]" }
+  ],
+  "groups": [ { "name": "all-staff", "members": ["front.desk@[@Aegion_DOMAIN]", "office.manager@[@Aegion_DOMAIN]"] } ],
+  "devices": [ { "role": "front desk laptop", "name": "LT-Front,Desk", "platform": "Windows", "managed_by": "Intune" } ],
+  "mailboxes": [ { "address": "front.desk@[@Aegion_DOMAIN]", "type": "user" } ],
+  "msgraph": {
+    "users": {
+      "a1000000-0000-4000-8000-000000000001": {
+        "id": "a1000000-0000-4000-8000-000000000001", "userPrincipalName": "front.desk@[@Aegion_DOMAIN]", "accountEnabled": true,
+        "userType": "Member", "onPremisesSyncEnabled": false, "lastPasswordChangeDateTime": "2026-01-10T09:00:00Z", "createdDateTime": "2024-03-01T09:00:00Z",
+        "signInSessionsValidFromDateTime": "2026-01-10T09:00:00Z"
+      }
+    },
+    "methods": {
+      "a1000000-0000-4000-8000-000000000001": [
+        { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" },
+        { "@odata.type": "#microsoft.graph.microsoftAuthenticatorAuthenticationMethod", "id": "a2000000-0000-4000-8000-000000000001" },
+        { "@odata.type": "#microsoft.graph.phoneAuthenticationMethod", "id": "3179e48a-750b-4051-897c-87b9720928f7" }
+      ]
+    },
+    "groups": {}
+  }
+}

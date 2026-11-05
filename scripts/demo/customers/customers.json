@@ -1,0 +1,76 @@
+{
+  "note": "Fictional customers for the Customer Desk demo. Every value here is invented: no real company, product customer or person. The tenant variables are what intake and the connectors read for this customer. A file here writes the customer's own domain as [@Aegion_DOMAIN] (the scanner allows only the bare example.* domains in an address); the desk fills in AEGION_DOMAIN when the customer sends the item; the simulated credentials are generated in memory at run time and are never stored.",
+  "customers": [
+    {
+      "id": "A",
+      "label": "Customer A: 14-seat dental office",
+      "stack": ["Microsoft 365 Business Premium", "Intune"],
+      "connectors": ["msgraph"],
+      "tenant_vars": {
+        "AEGION_DOMAIN": "dental-a.example.com",
+        "MS_TENANT_ID": "a0000000-0000-4000-8000-00000000000a",
+        "MS_CLIENT_ID": "a0000000-0000-4000-8000-0000000000c1"
+      },
+      "tenant_file": "a/tenant.json"
+    },
+    {
+      "id": "B",
+      "label": "Customer B: 40-person design studio",
+      "stack": ["Google Workspace", "Jamf Pro (Macs)", "Slack"],
+      "connectors": ["google-workspace", "jamf", "slack"],
+      "tenant_vars": {
+        "AEGION_DOMAIN": "studio-b.example.net",
+        "SLACK_TEAM_ID": "T0DEMOB001",
+        "GWS_CUSTOMER_ID": "C0demob01",
+        "GWS_ADMIN_SUBJECT": "it.admin@[@Aegion_DOMAIN]",
+        "GWS_SA_CLIENT_EMAIL": "desk-demo@[@Aegion_DOMAIN]",
+        "JAMF_URL": "jamf.studio-b.example.net",
+        "JAMF_CLIENT_ID": "demo-client-b"
+      },
+      "tenant_file": "b/tenant.json"
+    },
+    {
+      "id": "C",
+      "label": "Customer C: 80-person logistics company",
+      "stack": ["Microsoft 365", "Hybrid Active Directory", "Microsoft Defender"],
+      "connectors": ["msgraph"],
+      "tenant_vars": {
+        "AEGION_DOMAIN": "logistics-c.example.org",
+        "MS_TENANT_ID": "c0000000-0000-4000-8000-00000000000a",
+        "MS_CLIENT_ID": "c0000000-0000-4000-8000-0000000000c1"
+      },
+      "tenant_file": "c/tenant.json"
+    },
+    {
+      "id": "D",
+      "label": "Customer D: 30-person software startup",
+      "stack": ["Google Workspace", "Okta", "GitHub", "Linear", "Fleet"],
+      "connectors": ["google-workspace", "okta", "github", "linear", "fleet", "slack"],
+      "tenant_vars": {
+        "AEGION_DOMAIN": "startup-d.example.com",
+        "SLACK_TEAM_ID": "T0DEMOD001",
+        "GITHUB_ORG": "startup-d-demo",
+        "LINEAR_ORG": "startup-d-demo",
+        "GWS_CUSTOMER_ID": "C0demod01",
+        "GWS_ADMIN_SUBJECT": "it.admin@[@Aegion_DOMAIN]",
+        "GWS_SA_CLIENT_EMAIL": "desk-demo@[@Aegion_DOMAIN]",
+        "OKTA_ORG_URL": "okta.startup-d.example.com",
+        "OKTA_CLIENT_ID": "demo-client-d",
+        "FLEET_URL": "fleet.startup-d.example.com"
+      },
+      "tenant_file": "d/tenant.json"
+    },
+    {
+      "id": "E",
+      "label": "Customer E: 12-person accounting firm",
+      "stack": ["Microsoft 365"],
+      "connectors": ["msgraph"],
+      "tenant_vars": {
+        "AEGION_DOMAIN": "accounting-e.example.org",
+        "MS_TENANT_ID": "e0000000-0000-4000-8000-00000000000a",
+        "MS_CLIENT_ID": "e0000000-0000-4000-8000-0000000000c1"
+      },
+      "tenant_file": "e/tenant.json"
+    }
+  ]
+}

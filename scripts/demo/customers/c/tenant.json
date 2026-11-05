@@ -1,0 +1,9 @@
+{
+  "note": "SIMULATED tenant of Customer C. Fictional. Read back through the real connector code; never a real system.",
+  "users": [ { "role": "accounts payable clerk", "upn": "accounts.payable@[@Aegion_DOMAIN]" } ],
+  "groups": [ { "name": "finance", "members": ["accounts.payable@[@Aegion_DOMAIN]"] } ],
+  "devices": [ { "role": "accounts payable desktop", "name": "DT-Accounts,Payable", "platform": "Windows", "managed_by": "Intune" } ],
+  "mailboxes": [ { "address": "accounts.payable@[@Aegion_DOMAIN]", "type": "user" } ],
+  "quarantine": [ { "sender": "billing@example.net", "recipient": "accounts.payable@[@Aegion_DOMAIN]", "reason": "High confidence phish", "released": false } ],
+  "msgraph": { "users": {}, "methods": {}, "groups": {} }
+}

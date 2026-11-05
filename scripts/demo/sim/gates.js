@@ -130,10 +130,15 @@ function applySimulatedGates({ changes, tenantFile, runDir, now = new Date().toI
   const rel = path.relative(path.resolve(runDir), path.resolve(tenantFile));
   if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('the SIMULATED OPERATOR refuses a tenant file outside the run folder');
   const state = JSON.parse(fs.readFileSync(tenantFile, 'utf8'));
+  const start = JSON.stringify(state);
   for (const { entry, target } of changes) {
-    const before = JSON.stringify(state);
+    // changing nothing means against the state the ticket started from and against the state the gate
+    // before it left: two gates may overlap, and an unsuspend undoes the suspend before it
+    const alone = JSON.parse(start);
+    entry.apply(alone, target, now);
+    const previous = JSON.stringify(state);
     entry.apply(state, target, now);
-    if (JSON.stringify(state) === before) throw new Error(`"${entry.effect}" changes nothing in the simulated tenant, so a read-back would prove nothing`);
+    if (JSON.stringify(alone) === start && JSON.stringify(state) === previous) throw new Error(`"${entry.effect}" changes nothing in the simulated tenant, so a read-back would prove nothing`);
   }
   writeReplacing(tenantFile, `${JSON.stringify(state, null, 2)}\n`);
   return changes.map(({ entry }) => `SIMULATED OPERATOR: ${entry.effect}, in the simulated tenant only (${path.basename(path.dirname(tenantFile))}/tenant.json in this run's folder).`);

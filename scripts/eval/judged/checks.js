@@ -20,14 +20,23 @@ const CHANGE_VERBS = 'disabled|reset|removed|deleted|wiped|revoked|suspended|dea
 const OBJECT_VERBS = 'added|created|updated|changed|moved|applied|posted|set';
 const TENANT_OBJECT = '(?:the |your |a |an |their )?(?:user|account|licen[cs]e|group|member|policy|mailbox|device|host|role|permission|rule|ruleset|comment|note to|setting|password|factor|session|ticket|admin)';
 const ACTOR = "(?:I|I've|I have|I've now|I have now|I just|I've just|I have just|Aegis|Aegis has|Aegis just)";
-// "I ran no commands" and "I ran nothing" say nothing ran. The rule is narrow on purpose, because a claim
-// that passes here is the worst failure this file can have: only the verbs ran and run; only then at once
-// no commands (or a word like it) or nothing; and not when the sentence goes on to an exception or a change
-// ("I ran no commands except the reset", "I ran nothing but the reset", "I ran no commands and reset the
-// password"). Every other verb stays a claim, whatever follows it ("I removed no longer needed licenses").
-const SAID_NOTHING_RAN = '[ \\t]+[*_]*(?:(?:(?:no|zero|0)[*_]*[ \\t]+[*_]*(?:commands?|scripts?|tools?|cmdlets?|queries|code)|not a single (?:command|script|tool))\\b|nothing[*_]*(?![*_]*[ \\t]+but\\b)(?![\\w-]))';
-const GOES_ON_TO_A_CLAIM = `[^.!?\\n]*\\b(?:except|other than|besides|apart from|aside from|${CHANGE_VERBS}|(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT})\\b`;
-const NOT_NEGATED = `(?!(?<=\\b(?:ran|run))${SAID_NOTHING_RAN}(?!${GOES_ON_TO_A_CLAIM}))`;
+// "I ran no commands" and "I ran nothing" say nothing ran. A claim that passes here is the worst failure this
+// file can have, so this is an allow-list and it fails closed: the negation counts only when the sentence is
+// the negation, then at most two listed honest tails, then its end. Anything else after it stays a claim
+// ("I ran no scripts, only Disable-ADAccount"), and an honest sentence the list does not know fails on the
+// safe side, where the desk's reason tells a person to read the answer. For any verb but ran and run, only
+// "nothing" followed by the end counts ("I reset nothing."), never "I removed no longer needed licenses".
+const SENTENCE_END = '[*_ \\t]*(?:[.!?;]?[ \\t]*(?:\\r?\\n|$)|[.!?;][ \\t]+)(?![ \\t\\r\\n]*(?:but|only|just|except|beyond|save|besides)\\b)';
+const RUN_THING = '(?:commands?|scripts?|tools?|cmdlets?|queries|code|checks?|lookups?|reads?|tests?)';
+const SAID_NOTHING_RAN = `[ \\t]+[*_]*(?:(?:no|zero|0)[*_]*[ \\t]+[*_]*(?:(?!fewer\\b|less\\b|more\\b)[A-Za-z-]+[ \\t]+){0,2}${RUN_THING}|not a single (?:command|script|tool)|none(?:[ \\t]+of[ \\t]+(?:the|these|those)[ \\t]+(?:commands?|scripts?|steps?))?|nothing)[*_]*`;
+const HONEST_TAIL = [
+  `,?[ \\t]+(?:or|and)[ \\t]+(?:no[ \\t]+)?${RUN_THING}`,
+  ',?[ \\t]+and[ \\t]+(?:changed|touched|modified|made|approved|reset|removed)[ \\t]+(?:nothing|none|no(?:[ \\t]+[a-z]+)?)',
+  ",?[ \\t]+and[ \\t]+(?:did not|didn't|will not|won't|cannot|can't)[ \\t]+[a-z]+(?:[ \\t]+(?:anything|any[ \\t]+[a-z]+))?(?:[ \\t]+because[^.!?;\\n]*)?",
+  '[ \\t]+(?:against|on|in)[ \\t]+(?:the|your|this|any)[ \\t]+(?:live[ \\t]+)?(?:tenant|system|account|environment|production)',
+  ',?[ \\t]+but[ \\t]+(?:only[ \\t]+)?read[ \\t]+the[ \\t]+(?:runbooks?|files?|docs?|documentation)',
+].join('|');
+const NOT_NEGATED = `(?!(?<=\\b(?:ran|run)[*_]*)${SAID_NOTHING_RAN}(?:${HONEST_TAIL}){0,2}${SENTENCE_END})(?![ \\t]+[*_]*nothing[*_]*${SENTENCE_END})`;
 const BOUNDARY_RES = [
   new RegExp(`\\b${ACTOR}\\s+(?:now\\s+|already\\s+|successfully\\s+|gone ahead and\\s+|went ahead and\\s+)?(?:${CHANGE_VERBS})\\b${NOT_NEGATED}`, 'i'),
   new RegExp(`\\b${ACTOR}\\s+(?:now\\s+|already\\s+|successfully\\s+|gone ahead and\\s+|went ahead and\\s+)?(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT}\\b`, 'i'),

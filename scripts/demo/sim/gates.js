@@ -122,16 +122,17 @@ function notSimulated(gate, table, customer, targets) {
   return null;
 }
 
-// Applies one gate to the simulated tenant file. Refuses a file outside the run folder.
-function applySimulatedGate({ entry, tenantFile, runDir, target, now = new Date().toISOString() }) {
+// Applies a ticket's gates to the simulated tenant file, all or none: they change one copy in memory,
+// and the file is written once, after the last. Refuses a file outside the run folder.
+function applySimulatedGates({ changes, tenantFile, runDir, now = new Date().toISOString() }) {
   const rel = path.relative(path.resolve(runDir), path.resolve(tenantFile));
   if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('the SIMULATED OPERATOR refuses a tenant file outside the run folder');
   const state = JSON.parse(fs.readFileSync(tenantFile, 'utf8'));
-  entry.apply(state, target, now);
+  for (const { entry, target } of changes) entry.apply(state, target, now);
   const tmp = `${tenantFile}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, `${JSON.stringify(state, null, 2)}\n`);
   fs.renameSync(tmp, tenantFile);
-  return `SIMULATED OPERATOR: ${entry.effect}, in the simulated tenant only (${path.basename(path.dirname(tenantFile))}/tenant.json in this run's folder).`;
+  return changes.map(({ entry }) => `SIMULATED OPERATOR: ${entry.effect}, in the simulated tenant only (${path.basename(path.dirname(tenantFile))}/tenant.json in this run's folder).`);
 }
 
-module.exports = { SIM_GATES, notSimulated, applySimulatedGate };
+module.exports = { SIM_GATES, notSimulated, applySimulatedGates };

@@ -4,5 +4,23 @@
   "groups": [ { "name": "all-staff", "members": ["office.manager@[@Aegion_DOMAIN]", "staff.one@[@Aegion_DOMAIN]", "staff.two@[@Aegion_DOMAIN]"] } ],
   "devices": [ { "role": "front office desktop", "name": "DT-Office,Manager", "platform": "Windows", "managed_by": "none" } ],
   "mailboxes": [ { "address": "billing@[@Aegion_DOMAIN]", "type": "shared", "full_access": [], "send_as": [] } ],
-  "msgraph": { "users": {}, "methods": {}, "groups": {} }
+  "msgraph": {
+    "users": {
+      "e1000000-0000-4000-8000-000000000001": {
+        "id": "e1000000-0000-4000-8000-000000000001", "userPrincipalName": "staff.one@[@Aegion_DOMAIN]", "accountEnabled": true,
+        "userType": "Member", "onPremisesSyncEnabled": false, "lastPasswordChangeDateTime": "2026-01-10T09:00:00Z", "createdDateTime": "2024-03-01T09:00:00Z",
+        "signInSessionsValidFromDateTime": "2026-01-10T09:00:00Z"
+      },
+      "e1000000-0000-4000-8000-000000000002": {
+        "id": "e1000000-0000-4000-8000-000000000002", "userPrincipalName": "staff.two@[@Aegion_DOMAIN]", "accountEnabled": true,
+        "userType": "Member", "onPremisesSyncEnabled": false, "lastPasswordChangeDateTime": "2026-01-10T09:00:00Z", "createdDateTime": "2024-03-01T09:00:00Z",
+        "signInSessionsValidFromDateTime": "2026-01-10T09:00:00Z"
+      }
+    },
+    "methods": {
+      "e1000000-0000-4000-8000-000000000001": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" } ],
+      "e1000000-0000-4000-8000-000000000002": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" } ]
+    },
+    "groups": {}
+  }
 }

@@ -5,5 +5,15 @@
   "devices": [ { "role": "accounts payable desktop", "name": "DT-Accounts,Payable", "platform": "Windows", "managed_by": "Intune" } ],
   "mailboxes": [ { "address": "accounts.payable@[@Aegion_DOMAIN]", "type": "user" } ],
   "quarantine": [ { "sender": "billing@example.net", "recipient": "accounts.payable@[@Aegion_DOMAIN]", "reason": "High confidence phish", "released": false } ],
-  "msgraph": { "users": {}, "methods": {}, "groups": {} }
+  "msgraph": {
+    "users": {
+      "c1000000-0000-4000-8000-000000000001": {
+        "id": "c1000000-0000-4000-8000-000000000001", "userPrincipalName": "accounts.payable@[@Aegion_DOMAIN]", "accountEnabled": true,
+        "userType": "Member", "onPremisesSyncEnabled": true, "lastPasswordChangeDateTime": "2026-01-10T09:00:00Z", "createdDateTime": "2024-03-01T09:00:00Z",
+        "signInSessionsValidFromDateTime": "2026-01-10T09:00:00Z"
+      }
+    },
+    "methods": { "c1000000-0000-4000-8000-000000000001": [ { "@odata.type": "#microsoft.graph.passwordAuthenticationMethod", "id": "28c10230-6103-485e-b985-444c60001490" } ] },
+    "groups": {}
+  }
 }

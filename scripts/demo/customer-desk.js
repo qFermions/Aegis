@@ -36,7 +36,7 @@ const { clarify } = require('../intake/clarify.js');
 const { catalog, namedGates, clarifies, RUNBOOKS } = require('./catalog.js');
 const data = require('./customers.js');
 const render = require('./render.js');
-const { SIM_GATES, notSimulated, applySimulatedGate } = require('./sim/gates.js');
+const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
 const vendors = require('./sim/vendors.js');
 
 const REPO_ROOT = paths.REPO_ROOT;
@@ -261,6 +261,8 @@ function storeVerified(rec, answerFile, gates, evidence, c, ctx) {
   return `Resolved, and not stored in the replay cache: ${(plain.stderr || plain.stdout).trim().slice(0, 300)}`;
 }
 
+// One ticket. An unexpected error closes it OPEN with what was recorded so far, so one ticket never
+// loses the others or the cost of a session already paid for.
 async function workTicket(ticket, ctx) {
   const customer = ctx.customers.find((x) => x.id === ticket.customer);
   const { dir: customerDir, tenantFile } = prepareCustomer(customer, ctx.runDir);
@@ -280,6 +282,14 @@ async function workTicket(ticket, ctx) {
     return rec;
   };
 
+  try {
+    return await ticketSteps({ ticket, customer, customerDir, tenantFile, tickets, vars, rec, timed, close }, ctx);
+  } catch (e) {
+    return close('OPEN', `the desk could not finish this ticket: ${e && e.message ? e.message : 'unknown error'}`);
+  }
+}
+
+async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets, vars, rec, timed, close }, ctx) {
   // 1 CUSTOMER
   const ext = ticket.source === 'email' ? 'eml' : 'json';
   const rawFile = path.join(tickets, `${ticket.id}.${ext}`);
@@ -404,9 +414,15 @@ async function workTicket(ticket, ctx) {
   // 7 SIMULATED OPERATOR. Every gate is checked before any is applied, so a stop leaves no half change.
   const blocked = gates.map((g) => notSimulated(g.id, ctx.simTable, customer, valuesFor(g).target)).filter(Boolean);
   await timed('SIMULATED OPERATOR', 'SIMULATED OPERATOR', SIM, async () => {
-    if (blocked.length) return { result: blocked.join('; '), output: 'SIMULATED OPERATOR: nothing was applied.' };
-    const lines = gates.map((g) => applySimulatedGate({ entry: ctx.simTable[g.id], tenantFile, runDir: ctx.runDir, target: valuesFor(g).target }));
-    return { result: `applied ${gates.length} gate(s) to the simulated tenant`, output: lines.join('\n') };
+    if (!blocked.length) {
+      try {
+        const lines = applySimulatedGates({ changes: gates.map((g) => ({ entry: ctx.simTable[g.id], target: valuesFor(g).target })), tenantFile, runDir: ctx.runDir });
+        return { result: `applied ${gates.length} gate(s) to the simulated tenant`, output: lines.join('\n') };
+      } catch (e) {
+        blocked.push(`not simulated: the simulated tenant does not hold what ${names.join(', ')} acts on (${e.message})`);
+      }
+    }
+    return { result: blocked.join('; '), output: 'SIMULATED OPERATOR: nothing was applied.' };
   });
   if (blocked.length) return close('OPEN', blocked.join('; '));
 

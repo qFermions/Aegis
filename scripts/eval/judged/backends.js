@@ -13,19 +13,35 @@
 //   with the session id the first turn reported).
 // - Both sessions load only this repository's settings, CLAUDE.md, commands and skills, never a
 //   user-level CLAUDE.md, plugin, skill, hook or MCP server, so a run measures Aegis and not what
-//   is installed on the machine that day (batch 6, task 9). --bare is not used: it never reads the
-//   stored login.
+//   is installed on the machine that day (batch 6, task 9). --setting-sources project is not enough
+//   alone: the CLI walks up from the repository and loads ~/.claude/CLAUDE.md as a Project file, so
+//   every such file above the repository is excluded by name, and auto memory is off. --bare is not
+//   used: it never reads the stored login. Proof: docs/aegis/demo/evidence/isolation-probe.txt.
 // Nothing here reads a value from the environment beyond passing it on to the child.
 
 const childProcess = require('node:child_process');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const { REPO_ROOT } = require('./paths.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
-const ISOLATION_ARGS = Object.freeze(['--setting-sources', 'project', '--strict-mcp-config']);
+
+// Every CLAUDE.md the CLI's upward walk could find above the repository, and the home folder's own.
+function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir()) {
+  const dirs = new Set([home]);
+  for (let d = path.dirname(repoRoot); ; d = path.dirname(d)) {
+    dirs.add(d);
+    if (d === path.dirname(d)) break;
+  }
+  return [...dirs].flatMap((d) => [path.join(d, 'CLAUDE.md'), path.join(d, 'CLAUDE.local.md'), path.join(d, '.claude', 'CLAUDE.md'), path.join(d, '.claude', 'rules', '**')]);
+}
+
+function isolationArgs() {
+  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(), autoMemoryEnabled: false })];
+}
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
 const DEFAULT_GRACE_MS = 5000;
@@ -70,12 +86,12 @@ function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = n
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...ISOLATION_ARGS);
+    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs());
   return args;
 }
 
 function judgeArgs({ prompt, model = null }) {
-  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...ISOLATION_ARGS];
+  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...isolationArgs()];
   if (model) args.push('--model', model);
   return args;
 }
@@ -217,7 +233,7 @@ function sutRecord(turns, c) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, ISOLATION_ARGS, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  SUT_TOOLS, WEB_TOOLS, isolationArgs, excludedMemoryFiles, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
   envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn,
   runChild, runTurn, runSut, promptTooLong,
 };

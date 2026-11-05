@@ -1,0 +1,20 @@
+claude -p /context from the repository root, with the scrubbed environment. A local command: no model call. Paths written <home>.
+
+A. --setting-sources project --strict-mcp-config (the flags the two real sessions ran with)
+exit 0, total_cost_usd 0, num_turns 0, duration_api_ms 0
+### Memory Files
+
+| Type | Path | Tokens |
+|------|------|--------|
+| Project | <home>/.claude/CLAUDE.md | 945 |
+| Project | <home>/Code/Aegis/CLAUDE.md | 7.5k |
+
+B. backends.isolationArgs() (the flags at the head)
+exit 0, total_cost_usd 0, num_turns 0, duration_api_ms 0
+### Memory Files
+
+| Type | Path | Tokens |
+|------|------|--------|
+| Project | <home>/Code/Aegis/CLAUDE.md | 7.5k |
+
+B's init event: mcp_servers []; plugins ["cc-plugin-agents-md@builtin","cc-plugin-telemetry@builtin","cc-plugin-privacy@builtin","cc-plugin-plugin-authoring@builtin"]; memory_paths null

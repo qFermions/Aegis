@@ -31,6 +31,7 @@ const changes = require('../audit/change-record.js');
 const backends = require('../eval/judged/backends.js');
 const checks = require('../eval/judged/checks.js');
 const paths = require('../eval/judged/paths.js');
+const { SMOKE_USD_PER_SESSION } = require('../eval/judged-eval.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
 const { catalog, namedGates, clarifies, RUNBOOKS } = require('./catalog.js');
@@ -41,8 +42,7 @@ const vendors = require('./sim/vendors.js');
 
 const REPO_ROOT = paths.REPO_ROOT;
 const REPLAY_CLI = path.join(REPO_ROOT, 'scripts', 'replay', 'replay-cli.js');
-// docs/evidence/runtime-smoke.md, the figure the judged runner's dry run uses too.
-const USD_PER_SESSION = 2.5;
+const USD_PER_SESSION = SMOKE_USD_PER_SESSION;
 const STEP_NAMES = Object.freeze(['CUSTOMER', 'INTAKE', 'TRIAGE', 'AEGIS', 'CHECKS', 'APPROVAL', 'SIMULATED OPERATOR', 'READ-BACK', 'CLOSE']);
 const SCHEMA = 'aegis.demo.run.v1';
 const REAL = 'REAL';
@@ -201,7 +201,7 @@ function prepareCustomer(customer, runDir) {
 }
 
 // Step 6, for one gate: a change record per read-back the gate binds, and the simulated approval.
-function approveGate(id, gate, ctx, c) {
+function approveGate(id, gate, c) {
   if (!gate.bound.length) {
     return { gate: id, changes: [], note: `no change record: ${gate.rClass || 'an unclassed'} gate ${id} binds no read-back (its field says: none (${gate.none})), and change-record.js opens a record only for a gate that does. The SIMULATED OPERATOR's approval is noted here, not in the trail.` };
   }
@@ -408,7 +408,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   let refused = null;
   await timed('APPROVAL', 'SIMULATED OPERATOR', 'REAL code, SIMULATED person', async () => {
     for (const g of gates) {
-      const a = approveGate(g.id, g, ctx, { ticket, customer, customerDir, answerFile, values: valuesFor(g).values });
+      const a = approveGate(g.id, g, { ticket, customer, customerDir, answerFile, values: valuesFor(g).values });
       approvals.push(a);
       if (a.refused) { refused = a.refused; break; }
     }

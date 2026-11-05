@@ -29,13 +29,17 @@ const { REPO_ROOT } = require('./paths.js');
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
 
-// Every CLAUDE.md the CLI's upward walk could find above the repository, and the home folder's own.
+// Every CLAUDE.md the CLI's upward walk could find from the repository or the judge's temporary folder,
+// and the home folder's own. Never the repository's own, even when the checkout is the home folder.
 function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir()) {
   const dirs = new Set([home]);
-  for (let d = path.dirname(repoRoot); ; d = path.dirname(d)) {
-    dirs.add(d);
-    if (d === path.dirname(d)) break;
+  for (const start of [path.dirname(repoRoot), os.tmpdir(), fs.realpathSync(os.tmpdir())]) {
+    for (let d = start; ; d = path.dirname(d)) {
+      dirs.add(d);
+      if (d === path.dirname(d)) break;
+    }
   }
+  dirs.delete(repoRoot);
   return [...dirs].flatMap((d) => [path.join(d, 'CLAUDE.md'), path.join(d, 'CLAUDE.local.md'), path.join(d, '.claude', 'CLAUDE.md'), path.join(d, '.claude', 'rules', '**')]);
 }
 

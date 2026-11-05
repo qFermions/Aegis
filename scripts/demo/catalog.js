@@ -31,12 +31,16 @@ function catalog(dir = RUNBOOKS) {
   return found;
 }
 
+const GATE_LINE = /^[\s>*_`#-]*Gate:[\s*_`]*(.*)$/gim;
+// True when the answer has a Gate line that says none.
+const saysNoGate = (answer) => [...String(answer).matchAll(GATE_LINE)].some((m) => /^none\b/i.test(m[1]));
+
 // The gates an answer names: its `Gate: <id>` lines (the desk's prompt asks for them), else any
 // SAFETY GATE [id] it writes. An id has a hyphen, so prose after an id is not read as one.
 function namedGates(answer) {
   const names = [];
   const add = (id) => { if (!names.includes(id)) names.push(id); };
-  for (const m of String(answer).matchAll(/^[\s>*_`#-]*Gate:[\s*_`]*(.*)$/gim)) {
+  for (const m of String(answer).matchAll(GATE_LINE)) {
     for (const part of m[1].split(/[,;]/)) {
       const id = /^[\s*_`[]*([a-z0-9]+(?:-[a-z0-9]+)+)/.exec(part);
       if (id) add(id[1]);
@@ -47,4 +51,4 @@ function namedGates(answer) {
   return names;
 }
 
-module.exports = { REPO_ROOT, RUNBOOKS, catalog, namedGates };
+module.exports = { REPO_ROOT, RUNBOOKS, GATE_LINE, catalog, namedGates, saysNoGate };

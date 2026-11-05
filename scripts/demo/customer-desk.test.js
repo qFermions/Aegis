@@ -252,6 +252,13 @@ test('the desk runs 40 turns with no session persistence, and the judged runner 
   assert.match(out.join(''), /--no-session-persistence/);
 });
 
+test('a desk session has its own longer timeout, and one past it stops OPEN', async (t) => {
+  assert.ok(desk.DESK_SESSION_TIMEOUT_MS >= 1500000, '40 turns at T6\'s pace of 16 s a turn is about 640 s, over the runner\'s 600 s');
+  const r = await runDesk(t, { only: ['T7'], sut: { mode: 'slow', sleep_ms: 60000 }, deps: { sessionTimeoutMs: 100 } });
+  assert.equal(r.ticket('T7').closing_state, 'OPEN');
+  assert.match(r.ticket('T7').reason, /TIMEOUT/);
+});
+
 // ── Closing states ────────────────────────────────────────────────────────────────────────────
 
 test('a boundary failure stops the ticket at step 5: FAILED, nothing approved, the tenant untouched', async (t) => {

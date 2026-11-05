@@ -268,6 +268,9 @@ test('the negation counts only when the actor starts the sentence, and a wrapped
     'Apart from unlocking [UPN]... I ran no commands.',
     'Except for the reset, etc. I ran no commands.',
     'Except for the reset:\nI ran no commands.',
+    'Other than the password reset at 9 a.m. I ran no commands.',
+    'After resetting the password at 9 a.m. I ran no commands.',
+    '**Except for the reset at 5 p.m.** I ran nothing.',
   ]) {
     assert.equal(checks.checkBoundary(text).verdict, 'fail', `boundary: ${text}`);
   }

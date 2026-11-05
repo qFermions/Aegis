@@ -59,7 +59,7 @@ test('the SUT and judge command lines match the spec; --web moves the web tools 
 });
 
 test('both sessions load only the repository\'s own settings, also when resumed, on the web, or with a judge model (batch 6, task 9)', () => {
-  const isolated = (args, label) => {
+  const isolated = (args, label, { judge = false } = {}) => {
     const at = args.indexOf('--setting-sources');
     assert.ok(at > 0, `${label}: --setting-sources`);
     assert.equal(args[at + 1], 'project', `${label}: project settings only, so no user-level CLAUDE.md, plugin, skill or hook`);
@@ -74,13 +74,14 @@ test('both sessions load only the repository\'s own settings, also when resumed,
       for (const name of ['CLAUDE.md', 'CLAUDE.local.md', path.join('.claude', 'CLAUDE.md')]) assert.ok(settings.claudeMdExcludes.includes(path.join(d, name)), `${label}: ${path.join(d, name)}`);
       if (d === path.dirname(d)) break;
     }
-    assert.ok(!settings.claudeMdExcludes.some((p) => p === path.join(REPO_ROOT, 'CLAUDE.md') || p.startsWith(`${REPO_ROOT}${path.sep}`)), `${label}: the repository's own files still load`);
+    if (judge) assert.ok(settings.claudeMdExcludes.includes(path.join(REPO_ROOT, 'CLAUDE.md')), `${label}: the judge loads no CLAUDE.md, even with a temporary folder below the checkout`);
+    else assert.ok(!settings.claudeMdExcludes.some((p) => p === path.join(REPO_ROOT, 'CLAUDE.md') || p.startsWith(`${REPO_ROOT}${path.sep}`)), `${label}: the repository's own files still load`);
   };
   isolated(backends.sutArgs({ prompt: 'P' }), 'system under test');
   isolated(backends.sutArgs({ prompt: 'P', resume: 'sess-1' }), 'follow-up turn');
   isolated(backends.sutArgs({ prompt: 'P', web: true }), 'system under test with the web tools');
-  isolated(backends.judgeArgs({ prompt: 'J' }), 'judge');
-  isolated(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }), 'judge with a model');
+  isolated(backends.judgeArgs({ prompt: 'J' }), 'judge', { judge: true });
+  isolated(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }), 'judge with a model', { judge: true });
 });
 
 test('the exclusions cover the judge\'s temporary folder too, and never the repository\'s own CLAUDE.md (batch 6, code review 1 finding 7)', () => {
@@ -90,6 +91,10 @@ test('the exclusions cover the judge\'s temporary folder too, and never the repo
     assert.ok(list.includes(path.join(dir, 'CLAUDE.md')), `${dir}: the judge runs below it`);
     assert.ok(list.includes(path.join(path.dirname(dir), 'CLAUDE.md')), `above ${dir}`);
   }
+  // a temporary folder that does not exist (a stale TMPDIR) must not break building the arguments
+  const saved = process.env.TMPDIR;
+  process.env.TMPDIR = '/nonexistent-aegis-test/x';
+  try { assert.doesNotThrow(() => backends.sutArgs({ prompt: 'P' })); } finally { if (saved === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = saved; }
   // a checkout at the home folder keeps its own rules
   const homeCheckout = backends.excludedMemoryFiles('/h/me', '/h/me');
   assert.ok(!homeCheckout.includes(path.join('/h/me', 'CLAUDE.md')));

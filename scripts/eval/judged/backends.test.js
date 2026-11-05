@@ -109,9 +109,10 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
   const pinned = [
     repo('progress.md'), repo('checks.md'), repo('docs/review/**'), repo('docs/aegis/demo/**'), repo('docs/explainers/**'),
     repo('scripts/demo/customers/**'), repo('scripts/eval/judged/dev-cases.jsonl'),
-    // beyond the charter's list, from code review 1: the demo's own tests and table hold passing answers and
-    // ticket-to-gate pairs, the grader's rules are in scripts/eval/judged, and a judged run saves its grades
-    repo('scripts/demo/**'), repo('scripts/eval/judged/**'), repo('.aegis-state/**'),
+    // beyond the charter's list, from code reviews 1 and 2: the demo's own tests and table hold passing answers
+    // and ticket-to-gate pairs; scripts/eval holds the grader, the ticket corpora and their expected routes;
+    // docs/evidence holds scored answers; a judged run saves its grades
+    repo('scripts/demo/**'), repo('scripts/eval/**'), repo('docs/evidence/**'), repo('.aegis-state/**'),
     abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
   ];
   const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
@@ -122,13 +123,19 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
   // a run folder under a link is denied in both forms, since the CLI may match either
   const fsTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-deny-'));
   const link = `${fsTmp}-link`;
-  fs.symlinkSync(fsTmp, link);
   try {
-    const rules = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: link })).permissions.deny;
-    assert.ok(rules.includes(abs(path.join(link, '**'))), 'the given form');
-    assert.ok(rules.includes(abs(path.join(fs.realpathSync(fsTmp), '**'))), 'the real form');
+    let linked = true;
+    try { fs.symlinkSync(fsTmp, link); } catch (e) { if (e.code !== 'EPERM') throw e; linked = false; } // Windows needs a privilege for this
+    if (linked) {
+      const rules = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: link })).permissions.deny;
+      assert.ok(rules.includes(abs(path.join(link, '**'))), 'the given form');
+      assert.ok(rules.includes(abs(path.join(fs.realpathSync(fsTmp), '**'))), 'the real form');
+      // not created yet, as in a dry run: the same rules the real run will use
+      const later = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: path.join(link, 'not-yet') })).permissions.deny;
+      assert.ok(later.includes(abs(path.join(fs.realpathSync(fsTmp), 'not-yet', '**'))), 'the real form of a folder not made yet');
+    }
   } finally {
-    fs.rmSync(link);
+    fs.rmSync(link, { force: true });
     fs.rmSync(fsTmp, { recursive: true, force: true });
   }
   // only Read rules: the CLI's own warning says a Glob(path) rule is not matched and Read rules cover Grep and Glob

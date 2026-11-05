@@ -35,7 +35,7 @@ const paths = require('../eval/judged/paths.js');
 const { SMOKE_USD_PER_SESSION } = require('../eval/judged-eval.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
-const { catalog, namedGates, clarifies, RUNBOOKS } = require('./catalog.js');
+const { catalog, closingGateLines, namedGates, clarifies, RUNBOOKS } = require('./catalog.js');
 const data = require('./customers.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
@@ -254,10 +254,33 @@ async function readBack(change, c, ctx) {
   return done ? { state: 'PASS', exit: code, output: `${output}\n${proof}`, evidence: change.read_back.kind } : { state: 'INCONCLUSIVE', exit: code, output: `${output}\n${proof}\n${link ? link.stderr : 'no audit seq was printed'}${status.stderr}` };
 }
 
+// The note starts at a line that opens with its label, and runs to the next heading, rule or the "Not
+// checked" list. The closing Gate lines are never part of it.
+const NOTE_LABEL = /^[^A-Za-z0-9]*(?:jira[- ]?ready note|jira note|ticket note)\b[*_:\s]*(.*)$/i;
+const NOTE_END = /^\s*(?:#{1,6} |---|<details|\*\*Not checked)/;
+
+// The exit code a step with several read-backs shows: 2 (shown not done) over any other failure, then
+// the first failure, then 0; null when nothing ran.
+function worstExit(codes) {
+  const ran = codes.filter((e) => e !== null && e !== undefined);
+  if (!ran.length) return null;
+  if (ran.includes(2)) return 2;
+  const failed = ran.find((e) => e !== 0);
+  return failed === undefined ? 0 : failed;
+}
+
 function draftNote(ticket, customer, answer, closing, reason) {
-  // from after the label, on its line or under it, to the next heading, bold label or Gate line
-  const m = /(?:jira[- ]?ready note|jira note|ticket note)[*:\s]*([\s\S]{0,1500})/i.exec(answer || '');
-  const drafted = m ? m[1].split(/\n\s*(?:#{1,6} |\*\*[A-Z]|---|<details|Gate:)/)[0].trim() : '';
+  const lines = closingGateLines(answer || '').body.split(/\r?\n/);
+  const at = lines.findIndex((l) => NOTE_LABEL.test(l));
+  const kept = [];
+  if (at >= 0) {
+    kept.push(NOTE_LABEL.exec(lines[at])[1]);
+    for (const l of lines.slice(at + 1)) {
+      if (NOTE_END.test(l)) break;
+      kept.push(l);
+    }
+  }
+  const drafted = kept.join('\n').trim().slice(0, 1500);
   const body = drafted || `${ticket.title}. ${reason || ''}`.trim();
   return `SIMULATED demo note, ${customer.label}, ${ticket.id}, closing state ${closing}.\n\n${body}\n`;
 }
@@ -466,9 +489,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     }
     const pass = verdicts.filter((v) => v.state === 'PASS').length;
     const state = verdicts.some((v) => v.state === 'FAIL') ? 'FAIL' : (pass === verdicts.length ? 'PASS' : 'INCONCLUSIVE');
-    const exits = verdicts.map((v) => v.exit).filter((e) => e !== null && e !== undefined);
-    const worst = exits.find((e) => e !== 0);
-    return { exit_code: worst !== undefined ? worst : (exits.length ? 0 : null), result: `${state}: ${pass} of ${verdicts.length} read-back(s) passed`, output: lines.join('\n\n') };
+    return { exit_code: worstExit(verdicts.map((v) => v.exit)), result: `${state}: ${pass} of ${verdicts.length} read-back(s) passed`, output: lines.join('\n\n') };
   });
 
   // 9 CLOSE
@@ -559,4 +580,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, sessionCase, STEP_NAMES, USD_PER_SESSION };
+module.exports = { main, sessionCase, draftNote, worstExit, STEP_NAMES, USD_PER_SESSION };
+

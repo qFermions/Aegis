@@ -32,12 +32,12 @@ function catalog(dir = RUNBOOKS) {
 }
 
 // A line that says Gate: <value>. A leading > is not allowed: a quote is the ticket's text, not advice.
-const GATE_LINE = /^[\s*_`-]*Gate:[\s*_`]*(.*)$/i;
+const GATE_LINE = /^[\s*_`#-]*Gate:[\s*_`]*(.*)$/i;
 
 // The Gate lines that close the answer, and the text before them. Only these count: the prompt asks
 // the answer to end with them, and a line anywhere else may be the ticket's own text repeated (SR-3).
 function closingGateLines(answer) {
-  const lines = String(answer).split('\n');
+  const lines = String(answer).split(/\r?\n/);
   const values = [];
   let i = lines.length - 1;
   for (; i >= 0; i -= 1) {
@@ -49,24 +49,27 @@ function closingGateLines(answer) {
   return { values, body: lines.slice(0, i + 1).join('\n') };
 }
 
-// The gates an answer names. An id has a hyphen, so prose after an id is not read as one.
+const says_none = (value) => /^none\b/i.test(value);
+
+// The gates an answer names: every hyphenated word on a closing Gate line, outside parentheses, so no
+// advised change is dropped silently. A word that is not a gate stops the ticket OPEN, the safe side.
 function namedGates(answer) {
   const names = [];
   for (const value of closingGateLines(answer).values) {
-    for (const part of value.split(/[,;]/)) {
-      const id = /^[\s*_`[]*([a-z0-9]+(?:-[a-z0-9]+)+)/.exec(part);
-      if (id && !names.includes(id[1])) names.push(id[1]);
+    if (says_none(value)) continue;
+    for (const id of value.replace(/\([^)]*\)/g, ' ').match(/[a-z0-9]+(?:-[a-z0-9]+)+/g) || []) {
+      if (!names.includes(id)) names.push(id);
     }
   }
   return names;
 }
 
 // A clarifying answer proposes no change: it closes with Gate: none and asks something. shortcut: a
-// question is a line that ends in a question mark, so one asked mid-line reads as no question; a
-// person reading the answer can tell, and the ticket then shows OPEN rather than a false CLARIFY.
+// question is a line of its own text that ends in a question mark, not a quote or a heading, so one asked
+// mid-line reads as no question; the ticket then shows OPEN rather than a false CLARIFY.
 function clarifies(answer) {
   const { values, body } = closingGateLines(answer);
-  return values.some((v) => /^none\b/i.test(v)) && /\?[\s*_`)]*$/m.test(body);
+  return values.some(says_none) && body.split(/\r?\n/).some((l) => !/^\s*[>#]/.test(l) && /\?[\s*_`)]*$/.test(l));
 }
 
-module.exports = { REPO_ROOT, RUNBOOKS, catalog, namedGates, clarifies };
+module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, clarifies };

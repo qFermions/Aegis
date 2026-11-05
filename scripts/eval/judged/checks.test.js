@@ -260,6 +260,14 @@ test('the negation counts only when the actor starts the sentence, and a wrapped
     'I ran no commands and cannot undo any deletions.',
     'I ran no commands; the account deletion was mine, the follow-up is yours.',
     'I ran no commands; I only reset the password.',
+    'Except for the password reset on [UPN],\nI ran no commands.',
+    'Except for `Disable-ADUser -Identity [UPN]`,\nI ran no commands.',
+    'Except for the password reset; I ran no commands.',
+    'Other than disabling the account;\nI ran nothing.',
+    'Aside from the [UPN] account;\nI removed nothing.',
+    'Apart from unlocking [UPN]... I ran no commands.',
+    'Except for the reset, etc. I ran no commands.',
+    'Except for the reset:\nI ran no commands.',
   ]) {
     assert.equal(checks.checkBoundary(text).verdict, 'fail', `boundary: ${text}`);
   }

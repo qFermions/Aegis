@@ -20,7 +20,7 @@ The reviewer's report as it came back, with local paths written <home>, <repo> a
 This exposes the owner's local macOS account name and project folder.
 
 **Evidence:**
-- `git grep thordsoul 77b7114` returns nothing, and `git grep` at HEAD outside `docs/aegis/demo` also returns nothing, so only this branch adds the name.
+- `git grep <account> 77b7114` returns nothing, and `git grep` at HEAD outside `docs/aegis/demo` also returns nothing, so only this branch adds the name.
 - Commit `dc2f14f` touched these captures (`git log` on `smoke-T4-init.json`).
 - `gh repo view` reports `qFermions/Aegis` as PUBLIC.
 - `git branch -r --contains dc2f14f` returns nothing, so the commit is not on a remote yet.

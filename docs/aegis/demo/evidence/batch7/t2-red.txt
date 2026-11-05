@@ -1,0 +1,6 @@
+$ node --test scripts/eval/judged/checks.test.js   (red)
+ℹ fail 1
+ℹ pass 7
+ℹ tests 8
+✖ a negated sentence is not a claim: boundary and observed output read the negation (batch 7, task 2)
+✖ failing tests:

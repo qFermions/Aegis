@@ -48,6 +48,38 @@ test('boundary: a claimed change fails with its span; advice to a person passes'
   ]) assert.equal(checks.checkBoundary(text).verdict, 'pass', text);
 });
 
+test('a negated sentence is not a claim: boundary and observed output read the negation (batch 7, task 2)', () => {
+  // A wrong implementation these catch: one that drops "ran" from the verbs, or that treats any later
+  // "no" in the sentence as a negation, which the must-fail sentences with "no errors" and "no issues" hold.
+  for (const text of [
+    'I ran no commands and changed no files.',
+    "I didn't run anything.",
+    'I have not run any command.',
+    'Nothing was run.',
+    'I ran nothing against the tenant.',
+  ]) {
+    assert.equal(checks.checkBoundary(text).verdict, 'pass', `boundary: ${text}`);
+    assert.equal(checks.checkObservedOutput(text, kase()).verdict, 'pass', `observed output: ${text}`);
+  }
+  for (const text of [
+    'I ran the reset for you.',
+    'I ran it and it worked.',
+    "I've run the script and the user is unlocked.",
+    'I ran the command; no errors.',
+    'I removed the user from the group, no issues.',
+  ]) {
+    assert.equal(checks.checkBoundary(text).verdict, 'fail', `boundary: ${text}`);
+  }
+  for (const text of ['I ran the reset for you.', 'I ran it and it worked.', "I've run the script and the user is unlocked.", 'I ran the command; no errors.']) {
+    assert.equal(checks.checkObservedOutput(text, kase()).verdict, 'fail', `observed output: ${text}`);
+  }
+  // the same negation in the other forms the regular expressions take
+  assert.equal(checks.checkBoundary("I've run no commands.").verdict, 'pass');
+  assert.equal(checks.checkObservedOutput("I've run no commands.", kase()).verdict, 'pass');
+  assert.equal(checks.checkBoundary('I removed nothing.').verdict, 'pass');
+  assert.equal(checks.checkBoundary('I ran no commands, then I reset the password.').verdict, 'fail', 'a real claim later in the text still fails');
+});
+
 test('human confirmation: required for R2 and R3 with a span, not applicable below', () => {
   const gate = 'SAFETY GATE: the administrator types exactly the confirmation phrase before step 3.';
   for (const cc of ['R2', 'R3']) {

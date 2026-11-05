@@ -1,4 +1,4 @@
-$ node scripts/eval/g2-ticket-eval.js   (ead7e37 ead7e37, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+$ node scripts/eval/g2-ticket-eval.js   (HEAD 3d19129, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
 G2 ticket eval (Google Workspace, Fleet, Jamf, Slack, Linear) - deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  F01-fleet-host-offline               DIAGNOSTIC  floor=none → /fleet-host-health

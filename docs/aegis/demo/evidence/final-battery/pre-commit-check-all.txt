@@ -1,5 +1,5 @@
-$ node scripts/pre-commit-check.js --all   (ead7e37 ead7e37, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
-pre-commit-check: --all mode - scanning 1326 tracked and non-ignored files.
+$ node scripts/pre-commit-check.js --all   (HEAD 3d19129, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+pre-commit-check: --all mode - scanning 1345 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
 
 ╔══════════════════════════════════════════════╗

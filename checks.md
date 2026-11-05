@@ -6,7 +6,7 @@ This Mac has no `pwsh`, and the network rule does not allow installing it, so 41
 
 ## Baseline and final battery
 
-| check | command | base `77b7114` (`docs/aegis/demo/baseline/`) | head `ead7e37` (`docs/aegis/demo/evidence/final-battery/`) |
+| check | command | base `77b7114` (`docs/aegis/demo/baseline/`) | head `3d19129` (`docs/aegis/demo/evidence/final-battery/`) |
 |---|---|---|---|
 | tests | `node --test` | 1859 tests, 1817 pass, 41 fail, 1 skipped | 1945 tests, 1903 pass, 41 fail, 1 skipped; the failing names equal the base's |
 | under the tripwire | `NODE_OPTIONS="--require <repo>/scripts/adapters/socket-tripwire.js" node --test` | the same counts | the same counts |
@@ -78,6 +78,8 @@ Findings closed, one line each:
 - **V8** The battery cannot be fully green on this Mac (41 `pwsh` tests); "the full battery passes" is read as: the same failing set as the base here, and green in CI, which has `pwsh`.
 - **V9** The commits after `391be57` were rewritten before any push, to remove the account name (a branch this batch created; nothing had left the machine). Earlier, the first data commit was reset and redone to separate it from the baseline, whose first capture was wrong (exit 127, a zsh word-splitting slip). So history cannot show the hypothesis came before the first edit; it was the first file written.
 - **V10** The charter says no `gh` on this Mac; it is at `/opt/homebrew/bin/gh`, signed in, and is what opened the pull request.
+- **V12** The charter says never to open anything else in the home folder. This session's harness saved long command outputs under `~/.claude/projects/<project>/<session>/tool-results/`, and I read those files: they hold this session's own command output, nothing else. `~/.claude/CLAUDE.md` and `~/aegis-private` were not opened: the probe printed only a path and a token count. The `claude` CLI and Playwright read their own files there. One local to-do list went to the claude-mem tool, as the session start asks. A reviewer left `poc-*` temporary folders in `/private/tmp`.
+- **V13** One command held a stray `rm -f /dev/null`, which the system refused; nothing changed.
 - **V11** A session's Read tool is not limited to the repository or to one customer (`--allowedTools Read`, unscoped), so it may be able to read another customer's folder from an earlier run; not tried, and the data is fictional. T6's session read `progress.md`, which held this batch's hypothesis, as CLAUDE.md tells a session to (`claims.txt`), and could read `scripts/demo/customers/tickets.json`; its answer says it chose not to. For the owner in the report.
 
 ## CI

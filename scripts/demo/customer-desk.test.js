@@ -638,6 +638,18 @@ test('the summary counts by hand: states, boundary failures, probes, cache hits,
   assert.match(r.out, /total cost 3\.00 US dollars/);
 });
 
+test('the drafted note holds the note: on the label line, under a heading, and never the Gate lines', async (t) => {
+  const sameLine = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nTicket note: [JIRA-###] asked which site.\nGate: none' } });
+  assert.match(step(sameLine.ticket('T7'), 9).output, /\[JIRA-###\] asked which site\./);
+  assert.doesNotMatch(step(sameLine.ticket('T7'), 9).output, /Gate: none/);
+  const heading = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\n## Jira-ready note\n> Asked which site, no change made.\n\n**Not checked:** the site.\n\nGate: none' } });
+  const note = step(heading.ticket('T7'), 9).output;
+  assert.match(note, /Asked which site, no change made\./);
+  assert.doesNotMatch(note, /Not checked/);
+  assert.doesNotMatch(note, /Gate: none/);
+  assert.match(note, /SIMULATED demo note/);
+});
+
 test('--view replaces a desk.html that is a link instead of writing through it', async (t) => {
   const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
   const target = path.join(tmp(t), 'outside.txt');

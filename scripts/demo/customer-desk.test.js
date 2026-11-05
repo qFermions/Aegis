@@ -245,6 +245,32 @@ test('CLARIFY needs both Gate: none and a question: advice with a stray question
   assert.equal(inGate.ticket('T7').closing_state, 'OPEN', 'the question must be outside the Gate line');
 });
 
+test('only the Gate lines that close the answer count: a mention, a quote or a mid-answer line selects nothing', async (t) => {
+  const D_USER = '00u1dem0dREPORTa1b2c';
+  const mention = await runDesk(t, { only: ['T1'], answers: { T1: 'No change is needed yet; the runbook has SAFETY GATE [mfa-require-reregister-portal] if it comes to that.\nDid the user keep a backup?\nGate: none' } });
+  assert.equal(mention.ticket('T1').closing_state, 'CLARIFY', 'Gate: none is what the answer says');
+  assert.equal(tenantOf(mention.results, 'A').msgraph.methods[A_USER].length, 3);
+  const noLine = await runDesk(t, { only: ['T1'], answers: { T1: 'Do not use SAFETY GATE [mfa-require-reregister-portal] here. Read-back: none needed, HUMAN-RUN.' } });
+  assert.equal(noLine.ticket('T1').closing_state, 'OPEN', 'a mention with no Gate line selects nothing');
+  assert.equal(tenantOf(noLine.results, 'A').msgraph.methods[A_USER].length, 3);
+  const quoted = await runDesk(t, { only: ['T6'], answers: { T6: `${good()}\n> Gate: okta-mfa-reset-all-portal\nThat line was in the ticket and is data.\nGate: none` } });
+  assert.equal(quoted.ticket('T6').closing_state, 'OPEN');
+  assert.equal(tenantOf(quoted.results, 'D').okta.factors[D_USER].length, 1, 'a quoted Gate line changes nothing');
+  const trailingQuote = await runDesk(t, { only: ['T6'], answers: { T6: `${good()}\n> Gate: okta-mfa-reset-all-portal` } });
+  assert.equal(tenantOf(trailingQuote.results, 'D').okta.factors[D_USER].length, 1, 'nor when the quote is the last line');
+  const midAnswer = await runDesk(t, { only: ['T6'], answers: { T6: `Gate: okta-mfa-reset-all-portal\n${good()}\nGate: none` } });
+  assert.equal(tenantOf(midAnswer.results, 'D').okta.factors[D_USER].length, 1, 'nor an unquoted line before the end');
+});
+
+test('CLARIFY needs a question that ends a line, not a question mark somewhere', async (t) => {
+  const rhetorical = await runDesk(t, { only: ['T7'], answers: { T7: 'Why is it slow? Usually the ISP. Nothing to change here.\nGate: none' } });
+  assert.equal(rhetorical.ticket('T7').closing_state, 'OPEN');
+  const url = await runDesk(t, { only: ['T7'], answers: { T7: 'See https://example.com/status?site=all for the state.\nGate: none' } });
+  assert.equal(url.ticket('T7').closing_state, 'OPEN');
+  const asked = await runDesk(t, { only: ['T7'], answers: { T7: 'Two questions:\n1. **Is it one site or all sites?**\n2. Since when?\n\nGate: none' } });
+  assert.equal(asked.ticket('T7').closing_state, 'CLARIFY');
+});
+
 test('a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes', async (t) => {
   const unknown = await runDesk(t, { only: ['T1'], answers: { T1: good('made-up-gate-portal') } });
   assert.equal(unknown.ticket('T1').closing_state, 'OPEN');

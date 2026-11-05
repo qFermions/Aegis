@@ -1,4 +1,4 @@
-$ node scripts/eval/ms-ticket-eval.js   (b75cf9adccd0cd5f41bfdf4d5fc547599ca82f23 b75cf9a, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
+$ node scripts/eval/ms-ticket-eval.js   (HEAD c6e4ef9, node v24.21.0, TMPDIR=/private/tmp, no pwsh on this Mac)
 Microsoft ticket eval - deterministic half (floor · route lint · replay MISS · dangerous pairs)
 
 PASS  T01-locked-account                   QUICK_FIX   floor=none → /password-reset, /troubleshoot

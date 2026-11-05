@@ -55,6 +55,14 @@ const SIM_GATES = Object.freeze({
     platform: 'okta', effect: 'clears the Okta user\'s sessions',
     apply: (s, t, now) => { s.okta.logs.push({ eventType: 'user.session.clear', published: now, target: [{ id: t['[OKTA_USER_ID]'] }], outcome: { result: 'SUCCESS' } }); },
   },
+  'okta-user-lifecycle-unsuspend-portal': {
+    platform: 'okta', effect: 'unsuspends the Okta user',
+    apply: (s, t) => { s.okta.users[t['[OKTA_USER_ID]']].status = 'ACTIVE'; },
+  },
+  'okta-user-lifecycle-reset-password-portal': {
+    platform: 'okta', effect: 'resets the Okta user\'s password',
+    apply: (s, t, now) => { s.okta.logs.push({ eventType: 'user.account.reset_password', published: now, target: [{ id: t['[OKTA_USER_ID]'] }], outcome: { result: 'SUCCESS' } }); },
+  },
   'okta-mfa-reset-all-portal': {
     platform: 'okta', effect: 'resets every factor of the Okta user',
     apply: (s, t) => { s.okta.factors[t['[OKTA_USER_ID]']] = []; },
@@ -76,6 +84,14 @@ const SIM_GATES = Object.freeze({
   'gws-offboard-suspend-portal': {
     platform: 'google-workspace', effect: 'suspends the Google Workspace user',
     apply: (s, t) => { const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.suspended = true; u.suspensionReason = 'ADMIN'; },
+  },
+  'gws-offboard-drive-transfer-portal': {
+    platform: 'google-workspace', effect: 'transfers the user\'s Drive files to their manager',
+    apply: (s, t) => { (s.gws.transfers = s.gws.transfers || []).push({ user: t['[USER@DOMAIN.COM]'], what: 'drive' }); },
+  },
+  'gws-offboard-calendar-transfer-portal': {
+    platform: 'google-workspace', effect: 'transfers the user\'s calendars to their manager',
+    apply: (s, t) => { (s.gws.transfers = s.gws.transfers || []).push({ user: t['[USER@DOMAIN.COM]'], what: 'calendar' }); },
   },
   'gws-offboard-okta-deactivate-portal': {
     platform: 'okta', effect: 'deactivates the Okta user that provisions the Google account',

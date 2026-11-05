@@ -346,7 +346,7 @@ async function workTicket(ticket, ctx) {
       return {
         exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: started,
         turns: turn.num_turns, model: turn.model, session_id: turn.session_id, session_state: turn.state, session_reason: turn.reason,
-        result: answer ? `answered: ${turn.model || 'model'}, ${turn.num_turns} turns, ${turn.cost_usd === null ? 'cost not reported' : `${turn.cost_usd} US dollars`}` : sessionReason,
+        result: answer ? `answered: ${turn.model || 'model'}, ${turn.num_turns} turns, ${turn.cost_usd === null ? 'cost not reported' : `${Number(turn.cost_usd.toFixed(4))} US dollars`}` : sessionReason,
         output: answer || lastResultText(stdout),
       };
     });

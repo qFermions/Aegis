@@ -80,7 +80,7 @@ test('no file of this batch holds a long dash', () => {
       const file = path.join(ROOT, dir, f);
       if (!fs.statSync(file).isFile() || /\.png$/.test(f)) continue;
       if (dir === 'docs/explainers' && !f.startsWith('batch6-')) continue;
-      assert.ok(!fs.readFileSync(file, 'utf8').includes('—'), path.join(dir, f));
+      assert.ok(!fs.readFileSync(file, 'utf8').includes(String.fromCharCode(0x2014)), path.join(dir, f));
     }
   }
 });

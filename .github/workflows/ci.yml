@@ -163,3 +163,12 @@ jobs:
           set -e
           echo "exit $code (4 is a dry run)"
           test "$code" -eq 4
+
+      - name: Customer Desk dry run (no model is started)
+        run: |
+          set +e
+          node scripts/demo/customer-desk.js
+          code=$?
+          set -e
+          echo "exit $code (4 is a dry run)"
+          test "$code" -eq 4

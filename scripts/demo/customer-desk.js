@@ -144,9 +144,9 @@ function sessionEnv(env) {
 // session record, since the desk never resumes one.
 const sessionArgs = (prompt, runRoot) => backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false });
 
-async function askAegis(prompt, ctx) {
+async function askAegis(prompt, ctx, debugFile) {
   const backend = ctx.backend;
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: [...sessionArgs(prompt, ctx.runDir), '--debug-file', debugFile], cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
   const stream = backends.parseStream(run.stdout);
   return { turn: backends.summarizeTurn(stream, run), stdout: run.stdout, init: stream.init };
 }
@@ -414,7 +414,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const kase = sessionCase(text, customer, lookup.json ? lookup.json.result : `refused (exit ${lookup.code})`);
       const prompt = backends.buildSutPrompt(kase);
       if (backends.promptTooLong(prompt)) { sessionReason = 'session did not finish: the prompt is too long for one argument'; return { result: sessionReason, model_session: false }; }
-      const { turn, stdout, init } = await askAegis(prompt, ctx);
+      const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`));
       Object.assign(known, { exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: turn.exit_code !== null || Boolean(init), turns: turn.num_turns, model: turn.model });
       fs.writeFileSync(path.join(tickets, `${ticket.id}-stream.jsonl`), stdout);
       if (init) fs.writeFileSync(path.join(tickets, `${ticket.id}-init.json`), `${JSON.stringify(init, null, 2)}\n`);

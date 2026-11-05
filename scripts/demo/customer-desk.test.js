@@ -323,6 +323,46 @@ test('a Microsoft gate on a ticket whose customer holds that user applies and re
   }
 });
 
+test('a request that missed the seam still stops the whole run: the tripwire is never turned into a closing state', async (t) => {
+  const { NetworkTripwireError } = require('../adapters/socket-tripwire.js');
+  const deps = { transportFor: () => async () => { throw new NetworkTripwireError(); } };
+  await assert.rejects(runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps }), /Network tripwire fired/);
+});
+
+test('an internal error exits 1, never 0, and its reason holds no absolute home path', async (t) => {
+  const deps = { transportFor: () => { throw new Error(`cannot open ${os.homedir()}/some-place`); } };
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps });
+  assert.equal(r.code, 1);
+  assert.equal(r.ticket('T1').closing_state, 'OPEN');
+  assert.ok(!JSON.stringify(r.run).includes(os.homedir()), 'no home path in run.json');
+  assert.match(r.ticket('T1').reason, /~\/some-place/);
+});
+
+test('a step that throws is recorded as failed with what it knew: a paid session keeps its cost', async (t) => {
+  const dir = path.join(tmp(t), 'run');
+  const spawn = (cmd, args, o) => {
+    fs.mkdirSync(path.join(dir, 'customers', 'A', 'tickets', 'T1-stream.jsonl'));
+    return require('node:child_process').spawn(cmd, args, o);
+  };
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, dir, deps: { spawn } });
+  const s = step(r.ticket('T1'), 4);
+  assert.match(s.result, /^failed: /);
+  assert.equal(s.cost_usd, 0.5);
+  assert.equal(r.run.summary.model_sessions, 1);
+  assert.equal(r.run.summary.total_cost_usd, 0.5);
+  assert.equal(r.ticket('T1').closing_state, 'OPEN');
+  assert.equal(r.code, 1);
+});
+
+test('a note that cannot be saved does not change a decided closing state', async (t) => {
+  const { transportFor } = require('./sim/vendors.js');
+  const deps = { transportFor: (c, tenantFile) => { fs.mkdirSync(path.join(path.dirname(tenantFile), 'tickets', 'T1-note.md'), { recursive: true }); return transportFor(c, tenantFile); } };
+  const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps });
+  assert.equal(r.ticket('T1').closing_state, 'RESOLVED (SIMULATED)');
+  assert.match(step(r.ticket('T1'), 9).output, /note could not be saved/);
+  assert.equal(r.code, 0);
+});
+
 test('an unexpected error in one ticket closes it OPEN with the reason, keeps its steps and lets the run finish', async (t) => {
   const r = await runDesk(t, { only: ['T1', 'T7'], answers: { T1: good('mfa-require-reregister-portal'), T7: 'Which site?\nGate: none' }, deps: { transportFor: () => { throw new Error('seam failed'); } } });
   const k = r.ticket('T1');

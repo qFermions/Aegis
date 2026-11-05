@@ -1,0 +1,5 @@
+$ node --test scripts/demo/customers.test.js   (red at 021ce86: no customers.js in this commit)
+Error: Cannot find module './customers.js'
+ℹ fail 1
+ℹ pass 0
+ℹ tests 1

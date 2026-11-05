@@ -230,6 +230,13 @@ function approveGate(id, gate, c) {
   return { gate: id, changes: opened, note: `${opened.map((o) => o.change).join(', ')} opened and approved for ${id} by the SIMULATED OPERATOR, with the real change-record.js` };
 }
 
+function shownNotDone(text) {
+  try {
+    const v = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+    return v.state === 'OK' && v.verified === false;
+  } catch { return false; }
+}
+
 // Step 8, for one read-back: the connector's own code, over the simulated transport.
 async function readBack(change, c, ctx) {
   const [connector] = change.read_back.kind.split(':');
@@ -242,7 +249,9 @@ async function readBack(change, c, ctx) {
   const code = await client.run(argv, env, { transport: ctx.transportFor(connector, c.tenantFile), audit: sink, sleep: async () => {}, ...io.io });
   const output = `${change.read_back.kind}: exit ${code}\n${io.text()}${io.error()}`;
   if (code === 5) return { state: 'INCONCLUSIVE', exit: code, output };
-  if (code === 2) return { state: 'FAIL', exit: code, output };
+  // exit 2 is also a read that failed (a timeout, a network error): only an answer that was read and
+  // shows the change not done is a failure of the change
+  if (code === 2 && shownNotDone(`${io.text()}${io.error()}`)) return { state: 'FAIL', exit: code, output };
   if (code !== 0) return { state: 'INCONCLUSIVE', exit: code, output: `${output}\nThe read did not run to a verdict, so it proves nothing.` };
   // exit 0 alone is not the change's proof: link the entry and ask the change record
   let seq = null;

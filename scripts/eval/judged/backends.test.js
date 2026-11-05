@@ -108,13 +108,29 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
   const repo = (p) => abs(path.join(REPO_ROOT, p));
   const pinned = [
     repo('progress.md'), repo('checks.md'), repo('docs/review/**'), repo('docs/aegis/demo/**'), repo('docs/explainers/**'),
-    repo('scripts/demo/customers/**'), repo('scripts/eval/judged/dev-cases.jsonl'), abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
+    repo('scripts/demo/customers/**'), repo('scripts/eval/judged/dev-cases.jsonl'),
+    // beyond the charter's list, from code review 1: the demo's own tests and table hold passing answers and
+    // ticket-to-gate pairs, the grader's rules are in scripts/eval/judged, and a judged run saves its grades
+    repo('scripts/demo/**'), repo('scripts/eval/judged/**'), repo('.aegis-state/**'),
+    abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
   ];
   const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
   assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P' })).permissions.deny, pinned);
   // a run folder elsewhere is denied too, when the caller names it
   const elsewhere = path.join(os.tmpdir(), 'some-run');
   assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P', runRoot: elsewhere })).permissions.deny, [...pinned, abs(path.join(elsewhere, '**'))]);
+  // a run folder under a link is denied in both forms, since the CLI may match either
+  const fsTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-deny-'));
+  const link = `${fsTmp}-link`;
+  fs.symlinkSync(fsTmp, link);
+  try {
+    const rules = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: link })).permissions.deny;
+    assert.ok(rules.includes(abs(path.join(link, '**'))), 'the given form');
+    assert.ok(rules.includes(abs(path.join(fs.realpathSync(fsTmp), '**'))), 'the real form');
+  } finally {
+    fs.rmSync(link);
+    fs.rmSync(fsTmp, { recursive: true, force: true });
+  }
   // only Read rules: the CLI's own warning says a Glob(path) rule is not matched and Read rules cover Grep and Glob
   for (const rule of pinned) assert.match(rule, /^Read\(\/\//);
   // a wrong list that denied a parent folder would hide what Aegis must read

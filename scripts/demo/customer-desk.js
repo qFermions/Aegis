@@ -109,7 +109,7 @@ function dryRun(selected, customers, dir, io) {
     io.out(`${t.id}  ${c.label}: ${t.title}\n    expected: ${t.expected_path}\n`);
   }
   io.out(`Allowance: up to ${sessions} Aegis sessions on your subscription, about ${(sessions * USD_PER_SESSION).toFixed(2)} US dollars of allowance at the ${USD_PER_SESSION.toFixed(2)} per session in docs/evidence/runtime-smoke.md. A cache hit starts no session.\n`);
-  io.out(`Each session: claude ${backends.sutArgs({ prompt: '<ticket>' }).join(' ')}\n`);
+  io.out(`Each session: claude ${backends.sutArgs({ prompt: '<ticket>', runRoot: dir }).join(' ')}\n`);
   io.out(`${render.SENTENCE}\n`);
   return 4;
 }
@@ -140,7 +140,7 @@ function sessionEnv(env) {
 
 async function askAegis(prompt, ctx) {
   const backend = ctx.backend;
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: backends.sutArgs({ prompt }), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: backends.sutArgs({ prompt, runRoot: ctx.runDir }), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn });
   const stream = backends.parseStream(run.stdout);
   return { turn: backends.summarizeTurn(stream, run), stdout: run.stdout, init: stream.init };
 }

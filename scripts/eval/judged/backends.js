@@ -47,8 +47,24 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
   return [...dirs].flatMap((d) => [path.join(d, 'CLAUDE.md'), path.join(d, 'CLAUDE.local.md'), path.join(d, '.claude', 'CLAUDE.md'), path.join(d, '.claude', 'rules', '**')]);
 }
 
-function isolationArgs({ judge = false } = {}) {
-  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false })];
+// What a session may not read: this work's own records, the demo's expected answers, the runner's DEV
+// cases and every run folder, so it answers from Aegis's runbooks and not from its own grading material.
+// Read rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and
+// Glob. Proof the rules apply: docs/aegis/demo/evidence/batch7/isolation-probe.txt.
+const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl']);
+const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
+
+// The CLI's absolute form: // then the path from the file system root, with forward slashes.
+const absoluteReadRule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
+
+function readDenyRules(runRoot = null) {
+  const rules = [...READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p))), absoluteReadRule(path.join(os.homedir(), DEFAULT_RUN_ROOT, '**'))];
+  if (runRoot) rules.push(absoluteReadRule(path.join(path.resolve(runRoot), '**')));
+  return rules;
+}
+
+function isolationArgs({ judge = false, runRoot = null } = {}) {
+  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot) } })];
 }
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
@@ -88,13 +104,13 @@ function buildSutPrompt(c) {
   return c.evidence !== '' ? `${c.ticket}\n\n${EVIDENCE_HEADER}\n${c.evidence}` : c.ticket;
 }
 
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null }) {
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null }) {
   const tools = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs());
+    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot }));
   return args;
 }
 
@@ -241,7 +257,7 @@ function sutRecord(turns, c) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, isolationArgs, excludedMemoryFiles, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  SUT_TOOLS, WEB_TOOLS, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
   envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn,
   runChild, runTurn, runSut, promptTooLong,
 };

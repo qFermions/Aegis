@@ -48,13 +48,13 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
 }
 
 // What a session may not read: this work's own records, the demo's code and expected answers, the grader and
-// ticket corpora under scripts/eval, scored answers under docs/evidence, and the run folders the CLI can name,
+// ticket corpora under scripts/eval, scored answers and saved ticket results under docs/evidence and docs/aegis, and the run folders the CLI can name,
 // so it answers from Aegis's runbooks and not from its own grading material. A run saved under a custom folder
 // by an earlier command is not on the list, nor a judged run's custom --results-dir. Read
 // rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and Glob.
 // That the CLI loads them: docs/aegis/demo/evidence/batch7/isolation-probe.txt. That it refuses a read is
 // shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
-const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', '.aegis-state/**']);
+const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', 'docs/aegis/**/evidence/**', '.aegis-state/**']);
 const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.

@@ -8,9 +8,13 @@ require('../../adapters/socket-tripwire.js');
 //   WebFetch WebSearch; --web moves WebFetch and WebSearch to the allowed set. The judge's is
 //   one turn, --tools "", --no-session-persistence, plus --model when given.
 // - Batch 6, task 9: both sessions load only this repository's settings: --setting-sources project
-//   --strict-mcp-config (no user-level CLAUDE.md, plugin, skill, hook or MCP server). --bare is not
-//   used: it never reads the stored login. A wrong implementation this catches: a session that
-//   drops either flag, for either role.
+//   --strict-mcp-config (no user-level plugin, skill, hook or MCP server), plus --settings with
+//   claudeMdExcludes and autoMemoryEnabled false. The first run of task 8 showed why: with project
+//   settings alone the CLI still loads ~/.claude/CLAUDE.md, typed Project, because it walks up from
+//   the repository (docs/aegis/demo/evidence/isolation-probe.txt). --bare is not used: it never reads
+//   the stored login. Wrong implementations this catches: a session that drops a flag, for either
+//   role; an exclusion that names only the home file and misses a folder between home and the
+//   repository; one that excludes the repository's own CLAUDE.md.
 // - The prompt is the ticket, plus the evidence after a header saying it is pasted evidence.
 // - The child runs from the repository root, without a shell, with an environment that has
 //   no .env.example name and no *_TOKEN, *_KEY, *_SECRET or *_PASSWORD name (PATH stays).
@@ -44,12 +48,12 @@ function fake(t, config) {
 const kase = (over = {}) => ({ id: 'B1', ticket: 'Ticket text for [UPN].', evidence: '', follow_up: '', ...over });
 
 test('the SUT and judge command lines match the spec; --web moves the web tools to the allowed set', () => {
-  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', '--setting-sources', 'project', '--strict-mcp-config']);
+  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs()]);
   const web = backends.sutArgs({ prompt: 'P', maxTurns: 5, web: true });
   assert.deepEqual(web.slice(web.indexOf('--allowedTools'), web.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch']);
-  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', '--setting-sources', 'project', '--strict-mcp-config']);
+  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs()]);
   assert.deepEqual(backends.sutArgs({ prompt: 'F', resume: 'sess-1' }).slice(0, 4), ['-p', 'F', '--resume', 'sess-1']);
-  assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', '--setting-sources', 'project', '--strict-mcp-config']);
+  assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...backends.isolationArgs()]);
   assert.deepEqual(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }).slice(-2), ['--model', 'judge-x']);
   assert.equal(backends.sutArgs({ prompt: '--looks-like-a-flag' })[1], ' --looks-like-a-flag', 'a prompt never reads as an option');
 });
@@ -62,6 +66,15 @@ test('both sessions load only the repository\'s own settings, also when resumed,
     assert.ok(args.includes('--strict-mcp-config'), `${label}: --strict-mcp-config, so no MCP server`);
     assert.ok(!args.includes('--mcp-config'), `${label}: no MCP file is given`);
     assert.ok(!args.includes('--bare'), `${label}: --bare never reads the stored login`);
+    const settings = JSON.parse(args[args.indexOf('--settings') + 1]);
+    assert.equal(settings.autoMemoryEnabled, false, `${label}: no auto memory`);
+    const home = require('node:os').homedir();
+    assert.ok(settings.claudeMdExcludes.includes(path.join(home, '.claude', 'CLAUDE.md')), `${label}: the owner's own rules file is excluded`);
+    for (let d = path.dirname(REPO_ROOT); ; d = path.dirname(d)) {
+      for (const name of ['CLAUDE.md', 'CLAUDE.local.md', path.join('.claude', 'CLAUDE.md')]) assert.ok(settings.claudeMdExcludes.includes(path.join(d, name)), `${label}: ${path.join(d, name)}`);
+      if (d === path.dirname(d)) break;
+    }
+    assert.ok(!settings.claudeMdExcludes.some((p) => p === path.join(REPO_ROOT, 'CLAUDE.md') || p.startsWith(`${REPO_ROOT}${path.sep}`)), `${label}: the repository's own files still load`);
   };
   isolated(backends.sutArgs({ prompt: 'P' }), 'system under test');
   isolated(backends.sutArgs({ prompt: 'P', resume: 'sess-1' }), 'follow-up turn');

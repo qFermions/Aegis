@@ -30,21 +30,25 @@ const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
 
 // Every CLAUDE.md the CLI's upward walk could find from the repository or the judge's temporary folder,
-// and the home folder's own. Never the repository's own, even when the checkout is the home folder.
-function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir()) {
+// and the home folder's own. The system under test keeps the repository's own, even when the checkout
+// is the home folder; the judge loads none, even when its temporary folder sits below the checkout.
+function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge = false } = {}) {
   const dirs = new Set([home]);
-  for (const start of [path.dirname(repoRoot), os.tmpdir(), fs.realpathSync(os.tmpdir())]) {
+  let realTmp = os.tmpdir();
+  try { realTmp = fs.realpathSync(realTmp); } catch { /* a stale TMPDIR: its given form is listed */ }
+  for (const start of [path.dirname(repoRoot), os.tmpdir(), realTmp]) {
     for (let d = start; ; d = path.dirname(d)) {
       dirs.add(d);
       if (d === path.dirname(d)) break;
     }
   }
-  dirs.delete(repoRoot);
+  if (judge) dirs.add(repoRoot);
+  else dirs.delete(repoRoot);
   return [...dirs].flatMap((d) => [path.join(d, 'CLAUDE.md'), path.join(d, 'CLAUDE.local.md'), path.join(d, '.claude', 'CLAUDE.md'), path.join(d, '.claude', 'rules', '**')]);
 }
 
-function isolationArgs() {
-  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(), autoMemoryEnabled: false })];
+function isolationArgs({ judge = false } = {}) {
+  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false })];
 }
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
@@ -95,7 +99,7 @@ function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = n
 }
 
 function judgeArgs({ prompt, model = null }) {
-  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...isolationArgs()];
+  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...isolationArgs({ judge: true })];
   if (model) args.push('--model', model);
   return args;
 }

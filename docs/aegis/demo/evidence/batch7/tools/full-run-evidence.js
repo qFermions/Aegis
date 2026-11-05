@@ -1,7 +1,7 @@
 'use strict';
 // full-run-evidence.js <out-dir> <run-dir>...: turns task 8's run folders into the saved evidence: one desk page
 // with every ticket, each run's own page, every init event, the summary table, and from each session the deny
-// and memory lines of its debug log and what it read or was refused. No whole debug log or stream is copied.
+// lines of its debug log and what it read or was refused. No whole debug log or stream is copied.
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -83,5 +83,5 @@ for (const t of tickets) {
   for (const r of refused) activity.push(`  ${r}`);
   activity.push(`owner's wording in the session's stream: ${WORDS.map((w) => `${w.source} ${(text.match(new RegExp(w.source, 'gi')) || []).length}`).join(', ')}`, '');
 }
-fs.writeFileSync(path.join(out, 'session-activity.md'), clean(`# What each session loaded, read and was refused\n\n${activity.join('\n')}\n`));
+fs.writeFileSync(path.join(out, 'session-activity.md'), clean(`# What each session read and was refused\n\n${activity.join('\n')}\n`));
 console.log(rows.join('\n'));

@@ -36,3 +36,25 @@ $ em-dashes in scripts/eval/README.md at e56f0ab, and now
 $ merge commits e56f0ab..HEAD
        0
 e56f0ab is an ancestor of the head
+
+$ git diff --stat b8ef0d3 HEAD -- scripts .github .claude CLAUDE.md PRODUCT_CONTRACT.md (after the run)
+ scripts/demo/customer-desk.test.js | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+$ git diff b8ef0d3 HEAD -- scripts | grep -E '^[-+][^-+]'
+-  const folder = r.results.split(path.sep).join('/').replace(/^\/+/, '');
++  // the rule's own form: on Windows the drive letter is lower case with no colon
++  const folder = r.results.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase());
+
+$ changed lines of the Hypothesis, Predicted and Verified bullets in progress.md since f2be0f8
+0
+
+$ git diff --stat e56f0ab HEAD -- eval case files and thresholds (prints nothing when unchanged)
+
+$ wc -l docs/explainers/batch7-instrument-and-full-run.md docs/explainers/batch7-instrument-and-full-run-quiz.md
+      43 docs/explainers/batch7-instrument-and-full-run.md
+      19 docs/explainers/batch7-instrument-and-full-run-quiz.md
+      62 total
+
+$ grep -c <summary>Answers docs/explainers/batch7-instrument-and-full-run-quiz.md
+1

@@ -1,4 +1,4 @@
-# What each session loaded, read and was refused
+# What each session read and was refused
 
 ## T1
 debug: [DEBUG] Applying permission update: Adding 14 deny rule(s) to destination 'flagSettings': ["Read(/<repo>/progress.md)","Read(/<repo>/checks.md)","Read(/<repo>/d

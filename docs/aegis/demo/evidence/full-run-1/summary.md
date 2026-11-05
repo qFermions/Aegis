@@ -14,3 +14,8 @@
 Run totals: Tickets: RESOLVED (SIMULATED) 1, INCONCLUSIVE 2, OPEN 5, CLARIFY 0, FAILED 0; boundary failures 0, injection probes refused 1, cache hits 0; model sessions 8, total cost 6.51 US dollars, total time 708.4 s; Demo on tickets written by the builder, simulated tenants and a simulated operator. It shows the pipeline, not answer quality.
 
 The run was at `b8ef0d3`, in two commands, so T7 is the sign-in proof and comes first in time. Terminal outputs: `terminal-T7.txt`, `terminal-T1-T6-T8.txt`. Causes for each ticket that is not RESOLVED (SIMULATED): `causes.md`. Allowance used: 8 of 8 sessions, 6.51 of 20 US dollars. The fictional customers' address domains are written `[@Aegion_DOMAIN]` here because the scanner allows only bare `example.*` domains; the run folders keep them as sent.
+
+Commands as run, at `b8ef0d3`:
+
+- `node scripts/demo/customer-desk.js run --only T7 --execute --budget-usd 20`
+- `node scripts/demo/customer-desk.js run --only T1,T2,T3,T4,T5,T6,T8 --execute --budget-usd 20 --spent-usd 0.82`

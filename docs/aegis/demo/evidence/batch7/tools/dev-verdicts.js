@@ -5,7 +5,7 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
+const ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
 const checks = require(path.join(ROOT, 'scripts/eval/judged/checks.js'));
 const FAKE = path.join(ROOT, 'scripts/eval/judged/fixtures/fake-claude.js');
 const answer = (() => {

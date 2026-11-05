@@ -263,10 +263,13 @@ async function readBack(change, c, ctx) {
   return done ? { state: 'PASS', exit: code, output: `${output}\n${proof}`, evidence: change.read_back.kind } : { state: 'INCONCLUSIVE', exit: code, output: `${output}\n${proof}\n${link ? link.stderr : 'no audit seq was printed'}${status.stderr}` };
 }
 
-// The note starts at a line that opens with its label, and runs to the next heading, rule or the "Not
-// checked" list. The closing Gate lines are never part of it.
-const NOTE_LABEL = /^[^A-Za-z0-9]*(?:jira[- ]?ready note|jira note|ticket note)\b[*_:\s]*(.*)$/i;
-const NOTE_END = /^\s*(?:#{1,6} |---|<details|\*\*Not checked)/;
+// The note starts at its label: the last heading or "label:" line that names it, since the note closes
+// an answer and a checklist above it may name it too. It runs to the next heading, rule, Gate line or
+// reviewer section. shortcut: a word list for those sections, so a section it does not know stays in the
+// note; the note is a draft a person reads, and the cap is 1500 characters.
+const NOTE_LABEL = /^\s*(#{1,6}\s+)?[^A-Za-z0-9]*(?:[A-Za-z-]+\s+){0,2}?(?:jira[- ]?ready notes?|jira notes?|ticket notes?)\b(?:\s*\([^)]*\))?[*_\s]*(:)?[*_\s]*(.*)$/i;
+const isNoteLabel = (line) => { const m = NOTE_LABEL.exec(line); return Boolean(m && (m[1] || m[2])); };
+const NOTE_END = /^\s*(?:#{1,6} |---|<details|[\s*_`-]*Gate:|(?:\*\*)?(?:Not checked|Verification|Review notes|Did I miss|Evidence|Decisions|Quiz)\b)/i;
 
 // The exit code a step with several read-backs shows: 2 (shown not done) over any other failure, then
 // the first failure, then 0; null when nothing ran.
@@ -280,10 +283,10 @@ function worstExit(codes) {
 
 function draftNote(ticket, customer, answer, closing, reason) {
   const lines = closingGateLines(answer || '').body.split(/\r?\n/);
-  const at = lines.findIndex((l) => NOTE_LABEL.test(l));
+  const at = lines.findLastIndex(isNoteLabel);
   const kept = [];
   if (at >= 0) {
-    kept.push(NOTE_LABEL.exec(lines[at])[1]);
+    kept.push(NOTE_LABEL.exec(lines[at])[3]);
     for (const l of lines.slice(at + 1)) {
       if (NOTE_END.test(l)) break;
       kept.push(l);

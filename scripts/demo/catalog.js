@@ -51,13 +51,12 @@ function closingGateLines(answer) {
 
 const says_none = (value) => /^none\b/i.test(value);
 
-// The gates an answer names: every hyphenated word on a closing Gate line, outside parentheses, so no
-// advised change is dropped silently. A word that is not a gate stops the ticket OPEN, the safe side.
+// The gates an answer names: every whole lower-case hyphenated word on a closing Gate line, so no advised
+// change is dropped silently. A word that is not a gate stops the ticket OPEN, the safe side.
 function namedGates(answer) {
   const names = [];
   for (const value of closingGateLines(answer).values) {
-    if (says_none(value)) continue;
-    for (const id of value.replace(/\([^)]*\)/g, ' ').match(/[a-z0-9]+(?:-[a-z0-9]+)+/g) || []) {
+    for (const id of value.match(/(?<![A-Za-z0-9-])[a-z0-9]+(?:-[a-z0-9]+)+(?![A-Za-z0-9-])/g) || []) {
       if (!names.includes(id)) names.push(id);
     }
   }
@@ -65,11 +64,12 @@ function namedGates(answer) {
 }
 
 // A clarifying answer proposes no change: it closes with Gate: none and asks something. shortcut: a
-// question is a line of its own text that ends in a question mark, not a quote or a heading, so one asked
-// mid-line reads as no question; the ticket then shows OPEN rather than a false CLARIFY.
+// question is a line of its own text that ends in a question mark, not a quote, a heading or a line that
+// is all bold, so one asked mid-line reads as no question and the ticket shows OPEN rather than a false
+// CLARIFY; a bullet that asks a rhetorical question still reads as a question, and the page shows the answer.
 function clarifies(answer) {
   const { values, body } = closingGateLines(answer);
-  return values.some(says_none) && body.split(/\r?\n/).some((l) => !/^\s*[>#]/.test(l) && /\?[\s*_`)]*$/.test(l));
+  return values.some(says_none) && body.split(/\r?\n/).some((l) => !/^\s*(?:[>#]|\*\*.*\*\*\s*$)/.test(l) && /\?[\s*_`)]*$/.test(l));
 }
 
 module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, clarifies };

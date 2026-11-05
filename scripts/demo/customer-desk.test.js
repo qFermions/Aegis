@@ -235,6 +235,16 @@ test('an answer that names no gate stops OPEN with the reason; a question with n
   assert.deepEqual(tenantOf(clarify.results, 'B'), customersData.loadTenant(customersData.loadData().customers[1]), 'no change');
 });
 
+test('CLARIFY needs both Gate: none and a question: advice with a stray question and no Gate line is OPEN', async (t) => {
+  const advice = await runDesk(t, { only: ['T1'], answers: { T1: '1. In the admin center, require re-registering MFA, HUMAN-RUN. Did that help?' } });
+  assert.equal(advice.ticket('T1').closing_state, 'OPEN', 'steps with no gate line are not a clarifying question');
+  assert.match(advice.ticket('T1').reason, /names no gate/);
+  const noQuestion = await runDesk(t, { only: ['T7'], answers: { T7: 'Nothing to change here.\nGate: none' } });
+  assert.equal(noQuestion.ticket('T7').closing_state, 'OPEN', 'Gate: none with no question asks nothing');
+  const inGate = await runDesk(t, { only: ['T7'], answers: { T7: 'Nothing to change here.\nGate: none?' } });
+  assert.equal(inGate.ticket('T7').closing_state, 'OPEN', 'the question must be outside the Gate line');
+});
+
 test('a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes', async (t) => {
   const unknown = await runDesk(t, { only: ['T1'], answers: { T1: good('made-up-gate-portal') } });
   assert.equal(unknown.ticket('T1').closing_state, 'OPEN');

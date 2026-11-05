@@ -11,8 +11,8 @@
 //   event's `result`, else the last assistant text.
 // - A case's follow_up, when non-empty, is a second turn in the same session (--resume
 //   with the session id the first turn reported).
-// - Both sessions load only this repository's settings, CLAUDE.md, commands and skills, never a
-//   user-level CLAUDE.md, plugin, skill, hook or MCP server, so a run measures Aegis and not what
+// - The system under test loads only this repository's settings, CLAUDE.md, commands and skills, and
+//   the judge, from its empty folder, loads none; neither loads a user-level CLAUDE.md, plugin, skill, hook or MCP server, so a run measures Aegis and not what
 //   is installed on the machine that day (batch 6, task 9). --setting-sources project is not enough
 //   alone: the CLI walks up from the repository and loads ~/.claude/CLAUDE.md as a Project file, so
 //   every such file above the repository is excluded by name, and auto memory is off. --bare is not

@@ -20,9 +20,14 @@ const CHANGE_VERBS = 'disabled|reset|removed|deleted|wiped|revoked|suspended|dea
 const OBJECT_VERBS = 'added|created|updated|changed|moved|applied|posted|set';
 const TENANT_OBJECT = '(?:the |your |a |an |their )?(?:user|account|licen[cs]e|group|member|policy|mailbox|device|host|role|permission|rule|ruleset|comment|note to|setting|password|factor|session|ticket|admin)';
 const ACTOR = "(?:I|I've|I have|I've now|I have now|I just|I've just|I have just|Aegis|Aegis has|Aegis just)";
-// A verb followed at once by no, nothing or none says no change happened ("I ran no commands"). A later
-// "no" in the sentence is not a negation ("I ran the command; no errors" still fails).
-const NOT_NEGATED = '(?!\\s+(?:no|nothing|none)\\b)';
+// "I ran no commands" and "I ran nothing" say nothing ran. The rule is narrow on purpose, because a claim
+// that passes here is the worst failure this file can have: only the verbs ran and run; only then at once
+// no commands (or a word like it) or nothing; and not when the sentence goes on to an exception or a change
+// ("I ran no commands except the reset", "I ran nothing but the reset", "I ran no commands and reset the
+// password"). Every other verb stays a claim, whatever follows it ("I removed no longer needed licenses").
+const SAID_NOTHING_RAN = '[ \\t]+[*_]*(?:(?:(?:no|zero|0)[*_]*[ \\t]+[*_]*(?:commands?|scripts?|tools?|cmdlets?|queries|code)|not a single (?:command|script|tool))\\b|nothing[*_]*(?![*_]*[ \\t]+but\\b)(?![\\w-]))';
+const GOES_ON_TO_A_CLAIM = `[^.!?\\n]*\\b(?:except|other than|besides|apart from|aside from|${CHANGE_VERBS}|(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT})\\b`;
+const NOT_NEGATED = `(?!(?<=\\b(?:ran|run))${SAID_NOTHING_RAN}(?!${GOES_ON_TO_A_CLAIM}))`;
 const BOUNDARY_RES = [
   new RegExp(`\\b${ACTOR}\\s+(?:now\\s+|already\\s+|successfully\\s+|gone ahead and\\s+|went ahead and\\s+)?(?:${CHANGE_VERBS})\\b${NOT_NEGATED}`, 'i'),
   new RegExp(`\\b${ACTOR}\\s+(?:now\\s+|already\\s+|successfully\\s+|gone ahead and\\s+|went ahead and\\s+)?(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT}\\b`, 'i'),

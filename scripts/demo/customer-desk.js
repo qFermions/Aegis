@@ -13,13 +13,14 @@
 //   node scripts/demo/customer-desk.js [run] [--only T4,T6] [--execute] [--results-dir <dir>]
 //   node scripts/demo/customer-desk.js --view <run-dir>
 // Default is a dry run: the plan and an allowance estimate, exit 4, no model. Exit codes: 0 the run
-// finished with no ticket FAILED; 2 a ticket FAILED; 4 dry run; 1 input error or a refused folder.
+// finished with no ticket FAILED; 2 a ticket FAILED; 4 dry run; 1 input error, a refused folder, or the
+// desk could not finish a ticket.
 // More: scripts/demo/README.md.
 
 // No Node socket can open from this process: the connectors reach only the simulated transport, and
 // a request that missed it would throw here instead of reaching a vendor. Child processes are not
 // affected, so the claude CLI still reaches its own service.
-require('../adapters/socket-tripwire.js');
+const tripwire = require('../adapters/socket-tripwire.js');
 
 const childProcess = require('node:child_process');
 const fs = require('node:fs');
@@ -177,10 +178,20 @@ function newRecorder(ticket, customer, ctx) {
     ctx.io.out(`${render.stepLine(ticket.id, s)}\n`);
     return s;
   };
+  // A step that throws is recorded as failed with what it had put in known, so a paid session's cost
+  // survives; the error then goes on up.
   const timed = async (name, actor, tag, fn) => {
     const started = Date.now();
-    const fields = await fn();
-    return push(name, { actor, tag, started_at: new Date(started).toISOString(), duration_ms: Date.now() - started, ...fields });
+    const base = () => ({ actor, tag, started_at: new Date(started).toISOString(), duration_ms: Date.now() - started });
+    const known = {};
+    let fields;
+    try {
+      fields = await fn(known);
+    } catch (e) {
+      push(name, { ...base(), ...known, result: `failed: ${ctx.clean(e)}` });
+      throw e;
+    }
+    return push(name, { ...base(), ...fields });
   };
   const notReached = (reason) => {
     const actors = { TRIAGE: ['Aegis replay and graph', REAL], AEGIS: ['Aegis session', REAL], CHECKS: ['Aegis checks', REAL], APPROVAL: ['SIMULATED OPERATOR', 'REAL code, SIMULATED person'], 'SIMULATED OPERATOR': ['SIMULATED OPERATOR', SIM], 'READ-BACK': ['Aegis connector', 'REAL connector, SIMULATED tenant'] };
@@ -266,8 +277,9 @@ function storeVerified(rec, answerFile, gates, evidence, c, ctx) {
   return `Resolved, and not stored in the replay cache: ${(plain.stderr || plain.stdout).trim().slice(0, 300)}`;
 }
 
-// One ticket. An unexpected error closes it OPEN with what was recorded so far, so one ticket never
-// loses the others or the cost of a session already paid for.
+// One ticket. An unexpected error closes it OPEN with what was recorded so far, so one ticket does not
+// lose the others, and the run then exits 1. The network tripwire is the exception: a request that
+// missed the seam stops the run. A failure to prepare the customer's folder also stops the run.
 async function workTicket(ticket, ctx) {
   const customer = ctx.customers.find((x) => x.id === ticket.customer);
   const { dir: customerDir, tenantFile } = prepareCustomer(customer, ctx.runDir);
@@ -280,8 +292,9 @@ async function workTicket(ticket, ctx) {
     notReached(reason || state);
     await timed('CLOSE', 'Aegis desk', REAL, async () => {
       const note = draftNote(ticket, customer, rec.answer, state, reason);
-      fs.writeFileSync(path.join(tickets, `${ticket.id}-note.md`), note);
-      return { result: reason ? `${state}: ${reason}` : state, output: `${extra}${extra ? '\n\n' : ''}${note}` };
+      let saved = '';
+      try { fs.writeFileSync(path.join(tickets, `${ticket.id}-note.md`), note); } catch (e) { saved = `\n(The note could not be saved: ${ctx.clean(e)}.)\n`; }
+      return { result: reason ? `${state}: ${reason}` : state, output: `${extra}${extra ? '\n\n' : ''}${note}${saved}` };
     });
     delete rec.answer;
     return rec;
@@ -290,7 +303,9 @@ async function workTicket(ticket, ctx) {
   try {
     return await ticketSteps({ ticket, customer, customerDir, tenantFile, tickets, vars, rec, timed, close }, ctx);
   } catch (e) {
-    return close('OPEN', `the desk could not finish this ticket: ${e && e.message ? e.message : 'unknown error'}`);
+    if (e && e.message === tripwire.MESSAGE) throw e;
+    rec.internal_error = true;
+    return close('OPEN', `the desk could not finish this ticket: ${ctx.clean(e)}`);
   }
 }
 
@@ -348,11 +363,12 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       return { exit_code: r.code, result: r.code === 0 ? `CACHE_HIT ${hit.caseId} via ${hit.via} (replay, no model, no cost)` : sessionReason, output: answer || '' };
     });
   } else {
-    await timed('AEGIS', 'Aegis session', REAL, async () => {
+    await timed('AEGIS', 'Aegis session', REAL, async (known) => {
       const kase = sessionCase(text, customer);
       const prompt = backends.buildSutPrompt(kase);
       if (backends.promptTooLong(prompt)) { sessionReason = 'session did not finish: the prompt is too long for one argument'; return { result: sessionReason, model_session: false }; }
       const { turn, stdout, init } = await askAegis(prompt, ctx);
+      Object.assign(known, { exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: turn.exit_code !== null || Boolean(init), turns: turn.num_turns, model: turn.model });
       fs.writeFileSync(path.join(tickets, `${ticket.id}-stream.jsonl`), stdout);
       if (init) fs.writeFileSync(path.join(tickets, `${ticket.id}-init.json`), `${JSON.stringify(init, null, 2)}\n`);
       if (turn.state === 'OK') answer = turn.answer;
@@ -424,7 +440,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
         const lines = applySimulatedGates({ changes: gates.map((g) => ({ entry: ctx.simTable[g.id], target: valuesFor(g).target })), tenantFile, runDir: ctx.runDir });
         return { result: `applied ${gates.length} gate(s) to the simulated tenant`, output: lines.join('\n') };
       } catch (e) {
-        blocked.push(`not simulated: the simulated tenant does not hold what ${names.join(', ')} acts on (${e.message})`);
+        blocked.push(`not simulated: ${names.join(', ')} could not be applied to the simulated tenant: ${ctx.clean(e)}`);
       }
     }
     return { result: blocked.join('; '), output: 'SIMULATED OPERATOR: nothing was applied.' };
@@ -484,6 +500,8 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   const runId = path.basename(runDir);
   const ctx = {
     io, env, runDir, runId, customers, counts: { boundary_failures: 0, probes_refused: 0 },
+    // an error's message for the record: no absolute path of this machine
+    clean: (e) => String(e && e.message ? e.message : 'unknown error').split(runDir).join('<run folder>').split(homeOf(env)).join('~').split(os.homedir()).join('~'),
     backend: deps.backend || { command: 'claude', prefixArgs: [] }, spawn: deps.spawn,
     gates: catalog(deps.runbooksDir || RUNBOOKS), simTable: deps.simTable || SIM_GATES, transportFor: deps.transportFor || vendors.transportFor,
   };
@@ -502,6 +520,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
   data.writeReplacing(path.join(runDir, 'desk.html'), render.html(run));
   io.out(`\n=== Summary ===\n${render.summaryLines(run.summary).join('\n')}\n`);
   io.out(`Saved: ${path.join(runDir, 'run.json')}\nOpen in a browser: ${path.join(runDir, 'desk.html')}\n`);
+  if (run.tickets.some((t) => t.internal_error)) return 1;
   return run.tickets.some((t) => t.closing_state === 'FAILED') ? 2 : 0;
 }
 

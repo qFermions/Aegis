@@ -29,7 +29,7 @@ node scripts/demo/customer-desk.js --view ~/aegis-demo-runs/<run-id>
 
 Results go to `~/aegis-demo-runs/<run-id>/`, or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
 
-Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED; 4 dry run; 1 an input error or a refused folder.
+Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED; 4 dry run; 1 an input error, a refused folder, or the desk could not finish a ticket.
 
 ## What it costs
 

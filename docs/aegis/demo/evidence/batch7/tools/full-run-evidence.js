@@ -15,6 +15,7 @@ const clean = (s) => String(s)
   .replace(/\/(?:private\/)?(?:tmp|var\/folders)\/[^\s"'\]]*/g, '<tmp>')
   .replace(new RegExp(`-Users-${account}-`, 'g'), '-Users-<account>-')
   .replace(new RegExp(`\\b${account}\\b`, 'g'), '<account>')
+  .replace(/@[a-z0-9-]+\.example\.(?:com|org|net)\b/g, '@[@Aegion_DOMAIN]')
   .replaceAll('\u2014', '-');
 
 function walk(dir) {

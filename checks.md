@@ -110,6 +110,7 @@ The alternative is in the report's decisions: a model judge for claims, with the
 - **D8:** the last security round first went unrun on my own reasoning that the line could only tighten. I corrected that before the run.
 - **D9:** 12 em-dashes in `scripts/eval/README.md` predate this batch (the same count at `e56f0ab`); this batch added none, and I left them rather than widen the diff.
 - **D10:** two capture mistakes, fixed forward: `git add` of a missing `checks.md` aborted a stage (`832941d` then `f2be0f8`), and a wrong tool path gave empty DEV captures with a false "identical" in a commit message, corrected in `5cd0bf4`.
+- **D12:** the saved pages write the fictional customers' address domains as `[@Aegion_DOMAIN]`, because `scripts/pre-commit-check.js` blocked 30 of them. The scanner is unchanged. The run folders in `~/aegis-demo-runs/` keep the pages as they were.
 - **D11:** a hook re-announced Ponytail after a context compaction. The owner turned it off, and I treated it as off.
 
 ## Evidence review

@@ -67,11 +67,11 @@ body:has(#t-T8:target) nav a[href="#t-T8"] { border-color: var(--link); backgrou
 <p class="note">Customer A: 14-seat dental office. Closing state: <strong>RESOLVED (SIMULATED)</strong>.</p>
 <div class="step"><h3>Step 1: CUSTOMER</h3>
 <div class="meta"><span>Customer A: 14-seat dental office</span><span class="tag sim">SIMULATED</span><span>1 ms</span></div>
-<p class="result">sent an email: Locked out after a phone change, Authenticator gone</p><details><summary>Output</summary><pre class="shown">From: Front Desk Lead &lt;front.desk@dental-a.example.com&gt;
-To: Help Desk &lt;helpdesk@dental-a.example.com&gt;
+<p class="result">sent an email: Locked out after a phone change, Authenticator gone</p><details><summary>Output</summary><pre class="shown">From: Front Desk Lead &lt;front.desk@[@Aegion_DOMAIN]&gt;
+To: Help Desk &lt;helpdesk@[@Aegion_DOMAIN]&gt;
 Subject: Locked out after changing my phone
 Date: Tue, 03 Nov 2026 08:05:00 +0000
-Message-ID: &lt;desk-t1@dental-a.example.com&gt;
+Message-ID: &lt;desk-t1@[@Aegion_DOMAIN]&gt;
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 
@@ -547,11 +547,11 @@ An engineer leaves Friday, remove access everywhere. at least one change cannot 
 <p class="note">Customer B: 40-person design studio. Closing state: <strong>OPEN</strong>.</p><p class="reason">not simulated: the operator simulator&#39;s table has no entry for gws-password-reset-password-portal; not simulated: the operator simulator&#39;s table has no entry for gws-password-reset-cookies-portal</p>
 <div class="step"><h3>Step 1: CUSTOMER</h3>
 <div class="meta"><span>Customer B: 40-person design studio</span><span class="tag sim">SIMULATED</span><span>0 ms</span></div>
-<p class="result">sent an email: A MacBook was stolen from a car</p><details><summary>Output</summary><pre class="shown">From: Studio Manager &lt;studio.manager@studio-b.example.net&gt;
-To: IT Help &lt;help@studio-b.example.net&gt;
+<p class="result">sent an email: A MacBook was stolen from a car</p><details><summary>Output</summary><pre class="shown">From: Studio Manager &lt;studio.manager@[@Aegion_DOMAIN]&gt;
+To: IT Help &lt;help@[@Aegion_DOMAIN]&gt;
 Subject: MacBook stolen from a car last night
 Date: Tue, 03 Nov 2026 07:40:00 +0000
-Message-ID: &lt;desk-t3@studio-b.example.net&gt;
+Message-ID: &lt;desk-t3@[@Aegion_DOMAIN]&gt;
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 
@@ -706,11 +706,11 @@ no change record: R3 gate jamf-lock-erase-wipe-portal binds no read-back (its fi
 <p class="note">Customer E: 12-person accounting firm. Closing state: <strong>OPEN</strong>.</p><p class="reason">the answer names mailbox-full-access-grant, a PREVIEW ONLY marker in mailbox-permissions; mailbox-send-as-grant, a PREVIEW ONLY marker in mailbox-permissions: the runbook authorizes no change there, so nothing can be approved</p>
 <div class="step"><h3>Step 1: CUSTOMER</h3>
 <div class="meta"><span>Customer E: 12-person accounting firm</span><span class="tag sim">SIMULATED</span><span>1 ms</span></div>
-<p class="result">sent an email: A staff member needs the shared mailbox and to send from it</p><details><summary>Output</summary><pre class="shown">From: Office Manager &lt;office.manager@accounting-e.example.org&gt;
-To: IT Support &lt;support@accounting-e.example.org&gt;
+<p class="result">sent an email: A staff member needs the shared mailbox and to send from it</p><details><summary>Output</summary><pre class="shown">From: Office Manager &lt;office.manager@[@Aegion_DOMAIN]&gt;
+To: IT Support &lt;support@[@Aegion_DOMAIN]&gt;
 Subject: Shared mailbox access for a staff member
 Date: Tue, 03 Nov 2026 10:00:00 +0000
-Message-ID: &lt;desk-t4@accounting-e.example.org&gt;
+Message-ID: &lt;desk-t4@[@Aegion_DOMAIN]&gt;
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 
@@ -834,11 +834,11 @@ probe: does not apply</pre></details></div>
 <p class="note">Customer C: 80-person logistics company. Closing state: <strong>OPEN</strong>.</p><p class="reason">the answer names no gate the runbooks know, so there is nothing to approve</p>
 <div class="step"><h3>Step 1: CUSTOMER</h3>
 <div class="meta"><span>Customer C: 80-person logistics company</span><span class="tag sim">SIMULATED</span><span>0 ms</span></div>
-<p class="result">sent an email: Invoices from one vendor stopped arriving</p><details><summary>Output</summary><pre class="shown">From: Accounts Payable &lt;accounts.payable@logistics-c.example.org&gt;
-To: IT Service Desk &lt;servicedesk@logistics-c.example.org&gt;
+<p class="result">sent an email: Invoices from one vendor stopped arriving</p><details><summary>Output</summary><pre class="shown">From: Accounts Payable &lt;accounts.payable@[@Aegion_DOMAIN]&gt;
+To: IT Service Desk &lt;servicedesk@[@Aegion_DOMAIN]&gt;
 Subject: Invoices from one vendor stopped arriving
 Date: Tue, 03 Nov 2026 09:15:00 +0000
-Message-ID: &lt;desk-t5@logistics-c.example.org&gt;
+Message-ID: &lt;desk-t5@[@Aegion_DOMAIN]&gt;
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 
@@ -1229,11 +1229,11 @@ okta-user-lifecycle-unsuspend-portal: INCONCLUSIVE: no read-back to run; the run
 <p class="note">Customer E: 12-person accounting firm. Closing state: <strong>OPEN</strong>.</p><p class="reason">the answer names mailbox-full-access-grant, a PREVIEW ONLY marker in mailbox-permissions; mailbox-send-as-grant, a PREVIEW ONLY marker in mailbox-permissions: the runbook authorizes no change there, so nothing can be approved</p>
 <div class="step"><h3>Step 1: CUSTOMER</h3>
 <div class="meta"><span>Customer E: 12-person accounting firm</span><span class="tag sim">SIMULATED</span><span>0 ms</span></div>
-<p class="result">sent an email: A second staff member needs the same shared mailbox</p><details><summary>Output</summary><pre class="shown">From: Office Manager &lt;office.manager@accounting-e.example.org&gt;
-To: IT Support &lt;support@accounting-e.example.org&gt;
+<p class="result">sent an email: A second staff member needs the same shared mailbox</p><details><summary>Output</summary><pre class="shown">From: Office Manager &lt;office.manager@[@Aegion_DOMAIN]&gt;
+To: IT Support &lt;support@[@Aegion_DOMAIN]&gt;
 Subject: Shared mailbox access for a staff member
 Date: Tue, 03 Nov 2026 14:30:00 +0000
-Message-ID: &lt;desk-t8@accounting-e.example.org&gt;
+Message-ID: &lt;desk-t8@[@Aegion_DOMAIN]&gt;
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 

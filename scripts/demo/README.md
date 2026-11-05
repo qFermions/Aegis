@@ -57,7 +57,7 @@ Every simulated part says SIMULATED in text.
 
 ## What one thing the demo adds to a session
 
-The session is told the customer's label and platforms, and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
+The session is told the customer's label and platforms, and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the Gate lines that close the answer count, so a line quoted from the ticket or mentioned in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
 
 ## Closing states
 
@@ -66,7 +66,7 @@ The session is told the customer's label and platforms, and to end its answer wi
 | RESOLVED (SIMULATED) | Every read-back passed and each change record reads done |
 | INCONCLUSIVE | A change was simulated and at least one read-back proves nothing, or its gate says `Read-back: none` |
 | OPEN | The answer names no gate the runbooks know, names a PREVIEW ONLY marker, or names a gate the simulator does not map; or the session did not finish |
-| CLARIFY | The answer names no gate and asks a question |
+| CLARIFY | The answer closes with `Gate: none` and asks a question that ends a line |
 | FAILED | The boundary check failed, the answer followed an injected instruction, or a read-back shows the change not done |
 
 ## What to expect from the runbooks as they are

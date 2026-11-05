@@ -33,7 +33,7 @@ const checks = require('../eval/judged/checks.js');
 const paths = require('../eval/judged/paths.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
-const { catalog, namedGates, saysNoGate, GATE_LINE, RUNBOOKS } = require('./catalog.js');
+const { catalog, namedGates, clarifies, RUNBOOKS } = require('./catalog.js');
 const data = require('./customers.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGate } = require('./sim/gates.js');
@@ -375,8 +375,7 @@ async function workTicket(ticket, ctx) {
   // 6 APPROVAL
   const names = namedGates(answer);
   if (!names.length) {
-    // CLARIFY proposes no change: it says Gate: none and asks something outside that line
-    const asks = saysNoGate(answer) && answer.replace(GATE_LINE, '').includes('?');
+    const asks = clarifies(answer);
     return close(asks ? 'CLARIFY' : 'OPEN', asks ? null : 'the answer names no gate the runbooks know, so there is nothing to approve');
   }
   const unknown = names.filter((n) => !ctx.gates.has(n));

@@ -31,24 +31,42 @@ function catalog(dir = RUNBOOKS) {
   return found;
 }
 
-const GATE_LINE = /^[\s>*_`#-]*Gate:[\s*_`]*(.*)$/gim;
-// True when the answer has a Gate line that says none.
-const saysNoGate = (answer) => [...String(answer).matchAll(GATE_LINE)].some((m) => /^none\b/i.test(m[1]));
+// A line that says Gate: <value>. A leading > is not allowed: a quote is the ticket's text, not advice.
+const GATE_LINE = /^[\s*_`-]*Gate:[\s*_`]*(.*)$/i;
 
-// The gates an answer names: its `Gate: <id>` lines (the desk's prompt asks for them), else any
-// SAFETY GATE [id] it writes. An id has a hyphen, so prose after an id is not read as one.
+// The Gate lines that close the answer, and the text before them. Only these count: the prompt asks
+// the answer to end with them, and a line anywhere else may be the ticket's own text repeated (SR-3).
+function closingGateLines(answer) {
+  const lines = String(answer).split('\n');
+  const values = [];
+  let i = lines.length - 1;
+  for (; i >= 0; i -= 1) {
+    if (lines[i].trim() === '') continue;
+    const m = GATE_LINE.exec(lines[i]);
+    if (!m) break;
+    values.unshift(m[1]);
+  }
+  return { values, body: lines.slice(0, i + 1).join('\n') };
+}
+
+// The gates an answer names. An id has a hyphen, so prose after an id is not read as one.
 function namedGates(answer) {
   const names = [];
-  const add = (id) => { if (!names.includes(id)) names.push(id); };
-  for (const m of String(answer).matchAll(GATE_LINE)) {
-    for (const part of m[1].split(/[,;]/)) {
+  for (const value of closingGateLines(answer).values) {
+    for (const part of value.split(/[,;]/)) {
       const id = /^[\s*_`[]*([a-z0-9]+(?:-[a-z0-9]+)+)/.exec(part);
-      if (id) add(id[1]);
+      if (id && !names.includes(id[1])) names.push(id[1]);
     }
   }
-  if (names.length) return names;
-  for (const m of String(answer).matchAll(/SAFETY GATE \[([a-z0-9][a-z0-9-]*)\]/g)) add(m[1]);
   return names;
 }
 
-module.exports = { REPO_ROOT, RUNBOOKS, GATE_LINE, catalog, namedGates, saysNoGate };
+// A clarifying answer proposes no change: it closes with Gate: none and asks something. shortcut: a
+// question is a line that ends in a question mark, so one asked mid-line reads as no question; a
+// person reading the answer can tell, and the ticket then shows OPEN rather than a false CLARIFY.
+function clarifies(answer) {
+  const { values, body } = closingGateLines(answer);
+  return values.some((v) => /^none\b/i.test(v)) && /\?[\s*_`)]*$/m.test(body);
+}
+
+module.exports = { REPO_ROOT, RUNBOOKS, catalog, namedGates, clarifies };

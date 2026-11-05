@@ -1,0 +1,159 @@
+Saved output behind claims in checks.md. Local paths written <home> and <repo>.
+
+== T7: every changed path outside scripts/demo and docs/aegis/demo
+$ git diff --name-status 77b7114 HEAD, filtered
+M	.gitattributes
+M	.github/workflows/ci.yml
+M	checks.md
+M	docs/aegis/boundary-audit.md
+A	docs/explainers/batch6-customer-desk-quiz.md
+A	docs/explainers/batch6-customer-desk.md
+A	docs/review/batches/g4-checks.md
+A	docs/review/batches/g4-progress.md
+M	progress.md
+M	scripts/eval/judged/backends.js
+M	scripts/eval/judged/backends.test.js
+
+$ git diff --stat 77b7114 HEAD -- .claude CLAUDE.md PRODUCT_CONTRACT.md scripts/adapters scripts/eval
+ scripts/eval/judged/backends.js      | 35 ++++++++++++++++++++--
+ scripts/eval/judged/backends.test.js | 58 ++++++++++++++++++++++++++++++++++--
+ 2 files changed, 87 insertions(+), 6 deletions(-)
+
+$ git diff --stat 77b7114 HEAD -- PROJECT_STATE.md docs/aegis/production-readiness.md (nothing below means no change)
+
+== Secrets: the account name in the branch's history
+$ git log -p 77b7114..HEAD | grep -c "<the account name from whoami>"
+0
+
+== The 20 failures TMPDIR removes: failing tests per file at the base with the default temporary folder (this Mac's /var symlink)
+  41 scripts/command-safety-gates.test.js
+   1 scripts/gws-posture-audit.test.js
+   8 scripts/init-memory.test.js
+  11 scripts/security-audit.test.js
+ℹ tests 1859
+ℹ pass 1797
+ℹ fail 61
+ℹ skipped 1
+
+== T9: why not --bare
+$ claude --help (the --bare entry)
+  --bare                                Minimal mode: skip hooks (those defined
+                                        in settings and by installed plugins;
+                                        features built into Claude Code are
+                                        unaffected), LSP, plugin sync,
+                                        attribution, auto-memory, background
+                                        prefetches, keychain reads, and
+                                        CLAUDE.md auto-discovery. Sets
+                                        CLAUDE_CODE_SIMPLE=1. Anthropic auth is
+                                        strictly ANTHROPIC_API_KEY or
+                                        apiKeyHelper via --settings (OAuth and
+                                        keychain are never read). 3P providers
+                                        (Bedrock/Vertex/Foundry) use their own
+                                        credentials. Skills still resolve via
+                                        /skill-name. Explicitly provide context
+                                        via: --system-prompt[-file],
+                                        --append-system-prompt[-file], --add-dir
+                                        (CLAUDE.md dirs), --mcp-config,
+                                        --settings, --agents, --plugin-dir.
+                                        default, except under --bare outside
+                                        cloud and background sessions): the
+                                        prompt is rendered on the conversation's
+                                        first request - a --system-prompt or
+                                        --append-system-prompt included - sent,
+                                        and recorded; every later request and
+                                        resume sends the record as-is, even when
+                                        a later launch passes different text,
+                                        until the conversation is compacted.
+                                        off: never record; the prompt is
+                                        rendered fresh every request (for
+                                        iterating on prompt text). (choices:
+                                        "on", "off")
+  --teleport [session]                  Resume a teleport session, optionally
+                                        specify session ID
+  --tmux                                Create a tmux session for the worktree
+                                        (requires --worktree). Uses iTerm2
+                                        native panes when available; use
+                                        --tmux=classic for traditional tmux.
+  --tools <tools...>                    Specify the list of available tools from
+                                        the built-in set. Use "" to disable all
+                                        tools, "default" to use the default set,
+                                        or specify tool names (e.g.
+                                        "Bash,Edit,Read").
+  --verbose                             Override verbose mode setting from
+                                        config
+  -v, --version                         Output the version number
+  -w, --worktree [name]                 Create a new git worktree for this
+                                        session (optionally specify a name)
+
+Commands:
+  agents [options]                      Manage background agents
+  attach <id|name>                      Open a background session in this
+                                        terminal. <id> is the short id that
+                                        `claude --bg` prints and `claude agents`
+                                        lists. Part of the session name works
+                                        too
+  auth                                  Manage authentication
+  auto-mode                             Inspect or reset auto mode configuration
+  doctor                                Check the health of your Claude Code
+                                        installation. Reads settings files in
+                                        the current directory without a trust
+                                        prompt. For a full checkup that can also
+                                        fix issues, run /doctor in a session.
+  gateway [options]                     Run the enterprise auth/telemetry
+                                        gateway
+  import [options] [source]             Import config from another AI coding
+                                        agent into Claude Code
+  install [options] [target]            Install Claude Code native build. Use
+                                        [target] to specify version (stable,
+                                        latest, or specific version)
+  logs <id|name>                        Print a background session's recent
+                                        terminal output
+  mcp                                   Configure and manage MCP servers
+  plugin|plugins                        Manage Claude Code plugins
+  purge [options] [path]                Delete a project's Claude Code data
+                                        (transcripts, tasks, file history, and
+                                        its entry in ~/.claude.json) from this
+                                        computer only
+  respawn [options] [id]                Restart a background session, or all of
+                                        them with --all, so it runs the current
+                                        Claude Code version
+  rm <id>                               Delete a background session, and its
+                                        worktree when that is safe. Works on
+                                        sessions that have already exited
+  setup-token                           Set up a long-lived authentication token
+                                        (requires Claude subscription)
+  stop|kill <id>                        Stop a background session. Its
+                                        conversation is kept: `claude attach
+                                        <id>` opens it again, `claude --resume`
+                                        works once it is stopped
+  ultrareview [options] [target]        Run a cloud-hosted multi-agent code
+                                        review of the current branch (or a PR
+                                        number / base branch) and print the
+                                        findings
+  update|upgrade                        Check for updates and install if
+                                        available; package-manager installs
+                                        update through the package manager
+
+== T4: the page in the installed Chrome, at the head, driven by Playwright 1.56.1
+browser 157.0.8103.38
+1280 light horizontal overflow px: 0 background: rgb(255, 255, 255)
+1280 dark horizontal overflow px: 0 background: rgb(17, 21, 27)
+390 light horizontal overflow px: 0 background: rgb(255, 255, 255)
+390 dark horizontal overflow px: 0 background: rgb(17, 21, 27)
+network requests other than the file: 0
+Saved: desk-1280.png.b64 is the 1280 px wide, light view; desk-390.png.b64 is the 390 px wide, dark view. Both show T4 of the real run, the first ticket, from the page's top, at 900 and 844 px tall. The other two combinations were measured and not saved.
+
+== V4: Playwright versions tried, none found a preinstalled Chromium
+1.56.1: launch failed: browserType.launch: Executable doesn't exist at <home>/Library/Caches/ms-playwright/chromium_he
+1.64.1: launch failed: browserType.launch: Executable doesn't exist at <home>/Library/Caches/ms-playwright/chromium_he
+1.57.0: launch failed: browserType.launch: Executable doesn't exist at <home>/Library/Caches/ms-playwright/chromium_he
+1.55.1: launch failed: browserType.launch: Executable doesn't exist at <home>/Library/Caches/ms-playwright/chromium_he
+1.54.2: launch failed: browserType.launch: Executable doesn't exist at <home>/Library/Caches/ms-playwright/chromium_he
+1.53.2: launch failed: browserType.launch: Executable doesn't exist at <home>/Library/Caches/ms-playwright/chromium_he
+1.52.0: launch failed: browserType.launch: Executable doesn't exist at <home>/Library/Caches/ms-playwright/chromium_he
+
+== V11: what each real session read (its stream's tool calls)
+T4: <repo>/docs/aegis/workflow.md, <repo>/tasks/lessons.md, <repo>/modules/security/security-doctrine.md, <repo>/.claude/commands/mailbox-permissions.md, <repo>/.claude/commands/shared-mailbox.md, <repo>/scripts/replay/fixtures/shared-mailbox-demo.md, <repo>/scripts/replay/README.md, <repo>/memory/replay/index.json
+T6: <repo>/docs/aegis/workflow.md, <repo>/progress.md, <repo>/modules/security/security-doctrine.md, <repo>/tasks/lessons.md, <repo>/.claude/commands/okta-user-lifecycle.md, <repo>/.claude/commands/okta-mfa-reset.md, <repo>/.claude/commands/security-alert-triage.md, <repo>/.claude/commands/gws-account-containment.md
+
+== V7: the local /context runs: 3 by hand while finding the leak, 3 in the first probe, 4 in the second; the last 4 are in isolation-probe.txt (A, B, C and the init read).

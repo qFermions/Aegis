@@ -2,7 +2,7 @@
 
 One command that plays a support desk end to end. Fictional customers send tickets; the real Aegis code takes them in; a real Aegis session answers; the real checks grade the answer; a clearly labeled SIMULATED OPERATOR carries out the approved step on a simulated tenant; the real connector code reads it back and proves it or does not. Every step shows in the terminal and in one local HTML page.
 
-AEGIS ADVISES; HUMANS EXECUTE. In this demo nothing Aegis runs can change state. The only code that changes state is `sim/gates.js`, and it writes only the simulated tenant file inside the run folder.
+AEGIS ADVISES; HUMANS EXECUTE. In this demo nothing Aegis runs can change a tenant. The only code that changes one is `sim/gates.js`, and it writes only the simulated tenant file inside the run folder.
 
 This is a demo, not an evaluation. Demo on tickets written by the builder, simulated tenants and a simulated operator. It shows the pipeline, not answer quality. The held-out evaluation measures quality and is not part of this.
 
@@ -27,7 +27,7 @@ Rebuild the page from a saved run, with no model call:
 node scripts/demo/customer-desk.js --view ~/aegis-demo-runs/<run-id>
 ```
 
-Results go to `~/aegis-demo-runs/<run-id>/`, or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
+Results go to `~/aegis-demo-runs/<run-id>/` (the `claude` CLI also keeps its own record of each session under `~/.claude/projects/`), or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
 
 Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED, which wins over 1; 4 dry run; 1 an input error, a refused folder, or the desk could not finish a ticket. If the network tripwire fires, the run stops, exits 1 and marks `run.json` and the page.
 
@@ -41,7 +41,7 @@ Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 U
 |---|---|---|
 | 2 INTAKE | `scripts/intake/intake.js` | State, redaction counts, injection flags, the graph case |
 | 3 TRIAGE | `scripts/replay/replay-cli.js`, `scripts/intake/clarify.js` | Replay lookup, risk floor |
-| 4 AEGIS | `scripts/eval/judged/backends.js` | `claude -p` from the repository root; read-only tools; scrubbed environment; only this repository's settings and CLAUDE.md (`isolationArgs`, proof in `docs/aegis/demo/evidence/isolation-probe.txt`); or a replay of a verified answer with no model |
+| 4 AEGIS | `scripts/eval/judged/backends.js` | `claude -p` from the repository root; read-only tools; scrubbed environment; only this repository's settings and CLAUDE.md (`isolationArgs`, proof of what loads in `docs/aegis/demo/evidence/isolation-probe.txt`; no model session has run under these flags yet); or a replay of a verified answer with no model |
 | 5 CHECKS | `scripts/eval/judged/checks.js` | Boundary, human confirmation, read-back, privacy, observed output, probe |
 | 6 APPROVAL | `scripts/audit/change-record.js` | Opens the change record; the person approving is simulated |
 | 8 READ-BACK | `scripts/adapters/*-client.js`, `change-record.js status` | The connector's own request, allow-list and verdict; only the wire is replaced |
@@ -71,11 +71,11 @@ The session is told the customer's label and platforms, and to end its answer wi
 
 ## What to expect from the runbooks as they are
 
-The demo shows Aegis as it is. Several tickets cannot resolve, and that is a finding rather than a fault of the demo:
+The demo shows Aegis as it is. Several tickets should not resolve, and that is a finding rather than a fault of the demo. T4 ran for real; the others are what the runbooks lead to, and each outcome depends on the gates the answer names:
 
-- **T4**: the runbook has only a PREVIEW ONLY marker for a mailbox grant (`mailbox-grant-portal` in `.claude/commands/mailbox-permissions.md`), and no connector reads Exchange delegation. T4 ends OPEN.
-- **T8**: it can hit the cache only when T4 was verified in the same run, so with the real runbooks it is a MISS and gets its own session. The CACHE_HIT path is proved in `customer-desk.test.js` with a fixture gate.
-- **T3 and T5**: their gates say `Read-back: none`, so they end INCONCLUSIVE after the simulated change.
+- **T4**: the runbook has only PREVIEW ONLY markers for a mailbox grant (`mailbox-grant-portal`, `mailbox-full-access-grant` and `mailbox-send-as-grant` in `.claude/commands/mailbox-permissions.md`), and no connector reads Exchange delegation. T4 ended OPEN in the first real run.
+- **T8**: it can hit the cache only when T4 was verified in the same run, so with the real runbooks it should be a MISS and get its own session. The CACHE_HIT path is proved in `customer-desk.test.js` with a fixture gate.
+- **T3 and T5**: their gates say `Read-back: none`, so they should end INCONCLUSIVE after the simulated change.
 
 ## Files
 

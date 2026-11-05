@@ -5,7 +5,7 @@
 // grade the answer; a clearly labeled SIMULATED OPERATOR carries out the approved step on a simulated
 // tenant inside the run folder; the real connector code reads it back and proves it or does not.
 //
-// AEGIS ADVISES; HUMANS EXECUTE. Nothing Aegis runs here can change state. Only sim/gates.js does,
+// AEGIS ADVISES; HUMANS EXECUTE. Nothing Aegis runs here can change a tenant. Only sim/gates.js does,
 // and only to the tenant copy in the run folder. This is a demo, not an evaluation: the builder wrote
 // the tickets, so a run shows the pipeline and says nothing about answer quality.
 //

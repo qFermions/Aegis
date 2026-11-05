@@ -19,10 +19,10 @@ const DESK = path.join(__dirname, '..', 'demo', 'customer-desk.js');
 const STALE = path.join(path.parse(process.cwd()).root, 'aegis-no-such-folder', 'x');
 
 function childEnv(extra = {}) {
-  const env = { ...process.env, TMPDIR: STALE, TMP: STALE, TEMP: STALE, ...extra };
+  const env = { ...process.env, TMPDIR: STALE, TMP: STALE, TEMP: STALE };
   delete env.AEGIS_AUDIT_DIR;
   delete env.NODE_OPTIONS;
-  return env;
+  return { ...env, ...extra };
 }
 
 const CHILD = `

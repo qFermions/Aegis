@@ -118,6 +118,15 @@ test('the page avoids the listed patterns and themes both modes', () => {
   assert.match(css, /overflow-wrap/);
 });
 
+test('tickets that did not run are named at the top of the page, in text', () => {
+  const run = fixtureRun();
+  run.not_run = [{ id: 'T8', reason: 'the <limit> was reached' }];
+  const html = render.html(run);
+  assert.ok(html.indexOf('Did not run: T8') < html.indexOf('<nav'));
+  assert.ok(html.includes('the &lt;limit&gt; was reached'));
+  assert.ok(!render.html(fixtureRun()).includes('Did not run'));
+});
+
 test('a run with no tickets still renders, and the summary names what it holds', () => {
   const html = render.html({ schema: 'aegis.demo.run.v1', run_id: 'r', started_at: '2026-11-04T10:00:00.000Z', tickets: [], summary: render.summarize([], {}) });
   assert.match(html, /No tickets in this run/);

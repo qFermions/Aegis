@@ -265,6 +265,39 @@ test('each desk session keeps a debug log in its ticket folder, the proof of wha
   assert.equal(call.args[call.args.indexOf('--debug-file') + 1], path.join(r.results, 'customers', 'B', 'tickets', 'T7-debug.log'));
 });
 
+test('the allowance guard stops before a ticket that could pass the limit, and records what did not run (batch 7, task 8)', async (t) => {
+  const r = await runDesk(t, { only: ['T1', 'T2', 'T3'], answers: { T1: good('mfa-require-reregister-portal') }, argv: ['--budget-usd', '3', '--spent-usd', '0'] });
+  assert.deepEqual(r.run.tickets.map((k) => k.id), ['T1']);
+  assert.deepEqual(r.run.not_run.map((n) => n.id), ['T2', 'T3']);
+  assert.match(r.run.not_run[0].reason, /0\.50 spent.*about 4\.00.*3\.00/);
+  assert.match(r.out, /Did not run: T2, T3/);
+  assert.match(fs.readFileSync(path.join(r.results, 'desk.html'), 'utf8'), /Did not run: T2, T3/);
+  assert.equal(r.calls().length, 1);
+  assert.equal(r.code, 0);
+  // money spent before this command counts
+  const earlier = await runDesk(t, { only: ['T1'], argv: ['--budget-usd', '20', '--spent-usd', '18.5'] });
+  assert.deepEqual(earlier.run.tickets, []);
+  assert.deepEqual(earlier.run.not_run.map((n) => n.id), ['T1']);
+  assert.ok(fs.existsSync(path.join(earlier.results, 'desk.html')), 'the page is written even with nothing run');
+});
+
+test('a session that reports no cost counts at its likely cost, so the guard is never blind', async (t) => {
+  const r = await runDesk(t, { only: ['T1', 'T3'], sut: { mode: 'error' }, argv: ['--budget-usd', '3'] });
+  assert.deepEqual(r.run.tickets.map((k) => k.id), ['T1']);
+  assert.deepEqual(r.run.not_run.map((n) => n.id), ['T3']);
+});
+
+test('the guard takes only a number, and --spent-usd needs --budget-usd', async () => {
+  const io = { out: () => {}, err: () => {} };
+  assert.equal(await desk.main(['--budget-usd', 'lots'], {}, io), 1);
+  assert.equal(await desk.main(['--budget-usd', '-1'], {}, io), 1);
+  assert.equal(await desk.main(['--spent-usd', '1'], {}, io), 1);
+  assert.equal(await desk.main(['--budget-usd', '20', '--spent-usd', 'x'], {}, io), 1);
+  const out = [];
+  assert.equal(await desk.main(['--budget-usd', '20', '--spent-usd', '1.5', '--only', 'T7'], {}, { out: (s) => out.push(s), err: () => {} }), 4);
+  assert.match(out.join(''), /Limit: 20\.00 US dollars, 1\.50 already spent/);
+});
+
 // ── Closing states ────────────────────────────────────────────────────────────────────────────
 
 test('a boundary failure stops the ticket at step 5: FAILED, nothing approved, the tenant untouched', async (t) => {

@@ -37,7 +37,7 @@ for (const t of run.tickets) {
   const init = fileOf(t.id, '-init.json');
   if (init) fs.writeFileSync(path.join(out, 'init', `${t.id}-init.json`), clean(fs.readFileSync(init, 'utf8')));
   const answer = fileOf(t.id, '-answer.md');
-  if (answer) fs.writeFileSync(path.join(out, 'answers', `${t.id}-answer.md`), clean(fs.readFileSync(answer, 'utf8')));
+  if (answer) fs.writeFileSync(path.join(out, 'answers', `${t.id}-answer.txt`), clean(fs.readFileSync(answer, 'utf8')));
 }
 const cost = (t) => { const m = t.steps.find((s) => s.n === 4); return m && typeof m.cost_usd === 'number' ? m.cost_usd : null; };
 const money = (n) => (n === null ? 'none' : n.toFixed(2));

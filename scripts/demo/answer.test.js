@@ -25,7 +25,7 @@ const a = require('./answer.js');
 const { catalog } = require('./catalog.js');
 
 const FIXTURES = path.join(__dirname, 'fixtures', 'answers');
-const fixture = (name) => fs.readFileSync(path.join(FIXTURES, `${name}.md`), 'utf8');
+const fixture = (name) => fs.readFileSync(path.join(FIXTURES, `${name}.txt`), 'utf8');
 const KINDS = ['routine', 'multi-system', 'security'];
 const card = (lines) => ['## Fix', ...lines].join('\n');
 const GOOD_PARTS = [
@@ -106,7 +106,7 @@ test('task 8: the five answer checks, in page order, pass on a good answer and e
 });
 
 test('the INVESTIGATE step rule: steps that only look pass, a step that changes something does not', () => {
-  const t5 = fs.readFileSync(path.join(__dirname, 'fixtures', 'full-run-1', 'T5-answer.md'), 'utf8');
+  const t5 = fs.readFileSync(path.join(__dirname, 'fixtures', 'full-run-1', 'T5-answer.txt'), 'utf8');
   const looks = a.onlyLooks(t5);
   assert.ok(looks.steps.length >= 3, `T5 lists its steps: ${looks.steps.join(' | ')}`);
   assert.equal(looks.looks, true, `no step changes anything: ${looks.change}`);

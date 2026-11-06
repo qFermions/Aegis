@@ -1098,7 +1098,7 @@ test('task 1, desk side: Gate lines are read from the closing aegis-desk block, 
 });
 
 test('task 6: a question counts wherever its question mark sits in the line; T7\'s full-run-1 answer is CLARIFY', async (t) => {
-  const t7 = fs.readFileSync(path.join(FULL_RUN_1, 'T7-answer.md'), 'utf8');
+  const t7 = fs.readFileSync(path.join(FULL_RUN_1, 'T7-answer.txt'), 'utf8');
   const r = await runDesk(t, { only: ['T7'], answers: { T7: t7 } });
   assert.equal(r.ticket('T7').closing_state, 'CLARIFY', r.ticket('T7').reason);
   const { clarifies } = require('./catalog.js');
@@ -1109,7 +1109,7 @@ test('task 6: a question counts wherever its question mark sits in the line; T7\
 });
 
 test('task 6: an answer that only looks, names no change and asks nothing closes INVESTIGATE with its steps; one that changes something does not', async (t) => {
-  const t5 = fs.readFileSync(path.join(FULL_RUN_1, 'T5-answer.md'), 'utf8');
+  const t5 = fs.readFileSync(path.join(FULL_RUN_1, 'T5-answer.txt'), 'utf8');
   const r = await runDesk(t, { only: ['T5'], answers: { T5: t5 } });
   const k = r.ticket('T5');
   assert.equal(k.closing_state, 'INVESTIGATE', k.reason);

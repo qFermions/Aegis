@@ -99,7 +99,7 @@ The demo shows Aegis as it is. Several tickets should not resolve, and that is a
 | `answer.js` | Reads an answer the way a tech meets it: the Fix card, the closing `aegis-desk` block, the five answer checks of step 5 and the INVESTIGATE step rule (batch 8) |
 | `catalog.js` | What the runbooks say about a gate, read with the audit code's own parsers |
 | `customers.js`, `customers/` | The fictional data and its loader: `customers.json`, `tickets.json` (the tidy set), `tickets-messy.json` (the messy set), and per customer `tenant.json` and `profile.md` (what the session is told about that customer, in place of CLAUDE.md's default environment) |
-| `fixtures/` | Test fixtures: three answers in the Fix card format and two answers from full run 1 |
+| `fixtures/` | Test fixtures, kept as `.txt` so no check reads them as instructions: three answers in the Fix card format and two answers from full run 1 |
 | `sim/gates.js` | The SIMULATED OPERATOR: gate id to state change |
 | `sim/vendors.js` | Answers connector requests from the simulated tenant |
 | `render.js` | The terminal lines and `desk.html` |

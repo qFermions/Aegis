@@ -680,7 +680,9 @@ test('two gates: the ticket resolves only when both read-backs pass; one none-re
   const k = both.ticket('T2');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
   assert.match(step(k, 8).result, /4 of 4/);
-  const mixed = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'gws-offboard-suspend-portal') } });
+  // batch 8, task 3 gave gws-offboard-suspend-portal a read-back (verify-suspended), so the gate with no
+  // read-back in this case is now the Drive transfer
+  const mixed = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'gws-offboard-drive-transfer-portal') } });
   assert.equal(mixed.ticket('T2').closing_state, 'INCONCLUSIVE');
 });
 

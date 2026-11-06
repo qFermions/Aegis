@@ -196,3 +196,13 @@ test('the default organization\'s tokens are read from the dictionary, without t
   for (const tok of ['[@Aegion_SIZE]', '[@Aegion_REMOTE_ACCESS]', '[@Aegion_VOIP_URL]']) assert.ok(real.includes(tok), tok);
   for (const tok of ['[@Aegion_DOMAIN]', '[@Aegion_GITHUB_ORG]', '[@Aegion_OKTA_ORG_URL]', '[@Aegion_JIRA_SPACE]']) assert.ok(!real.includes(tok), tok);
 });
+
+// Final security review: indenting a numbered change step two spaces or a tab must not hide it from the
+// change scan, with or without a card. A wrong implementation it catches: scanning with the card's narrow
+// step pattern.
+test('an indented numbered change line is still scanned, with or without a card', () => {
+  const noCard = "1. Open the Entra sign-in logs for [UPN].\n   2. Reset the user's MFA methods.\n\t3. Disable the account.";
+  assert.equal(a.onlyLooks(noCard).looks, false);
+  const stray = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the logs.', '2. Read the user page.', '**Tell the user:** We are on it.', '  3. Reset the MFA methods.', ...GOOD_PARTS.slice(5, 7)]);
+  assert.equal(a.onlyLooks(stray).looks, false);
+});

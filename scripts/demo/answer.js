@@ -24,6 +24,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const STEP = /^ ?(?:\*\*)?(\d+)[.)](?:\*\*)?[ \t]+(.+)$/;
+// Any numbered line at any indent: what the change scan and the no-card step list read, so indenting a
+// step cannot hide a change from INVESTIGATE (final security review).
+const ANY_STEP = /^[ \t]*(?:\*\*)?(\d+)[.)](?:\*\*)?[ \t]+(.+)$/;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 
@@ -194,7 +197,7 @@ const CHANGE_WORD = new RegExp(`(?<![A-Za-z-])(?:${[...new Set(CHANGE_STEMS.flat
 function answerSteps(answer) {
   const card = fixCard(answer);
   if (card.present && card.steps.length) return card.steps;
-  return deskBlock(answer).body.split(/\r?\n/).map((l) => STEP.exec(l)).filter(Boolean).map((m) => m[2].replace(/\*\*$/, '').trim());
+  return deskBlock(answer).body.split(/\r?\n/).map((l) => ANY_STEP.exec(l)).filter(Boolean).map((m) => m[2].replace(/\*\*$/, '').trim());
 }
 
 // The step half of the INVESTIGATE rule: at least one step, and no change word in the steps, in any text
@@ -203,7 +206,7 @@ function answerSteps(answer) {
 function onlyLooks(answer) {
   const steps = answerSteps(answer);
   const card = fixCard(answer);
-  const extra = card.present ? [card.parts.doThis || '', ...card.text.split(/\r?\n/).filter((l) => STEP.test(l))] : [];
+  const extra = card.present ? [card.parts.doThis || '', ...card.text.split(/\r?\n/).filter((l) => ANY_STEP.test(l))] : [];
   const change = [...steps, ...extra].find((s) => CHANGE_WORD.test(s)) || null;
   return { steps, looks: steps.length > 0 && change === null, change };
 }

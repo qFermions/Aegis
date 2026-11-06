@@ -104,7 +104,7 @@ node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
 - Okta Admin Console → Reports → System Log → search for `[UPN]` → read whether the reset event was recorded at all.
 - Fallback: pick **Create a temporary password** in the gate below and hand `[TEMP_PASSWORD]` over out of band, or use the Okta API reset with `sendEmail=false`, which returns the reset link for you to deliver out of band.
 
-**Before the click:** write the current UTC time in the ticket as `[NOT_BEFORE]`. The read-back counts only events at or after it, so a time written after the click misses the reset and an older time can match an earlier one.
+**Before the click:** take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket. The read-back counts only events at or after it, so a time written after the click misses the reset and an older time can match an earlier one.
 
 <!-- SAFETY GATE [okta-user-lifecycle-reset-password-portal] -->
 - **Target:** [UPN]

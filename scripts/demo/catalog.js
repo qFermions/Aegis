@@ -120,13 +120,20 @@ function namedGates(answer) {
 }
 
 // A clarifying answer proposes no change: it closes with Gate: none and asks something. A question is a
-// question mark that ends a sentence anywhere in a line of the answer's own text (batch 8, task 6), not
-// in a quote, a heading or a line that is all bold; one inside a link (?site=all) ends nothing.
-// shortcut: a rhetorical question reads as a question too, so such an answer shows CLARIFY; the page
-// shows the answer for a person to read.
+// question mark that ends a sentence anywhere in a line of the answer's own text (batch 8, task 6): not in
+// a quote, a heading, a line that is all bold, a code fence or inline code, and not right before a
+// closing quote mark, which is the ticket's question repeated (code review 1, finding 5); one inside a
+// link (?site=all) ends nothing. shortcut: a rhetorical question reads as a question too, so such an
+// answer shows CLARIFY; the page shows the answer for a person to read.
 function clarifies(answer) {
   const { values, body } = closingGateLines(answer);
-  return values.some(says_none) && body.split(/\r?\n/).some((l) => !/^\s*(?:[>#]|\*\*.*\*\*\s*$)/.test(l) && /\?(?=[\s*_`)"']|$)/.test(l));
+  if (!values.some(says_none)) return false;
+  let fenced = false;
+  return body.split(/\r?\n/).some((l) => {
+    if (/^\s*```/.test(l)) { fenced = !fenced; return false; }
+    if (fenced || /^\s*(?:[>#]|\*\*.*\*\*\s*$)/.test(l)) return false;
+    return /\?+(?=[\s*_)]|$)/.test(l.replace(/`[^`]*`/g, ' '));
+  });
 }
 
-module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, contradictsItself, clarifies };
+module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, contradictsItself, clarifies, says_none };

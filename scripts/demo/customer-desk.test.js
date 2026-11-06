@@ -1310,3 +1310,14 @@ test('an R1 gate uses its section\'s read only when there is exactly one, and a 
   fs.writeFileSync(path.join(dir, 'fenced.md'), ['# fixture', '', '```bash', '# HUMAN-RUN', '# SAFETY GATE [fixture-fenced]', '# Target: [UPN]', '# Reversibility: R1: undo is one click', '# Read-back: none, R1: no change record', 'do-the-change', '# read-back:', 'node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status SUSPENDED --execute', '```', ''].join('\n'));
   assert.deepEqual(catalog(dir).get('fixture-fenced').reads.map((r) => r.kind), ['okta:verify-status']);
 });
+
+// Code review 1, finding 5: a question mark in code or in the ticket's own quoted words is not Aegis
+// asking. A wrong implementation it catches: a rule that reads every "? " in the answer's text.
+test('CLARIFY ignores a question mark in code, in inline code, or right before a closing quote mark', () => {
+  const { clarifies } = require('./catalog.js');
+  assert.equal(clarifies('Run this read:\n```powershell\nGet-MgUser -All | ? { $_.AccountEnabled }\n```\nGate: none'), false, 'a fenced code line');
+  assert.equal(clarifies('Run `Get-MgUser -All | ? { $_.AccountEnabled }` first.\nGate: none'), false, 'inline code');
+  assert.equal(clarifies('The clerk asks "Is our email broken???" and the trace will tell.\nGate: none'), false, 'the ticket\'s question, quoted');
+  assert.equal(clarifies('Is it one site or all of them? Then I can say more.\nGate: none'), true, 'a question Aegis asks, mid-line');
+  assert.equal(clarifies('Which router does the office run??\nGate: none'), true, 'two question marks still ask');
+});

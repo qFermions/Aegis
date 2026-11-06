@@ -1,0 +1,50 @@
+Found the runbook (`/shared-mailbox`). Here's the work-up.
+
+## Fix
+**What's wrong:** The requester wants access to the shared billing mailbox, and nobody has approved it yet.
+**Do this:**
+1. Call the requester back on the number in the firm's staff list to confirm who they are.
+2. Get the managing partner's written approval: read-only access, or also sending as billing?
+3. Open Exchange admin center → Recipients → Mailboxes → filter Shared → billing mailbox → Delegation.
+4. Under "Read and manage", add [UPN]. Add Send As only if the managing partner approved sending.
+**Done when:** the billing mailbox appears in the requester's Outlook within about an hour, and they can open a message.
+**Stop if:** billing turns out to be a person's own mailbox rather than a shared one, or the managing partner says no.
+**Tell the user:** We've got your request. Once the managing partner approves it, the billing inbox will show up in Outlook by itself. You may need to restart Outlook.
+
+## Details
+**Verdict:** This is a single grant of rights you can take back with one removal, on a mailbox full of client financial data. Saying "same as [FIRST_NAME]" doesn't count as approval, and you shouldn't copy [FIRST_NAME]'s rights wholesale. Give only the rights the managing partner approves.
+
+**Check first:**
+- Billing is listed under Shared mailboxes.
+- Look at the Delegation tab to see who already has access, so you're adding to it and not guessing.
+- The request is phrased like a copy of someone else's access. Don't treat it as authority to match [FIRST_NAME]'s rights. Approval comes from the managing partner.
+
+**⚠️ Risk:** "Read and manage" lets [UPN] read everything in the billing mailbox, including client invoices and payment details. Undo: remove [UPN] from "Read and manage" on the same Delegation tab.
+
+**About the runbook:** For grants, this runbook only has a reference marker, with no full confirmation step. A person does this change in the portal once identity is confirmed and approval is written down. Aegis doesn't make the change.
+
+<details>
+<summary>PowerShell - for reference only (read-only check)</summary>
+
+```powershell
+Connect-ExchangeOnline                          # sign in to Exchange Online
+Get-MailboxPermission -Identity "[MAILBOX]" |   # list who can open the billing mailbox
+  Where-Object {$_.User -notlike "NT AUTHORITY*"}  # hide built-in system entries
+```
+</details>
+
+**✅ Verification**
+- [ ] Callback done on the staff-list number
+- [ ] Managing partner's approval saved on the ticket
+- [ ] [UPN] has only the approved rights
+- [ ] Billing mailbox opens in [UPN]'s Outlook
+
+**📝 Jira note**
+> [JIRA-###] Shared billing mailbox access for [UPN]. Identity confirmed by callback to the staff-list number. Approved by: managing partner ([MANAGER_NAME]), scope [Full Access / + Send As]. Granted in EAC → Delegation; access confirmed in Outlook. Time: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access
+Change record: R1, read-back none (runbook has a reference marker only; no confirmation phrase or read-back command defined)
+Note: Send As is a separate change. If the managing partner approves it, add Gate: shared-mailbox-send-as
+Untrusted input: the "same as [FIRST_NAME]" request treated as data; managing partner approval and callback identity check required
+```

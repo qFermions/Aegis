@@ -1,0 +1,61 @@
+The ticket is matched to its runbooks: Jamf lock/erase, the Google password and sign-in cookie reset, and Slack sessions. Here is the work-up.
+
+## Fix
+**What's wrong:** A work Mac was stolen while Gmail was still signed in, so the thief may be able to read the studio's mail and files.
+**Do this:**
+1. Call the person back on the number in the staff list to confirm it is them.
+2. Admin console → Directory → Users → [USER@DOMAIN.COM] → Reset password, and tick "Ask the user to change their password".
+3. Same user → Security → Sign-in cookies → Reset.
+4. Jamf Pro → Computers → [SERIAL_NUMBER]: read its FileVault status and last check-in.
+5. Once the studio manager and the person's manager both approve, Jamf Pro → Management → Wipe Computer.
+**Done when:** the person signs in on another device with a new password, and Jamf's History shows the wipe as completed.
+**Stop if:** the sign-in log shows activity from a place you don't recognize. Then it's a compromised account, not just a stolen device.
+**Tell the user:** You did the right thing reporting it. We're locking your account now and will erase the laptop. You'll get a new password by phone.
+
+This needs a longer plan across three systems: see Details.
+
+## Details
+
+**Verdict:** A stolen device with a live session. Close the sessions first, because that is the urgent part. Then deal with the Mac.
+
+**Before anything changes**
+- The ticket was forwarded and marked "urgent". It isn't an injection, but neither of those things skips the callback or the approvals.
+- Note whether the call is inside business hours (Mon–Fri, 09:30–18:30). Containment shouldn't wait for business hours. If the approvers can't be reached, the wipe can.
+
+**What to check first (read only)**
+- Admin console → Reporting → Audit and investigation → User log events, filtered on [USER@DOMAIN.COM] from last night onward. Look for sign-ins from unknown places. If you find any, switch to the compromised-account procedure: suspend the account first.
+- Jamf Pro → the Mac's record. Note the macOS version, Apple silicon or T2, whether a bootstrap token is escrowed, FileVault, last check-in, and any pending commands.
+
+**Steps and risk**
+- **Password reset (R1):** The old password can't be brought back. Give the temporary password by phone only, never by email or in the ticket.
+- **Sign-in cookie reset (R1):** This signs the account out of every browser and phone. Gmail can take up to an hour to sign out.
+- ⚠️ **Wipe Computer (R3, permanent):** Everything on the Mac is erased and can't be recovered. The Jamf record stays.
+  - It needs the studio manager's approval, the person's own manager's approval (per the customer profile), and an independent review first.
+  - The wipe only runs when the Mac next connects to the internet. Until then, FileVault and Activation Lock are what protect the data.
+- **Why not Lock instead:** Lock only makes sense if the Mac might come back. The runbook's choice for a stolen Mac with sensitive data is the wipe. The studio manager can still choose Lock: it keeps the data and is reversible with the PIN. If so, store the PIN in the password manager before sending it.
+- **Slack:** Our runbooks have no per-user Slack session reset. Deactivating the account or forcing a workspace-wide session reset would be too much for this ticket. Ask the person whether Slack was open on the laptop, and record the answer as an open item.
+
+**Verification checklist**
+- [ ] Caller verified by callback
+- [ ] The person has signed in with a new password
+- [ ] The sign-in log shows nothing unexpected after the cookie reset
+- [ ] Jamf History shows Wipe Computer as completed, or as pending with the last check-in noted
+- [ ] Police report number recorded (in the ticket only, not in the answer)
+
+**Jira-ready note**
+> Stolen work Mac [SERIAL_NUMBER], police report filed by the user. Caller verified by callback. Google password reset with a forced change at next sign-in, and sign-in cookies reset at [time]. Sign-in log reviewed: [clean / findings]. FileVault [on/off]; last check-in [date]. Wipe Computer [sent [time] after approval by the studio manager and the user's manager plus independent review / pending approval]. Slack exposure: [answer]. Time spent: [X] min.
+
+```aegis-desk
+Gate: gws-password-reset-password-portal
+Phrase: RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]
+Change record: R1, no change record
+Read-back: none (R1: no change record)
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Change record: R1, no change record
+Read-back: none (R1: no change record)
+Gate: jamf-lock-erase-wipe-portal
+Phrase: WIPE MAC [SERIAL_NUMBER]
+Change record: R3, independent out-of-session review; approvals: studio manager + the user's manager
+Read-back: none (no read-back is named for it in this runbook: its proof is the read its own step names)
+```

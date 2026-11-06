@@ -1,0 +1,52 @@
+## Fix
+**What's wrong:** Email is probably working. The vendor's invoices are most likely being held by the spam filter (quarantine), not lost.
+**Do this:**
+1. Open the Defender portal → Email & collaboration → Review → Quarantine. Filter by Sender = [SENDER], from last Tuesday to today.
+2. If nothing shows up there, open the Exchange admin center → Mail flow → Message trace and search the same sender and dates.
+3. For each invoice in quarantine, read why it was held. Release only the ones held as spam or bulk, one message at a time, to [USER@DOMAIN.COM].
+4. Get the IT lead's go before each release.
+**Done when:** the recipient sees all six invoices in their inbox.
+**Stop if:** a message was held as phish or malware, the trace says "Delivered", or the sender address doesn't match the vendor's known domain. Any of those means possible invoice fraud, not a filter problem.
+**Tell the user:** Your email is working. The vendor's invoices look like they were held by our spam filter. We're checking each one and will release the safe ones today.
+
+## Details
+
+**Verdict:** Six messages from one sender all going missing points to filtering, not a mail outage. Invoice emails with attachments or payment links often get flagged as phish.
+
+**What to check first**
+- **Quarantine** (step 1). If the invoices are there, the reason held decides what happens next:
+  - Spam or bulk: release after you confirm with the recipient.
+  - High-confidence spam: review the headers first.
+  - Phish or high-confidence phish: do not release.
+  - Malware: can't be released.
+- **Message trace** (step 2):
+  - "Delivered": the mail reached the mailbox. Check the Junk folder and the mailbox's inbox rules. A rule that quietly moves or deletes vendor invoices is a classic sign of a compromised mailbox. Send that to `/security-alert-triage`, not this fix.
+  - "FilteredAsSpam": the filter caught it. Go back to quarantine.
+  - "Failed": the sending side or a mail-routing problem. Ask the vendor for the bounce message they got.
+  - No trace at all: the mail never reached Customer C. The vendor should check which address they sent to.
+
+**Customer C notes**
+- ⚠️ **No identity-check process:** the profile has no way to verify who is asking ([org gap]). Before releasing anything, have the IT lead confirm the requester and the recipient mailbox another way, such as a callback to a known number.
+- **Who approves:** the IT lead approves each release.
+- **Not advised: an allow entry for the vendor.** If this keeps happening, an entry with an expiry date goes through `/email-whitelist` as its own change. Because it changes mail flow, it needs both the IT lead and the operations manager.
+
+**⚠️ Risk:** A released message can't be pulled back. Releasing a real phish puts working links and attachments in the inbox. Release each message to one recipient only, never to all.
+
+**Verification checklist**
+- [ ] Message trace run for [SENDER], from last Tuesday to today
+- [ ] Each quarantined invoice's reason reviewed
+- [ ] Requester confirmed by the IT lead (identity-check gap noted)
+- [ ] Only spam or bulk items released, one recipient each
+- [ ] Recipient confirms all six invoices arrived
+- [ ] Inbox rules checked if the trace showed "Delivered"
+
+**Jira-ready note**
+> Vendor [SENDER] reports 6 invoices sent since [DATE]; none received at [USER@DOMAIN.COM]. Message trace: [result]. Quarantine: [N] items, reason [spam/bulk/phish]. Released [N] to one recipient each after IT lead approval; [N] held for security review. Requester confirmed by [ADMIN_NAME] (no documented identity-check process). Allow entry: not requested. Time spent: [X] min.
+
+```aegis-desk
+Gate: quarantine-release-one-portal
+Phrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]
+Change record: R2, read-back none
+Read-back: none (Defender quarantine: no connector reads it)
+Note: one release per quarantined invoice (up to 6), each with its own [MESSAGE_IDENTITY_GUID] and its own typed phrase; approver is the IT lead; release-to-all and allow-list gates not advised.
+```

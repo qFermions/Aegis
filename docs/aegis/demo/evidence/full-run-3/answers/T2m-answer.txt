@@ -1,0 +1,95 @@
+## Fix
+**What's wrong:** [FIRST_NAME] leaves Friday, and every company account has to be switched off, starting with Okta.
+**Do this:**
+1. Before Friday, get written confirmation from HR and approval from the head of engineering on the ticket.
+2. Friday at the end of the day: Okta Admin Console → Directory → People → [UPN] → More Actions → Deactivate.
+3. Google Admin console → Directory → Users → [USER@DOMAIN.COM]: suspend the account only if it doesn't already show Suspended.
+4. GitHub → [@Aegion_GITHUB_ORG] → People → tick only [GITHUB_USER] → Remove from organization.
+5. Linear and Slack: switch the account off only if Okta didn't already.
+
+**Done when:** Okta shows Deactivated. Aegis then checks that Google, GitHub, Linear and Slack are off too.
+**Stop if:** HR hasn't confirmed in writing, or no one has confirmed the GitHub username belongs to them.
+**Tell the user:** We'll switch off [FIRST_NAME]'s access at the end of Friday. Please ask HR to confirm in writing on the ticket. Please also confirm their GitHub username.
+
+This plan covers five systems. The full steps are under Details.
+
+## Details
+
+**Verdict:** This is a planned leaver offboarding. It changes several systems and can't easily be undone, so it is the highest risk level. Nothing changes before Friday at the end of the day (Nov 6, before 18:00).
+
+**Before any change (Thursday and Friday morning)**
+- **HR:** The comment "confirmed w HR" is the requester's word, not HR's. Customer D's policy needs written confirmation from HR on the ticket, plus approval from the head of engineering.
+- **GitHub username:** The requester wrote "i think", so treat it as unconfirmed. Check that [GITHUB_USER] is this person before removing anyone.
+- **Independent review:** A plan that removes access across several systems gets an independent review before step 2.
+- **Look-only checks, saved to the ticket before anything changes:**
+  - Okta status and assigned apps.
+  - What the Okta Google integration does when someone is deactivated.
+  - Whether [FIRST_NAME] has a Google admin role. A super admin can skip Okta and sign in directly.
+  - Whether Linear and Slack get their accounts from Okta.
+  - GitHub role and teams, any repos where they are the only admin, and any forks of private repos.
+  - Their Slack channel list.
+  - Their open Linear issues, and who takes each one.
+
+**Step by step on Friday**
+1. **Okta (first):** Deactivate the user. This removes every app assignment and permanently deletes the Okta password.
+2. **Google:**
+   - With the default integration settings, Okta's deactivation suspends the Google account for you.
+   - Suspend it by hand only if it still shows Active.
+   - Don't delete the account. Moving Drive files and Calendar events to the manager is a separate decision for later.
+3. **GitHub:**
+   - Okta doesn't remove anyone from the GitHub organization, so this step is always needed.
+   - **Stop if** they are one of 2 or fewer owners, the only admin of a repo, or have work that exists only in a fork.
+4. **Linear and Slack:**
+   - If Okta provisions these accounts, Okta switches them off. Then only check the result.
+   - If Okta doesn't, suspend them in Linear (Settings → Administration → Members) and deactivate them in Slack (Manage members).
+   - Linear needs a workspace Admin or Owner to suspend someone.
+5. **Laptop (Fleet):**
+   - The laptop's local login keeps working after Okta is off.
+   - Arrange to get the laptop back. A Fleet lock is a separate ticket, only if the laptop isn't returned.
+
+**⚠️ Risks**
+- Okta deactivation can't be fully undone. Reactivating means assigning apps again and setting a new password.
+- GitHub removal takes every team and repo at once. The saved before-state is the only record of what to restore.
+- Slack reactivation doesn't bring back channel memberships.
+
+**How to undo:**
+- **Okta:** Activate the user, then assign the apps again.
+- **Google:** Reactivate the account.
+- **GitHub:** Send a new invite and restore the saved teams.
+- **Linear:** Unsuspend the member.
+- **Slack:** Reactivate the account, then add the saved channels back.
+
+**Verification checklist**
+- [ ] HR's written confirmation and the head of engineering's approval are on the ticket.
+- [ ] The independent review is done.
+- [ ] Okta shows Deactivated, and its app list is empty.
+- [ ] Google shows Suspended, and no admin role remains.
+- [ ] GitHub People no longer lists them, with no pending invite and no outside-collaborator access left.
+- [ ] Linear shows Suspended, and Slack shows Deactivated.
+- [ ] The laptop's return is arranged.
+
+**Ticket note (post only after every check passes):**
+> Offboarded [FIRST_NAME] on [date/time] at the end of their last day. HR written confirmation: [link]. Approved by: head of engineering. Okta deactivated. Google suspended by [Okta provisioning / admin]. GitHub [GITHUB_USER] removed from [@Aegion_GITHUB_ORG]. Linear suspended. Slack deactivated. Each one checked afterwards. Before-state saved. Laptop: [returned / pending]. Drive/Calendar transfer: [pending manager decision]. Time spent: [X] min.
+
+```aegis-desk
+Gate: okta-user-lifecycle-deactivate-portal
+Phrase: DEACTIVATE OKTA USER [UPN]
+Change record: R3, read-back okta:verify-status --status DEPROVISIONED
+Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+Gate: gws-offboard-suspend-portal
+Phrase: SUSPEND GOOGLE USER [USER@DOMAIN.COM]
+Change record: R2, read-back google-workspace:verify-suspended
+Read-back: gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+Gate: github-offboard-member-remove-portal
+Phrase: REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]
+Change record: R3, read-back github:verify-offboarded
+Read-back: github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
+Gate: linear-workspace-admin-suspend-portal
+Phrase: SUSPEND LINEAR MEMBER [USER@DOMAIN.COM] ID [USER_ID]
+Change record: R3, read-back linear:verify-suspended
+Read-back: linear-client.js verify-suspended --user [USER_ID] --change [CHANGE_ID] --execute
+Gate: slack-user-lifecycle-deactivate-portal
+Phrase: DEACTIVATE SLACK MEMBER [USER_ID]
+Change record: R3, read-back slack:verify-deactivated
+Read-back: slack-client.js verify-deactivated --user [USER_ID] --change [CHANGE_ID] --execute
+```

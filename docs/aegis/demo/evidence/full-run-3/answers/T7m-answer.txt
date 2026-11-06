@@ -1,0 +1,43 @@
+## Fix
+**What's wrong:** Internet is slow for the whole office, so the cause is probably the office's internet line or something using it all up, not the Wi-Fi.
+
+**Do this:**
+1. Ask one person in the office to plug a Mac into a network cable and run a speed test. Then ask them to run it again on Wi-Fi.
+2. Ask a remote staff member whether Zoom freezes for them too.
+3. Open the studio's router or firewall admin page. Look for any device using a lot of upload, such as Google Drive or other file sync pushing large design files.
+4. Check your internet provider's status page for an outage in your area.
+
+**Done when:** a Zoom test call runs for 10 minutes with no freezing, on both cable and Wi-Fi.
+
+**Stop if:** the cabled test is just as slow, or remote staff freeze too. Then it isn't the Wi-Fi: contact the provider, or treat it as a Zoom problem.
+
+**Tell the user:** We're checking the office internet now. It's probably not your laptop. We'll update you within the hour.
+
+## Details
+
+**Verdict:** The problem hits everyone, so start with the internet line, not the Wi-Fi. `/wifi-issue` sends a slowdown across the whole site to the internet line first.
+
+**Ranked causes (most likely first):**
+1. **Upload is full.** Zoom freezes quickly when upload is short. In a design studio, large files syncing to Google Drive, or a backup, are the usual cause.
+2. **Problem at the internet provider.** "Again" means it keeps happening. Write down the time of each slowdown so you can show the provider a pattern.
+3. **Wi-Fi only.** If the cable test is fast but Wi-Fi is slow, check how many people are on each access point and look for channel interference.
+4. **Zoom's side.** Do this if remote staff also freeze.
+
+**What I couldn't fill in:** The customer profile doesn't say what network hardware the studio uses, who their internet provider is, or who manages the network. I didn't guess. The router admin page and the provider escalation in steps 3 and 4 go to whoever owns those for the studio.
+
+**⚠️ Risk:** Don't restart the router or access points during business hours (09:30 to 18:30) without warning everyone first. It disconnects every call in progress. A restart, a bandwidth limit or a Wi-Fi setting change is a separate change and needs the studio manager's approval.
+
+**Verification checklist**
+- [ ] Speed results on cable and Wi-Fi recorded, with the times
+- [ ] Whether remote staff are also affected is confirmed
+- [ ] Any heavy upload device found, or ruled out
+- [ ] A 10-minute Zoom test call runs clean
+
+**Jira-ready note**
+> Office-wide slowness, Zoom freezing (repeat issue). Scope: [office only / office + remote]. Cable test: [down/up Mbps]. Wi-Fi test: [down/up Mbps]. Upload heavy device: [found/none]. Provider status: [ok/outage]. Root cause: [ ]. Next step: [ ]. Time spent: [X] min.
+
+```aegis-desk
+Gate: none
+Runbook: /wifi-issue (site-wide branch → internet line). Only diagnostic checks are advised; no change.
+Note: a later change (router or access point restart, bandwidth limit, Wi-Fi setting) would fall under PREVIEW ONLY [wifi-radio-remediation] or [wifi-network-remediation]. It needs its own reviewed runbook and the studio manager's approval. It is not advised here.
+```

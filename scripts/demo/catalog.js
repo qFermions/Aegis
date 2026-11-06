@@ -19,11 +19,16 @@ const READ_LINE = /^node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-
 const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
 const MARK = /^<!-- SAFETY GATE \[|^# SAFETY GATE \[/;
 
-// The read lines in one gate's own section: from the line after its marker (from: the marker's 1-based
-// line number) to the next gate marker or the next heading outside a code fence. Used only for an R1 gate, which takes no change record (batch 8, task 5).
+// The read line in one gate's own section: from the line after its marker (from: the marker's 1-based
+// line number) to the next gate marker or the next heading outside a code fence. Used only for an R1
+// gate, which takes no change record (batch 8, task 5). It counts only when the section names exactly
+// one read: a section with two lists alternatives (an activate reads PROVISIONED or ACTIVE) or reads
+// that prove other changes, and a read bound by where it sits proves nothing (code review 1, finding 4).
+// The fence state is counted from the top of the file, so a gate whose marker sits inside a bash fence
+// starts inside it (finding 9).
 function sectionReads(lines, from) {
   const reads = [];
-  let fenced = false;
+  let fenced = lines.slice(0, from - 1).filter((l) => /^\s*```/.test(l)).length % 2 === 1;
   for (let i = from; i < lines.length; i += 1) {
     const l = lines[i];
     if (/^\s*```/.test(l)) { fenced = !fenced; continue; }
@@ -32,7 +37,7 @@ function sectionReads(lines, from) {
     const m = READ_LINE.exec(l.trim());
     if (m && !/--change\b/.test(l)) reads.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)], command: l.trim() });
   }
-  return reads;
+  return reads.length === 1 ? reads : [];
 }
 
 // The exact phrase a gate's "Required confirmation" field asks a person to type, or null: the last

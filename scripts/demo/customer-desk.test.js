@@ -1295,3 +1295,18 @@ test('the simulated Jamf lock leaves a pending lock command the real Jamf client
   assert.equal(code, 5, out.join(''));
   assert.match(out.join(''), /DEVICE_LOCK/);
 });
+
+// Code review 1, findings 4 and 9: an R1 gate's own read counts only when its section names exactly one,
+// and a gate marker inside a bash fence starts its section inside the fence. Wrong implementations they
+// catch: requiring every alternative read to pass (activate reads PROVISIONED or ACTIVE); reading a fenced
+// gate's "# Reversibility:" comment as a heading, so its read is never found.
+test('an R1 gate uses its section\'s read only when there is exactly one, and a fenced gate finds its own', (t) => {
+  const { catalog } = require('./catalog.js');
+  const real = catalog();
+  assert.deepEqual(real.get('okta-user-lifecycle-clear-sessions-portal').reads.map((r) => r.kind), ['okta:verify-sessions-cleared']);
+  assert.deepEqual(real.get('okta-user-lifecycle-activate-portal').reads, [], 'two alternative reads: none is used');
+  assert.deepEqual(real.get('okta-group-membership-add-person-portal').reads, [], 'a read for another change in the same section is not used');
+  const dir = tmp(t, 'aegis-desk-runbooks-');
+  fs.writeFileSync(path.join(dir, 'fenced.md'), ['# fixture', '', '```bash', '# HUMAN-RUN', '# SAFETY GATE [fixture-fenced]', '# Target: [UPN]', '# Reversibility: R1: undo is one click', '# Read-back: none, R1: no change record', 'do-the-change', '# read-back:', 'node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status SUSPENDED --execute', '```', ''].join('\n'));
+  assert.deepEqual(catalog(dir).get('fixture-fenced').reads.map((r) => r.kind), ['okta:verify-status']);
+});

@@ -70,14 +70,20 @@ function catalog(dir = RUNBOOKS) {
     for (const m of text.matchAll(PREVIEW)) if (!found.has(m[1])) found.set(m[1], { kind: 'preview', command, file });
     const lines = boundReadBacks(text);
     const all = text.split('\n');
-    // whether each line sits inside a code fence, counted once per file (code review 2, finding 15)
-    const fencedAt = [];
-    let open = false;
-    for (const l of all) { fencedAt.push(open); if (/^\s*```/.test(l)) open = !open; }
+    // whether each line sits inside a code fence, counted once per file and only when an R1 gate with no
+    // bound read needs it (code review 2, finding 15; code review 3, finding 14)
+    let fencedAt = null;
+    const fences = () => {
+      if (fencedAt) return fencedAt;
+      fencedAt = [];
+      let open = false;
+      for (const l of all) { fencedAt.push(open); if (/^\s*```/.test(l)) open = !open; }
+      return fencedAt;
+    };
     for (const g of gateFields(text)) {
       const seen = new Set();
       const bound = lines.filter((l) => l.gates.includes(g.id) && !seen.has(l.command) && seen.add(l.command)).map((l) => ({ kind: l.kind, argv: l.argv, command: l.command }));
-      const reads = g.rClass === 'R1' && !bound.length ? sectionReads(all, g.line, fencedAt) : [];
+      const reads = g.rClass === 'R1' && !bound.length ? sectionReads(all, g.line, fences()) : [];
       found.set(g.id, { kind: 'gate', command, file, rClass: g.rClass, none: g.readBack ? g.readBack.none : null, bound, reads, phrase: phraseOf(all, g.line) });
     }
   }

@@ -64,9 +64,12 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
       else if (g.readBack.none !== null) assert.ok(g.readBack.none.length > 10 && !/^R[0-3]: no change record$/.test(g.readBack.none), `${name}: ${g.id} (${g.rClass}) gives its reason: ${g.readBack.none}`);
     }
   }
-  // the SAFETY GATE count is unchanged (gate-r-class.test.js); 89 gates bind read-backs at the base
+  // the SAFETY GATE count is unchanged (gate-r-class.test.js); 89 gates bind read-backs at the base;
+  // batch 8, task 3: 97, with gws-offboard-suspend, okta-user-lifecycle-reset-password,
+  // okta-user-lifecycle-suspend and okta-user-lifecycle-unsuspend re-classed to R2, each portal
+  // gate and its fenced twin (4 times 2)
   assert.equal(gates, 343, 'every runbook gate');
-  assert.equal(naming, 89, 'the gates that name read-backs');
+  assert.equal(naming, 97, 'the gates that name read-backs');
 });
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {

@@ -302,8 +302,9 @@ test('runbooks: a change-record paragraph covers only gates with a read-back nam
       if (bound.has(`${gate}-portal`)) assert.ok(bound.has(gate), `${file}: ${gate} binds the read-back of ${gate}-portal`);
     }
   }
-  // every runbook with a bound read-back has one, 27 since this batch (code review round 3, finding 7)
-  assert.equal(paragraphs, 27, `${paragraphs} change-record paragraphs`);
+  // every runbook with a bound read-back has one, 27 since this batch (code review round 3, finding 7);
+  // batch 8, task 3: 28, /gws-offboard's, since gws-offboard-suspend-portal is R2 with a read-back
+  assert.equal(paragraphs, 28, `${paragraphs} change-record paragraphs`);
   const okta = fs.readFileSync(path.join(dir, 'okta-mfa-reset.md'), 'utf8');
   assert.ok(changes.boundReadBacks(okta).some((b) => b.gates.includes('okta-mfa-reset-factor')), 'the API reset of one factor binds verify-factor-reset');
   // the rollback after an exception: Phase B's and C's gates have a read-back, D's and E's do not

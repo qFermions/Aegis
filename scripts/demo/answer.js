@@ -178,10 +178,14 @@ function answerSteps(answer) {
   return deskBlock(answer).body.split(/\r?\n/).map((l) => STEP.exec(l)).filter(Boolean).map((m) => m[2].replace(/\*\*$/, '').trim());
 }
 
-// The step half of the INVESTIGATE rule: at least one step, and no step holds a change word.
+// The step half of the INVESTIGATE rule: at least one step, and no change word in the steps, in any text
+// of "Do this" before its first step, or in any numbered line of the card, so a change cannot hide in a
+// line the parser did not file as a step (security review 3).
 function onlyLooks(answer) {
   const steps = answerSteps(answer);
-  const change = steps.find((s) => CHANGE_WORD.test(s)) || null;
+  const card = fixCard(answer);
+  const extra = card.present ? [card.parts.doThis || '', ...card.text.split(/\r?\n/).filter((l) => STEP.test(l))] : [];
+  const change = [...steps, ...extra].find((s) => CHANGE_WORD.test(s)) || null;
   return { steps, looks: steps.length > 0 && change === null, change };
 }
 

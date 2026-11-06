@@ -1,0 +1,3 @@
+$ node --test --test-name-pattern "a change hidden before" scripts/demo/answer.test.js   (answer.js before the fix)
+✖ a change hidden before the first step, on the label line, or after a stray label still counts (1.926ms)
+✖ failing tests:

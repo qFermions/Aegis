@@ -155,3 +155,15 @@ test('an unindented wrapped line inside a step keeps the later steps', () => {
   assert.equal(a.fixCard(wrapped).steps.length, 3);
   assert.equal(a.onlyLooks(wrapped).looks, false);
 });
+
+// Security review 3: a change word before the first step, on the "Do this" line itself, or in a numbered
+// line filed under another part must still count. A wrong implementation it catches: scanning only steps.
+test('a change hidden before the first step, on the label line, or after a stray label still counts', () => {
+  const before = card([GOOD_PARTS[0], GOOD_PARTS[1], "- Reset the user's MFA methods in Entra.", '1. Open the admin center.', '2. Read the sign-in logs.', '3. Look at the user page.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(before).looks, false);
+  const label = card([GOOD_PARTS[0], '**Do this:** reset the MFA, then check:', '1. Open the admin center.', '2. Read the sign-in logs.', '3. Look at the user page.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(label).looks, false);
+  const stray = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the admin center.', '2. Read the sign-in logs.', '**Tell the user:** We are on it.', '3. Reset the MFA methods.', ...GOOD_PARTS.slice(5, 7)]);
+  assert.equal(a.onlyLooks(stray).looks, false);
+  assert.equal(a.onlyLooks(card([...GOOD_PARTS.slice(0, 2), '1. Open the admin center.', '2. Read the sign-in logs.', '3. Look at the user page.', ...GOOD_PARTS.slice(5)])).looks, true, 'a card that only looks still does');
+});

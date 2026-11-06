@@ -1,0 +1,60 @@
+## Fix
+**What's wrong:** The wiped phone had the user's only sign-in approval method, so they can't finish signing in.
+
+**Do this:**
+1. Call the office manager on a number you already have. They confirm by voice that this is the front desk lead. Get their approval and the practice owner's, because neither step below can be undone.
+2. In the Entra admin center, go to Users → [UPN] → Overview → Revoke sessions.
+3. On the same user, open Authentication methods and delete only the old Authenticator entry.
+4. The user signs in on the front-desk PC and sets up Authenticator on the new phone when asked, or at aka.ms/mfasetup.
+
+**Done when:** Outlook and Teams open. Aegis then checks that the old method is gone and the new one is registered.
+
+**Stop if:** the office manager can't vouch, or sign-in is blocked before setup appears.
+
+**Tell the user:** We're resetting your sign-in approval now. Have your new phone ready. You'll set up Authenticator once and you'll be back in.
+
+## Details
+
+**Verdict:** This is the "got a new phone" case in the MFA runbook. No lessons on file apply, and the replay lookup was a miss.
+
+**Before any change**
+- **Identity check:** this office has no written rule yet, so the profile's interim one applies: the office manager vouches by phone. Use a number you already have, not one from the ticket. Attackers often ask for MFA resets.
+- **Approval:** both changes are permanent, so the profile needs the office manager **and** the practice owner. Patients arriving at nine doesn't skip this step.
+- **Timing:** today is a Thursday and the work falls in business hours (08:00–17:00), so the office manager should be reachable.
+
+**Why these two changes**
+- **Revoke sessions:** ends any session that was still signed in on the old phone. It's cheap protection in case the phone wasn't really wiped.
+- **Delete one method:** removes only the old Authenticator entry. The other option, "Require re-register MFA", clears every phone and app method. On a ticket you do one or the other, never both. Here the one-method delete is enough.
+
+**⚠️ Risks**
+- Neither change can be undone. If something goes wrong, the user registers again at aka.ms/mfasetup. Write that recovery path in the ticket before the delete.
+- **Don't add a text-message fallback.** The profile says Authenticator only, and adding a phone number would be a separate change.
+- **If a Conditional Access policy blocks setup**, stop. Any exclusion is a separate, time-boxed policy change in its own runbook. It is not part of this fix.
+
+**Verification**
+- [ ] The office manager vouched, and both approvals are in the ticket
+- [ ] The session revoke is confirmed (tokens can take a few more minutes to expire)
+- [ ] The old Authenticator entry is gone
+- [ ] The new Authenticator is registered, and a sign-in succeeds with an MFA prompt
+- [ ] No Conditional Access exclusion was made
+
+**Jira-ready note**
+> Resolved [date/time]. MFA new-phone re-registration for `[UPN]`. Identity vouched by office manager by phone, using a number already on file (interim rule; the office has not set an identity-verification rule yet). Approved by office manager and practice owner. Sessions revoked; read-back passed. Old Microsoft Authenticator method deleted; read-back passed. User re-registered on the new device; Authenticator present and sign-in succeeded. No CA exclusion. No SMS fallback added (per customer profile). Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-session-revoke-portal
+Phrase: REVOKE ENTRA SESSIONS FOR [UPN]
+Change record: R2, read-back msgraph:verify-sessions-revoked --not-before
+Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+Pre-state: node scripts/adapters/msgraph-client.js sign-ins --user [USER_ID] --since [DATE_TIME] --execute -> tasks/checkpoints/ (before revoke)
+Pre-state: node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute -> tasks/checkpoints/ (before delete)
+Post-registration: node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+Post-registration: node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+Approvals: office manager + practice owner (both gates not reversible, per customer profile)
+Identity: [org gap] interim rule - office manager vouches by phone
+Not advised: mfa-require-reregister-portal (alternative to the one-method delete), mfa-phone-add (customer allows Authenticator only), mfa-ca-exclusion (separate runbook if the CA block appears)
+```

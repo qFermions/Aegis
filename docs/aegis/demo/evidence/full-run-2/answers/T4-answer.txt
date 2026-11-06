@@ -1,0 +1,51 @@
+## Fix
+**What's wrong:** [UPN] needs Full Access and Send As on the [SHARED_MAILBOX] shared mailbox.
+**Do this:**
+1. Call the requester back on the number in the firm's staff list, then get the managing partner's approval.
+2. Open Exchange admin center → Recipients → Mailboxes → filter Shared → [SHARED_MAILBOX] → Delegation.
+3. Under Read and manage (Full Access), add [UPN].
+4. Under Send As, add [UPN].
+**Done when:** [SHARED_MAILBOX] shows up in [FIRST_NAME]'s Outlook and a test message shows [SHARED_MAILBOX] on the From line. Aegis then checks both permissions are listed for [UPN].
+**Stop if:** the mailbox isn't listed as Shared, or the managing partner doesn't approve.
+**Tell the user:** You now have access to the shared mailbox and can send from it. It can take up to an hour to show up in Outlook. If it doesn't show up, restart Outlook.
+
+## Details
+**Gate status:** the shared-mailbox runbook has no reviewed safety gate for these two grants yet. It only has preview markers. A human admin makes the change in the portal after the callback and approval. Aegis doesn't make it.
+
+**Risk:** two single reversible writes on one mailbox for one user (R1). Not destructive.
+- **Undo:** remove [UPN] from Full Access and from Send As in the same Delegation pane.
+
+**Notes**
+- Send As and Send on Behalf are different. The ticket asks for Send As, so mail will look like it came from the mailbox itself. Don't add Send on Behalf.
+- Accounts here are cloud-only, so nothing needs to sync.
+- Outlook can take up to 60 minutes to show the mailbox automatically. If it still doesn't appear, restart Outlook or add the mailbox by hand under Account settings.
+
+<details>
+<summary>PowerShell - for reference only</summary>
+
+```powershell
+Connect-ExchangeOnline   # sign in to Exchange Online
+# Gives [UPN] full read/manage rights; AutoMapping adds it to their Outlook
+Add-MailboxPermission -Identity "[SHARED_MAILBOX]" -User "[UPN]" -AccessRights FullAccess -AutoMapping $true
+# Lets [UPN] send mail that appears to come from the shared mailbox
+Add-RecipientPermission -Identity "[SHARED_MAILBOX]" -Trustee "[UPN]" -AccessRights SendAs
+```
+</details>
+
+**✅ Verification checklist**
+- [ ] Callback done on the staff-list number
+- [ ] Managing partner approved
+- [ ] [UPN] listed under Full Access and under Send As
+- [ ] Mailbox appears in Outlook, and a test message shows the right From line
+
+**📝 Jira-ready note**
+> [JIRA-###] Customer E. Requester identity checked by calling back the staff-list number; managing partner approved. Gave [UPN] Full Access (auto-mapping on) and Send As on [SHARED_MAILBOX] in the Exchange admin center. Read-back: [verified / not verified]. Test send from [SHARED_MAILBOX]: [pass / fail]. Undo: remove both permissions under Delegation. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access
+Change record: R1
+Gate: shared-mailbox-send-as
+Change record: R1
+Note: the runbook has PREVIEW ONLY markers for both grants and no SAFETY GATE, so there is no confirmation phrase or read-back command to quote. The grants need a separate reviewed runbook before the desk treats them as gated.
+Read-back (reference): Get-MailboxPermission -Identity "[SHARED_MAILBOX]" -User "[UPN]"; Get-RecipientPermission -Identity "[SHARED_MAILBOX]" -Trustee "[UPN]"
+```

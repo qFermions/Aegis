@@ -1,5 +1,5 @@
 $ git diff --stat abb6ea6 -- .claude CLAUDE.md PRODUCT_CONTRACT.md scripts/adapters scripts/audit scripts/replay scripts/eval
-(at 4f0f42c)
+(at 31727e0; code frozen at de55c4d)
  .claude/commands/gws-offboard.md        | 17 ++++++++----
  .claude/commands/mfa-issue.md           |  1 +
  .claude/commands/okta-user-lifecycle.md | 44 +++++++++++++++----------------

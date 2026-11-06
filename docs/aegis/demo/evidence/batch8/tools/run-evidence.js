@@ -20,7 +20,7 @@ const clean = (s) => String(s)
   .replace(new RegExp(`-Users-${account}-`, 'g'), '-Users-<account>-')
   .replace(new RegExp(`\\b${account}\\b`, 'g'), '<account>')
   .replace(/@[a-z0-9-]+\.example\.(?:com|org|net)\b/g, '@[@Aegion_DOMAIN]')
-  .replaceAll('—', '-');
+  .replaceAll('\u2014', '-');
 const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 
 const argv = process.argv.slice(2);

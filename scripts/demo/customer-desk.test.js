@@ -1202,3 +1202,22 @@ test('task 5: an R1 gate with no change record still gets the read its runbook s
   assert.match(step(k, 8).output, /no change record \(R1\)/);
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
 });
+
+test('task 8: step 5 shows the five answer checks as rows; a failed row is shown and does not stop the ticket', async (t) => {
+  const old = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') } });
+  const k = old.ticket('T1');
+  const rows = step(k, 5).answer_checks;
+  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts']);
+  assert.equal(rows[0].verdict, 'fail', 'an answer with no Fix card fails the first row');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', 'and the ticket still goes on');
+  assert.deepEqual(step(k, 5).checks.map((r) => r.check), ['boundary', 'human-confirmation', 'read-back', 'privacy', 'observed-output', 'probe'], 'the existing checks are unchanged');
+  assert.match(step(k, 5).result, /answer format: \d of 5 pass/);
+  const carded = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\n${good()}`, 'mfa-require-reregister-portal') } });
+  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass']);
+  const sms = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\nThe SMS fallback still works for this user.\n${good()}`, 'mfa-require-reregister-portal') } });
+  assert.equal(step(sms.ticket('T1'), 5).answer_checks[4].verdict, 'fail', 'Customer A has no SMS fallback');
+  const hybrid = await runDesk(t, { only: ['T5'], answers: { T5: withBlock(`${CARD}\nThe user is synced from hybrid AD.\n${good()}`, 'mfa-session-revoke-portal') } });
+  assert.equal(step(hybrid.ticket('T5'), 5).answer_checks[4].verdict, 'pass', 'Customer C runs hybrid Active Directory');
+  assert.deepEqual(Object.keys(carded.ticket('T1').answer_stats), ['fix_card_words', 'answer_words', 'answer_lines', 'first_action_line']);
+  assert.equal(carded.ticket('T1').answer_stats.first_action_line, 4, 'the first numbered step is line 4 of this answer');
+});

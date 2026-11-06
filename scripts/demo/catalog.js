@@ -35,7 +35,20 @@ function sectionReads(lines, from) {
   return reads;
 }
 
-// id to { kind: 'gate', command, file, rClass, none, bound: [{ kind, argv, command }], reads } or
+// The exact phrase a gate's "Required confirmation" field asks a person to type, or null: the last
+// backtick span after "type exactly" on the gate's own field lines.
+function phraseOf(lines, from) {
+  for (let i = from; i < lines.length && /^(?:- \*\*[A-Za-z -]+:\*\*|# [A-Za-z -]+:)/.test(lines[i]); i += 1) {
+    const m = /Required confirmation:\*{0,2}(.*)$/.exec(lines[i]);
+    if (!m) continue;
+    const after = m[1].split(/type exactly/i).pop();
+    const spans = [...after.matchAll(/`([^`]+)`/g)];
+    return spans.length ? spans[spans.length - 1][1] : null;
+  }
+  return null;
+}
+
+// id to { kind: 'gate', command, file, rClass, none, bound: [{ kind, argv, command }], reads, phrase } or
 // { kind: 'preview', command, file }. A gate wins over a preview of the same id. reads: for an R1 gate
 // that binds nothing, the read lines its own section names.
 function catalog(dir = RUNBOOKS) {
@@ -51,7 +64,7 @@ function catalog(dir = RUNBOOKS) {
       const seen = new Set();
       const bound = lines.filter((l) => l.gates.includes(g.id) && !seen.has(l.command) && seen.add(l.command)).map((l) => ({ kind: l.kind, argv: l.argv, command: l.command }));
       const reads = g.rClass === 'R1' && !bound.length ? sectionReads(all, g.line) : [];
-      found.set(g.id, { kind: 'gate', command, file, rClass: g.rClass, none: g.readBack ? g.readBack.none : null, bound, reads });
+      found.set(g.id, { kind: 'gate', command, file, rClass: g.rClass, none: g.readBack ? g.readBack.none : null, bound, reads, phrase: phraseOf(all, g.line) });
     }
   }
   return found;

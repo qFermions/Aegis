@@ -37,7 +37,7 @@ const { SMOKE_USD_PER_SESSION } = require('../eval/judged-eval.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
 const { catalog, closingGateLines, namedGates, contradictsItself, clarifies, RUNBOOKS } = require('./catalog.js');
-const { onlyLooks } = require('./answer.js');
+const { onlyLooks, answerChecks, fixCard, words, deskBlock } = require('./answer.js');
 const data = require('./customers.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
@@ -282,18 +282,20 @@ async function readBacksForGate(a, g, c, ctx, rec) {
   if (!a.changes.length && g.reads && g.reads.length) {
     for (const read of g.reads) {
       const v = await guarded(read.kind, () => readPlain(read, a.approved_at, c, ctx));
+      v.read = { gate: a.gate, kind: read.kind, argv: read.argv, state: v.state };
       verdicts.push(v);
       lines.push(`${a.gate}: ${v.state}\n${v.output}`);
     }
     return { verdicts, lines };
   }
   if (!a.changes.length) {
-    verdicts.push({ state: 'INCONCLUSIVE', exit: null });
+    verdicts.push({ state: 'INCONCLUSIVE', exit: null, read: { gate: a.gate, kind: null, argv: [], state: 'NONE' } });
     lines.push(`${a.gate}: INCONCLUSIVE: no read-back to run; the runbook says: ${g.none}`);
     return { verdicts, lines };
   }
   for (const change of a.changes) {
     const v = await guarded(change.read_back.kind, () => readBack(change, c, ctx));
+    v.read = { gate: a.gate, kind: change.read_back.kind, argv: change.read_back.argv, state: v.state };
     verdicts.push(v);
     lines.push(`${a.gate}: ${v.state}\n${v.output}`);
   }
@@ -455,7 +457,8 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     record = JSON.parse(io.text() || io.error());
     const r = record.redactions || {};
     const shown = { state: record.state, reason: record.reason, redactions: record.redactions, injection_flags: record.injection_flags, tenant: record.tenant };
-    return { exit_code: code, result: record.state === 'ACCEPTED' ? `ACCEPTED, redactions: ${r.emails} email, ${r.phones} phone, ${r.mentions} mention, ${r.tenant_values} tenant value; injection flags: ${record.injection_flags}` : `${record.state}: ${record.reason}`, output: JSON.stringify(shown, null, 2) };
+    const hidden = Object.values(r).filter((n) => typeof n === 'number').reduce((x, y) => x + y, 0);
+    return { facts: { accepted: record.state === 'ACCEPTED', hidden, injection_flags: record.injection_flags || 0 }, exit_code: code, result: record.state === 'ACCEPTED' ? `ACCEPTED, redactions: ${r.emails} email, ${r.phones} phone, ${r.mentions} mention, ${r.tenant_values} tenant value; injection flags: ${record.injection_flags}` : `${record.state}: ${record.reason}`, output: JSON.stringify(shown, null, 2) };
   });
   if (record.state !== 'ACCEPTED') return close('OPEN', `intake refused the ticket (${record.state}): ${record.reason}`);
   const text = record.case.ticket.text;
@@ -471,6 +474,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     const via = lookup.json && lookup.json.via ? ` via ${lookup.json.via}` : '';
     const question = clarify(text);
     return {
+      facts: { lookup: lookup.json ? lookup.json.result : 'REFUSED' },
       exit_code: lookup.code,
       result: `replay ${result}${via}, risk floor ${floor}, graph case ${record.case.runId} at ${record.case.node}`,
       output: JSON.stringify({ lookup: lookup.json, explain: explain.json && { riskFloor: explain.json.riskFloor, riskTriggers: explain.json.riskTriggers, wouldConsult: explain.json.wouldConsult }, clarify: question, case: { runId: record.case.runId, node: record.case.node, status: record.case.status } }, null, 2),
@@ -488,7 +492,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       if (r.code === 0) answer = r.stdout;
       else sessionReason = `the replay cache refused to render ${hit.caseId}: ${r.stderr.trim().slice(0, 200)}`;
       rec.cache_hit = r.code === 0;
-      return { exit_code: r.code, result: r.code === 0 ? `CACHE_HIT ${hit.caseId} via ${hit.via} (replay, no model, no cost)` : sessionReason, output: answer || '' };
+      return { facts: { cache_hit: r.code === 0, answered: r.code === 0 }, exit_code: r.code, result: r.code === 0 ? `CACHE_HIT ${hit.caseId} via ${hit.via} (replay, no model, no cost)` : sessionReason, output: answer || '' };
     });
   } else {
     await timed('AEGIS', 'Aegis session', REAL, async (known) => {
@@ -505,6 +509,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       else sessionReason = `session did not finish (${turn.state}${turn.reason ? `: ${turn.reason}` : ''}${turn.exit_code ? `, exit ${turn.exit_code}` : ''})`;
       const started = turn.exit_code !== null || Boolean(init);
       return {
+        facts: { cache_hit: false, answered: Boolean(answer) },
         exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: started, cost_unknown: costUnknown,
         turns: turn.num_turns, model: turn.model, session_id: turn.session_id, session_state: turn.state, session_reason: turn.reason,
         result: answer ? `answered: ${turn.model || 'model'}, ${turn.num_turns} turns, ${turn.cost_usd === null ? 'cost not reported' : `${Number(turn.cost_usd.toFixed(4))} US dollars`}` : sessionReason,
@@ -516,13 +521,21 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   ctx.io.out(`--- Answer ---\n${answer}\n--- End of answer ---\n`);
   fs.writeFileSync(answerFile, answer);
   rec.answer = answer;
+  rec.answer_stats = answerStats(answer);
 
   // 5 CHECKS
   const c5 = { expected: { change_class: ticket.change_class }, probe: ticket.probe, evidence: text };
   let results = null;
   await timed('CHECKS', 'Aegis checks', REAL, async () => {
     results = checks.runChecks(c5, { answer, follow_up_answer: null });
-    return { result: results.filter((r) => r.applies).map((r) => `${r.check} ${r.verdict}`).join(', '), output: results.map((r) => `${r.check}: ${r.applies ? r.verdict : 'does not apply'}${r.span ? ` (matched: ${r.span})` : ''}`).join('\n') };
+    // the five answer checks of batch 8, task 8: shown as rows, and none of them stops the ticket
+    const format = answerChecks(answer, { profile: data.profileText(customer) });
+    return {
+      checks: results.map((r) => ({ check: r.check, verdict: r.verdict, applies: r.applies })),
+      answer_checks: format,
+      result: `${results.filter((r) => r.applies).map((r) => `${r.check} ${r.verdict}`).join(', ')}; answer format: ${format.filter((r) => r.verdict === 'pass').length} of ${format.length} pass`,
+      output: [...results.map((r) => `${r.check}: ${r.applies ? r.verdict : 'does not apply'}${r.span ? ` (matched: ${r.span})` : ''}`), ...format.map((r) => `${r.check}: ${r.verdict} (${r.detail})`)].join('\n'),
+    };
   });
   const boundary = results.find((r) => r.check === 'boundary');
   const probe = results.find((r) => r.check === 'probe');
@@ -564,7 +577,10 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       approvals.push(a);
       if (a.refused) { refused = a.refused; break; }
     }
-    return { result: refused || `${approvals.length} gate(s) approved by the SIMULATED OPERATOR: ${names.join(', ')}`, output: approvals.map((a) => a.note || a.refused).join('\n') };
+    return {
+      signed_off: refused ? [] : gates.map((g) => ({ gate: g.id, effect: ctx.simTable[g.id] ? ctx.simTable[g.id].effect : null, phrase: g.phrase || null })),
+      result: refused || `${approvals.length} gate(s) approved by the SIMULATED OPERATOR: ${names.join(', ')}`, output: approvals.map((a) => a.note || a.refused).join('\n'),
+    };
   });
   if (refused) return close('OPEN', refused);
 
@@ -615,6 +631,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   }
   const at = (ms) => new Date(ms).toISOString();
   push('SIMULATED OPERATOR', {
+    facts: { applied: op.applied, total: gates.length, blocked: blocked.length > 0 },
     actor: 'SIMULATED OPERATOR', tag: SIM, started_at: at(op.started), duration_ms: op.ms,
     result: blocked.length ? blocked.join('; ') : `applied ${op.applied} gate(s) of ${gates.length} to the simulated tenant, one at a time`,
     output: op.lines.length ? op.lines.join('\n') : 'SIMULATED OPERATOR: nothing was applied.',
@@ -622,12 +639,12 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   if (blocked.length && !op.applied) return close('OPEN', blocked.join('; '));
   if (blocked.length) {
     // a later gate could not be acted out after an earlier one was applied: the run says what changed
-    push('READ-BACK', { actor: 'Aegis connector', tag: 'REAL connector, SIMULATED tenant', started_at: at(rb.started || Date.now()), duration_ms: rb.ms, exit_code: worstExit(verdicts.map((v) => v.exit)), result: `stopped after ${op.applied} gate(s): ${verdicts.filter((v) => v.state === 'PASS').length} of ${verdicts.length} read-back(s) passed`, output: rb.lines.join('\n\n') });
+    push('READ-BACK', { reads: verdicts.map((v) => v.read), actor: 'Aegis connector', tag: 'REAL connector, SIMULATED tenant', started_at: at(rb.started || Date.now()), duration_ms: rb.ms, exit_code: worstExit(verdicts.map((v) => v.exit)), result: `stopped after ${op.applied} gate(s): ${verdicts.filter((v) => v.state === 'PASS').length} of ${verdicts.length} read-back(s) passed`, output: rb.lines.join('\n\n') });
     return close('OPEN', `${blocked.join('; ')}; ${op.applied} earlier gate(s) were applied in the simulated tenant`);
   }
   const pass = verdicts.filter((v) => v.state === 'PASS').length;
   const rbState = verdicts.some((v) => v.state === 'FAIL') ? 'FAIL' : (pass === verdicts.length ? 'PASS' : 'INCONCLUSIVE');
-  push('READ-BACK', { actor: 'Aegis connector', tag: 'REAL connector, SIMULATED tenant', started_at: at(rb.started || Date.now()), duration_ms: rb.ms, exit_code: worstExit(verdicts.map((v) => v.exit)), result: `${rbState}: ${pass} of ${verdicts.length} read-back(s) passed`, output: rb.lines.join('\n\n') });
+  push('READ-BACK', { reads: verdicts.map((v) => v.read), actor: 'Aegis connector', tag: 'REAL connector, SIMULATED tenant', started_at: at(rb.started || Date.now()), duration_ms: rb.ms, exit_code: worstExit(verdicts.map((v) => v.exit)), result: `${rbState}: ${pass} of ${verdicts.length} read-back(s) passed`, output: rb.lines.join('\n\n') });
 
   // 9 CLOSE
   if (verdicts.some((v) => v.state === 'FAIL')) return close('FAILED', 'a read-back shows the change was not done');
@@ -638,6 +655,16 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   let stored = 'Answered from the replay cache, so nothing new is stored.';
   if (!rec.cache_hit) stored = unsettled.length ? 'Resolved, and not stored in the replay cache: an answer enters it only when every check passed.' : storeVerified(rec, answerFile, gates, verdicts.map((v) => v.evidence), { customer, customerDir }, ctx);
   return close('RESOLVED (SIMULATED)', unsettled.length ? `the read-back passed, but the answer did not pass these checks: ${unsettled.join(', ')}` : null, stored);
+}
+
+// What Run A compares with full run 1 (batch 8, task 11): the Fix card's words, the whole answer's words
+// (without the aegis-desk block), its lines, and the line of its first numbered step, the first action.
+function answerStats(answer) {
+  const body = deskBlock(answer).body;
+  const lines = body.split(/\r?\n/);
+  const first = lines.findIndex((l) => /^[ \t]*(?:\*\*)?\d+[.)][ \t]+\S/.test(l));
+  const card = fixCard(answer);
+  return { fix_card_words: card.present ? card.words : 0, answer_words: words(body), answer_lines: lines.length, first_action_line: first < 0 ? null : first + 1 };
 }
 
 // The result event's text, for a session that ended in an error: what the CLI itself said.
@@ -754,4 +781,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, sessionCase, draftNote, worstExit, STEP_NAMES, USD_PER_SESSION, DESK_SESSION_TIMEOUT_MS };
+module.exports = { main, sessionCase, draftNote, worstExit, answerStats, STEP_NAMES, USD_PER_SESSION, DESK_SESSION_TIMEOUT_MS };

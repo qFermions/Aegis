@@ -40,7 +40,9 @@ development-plane request — dispatch that agent, never the support lane.
 
 ---
 
-## Environment Snapshot
+## Default environment (used only when no customer profile is given)
+
+A customer profile, when given, replaces this whole block (sites, servers and vendors too).
 
 | Item | Detail |
 |------|--------|

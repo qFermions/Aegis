@@ -56,7 +56,9 @@ function plainRead(read) {
     'google-workspace:verify-suspended': 'The Google account is paused',
     'google-workspace:verify-event': 'Google recorded the change',
     'github:verify-offboarded': 'The person is out of GitHub',
-    'linear:verify-state': 'The Linear account is paused',
+    'linear:verify-suspended': 'The Linear account is paused',
+    'linear:verify-state': 'The Linear issue is in the planned state',
+    'linear:verify-trashed': 'The Linear issue is in the trash',
   };
   if (known[kind]) return known[kind];
   const name = { msgraph: 'Microsoft', okta: 'Okta', 'google-workspace': 'Google', github: 'GitHub', linear: 'Linear', jamf: 'Jamf' }[system];

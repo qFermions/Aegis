@@ -277,4 +277,7 @@ test('task 9: every plain step name and closing state has its own words', () => 
   for (const state of render.STATES) assert.ok(render.closingPlain({ closing_state: state, reason: '' }).length > 10, state);
   assert.equal(render.plainRead({ kind: 'okta:verify-status', argv: ['verify-status', '--status', 'SUSPENDED'] }), 'The Okta account is paused');
   assert.equal(render.plainRead({ kind: 'okta:verify-status', argv: ['verify-status', '--status', 'ACTIVE'] }), 'The Okta account is back on');
+  // code review 1, finding 11: verify-state reads an issue's state; the account suspend is verify-suspended
+  assert.equal(render.plainRead({ kind: 'linear:verify-suspended', argv: [] }), 'The Linear account is paused');
+  assert.equal(render.plainRead({ kind: 'linear:verify-state', argv: [] }), 'The Linear issue is in the planned state');
 });

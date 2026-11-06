@@ -1,0 +1,4 @@
+$ node --test scripts/risk_tier.test.js   (green)
+ℹ fail 0
+ℹ pass 28
+ℹ tests 28

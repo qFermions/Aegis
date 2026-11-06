@@ -177,8 +177,12 @@ nothing under it: `results.json`, `report.md` and, with `--calibration-sheet`,
 
 **System under test.** `claude -p <ticket> --output-format stream-json --verbose --max-turns
 N --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent --disallowedTools Bash
-WebFetch WebSearch`, from the repository root, so Aegis loads `CLAUDE.md` as an operator's
-session would. The child's environment loses every name in `.env.example` and every name
+WebFetch WebSearch --setting-sources project --strict-mcp-config --settings <isolation>`, from
+the repository root, so Aegis loads only the repository's CLAUDE.md. `<isolation>` is the JSON
+that `backends.js` `isolationArgs` builds: `claudeMdExcludes` (every CLAUDE.md above the repository,
+which the CLI otherwise loads), `autoMemoryEnabled: false`, and `permissions.deny` with `Read` rules
+for this work's records, the demo's code and expected answers, the grader, the DEV cases and the run folders. What the CLI
+loads: `docs/aegis/demo/evidence/batch7/isolation-probe.txt`. The child's environment loses every name in `.env.example` and every name
 ending in `_TOKEN`, `_KEY`, `_SECRET` or `_PASSWORD`, so the CLI must be signed in with its
 stored login. A `follow_up` resumes the same session (`--resume`). Recorded per case: the
 answer, turns, duration, the model from the init event and `total_cost_usd` when reported. Run it from a plain terminal where `claude` is signed in, not from inside a Claude Code session: the child keeps every other environment name, including a hosting session's own.

@@ -1,0 +1,4 @@
+$ node --test scripts/eval/judged/*.test.js   (green: the whole judged runner suite, every existing test unchanged)
+ℹ fail 0
+ℹ pass 70
+ℹ tests 70

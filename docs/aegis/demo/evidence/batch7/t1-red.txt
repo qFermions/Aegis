@@ -1,0 +1,10 @@
+$ node --test scripts/account-name.test.js   (red: the name is in one file at e56f0ab)
+    actual: [ 'docs/aegis/demo/evidence/reviews/security-review-1.md' ],
+  +   'docs/aegis/demo/evidence/reviews/security-review-1.md'
+ℹ fail 1
+ℹ pass 2
+ℹ tests 3
+✔ the search finds a tracked file in any case, and finds nothing for text no file holds
+✔ the skip rule: short names and generic CI accounts are skipped, any other name is lower-cased
+✖ failing tests:
+✖ no tracked file holds the local account name

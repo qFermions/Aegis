@@ -27,11 +27,13 @@ Rebuild the page from a saved run, with no model call:
 node scripts/demo/customer-desk.js --view ~/aegis-demo-runs/<run-id>
 ```
 
-Results go to `~/aegis-demo-runs/<run-id>/` (the `claude` CLI also keeps its own record of each session under `~/.claude/projects/`), or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
+Results go to `~/aegis-demo-runs/<run-id>/`, or to `--results-dir <dir>`, which must be empty. A folder inside the repository is refused unless git ignores it and tracks nothing in it (`scripts/eval/judged/paths.js`); there the replay cache refuses its store (`replay-cli.js`, guard R8), so a resolved ticket is reported as not stored, and no later ticket can hit it. Open `desk.html` from the folder in a browser; it fetches nothing.
 
-Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED, which wins over 1; 4 dry run; 1 an input error, a refused folder, or the desk could not finish a ticket. If the network tripwire fires, the run stops, exits 1 and marks `run.json` and the page.
+Exit codes: 0 the run finished and no ticket is FAILED; 2 a ticket is FAILED, which wins over 1; 3 the allowance guard stopped the run before every ticket ran; 4 dry run; 1 an input error, a refused folder, or the desk could not finish a ticket. If the network tripwire fires, the run stops, exits 1 and marks `run.json` and the page.
 
 ## What it costs
+
+`--budget-usd N` stops the run before a ticket that could pass N, counting `--spent-usd N` from earlier commands, and names the tickets that did not run. It reads the likely cost of a ticket from `LIKELY_USD` in `customer-desk.js`: 2 US dollars, 4 for T2. Each session also gets `--max-budget-usd` with what is left, because a session can cost more than its likely figure. A session killed with no cost reported (at its 25-minute timeout or the output cap) stops the run too, because what it spent is unknown.
 
 Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 US dollars of allowance per session, the figure in `docs/evidence/runtime-smoke.md`; the full set is at most 8 sessions, about 20.00 US dollars. Each real session's `total_cost_usd` is shown under step 4 and added up in the summary. A cache hit starts no session.
 
@@ -41,7 +43,7 @@ Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 U
 |---|---|---|
 | 2 INTAKE | `scripts/intake/intake.js` | State, redaction counts, injection flags, the graph case |
 | 3 TRIAGE | `scripts/replay/replay-cli.js`, `scripts/intake/clarify.js` | Replay lookup, risk floor |
-| 4 AEGIS | `scripts/eval/judged/backends.js` | `claude -p` from the repository root; read-only tools; scrubbed environment; only this repository's settings and CLAUDE.md (`isolationArgs`, proof of what loads in `docs/aegis/demo/evidence/isolation-probe.txt`; no model session has run under these flags yet); or a replay of a verified answer with no model |
+| 4 AEGIS | `scripts/eval/judged/backends.js` | `claude -p` from the repository root; read-only tools; scrubbed environment; only this repository's settings and CLAUDE.md, and deny rules on this work's records, the demo's code and expected answers, the grader and ticket corpora, scored answers and the run folders the CLI can name (`isolationArgs`; what the CLI loads is in `docs/aegis/demo/evidence/batch7/isolation-probe.txt`, and what a real session did is in `docs/aegis/demo/evidence/full-run-1/`; a run under a custom folder from an earlier command is not denied); or a replay of a verified answer with no model |
 | 5 CHECKS | `scripts/eval/judged/checks.js` | Boundary, human confirmation, read-back, privacy, observed output, probe |
 | 6 APPROVAL | `scripts/audit/change-record.js` | Opens the change record; the person approving is simulated |
 | 8 READ-BACK | `scripts/adapters/*-client.js`, `change-record.js status` | The connector's own request, allow-list and verdict; only the wire is replaced |
@@ -55,9 +57,9 @@ Up to one Aegis session per ticket, on your subscription. The estimate is 2.50 U
 
 Every simulated part says SIMULATED in text.
 
-## What one thing the demo adds to a session
+## What the demo adds to a session
 
-The session is told the customer's label and platforms, and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
+Desk sessions run with `--max-turns 40` and `--no-session-persistence`. The session is told the customer's label and platforms, the replay lookup's real result (it has no shell to run the lookup itself), and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
 
 ## Closing states
 

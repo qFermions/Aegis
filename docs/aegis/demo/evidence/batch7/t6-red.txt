@@ -1,0 +1,6 @@
+$ node --test scripts/risk_tier.test.js   (red)
+ℹ fail 1
+ℹ pass 27
+ℹ tests 28
+✖ C: scripts/demo/** (spawns the claude CLI, writes change records and a simulated tenant) is tier C, not scripts/** B (batch 7, task 6)
+✖ failing tests:

@@ -41,7 +41,11 @@ if (!process.env.AEGIS_AUDIT_DIR) {
   const fs = require('node:fs');
   const os = require('node:os');
   const path = require('node:path');
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-audit-tripwire-'));
+  // a TMPDIR that names a missing folder falls back to the system's; if that fails too, it throws, so no
+  // CLI in a test ever falls through to the operator's real trail
+  const make = (base) => fs.mkdtempSync(path.join(base, 'aegis-audit-tripwire-'));
+  let dir;
+  try { dir = make(os.tmpdir()); } catch { dir = make(process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'Temp') : '/tmp'); }
   process.env.AEGIS_AUDIT_DIR = dir;
   process.on('exit', () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* best effort */ } });
 }

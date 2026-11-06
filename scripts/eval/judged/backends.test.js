@@ -102,6 +102,62 @@ test('the exclusions cover the judge\'s temporary folder too, and never the repo
   assert.ok(homeCheckout.includes(path.join('/h', 'CLAUDE.md')));
 });
 
+test('the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4)', () => {
+  const os = require('node:os');
+  const abs = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
+  const repo = (p) => abs(path.join(REPO_ROOT, p));
+  const pinned = [
+    repo('progress.md'), repo('checks.md'), repo('docs/review/**'), repo('docs/aegis/demo/**'), repo('docs/explainers/**'),
+    repo('scripts/demo/customers/**'), repo('scripts/eval/judged/dev-cases.jsonl'),
+    // beyond the charter's list, from code reviews 1 and 2: the demo's own tests and table hold passing answers
+    // and ticket-to-gate pairs; scripts/eval holds the grader, the ticket corpora and their expected routes;
+    // docs/evidence holds scored answers; a judged run saves its grades
+    repo('scripts/demo/**'), repo('scripts/eval/**'), repo('docs/evidence/**'), repo('docs/aegis/**/evidence/**'), repo('.aegis-state/**'),
+    abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
+  ];
+  const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
+  assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P' })).permissions.deny, pinned);
+  // a run folder elsewhere is denied too, when the caller names it
+  // the real form of the temporary folder, so the rule has one form under this Mac's default /var link too
+  const elsewhere = path.join(fs.realpathSync(os.tmpdir()), 'some-run');
+  assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P', runRoot: elsewhere })).permissions.deny, [...pinned, abs(path.join(elsewhere, '**'))]);
+  // a run folder under a link is denied in both forms, since the CLI may match either
+  const fsTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-deny-'));
+  const link = `${fsTmp}-link`;
+  try {
+    let linked = true;
+    try { fs.symlinkSync(fsTmp, link); } catch (e) { if (e.code !== 'EPERM') throw e; linked = false; } // Windows needs a privilege for this
+    if (linked) {
+      const rules = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: link })).permissions.deny;
+      assert.ok(rules.includes(abs(path.join(link, '**'))), 'the given form');
+      assert.ok(rules.includes(abs(path.join(fs.realpathSync(fsTmp), '**'))), 'the real form');
+      // not created yet, as in a dry run: the same rules the real run will use
+      const later = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: path.join(link, 'not-yet') })).permissions.deny;
+      assert.ok(later.includes(abs(path.join(fs.realpathSync(fsTmp), 'not-yet', '**'))), 'the real form of a folder not made yet');
+    }
+  } finally {
+    fs.rmSync(link, { force: true });
+    fs.rmSync(fsTmp, { recursive: true, force: true });
+  }
+  // only Read rules: the CLI's own warning says a Glob(path) rule is not matched and Read rules cover Grep and Glob
+  for (const rule of pinned) assert.match(rule, /^Read\(\/\//);
+  // a wrong list that denied a parent folder would hide what Aegis must read
+  for (const readable of ['CLAUDE.md', 'PRODUCT_CONTRACT.md', 'docs/aegis/workflow.md', 'modules/security/security-doctrine.md', '.claude/commands/mfa-issue.md', 'tasks/lessons.md']) {
+    const target = repo(readable).slice(0, -1);
+    for (const rule of pinned) {
+      const base = rule.slice(0, -1).replace(/\/\*\*$/, '');
+      assert.ok(target !== base && !target.startsWith(`${base}/`), `${readable} stays readable under ${rule}`);
+    }
+  }
+});
+
+test('sutArgs takes no persistence only when asked, and the judge never persists (batch 7, task 5)', () => {
+  assert.ok(!backends.sutArgs({ prompt: 'P' }).includes('--no-session-persistence'));
+  assert.ok(backends.sutArgs({ prompt: 'P', persist: false }).includes('--no-session-persistence'));
+  assert.throws(() => backends.sutArgs({ prompt: 'P', persist: false, resume: 'sess-1' }), /cannot resume/);
+  assert.ok(backends.judgeArgs({ prompt: 'J' }).includes('--no-session-persistence'));
+});
+
 test('the prompt is the ticket, plus the evidence after the pasted-evidence header', () => {
   assert.equal(backends.buildSutPrompt(kase()), 'Ticket text for [UPN].');
   assert.equal(backends.buildSutPrompt(kase({ evidence: 'line 1' })), `Ticket text for [UPN].\n\n${backends.EVIDENCE_HEADER}\nline 1`);

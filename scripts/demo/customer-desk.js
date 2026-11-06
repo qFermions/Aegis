@@ -616,9 +616,11 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     result: blocked.length ? blocked.join('; ') : `applied ${op.applied} gate(s) of ${gates.length} to the simulated tenant, one at a time`,
     output: op.lines.length ? op.lines.join('\n') : 'SIMULATED OPERATOR: nothing was applied.',
   });
+  // names each gate after the i-th as not applied, and why (code review 3, finding 12: one place for it)
+  const skipLater = (i, why) => { for (const later of gates.slice(i + 1)) op.lines.push(`${later.id}: not applied, because ${why}`); };
   // the tripwire stops the whole run from inside a read-back; what was applied and read is still recorded
   const stopped = (e, i) => {
-    for (const later of gates.slice(i + 1)) op.lines.push(`${later.id}: not applied, because the run stopped`);
+    skipLater(i, 'the run stopped');
     operatorStep();
     readBackStep(`failed: ${ctx.clean(e)}`);
     return e;
@@ -634,7 +636,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       }
       op.ms += Date.now() - t0;
       if (blocked.length) {
-        for (const later of gates.slice(i + 1)) op.lines.push(`${later.id}: not applied, because ${g.id} could not be applied`);
+        skipLater(i, `${g.id} could not be applied`);
         break;
       }
       t0 = Date.now();
@@ -652,7 +654,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const why = found.verdicts.some((v) => v.state === 'FAIL') ? 'failed'
         : (found.verdicts.some((v) => v.state === 'INCONCLUSIVE' && v.read && v.read.kind) ? 'proved nothing' : null);
       if (why) {
-        for (const later of gates.slice(i + 1)) op.lines.push(`${later.id}: not applied, because the read-back of ${g.id} ${why}`);
+        skipLater(i, `the read-back of ${g.id} ${why}`);
         break;
       }
     }

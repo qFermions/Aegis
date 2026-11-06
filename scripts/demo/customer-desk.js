@@ -597,8 +597,10 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
 
   // 7 SIMULATED OPERATOR and 8 READ-BACK, one gate at a time (batch 8, task 5): a gate is applied, its
   // read-back runs, then the next gate. A failed read-back stops the ticket there and no later gate is
-  // applied. Every gate is checked before any is applied, so a gate the desk cannot act out stops the
-  // ticket before anything changes.
+  // applied; so does a read that ran and proved nothing (CLAUDE.md: verify each step, never continue a
+  // batch past a failure). A gate whose runbook names no read is not proved either, and the next gate
+  // still runs: its proof is the read its own step names. Every gate is checked before any is applied, so
+  // a gate the desk cannot act out stops the ticket before anything changes.
   const blocked = gates.map((g) => notSimulated(g.id, ctx.simTable, customer, valuesFor(g).target)).filter(Boolean);
   const origin = fs.readFileSync(tenantFile, 'utf8');
   const op = { started: Date.now(), ms: 0, lines: [], applied: 0 };
@@ -614,6 +616,20 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   op.ms += Date.now() - op.started;
   const rb = { started: null, ms: 0, lines: [] };
   const verdicts = [];
+  const at = (ms) => new Date(ms).toISOString();
+  const readBackStep = (result) => push('READ-BACK', { reads: verdicts.map((v) => v.read), actor: 'Aegis connector', tag: 'REAL connector, SIMULATED tenant', started_at: at(rb.started || Date.now()), duration_ms: rb.ms, exit_code: worstExit(verdicts.map((v) => v.exit)), result, output: rb.lines.join('\n\n') });
+  const operatorStep = () => push('SIMULATED OPERATOR', {
+    facts: { applied: op.applied, total: gates.length, blocked: blocked.length > 0 },
+    actor: 'SIMULATED OPERATOR', tag: SIM, started_at: at(op.started), duration_ms: op.ms,
+    result: blocked.length ? blocked.join('; ') : `applied ${op.applied} gate(s) of ${gates.length} to the simulated tenant, one at a time`,
+    output: op.lines.length ? op.lines.join('\n') : 'SIMULATED OPERATOR: nothing was applied.',
+  });
+  // the tripwire stops the whole run from inside a read-back; what was applied and read is still recorded
+  const stopped = (e) => {
+    operatorStep();
+    readBackStep(`failed: ${ctx.clean(e)}`);
+    return e;
+  };
   if (!blocked.length) {
     for (const [i, g] of gates.entries()) {
       let t0 = Date.now();
@@ -630,32 +646,34 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       }
       t0 = Date.now();
       if (rb.started === null) rb.started = t0;
-      const found = await readBacksForGate(approvals.find((a) => a.gate === g.id), g, { customer, customerDir, tenantFile, values: valuesFor(g).values }, ctx, rec);
+      let found;
+      try {
+        found = await readBacksForGate(approvals.find((a) => a.gate === g.id), g, { customer, customerDir, tenantFile, values: valuesFor(g).values }, ctx, rec);
+      } catch (e) {
+        rb.ms += Date.now() - t0;
+        throw stopped(e);
+      }
       rb.ms += Date.now() - t0;
       verdicts.push(...found.verdicts);
       rb.lines.push(...found.lines);
-      if (found.verdicts.some((v) => v.state === 'FAIL')) {
-        for (const later of gates.slice(i + 1)) op.lines.push(`${later.id}: not applied, because the read-back of ${g.id} failed`);
+      const why = found.verdicts.some((v) => v.state === 'FAIL') ? 'failed'
+        : (found.verdicts.some((v) => v.state === 'INCONCLUSIVE' && v.read && v.read.kind) ? 'proved nothing' : null);
+      if (why) {
+        for (const later of gates.slice(i + 1)) op.lines.push(`${later.id}: not applied, because the read-back of ${g.id} ${why}`);
         break;
       }
     }
   }
-  const at = (ms) => new Date(ms).toISOString();
-  push('SIMULATED OPERATOR', {
-    facts: { applied: op.applied, total: gates.length, blocked: blocked.length > 0 },
-    actor: 'SIMULATED OPERATOR', tag: SIM, started_at: at(op.started), duration_ms: op.ms,
-    result: blocked.length ? blocked.join('; ') : `applied ${op.applied} gate(s) of ${gates.length} to the simulated tenant, one at a time`,
-    output: op.lines.length ? op.lines.join('\n') : 'SIMULATED OPERATOR: nothing was applied.',
-  });
+  operatorStep();
   if (blocked.length && !op.applied) return close('OPEN', blocked.join('; '));
   if (blocked.length) {
     // a later gate could not be acted out after an earlier one was applied: the run says what changed
-    push('READ-BACK', { reads: verdicts.map((v) => v.read), actor: 'Aegis connector', tag: 'REAL connector, SIMULATED tenant', started_at: at(rb.started || Date.now()), duration_ms: rb.ms, exit_code: worstExit(verdicts.map((v) => v.exit)), result: `stopped after ${op.applied} gate(s): ${verdicts.filter((v) => v.state === 'PASS').length} of ${verdicts.length} read-back(s) passed`, output: rb.lines.join('\n\n') });
+    readBackStep(`stopped after ${op.applied} gate(s): ${verdicts.filter((v) => v.state === 'PASS').length} of ${verdicts.length} read-back(s) passed`);
     return close('OPEN', `${blocked.join('; ')}; ${op.applied} earlier gate(s) were applied in the simulated tenant`);
   }
   const pass = verdicts.filter((v) => v.state === 'PASS').length;
   const rbState = verdicts.some((v) => v.state === 'FAIL') ? 'FAIL' : (pass === verdicts.length ? 'PASS' : 'INCONCLUSIVE');
-  push('READ-BACK', { reads: verdicts.map((v) => v.read), actor: 'Aegis connector', tag: 'REAL connector, SIMULATED tenant', started_at: at(rb.started || Date.now()), duration_ms: rb.ms, exit_code: worstExit(verdicts.map((v) => v.exit)), result: `${rbState}: ${pass} of ${verdicts.length} read-back(s) passed`, output: rb.lines.join('\n\n') });
+  readBackStep(`${rbState}: ${pass} of ${verdicts.length} read-back(s) passed${op.applied < gates.length ? `; ${gates.length - op.applied} later gate(s) not applied` : ''}`);
 
   // 9 CLOSE
   if (verdicts.some((v) => v.state === 'FAIL')) return close('FAILED', 'a read-back shows the change was not done');

@@ -517,17 +517,19 @@ test('an internal error exits 1, never 0, and its reason holds no absolute home 
   assert.match(step(r.ticket('T1'), 8).output, /~\/some-place/);
 });
 
-// Batch 8, task 5: gates run one at a time and a failed read-back stops the ticket, so the read that
-// cannot run now comes first (GitHub) and the failing one second (Okta); the point is unchanged.
-test('a read that shows a failure is kept when another read-back cannot run: the ticket is FAILED', async (t) => {
+// Batch 8: gates run one at a time (task 5), and code review 1 (finding 8) made a read that ran and
+// proved nothing stop the ticket too, as CLAUDE.md asks (verify each step; never continue past a
+// failure). So a read that cannot run now stops the ticket before the next gate is applied.
+test('a read-back that cannot run stops the ticket: the next gate is never applied, and the run says the desk had a fault', async (t) => {
   const { transportFor } = require('./sim/vendors.js');
-  const simTable = { ...SIM_GATES, 'okta-user-lifecycle-deactivate-portal': { ...SIM_GATES['okta-user-lifecycle-deactivate-portal'], apply: (s) => { s.touched_elsewhere = true; } } };
-  const deps = { simTable, transportFor: (c, f) => { if (c === 'github') throw new Error('seam failed'); return transportFor(c, f); } };
+  const deps = { transportFor: (c, f) => { if (c === 'github') throw new Error('seam failed'); return transportFor(c, f); } };
   const r = await runDesk(t, { only: ['T2'], answers: { T2: good('github-offboard-member-remove-portal', 'okta-user-lifecycle-deactivate-portal') }, deps });
   const k = r.ticket('T2');
-  assert.equal(k.closing_state, 'FAILED');
-  assert.match(step(k, 8).output, /okta:verify-status: exit 2/);
+  assert.equal(k.closing_state, 'INCONCLUSIVE', k.reason);
   assert.match(step(k, 8).output, /could not run.*seam failed/);
+  assert.match(step(k, 7).output, /okta-user-lifecycle-deactivate-portal: not applied, because the read-back of github-offboard-member-remove-portal proved nothing/);
+  assert.equal(tenantOf(r.results, 'D').okta.users['00u1dem0dEPARTx7y8z9'].status, 'ACTIVE', 'the Okta gate never changed the simulated tenant');
+  assert.equal(r.code, 1);
 });
 
 test('exit 2 wins over exit 1: a run holding a FAILED ticket says so even when another ticket had a fault', async (t) => {
@@ -981,14 +983,29 @@ test('the FAILED reason says what the check matched, not what the answer means',
   assert.doesNotMatch(k.reason, /says Aegis made a change/);
 });
 
-// Batch 8, task 5: a failed read-back now stops the ticket, so a FAIL is always the last read; the
-// worst-not-last case is an inconclusive read (exit 5) followed by a pass (exit 0).
-test('step 8 shows the worst exit code of its read-backs, not the last', async (t) => {
+// Batch 8: a read that fails or proves nothing stops the ticket (task 5; code review 1, finding 8), so the
+// step shows the exit code of the read that stopped it, and the later gate is named as not applied.
+test('step 8 shows the exit code of the read that stopped the ticket, and the later gate is not applied', async (t) => {
   const simTable = { ...SIM_GATES, 'mfa-require-reregister-portal': { ...SIM_GATES['mfa-require-reregister-portal'], apply: (s, target) => { s.msgraph.methods[target['[USER_ID]']] = 'not a list'; } } };
   const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal', 'mfa-session-revoke-portal') }, deps: { simTable } });
   const s = step(r.ticket('T1'), 8);
-  assert.match(s.result, /INCONCLUSIVE: 1 of 2/);
+  assert.match(s.result, /INCONCLUSIVE: 0 of 1 read-back\(s\) passed; 1 later gate\(s\) not applied/);
   assert.equal(s.exit_code, 5);
+  assert.match(step(r.ticket('T1'), 7).output, /mfa-session-revoke-portal: not applied, because the read-back of mfa-require-reregister-portal proved nothing/);
+  assert.equal(tenantOf(r.results, 'A').msgraph.users[A_USER].signInSessionsValidFromDateTime, customersData.loadTenant(customersData.loadData().customers[0]).msgraph.users[A_USER].signInSessionsValidFromDateTime, 'the session revoke never ran');
+});
+
+// Code review 1, finding 2: the tripwire is thrown from inside a read-back after a gate was applied; steps
+// 7 and 8 must say so, not "not reached". A wrong implementation it catches: steps pushed only after the loop.
+test('a tripwire inside a read-back still records the applied gate at step 7 and the failed read at step 8', async (t) => {
+  const { NetworkTripwireError } = require('../adapters/socket-tripwire.js');
+  const dir = path.join(tmp(t), 'run');
+  const deps = { transportFor: () => async () => { throw new NetworkTripwireError(); } };
+  await assert.rejects(runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') }, deps, dir }), /Network tripwire fired/);
+  const k = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).tickets[0];
+  assert.match(step(k, 7).result, /applied 1 gate\(s\) of 1/);
+  assert.match(step(k, 8).result, /^failed: .*tripwire/i);
+  assert.doesNotMatch(step(k, 7).result, /not reached/);
 });
 
 test('a repeated flag is an input error, so a run never spends on a set other than the one typed', async () => {

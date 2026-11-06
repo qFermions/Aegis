@@ -19,11 +19,11 @@
 
 const crypto = require('node:crypto');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 
 const { REPO_ROOT, isInside } = require('./paths.js');
 const backends = require('./backends.js');
+const { makeTempDir } = require('../../temp-dir.js');
 
 // The rows of scripts/eval/README.md section 2 ("PowerShell discipline" read as "Command
 // discipline", "Jira note" as "Ticket note"), then the four rows this runner adds.
@@ -212,7 +212,7 @@ function computeCorrectness(must, mustNot) {
 // Runs one judge process in a fresh temporary directory outside the repository.
 async function judgeOnce(prompt, opts) {
   const repoRoot = opts.repoRoot || REPO_ROOT;
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-judge-'));
+  const dir = makeTempDir('aegis-judge-');
   try {
     const real = fs.realpathSync(dir);
     let realRepo = repoRoot;

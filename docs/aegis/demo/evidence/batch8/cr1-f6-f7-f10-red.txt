@@ -1,0 +1,4 @@
+$ node --test --test-name-pattern "a blank line inside" scripts/demo/answer.test.js   (answer.js before the fix)
+✖ a blank line inside "Do this" keeps its steps; only the default block's tokens are its facts; a placeholder is one word (0.962875ms)
+✖ failing tests:
+✖ a blank line inside "Do this" keeps its steps; only the default block's tokens are its facts; a placeholder is one word (0.962875ms)

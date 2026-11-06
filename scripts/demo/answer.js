@@ -16,12 +16,15 @@ const PARTS = Object.freeze([
   { key: 'tellUser', label: 'Tell the user' },
 ]);
 const labelRe = (label) => new RegExp(`^[\\s>*_-]*(?:\\*\\*)?${label.replace(/'/g, "['’]")}(?:\\*\\*)?[ \\t]*:[ \\t]*(?:\\*\\*)?[ \\t]*(.*)$`, 'i');
+// compiled once (code review 1, finding 15)
+const LABELS = PARTS.map((p) => ({ ...p, re: labelRe(p.label) }));
 const STEP = /^[ \t]*(?:\*\*)?(\d+)[.)][ \t]+(.+)$/;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 
-// Words a reader reads: markdown marks, list numbers and arrows are not words.
-const words = (text) => String(text).replace(/[*_`#>]/g, ' ').split(/\s+/).filter((w) => w && !/^\d+[.)]$/.test(w) && !/^[-|:\u2192]+$/.test(w)).length;
+// Words a reader reads: markdown marks, list numbers and arrows are not words. An underscore stays, so
+// [FIRST_NAME] is one word (code review 1, finding 10).
+const words = (text) => String(text).replace(/[*`#>]/g, ' ').split(/\s+/).filter((w) => w && !/^\d+[.)]$/.test(w) && !/^[-|:\u2192]+$/.test(w)).length;
 // Sentences in a short text: a run of text that ends at . ! or ? followed by a space or the end.
 const sentences = (text) => String(text).replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+(?=\S)/).filter((s) => s.trim() !== '');
 
@@ -54,18 +57,20 @@ function fixCard(answer) {
   const steps = [];
   let current = null;
   for (const line of own) {
-    const found = PARTS.find((p) => labelRe(p.label).test(line));
+    const found = LABELS.find((p) => p.re.test(line));
     if (found) {
       current = found.key;
       if (!order.includes(found.key)) order.push(found.key);
-      parts[found.key] = labelRe(found.label).exec(line)[1].trim();
+      parts[found.key] = found.re.exec(line)[1].trim();
       continue;
     }
     const step = STEP.exec(line);
     if (current === 'doThis' && step) { steps.push(step[2].replace(/\*\*$/, '').trim()); continue; }
     // a part runs on over its wrapped lines and ends at a blank line; what follows it (such as the line
-    // that points to Details) belongs to the card but to no part
-    if (line.trim() === '') { current = null; continue; }
+    // that points to Details) belongs to the card but to no part. "Do this" keeps going over blank lines
+    // between its numbered steps, as markdown lists often have (code review 1, finding 6).
+    if (line.trim() === '') { if (current !== 'doThis') current = null; continue; }
+    if (current === 'doThis' && steps.length) { current = null; continue; }
     if (current) parts[current] = `${parts[current] ? `${parts[current]} ` : ''}${line.trim()}`;
   }
   const text = own.join('\n').trim();
@@ -123,7 +128,9 @@ const DEFAULT_FACTS = Object.freeze([
   { fact: 'Microsoft Intune', answer: /\bIntune\b/i, profile: /\bIntune\b/i },
   { fact: 'Jira Service Management', answer: /\bJira Service Management\b|\[@Aegion_JIRA_SPACE\]/i, profile: /\bJira\b/i },
   { fact: 'the DT- and LT- device names', answer: /\b(?:DT|LT)-(?:First|\[)/, profile: /\b(?:DT|LT)-/ },
-  { fact: 'the default organization\'s own sites, vendors and servers', answer: /\[@Aegion(?:_(?!DOMAIN\])[A-Z0-9_]+)?\]|\bAD Connect server\b|\bthird tower\b/, profile: /\[@Aegion(?:_(?!DOMAIN\])[A-Z0-9_]+)?\]/ },
+  // only the tokens CLAUDE.md's default environment block uses; the runbooks' per-tenant connection
+  // tokens ([@Aegion_GITHUB_ORG], [@Aegion_OKTA_ORG_URL] and the like) are every customer's (code review 1, finding 7)
+  { fact: 'the default organization\'s own sites, vendors and servers', answer: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[0-9]+|VOIP|VOIP_LEGACY|ALARM|NETPARTNER|FINANCE_SERVER|JIRA_SPACE))?\]|\bAD Connect server\b|\bthird tower\b/, profile: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[0-9]+|VOIP|VOIP_LEGACY|ALARM|NETPARTNER|FINANCE_SERVER|JIRA_SPACE))?\]/ },
 ]);
 function defaultFactsIn(text, profile) {
   return DEFAULT_FACTS.filter((f) => f.answer.test(String(text)) && !f.profile.test(String(profile || ''))).map((f) => f.fact);

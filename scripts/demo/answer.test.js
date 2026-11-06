@@ -117,3 +117,18 @@ test('the INVESTIGATE step rule: steps that only look pass, a step that changes 
   for (const word of ['reset', 'Removed', 'adding', 'turn off', 'deleting']) assert.ok(a.CHANGE_WORD.test(`1. ${word} it`), word);
   for (const word of ['address', 'settings', 'readd', 'presets']) assert.equal(a.CHANGE_WORD.test(word), false, word);
 });
+
+// Code review 1, findings 6, 7 and 10. Wrong implementations they catch: a card parser that ends "Do this"
+// at the blank line before its list (0 steps); a fact check that treats every [@Aegion_*] token as the
+// default organization's (the runbooks use [@Aegion_GITHUB_ORG] for any customer); a word count that
+// splits [FIRST_NAME] into two words.
+test('a blank line inside "Do this" keeps its steps; only the default block\'s tokens are its facts; a placeholder is one word', () => {
+  const spaced = card([GOOD_PARTS[0], GOOD_PARTS[1], '', '1. Open the admin center.', '', '2. Find the group.', '', '3. Add the user.', '', ...GOOD_PARTS.slice(5)]);
+  const c = a.fixCard(spaced);
+  assert.equal(c.steps.length, 3);
+  assert.deepEqual(a.cardProblems(c), []);
+  assert.equal(a.onlyLooks(`${spaced}\n\n## Details\n1. Reset the password for [UPN].`).steps.length, 3, 'the card\'s steps, not the Details list');
+  assert.deepEqual(a.defaultFactsIn('Open github.com/orgs/[@Aegion_GITHUB_ORG] and [@Aegion_OKTA_ORG_URL].', ''), []);
+  for (const token of ['[@Aegion]', '[@Aegion_SITE_2]', '[@Aegion_NETPARTNER]', '[@Aegion_JIRA_SPACE]']) assert.ok(a.defaultFactsIn(`Ask ${token}.`, '').includes("the default organization's own sites, vendors and servers"), token);
+  assert.equal(a.words('[FIRST_NAME] at [@Aegion_DOMAIN]'), 3);
+});

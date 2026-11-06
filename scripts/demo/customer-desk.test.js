@@ -851,18 +851,22 @@ test('each customer has its own audit folder, replay store, simulated tenant and
 
 // ── The simulator and the boundary ────────────────────────────────────────────────────────────
 
+// Batch 8: task 3 gave okta-user-lifecycle-unsuspend-portal a read-back, so this test now reaches it, and
+// an unsuspend changes nothing on an active user: it runs after the suspend. Task 5's R1 reads are
+// covered too (a gate whose runbook section names a read with no change record).
 test('every gate the table maps is a real gate, and every one with a read-back resolves through its own connector', async (t) => {
   const { catalog } = require('./catalog.js');
   const gates = catalog();
   const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3' };
+  const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'] };
   for (const [id, entry] of Object.entries(SIM_GATES)) {
     const g = gates.get(id);
     assert.ok(g && g.kind === 'gate', `${id} is a SAFETY GATE in .claude/commands`);
     assert.equal(typeof entry.effect, 'string', `${id} effect`);
-    if (!g.bound.length) continue;
+    if (!g.bound.length && !g.reads.length) continue;
     const only = ticketFor[entry.platform];
     assert.ok(only, `${id}: a ticket for ${entry.platform}`);
-    const r = await runDesk(t, { only: [only], answers: { [only]: good(id) } });
+    const r = await runDesk(t, { only: [only], answers: { [only]: good(...(after[id] || []), id) } });
     assert.equal(r.ticket(only).closing_state, 'RESOLVED (SIMULATED)', `${id}: ${r.ticket(only).reason}`);
   }
 });

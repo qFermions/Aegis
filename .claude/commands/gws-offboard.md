@@ -71,7 +71,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** suspend one Google Workspace user; sign-in stops and Google resets the sign-in cookies, and nothing is deleted
 - **Scope:** one user; mail, Drive, Calendar, licences and group memberships are kept (the licence is still billed)
-- **Reversibility:** R2: blocks all access and resets the sign-in cookies; undo in the same place: Admin console → Directory → Users → filter User status = Suspended → More options → Reactivate, under its own exact phrase `REACTIVATE GOOGLE USER [USER@DOMAIN.COM]`, but the reset cookies do not come back: the user signs in again
+- **Reversibility:** R2: stops every sign-in and resets the sign-in cookies; undo in the same place: Admin console → Directory → Users → filter User status = Suspended → More options → Reactivate, under its own exact phrase `REACTIVATE GOOGLE USER [USER@DOMAIN.COM]`, but the reset cookies do not come back: the user signs in again
 - **Required confirmation:** Type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 - **Read-back:** `gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
@@ -190,7 +190,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Target: [USER@DOMAIN.COM]
 # Effect: suspend one Google Workspace user — nothing is deleted
 # Scope: one user — data, licences and group memberships are kept
-# Reversibility: R2: blocks all access and resets the sign-in cookies, undo with the separate unsuspend procedure under its own phrase
+# Reversibility: R2: stops every sign-in and resets the sign-in cookies, undo with the separate unsuspend procedure under its own phrase
 # Required confirmation: type exactly "SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
 # Read-back: gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute

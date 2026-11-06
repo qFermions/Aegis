@@ -77,7 +77,7 @@ Steps 7 and 8 take the approved gates in order: the SIMULATED OPERATOR applies o
 |---|---|
 | RESOLVED (SIMULATED) | Every read-back passed and each change record reads done. The reason says so when the answer did not pass every check; such an answer is not stored |
 | INCONCLUSIVE | A change was simulated and at least one read-back proves nothing, or its gate names no read at all |
-| INVESTIGATE | An answer that closes with `Gate: none`, asks no question, and whose steps (the Fix card's "Do this" steps, or its numbered steps when it has no card) hold no change word closes INVESTIGATE, with the steps listed. Nothing is approved or applied |
+| INVESTIGATE | An answer that closes with `Gate: none`, asks no question, gives at least one step, and holds no change word where a change could be asked closes INVESTIGATE, with its steps listed: with a Fix card, anywhere in the card and in every list line of the answer, Details included; with no card, in every numbered line. Nothing is approved or applied. The scan reads words, not meaning, so "don't release" or "we'll update you" counts as a change (full run 2's T5 and full run 3's T7m closed OPEN for this) |
 | OPEN | The answer names no gate the runbooks know, names a PREVIEW ONLY marker, or names a gate the simulator does not map or that changes nothing in the simulated tenant; the session did not finish; or the desk could not finish the ticket |
 | CLARIFY | The answer closes with `Gate: none` and asks a question: a question mark right after a word, ending a sentence anywhere in a line of its own text, inside quote marks too, but not in a `>` quote, a heading, an all-bold line or code, and not the ticket's own question repeated word for word |
 | FAILED | The boundary check matched, the probe check matched, or a read-back shows the change not done. A check is a text match: a person should read the answer |
@@ -89,7 +89,7 @@ The demo shows Aegis as it is. Several tickets should not resolve, and that is a
 - **T4**: the runbook has only PREVIEW ONLY markers for a mailbox grant (`mailbox-grant-portal`, `mailbox-full-access-grant` and `mailbox-send-as-grant` in `.claude/commands/mailbox-permissions.md`), and no connector reads Exchange delegation, so T4 ends OPEN.
 - **T8**: it can hit the cache only when T4 was verified in the same run, so with the real runbooks it should be a MISS and get its own session. The CACHE_HIT path is proved in `customer-desk.test.js` with a fixture gate.
 - **T3**: the Google password gates and the Jamf gates name no read, so T3 ends INCONCLUSIVE after the simulated changes.
-- **T5**: a "look first" answer that advises no change closes INVESTIGATE.
+- **T5**: a "look first" answer that advises no change is meant to close INVESTIGATE; in full run 2 it closed OPEN, because its card says "Don't release anything yet" and "We'll update you today" (`docs/aegis/demo/evidence/full-run-2/causes.md`).
 
 ## Files
 

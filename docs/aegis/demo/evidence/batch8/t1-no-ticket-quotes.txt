@@ -1,3 +1,10 @@
-CLAUDE.md answer format shares 0 four-word runs with the 16 tickets []
+$ node -e '<the script below>'   (at a2eb2b9)
+const fs=require("fs");const d=require("./scripts/demo/customers.js");const bodies=[];for(const set of ["tidy","messy"]){const {customers,tickets}=d.loadData(set);for(const t of tickets){const c=customers.find(x=>x.id===t.customer);bodies.push([t.id,d.rawItem(t,c).split("
+
+").slice(1).join(" ")+" "+t.title])}}const grams=(s,n)=>{const w=s.toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean);const g=new Set();for(let i=0;i+n<=w.length;i++)g.add(w.slice(i,i+n).join(" "));return g};const sides={"CLAUDE.md":fs.readFileSync("CLAUDE.md","utf8"),"answer-format.md":fs.readFileSync("docs/aegis/answer-format.md","utf8"),"fixtures":["routine","multi-system","security"].map(f=>fs.readFileSync("scripts/demo/fixtures/answers/"+f+".txt","utf8")).join(" ")};console.log("tickets read: "+bodies.map(b=>b[0]).join(", "));for(const [name,text] of Object.entries(sides)){const g=grams(text,4);const hits=[];for(const [id,b] of bodies)for(const x of grams(b,4))if(g.has(x))hits.push(id+": "+x);console.log(name+" shares "+hits.length+" four-word runs with the 16 tickets "+JSON.stringify(hits.slice(0,8)))}
+
+tickets read: T1, T2, T3, T4, T5, T6, T7, T8, T1m, T2m, T3m, T4m, T5m, T6m, T7m, T8m
+CLAUDE.md shares 0 four-word runs with the 16 tickets []
 answer-format.md shares 0 four-word runs with the 16 tickets []
 fixtures shares 0 four-word runs with the 16 tickets []
+Read by hand as well: the examples are a shared calendar, a new starter, a phishing click and a full mailbox; none is one of the 16 tickets.

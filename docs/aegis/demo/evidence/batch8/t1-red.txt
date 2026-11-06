@@ -1,4 +1,4 @@
-$ node --test scripts/demo/answer.test.js   (answer.js not written yet)
+$ node --test scripts/demo/answer.test.js   (answer.js written first and set aside for this run, so the module is missing)
 Error: Cannot find module './answer.js'
 ℹ tests 1
 ℹ pass 0

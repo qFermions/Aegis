@@ -49,6 +49,8 @@ This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fa
 |---|---|---|---|---|---|
 | security 1 | `abb6ea6..6705ff0` | 0 | 0 | 0 | `batch8/reviews/security-review-1.md` |
 | code 1 (xhigh, tier C) | `abb6ea6..bffecff` | 15 | 13, in 10 commits (`f20eaaf` to `87fa578`) | 2: #13's pattern copy (scripts/audit is outside the allowed files), #15's repeated parse (no measurable cost) | `batch8/reviews/code-review-1.md` |
+| security 2 | `bffecff..71a0388` | 1 (Medium) | 1 (`4b60407`) | 0 | `batch8/reviews/security-review-2.md` |
+| code 2 (xhigh) | `bffecff..4b60407` | 15 | 11, in `6021cd8` (one class per bullet) | 4: #2 (the safe side), #5 (CLAUDE.md per-step verify), #13 and #14 (owner decisions, outside this batch's files or scope) | `batch8/reviews/code-review-2.md` |
 
 ## Deviations and decisions
 

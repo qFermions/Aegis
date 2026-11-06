@@ -102,6 +102,30 @@ test('the exclusions cover the judge\'s temporary folder too, and never the repo
   assert.ok(homeCheckout.includes(path.join('/h', 'CLAUDE.md')));
 });
 
+// Batch 8, task 10c review finding 2: under a stale TMPDIR the judge's folder falls back to the system
+// temporary folder (scripts/temp-dir.js), so the exclusions cover that folder and what it resolves to.
+// Wrong implementation it catches: exclusions built from os.tmpdir() alone, which then name only the
+// missing folder, so a /tmp/CLAUDE.md would load into the judge.
+test('under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to', () => {
+  const { makeTempDir } = require('../../temp-dir.js');
+  const names = ['TMPDIR', 'TMP', 'TEMP'];
+  const saved = names.map((n) => process.env[n]);
+  for (const n of names) process.env[n] = path.join(path.parse(process.cwd()).root, 'aegis-no-such-folder', 'x');
+  let made = null;
+  try {
+    const list = backends.excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge: true });
+    const system = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'Temp') : '/tmp';
+    made = makeTempDir('aegis-exclusion-test-');
+    for (const dir of [system, fs.realpathSync(system), path.dirname(fs.realpathSync(made))]) {
+      assert.ok(list.includes(path.join(dir, 'CLAUDE.md')), `${dir}: the judge's fallback folder sits below it`);
+      assert.ok(list.includes(path.join(dir, '.claude', 'rules', '**')), `${dir}: its rules folder`);
+    }
+  } finally {
+    names.forEach((n, i) => { if (saved[i] === undefined) delete process.env[n]; else process.env[n] = saved[i]; });
+    if (made) fs.rmSync(made, { recursive: true, force: true });
+  }
+});
+
 test('the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4)', () => {
   const os = require('node:os');
   const abs = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;

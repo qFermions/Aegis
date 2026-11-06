@@ -25,18 +25,23 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { REPO_ROOT, effectivePath } = require('./paths.js');
+const { systemTempDir } = require('../../temp-dir.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
 
 // Every CLAUDE.md the CLI's upward walk could find from the repository or the judge's temporary folder,
 // and the home folder's own. The system under test keeps the repository's own, even when the checkout
-// is the home folder; the judge loads none, even when its temporary folder sits below the checkout.
+// is the home folder; the judge loads none, even when its temporary folder sits below the checkout. The
+// system temporary folder is walked too: under a stale TMPDIR the judge's folder is made there (batch 8,
+// task 10c review finding 2).
 function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge = false } = {}) {
   const dirs = new Set([home]);
   let realTmp = os.tmpdir();
   try { realTmp = fs.realpathSync(realTmp); } catch { /* a stale TMPDIR: its given form is listed */ }
-  for (const start of [path.dirname(repoRoot), os.tmpdir(), realTmp]) {
+  let realSystem = systemTempDir();
+  try { realSystem = fs.realpathSync(realSystem); } catch { /* listed in its given form */ }
+  for (const start of [path.dirname(repoRoot), os.tmpdir(), realTmp, systemTempDir(), realSystem]) {
     for (let d = start; ; d = path.dirname(d)) {
       dirs.add(d);
       if (d === path.dirname(d)) break;

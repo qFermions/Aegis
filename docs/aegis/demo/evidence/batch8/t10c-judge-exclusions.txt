@@ -1,0 +1,26 @@
+$ node --test scripts/eval/judged/backends.test.js   (review finding 2: the new test before the fix; exit 1)
+✖ under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to (0.635125ms)
+ℹ tests 13
+ℹ pass 12
+ℹ fail 1
+✖ failing tests:
+✖ under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to (0.635125ms)
+  AssertionError [ERR_ASSERTION]: /tmp: the judge's fallback folder sits below it
+
+$ TMPDIR=<tmp> node --test scripts/eval/judged/*.test.js scripts/temp-dir.test.js scripts/adapters/socket-tripwire.test.js   (after the fix; exit 0; stale-folder tests and summary)
+✔ a stale temporary folder falls back to the system one, with the tripwire still armed (42.822417ms)
+✔ the desk's dry run works under a stale temporary folder (45.517334ms)
+✔ under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to (0.402625ms)
+✔ makeTempDir returns a new folder that exists under a stale TMPDIR, outside the stale path (23.8025ms)
+✔ replay-demo runs to exit 0 under a stale TMPDIR (536.738875ms)
+✔ the change trail of the runbook tests is made under a stale TMPDIR (23.371458ms)
+✔ a judge run makes its folder under a stale TMPDIR (45.264875ms)
+ℹ tests 87
+ℹ suites 0
+ℹ pass 87
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2107.400834
+

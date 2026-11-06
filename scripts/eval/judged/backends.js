@@ -52,7 +52,8 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
 // older baseline folders (docs/aegis/<batch>/baseline and docs/baseline, which hold ticket-to-route results: batch 8,
 // task 10a), and the run folders the CLI can name,
 // so it answers from Aegis's runbooks and not from its own grading material. A run saved under a custom folder
-// by an earlier command is not on the list, nor a judged run's custom --results-dir. Read
+// by an earlier command is not on the list; a judged run's own results folder is added by the caller as runRoot
+// (judged-eval.js passes it to runSut: batch 8, task 10b). Read
 // rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and Glob.
 // That the CLI loads them: docs/aegis/demo/evidence/batch7/isolation-probe.txt. That it refuses a read is
 // shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
@@ -234,18 +235,19 @@ function promptTooLong(prompt) {
 }
 
 // Runs one case through the system under test. opts: { command, prefixArgs, spawn, env,
-// repoRoot, maxTurns, web, timeoutMs, graceMs }. env is already scrubbed.
+// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot }. env is already scrubbed; runRoot, the run's
+// results folder, is denied to both turns (batch 8, task 10b).
 async function runSut(c, opts) {
   const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: opts.repoRoot || REPO_ROOT, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
   const turns = [];
   const prompt = buildSutPrompt(c);
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c);
-  turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web }), base));
+  turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, runRoot: opts.runRoot }), base));
   if (c.follow_up !== '' && turns[0].state === 'OK') {
     if (!turns[0].session_id) {
       turns.push({ state: 'ERROR', reason: 'no session id to resume for the follow-up', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null });
     } else {
-      turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id }), base));
+      turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, runRoot: opts.runRoot }), base));
     }
   }
   return sutRecord(turns, c);

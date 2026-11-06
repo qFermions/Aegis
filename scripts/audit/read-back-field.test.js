@@ -187,3 +187,26 @@ test('D2: open takes the read-back a gate\'s field names and refuses one its fie
   assert.equal(a.code, 1);
   assert.match(a.err, /gate aegis-d2-a .* binds no read-back/);
 });
+
+// Batch 8, task 3: four portal gates the desk could not prove are R2 now, each naming the read that
+// proves it (full-run-1 causes.md, rows T2 and T6). Each gate's field names its command, and a line
+// of its runbook runs that command with --change, so a change record can be opened for it. Wrong
+// implementation it catches: a gate re-classed to R2 whose field still says none, or whose field
+// names verify-status --status ACTIVE for the suspend, or whose run line was left without --change.
+test('batch 8: the Google offboard suspend and three Okta lifecycle gates are R2 and name their read-backs', () => {
+  const want = [
+    ['gws-offboard.md', 'gws-offboard-suspend-portal', 'gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute'],
+    ['okta-user-lifecycle.md', 'okta-user-lifecycle-reset-password-portal', 'okta-client.js verify-password-reset --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute'],
+    ['okta-user-lifecycle.md', 'okta-user-lifecycle-suspend-portal', 'okta-client.js verify-status --user [OKTA_USER_ID] --status SUSPENDED --change [CHANGE_ID] --execute'],
+    ['okta-user-lifecycle.md', 'okta-user-lifecycle-unsuspend-portal', 'okta-client.js verify-status --user [OKTA_USER_ID] --status ACTIVE --change [CHANGE_ID] --execute'],
+  ];
+  for (const [file, id, command] of want) {
+    const text = read(file);
+    const gate = changes.gateFields(text).find((g) => g.id === id);
+    assert.ok(gate, `${file}: ${id} exists`);
+    assert.equal(gate.rClass, 'R2', `${file}: ${id} is R2`);
+    assert.deepEqual(gate.readBack && gate.readBack.commands, [command], `${file}: ${id} names its read-back`);
+    const bound = changes.boundReadBacks(text).filter((b) => b.gates.includes(id));
+    assert.deepEqual(bound.map((b) => b.command), [`node scripts/adapters/${command}`], `${file}: one line runs ${id}'s read-back under a change`);
+  }
+});

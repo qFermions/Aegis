@@ -11,6 +11,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[USER@DOMAIN.COM]` (the departing user's Google address) · `[UPN]` (their Okta username) · `[USER_ID]` (their Okta user ID) · `[MANAGER_UPN]` (who receives the data) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
+**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`: `google-workspace:verify-suspended` for [gws-offboard-suspend-portal] or its GAM twin [gws-offboard-suspend]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+
 ## ⚠️ Admin / safety gate
 
 - **Destructive multi-system plan** (Okta → Google Workspace → devices). Route it through an independent, out-of-session review before Phase D runs.
@@ -34,7 +36,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 1. Read the Okta user and the Google account (R0).
 2. Phase A — deactivate in Okta (R3 gate). **WAIT UNTIL** Google reflects the provisioning result.
-3. Phase B — suspend in Google only if Okta did not (R1 gate, undo stated in the gate).
+3. Phase B: suspend in Google only if Okta did not (R2 gate, undo stated in the gate).
 4. Phase C — capture the Drive pre-state, then transfer Drive and Calendar to `[MANAGER_UPN]` (R2 gates). **WAIT UNTIL** both transfers finish.
 5. Phase D — delete only after the independent review and the retention decision (R3 gate), or leave the account suspended.
 6. Phase E — devices: lock or wipe the Mac and handle the Chromebook in their own runbooks (`/jamf-lock-erase`, `/gws-chromeos-device`).
@@ -69,13 +71,18 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** suspend one Google Workspace user; sign-in stops and Google resets the sign-in cookies, and nothing is deleted
 - **Scope:** one user; mail, Drive, Calendar, licences and group memberships are kept (the licence is still billed)
-- **Reversibility:** R1 — undo in the same place: Admin console → Directory → Users → filter User status = Suspended → More options → Reactivate, under its own exact phrase `REACTIVATE GOOGLE USER [USER@DOMAIN.COM]`
+- **Reversibility:** R2: blocks all access and resets the sign-in cookies; undo in the same place: Admin console → Directory → Users → filter User status = Suspended → More options → Reactivate, under its own exact phrase `REACTIVATE GOOGLE USER [USER@DOMAIN.COM]`, but the reset cookies do not come back: the user signs in again
 - **Required confirmation:** Type exactly `SUSPEND GOOGLE USER [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (R1: no change record)
+- **Read-back:** `gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-offboard-suspend-portal]:** Only after the exact match:
 1. Admin console → Directory → Users → point to `[USER@DOMAIN.COM]` → **More options** → **Suspend user**.
 2. In the dialog, click **Suspend**, then read the status back as **Suspended**.
+
+```bash
+# read-back: proves the account is suspended
+node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+```
 
 **Gotcha** — a separate sign-in-cookie reset is not needed: suspending a user already resets their sign-in cookies.
 
@@ -183,10 +190,10 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Target: [USER@DOMAIN.COM]
 # Effect: suspend one Google Workspace user — nothing is deleted
 # Scope: one user — data, licences and group memberships are kept
-# Reversibility: R1 — undo with the separate unsuspend procedure under its own phrase
+# Reversibility: R2: blocks all access and resets the sign-in cookies, undo with the separate unsuspend procedure under its own phrase
 # Required confirmation: type exactly "SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, R1: no change record
+# Read-back: gws-client.js verify-suspended --user [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="SUSPEND GOOGLE USER [USER@DOMAIN.COM]"
 # shows the phrase

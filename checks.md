@@ -43,6 +43,13 @@ This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fa
 | Push only when the battery passes | unresolved | | |
 | Every commit passes its own tests | fail | (1) `d79298b` fails `scripts/demo/wiring.test.js` (a long dash in the evidence tool), fixed forward in `95cd1e3`. (2) Every commit from `01b8be6` to the merge fails one test in `scripts/command-safety-gates.test.js`, "every discovered manual portal mutation has one action-local gate or preview owner", because the fixture `multi-system.md` holds "Users → Add a user"; my per-commit gate ran only the demo suite and the scanner, and the full battery after the merge found it; fixed forward by D3. (3) The subagent's task 3 runbook commits come before the commits that move the counts, as the charter asks ("each in its own commit"), so those runbook commits fail the count tests until the next one. None of these commits had been pushed when found; history is not rewritten | each commit now runs the whole `node --test` before it is made |
 
+## Review rounds
+
+| round | range | findings | fixed | closed (reason) | record |
+|---|---|---|---|---|---|
+| security 1 | `abb6ea6..6705ff0` | 0 | 0 | 0 | `batch8/reviews/security-review-1.md` |
+| code 1 (xhigh, tier C) | `abb6ea6..bffecff` | 15 | 13, in 10 commits (`f20eaaf` to `87fa578`) | 2: #13's pattern copy (scripts/audit is outside the allowed files), #15's repeated parse (no measurable cost) | `batch8/reviews/code-review-1.md` |
+
 ## Deviations and decisions
 
 - **C1:** ponytail has no "off" level; the instruction counts as its "normal mode".

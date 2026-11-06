@@ -2,7 +2,7 @@
 // answer.js: reads an Aegis answer the way a tech meets it (batch 8). An answer starts with a "## Fix"
 // card (docs/aegis/answer-format.md), may go on under "## Details", and closes with one fenced block
 // labeled aegis-desk that holds what only the desk needs (Gate lines, gate ids, change records,
-// confirmation phrases). Pure: text in, values out. Nothing here decides a closing state on its own;
+// confirmation phrases). Text in, values out; the only file it reads is the placeholder dictionary, once at load. Nothing here decides a closing state on its own;
 // the desk's five answer checks read these values and show on the page, and none of them stops a ticket.
 
 const CARD_HEADING = /^##[ \t]+Fix[ \t]*$/;
@@ -20,6 +20,9 @@ const labelRe = (label) => new RegExp(`^[\\s>*_-]*(?:\\*\\*)?${label.replace(/'/
 const LABELS = PARTS.map((p) => ({ ...p, re: labelRe(p.label) }));
 // A top-level numbered step: at most one space of indent (a deeper one is a sub-item of the step above),
 // and the number may be bold, as in "**1.** Open" (code review 3, findings 3 and 4).
+const fs = require('node:fs');
+const path = require('node:path');
+
 const STEP = /^ ?(?:\*\*)?(\d+)[.)](?:\*\*)?[ \t]+(.+)$/;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
@@ -126,6 +129,24 @@ function deskOnlyIn(text, ids) {
   return other ? other[0].trim() : null;
 }
 
+// The org tokens that describe the default organization itself (its size, ISP, WAN, sites, phones, alarm,
+// servers, partners, remote access), read from the placeholder dictionary's "Org tokens" table, so a token
+// added there is known here too (code review 3, finding 10). Left out by prefix: the per-tenant connection
+// tokens every customer has (DOMAIN, the Google, Okta, Jamf, Fleet, Slack, Linear, GitHub and Microsoft
+// ids and hosts), and the Jira tokens, which the Jira fact covers.
+const CONNECTION_TOKEN = /^\[@Aegion_(?:DOMAIN|GWS|OKTA|JAMF|FLEET|SLACK|LINEAR|GITHUB|MS|JIRA)(?:_[A-Z0-9_]+)?\]$/;
+function defaultOrgTokens(file = path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md')) {
+  const text = fs.readFileSync(file, 'utf8');
+  const start = text.indexOf('## Org tokens');
+  const end = text.indexOf('\n## ', start + 1);
+  const table = text.slice(start, end < 0 ? undefined : end);
+  const tokens = [...new Set([...table.matchAll(/^\|[^|]*\|/gm)].flatMap((row) => row[0].match(/\[@Aegion(?:_[A-Z0-9_]+)?\]/g) || []))];
+  return tokens.filter((tok) => !CONNECTION_TOKEN.test(tok));
+}
+const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// one pattern for the answer and the profile (code review 3, finding 11)
+const DEFAULT_ORG_TOKENS = new RegExp(defaultOrgTokens().map(escapeRe).join('|'));
+
 // The default environment of CLAUDE.md, fact by fact: how an answer names it and how a customer
 // profile would say it is theirs. A customer profile replaces that block, so an answer that names one
 // of these for a customer whose profile does not have it is using the wrong organization's facts.
@@ -138,11 +159,7 @@ const DEFAULT_FACTS = Object.freeze([
   { fact: 'Microsoft Intune', answer: /\bIntune\b/i, profile: /\bIntune\b/i },
   { fact: 'Jira Service Management', answer: /\bJira Service Management\b|\[@Aegion_JIRA_(?:SPACE|URL)\]/i, profile: /\bJira\b/i },
   { fact: 'the DT- and LT- device names', answer: /\b(?:DT|LT)-(?:First|\[)/, profile: /\b(?:DT|LT)-/ },
-  // the dictionary's org tokens that describe the default organization itself (its size, ISP, WAN, sites,
-  // phones, alarm, servers, partners, remote access); the per-tenant connection tokens ([@Aegion_DOMAIN],
-  // [@Aegion_GITHUB_ORG], [@Aegion_OKTA_ORG_URL] and the like) are every customer's, and the Jira tokens
-  // belong to the Jira fact (code review 1, finding 7; code review 2, findings 4 and 7)
-  { fact: 'the default organization\'s own sites, vendors and servers', answer: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[A-Z0-9]+|VOIP[A-Z_]*|ALARM|FINANCE_SERVER|NETPARTNER|REMOTE_ACCESS))?\]|\bAD Connect server\b|\bthird tower\b/, profile: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[A-Z0-9]+|VOIP[A-Z_]*|ALARM|FINANCE_SERVER|NETPARTNER|REMOTE_ACCESS))?\]/ },
+  { fact: 'the default organization\'s own sites, vendors and servers', answer: new RegExp(`${DEFAULT_ORG_TOKENS.source}|\\bAD Connect server\\b|\\bthird tower\\b`), profile: DEFAULT_ORG_TOKENS },
 ]);
 function defaultFactsIn(text, profile) {
   return DEFAULT_FACTS.filter((f) => f.answer.test(String(text)) && !f.profile.test(String(profile || ''))).map((f) => f.fact);
@@ -191,4 +208,4 @@ function onlyLooks(answer) {
   return { steps, looks: steps.length > 0 && change === null, change };
 }
 
-module.exports = { PARTS, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };
+module.exports = { defaultOrgTokens, PARTS, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

@@ -178,3 +178,21 @@ test('an indented numbered sub-item is part of its step, and a bold number start
   assert.equal(a.fixCard(bold).steps.length, 3);
   assert.deepEqual(a.cardProblems(a.fixCard(bold)), []);
 });
+
+// Code review 3, findings 10 and 11: the default organization's tokens come from the placeholder dictionary,
+// so a token added there is known here. A wrong implementation it catches: a hand-copied list, which would
+// miss the fixture's new site token.
+test('the default organization\'s tokens are read from the dictionary, without the connection tokens', (t) => {
+  const os = require('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-dict-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'dict.md');
+  // the invented tokens are built at run time, as customers.test.js builds its addresses, so the repository's
+  // rule that every org token in a tracked file is a dictionary token holds for this file
+  const tok = (name) => `[@Aegion_${name}]`;
+  fs.writeFileSync(file, ['# dict', '## Org tokens', '| Token | Description |', '|---|---|', '| `[@Aegion]` | name |', `| \`${tok('SITE_9')}\` | a new site |`, `| \`${tok('OKTA_NEW')}\` | an Okta host |`, '| `[@Aegion_JIRA_URL]` | Jira |', '## Generic tokens', `| \`${tok('NOT_ORG')}\` | elsewhere |`, ''].join('\n'));
+  assert.deepEqual(a.defaultOrgTokens(file), ['[@Aegion]', tok('SITE_9')]);
+  const real = a.defaultOrgTokens();
+  for (const tok of ['[@Aegion_SIZE]', '[@Aegion_REMOTE_ACCESS]', '[@Aegion_VOIP_URL]']) assert.ok(real.includes(tok), tok);
+  for (const tok of ['[@Aegion_DOMAIN]', '[@Aegion_GITHUB_ORG]', '[@Aegion_OKTA_ORG_URL]', '[@Aegion_JIRA_SPACE]']) assert.ok(!real.includes(tok), tok);
+});

@@ -31,7 +31,7 @@ No `node`, `npm` or other script command appears anywhere in an answer meant for
 The answer ends with one fenced block labeled `aegis-desk`, and nothing after it. It holds what the desk needs and a tech does not: gate ids, R classes, change records, confirmation phrases and the `Gate:` lines. The desk reads it and hides it from people; nothing in it is an instruction to the tech.
 
 - One `Gate: <gate id>` line per change the answer advises, using the runbook's SAFETY GATE id (or its PREVIEW ONLY id when that is all the runbook has), or `Gate: none` when it advises no change.
-- Optional, after a Gate line: `Phrase: <the exact confirmation phrase>` and `Change record: <R class>, read-back <connector:verify-command>`.
+- After a Gate line, when the runbook has them: `Phrase: <the exact confirmation phrase>`, `Change record: <R class>, read-back <connector:verify-command>`, and `Read-back: <the runbook's read-back command, exactly as the runbook writes it>`. The read-back is not dropped from the answer: CLAUDE.md's "verify or it didn't happen" still holds, and the block is where a person or the desk finds the command to run it.
 
 ## 5. A short example
 

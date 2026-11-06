@@ -112,7 +112,7 @@ A customer profile, when given, replaces this whole block (sites, servers and ve
 
 ## Answer format
 
-Every answer starts with `## Fix`: What's wrong (one sentence), Do this (3 to 5 numbered portal or phone steps), Done when, Stop if, Tell the user (at most 3 plain sentences); at most 150 words. The rest goes under `## Details`. No node, npm or script command anywhere: Aegis does the checking and says so in plain words. Gate ids, change records, confirmation phrases and `Gate:` lines go only in a final `aegis-desk` fenced block. This wins over the order in `docs/aegis/workflow.md`; detail: `docs/aegis/answer-format.md`.
+Every answer starts with `## Fix`: What's wrong (one sentence), Do this (3 to 5 numbered portal or phone steps), Done when, Stop if, Tell the user (at most 3 plain sentences); at most 150 words. The rest goes under `## Details`. No node, npm or script command anywhere: Aegis does the checking and says so in plain words. Gate ids, change records, read-back commands, confirmation phrases and `Gate:` lines go only in a final `aegis-desk` fenced block. This wins over the order in `docs/aegis/workflow.md`; detail: `docs/aegis/answer-format.md`.
 
 ---
 

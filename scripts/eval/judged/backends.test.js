@@ -113,10 +113,32 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
     // and ticket-to-gate pairs; scripts/eval holds the grader, the ticket corpora and their expected routes;
     // docs/evidence holds scored answers; a judged run saves its grades
     repo('scripts/demo/**'), repo('scripts/eval/**'), repo('docs/evidence/**'), repo('docs/aegis/**/evidence/**'), repo('.aegis-state/**'),
+    // batch 8, task 10a: the older baseline folders hold ticket-to-route results (full-run-1 causes.md,
+    // "A gap in the deny list")
+    repo('docs/aegis/**/baseline/**'), repo('docs/baseline/**'),
     abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
   ];
   const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
   assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P' })).permissions.deny, pinned);
+  // every file under every baseline folder in docs is covered by a rule, matched in the CLI's own form.
+  // Wrong implementation it catches: `docs/baseline` without `/**`, which names the folder and no file in it,
+  // or a list that leaves out docs/baseline.
+  const ruleGlob = (rule) => rule.slice('Read('.length, -1);
+  const baselines = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(path.join(REPO_ROOT, dir), { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const sub = path.join(dir, e.name);
+      if (e.name === 'baseline') baselines.push(sub);
+      else walk(sub);
+    }
+  };
+  walk('docs');
+  assert.ok(baselines.includes(path.join('docs', 'baseline')) && baselines.includes(path.join('docs', 'aegis', 'g4', 'baseline')), baselines.join(', '));
+  for (const dir of baselines) {
+    const file = ruleGlob(repo(path.join(dir, 'node-test.txt')));
+    assert.ok(pinned.some((rule) => path.posix.matchesGlob(file, ruleGlob(rule))), `${dir}: a file in it is denied`);
+  }
   // a run folder elsewhere is denied too, when the caller names it
   // the real form of the temporary folder, so the rule has one form under this Mac's default /var link too
   const elsewhere = path.join(fs.realpathSync(os.tmpdir()), 'some-run');

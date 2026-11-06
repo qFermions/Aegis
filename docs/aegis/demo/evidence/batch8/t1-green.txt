@@ -1,0 +1,8 @@
+$ node --test scripts/demo/answer.test.js
+✔ task 1: each fixture answer opens with the card, has the five parts in order, at most 150 words, no command, no desk-only text, and the aegis-desk block last (12.664959ms)
+✔ task 1: each break of the format is caught (9.889292ms)
+✔ task 8: the five answer checks, in page order, pass on a good answer and each fails on its own break (1.09775ms)
+✔ the INVESTIGATE step rule: steps that only look pass, a step that changes something does not (1.221541ms)
+ℹ tests 4
+ℹ pass 4
+ℹ fail 0

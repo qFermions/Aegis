@@ -1,0 +1,20 @@
+## Fix
+**What's wrong:** [FIRST_NAME] was never given access to the team calendar, so Outlook shows it as unavailable.
+**Do this:**
+1. Open Microsoft 365 admin center → Teams & groups → Active teams & groups → [GROUP_NAME].
+2. Open Members and look for [UPN] in the list.
+3. Add [UPN] as a member and save.
+4. Ask [FIRST_NAME] to close and reopen Outlook.
+**Done when:** the team calendar opens in [FIRST_NAME]'s Outlook and shows this week's events. Aegis then checks the member list shows [UPN].
+**Stop if:** [UPN] is already a member; then this is a sync problem, not access.
+**Tell the user:** We added you to the team calendar. Please close and reopen Outlook. It should show up within a few minutes.
+
+## Details
+The group membership is the only change. Membership can take up to an hour to show in Outlook on the web.
+
+Ticket note: added [UPN] to [GROUP_NAME] for calendar access; user confirmed it opens.
+
+```aegis-desk
+Gate: example-group-add-portal
+Phrase: ADD [UPN] TO [GROUP_NAME]
+```

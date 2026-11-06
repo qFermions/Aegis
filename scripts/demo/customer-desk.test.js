@@ -1388,3 +1388,12 @@ test('CLARIFY: the ticket\'s own question repeated is not a question; one Aegis 
   const r = await runDesk(t, { only: ['T5m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'WHERE ARE OUR INVOICES', answer: t5m }, { match: 'freight vendor', answer: t5m }] } });
   assert.equal(r.ticket('T5m').closing_state, 'INVESTIGATE', r.ticket('T5m').reason);
 });
+
+// Code review 3, finding 6: a quoted value in an R1 read line loses its quote marks, so its placeholder can
+// be filled. A wrong implementation it catches: keeping the token '"[STATE_NAME]"', which fillArgv never matches.
+test('an R1 read line\'s quoted placeholder is filled without its quote marks', (t) => {
+  const { catalog } = require('./catalog.js');
+  const dir = tmp(t, 'aegis-desk-runbooks-');
+  fs.writeFileSync(path.join(dir, 'quoted.md'), ['# fixture', '', '<!-- SAFETY GATE [fixture-quoted-portal] -->', '- **Target:** [ISSUE_ID]', '- **Reversibility:** R1 (fixture)', '- **Read-back:** none (R1: no change record)', '', '```bash', 'node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --execute', '```', ''].join('\n'));
+  assert.deepEqual(catalog(dir).get('fixture-quoted-portal').reads[0].argv, ['verify-state', '--issue', '[ISSUE_ID]', '--state', '[STATE_NAME]']);
+});

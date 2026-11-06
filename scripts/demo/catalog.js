@@ -17,6 +17,10 @@ const PREVIEW = /PREVIEW ONLY \[([a-z0-9][a-z0-9-]*)\]/g;
 // (its RUNBOOK_LINE), with --execute and no --change.
 const READ_LINE = /^node scripts\/(?:adapters\/)?([a-z]+)-client\.js (verify-[a-z0-9-]+)((?: [^`\n]*)?) --execute$/;
 const CLIENT_CONNECTOR = Object.freeze({ gws: 'google-workspace' });
+// a runbook line may quote a value ("[STATE_NAME]"); the argument the client gets has no quote marks, so
+// the placeholder can be filled (code review 3, finding 6). shortcut: a quoted value with a space in it
+// would still be split; no runbook read line has one today.
+const unquote = (a) => a.replace(/^"(.*)"$/, '$1');
 const MARK = /^<!-- SAFETY GATE \[|^# SAFETY GATE \[/;
 
 // The read line in one gate's own section: from the line after its marker (from: the marker's 1-based
@@ -35,7 +39,7 @@ function sectionReads(lines, from, fencedAt) {
     if (MARK.test(l)) break;
     if (!fenced && /^#{1,6} /.test(l)) break;
     const m = READ_LINE.exec(l.trim());
-    if (m && !/--change\b/.test(l) && !reads.some((r) => r.command === l.trim())) reads.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)], command: l.trim() });
+    if (m && !/--change\b/.test(l) && !reads.some((r) => r.command === l.trim())) reads.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean).map(unquote)], command: l.trim() });
   }
   return reads.length === 1 ? reads : [];
 }

@@ -42,6 +42,7 @@ This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fa
 | Rules: `git diff --stat abb6ea6 -- .claude CLAUDE.md PRODUCT_CONTRACT.md scripts/adapters scripts/audit scripts/replay scripts/eval` shows only the allowed files | unresolved | after the merge | |
 | Push only when the battery passes | unresolved | | |
 | Every review finding fixed in its own commit (CLAUDE.md, Review) | fail | round 1: findings 2 and 8 share `74b2c9e`, 4 and 9 share `ea3657e`, 6, 7, 10 and 15 share `3e9abba`, 13 and 14 share `87fa578`; round 2: eleven findings in `6021cd8`. Found by code review 3 (finding 7). History is not rewritten | round 3's fixes went one class per commit; grouping by class is allowed by the batch's review rules, grouping across classes was not |
+| Battery before the second push, at the frozen code `de55c4d` | pass | `batch8/final-battery/`: 2021 tests, 1979 pass, 41 fail (the base's names), 1 skipped, in both runs; the four ticket evals, the lint, the scanner, the release boundary and the replay demo exit 0 | none |
 | Every commit passes its own tests | fail | (1) `d79298b` fails `scripts/demo/wiring.test.js` (a long dash in the evidence tool), fixed forward in `95cd1e3`. (2) Every commit from `01b8be6` to the merge fails one test in `scripts/command-safety-gates.test.js`, "every discovered manual portal mutation has one action-local gate or preview owner", because the fixture `multi-system.md` holds "Users → Add a user"; my per-commit gate ran only the demo suite and the scanner, and the full battery after the merge found it; fixed forward by D3. (3) The subagent's task 3 runbook commits come before the commits that move the counts, as the charter asks ("each in its own commit"), so those runbook commits fail the count tests until the next one. None of these commits had been pushed when found; history is not rewritten | each commit now runs the whole `node --test` before it is made |
 
 ## Review rounds
@@ -54,6 +55,9 @@ This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fa
 | code 2 (xhigh) | `bffecff..4b60407` | 15 | 11, in `6021cd8` (one class per bullet) | 4: #2 (the safe side), #5 (CLAUDE.md per-step verify), #13 and #14 (owner decisions, outside this batch's files or scope) | `batch8/reviews/code-review-2.md` |
 | security 3 | `4b60407..8e6e589` | 1 (Low to Medium) | 1 (`1775639`) | 0 | `batch8/reviews/security-review-3.md` |
 | code 3 (xhigh, last) | `4b60407..1775639` | 14 | 12, one class per commit (`397a6b2` to `98226c3`) | 1: #5 (the safe side, and the card already fails its parts check); #7 recorded as a fail row below | `batch8/reviews/code-review-3.md` |
+| security 4 (final) | `8e6e589..da7745d` | 1 (Medium) | 1 (`b68ab07`) | 0 | `batch8/reviews/security-review-4.md` |
+| security 5 | `da7745d..b68ab07` | 1 (Low, older than the range) | 1 (`de55c4d`), not the reviewer's "scan every line", which would stop T5 closing INVESTIGATE | 0 | `batch8/reviews/security-review-5.md` |
+| security 6 | `b68ab07..de55c4d` | 0 at 80% or more | 0 | 3 label-only notes below the threshold, recorded as known limits | `batch8/reviews/security-review-6.md` |
 
 ## Deviations and decisions
 

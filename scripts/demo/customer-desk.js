@@ -36,7 +36,7 @@ const paths = require('../eval/judged/paths.js');
 const { SMOKE_USD_PER_SESSION } = require('../eval/judged-eval.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
-const { catalog, closingGateLines, namedGates, contradictsItself, clarifies, RUNBOOKS } = require('./catalog.js');
+const { catalog, closingGateLines, namedGates, contradictsItself, clarifies, says_none, RUNBOOKS } = require('./catalog.js');
 const { onlyLooks, answerChecks, fixCard, words, deskBlock } = require('./answer.js');
 const data = require('./customers.js');
 const render = require('./render.js');
@@ -292,7 +292,7 @@ async function readBacksForGate(a, g, c, ctx, rec) {
   };
   if (!a.changes.length && g.reads && g.reads.length) {
     for (const read of g.reads) {
-      const v = await guarded(read.kind, () => readPlain(read, a.approved_at, c, ctx));
+      const v = await guarded(read.kind, () => readBack({ read_back: read, approved_at: a.approved_at, change: null }, c, ctx));
       v.read = { gate: a.gate, kind: read.kind, argv: read.argv, state: v.state };
       verdicts.push(v);
       lines.push(`${a.gate}: ${v.state}\n${v.output}`);
@@ -313,25 +313,6 @@ async function readBacksForGate(a, g, c, ctx, rec) {
   return { verdicts, lines };
 }
 
-// An R1 gate's own read, with no change record: the connector's exit 0 on its verify is the proof the
-// runbook names for such a gate. A read that shows the change not done is a failure; any other exit
-// proves nothing.
-async function readPlain(read, approvedAt, c, ctx) {
-  const [connector] = read.kind.split(':');
-  const client = vendors.connectorModule(connector);
-  if (!client) return { state: 'INCONCLUSIVE', exit: null, output: `the demo has no simulated answers for ${connector}, so nothing was read` };
-  const argv = [...fillArgv(read.argv, { ...c.values, '[NOT_BEFORE]': approvedAt }), '--execute'];
-  const gap = argv.find((x) => PLACEHOLDER.test(x));
-  if (gap) return { state: 'INCONCLUSIVE', exit: null, output: `${read.kind}: not run, this ticket has no simulated value for ${gap}` };
-  const env = { ...data.tenantVars(c.customer), ...vendors.simulatedCredentials(connector), AEGIS_AUDIT_DIR: path.join(c.customerDir, 'audit') };
-  const io = capture();
-  const code = await client.run(argv, env, { transport: ctx.transportFor(connector, c.tenantFile), audit: audit.auditSink({ AEGIS_AUDIT_DIR: env.AEGIS_AUDIT_DIR }), sleep: async () => {}, ...io.io });
-  const output = `${read.kind}: exit ${code}, no change record (R1): the runbook's own read is the proof\n${io.text()}${io.error()}`;
-  if (code === 0) return { state: 'PASS', exit: code, output, evidence: read.kind };
-  if (code === 2 && shownNotDone(`${io.text()}${io.error()}`)) return { state: 'FAIL', exit: code, output };
-  return { state: 'INCONCLUSIVE', exit: code, output: `${output}\nThe read did not run to a verdict, so it proves nothing.` };
-}
-
 function shownNotDone(text) {
   try {
     const v = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
@@ -339,22 +320,31 @@ function shownNotDone(text) {
   } catch { return false; }
 }
 
-// Step 8, for one read-back: the connector's own code, over the simulated transport.
+// Step 8, for one read-back: the connector's own code, over the simulated transport. change.change is the
+// change record's id, or null for an R1 gate's own read (batch 8, task 5), whose exit 0 is the proof the
+// runbook names for such a gate, since it has no change record to link.
 async function readBack(change, c, ctx) {
   const [connector] = change.read_back.kind.split(':');
   const client = vendors.connectorModule(connector);
   if (!client) return { state: 'INCONCLUSIVE', exit: null, output: `the demo has no simulated answers for ${connector}, so nothing was read` };
+  const bound = change.change !== null;
   const argv = fillArgv(change.read_back.argv, { ...c.values, '[NOT_BEFORE]': change.approved_at, '[CHANGE_ID]': change.change });
+  if (!bound) {
+    argv.push('--execute');
+    const gap = argv.find((x) => PLACEHOLDER.test(x));
+    if (gap) return { state: 'INCONCLUSIVE', exit: null, output: `${change.read_back.kind}: not run, this ticket has no simulated value for ${gap}` };
+  }
   const env = { ...data.tenantVars(c.customer), ...vendors.simulatedCredentials(connector), AEGIS_AUDIT_DIR: path.join(c.customerDir, 'audit') };
   const sink = audit.auditSink({ AEGIS_AUDIT_DIR: env.AEGIS_AUDIT_DIR });
   const io = capture();
   const code = await client.run(argv, env, { transport: ctx.transportFor(connector, c.tenantFile), audit: sink, sleep: async () => {}, ...io.io });
-  const output = `${change.read_back.kind}: exit ${code}\n${io.text()}${io.error()}`;
+  const output = `${change.read_back.kind}: exit ${code}${bound ? '' : ", no change record (R1): the runbook's own read is the proof"}\n${io.text()}${io.error()}`;
   if (code === 5) return { state: 'INCONCLUSIVE', exit: code, output };
   // exit 2 is also a read that failed (a timeout, a network error): only an answer that was read and
   // shows the change not done is a failure of the change
   if (code === 2 && shownNotDone(`${io.text()}${io.error()}`)) return { state: 'FAIL', exit: code, output };
   if (code !== 0) return { state: 'INCONCLUSIVE', exit: code, output: `${output}\nThe read did not run to a verdict, so it proves nothing.` };
+  if (!bound) return { state: 'PASS', exit: code, output, evidence: change.read_back.kind };
   // exit 0 alone is not the change's proof: link the entry and ask the change record
   let seq = null;
   try { seq = JSON.parse(io.text().slice(io.text().indexOf('{'))).audit_seq; } catch { /* no seq, link is skipped below */ }
@@ -564,7 +554,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     if (clarifies(answer)) return close('CLARIFY', null);
     // INVESTIGATE (batch 8, task 6): Gate: none, no question, and every step only looks
     const look = onlyLooks(answer);
-    if (closingGateLines(answer).values.some((v) => /^none\b/i.test(v)) && look.looks) {
+    if (closingGateLines(answer).values.some(says_none) && look.looks) {
       return close('INVESTIGATE', `the answer advises looking first and names no change, so there is nothing to approve yet; its steps: ${look.steps.map((x, i) => `${i + 1}. ${x}`).join(' ')}`);
     }
     return close('OPEN', 'the answer names no gate the runbooks know, so there is nothing to approve');

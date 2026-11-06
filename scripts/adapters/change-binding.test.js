@@ -379,7 +379,10 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // code review round 1 of the batch G3 close-out 3, finding 3: the rollback read-back written in
   // the prose after /github-branch-protection's Phase F sat under the last exception gate; it now
   // names the rollback gate's own read-back line instead of repeating it (90 to 89)
-  assert.equal(bound, 89, 'the 89 read-backs of R2 and R3 gates');
+  // batch 8, task 3: gws-offboard-suspend-portal's new verify-suspended line, and the three verify
+  // lines of okta-user-lifecycle-reset-password-portal, -suspend-portal and -unsuspend-portal, now
+  // R2 (89 to 93)
+  assert.equal(bound, 93, 'the 93 read-backs of R2 and R3 gates');
   // code review round 1 of the batch G3 close-out 3, finding 9: the Jamf pilot read under the
   // removal from All Computers is no longer a line there (76 to 75); round 3, finding 3: it is read
   // after the removals in an R0 section of its own (75 to 76)

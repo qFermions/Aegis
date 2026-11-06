@@ -41,6 +41,7 @@ This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fa
 | Task 11: Run A and Run B under the 16-session, 30 US dollar limit, one ticket at a time | unresolved | not run yet | |
 | Rules: `git diff --stat abb6ea6 -- .claude CLAUDE.md PRODUCT_CONTRACT.md scripts/adapters scripts/audit scripts/replay scripts/eval` shows only the allowed files | unresolved | after the merge | |
 | Push only when the battery passes | unresolved | | |
+| Every review finding fixed in its own commit (CLAUDE.md, Review) | fail | round 1: findings 2 and 8 share `74b2c9e`, 4 and 9 share `ea3657e`, 6, 7, 10 and 15 share `3e9abba`, 13 and 14 share `87fa578`; round 2: eleven findings in `6021cd8`. Found by code review 3 (finding 7). History is not rewritten | round 3's fixes went one class per commit; grouping by class is allowed by the batch's review rules, grouping across classes was not |
 | Every commit passes its own tests | fail | (1) `d79298b` fails `scripts/demo/wiring.test.js` (a long dash in the evidence tool), fixed forward in `95cd1e3`. (2) Every commit from `01b8be6` to the merge fails one test in `scripts/command-safety-gates.test.js`, "every discovered manual portal mutation has one action-local gate or preview owner", because the fixture `multi-system.md` holds "Users → Add a user"; my per-commit gate ran only the demo suite and the scanner, and the full battery after the merge found it; fixed forward by D3. (3) The subagent's task 3 runbook commits come before the commits that move the counts, as the charter asks ("each in its own commit"), so those runbook commits fail the count tests until the next one. None of these commits had been pushed when found; history is not rewritten | each commit now runs the whole `node --test` before it is made |
 
 ## Review rounds
@@ -51,6 +52,8 @@ This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fa
 | code 1 (xhigh, tier C) | `abb6ea6..bffecff` | 15 | 13, in 10 commits (`f20eaaf` to `87fa578`) | 2: #13's pattern copy (scripts/audit is outside the allowed files), #15's repeated parse (no measurable cost) | `batch8/reviews/code-review-1.md` |
 | security 2 | `bffecff..71a0388` | 1 (Medium) | 1 (`4b60407`) | 0 | `batch8/reviews/security-review-2.md` |
 | code 2 (xhigh) | `bffecff..4b60407` | 15 | 11, in `6021cd8` (one class per bullet) | 4: #2 (the safe side), #5 (CLAUDE.md per-step verify), #13 and #14 (owner decisions, outside this batch's files or scope) | `batch8/reviews/code-review-2.md` |
+| security 3 | `4b60407..8e6e589` | 1 (Low to Medium) | 1 (`1775639`) | 0 | `batch8/reviews/security-review-3.md` |
+| code 3 (xhigh, last) | `4b60407..1775639` | 14 | 12, one class per commit (`397a6b2` to `98226c3`) | 1: #5 (the safe side, and the card already fails its parts check); #7 recorded as a fail row below | `batch8/reviews/code-review-3.md` |
 
 ## Deviations and decisions
 

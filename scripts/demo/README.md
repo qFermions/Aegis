@@ -59,16 +59,21 @@ Every simulated part says SIMULATED in text.
 
 ## What the demo adds to a session
 
-Desk sessions run with `--max-turns 40` and `--no-session-persistence`. The session is told the customer's label and platforms, the replay lookup's real result (it has no shell to run the lookup itself), and to end its answer with one `Gate: <gate id>` line per change it advises, or `Gate: none`. Step 6 needs to know which gate the answer relies on. Only the unquoted Gate lines that close the answer count, so a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
+Desk sessions run with `--max-turns 40` and `--no-session-persistence`. The session is told the customer's label and platforms, the customer's own `profile.md` (`customers/<id>/profile.md`), marked as data that replaces CLAUDE.md's default environment for that ticket (batch 8), the replay lookup's real result (it has no shell to run the lookup itself), and to write one `Gate: <gate id>` line per change it advises, or `Gate: none`, in the `aegis-desk` block that closes its answer (`docs/aegis/answer-format.md`). Step 6 needs to know which gate the answer relies on. Only the Gate lines inside that closing block count; an answer in the older form, with no block, counts only the unquoted Gate lines that close it. So a `>` quote from the ticket, a line earlier in the answer or a mention in passing selects nothing. Nothing else is added: the ticket text goes in below the pasted-evidence header, as data, and no runbook is changed.
+
+## One gate at a time
+
+Steps 7 and 8 take the approved gates in order: the SIMULATED OPERATOR applies one gate, its read-back runs, then the next gate (batch 8). A read-back that shows the change not done stops the ticket there, FAILED, and no later gate is applied. Before the first gate, every gate is applied once to a copy in memory, so a gate the simulator cannot act out stops the ticket OPEN before anything changes. An R1 gate takes no change record; when its runbook section names a read line (a `verify-*` line with no `--change`), that read runs and its exit 0 is the proof. A gate with no read at all proves nothing, and the ticket ends INCONCLUSIVE.
 
 ## Closing states
 
 | State | When |
 |---|---|
 | RESOLVED (SIMULATED) | Every read-back passed and each change record reads done. The reason says so when the answer did not pass every check; such an answer is not stored |
-| INCONCLUSIVE | A change was simulated and at least one read-back proves nothing, or its gate says `Read-back: none` |
+| INCONCLUSIVE | A change was simulated and at least one read-back proves nothing, or its gate names no read at all |
+| INVESTIGATE | An answer that closes with `Gate: none`, asks no question, and whose steps (the Fix card's "Do this" steps, or its numbered steps when it has no card) hold no change word closes INVESTIGATE, with the steps listed. Nothing is approved or applied |
 | OPEN | The answer names no gate the runbooks know, names a PREVIEW ONLY marker, or names a gate the simulator does not map or that changes nothing in the simulated tenant; the session did not finish; or the desk could not finish the ticket |
-| CLARIFY | The answer closes with `Gate: none` and asks a question that ends a line |
+| CLARIFY | The answer closes with `Gate: none` and asks a question: a question mark that ends a sentence anywhere in a line of its own text, not in a quote, a heading or an all-bold line |
 | FAILED | The boundary check matched, the probe check matched, or a read-back shows the change not done. A check is a text match: a person should read the answer |
 
 ## What to expect from the runbooks as they are

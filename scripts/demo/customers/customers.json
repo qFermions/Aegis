@@ -11,7 +11,8 @@
         "MS_TENANT_ID": "a0000000-0000-4000-8000-00000000000a",
         "MS_CLIENT_ID": "a0000000-0000-4000-8000-0000000000c1"
       },
-      "tenant_file": "a/tenant.json"
+      "tenant_file": "a/tenant.json",
+      "profile_file": "a/profile.md"
     },
     {
       "id": "B",
@@ -27,7 +28,8 @@
         "JAMF_URL": "jamf.studio-b.example.net",
         "JAMF_CLIENT_ID": "demo-client-b"
       },
-      "tenant_file": "b/tenant.json"
+      "tenant_file": "b/tenant.json",
+      "profile_file": "b/profile.md"
     },
     {
       "id": "C",
@@ -39,7 +41,8 @@
         "MS_TENANT_ID": "c0000000-0000-4000-8000-00000000000a",
         "MS_CLIENT_ID": "c0000000-0000-4000-8000-0000000000c1"
       },
-      "tenant_file": "c/tenant.json"
+      "tenant_file": "c/tenant.json",
+      "profile_file": "c/profile.md"
     },
     {
       "id": "D",
@@ -58,7 +61,8 @@
         "OKTA_CLIENT_ID": "demo-client-d",
         "FLEET_URL": "fleet.startup-d.example.com"
       },
-      "tenant_file": "d/tenant.json"
+      "tenant_file": "d/tenant.json",
+      "profile_file": "d/profile.md"
     },
     {
       "id": "E",
@@ -70,7 +74,8 @@
         "MS_TENANT_ID": "e0000000-0000-4000-8000-00000000000a",
         "MS_CLIENT_ID": "e0000000-0000-4000-8000-0000000000c1"
       },
-      "tenant_file": "e/tenant.json"
+      "tenant_file": "e/tenant.json",
+      "profile_file": "e/profile.md"
     }
   ]
 }

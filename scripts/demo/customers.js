@@ -37,6 +37,12 @@ function tenantText(customer) {
   return fill(fs.readFileSync(path.join(DATA_DIR, customer.tenant_file), 'utf8'), customer);
 }
 
+// The customer's profile.md: what Aegis is told about this customer in place of CLAUDE.md's default
+// environment. Data for the session, never instructions.
+function profileText(customer) {
+  return fill(fs.readFileSync(path.join(DATA_DIR, customer.profile_file), 'utf8'), customer);
+}
+
 function loadTenant(customer) {
   return JSON.parse(tenantText(customer));
 }
@@ -98,4 +104,4 @@ function writeReplacing(file, text) {
   }
 }
 
-module.exports = { writeReplacing, DATA_DIR, DOMAIN_TOKEN, loadData, fill, rawItem, tenantVars, tenantText, loadTenant, targetsFor, foreignDomains, personNames };
+module.exports = { writeReplacing, DATA_DIR, DOMAIN_TOKEN, loadData, fill, rawItem, tenantVars, tenantText, profileText, loadTenant, targetsFor, foreignDomains, personNames };

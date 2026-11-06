@@ -1,0 +1,16 @@
+$ node --test scripts/demo/customer-desk.test.js scripts/demo/answer.test.js
+✔ task 1: each fixture answer opens with the card, has the five parts in order, at most 150 words, no command, no desk-only text, and the aegis-desk block last (19.296584ms)
+✔ task 1: each break of the format is caught (14.675583ms)
+✔ task 8: the five answer checks, in page order, pass on a good answer and each fails on its own break (1.057667ms)
+✔ task 2: each session gets its own customer profile as data, and no other customer's (266.031375ms)
+✔ task 1, desk side: Gate lines are read from the closing aegis-desk block, and a block that does not close the answer selects nothing (305.521042ms)
+✔ task 6: a question counts wherever its question mark sits in the line; T7's full-run-1 answer is CLARIFY (95.602125ms)
+✔ task 6: an answer that only looks, names no change and asks nothing closes INVESTIGATE with its steps; one that changes something does not (293.219292ms)
+✔ task 6: T3's Google password gates and the Jamf lock gate are simulated; with no read-back named T3 still ends INCONCLUSIVE (101.395208ms)
+✔ task 6: the Jamf simulated vendor answers the real Jamf connector's reads from the simulated tenant (2.608875ms)
+✔ task 5: one gate at a time: both read-backs pass in order and the ticket resolves (279.91375ms)
+✔ task 5: when the first gate's read-back fails, the ticket stops there and the second gate is never applied (159.971625ms)
+✔ task 5: an R1 gate with no change record still gets the read its runbook section names (202.672459ms)
+ℹ tests 85
+ℹ pass 85
+ℹ fail 0

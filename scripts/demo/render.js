@@ -5,7 +5,7 @@
 // escaped, so it cannot add markup.
 
 const SENTENCE = 'Demo on tickets written by the builder, simulated tenants and a simulated operator. It shows the pipeline, not answer quality.';
-const STATES = Object.freeze(['RESOLVED (SIMULATED)', 'INCONCLUSIVE', 'OPEN', 'CLARIFY', 'FAILED']);
+const STATES = Object.freeze(['RESOLVED (SIMULATED)', 'INCONCLUSIVE', 'INVESTIGATE', 'OPEN', 'CLARIFY', 'FAILED']);
 
 const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 // an id in a URL fragment and an element id: only what a ticket id may hold

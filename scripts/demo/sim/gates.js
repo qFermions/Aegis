@@ -83,6 +83,14 @@ const SIM_GATES = Object.freeze({
     platform: 'google-workspace', effect: 'suspends the Google Workspace user',
     apply: (s, t) => { const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.suspended = true; u.suspensionReason = 'ADMIN'; },
   },
+  'gws-password-reset-password-portal': {
+    platform: 'google-workspace', effect: 'resets the Google Workspace password to a temporary one the user must change',
+    apply: (s, t, now) => { const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.changePasswordAtNextLogin = true; u.passwordResetAt = now; },
+  },
+  'gws-password-reset-cookies-portal': {
+    platform: 'google-workspace', effect: 'resets the user\'s Google sign-in cookies, so every device signs in again',
+    apply: (s, t, now) => { s.gws.users[t['[USER@DOMAIN.COM]']].signInCookiesResetAt = now; },
+  },
   'gws-offboard-suspend-portal': {
     platform: 'google-workspace', effect: 'suspends the Google Workspace user',
     apply: (s, t) => { const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.suspended = true; u.suspensionReason = 'ADMIN'; },
@@ -107,7 +115,8 @@ const SIM_GATES = Object.freeze({
   // Jamf Pro
   'jamf-lock-erase-lock-portal': {
     platform: 'jamf', effect: 'locks the Mac at its next check-in',
-    apply: (s, t) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) d.lock_state = 'locked'; },
+    // the lock is sent now and done at the Mac's next check-in, so its command stays Pending
+    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.lock_state = 'locked'; (d.mdm_commands = d.mdm_commands || []).push({ commandType: 'DEVICE_LOCK', status: 'Pending', dateSent: now }); } },
   },
   'jamf-lock-erase-wipe-portal': {
     platform: 'jamf', effect: 'wipes the Mac at its next check-in',
@@ -124,13 +133,17 @@ function notSimulated(gate, table, customer, targets) {
   return null;
 }
 
-// Applies a ticket's gates to the simulated tenant file, all or none: they change one copy in memory,
-// and the file is written once, after the last. Refuses a file outside the run folder.
-function applySimulatedGates({ changes, tenantFile, runDir, now = new Date().toISOString() }) {
+// Applies gates to the simulated tenant file, all or none: they change one copy in memory, and the file
+// is written once, after the last. The desk calls it once per gate (batch 8, task 5) and passes origin,
+// the tenant as the ticket started, so "changes nothing" is still judged against that state too.
+// Refuses a file outside the run folder.
+// dryRun: apply to the copy in memory only and write nothing, so the desk can learn that every gate
+// applies before it applies the first.
+function applySimulatedGates({ changes, tenantFile, runDir, now = new Date().toISOString(), origin = null, dryRun = false }) {
   const rel = path.relative(path.resolve(runDir), path.resolve(tenantFile));
   if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('the SIMULATED OPERATOR refuses a tenant file outside the run folder');
   const state = JSON.parse(fs.readFileSync(tenantFile, 'utf8'));
-  const start = JSON.stringify(state);
+  const start = origin === null ? JSON.stringify(state) : JSON.stringify(JSON.parse(origin));
   for (const { entry, target } of changes) {
     // changing nothing means against the state the ticket started from and against the state the gate
     // before it left: two gates may overlap, and an unsuspend undoes the suspend before it
@@ -140,7 +153,7 @@ function applySimulatedGates({ changes, tenantFile, runDir, now = new Date().toI
     entry.apply(state, target, now);
     if (JSON.stringify(alone) === start && JSON.stringify(state) === previous) throw new Error(`"${entry.effect}" changes nothing in the simulated tenant, so a read-back would prove nothing`);
   }
-  writeReplacing(tenantFile, `${JSON.stringify(state, null, 2)}\n`);
+  if (!dryRun) writeReplacing(tenantFile, `${JSON.stringify(state, null, 2)}\n`);
   return changes.map(({ entry }) => `SIMULATED OPERATOR: ${entry.effect}, in the simulated tenant only (${path.basename(path.dirname(tenantFile))}/tenant.json in this run's folder).`);
 }
 

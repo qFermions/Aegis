@@ -143,7 +143,8 @@ test('the terminal line carries the actor, the result and the tag; summaryLines 
   const multi = render.stepLine('T4', { ...t.steps[0], result: 'a\nb' });
   assert.equal(multi.split('\n').length, 1, 'a result with a new line stays on one line');
   const text = render.summaryLines(fixtureRun().summary).join('\n');
-  assert.match(text, /RESOLVED \(SIMULATED\) 1, INCONCLUSIVE 0, OPEN 1, CLARIFY 1, FAILED 0/);
+  // batch 8, task 6 added INVESTIGATE to the states, after INCONCLUSIVE
+  assert.match(text, /RESOLVED \(SIMULATED\) 1, INCONCLUSIVE 0, INVESTIGATE 0, OPEN 1, CLARIFY 1, FAILED 0/);
   assert.match(text, /total cost 1\.26 US dollars/);
   assert.ok(text.includes(render.SENTENCE));
 });

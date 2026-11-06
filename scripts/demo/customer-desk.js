@@ -254,6 +254,10 @@ function prepareCustomer(customer, runDir) {
   return { dir, tenantFile };
 }
 
+// The ticket reference an approval records. The audit trail takes a key like DESK-2 (letters, a dash,
+// a number); a messy twin's id ends in m, so T2m is DESK-102 and never collides with T2's DESK-2.
+const deskRef = (id) => `DESK-${Number(String(id).slice(1).replace(/m$/, '')) + (/m$/.test(id) ? 100 : 0)}`;
+
 // Step 6, for one gate: a change record per read-back the gate binds, and the simulated approval.
 function approveGate(id, gate, c) {
   if (!gate.bound.length) {
@@ -266,7 +270,7 @@ function approveGate(id, gate, c) {
     if (gap) return { gate: id, changes: opened, refused: `not simulated: this ticket has no simulated value for ${gap} in ${b.kind}` };
     const open = changeCli(['open', '--command', gate.command, '--gate', id, '--r-class', gate.rClass, '--target', '[UPN]', '--read-back', audit.readBackFor(b.kind, probe), '--procedure-file', c.answerFile], c.customerDir);
     if (open.code !== 0) return { gate: id, changes: opened, refused: `change-record.js refused to open ${id}: ${open.stderr.trim()}` };
-    const approve = changeCli(['approve', '--change', open.json.change, '--ref', `DESK-${c.ticket.id.slice(1)}`, '--procedure-sha256', open.json.procedure_sha256], c.customerDir);
+    const approve = changeCli(['approve', '--change', open.json.change, '--ref', deskRef(c.ticket.id), '--procedure-sha256', open.json.procedure_sha256], c.customerDir);
     if (approve.code !== 0) return { gate: id, changes: opened, refused: `change-record.js refused the approval of ${id}: ${approve.stderr.trim()}` };
     opened.push({ change: open.json.change, read_back: b, approved_at: approve.json.approved_at });
   }
@@ -788,4 +792,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, sessionCase, draftNote, worstExit, answerStats, STEP_NAMES, USD_PER_SESSION, DESK_SESSION_TIMEOUT_MS };
+module.exports = { main, sessionCase, draftNote, worstExit, answerStats, deskRef, STEP_NAMES, USD_PER_SESSION, DESK_SESSION_TIMEOUT_MS };

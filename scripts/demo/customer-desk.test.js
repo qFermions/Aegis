@@ -1250,3 +1250,14 @@ test('task 11: a messy twin\'s likely cost is its tidy twin\'s, so the guard hol
   assert.match(r.run.not_run[0].reason, /T2m could cost about 4\.00/);
   assert.equal(r.run.ticket_set, 'messy');
 });
+
+// Code review 1 (batch 8), finding 1: the approval's ticket reference was DESK-2m for T2m, which the audit
+// trail refuses, so no messy ticket could get past sign-off. A wrong implementation it catches: any ref
+// built from the id with its m kept.
+test('a messy ticket gets past sign-off: its approval reference is a key the audit trail takes', async (t) => {
+  assert.equal(desk.deskRef('T2'), 'DESK-2');
+  assert.equal(desk.deskRef('T2m'), 'DESK-102');
+  const r = await runDesk(t, { only: ['T2m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'cut them off', answer: good('okta-user-lifecycle-deactivate-portal') }] } });
+  const k = r.ticket('T2m');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+});

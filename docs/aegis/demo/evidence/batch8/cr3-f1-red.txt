@@ -1,0 +1,2 @@
+$ node --test --test-name-pattern "the ticket.s own question repeated" scripts/demo/customer-desk.test.js   (the fix set aside)
+✖ CLARIFY: the ticket's own question repeated is not a question; one Aegis writes, quoted, is (0.824959ms)

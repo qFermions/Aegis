@@ -124,20 +124,30 @@ function namedGates(answer) {
 }
 
 // A clarifying answer proposes no change: it closes with Gate: none and asks something. A question is a
-// question mark that ends a sentence anywhere in a line of the answer's own text (batch 8, task 6): not in
-// a quote, a heading, a line that is all bold, a code fence or inline code (code review 1, finding 5); one
-// inside a link (?site=all) ends nothing. A question inside quote marks counts: it is how an answer gives
-// the tech a question to pass on (code review 2, finding 3), so the ticket's own question, quoted inline,
-// reads as asked too. shortcut: a rhetorical question reads as a question too, so such an
+// question mark that ends a sentence anywhere in a line of the answer's own text (batch 8, task 6), after
+// a word, so "'???'" asks nothing; not in a quote, a heading, a line that is all bold, a code fence or
+// inline code (code review 1, finding 5). A question inside quote marks counts, since that is how an
+// answer gives the tech a question to pass on (code review 2, finding 3), unless it is the ticket's own
+// question repeated word for word (code review 3, finding 1): ticket, when given, is the ticket's text.
+// A link's ?site=all ends nothing. shortcut: a rhetorical question reads as a question too, so such an
 // answer shows CLARIFY; the page shows the answer for a person to read.
-function clarifies(answer) {
+const QUESTION = /[A-Za-z0-9)\]]\?+(?=[\s*_)"'\u201d\u2019]|$)/g;
+const squash = (t) => String(t).toLowerCase().replace(/[^a-z0-9?]+/g, ' ').trim();
+function clarifies(answer, ticket = '') {
   const { values, body } = closingGateLines(answer);
   if (!values.some(says_none)) return false;
+  const theirs = squash(ticket);
   let fenced = false;
   return body.split(/\r?\n/).some((l) => {
     if (/^\s*```/.test(l)) { fenced = !fenced; return false; }
     if (fenced || /^\s*(?:[>#]|\*\*.*\*\*\s*$)/.test(l)) return false;
-    return /\?+(?=[\s*_)"'\u201d\u2019]|$)/.test(l.replace(/`[^`]*`/g, ' '));
+    const text = l.replace(/`[^`]*`/g, ' ');
+    return [...text.matchAll(QUESTION)].some((m) => {
+      // the asked sentence runs back from its question mark to the nearest sentence end or opening quote
+      const start = Math.max(...['.', '!', '?', '"', '\u201c'].map((c) => text.lastIndexOf(c, m.index))) + 1;
+      const asked = squash(text.slice(start, m.index + m[0].length));
+      return !(theirs && asked.length > 8 && theirs.includes(asked));
+    });
   });
 }
 

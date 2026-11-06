@@ -553,7 +553,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   if (contradictsItself(answer)) return close('OPEN', 'a Gate line in the answer says none and also names a gate, which contradicts itself, so nothing is approved');
   const names = namedGates(answer);
   if (!names.length) {
-    if (clarifies(answer)) return close('CLARIFY', null);
+    if (clarifies(answer, text)) return close('CLARIFY', null);
     // INVESTIGATE (batch 8, task 6): Gate: none, no question, and every step only looks
     const look = onlyLooks(answer);
     if (closingGateLines(answer).values.some(says_none) && look.looks) {

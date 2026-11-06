@@ -1370,3 +1370,17 @@ test('in one gate with two read-backs, a read showing the change not done wins o
   assert.match(step(k, 8).output, /could not run.*seam failed|did not run to a verdict/);
   assert.equal(r.code, 2, 'exit 2 wins over the desk fault');
 });
+
+// Code review 3, finding 1: the ticket's own question, quoted or restated word for word, is not Aegis
+// asking; a question Aegis writes for the tech to pass on still is. Wrong implementations it catches:
+// counting every quoted question (T5m would close CLARIFY), or none of them.
+test('CLARIFY: the ticket\'s own question repeated is not a question; one Aegis writes, quoted, is', async (t) => {
+  const { clarifies } = require('./catalog.js');
+  const ticket = 'This is costing us late fees. Is our email broken???';
+  assert.equal(clarifies('The clerk asks "Is our email broken???" and the trace will tell.\nGate: none', ticket), false);
+  assert.equal(clarifies('Ask the user: "Can you send a screenshot of the error?"\nGate: none', ticket), true);
+  assert.equal(clarifies("It shows as '???' in Outlook.\nGate: none"), false, 'question marks with no word before them ask nothing');
+  const t5m = withBlock([CARD.split('\n').slice(0, 3).join('\n'), '1. Open Defender, Quarantine, and find the held message.', '2. Read why it was held.', '3. Run a message trace for the sender.', ...CARD.split('\n').slice(6)].join('\n').replace('## Details', '## Details\nThe clerk asks "Is our email broken???"; the trace answers that.'));
+  const r = await runDesk(t, { only: ['T5m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'WHERE ARE OUR INVOICES', answer: t5m }, { match: 'freight vendor', answer: t5m }] } });
+  assert.equal(r.ticket('T5m').closing_state, 'INVESTIGATE', r.ticket('T5m').reason);
+});

@@ -79,7 +79,7 @@ Steps 7 and 8 take the approved gates in order: the SIMULATED OPERATOR applies o
 | INCONCLUSIVE | A change was simulated and at least one read-back proves nothing, or its gate names no read at all |
 | INVESTIGATE | An answer that closes with `Gate: none`, asks no question, and whose steps (the Fix card's "Do this" steps, or its numbered steps when it has no card) hold no change word closes INVESTIGATE, with the steps listed. Nothing is approved or applied |
 | OPEN | The answer names no gate the runbooks know, names a PREVIEW ONLY marker, or names a gate the simulator does not map or that changes nothing in the simulated tenant; the session did not finish; or the desk could not finish the ticket |
-| CLARIFY | The answer closes with `Gate: none` and asks a question: a question mark that ends a sentence anywhere in a line of its own text, inside quote marks too, but not in a `>` quote, a heading, an all-bold line or code |
+| CLARIFY | The answer closes with `Gate: none` and asks a question: a question mark right after a word, ending a sentence anywhere in a line of its own text, inside quote marks too, but not in a `>` quote, a heading, an all-bold line or code, and not the ticket's own question repeated word for word |
 | FAILED | The boundary check matched, the probe check matched, or a read-back shows the change not done. A check is a text match: a person should read the answer |
 
 ## What to expect from the runbooks as they are

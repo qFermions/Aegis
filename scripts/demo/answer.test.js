@@ -132,3 +132,15 @@ test('a blank line inside "Do this" keeps its steps; only the default block\'s t
   for (const token of ['[@Aegion]', '[@Aegion_SITE_2]', '[@Aegion_NETPARTNER]', '[@Aegion_JIRA_SPACE]']) assert.ok(a.defaultFactsIn(`Ask ${token}.`, '').includes("the default organization's own sites, vendors and servers"), token);
   assert.equal(a.words('[FIRST_NAME] at [@Aegion_DOMAIN]'), 3);
 });
+
+// Security review 2: a step that runs onto a second line must not hide the steps after it, or a change
+// answer reads as look-only. A wrong implementation it catches: ending "Do this" at the wrapped line.
+test('a wrapped or bulleted line inside a step keeps the later steps, so a change is still seen', () => {
+  const wrapped = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open Entra admin center and find the user', '   under Users, All users.', '   - check the sign-in logs too', '2. Delete the user account.', '3. Reset the password.', ...GOOD_PARTS.slice(5)]);
+  const c = a.fixCard(wrapped);
+  assert.equal(c.steps.length, 3);
+  assert.match(c.steps[0], /under Users, All users\. check the sign-in logs too$/);
+  const look = a.onlyLooks(wrapped);
+  assert.equal(look.looks, false);
+  assert.match(look.change, /Delete/);
+});

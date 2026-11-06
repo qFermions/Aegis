@@ -70,6 +70,9 @@ function fixCard(answer) {
     // that points to Details) belongs to the card but to no part. "Do this" keeps going over blank lines
     // between its numbered steps, as markdown lists often have (code review 1, finding 6).
     if (line.trim() === '') { if (current !== 'doThis') current = null; continue; }
+    // an indented or bulleted line inside "Do this" continues its last step, so no later step is lost
+    // (security review 2); any other text after the steps ends the part
+    if (current === 'doThis' && steps.length && /^(?:\s+\S|\s*[-*] )/.test(line)) { steps[steps.length - 1] += ` ${line.trim().replace(/^[-*]\s+/, '')}`; continue; }
     if (current === 'doThis' && steps.length) { current = null; continue; }
     if (current) parts[current] = `${parts[current] ? `${parts[current]} ` : ''}${line.trim()}`;
   }

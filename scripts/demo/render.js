@@ -101,7 +101,7 @@ function stepPlain(step, t) {
     case 2:
       if (f.accepted === false) return 'Aegis could not take this ticket in.';
       if (f.accepted === undefined) return 'Aegis took in the ticket.';
-      return `Aegis took in the ticket and hid ${plural(f.hidden, 'personal detail')} first.${f.injection_flags ? ` It marked ${plural(f.injection_flags, 'line')} that try to give Aegis orders.` : ''}`;
+      return `${f.hidden ? `Aegis took in the ticket and hid ${plural(f.hidden, 'personal detail')} first.` : 'Aegis took in the ticket; it held no personal details to hide.'}${f.injection_flags ? ` It marked ${plural(f.injection_flags, 'line')} that try to give Aegis orders.` : ''}`;
     case 3:
       return { CACHE_HIT: 'Aegis had a checked answer for this exact ticket, so it reused it.', MISS: 'Aegis had no checked answer for this, so it worked the ticket fresh.', STALE: 'Aegis had an old answer whose sources changed, so it worked the ticket fresh.' }[f.lookup] || 'Aegis looked for a saved answer to this ticket.';
     case 4:
@@ -131,7 +131,7 @@ function stepPlain(step, t) {
 }
 
 const listHtml = (items) => (items.length ? `<ul class="plain-list">${items.map((i) => `<li>${i}</li>`).join('')}</ul>` : '');
-const cardText = (card) => card.text.replace(/\*\*/g, '').replace(/`/g, '');
+const cardText = (card) => card.text.replace(/\*\*/g, '').replace(/`/g, '').replace(/\n\s*\n+/g, '\n\n');
 
 // What a step shows in plain view after its sentence.
 function stepExtra(step, t) {

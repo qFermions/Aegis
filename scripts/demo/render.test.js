@@ -267,6 +267,9 @@ test('task 9: each step opens with its plain sentence, and the steps the charter
   assert.match(t4, /<p class="plain">Not reached: the ticket stopped before this step\.<\/p>/);
   assert.match(t4, /no approved way to make this change yet/);
   assert.match(html, /Did not run: T8, because the spending limit would have been passed\./);
+  const none = plainRun();
+  none.tickets[0].steps[1].facts = { accepted: true, hidden: 0, injection_flags: 0 };
+  assert.match(render.html(none), /Aegis took in the ticket; it held no personal details to hide\./, 'no "hid 0 personal details"');
 });
 
 test('task 9: every plain step name and closing state has its own words', () => {

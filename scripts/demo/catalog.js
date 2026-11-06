@@ -25,17 +25,17 @@ const MARK = /^<!-- SAFETY GATE \[|^# SAFETY GATE \[/;
 // one read: a section with two lists alternatives (an activate reads PROVISIONED or ACTIVE) or reads
 // that prove other changes, and a read bound by where it sits proves nothing (code review 1, finding 4).
 // The fence state is counted from the top of the file, so a gate whose marker sits inside a bash fence
-// starts inside it (finding 9).
-function sectionReads(lines, from) {
+// starts inside it (finding 9). The same read written twice counts once (code review 2, finding 10).
+function sectionReads(lines, from, fencedAt) {
   const reads = [];
-  let fenced = lines.slice(0, from - 1).filter((l) => /^\s*```/.test(l)).length % 2 === 1;
+  let fenced = fencedAt[from - 1];
   for (let i = from; i < lines.length; i += 1) {
     const l = lines[i];
     if (/^\s*```/.test(l)) { fenced = !fenced; continue; }
     if (MARK.test(l)) break;
     if (!fenced && /^#{1,6} /.test(l)) break;
     const m = READ_LINE.exec(l.trim());
-    if (m && !/--change\b/.test(l)) reads.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)], command: l.trim() });
+    if (m && !/--change\b/.test(l) && !reads.some((r) => r.command === l.trim())) reads.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean)], command: l.trim() });
   }
   return reads.length === 1 ? reads : [];
 }
@@ -65,10 +65,14 @@ function catalog(dir = RUNBOOKS) {
     for (const m of text.matchAll(PREVIEW)) if (!found.has(m[1])) found.set(m[1], { kind: 'preview', command, file });
     const lines = boundReadBacks(text);
     const all = text.split('\n');
+    // whether each line sits inside a code fence, counted once per file (code review 2, finding 15)
+    const fencedAt = [];
+    let open = false;
+    for (const l of all) { fencedAt.push(open); if (/^\s*```/.test(l)) open = !open; }
     for (const g of gateFields(text)) {
       const seen = new Set();
       const bound = lines.filter((l) => l.gates.includes(g.id) && !seen.has(l.command) && seen.add(l.command)).map((l) => ({ kind: l.kind, argv: l.argv, command: l.command }));
-      const reads = g.rClass === 'R1' && !bound.length ? sectionReads(all, g.line) : [];
+      const reads = g.rClass === 'R1' && !bound.length ? sectionReads(all, g.line, fencedAt) : [];
       found.set(g.id, { kind: 'gate', command, file, rClass: g.rClass, none: g.readBack ? g.readBack.none : null, bound, reads, phrase: phraseOf(all, g.line) });
     }
   }
@@ -121,9 +125,10 @@ function namedGates(answer) {
 
 // A clarifying answer proposes no change: it closes with Gate: none and asks something. A question is a
 // question mark that ends a sentence anywhere in a line of the answer's own text (batch 8, task 6): not in
-// a quote, a heading, a line that is all bold, a code fence or inline code, and not right before a
-// closing quote mark, which is the ticket's question repeated (code review 1, finding 5); one inside a
-// link (?site=all) ends nothing. shortcut: a rhetorical question reads as a question too, so such an
+// a quote, a heading, a line that is all bold, a code fence or inline code (code review 1, finding 5); one
+// inside a link (?site=all) ends nothing. A question inside quote marks counts: it is how an answer gives
+// the tech a question to pass on (code review 2, finding 3), so the ticket's own question, quoted inline,
+// reads as asked too. shortcut: a rhetorical question reads as a question too, so such an
 // answer shows CLARIFY; the page shows the answer for a person to read.
 function clarifies(answer) {
   const { values, body } = closingGateLines(answer);
@@ -132,7 +137,7 @@ function clarifies(answer) {
   return body.split(/\r?\n/).some((l) => {
     if (/^\s*```/.test(l)) { fenced = !fenced; return false; }
     if (fenced || /^\s*(?:[>#]|\*\*.*\*\*\s*$)/.test(l)) return false;
-    return /\?+(?=[\s*_)]|$)/.test(l.replace(/`[^`]*`/g, ' '));
+    return /\?+(?=[\s*_)"'\u201d\u2019]|$)/.test(l.replace(/`[^`]*`/g, ' '));
   });
 }
 

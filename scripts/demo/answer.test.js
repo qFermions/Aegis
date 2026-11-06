@@ -129,7 +129,11 @@ test('a blank line inside "Do this" keeps its steps; only the default block\'s t
   assert.deepEqual(a.cardProblems(c), []);
   assert.equal(a.onlyLooks(`${spaced}\n\n## Details\n1. Reset the password for [UPN].`).steps.length, 3, 'the card\'s steps, not the Details list');
   assert.deepEqual(a.defaultFactsIn('Open github.com/orgs/[@Aegion_GITHUB_ORG] and [@Aegion_OKTA_ORG_URL].', ''), []);
-  for (const token of ['[@Aegion]', '[@Aegion_SITE_2]', '[@Aegion_NETPARTNER]', '[@Aegion_JIRA_SPACE]']) assert.ok(a.defaultFactsIn(`Ask ${token}.`, '').includes("the default organization's own sites, vendors and servers"), token);
+  // code review 2, findings 4 and 7: the default organization's own tokens are the dictionary's, and the Jira
+  // tokens belong to the Jira fact alone
+  for (const token of ['[@Aegion]', '[@Aegion_SITE_2]', '[@Aegion_NETPARTNER]', '[@Aegion_REMOTE_ACCESS]', '[@Aegion_VOIP_URL]', '[@Aegion_SITE_COUNT]']) assert.ok(a.defaultFactsIn(`Ask ${token}.`, '').includes("the default organization's own sites, vendors and servers"), token);
+  assert.deepEqual(a.defaultFactsIn('File it in [@Aegion_JIRA_SPACE] at [@Aegion_JIRA_URL].', 'We use Jira Service Management.'), []);
+  assert.deepEqual(a.defaultFactsIn('File it in [@Aegion_JIRA_SPACE].', ''), ['Jira Service Management']);
   assert.equal(a.words('[FIRST_NAME] at [@Aegion_DOMAIN]'), 3);
 });
 
@@ -143,4 +147,11 @@ test('a wrapped or bulleted line inside a step keeps the later steps, so a chang
   const look = a.onlyLooks(wrapped);
   assert.equal(look.looks, false);
   assert.match(look.change, /Delete/);
+});
+
+// Code review 2, finding 1: a step's second line that is not indented must not end "Do this" either.
+test('an unindented wrapped line inside a step keeps the later steps', () => {
+  const wrapped = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the Entra admin center and find the user', 'under Users, All users.', '2. Delete the user account.', '3. Reset the password.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.fixCard(wrapped).steps.length, 3);
+  assert.equal(a.onlyLooks(wrapped).looks, false);
 });

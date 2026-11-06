@@ -64,16 +64,21 @@ function fixCard(answer) {
       parts[found.key] = found.re.exec(line)[1].trim();
       continue;
     }
-    const step = STEP.exec(line);
-    if (current === 'doThis' && step) { steps.push(step[2].replace(/\*\*$/, '').trim()); continue; }
-    // a part runs on over its wrapped lines and ends at a blank line; what follows it (such as the line
-    // that points to Details) belongs to the card but to no part. "Do this" keeps going over blank lines
-    // between its numbered steps, as markdown lists often have (code review 1, finding 6).
-    if (line.trim() === '') { if (current !== 'doThis') current = null; continue; }
-    // an indented or bulleted line inside "Do this" continues its last step, so no later step is lost
-    // (security review 2); any other text after the steps ends the part
-    if (current === 'doThis' && steps.length && /^(?:\s+\S|\s*[-*] )/.test(line)) { steps[steps.length - 1] += ` ${line.trim().replace(/^[-*]\s+/, '')}`; continue; }
-    if (current === 'doThis' && steps.length) { current = null; continue; }
+    // "Do this" runs to the next part's label: a numbered line starts a step, and every other line in it
+    // (a wrapped line, a bullet, a blank line) belongs to the step before it, so no step is ever lost
+    // (code review 1, finding 6; security review 2; code review 2, finding 1). A negated change word in
+    // such a line ("do not reset") still reads as a change: the safe side, since it only keeps a ticket
+    // from closing INVESTIGATE.
+    if (current === 'doThis') {
+      const step = STEP.exec(line);
+      if (step) steps.push(step[2].replace(/\*\*$/, '').trim());
+      else if (line.trim() !== '' && steps.length) steps[steps.length - 1] += ` ${line.trim().replace(/^[-*]\s+/, '')}`;
+      else if (line.trim() !== '') parts.doThis = `${parts.doThis ? `${parts.doThis} ` : ''}${line.trim()}`;
+      continue;
+    }
+    // another part runs on over its wrapped lines and ends at a blank line; what follows it (such as the
+    // line that points to Details) belongs to the card but to no part
+    if (line.trim() === '') { current = null; continue; }
     if (current) parts[current] = `${parts[current] ? `${parts[current]} ` : ''}${line.trim()}`;
   }
   const text = own.join('\n').trim();
@@ -129,11 +134,13 @@ const DEFAULT_FACTS = Object.freeze([
   { fact: 'a Cisco Meraki network', answer: /\bMeraki\b/i, profile: /\bMeraki\b/i },
   { fact: 'Microsoft 365 Business Premium licensing', answer: /\bBusiness Premium\b/i, profile: /\bBusiness Premium\b/i },
   { fact: 'Microsoft Intune', answer: /\bIntune\b/i, profile: /\bIntune\b/i },
-  { fact: 'Jira Service Management', answer: /\bJira Service Management\b|\[@Aegion_JIRA_SPACE\]/i, profile: /\bJira\b/i },
+  { fact: 'Jira Service Management', answer: /\bJira Service Management\b|\[@Aegion_JIRA_(?:SPACE|URL)\]/i, profile: /\bJira\b/i },
   { fact: 'the DT- and LT- device names', answer: /\b(?:DT|LT)-(?:First|\[)/, profile: /\b(?:DT|LT)-/ },
-  // only the tokens CLAUDE.md's default environment block uses; the runbooks' per-tenant connection
-  // tokens ([@Aegion_GITHUB_ORG], [@Aegion_OKTA_ORG_URL] and the like) are every customer's (code review 1, finding 7)
-  { fact: 'the default organization\'s own sites, vendors and servers', answer: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[0-9]+|VOIP|VOIP_LEGACY|ALARM|NETPARTNER|FINANCE_SERVER|JIRA_SPACE))?\]|\bAD Connect server\b|\bthird tower\b/, profile: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[0-9]+|VOIP|VOIP_LEGACY|ALARM|NETPARTNER|FINANCE_SERVER|JIRA_SPACE))?\]/ },
+  // the dictionary's org tokens that describe the default organization itself (its size, ISP, WAN, sites,
+  // phones, alarm, servers, partners, remote access); the per-tenant connection tokens ([@Aegion_DOMAIN],
+  // [@Aegion_GITHUB_ORG], [@Aegion_OKTA_ORG_URL] and the like) are every customer's, and the Jira tokens
+  // belong to the Jira fact (code review 1, finding 7; code review 2, findings 4 and 7)
+  { fact: 'the default organization\'s own sites, vendors and servers', answer: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[A-Z0-9]+|VOIP[A-Z_]*|ALARM|FINANCE_SERVER|NETPARTNER|REMOTE_ACCESS))?\]|\bAD Connect server\b|\bthird tower\b/, profile: /\[@Aegion(?:_(?:SIZE|ISP|WAN|SITE_[A-Z0-9]+|VOIP[A-Z_]*|ALARM|FINANCE_SERVER|NETPARTNER|REMOTE_ACCESS))?\]/ },
 ]);
 function defaultFactsIn(text, profile) {
   return DEFAULT_FACTS.filter((f) => f.answer.test(String(text)) && !f.profile.test(String(profile || ''))).map((f) => f.fact);

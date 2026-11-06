@@ -328,7 +328,9 @@ async function readBack(change, c, ctx) {
   const client = vendors.connectorModule(connector);
   if (!client) return { state: 'INCONCLUSIVE', exit: null, output: `the demo has no simulated answers for ${connector}, so nothing was read` };
   const bound = change.change !== null;
-  const argv = fillArgv(change.read_back.argv, { ...c.values, '[NOT_BEFORE]': change.approved_at, '[CHANGE_ID]': change.change });
+  // an R1 read has no change record, so [CHANGE_ID] stays a placeholder and the guard below stops it
+  // (code review 2, finding 9)
+  const argv = fillArgv(change.read_back.argv, { ...c.values, '[NOT_BEFORE]': change.approved_at, ...(bound ? { '[CHANGE_ID]': change.change } : {}) });
   if (!bound) {
     argv.push('--execute');
     const gap = argv.find((x) => PLACEHOLDER.test(x));
@@ -615,7 +617,8 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     output: op.lines.length ? op.lines.join('\n') : 'SIMULATED OPERATOR: nothing was applied.',
   });
   // the tripwire stops the whole run from inside a read-back; what was applied and read is still recorded
-  const stopped = (e) => {
+  const stopped = (e, i) => {
+    for (const later of gates.slice(i + 1)) op.lines.push(`${later.id}: not applied, because the run stopped`);
     operatorStep();
     readBackStep(`failed: ${ctx.clean(e)}`);
     return e;
@@ -641,7 +644,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
         found = await readBacksForGate(approvals.find((a) => a.gate === g.id), g, { customer, customerDir, tenantFile, values: valuesFor(g).values }, ctx, rec);
       } catch (e) {
         rb.ms += Date.now() - t0;
-        throw stopped(e);
+        throw stopped(e, i);
       }
       rb.ms += Date.now() - t0;
       verdicts.push(...found.verdicts);

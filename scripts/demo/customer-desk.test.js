@@ -1311,13 +1311,62 @@ test('an R1 gate uses its section\'s read only when there is exactly one, and a 
   assert.deepEqual(catalog(dir).get('fixture-fenced').reads.map((r) => r.kind), ['okta:verify-status']);
 });
 
-// Code review 1, finding 5: a question mark in code or in the ticket's own quoted words is not Aegis
-// asking. A wrong implementation it catches: a rule that reads every "? " in the answer's text.
-test('CLARIFY ignores a question mark in code, in inline code, or right before a closing quote mark', () => {
+// Code review 1, finding 5: a question mark in code is not Aegis asking. Code review 2, finding 3: a
+// question inside quote marks is how an answer gives the tech a question to pass on, so it counts again.
+// A wrong implementation it catches: a rule that reads every "? " in the answer, code included.
+test('CLARIFY ignores a question mark in code or inline code, and counts one inside quote marks', () => {
   const { clarifies } = require('./catalog.js');
   assert.equal(clarifies('Run this read:\n```powershell\nGet-MgUser -All | ? { $_.AccountEnabled }\n```\nGate: none'), false, 'a fenced code line');
   assert.equal(clarifies('Run `Get-MgUser -All | ? { $_.AccountEnabled }` first.\nGate: none'), false, 'inline code');
-  assert.equal(clarifies('The clerk asks "Is our email broken???" and the trace will tell.\nGate: none'), false, 'the ticket\'s question, quoted');
+  assert.equal(clarifies('Ask the user: "Can you send a screenshot of the error?"\nGate: none'), true, 'a question for the tech to pass on');
+  assert.equal(clarifies("Ask the user: 'Is it one printer or all of them?' and wait.\nGate: none"), true);
   assert.equal(clarifies('Is it one site or all of them? Then I can say more.\nGate: none'), true, 'a question Aegis asks, mid-line');
   assert.equal(clarifies('Which router does the office run??\nGate: none'), true, 'two question marks still ask');
+});
+
+// Code review 2, findings 9, 10, 11 and 12. Wrong implementations they catch: an R1 read that fills
+// [CHANGE_ID] with null instead of stopping (9); a section that writes its one read twice losing it (10);
+// a tripwire stop that does not name the gates never applied (11); a close that lets a desk fault hide a
+// read that shows the change not done in the same gate (12).
+test('R1 reads: [CHANGE_ID] with no change record stops cleanly, and the same read written twice counts once', async (t) => {
+  const dir = tmp(t, 'aegis-desk-runbooks-');
+  fs.cpSync(path.join(REPO, '.claude', 'commands'), dir, { recursive: true });
+  const group = 'e2000000-0000-4000-8000-0000000000f9';
+  const gate = (id, line, twice) => [`<!-- SAFETY GATE [${id}] -->`, '- **Target:** [UPN]', '- **Reversibility:** R1 (fixture)', '- **Read-back:** none (R1: no change record)', '', '```bash', line, '```', ...(twice ? ['', 'WAIT UNTIL it shows, then read again:', '', '```bash', line, '```'] : []), ''];
+  fs.writeFileSync(path.join(dir, 'fixture-r1.md'), ['# fixture', '', ...gate('fixture-r1-change-id-portal', `node scripts/adapters/msgraph-client.js verify-group-member --group ${group} --user [USER_ID] --note [CHANGE_ID] --execute`), '## Next', '', ...gate('fixture-r1-twice-portal', `node scripts/adapters/msgraph-client.js verify-group-member --group ${group} --user [USER_ID] --execute`, true)].join('\n'));
+  const add = (s, target) => { (s.msgraph.groups[group] = s.msgraph.groups[group] || []).push({ id: target['[USER_ID]'] }); };
+  const simTable = { ...SIM_GATES, 'fixture-r1-change-id-portal': { platform: 'msgraph', effect: 'adds the user to the group', apply: add }, 'fixture-r1-twice-portal': { platform: 'msgraph', effect: 'adds the user to the group', apply: add } };
+  const { catalog } = require('./catalog.js');
+  assert.equal(catalog(dir).get('fixture-r1-twice-portal').reads.length, 1, 'the read written twice is one read');
+  const twice = await runDesk(t, { only: ['T4'], answers: { T4: good('fixture-r1-twice-portal') }, deps: { runbooksDir: dir, simTable } });
+  assert.equal(twice.ticket('T4').closing_state, 'RESOLVED (SIMULATED)', twice.ticket('T4').reason);
+  const changeId = await runDesk(t, { only: ['T4'], answers: { T4: good('fixture-r1-change-id-portal') }, deps: { runbooksDir: dir, simTable } });
+  assert.equal(changeId.ticket('T4').closing_state, 'INCONCLUSIVE');
+  assert.match(step(changeId.ticket('T4'), 8).output, /no simulated value for \[CHANGE_ID\]/);
+  assert.equal(changeId.code, 0, 'a clean stop, not a desk fault');
+});
+
+test('a tripwire stop names each gate it left unapplied at step 7', async (t) => {
+  const { NetworkTripwireError } = require('../adapters/socket-tripwire.js');
+  const dir = path.join(tmp(t), 'run');
+  const deps = { transportFor: () => async () => { throw new NetworkTripwireError(); } };
+  await assert.rejects(runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal', 'mfa-session-revoke-portal') }, deps, dir }), /Network tripwire fired/);
+  const k = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).tickets[0];
+  assert.match(step(k, 7).output, /mfa-session-revoke-portal: not applied, because the run stopped/);
+});
+
+test('in one gate with two read-backs, a read showing the change not done wins over a read that could not run: FAILED', async (t) => {
+  const dir = tmp(t, 'aegis-desk-runbooks-');
+  fs.cpSync(path.join(REPO, '.claude', 'commands'), dir, { recursive: true });
+  const [ga, gb] = ['e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-0000000000b1'];
+  const read = (g) => `msgraph-client.js verify-group-member --group ${g} --user [USER_ID] --change [CHANGE_ID] --execute`;
+  fs.writeFileSync(path.join(dir, 'fixture-two.md'), ['# fixture', '', '<!-- SAFETY GATE [fixture-two-reads-portal] -->', '- **Target:** [UPN]', '- **Reversibility:** R2 (fixture)', `- **Read-back:** \`${read(ga)}\`; \`${read(gb)}\``, '', '```bash', `node scripts/adapters/${read(ga)}`, `node scripts/adapters/${read(gb)}`, '```', ''].join('\n'));
+  const simTable = { ...SIM_GATES, 'fixture-two-reads-portal': { platform: 'msgraph', effect: 'touches the tenant elsewhere', apply: (s) => { s.touched_elsewhere = true; } } };
+  const { transportFor } = require('./sim/vendors.js');
+  const deps = { runbooksDir: dir, simTable, transportFor: (c, f) => { const real = transportFor(c, f); return async (req) => { if (String(req.path).includes(gb)) throw new Error('seam failed'); return real(req); }; } };
+  const r = await runDesk(t, { only: ['T4'], answers: { T4: good('fixture-two-reads-portal') }, deps });
+  const k = r.ticket('T4');
+  assert.equal(k.closing_state, 'FAILED', k.reason);
+  assert.match(step(k, 8).output, /could not run.*seam failed|did not run to a verdict/);
+  assert.equal(r.code, 2, 'exit 2 wins over the desk fault');
 });

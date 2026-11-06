@@ -24,7 +24,7 @@ Everything else goes under `## Details`, after the card: the sections of the Res
 
 ## 3. No commands for the tech
 
-No `node`, `npm` or other script command appears anywhere in an answer meant for a tech, card or Details. Checking that a change worked is Aegis's job: the card says what Aegis will check, in plain words, and the read-back itself goes in the aegis-desk block. PowerShell for reference stays allowed under Details, labeled and explained as CLAUDE.md rule 3 says.
+No `node`, `npm` or other script command appears in the card or in Details, anywhere outside the aegis-desk block. Checking that a change worked is Aegis's job: the card says what Aegis will check, in plain words, and the read-back itself goes in the aegis-desk block. PowerShell for reference stays allowed under Details, labeled and explained as CLAUDE.md rule 3 says.
 
 ## 4. The aegis-desk block
 
@@ -55,5 +55,6 @@ This example is about none of the desk's tickets.
 ```aegis-desk
 Gate: <the archive gate's id>
 Phrase: <its exact confirmation phrase>
+Read-back: <the runbook's read-back command for that gate, as the runbook writes it>
 ```
 ````

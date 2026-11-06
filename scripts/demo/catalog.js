@@ -32,6 +32,7 @@ const MARK = /^<!-- SAFETY GATE \[|^# SAFETY GATE \[/;
 // starts inside it (finding 9). The same read written twice counts once (code review 2, finding 10).
 function sectionReads(lines, from, fencedAt) {
   const reads = [];
+  const seen = new Set();
   let fenced = fencedAt[from - 1];
   for (let i = from; i < lines.length; i += 1) {
     const l = lines[i];
@@ -39,7 +40,7 @@ function sectionReads(lines, from, fencedAt) {
     if (MARK.test(l)) break;
     if (!fenced && /^#{1,6} /.test(l)) break;
     const m = READ_LINE.exec(l.trim());
-    if (m && !/--change\b/.test(l) && !reads.some((r) => r.command === l.trim())) reads.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean).map(unquote)], command: l.trim() });
+    if (m && !/--change\b/.test(l) && !seen.has(l.trim()) && seen.add(l.trim())) reads.push({ kind: `${CLIENT_CONNECTOR[m[1]] || m[1]}:${m[2]}`, argv: [m[2], ...m[3].trim().split(/\s+/).filter(Boolean).map(unquote)], command: l.trim() });
   }
   return reads.length === 1 ? reads : [];
 }

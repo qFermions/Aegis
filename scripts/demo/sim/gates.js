@@ -116,7 +116,7 @@ const SIM_GATES = Object.freeze({
   'jamf-lock-erase-lock-portal': {
     platform: 'jamf', effect: 'locks the Mac at its next check-in',
     // the lock is sent now and done at the Mac's next check-in, so its command stays Pending
-    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.lock_state = 'locked'; (d.mdm_commands = d.mdm_commands || []).push({ commandType: 'DEVICE_LOCK', status: 'Pending', dateSent: now }); } },
+    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.lock_state = 'locked'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'DEVICE_LOCK', status: 'Pending', dateSent: now }); } },
   },
   'jamf-lock-erase-wipe-portal': {
     platform: 'jamf', effect: 'wipes the Mac at its next check-in',

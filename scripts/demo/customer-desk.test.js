@@ -1278,3 +1278,20 @@ test('a messy ticket gets past sign-off: its approval reference is a key the aud
   const k = r.ticket('T2m');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
 });
+
+// Code review 1, finding 3: the simulated lock wrote its command under commandType, but the Jamf client
+// matches on command, so a lock read-back found nothing and read as "not done". A pending lock must read
+// as not proved yet (exit 5), never as a failure (exit 2).
+test('the simulated Jamf lock leaves a pending lock command the real Jamf client finds, which proves nothing yet', async (t) => {
+  const vendors = require('./sim/vendors.js');
+  const { applySimulatedGates } = require('./sim/gates.js');
+  const b = customersData.loadData().customers.find((c) => c.id === 'B');
+  const dir = tmp(t);
+  const tenantFile = path.join(dir, 'tenant.json');
+  fs.writeFileSync(tenantFile, customersData.tenantText(b));
+  applySimulatedGates({ changes: [{ entry: SIM_GATES['jamf-lock-erase-lock-portal'], target: { '[SERIAL_NUMBER]': 'C02DEMOB0001' } }], tenantFile, runDir: dir, now: '2026-11-06T10:00:00.000Z' });
+  const out = [];
+  const code = await vendors.connectorModule('jamf').run(['verify-command', '--management-id', 'b1000000-0000-4000-8000-0000000000d1', '--type', 'DEVICE_LOCK', '--not-before', '2026-11-06T09:59:00Z', '--execute'], { ...customersData.tenantVars(b), ...vendors.simulatedCredentials('jamf') }, { transport: vendors.transportFor('jamf', tenantFile), sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) });
+  assert.equal(code, 5, out.join(''));
+  assert.match(out.join(''), /DEVICE_LOCK/);
+});

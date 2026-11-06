@@ -1,0 +1,10 @@
+$ node --test scripts/demo/wiring.test.js   (green)
+✔ the README says what is real, what is simulated, where results go and what it costs
+✔ every desk command the README shows parses with the real CLI
+✔ CI runs the dry run and checks exit 4, and never starts a model
+✔ every test in scripts/demo is one node --test picks up
+✔ the explainer is under 60 lines and the quiz keeps its answers collapsed
+✔ no file of this batch holds a long dash
+ℹ tests 6
+ℹ pass 6
+ℹ fail 0

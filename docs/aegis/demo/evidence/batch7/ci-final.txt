@@ -1,0 +1,17 @@
+$ gh run list --commit ec0f7cb
+42003896240 CI success ec0f7cb
+42003896382 Release Gate success ec0f7cb
+
+$ gh pr checks 12
+Tests and full-tree scan (ubuntu-latest)	pass	1m39s
+Tests and full-tree scan (windows-latest)	pass	4m54s
+detect	pass	5s
+evals	pass	11s
+risk-tier	pass	6s
+verify	pass	1m44s
+
+verify job's node --test, with pwsh:
+ℹ tests 1970
+ℹ pass 1969
+ℹ fail 0
+ℹ skipped 1

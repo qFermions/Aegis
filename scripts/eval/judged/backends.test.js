@@ -7,6 +7,14 @@ require('../../adapters/socket-tripwire.js');
 //   --max-turns N --tools Read Grep Glob Agent --allowedTools (same) --disallowedTools Bash
 //   WebFetch WebSearch; --web moves WebFetch and WebSearch to the allowed set. The judge's is
 //   one turn, --tools "", --no-session-persistence, plus --model when given.
+// - Batch 6, task 9: both sessions load only this repository's settings: --setting-sources project
+//   --strict-mcp-config (no user-level plugin, skill, hook or MCP server), plus --settings with
+//   claudeMdExcludes and autoMemoryEnabled false. The first run of task 8 showed why: with project
+//   settings alone the CLI still loads ~/.claude/CLAUDE.md, typed Project, because it walks up from
+//   the repository (docs/aegis/demo/evidence/isolation-probe.txt). --bare is not used: it never reads
+//   the stored login. Wrong implementations this catches: a session that drops a flag, for either
+//   role; an exclusion that names only the home file and misses a folder between home and the
+//   repository; one that excludes the repository's own CLAUDE.md.
 // - The prompt is the ticket, plus the evidence after a header saying it is pasted evidence.
 // - The child runs from the repository root, without a shell, with an environment that has
 //   no .env.example name and no *_TOKEN, *_KEY, *_SECRET or *_PASSWORD name (PATH stays).
@@ -40,14 +48,114 @@ function fake(t, config) {
 const kase = (over = {}) => ({ id: 'B1', ticket: 'Ticket text for [UPN].', evidence: '', follow_up: '', ...over });
 
 test('the SUT and judge command lines match the spec; --web moves the web tools to the allowed set', () => {
-  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch']);
+  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs()]);
   const web = backends.sutArgs({ prompt: 'P', maxTurns: 5, web: true });
   assert.deepEqual(web.slice(web.indexOf('--allowedTools'), web.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch']);
-  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash']);
+  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs()]);
   assert.deepEqual(backends.sutArgs({ prompt: 'F', resume: 'sess-1' }).slice(0, 4), ['-p', 'F', '--resume', 'sess-1']);
-  assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence']);
+  assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...backends.isolationArgs({ judge: true })]);
   assert.deepEqual(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }).slice(-2), ['--model', 'judge-x']);
   assert.equal(backends.sutArgs({ prompt: '--looks-like-a-flag' })[1], ' --looks-like-a-flag', 'a prompt never reads as an option');
+});
+
+test('both sessions load only the repository\'s own settings, also when resumed, on the web, or with a judge model (batch 6, task 9)', () => {
+  const isolated = (args, label, { judge = false } = {}) => {
+    const at = args.indexOf('--setting-sources');
+    assert.ok(at > 0, `${label}: --setting-sources`);
+    assert.equal(args[at + 1], 'project', `${label}: project settings only, so no user-level CLAUDE.md, plugin, skill or hook`);
+    assert.ok(args.includes('--strict-mcp-config'), `${label}: --strict-mcp-config, so no MCP server`);
+    assert.ok(!args.includes('--mcp-config'), `${label}: no MCP file is given`);
+    assert.ok(!args.includes('--bare'), `${label}: --bare never reads the stored login`);
+    const settings = JSON.parse(args[args.indexOf('--settings') + 1]);
+    assert.equal(settings.autoMemoryEnabled, false, `${label}: no auto memory`);
+    const home = require('node:os').homedir();
+    assert.ok(settings.claudeMdExcludes.includes(path.join(home, '.claude', 'CLAUDE.md')), `${label}: the owner's own rules file is excluded`);
+    for (let d = path.dirname(REPO_ROOT); ; d = path.dirname(d)) {
+      for (const name of ['CLAUDE.md', 'CLAUDE.local.md', path.join('.claude', 'CLAUDE.md')]) assert.ok(settings.claudeMdExcludes.includes(path.join(d, name)), `${label}: ${path.join(d, name)}`);
+      if (d === path.dirname(d)) break;
+    }
+    if (judge) assert.ok(settings.claudeMdExcludes.includes(path.join(REPO_ROOT, 'CLAUDE.md')), `${label}: the judge loads no CLAUDE.md, even with a temporary folder below the checkout`);
+    else assert.ok(!settings.claudeMdExcludes.some((p) => p === path.join(REPO_ROOT, 'CLAUDE.md') || p.startsWith(`${REPO_ROOT}${path.sep}`)), `${label}: the repository's own files still load`);
+  };
+  isolated(backends.sutArgs({ prompt: 'P' }), 'system under test');
+  isolated(backends.sutArgs({ prompt: 'P', resume: 'sess-1' }), 'follow-up turn');
+  isolated(backends.sutArgs({ prompt: 'P', web: true }), 'system under test with the web tools');
+  isolated(backends.judgeArgs({ prompt: 'J' }), 'judge', { judge: true });
+  isolated(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }), 'judge with a model', { judge: true });
+});
+
+test('the exclusions cover the judge\'s temporary folder too, and never the repository\'s own CLAUDE.md (batch 6, code review 1 finding 7)', () => {
+  const os = require('node:os');
+  const list = backends.excludedMemoryFiles();
+  for (const dir of [os.tmpdir(), fs.realpathSync(os.tmpdir())]) {
+    assert.ok(list.includes(path.join(dir, 'CLAUDE.md')), `${dir}: the judge runs below it`);
+    assert.ok(list.includes(path.join(path.dirname(dir), 'CLAUDE.md')), `above ${dir}`);
+  }
+  // a temporary folder that does not exist (a stale TMPDIR) must not break building the arguments
+  const saved = process.env.TMPDIR;
+  process.env.TMPDIR = '/nonexistent-aegis-test/x';
+  try { assert.doesNotThrow(() => backends.sutArgs({ prompt: 'P' })); } finally { if (saved === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = saved; }
+  // a checkout at the home folder keeps its own rules
+  const homeCheckout = backends.excludedMemoryFiles('/h/me', '/h/me');
+  assert.ok(!homeCheckout.includes(path.join('/h/me', 'CLAUDE.md')));
+  assert.ok(!homeCheckout.includes(path.join('/h/me', '.claude', 'CLAUDE.md')));
+  assert.ok(homeCheckout.includes(path.join('/h', 'CLAUDE.md')));
+});
+
+test('the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4)', () => {
+  const os = require('node:os');
+  const abs = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
+  const repo = (p) => abs(path.join(REPO_ROOT, p));
+  const pinned = [
+    repo('progress.md'), repo('checks.md'), repo('docs/review/**'), repo('docs/aegis/demo/**'), repo('docs/explainers/**'),
+    repo('scripts/demo/customers/**'), repo('scripts/eval/judged/dev-cases.jsonl'),
+    // beyond the charter's list, from code reviews 1 and 2: the demo's own tests and table hold passing answers
+    // and ticket-to-gate pairs; scripts/eval holds the grader, the ticket corpora and their expected routes;
+    // docs/evidence holds scored answers; a judged run saves its grades
+    repo('scripts/demo/**'), repo('scripts/eval/**'), repo('docs/evidence/**'), repo('docs/aegis/**/evidence/**'), repo('.aegis-state/**'),
+    abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
+  ];
+  const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
+  assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P' })).permissions.deny, pinned);
+  // a run folder elsewhere is denied too, when the caller names it
+  // the real form of the temporary folder, so the rule has one form under this Mac's default /var link too
+  const elsewhere = path.join(fs.realpathSync(os.tmpdir()), 'some-run');
+  assert.deepEqual(settingsOf(backends.sutArgs({ prompt: 'P', runRoot: elsewhere })).permissions.deny, [...pinned, abs(path.join(elsewhere, '**'))]);
+  // a run folder under a link is denied in both forms, since the CLI may match either
+  const fsTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-deny-'));
+  const link = `${fsTmp}-link`;
+  try {
+    let linked = true;
+    try { fs.symlinkSync(fsTmp, link); } catch (e) { if (e.code !== 'EPERM') throw e; linked = false; } // Windows needs a privilege for this
+    if (linked) {
+      const rules = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: link })).permissions.deny;
+      assert.ok(rules.includes(abs(path.join(link, '**'))), 'the given form');
+      assert.ok(rules.includes(abs(path.join(fs.realpathSync(fsTmp), '**'))), 'the real form');
+      // not created yet, as in a dry run: the same rules the real run will use
+      const later = settingsOf(backends.sutArgs({ prompt: 'P', runRoot: path.join(link, 'not-yet') })).permissions.deny;
+      assert.ok(later.includes(abs(path.join(fs.realpathSync(fsTmp), 'not-yet', '**'))), 'the real form of a folder not made yet');
+    }
+  } finally {
+    fs.rmSync(link, { force: true });
+    fs.rmSync(fsTmp, { recursive: true, force: true });
+  }
+  // only Read rules: the CLI's own warning says a Glob(path) rule is not matched and Read rules cover Grep and Glob
+  for (const rule of pinned) assert.match(rule, /^Read\(\/\//);
+  // a wrong list that denied a parent folder would hide what Aegis must read
+  for (const readable of ['CLAUDE.md', 'PRODUCT_CONTRACT.md', 'docs/aegis/workflow.md', 'modules/security/security-doctrine.md', '.claude/commands/mfa-issue.md', 'tasks/lessons.md']) {
+    const target = repo(readable).slice(0, -1);
+    for (const rule of pinned) {
+      const base = rule.slice(0, -1).replace(/\/\*\*$/, '');
+      assert.ok(target !== base && !target.startsWith(`${base}/`), `${readable} stays readable under ${rule}`);
+    }
+  }
+});
+
+test('sutArgs takes no persistence only when asked, and the judge never persists (batch 7, task 5)', () => {
+  assert.ok(!backends.sutArgs({ prompt: 'P' }).includes('--no-session-persistence'));
+  assert.ok(backends.sutArgs({ prompt: 'P', persist: false }).includes('--no-session-persistence'));
+  assert.throws(() => backends.sutArgs({ prompt: 'P', persist: false, resume: 'sess-1' }), /cannot resume/);
+  assert.ok(backends.judgeArgs({ prompt: 'J' }).includes('--no-session-persistence'));
 });
 
 test('the prompt is the ticket, plus the evidence after the pasted-evidence header', () => {

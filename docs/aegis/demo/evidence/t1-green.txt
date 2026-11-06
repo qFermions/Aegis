@@ -1,0 +1,10 @@
+$ node --test scripts/demo/customers.test.js   (green)
+✔ five customers and eight tickets, each with the fields the desk reads
+✔ the charter's customer stacks and ticket routing hold
+✔ every domain in the data is an example.* domain; a real domain is caught
+✔ every person is a placeholder or a role; a name is caught
+✔ intake ACCEPTS every ticket under its own customer's tenant variables, and flags T6
+✔ the targets and tenant files fill the customer domain and name no address outside it
+ℹ tests 6
+ℹ pass 6
+ℹ fail 0

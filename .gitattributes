@@ -7,6 +7,9 @@
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
+# The screenshots, stored as base64 text because the repository holds no binary file
+docs/aegis/demo/evidence/*.b64 -diff
+
 # Never normalize binaries
 *.png binary
 *.jpg binary

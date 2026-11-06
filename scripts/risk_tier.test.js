@@ -111,6 +111,12 @@ for (const connector of ['github-client.js', 'okta-client.js', 'msgraph-client.j
   });
 }
 
+test('C: scripts/demo/** (spawns the claude CLI, writes change records and a simulated tenant) is tier C, not scripts/** B (batch 7, task 6)', () => {
+  const cwd = sandbox();
+  commit(cwd, ['scripts/demo/customer-desk.js', 'scripts/demo/sim/gates.js']);
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', 'scripts/demo/customer-desk.js', 'scripts/demo/sim/gates.js']);
+});
+
 test('one C path wins over many B paths, and only the C path is listed', () => {
   const cwd = sandbox();
   const many = Array.from({ length: 12 }, (_, i) => `scripts/eval/case-${i}.js`);

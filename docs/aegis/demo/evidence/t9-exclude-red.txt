@@ -1,0 +1,7 @@
+$ node --test scripts/eval/judged/backends.test.js   (red, second attempt: isolationArgs does not exist yet)
+ℹ fail 2
+ℹ pass 7
+ℹ tests 9
+✖ both sessions load only the repository's own settings, also when resumed, on the web, or with a judge model (batch 6, task 9)
+✖ failing tests:
+✖ the SUT and judge command lines match the spec; --web moves the web tools to the allowed set

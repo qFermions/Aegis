@@ -1,0 +1,14 @@
+claude -p /context with the scrubbed environment and the desk's final flags, from the repository root. A local command: no model call. Paths written <home>, <repo>, <tmp>.
+exit 0, total_cost_usd 0, num_turns 0, duration_api_ms 0
+
+### Memory Files
+
+| Type | Path | Tokens |
+|------|------|--------|
+| Project | <repo>/CLAUDE.md | 7.5k |
+
+The CLI's debug log, the lines on permissions:
+[DEBUG] Applying permission update: Adding 14 deny rule(s) to destination 'flagSettings': ["Read(/<repo>/progress.md)","Read(/<repo>/checks.md)","Read(/<repo>/docs/review/**)","Read(/<repo>/docs/aegis/demo/**)","Read(/<repo>/docs/explainers/**)","Read(/<repo>/scripts/demo/customers/**)","Read(/<repo>/scripts/eval/judged/dev-cases.jsonl)","Read(/<repo>/scripts/demo/**)","Read(/<repo>/scripts/eval/**)","Read(/<repo>/docs/evidence/**)","Read(/<repo>/docs/aegis/**/evidence/**)","Read(/<repo>/.aegis-state/**)","Read(/<home>/aegis-demo-runs/**)","Read(/<home>/aegis-demo-runs/example-run/**)"]
+
+Init event: mcp_servers []; plugins ["cc-plugin-agents-md@builtin","cc-plugin-telemetry@builtin","cc-plugin-privacy@builtin","cc-plugin-plugin-authoring@builtin"]; memory_paths null; permissionMode default. The init event does not list permission rules.
+Not shown here: that the CLI refuses a read. /context runs no tool, so only a real session can show that.

@@ -1,0 +1,42 @@
+$ node --test scripts/demo/customer-desk.test.js scripts/demo/render.test.js   (green)
+✔ the default is a dry run: the plan and an allowance estimate, exit 4, no process, no folder
+✔ --only runs a subset; an unknown ticket, an unknown flag or a repeated flag is an input error
+✔ results go to ~/aegis-demo-runs/<run-id> by default, and a folder git tracks or does not ignore is refused
+✔ a results folder that already holds files is refused, so two runs never mix
+✔ T1 end to end: nine steps in order, the real read-back passes on the simulated tenant, RESOLVED (SIMULATED)
+✔ step 4 runs the same session as the judged runner: repo root, read-only tools, isolated, scrubbed, the ticket as data
+✔ a boundary failure stops the ticket at step 5: FAILED, nothing approved, the tenant untouched
+✔ an answer that names no gate stops OPEN with the reason; a question with no gate is CLARIFY
+✔ a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes
+✔ a real gate the table does not map stops OPEN with "not simulated"; so does a gate for a platform this customer lacks
+✔ a read-back that shows the change not done is FAILED; the connector's own message is shown
+✔ a read-back that proves nothing either way is INCONCLUSIVE, not resolved, and is not stored
+✔ T3: a gate whose runbook names no read-back is simulated, then INCONCLUSIVE with the runbook's reason, never resolved
+✔ two gates: the ticket resolves only when both read-backs pass; one none-read-back gate makes it INCONCLUSIVE
+✔ T6: intake flags the injected line, the answer refuses it, the probe is counted; complying is FAILED
+✔ a session that fails or errors stops OPEN with the reason, no change and no cost claimed
+✔ T8 hits the cache when T4 was verified in the same run: no second session, its own read-back, its own customer store
+✔ with the real runbooks T4 cannot resolve, so T8 is a replay MISS and gets its own session (the gap for the owner)
+✔ a cache hit cannot cross customers: another customer's store misses, and E's store refuses another tenant
+✔ Customer B's tickets under Customer D's tenant variables are refused by intake (TENANT_MISMATCH), both sources
+✔ each customer has its own audit folder, replay store, simulated tenant and cases inside the run folder
+✔ every gate the table maps is a real gate, and every one with a read-back resolves through its own connector
+✔ only the operator simulator writes a tenant: no other demo file writes one, and nothing Aegis runs can
+✔ no vendor is contacted: the connectors reach only the seam, and a real socket would have tripped
+✔ the repository is unchanged by a run
+✔ a results folder inside the repository that git ignores runs, and the replay cache refuses to store there, with the reason
+✔ the terminal prints one line per step as it finishes, with actor, result and tag, and the answer in full under step 4
+✔ the summary counts by hand: states, boundary failures, probes, cache hits, sessions, cost, time, and the sentence word for word
+✔ --view rebuilds the page from a saved run with no model call; a folder with no run is an input error
+✔ every step of every ticket, its actor, tag, duration and output are in the page, in order
+✔ every simulated part is labeled SIMULATED in text
+✔ no http or https URL outside the shown ticket and answer text, no script, no external resource
+✔ ticket and answer text is escaped, so it cannot add markup
+✔ the list shows each ticket's customer label, title and closing state; the summary sits on top
+✔ the page avoids the listed patterns and themes both modes
+✔ a run with no tickets still renders, and the summary names what it holds
+✔ the terminal line carries the actor, the result and the tag; summaryLines carries the counts
+✔ a cost no session reported reads as unknown, never as zero
+ℹ tests 38
+ℹ pass 38
+ℹ fail 0

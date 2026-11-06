@@ -1,0 +1,14 @@
+$ node --test scripts/eval/judged/backends.test.js   (red: the flags are not in backends.js yet)
+ℹ fail 2
+ℹ pass 7
+ℹ tests 9
+✔ a case with a follow_up resumes the first turn's session and records both answers, turns, cost and model
+✔ a slow child is stopped at the timeout: state TIMEOUT, and SIGKILL follows a child that ignores SIGTERM
+✔ output that is not stream-json, an error result, or a missing executable is ERROR
+✔ parseStream takes the result text, else the last assistant text, and counts invalid lines
+✔ the child runs from the repository root with a scrubbed environment (names only are checked)
+✔ the prompt is the ticket, plus the evidence after the pasted-evidence header
+✔ the scrub list is every NAME= of .env.example plus the secret suffixes
+✖ both sessions load only the repository's own settings, also when resumed, on the web, or with a judge model (batch 6, task 9)
+✖ failing tests:
+✖ the SUT and judge command lines match the spec; --web moves the web tools to the allowed set

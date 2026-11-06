@@ -11,16 +11,70 @@
 //   event's `result`, else the last assistant text.
 // - A case's follow_up, when non-empty, is a second turn in the same session (--resume
 //   with the session id the first turn reported).
+// - The system under test loads only this repository's settings, CLAUDE.md, commands and skills, and
+//   the judge, from its empty folder, loads none; neither loads a user-level CLAUDE.md, plugin, skill, hook or MCP server, so a run measures Aegis and not what
+//   is installed on the machine that day (batch 6, task 9). --setting-sources project is not enough
+//   alone: the CLI walks up from the repository and loads ~/.claude/CLAUDE.md as a Project file, so
+//   every such file above the repository is excluded by name, and auto memory is off. --bare is not
+//   used: it never reads the stored login. Proof: docs/aegis/demo/evidence/batch7/isolation-probe.txt.
 // Nothing here reads a value from the environment beyond passing it on to the child.
 
 const childProcess = require('node:child_process');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
-const { REPO_ROOT } = require('./paths.js');
+const { REPO_ROOT, effectivePath } = require('./paths.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
+
+// Every CLAUDE.md the CLI's upward walk could find from the repository or the judge's temporary folder,
+// and the home folder's own. The system under test keeps the repository's own, even when the checkout
+// is the home folder; the judge loads none, even when its temporary folder sits below the checkout.
+function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge = false } = {}) {
+  const dirs = new Set([home]);
+  let realTmp = os.tmpdir();
+  try { realTmp = fs.realpathSync(realTmp); } catch { /* a stale TMPDIR: its given form is listed */ }
+  for (const start of [path.dirname(repoRoot), os.tmpdir(), realTmp]) {
+    for (let d = start; ; d = path.dirname(d)) {
+      dirs.add(d);
+      if (d === path.dirname(d)) break;
+    }
+  }
+  if (judge) dirs.add(repoRoot);
+  else dirs.delete(repoRoot);
+  return [...dirs].flatMap((d) => [path.join(d, 'CLAUDE.md'), path.join(d, 'CLAUDE.local.md'), path.join(d, '.claude', 'CLAUDE.md'), path.join(d, '.claude', 'rules', '**')]);
+}
+
+// What a session may not read: this work's own records, the demo's code and expected answers, the grader and
+// ticket corpora under scripts/eval, scored answers and saved ticket results under docs/evidence and docs/aegis, and the run folders the CLI can name,
+// so it answers from Aegis's runbooks and not from its own grading material. A run saved under a custom folder
+// by an earlier command is not on the list, nor a judged run's custom --results-dir. Read
+// rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and Glob.
+// That the CLI loads them: docs/aegis/demo/evidence/batch7/isolation-probe.txt. That it refuses a read is
+// shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
+const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', 'docs/aegis/**/evidence/**', '.aegis-state/**']);
+const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
+
+// The CLI's absolute form: // then the path from the file system root, with forward slashes.
+const absoluteReadRule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
+
+function readDenyRules(runRoot = null) {
+  const rules = READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p)));
+  // both forms of a folder behind a link, since the CLI may match either; effectivePath resolves the nearest
+  // folder that exists, so a dry run lists what the real run will
+  for (const root of [path.join(os.homedir(), DEFAULT_RUN_ROOT), ...(runRoot ? [path.resolve(runRoot)] : [])]) {
+    rules.push(absoluteReadRule(path.join(root, '**')));
+    const real = effectivePath(root);
+    if (real !== root) rules.push(absoluteReadRule(path.join(real, '**')));
+  }
+  return rules;
+}
+
+function isolationArgs({ judge = false, runRoot = null } = {}) {
+  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot) } })];
+}
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
 const DEFAULT_GRACE_MS = 5000;
@@ -59,18 +113,20 @@ function buildSutPrompt(c) {
   return c.evidence !== '' ? `${c.ticket}\n\n${EVIDENCE_HEADER}\n${c.evidence}` : c.ticket;
 }
 
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null }) {
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, persist = true }) {
+  if (resume && !persist) throw new Error('a session with no persistence cannot resume');
   const tools = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
+  if (!persist) args.push('--no-session-persistence');
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed);
+    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot }));
   return args;
 }
 
 function judgeArgs({ prompt, model = null }) {
-  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence'];
+  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...isolationArgs({ judge: true })];
   if (model) args.push('--model', model);
   return args;
 }
@@ -212,7 +268,7 @@ function sutRecord(turns, c) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  SUT_TOOLS, WEB_TOOLS, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
   envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn,
   runChild, runTurn, runSut, promptTooLong,
 };

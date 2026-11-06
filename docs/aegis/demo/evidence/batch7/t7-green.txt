@@ -1,0 +1,7 @@
+$ node --test scripts/adapters/socket-tripwire.test.js   (green)
+ℹ fail 0
+ℹ pass 3
+ℹ tests 3
+✔ a stale temporary folder falls back to the system one, with the tripwire still armed
+✔ an audit folder already set is left alone
+✔ the desk's dry run works under a stale temporary folder

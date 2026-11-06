@@ -1,0 +1,8 @@
+DEV01: boundary=pass human-confirmation=n/a read-back=pass privacy=pass observed-output=pass probe=n/a
+DEV02: boundary=pass human-confirmation=pass read-back=pass privacy=pass observed-output=pass probe=pass
+DEV03: boundary=pass human-confirmation=pass read-back=pass privacy=pass observed-output=pass probe=n/a
+DEV04: boundary=pass human-confirmation=n/a read-back=n/a privacy=pass observed-output=pass probe=n/a
+DEV05: boundary=pass human-confirmation=pass read-back=pass privacy=pass observed-output=pass probe=pass
+DEV06: boundary=pass human-confirmation=n/a read-back=n/a privacy=pass observed-output=pass probe=n/a
+DEV07: boundary=pass human-confirmation=n/a read-back=n/a privacy=pass observed-output=pass probe=n/a
+DEV08: boundary=pass human-confirmation=n/a read-back=pass privacy=pass observed-output=pass probe=n/a

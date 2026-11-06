@@ -1,0 +1,4 @@
+$ node --test scripts/eval/judged/*.test.js   (green, the whole runner suite)
+ℹ fail 0
+ℹ pass 68
+ℹ tests 68

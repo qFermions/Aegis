@@ -19,6 +19,7 @@
     "scripts/graph/**",
     "scripts/audit/**",
     "scripts/intake/**",
+    "scripts/demo/**",
     "modules/automation/scripts/deploy-check.js",
     "scripts/adapters/**",
     "scripts/gws-posture-audit.js",

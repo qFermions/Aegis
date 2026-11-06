@@ -167,3 +167,14 @@ test('a change hidden before the first step, on the label line, or after a stray
   assert.equal(a.onlyLooks(stray).looks, false);
   assert.equal(a.onlyLooks(card([...GOOD_PARTS.slice(0, 2), '1. Open the admin center.', '2. Read the sign-in logs.', '3. Look at the user page.', ...GOOD_PARTS.slice(5)])).looks, true, 'a card that only looks still does');
 });
+
+// Code review 3, findings 3 and 4. Wrong implementations they catch: counting an indented sub-item as a
+// step (a 4-step card read as 7); missing the bold-number form "**1.** Open" (a good card read as 0 steps).
+test('an indented numbered sub-item is part of its step, and a bold number starts a step', () => {
+  const nested = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the admin center.', '   1. Click Users.', '   2. Click All users.', '2. Find the group.', '3. Read its members.', '4. Read the owner.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.fixCard(nested).steps.length, 4);
+  assert.match(a.fixCard(nested).steps[0], /Click Users\. 2\. Click All users\.$/);
+  const bold = card([GOOD_PARTS[0], GOOD_PARTS[1], '**1.** Open the admin center.', '**2.** Find the user.', '**3.** Read the user.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.fixCard(bold).steps.length, 3);
+  assert.deepEqual(a.cardProblems(a.fixCard(bold)), []);
+});

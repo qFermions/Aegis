@@ -1,0 +1,2 @@
+$ node --test --test-name-pattern "an indented numbered sub-item" scripts/demo/answer.test.js   (answer.js before the fix)
+✖ an indented numbered sub-item is part of its step, and a bold number starts a step (0.918375ms)

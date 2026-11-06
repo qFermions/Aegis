@@ -18,7 +18,9 @@ const PARTS = Object.freeze([
 const labelRe = (label) => new RegExp(`^[\\s>*_-]*(?:\\*\\*)?${label.replace(/'/g, "['’]")}(?:\\*\\*)?[ \\t]*:[ \\t]*(?:\\*\\*)?[ \\t]*(.*)$`, 'i');
 // compiled once (code review 1, finding 15)
 const LABELS = PARTS.map((p) => ({ ...p, re: labelRe(p.label) }));
-const STEP = /^[ \t]*(?:\*\*)?(\d+)[.)][ \t]+(.+)$/;
+// A top-level numbered step: at most one space of indent (a deeper one is a sub-item of the step above),
+// and the number may be bold, as in "**1.** Open" (code review 3, findings 3 and 4).
+const STEP = /^ ?(?:\*\*)?(\d+)[.)](?:\*\*)?[ \t]+(.+)$/;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 

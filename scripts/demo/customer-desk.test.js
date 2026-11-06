@@ -1363,11 +1363,15 @@ test('in one gate with two read-backs, a read showing the change not done wins o
   fs.writeFileSync(path.join(dir, 'fixture-two.md'), ['# fixture', '', '<!-- SAFETY GATE [fixture-two-reads-portal] -->', '- **Target:** [UPN]', '- **Reversibility:** R2 (fixture)', `- **Read-back:** \`${read(ga)}\`; \`${read(gb)}\``, '', '```bash', `node scripts/adapters/${read(ga)}`, `node scripts/adapters/${read(gb)}`, '```', ''].join('\n'));
   const simTable = { ...SIM_GATES, 'fixture-two-reads-portal': { platform: 'msgraph', effect: 'touches the tenant elsewhere', apply: (s) => { s.touched_elsewhere = true; } } };
   const { transportFor } = require('./sim/vendors.js');
-  const deps = { runbooksDir: dir, simTable, transportFor: (c, f) => { const real = transportFor(c, f); return async (req) => { if (String(req.path).includes(gb)) throw new Error('seam failed'); return real(req); }; } };
+  // code review 3, finding 2: the fault must reach the desk, so the second read's transport setup throws
+  // (an error inside the transport itself becomes the connector's own failed read, not a desk fault)
+  let calls = 0;
+  const deps = { runbooksDir: dir, simTable, transportFor: (c, f) => { calls += 1; if (calls === 2) throw new Error('seam failed'); return transportFor(c, f); } };
   const r = await runDesk(t, { only: ['T4'], answers: { T4: good('fixture-two-reads-portal') }, deps });
   const k = r.ticket('T4');
   assert.equal(k.closing_state, 'FAILED', k.reason);
-  assert.match(step(k, 8).output, /could not run.*seam failed|did not run to a verdict/);
+  assert.equal(k.internal_error, true, 'the desk fault happened');
+  assert.match(step(k, 8).output, /the read-back could not run: seam failed/);
   assert.equal(r.code, 2, 'exit 2 wins over the desk fault');
 });
 

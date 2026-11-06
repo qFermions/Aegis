@@ -15,7 +15,7 @@
 | 9 | `customer-desk.js:331` | an R1 read filled `[CHANGE_ID]` with null | fixed `6021cd8`: the placeholder stays and the guard stops it |
 | 10 | `catalog.js:40` | a read written twice counted as two | fixed `6021cd8` |
 | 11 | `customer-desk.js:618` | a tripwire stop did not name the unapplied gates | fixed `6021cd8` |
-| 12 | `scripts/demo/customer-desk.test.js:397` | no test that a shown failure wins over a desk fault in one gate | fixed `6021cd8`: test added (it passes on the old code too: coverage, not a bug) |
+| 12 | `scripts/demo/customer-desk.test.js:397` | no test that a shown failure wins over a desk fault in one gate | test added in `6021cd8`, but it never caused a desk fault (code review 3, finding 2): fixed in the commit after `397a6b2`, which asserts the fault happened |
 | 13 | `catalog.js:40` | altitude: an R1 gate's read is guessed from position; the Read-back field could name it | closed for the owner: `scripts/audit/read-back-field.test.js` requires every R1 field to say `none (R1: no change record)`, a contract outside this batch's files; recommended as the next change |
 | 14 | `catalog.js:128` | altitude: CLARIFY keeps gaining regex exceptions; a `Question:` line in the aegis-desk block would mark it exactly | closed for the owner: a new block line is a change to the answer format the charter did not ask for; recommended |
 | 15 | `catalog.js:31` | the fence state recounted per gate | fixed `6021cd8` |

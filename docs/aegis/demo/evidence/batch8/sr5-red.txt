@@ -1,0 +1,2 @@
+$ node --test --test-name-pattern "a change in any step form" scripts/demo/answer.test.js   (answer.js before the fix)
+✖ a change in any step form, in odd characters, in another card part or in a Details list is still seen (2.024083ms)

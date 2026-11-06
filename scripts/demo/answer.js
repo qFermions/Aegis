@@ -24,9 +24,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const STEP = /^ ?(?:\*\*)?(\d+)[.)](?:\*\*)?[ \t]+(.+)$/;
-// Any numbered line at any indent: what the change scan and the no-card step list read, so indenting a
-// step cannot hide a change from INVESTIGATE (final security review).
-const ANY_STEP = /^[ \t]*(?:\*\*)?(\d+)[.)](?:\*\*)?[ \t]+(.+)$/;
+// Any numbered line, in any of the forms a step takes (indented, quoted, after a bullet, "(2)", "2)",
+// "2.Reset", a bold number): what the change scan and the no-card step list read, so the form of a step
+// cannot hide a change from INVESTIGATE (security reviews 4 and 5).
+const ANY_STEP = /^[ \t>]*(?:[-*+][ \t]+)?(?:\*\*)?\(?(\d+)[.)](?:\*\*)?[ \t]*(\S.*)$/;
+const LIST_LINE = /^[ \t>]*(?:[-*+][ \t]+|\(?\d+[.)])/;
+// Characters that make a line look plain but read differently: full-width digits and no-break spaces fold
+// to plain ones (NFKC), and zero-width characters go.
+const plainText = (t) => String(t).normalize('NFKC').replace(/[\u200b-\u200d\u2060\ufeff]/g, '');
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 
@@ -194,20 +199,28 @@ const forms = (s) => [s, `${s}s`, `${s}ed`, `${s}d`, `${s}ing`, ...(s.endsWith('
 const CHANGE_WORD = new RegExp(`(?<![A-Za-z-])(?:${[...new Set(CHANGE_STEMS.flatMap(forms))].sort((a, b) => b.length - a.length).join('|')}|turn(?:s|ed|ing)? (?:on|off))(?![A-Za-z-])`, 'i');
 
 // The steps an answer gives: the card's "Do this" steps, or, with no card, every numbered line.
-function answerSteps(answer) {
+function answerSteps(raw) {
+  const answer = plainText(raw);
   const card = fixCard(answer);
   if (card.present && card.steps.length) return card.steps;
   return deskBlock(answer).body.split(/\r?\n/).map((l) => ANY_STEP.exec(l)).filter(Boolean).map((m) => m[2].replace(/\*\*$/, '').trim());
 }
 
-// The step half of the INVESTIGATE rule: at least one step, and no change word in the steps, in any text
-// of "Do this" before its first step, or in any numbered line of the card, so a change cannot hide in a
-// line the parser did not file as a step (security review 3).
-function onlyLooks(answer) {
+// The step half of the INVESTIGATE rule: at least one step, and no change word where a change could be
+// asked. With a Fix card: anywhere in the card (every part, every line) and in every list line under it
+// (Details included). With no card (an answer in the older format): in every numbered line, in any form.
+// shortcut: an older-format answer's prose and bullets are not read, since a look-first answer of that
+// form says "don't release" or "don't delete it" in them (full run 1's T5); such an answer can only gain a
+// label, never a change.
+function onlyLooks(raw) {
+  const answer = plainText(raw);
   const steps = answerSteps(answer);
   const card = fixCard(answer);
-  const extra = card.present ? [card.parts.doThis || '', ...card.text.split(/\r?\n/).filter((l) => ANY_STEP.test(l))] : [];
-  const change = [...steps, ...extra].find((s) => CHANGE_WORD.test(s)) || null;
+  const body = deskBlock(answer).body.split(/\r?\n/);
+  const scan = card.present
+    ? [...steps, card.parts.doThis || '', ...card.text.split(/\r?\n/), ...body.filter((l) => LIST_LINE.test(l))]
+    : [...steps, ...body.filter((l) => ANY_STEP.test(l))];
+  const change = scan.find((x) => CHANGE_WORD.test(x)) || null;
   return { steps, looks: steps.length > 0 && change === null, change };
 }
 

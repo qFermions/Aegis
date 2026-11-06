@@ -206,3 +206,18 @@ test('an indented numbered change line is still scanned, with or without a card'
   const stray = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the logs.', '2. Read the user page.', '**Tell the user:** We are on it.', '  3. Reset the MFA methods.', ...GOOD_PARTS.slice(5, 7)]);
   assert.equal(a.onlyLooks(stray).looks, false);
 });
+
+// Security review 5: the forms a step can take, and the rest of a card, cannot hide a change. Wrong
+// implementations it catches: a scan of plain numbered lines only; a scan blind to a no-break space, a
+// full-width digit or a zero-width space; a card scan that skips Details' list lines or "Done when".
+test('a change in any step form, in odd characters, in another card part or in a Details list is still seen', () => {
+  const look = '1. Open the Entra sign-in logs for [UPN].';
+  const plainCard = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the logs.', '2. Read the user page.', '3. Read the device list.', '**Done when:** the logs show it.', ...GOOD_PARTS.slice(6)]);
+  assert.equal(a.onlyLooks(plainCard).looks, true, 'a card that only looks still does');
+  for (const hidden of ['(2) Reset MFA.', '2. Reset MFA.', '  2. Reset MFA.', '> 2. Reset MFA.', '- 2. Reset MFA.', '2.Reset MFA.', '２. Reset MFA.', '2. Re​set MFA.']) {
+    assert.equal(a.onlyLooks(`${look}\n${hidden}`).looks, false, JSON.stringify(hidden));
+  }
+  assert.equal(a.onlyLooks(`${plainCard}\n\n## Details\n1. Reset the MFA methods.`).looks, false, 'a numbered Details line');
+  assert.equal(a.onlyLooks(`${plainCard}\n\n## Details\n- Remove the old phone.`).looks, false, 'a bulleted Details line');
+  assert.equal(a.onlyLooks(plainCard.replace('the logs show it', 'you have reset the MFA methods')).looks, false, 'a change in Done when');
+});

@@ -158,3 +158,19 @@ test('each messy body is the charter\'s text exactly, with only the headers its 
   assert.notEqual(thread('T2m')[0], thread('T2m')[1]);
   assert.equal(thread('T6m')[0], thread('T6m')[1]);
 });
+
+// Batch 8, task 7. EXPECTED DECISION (written with the files, see checks.md D1): each customer has a
+// profile.md naming its platform stack, how identity is verified (or [org gap]), who approves changes and
+// its business hours; fictional, no person's name, no domain outside example.*. A wrong implementation it
+// catches: a profile copied from another customer (the stack must match customers.json's own stack).
+test('task 7: every customer has a profile with its stack, identity rule, approver and hours, and no name or real domain', () => {
+  for (const c of desk.loadData().customers) {
+    const text = desk.profileText(c);
+    assert.match(text, new RegExp(`^# Customer ${c.id} profile \\(fictional\\)`), c.id);
+    for (const field of ['Platform stack:', 'How identity is verified:', 'Who approves changes:', 'Business hours:']) assert.ok(text.includes(field), `${c.id} ${field}`);
+    for (const product of c.stack) assert.ok(text.toLowerCase().includes(product.split(' (')[0].toLowerCase()), `${c.id} names ${product}`);
+    const raw = fs.readFileSync(path.join(DIR, c.profile_file), 'utf8');
+    assert.deepEqual(desk.personNames(raw), [], `${c.id} names`);
+    assert.deepEqual(desk.foreignDomains(raw), [], `${c.id} domains`);
+  }
+});

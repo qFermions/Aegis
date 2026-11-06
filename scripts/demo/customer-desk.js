@@ -10,7 +10,7 @@
 // the tickets, so a run shows the pipeline and says nothing about answer quality.
 //
 // Usage:
-//   node scripts/demo/customer-desk.js [run] [--only T4,T6] [--execute] [--results-dir <dir>]
+//   node scripts/demo/customer-desk.js [run] [--set tidy|messy] [--only T4,T6] [--execute] [--results-dir <dir>]
 //        [--budget-usd N [--spent-usd N]]
 //   node scripts/demo/customer-desk.js --view <run-dir>
 // Default is a dry run: the plan and an allowance estimate, exit 4, no model. Exit codes: 0 the run
@@ -52,7 +52,8 @@ const DESK_MAX_TURNS = 40;
 // unless a session reports no cost.
 const LIKELY_USD = Object.freeze({ T2: 4 });
 const LIKELY_USD_DEFAULT = 2;
-const likelyUsd = (id) => LIKELY_USD[id] || LIKELY_USD_DEFAULT;
+// a messy twin (T2m) costs what its tidy twin (T2) does
+const likelyUsd = (id) => LIKELY_USD[String(id).replace(/m$/, '')] || LIKELY_USD_DEFAULT;
 const DESK_SESSION_TIMEOUT_MS = 1500000;
 const STEP_NAMES = Object.freeze(['CUSTOMER', 'INTAKE', 'TRIAGE', 'AEGIS', 'CHECKS', 'APPROVAL', 'SIMULATED OPERATOR', 'READ-BACK', 'CLOSE']);
 const SCHEMA = 'aegis.demo.run.v1';
@@ -60,9 +61,10 @@ const REAL = 'REAL';
 const SIM = 'SIMULATED';
 
 const USAGE = `Usage:
-  node scripts/demo/customer-desk.js [run] [--only T4,T6] [--execute] [--results-dir <dir>]
+  node scripts/demo/customer-desk.js [run] [--set tidy|messy] [--only T4,T6] [--execute] [--results-dir <dir>]
        [--budget-usd N [--spent-usd N]]
   node scripts/demo/customer-desk.js --view <run-dir>
+--set picks the ticket set: tidy (T1 to T8, the default) or messy (T1m to T8m, batch 8).
 Default is a dry run: it prints the plan and an allowance estimate, starts no model and exits 4.
 `;
 
@@ -77,7 +79,7 @@ function usdValue(flag, text) {
 
 function parseArgs(argv) {
   const list = [...argv];
-  const args = { only: null, execute: false, resultsDir: null, view: null, budget: null, spent: null };
+  const args = { only: null, set: 'tidy', execute: false, resultsDir: null, view: null, budget: null, spent: null };
   if (list[0] === 'run') list.shift();
   const seen = new Set();
   const value = (flag) => {
@@ -91,6 +93,10 @@ function parseArgs(argv) {
     const t = list.shift();
     if (t === '--execute') args.execute = true;
     else if (t === '--only') args.only = value(t).split(',').map((s) => s.trim());
+    else if (t === '--set') {
+      args.set = value(t);
+      if (!Object.prototype.hasOwnProperty.call(data.TICKET_SETS, args.set)) throw new InputError(`--set takes ${Object.keys(data.TICKET_SETS).join(' or ')}`);
+    }
     else if (t === '--results-dir') args.resultsDir = value(t);
     else if (t === '--view') args.view = value(t);
     else if (t === '--budget-usd') args.budget = usdValue(t, value(t));
@@ -105,7 +111,7 @@ function parseArgs(argv) {
 function selectTickets(only, tickets) {
   if (!only) return tickets;
   if (new Set(only).size !== only.length) throw new InputError('--only names a ticket twice');
-  for (const id of only) if (!tickets.some((t) => t.id === id)) throw new InputError(`--only: no ticket ${JSON.stringify(id).slice(0, 12)}; the tickets are T1 to T8`);
+  for (const id of only) if (!tickets.some((t) => t.id === id)) throw new InputError(`--only: no ticket ${JSON.stringify(id).slice(0, 12)} in this set; its tickets are ${tickets.map((t) => t.id).join(', ')}`);
   // the charter's order, so T8 follows T4 however --only is written
   return tickets.filter((t) => only.includes(t.id));
 }
@@ -124,6 +130,7 @@ function dryRun(selected, customers, dir, io, args) {
   const sessions = selected.length;
   io.out(`DRY RUN: nothing is started and no folder is created. Add --execute to run.\n`);
   io.out(`Results would go to ${dir}\n`);
+  io.out(`Ticket set: ${args.set}\n`);
   for (const t of selected) {
     const c = customers.find((x) => x.id === t.customer);
     io.out(`${t.id}  ${c.label}: ${t.title}\n    expected: ${t.expected_path}\n`);
@@ -701,7 +708,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
     gates: catalog(deps.runbooksDir || RUNBOOKS), simTable: deps.simTable || SIM_GATES, transportFor: deps.transportFor || vendors.transportFor,
   };
   const before = deps.runbooksDir ? changes.useRunbooksForTests(deps.runbooksDir) : null;
-  const run = { schema: SCHEMA, run_id: runId, started_at: new Date().toISOString(), tickets: [], summary: null };
+  const run = { schema: SCHEMA, run_id: runId, ticket_set: deps.set || 'tidy', started_at: new Date().toISOString(), tickets: [], summary: null };
   try {
     let spent = deps.spent || 0;
     let costUnknown = false;
@@ -763,11 +770,11 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     const args = parseArgs(argv);
     if (args.help) { io.out(USAGE); return 0; }
     if (args.view) return view(args.view, io);
-    const { customers, tickets } = data.loadData();
+    const { customers, tickets } = data.loadData(args.set);
     const selected = selectTickets(args.only, tickets);
     const dir = resultsDirFor(args, env);
     if (!args.execute) return dryRun(selected, customers, dir, io, args);
-    return await deskRun(selected, customers, dir, { ...deps, budget: args.budget, spent: args.spent || 0 }, env, io);
+    return await deskRun(selected, customers, dir, { ...deps, budget: args.budget, spent: args.spent || 0, set: args.set }, env, io);
   } catch (e) {
     if (e instanceof InputError || e instanceof paths.PathRefused) { io.err(`customer-desk: ${e.message}\n`); return 1; }
     throw e;

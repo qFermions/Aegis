@@ -1221,3 +1221,26 @@ test('task 8: step 5 shows the five answer checks as rows; a failed row is shown
   assert.deepEqual(Object.keys(carded.ticket('T1').answer_stats), ['fix_card_words', 'answer_words', 'answer_lines', 'first_action_line']);
   assert.equal(carded.ticket('T1').answer_stats.first_action_line, 4, 'the first numbered step is line 4 of this answer');
 });
+
+test('task 11: --set messy picks the messy tickets, the tidy set stays the default, and an unknown set is an input error', async () => {
+  const out = [];
+  const io = { out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) };
+  assert.equal(await desk.main(['--set', 'messy'], { PATH: '' }, io), 4);
+  for (const id of ['T1m', 'T2m', 'T3m', 'T4m', 'T5m', 'T6m', 'T7m', 'T8m']) assert.match(out.join(''), new RegExp(`\\b${id}\\b`));
+  assert.match(out.join(''), /Ticket set: messy/);
+  assert.match(out.join(''), /up to 8 Aegis sessions/);
+  out.length = 0;
+  assert.equal(await desk.main([], { PATH: '' }, io), 4);
+  assert.match(out.join(''), /Ticket set: tidy/);
+  assert.doesNotMatch(out.join(''), /T1m/);
+  assert.equal(await desk.main(['--set', 'other'], {}, io), 1);
+  assert.equal(await desk.main(['--set', 'messy', '--only', 'T1'], {}, io), 1, 'a tidy id is not in the messy set');
+  assert.equal(await desk.main(['--set', 'messy', '--set', 'tidy'], {}, io), 1);
+});
+
+test('task 11: a messy twin\'s likely cost is its tidy twin\'s, so the guard holds for T2m too', async (t) => {
+  const r = await runDesk(t, { only: ['T1m', 'T2m'], argv: ['--set', 'messy', '--budget-usd', '3'], answers: {} });
+  assert.deepEqual(r.run.tickets.map((k) => k.id), ['T1m']);
+  assert.match(r.run.not_run[0].reason, /T2m could cost about 4\.00/);
+  assert.equal(r.run.ticket_set, 'messy');
+});

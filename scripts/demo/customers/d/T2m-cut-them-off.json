@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "user": "U0DEMOD006",
+      "team": "T0DEMOD001",
+      "ts": "1793800100.000100",
+      "thread_ts": "1793800100.000100",
+      "text": "hey [FIRST_NAME]s last day is friday, can u cut them off from everything? okta github google linear whatever else lol"
+    },
+    {
+      "type": "message",
+      "user": "U0DEMOD007",
+      "team": "T0DEMOD001",
+      "ts": "1793800100.000200",
+      "thread_ts": "1793800100.000100",
+      "text": "yep confirmed w HR. github is [GITHUB_USER] i think"
+    }
+  ]
+}

@@ -211,5 +211,8 @@ test('batch 8: the Google offboard suspend and three Okta lifecycle gates are R2
     assert.deepEqual(gate.readBack && gate.readBack.commands, [command], `${file}: ${id} names its read-back`);
     const bound = changes.boundReadBacks(text).filter((b) => b.gates.includes(id));
     assert.deepEqual(bound.map((b) => b.command), [`node scripts/adapters/${command}`], `${file}: one line runs ${id}'s read-back under a change`);
+    // and that line sits in the gate's own section: after its marker, with no heading between
+    const between = text.split('\n').slice(gate.line, bound[0].line - 1);
+    assert.ok(bound[0].line > gate.line && !between.some((l) => /^#{2,3} /.test(l)),`${file}: ${id}'s run line (line ${bound[0].line}) is in its section`);
   }
 });

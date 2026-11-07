@@ -232,10 +232,12 @@ function userMessageProblems(message, ticket = '') {
   const found = [];
   for (const sentence of sentences(text)) {
     for (const clause of sentence.split(/[;,:]|\s-\s/)) {
-      if (PLAN_CLAUSE.test(clause)) continue;
-      for (const re of DONE_CLAIMS) { const m = re.exec(clause); if (m) found.push(`says a change is done ("${m[0].trim()}")`); }
+      // a phrase is a plan only when a plan word comes before it in its clause ("once it has been approved"); a
+      // claim before the plan word is still a claim (code review round 1 of batch 9, finding 5)
+      const planned = (m) => PLAN_CLAUSE.test(clause.slice(0, m.index));
+      for (const re of DONE_CLAIMS) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
       const d = DECIDED_ACTION.exec(clause);
-      if (d) found.push(`announces a change that needs sign-off as decided ("${d[0].trim()}")`);
+      if (d && !planned(d)) found.push(`announces a change that needs sign-off as decided ("${d[0].trim()}")`);
     }
   }
   const theirs = squashed(ticket);

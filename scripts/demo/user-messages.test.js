@@ -206,3 +206,18 @@ test('code review 1, finding 2: an Aegis claim inside a user message still fails
   assert.notDeepEqual(a.userMessageProblems('Aegis reset your password.'), []);
   assert.equal(checks.checkBoundary(cardWith({ now: "We've locked your account to keep you safe." })).verdict, 'pass', 'the tech\'s we is still exempt');
 });
+
+// Code review round 1 (batch 9), finding 5: a plan word anywhere in a clause hid a done claim before it. Wrong
+// implementation it catches: skipping the whole clause when "when" or "if" appears after the claim.
+test('code review 1, finding 5: a done claim before a plan word still fails; one after it is a plan', () => {
+  assert.notDeepEqual(a.userMessageProblems('We have reset your password so you can sign in when you are ready.'), []);
+  assert.notDeepEqual(a.userMessageProblems('Your account is unlocked if you want to try again.'), []);
+  assert.deepEqual(a.userMessageProblems('IT will tell you once it has been approved.'), []);
+});
+
+// Code review round 1 (batch 9), finding 6: "has been <any participle>" failed ordinary acknowledgements.
+// Wrong implementation it catches: a done-claim rule that reads every participle as a change.
+test('code review 1, finding 6: an acknowledgement passes; a participle that names a change still fails', () => {
+  for (const ok of ['Your ticket has been received and IT is looking at it.', 'It has been logged.', 'Your request has been escalated to the admin.', 'It has been passed to the admin.']) assert.deepEqual(a.userMessageProblems(ok), [], ok);
+  for (const bad of ['Your password has been reset.', 'The message has been released.', 'Your access has been granted.']) assert.notDeepEqual(a.userMessageProblems(bad), [], bad);
+});

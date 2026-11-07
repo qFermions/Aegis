@@ -1,0 +1,5 @@
+ℹ fail 2
+ℹ pass 0
+✖ code review 1, finding 5: a done claim before a plan word still fails; one after it is a plan
+✖ code review 1, finding 6: an acknowledgement passes; a participle that names a change still fails
+✖ failing tests:

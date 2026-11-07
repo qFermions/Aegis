@@ -9,7 +9,7 @@
 const fs = require('node:fs');
 
 const { namedGates } = require('./catalog.js');
-const { sectionEvents } = require('../lint/ladder-audit.js');
+const { sectionEvents, lighterBefore } = require('../lint/ladder-audit.js');
 
 const row = (ok, detail) => ({ check: 'lightest-step-first', verdict: ok ? 'pass' : 'fail', plain: 'The first change is the lightest one the runbook offers', detail });
 
@@ -25,7 +25,7 @@ function lightestStepFirst(answer, gates) {
   const section = sections.find((s) => s.events.some((e) => e.id === first && e.kind === 'heavy'));
   if (!section) return row(true, `the first change, ${first}, is not a reset, wipe, erase, delete, re-register or R3 change`);
   const at = section.events.findIndex((e) => e.id === first);
-  const lighter = section.events.slice(0, at).filter((e) => e.kind === 'lighter' && e.admin).map((e) => e.id);
+  const lighter = lighterBefore(section, at).filter((e) => e.admin).map((e) => e.id);
   if (!lighter.length) return row(true, `${first} is heavy, and its runbook section lists no lighter admin step before it`);
   return row(false, `the first change is ${first}, a heavy one, while its runbook section "${section.title}" lists ${lighter.join(', ')} first`);
 }

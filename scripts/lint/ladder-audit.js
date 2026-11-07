@@ -115,32 +115,39 @@ function sectionEvents(text, runbook = '') {
   if (parent) sections.push(parent);
   sections.push(current);
   // A scripted twin in a <details> block keeps the lighter steps its portal twin's section lists before the portal
-  // gate ([x-portal] for [x], or for [x-api] and [x-script]): they come first on either path. With no portal twin
-  // it inherits nothing, so a twin filed under another phase is not passed by that phase's steps (code review
-  // round 2 of batch 9, findings 1 and 7; round 1, finding 9).
+  // gate. Twins are the ids a runbook pairs on one read-back line ("read-back of [a] or [b]") and, by name, [x] or
+  // [x-api] with [x-portal]; a twin in the same block does not count. Each heavy gate gets its own list (inherit),
+  // so the gates of a scale block do not share the first one's, and nothing after a gate counts for it. With no
+  // portal twin, a block that is its phase's only gate keeps the phase's written reason, never its previews (code
+  // review round 2 of batch 9, findings 1 and 7; round 3, findings 4, 9, 10 and 13; round 1, finding 9).
   const where = new Map();
   for (const sec of sections) sec.events.forEach((e, k) => { if (!where.has(e.id)) where.set(e.id, { sec, k }); });
+  const paired = new Map();
+  for (const l of lines) {
+    if (!/read-back of \[/.test(l)) continue;
+    const ids = [...l.matchAll(/\[([a-z0-9]+(?:-[a-z0-9]+)+)\]/g)].map((m) => m[1]);
+    for (const id of ids) paired.set(id, [...new Set([...(paired.get(id) || []), ...ids.filter((x) => x !== id)])]);
+  }
   for (const sec of sections.filter((x) => x.reference)) {
-    const heavy = sec.events.find((e) => e.kind === 'heavy');
-    if (!heavy) continue;
-    const twin = [`${heavy.id}-portal`, `${heavy.id.replace(/-(?:api|script|cli|ps)$/, '')}-portal`].map((id) => where.get(id)).find(Boolean);
-    // with no portal twin, a block that holds its phase's only gate is that phase's own step, so it keeps the
-    // phase's lighter steps and its written reason; a phase with gates of its own passes nothing to it
-    const own = !twin && sec.within && !sec.within.events.some((e) => e.gate);
-    if (own) {
-      sec.events = [...sec.within.events.filter((e) => e.kind === 'lighter').map((e) => ({ ...e, inherited: true })), ...sec.events];
-      sec.escape = sec.escape || sec.within.escape;
-    }
-    if (twin) {
-      // the scripted form of a light portal step is that light step ([mfa-session-revoke] of its portal twin)
-      // (only a twin heavy by its words: an R3 gate stays heavy whatever its portal twin is)
-      if (twin.sec.events[twin.k].kind !== 'heavy' && heavy.rClass !== 'R3') heavy.kind = twin.sec.events[twin.k].kind;
-      sec.events = [...twin.sec.events.slice(0, twin.k).filter((e) => e.kind === 'lighter').map((e) => ({ ...e, inherited: true })), ...sec.events];
-      sec.escape = sec.escape || twin.sec.escape;
+    for (const heavy of sec.events.filter((e) => e.kind === 'heavy')) {
+      const names = [...(paired.get(heavy.id) || []), `${heavy.id}-portal`, `${heavy.id.replace(/-(?:api|script|cli|ps)$/, '')}-portal`];
+      const twin = names.filter((id) => id.endsWith('-portal')).map((id) => where.get(id)).find((t) => t && t.sec !== sec);
+      if (twin) {
+        // (only a twin heavy by its words: an R3 gate stays heavy whatever its portal twin is)
+        if (twin.sec.events[twin.k].kind !== 'heavy' && heavy.rClass !== 'R3') heavy.kind = twin.sec.events[twin.k].kind;
+        heavy.inherit = twin.sec.events.slice(0, twin.k).filter((e) => e.kind === 'lighter');
+        heavy.inheritedEscape = twin.sec.escape;
+      } else if (sec.within && !sec.within.events.some((e) => e.gate)) {
+        heavy.inherit = [];
+        heavy.inheritedEscape = sec.within.escape;
+      }
     }
   }
   return sections;
 }
+
+// The lighter steps that come before the event at index k: its section's own, then what its twin inherits.
+const lighterBefore = (sec, k) => [...sec.events.slice(0, k).filter((e) => e.kind === 'lighter'), ...(sec.events[k].inherit || [])];
 
 // Every audited section of one runbook: { runbook, vendor, section, line, heavy, verdict, reason }.
 function auditText(text, runbook) {
@@ -149,10 +156,10 @@ function auditText(text, runbook) {
     const first = s.events.findIndex((e) => e.kind === 'heavy');
     if (first < 0) continue;
     const heavy = s.events[first];
-    const before = s.events.slice(0, first).find((e) => e.kind === 'lighter');
+    const before = lighterBefore(s, first)[0];
     let verdict = 'fail';
     let reason = `${heavy.id} (line ${heavy.line}) has no lighter step before it in this section`;
-    if (before) { verdict = 'pass'; reason = `${before.id} (line ${before.line}) comes first`; } else if (s.escape) { verdict = 'pass'; reason = 'the section says why no lighter step applies'; }
+    if (before) { verdict = 'pass'; reason = `${before.id} (line ${before.line}) comes first`; } else if (s.escape || heavy.inheritedEscape) { verdict = 'pass'; reason = 'the section says why no lighter step applies'; }
     rows.push({ runbook, vendor: vendorOf(runbook), section: s.title, line: s.line, heavy: heavy.id, verdict, reason });
   }
   return rows;
@@ -214,6 +221,6 @@ function main(argv = process.argv.slice(2), io = { out: (s) => process.stdout.wr
   return 0;
 }
 
-module.exports = { sectionEvents, auditText, auditAll, report, vendorOf, SCOPE, HEAVY, main };
+module.exports = { sectionEvents, lighterBefore, auditText, auditAll, report, vendorOf, SCOPE, HEAVY, main };
 
 if (require.main === module) process.exitCode = main();

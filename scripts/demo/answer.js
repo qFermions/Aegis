@@ -38,6 +38,7 @@ const LIST_LINE = /^[ \t>]*(?:[-*+][ \t]+|\(?\d+[.)])/;
 // Characters that make a line look plain but read differently: full-width digits and no-break spaces fold
 // to plain ones (NFKC), and zero-width characters go.
 const plainText = (t) => String(t).normalize('NFKC').replace(/[\u200b-\u200d\u2060\ufeff]/g, '');
+const POINTER_LINE = /\b(?:see|in|under)\s+(?:the\s+)?Details\b/i;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 
@@ -91,9 +92,16 @@ function fixCard(answer) {
     // user now" or "Stop if" is still read as a step (security review 3's stray label)
     const listed = current !== 'doThis' && LIST_LINE.test(plainText(line));
     tagged.push({ text: line, part: (line.trim() === '' && current !== 'doThis') || listed ? null : current });
-    // the one line, in no part, that points to Details ("This needs a longer plan ...: see Details."): the
-    // 150-word limit counts the card body, not this pointer (batch 9, task 3); only the first such line
-    if (current === null && pointer === null && line.trim() !== '' && /\bDetails\b/.test(line)) pointer = line;
+    // the one line that points to Details ("This needs a longer plan ...: see Details."): the 150-word limit counts
+    // the card body, not this pointer (batch 9, task 3). Only the first short line that says "see", "in" or "under
+    // Details", after the parts begin, in no part or right under a message to the user, which it then ends (code
+    // review round 1 of batch 9, finding 12)
+    if (pointer === null && order.length > 0 && (current === null || USER_PARTS.includes(current)) && POINTER_LINE.test(line) && words(line) <= 25) {
+      pointer = line;
+      tagged[tagged.length - 1].part = null;
+      current = null;
+      continue;
+    }
     // "Do this" runs to the next part's label: a numbered line starts a step, and every other line in it
     // (a wrapped line, a bullet, a blank line) belongs to the step before it, so no step is ever lost
     // (code review 1, finding 6; security review 2; code review 2, finding 1). A negated change word in

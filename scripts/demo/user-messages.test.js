@@ -232,3 +232,16 @@ test('code review 1, finding 7: a negation cancels only the change word it gover
   assert.ok(a.defaultFactsIn('Check no errors show on the AD Connect server.', '').includes('hybrid Active Directory synced by Entra Connect'), 'the negation governs "errors", not the server');
   assert.deepEqual(a.defaultFactsIn('Do not use the SMS fallback; it is off.', ''), []);
 });
+
+// Code review round 1 (batch 9), finding 12: a pointer written right under the when-done line was read as part of
+// the message, and a long line above the parts that mentioned Details left the count. Wrong implementations it
+// catches: a pointer found only after a blank line; any line that mentions Details dropped from the count.
+test('code review 1, finding 12: the pointer is found under the when-done line, and only a short pointer line leaves the count', () => {
+  const under = cardWith({ done: 'It works again.\nThis needs a longer plan across four systems: see Details.' });
+  const c = a.fixCard(under);
+  assert.equal(c.parts.tellDone, 'It works again.');
+  assert.match(c.pointer || '', /see Details/);
+  const intro = cardWith().replace('## Fix\n', `## Fix\nAs Details explains, ${words(40)}\n`);
+  assert.equal(a.fixCard(intro).pointer, null, 'a line above the parts is not the pointer');
+  assert.ok(a.fixCard(intro).words > a.fixCard(cardWith()).words + 40);
+});

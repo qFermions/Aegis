@@ -1,0 +1,10 @@
+Before Run A, with this session's Claude Code variables unset (CLAUDECODE, CLAUDE_CODE_*, CLAUDE_PID,
+CLAUDE_EFFORT: 24 words of "-u NAME"), as the README's "plain signed-in terminal" would have them:
+
+$ env -u CLAUDECODE -u CLAUDE_CODE_... claude -p /context --output-format json --setting-sources project --strict-mcp-config < /dev/null
+
+First 600 characters of its output, as printed (claude 2.1.319):
+{"is_error":false,"duration_api_ms":0,"num_turns":0,"stop_reason":null,"session_id":"7bc1a7a0-4699-419d-9453-55e5372ccc87","total_cost_usd":0,"usage":{"output_tokens_details":{"thinking_tokens":0},"input_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":0,...
+
+A local command: no model call, cost 0. Both runs then started the desk the same way (full-run-2/terminal.txt:1,
+full-run-3/terminal.txt:1 show the desk command; the env -u prefix is in this session's command, not in the files).

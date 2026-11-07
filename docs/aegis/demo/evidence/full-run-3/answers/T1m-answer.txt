@@ -1,0 +1,51 @@
+## Fix
+**What's wrong:** [FIRST_NAME]'s sign-in approval is still tied to the Authenticator app on the old phone, so the new phone can't approve Outlook or Teams sign-ins.
+**Do this:**
+1. Call the office manager. Have them vouch for [FIRST_NAME] by phone, and get their approval plus the practice owner's, because this change can't be undone.
+2. Go to Entra admin center → Users → [UPN] → Authentication methods. Write down which entry is the old phone's Authenticator.
+3. Delete that one entry and nothing else.
+4. Have [FIRST_NAME] open aka.ms/mfasetup on the front-desk PC and add Authenticator on the new phone.
+5. Have [FIRST_NAME] sign in to Outlook and Teams on the new phone.
+**Done when:** Outlook and Teams open on the new phone. Aegis then checks that the old entry is gone and the new one is registered.
+**Stop if:** the old phone is lost or stolen, or a sign-in rule blocks step 4.
+**Tell the user:** We're moving your sign-in app to your new phone. Keep the new phone handy and we'll walk you through a 2-minute setup. You'll be in before patients arrive.
+
+## Details
+
+**Verdict:** This is a standard new-phone re-registration for one user. I'm advising the narrowest change: delete one method, not clear all of them. The replay check missed, so this answer comes from the `/mfa-issue` runbook.
+
+**Check first (read-only)**
+- **Identity:** the office has no rule yet for proving who someone is. Until it does, the office manager vouches by phone. Call them on a number you already know. Don't use a number from the ticket. Fake MFA reset requests are a common attack.
+- **Authentication methods:** this customer uses Authenticator only, so you should see only the old phone's entry. If you see something else, stop and ask before going further.
+- **Sign-in logs for [UPN]:** check that the failures are MFA prompts that never get approved.
+
+**Timing:** patients start at 9 and the office opens at 8. Both approvals have to come in before step 3. Line up the practice owner first, since their approval will probably take longest.
+
+**Risk warning**
+- ⚠️ **WARNING:** the deleted method can't be restored. [FIRST_NAME] has to register again. Until step 4 is done, they can't sign in anywhere that needs the second step.
+- If a sign-in rule blocks registration, don't remove the rule yourself. Excluding a user from it is a separate high-risk policy change with its own runbook.
+- If the old phone is lost, sold or traded in with apps still signed in, treat it as a lost-device ticket and cut its sessions first.
+- **Intune:** if Outlook or Teams on the new phone says the device must be managed, enroll it in Company Portal. That's a separate device-setup step.
+
+**Rollback:** none for the deleted method. The way back is that [FIRST_NAME] registers again at aka.ms/mfasetup. Write that in the ticket before step 3.
+
+**Verification checklist**
+- [ ] Office manager vouched for [FIRST_NAME]. Office manager and practice owner both approved.
+- [ ] The method list was saved before the delete.
+- [ ] The old Authenticator entry is gone (Aegis checks).
+- [ ] The new Authenticator is registered and a sign-in has succeeded (Aegis checks).
+- [ ] Outlook and Teams work on the new phone.
+
+**Jira-ready note**
+> Resolved [date/time]. MFA new-phone re-registration for `[UPN]`. Identity: office manager vouched by phone. Approvals: office manager and practice owner. One Authenticator method was deleted under the single-method delete gate, and Aegis confirmed it was gone. The user re-registered at aka.ms/mfasetup, and Aegis confirmed the new method and a successful sign-in. Sessions were not revoked because the old phone was not reported lost. No Conditional Access exclusion. Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+Pre-state: node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute  -> tasks/checkpoints/
+Approvals: office manager + practice owner (irreversible, per customer profile); identity vouched by office manager callback
+After re-registration: node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+After re-registration: node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```

@@ -213,3 +213,21 @@ test('the change-record paragraph names every gate a read-back below binds', () 
     assert.ok(para.includes(`[${gate}]`), `the paragraph names [${gate}]`);
   }
 });
+
+// Batch 8, task 4: /mfa-issue confirms the requester is who they say before any change, as
+// docs/ticket-examples.md (the MFA example) and /gws-2sv-reset already do. The step is the first
+// bullet of "What to check first", so it comes before the first SAFETY GATE marker, and it keeps
+// the org gap open. Wrong implementation it catches: the step added to the verification checklist
+// at the end of the page (after every gate), or copied with the long dash of /gws-2sv-reset.
+test('/mfa-issue verifies the requester first, before its first gate', () => {
+  const lines = PAGE.split('\n');
+  const heading = lines.indexOf('## What to check first');
+  assert.ok(heading >= 0, 'the What to check first section');
+  const step = lines[heading + 1];
+  assert.match(step, /^- Verify the requester first, using the agreed identity check \*\*\[org gap: confirm the identity-verification rule\]\*\*/);
+  assert.match(step, /confirm with the user that you're talking to the actual person \(callback to a known good number/);
+  assert.match(step, /social engineering risk on MFA resets is real\)/);
+  assert.doesNotMatch(step, /—/, 'no long dash in the new step');
+  const firstGate = lines.findIndex((l) => /^<!-- SAFETY GATE \[|^# SAFETY GATE \[/.test(l));
+  assert.ok(firstGate > heading + 1, `the step (line ${heading + 2}) comes before the first gate (line ${firstGate + 1})`);
+});

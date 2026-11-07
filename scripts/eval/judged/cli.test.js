@@ -193,3 +193,21 @@ test('a results directory in a tracked part of the repository is refused before 
   assert.equal(s.calls().length, 0);
   assert.equal(fs.existsSync(path.join(REPO_ROOT, 'scripts', 'eval', 'judged', 'out')), false);
 });
+
+// Batch 8, task 10b: a judged run's custom --results-dir is denied to every system-under-test
+// session, the follow-up turn included, so a session cannot read the grades of the run it is in.
+// Wrong implementation it catches: runSut passing the run folder to the first turn only, or
+// judged-eval never passing it, so the deny list holds only the default run folder.
+test('a custom --results-dir is denied to every system-under-test turn, the follow-up included', async (t) => {
+  const s = setup(t);
+  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  assert.equal(code, 3, `${s.out.join('\n')}\n${s.err.join('\n')}`);
+  const rule = `Read(//${fs.realpathSync(s.results).split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())}/**)`;
+  const sut = s.calls().filter((c) => c.role === 'sut');
+  assert.equal(sut.length, 9, '8 sessions and 1 follow-up turn');
+  assert.equal(sut.filter((c) => c.resume).length, 1);
+  for (const call of sut) {
+    const settings = JSON.parse(call.args[call.args.indexOf('--settings') + 1]);
+    assert.ok(settings.permissions.deny.includes(rule), `${call.resume ? 'the follow-up' : 'a first'} turn denies the results folder: ${rule}`);
+  }
+});

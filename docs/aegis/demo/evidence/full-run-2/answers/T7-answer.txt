@@ -1,0 +1,48 @@
+## Fix
+**What's wrong:** The whole office is slow, so the cause is shared: most often one device using up the internet line (a big upload or backup), or a problem at the internet provider.
+
+**Do this:**
+1. Open the router or firewall admin page → traffic or usage view. Look for one device using most of the bandwidth.
+2. Run a speed test on a wired Mac in the office. Compare it to the speed the studio pays for.
+3. Ask one remote staff member if things are slow for them too.
+4. Look at the internet provider's status page for an outage in your area.
+
+**Done when:** the speed test is close to the speed the studio pays for, and pages load normally again.
+
+**Stop if:** remote staff are slow too, or only Google or Slack is slow. Then it's a service outage, not the office line.
+
+**Tell the user:** We're looking into the slow internet now. We'll find out whether it's coming from inside the office or from the provider. We'll update you soon.
+
+## Details
+
+**Verdict:** I'm diagnosing only and advising no changes yet. This ticket doesn't need anything changed until we know the cause.
+
+**Note:** Customer B's profile doesn't say what router or firewall the office uses. The steps above stay generic. Use whatever admin portal the office has, or the managed service provider's portal if someone else runs the office network.
+
+**What to check first (in this order):**
+- **Office only, or everyone?** If remote staff are fine, the problem is in the office: the line, the router or the Wi-Fi.
+- **One device using all the bandwidth.** Design studios often fill the line with large file uploads to Google Drive, Mac backups or big video exports. Check the router's per-device usage.
+- **Wired vs Wi-Fi.** If wired is fast and Wi-Fi is slow, the problem is the wireless. Check how many devices are connected and which access point they're on.
+- **Speed vs plan.** If even a wired test is far below the plan with nothing else running, that points to the provider.
+- **Only some services slow.** Check the Google Workspace Status Dashboard and Slack Status. If either shows a problem, wait it out and tell staff.
+
+**If the cause is found:**
+- **One device using the line:** ask the person to pause the upload or backup. That's a request, not a configuration change.
+- **Provider problem:** the operator opens a case with the provider. Aegis doesn't contact vendors. Collect the speed test results and the times first.
+- **A settings change seems needed** (traffic limits, Wi-Fi changes, router restart): stop. Each one is a separate change with its own approval from the studio manager. Ask Aegis again with what you found.
+
+**Verification checklist:**
+- [ ] Wired speed test is close to the plan
+- [ ] No single device is using most of the bandwidth
+- [ ] Remote staff and office staff both say it's back to normal
+
+**Jira-ready note:**
+> Studio-wide slow internet reported. Diagnosis only, no changes made. Checked bandwidth per device, a wired speed test against the plan, remote vs office, and provider and SaaS status pages. Cause: [CAUSE]. Action: [ACTION]. Confirmed with [FIRST_NAME] at [TIME].
+
+```aegis-desk
+Replay: MISS
+Class: R0 (read-only diagnosis)
+Gate: none
+Profile gap: Customer B profile names no network appliance or ISP; generic steps used. Any traffic-shaping, wireless or uplink change routes to its own gated runbook (lan-wan / wifi-issue) with studio-manager approval.
+Vendor contact: operator action only (network-vendor-contact is PREVIEW ONLY; not advised as a change).
+```

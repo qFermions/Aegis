@@ -1,0 +1,18 @@
+$ git diff --stat abb6ea6 -- .claude CLAUDE.md PRODUCT_CONTRACT.md scripts/adapters scripts/audit scripts/replay scripts/eval
+(at 31727e0; code frozen at de55c4d)
+ .claude/commands/gws-offboard.md        | 17 ++++++++----
+ .claude/commands/mfa-issue.md           |  1 +
+ .claude/commands/okta-user-lifecycle.md | 44 +++++++++++++++----------------
+ CLAUDE.md                               |  8 +++++-
+ scripts/adapters/change-binding.test.js | 15 +++++++----
+ scripts/adapters/socket-tripwire.js     |  7 ++---
+ scripts/audit/pass-flags.test.js        |  4 ++-
+ scripts/audit/read-back-field.test.js   | 33 +++++++++++++++++++++--
+ scripts/audit/trail-helper.js           |  4 +--
+ scripts/eval/judged-eval.js             |  2 +-
+ scripts/eval/judged/backends.js         | 25 ++++++++++++------
+ scripts/eval/judged/backends.test.js    | 46 +++++++++++++++++++++++++++++++++
+ scripts/eval/judged/cli.test.js         | 18 +++++++++++++
+ scripts/eval/judged/judge.js            |  4 +--
+ scripts/replay/replay-demo.js           |  4 +--
+ 15 files changed, 176 insertions(+), 56 deletions(-)

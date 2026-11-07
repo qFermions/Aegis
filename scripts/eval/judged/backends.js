@@ -25,18 +25,23 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { REPO_ROOT, effectivePath } = require('./paths.js');
+const { systemTempDir } = require('../../temp-dir.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
 
 // Every CLAUDE.md the CLI's upward walk could find from the repository or the judge's temporary folder,
 // and the home folder's own. The system under test keeps the repository's own, even when the checkout
-// is the home folder; the judge loads none, even when its temporary folder sits below the checkout.
+// is the home folder; the judge loads none, even when its temporary folder sits below the checkout. The
+// system temporary folder is walked too: under a stale TMPDIR the judge's folder is made there (batch 8,
+// task 10c review finding 2).
 function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge = false } = {}) {
   const dirs = new Set([home]);
   let realTmp = os.tmpdir();
   try { realTmp = fs.realpathSync(realTmp); } catch { /* a stale TMPDIR: its given form is listed */ }
-  for (const start of [path.dirname(repoRoot), os.tmpdir(), realTmp]) {
+  let realSystem = systemTempDir();
+  try { realSystem = fs.realpathSync(realSystem); } catch { /* listed in its given form */ }
+  for (const start of [path.dirname(repoRoot), os.tmpdir(), realTmp, systemTempDir(), realSystem]) {
     for (let d = start; ; d = path.dirname(d)) {
       dirs.add(d);
       if (d === path.dirname(d)) break;
@@ -48,13 +53,16 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
 }
 
 // What a session may not read: this work's own records, the demo's code and expected answers, the grader and
-// ticket corpora under scripts/eval, scored answers and saved ticket results under docs/evidence and docs/aegis, and the run folders the CLI can name,
+// ticket corpora under scripts/eval, scored answers and saved ticket results under docs/evidence and docs/aegis, the
+// older baseline folders (docs/aegis/<batch>/baseline and docs/baseline, which hold ticket-to-route results: batch 8,
+// task 10a), and the run folders the CLI can name,
 // so it answers from Aegis's runbooks and not from its own grading material. A run saved under a custom folder
-// by an earlier command is not on the list, nor a judged run's custom --results-dir. Read
+// by an earlier command is not on the list; a judged run's own results folder is added by the caller as runRoot
+// (judged-eval.js passes it to runSut: batch 8, task 10b). Read
 // rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and Glob.
 // That the CLI loads them: docs/aegis/demo/evidence/batch7/isolation-probe.txt. That it refuses a read is
 // shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
-const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', 'docs/aegis/**/evidence/**', '.aegis-state/**']);
+const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', 'docs/aegis/**/evidence/**', '.aegis-state/**', 'docs/aegis/**/baseline/**', 'docs/baseline/**']);
 const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.
@@ -232,18 +240,19 @@ function promptTooLong(prompt) {
 }
 
 // Runs one case through the system under test. opts: { command, prefixArgs, spawn, env,
-// repoRoot, maxTurns, web, timeoutMs, graceMs }. env is already scrubbed.
+// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot }. env is already scrubbed; runRoot, the run's
+// results folder, is denied to both turns (batch 8, task 10b).
 async function runSut(c, opts) {
   const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: opts.repoRoot || REPO_ROOT, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
   const turns = [];
   const prompt = buildSutPrompt(c);
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c);
-  turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web }), base));
+  turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, runRoot: opts.runRoot }), base));
   if (c.follow_up !== '' && turns[0].state === 'OK') {
     if (!turns[0].session_id) {
       turns.push({ state: 'ERROR', reason: 'no session id to resume for the follow-up', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null });
     } else {
-      turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id }), base));
+      turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, runRoot: opts.runRoot }), base));
     }
   }
   return sutRecord(turns, c);

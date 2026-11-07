@@ -1,0 +1,20 @@
+$ TMPDIR=<tmp> node --test scripts/temp-dir.test.js scripts/adapters/socket-tripwire.test.js scripts/eval/judged/*.test.js scripts/replay/*.test.js scripts/audit/*.test.js scripts/adapters/g3-runbooks.test.js scripts/gws-runbooks.test.js scripts/env-example.test.js   (exit 0; the stale-folder and helper tests, then the summary)
+✔ a stale temporary folder falls back to the system one, with the tripwire still armed (46.569333ms)
+✔ the desk's dry run works under a stale temporary folder (49.802125ms)
+✔ a done change stays done after its runbook changes; only a read-back named without its line's pass flags is stale (30.0735ms)
+ℹ 34 names read: AEGION_DOMAIN AEGIS_AUDIT_DIR AEGIS_GRAPH_RUNS_DIR AEGIS_NETWORK_TRIPWIRE FLEET_API_TOKEN FLEET_URL GITHUB_ORG GITHUB_TOKEN GWS_ADMIN_SUBJECT GWS_CUSTOMER_ID GWS_SA_CLIENT_EMAIL GWS_SA_PRIVATE_KEY JAMF_CLIENT_ID JAMF_CLIENT_SECRET JAMF_URL JIRA_API_TOKEN JIRA_EMAIL JIRA_REQUEST_TYPE_ID JIRA_SERVICE_DESK_ID JIRA_SITE LINEAR_API_KEY LINEAR_ORG MS_CERT_SHA256 MS_CLIENT_ID MS_PRIVATE_KEY MS_SCOPE_CHECK_USER MS_TENANT_ID OKTA_CLIENT_ID OKTA_KEY_ID OKTA_ORG_URL OKTA_PRIVATE_KEY SLACK_ACCESS_LOGS_TOKEN SLACK_TEAM_ID SLACK_TOKEN
+✔ makeTempDir returns a new folder that exists under a stale TMPDIR, outside the stale path (29.125583ms)
+✔ makeTempDir loads Node builtins only, so the tripwire can load it first (0.151917ms)
+✔ replay-demo runs to exit 0 under a stale TMPDIR (685.994917ms)
+✔ the change trail of the runbook tests is made under a stale TMPDIR (52.808625ms)
+✔ a judge run makes its folder under a stale TMPDIR (56.995041ms)
+✔ each of the four callers uses the helper and makes no temporary folder of its own (0.437ms)
+ℹ tests 289
+ℹ suites 0
+ℹ pass 289
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14033.5065
+

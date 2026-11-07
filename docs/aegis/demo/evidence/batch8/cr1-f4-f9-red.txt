@@ -1,0 +1,4 @@
+$ node --test --test-name-pattern "exactly one, and a fenced gate" scripts/demo/customer-desk.test.js   (catalog.js before the fix)
+✖ an R1 gate uses its section's read only when there is exactly one, and a fenced gate finds its own (12.716ms)
+✖ failing tests:
+✖ an R1 gate uses its section's read only when there is exactly one, and a fenced gate finds its own (12.716ms)

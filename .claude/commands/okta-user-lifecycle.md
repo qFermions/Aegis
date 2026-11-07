@@ -1,5 +1,5 @@
 ---
-description: Okta user lifecycle for one user: states, and gated suspend, unsuspend, deactivate (R3), delete (R3), activate, password reset (R1) and clear sessions; what Okta deprovisioning does to the Google account. Offboarding starts here, Okta first. Placeholders only.
+description: Okta user lifecycle for one user: states, and gated suspend, unsuspend, deactivate (R3), delete (R3), activate, password reset (R2) and clear sessions; what Okta deprovisioning does to the Google account. Offboarding starts here, Okta first. Placeholders only.
 disable-model-invocation: true
 ---
 
@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[NOT_BEFORE]` (the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, written in the ticket just before a change) · `[USER@DOMAIN.COM]` (their Google account) · `[TEMP_PASSWORD]` (a temporary password handed over out of band) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R3 gates):** before a gate whose reversibility is R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-status --status DEPROVISIONED`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-status --status DEPROVISIONED`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-status --status DEPROVISIONED`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-status --status DEPROVISIONED`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `okta:verify-password-reset --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 ## ⚠️ Admin / safety gate
 
@@ -66,9 +66,9 @@ Activate and reactivate are two different API calls: **activate** works on STAGE
 ## Fast path
 
 1. Phase A: read status, apps, and the Google integration's deactivation options (R0).
-2. Phase B: password reset (R1 gate), including the "reset email never arrives" checks.
+2. Phase B: password reset (R2 gate), including the "reset email never arrives" checks.
 3. Phase C: clear user sessions (gate) when a sign-out everywhere is needed.
-4. Phase D / E: suspend (R1 gate) and unsuspend (gate).
+4. Phase D / E: suspend (R2 gate) and unsuspend (R2 gate).
 5. Phase F: deactivate (R3 gate). **WAIT UNTIL** Google reflects the provisioning result.
 6. Phase G: activate a deactivated user (gate) when someone returns.
 7. Phase H: delete only after deactivation, the retention decision and the independent review (R3 gate).
@@ -93,7 +93,7 @@ node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
 
 **Verification checkpoint:** [ ] status recorded (GUI and connector agree) · [ ] app list recorded · [ ] Google deactivation options recorded · [ ] admin-role check recorded.
 
-## Phase B: Reset the password (R1)
+## Phase B: Reset the password (R2)
 
 **Purpose:** give the user a way back in: an emailed reset link (valid one hour) or a temporary password.
 
@@ -104,16 +104,16 @@ node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
 - Okta Admin Console → Reports → System Log → search for `[UPN]` → read whether the reset event was recorded at all.
 - Fallback: pick **Create a temporary password** in the gate below and hand `[TEMP_PASSWORD]` over out of band, or use the Okta API reset with `sendEmail=false`, which returns the reset link for you to deliver out of band.
 
-**Before the click:** write the current UTC time in the ticket as `[NOT_BEFORE]`. The read-back counts only events at or after it, so a time written after the click misses the reset and an older time can match an earlier one.
+**Before the click:** take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket. The read-back counts only events at or after it, so a time written after the click misses the reset and an older time can match an earlier one.
 
 <!-- SAFETY GATE [okta-user-lifecycle-reset-password-portal] -->
 - **Target:** [UPN]
 - **Effect:** reset one user's Okta password; the current password stops working immediately and the user sets a new one from the emailed link or the temporary password
 - **Scope:** one user; for an AD-sourced user under delegated authentication the original AD password does not expire, so the user can still sign in with it until AD is changed
-- **Reversibility:** R1: there is no undo as such; a new reset replaces it and the user sets the password they will use
+- **Reversibility:** R2: forward-only; the old password cannot be restored and there is no undo as such; a new reset replaces it and the user sets the password they will use
 - **Required confirmation:** Type exactly `RESET OKTA PASSWORD FOR [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (R1: no change record)
+- **Read-back:** `okta-client.js verify-password-reset --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-user-lifecycle-reset-password-portal]:** Only after identity is verified out of band and the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **Reset or Remove password**.
 2. Pick **Send a password reset email** (the link goes to the primary and secondary email and expires in one hour) or **Create a temporary password** (the account is marked expired and the user must change it at sign-in); tick **Sign out user** to end their sessions on every device and browser; click **Reset password**.
@@ -121,7 +121,7 @@ node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the System Log holds a user.account.reset_password event with outcome SUCCESS for the user at or after [NOT_BEFORE]
-node scripts/adapters/okta-client.js verify-password-reset --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute
+node scripts/adapters/okta-client.js verify-password-reset --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 
 If it fails, read Reports → System Log for `[UPN]` before anything else and never reset again to make it pass. Whether **Create a temporary password** writes the same event type is **[unconfirmed: check in the Okta Admin Console]**.
@@ -154,7 +154,7 @@ node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_I
 
 **Gotcha:** suspending or deactivating a user already signs them out of all devices; a separate session clear is only needed while the user stays Active.
 
-## Phase D: Suspend (R1, reversible containment)
+## Phase D: Suspend (R2, reversible containment)
 
 **Purpose:** stop sign-in without touching assignments: leave of absence, contractor pause, or an HR review.
 
@@ -162,17 +162,17 @@ node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_I
 - **Target:** [UPN]
 - **Effect:** suspend one Okta user; sign-in stops and every active Okta session ends
 - **Scope:** one user; app and group assignments are kept and reinstated on unsuspend; the profile can still be updated
-- **Reversibility:** R1: undo is the Phase E unsuspend gate under its own phrase
+- **Reversibility:** R2: sign-in stops and every active Okta session ends, and the ended sessions do not come back; undo is the Phase E unsuspend gate under its own phrase
 - **Required confirmation:** Type exactly `SUSPEND OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (R1: no change record)
+- **Read-back:** `okta-client.js verify-status --user [OKTA_USER_ID] --status SUSPENDED --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-user-lifecycle-suspend-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Suspend**.
 2. Confirm in the dialog, then read the status back as **Suspended**.
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the user record reads status SUSPENDED. It proves the suspend only when Phase A recorded ACTIVE
-node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status SUSPENDED --execute
+node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status SUSPENDED --change [CHANGE_ID] --execute
 ```
 
 **Verification checkpoint:** [ ] status reads Suspended · [ ] `verify-status --status SUSPENDED` passed against a recorded pre-state of ACTIVE · [ ] the Applications tab still lists the apps.
@@ -185,17 +185,17 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 - **Target:** [UPN]
 - **Effect:** unsuspend one Okta user; app and group memberships are reinstated
 - **Scope:** one suspended user
-- **Reversibility:** R1: suspend again under the Phase D phrase
+- **Reversibility:** R2: access returns at once to every reinstated app and group membership; undo is to suspend again under the Phase D phrase
 - **Required confirmation:** Type exactly `REACTIVATE SUSPENDED OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (R1: no change record)
+- **Read-back:** `okta-client.js verify-status --user [OKTA_USER_ID] --status ACTIVE --change [CHANGE_ID] --execute`
 **PORTAL ACTION [okta-user-lifecycle-unsuspend-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → **Suspended** (left menu) → `[UPN]` → **Activate**.
 2. Read the status back as **Active**.
 
 ```bash
 # HUMAN-RUN read-only read-back, passes only when the user record reads status ACTIVE. It proves the unsuspend only when the connector user read showed SUSPENDED just before the click
-node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status ACTIVE --execute
+node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status ACTIVE --change [CHANGE_ID] --execute
 ```
 
 ## Phase F: Deactivate (R3)
@@ -290,10 +290,10 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 # Target: [USER_ID]
 # Effect: reset the user’s Okta password, the user cannot sign in until they complete the reset flow
 # Scope: one user, sendEmail=true emails the one-time link, sendEmail=false returns the link in the response for out-of-band delivery
-# Reversibility: R1: no undo as such, a new reset replaces it. For an AD-sourced user the original AD password does not expire
+# Reversibility: R2: forward-only, the old password cannot be restored, a new reset replaces it. For an AD-sourced user the original AD password does not expire
 # Required confirmation: type exactly "RESET OKTA PASSWORD FOR [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, R1: no change record
+# Read-back: okta-client.js verify-password-reset --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="RESET OKTA PASSWORD FOR [USER_ID]"
 # shows the phrase
@@ -346,10 +346,10 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Target: [USER_ID]
 # Effect: suspend one Okta user, group and app assignments are retained
 # Scope: one ACTIVE user
-# Reversibility: R1: undo with the separate unsuspend gate below under its own phrase
+# Reversibility: R2: sign-in stops and the ended sessions do not come back, undo with the separate unsuspend gate below under its own phrase
 # Required confirmation: type exactly "SUSPEND OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, R1: no change record
+# Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status SUSPENDED --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="SUSPEND OKTA USER [USER_ID]"
 # shows the phrase
@@ -374,10 +374,10 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 # Target: [USER_ID]
 # Effect: unsuspend one Okta user, the user returns to ACTIVE with memberships intact
 # Scope: one SUSPENDED user
-# Reversibility: R1: suspend again under the suspend phrase
+# Reversibility: R2: access returns at once to every reinstated app and group membership, suspend again under the suspend phrase
 # Required confirmation: type exactly "UNSUSPEND OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, R1: no change record
+# Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status ACTIVE --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="UNSUSPEND OKTA USER [USER_ID]"
 # shows the phrase

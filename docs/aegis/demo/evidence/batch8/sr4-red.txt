@@ -1,0 +1,2 @@
+$ node --test --test-name-pattern "an indented numbered change line" scripts/demo/answer.test.js   (answer.js before the fix)
+✖ an indented numbered change line is still scanned, with or without a card (1.186542ms)

@@ -7,11 +7,11 @@
 // as a test file.
 
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 
 const audit = require('./audit-log.js');
 const changes = require('./change-record.js');
+const { makeTempDir } = require('../temp-dir.js');
 
 // A folder of test gates, each binding one read-back with --change, which change-record.js reads
 // instead of .claude/commands in this test process (code review round 1 of the batch G3
@@ -48,7 +48,7 @@ const APPROVED_AT = Date.parse('2026-10-27T11:00:00.000Z');
 
 // t: the node:test context (its after() removes the folder).
 function changeTrail(t) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-runbook-trail-'));
+  const dir = makeTempDir('aegis-runbook-trail-');
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const env = { AEGIS_AUDIT_DIR: path.join(dir, 'audit') };
   const procedure = path.join(dir, 'procedure.md');

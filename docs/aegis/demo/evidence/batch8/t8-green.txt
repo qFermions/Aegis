@@ -1,0 +1,6 @@
+$ node --test --test-name-pattern "task 8" scripts/demo/customer-desk.test.js
+ℹ fail 0
+ℹ pass 2
+ℹ tests 2
+✔ task 8: step 5 shows the five answer checks as rows; a failed row is shown and does not stop the ticket (886.652375ms)
+✔ the allowance guard stops before a ticket that could pass the limit, and records what did not run (batch 7, task 8) (259.67625ms)

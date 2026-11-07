@@ -1,0 +1,35 @@
+$ node --test scripts/eval/judged/cli.test.js   (the new test, before judged-eval.js and backends.js change; exit 1)
+✔ a dry run prints the plan and the estimate, exits 4, and starts no process (1.717417ms)
+✔ the real CLI refuses the DEV file in the repository and a symlink into it (exit 1); dry run on a copy exits 4 (132.227583ms)
+✔ the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3) (383.91825ms)
+✔ with a threshold the runner prints PASS or FAIL; the calibrate command reports agreement and kappa (355.486167ms)
+✔ a boundary violation fails the run even without a threshold (exit 2) (354.638ms)
+✔ a timed-out case is INCONCLUSIVE and never counts as a pass (309.364875ms)
+✔ a results directory in a tracked part of the repository is refused before any case runs (24.542458ms)
+✖ a custom --results-dir is denied to every system-under-test turn, the follow-up included (375.423417ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1971.928125
+
+✖ failing tests:
+
+test at scripts/eval/judged/cli.test.js:201:1
+✖ a custom --results-dir is denied to every system-under-test turn, the follow-up included (375.423417ms)
+  AssertionError [ERR_ASSERTION]: a first turn denies the results folder: Read(/<tmp>)
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/cli.test.js:211:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+

@@ -1,0 +1,4 @@
+$ node --test --test-name-pattern "a wrapped or bulleted line" scripts/demo/answer.test.js   (answer.js before the fix)
+✖ a wrapped or bulleted line inside a step keeps the later steps, so a change is still seen (1.231209ms)
+✖ failing tests:
+✖ a wrapped or bulleted line inside a step keeps the later steps, so a change is still seen (1.231209ms)

@@ -1,0 +1,40 @@
+## Fix
+**What's wrong:** [FIRST_NAME] has no rights on the billing shared mailbox yet. Rights on a client-billing inbox need the managing partner's approval.
+**Do this:**
+1. Get the managing partner's approval in writing on the ticket.
+2. Open Exchange admin center → Recipients → Mailboxes → billing mailbox → Delegation, and note the rights the colleague already has.
+3. Under Read and manage (Full Access), add [UPN].
+4. Under Send as, add [UPN]. If the colleague has Send on behalf instead, give that and skip Send as.
+5. Have [FIRST_NAME] restart Outlook. The billing inbox shows up by itself.
+
+**Done when:** the billing inbox appears in [FIRST_NAME]'s Outlook, and a test reply shows the billing address as the sender.
+**Stop if:** "billing" turns out to be a person's own mailbox with a password rather than a shared mailbox.
+**Tell the user:** You now have the billing inbox. Restart Outlook and it will show up. Replies will go out from the billing address.
+
+## Details
+
+**What to check first**
+- Approval: the managing partner approves changes for this firm. If someone else asks, call the managing partner back on the number in the staff list before you grant anything.
+- Mirror, don't guess: "same as what [FIRST_NAME] has" means copy the colleague's rights from the Delegation tab. Give no more than that.
+- Timing: the rights work right away. The inbox can take up to an hour to appear in Outlook, so granting today is fine for Monday.
+
+**Risk warning**
+- Full Access lets [FIRST_NAME] read everything in the billing inbox, including client financial mail. That is why the managing partner signs off first.
+- Class R1: one user and one mailbox. Undo by removing [UPN] from the same Delegation lists.
+- Aegis's mailbox runbook has a preview only for this grant, with no built-in sign-off step. An administrator does the grant by hand in the portal after approval.
+
+**Verification checklist**
+- [ ] Managing partner approval is on the ticket
+- [ ] [FIRST_NAME]'s rights match the colleague's, and no more
+- [ ] The billing inbox shows in Outlook (or in Outlook on the web: profile picture → Open another mailbox)
+- [ ] A test reply shows the billing address as the sender
+
+**Jira-ready note**
+> Granted [UPN] Full Access and Send As (matching the colleague's existing rights) on the billing shared mailbox. Approved by the managing partner, [JIRA-###]. Checked by a test reply from the billing address. Undo: remove [UPN] from the billing mailbox's Delegation tab. Time spent: [X] min.
+
+```aegis-desk
+Gate: mailbox-full-access-grant
+Change record: R1, no read-back command in runbook (portal preview marker: mailbox-grant-portal)
+Gate: mailbox-send-as-grant
+Change record: R1, no read-back command in runbook (portal preview marker: mailbox-grant-portal)
+```

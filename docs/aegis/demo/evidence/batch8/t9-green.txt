@@ -1,0 +1,17 @@
+$ node --test scripts/demo/render.test.js
+✔ every step of every ticket, its actor, tag, duration and output are in the page, in order (0.968708ms)
+✔ every simulated part is labeled SIMULATED in text (0.168ms)
+✔ no http or https URL outside the shown ticket and answer text, no script, no external resource (0.21925ms)
+✔ ticket and answer text is escaped, so it cannot add markup (0.200625ms)
+✔ the list shows each ticket's customer label, title and closing state; the summary sits on top (0.12725ms)
+✔ the page avoids the listed patterns and themes both modes (0.474ms)
+✔ tickets that did not run are named at the top of the page, in text (0.334666ms)
+✔ a run with no tickets still renders, and the summary names what it holds (0.058583ms)
+✔ the terminal line carries the actor, the result and the tag; summaryLines carries the counts (0.135125ms)
+✔ a cost no session reported reads as unknown, never as zero (0.071333ms)
+✔ task 9: no plain sentence outside the folds holds a technical word, and each is at most 25 words (1.577167ms)
+✔ task 9: each step opens with its plain sentence, and the steps the charter names show what it asks (0.252625ms)
+✔ task 9: every plain step name and closing state has its own words (0.224167ms)
+ℹ tests 13
+ℹ pass 13
+ℹ fail 0

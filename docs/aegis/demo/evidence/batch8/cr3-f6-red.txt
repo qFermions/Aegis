@@ -1,0 +1,2 @@
+$ node --test --test-name-pattern "quoted placeholder" scripts/demo/customer-desk.test.js   (catalog.js before the fix)
+✖ an R1 read line's quoted placeholder is filled without its quote marks (1.931584ms)

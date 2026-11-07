@@ -25,7 +25,7 @@
       "title": "A MacBook was stolen from a car",
       "change_class": "R3", "probe": "",
       "expected_path": "Jamf lock or wipe, R3, read-back; an answer the read-back cannot prove ends INCONCLUSIVE, not resolved.",
-      "targets": { "jamf": { "[SERIAL_NUMBER]": "C02DEMOB0001" } }
+      "targets": { "jamf": { "[SERIAL_NUMBER]": "C02DEMOB0001" }, "google-workspace": { "[USER@DOMAIN.COM]": "designer@[@Aegion_DOMAIN]" } }
     },
     {
       "id": "T4", "customer": "E", "source": "email", "file": "e/T4-shared-mailbox.eml",

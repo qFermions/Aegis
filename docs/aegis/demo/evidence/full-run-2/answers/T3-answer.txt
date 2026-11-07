@@ -1,0 +1,57 @@
+## Fix
+**What's wrong:** A stolen Mac with client files is still managed in Jamf, and the designer's accounts may still be signed in on it.
+**Do this:**
+1. Call the studio manager back on the staff-list number to confirm the request.
+2. Google Admin console → Directory → Users → [USER@DOMAIN.COM] → Reset password. Then go to Security → Sign-in cookies → Reset.
+3. Jamf Pro → Computers → search [SERIAL_NUMBER]. Read the last check-in, FileVault and bootstrap token state.
+4. Get the erase approved by the designer's own manager as well as the studio manager.
+5. After the review: Jamf Pro → [SERIAL_NUMBER] → Management → Wipe Computer.
+**Done when:** Jamf History shows the wipe completed. Aegis then checks that History entry.
+**Stop if:** the Mac is recovered before the wipe is sent. Then cancel the pending wipe and lock it instead.
+**Tell the user:** We are changing your password and signing you out everywhere. The stolen laptop will be erased remotely. Anything saved only on that laptop will be lost.
+
+This needs a longer plan across three systems: see Details.
+
+## Details
+
+**Verdict:** This is a stolen device with sensitive data, so Aegis advises an erase, not a lock. The Jamf runbook is clear on that case. A locked Mac won't start macOS, so it may never pick up a wipe sent later. Choose one command, and here that's the wipe. Aegis advises; your admin runs every step.
+
+**Order of work**
+1. **Verify and approve.** Call back on the staff-list number. For the erase you need two approvals: the studio manager and the designer's own manager. Put the police report number in the ticket.
+2. **Google first (minutes).** Client files in Drive and Gmail are what's at risk right now. Resetting the password and the sign-in cookies signs the designer out of Google on every device, including the stolen Mac. Gmail can take up to an hour to sign out. Give the new temporary password to the designer by phone, not by email.
+3. **Read the Jamf record before you wipe.**
+   - **FileVault on:** the disk is encrypted and the data is safe even if the Mac never comes online again.
+   - **FileVault off:** treat it as a likely data exposure. The studio manager decides whether clients have to be told (check client contracts).
+   - **Apple silicon with no bootstrap token escrowed:** the Mac won't get the standard Erase All Content and Settings wipe. Note that in the review.
+   - **Pending or failed commands:** these change the plan.
+4. **Wipe (R3, cannot be undone).** The wipe runs at the Mac's next check-in. Until then it sits under Pending Commands, where it can still be cancelled. The Jamf record stays and gets marked as wiped. Activation Lock keeps the Mac blocked for a thief after the wipe.
+5. **Slack.** Slack has no way to sign out one person in its settings, and a workspace-wide session reset would sign out all 40 staff. Aegis doesn't advise that. The designer should change their Slack password and use "Sign out all other sessions" in their own Slack account settings. That is a self-service step, not an admin change.
+
+**⚠️ Risk warning**
+- The wipe destroys every file on the Mac. Anything not in Drive is gone.
+- A Mac that never reconnects never receives the wipe. FileVault and Activation Lock are the real protection, so their state belongs in the ticket.
+
+**Verification checklist**
+- [ ] Requester verified by callback; both erase approvals recorded
+- [ ] Designer signed in fresh on another device with a new password
+- [ ] Jamf → [SERIAL_NUMBER] → History → Management History shows Wipe Computer as pending or completed
+- [ ] FileVault, chip and bootstrap token state recorded
+- [ ] Designer did the Slack self sign-out
+
+**Jira-ready note (partial state until the wipe completes)**
+> Stolen Mac [SERIAL_NUMBER]. Police report [REF] on file. Requester verified by callback. Google password and sign-in cookies reset for [USER@DOMAIN.COM] at [TIME]. Jamf pre-state: macOS [VER], [chip], FileVault [on/off], bootstrap token [yes/no], last check-in [DATE]. Wipe Computer approved by the studio manager and [MANAGER], independent review done, sent [TIME], status [pending/completed]. Next owner: [ADMIN_NAME].
+
+```aegis-desk
+Gate: gws-password-reset-password-portal
+Phrase: RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]
+Change record: R1
+Read-back: none (R1: no change record)
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Change record: R1
+Read-back: none (R1: no change record)
+Gate: jamf-lock-erase-wipe-portal
+Phrase: WIPE MAC [SERIAL_NUMBER]
+Change record: R3, independent out-of-session review required before the gate runs; approvals: studio manager + the person's own manager
+Read-back: none (no read-back is named for it in this runbook: its proof is the read its own step names)
+```

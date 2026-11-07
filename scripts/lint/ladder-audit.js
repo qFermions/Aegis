@@ -74,15 +74,27 @@ function sectionEvents(text, runbook = '') {
   const rClass = new Map(gateFields(text).map((g) => [g.line, g.rClass]));
   const sections = [];
   let current = { title: '(top of file)', line: 1, events: [], escape: false };
+  let parent = null;
   let fenced = false;
   lines.forEach((l, i) => {
     if (FENCE.test(l)) { fenced = !fenced; return; }
     const mark = MARK.exec(l.trim());
     if (!fenced && !mark && HEADING.test(l)) {
+      if (parent) { sections.push(parent); parent = null; }
       sections.push(current);
       current = { title: l.replace(/^#+\s+/, '').trim(), line: i + 1, events: [], escape: false };
       return;
     }
+    // a <details> block's summary starts its own section, and the section it interrupts resumes after
+    // </details>: the reference twins sit in such blocks, and the heading above them may name another phase
+    // (code review round 1 of batch 9, finding 9)
+    const summary = fenced ? null : /^\s*<summary>(.*?)<\/summary>\s*$/.exec(l);
+    if (summary) {
+      if (parent) sections.push(current); else parent = current;
+      current = { title: summary[1].replace(/<[^>]+>/g, '').trim(), line: i + 1, events: [], escape: false };
+      return;
+    }
+    if (!fenced && parent && /^\s*<\/details>\s*$/.test(l)) { sections.push(current); current = parent; parent = null; return; }
     if (mark) {
       const id = mark[1] || mark[2];
       const r = rClass.get(i + 1) || null;
@@ -96,6 +108,7 @@ function sectionEvents(text, runbook = '') {
     if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: /\*\*User check\b/i.test(l) ? 'a user check line' : 'a lighter step line', line: i + 1, admin: !/\*\*User check\b/i.test(l) });
     if (NO_LIGHTER.test(l)) current.escape = true;
   });
+  if (parent) sections.push(parent);
   sections.push(current);
   return sections;
 }

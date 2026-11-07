@@ -98,3 +98,14 @@ test('the runbook\'s own name in a gate id does not make the gate heavy', () => 
   assert.equal(row.verdict, 'pass', row.reason);
   assert.equal(ladder.auditText(text, 'other-runbook')[0].heavy, 'jamf-lock-erase-lock-portal', 'in a runbook of another name the words still count');
 });
+
+// Code review round 1 (batch 9), finding 9: a fenced twin inside a <details> block was filed under the last
+// heading, so a Mac wipe's API twin was audited inside an iPhone Lost Mode phase. Wrong implementation it
+// catches: sections split by headings only.
+test('code review 1, finding 9: a <details> summary starts its own section', () => {
+  const text = ['## Phase E: iPhone Lost Mode', '**User check:** look for the phone first.', gate('x-lost-mode-portal', 'R2', 'turn on Lost Mode'), '', '<details>', '<summary>API reference: wipe the Mac</summary>', '', gate('x-wipe-api', 'R3', 'erase the Mac', false), '</details>'].join('\n');
+  const rows = ladder.auditText(text, 'x');
+  const wipe = rows.find((r) => r.heavy === 'x-wipe-api');
+  assert.equal(wipe.section, 'API reference: wipe the Mac');
+  assert.equal(wipe.verdict, 'fail', 'the iPhone section\'s lighter steps do not count for it');
+});

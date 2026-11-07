@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 0
+✖ code review 1, finding 9: a <details> summary starts its own section
+✖ failing tests:

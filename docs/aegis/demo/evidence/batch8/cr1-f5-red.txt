@@ -1,0 +1,4 @@
+$ node --test --test-name-pattern "CLARIFY ignores a question mark" scripts/demo/customer-desk.test.js   (catalog.js before the fix)
+✖ CLARIFY ignores a question mark in code, in inline code, or right before a closing quote mark (0.849917ms)
+✖ failing tests:
+✖ CLARIFY ignores a question mark in code, in inline code, or right before a closing quote mark (0.849917ms)

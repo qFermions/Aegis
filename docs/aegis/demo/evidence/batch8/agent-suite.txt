@@ -1,0 +1,153 @@
+$ TMPDIR=<tmp> node --test --test-reporter=tap   (at e852b75; summary, and the failing names compared with the base run at 4b3072d)
+# tests 1981
+# suites 0
+# pass 1936
+# fail 44
+# cancelled 0
+# skipped 1
+# todo 0
+
+failing test names at the base 4b3072d: 41, every one in scripts/command-safety-gates.test.js (no pwsh on this Mac)
+failing test names now: 44
+in both: 41
+base failures that now pass: 0
+new failures, all 3 in scripts/demo/customer-desk.test.js (another engineer's files, not edited):
+  every gate the table maps is a real gate, and every one with a read-back resolves through its own connector
+  the gates T6 named in the first real run are simulated: suspend, reset, unsuspend apply, and a reset with no read-back is INCONCLUSIVE
+  two gates: the ticket resolves only when both read-backs pass; one none-read-back gate makes it INCONCLUSIVE
+
+$ TMPDIR=<tmp> node --test 2>&1 | tail -40   (at e852b75)
+
+test at scripts/demo/customer-desk.test.js:675:1
+✖ the gates T6 named in the first real run are simulated: suspend, reset, unsuspend apply, and a reset with no read-back is INCONCLUSIVE (267.974208ms)
+  AssertionError [ERR_ASSERTION]: a read-back shows the change was not done
+  + actual - expected
+  
+  + 'FAILED'
+  - 'INCONCLUSIVE'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/customer-desk.test.js:678:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'FAILED',
+    expected: 'INCONCLUSIVE',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/customer-desk.test.js:834:1
+✖ every gate the table maps is a real gate, and every one with a read-back resolves through its own connector (1692.082917ms)
+  AssertionError [ERR_ASSERTION]: okta-user-lifecycle-unsuspend-portal: not simulated: okta-user-lifecycle-unsuspend-portal could not be applied to the simulated tenant: "unsuspends the Okta user" changes nothing in the simulated tenant, so a read-back would prove nothing
+  + actual - expected
+  
+  + 'OPEN'
+  - 'RESOLVED (SIMULATED)'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/customer-desk.test.js:846:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'OPEN',
+    expected: 'RESOLVED (SIMULATED)',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+$ node scripts/lint/command-structure.js   (at e852b75)
+command-structure lint - 108 commands (B:23 E:6 D:3 C:11 A:63 ALIAS:2)
+
+clean - structural GUI-first contract holds for every operational/troubleshooting command
+exit 0
+
+$ node scripts/pre-commit-check.js --all   (at e852b75; file lines and the total only. 260 warnings, the same total as batch8/baseline/pre-commit-check-all.txt, and the same count in each runbook changed here: gws-offboard 4, mfa-issue 1, okta-user-lifecycle 5)
+  File: .claude/agents/graph-risk-finalizer.md
+  File: .claude/agents/graph-router.md
+  File: .claude/commands/ad-connect.md
+  File: .claude/commands/conditional-access.md
+  File: .claude/commands/device-wipe.md
+  File: .claude/commands/distribution-list.md
+  File: .claude/commands/email-quarantine.md
+  File: .claude/commands/email-to-spam.md
+  File: .claude/commands/email-whitelist.md
+  File: .claude/commands/fleet-device-actions.md
+  File: .claude/commands/gws-2sv-reset.md
+  File: .claude/commands/gws-chromeos-device.md
+  File: .claude/commands/gws-drive-sharing.md
+  File: .claude/commands/gws-drive-transfer.md
+  File: .claude/commands/gws-license-assign.md
+  File: .claude/commands/gws-offboard.md
+  File: .claude/commands/jamf-lock-erase.md
+  File: .claude/commands/jira-create.md
+  File: .claude/commands/jira-update.md
+  File: .claude/commands/mac-troubleshoot.md
+  File: .claude/commands/mailbox-permissions.md
+  File: .claude/commands/mfa-issue.md
+  File: .claude/commands/new-user.md
+  File: .claude/commands/offboard.md
+  File: .claude/commands/okta-mfa-reset.md
+  File: .claude/commands/okta-user-lifecycle.md
+  File: .claude/commands/onedrive-issue.md
+  File: .claude/commands/password-reset.md
+  File: .claude/commands/printer-issue.md
+  File: .claude/commands/security-alert-triage.md
+  File: .claude/commands/shared-mailbox.md
+  File: .claude/commands/sharepoint-access.md
+  File: .claude/commands/slack-user-lifecycle.md
+  File: .claude/commands/teams-issue.md
+  File: CHANGELOG.md
+  File: docs/adr/ADR-001-blast-radius-classes.md
+  File: docs/aegis/demo/evidence/batch7/reviews/code-review-2.md
+  File: docs/aegis/demo/evidence/batch7/reviews/code-review-3.md
+  File: docs/aegis/demo/evidence/batch7/reviews/security-review-2.md
+  File: docs/aegis/demo/evidence/batch7/reviews/security-review-3.md
+  File: docs/aegis/demo/evidence/batch7/reviews/security-review-5.md
+  File: docs/aegis/demo/evidence/full-run-1/desk-run-2.html
+  File: docs/aegis/demo/evidence/full-run-1/desk.html
+  File: docs/aegis/demo/evidence/full-run-1/session-activity.md
+  File: docs/aegis/demo/evidence/full-run-1/terminal-T1-T6-T8.txt
+  File: docs/aegis/demo/evidence/smoke-run.txt
+  File: docs/aegis/g3/evidence/t2-b1-finding-6-red.txt
+  File: docs/aegis/g3/vendor-facts.md
+  File: docs/aegis/lanes/g2.md
+  File: docs/aegis/owner/test-tenant-runbook.md
+  File: docs/aegis/workflow.md
+  File: docs/evidence/ticket-eval-samples.md
+  File: docs/examples.md
+  File: docs/gws-reversibility.md
+  File: docs/review/batches/batch7-checks.md
+  File: docs/review/batches/g3-closeout-2-checks.md
+  File: docs/security_model.md
+  File: docs/ticket-examples.md
+  File: modules/automation/powershell/examples.md
+  File: modules/automation/powershell/rollback_patterns.md
+  File: modules/automation/powershell/safety_patterns.md
+  File: modules/automation/pre_commit_hooks.md
+  File: modules/it_support/workflows.md
+  File: modules/security/security-doctrine.md
+  File: modules/security/threat_detection.md
+  File: modules/security/threat_model.md
+  File: modules/systems/health_checks.md
+  File: modules/systems/infrastructure.md
+  File: scripts/adapters/fleet-client.test.js
+  File: scripts/adapters/linear-client.test.js
+  File: scripts/adapters/readonly-contract.test.js
+  File: scripts/audit/audit-log.test.js
+  File: scripts/demo/customer-desk.test.js
+  File: scripts/demo/customers/d/T6-suspicious-sign-in.json
+  File: scripts/eval/g2-tickets.json
+  File: scripts/eval/g3-intake/email-4.eml
+  File: scripts/eval/g3-intake/github-4.json
+  File: scripts/eval/g3-tickets.json
+  File: scripts/intake/intake.test.js
+  File: scripts/jira-contract.test.js
+  File: scripts/tier/tier-routing.test.js
+  File: scripts/untrusted/instruction-injection.test.js
+  File: scripts/untrusted/poisoned-memory.test.js
+⚠️  260 warning(s) found - review the flagged lines above.
+exit 0
+

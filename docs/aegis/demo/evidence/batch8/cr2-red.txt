@@ -1,0 +1,10 @@
+$ node --test scripts/demo/answer.test.js scripts/demo/customer-desk.test.js   (the round 2 code set aside)
+ℹ fail 5
+ℹ pass 94
+ℹ tests 99
+✖ CLARIFY ignores a question mark in code or inline code, and counts one inside quote marks (0.508833ms)
+✖ R1 reads: [CHANGE_ID] with no change record stops cleanly, and the same read written twice counts once (19.798875ms)
+✖ a blank line inside "Do this" keeps its steps; only the default block's tokens are its facts; a placeholder is one word (0.404541ms)
+✖ a tripwire stop names each gate it left unapplied at step 7 (134.279625ms)
+✖ an unindented wrapped line inside a step keeps the later steps (0.205916ms)
+✖ failing tests:

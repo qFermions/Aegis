@@ -167,7 +167,9 @@ const TIME_SENTENCE = 'A read-back whose line has `--not-before` is named with i
 test('each runbook that binds a time-bounded read-back says to name its bound bare and to run it at or after the approval', () => {
   const timed = readBackLines().filter((r) => r.bound && r.flags.includes('not-before'));
   const files = [...new Set(timed.map((r) => r.file))].sort();
-  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'jamf-config-profiles.md', 'mfa-issue.md', 'offboard.md', 'password-reset.md', 'security-alert-triage.md']);
+  // batch 8, task 3: okta-user-lifecycle.md joins (9 to 10 files), with
+  // okta-user-lifecycle-reset-password-portal R2 and its verify-password-reset run under a change
+  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'jamf-config-profiles.md', 'mfa-issue.md', 'offboard.md', 'okta-user-lifecycle.md', 'password-reset.md', 'security-alert-triage.md']);
   for (const file of files) {
     const paragraph = fs.readFileSync(path.join(DIR, file), 'utf8').split('\n').find((l) => l.startsWith('**Change record'));
     assert.ok(paragraph && paragraph.includes(TIME_SENTENCE), `${file}: the change-record paragraph names the time bound`);

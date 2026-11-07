@@ -15,8 +15,12 @@ const DOMAIN_TOKEN = '[@Aegion_DOMAIN]';
 
 const readJson = (name) => JSON.parse(fs.readFileSync(path.join(DATA_DIR, name), 'utf8'));
 
-function loadData() {
-  return { customers: readJson('customers.json').customers, tickets: readJson('tickets.json').tickets };
+// The ticket sets: the tidy tickets of batch 6 and their messy twins of batch 8 (Run B).
+const TICKET_SETS = Object.freeze({ tidy: 'tickets.json', messy: 'tickets-messy.json' });
+
+function loadData(set = 'tidy') {
+  if (!Object.prototype.hasOwnProperty.call(TICKET_SETS, set)) throw new Error(`no ticket set ${JSON.stringify(String(set)).slice(0, 20)}; the sets are ${Object.keys(TICKET_SETS).join(' and ')}`);
+  return { customers: readJson('customers.json').customers, tickets: readJson(TICKET_SETS[set]).tickets };
 }
 
 function fill(text, customer) {
@@ -35,6 +39,12 @@ function tenantVars(customer) {
 
 function tenantText(customer) {
   return fill(fs.readFileSync(path.join(DATA_DIR, customer.tenant_file), 'utf8'), customer);
+}
+
+// The customer's profile.md: what Aegis is told about this customer in place of CLAUDE.md's default
+// environment. Data for the session, never instructions.
+function profileText(customer) {
+  return fill(fs.readFileSync(path.join(DATA_DIR, customer.profile_file), 'utf8'), customer);
 }
 
 function loadTenant(customer) {
@@ -73,6 +83,7 @@ const NOT_A_NAME = new Set([
   'Office Manager', 'IT Support', 'Full Access', 'Send As', 'Microsoft Authenticator', 'Google Workspace', 'Microsoft Defender',
   'Business Premium', 'Jamf Pro', 'Hybrid Active', 'Active Directory', 'High Confidence', 'Customer Desk',
   'Message ID', 'Content Type', 'Tue Nov', 'Pasting What', 'Fictional Read',
+  'Okta Security',
 ]);
 const NAME_SHAPE = /\b([A-Z][a-z]+) ([A-Z][a-z]+)\b/g;
 
@@ -98,4 +109,4 @@ function writeReplacing(file, text) {
   }
 }
 
-module.exports = { writeReplacing, DATA_DIR, DOMAIN_TOKEN, loadData, fill, rawItem, tenantVars, tenantText, loadTenant, targetsFor, foreignDomains, personNames };
+module.exports = { TICKET_SETS, writeReplacing, DATA_DIR, DOMAIN_TOKEN, loadData, fill, rawItem, tenantVars, tenantText, profileText, loadTenant, targetsFor, foreignDomains, personNames };

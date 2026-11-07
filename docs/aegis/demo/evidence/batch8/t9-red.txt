@@ -1,0 +1,9 @@
+$ node --test scripts/demo/render.test.js   (before the batch 8 render code)
+ℹ fail 4
+ℹ pass 9
+ℹ tests 13
+✖ every step of every ticket, its actor, tag, duration and output are in the page, in order (1.246708ms)
+✖ failing tests:
+✖ task 9: each step opens with its plain sentence, and the steps the charter names show what it asks (0.158042ms)
+✖ task 9: every plain step name and closing state has its own words (0.354542ms)
+✖ task 9: no plain sentence outside the folds holds a technical word, and each is at most 25 words (0.848542ms)

@@ -1,0 +1,65 @@
+## Fix
+**What's wrong:** Mail from one freight vendor is stopped somewhere before it reaches accounts payable, and we don't know where yet.
+**Do this:**
+1. Open Exchange admin center → Mail flow → Message trace → Start a trace. Set the sender to the vendor's address, the recipient to the AP mailbox, and the date range to the last 10 days.
+2. Open each result and read its Status and its event details.
+3. If the status is Quarantined, go to Defender portal → Email & collaboration → Review → Quarantine and read the reason. Don't release anything yet.
+4. If the status is Delivered, check the AP mailbox's Junk folder and its inbox rules.
+5. If there are no results, ask the vendor for the bounce message they got.
+
+**Done when:** you can say where each missing invoice went.
+**Stop if:** a rule is moving or forwarding the invoices, or the quarantine reason is phish. Treat that as possible invoice fraud.
+**Tell the user:** We're tracing the vendor's invoices now. Please don't pay any invoice that asks you to change bank details. We'll update you today.
+
+## Details
+
+**Verdict:** One vendor fails while all the others still get through, so something specific to that sender or to the AP mailbox is catching the mail. The usual causes are a quarantine verdict, a Block entry for the sender, a failed sender check (SPF/DKIM/DMARC), a mail flow rule, or an inbox rule. With invoices, a hidden inbox rule is a known sign that someone is trying to redirect payments. So this answer only investigates. It advises no change until the trace shows the cause.
+
+**What the trace tells you, and what to do next**
+| Trace shows | Next step (each is a separate decision) |
+|---|---|
+| Quarantined (spam or bulk) | Review the message headers. If it's a false positive, release it to the AP mailbox only, after IT lead approval. |
+| Quarantined (phish or high-confidence phish) | Don't release it. Call the vendor at a number you already have on file and confirm they sent it. |
+| Failed or rejected, sender checks fail | The vendor fixes their sending setup. Don't add an allow entry to work around it. |
+| A mail flow rule name in the events | Read the rule in Exchange admin center → Mail flow → Rules. Changing it needs the IT lead **and** the operations manager. |
+| Delivered, but missing from the inbox | Check Junk, then the clerk's inbox rules (Outlook on the web → Settings → Mail → Rules) and mailbox forwarding (Admin center → Users → Active users → [UPN] → Mail → Email forwarding). |
+| No trace results | The mail never reached us. The vendor checks the address they send to and their bounce messages. |
+
+Also check Defender → Policies & rules → Threat policies → Tenant Allow/Block Lists → Senders for a **Block** entry that matches the vendor.
+
+**Before any change:**
+- This customer has no defined way to verify who is asking ([org gap]). The request is from "accounts payable clerk" and is unverified. That's fine for looking things up, but a release or an allow entry needs the IT lead's approval.
+- "Make sure we get them" does not mean an allow entry yet. If the trace shows repeated false positives, an allow entry for that one sender with an expiry date is the narrowest option. Never allow the vendor's whole domain.
+- Business hours are Monday to Saturday, 06:00 to 20:00. Ask the vendor to resend within those hours so a test message is easy to spot.
+
+<details>
+<summary>PowerShell - for reference only (read-only)</summary>
+
+```powershell
+Connect-ExchangeOnline -UserPrincipalName "[UPN]"            # sign in with your admin account
+Get-MessageTrace -SenderAddress "[SENDER]" -RecipientAddress "[USER@DOMAIN.COM]" `
+  -StartDate (Get-Date).AddDays(-10) -EndDate (Get-Date) |   # last 10 days, vendor to AP only
+  Select-Object Received, Subject, Status                    # when it arrived, what it was, what happened to it
+Get-InboxRule -Mailbox "[USER@DOMAIN.COM]" |                 # lists the AP mailbox's inbox rules (read only)
+  Select-Object Name, Enabled, MoveToFolder, ForwardTo, DeleteMessage   # shows any rule that moves, forwards or deletes mail
+```
+</details>
+
+**Verification checklist**
+- [ ] Trace run for the vendor sender and the AP mailbox, last 10 days
+- [ ] Status and reason written down for each missing invoice
+- [ ] No Block entry for the sender, or one found and recorded
+- [ ] AP mailbox inbox rules and forwarding checked
+- [ ] Vendor confirmed at a known number if anything looks like phish
+- [ ] Any follow-up change approved by the IT lead (and the operations manager for mail flow)
+
+**Jira-ready note**
+> [JIRA-###] Invoices from one freight vendor ([SENDER]) are not reaching [USER@DOMAIN.COM] since about [DATE]. Other vendors are unaffected. Message trace result: [status / reason]. Block entry: [none / found]. Inbox rules and forwarding: [clean / found: describe]. Cause: [ ]. No change made. Next step: [release / vendor fix / rule review] pending [IT lead / operations manager] approval. Requester identity not verified ([org gap]).
+
+```aegis-desk
+Gate: none
+Note: investigation only; no change advised until message trace names the cause
+Pending (not advised, needs trace + IT lead approval): single-recipient quarantine release if trace shows a spam/bulk false positive
+Approvers: IT lead; mail flow rule change also needs operations manager
+Identity verification: [org gap], requester unverified
+```

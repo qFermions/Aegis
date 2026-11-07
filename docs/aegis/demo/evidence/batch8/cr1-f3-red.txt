@@ -1,0 +1,4 @@
+$ node --test --test-name-pattern "pending lock command" scripts/demo/customer-desk.test.js   (old field name commandType)
+✖ the simulated Jamf lock leaves a pending lock command the real Jamf client finds, which proves nothing yet (4.804042ms)
+✖ failing tests:
+✖ the simulated Jamf lock leaves a pending lock command the real Jamf client finds, which proves nothing yet (4.804042ms)

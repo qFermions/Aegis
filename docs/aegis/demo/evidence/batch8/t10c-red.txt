@@ -1,0 +1,227 @@
+$ node --test scripts/temp-dir.test.js   (the final test file, with scripts/temp-dir.js absent and the four callers at HEAD 954b967; exit 1)
+✖ makeTempDir returns a new folder that exists under a stale TMPDIR, outside the stale path (18.132958ms)
+✖ makeTempDir loads Node builtins only, so the tripwire can load it first (0.057834ms)
+✖ replay-demo runs to exit 0 under a stale TMPDIR (18.33025ms)
+✖ the change trail of the runbook tests is made under a stale TMPDIR (22.984583ms)
+✖ a judge run makes its folder under a stale TMPDIR (21.600167ms)
+✖ each of the four callers uses the helper and makes no temporary folder of its own (0.17225ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.865709
+
+✖ failing tests:
+
+test at scripts/temp-dir.test.js:41:1
+✖ makeTempDir returns a new folder that exists under a stale TMPDIR, outside the stale path (18.132958ms)
+  AssertionError [ERR_ASSERTION]: node:internal/modules/cjs/loader:1568
+    throw err;
+    ^
+  
+  Error: Cannot find module '<repo>/scripts/temp-dir.js'
+  Require stack:
+  - <repo>/[eval]
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at [eval]:3:29
+      at runScriptInThisContext (node:internal/vm:219:10) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [
+      '<repo>/[eval]'
+    ]
+  }
+  
+  Node.js v24.21.0
+  
+  
+  1 !== 0
+  
+      at child (<repo>/scripts/temp-dir.test.js:37:10)
+      at TestContext.<anonymous> (<repo>/scripts/temp-dir.test.js:42:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/temp-dir.test.js:57:1
+✖ makeTempDir loads Node builtins only, so the tripwire can load it first (0.057834ms)
+  Error: ENOENT: no such file or directory, open '<repo>/scripts/temp-dir.js'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/temp-dir.test.js:58:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/scripts/temp-dir.js'
+  }
+
+test at scripts/temp-dir.test.js:62:1
+✖ replay-demo runs to exit 0 under a stale TMPDIR (18.33025ms)
+  AssertionError [ERR_ASSERTION]: node:fs:3134
+    return binding.mkdtemp(prefix, options.encoding);
+                   ^
+  
+  Error: ENOENT: no such file or directory, mkdtemp '/aegis-no-such-folder/x/aegis-replay-demo-XXXXXX'
+      at Object.mkdtempSync (node:fs:3134:18)
+      at Object.<anonymous> (<repo>/scripts/replay/replay-demo.js:23:17)
+      at Module._compile (node:internal/modules/cjs/loader:1929:14)
+      at Object..js (node:internal/modules/cjs/loader:2060:10)
+      at Module.load (node:internal/modules/cjs/loader:1651:32)
+      at Module._load (node:internal/modules/cjs/loader:1443:12)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/aegis-no-such-folder/x/aegis-replay-demo-XXXXXX'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/temp-dir.test.js:64:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/temp-dir.test.js:67:1
+✖ the change trail of the runbook tests is made under a stale TMPDIR (22.984583ms)
+  AssertionError [ERR_ASSERTION]: node:fs:3134
+    return binding.mkdtemp(prefix, options.encoding);
+                   ^
+  
+  Error: ENOENT: no such file or directory, mkdtemp '/aegis-no-such-folder/x/aegis-runbook-trail-XXXXXX'
+      at Object.mkdtempSync (node:fs:3134:18)
+      at changeTrail (<repo>/scripts/audit/trail-helper.js:51:18)
+      at [eval]:4:19
+      at runScriptInThisContext (node:internal/vm:219:10)
+      at node:internal/process/execution:451:12
+      at [eval]-wrapper:6:24
+      at runScriptInContext (node:internal/process/execution:449:60)
+      at evalFunction (node:internal/process/execution:283:30)
+      at evalTypeScript (node:internal/process/execution:295:3)
+      at node:internal/main/eval_string:71:3 {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/aegis-no-such-folder/x/aegis-runbook-trail-XXXXXX'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  1 !== 0
+  
+      at child (<repo>/scripts/temp-dir.test.js:37:10)
+      at TestContext.<anonymous> (<repo>/scripts/temp-dir.test.js:68:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/temp-dir.test.js:78:1
+✖ a judge run makes its folder under a stale TMPDIR (21.600167ms)
+  AssertionError [ERR_ASSERTION]: node:fs:3134
+    return binding.mkdtemp(prefix, options.encoding);
+                   ^
+  
+  Error: ENOENT: no such file or directory, mkdtemp '/aegis-no-such-folder/x/aegis-judge-XXXXXX'
+      at Object.mkdtempSync (node:fs:3134:18)
+      at Object.judgeOnce (<repo>/scripts/eval/judged/judge.js:215:18)
+      at [eval]:5:11
+      at runScriptInThisContext (node:internal/vm:219:10)
+      at node:internal/process/execution:451:12
+      at [eval]-wrapper:6:24
+      at runScriptInContext (node:internal/process/execution:449:60)
+      at evalFunction (node:internal/process/execution:283:30)
+      at evalTypeScript (node:internal/process/execution:295:3)
+      at node:internal/main/eval_string:71:3 {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/aegis-no-such-folder/x/aegis-judge-XXXXXX'
+  }
+  
+  Node.js v24.21.0
+  
+  
+  1 !== 0
+  
+      at child (<repo>/scripts/temp-dir.test.js:37:10)
+      at TestContext.<anonymous> (<repo>/scripts/temp-dir.test.js:79:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/temp-dir.test.js:89:1
+✖ each of the four callers uses the helper and makes no temporary folder of its own (0.17225ms)
+  AssertionError [ERR_ASSERTION]: adapters/socket-tripwire.js requires the helper
+      at TestContext.<anonymous> (<repo>/scripts/temp-dir.test.js:92:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: `'use strict';\n// socket-tripwire.js: test support for the read-only adapters (scripts/adapters/).\n//\n// Required first by every adapter test file. It replaces every way Node opens a\n// connection (net and tls sockets, http and https requests, DNS lookups) with a\n// function that throws "Network tripwire fired", and sets AEGIS_NETWORK_TRIPWIRE=1\n// so the contract's default transport throws the same error before it builds a\n// request. A test that forgets to inject a mock transport therefore fails loudly\n// instead of reaching a real Google, Fleet, Jamf, Slack or Linear system.\n//\n// node --test runs each test file in its own process, so the patch never leaks\n// into another suite.\n\nconst dns = require('node:dns');\nconst http = require('node:http');\nconst https = require('node:https');\nconst net = require('node:net');\nconst tls = require('node:tls');\n\nconst MESSAGE = 'Network tripwire fired';\n\nclass NetworkTripwireError extends Error {\n  constructor() {\n    super(MESSAGE);\n    this.name = 'NetworkTripwireError';\n  }\n}\n\nconst attempts = [];\nfunction trip(kind) {\n  return function tripped() {\n    attempts.push(kind);\n    throw new NetworkTripwireError();\n  };\n}\n\nprocess.env.AEGIS_NETWORK_TRIPWIRE = '1';\n// Batch G3: a CLI run in a test without an injected transport writes its audit entries to a\n// temporary folder, never to the operator's real trail.\nif (!process.env.AEGIS_AUDIT_DIR) {\n  const fs = require('node:fs');\n  const os = require('node:os');\n  const path = require('node:path');\n  // a TMPDIR that names a missing folder falls back to the system's; if that fails too, it throws, so no\n  // CLI in a test ever falls through to the operator's real trail\n  const make = (base) => fs.mkdtempSync(path.join(base, 'aegis-audit-tripwire-'));\n  let dir;\n  try { dir = make(os.tmpdir()); } catch { dir = make(process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\\\Windows', 'Temp') : '/tmp'); }\n  process.env.AEGIS_AUDIT_DIR = dir;\n  process.on('exit', () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* best effort */ } });\n}\nnet.Socket.prototype.connect = trip('net.Socket.connect');\nnet.connect = trip('net.connect');\nnet.createConnection = trip('net.createConnection');\ntls.connect = trip('tls.connect');\nhttp.request = trip('http.request');\nhttp.get = trip('http.get');\nhttps.request = trip('https.request');\nhttps.get = trip('https.get');\ndns.lookup = trip('dns.lookup');\ndns.resolve = trip('dns.resolve');\nif (dns.promises) {\n  dns.promises.lookup = trip('dns.promises.lookup');\n  dns.promises.resolve = trip('dns.promises.resolve');\n}\nif (typeof globalThis.fetch === 'function') globalThis.fetch = trip('fetch');\n\nmodule.exports = { MESSAGE, NetworkTripwireError, attempts };\n`,
+    expected: /require\('(?:\.\.\/)+temp-dir\.js'\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+

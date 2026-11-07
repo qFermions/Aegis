@@ -1,0 +1,51 @@
+## Fix
+**What's wrong:** [USER@DOMAIN.COM] can't open or send from the [SHARED_MAILBOX] shared mailbox yet.
+**Do this:**
+1. Get the managing partner's approval, then call the requester back on the number in the firm's staff list to confirm who they are.
+2. Open Exchange admin center → Recipients → Mailboxes → [SHARED_MAILBOX] → Delegation, and note who already has access.
+3. Under Read and manage (Full Access), add [USER@DOMAIN.COM].
+4. Under Send As, add [USER@DOMAIN.COM]. Leave Send on Behalf alone.
+**Done when:** the mailbox shows up in their Outlook, and a test email arrives From [SHARED_MAILBOX] with no "on behalf of" line.
+**Stop if:** the managing partner doesn't approve, or the callback doesn't match the staff list.
+**Tell the user:** You now have access to the shared mailbox. It will appear in Outlook within about an hour. Let us know if it doesn't show up.
+
+## Details
+**Verdict:** These are two separate permissions. Full Access lets them open and read the mailbox. Send As makes their mail look like it came from the mailbox itself. Each one affects one person and one mailbox and is easy to undo by removing the entry.
+
+**⚠️ Risk warning**
+- Full Access shows **everything** in the mailbox. At an accounting firm that can include client financial data, so get the managing partner's approval first.
+- Aegis's mailbox runbook has no confirmation step for adding access, only a preview. You make the change yourself in the portal, under the managing partner's written approval. Aegis doesn't make it.
+- Outlook can take up to about an hour to show the mailbox. If it still isn't there, remove and re-add the account in Outlook.
+
+**Rollback:** In Delegation, remove [USER@DOMAIN.COM] from Full Access and from Send As.
+
+<details>
+<summary>PowerShell - for reference only</summary>
+
+```powershell
+Connect-ExchangeOnline   # sign in to Exchange Online
+# List who has Full Access now (read-only)
+Get-MailboxPermission -Identity "[SHARED_MAILBOX]" | Where-Object {$_.User -notlike "NT AUTHORITY*"}
+# List who has Send As now (read-only)
+Get-RecipientPermission -Identity "[SHARED_MAILBOX]"
+```
+These two commands only read. They are a quick way to confirm the change after you make it.
+</details>
+
+**✅ Verification checklist**
+- [ ] Managing partner's approval recorded on the ticket
+- [ ] Requester's identity confirmed by calling back the number in the staff list
+- [ ] Delegation shows [USER@DOMAIN.COM] under Full Access and Send As, and nothing else was added
+- [ ] Mailbox appears in their Outlook
+- [ ] A test email shows From: [SHARED_MAILBOX]
+
+**📝 Jira-ready note**
+> Resolved [date/time]. Granted Full Access and Send As on [SHARED_MAILBOX] to [USER@DOMAIN.COM]; the change was made by the technician in the Exchange admin center. Approved by the managing partner ([JIRA-###]); requester's identity confirmed by calling back the number in the staff list. Delegation list re-read; the mailbox opened in Outlook and a test email sent with Send As: [verified / pending]. Time spent: [X] min.
+
+```aegis-desk
+Gate: mailbox-full-access-grant
+Gate: mailbox-send-as-grant
+Change record: R1 each (one user, one mailbox, undone by removing the entry); the runbook has preview markers only, so it gives no confirmation phrase and no read-back command
+Runbook: .claude/commands/mailbox-permissions.md (preview markers at lines 44 and 46; portal path is under preview marker mailbox-grant-portal, line 18)
+Approval: managing partner (Customer E profile); identity check: call back the number in the staff list
+```

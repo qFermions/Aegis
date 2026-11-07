@@ -1,0 +1,8 @@
+# Security review, round 2 (batch 8)
+
+Range: `git diff bffecff..71a0388` (the code review round 1 fixes). One review subagent.
+
+**1 finding, Medium, confidence 8:** `scripts/demo/answer.js:73` (at 71a0388). The round 1 fix for a blank line inside "Do this" ended the list at any non-step line, so an indented second line of step 1 hid steps 2 and 3. A change answer with `Gate: none` whose first step wraps then read as look-only and closed INVESTIGATE ("Look first") instead of OPEN. Nothing is applied either way; the harm is a "safe" label on a gateless change. Reproduced by the reviewer against both versions.
+Fixed: an indented or bulleted line continues the last step; test "a wrapped or bulleted line inside a step keeps the later steps"; red `batch8/sr2-red.txt`.
+
+Checked and clean (file:line at 71a0388): only runbook verify lines run, and the answer's own `Read-back:` lines are never parsed (`catalog.js:29-41, 88-93`); an R1 read still appends `--execute` and a placeholder left unfilled fails closed (`customer-desk.js:326-346`); `[CHANGE_ID]` cannot reach an R1 read (`catalog.js:38`); a section with zero or two reads gives none; every read that ran stops the loop on a non-pass, and the ticket cannot resolve with a gate unapplied (`customer-desk.js:649-669`); the tripwire is recorded and rethrown, not swallowed (`:617-645`, `:432-437`, `:747-753`); `deskRef` fails closed on an id that does not parse; the token list covers CLAUDE.md's default block; the Jamf command field matches `jamf-client.js:582`; new page text is escaped (`render.js:155, 248, 250`); the CLAUDE.md change skips no confirmation or gate.

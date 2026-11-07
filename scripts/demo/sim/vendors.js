@@ -27,6 +27,7 @@ const CONNECTORS = Object.freeze({
   github: { module: 'github-client.js', credentials: () => ({ GITHUB_TOKEN: FILLER }) },
   'google-workspace': { module: 'gws-client.js', credentials: () => ({ GWS_SA_PRIVATE_KEY: simKey() }) },
   linear: { module: 'linear-client.js', credentials: () => ({ LINEAR_API_KEY: FILLER }) },
+  jamf: { module: 'jamf-client.js', credentials: () => ({ JAMF_CLIENT_SECRET: FILLER }) },
 });
 
 const connectorModule = (name) => (CONNECTORS[name] ? require(path.join(ADAPTERS, CONNECTORS[name].module)) : null);
@@ -38,6 +39,13 @@ const notFound = () => reply(404, { message: 'Not Found (simulated tenant)' });
 const token = (extra = {}) => ok({ token_type: 'Bearer', expires_in: 3599, access_token: FILLER, ...extra });
 
 const SEGMENT = (p) => decodeURIComponent(p);
+// One filter value from a request's query, such as hardware.serialNumber=="X", or null.
+const filterValue = (req, field) => {
+  const q = String(req.path).split('?')[1] || '';
+  const filter = new URLSearchParams(q).get('filter') || '';
+  const m = new RegExp(`${field.replace(/\./g, '\\.')}=="([^"]+)"`).exec(filter);
+  return m ? m[1] : null;
+};
 
 const ROUTES = {
   msgraph(state, req, p) {
@@ -74,6 +82,24 @@ const ROUTES = {
     if (req.method === 'POST') return token();
     const m = /^\/admin\/directory\/v1\/users\/([^/]+)$/.exec(p);
     if (m) return state.gws.users[SEGMENT(m[1])] ? ok(state.gws.users[SEGMENT(m[1])]) : notFound();
+    return notFound();
+  },
+  // Jamf Pro: the computers in the tenant's devices list, by serial, and the MDM commands sent to one.
+  jamf(state, req, p) {
+    if (req.method === 'POST') return token();
+    if (p === '/api/v1/jamf-pro-version') return ok({ version: '11.0.0-simulated' });
+    const jamfDevices = (state.devices || []).filter((d) => d.managed_by === 'Jamf Pro');
+    if (p === '/api/v1/computers-inventory') {
+      const serial = filterValue(req, 'hardware.serialNumber');
+      const found = jamfDevices.filter((d) => d.serial === serial).map((d) => ({ id: d.jamf_id, general: { name: d.name, managementId: d.management_id, lastContactTime: d.last_contact }, hardware: { serialNumber: d.serial } }));
+      return ok({ totalCount: found.length, results: found });
+    }
+    if (p === '/api/v2/mdm/commands') {
+      const id = filterValue(req, 'clientManagementId');
+      const d = jamfDevices.find((x) => x.management_id === id);
+      const sent = d ? (d.mdm_commands || []).map((c) => ({ clientManagementId: id, ...c })) : [];
+      return ok({ totalCount: sent.length, results: sent });
+    }
     return notFound();
   },
   linear(state, req, p) {

@@ -14,13 +14,13 @@
 // Run: node scripts/replay/replay-demo.js
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { makeTempDir } = require('../temp-dir.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const CLI = path.join(__dirname, 'replay-cli.js');
-const work = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-replay-demo-'));
+const work = makeTempDir('aegis-replay-demo-');
 const store = path.join(work, 'store');
 const env = { ...process.env, AEGIS_REPLAY_DIR: store };
 

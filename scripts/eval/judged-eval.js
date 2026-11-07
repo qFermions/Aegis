@@ -160,7 +160,7 @@ async function runCommand(opts, io, deps) {
   io.out(`judged-eval: run ${runId}, ${list.length} case(s); ${report.LABEL}`);
   const results = [];
   for (const c of list) {
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web });
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir });
     const det = sut.state === 'OK' ? checks.runChecks(c, sut) : [];
     const jr = sut.state === 'OK' ? await judge.judgeCase(c, sut, { ...backend, repoRoot, judgeModel: config.judge_model, random: deps.random }) : null;
     const v = judge.caseVerdict(c, sut, det, jr);

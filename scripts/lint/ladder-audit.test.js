@@ -87,3 +87,14 @@ test('on the real runbooks, --check exits 0: the saved audit is fresh and the fi
   assert.equal(code, 0, err.join(''));
   assert.match(out.join(''), /the fixed scope passes/);
 });
+
+// Batch 9, found by the runbook fixes' review: the runbook's own name sat inside its gate ids, so a lock in
+// /jamf-lock-erase ("jamf-lock-erase-lock-portal") read as an erase. A wrong implementation it catches: matching
+// the heavy words against the whole id, runbook name included.
+test('the runbook\'s own name in a gate id does not make the gate heavy', () => {
+  const text = ['## Lock first', gate('jamf-lock-erase-lock-portal', 'R1', 'lock the Mac at its next check-in'), gate('jamf-lock-erase-wipe-portal', 'R3', 'erase the Mac')].join('\n');
+  const [row] = ladder.auditText(text, 'jamf-lock-erase');
+  assert.equal(row.heavy, 'jamf-lock-erase-wipe-portal', 'the lock is not the first heavy gate');
+  assert.equal(row.verdict, 'pass', row.reason);
+  assert.equal(ladder.auditText(text, 'other-runbook')[0].heavy, 'jamf-lock-erase-lock-portal', 'in a runbook of another name the words still count');
+});

@@ -315,3 +315,10 @@ test('security review 3: only a known placeholder is kept in brackets; every pho
   assert.equal(ask.protect('call [UPN] or [@Aegion_DOMAIN]').text, 'call [UPN] or [@Aegion_DOMAIN]');
   assert.equal(ask.protect('Windows Update error 2147942402').text, 'Windows Update error 2147942402');
 });
+
+// Code review round 3 (batch 9), finding 1: the password rule blocked the most common password tickets. Wrong
+// implementation it catches: any word after "password is" read as a secret.
+test('code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask', () => {
+  for (const ok of ['My password is expired and I cannot sign in to Outlook.', 'User says password is incorrect after the reset', 'We have password issues with Teams', 'The app client secret is expiring next week', 'Temp password: [TEMP_PASSWORD]']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+  for (const bad of ['my password is Summer2026! and it stopped working', 'temp password: Welcome#12345']) assert.ok(ask.protect(bad).blocked, bad);
+});

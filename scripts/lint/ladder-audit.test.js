@@ -128,3 +128,18 @@ test('code review 2: an R3 scripted twin stays heavy even when its portal twin i
   const text = ['## Block', gate('x-block-portal', 'R2', 'block sign-in'), '', '<details>', '<summary>PowerShell</summary>', '', gate('x-block', 'R3', 'block sign-in and revoke', false), '</details>'].join('\n');
   assert.ok(ladder.auditText(text, 'x').some((r) => r.heavy === 'x-block'));
 });
+
+// Code review round 3 (batch 9), findings 4, 9, 10 and 13. Wrong implementations they catch: a block that inherits
+// a phase's previews written after it; a same-section twin whose later steps are copied before the heavy gate;
+// inheritance from the first heavy gate given to every gate of a scale block; twins matched by id suffix only.
+test('code review 3: twins pair by the runbook\'s own read-back lines, each heavy gate inherits only its own twin\'s steps, and nothing after it counts', () => {
+  const pairText = ['## Reset', '**User check:** sign in by hand.', 'PREVIEW ONLY [x-sspr-preview]: self-service reset.', gate('x-reset-cloud-portal', 'R3', 'reset the password'), '# HUMAN-RUN read-back of [x-reset-cloud-portal] or [x-cloud-reset]', '', '<details>', '<summary>PowerShell</summary>', '', gate('x-cloud-reset', 'R3', 'reset the password', false), '</details>'].join('\n');
+  assert.equal(ladder.auditText(pairText, 'x').find((r) => r.heavy === 'x-cloud-reset').verdict, 'pass');
+  const after = ['## Notify', 'PREVIEW ONLY [x-policy-preview]: change the policy.', '', '<details>', '<summary>Delete</summary>', '', gate('x-permanent-delete', 'R3', 'delete the message', false), '</details>'].join('\n');
+  assert.equal(ladder.auditText(after, 'x').find((r) => r.heavy === 'x-permanent-delete').verdict, 'fail', 'a phase preview is not a delete\'s lighter step');
+  const same = ['## S', '<details>', '<summary>API</summary>', '', gate('x-wipe', 'R3', 'erase', false), 'PREVIEW ONLY [x-lock]: lock it.', gate('x-wipe-portal', 'R3', 'erase'), '</details>'].join('\n');
+  assert.equal(ladder.auditText(same, 'x').find((r) => r.heavy === 'x-wipe').verdict, 'fail', 'the lock comes after the wipe');
+  const scale = ['## B', 'PREVIEW ONLY [x-unlock-preview]: unlock.', gate('x-reset-password-portal', 'R2', 'reset the password'), '## H', gate('x-delete-portal', 'R3', 'delete the user'), '', '<details>', '<summary>API, the scale version</summary>', '', gate('x-reset-password', 'R2', 'reset the password', false), gate('x-delete', 'R3', 'delete the user', false), '</details>'].join('\n');
+  const del = ladder.sectionEvents(scale, 'x').flatMap((s) => s.events).find((e) => e.id === 'x-delete');
+  assert.deepEqual((del.inherit || []).map((e) => e.id), [], 'the delete inherits nothing from Phase B');
+});

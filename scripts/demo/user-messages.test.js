@@ -304,3 +304,35 @@ test('code review 2, finding 13: "in the details field" is part of the message, 
   assert.match(c.parts.tellNow, /details field of your ticket/);
   assert.equal(c.pointer, null);
 });
+
+// Code review round 3 (batch 9). Each case names the wrong implementation it catches.
+test('code review 3, findings 2 and 7: an Aegis claim fails with any object but its own text, in the body and in user lines', () => {
+  for (const claim of ['Aegis has added you to the Finance group.', 'Aegis has changed your MFA method.', 'Aegis has created your new login.', 'Aegis has moved your files to OneDrive.']) {
+    assert.equal(checks.checkBoundary(cardWith({ now: claim })).verdict, 'fail', claim); // object verbs read only with a tenant object
+  }
+  assert.equal(checks.checkBoundary(cardWith({ now: 'Aegis has updated the steps below for you.' })).verdict, 'pass'); // its own text is no claim
+  assert.equal(checks.checkBoundary('## Fix\nThe Aegis assistant has reset the password for [UPN].\n').verdict, 'fail'); // the body's actor list knows bare Aegis only
+  assert.equal(checks.checkBoundary('## Fix\nThe Aegis desk disabled the account.\n').verdict, 'fail');
+});
+
+test('code review 3, finding 3: a clause ends at then, but, so, a dash or "and" plus a new subject; a list stays one clause', () => {
+  assert.ok(a.defaultFactsIn('Make sure the laptop is not asleep and then open Intune and check the device.', '').includes('Microsoft Intune')); // punctuation-only clauses
+  assert.ok(a.defaultFactsIn('No hybrid AD here and we sync with AD Connect anyway.', '').includes('hybrid Active Directory synced by Entra Connect'));
+  assert.deepEqual(a.defaultFactsIn('This customer does not use Intune and Meraki.', ''), []); // "and" in a list broke the clause
+});
+
+test('code review 3, finding 5: a decided change followed by "and ... when" is still decided; one that waits on its condition is a plan', () => {
+  assert.notDeepEqual(a.userMessageProblems('We will reset your password and email you when it is done.'), []); // a plan word anywhere excused it
+  assert.notDeepEqual(a.userMessageProblems("We'll wipe the laptop now so it is safe if it was stolen."), []);
+  assert.deepEqual(a.userMessageProblems("We'll reset your password once your manager approves."), []);
+});
+
+test('code review 3, finding 8: a ticket routed or approved is an acknowledgement; irregular change participles are claims', () => {
+  for (const ok of ['Your ticket has been assigned to a technician.', 'Your request has been approved.', 'Your ticket has been updated with the details.', 'Your request has been moved to the network team.']) assert.deepEqual(a.userMessageProblems(ok), [], ok); // a ticket subject read as a change
+  for (const bad of ['Your settings have been modified.', 'Your files have been transferred.']) assert.notDeepEqual(a.userMessageProblems(bad), [], bad); // a naive past tense
+});
+
+test('code review 3, finding 11: "in the Details section of this answer" is the pointer; a field or tab is not', () => {
+  assert.match(a.fixCard(cardWith({ extra: ['', 'The full plan is in the Details section of this answer.'] })).pointer || '', /Details section/); // the section exclusion rejected a real pointer
+  assert.equal(a.fixCard(cardWith({ now: 'We are on it. Please add your device name\nin the details field of your ticket.' })).pointer, null);
+});

@@ -118,3 +118,9 @@ test('intake: an ordinary ticket gets no flag from the new rules', () => {
   assert.equal(r.state, 'ACCEPTED', JSON.stringify(r));
   assert.equal(r.injection_flags, 0);
 });
+
+// Code review round 3 (batch 9), finding 12: field lines that start with a change verb were flagged. Wrong
+// implementation it catches: the broad reader (tool, model, agent) in the colon form.
+test('code review 3, finding 12: a field line with a change verb is not an order to an assistant', () => {
+  for (const line of ['Tool: Remove-Item fails with access denied', 'Model: Reset to factory defaults did not help', 'Agent: Add [FIRST_NAME] to the Finance group per HR']) assert.deepEqual(assistantAddressFlags(line), [], line);
+});

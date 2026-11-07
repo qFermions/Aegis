@@ -142,7 +142,9 @@ function stepExtra(step, t) {
     const card = fixCard(step.output);
     const body = deskBlock(step.output).body;
     const shown = card.present ? `<p class="plain">The Fix card:</p><div class="card"><pre class="shown">${esc(cardText(card))}</pre></div>` : '<p class="plain">This answer has no Fix card.</p>';
-    return `${shown}\n<details><summary>The whole answer</summary><pre class="shown">${esc(body)}</pre></details>`;
+    // batch 9, task 2: the message the tech sends the user now, as the answer wrote it
+    const now = card.parts && card.parts.tellNow ? `\n<p class="plain">Message to send the user now:</p>\n<pre class="shown">${esc(card.parts.tellNow.replace(/\*\*/g, ''))}</pre>` : '';
+    return `${shown}${now}\n<details><summary>The whole answer</summary><pre class="shown">${esc(body)}</pre></details>`;
   }
   if (step.n === 5) {
     const rows = [...(step.checks || []).filter((c) => c.applies).map((c) => `${esc(PLAIN_CHECKS[c.check] || c.check)}: ${mark(c.verdict)}`), ...(step.answer_checks || []).map((c) => `${esc(c.plain)}: ${mark(c.verdict)}`)];
@@ -150,6 +152,14 @@ function stepExtra(step, t) {
   }
   if (step.n === 6 && step.signed_off) {
     return listHtml(step.signed_off.map((g) => `This change ${esc(g.effect || 'is the one Aegis named')}. ${g.phrase ? `A real tech would type: <strong>${esc(g.phrase)}</strong>` : 'A real tech would type the phrase its runbook gives.'}`));
+  }
+  if (step.n === 9) {
+    // batch 9, task 2: the when-done message goes to the user only after the double-check passed
+    const answer = ((t.steps || []).find((x) => x.n === 4) || {}).output;
+    const card = answer ? fixCard(answer) : null;
+    if (!card || !card.parts || !card.parts.tellDone) return '';
+    if (t.closing_state !== 'RESOLVED (SIMULATED)') return '<p class="plain">Message to send the user when done: not sent, because the change is not proved.</p>';
+    return `<p class="plain">Message to send the user when done:</p>\n<pre class="shown">${esc(card.parts.tellDone.replace(/\*\*/g, ''))}</pre>`;
   }
   if (step.n === 8 && step.reads) {
     return listHtml(step.reads.map((r) => (r.state === 'NONE' ? 'This change has no automatic double-check yet: not proved' : `${esc(plainRead(r))}: ${mark(r.state)}`)));

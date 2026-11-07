@@ -62,7 +62,7 @@ node scripts/adapters/okta-client.js factors --user [OKTA_USER_ID] --execute
 
 Source: operator-validated by the owner, 2026-11-06; not in Okta's published troubleshooting pages
 
-**Purpose:** after a macOS update, Okta Verify on the Mac keeps sending the user back to sign in, and reinstalling Okta Verify (already done, per the ticket) did not stop it. What changed is the macOS update, so stale state on the Mac is the first suspect, before any reset. Run Phase A first: the compromise check still applies.
+**Purpose:** after a macOS update, Okta Verify on the Mac keeps sending the user back to sign in, and reinstalling Okta Verify, if it was already tried, did not stop it. What changed is the macOS update, so stale state on the Mac is the first suspect, before any reset. Run Phase A first: the compromise check still applies.
 
 1. **User check:** ask the user to quit Okta Verify completely (not only close its window), open it again, and sign in once.
 2. **User check:** ask the user to restart the Mac, then open Okta Verify and sign in once after the restart.

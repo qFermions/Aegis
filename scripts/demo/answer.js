@@ -40,7 +40,9 @@ const LIST_LINE = /^[ \t>]*(?:[-*+][ \t]+|\(?\d+[.)])/;
 const plainText = (t) => String(t).normalize('NFKC').replace(/[\u200b-\u200d\u2060\ufeff]/g, '');
 // "Details" with its capital, not followed by a field or tab name: "in the details field of your ticket" is a
 // message line (code review round 2 of batch 9, finding 13)
-const POINTER_LINE = /\b(?:[Ss]ee|[Ii]n|[Uu]nder)\s+(?:the\s+)?Details\b(?!\s+(?:field|tab|box|page|pane|section of))/;
+// "the Details section of this answer" is a pointer; a details field, tab, box or pane is part of a message
+// (code review round 3 of batch 9, finding 11)
+const POINTER_LINE = /\b(?:see|in|under)\s+(?:the\s+)?Details\b(?!\s+(?:field|tab|box|pane)\b)/i;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 

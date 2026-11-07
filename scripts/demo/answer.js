@@ -209,15 +209,16 @@ function negatedAt(t, index) {
   return NEGATION_BEFORE.test(before.slice(start + 1));
 }
 
-// A mention counts only when no negation opens its own clause ("No SMS fallback added" names the fact to say
-// it is not used; batch 8's T1, batch 9). A clause ends at . ; : ! ? , or a line end.
-// A default fact is used in a clause (split at . ; : ! ? , and line ends) unless a negated verb comes earlier in
-// that clause ("We do not use Intune or Meraki"), which covers every fact in it, or a "no" stands at most two
-// words before its first mention ("has no hybrid identity synced by Entra Connect"); "check no errors show on the
-// AD Connect server" still uses it (code review round 2 of batch 9, finding 10).
+// A default fact is used in a clause unless a negated verb comes earlier in that clause ("We do not use Intune or
+// Meraki"), which covers every fact in it, or a "no" stands at most two words before its first mention ("has no
+// hybrid identity synced by Entra Connect"); "check no errors show on the AD Connect server" still uses it (code
+// review round 2 of batch 9, finding 10). A clause ends at . ; : ! ? , a line end, " - ", then, but, so, or "and"
+// followed by a new subject ("not asleep and then open Intune", "no hybrid AD here and we sync"); a list joined by
+// and or or stays one clause (round 3, finding 3).
+const FACT_CLAUSE = /[.;:!?,\n]|\s-\s|\b(?:then|but|so)\b|\band\s+(?=(?:we|you|I|it|they|he|she|then|open|check|run|go|click|sync|use)\b)/i;
 const VERB_NEGATION = /\b(?:do not|does not|did not|don['\u2019]?t|doesn['\u2019]?t|didn['\u2019]?t|never|not|without|no longer)\b/i;
 function usesFact(text, re) {
-  for (const clause of String(text).split(/[.;:!?,\n]/)) {
+  for (const clause of String(text).split(FACT_CLAUSE)) {
     const m = new RegExp(re.source, re.flags.replace('g', '')).exec(clause);
     if (!m) continue;
     const before = clause.slice(0, m.index);

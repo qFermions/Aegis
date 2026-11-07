@@ -464,10 +464,11 @@ test('a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and s
   const unknown = await runDesk(t, { only: ['T1'], answers: { T1: good('made-up-gate-portal') } });
   assert.equal(unknown.ticket('T1').closing_state, 'OPEN');
   assert.match(unknown.ticket('T1').reason, /made-up-gate-portal.*no runbook/);
-  const preview = await runDesk(t, { only: ['T4'], answers: { T4: good('mailbox-grant-portal') } });
+  // batch 9, task 5: the grants are gates now; Send on Behalf is still a PREVIEW ONLY marker
+  const preview = await runDesk(t, { only: ['T4'], answers: { T4: good('mailbox-send-on-behalf-portal') } });
   const k = preview.ticket('T4');
   assert.equal(k.closing_state, 'OPEN');
-  assert.match(k.reason, /mailbox-grant-portal.*PREVIEW ONLY.*mailbox-permissions/);
+  assert.match(k.reason, /mailbox-send-on-behalf-portal.*PREVIEW ONLY.*mailbox-permissions/);
   // one known gate and one unknown: nothing is applied at all
   const mixed = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal', 'made-up-gate-portal') } });
   assert.equal(mixed.ticket('T1').closing_state, 'OPEN');
@@ -1417,3 +1418,35 @@ test('batch 9, task 9: T2m with the Slack deactivation closes RESOLVED (SIMULATE
   const reads = step(k, 8).reads.map((x) => `${x.kind} ${x.state}`);
   assert.ok(reads.includes('slack:verify-deactivated PASS'), reads.join('; '));
 });
+
+// Batch 9, tasks 5 and 6: the shared mailbox grants and the quarantine release are SAFETY GATEs whose read-back
+// is the Exchange connector (exo-client.js), answered from each customer's simulated mailboxes and quarantine.
+// Wrong implementations they catch: a simulator that answers exo from nothing (the read reads INCONCLUSIVE),
+// a grant that writes the wrong list (Send As read as Full Access), and a release whose read-back ignores the
+// recipient.
+test('batch 9, task 5: T4 with both shared mailbox grants closes RESOLVED (SIMULATED) through the Exchange read-backs', async (t) => {
+  const r = await runDesk(t, { only: ['T4'], answers: { T4: good('shared-mailbox-full-access-portal', 'shared-mailbox-send-as-portal') } });
+  const k = r.ticket('T4');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['exo:verify-mailbox-permission PASS', 'exo:verify-recipient-permission PASS']);
+});
+
+test('batch 9, task 5: T8 with the mailbox-permissions Full Access grant closes RESOLVED (SIMULATED)', async (t) => {
+  const r = await runDesk(t, { only: ['T8'], answers: { T8: good('mailbox-full-access-grant-portal') } });
+  assert.equal(r.ticket('T8').closing_state, 'RESOLVED (SIMULATED)', r.ticket('T8').reason);
+});
+
+test('batch 9, task 5: a grant the simulator applies to the wrong list fails its read-back', async (t) => {
+  const { SIM_GATES: real } = require('./sim/gates.js');
+  const simTable = { ...real, 'shared-mailbox-send-as-portal': { ...real['shared-mailbox-send-as-portal'], apply: real['shared-mailbox-full-access-portal'].apply } };
+  const r = await runDesk(t, { only: ['T4'], answers: { T4: good('shared-mailbox-send-as-portal') }, deps: { simTable } });
+  assert.equal(r.ticket('T4').closing_state, 'FAILED', r.ticket('T4').reason);
+});
+
+test('batch 9, task 6: T5 with the quarantine release to one recipient closes RESOLVED (SIMULATED)', async (t) => {
+  const r = await runDesk(t, { only: ['T5'], answers: { T5: good('quarantine-release-one-portal') } });
+  const k = r.ticket('T5');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['exo:verify-quarantine-released PASS']);
+});
+

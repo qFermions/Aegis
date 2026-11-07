@@ -189,8 +189,18 @@ const DEFAULT_FACTS = Object.freeze([
   { fact: 'the DT- and LT- device names', answer: /\b(?:DT|LT)-(?:First|\[)/, profile: /\b(?:DT|LT)-/ },
   { fact: 'the default organization\'s own sites, vendors and servers', answer: new RegExp(`${DEFAULT_ORG_TOKENS.source}|\\bAD Connect server\\b|\\bthird tower\\b`), profile: DEFAULT_ORG_TOKENS },
 ]);
+// A mention counts only when no negation opens its own clause ("No SMS fallback added" names the fact to say
+// it is not used; batch 8's T1, batch 9). A clause ends at . ; : ! ? , or a line end.
+function usesFact(text, re) {
+  const t = String(text);
+  for (const m of t.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`))) {
+    const start = Math.max(...[...'.;:!?,\n'].map((c) => t.lastIndexOf(c, m.index - 1))) + 1;
+    if (!NEGATION.test(t.slice(start, m.index))) return true;
+  }
+  return false;
+}
 function defaultFactsIn(text, profile) {
-  return DEFAULT_FACTS.filter((f) => f.answer.test(String(text)) && !f.profile.test(String(profile || ''))).map((f) => f.fact);
+  return DEFAULT_FACTS.filter((f) => usesFact(text, f.answer) && !f.profile.test(String(profile || ''))).map((f) => f.fact);
 }
 
 // The message to the user now (batch 9, task 2) says what happens next. It never says a change is done, never

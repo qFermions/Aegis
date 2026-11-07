@@ -1,0 +1,3 @@
+✔ a default fact a negation opens its clause with is not the answer using that fact
+ℹ pass 1
+ℹ fail 0

@@ -212,7 +212,9 @@ const DONE_CLAIMS = [
   /\byou now have\b/i,
   /\byou(?:'re| are) (?:now |all )?back (?:in|on)\b/i,
   /\b(?:is|are|'s|'re) (?:now |all )?(?:fixed|resolved|sorted|unlocked|restored|working again|back up)\b/i,
-  /\b(?:has|have) (?:now |already |just )?been (?:[a-z]+ed|reset|set up|sent|done|undone)\b/i,
+  // the participles that name a change, so "has been received" or "has been escalated" stays an acknowledgement
+  // (code review round 1 of batch 9, finding 6)
+  /\b(?:has|have) (?:now |already |just )?been (?:reset|released|removed|deleted|wiped|erased|disabled|enabled|unlocked|locked|restored|granted|added|given|fixed|changed|revoked|resolved|blocked|unblocked|suspended|unsuspended|moved|created|turned (?:on|off)|set up|done|undone|sorted)\b/i,
   /\b(?:we|I|IT|Aegis)(?:'ve| have| has)? (?:just |now |already )?(?:locked|unlocked|reset|released|removed|deleted|wiped|erased|disabled|enabled|suspended|unsuspended|restored|granted|added|given|fixed|changed|blocked|unblocked|revoked|moved|created|signed you out|turned (?:on|off)|set up)\b/i,
 ];
 const DECIDED_ACTION = /\b(?:we|I|IT)(?:'ll| will| are going to| is going to|'re going to|'m going to) (?:now |then |also |first |just )?(?:lock|wipe|erase|reset|disable|delete|remove|suspend|block|revoke|re-?register|sign you out)\b/i;

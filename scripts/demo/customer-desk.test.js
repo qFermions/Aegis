@@ -859,7 +859,8 @@ test('each customer has its own audit folder, replay store, simulated tenant and
 test('every gate the table maps is a real gate, and every one with a read-back resolves through its own connector', async (t) => {
   const { catalog } = require('./catalog.js');
   const gates = catalog();
-  const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3' };
+  // batch 9, task 9: Slack joined the simulator through T2 and T2m's departing engineer
+  const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3', slack: 'T2' };
   const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'] };
   for (const [id, entry] of Object.entries(SIM_GATES)) {
     const g = gates.get(id);

@@ -22,5 +22,6 @@
       "reporting.user@[@Aegion_DOMAIN]": { "kind": "admin#directory#user", "id": "100000000000000000d02", "primaryEmail": "reporting.user@[@Aegion_DOMAIN]", "customerId": "C0demod01", "orgUnitPath": "/Staff", "suspended": false }
     }
   },
-  "linear": { "urlKey": "startup-d-demo", "users": [ { "id": "d1000000-0000-4000-8000-000000000001", "active": true, "admin": false, "guest": false, "owner": false } ] }
+  "linear": { "urlKey": "startup-d-demo", "users": [ { "id": "d1000000-0000-4000-8000-000000000001", "active": true, "admin": false, "guest": false, "owner": false } ] },
+  "slack": { "team_id": "T0DEMOD001", "users": { "U0DEMOD0LEAVE": { "id": "U0DEMOD0LEAVE", "team_id": "T0DEMOD001", "deleted": false, "is_restricted": false, "is_ultra_restricted": false, "is_admin": false, "is_bot": false } } }
 }

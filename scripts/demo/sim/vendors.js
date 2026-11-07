@@ -28,6 +28,7 @@ const CONNECTORS = Object.freeze({
   'google-workspace': { module: 'gws-client.js', credentials: () => ({ GWS_SA_PRIVATE_KEY: simKey() }) },
   linear: { module: 'linear-client.js', credentials: () => ({ LINEAR_API_KEY: FILLER }) },
   jamf: { module: 'jamf-client.js', credentials: () => ({ JAMF_CLIENT_SECRET: FILLER }) },
+  slack: { module: 'slack-client.js', credentials: () => ({ SLACK_TOKEN: FILLER }) },
 });
 
 const connectorModule = (name) => (CONNECTORS[name] ? require(path.join(ADAPTERS, CONNECTORS[name].module)) : null);
@@ -99,6 +100,18 @@ const ROUTES = {
       const d = jamfDevices.find((x) => x.management_id === id);
       const sent = d ? (d.mdm_commands || []).map((c) => ({ clientManagementId: id, ...c })) : [];
       return ok({ totalCount: sent.length, results: sent });
+    }
+    return notFound();
+  },
+  // Slack Web API (batch 9, task 9): users.info and auth.test from the tenant's Slack users. A Web API
+  // answer is HTTP 200 with ok false for an unknown user, as Slack answers it.
+  slack(state, req, p) {
+    const s = state.slack;
+    if (!s) return notFound();
+    if (p === '/api/auth.test') return ok({ ok: true, team_id: s.team_id, user_id: 'U0DESKSIM', team: 'simulated' });
+    if (p === '/api/users.info') {
+      const id = new URLSearchParams(String(req.path).split('?')[1] || '').get('user');
+      return s.users[id] ? ok({ ok: true, user: s.users[id] }) : ok({ ok: false, error: 'user_not_found' });
     }
     return notFound();
   },

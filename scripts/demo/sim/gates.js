@@ -44,6 +44,11 @@ const SIM_GATES = Object.freeze({
     platform: 'msgraph', effect: 'releases the quarantined message to all its recipients',
     apply: (s) => { for (const q of s.quarantine || []) q.released = true; },
   },
+  // Slack (batch 9, task 9: T2m's "whatever else" adds Slack)
+  'slack-user-lifecycle-deactivate-portal': {
+    platform: 'slack', effect: 'deactivates the Slack member',
+    apply: (s, t) => { s.slack.users[t['[USER_ID]']].deleted = true; },
+  },
   // Okta
   'okta-user-lifecycle-deactivate-portal': {
     platform: 'okta', effect: 'deactivates the Okta user',

@@ -17,7 +17,8 @@
         "okta": { "[OKTA_USER_ID]": "00u1dem0dEPARTx7y8z9" },
         "github": { "[GITHUB_USER]": "departing-engineer-demo" },
         "google-workspace": { "[USER@DOMAIN.COM]": "departing.engineer@[@Aegion_DOMAIN]" },
-        "linear": { "[USER_ID]": "d1000000-0000-4000-8000-000000000001" }
+        "linear": { "[USER_ID]": "d1000000-0000-4000-8000-000000000001" },
+        "slack": { "[USER_ID]": "U0DEMOD0LEAVE" }
       }
     },
     {

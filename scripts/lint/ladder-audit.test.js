@@ -78,3 +78,12 @@ test('Microsoft and Google are separate vendors, by runbook name', () => {
   assert.equal(ladder.vendorOf('jamf-lock-erase'), 'Jamf');
   assert.equal(ladder.vendorOf('fleet-device-actions'), 'Fleet');
 });
+
+test('on the real runbooks, --check exits 0: the saved audit is fresh and the fixed scope passes', () => {
+  // catches: a runbook edit that makes a section in SCOPE fail again, or an audit file left stale after an edit
+  const out = [];
+  const err = [];
+  const code = ladder.main(['--check'], { out: (s) => out.push(s), err: (s) => err.push(s) });
+  assert.equal(code, 0, err.join(''));
+  assert.match(out.join(''), /the fixed scope passes/);
+});

@@ -68,8 +68,9 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // batch 8, task 3: 97, with gws-offboard-suspend, okta-user-lifecycle-reset-password,
   // okta-user-lifecycle-suspend and okta-user-lifecycle-unsuspend re-classed to R2, each portal
   // gate and its fenced twin (4 times 2)
+  // batch 9, task 7: 98, jamf-lock-erase-wipe-portal names jamf-client.js verify-command --type ERASE_DEVICE
   assert.equal(gates, 343, 'every runbook gate');
-  assert.equal(naming, 97, 'the gates that name read-backs');
+  assert.equal(naming, 98, 'the gates that name read-backs');
 });
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {

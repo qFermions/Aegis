@@ -1,0 +1,2 @@
+comm -3 of the failing test names, batch9b/baseline/node-test-tripwire.txt against batch9/baseline/failing-tests.txt (tools/failing-names.sh on both; empty below means the same names):
+(end) names: 41

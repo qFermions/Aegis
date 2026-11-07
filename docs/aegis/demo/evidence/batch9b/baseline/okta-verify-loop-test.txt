@@ -1,0 +1,14 @@
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.453667ms)
+✔ user checks come first, then the admin PREVIEW ONLY marker, then Reset Authenticators as the last resort (0.22575ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.09425ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.421208ms)
+✔ the admin marker invents no menu path and authorizes nothing (0.111625ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34.515334
+exit 0

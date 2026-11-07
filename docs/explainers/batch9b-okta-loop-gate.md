@@ -13,10 +13,11 @@ Your ticket (MF-1): after a macOS update, Okta Verify on a Mac kept sending the 
 - It is the same change, with the same wording and phrase, as the session clear already in `/okta-user-lifecycle`. It has its own name because the safety checks allow each gate name only once.
 - Two Okta limits are written next to it: the More Actions menu does not show on your own profile, and Clear User Sessions is offered only for active users.
 - The three user checks and the last-resort reset did not change.
+- The practice desk learned the new step: one line in its pretend operator (`scripts/demo/sim/gates.js`), copying the existing session clear. Without it the ticket would stop as "not simulated".
 
 ## What the practice run showed
 
-One run of your ticket, 0.29 US dollars: it closed **RESOLVED (SIMULATED)**. The answer started with Okta's System Log, then the user checks, then Clear User Sessions, with the reset last.
+One run of your ticket, 0.29 US dollars: it closed **RESOLVED (SIMULATED)**. The answer started with Okta's System Log, then the user checks, then Clear User Sessions, with the reset last. Its card was 208 words, over the 150-word limit (that row fails; it does not stop a ticket).
 
 One thing to know: the answer also listed the reset as an approved change, and the practice desk carried out both. The desk does every change an answer lists; it cannot hold back "only if the step before did not work". In real life the technician would stop after the session clear if the loop was fixed.
 

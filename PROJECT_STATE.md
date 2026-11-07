@@ -252,6 +252,10 @@ captures: `docs/aegis/demo/evidence/batch9b/`; the owner's page: `docs/explainer
 | the inventory lists the new gate and drops the marker | `docs/security/STATE_CHANGE_INVENTORY.json` (regenerated) | the inventory equality test in `scripts/command-safety-gates.test.js` |
 | the simulated operator applies the new gate | `scripts/demo/sim/gates.js` | `customer-desk.test.js` "batch 9b" (`t2-desk-red.txt`, `t2-desk-green.txt`) |
 | vendor fact L-13 is CONFIRMED | `docs/aegis/batch9/vendor-facts-ladder.md` | Okta's "How to clear user session" article, opened 2026-11-07 |
+| T9m run alone, one session | `docs/aegis/demo/evidence/batch9b/T9m/` | RESOLVED (SIMULATED), 208-word card, 0.29 US dollars; the answer also named the last-resort reset gate and the desk simulated both (`T9m/summary.md`) |
+| gate-count pins move by one | `scripts/gate-r-class.test.js`, `scripts/audit/read-back-field.test.js` (348 to 349), `scripts/adapters/change-binding.test.js` (76 to 77 unbound) | the battery at `docs/aegis/demo/evidence/batch9b/battery-head/` |
+| batch 9's stale test title | `scripts/demo/customer-desk.test.js` (the T4/T8 replay-miss test) | `docs/aegis/demo/evidence/batch9b/t5-green.txt` |
+| the loop section's Purpose line no longer quotes the demo ticket; the Gotcha names Clear User Sessions as active-only | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` (`er1-02-red.txt`, `er1-02-green.txt`) |
 
 ## Partial
 

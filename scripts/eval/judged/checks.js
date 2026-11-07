@@ -150,8 +150,13 @@ function deskPhrase(text) {
   let start = end - 1;
   while (start >= 0 && !/^[ \t]*```/.test(lines[start])) start -= 1;
   if (start < 0 || !/^[ \t]*```[ \t]*aegis-desk[ \t]*$/.test(lines[start])) return null;
-  // a Phrase line that says there is none names no confirmation (code review round 1 of batch 9, finding 11)
-  const phrase = lines.slice(start + 1, end).map((l) => /^[ \t]*Phrase:[ \t]*(\S.*)$/.exec(l)).find((m) => m && !/^(?:none\b|n\/?a\b|tbd\b|-+$|\(none)/i.test(m[1].trim()));
+  // a phrase confirms a change only in a block that names one: at least one Gate line that is not "none"
+  // (code review round 2 of batch 9, finding 6); a Phrase line that says there is none names no confirmation
+  // (round 1, finding 11), and a phrase holds a word of letters
+  const block = lines.slice(start + 1, end);
+  const gates = block.map((l) => /^[ \t]*Gate:[ \t]*(\S.*)$/.exec(l)).filter(Boolean).map((m) => m[1].trim());
+  if (!gates.some((g) => !/^none\b/i.test(g))) return null;
+  const phrase = block.map((l) => /^[ \t]*Phrase:[ \t]*(\S.*)$/.exec(l)).find((m) => m && /[A-Za-z]{2,}/.test(m[1]) && !/^(?:none\b|n\/?a\b|tbd\b|null\b|not (?:required|needed)\b|no (?:phrase|gate)\b|\(no)/i.test(m[1].trim()));
   return phrase ? phrase[0].trim() : null;
 }
 

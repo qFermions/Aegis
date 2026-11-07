@@ -1,6 +1,6 @@
 # Whole-tree diff against 73bdc68: every path accounted for
 
-`whole-tree-diff.txt` beside this file is `git diff --stat 73bdc68` at the head it was taken. Paths inside `scripts/demo/`, `scripts/intake/`, `scripts/eval/judged/` and `docs/` are free under the charter. Every other path:
+`whole-tree-diff.txt` beside this file is `git diff --stat 73bdc68`, refreshed after the runs (247 files; most of the lines are evidence under `docs/aegis/demo/evidence/`). Paths inside `scripts/demo/`, `scripts/intake/`, `scripts/eval/judged/` and `docs/` are free under the charter. Every other path:
 
 | Path | Why | Allowed by |
 |---|---|---|
@@ -18,5 +18,7 @@
 | `scripts/lint/ladder-audit.js`, `ladder-audit.test.js` | the lint check and its tests | task 8b |
 | `scripts/okta-verify-loop.test.js`, `scripts/reset-erase-readbacks.test.js` | the section-order test; the read-back tests | tasks 8, 7 |
 | `scripts/ask-aegis.js`, `aegis-chat.js` and their tests | the two commands | task 11 |
+| `modules/security/placeholder-dictionary.md` | `[MESSAGE_ID]`, `[MESSAGE_IDENTITY_GUID]` and `[MAILBOX]` added through its "Adding a token" process | code review round 1, finding 14 (deviation D3 in checks.md: CLAUDE.md requires it, the charter's list does not name the file) |
+| `scripts/quarantine-readback-shell.test.js` | the quoted read-back placeholders and the dictionary check | code review round 1, findings 4 and 14 |
 | `checks.md`, `progress.md` | the harness records | CLAUDE.md Harness |
 | `docs/security/STATE_CHANGE_INVENTORY.json`, `docs/aegis/owner/vendor-facts-priority.md`, `docs/aegis/ladder-audit.md` | generated files their freshness tests require after the gate changes | docs |

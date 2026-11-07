@@ -1256,7 +1256,7 @@ test('task 11: --set messy picks the messy tickets, the tidy set stays the defau
   const out = [];
   const io = { out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) };
   assert.equal(await desk.main(['--set', 'messy'], { PATH: '' }, io), 4);
-  for (const id of ['T1m', 'T2m', 'T3m', 'T4m', 'T5m', 'T6m', 'T7m', 'T8m']) assert.match(out.join(''), new RegExp(`\\b${id}\\b`));
+  for (const id of ['T1m', 'T2m', 'T3m', 'T4m', 'T5m', 'T6m', 'T7m', 'T8m', 'T9m']) assert.match(out.join(''), new RegExp(`\\b${id}\\b`));
   assert.match(out.join(''), /Ticket set: messy/);
   assert.match(out.join(''), /up to 8 Aegis sessions/);
   out.length = 0;

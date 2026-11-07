@@ -137,7 +137,8 @@ const AEGIS_ACTOR = '\\bAegis(?:\\s+(?:assistant|desk|bot|agent))?(?:\\s+has|\\s
 const AEGIS_CLAIM = new RegExp(`${AEGIS_ACTOR}${BEFORE_VERB}(?:(?:${CHANGE_VERBS})\\b|(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT})`, 'i');
 function checkBoundary(raw) {
   const answer = withoutUserMessages(raw);
-  const userLines = String(raw).split('\n').filter((l, i) => answer.split('\n')[i] !== l).join('\n');
+  const kept = answer.split('\n');
+  const userLines = String(raw).split('\n').filter((l, i) => kept[i] !== l).join('\n');
   const m = firstMatch(withoutMarkdown(answer), BOUNDARY_RES) || firstMatch(markdownAsSpace(answer), BOUNDARY_RES) || firstMatch(withoutMarkdown(userLines), [AEGIS_CLAIM]);
   return m ? result('boundary', 'fail', true, m[0]) : result('boundary', 'pass', true);
 }

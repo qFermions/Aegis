@@ -1,0 +1,8 @@
+ℹ fail 6
+ℹ pass 0
+✖ code review 2, finding 10: a negated verb covers every default fact in its clause; a stray "no" does not
+✖ code review 2, finding 12: an Aegis claim needs a change, and the Aegis assistant is Aegis too
+✖ code review 2, finding 13: "in the details field" is part of the message, not the pointer
+✖ code review 2, finding 5: every change participle the desk knows is a done claim; acknowledgements are not
+✖ code review 2, finding 6: a Phrase line counts only in a block that names a gate
+✖ code review 2, finding 9: an announced change that waits on a condition is a plan, before or after

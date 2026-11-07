@@ -20,7 +20,7 @@ const path = require('node:path');
 const { test } = require('node:test');
 
 const { catalog } = require('./catalog.js');
-const { lightestStepFirst } = require('./lightest-step.js');
+const { lightestStepFirst } = require('./step-ladder.js');
 
 const portal = (id, r, effect) => [`<!-- SAFETY GATE [${id}] -->`, '- **Target:** [UPN]', `- **Effect:** ${effect}`, '- **Scope:** one user', `- **Reversibility:** ${r}: as stated`, `- **Required confirmation:** Type exactly \`DO ${id} FOR [UPN]\`.`, '- **Failure behavior:** stop.', '- **Read-back:** none (a reason)'].join('\n');
 const RUNBOOK = ['# Example sign-in loop', '',

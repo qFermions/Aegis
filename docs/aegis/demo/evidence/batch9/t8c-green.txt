@@ -1,0 +1,9 @@
+✔ fails: the first change is a heavy reset while the section lists a lighter admin step
+✔ passes: the section lists only a user check before the heavy gate
+✔ passes: the answer names the lighter gate first, then the heavy one
+✔ fails: the heavy gate first, the lighter gate of its own section second
+✔ passes: no change advised, or a first change that is not heavy, or a gate no runbook holds
+✔ the desk shows it as its own row at step 5, and a failed row does not stop the ticket
+ℹ tests 6
+ℹ pass 6
+ℹ fail 0

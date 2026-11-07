@@ -6,10 +6,16 @@
 # value, CAP_USD is used. (Code review 1 of batch 9b, finding 11: it once raised a smaller desk value.)
 real="${REAL_CLAUDE:?set REAL_CLAUDE to the real claude binary}"
 cap="${CAP_USD:?set CAP_USD}"
-smaller() { awk -v a="$1" -v b="$2" 'BEGIN { if (a == "" || a + 0 > b + 0) print b; else print a }'; }
+# the smaller of two amounts; anything but a plain decimal amount (abc, -1, nan, 1.5.0, empty) counts as no
+# value, so the cap is used (code review 2, finding 3: the guard failed open on those)
+smaller() {
+  case "$1" in ''|*[!0-9.]*|*.*.*|.*|*.) echo "$2"; return ;; esac
+  awk -v a="$1" -v b="$2" 'BEGIN { if (a + 0 > b + 0) print b; else print a }'
+}
 out=(); asked=""; next=0
 for a in "$@"; do
-  if [ "$next" = 1 ]; then asked="$a"; next=0; continue; fi
+  # a flag right after --max-budget-usd is not its value: keep it (code review 2, finding 3)
+  if [ "$next" = 1 ]; then next=0; case "$a" in -*) ;; *) asked="$a"; continue ;; esac; fi
   case "$a" in
     --max-budget-usd) next=1 ;;
     --max-budget-usd=*) asked="${a#--max-budget-usd=}" ;;

@@ -39,7 +39,7 @@ The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (
 | /security-review on the branch | pass | `reviews/security-review-1.md`: no findings, at `d914023` | |
 | /code-review at xhigh (tier C from `node scripts/risk_tier.mjs c0f3757`), at most three rounds | pass | three rounds (Review rounds: 14, 15 and 15 findings), every finding fixed in a commit named for its class or closed with a reason | the fixes made after round 3 had no fourth review (the limit is three rounds) |
 | Evidence review | pass | `reviews/evidence-review-1.md`: 13 findings (5 important, 5 nits, 3 pre-existing); each fixed or closed below | |
-| CI green on the draft pull request | unresolved | not opened yet | |
+| CI green on the draft pull request | pass | draft PR #16; at `36f5adc`: workflow CI run 42361263141 (detect, evals, risk-tier, verify) and Release Gate run 42361263198 (Tests and full-tree scan on ubuntu-latest and windows-latest), 6 of 6 pass, read with `gh pr checks 16` | the record commit after it reran CI (PR body) |
 
 ## Evidence review 1 (at `d914023`)
 

@@ -18,7 +18,7 @@ test at scripts/demo/customer-desk.test.js:1302:1
   + 'OPEN'
   - 'RESOLVED (SIMULATED)'
   
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/scripts/demo/customer-desk.test.js:1307:10)
+      at TestContext.<anonymous> (<repo>/scripts/demo/customer-desk.test.js:1307:10)
       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
       at async Test.run (node:internal/test_runner/test:1409:7)
       at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {

@@ -24,7 +24,7 @@ test at scripts/okta-verify-loop.test.js:65:1
   
   0 !== 1
   
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/scripts/okta-verify-loop.test.js:72:10)
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:72:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -42,7 +42,7 @@ test at scripts/okta-verify-loop.test.js:65:1
 test at scripts/okta-verify-loop.test.js:91:1
 ✖ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.082625ms)
   AssertionError [ERR_ASSERTION]: a SAFETY GATE in the section
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/scripts/okta-verify-loop.test.js:96:10)
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:96:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -60,7 +60,7 @@ test at scripts/okta-verify-loop.test.js:91:1
 test at scripts/okta-verify-loop.test.js:105:1
 ✖ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.075542ms)
   AssertionError [ERR_ASSERTION]: a SAFETY GATE in the section
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/scripts/okta-verify-loop.test.js:110:10)
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:110:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -78,7 +78,7 @@ test at scripts/okta-verify-loop.test.js:105:1
 test at scripts/okta-verify-loop.test.js:121:1
 ✖ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.060417ms)
   AssertionError [ERR_ASSERTION]: a SAFETY GATE in the section
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/scripts/okta-verify-loop.test.js:126:10)
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:126:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -96,7 +96,7 @@ test at scripts/okta-verify-loop.test.js:121:1
 test at scripts/okta-verify-loop.test.js:135:1
 ✖ the admin step says where it comes from and the two Okta limits on More Actions (0.145709ms)
   AssertionError [ERR_ASSERTION]: the admin step's source line
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/scripts/okta-verify-loop.test.js:140:10)
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:140:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -121,7 +121,7 @@ test at scripts/okta-verify-loop.test.js:160:1
   + ]
   - []
   
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/scripts/okta-verify-loop.test.js:164:10)
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:164:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)

@@ -805,7 +805,9 @@ test('T8 hits the cache when T4 was verified in the same run: no second session,
   assert.deepEqual(members, ['e1000000-0000-4000-8000-000000000001', 'e1000000-0000-4000-8000-000000000002'], 'each ticket changed its own person');
 });
 
-test('with the real runbooks T4 cannot resolve, so T8 is a replay MISS and gets its own session (the gap for the owner)', async (t) => {
+// The answer names mailbox-grant-portal, an id no runbook holds, so T4 closes OPEN; since batch 9 the real
+// grant gates exist (the "batch 9, task 5" tests resolve T4 and T8 with them), so this is no longer a runbook gap.
+test('when T4 names a gate no runbook holds it stays OPEN, so T8 is a replay MISS and gets its own session', async (t) => {
   const answer = good('mailbox-grant-portal');
   const r = await runDesk(t, { only: ['T4', 'T8'], answers: { T4: answer, T8: answer } });
   assert.equal(r.ticket('T4').closing_state, 'OPEN');

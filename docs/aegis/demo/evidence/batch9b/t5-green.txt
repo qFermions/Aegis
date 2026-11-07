@@ -1,0 +1,10 @@
+✔ when T4 names a gate no runbook holds it stays OPEN, so T8 is a replay MISS and gets its own session (278.781542ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 335.185458
+exit 0

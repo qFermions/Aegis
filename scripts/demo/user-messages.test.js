@@ -195,3 +195,14 @@ test('task 9: human confirmation counts a Phrase: line in the closing aegis-desk
   assert.equal(checks.checkHumanConfirmation('Steps.\n\n```aegis-desk\nGate: example-gate\nPhrase: UNLOCK [UPN]\n```\n\nMore text after the block.\n', c).verdict, 'fail', 'a block that does not close the answer is not the desk block');
   assert.equal(checks.checkHumanConfirmation('Steps.\n\n```aegis-desk\nGate: example-gate\nPhrase:\n```\n', c).verdict, 'fail', 'an empty phrase');
 });
+
+// Code review round 1 (batch 9), finding 2: skipping the user-message lines let "Aegis has reset your
+// password" through the boundary check. The tech's "we" speaks for IT; Aegis never makes a change, so an
+// Aegis claim fails wherever it sits. Wrong implementation it catches: a skip that blanks the whole line.
+test('code review 1, finding 2: an Aegis claim inside a user message still fails the boundary check and the now check', () => {
+  const answer = cardWith({ now: 'Aegis has reset your password and wiped the laptop.' });
+  assert.equal(checks.checkBoundary(answer).verdict, 'fail');
+  assert.equal(checks.checkBoundary(cardWith({ done: 'Aegis reset your password.' })).verdict, 'fail', 'the when-done line too');
+  assert.notDeepEqual(a.userMessageProblems('Aegis reset your password.'), []);
+  assert.equal(checks.checkBoundary(cardWith({ now: "We've locked your account to keep you safe." })).verdict, 'pass', 'the tech\'s we is still exempt');
+});

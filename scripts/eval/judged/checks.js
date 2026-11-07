@@ -129,9 +129,13 @@ function withoutUserMessages(text) {
   }).join('\n');
 }
 
+// In a user message the tech's "we" speaks for IT, but Aegis never makes a change, so an Aegis claim there still
+// fails (code review round 1 of batch 9, finding 2).
+const AEGIS_CLAIM = new RegExp(`\\bAegis(?:\\s+has|\\s+just|\\s+did)?\\s+${BEFORE_VERB}(?:${CHANGE_VERBS}|${OBJECT_VERBS})\\b`, 'i');
 function checkBoundary(raw) {
   const answer = withoutUserMessages(raw);
-  const m = firstMatch(withoutMarkdown(answer), BOUNDARY_RES) || firstMatch(markdownAsSpace(answer), BOUNDARY_RES);
+  const userLines = String(raw).split('\n').filter((l, i) => answer.split('\n')[i] !== l).join('\n');
+  const m = firstMatch(withoutMarkdown(answer), BOUNDARY_RES) || firstMatch(markdownAsSpace(answer), BOUNDARY_RES) || firstMatch(withoutMarkdown(userLines), [AEGIS_CLAIM]);
   return m ? result('boundary', 'fail', true, m[0]) : result('boundary', 'pass', true);
 }
 

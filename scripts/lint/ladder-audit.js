@@ -63,8 +63,10 @@ function fieldOf(lines, from, name) {
   return '';
 }
 
-// Every audited section of one runbook: { runbook, vendor, section, line, heavy, verdict, reason }.
-function auditText(text, runbook) {
+// Every section of one runbook with its ladder events in order: { title, line, escape, events: [{ kind:
+// 'heavy'|'lighter'|'other', id, line, admin }] }. admin is false for a user check or lighter step line (not
+// an admin change). The desk's "lightest step first" check reads this too (scripts/demo/step-ladder.js).
+function sectionEvents(text) {
   const lines = String(text).split('\n');
   const rClass = new Map(gateFields(text).map((g) => [g.line, g.rClass]));
   const sections = [];
@@ -82,16 +84,21 @@ function auditText(text, runbook) {
       const id = mark[1] || mark[2];
       const r = rClass.get(i + 1) || null;
       const heavy = r === 'R3' || HEAVY.test(id) || HEAVY.test(fieldOf(lines, i + 1, 'Effect'));
-      current.events.push({ kind: heavy ? 'heavy' : (['R0', 'R1', 'R2'].includes(r) ? 'lighter' : 'other'), id, line: i + 1 });
+      current.events.push({ kind: heavy ? 'heavy' : (['R0', 'R1', 'R2'].includes(r) ? 'lighter' : 'other'), id, line: i + 1, admin: true });
       return;
     }
-    for (const m of l.matchAll(PREVIEW)) current.events.push({ kind: HEAVY.test(m[1]) ? 'other' : 'lighter', id: m[1], line: i + 1 });
-    if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: 'a user check or lighter step line', line: i + 1 });
+    for (const m of l.matchAll(PREVIEW)) current.events.push({ kind: HEAVY.test(m[1]) ? 'other' : 'lighter', id: m[1], line: i + 1, admin: true });
+    if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: 'a user check or lighter step line', line: i + 1, admin: false });
     if (NO_LIGHTER.test(l)) current.escape = true;
   });
   sections.push(current);
+  return sections;
+}
+
+// Every audited section of one runbook: { runbook, vendor, section, line, heavy, verdict, reason }.
+function auditText(text, runbook) {
   const rows = [];
-  for (const s of sections) {
+  for (const s of sectionEvents(text)) {
     const first = s.events.findIndex((e) => e.kind === 'heavy');
     if (first < 0) continue;
     const heavy = s.events[first];
@@ -109,7 +116,8 @@ function auditAll(dir = RUNBOOKS) {
   return { names, rows: names.flatMap((n) => auditText(fs.readFileSync(path.join(dir, `${n}.md`), 'utf8'), n)) };
 }
 
-const cell = (s) => String(s).replace(/\|/g, '\\|');
+// a runbook heading may hold a long dash; the audit writes it as a hyphen (the repository's rule for new files)
+const cell = (s) => String(s).replace(/\|/g, '\\|').replace(/\u2014/g, '-');
 function report({ names, rows }) {
   const count = (pred) => rows.filter(pred).length;
   const inScope = (r) => SCOPE.includes(r.runbook);
@@ -159,6 +167,6 @@ function main(argv = process.argv.slice(2), io = { out: (s) => process.stdout.wr
   return 0;
 }
 
-module.exports = { auditText, auditAll, report, vendorOf, SCOPE, HEAVY, main };
+module.exports = { sectionEvents, auditText, auditAll, report, vendorOf, SCOPE, HEAVY, main };
 
 if (require.main === module) process.exitCode = main();

@@ -84,6 +84,15 @@ const CONNECTORS = [
     verify: ['verify-deactivated', '--user', 'U0USER0001'], other: 'verify-guest', read: ['user', '--user', 'U0USER0001'],
     replies: () => [ok({ ok: true, user: { id: 'U0USER0001', team_id: 'T0OURS0001', deleted: true } })],
   },
+  // batch 9, task 4: the Exchange Online connector; its transport answers { exitCode, stdout } as pwsh
+  // would, so it brings its own (pwsh below)
+  {
+    name: 'exo', file: './exo-client.js',
+    env: { EXO_APP_ID: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', EXO_ORGANIZATION: 'example-test.onmicrosoft.com', EXO_CERTIFICATE_PATH: '/fixture/exo.pfx' },
+    verify: ['verify-mailbox-permission', '--mailbox', at('shared-box', 'example.org'), '--delegate', at('delegate', 'example.org'), '--absent'], other: 'verify-recipient-permission', read: ['mailbox-permissions', '--mailbox', at('shared-box', 'example.org')],
+    replies: () => [{ exitCode: 0, stderr: '', stdout: '[]' }],
+    pwsh: true,
+  },
   {
     name: 'jira', file: '../jira-client.js', env: { JIRA_SITE: 'example-tenant.atlassian.net', JIRA_EMAIL: at('api', 'example.org'), JIRA_API_TOKEN: TOKEN },
     verify: ['verify-transition', '--issue', 'HELP-1', '--issue-id', '10001', '--from-version', '1000', '--to-status', 'Done'], other: 'verify-comment', read: ['get', '--issue', 'HELP-1'],
@@ -98,6 +107,14 @@ function queued(replies) {
     const next = replies.length ? replies.shift() : { status: 500, body: '{}' };
     return { status: next.status, headers: next.headers || {}, body: typeof next.body === 'string' ? next.body : JSON.stringify(next.body) };
   };
+  transport.calls = calls;
+  return transport;
+}
+
+// The Exchange Online seam: each reply is already { exitCode, stdout, stderr }.
+function pwsh(replies) {
+  const calls = [];
+  const transport = async (request) => { calls.push(request); return replies.length ? replies.shift() : { exitCode: 1, stdout: '', stderr: '' }; };
   transport.calls = calls;
   return transport;
 }
@@ -135,7 +152,7 @@ function trail(t) {
 
 async function run(c, argv, tr, { execute = true } = {}) {
   const mod = require(c.file);
-  const transport = queued(c.replies());
+  const transport = c.pwsh ? pwsh(c.replies()) : queued(c.replies());
   const out = [];
   const err = [];
   const code = await mod.run(execute ? [...argv, '--execute'] : argv, c.env, {
@@ -586,7 +603,8 @@ test('every connector with a verify-* command takes --change out of argv, checks
       for (const call of calls) assert.match(call, /,\s*bound\.change\s*,\s*(?:null|runIdOf\('[a-z-]+', name, args(?:, [^()]+)?\))\s*,\s*bound\.argv\s*$/, `${name}: recordVerdict(${call.slice(0, 60)}) passes bound.change, the run id and bound.argv`);
     }
   }
-  assert.equal(checked, 9, 'the nine connectors with read-backs');
+  // nine before batch 9; task 4 adds exo-client.js
+  assert.equal(checked, 10, 'the ten connectors with read-backs');
 });
 
 // Code review round 2, finding 7: on a plain read, --change in either form is refused as not a

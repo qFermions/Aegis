@@ -487,6 +487,51 @@
         }
       ]
     },
+    "exo": {
+      "credential": [
+        "EXO_APP_ID",
+        "EXO_CERTIFICATE_PATH",
+        "EXO_CERTIFICATE_PASSWORD",
+        "EXO_CERTIFICATE_THUMBPRINT"
+      ],
+      "least_privilege": [
+        "the application permission Office 365 Exchange Online > Exchange.ManageAsApp, with admin consent, and no other API permission (the default Microsoft Graph User.Read consent revoked; vendor facts X-05, X-27)",
+        "the Microsoft Entra role Global Reader assigned to the app, a role app-only Exchange Online PowerShell supports (vendor fact X-06); the session is limited by that role"
+      ],
+      "refused": [
+        "any role that can write: Exchange Administrator, Exchange Recipient Administrator, Global Administrator, Helpdesk Administrator, Security Administrator, Compliance Administrator (vendor fact X-06)",
+        "a custom role group holding any Set-, New-, Add-, Remove- or Release- cmdlet"
+      ],
+      "exposure": {
+        "kind": "none",
+        "how": "Not exposed: the module fetches the app-only token itself and the role is returned only inside that access token (vendor fact X-06), which the connector never sees, so Aegis cannot check the granted role and says so in a scope_notice on every executed result. Assign exactly the role above; the connector itself runs only the four read cmdlets, and asks Connect-ExchangeOnline -CommandName for those four only."
+      },
+      "facts": [
+        "X-01",
+        "X-02",
+        "X-03",
+        "X-04",
+        "X-05",
+        "X-06",
+        "X-07",
+        "X-27"
+      ],
+      "unconfirmed": [
+        "X-07: that -CommandName limits the session to the commands named (only the syntax line was read)"
+      ],
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/powershell/exchange/app-only-auth-powershell-v2",
+          "read_on": "2026-11-06",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://learn.microsoft.com/powershell/module/exchangepowershell/connect-exchangeonline",
+          "read_on": "2026-11-06",
+          "how": "search excerpt"
+        }
+      ]
+    },
     "okta": {
       "credential": [
         "OKTA_CLIENT_ID",

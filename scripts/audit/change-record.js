@@ -73,6 +73,8 @@ const CONNECTOR_FILES = Object.freeze({
   'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js',
   linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js',
   okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js',
+  // batch 9, task 4: Exchange Online, the PowerShell connector
+  exo: 'scripts/adapters/exo-client.js',
 });
 // Gates whose required confirmation names a count of objects the change acts on, each object
 // proved by its own verify-* read-back (batch G3 close-out 2, owner decision 2), with the

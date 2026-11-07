@@ -1,0 +1,94 @@
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.471125ms)
+✔ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.335792ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.075416ms)
+✔ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.390291ms)
+✔ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.424125ms)
+✔ the PORTAL ACTION dialog and read-back steps are Phase C's word for word (0.141708ms)
+✔ the Placeholders line defines [NOT_BEFORE] in the form the connector takes (0.051375ms)
+✖ the Fast path sends a loop ticket to its section first, with Phase B or Phase C as its last resort (0.288375ms)
+✖ the checklist has the session-clear item, and the compromise item still applies when no reset was done (0.144625ms)
+✖ a completed Jira form needs every read-back of the path taken, and one form covers the session clear then the reset (0.120458ms)
+✔ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.080583ms)
+✔ the admin step says where it comes from and the two Okta limits on More Actions (0.0845ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.0705ms)
+✔ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (19.604916ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 11
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.181959
+
+✖ failing tests:
+
+test at scripts/okta-verify-loop.test.js:155:1
+✖ the Fast path sends a loop ticket to its section first, with Phase B or Phase C as its last resort (0.288375ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Phase B, or Phase C when every enrollment must go, is its last resort/. Input:
+  
+  '2. An Okta Verify sign-in loop after a macOS update: follow "Okta Verify sign-in loop after a macOS update" below first (the user checks, then the session clear gate); Phase B is its last resort.'
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:162:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '2. An Okta Verify sign-in loop after a macOS update: follow "Okta Verify sign-in loop after a macOS update" below first (the user checks, then the session clear gate); Phase B is its last resort.',
+    expected: /Phase B, or Phase C when every enrollment must go, is its last resort/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:165:1
+✖ the checklist has the session-clear item, and the compromise item still applies when no reset was done (0.144625ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /the compromise item still applies/. Input:
+  
+  '- [ ] Okta Verify sign-in loop fixed by the session clear: the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click, and the user completed one full sign-in. With no reset done, the reset and re-enrollment items below do not apply.'
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:171:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '- [ ] Okta Verify sign-in loop fixed by the session clear: the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click, and the user completed one full sign-in. With no reset done, the reset and re-enrollment items below do not apply.',
+    expected: /the compromise item still applies/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:174:1
+✖ a completed Jira form needs every read-back of the path taken, and one form covers the session clear then the reset (0.120458ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /every read-back this ticket ran passed/. Input:
+  
+  '\n' +
+    '\n' +
+    'Use a completed form only when every read-back this ticket ran passed; otherwise write a partial-state note naming what is verified, what is pending, and the next owner.\n' +
+    '\n' +
+    '> [Only if all checks passed] Okta MFA reset for `[UPN]`: identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n' +
+    '\n' +
+    '> [Okta Verify loop fixed by the session clear, only if its checks passed] Okta Verify sign-in loop for `[UPN]` after a macOS update: user checks [results]; macOS [version], Okta Verify [version]; sessions cleared after [NOT_BEFORE], confirmed by the exact phrase; connector read-back verify-sessions-cleared passed at [timestamp]; the user completed a sign-in at [timestamp]. No authenticator was reset. Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:178:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n\nUse a completed form only when every read-back this ticket ran passed; otherwise write a partial-state note naming what is verified, what is pending, and the next owner.\n\n> [Only if all checks passed] Okta MFA reset for `[UPN]`: identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n\n> [Okta Verify loop fixed by the session clear, only if its checks passed] Okta Verify sign-in loop for `[UPN]` after a macOS update: user checks [results]; macOS [version], Okta Verify [version]; sessions cleared after [NOT_BEFORE], confirmed by the exact phrase; connector read-back verify-sessions-cleared passed at [timestamp]; the user completed a sign-in at [timestamp]. No authenticator was reset. Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n',
+    expected: /every read-back this ticket ran passed/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+exit 1

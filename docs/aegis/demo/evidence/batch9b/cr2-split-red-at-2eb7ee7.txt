@@ -1,0 +1,17 @@
+$ git show 2eb7ee7:.claude/commands/okta-mfa-reset.md > .claude/commands/okta-mfa-reset.md && node --test scripts/okta-verify-loop.test.js   (the test at this commit against the runbook before code review 1)
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.48025ms)
+✔ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.348ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.071375ms)
+✔ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.491792ms)
+✔ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.193834ms)
+✔ the PORTAL ACTION dialog and read-back steps are Phase C's word for word (0.479959ms)
+✖ the Placeholders line defines [NOT_BEFORE] in the form the connector takes (0.303708ms)
+✖ the Fast path sends a loop ticket to its section first, with Phase B or Phase C as its last resort (0.149292ms)
+✖ the checklist has the session-clear item, and the compromise item still applies when no reset was done (0.127083ms)
+✖ a completed Jira form needs every read-back of the path taken, and one form covers the session clear then the reset (0.209084ms)
+✔ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.088041ms)
+✔ the admin step says where it comes from and the two Okta limits on More Actions (0.109084ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.070666ms)
+✔ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (3.925042ms)
+ℹ tests 14
+ℹ pass 10

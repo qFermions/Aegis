@@ -124,32 +124,61 @@ test('the gate\'s click path is the owner\'s: Directory, People or the Dashboard
   assert.doesNotMatch(s.join('\n'), /\*\*re-?auth/i, 'no button named re-auth');
 });
 
+// The numbered steps 2 and 3 of one PORTAL ACTION block: from its label to the next blank line, so another
+// block's steps are never read (code review 2 of batch 9b, finding 12).
+function actionSteps(lines, id) {
+  const at = lines.findIndex((l) => l.includes(`**PORTAL ACTION [${id}]:**`));
+  assert.ok(at >= 0, `a PORTAL ACTION for ${id}`);
+  const end = lines.findIndex((l, i) => i > at && l.trim() === '');
+  return lines.slice(at + 1, end < 0 ? lines.length : end).filter((l) => /^\s*[23]\.\s/.test(l));
+}
+const block = (heading) => { const parts = TEXT.split(heading); assert.equal(parts.length, 2, `one "${heading}"`); return parts[1].split('\n## ')[0]; };
+const fastPath = () => { const lines = TEXT.split('\n'); const at = lines.indexOf('## Fast path'); assert.ok(at >= 0, 'a Fast path'); return lines.slice(at, lines.findIndex((l, i) => i > at && /^## /.test(l))); };
+
 test('the PORTAL ACTION dialog and read-back steps are Phase C\'s word for word', () => {
   // code review 1 of batch 9b, finding 8: catches the two copies of the session clear drifting apart past the field lines
   const s = section();
   assert.ok(s, 'section present');
   const [gate] = gatesIn(s);
-  const steps = (lines, id) => { const at = lines.findIndex((l) => l.includes(`**PORTAL ACTION [${id}]:**`)); return lines.slice(at + 1).filter((l) => /^\s*[23]\.\s/.test(l)).slice(0, 2); };
-  const phaseC = steps(LIFECYCLE.split('\n'), PHASE_C);
+  assert.ok(gate, 'a SAFETY GATE in the section');
+  const phaseC = actionSteps(LIFECYCLE.split('\n'), PHASE_C);
   assert.equal(phaseC.length, 2, 'Phase C has steps 2 and 3');
-  assert.deepEqual(steps(s, gate.id), phaseC);
+  assert.deepEqual(actionSteps(s, gate.id), phaseC);
 });
 
-test('the rest of the runbook knows the light path: [NOT_BEFORE] defined, the Fast path, the checklist and the Jira note', () => {
-  // code review 1 of batch 9b, findings 2, 9 and 10: catches a tech who follows only the top of the runbook or its
-  // closing checklist being sent past the session clear to the reset, or writing [NOT_BEFORE] in a form the connector refuses
-  const lines = TEXT.split('\n');
-  const placeholders = lines.find((l) => l.startsWith('**Placeholders:**'));
+test('the Placeholders line defines [NOT_BEFORE] in the form the connector takes', () => {
+  // code review 1 of batch 9b, finding 9: catches a tech writing "09:05 UTC", which the connector refuses
+  const placeholders = TEXT.split('\n').find((l) => l.startsWith('**Placeholders:**'));
   assert.match(placeholders, /`\[NOT_BEFORE\]` \(the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`/);
-  const fast = lines.slice(lines.indexOf('## Fast path'), lines.findIndex((l, i) => i > lines.indexOf('## Fast path') && /^## /.test(l)));
+});
+
+test('the Fast path sends a loop ticket to its section first, with Phase B or Phase C as its last resort', () => {
+  // code review 1, finding 10, and code review 2, finding 14: catches the quick route skipping the session clear,
+  // or naming only Phase B where the section names Phase B or Phase C
+  const fast = fastPath();
   const loop = fast.findIndex((l) => l.includes(TITLE));
   const phaseB = fast.findIndex((l) => /^\d+\. Phase B:/.test(l));
   assert.ok(loop > 0 && loop < phaseB, 'the Fast path names the loop section before Phase B');
-  const checklist = TEXT.split('## ✅ Verification checklist')[1].split('\n## ')[0];
-  assert.match(checklist, /verify-sessions-cleared/, 'a checklist item for the session-clear read-back');
-  const note = TEXT.split('## 📝 Jira-ready note')[1].split('\n## ')[0];
-  assert.match(note, /every read-back this ticket ran passed/);
+  assert.match(fast[loop], /Phase B, or Phase C when every enrollment must go, is its last resort/);
+});
+
+test('the checklist has the session-clear item, and the compromise item still applies when no reset was done', () => {
+  // code review 1, finding 2, and code review 2, finding 13: catches a checklist with no item for the light path, or one
+  // that lets a tech skip the compromise item along with the reset items
+  const checklist = block('## ✅ Verification checklist');
+  const item = checklist.split('\n').find((l) => /verify-sessions-cleared/.test(l));
+  assert.ok(item, 'a checklist item for the session-clear read-back');
+  assert.match(item, /the compromise item still applies/);
+});
+
+test('a completed Jira form needs every read-back of the path taken, and one form covers the session clear then the reset', () => {
+  // code review 2, findings 1 and 5: catches a rule a skipped read-back satisfies ("every read-back this ticket ran"),
+  // and a ticket where both changes ran having no true completed form
+  const note = block('## 📝 Jira-ready note');
+  assert.doesNotMatch(note, /every read-back this ticket ran passed/);
+  assert.match(note, /every read-back above that the path taken requires passed/);
   assert.match(note, /verify-sessions-cleared passed/, 'a completed form for the session-clear path');
+  assert.match(note, /\[if the session clear ran first\][^\n]*verify-sessions-cleared passed/, 'the reset form carries the session clear when it ran first');
 });
 
 test('a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it', () => {
@@ -170,7 +199,6 @@ test('the admin step says where it comes from and the two Okta limits on More Ac
   // catches: a step that reads as Okta's published fix for the loop, or the limits left out
   const s = section();
   assert.ok(s, 'section present');
-  const body = s.join('\n');
   assert.ok(s.includes('Source: operator-validated by the owner on the real ticket, 2026-11-07, path confirmed against Okta\'s "How to clear user session" article.'), 'the admin step\'s source line');
   const gotcha = s.find((l) => /^\*\*Gotcha:\*\*/.test(l) && /More Actions/.test(l));
   assert.ok(gotcha, 'a Gotcha about More Actions');

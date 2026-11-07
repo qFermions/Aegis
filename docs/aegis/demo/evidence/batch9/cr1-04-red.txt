@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 1
+✖ every exo read-back line and field quotes [MESSAGE_ID] and [MESSAGE_IDENTITY_GUID]
+✖ failing tests:

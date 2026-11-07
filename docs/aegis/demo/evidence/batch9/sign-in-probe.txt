@@ -1,0 +1,6 @@
+Before the runs (batch 9), with this session's Claude Code variables unset (CLAUDECODE, CLAUDE_CODE_*, CLAUDE_PID, CLAUDE_EFFORT), as a plain signed-in terminal has them:
+
+$ env -u CLAUDECODE -u CLAUDE_CODE_... claude -p /context --output-format json --setting-sources project --strict-mcp-config < /dev/null
+
+First 600 characters of its output, as printed (2.1.319 (Claude Code)):
+{"is_error":false,"duration_api_ms":0,"num_turns":0,"stop_reason":null,"session_id":"517a2240-e165-456c-8b09-96b602c6592e","total_cost_usd":0,"usage":{"output_tokens_details":{"thinking_tokens":0},"input_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":0,"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":0},"inference_geo":"","iterations":[],"speed":"standard","fallback_credit":null},"modelUsage":{},"permission_denials":[],"fast_mode_state":

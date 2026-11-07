@@ -1,0 +1,11 @@
+$ self-check of tools/claude-cap.sh under bash, REAL_CLAUDE=/bin/echo CAP_USD=1.50
+args: -p x --max-budget-usd 2.00 --model y
+  -> -p x --model y --max-budget-usd 1.50
+args: -p x --max-budget-usd 0.40
+  -> -p x --max-budget-usd 0.40
+args: -p x --max-budget-usd=2
+  -> -p x --max-budget-usd 1.50
+args: -p x
+  -> -p x --max-budget-usd 1.50
+args: -p x --max-budget-usd
+  -> -p x --max-budget-usd 1.50

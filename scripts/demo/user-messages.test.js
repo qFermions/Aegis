@@ -253,3 +253,52 @@ test('code review 1, finding 11: a Phrase line that says there is none is no con
   for (const v of ['none', 'n/a', 'N/A', '-', 'TBD', 'None (no gate)']) assert.equal(checks.checkHumanConfirmation(`Steps.\n\n\`\`\`aegis-desk\nGate: none\nPhrase: ${v}\n\`\`\`\n`, c).verdict, 'fail', v);
   assert.equal(checks.checkHumanConfirmation('Steps.\n\n```aegis-desk\nGate: x-y\nPhrase: WIPE [DEVICE_NAME]\n```\n', c).verdict, 'pass');
 });
+
+// Code review round 2 (batch 9), finding 5 and security review 2's note: the closed participle list missed
+// deactivated, retired, assigned, enrolled, signed out, migrated, updated. Wrong implementation it catches: a
+// hand list that forgets change words the desk already knows.
+test('code review 2, finding 5: every change participle the desk knows is a done claim; acknowledgements are not', () => {
+  for (const bad of ['Your account has been deactivated.', 'Your device has been retired.', 'Your licence has been assigned.', 'Your laptop has been enrolled.', 'Your sessions have been signed out.', 'Your mailbox has been migrated.', 'Your profile has been updated.']) assert.notDeepEqual(a.userMessageProblems(bad), [], bad);
+  for (const ok of ['Your ticket has been received.', 'It has been logged and escalated.', 'Your request has been passed to the admin.', 'It has been noted.']) assert.deepEqual(a.userMessageProblems(ok), [], ok);
+});
+
+// Code review round 2, finding 9: a conditional announcement whose condition follows it failed. Wrong
+// implementation it catches: a plan word counted only before the announcement.
+test('code review 2, finding 9: an announced change that waits on a condition is a plan, before or after', () => {
+  assert.deepEqual(a.userMessageProblems("We'll reset your password once your manager approves."), []);
+  assert.notDeepEqual(a.userMessageProblems("We'll reset your password."), []);
+});
+
+// Code review round 2, finding 10: a negation that covers a list or a second term no longer did. Wrong
+// implementation it catches: a two-word window applied to facts.
+test('code review 2, finding 10: a negated verb covers every default fact in its clause; a stray "no" does not', () => {
+  assert.deepEqual(a.defaultFactsIn('We do not use Intune or Meraki here.', ''), []);
+  assert.deepEqual(a.defaultFactsIn('This customer does not use Intune and Meraki.', ''), []);
+  assert.deepEqual(a.defaultFactsIn('The tenant has no hybrid identity synced by Entra Connect.', ''), []);
+  assert.ok(a.defaultFactsIn('Check no errors show on the AD Connect server.', '').length > 0);
+});
+
+// Code review round 2, finding 6: "Phrase: not required" and its kin counted. Wrong implementation it catches: a
+// short denylist instead of the root cause, a block whose Gate lines name no gate.
+test('code review 2, finding 6: a Phrase line counts only in a block that names a gate', () => {
+  const c = { expected: { change_class: 'R3' } };
+  for (const v of ['not required', '(no gate)', 'no phrase needed', String.fromCharCode(0x2014), 'null', 'WIPE [DEVICE_NAME]']) assert.equal(checks.checkHumanConfirmation(`Steps.\n\n\`\`\`aegis-desk\nGate: none\nPhrase: ${v}\n\`\`\`\n`, c).verdict, 'fail', v);
+  assert.equal(checks.checkHumanConfirmation('Steps.\n\n```aegis-desk\nGate: x-wipe-portal\nPhrase: WIPE [DEVICE_NAME]\n```\n', c).verdict, 'pass');
+  assert.equal(checks.checkHumanConfirmation('Steps.\n\n```aegis-desk\nGate: x-wipe-portal\nPhrase: not required\n```\n', c).verdict, 'fail');
+});
+
+// Code review round 2, finding 12: AEGIS_CLAIM failed "Aegis has updated your ticket notes" and missed "The Aegis
+// assistant has reset your password". Wrong implementation it catches: object verbs with no tenant object, and
+// the actor read only as the bare word.
+test('code review 2, finding 12: an Aegis claim needs a change, and the Aegis assistant is Aegis too', () => {
+  assert.equal(checks.checkBoundary(cardWith({ now: 'Aegis has updated your ticket notes.' })).verdict, 'pass');
+  assert.equal(checks.checkBoundary(cardWith({ now: 'The Aegis assistant has reset your password.' })).verdict, 'fail');
+});
+
+// Code review round 2, finding 13: "in the details field" was read as the pointer to Details. Wrong
+// implementation it catches: a pointer rule that ignores the case of Details or what follows it.
+test('code review 2, finding 13: "in the details field" is part of the message, not the pointer', () => {
+  const c = a.fixCard(cardWith({ now: 'We are on it. Please add your device name\nin the details field of your ticket.' }));
+  assert.match(c.parts.tellNow, /details field of your ticket/);
+  assert.equal(c.pointer, null);
+});

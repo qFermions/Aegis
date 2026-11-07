@@ -7260,6 +7260,19 @@
       ]
     },
     {
+      "id": "okta-verify-loop-admin-reauth",
+      "file": ".claude/commands/okta-mfa-reset.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "onedrive-client-reset",
       "file": ".claude/commands/onedrive-issue.md",
       "kind": "powershell",

@@ -21,7 +21,7 @@ const path = require('node:path');
 const backends = require('./eval/judged/backends.js');
 const paths = require('./eval/judged/paths.js');
 const sanitize = require('./graph/sanitize.js');
-const { replaceEmails } = require('./tier/tier-guard.js');
+const { PHONE_LITERAL, replaceEmails, isCanonicalPlaceholder } = require('./tier/tier-guard.js');
 const { fixCard, PARTS } = require('./demo/answer.js');
 
 const REPO_ROOT = paths.REPO_ROOT;
@@ -63,13 +63,21 @@ const EXTRA_SECRETS = [
   { label: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/ },
   { label: 'Entra client secret', re: /\b[A-Za-z0-9_.-]{0,3}8Q~[A-Za-z0-9_.~-]{20,}/ },
 ];
+// Only a known placeholder is kept as it is ([USER@DOMAIN.COM], [UPN], [@Aegion_*]): any other bracket, such as
+// "[mailto:<address>]", is masked inside (security review round 3 of batch 9). A phone number is every form the
+// intake masks (PHONE_LITERAL) except a bare run of ten digits with no sign before it, which in a ticket is an error
+// code or a time far more often (code review round 2, finding 8). shortcut: a bare ten-digit phone number stays.
 const BRACKET_TOKEN = /(\[[^\]\n]{1,80}\])/;
-const PHONE = /(?<![\w-])(?:\+\d{1,3}[\s.-]?)?(?:\(\d{3}\)\s?|\d{3}[\s.-])\d{3}[\s.-]\d{4}\b/g;
+const PHONE = new RegExp(PHONE_LITERAL.source, 'g');
+const phoneOrCode = (m) => (/^\d{10}$/.test(m) ? m : '[PHONE_NUMBER]');
 function protect(text) {
   const t = String(text);
   const blocked = [...new Set([...sanitize.scanText(t).blocks.map((b) => b.label), ...EXTRA_SECRETS.filter((x) => x.re.test(t)).map((x) => x.label)])];
   if (blocked.length) return { blocked };
-  const out = t.split(BRACKET_TOKEN).map((piece, i) => (i % 2 ? piece : replaceEmails(piece, () => '[USER@DOMAIN.COM]').replace(PHONE, '[PHONE_NUMBER]'))).join('');
+  const mask = (piece) => replaceEmails(piece, () => '[USER@DOMAIN.COM]').replace(PHONE, phoneOrCode);
+  // an address at the placeholder domain ([ADMIN@DOMAIN.COM]) is a placeholder too, never a real address
+  const kept = (piece) => isCanonicalPlaceholder(piece) || /^\[[A-Za-z_]+@domain\.com\]$/i.test(piece);
+  const out = t.split(BRACKET_TOKEN).map((piece, i) => (i % 2 && kept(piece) ? piece : mask(piece))).join('');
   return { text: out };
 }
 

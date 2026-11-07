@@ -229,9 +229,6 @@ const DONE_CLAIMS = [
   /\byou now have\b/i,
   /\byou(?:'re| are) (?:now |all )?back (?:in|on)\b/i,
   /\b(?:is|are|'s|'re) (?:now |all )?(?:fixed|resolved|sorted|unlocked|restored|working again|back up)\b/i,
-  // the participles that name a change, so "has been received" or "has been escalated" stays an acknowledgement
-  // (code review round 1 of batch 9, finding 6)
-  /\b(?:has|have) (?:now |already |just )?been (?:reset|released|removed|deleted|wiped|erased|disabled|enabled|unlocked|locked|restored|granted|added|given|fixed|changed|revoked|resolved|blocked|unblocked|suspended|unsuspended|moved|created|turned (?:on|off)|set up|done|undone|sorted)\b/i,
   /\b(?:we|I|IT|Aegis)(?:'ve| have| has)? (?:just |now |already )?(?:locked|unlocked|reset|released|removed|deleted|wiped|erased|disabled|enabled|suspended|unsuspended|restored|granted|added|given|fixed|changed|blocked|unblocked|revoked|moved|created|signed you out|turned (?:on|off)|set up)\b/i,
 ];
 const DECIDED_ACTION = /\b(?:we|I|IT)(?:'ll| will| are going to| is going to|'re going to|'m going to) (?:now |then |also |first |just )?(?:lock|wipe|erase|reset|disable|delete|remove|suspend|block|revoke|re-?register|sign you out)\b/i;
@@ -242,6 +239,18 @@ const CLOCKS = [
   /\b(?:before|by|on) (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
   /\bin (?:\d+|a few|an?) (?:minutes?|hours?)\b/i,
 ];
+// "has been <a change>": every change word the desk knows (CHANGE_STEMS) in its past form, and a few more, so
+// "has been received", "logged", "escalated" or "passed" stays an acknowledgement (code review round 1 of
+// batch 9, finding 6; round 2, finding 5). Built on first use: CHANGE_STEMS is defined further down.
+let participle = null;
+function doneParticiple() {
+  if (!participle) {
+    const past = (w) => (w.endsWith('e') ? `${w}d` : `${w}ed`);
+    const words = [...CHANGE_STEMS.map(past), 'reset', 'given', 'fixed', 'resolved', 'blocked', 'retired', 'enrolled', 'unenrolled', 'signed out', 'set up', 'turned on', 'turned off', 'done', 'undone', 'sorted', 'wiped', 'locked', 'unlocked', 'added', 'granted'];
+    participle = new RegExp(`\\b(?:has|have) (?:now |already |just )?been (?:${[...new Set(words)].sort((x, y) => y.length - x.length).join('|')})\\b`, 'i');
+  }
+  return participle;
+}
 const PLAN_CLAUSE = /\b(?:once|when|after|until|if|as soon as)\b/i;
 const squashed = (t) => String(t).toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ');
 function userMessageProblems(message, ticket = '') {
@@ -252,7 +261,7 @@ function userMessageProblems(message, ticket = '') {
       // a phrase is a plan only when a plan word comes before it in its clause ("once it has been approved"); a
       // claim before the plan word is still a claim (code review round 1 of batch 9, finding 5)
       const planned = (m) => PLAN_CLAUSE.test(clause.slice(0, m.index));
-      for (const re of DONE_CLAIMS) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
+      for (const re of [...DONE_CLAIMS, doneParticiple()]) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
       const d = DECIDED_ACTION.exec(clause);
       if (d && !planned(d)) found.push(`announces a change that needs sign-off as decided ("${d[0].trim()}")`);
     }

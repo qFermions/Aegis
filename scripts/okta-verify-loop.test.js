@@ -102,7 +102,8 @@ test('the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own wh
   const want = phaseCFields();
   assert.ok(want, `${PHASE_C} is still a gate in /okta-user-lifecycle`);
   for (const f of FIELDS) assert.ok(want[f], `Phase C has a ${f} field`);
-  if (gate.id !== PHASE_C) assert.deepEqual(fieldsAfter(s, gate.at), want, `${gate.id}: the same fields as ${PHASE_C}`);
+  // evidence review 1, nit 3: compared whichever id the gate uses, so a reused id with weaker fields fails too
+  assert.deepEqual(fieldsAfter(s, gate.at), want, `${gate.id}: the same fields as ${PHASE_C}`);
   assert.equal(want['Required confirmation'], 'Type exactly `CLEAR OKTA SESSIONS FOR [UPN]`.');
   assert.match(want.Reversibility, /^R1:/);
 });
@@ -165,7 +166,8 @@ test('the reset step points to the existing reset gates, which are still in the 
 
 test('the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands', () => {
   // catches: the old marker left beside the new gate, here or in another runbook
-  const hits = fs.readdirSync(COMMANDS).filter((f) => f.endsWith('.md'))
-    .filter((f) => fs.readFileSync(path.join(COMMANDS, f), 'utf8').includes('PREVIEW ONLY [okta-verify-loop-admin-reauth]'));
+  // evidence review 1, nit 2: every Markdown file under .claude/commands, subfolders included
+  const hits = fs.readdirSync(COMMANDS, { recursive: true }).filter((f) => String(f).endsWith('.md'))
+    .filter((f) => fs.readFileSync(path.join(COMMANDS, String(f)), 'utf8').includes('PREVIEW ONLY [okta-verify-loop-admin-reauth]'));
   assert.deepEqual(hits, []);
 });

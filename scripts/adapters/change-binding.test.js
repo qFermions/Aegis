@@ -321,7 +321,10 @@ test('runbooks: a change-record paragraph covers only gates with a read-back nam
   }
   // every runbook with a bound read-back has one, 27 since this batch (code review round 3, finding 7);
   // batch 8, task 3: 28, /gws-offboard's, since gws-offboard-suspend-portal is R2 with a read-back
-  assert.equal(paragraphs, 28, `${paragraphs} change-record paragraphs`);
+  // batch 9, tasks 5 and 6: 31, /mailbox-permissions', /shared-mailbox's and /email-quarantine's, for
+  // mailbox-full-access-grant-portal, mailbox-send-as-grant-portal, shared-mailbox-full-access-portal,
+  // shared-mailbox-send-as-portal and the two quarantine releases with their PowerShell twins
+  assert.equal(paragraphs, 31, `${paragraphs} change-record paragraphs`);
   const okta = fs.readFileSync(path.join(dir, 'okta-mfa-reset.md'), 'utf8');
   assert.ok(changes.boundReadBacks(okta).some((b) => b.gates.includes('okta-mfa-reset-factor')), 'the API reset of one factor binds verify-factor-reset');
   // the rollback after an exception: Phase B's and C's gates have a read-back, D's and E's do not
@@ -399,12 +402,17 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // batch 8, task 3: gws-offboard-suspend-portal's new verify-suspended line, and the three verify
   // lines of okta-user-lifecycle-reset-password-portal, -suspend-portal and -unsuspend-portal, now
   // R2 (89 to 93)
-  assert.equal(bound, 93, 'the 93 read-backs of R2 and R3 gates');
+  // batch 9, tasks 5 and 6: the verify-mailbox-permission and verify-recipient-permission lines of
+  // mailbox-full-access-grant-portal, mailbox-send-as-grant-portal, shared-mailbox-full-access-portal and
+  // shared-mailbox-send-as-portal, and the verify-quarantine-released lines of quarantine-release-all-portal
+  // and quarantine-release-one-portal (93 to 99)
+  assert.equal(bound, 99, 'the 99 read-backs of R2 and R3 gates');
   // code review round 1 of the batch G3 close-out 3, finding 9: the Jamf pilot read under the
   // removal from All Computers is no longer a line there (76 to 75); round 3, finding 3: it is read
   // after the removals in an R0 section of its own (75 to 76); batch 8, task 3: the verify lines of
   // okta-user-lifecycle-reset-password-portal, -suspend-portal and -unsuspend-portal are bound (76 to 73)
-  assert.equal(unbound, 73, 'the 73 read-backs of R0 and R1 work or of no gate stay unbound');
+  // batch 9, task 5: the R1 mailbox-send-as-remove-portal's own verify-recipient-permission --absent read (73 to 74)
+  assert.equal(unbound, 74, 'the 74 read-backs of R0 and R1 work or of no gate stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // read-backs of R2 and R3 changes named in prose: the per-host read-back of a batch script run

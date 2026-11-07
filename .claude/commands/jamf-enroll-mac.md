@@ -116,6 +116,8 @@ No lighter step: re-running enrollment without erasing is itself the light path 
 <details>
 <summary>Terminal on the Mac — re-run enrollment (HUMAN-RUN)</summary>
 
+No lighter step: this block is the scripted form of the steps above, for reference; the lighter steps, or the reason none applies, are in that section and come first.
+
 ```zsh
 # HUMAN-RUN — the administrator runs this in Terminal on the Mac — Aegis never does
 # macOS 14 or earlier needs sudo — on macOS 15 or later the same command runs without it

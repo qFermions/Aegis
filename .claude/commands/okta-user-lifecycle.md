@@ -282,6 +282,8 @@ No connector read-back covers a delete; the People page read-back above is the c
 <details>
 <summary>Okta API, the scale version (HUMAN-RUN, for reference)</summary>
 
+No lighter step: this block is the scripted form of the steps above, for reference; the lighter steps, or the reason none applies, are in that section and come first.
+
 Export `OKTA_API_TOKEN` from the secret manager first (never paste a token into a ticket). Okta recommends OAuth 2.0 over SSWS tokens; an SSWS token inherits its creator's privileges and expires after 30 days unused. The lifecycle endpoints accept the user ID or the login in the path; `[USER_ID]` is used below. Whichever way a change is made, here or in the Admin Console, the connector read-back in its phase above is the proof.
 
 ```bash

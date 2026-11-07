@@ -648,7 +648,8 @@
       "impactCategories": [
         "data-removal related",
         "destructive",
-        "external-system mutation"
+        "external-system mutation",
+        "security-sensitive"
       ]
     },
     {
@@ -3288,7 +3289,8 @@
       "impactCategories": [
         "data-removal related",
         "destructive",
-        "external-system mutation"
+        "external-system mutation",
+        "security-sensitive"
       ]
     },
     {

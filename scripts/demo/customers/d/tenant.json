@@ -7,11 +7,11 @@
   "okta": {
     "users": {
       "00u1dem0dEPARTx7y8z9": { "id": "00u1dem0dEPARTx7y8z9", "status": "ACTIVE", "profile": { "login": "departing.engineer@[@Aegion_DOMAIN]" } },
-      "00u1dem0dREPORTa1b2c": { "id": "00u1dem0dREPORTa1b2c", "status": "ACTIVE", "profile": { "login": "reporting.user@[@Aegion_DOMAIN]" } }
+      "00u1dem0dREPORTa1b2c": { "id": "00u1dem0dREPORTa1b2c", "status": "ACTIVE", "profile": { "login": "reporting.user@[@Aegion_DOMAIN]" } }, "00u1dem0dLOOPa1b2c3": { "id": "00u1dem0dLOOPa1b2c3", "status": "ACTIVE", "profile": { "login": "looping.user@[@Aegion_DOMAIN]" } }
     },
     "factors": {
       "00u1dem0dEPARTx7y8z9": [ { "id": "opf1dem0d0000000001", "factorType": "push", "status": "ACTIVE" } ],
-      "00u1dem0dREPORTa1b2c": [ { "id": "opf1dem0d0000000002", "factorType": "push", "status": "ACTIVE" } ]
+      "00u1dem0dREPORTa1b2c": [ { "id": "opf1dem0d0000000002", "factorType": "push", "status": "ACTIVE" } ], "00u1dem0dLOOPa1b2c3": [ { "id": "opf1dem0d0000000003", "factorType": "push", "status": "ACTIVE" }, { "id": "opf1dem0d0000000004", "factorType": "signed_nonce", "status": "ACTIVE" } ]
     },
     "logs": []
   },

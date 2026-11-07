@@ -38,7 +38,11 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
   const spawn = deps.spawn || childProcess.spawn;
   return new Promise((resolve) => {
     let done = false;
-    const finish = (code) => { if (!done) { done = true; resolve(code); } };
+    // Ctrl-C reaches the whole foreground group: claude uses it to stop a reply, so the parent ignores it
+    // while claude runs, or it would exit and leave claude on the terminal (code review round 1, finding 1)
+    const ignoreInterrupt = () => {};
+    const finish = (code) => { if (!done) { done = true; process.removeListener('SIGINT', ignoreInterrupt); resolve(code); } };
+    process.on('SIGINT', ignoreInterrupt);
     const failed = (e) => { io.err(`aegis-chat: could not start claude (${e.code || 'error'}). Is Claude Code installed? Type claude once to install it and sign in.\n`); finish(2); };
     let child;
     try {

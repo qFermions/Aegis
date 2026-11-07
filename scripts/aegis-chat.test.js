@@ -120,3 +120,17 @@ test('bad arguments exit 1 with no session; a claude that cannot start is a plai
     assert.equal(await chat.main([], process.env, { ...ended.deps, spawn: stub }), want);
   }
 });
+
+// Code review round 1 (batch 9), finding 1: the terminal sends Ctrl-C to the whole foreground group, so a node
+// parent with no SIGINT handler exited and left claude running on the same terminal. Wrong implementation it
+// catches: no handler while the chat runs, or one left behind after it ends.
+test('while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits', async () => {
+  const { EventEmitter } = require('node:events');
+  const child = new EventEmitter();
+  const before = process.listenerCount('SIGINT');
+  const running = chat.main([], { HOME: os.tmpdir() }, { spawn: () => child, out: () => {}, err: () => {} });
+  assert.equal(process.listenerCount('SIGINT'), before + 1, 'a handler while claude runs');
+  child.emit('exit', 0);
+  assert.equal(await running, 0);
+  assert.equal(process.listenerCount('SIGINT'), before, 'removed after claude exits');
+});

@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 0
+✖ failing tests:
+✖ while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits

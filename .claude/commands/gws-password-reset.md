@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[USER@DOMAIN.COM]` (the user's Google address) · `[UPN]` (their Okta username) · `[TEMP_PASSWORD]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[USER@DOMAIN.COM]` (the user's Google address) · `[UPN]` (your own administrator address: the actor that Admin log events records, as in `/gws-account-containment`) · `[NOT_BEFORE]` (the time the Phase B read-back starts from) · `[TEMP_PASSWORD]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 ## ⚠️ Admin / safety gate
 
@@ -55,6 +55,8 @@ gam info user "[USER@DOMAIN.COM]"   # prints status, OU, suspension and 2SV enro
 
 **Purpose** — issue a temporary password the user must replace at their next sign-in.
 
+Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
+
 <!-- SAFETY GATE [gws-password-reset-password-portal] -->
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** reset the user's Google Workspace password to a temporary value; the user must change it at the next sign-in
@@ -70,9 +72,18 @@ gam info user "[USER@DOMAIN.COM]"   # prints status, OU, suspension and 2SV enro
 
 **Gotcha** — the Security-page route does the same job: open the user's account page → **Security** → **Password** → **Reset Password**, with *Ask for a password change at the next sign-in* set to On. The Security page also offers *Require password change* (Turn on), which forces a change at the next sign-in without issuing a new password and resets itself to Off afterwards — but under third-party IdP SSO that setting is not available unless a network mask lets some users sign in directly.
 
+**Read-back (R1, no change record):** the Admin log event for this reset, the same read `/gws-account-containment` Phase C runs, here without `--change` because an R1 change takes no change record.
+
+```bash
+# read-only read-back: a password-change event with you as the actor after NOT_BEFORE whose parameters name the account, the event name as recorded in /gws-audit-log
+node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+```
+
+`--target` makes the read prove this account's reset: a password change you made on another account does not pass. GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the password change for `[USER@DOMAIN.COM]` with your address as the actor. The event name and its parameter names are not confirmed in this lane's sources: if `verify-event` finds nothing, read the entry in the GUI before concluding the reset did not happen.
+
 **WAIT UNTIL** the user has signed in with the temporary password and set a new one. Done when: the user reaches Gmail on their own device.
 
-**Verification checkpoint** — [ ] temporary password handed over out of band · [ ] the user confirms the new password works.
+**Verification checkpoint** — [ ] `verify-event` exit 0, or the GUI entry for `[USER@DOMAIN.COM]` found · [ ] temporary password handed over out of band · [ ] the user confirms the new password works.
 
 ## Phase C — Optional: reset the sign-in cookies (R1 gate)
 

@@ -47,7 +47,8 @@ test('the Google password reset gate is R1 and its own section names exactly one
 test('the read line is the one /gws-account-containment uses, without --change', () => {
   // catches: a read with other flags (no --target, another event), so the desk reads a different proof than containment
   const containment = fs.readFileSync(path.join(DIR, 'gws-account-containment.md'), 'utf8');
-  const line = containment.split('\n').find((l) => /verify-event --app admin --event CHANGE_PASSWORD/.test(l) && /--change \[CHANGE_ID\]/.test(l));
+  // the runbook line it runs, not its gate's Read-back field (which names the command without node scripts/)
+  const line = containment.split('\n').find((l) => /^node scripts\/adapters\/gws-client\.js verify-event --app admin --event CHANGE_PASSWORD/.test(l.trim()) && /--change \[CHANGE_ID\]/.test(l));
   assert.ok(line, 'containment still has its bound read line');
   assert.equal(gates.get('gws-password-reset-password-portal').reads[0].command, line.trim().replace(' --change [CHANGE_ID]', ''));
 });

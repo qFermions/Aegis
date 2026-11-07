@@ -1,0 +1,14 @@
+$ node --test scripts/reset-erase-readbacks.test.js
+✔ the Google password reset gate is R1 and its own section names exactly one CHANGE_PASSWORD audit read (0.478708ms)
+✔ the read line is the one /gws-account-containment uses, without --change (0.177083ms)
+✔ the Jamf wipe gate binds a verify-command read of the erase command, under its change record (0.0565ms)
+✔ both runbooks keep the Read-back contract change-record.js reads (0.431209ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.373625
+exit 0

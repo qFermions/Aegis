@@ -1,7 +1,75 @@
 # checks: batch 9 (safer messages, the missing admin steps, a clean way to try Aegis, then run it again)
 
-Branch `feat/batch9-safety-and-gaps`, base main at `73bdc68`. Verdicts: pass, fail, unresolved. The batch 8 table is at `docs/review/batches/batch8-checks.md` (and its progress at `batch8-progress.md`). Local paths in captures are written `<home>`, `<repo>` and `<tmp>`; each long dash in a capture is written `-`.
+Branch `feat/batch9-safety-and-gaps`, base main at `73bdc68`. Verdicts: pass, fail, unresolved. The batch 8 table is at `docs/review/batches/batch8-checks.md` (and its progress at `batch8-progress.md`). Local paths in captures are written `<home>`, `<repo>` and `<tmp>`; each long dash in a capture is written `-`. Evidence paths below are under `docs/aegis/demo/evidence/batch9/` unless they say otherwise.
 
-This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fail here at the base and the head; CI has `pwsh` and runs them. The battery runs with `TMPDIR=/private/tmp` (`docs/aegis/demo/evidence/batch9/tools/battery.sh`).
+This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fail here at the base and the head; CI has `pwsh` and runs them. The battery runs with `TMPDIR=/private/tmp` (`tools/battery.sh`).
 
-(Filled in as the batch goes; see the sections below.)
+## Battery
+
+| check | command | base `73bdc68` (`baseline/`) | head after the three code review rounds (`final-battery/`, at `fe01bf4`) |
+|---|---|---|---|
+| tests | `node --test` | 2021 tests, 1979 pass, 41 fail, 1 skipped | 2187 tests, 2145 pass, 41 fail, 1 skipped; failing names equal the base's (`baseline/failing-tests.txt`, compared with `comm`) |
+| under the tripwire | `NODE_OPTIONS="--require <repo>/scripts/adapters/socket-tripwire.js" node --test` | the same counts | the same counts and names |
+| four ticket evals | `node scripts/eval/{ms,gws,g2,g3}-ticket-eval.js` | exit 0 | exit 0 |
+| lint | `node scripts/lint/command-structure.js` | exit 0 | exit 0 |
+| ladder lint | `node scripts/lint/ladder-audit.js --check` | did not exist | exit 0 (also in `node --test`, `ladder-audit.test.js`) |
+| scanner | `node scripts/pre-commit-check.js --all` | exit 0 | exit 0 |
+| release boundary | `node scripts/harness/release-boundary-check.js` | exit 0 | exit 0 |
+| replay demo | `node scripts/replay/replay-demo.js` | exit 0 | exit 0 |
+
+The security-review fixes after `fe01bf4` (768bea9, 7c0728b, 905c268) were checked with their own suites (`sr4-green.txt`: 214 tests, `sr5-green.txt`: 18 tests, all pass) and the full-tree scan (exit 0); CI ran the whole battery on the pushed head (below).
+
+## Acceptance
+
+| requirement | verdict | evidence | correction |
+|---|---|---|---|
+| Task 1: intake flags lines addressed to an assistant that grant or claim authority; at least 10 own phrasings flagged, at least 6 ordinary sentences not; the T6m sentence not copied; a flagged line is reported, never followed, the ticket still accepted | pass | `scripts/intake/assistant-address.test.js` (15 must-flag and 9 must-not at first; the reviews grew them to 21 and 17); red `t1-red.txt`, green `t1-green.txt`; the intake test "a line addressed to the assistant is flagged, kept as data, and the ticket is ACCEPTED" | the review rounds narrowed and widened the patterns (code review 1 finding 10, round 2 findings 3 and 4, round 3 finding 12); every case is a test |
+| Task 2: "Tell the user now" and "Tell the user when done" in CLAUDE.md and answer-format.md, examples from no demo ticket; the desk shows now at step 4 and when done at step 9 only when the double-check passed; the "user message now makes no done claim" check fails on the listed phrases and clocks; the boundary check stops reading both lines; batch 8's T6 line fails the new check and no longer trips the boundary check | pass | `CLAUDE.md` Answer format; `docs/aegis/answer-format.md` sections 1 and 6; `scripts/demo/user-messages.test.js` (must-pass and must-fail lines, the T6 test); `scripts/demo/render.test.js` "batch 9, task 2"; red `t2-t3-t9-red.txt` (26 of 28 fail), `t2-page-red.txt`; green `t2-t3-t9-green.txt` (42 of 42) | an Aegis claim inside a user line still fails the boundary check (code review 1 finding 2; round 3 findings 2 and 7): only the tech's "we" is exempt. The page test was committed with its code, its red saved first (D6) |
+| Task 3: the 150-word limit counts the body, not the one-line pointer; 149 plus pointer passes, 151 fails | pass | `user-messages.test.js` "task 3"; same red and green files | the pointer rule tightened by code review 1 finding 12 and round 2 finding 13, loosened back for "the Details section of this answer" in round 3 finding 11 |
+| Task 4: a read-only Exchange Online connector: PowerShell 7 and ExchangeOnlineManagement, app-only certificate, four cmdlets only, refusal before PowerShell starts, three verify commands, dry run exit 4, INCONCLUSIVE exit 5, the same failure messages and audit; tests on a fake PowerShell; an owner doc; vendor facts | pass | `scripts/adapters/exo-client.js`, `exo-client.test.js` (18 tests: an unknown cmdlet, a semicolon, a pipe, a script block and a newline each refused; each verify's pass, fail and INCONCLUSIVE; dry run); red `t4-red.txt`, green `t4-green.txt`; `docs/aegis/owner/exchange-online-readonly.md`; `docs/aegis/batch9/vendor-facts.md` X-01 to X-32 | built in a subagent worktree and merged (`08a7110`); five registration files outside the charter's list (D2) |
+| Task 5: shared mailbox Full Access and Send As grants are SAFETY GATEs (R2) with the admin center path, phrase, undo and a Read-back naming the task 4 command; Send As removal has a gate; simulator entries and tenant data; lint clean; counts moved in commits naming the gates; a desk test closes the shared mailbox RESOLVED (SIMULATED) | pass | `.claude/commands/shared-mailbox.md`, `mailbox-permissions.md`; counts: `git log --grep "test(counts)"`; `customer-desk.test.js` "batch 9, task 5" (T4 with both grants, T8, a wrong-list grant fails); red `t5-t6-red.txt`, green `t5-t6-green.txt`; `node scripts/lint/command-structure.js` exit 0 | the Full Access removal got its own read too (code review 1 finding 13) |
+| Task 6: the quarantine release gate names verify-quarantine-released; simulator entry; lint clean; a desk test with a fixture answer | pass | `.claude/commands/email-quarantine.md` (both release gates and their PowerShell twins); `customer-desk.test.js` "batch 9, task 6"; same red and green files | the placeholders are double-quoted for a shell (code review 1 finding 4); `[MESSAGE_ID]` and `[MESSAGE_IDENTITY_GUID]` joined the dictionary (finding 14, D3) |
+| Task 7: the Google reset gates name the CHANGE_PASSWORD audit read; the Jamf erase gate names a command-status read; lint clean; desk tests | pass | `.claude/commands/gws-password-reset.md` (the R1 gate's section read), `jamf-lock-erase.md` (`verify-command --type ERASE_DEVICE`, portal and API twin); `scripts/reset-erase-readbacks.test.js` (red `t7-red.txt`, green `t7-green.txt`); `customer-desk.test.js` "batch 9, task 7" (`t7-desk-green.txt`) | the desk test came after its simulator code (D6); the erase stays Pending until the Mac checks in, so a wipe reads INCONCLUSIVE in the desk (C5); ERASE_DEVICE as the API value is UNCONFIRMED (`docs/aegis/batch9/vendor-facts-ladder.md`) |
+| Task 8: "Okta Verify sign-in loop after a macOS update": user checks, then the admin step, then Reset Authenticators as last resort, labeled operator-validated; with the fill-in blank, a PREVIEW ONLY marker and no menu path; a test of the order | pass | `.claude/commands/okta-mfa-reset.md`; `scripts/okta-verify-loop.test.js` (red `t8-red.txt`, green `t8-green.txt`); marker `okta-verify-loop-admin-reauth` | the fill-in line was blank (C1) |
+| Task 8a: the three thinking rules in CLAUDE.md and answer-format.md, each with an example from no demo ticket | pass | `CLAUDE.md` Answer format (one clause each); `docs/aegis/answer-format.md` section 2 with three examples | the CLAUDE.md cap forced the short form (D1) |
+| Task 8b: a lint check over every runbook section with a heavy gate; tests for pass, fail and a "No lighter step" line; the audit with counts; the failing identity, sign-in, MFA and device sections of Microsoft, Google, Okta, Jamf and Fleet fixed with cited or UNCONFIRMED lighter steps; lint clean | pass | `scripts/lint/ladder-audit.js`, `ladder-audit.test.js`; `docs/aegis/ladder-audit.md` (141 sections audited, 80 pass, 61 fail; the fixed scope 61 of 61 pass); before: `ladder-audit-before.md` (134 audited; fixed scope 59, 5 pass, 54 fail); `docs/aegis/batch9/vendor-facts-ladder.md` L-01 to L-15 | the section reader changed three times under review (twins in details blocks, per-gate inheritance, pairing from read-back lines); the counts here are the final ones |
+| Task 8c: a desk check "lightest step first", its own row, never stops a ticket; tests with fixture answers that pass and fail | pass | `scripts/demo/step-ladder.js`, `lightest-step.test.js` (red `t8c-red.txt`, green `t8c-green.txt`); the task 8 row test in `customer-desk.test.js` | counts gates, PREVIEW ONLY markers and Try first lines that name a gate or phase; a User check is not an admin step (C4) |
+| Task 9: the look-first check skips a negated change word, both user lines and Details lines; Slack in the practice tenant for T2m; the sign-off check knows the `Phrase:` line; tests first with batch 8 answers as fixtures | pass | `user-messages.test.js` "task 9" (T5 and T7m look-only); `customer-desk.test.js` "batch 9, task 9" (T2m Slack, `t9-slack-red.txt`, `t9-slack-green.txt`); `checks.js` deskPhrase | the Details-as-mention rule changed one batch 8 security-review assertion on purpose, named in its test; What's wrong and Stop if read as mentions too (C3) |
+| Task 10: T9m in the messy set: Customer D, Slack, the body exactly | pass | `scripts/demo/customers/tickets-messy.json` T9m, `d/T9m-okta-verify-loop.json`; `customers.test.js` (word for word, twin null; red `t10-red.txt`, green `t10-green.txt`) | Customer D's profile says Macs with Okta Verify (C6) |
+| Task 11: `ask-aegis.js` and `aegis-chat.js` with the desk's isolation; README "Try Aegis"; tests pin the arguments against backends.js with a fake claude; the chat started once under a fake | pass | `scripts/ask-aegis.test.js`, `scripts/aegis-chat.test.js` (red `t11-red.txt`, green `t11-green.txt`, review `t11-review1-*`); README "Try Aegis" | built in a subagent worktree; the reviews added privacy protection of the ticket and setup text (code review 1 finding 3 and the security rounds) |
+| Task 12: security review, code review at xhigh (tier C), at most three rounds, every finding fixed in its own commit or closed with a reason; a draft PR with the template filled; CI green | pass | `reviews/security-review-1.md`, `-2.md`, `-3-and-4.md`; `reviews/code-review-1.md`, `-2.md`, `-3.md`; PR #15; CI below | see "Review rounds"; the security review ran six times because code changed after each |
+| Task 13: predictions written before the runs; the messy then the tidy set, one ticket at a time, within 17 sessions and 25 US dollars; evidence in full-run-4 and full-run-5 with the side-by-side | unresolved | the runs are under way; filled when they finish | |
+| Whole-tree diff with every path accounted for | pass | `whole-tree-diff.txt`, `whole-tree-accounting.md` | refreshed after the runs |
+
+## Review rounds
+
+| Round | Range | Findings | Outcome |
+|---|---|---|---|
+| Security 1 | 73bdc68...b580086 | 0 | the checks.js note recorded |
+| Code 1 (xhigh) | 73bdc68...abb02ed | 15 | 13 fixed, each in its own commit; 3 parts closed with a reason (`code-review-1.md`) |
+| Security 2 | abb02ed...d943a84 | 0, one quality note | the note fixed in round 2 |
+| Code 2 (xhigh) | abb02ed...1ddb57e | 15, and 4 left out | all fixed by class or closed (`code-review-2.md`) |
+| Security 3 | 57d48ef...b3815bc | 1 medium | fixed (a1e7d86, ebc6bae) |
+| Code 3 (xhigh) | 57d48ef...ebc6bae | 15 | 14 fixed, 1 closed (`code-review-3.md`); no fourth round (REVIEW.md) |
+| Security 4 | b3815bc...aeda61c | 1 medium, 1 below the bar | both fixed (768bea9, 7c0728b) |
+| Security 5 | 705eede...0d5c99b | 1 medium | fixed (905c268) |
+| Security 6 | 905c268 alone | 0 | the code is frozen here for the runs |
+
+## Deviations and decisions
+
+| id | what | why |
+|---|---|---|
+| D1 | CLAUDE.md's version-history line points to CHANGELOG.md without repeating it | the answer rule and the three thinking rules did not fit the 20,000-byte test otherwise; the test is never weakened, so the only text outside the answer rule that could give way was a line CHANGELOG.md already holds |
+| D2 | `verify-flags.js`, `scope-manifest.json`, `operator-message.js`, `scripts/adapters/README.md` and `scripts/audit/change-record.js` changed for the Exchange connector | not in the charter's list; without them no change record can name an `exo:` read-back and the flag and scope tests fail |
+| D3 | `modules/security/placeholder-dictionary.md` gained `[MESSAGE_ID]`, `[MESSAGE_IDENTITY_GUID]` and `[MAILBOX]` | CLAUDE.md requires every token in the dictionary (code review 1 finding 14); the charter's list does not name the file; a CLAUDE.md rule break wins |
+| D4 | the ponytail band read ON at session start | this session cannot type `/ponytail off`; it followed the instruction (off) |
+| D5 | counts moved: gates 343 to 348, gates naming read-backs 97 to 107, bound read-backs 93 to 100, unbound 73 to 76, change-record paragraphs 28 to 32, D3's no-read-back list 31 to 27 | each move is in a commit naming its gates; none weakens what its test checks |
+| D6 | three tests went in with or after their code: the step 9 page test (its red saved first), the task 7 desk test, and a round 2 fixture changed to name a gate | recorded so the owner reads them as such |
+| D7 | several pre-commit scans ran before staging and so scanned nothing; commits 91d0f9f and a1e7d86 carried lines the full-tree scan blocks, fixed forward (8271703, b3815bc, ebc6bae) | the scan must run after `git add`; CI's full-tree scan would also have caught them |
+| C1 | the owner fill-in line for MF-1 was blank | task 8 step 2 is a PREVIEW ONLY marker with no menu path |
+| C2 | the release-to-one read-back names the message by Message-ID and recipient, the release-to-all by Identity | a release to one of several recipients would otherwise read as not done |
+| C3 | the look-first rule reads What's wrong, Stop if, both user messages and Details as mentions | task 9 asked for Details and the user lines; T5's "Stop if: a rule is moving" showed the describing parts need the same |
+| C4 | the lightest-step row counts admin steps only | a user check is not an admin change an answer could advise first |
+| C5 | the simulated Jamf erase stays Pending until a check-in | batch 8 made the same choice for the lock: the simulated operator sends the command; the device acting on it is not the operator's act |
+| C6 | Customer D's profile says its laptops are Macs with Okta Verify | the task describes T9m's customer as "Okta, Macs" |
+| C7 | the bracket rule keeps addresses at the placeholder domain (`domain.com`) | code review 2 wanted `[ADMIN@DOMAIN.COM]` kept; security review 3 wanted other bracketed addresses masked |

@@ -23,6 +23,31 @@
 
 ---
 
+## Try Aegis
+
+For a person who does not write code. You need a computer with Git and Node.js.
+
+1. Install Claude Code from [claude.ai/code](https://claude.ai/code), then type `claude` once in a terminal and sign in with your own account.
+2. Get a copy of this repository: the clone line under [Try it](#-try-it--5-minutes) below, then `cd Aegis`.
+3. Ask about one IT problem. Aegis prints a short Fix card and what to tell the user:
+
+   ```bash
+   node scripts/ask-aegis.js "A user cannot open Outlook after a password reset"
+   node scripts/ask-aegis.js "The front desk printer will not print" --setup "Google Workspace, Windows laptops, no Intune"
+   ```
+
+4. Or open a chat for follow-up questions:
+
+   ```bash
+   node scripts/aegis-chat.js --setup "Microsoft 365, Macs managed by Jamf"
+   ```
+
+`--setup` tells Aegis what your company runs, in plain words; leave it out to use the example company in `CLAUDE.md`.
+
+What Aegis will do: read the problem, read its own runbooks, and tell you the steps, how to check they worked, and when to stop.
+What it will not do: it reads only. It cannot run commands, and it never changes anything in your systems. A person does every change.
+Each answer is saved in your home folder under `aegis-asks`. One ask is capped at 3 US dollars of your Claude allowance (`--max-budget-usd` sets another cap).
+
 ## The problem
 
 > [!IMPORTANT]

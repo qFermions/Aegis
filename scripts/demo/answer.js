@@ -257,7 +257,9 @@ const CLOCKS = [
 let participle = null;
 function doneParticiple() {
   if (!participle) {
-    const past = (w) => (w.endsWith('e') ? `${w}d` : `${w}ed`);
+    // modify, transfer: the irregular spellings the naive form missed (code review round 3 of batch 9, finding 8)
+    const IRREGULAR = { modify: 'modified', transfer: 'transferred', whitelist: 'whitelisted', 're-register': 're-registered', reregister: 'reregistered', register: 'registered' };
+    const past = (w) => IRREGULAR[w] || (w.endsWith('e') ? `${w}d` : `${w}ed`);
     const words = [...CHANGE_STEMS.map(past), 'reset', 'given', 'fixed', 'resolved', 'blocked', 'retired', 'enrolled', 'unenrolled', 'signed out', 'set up', 'turned on', 'turned off', 'done', 'undone', 'sorted', 'wiped', 'locked', 'unlocked', 'added', 'granted'];
     participle = new RegExp(`\\b(?:has|have) (?:now |already |just )?been (?:${[...new Set(words)].sort((x, y) => y.length - x.length).join('|')})\\b`, 'i');
   }
@@ -273,7 +275,10 @@ function userMessageProblems(message, ticket = '') {
       // a phrase is a plan only when a plan word comes before it in its clause ("once it has been approved"); a
       // claim before the plan word is still a claim (code review round 1 of batch 9, finding 5)
       const planned = (m) => PLAN_CLAUSE.test(clause.slice(0, m.index));
-      for (const re of [...DONE_CLAIMS, doneParticiple()]) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
+      // a ticket, request or case that has been assigned, approved, updated or moved is routing, not a change
+      // (code review round 3 of batch 9, finding 8)
+      const routing = /\b(?:ticket|request|case|issue|query)\s+(?:has|have)\s+(?:now\s+|already\s+|just\s+)?been\b/i.test(clause);
+      for (const re of [...DONE_CLAIMS, ...(routing ? [] : [doneParticiple()])]) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
       const d = DECIDED_ACTION.exec(clause);
       // an announced change that waits on a condition is a plan wherever the condition sits ("We'll reset it
       // once your manager approves"; code review round 2 of batch 9, finding 9)

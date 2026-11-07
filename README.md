@@ -102,7 +102,7 @@ cd Aegis
 claude
 ```
 
-1. Paste a ticket in plain words: *"User can't sign in, says account is locked"* — watch it produce Verdict → checks → fix → verification → Jira-ready note.
+1. Paste a ticket in plain words: *"User can't sign in, says account is locked"*. Watch it produce a Fix card (what's wrong, the steps, done when, stop if, and the messages to send the user now and when done), then Details with the checks, the verification and a Jira-ready note.
 2. **`/new-user`** — the full onboarding runbook. It never asks you for a real name; placeholders are enforced.
 3. The replay fast path, with no model at all (sandbox the store with `AEGIS_REPLAY_DIR=/tmp/replay-demo` to keep your real cache clean and make the demo rerunnable):
    ```bash

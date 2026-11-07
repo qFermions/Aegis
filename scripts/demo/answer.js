@@ -263,7 +263,9 @@ function userMessageProblems(message, ticket = '') {
       const planned = (m) => PLAN_CLAUSE.test(clause.slice(0, m.index));
       for (const re of [...DONE_CLAIMS, doneParticiple()]) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
       const d = DECIDED_ACTION.exec(clause);
-      if (d && !planned(d)) found.push(`announces a change that needs sign-off as decided ("${d[0].trim()}")`);
+      // an announced change that waits on a condition is a plan wherever the condition sits ("We'll reset it
+      // once your manager approves"; code review round 2 of batch 9, finding 9)
+      if (d && !PLAN_CLAUSE.test(clause)) found.push(`announces a change that needs sign-off as decided ("${d[0].trim()}")`);
     }
   }
   const theirs = squashed(ticket);

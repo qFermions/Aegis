@@ -34,7 +34,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 1. Phase A: read status, recent sign-ins and enrolled authenticators (R0); rule out a compromise.
 2. An Okta Verify sign-in loop after a macOS update: follow "Okta Verify sign-in loop after a macOS update" below first (the user checks, then the session clear gate); Phase B, or Phase C when every enrollment must go, is its last resort.
-3. Phase B: reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.
+3. Phase B (a new phone, or the loop's last resort when the session clear did not stop it): reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.
 4. Phase C: reset all authenticators only when every enrollment must go (separate gate).
 5. Verify in the System Log and by the completed sign-in.
 
@@ -237,7 +237,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 ## ✅ Verification checklist
 
 - [ ] Okta Admin Console → Directory → People → `[UPN]` reads **Active**.
-- [ ] Okta Verify sign-in loop fixed by the session clear: the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click, and the user completed one full sign-in. With no reset done, the three reset and re-enrollment items below do not apply; the compromise item still applies.
+- [ ] Okta Verify sign-in loop: after the session clear, the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click. When it fixed the loop and the user completed one full sign-in, with no reset done, the four reset and re-enrollment items below do not apply; if the reset followed, they apply too. The compromise item applies either way.
 - [ ] The user enrolled Okta Verify on the new phone and completed one sign-in: the user confirms it, and Okta Admin Console → Reports → System Log shows that sign-in for `[UPN]`.
 - [ ] Reports → System Log shows the authenticator reset for `[UPN]` with the expected admin and time.
 - [ ] Right after the reset and before the re-enrollment, the connector read-back passed (exit 0, `"verified": true`) against the factor types Phase A recorded: `verify-factor-reset --factor-type push` (and `signed_nonce` when it was listed) for one authenticator, or `verify-factors-reset-all` for all.
@@ -246,9 +246,9 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 
 ## 📝 Jira-ready note
 
-Use a completed form only when every read-back above that the path taken requires passed (the session clear's `verify-sessions-cleared`; the reset's `verify-factor-reset` or `verify-factors-reset-all`; both when both ran); otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
+Use a completed form only when every read-back above that the path taken requires passed (the session clear's `verify-sessions-cleared`; the reset's `verify-factor-reset` or `verify-factors-reset-all`; both when both changes were made); otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
 
-> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
+> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push (and signed_nonce when Phase A listed it) / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify [on the new phone / on the Mac] and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
 
 > [Okta Verify loop fixed by the session clear, only if its checks passed] Okta Verify sign-in loop for `[UPN]` after a macOS update: user checks [results]; macOS [version], Okta Verify [version]; sessions cleared after [NOT_BEFORE], confirmed by the exact phrase; connector read-back verify-sessions-cleared passed at [timestamp]; the user completed a sign-in at [timestamp]. No authenticator was reset. Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
 

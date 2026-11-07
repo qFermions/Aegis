@@ -157,28 +157,54 @@ test('the Fast path sends a loop ticket to its section first, with Phase B or Ph
   // or naming only Phase B where the section names Phase B or Phase C
   const fast = fastPath();
   const loop = fast.findIndex((l) => l.includes(TITLE));
-  const phaseB = fast.findIndex((l) => /^\d+\. Phase B:/.test(l));
+  const phaseB = fast.findIndex((l) => /^\d+\. Phase B\b/.test(l));
   assert.ok(loop > 0 && loop < phaseB, 'the Fast path names the loop section before Phase B');
   assert.match(fast[loop], /Phase B, or Phase C when every enrollment must go, is its last resort/);
+  // code review 3, finding 11: catches Phase B read as the next step after a loop the session clear already fixed
+  assert.match(fast[phaseB], /^\d+\. Phase B \(a new phone, or the loop's last resort when the session clear did not stop it\):/);
 });
 
-test('the checklist has the session-clear item, and the compromise item still applies when no reset was done', () => {
-  // code review 1, finding 2, and code review 2, finding 13: catches a checklist with no item for the light path, or one
-  // that lets a tech skip the compromise item along with the reset items
-  const checklist = block('## ✅ Verification checklist');
-  const item = checklist.split('\n').find((l) => /verify-sessions-cleared/.test(l));
-  assert.ok(item, 'a checklist item for the session-clear read-back');
-  assert.match(item, /the compromise item still applies/);
+test('the checklist has the session-clear item, which names how many reset items it waives and keeps the compromise item', () => {
+  // code review 1, finding 2; code review 2, finding 13; code review 3, findings 2 and 10: catches a light path with no
+  // checklist item, a wrong count of the waived items, or a checklist with no compromise item to keep
+  const items = block('## ✅ Verification checklist').split('\n').filter((l) => /^- \[ \]/.test(l));
+  const at = items.findIndex((l) => /verify-sessions-cleared/.test(l));
+  assert.ok(at >= 0, 'a checklist item for the session-clear read-back');
+  const compromise = items.findIndex((l) => /compromise was suspected/.test(l));
+  assert.ok(compromise > at, 'a compromise item after it');
+  const waived = items.slice(at + 1, compromise).length;
+  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six'];
+  assert.match(items[at], new RegExp(`the ${words[waived]} reset and re-enrollment items below do not apply`), `${waived} items sit between it and the compromise item`);
+  assert.match(items[at], /if the reset followed, they apply too/);
+  assert.match(items[at], /the compromise item applies either way/i);
 });
 
-test('a completed Jira form needs every read-back of the path taken, and one form covers the session clear then the reset', () => {
-  // code review 2, findings 1 and 5: catches a rule a skipped read-back satisfies ("every read-back this ticket ran"),
-  // and a ticket where both changes ran having no true completed form
+test('a completed Jira form needs every read-back of the changes made, never only the ones that ran', () => {
+  // code review 2, finding 1, and code review 3, finding 4: catches a rule a skipped read-back satisfies
   const note = block('## 📝 Jira-ready note');
-  assert.doesNotMatch(note, /every read-back this ticket ran passed/);
+  assert.doesNotMatch(note, /read-back this ticket ran passed|both when both ran/);
   assert.match(note, /every read-back above that the path taken requires passed/);
-  assert.match(note, /verify-sessions-cleared passed/, 'a completed form for the session-clear path');
-  assert.match(note, /\[if the session clear ran first\][^\n]*verify-sessions-cleared passed/, 'the reset form carries the session clear when it ran first');
+  assert.match(note, /both when both changes were made/);
+});
+
+test('the Jira note has a completed form for the loop fixed by the session clear alone', () => {
+  // code review 1, finding 2, and code review 3, finding 5: catches that form deleted while the reset form still names the read
+  const note = block('## 📝 Jira-ready note');
+  const form = note.split('\n').find((l) => l.startsWith('> [Okta Verify loop fixed by the session clear'));
+  assert.ok(form, 'the session-clear form');
+  assert.match(form, /verify-sessions-cleared passed/);
+  assert.match(form, /No authenticator was reset/);
+});
+
+test('the reset form fits the session clear then the reset: its slot, the Mac, and the signed_nonce read', () => {
+  // code review 2, finding 5, and code review 3, finding 3: catches a form that forces "the new phone" on a Mac loop
+  // ticket or has no slot for the FastPass read Phase B requires
+  const note = block('## 📝 Jira-ready note');
+  const form = note.split('\n').find((l) => l.startsWith('> [Only if all checks passed] Okta MFA reset'));
+  assert.ok(form, 'the reset form');
+  assert.match(form, /\[if the session clear ran first\][^\n]*verify-sessions-cleared passed/);
+  assert.match(form, /\[on the new phone \/ on the Mac\]/);
+  assert.match(form, /signed_nonce/);
 });
 
 test('a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it', () => {

@@ -1,0 +1,26 @@
+## Fix
+**What's wrong:** The requester wants access to the shared billing mailbox and doesn't have it yet.
+**Do this:**
+1. Call the requester back on the number in the firm's staff list to confirm the request is really from them.
+2. Get the managing partner's written approval for this person to open the billing mailbox.
+3. Open Exchange admin center → Recipients → Mailboxes → billing mailbox → Mailbox Delegation. Copy the Full Access and Send As lists into the ticket, and note what [FIRST_NAME] holds.
+4. After approval, give Full Access only: Read and manage → Edit → Add members → [UPN] → Save → Confirm.
+**Done when:** [UPN] appears under Read and manage. Aegis then checks the grant is in place.
+**Stop if:** the callback fails, approval is refused, or "billing" turns out to be a group rather than a shared mailbox.
+**Tell the user now:** IT got your request. We'll call you to confirm it, and the managing partner needs to approve it.
+**Tell the user when done:** The billing mailbox is set up for you. It will show up in Outlook by itself. Restart Outlook if you don't see it.
+
+## Details
+- **Runbook:** `/shared-mailbox`, Full Access gate. Replay was a MISS, so this comes from the runbook and isn't a cached fix.
+- **"Same as [FIRST_NAME]":** that is a hint, not approval. If [FIRST_NAME] also has Send As, don't copy it. Grant it only if the requester says they need to send *as* billing and the partner approves that separately (Send As gate in the same runbook).
+- **Risk:** In an accounting firm the billing mailbox holds client financial data. Removing access later doesn't undo what the person already read, which is why it needs a callback and the partner's approval first.
+- **Undo:** remove the grant with `/mailbox-permissions` (Full Access remove gate).
+- **Verify:** the mailbox shows in the requester's Outlook. Aegis reads back the permission.
+- **Jira note:** Identity confirmed by callback [date/time]. Managing partner approved [date/time]. Delegation pre-state recorded. Full Access on [MAILBOX] for [UPN]: [verified / not verified]. Send As: not requested. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

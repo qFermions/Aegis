@@ -1,0 +1,50 @@
+## Fix
+**What's wrong:** [FIRST_NAME]'s sign-in approvals still go to the Authenticator app on the old phone, so the new phone can't get past the second step.
+**Do this:**
+1. Confirm it is really [FIRST_NAME]: the office manager vouches for them by phone.
+2. Go to Entra admin center → Users → [UPN] → Authentication methods and note the old phone's Authenticator entry. Then open Sign-in logs: a failed second step confirms the diagnosis. A policy block means a different problem.
+3. If the old phone still works: [FIRST_NAME] opens aka.ms/mfasetup on a PC, approves on the old phone, then adds the new phone. No admin change is needed.
+4. Last resort, only if the old phone is gone: with sign-off from the office manager and the practice owner, use Revoke sessions, then delete only the old Authenticator entry. Neither can be undone.
+5. [FIRST_NAME] signs in on a PC and sets up Authenticator on the new phone when asked.
+
+**Done when:** Outlook and Teams open after an approval on the new phone. Aegis then checks that the new app is registered and the sign-in succeeded.
+**Stop if:** sign-in says registration is blocked by policy.
+**Tell the user now:** IT is working on getting your new phone set up for sign-in. If you still have your old phone, please keep it charged and nearby. We will call to confirm it's you first.
+**Tell the user when done:** Your new phone is set up. Open Outlook and Teams, sign in, and approve the prompt in Authenticator on your new phone.
+
+## Details
+- **Runbook:** `/mfa-issue`, the new phone / re-register path. Replay was a MISS, so the steps above come from that runbook.
+- **What changed:** the new phone. The old Authenticator registration stays tied to the old handset. Text-message codes are off at this office, so there is no fallback method. That is why step 3 (self-service with the old phone) comes first: it needs no admin change.
+- **Identity:** the customer has no written rule yet for checking who is calling ([org gap]). For now the office manager vouches by phone. Write who vouched, and when, in the ticket.
+- **Approvals (customer profile):** Revoke sessions and the method delete are both permanent, so each needs the office manager **and** the practice owner.
+- **Before-state:** before the revoke, Aegis saves the recent sign-ins. Before the delete, it saves the method list. Both stay in the checkpoint folder, and the ticket names the method type only. Write the time of the revoke click in the ticket.
+- **Why the one-method delete and not Require re-register MFA:** it is the narrower change, and only one of the two is ever used on a ticket.
+- **⚠️ If step 5 is blocked by a policy:** the fix is a Temporary Access Pass or a Conditional Access exclusion. Both are separate reviewed changes (`/conditional-access`) and are not advised here. Never turn off MFA.
+- **Timing:** office hours start at 08:00 and patients at 9. Treat this as a priority, but don't promise the user a time.
+- **No cloud sync:** accounts are cloud-only, so nothing needs to sync and nothing waits on AD Connect.
+
+**Verification checklist**
+- [ ] Identity vouched for and recorded
+- [ ] If the old phone was gone: the revoke and the delete each passed Aegis's check
+- [ ] New Authenticator registered; sign-in to Outlook and Teams succeeds
+- [ ] No policy exclusion left in place
+
+**Jira-ready note**
+> MFA new-phone re-registration for `[UPN]` (front desk). Identity vouched for by the office manager by phone at [TIME]. Path: [self-service via old phone / old phone gone: sessions revoked and the old Authenticator method deleted, approved by the office manager + practice owner]. New Authenticator registered and sign-in checked: [yes/no]. Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-session-revoke-portal
+Phrase: REVOKE ENTRA SESSIONS FOR [UPN]
+Change record: R2, read-back msgraph:verify-sessions-revoked --not-before
+Pre-state: node scripts/adapters/msgraph-client.js sign-ins --user [USER_ID] --since [DATE_TIME] --execute
+Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Pre-state: node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+After registration: node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+After registration: node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+Approval: office manager + practice owner (both gates not reversible)
+Condition: both gates apply only if the old phone is no longer usable; self-service path = no change
+```

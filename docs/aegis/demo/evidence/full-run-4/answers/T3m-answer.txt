@@ -1,0 +1,67 @@
+## Fix
+**What's wrong:** A work MacBook was stolen with Gmail open on it, so anyone holding it may still be able to read the person's mail.
+**Do this:**
+1. Call the person back on the number in the staff list. Then read Jamf Pro → Computers → [SERIAL_NUMBER] (last check-in, FileVault) and Google Admin → Reporting → User log events since the theft. No check-in and no unknown sign-ins means nothing has been accessed yet. Any unknown sign-in is the Stop-if case.
+2. Admin console → Directory → Users → [USER@DOMAIN.COM] → Reset password, with "Ask the user to change their password" ticked.
+3. Same user → Security → Sign-in cookies → Reset. This signs the stolen Mac out of Google.
+4. With the studio manager's approval: Jamf Pro → [SERIAL_NUMBER] → Management → Lock Computer. Save the PIN in the password manager first.
+5. Last resort: Wipe Computer, only after an independent review and approval from both managers.
+
+**Done when:** the person signs in with a new password. Aegis then checks that the password change appears in the admin log.
+**Stop if:** any sign-in or activity came from an unknown place after the theft. Treat it as a compromised account.
+**Tell the user now:** IT is checking your work accounts and the laptop's status. Please keep your phone close so we can call you back, and send us the police report number.
+**Tell the user when done:** You're signed out of your work Google account everywhere, and the stolen laptop is locked. Sign in with the temporary password we gave you and pick a new one.
+
+This touches Google, Jamf and Slack: see Details.
+
+## Details
+
+**Verdict:** This is a stolen device, not a confirmed account compromise. It needs a short plan across three systems. The runbooks are `/gws-password-reset` (Phases B and C) and `/jamf-lock-erase` (Phases A, B and C). Replay was a MISS.
+
+**What to check first**
+- **Who is asking.** The ticket arrived as a forwarded "urgent" email. Check identity by calling back the number in the staff list before making any change. Urgency doesn't skip that check.
+- **Jamf record (Phase A).** Read the macOS version, whether it's Apple silicon or T2, FileVault, the bootstrap token, the last check-in and any pending commands. If FileVault is on and the Mac hasn't checked in, the data is protected for now.
+- **Google logs.** Read `login` and `user_accounts` events since the theft. Look for `suspicious_login`, `recovery_email_edit`, `recovery_phone_edit` and `2sv_disable`. If any of those appear, switch to `/gws-account-containment`, which suspends the account first.
+- **Sign-in path.** If Google sign-in goes through an identity provider (an SSO service), the Google reset doesn't cover it. End that session in the identity provider's own procedure. *[Org gap: the customer profile doesn't name an identity provider.]*
+
+**Order and why**
+- **Password reset.** It's forward-only (R1). The new password goes to the person by phone, never into the ticket.
+- **Sign-in cookie reset.** R1. Gmail can take up to an hour to sign out.
+- **Lock Computer.** R2: the PIN is the pre-state. The Mac runs the lock at its next check-in, and the data stays intact. The studio manager approves it.
+- **Wipe Computer.** R3, cannot be undone. Use it only if FileVault was off, or the data must not survive. It needs an independent out-of-session review plus approval from the studio manager *and* the person's own manager (customer profile). The Jamf record stays.
+
+**Slack:** The runbook has no way to sign out a single person. The GUI reset signs out the whole workspace (R3), and deactivating the account is heavier still. I'm not advising either one. Watch the Slack access logs (paid plans). If there's activity from the stolen Mac, raise deactivation (`/slack-user-lifecycle` Phase D) as its own reviewed change.
+
+**Also tell the person:** Mark the Mac lost in their own Find My, if their Apple Account was signed in on it. Change any personal passwords that were saved in the browser on that Mac.
+
+**Risk:** A Mac that never comes back online never receives the lock or the wipe. FileVault and Activation Lock are what protect it in that case.
+
+**Verification checklist**
+- [ ] Identity confirmed by callback
+- [ ] Password-change event found in the admin log
+- [ ] The person is asked to sign in again on their other devices
+- [ ] Jamf Management History shows Lock Computer completed (or still pending, noted with the time)
+- [ ] PIN only in the password manager
+- [ ] Slack access logs checked
+
+**Ticket note**
+> Stolen work Mac [SERIAL_NUMBER], police report [REPORT_REF]. Identity confirmed by callback. Google password reset [time], read-back passed. Sign-in cookies reset [time]. Lock Computer sent [time], status [completed/pending], PIN in password manager [entry]. Pre-state: macOS [ver], FileVault [on/off], last check-in [date]. Wipe: [not needed / sent after review and both approvals]. Slack: [no activity / escalated]. Time spent: [X] min.
+
+```aegis-desk
+Gate: gws-password-reset-password-portal
+Phrase: RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]
+Change record: R1, no change record
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Change record: R1, no change record
+Read-back: none (the person is prompted to sign in again; Gmail up to an hour)
+Gate: jamf-lock-erase-lock-portal
+Phrase: LOCK MAC [SERIAL_NUMBER]
+Change record: R2, no read-back named; proof is Jamf Management History showing the command completed
+Read-back: none
+Gate: jamf-lock-erase-wipe-portal
+Phrase: WIPE MAC [SERIAL_NUMBER]
+Change record: R3, read-back jamf:verify-command --not-before --type ERASE_DEVICE
+Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type ERASE_DEVICE --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```

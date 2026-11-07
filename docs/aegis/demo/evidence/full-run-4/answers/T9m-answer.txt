@@ -1,0 +1,51 @@
+## Fix
+**What's wrong:** Since the macOS update, Okta Verify keeps sending [FIRST_NAME] back to sign-in.
+**Do this:**
+1. Okta Admin Console → Reports → System Log → search [UPN]. Repeated Okta Verify failures from this Mac point to leftover state on the Mac. Sign-ins or pushes they didn't make mean stop.
+2. Ask them to fully quit and reopen Okta Verify, then sign in. If it still loops, restart the Mac and try once more. Note both version numbers in the ticket.
+3. Admin re-authentication in Okta: on hold until someone confirms the exact console action.
+4. Last resort, after the identity check: Directory → People → [UPN] → More Actions → Reset Authenticators, tick Okta Verify only.
+**Done when:** they sign in with no loop. After a reset, Aegis checks the old enrollment is gone.
+**Stop if:** the log shows activity they didn't make. That is a security report.
+**Tell the user now:** Please quit Okta Verify fully, reopen it and sign in. If it loops, restart your Mac and try again. Send us your macOS and Okta Verify versions.
+**Tell the user when done:** Your sign-in works again. If Okta asks, set up Okta Verify once.
+
+See Details for the reset's identity check and approval.
+
+## Details
+
+**Verdict:** The replay lookup was a miss. The runbook is `/okta-mfa-reset`, section "Okta Verify sign-in loop after a macOS update". The owner checked it on 2026-11-06; Okta's published pages don't cover it. The macOS update is what changed, so leftover state on the Mac comes first. The reinstall is already done, so it isn't repeated.
+
+**What to check first (read-only)**
+- In the Okta user record, Status must be **Active**. If it is Suspended or Deactivated, this becomes an account lifecycle ticket.
+- The System Log is also the compromise check. Look for pushes they didn't send, unfamiliar locations or odd-hour approvals. If you see any, send it to security triage. Customer D handles security reports at any hour.
+- Fleet can show the Mac's macOS version (host details, read-only) if the user can't find it.
+
+**Step 3 (admin re-authentication):** The runbook has this only as a plan. The exact console action isn't confirmed yet, so nothing authorizes it. Don't improvise a console path. Ask the runbook owner for the action first.
+
+**Step 4 (reset, last resort):** ⚠️ WARNING: this can't be undone. Okta cancels the Okta Verify enrollment, and the user sets it up again at next sign-in. Removing Okta Verify also removes its code, push and FastPass methods together. Other authenticators stay.
+- **Identity check:** a video call with the person, and their manager confirms in the IT channel. Never accept the request based on the message it arrived in.
+- **Approval:** head of engineering, recorded in the ticket.
+- **Before the reset:** record which authenticators are enrolled (types only).
+- **After the reset:** Aegis checks the reset before the user sets Okta Verify up again. Then wait for one full sign-in.
+- Don't reset all authenticators. That is a separate, heavier step for when every enrollment must go.
+
+**Verification checklist**
+- [ ] Status Active, no signs of compromise in the System Log
+- [ ] Quit/reopen and restart tried, versions recorded
+- [ ] If reset: identity checked, approval recorded, Aegis's check passed before re-enrollment
+- [ ] One full sign-in with no loop, visible in the System Log
+
+**Ticket note (Linear):** Okta Verify sign-in loop on macOS after an OS update; reinstall already tried. Checked status and System Log: [RESULT]. Quit/reopen and restart: [RESULT]. macOS [VERSION], Okta Verify [VERSION]. Escalation: [NONE / authenticator reset with identity check, approval by head of engineering, check passed]. Resolved: [YES/NO].
+
+```aegis-desk
+Pre-state: node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
+Pre-state: node scripts/adapters/okta-client.js factors --user [OKTA_USER_ID] --execute
+Gate: okta-verify-loop-admin-reauth
+Note: PREVIEW ONLY, UNCONFIRMED, authorizes no change; needs the owner's exact action and its own reviewed gate
+Gate: okta-mfa-reset-selected-portal
+Phrase: RESET SELECTED OKTA AUTHENTICATORS FOR [UPN]
+Change record: R2, read-back okta:verify-factor-reset --factor-type push
+Read-back: okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute
+Approver: head of engineering; identity check: video call + manager confirmation in the IT channel
+```

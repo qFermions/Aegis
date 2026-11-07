@@ -81,7 +81,7 @@ Resetting the password first just walks the user into an MFA wall they can't pas
 <details>
 <summary>PowerShell — cloud-only password reset</summary>
 
-No lighter step: this block is the scripted form of the steps above, for reference; the lighter steps, or the reason none applies, are in that section and come first.
+**Try first:** the user check and the self-service reset in the steps before [password-reset-cloud-portal] above; this block is that gate's PowerShell form.
 
 ```powershell
 Connect-MgGraph -Scopes "User.ReadWrite.All"

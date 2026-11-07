@@ -91,7 +91,9 @@ function sectionEvents(text, runbook = '') {
     const summary = fenced ? null : /^\s*<summary>(.*?)<\/summary>\s*$/.exec(l);
     if (summary) {
       if (parent) sections.push(current); else parent = current;
-      current = { title: summary[1].replace(/<[^>]+>/g, '').trim(), line: i + 1, events: [], escape: false };
+      // the twin keeps the lighter steps its section listed before the block: they come first for it too
+      // (code review round 2 of batch 9, findings 1 and 7)
+      current = { title: summary[1].replace(/<[^>]+>/g, '').trim(), line: i + 1, events: [], escape: false, reference: true, within: parent };
       return;
     }
     if (!fenced && parent && /^\s*<\/details>\s*$/.test(l)) { sections.push(current); current = parent; parent = null; return; }
@@ -99,17 +101,44 @@ function sectionEvents(text, runbook = '') {
       const id = mark[1] || mark[2];
       const r = rClass.get(i + 1) || null;
       const heavy = r === 'R3' || HEAVY.test(ownWords(id, runbook)) || HEAVY.test(fieldOf(lines, i + 1, 'Effect'));
-      current.events.push({ kind: heavy ? 'heavy' : (['R0', 'R1', 'R2'].includes(r) ? 'lighter' : 'other'), id, line: i + 1, admin: true });
+      current.events.push({ kind: heavy ? 'heavy' : (['R0', 'R1', 'R2'].includes(r) ? 'lighter' : 'other'), id, line: i + 1, admin: true, gate: true, rClass: r });
       return;
     }
     for (const m of l.matchAll(PREVIEW)) current.events.push({ kind: HEAVY.test(ownWords(m[1], runbook)) ? 'other' : 'lighter', id: m[1], line: i + 1, admin: true });
     // a User check is the user's own step; Try first and Lighter step name a lighter admin action, often a gate in
     // another phase (code review round 1 of batch 9, finding 8)
-    if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: /\*\*User check\b/i.test(l) ? 'a user check line' : 'a lighter step line', line: i + 1, admin: !/\*\*User check\b/i.test(l) });
+    // a Try first or Lighter step line is an admin step an answer can name only when it names a gate ([id]) or a
+    // phase (code review round 2 of batch 9, finding 11: "keep the account suspended" names nothing to advise)
+    if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: /\*\*User check\b/i.test(l) ? 'a user check line' : 'a lighter step line', line: i + 1, admin: !/\*\*User check\b/i.test(l) && /\[[a-z0-9]+(?:-[a-z0-9]+)+\]|\bPhase [A-Z0-9]/.test(l) });
     if (NO_LIGHTER.test(l)) current.escape = true;
   });
   if (parent) sections.push(parent);
   sections.push(current);
+  // A scripted twin in a <details> block keeps the lighter steps its portal twin's section lists before the portal
+  // gate ([x-portal] for [x], or for [x-api] and [x-script]): they come first on either path. With no portal twin
+  // it inherits nothing, so a twin filed under another phase is not passed by that phase's steps (code review
+  // round 2 of batch 9, findings 1 and 7; round 1, finding 9).
+  const where = new Map();
+  for (const sec of sections) sec.events.forEach((e, k) => { if (!where.has(e.id)) where.set(e.id, { sec, k }); });
+  for (const sec of sections.filter((x) => x.reference)) {
+    const heavy = sec.events.find((e) => e.kind === 'heavy');
+    if (!heavy) continue;
+    const twin = [`${heavy.id}-portal`, `${heavy.id.replace(/-(?:api|script|cli|ps)$/, '')}-portal`].map((id) => where.get(id)).find(Boolean);
+    // with no portal twin, a block that holds its phase's only gate is that phase's own step, so it keeps the
+    // phase's lighter steps and its written reason; a phase with gates of its own passes nothing to it
+    const own = !twin && sec.within && !sec.within.events.some((e) => e.gate);
+    if (own) {
+      sec.events = [...sec.within.events.filter((e) => e.kind === 'lighter').map((e) => ({ ...e, inherited: true })), ...sec.events];
+      sec.escape = sec.escape || sec.within.escape;
+    }
+    if (twin) {
+      // the scripted form of a light portal step is that light step ([mfa-session-revoke] of its portal twin)
+      // (only a twin heavy by its words: an R3 gate stays heavy whatever its portal twin is)
+      if (twin.sec.events[twin.k].kind !== 'heavy' && heavy.rClass !== 'R3') heavy.kind = twin.sec.events[twin.k].kind;
+      sec.events = [...twin.sec.events.slice(0, twin.k).filter((e) => e.kind === 'lighter').map((e) => ({ ...e, inherited: true })), ...sec.events];
+      sec.escape = sec.escape || twin.sec.escape;
+    }
+  }
   return sections;
 }
 

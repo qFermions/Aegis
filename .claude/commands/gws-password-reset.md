@@ -112,8 +112,6 @@ node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASS
 <details>
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
-No lighter step: this block is the scripted form of the steps above, for reference; the lighter steps, or the reason none applies, are in that section and come first.
-
 ```bash
 # HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # SAFETY GATE [gws-password-reset-password]

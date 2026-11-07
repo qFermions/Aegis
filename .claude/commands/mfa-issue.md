@@ -74,8 +74,6 @@ disable-model-invocation: true
 <details>
 <summary>PowerShell — for reference only</summary>
 
-No lighter step: this block is the scripted form of the steps above, for reference; the lighter steps, or the reason none applies, are in that section and come first.
-
 ```powershell
 Connect-MgGraph -Scopes "UserAuthenticationMethod.Read.All","User.RevokeSessions.All"  # list methods + revoke Entra sessions
 $sessionUser = Get-MgUser -UserId "[UPN]" -Property Id,UserPrincipalName -ErrorAction Stop

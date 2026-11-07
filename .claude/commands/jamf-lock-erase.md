@@ -118,7 +118,7 @@ No lighter step: the Mac is leaving the fleet, so its management must end; a Mac
 <details>
 <summary>Terminal on the Mac — remove the Jamf management framework (HUMAN-RUN)</summary>
 
-No lighter step: this block is the scripted form of the steps above, for reference; the lighter steps, or the reason none applies, are in that section and come first.
+No lighter step: removing the management framework is how a Mac that is leaving the fleet stops being managed; a Mac that may come back gets Phase B's lock instead.
 
 ```zsh
 # HUMAN-RUN — the administrator runs this in Terminal on the Mac, or over SSH — Aegis never does

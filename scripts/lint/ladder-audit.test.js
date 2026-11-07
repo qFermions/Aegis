@@ -109,3 +109,22 @@ test('code review 1, finding 9: a <details> summary starts its own section', () 
   assert.equal(wipe.section, 'API reference: wipe the Mac');
   assert.equal(wipe.verdict, 'fail', 'the iPhone section\'s lighter steps do not count for it');
 });
+
+// Code review round 2 (batch 9), findings 1, 7 and 11: a twin in a <details> block lost the lighter steps of the
+// section it sits in, and an escape line was pasted to pass; a "Try first" line that names no gate or phase made
+// the desk row fail with nothing an answer could name. Wrong implementations they catch: a twin section that
+// starts empty, and a Try first line counted as an admin step whatever it says.
+test('code review 2: a <details> twin inherits the lighter steps listed before it; a Try first line is an admin step only when it names a gate or phase', () => {
+  const text = ['## Wipe', 'PREVIEW ONLY [x-lock-preview]: lock it first.', gate('x-wipe-portal', 'R3', 'erase the device'), '', '<details>', '<summary>PowerShell: the wipe</summary>', '', gate('x-wipe', 'R3', 'erase the device', false), '</details>'].join('\n');
+  const twin = ladder.auditText(text, 'x').find((r) => r.heavy === 'x-wipe');
+  assert.equal(twin.verdict, 'pass', twin.reason);
+  const events = ladder.sectionEvents(['## S', '**Try first:** keep the account suspended.', '**Try first:** Phase B, lock it.', '**Lighter step:** [x-signout-portal] signs the user out.'].join('\n'))[1].events;
+  assert.deepEqual(events.map((e) => e.admin), [false, true, true]);
+});
+
+// Code review round 2 (batch 9), follow-up: a scripted R3 twin of a lighter portal gate stays heavy. Wrong
+// implementation it catches: re-classing the twin by its portal twin's class.
+test('code review 2: an R3 scripted twin stays heavy even when its portal twin is lighter', () => {
+  const text = ['## Block', gate('x-block-portal', 'R2', 'block sign-in'), '', '<details>', '<summary>PowerShell</summary>', '', gate('x-block', 'R3', 'block sign-in and revoke', false), '</details>'].join('\n');
+  assert.ok(ladder.auditText(text, 'x').some((r) => r.heavy === 'x-block'));
+});

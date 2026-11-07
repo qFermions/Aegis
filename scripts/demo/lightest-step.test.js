@@ -83,7 +83,7 @@ test('the desk shows it as its own row at step 5, and a failed row does not stop
 test('code review 1, finding 8: a Try first or Lighter step line counts as a lighter admin step; a User check does not', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  fs.writeFileSync(path.join(dir, 'example-wipe.md'), ['# Example', '## Wipe', '**Try first:** Phase B, lock the Mac.', '', portal('ex-wipe-portal', 'R3', 'erase the Mac'), '', '## Reset', '**Lighter step:** sign the user out.', '', portal('ex-all-reset', 'R3', 'reset every authenticator'), ''].join('\n'));
+  fs.writeFileSync(path.join(dir, 'example-wipe.md'), ['# Example', '## Wipe', '**Try first:** Phase B, lock the Mac.', '', portal('ex-wipe-portal', 'R3', 'erase the Mac'), '', '## Reset', '**Lighter step:** [ex-signout-portal] signs the user out.', '', portal('ex-all-reset', 'R3', 'reset every authenticator'), ''].join('\n'));
   const c = catalog(dir);
   assert.equal(lightestStepFirst(answer('ex-wipe-portal'), c).verdict, 'fail');
   assert.equal(lightestStepFirst(answer('ex-all-reset'), c).verdict, 'fail');

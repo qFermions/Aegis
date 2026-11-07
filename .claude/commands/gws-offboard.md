@@ -161,8 +161,6 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 <details>
 <summary>GAM / Okta API — the scale version (HUMAN-RUN, for reference)</summary>
 
-No lighter step: this block is the scripted form of the steps above, for reference; the lighter steps, or the reason none applies, are in that section and come first.
-
 ```bash
 # HUMAN-RUN — the administrator runs this in their own terminal — Aegis never does
 # Okta API token: export OKTA_API_TOKEN from the secret manager first — never paste it into a ticket

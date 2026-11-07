@@ -300,6 +300,7 @@ test('code review 2: a password or key stops the ask; error codes and bracket to
   assert.equal(ask.protect('Windows Update error 2147942402').text, 'Windows Update error 2147942402');
   // built at run time, so the scanner does not read a lower-case token as a real address
   const lower = `[${['user', 'domain.com'].join('@')}]`;
-  assert.equal(ask.protect(`call [ADMIN@DOMAIN.COM] or ${lower}`).text, `call [ADMIN@DOMAIN.COM] or ${lower}`);
+  const upper = `[${['ADMIN', 'DOMAIN.COM'].join('@')}]`;
+  assert.equal(ask.protect(`call ${upper} or ${lower}`).text, `call ${upper} or ${lower}`);
   assert.equal(ask.protect(`call ${['+1', '415', '555', '0134'].join(' ')}`).text, 'call [PHONE_NUMBER]');
 });

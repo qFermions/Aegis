@@ -54,10 +54,11 @@ function setupBlock(setup, scope) {
 // The intake's own privacy rules for typed text (code review round 1 of batch 9, finding 3): a credential or a
 // tenant literal stops the ask, and is never echoed; email addresses and phone numbers become placeholders.
 // Beyond the graph sanitizer's patterns, a password written after the word password, passcode or secret, an AWS
-// access key and an Entra client secret stop it too, as the README says (round 2, finding 2). A placeholder in
-// brackets is kept as it is (finding 15), and only a number written as a phone number is one: ten digits alone,
-// such as an error code, stay (finding 8). Returns { text } or { blocked: [labels] }. Names in free text are not
-// detected, as in the intake. shortcut: pattern lists, so a secret of another shape still goes through.
+// access key and an Entra client secret stop it too, as the README says (round 2, finding 2). Only a known
+// placeholder, or an address at the placeholder domain, is kept in brackets; any other bracket is masked inside
+// (security review round 3). Every phone form the intake masks is masked, except ten bare digits, such as an error
+// code (round 2, finding 8). Returns { text } or { blocked: [labels] }. Names in free text are not detected, as in
+// the intake. shortcut: pattern lists, so a secret of another shape still goes through.
 const EXTRA_SECRETS = [
   // a value that looks like a password: six or more characters with a letter and a digit or symbol, and not a
   // [PLACEHOLDER], so "my password is expired" or "Temp password: [TEMP_PASSWORD]" pass (code review round 3,

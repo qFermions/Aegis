@@ -146,7 +146,8 @@ test('the admin step says where it comes from and the two Okta limits on More Ac
   const gotcha = s.find((l) => /^\*\*Gotcha:\*\*/.test(l) && /More Actions/.test(l));
   assert.ok(gotcha, 'a Gotcha about More Actions');
   assert.match(gotcha, /own profile/i);
-  assert.match(gotcha, /active users/i);
+  // evidence review 1, finding 2: Okta limits the Clear User Sessions action to active users, not More Actions
+  assert.match(gotcha, /\*\*Clear User Sessions\*\* is offered only for active users/);
   assert.match(body, /`okta-mfa-reset-selected-portal`/);
 });
 

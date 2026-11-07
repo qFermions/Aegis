@@ -11,7 +11,7 @@ Your ticket (MF-1): after a macOS update, Okta Verify on a Mac kept sending the 
 - You named the button: user profile, More Actions, **Clear User Sessions**. Okta's own article ("How to clear user session") shows the same path.
 - The placeholder is now a gated step in `/okta-mfa-reset`: the technician writes the time, types `CLEAR OKTA SESSIONS FOR [UPN]`, clicks the button, and then a read-only check confirms in Okta's log that the sessions were cleared after that time.
 - It is the same change, with the same wording and phrase, as the session clear already in `/okta-user-lifecycle`. It has its own name because the safety checks allow each gate name only once.
-- Two Okta limits are written next to it: the button does not show on your own profile, and only active users get it.
+- Two Okta limits are written next to it: the More Actions menu does not show on your own profile, and Clear User Sessions is offered only for active users.
 - The three user checks and the last-resort reset did not change.
 
 ## What the practice run showed

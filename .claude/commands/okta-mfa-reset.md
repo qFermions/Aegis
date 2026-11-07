@@ -94,7 +94,7 @@ node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_I
 
 **WAIT UNTIL** the user quits Okta Verify, opens it again and completes one full sign-in.
 
-**Gotcha:** **More Actions** does not show when an admin opens their own profile, and it is offered only for active users: a user in a password-reset state or recently reactivated does not get it.
+**Gotcha:** **More Actions** does not show when an admin opens their own profile, and **Clear User Sessions** is offered only for active users: a user in a password-reset state or recently reactivated does not get it.
 
 4. **Last resort:** Reset Authenticators, only when the steps above did not stop the loop: Phase B below resets only the ticked authenticator, Okta Verify here (gate `okta-mfa-reset-selected-portal`), and Phase C resets every authenticator (gate `okta-mfa-reset-all-portal`) only when every enrollment must go. Those gates are unchanged: follow them as written.
 

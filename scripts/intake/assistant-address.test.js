@@ -54,6 +54,12 @@ const MUST_NOT_FLAG = [
   'Can you do it now before my 3pm meeting?', // "do it now before" alone flagged
   'The security team approved my request last week.', // "approved" alone flagged
   'Hi IT assistant, my laptop will not connect to the Wi-Fi.', // every comma vocative flagged, even a plain greeting
+  // code review round 1 (batch 9), finding 10: ticket field lines and a meeting
+  'Model: Dell Latitude 7420', // a colon after a generic noun read as speaking to a model
+  'Agent: [ADMIN_NAME]', // a help desk export's agent field
+  'Tool: Outlook desktop', // a field naming the app
+  'Bot - please help', // a dash after "bot" with no authority claimed
+  'Can we skip the review meeting today?', // "skip the review" read as skipping a safety review
 ];
 
 for (const line of MUST_FLAG) {

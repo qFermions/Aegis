@@ -1,0 +1,8 @@
+ℹ fail 5
+ℹ pass 27
+✖ failing tests:
+✖ not flagged: Agent: [ADMIN_NAME]
+✖ not flagged: Bot - please help
+✖ not flagged: Can we skip the review meeting today?
+✖ not flagged: Model: Dell Latitude 7420
+✖ not flagged: Tool: Outlook desktop

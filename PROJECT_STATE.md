@@ -258,7 +258,7 @@ captures: `docs/aegis/demo/evidence/batch9b/`; the owner's page: `docs/explainer
 | the loop section's Purpose line no longer quotes the demo ticket; the Gotcha names Clear User Sessions as active-only | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` (`er1-02-red.txt`, `er1-02-green.txt`) |
 | the rest of the runbook knows the session-clear path: `[NOT_BEFORE]` in the Placeholders line, the Fast path, a checklist item, two Jira-note forms (session clear; session clear then reset) and a rule naming the read-backs each path requires | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` (`cr1-runbook-*.txt`, `cr2-runbook-*.txt`, `cr2-split-red-at-2eb7ee7.txt`) |
 | one shared simulator entry for both session-clear gates; T9m's `expected_path` names the gate; the README's ladder sentence matches the desk | `scripts/demo/sim/gates.js`, `scripts/demo/customers/tickets-messy.json`, `scripts/demo/README.md` | `customer-desk.test.js` "batch 9b"; `customers.test.js` (`cr1-06-red.txt`, `cr1-06-green.txt`) |
-| the session-cap wrapper used for the T9m run | `docs/aegis/demo/evidence/batch9b/tools/claude-cap.sh` | `tools/claude-cap-selfcheck.sh` (`claude-cap-selfcheck.txt`) |
+| the session-cap wrapper: the version the T9m run used, and the version after code reviews 1 to 3 | `docs/aegis/demo/evidence/batch9b/tools/claude-cap-as-run-for-T9m.sh` (from `8533733`), `tools/claude-cap.sh` | `tools/claude-cap-selfcheck.sh`, 20 of 20 (`claude-cap-selfcheck.txt`) |
 
 ## Partial
 

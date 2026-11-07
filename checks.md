@@ -29,7 +29,7 @@ The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (
 | Task 3: `git grep -n "okta-verify-loop-admin-reauth"` shows no PREVIEW ONLY use | pass | `marker-grep.txt`: the remaining hits are batch 9's records, its run evidence, the new test that asserts the absence, and this batch's notes; the PREVIEW ONLY form has 0 hits in `.claude/commands/` (exit 1) | |
 | Task 3: the full battery passes | unresolved | passed at `9523ad7` and at `29583d6` (Battery table); not yet rerun at the final head | |
 | Task 4: prediction written before the run | pass | `progress.md`, committed in `d500a87`; the run was at `9523ad7` (runbook and desk unchanged after `d500a87`) | |
-| Task 4: T9m alone, one session, within 1.50 US dollars, saved with terminal output, the answer, desk.html and a one-row table; RESOLVED (SIMULATED) with no change to the desk made to force a pass | pass | `T9m/terminal.txt`, `T9m/answers/T9m-answer.txt`, `T9m/desk.html`, `T9m/summary.md`: RESOLVED (SIMULATED), 208 words, 0.29 US dollars, 1 session; the cap held at 1.50 by `tools/claude-cap.sh` (log line at the top of `terminal.txt`) | limit: the answer named the last-resort reset gate too, and the desk simulated both (decision for the owner). The desk change in this batch is the simulator entry for the new gate (`021a6c8`, its own test), which every gate needs to be simulated; no check was changed |
+| Task 4: T9m alone, one session, within 1.50 US dollars, saved with terminal output, the answer, desk.html and a one-row table; RESOLVED (SIMULATED) with no change to the desk made to force a pass | pass | `T9m/terminal.txt`, `T9m/answers/T9m-answer.txt`, `T9m/desk.html`, `T9m/summary.md`: RESOLVED (SIMULATED), 208 words, 0.29 US dollars, 1 session; the cap held at 1.50 by the wrapper as it was then, `tools/claude-cap-as-run-for-T9m.sh` (from `8533733`; its log line is the top of `terminal.txt`; `tools/claude-cap.sh` is the reviewed version) | limit: the answer named the last-resort reset gate too, and the desk simulated both (decision for the owner). The desk change in this batch is the simulator entry for the new gate (`021a6c8`, its own test), which every gate needs to be simulated; no check was changed |
 | Task 5: the stale title at `scripts/demo/customer-desk.test.js:808`, its own commit | pass | `6e37786`; `t5-green.txt` | no assertion changed |
 | A test for each changed behavior | pass | the loop test (runbook); `customer-desk.test.js` "batch 9b" (simulator entry: red without it `t2-desk-red.txt`, OPEN; green `t2-desk-green.txt`; a wrong simulated change FAILS its read-back) | |
 | Snapshot counts moved by one for the new gate, each with its reason | pass | `scripts/gate-r-class.test.js` (348 to 349), `scripts/audit/read-back-field.test.js` (348 to 349), `scripts/adapters/change-binding.test.js` (76 to 77 unbound) | these pins count gates; batch 9 moved them the same way when it added gates |
@@ -37,7 +37,7 @@ The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (
 | The pre-commit scan after `git add`, never before | fail | the first commit, `0fbbce0`, ran the scan after the commit, with nothing staged, so it scanned nothing; every later commit ran `node scripts/pre-commit-check.js` in the same command between `git add` and `git commit` (exit 0 each time; the outputs were not saved) | not repairable for `0fbbce0`; `node scripts/pre-commit-check.js --all` exit 0 at the head battery (`battery-head/pre-commit-check-all.txt`) covers what that commit added |
 | Push only after the battery passes at the pushed commit | pass | `9523ad7` pushed after the battery at `9523ad7` | |
 | /security-review on the branch | pass | `reviews/security-review-1.md`: no findings, at `d914023` | |
-| /code-review at xhigh (tier C from `node scripts/risk_tier.mjs c0f3757`), at most three rounds | unresolved | rounds 1 and 2 run (Review rounds: 14 and 15 findings, each fixed or closed); round 3 on the new diff not yet run | |
+| /code-review at xhigh (tier C from `node scripts/risk_tier.mjs c0f3757`), at most three rounds | pass | three rounds (Review rounds: 14, 15 and 15 findings), every finding fixed in a commit named for its class or closed with a reason | the fixes made after round 3 had no fourth review (the limit is three rounds) |
 | Evidence review | pass | `reviews/evidence-review-1.md`: 13 findings (5 important, 5 nits, 3 pre-existing); each fixed or closed below | |
 | CI green on the draft pull request | unresolved | not opened yet | |
 
@@ -67,6 +67,7 @@ The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (
 | security 1 | `c0f3757...d914023` | 0 | `reviews/security-review-1.md` |
 | code 1 (xhigh) | `c0f3757...2eb7ee7` (HEAD moved during the review; each finding rechecked at `2eb7ee7`) | 14 | 10 fixed, 4 closed; `reviews/code-review-1.md` |
 | code 2 (xhigh) | `2eb7ee7...29583d6` (the new diff only) | 15 | 13 fixed, 2 closed; `reviews/code-review-2.md` |
+| code 3 (xhigh) | `29583d6...14444c3` (the new diff only; the last round allowed) | 15 | 14 fixed, 1 closed; `reviews/code-review-3.md`; the fixes after it were not reviewed again |
 
 Code review 1, by class:
 
@@ -79,7 +80,7 @@ Code review 1, by class:
 | 1 | README said naming a reset gate first fails "lightest step first"; for `okta-mfa-reset-selected-portal` it passes | README fixed, `8b74087` (checked against the real catalog); the desk check in `scripts/demo/step-ladder.js:25` is closed here as a decision for the owner: it is outside this change and changes what the desk checks |
 | 6 | T9m's `expected_path` still named the PREVIEW ONLY marker | fixed, `8b74087`, red first (`cr1-06-red.txt`, `cr1-06-green.txt`) |
 | 11 | claude-cap raised a smaller desk budget and missed the `=` form | fixed, `6df8106` (`claude-cap-selfcheck.txt`) |
-| 3, 4 | checks.md claimed progress.md and the head battery fixed; progress.md stale | fixed: progress.md rewritten in `29583d6`; the battery rerun at the final head (the Battery table) |
+| 3, 4 | checks.md claimed progress.md and the head battery fixed; progress.md stale | fixed: progress.md rewritten in `29583d6`; the battery rerun at the final head and saved in the repo (the Battery table, `battery-final/`) |
 | 5 | T9m's RESOLVED proves both simulated gates, the reset included | closed: disclosed in `T9m/summary.md`, the Task 4 row and the explainer; the desk applying every gate in a block is a decision for the owner; the replay store it writes is in the run folder outside the repo |
 | 7 | the Gotcha leaves out L-13c (Classic Engine keeps the MFA cookie) | closed: new runbook copy beyond the task's two limits; a decision for the owner, with the fact recorded in L-13c and the explainer |
 | 14 | the admin step is unnumbered between steps 3 and 4 | closed: the instruction keeps the last resort exactly as it is, its "4." included; renumbering it would change it |
@@ -94,4 +95,17 @@ Code review 2, by class:
 | 2, 4, 10, 11 | checks.md rows behind the tree; the explainer and PROJECT_STATE.md stale | fixed in `2fa1665` (this table, the explainer at 28 lines, PROJECT_STATE.md's 9b rows) and the commit after it (the /code-review and battery Acceptance rows say what is run and what is not) |
 | 6 | the desk's "lightest step first" row reads only the first gate's own section | closed: a re-report of round 1's finding 1, already closed as a decision for the owner |
 | 7 | round 1 fixed several findings in one commit | closed: the instruction says to group findings by class so one fix covers every instance; each commit names its class and findings |
+
+Code review 3, by class:
+
+| # | finding | outcome |
+|---|---|---|
+| 2, 3, 4, 11 | the closing rules still did not fit every loop path: the checklist said three waived items where there are four; the reset form forced "the new phone" and had no signed_nonce slot; "both when both ran" brought back the "ran" wording; the Fast path's Phase B step had no condition | fixed, `19b9ef9`, red first (`cr3-runbook-red.txt` 4 of 16, `cr3-runbook-green.txt` 16 of 16) |
+| 5, 10, 15 | the session-clear form's assertion also matched the reset form; the checklist test checked a phrase, not the item or the count; the round 2 red showed only the first assertion of the Jira test | fixed, `19b9ef9`: the Jira assertions are three tests; removing the session-clear form fails exactly its test (`cr3-form-removed.txt`); the checklist test counts the waived items and needs the compromise item |
+| 6, 7, 9 | claude-cap raised `.5` and `5.`, passed `-1` on as an argument, let `0` through; the self-check only printed | fixed, `c9f7006`: 20 cases with expected results, exit 1 on a mismatch, CAP_LOG unset (20 of 20, `claude-cap-selfcheck.txt`; 14 of 20 and exit 1 against the round 2 wrapper, `claude-cap-selfcheck-red.txt`) |
+| 8 | the cited wrapper is not the one the T9m run used | fixed: `tools/claude-cap-as-run-for-T9m.sh` is the run's version (from `8533733`); PROJECT_STATE.md and the Task 4 row cite both |
+| 1, 12, 13 | the battery claimed at `29583d6` and at the final head had no capture in the repo (it ran, at `29583d6`, into the scratchpad); progress.md stale; the explainer said the checklist covered both paths | fixed: the final battery saved in the repo (`battery-final/`, Battery table); progress.md rewritten; the checklist covers both paths since `19b9ef9`, so the explainer's sentence is true at this head |
+| 14 | one commit fixed several findings | closed: a re-report of round 2's finding 7; the instruction groups findings by class so one fix covers every instance |
+
+Not done, named for the owner: the reviewer's altitude point that a per-ticket cap in the desk (`--max-budget-usd` below the desk's 2 US dollar guess) would replace the wrapper; that is a desk change outside this batch.
 

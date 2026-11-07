@@ -37,6 +37,8 @@ const READERS = {
   okta: { table: () => require('./okta-client.js').COMMANDS, flags: (s) => [...(s.required || []), ...(s.optional || [])], keys: ['kind', 'required', 'optional', 'plans', 'expected', 'pages'] },
   slack: { table: () => require('./slack-client.js').COMMANDS, flags: (s) => Object.keys(s.flags || {}), keys: ['kind', 'team', 'flags', 'required', 'steps', 'pagination', 'verify'] },
   jira: { table: () => require('../jira-client.js').VERIFY_FLAGS, flags: (s) => s.filter((f) => f !== 'execute'), keys: null },
+  // batch 9, task 4: the Exchange Online connector
+  exo: { table: () => require('./exo-client.js').COMMANDS, flags: (s) => [...(s.flags || []), ...(s.optional || []), ...(s.booleans || [])], keys: ['kind', 'flags', 'optional', 'booleans', 'request', 'expected'] },
 };
 
 function taken() {
@@ -56,7 +58,8 @@ test('every verify-* command of the nine connectors declares every flag it takes
   const t = taken();
   assert.deepEqual(Object.keys(declared.VERIFY_FLAGS).sort(), Object.keys(READERS).sort(), 'one block per connector');
   const commands = Object.values(t).reduce((n, c) => n + Object.keys(c).length, 0);
-  assert.equal(commands, 59, `verify-* commands read: ${commands}`);
+  // 59 before batch 9; task 4 adds exo's three read-backs
+  assert.equal(commands, 62, `verify-* commands read: ${commands}`);
   assert.deepEqual(declared.undeclared(declared.VERIFY_FLAGS, t), []);
 });
 
@@ -87,8 +90,9 @@ test('the owner\'s minimum is a pass flag wherever a command takes it: --not-bef
       }
     }
   }
-  // 28 before the A3 fix on branch fix/g4-a3-factor-type, plus okta verify-factor-reset --factor-type
-  assert.equal(seen, 29, `minimum flags seen: ${seen}`);
+  // 28 before the A3 fix on branch fix/g4-a3-factor-type, plus okta verify-factor-reset --factor-type;
+  // batch 9, task 4: plus exo verify-mailbox-permission and verify-recipient-permission --absent
+  assert.equal(seen, 31, `minimum flags seen: ${seen}`);
   assert.equal(declared.VERIFY_FLAGS.msgraph['verify-sessions-revoked']['not-before'], declared.TIME);
   assert.equal(declared.VERIFY_FLAGS.jira['verify-create']['not-before'], declared.TIME);
 });

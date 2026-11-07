@@ -11,7 +11,7 @@
 
 const NAMES = Object.freeze({
   fleet: 'Fleet', jamf: 'Jamf Pro', slack: 'Slack', linear: 'Linear', gws: 'Google Workspace', 'google-workspace': 'Google Workspace', jira: 'Jira',
-  github: 'GitHub', okta: 'Okta', msgraph: 'Microsoft Graph',
+  github: 'GitHub', okta: 'Okta', msgraph: 'Microsoft Graph', exo: 'Exchange Online',
 });
 
 const SAFE_TOKEN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;

@@ -128,8 +128,11 @@ test('a value holding a semicolon, a pipe, a script block, a backtick, a $, a ne
     const r = await cli(['verify-mailbox-permission', '--mailbox', value, '--delegate', DELEGATE, '--execute'], { replies: [answer([perm(DELEGATE)])] });
     assert.equal(r.code, 1, `${JSON.stringify(value)}: ${r.text}`);
     assert.equal(r.calls.length, 0, `${JSON.stringify(value)}: no transport call`);
+    // the breakout check names its reason, so it is tested on its own and not only through the patterns
+    assert.match(r.text, /could break out of a PowerShell command/, JSON.stringify(value));
     const seam = await exo.callExo({ cmdlet: 'Get-MailboxPermission', parameters: { Identity: value } }, { transport: fake([]) });
     assert.equal(seam.state, STATES.REFUSED, `${JSON.stringify(value)} at the seam`);
+    assert.match(seam.error, /could break out of a PowerShell command/, `${JSON.stringify(value)} at the seam`);
   }
   const q = await cli(vqr('--message-id', `<${at('a;b', 'example.org')}>`, '--recipient', DELEGATE), { replies: [answer([quarantined()])] });
   assert.equal(q.code, 1, q.text);
@@ -324,7 +327,7 @@ test('missing credentials exit 1 naming the variable, before the transport is ca
 });
 
 // Catches: a read-back that runs under --change without checking the trail, or records the verdict unbound.
-test('--change: no change, an unapproved change or a change for another read-back is refused before the transport; an approved one is recorded under it', async (t) => {
+test('--change: no change, a change for another read-back, or for the other form of this read-back is refused before the transport; an approved one is recorded under it', async (t) => {
   const trail = changeTrail(t);
   const audit = trail.sink;
   const approved = trail.changeFor('exo:verify-mailbox-permission', ['--absent']);

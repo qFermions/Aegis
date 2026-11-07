@@ -86,7 +86,7 @@ test('every flag a runbook passes to a read-back is classified: a pass flag, or 
 });
 
 test('each pass flag is a flag its connector takes, and every value rule is a closed set, a number or a digest', () => {
-  const FILES = { fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js', 'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js', linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js', okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js' };
+  const FILES = { fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js', 'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js', linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js', okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js', exo: 'scripts/adapters/exo-client.js' };
   for (const [kind, flags] of Object.entries(audit.PASS_FLAGS)) {
     const [connector, command] = kind.split(':');
     const src = fs.readFileSync(path.join(ROOT, FILES[connector]), 'utf8');

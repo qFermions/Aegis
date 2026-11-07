@@ -77,6 +77,10 @@
       "targets": {
         "msgraph": {
           "[USER_ID]": "e1000000-0000-4000-8000-000000000001"
+        },
+        "exo": {
+          "[MAILBOX]": "billing@[@Aegion_DOMAIN]",
+          "[UPN]": "staff.one@[@Aegion_DOMAIN]"
         }
       },
       "twin": "T4"
@@ -93,6 +97,11 @@
       "targets": {
         "msgraph": {
           "[USER_ID]": "c1000000-0000-4000-8000-000000000001"
+        },
+        "exo": {
+          "[MESSAGE_IDENTITY_GUID]": "c2000000-0000-4000-8000-000000000001\\c2000000-0000-4000-8000-000000000002",
+          "[MESSAGE_ID]": "<invoice-6.demo@example.net>",
+          "[USER@DOMAIN.COM]": "accounts.payable@[@Aegion_DOMAIN]"
         }
       },
       "twin": "T5"
@@ -140,6 +149,10 @@
       "targets": {
         "msgraph": {
           "[USER_ID]": "e1000000-0000-4000-8000-000000000002"
+        },
+        "exo": {
+          "[MAILBOX]": "billing@[@Aegion_DOMAIN]",
+          "[UPN]": "staff.two@[@Aegion_DOMAIN]"
         }
       },
       "twin": "T8"

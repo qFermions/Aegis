@@ -35,7 +35,7 @@
       "id": "C",
       "label": "Customer C: 80-person logistics company",
       "stack": ["Microsoft 365", "Hybrid Active Directory", "Microsoft Defender"],
-      "connectors": ["msgraph"],
+      "connectors": ["msgraph", "exo"],
       "tenant_vars": {
         "AEGION_DOMAIN": "logistics-c.example.org",
         "MS_TENANT_ID": "c0000000-0000-4000-8000-00000000000a",
@@ -68,7 +68,7 @@
       "id": "E",
       "label": "Customer E: 12-person accounting firm",
       "stack": ["Microsoft 365"],
-      "connectors": ["msgraph"],
+      "connectors": ["msgraph", "exo"],
       "tenant_vars": {
         "AEGION_DOMAIN": "accounting-e.example.org",
         "MS_TENANT_ID": "e0000000-0000-4000-8000-00000000000a",

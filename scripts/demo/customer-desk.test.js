@@ -861,14 +861,16 @@ test('every gate the table maps is a real gate, and every one with a read-back r
   const { catalog } = require('./catalog.js');
   const gates = catalog();
   // batch 9, task 9: Slack joined the simulator through T2 and T2m's departing engineer
-  const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3', slack: 'T2' };
-  const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'] };
+  // batch 9, tasks 5 and 6: Exchange holds T4's shared mailbox and T5's quarantine, so exo picks by gate
+  const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3', slack: 'T2', exo: 'T4' };
+  const ticketForGate = { 'quarantine-release-one-portal': 'T5', 'quarantine-release-all-portal': 'T5' };
+  const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'], 'mailbox-send-as-remove-portal': ['mailbox-send-as-grant-portal'] };
   for (const [id, entry] of Object.entries(SIM_GATES)) {
     const g = gates.get(id);
     assert.ok(g && g.kind === 'gate', `${id} is a SAFETY GATE in .claude/commands`);
     assert.equal(typeof entry.effect, 'string', `${id} effect`);
     if (!g.bound.length && !g.reads.length) continue;
-    const only = ticketFor[entry.platform];
+    const only = ticketForGate[id] || ticketFor[entry.platform];
     assert.ok(only, `${id}: a ticket for ${entry.platform}`);
     const r = await runDesk(t, { only: [only], answers: { [only]: good(...(after[id] || []), id) } });
     assert.equal(r.ticket(only).closing_state, 'RESOLVED (SIMULATED)', `${id}: ${r.ticket(only).reason}`);

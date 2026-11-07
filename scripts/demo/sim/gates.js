@@ -7,8 +7,7 @@
 //
 // SIM_GATES maps a runbook's SAFETY GATE id to the state change that gate describes. A gate that is
 // not here is "not simulated", and the ticket stops OPEN. An entry's platform is the connector whose
-// system holds the state, or, for Exchange and Defender, which no connector reads, the Microsoft
-// connector name that says the customer is on Microsoft 365. target holds the ticket's fictional
+// system holds the state: since batch 9 Exchange mailboxes and quarantine are exo (exo-client.js). target holds the ticket's fictional
 // values for that platform, by the runbook's placeholder.
 
 const fs = require('node:fs');
@@ -17,6 +16,10 @@ const path = require('node:path');
 const { writeReplacing } = require('../customers.js');
 
 const AUTHENTICATOR_LIKE = /(?:microsoftAuthenticator|phone|softwareOath)AuthenticationMethod$/;
+
+// A mailbox in the simulated tenant, by the runbook's [MAILBOX] placeholder, and one delegate added to one list.
+const boxOf = (s, t) => s.mailboxes.find((m) => m.address.toLowerCase() === String(t['[MAILBOX]']).toLowerCase());
+const grant = (s, t, list) => { const b = boxOf(s, t); b[list] = [...new Set([...(b[list] || []), t['[UPN]']])]; };
 
 const SIM_GATES = Object.freeze({
   // Microsoft 365
@@ -36,14 +39,20 @@ const SIM_GATES = Object.freeze({
     platform: 'msgraph', effect: 'revokes the user\'s sign-in sessions',
     apply: (s, t, now) => { s.msgraph.users[t['[USER_ID]']].signInSessionsValidFromDateTime = now; },
   },
+  // Exchange Online (batch 9, tasks 5 and 6): platform exo, read back by exo-client.js
   'quarantine-release-one-portal': {
-    platform: 'msgraph', effect: 'releases the quarantined message to its one recipient',
-    apply: (s) => { for (const q of s.quarantine || []) q.released = true; },
+    platform: 'exo', effect: 'releases the quarantined message to its one recipient',
+    apply: (s, t) => { for (const q of (s.quarantine || []).filter((x) => x.message_id === t['[MESSAGE_ID]'] && x.recipient === t['[USER@DOMAIN.COM]'])) { q.released = true; q.released_users = [...new Set([...(q.released_users || []), q.recipient])]; } },
   },
   'quarantine-release-all-portal': {
-    platform: 'msgraph', effect: 'releases the quarantined message to all its recipients',
-    apply: (s) => { for (const q of s.quarantine || []) q.released = true; },
+    platform: 'exo', effect: 'releases the quarantined message to all its recipients',
+    apply: (s, t) => { for (const q of (s.quarantine || []).filter((x) => x.identity === t['[MESSAGE_IDENTITY_GUID]'])) { q.released = true; q.released_users = [q.recipient]; } },
   },
+  'shared-mailbox-full-access-portal': { platform: 'exo', effect: 'grants the delegate Full Access to the shared mailbox', apply: (s, t) => grant(s, t, 'full_access') },
+  'mailbox-full-access-grant-portal': { platform: 'exo', effect: 'grants the delegate Full Access to the mailbox', apply: (s, t) => grant(s, t, 'full_access') },
+  'shared-mailbox-send-as-portal': { platform: 'exo', effect: 'grants the delegate Send As on the shared mailbox', apply: (s, t) => grant(s, t, 'send_as') },
+  'mailbox-send-as-grant-portal': { platform: 'exo', effect: 'grants the delegate Send As on the mailbox', apply: (s, t) => grant(s, t, 'send_as') },
+  'mailbox-send-as-remove-portal': { platform: 'exo', effect: 'removes Send As from the delegate', apply: (s, t) => { const b = boxOf(s, t); b.send_as = (b.send_as || []).filter((u) => u.toLowerCase() !== t['[UPN]'].toLowerCase()); } },
   // Slack (batch 9, task 9: T2m's "whatever else" adds Slack)
   'slack-user-lifecycle-deactivate-portal': {
     platform: 'slack', effect: 'deactivates the Slack member',

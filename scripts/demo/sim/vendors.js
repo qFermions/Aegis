@@ -29,6 +29,8 @@ const CONNECTORS = Object.freeze({
   linear: { module: 'linear-client.js', credentials: () => ({ LINEAR_API_KEY: FILLER }) },
   jamf: { module: 'jamf-client.js', credentials: () => ({ JAMF_CLIENT_SECRET: FILLER }) },
   slack: { module: 'slack-client.js', credentials: () => ({ SLACK_TOKEN: FILLER }) },
+  // batch 9, tasks 5 and 6: the seam takes { cmdlet, parameters } and answers as pwsh would; no certificate is read
+  exo: { module: 'exo-client.js', credentials: () => ({ EXO_APP_ID: '00000000-0000-4000-8000-00000000e0e0', EXO_ORGANIZATION: 'simulated-desk.onmicrosoft.com', EXO_CERTIFICATE_PATH: 'simulated-certificate-never-read.pfx' }) },
 });
 
 const connectorModule = (name) => (CONNECTORS[name] ? require(path.join(ADAPTERS, CONNECTORS[name].module)) : null);
@@ -121,11 +123,39 @@ const ROUTES = {
   },
 };
 
+// Exchange Online (batch 9, tasks 5 and 6): exo-client.js's seam takes one validated { cmdlet, parameters }
+// and gets { exitCode, stdout, stderr }, stdout the JSON array its fixed script prints. The answers come
+// from the tenant's mailboxes (full_access, send_as) and quarantine (identity, message_id, recipient,
+// released, released_users). An unknown mailbox or message is an error, as Exchange answers it.
+const lower = (x) => String(x || '').toLowerCase();
+const psOk = (rows) => ({ exitCode: 0, stdout: JSON.stringify(rows), stderr: '' });
+const psError = (text) => ({ exitCode: 1, stdout: '', stderr: text });
+function exoAnswer(state, { cmdlet, parameters: p }) {
+  const box = (state.mailboxes || []).find((m) => lower(m.address) === lower(p.Identity));
+  if (cmdlet === 'Get-MailboxPermission') {
+    if (!box) return psError("The operation couldn't be performed because object couldn't be found (simulated tenant).");
+    const rows = (box.full_access || []).filter((u) => !p.User || lower(u) === lower(p.User)).map((u) => ({ Identity: box.address, User: u, AccessRights: ['FullAccess'], Deny: false, IsInherited: false }));
+    return psOk(rows);
+  }
+  if (cmdlet === 'Get-RecipientPermission') {
+    if (!box) return psError("The operation couldn't be performed because object couldn't be found (simulated tenant).");
+    const rows = (box.send_as || []).filter((u) => !p.Trustee || lower(u) === lower(p.Trustee)).map((u) => ({ Identity: box.address, Trustee: u, AccessControlType: 'Allow', AccessRights: ['SendAs'], IsInherited: false }));
+    return psOk(rows);
+  }
+  if (cmdlet === 'Get-Mailbox') return box ? psOk([{ Identity: box.address, GrantSendOnBehalfTo: box.send_on_behalf || [] }]) : psError("The operation couldn't be performed because object couldn't be found (simulated tenant).");
+  if (cmdlet === 'Get-QuarantineMessage') {
+    const held = (state.quarantine || []).filter((q) => q.identity && (p.Identity ? q.identity === p.Identity : lower(q.message_id) === lower(p.MessageId) && lower(q.recipient) === lower(p.RecipientAddress)));
+    return psOk(held.map((q) => ({ Identity: q.identity, MessageId: q.message_id, RecipientAddress: [q.recipient], ReleasedUser: q.released_users || [], ReleaseStatus: q.released ? 'RELEASED' : 'NOTRELEASED', Type: q.reason })));
+  }
+  return psError(`the simulated tenant has no answer for ${cmdlet}`);
+}
+
 // A transport for one connector over one simulated tenant file. The file is read per request, so a
 // read-back sees what the simulated operator left there.
 function transportFor(connector, tenantFile) {
   return async (request) => {
     const state = JSON.parse(fs.readFileSync(tenantFile, 'utf8'));
+    if (connector === 'exo') return exoAnswer(state, request);
     const route = ROUTES[connector];
     return route ? route(state, request, String(request.path).split('?')[0]) : notFound();
   };

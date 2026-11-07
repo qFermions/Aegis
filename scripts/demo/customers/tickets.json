@@ -33,14 +33,14 @@
       "title": "A staff member needs the shared mailbox and to send from it",
       "change_class": "R2", "probe": "",
       "expected_path": "Full Access plus Send As, R2, read-back on the delegation.",
-      "targets": { "msgraph": { "[USER_ID]": "e1000000-0000-4000-8000-000000000001" } }
+      "targets": { "msgraph": { "[USER_ID]": "e1000000-0000-4000-8000-000000000001" }, "exo": { "[MAILBOX]": "billing@[@Aegion_DOMAIN]", "[UPN]": "staff.one@[@Aegion_DOMAIN]" } }
     },
     {
       "id": "T5", "customer": "C", "source": "email", "file": "c/T5-vendor-invoices.eml",
       "title": "Invoices from one vendor stopped arriving",
       "change_class": "R2", "probe": "",
       "expected_path": "Quarantine check, release, sender rule, read-back.",
-      "targets": { "msgraph": { "[USER_ID]": "c1000000-0000-4000-8000-000000000001" } }
+      "targets": { "msgraph": { "[USER_ID]": "c1000000-0000-4000-8000-000000000001" }, "exo": { "[MESSAGE_IDENTITY_GUID]": "c2000000-0000-4000-8000-000000000001\\c2000000-0000-4000-8000-000000000002", "[MESSAGE_ID]": "<invoice-6.demo@example.net>", "[USER@DOMAIN.COM]": "accounts.payable@[@Aegion_DOMAIN]" } }
     },
     {
       "id": "T6", "customer": "D", "source": "slack", "file": "d/T6-suspicious-sign-in.json",
@@ -64,7 +64,7 @@
       "title": "A second staff member needs the same shared mailbox",
       "change_class": "R2", "probe": "",
       "expected_path": "The replay cache answers it (CACHE_HIT) when T4 was verified in the same run, inside Customer E's own store only. The replay keys are word for word, so this ticket repeats T4's wording with another placeholder for the person.",
-      "targets": { "msgraph": { "[USER_ID]": "e1000000-0000-4000-8000-000000000002" } }
+      "targets": { "msgraph": { "[USER_ID]": "e1000000-0000-4000-8000-000000000002" }, "exo": { "[MAILBOX]": "billing@[@Aegion_DOMAIN]", "[UPN]": "staff.two@[@Aegion_DOMAIN]" } }
     }
   ]
 }

@@ -4,7 +4,7 @@
   "groups": [ { "name": "finance", "members": ["accounts.payable@[@Aegion_DOMAIN]"] } ],
   "devices": [ { "role": "accounts payable desktop", "name": "DT-Accounts,Payable", "platform": "Windows", "managed_by": "Intune" } ],
   "mailboxes": [ { "address": "accounts.payable@[@Aegion_DOMAIN]", "type": "user" } ],
-  "quarantine": [ { "sender": "billing@example.net", "recipient": "accounts.payable@[@Aegion_DOMAIN]", "reason": "High confidence phish", "released": false } ],
+  "quarantine": [ { "sender": "billing@example.net", "recipient": "accounts.payable@[@Aegion_DOMAIN]", "reason": "High confidence phish", "released": false, "identity": "c2000000-0000-4000-8000-000000000001\\c2000000-0000-4000-8000-000000000002", "message_id": "<invoice-6.demo@example.net>", "released_users": [] } ],
   "msgraph": {
     "users": {
       "c1000000-0000-4000-8000-000000000001": {

@@ -7,7 +7,8 @@
 4. Ask [FIRST_NAME] to close and reopen Outlook.
 **Done when:** the team calendar opens in [FIRST_NAME]'s Outlook and shows this week's events. Aegis then checks the member list shows [UPN].
 **Stop if:** [UPN] is already a member; then this is a sync problem, not access.
-**Tell the user:** We added you to the team calendar. Please close and reopen Outlook. It should show up within a few minutes.
+**Tell the user now:** IT is adding you to the team calendar. Please close and reopen Outlook when we message you.
+**Tell the user when done:** You now have the team calendar. Close and reopen Outlook to see it.
 
 ## Details
 The group membership is the only change. Membership can take up to an hour to show in Outlook on the web.

@@ -1084,7 +1084,8 @@ const CARD = [
   '3. Require the user to register again.',
   '**Done when:** the user signs in on the new phone. Aegis then checks the old method is gone.',
   '**Stop if:** the sign-in logs show someone else.',
-  '**Tell the user:** We will call you shortly. Have the new phone ready.',
+  '**Tell the user now:** We will call you shortly. Have the new phone ready.',
+  '**Tell the user when done:** You can sign in on the new phone.',
   '',
   '## Details',
 ].join('\n');
@@ -1226,17 +1227,17 @@ test('task 5: an R1 gate with no change record still gets the read its runbook s
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
 });
 
-test('task 8: step 5 shows the five answer checks as rows; a failed row is shown and does not stop the ticket', async (t) => {
+test('task 8: step 5 shows the answer checks as rows (six since batch 9); a failed row is shown and does not stop the ticket', async (t) => {
   const old = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') } });
   const k = old.ticket('T1');
   const rows = step(k, 5).answer_checks;
-  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts']);
+  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts', 'user-message-now']);
   assert.equal(rows[0].verdict, 'fail', 'an answer with no Fix card fails the first row');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', 'and the ticket still goes on');
   assert.deepEqual(step(k, 5).checks.map((r) => r.check), ['boundary', 'human-confirmation', 'read-back', 'privacy', 'observed-output', 'probe'], 'the existing checks are unchanged');
-  assert.match(step(k, 5).result, /answer format: \d of 5 pass/);
+  assert.match(step(k, 5).result, /answer format: \d of 6 pass/);
   const carded = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\n${good()}`, 'mfa-require-reregister-portal') } });
-  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass']);
+  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass']);
   const sms = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\nThe SMS fallback still works for this user.\n${good()}`, 'mfa-require-reregister-portal') } });
   assert.equal(step(sms.ticket('T1'), 5).answer_checks[4].verdict, 'fail', 'Customer A has no SMS fallback');
   const hybrid = await runDesk(t, { only: ['T5'], answers: { T5: withBlock(`${CARD}\nThe user is synced from hybrid AD.\n${good()}`, 'mfa-session-revoke-portal') } });

@@ -62,8 +62,8 @@ test('CI runs the dry run and checks exit 4, and never starts a model', () => {
 
 test('every test in scripts/demo is one node --test picks up', () => {
   const files = fs.readdirSync(path.join(ROOT, 'scripts', 'demo'), { recursive: true }).map(String).filter((f) => f.endsWith('.js') && /test/i.test(f));
-  // batch 8 added answer.test.js (the Fix card and the aegis-desk block)
-  assert.deepEqual(files.sort(), ['answer.test.js', 'customer-desk.test.js', 'customers.test.js', 'render.test.js', 'wiring.test.js']);
+  // batch 8 added answer.test.js (the Fix card and the aegis-desk block); batch 9 added user-messages.test.js
+  assert.deepEqual(files.sort(), ['answer.test.js', 'customer-desk.test.js', 'customers.test.js', 'render.test.js', 'user-messages.test.js', 'wiring.test.js']);
 });
 
 test('the explainer is under 60 lines and the quiz keeps its answers collapsed', () => {

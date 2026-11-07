@@ -1,0 +1,35 @@
+✔ task 9: no plain sentence outside the folds holds a technical word, and each is at most 25 words
+✔ task 9: each step opens with its plain sentence, and the steps the charter names show what it asks
+✔ task 9: every plain step name and closing state has its own words
+✔ batch 9, task 2: step 4 shows the now message; step 9 shows the when-done message only when the double-check passed
+✔ task 2: the card has six parts in order, ending with the two user messages
+✔ task 2: an older answer with one "Tell the user" line reads it as the now line, and its card lacks the when-done line
+✔ task 2: user message now passes: IT is checking your account now. You may be asked to sign in again.
+✔ task 2: user message now passes: We will look at the sign-in record and message you with the next step.
+✔ task 2: user message now passes: Please keep your laptop on and connected to the office network.
+✔ task 2: user message now passes: Your manager has asked for this; IT will set it up once it is approved.
+✔ task 2: user message now fails: You now have access to the shared mailbox.
+✔ task 2: user message now fails: We've locked your account to keep you safe.
+✔ task 2: user message now fails: We have reset your password. Use the temporary one.
+✔ task 2: user message now fails: Your laptop is fixed.
+✔ task 2: user message now fails: The invoice has been released to your inbox.
+✔ task 2: user message now fails: You're back in. Sign in as usual.
+✔ task 2: user message now fails: We are checking the network. We will update you within the hour.
+✔ task 2: user message now fails: It will be ready before 9.
+✔ task 2: user message now fails: We will sort it out today.
+✔ task 2: user message now fails: We'll wipe the phone so nobody can read it.
+✔ task 2: a time the ticket itself sets is not a promise the tech made
+✔ task 2: the when-done line may say the change is done; only the now line is held to the rule
+✔ task 2: an answer with no now line fails the check with a plain reason
+✔ task 2: batch 8 T6 "We've locked your account" fails the new check and no longer trips the boundary check
+✔ task 2: the boundary check still reads every other line, so a claim outside the user messages fails
+✔ task 2: a wrapped user-message line is skipped as a whole, and the next part is read again
+✔ task 3: a 149-word body plus the pointer to Details passes; a 151-word body fails
+✔ task 3: only one pointer line is left out of the count, and only a line that points to Details
+✔ task 9: batch 8 T5 (negated "Don't release", a "Tell the user" line, Details mentions) now only looks
+✔ task 9: batch 8 T7m ("We'll update you within the hour" in its user line) now only looks
+✔ task 9: a change word in a card step still counts, and a negation in another clause does not hide it
+✔ task 9: human confirmation counts a Phrase: line in the closing aegis-desk block, and only there
+ℹ tests 42
+ℹ pass 42
+ℹ fail 0

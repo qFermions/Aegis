@@ -209,10 +209,17 @@ function negatedAt(t, index) {
 
 // A mention counts only when no negation opens its own clause ("No SMS fallback added" names the fact to say
 // it is not used; batch 8's T1, batch 9). A clause ends at . ; : ! ? , or a line end.
+// A default fact is used in a clause (split at . ; : ! ? , and line ends) unless a negated verb comes earlier in
+// that clause ("We do not use Intune or Meraki"), which covers every fact in it, or a "no" stands at most two
+// words before its first mention ("has no hybrid identity synced by Entra Connect"); "check no errors show on the
+// AD Connect server" still uses it (code review round 2 of batch 9, finding 10).
+const VERB_NEGATION = /\b(?:do not|does not|did not|don['\u2019]?t|doesn['\u2019]?t|didn['\u2019]?t|never|not|without|no longer)\b/i;
 function usesFact(text, re) {
-  const t = String(text);
-  for (const m of t.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`))) {
-    if (!negatedAt(t, m.index)) return true;
+  for (const clause of String(text).split(/[.;:!?,\n]/)) {
+    const m = new RegExp(re.source, re.flags.replace('g', '')).exec(clause);
+    if (!m) continue;
+    const before = clause.slice(0, m.index);
+    if (!VERB_NEGATION.test(before) && !/\bno(?:\s+\S+){0,2}\s*$/i.test(before)) return true;
   }
   return false;
 }

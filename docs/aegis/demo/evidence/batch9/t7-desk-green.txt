@@ -1,0 +1,3 @@
+ℹ fail 0
+ℹ pass 1
+✔ batch 9, task 7: T3's password reset passes its audit read; the wipe's read runs and proves nothing until check-in

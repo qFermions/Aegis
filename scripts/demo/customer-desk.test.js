@@ -863,7 +863,8 @@ test('every gate the table maps is a real gate, and every one with a read-back r
   // batch 9, task 9: Slack joined the simulator through T2 and T2m's departing engineer
   // batch 9, tasks 5 and 6: Exchange holds T4's shared mailbox and T5's quarantine, so exo picks by gate
   const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3', slack: 'T2', exo: 'T4' };
-  const ticketForGate = { 'quarantine-release-one-portal': 'T5', 'quarantine-release-all-portal': 'T5' };
+  // batch 9, task 7: the Google reset's read names the admin as [UPN], which T3 (Customer B) carries
+  const ticketForGate = { 'quarantine-release-one-portal': 'T5', 'quarantine-release-all-portal': 'T5', 'gws-password-reset-password-portal': 'T3' };
   const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'], 'mailbox-send-as-remove-portal': ['mailbox-send-as-grant-portal'] };
   for (const [id, entry] of Object.entries(SIM_GATES)) {
     const g = gates.get(id);
@@ -873,7 +874,10 @@ test('every gate the table maps is a real gate, and every one with a read-back r
     const only = ticketForGate[id] || ticketFor[entry.platform];
     assert.ok(only, `${id}: a ticket for ${entry.platform}`);
     const r = await runDesk(t, { only: [only], answers: { [only]: good(...(after[id] || []), id) } });
-    assert.equal(r.ticket(only).closing_state, 'RESOLVED (SIMULATED)', `${id}: ${r.ticket(only).reason}`);
+    // batch 9, task 7: the wipe's ERASE_DEVICE command waits for the Mac's next check-in, as the lock's does,
+    // so its read-back runs and proves nothing yet
+    const expected = id === 'jamf-lock-erase-wipe-portal' ? 'INCONCLUSIVE' : 'RESOLVED (SIMULATED)';
+    assert.equal(r.ticket(only).closing_state, expected, `${id}: ${r.ticket(only).reason}`);
   }
 });
 
@@ -1452,3 +1456,16 @@ test('batch 9, task 6: T5 with the quarantine release to one recipient closes RE
   assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['exo:verify-quarantine-released PASS']);
 });
 
+
+// Batch 9, task 7: the Google password reset is read back by its CHANGE_PASSWORD admin event, and the Jamf wipe
+// by its ERASE_DEVICE command, which stays Pending until the Mac checks in. Wrong implementations it catches:
+// a simulator that leaves no audit event (the reset reads INCONCLUSIVE), and one that marks the erase done the
+// moment it is sent (a stolen Mac's wipe would read as proved).
+test('batch 9, task 7: T3\'s password reset passes its audit read; the wipe\'s read runs and proves nothing until check-in', async (t) => {
+  const reset = (await runDesk(t, { only: ['T3'], answers: { T3: good('gws-password-reset-password-portal') } })).ticket('T3');
+  assert.equal(reset.closing_state, 'RESOLVED (SIMULATED)', reset.reason);
+  assert.deepEqual(step(reset, 8).reads.map((x) => `${x.kind} ${x.state}`), ['google-workspace:verify-event PASS']);
+  const wipe = (await runDesk(t, { only: ['T3'], answers: { T3: good('jamf-lock-erase-wipe-portal') } })).ticket('T3');
+  assert.equal(wipe.closing_state, 'INCONCLUSIVE', wipe.reason);
+  assert.deepEqual(step(wipe, 8).reads.map((x) => `${x.kind} ${x.state}`), ['jamf:verify-command INCONCLUSIVE']);
+});

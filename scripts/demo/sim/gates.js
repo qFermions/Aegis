@@ -99,7 +99,12 @@ const SIM_GATES = Object.freeze({
   },
   'gws-password-reset-password-portal': {
     platform: 'google-workspace', effect: 'resets the Google Workspace password to a temporary one the user must change',
-    apply: (s, t, now) => { const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.changePasswordAtNextLogin = true; u.passwordResetAt = now; },
+    // batch 9, task 7: the Admin console records the change as a CHANGE_PASSWORD admin event, actor the admin
+    // ([UPN]) and target the account, which the runbook's verify-event read finds
+    apply: (s, t, now) => {
+      const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.changePasswordAtNextLogin = true; u.passwordResetAt = now;
+      (s.gws.activities = s.gws.activities || []).push({ app: 'admin', name: 'CHANGE_PASSWORD', time: now, actor: t['[UPN]'], target: t['[USER@DOMAIN.COM]'] });
+    },
   },
   'gws-password-reset-cookies-portal': {
     platform: 'google-workspace', effect: 'resets the user\'s Google sign-in cookies, so every device signs in again',
@@ -134,7 +139,9 @@ const SIM_GATES = Object.freeze({
   },
   'jamf-lock-erase-wipe-portal': {
     platform: 'jamf', effect: 'wipes the Mac at its next check-in',
-    apply: (s, t) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) d.wipe_state = 'wiped'; },
+    // batch 9, task 7: the erase is sent now and runs at the Mac's next check-in, so, like the lock, its
+    // ERASE_DEVICE command stays Pending and the runbook's verify-command read proves nothing yet (exit 5)
+    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.wipe_state = 'wipe sent'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'ERASE_DEVICE', status: 'Pending', dateSent: now }); } },
   },
 });
 

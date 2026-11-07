@@ -85,6 +85,16 @@ const ROUTES = {
     if (req.method === 'POST') return token();
     const m = /^\/admin\/directory\/v1\/users\/([^/]+)$/.exec(p);
     if (m) return state.gws.users[SEGMENT(m[1])] ? ok(state.gws.users[SEGMENT(m[1])]) : notFound();
+    // batch 9, task 7: the Reports API's admin events, by actor, application, event name and start time
+    const a = /^\/admin\/reports\/v1\/activity\/users\/([^/]+)\/applications\/([^/]+)$/.exec(p);
+    if (a) {
+      const q = new URLSearchParams(String(req.path).split('?')[1] || '');
+      const customerId = Object.values(state.gws.users).map((u) => u.customerId).find(Boolean) || state.gws.customerId;
+      const items = (state.gws.activities || [])
+        .filter((e) => e.actor === SEGMENT(a[1]) && e.app === SEGMENT(a[2]) && (!q.get('eventName') || e.name === q.get('eventName')) && (!q.get('startTime') || Date.parse(e.time) >= Date.parse(q.get('startTime'))))
+        .map((e, i) => ({ kind: 'admin#reports#activity', id: { time: e.time, uniqueQualifier: String(5500 + i), applicationName: e.app, customerId }, actor: { email: e.actor }, events: [{ type: 'USER_SETTINGS', name: e.name, parameters: [{ name: 'USER_EMAIL', value: e.target }] }] }));
+      return ok({ kind: 'admin#reports#activities', items });
+    }
     return notFound();
   },
   // Jamf Pro: the computers in the tenant's devices list, by serial, and the MDM commands sent to one.

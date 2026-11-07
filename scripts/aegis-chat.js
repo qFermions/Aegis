@@ -15,7 +15,7 @@ const childProcess = require('node:child_process');
 const backends = require('./eval/judged/backends.js');
 const path = require('node:path');
 
-const { REPO_ROOT, ASKS_DIR, homeOf, sessionEnv, setupBlock } = require('./ask-aegis.js');
+const { REPO_ROOT, ASKS_DIR, homeOf, sessionEnv, setupBlock, protect } = require('./ask-aegis.js');
 
 const NOTICE = 'This Aegis chat reads only: Aegis can read its runbooks and answer your questions, and it cannot run commands, change files or change anything in your systems; a person does every change.';
 const USAGE = 'Usage: node scripts/aegis-chat.js [--setup "what the company runs"]\nType your questions inside the chat.\n';
@@ -32,6 +32,12 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
   let setup = null;
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '--setup' && i + 1 < argv.length) { setup = argv[i + 1]; i += 1; } else if (argv[i] === '--help' || argv[i] === '-h') { io.out(USAGE); return Promise.resolve(0); } else { io.err(`aegis-chat: ${argv[i] === '--setup' ? '--setup needs a value' : `unexpected ${JSON.stringify(argv[i]).slice(0, 40)}`}\n${USAGE}`); return Promise.resolve(1); }
+  }
+  // the setup text passes the same privacy rules as ask-aegis's (code review round 2 of batch 9, finding 14)
+  if (setup !== null) {
+    const safe = protect(setup);
+    if (safe.blocked) { io.err(`aegis-chat: the setup text holds a value Aegis never keeps (${safe.blocked.join('; ')}). Nothing was sent. Take it out and start again.\n`); return Promise.resolve(1); }
+    setup = safe.text;
   }
   io.out(`${NOTICE}\n`);
   const backend = deps.backend || { command: 'claude', prefixArgs: [] };

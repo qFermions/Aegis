@@ -134,3 +134,20 @@ test('while the chat runs the parent ignores Ctrl-C, and it stops ignoring it wh
   assert.equal(await running, 0);
   assert.equal(process.listenerCount('SIGINT'), before, 'removed after claude exits');
 });
+
+// Code review round 2 (batch 9), finding 14: the chat's --setup reached the session unprotected. Wrong
+// implementation it catches: protection on ask-aegis only.
+test('code review 2, finding 14: the chat protects its setup text as ask-aegis does', async () => {
+  const { EventEmitter } = require('node:events');
+  const seen = [];
+  const child = new EventEmitter();
+  const mail = ['jane.doe', 'realcorp.example.org'].join('@');
+  const running = chat.main(['--setup', `Admin is ${mail}`], { HOME: os.tmpdir() }, { spawn: (cmd, args) => { seen.push(args); return child; }, out: () => {}, err: () => {} });
+  child.emit('exit', 0);
+  assert.equal(await running, 0);
+  assert.ok(!seen[0].join(' ').includes(mail), 'no address reaches the session');
+  const err = [];
+  const token = ['ghp', '_', 'a'.repeat(30)].join('');
+  assert.equal(await chat.main(['--setup', `token ${token}`], { HOME: os.tmpdir() }, { spawn: () => { throw new Error('no session may start'); }, out: () => {}, err: (s) => err.push(s) }), 1);
+  assert.ok(!err.join('').includes(token));
+});

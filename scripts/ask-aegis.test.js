@@ -287,3 +287,17 @@ test('code review 1, finding 15: a budget that rounds to 0.00 is refused before 
   assert.equal(s.calls().length, 0);
   assert.match(s.stderr(), /0\.01/);
 });
+
+// Code review round 2 (batch 9), findings 2, 8 and 15: the README promises a password, token or key stops the ask,
+// but plain passwords and common key shapes went through; error codes became [PHONE_NUMBER]; a bracket token in
+// address form was rewritten inside its brackets. Wrong implementations they catch: only the graph sanitizer's
+// patterns, a phone rule that takes any ten digits, and an email rule that reads inside a placeholder.
+test('code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged', () => {
+  for (const text of ['my password is Summer2026! and it stopped working', 'temp password: Welcome#12345', `API key ${['AKIA', 'IOSFODNN7EXAMPLE'].join('')}`, `client secret ${['8Q~', 'abcdefghijklmnopqrstuvwxyz0123456789AB'].join('')}`]) {
+    assert.ok(ask.protect(text).blocked, text.replace(/\S{8,}$/, '...'));
+  }
+  assert.equal(ask.protect('Intune app install failed with error -2016281112').text, 'Intune app install failed with error -2016281112');
+  assert.equal(ask.protect('Windows Update error 2147942402').text, 'Windows Update error 2147942402');
+  assert.equal(ask.protect('call [ADMIN@DOMAIN.COM] or [user@domain.com]').text, 'call [ADMIN@DOMAIN.COM] or [user@domain.com]');
+  assert.equal(ask.protect(`call ${['+1', '415', '555', '0134'].join(' ')}`).text, 'call [PHONE_NUMBER]');
+});

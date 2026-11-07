@@ -21,7 +21,7 @@ const path = require('node:path');
 const backends = require('./eval/judged/backends.js');
 const paths = require('./eval/judged/paths.js');
 const sanitize = require('./graph/sanitize.js');
-const { PHONE_LITERAL, replaceEmails } = require('./tier/tier-guard.js');
+const { replaceEmails } = require('./tier/tier-guard.js');
 const { fixCard, PARTS } = require('./demo/answer.js');
 
 const REPO_ROOT = paths.REPO_ROOT;
@@ -53,13 +53,24 @@ function setupBlock(setup, scope) {
 
 // The intake's own privacy rules for typed text (code review round 1 of batch 9, finding 3): a credential or a
 // tenant literal stops the ask, and is never echoed; email addresses and phone numbers become placeholders.
-// Returns { text } or { blocked: [labels] }. Names in free text are not detected, as in the intake.
+// Beyond the graph sanitizer's patterns, a password written after the word password, passcode or secret, an AWS
+// access key and an Entra client secret stop it too, as the README says (round 2, finding 2). A placeholder in
+// brackets is kept as it is (finding 15), and only a number written as a phone number is one: ten digits alone,
+// such as an error code, stay (finding 8). Returns { text } or { blocked: [labels] }. Names in free text are not
+// detected, as in the intake. shortcut: pattern lists, so a secret of another shape still goes through.
+const EXTRA_SECRETS = [
+  { label: 'A password written in the text', re: /\b(?:password|passcode|passwd|secret)\s*(?:is|:|=)\s*\S{4,}/i },
+  { label: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/ },
+  { label: 'Entra client secret', re: /\b[A-Za-z0-9_.-]{0,3}8Q~[A-Za-z0-9_.~-]{20,}/ },
+];
+const BRACKET_TOKEN = /(\[[^\]\n]{1,80}\])/;
+const PHONE = /(?<![\w-])(?:\+\d{1,3}[\s.-]?)?(?:\(\d{3}\)\s?|\d{3}[\s.-])\d{3}[\s.-]\d{4}\b/g;
 function protect(text) {
-  const scan = sanitize.scanText(String(text));
-  if (scan.blocks.length) return { blocked: [...new Set(scan.blocks.map((b) => b.label))] };
-  const keep = '[USER@DOMAIN.COM]';
-  const emails = String(text).split(keep).map((piece) => replaceEmails(piece, () => keep)).join(keep);
-  return { text: emails.replace(new RegExp(PHONE_LITERAL.source, 'g'), '[PHONE_NUMBER]') };
+  const t = String(text);
+  const blocked = [...new Set([...sanitize.scanText(t).blocks.map((b) => b.label), ...EXTRA_SECRETS.filter((x) => x.re.test(t)).map((x) => x.label)])];
+  if (blocked.length) return { blocked };
+  const out = t.split(BRACKET_TOKEN).map((piece, i) => (i % 2 ? piece : replaceEmails(piece, () => '[USER@DOMAIN.COM]').replace(PHONE, '[PHONE_NUMBER]'))).join('');
+  return { text: out };
 }
 
 function buildPrompt(ticket, setup) {
@@ -214,4 +225,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, homeOf, REPO_ROOT, ASKS_DIR, DEFAULT_MAX_USD };
+module.exports = { main, protect, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, homeOf, REPO_ROOT, ASKS_DIR, DEFAULT_MAX_USD };

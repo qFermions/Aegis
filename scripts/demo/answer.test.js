@@ -229,3 +229,16 @@ test('a change in any step form, in odd characters, in another card part or in a
   assert.equal(a.onlyLooks(`${look}\n\n## Details\n1. Reset the MFA methods.`).looks, false, 'with no card, every numbered line is still read');
   assert.equal(a.onlyLooks(plainCard.replace('the logs show it', 'you have reset the MFA methods')).looks, false, 'a change in Done when');
 });
+
+// Batch 9, beyond the task: batch 8's T1 failed "customer facts" on "No SMS fallback added (per customer
+// profile)", a sentence that says the opposite (full-run-2/causes.md). A wrong implementation it catches: a
+// fact check that matches a mention whether or not a negation opens its clause, and one that drops the
+// fact everywhere once any negation is on the line.
+test('a default fact a negation opens its clause with is not the answer using that fact', () => {
+  const t1 = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'aegis', 'demo', 'evidence', 'full-run-2', 'answers', 'T1-answer.txt'), 'utf8');
+  assert.deepEqual(a.defaultFactsIn(t1, 'MFA: Microsoft Authenticator only'), []);
+  assert.deepEqual(a.defaultFactsIn('No SMS fallback added.', ''), []);
+  assert.deepEqual(a.defaultFactsIn('Do not use the SMS fallback; it is off.', ''), []);
+  assert.deepEqual(a.defaultFactsIn('Not the phone: the SMS fallback still works.', ''), ['SMS as the MFA fallback'], 'the negation is in another clause');
+  assert.deepEqual(a.defaultFactsIn('The SMS fallback still works.', ''), ['SMS as the MFA fallback']);
+});

@@ -1,0 +1,11 @@
+ℹ fail 0
+ℹ pass 18
+blocked | password: Reset@123
+blocked | password: Changed!1
+blocked | password is Now@2024!
+blocked | password: my$ecret1
+blocked | password is The.Dog#2024
+blocked | password: ok!23456
+passes | my password is expired.
+passes | my password is not working
+passes | password is reset, it says

@@ -327,6 +327,7 @@ test('code review 3, finding 1: a ticket about a password passes; a password wri
 // passwords through. Wrong implementation it catches: a complexity shape instead of "any value but a status word
 // or a whole placeholder".
 test('final security review: any written password stops the ask; a status word or a whole placeholder does not', () => {
-  for (const bad of ['the new passcode is 739204 and she still cannot sign in', 'password: sunshine', 'Temp password: Welcome', 'password is [x]Hunter22!']) assert.ok(ask.protect(bad).blocked, bad);
+  // a password that begins with a status word is still a password (security review round 5)
+  for (const bad of ['the new passcode is 739204 and she still cannot sign in', 'password: sunshine', 'Temp password: Welcome', 'password is [x]Hunter22!', 'temp password: Reset@123', 'password is no-Hunter22', 'password: Valid!2024']) assert.ok(ask.protect(bad).blocked, bad);
   for (const ok of ['My password is expired and I cannot sign in to Outlook.', 'User says password is incorrect after the reset', 'Temp password: [TEMP_PASSWORD]', 'The app client secret is expiring next week', 'my password is not working']) assert.equal(ask.protect(ok).blocked, undefined, ok);
 });

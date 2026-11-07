@@ -20,6 +20,8 @@ const path = require('node:path');
 
 const backends = require('./eval/judged/backends.js');
 const paths = require('./eval/judged/paths.js');
+const sanitize = require('./graph/sanitize.js');
+const { PHONE_LITERAL, replaceEmails } = require('./tier/tier-guard.js');
 const { fixCard, PARTS } = require('./demo/answer.js');
 
 const REPO_ROOT = paths.REPO_ROOT;
@@ -47,6 +49,17 @@ function setupBlock(setup, scope) {
     String(setup).trim(),
     '--- End of what the company runs ---',
   ];
+}
+
+// The intake's own privacy rules for typed text (code review round 1 of batch 9, finding 3): a credential or a
+// tenant literal stops the ask, and is never echoed; email addresses and phone numbers become placeholders.
+// Returns { text } or { blocked: [labels] }. Names in free text are not detected, as in the intake.
+function protect(text) {
+  const scan = sanitize.scanText(String(text));
+  if (scan.blocks.length) return { blocked: [...new Set(scan.blocks.map((b) => b.label))] };
+  const keep = '[USER@DOMAIN.COM]';
+  const emails = String(text).split(keep).map((piece) => replaceEmails(piece, () => keep)).join(keep);
+  return { text: emails.replace(new RegExp(PHONE_LITERAL.source, 'g'), '[PHONE_NUMBER]') };
 }
 
 function buildPrompt(ticket, setup) {
@@ -142,7 +155,11 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     io.err('ask-aegis: that results folder already holds files. Name a new or empty folder, so an earlier answer is never overwritten.\n');
     return 1;
   }
-  const prompt = buildPrompt(args.ticket, args.setup);
+  const ticket = protect(args.ticket);
+  const setupText = args.setup ? protect(args.setup) : { text: null };
+  const blocked = [...(ticket.blocked || []), ...(setupText.blocked || [])];
+  if (blocked.length) { io.err(`ask-aegis: the text holds a value Aegis never keeps (${blocked.join('; ')}). Nothing was sent. Take it out and ask again.\n`); return 1; }
+  const prompt = buildPrompt(ticket.text, setupText.text);
   if (backends.promptTooLong(prompt)) { io.err('ask-aegis: the ticket and setup text are too long for one session. Shorten them and ask again.\n'); return 1; }
 
   // made before the session, so a folder that cannot be made costs nothing (review round 1, nit 1)

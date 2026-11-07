@@ -46,7 +46,7 @@ For a person who does not write code. You need a computer with Git and Node.js.
 
 What Aegis will do: read the problem, read its own runbooks, and tell you the steps, how to check they worked, and when to stop.
 What it will not do: it reads only. It cannot run commands, and it never changes anything in your systems. A person does every change.
-Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit).
+Before your ticket reaches Aegis, email addresses and phone numbers in it become placeholders, and a password, token or key in it stops the ask. Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit).
 
 ## The problem
 

@@ -258,3 +258,23 @@ test('a session that fails or runs past its time: a plain message, exit 2, nothi
   assert.match(blocked.stderr(), /cannot make the results folder/);
   assert.equal(blocked.calls().length, 0);
 });
+
+// Code review round 1 (batch 9), finding 3: the typed ticket reached the session without the intake's redaction,
+// so a real address or number was sent and kept in ~/aegis-asks. Wrong implementations it catches: no redaction,
+// redaction of the ticket but not of the setup text, and a credential-shaped value that still starts a session.
+test('code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session', async (t) => {
+  const s = setup(t, { answer: NEW_ANSWER });
+  const mail = ['jane.doe', 'realcorp.example.org'].join('@');
+  const phone = ['+1', '415', '555', '0134'].join(' ');
+  const code = await ask.main([`${mail} at ${phone} cannot sign in`, '--setup', `Admin is ${['it.admin', 'realcorp.example.org'].join('@')}`], s.env, s.deps);
+  assert.equal(code, 0, s.stderr());
+  const prompt = s.calls()[0].prompt;
+  assert.ok(!prompt.includes(mail) && !prompt.includes('it.admin@'), 'no address reaches the session');
+  assert.ok(!prompt.includes(phone), 'no phone number reaches the session');
+  assert.match(prompt, /\[USER@DOMAIN\.COM\] at \[PHONE_NUMBER\] cannot sign in/);
+  const blocked = setup(t, { answer: NEW_ANSWER });
+  const token = ['ghp', '_', 'a'.repeat(30)].join('');
+  assert.equal(await ask.main([`my token ${token} stopped working`], blocked.env, blocked.deps), 1);
+  assert.equal(blocked.calls().length, 0, 'no session starts');
+  assert.ok(!blocked.stderr().includes(token), 'the value is never echoed');
+});

@@ -58,7 +58,7 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 
 **Purpose** — stop anyone using the Mac while it may still come back; nothing is deleted.
 
-No lighter step: the Mac is out of the user's hands, so nothing can be asked of them, and Lock Computer is the lightest remote command Jamf Pro offers before Wipe Computer; it reads as heavy here only because the gate id carries the runbook's name, lock-erase.
+No lighter step: the Mac is out of the user's hands, so nothing can be asked of them, and Lock Computer deletes nothing and is the lightest step in this runbook that stops use of a Mac already out of the user's hands; it reads as heavy here only because the gate id carries the runbook's name, lock-erase.
 
 <!-- SAFETY GATE [jamf-lock-erase-lock-portal] -->
 - **Target:** [SERIAL_NUMBER]

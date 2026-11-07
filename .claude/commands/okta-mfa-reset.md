@@ -70,7 +70,7 @@ Source: operator-validated by the owner, 2026-11-06; not in Okta's published tro
 
 > **PREVIEW ONLY [okta-verify-loop-admin-reauth]:** admin re-authentication in the Okta Admin Console (exact menu action to be confirmed by the owner). Planning only: UNCONFIRMED, this runbook names no menu path for it because the owner's fill-in line with the exact menu action was blank, so it does not authorize any change; it needs its own reviewed gate once the owner supplies the action.
 
-4. **Last resort:** Reset Authenticators, only when the steps above did not stop the loop: Phase B below resets only Okta Verify (gate `okta-mfa-reset-selected-portal`), and Phase C resets every authenticator (gate `okta-mfa-reset-all-portal`) only when every enrollment must go. Those gates are unchanged: follow them as written.
+4. **Last resort:** Reset Authenticators, only when the steps above did not stop the loop: Phase B below resets only the ticked authenticator, Okta Verify here (gate `okta-mfa-reset-selected-portal`), and Phase C resets every authenticator (gate `okta-mfa-reset-all-portal`) only when every enrollment must go. Those gates are unchanged: follow them as written.
 
 ## Phase B: Reset the affected authenticator (the new-phone fix)
 

@@ -304,7 +304,7 @@ No lighter step: the leaver's corporate phone must not keep company data; the se
 
 ### STEP 11 — [@Aegion_VOIP]: reclaim the extension
 
-No lighter step: the leaver's extension is reclaimed so calls stop reaching them, and no smaller action does that.
+No lighter step: the leaver's VoIP identity must stop working, and deactivating it is already the reversible form (the extension and voicemail are kept, and the captured pre-state reactivates it).
 
 <!-- SAFETY GATE [offboard-voip-deactivate-portal] -->
 - **Target:** [UPN] as the exact displayed VoIP identity

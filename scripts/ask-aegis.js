@@ -113,7 +113,8 @@ function parseArgs(argv) {
     else if (t === '--results-dir') args.resultsDir = value();
     else if (t === '--max-budget-usd') {
       const v = value();
-      if (!/^\d+(?:\.\d+)?$/.test(v) || !(Number(v) > 0)) throw new InputError('--max-budget-usd needs a number of US dollars above 0, such as 2.50');
+      // claude gets two decimals, so a value that rounds to 0.00 is refused (code review round 1, finding 15)
+      if (!/^\d+(?:\.\d+)?$/.test(v) || !(Number(Number(v).toFixed(2)) >= 0.01)) throw new InputError('--max-budget-usd needs a number of US dollars of at least 0.01, such as 2.50');
       args.maxUsd = Number(v).toFixed(2);
     } else if (t === '--help' || t === '-h') args.help = true;
     // a word such as -2147 in an unquoted ticket is ticket text (review round 1, nit 2)

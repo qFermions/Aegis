@@ -278,3 +278,12 @@ test('code review 1, finding 3: emails and phone numbers become placeholders, an
   assert.equal(blocked.calls().length, 0, 'no session starts');
   assert.ok(!blocked.stderr().includes(token), 'the value is never echoed');
 });
+
+// Code review round 1 (batch 9), finding 15: 0.004 passed the "above 0" check and reached claude as 0.00. Wrong
+// implementation it catches: a check on the raw number instead of the value claude gets.
+test('code review 1, finding 15: a budget that rounds to 0.00 is refused before any session', async (t) => {
+  const s = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print', '--max-budget-usd', '0.004'], s.env, s.deps), 1);
+  assert.equal(s.calls().length, 0);
+  assert.match(s.stderr(), /0\.01/);
+});

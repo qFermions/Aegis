@@ -1,0 +1,38 @@
+## Fix
+**What's wrong:** [UPN] needs Full Access and Send As on the [SHARED_MAILBOX] shared mailbox.
+**Do this:**
+1. Open Exchange admin center → Recipients → Mailboxes → [SHARED_MAILBOX] → Mailbox Delegation. Copy the current lists into the ticket. If [UPN] is already listed, only add the missing right.
+2. Get the managing partner's approval. Call the requester back on the number in the firm's staff list.
+3. Mailbox Delegation → Read and manage (Full Access) → Edit → Add members → [UPN] → Save → Confirm.
+4. Mailbox Delegation → Send as → Edit → Add members → [UPN] → Save → Confirm.
+
+**Done when:** [UPN] appears under both lists. Aegis then checks both rights are in place.
+**Stop if:** the mailbox isn't listed as Shared, or the managing partner doesn't approve.
+**Tell the user now:** IT is reviewing your request for the shared mailbox. It needs the managing partner's sign-off first.
+**Tell the user when done:** You can now open the shared mailbox in Outlook and send as it. Restart Outlook if it doesn't show up.
+
+## Details
+- **Runbook:** `/shared-mailbox`. Each grant is its own R2 gate. Removing a grant is done in `/mailbox-permissions`.
+- **Why R2:** whatever [UPN] reads while Full Access is on can't be un-read, and mail sent as the mailbox can't be recalled.
+- **Pre-state:** the Mailbox Delegation lists from step 1 are the rollback record.
+- **Customer E:** the accounts are cloud-only, so you don't need to wait for a sync. Make the change during business hours (Mon–Fri 08:30–17:30).
+- **Auto-mapping:** the mailbox can take some time to show in Outlook. If it never appears, remove and re-add the Outlook profile.
+
+**Verification checklist**
+- [ ] [UPN] is listed under Read and manage and under Send as
+- [ ] The mailbox appears in [UPN]'s Outlook
+- [ ] A test message sent from [SHARED_MAILBOX] shows only the mailbox as the sender
+
+**Jira-ready note**
+> Shared-mailbox delegation for `[UPN]` on `[SHARED_MAILBOX]`: Full Access [verified / not verified], Send As [verified / not verified]. Pre-state copied to the ticket. Approved by the managing partner, and the requester's identity was confirmed by a callback to the staff-list number. Auto-mapping: [verified / not verified]. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

@@ -1,0 +1,64 @@
+## Fix
+**What's wrong:** A managed Mac with client files was stolen, and the designer's Google sign-ins on it may still work.
+**Do this:**
+1. Call the studio manager back on the staff-list number to confirm the request.
+2. Jamf Pro → Computers → [SERIAL_NUMBER]: read FileVault, last check-in and History. FileVault on means the files are encrypted. FileVault off means they are exposed. A check-in after the theft means someone has the Mac online.
+3. Google Admin → Users → [USER@DOMAIN.COM]: reset the password, then Security → Sign-in cookies → Reset.
+4. Jamf → Management → Lock Computer. Save the PIN in the password manager first.
+5. Last resort, in place of step 4: Wipe Computer, with both managers' approval.
+
+**Done when:** Google asks the designer to sign in again, and Jamf History shows the lock or wipe completed.
+**Stop if:** History shows activity after the theft. Treat it as a data breach.
+**Tell the user now:** IT is checking the Mac's protection and the designer's accounts. We will call you back before anything changes.
+**Tell the user when done:** The designer's Google sign-ins on the Mac are ended and the Mac is [locked / erased].
+
+This touches three systems and needs one decision before step 4: see Details.
+
+## Details
+
+**Verdict.** Runbooks: `/jamf-lock-erase` (Phases A, B, C) and `/gws-password-reset` (Phases B, C). The account is not shown to be compromised, so suspending it (`/gws-account-containment`) is not advised. Move to that runbook if the Google logs show sign-ins from unknown places.
+
+**Decide lock or wipe before sending either one.**
+- A Mac that receives Lock Computer restarts and will not start macOS until someone types the PIN. My reasoning (not written in the runbook, so check it in Jamf's documentation): a locked Mac cannot check in, so it would never receive a wipe sent later.
+- **Lock** fits when FileVault is on and the key is escrowed. The files stay encrypted, the PIN undoes the lock, and the Mac can be used again if police find it.
+- **Wipe** fits when FileVault is off, or when the Mac checked in after the theft. It is R3 and cannot be undone. Under the profile it needs approval from the studio manager and the designer's own manager. The runbook also requires an independent review out of session first, because this is a plan across several systems.
+- Either command only runs when the Mac comes online. Until then, FileVault and Activation Lock are what protect the data.
+
+**What to check first (read only).**
+- Jamf: FileVault status and key escrow, macOS version, chip, bootstrap token, last check-in, and any pending commands. On an Apple silicon Mac, the wipe needs an escrowed bootstrap token.
+- Google Admin → Reporting → Audit and investigation → User log events for [USER@DOMAIN.COM]: look for sign-ins since the theft.
+
+**Google.** Reset the password, then the sign-in cookies, in that order, so that only the new password works after the sign-out. Give the temporary password to the designer by calling them on the staff-list number. Never send it by email or Slack. Gmail can take up to an hour to sign out.
+
+**Slack (no runbook step fits).** Slack has no way in the admin screens to sign out one person (`/slack-user-lifecycle` Phase G). The two options it offers are deactivating the account, or a session reset across the whole workspace (R3). I am not advising either for now. If the Mac checks in, or someone reports odd Slack activity, deactivate the designer's account under that runbook's own gate.
+
+**Risk warning.**
+- ⚠️ The wipe is permanent. Only the client files that also exist elsewhere survive it.
+- The lock PIN goes only in the password manager. Never put it in the ticket or a chat.
+- Client files were on the Mac. Whether to tell those clients is the studio manager's decision. Record the FileVault status as evidence for it.
+- Add the serial number to the police report.
+
+**Verification checklist.**
+- [ ] Studio manager confirmed by callback.
+- [ ] Phase A details recorded in the ticket.
+- [ ] Google password reset proved by the admin log read-back. The designer is asked to sign in again on their devices.
+- [ ] Jamf History shows the command as pending, then as completed.
+- [ ] If wiped: the Jamf record still exists and the ticket marks it as wiped.
+
+**Ticket note.** Mac [SERIAL_NUMBER] reported stolen [date]. Police report filed. FileVault [on / off], last check-in [time]. Google password and sign-in cookies reset [time] (read-back [passed / pending]). Jamf [Lock / Wipe] sent [time], status [pending / completed]. Approvals: [names, by role]. Slack: [not changed / deactivated]. Next owner: [role].
+
+```aegis-desk
+Gate: gws-password-reset-password-portal
+Phrase: RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Read-back: none (R1: no change record)
+Gate: jamf-lock-erase-lock-portal
+Phrase: LOCK MAC [SERIAL_NUMBER]
+Read-back: none (no read-back is named for it in this runbook: its proof is the read its own step names)
+Gate: jamf-lock-erase-wipe-portal
+Phrase: WIPE MAC [SERIAL_NUMBER]
+Change record: R3, read-back jamf:verify-command --not-before --type ERASE_DEVICE
+Read-back: node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type ERASE_DEVICE --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```

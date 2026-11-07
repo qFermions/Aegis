@@ -1,0 +1,62 @@
+## Fix
+**What's wrong:** Authenticator was on the wiped phone, so every sign-in stops at the approval step.
+**Do this:**
+1. Open Entra admin center → Users → [UPN] → Sign-in logs. If the latest Outlook/Teams sign-in shows "MFA not completed", the lost phone is the cause. Any other failure is a different problem.
+2. The office manager confirms by phone that the requester is who they say. The office manager and the practice owner then approve the changes.
+3. Overview → Revoke sessions, which signs the old phone out.
+4. Last resort (no fix here can be undone): Authentication methods → delete only the old Authenticator entry.
+5. The user registers the new phone at aka.ms/mfasetup.
+**Done when:** the user approves a Teams sign-in on the new phone. Aegis then checks that the old method is gone.
+**Stop if:** registration asks for an approval the user cannot give.
+**Tell the user now:** IT is checking your account and will confirm it's you with the office manager. Please install Microsoft Authenticator on your new phone.
+**Tell the user when done:** Your new phone now approves your sign-ins. Open Outlook and Teams and approve the prompt.
+
+## Details
+
+**Verdict:** This is a standard new-phone case. The runbook is `/mfa-issue` → "New phone / re-register". The replay lookup found no match, and there are no matching lessons.
+
+**What to check first (read-only)**
+- **Sign-in logs:** the failure reason sorts the cause. "MFA required, not completed" means the lost phone. A Conditional Access block or a disabled account means another cause, so stop and re-triage.
+- **Authentication methods:** write down the old Authenticator entry's type and ID. If more than one entry is listed, delete only the one tied to the old phone.
+- **Identity:** the customer has no identity-check rule yet (an org gap). Until it sets one, the office manager vouches by phone. Call the office manager on a number already on file, not one from the ticket. Get approval from both the office manager and the practice owner: neither change can be undone.
+
+**Why these steps**
+- **Lighter fixes first:** none applies. Asking the user to sign in again fails without the second step, and this customer has no text-message fallback. Adding a phone method is not advised, because the profile allows Authenticator only.
+- **Revoke sessions:** this cuts off any token still on the old phone. The user says it was wiped, but nobody has confirmed that. Microsoft notes tokens can take a few minutes more to end.
+- **Delete one method, not "Require re-register MFA":** it is the narrower change. The runbook allows one or the other on a ticket, never both.
+- **Temporary Access Pass:** no runbook here covers it. It is not advised on this ticket.
+
+**If registration is blocked:** that is the runbook's Conditional Access gotcha. Excluding the user from a policy is a separate high-risk change that needs its own `/conditional-access` plan. It is not advised here.
+
+**Old phone:** if Intune still lists it, retiring it is a separate `/device-wipe` ticket and is not advised here.
+
+**Risk warning:** ⚠️ Both changes are permanent. The deleted method cannot be restored; the user can only register a new one. Never turn off MFA for the office as a fix.
+
+**No time promise:** the ticket mentions patients arriving at nine, but the card promises no time. The fix depends on the office manager's callback and the approvals.
+
+**Verification checklist**
+- [ ] The office manager confirmed the requester's identity, and both people approved.
+- [ ] Before each change, the list of sign-in methods and the recent sign-ins were saved.
+- [ ] Revoking sessions was confirmed by its check.
+- [ ] The old method's removal was confirmed by its check.
+- [ ] The new Authenticator is registered, and a sign-in succeeded after the change.
+- [ ] No Conditional Access exclusion is left open.
+
+**Jira-ready note**
+> Resolved [date/time]. MFA new-phone issue for `[UPN]`. Office manager vouched for the requester (Customer A's identity-check rule is still an org gap). Approval from the office manager and the practice owner ([MANAGER_NAME]). Sessions revoked, check passed. Old Authenticator method deleted, check passed. User re-registered at aka.ms/mfasetup; Authenticator registered and sign-in check passed. No CA exclusion used. Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-session-revoke-portal
+Phrase: REVOKE ENTRA SESSIONS FOR [UPN]
+Change record: R2, read-back msgraph:verify-sessions-revoked --not-before
+Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+Pre-state (tasks/checkpoints/): node scripts/adapters/msgraph-client.js sign-ins --user [USER_ID] --since [DATE_TIME] --execute
+Pre-state (tasks/checkpoints/): node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute
+After registration: node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+After registration: node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+Approval: office manager + practice owner (both changes are irreversible, per the customer profile)
+```

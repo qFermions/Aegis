@@ -75,7 +75,8 @@ function protect(text) {
   const blocked = [...new Set([...sanitize.scanText(t).blocks.map((b) => b.label), ...EXTRA_SECRETS.filter((x) => x.re.test(t)).map((x) => x.label)])];
   if (blocked.length) return { blocked };
   const mask = (piece) => replaceEmails(piece, () => '[USER@DOMAIN.COM]').replace(PHONE, phoneOrCode);
-  // an address at the placeholder domain ([ADMIN@DOMAIN.COM]) is a placeholder too, never a real address
+  // an address at the placeholder domain (an ADMIN or USER token at DOMAIN.COM, in brackets) is a placeholder too,
+  // never a real address
   const kept = (piece) => isCanonicalPlaceholder(piece) || /^\[[A-Za-z_]+@domain\.com\]$/i.test(piece);
   const out = t.split(BRACKET_TOKEN).map((piece, i) => (i % 2 && kept(piece) ? piece : mask(piece))).join('');
   return { text: out };

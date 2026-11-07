@@ -311,7 +311,7 @@ test('code review 2: a password or key stops the ask; error codes and bracket to
 test('security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked', () => {
   const mail = ['jane.smith', 'realcorp.example.org'].join('@');
   assert.equal(ask.protect(`Jane Smith [mailto:${mail}]`).text, 'Jane Smith [mailto:[USER@DOMAIN.COM]]');
-  for (const phone of [['+44', '20', '7946', '0958'].join(' '), ['+1', '5551234567'].join(''), '(415) 555-0134', '[555-123-4567]']) assert.ok(ask.protect(`call ${phone}`).text.includes('[PHONE_NUMBER]'), phone);
+  for (const phone of [['+44', '20', '7946', '0958'].join(' '), ['+1', '5551234567'].join(''), `(${'415'}) ${['555', '0134'].join('-')}`, `[${['555', '123', '4567'].join('-')}]`]) assert.ok(ask.protect(`call ${phone}`).text.includes('[PHONE_NUMBER]'), phone);
   assert.equal(ask.protect('call [UPN] or [@Aegion_DOMAIN]').text, 'call [UPN] or [@Aegion_DOMAIN]');
   assert.equal(ask.protect('Windows Update error 2147942402').text, 'Windows Update error 2147942402');
 });

@@ -1308,8 +1308,8 @@ test('batch 9b: T9m with the loop section\'s session-clear gate closes RESOLVED 
   const k = r.ticket('T9m');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
   assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['okta:verify-sessions-cleared PASS']);
-  const { SIM_GATES: real } = require('./sim/gates.js');
-  const simTable = { ...real, 'okta-mfa-reset-clear-sessions-portal': { ...real['okta-mfa-reset-clear-sessions-portal'], apply: real['okta-user-lifecycle-reset-password-portal'].apply } };
+  assert.equal(SIM_GATES['okta-mfa-reset-clear-sessions-portal'], SIM_GATES['okta-user-lifecycle-clear-sessions-portal'], 'one shared session-clear entry');
+  const simTable = { ...SIM_GATES, 'okta-mfa-reset-clear-sessions-portal': { ...SIM_GATES['okta-mfa-reset-clear-sessions-portal'], apply: SIM_GATES['okta-user-lifecycle-reset-password-portal'].apply } };
   const wrong = await runDesk(t, { only: ['T9m'], argv: ['--set', 'messy'], answers: {}, deps: { simTable }, sut: { answers: [{ match: 'okta verify keeps looping', answer: good('okta-mfa-reset-clear-sessions-portal') }] } });
   assert.equal(wrong.ticket('T9m').closing_state, 'FAILED', 'a simulated change that is not a session clear fails its read-back');
 });

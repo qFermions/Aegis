@@ -21,6 +21,13 @@ const AUTHENTICATOR_LIKE = /(?:microsoftAuthenticator|phone|softwareOath)Authent
 const boxOf = (s, t) => s.mailboxes.find((m) => m.address.toLowerCase() === String(t['[MAILBOX]']).toLowerCase());
 const grant = (s, t, list) => { const b = boxOf(s, t); b[list] = [...new Set([...(b[list] || []), t['[UPN]']])]; };
 
+// One session clear, two gates: /okta-user-lifecycle Phase C and the Okta Verify loop's admin step in
+// /okta-mfa-reset (batch 9b; code review 1, finding 12: one entry, so the two cannot drift apart).
+const CLEAR_OKTA_SESSIONS = Object.freeze({
+  platform: 'okta', effect: 'clears the Okta user\'s sessions',
+  apply: (s, t, now) => { s.okta.logs.push({ eventType: 'user.session.clear', published: now, target: [{ id: t['[OKTA_USER_ID]'] }], outcome: { result: 'SUCCESS' } }); },
+});
+
 const SIM_GATES = Object.freeze({
   // Microsoft 365
   'mfa-require-reregister-portal': {
@@ -67,15 +74,9 @@ const SIM_GATES = Object.freeze({
     platform: 'okta', effect: 'suspends the Okta user',
     apply: (s, t) => { s.okta.users[t['[OKTA_USER_ID]']].status = 'SUSPENDED'; },
   },
-  'okta-user-lifecycle-clear-sessions-portal': {
-    platform: 'okta', effect: 'clears the Okta user\'s sessions',
-    apply: (s, t, now) => { s.okta.logs.push({ eventType: 'user.session.clear', published: now, target: [{ id: t['[OKTA_USER_ID]'] }], outcome: { result: 'SUCCESS' } }); },
-  },
+  'okta-user-lifecycle-clear-sessions-portal': CLEAR_OKTA_SESSIONS,
   // batch 9b: the Okta Verify loop's admin step in okta-mfa-reset, the same change as Phase C above
-  'okta-mfa-reset-clear-sessions-portal': {
-    platform: 'okta', effect: 'clears the Okta user\'s sessions',
-    apply: (s, t, now) => { s.okta.logs.push({ eventType: 'user.session.clear', published: now, target: [{ id: t['[OKTA_USER_ID]'] }], outcome: { result: 'SUCCESS' } }); },
-  },
+  'okta-mfa-reset-clear-sessions-portal': CLEAR_OKTA_SESSIONS,
   'okta-user-lifecycle-unsuspend-portal': {
     platform: 'okta', effect: 'unsuspends the Okta user',
     apply: (s, t) => { s.okta.users[t['[OKTA_USER_ID]']].status = 'ACTIVE'; },

@@ -37,6 +37,8 @@ const NOT_PASS_ANY = Object.freeze({
   user: OBJECT, group: OBJECT, team: OBJECT, repo: OBJECT, branch: OBJECT, number: OBJECT, id: OBJECT, serial: OBJECT, issue: OBJECT,
   channel: OBJECT, device: OBJECT, 'profile-id': OBJECT, 'profile-identifier': OBJECT, 'role-id': OBJECT,
   'management-id': OBJECT, 'execution-id': OBJECT, identifier: OBJECT, 'app-id': OBJECT, 'comment-id': OBJECT,
+  // batch 9, tasks 5 and 6: the Exchange read-backs name the mailbox, the delegate, and the held message
+  mailbox: OBJECT, delegate: OBJECT, identity: OBJECT, 'message-id': OBJECT, recipient: OBJECT,
   'issue-id': OBJECT, author: OBJECT, target: OBJECT, 'method-id': OBJECT,
   // batch G4, task A3: --not-before is a pass flag now (D10 on PR #9); the version bound stays here
   'from-version': TIME,

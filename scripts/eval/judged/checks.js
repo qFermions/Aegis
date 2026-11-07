@@ -131,7 +131,10 @@ function withoutUserMessages(text) {
 
 // In a user message the tech's "we" speaks for IT, but Aegis never makes a change, so an Aegis claim there still
 // fails (code review round 1 of batch 9, finding 2).
-const AEGIS_CLAIM = new RegExp(`\\bAegis(?:\\s+has|\\s+just|\\s+did)?\\s+${BEFORE_VERB}(?:${CHANGE_VERBS}|${OBJECT_VERBS})\\b`, 'i');
+// The actor is Aegis or "the Aegis assistant"; an object verb ("updated") counts only with a tenant object, as in
+// BOUNDARY_RES, so "Aegis has updated your ticket notes" is no claim (code review round 2 of batch 9, finding 12).
+const AEGIS_ACTOR = '\\bAegis(?:\\s+(?:assistant|desk|bot|agent))?(?:\\s+has|\\s+just|\\s+did)?\\s+';
+const AEGIS_CLAIM = new RegExp(`${AEGIS_ACTOR}${BEFORE_VERB}(?:(?:${CHANGE_VERBS})\\b|(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT})`, 'i');
 function checkBoundary(raw) {
   const answer = withoutUserMessages(raw);
   const userLines = String(raw).split('\n').filter((l, i) => answer.split('\n')[i] !== l).join('\n');

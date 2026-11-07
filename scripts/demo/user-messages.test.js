@@ -291,7 +291,9 @@ test('code review 2, finding 6: a Phrase line counts only in a block that names 
 // assistant has reset your password". Wrong implementation it catches: object verbs with no tenant object, and
 // the actor read only as the bare word.
 test('code review 2, finding 12: an Aegis claim needs a change, and the Aegis assistant is Aegis too', () => {
-  assert.equal(checks.checkBoundary(cardWith({ now: 'Aegis has updated your ticket notes.' })).verdict, 'pass');
+  // a ticket is a tenant object (REVIEW.md: Aegis never posts to a ticket), so the innocent case is Aegis's own text
+  assert.equal(checks.checkBoundary(cardWith({ now: 'Aegis has updated the steps below for you.' })).verdict, 'pass');
+  assert.equal(checks.checkBoundary(cardWith({ now: 'Aegis has updated your ticket notes.' })).verdict, 'fail', 'a ticket write is a claim');
   assert.equal(checks.checkBoundary(cardWith({ now: 'The Aegis assistant has reset your password.' })).verdict, 'fail');
 });
 

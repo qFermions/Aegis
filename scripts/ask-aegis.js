@@ -60,10 +60,10 @@ function setupBlock(setup, scope) {
 // code (round 2, finding 8). Returns { text } or { blocked: [labels] }. Names in free text are not detected, as in
 // the intake. shortcut: pattern lists, so a secret of another shape still goes through.
 const EXTRA_SECRETS = [
-  // a value that looks like a password: six or more characters with a letter and a digit or symbol, and not a
-  // [PLACEHOLDER], so "my password is expired" or "Temp password: [TEMP_PASSWORD]" pass (code review round 3,
-  // finding 1)
-  { label: 'A password written in the text', re: /\b(?:password|passcode|passwd|secret)\s*(?:is|:|=)\s*(?!\[)(?=\S*[A-Za-z])(?=\S*[\d!@#$%^&*?~+=])\S{6,}/i },
+  // any value of four or more characters after the word, except a status word ("is expired", "is not working") or a
+  // whole [PLACEHOLDER] (code review round 3, finding 1; the final security review: digit-only passcodes and
+  // letter-only passwords are passwords too)
+  { label: 'A password written in the text', re: /\b(?:password|passcode|passwd|pin|secret)\s*(?:is\b|:|=)\s*(?!\[[A-Z0-9_@.]+\](?:\W|$))(?!(?:expired|expiring|locked|wrong|incorrect|invalid|reset|not|being|no|still|working|changed|required|blank|empty|missing|rejected|forgotten|too|the|my|now|correct|right|fine|ok|okay|valid)\b)\S{4,}/i },
   { label: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/ },
   { label: 'Entra client secret', re: /\b[A-Za-z0-9_.-]{0,3}8Q~[A-Za-z0-9_.~-]{20,}/ },
 ];

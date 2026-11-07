@@ -322,3 +322,11 @@ test('code review 3, finding 1: a ticket about a password passes; a password wri
   for (const ok of ['My password is expired and I cannot sign in to Outlook.', 'User says password is incorrect after the reset', 'We have password issues with Teams', 'The app client secret is expiring next week', 'Temp password: [TEMP_PASSWORD]']) assert.equal(ask.protect(ok).blocked, undefined, ok);
   for (const bad of ['my password is Summer2026! and it stopped working', 'temp password: Welcome#12345']) assert.ok(ask.protect(bad).blocked, bad);
 });
+
+// Final security review (batch 9): the round 3 password rule let digit-only passcodes and short or letter-only
+// passwords through. Wrong implementation it catches: a complexity shape instead of "any value but a status word
+// or a whole placeholder".
+test('final security review: any written password stops the ask; a status word or a whole placeholder does not', () => {
+  for (const bad of ['the new passcode is 739204 and she still cannot sign in', 'password: sunshine', 'Temp password: Welcome', 'password is [x]Hunter22!']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ['My password is expired and I cannot sign in to Outlook.', 'User says password is incorrect after the reset', 'Temp password: [TEMP_PASSWORD]', 'The app client secret is expiring next week', 'my password is not working']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+});

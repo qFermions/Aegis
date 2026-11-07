@@ -1,0 +1,4 @@
+ℹ fail 2
+ℹ pass 0
+✖ final security review: a done claim after a ticket routing mention in the same clause still fails
+✖ final security review: any written password stops the ask; a status word or a whole placeholder does not

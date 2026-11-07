@@ -82,6 +82,11 @@ node scripts/adapters/exo-client.js verify-recipient-permission --mailbox [MAILB
 - **Read-back:** none (R1: no change record)
 **PORTAL ACTION [mailbox-permission-remove-portal]:** Only after the exact match, remove `[UPN]` from **Full Access** on `[MAILBOX]` and re-read the Delegation list.
 
+```bash
+# HUMAN-RUN read-only read of [mailbox-permission-remove-portal]: passes only when no Full Access entry names [UPN] on [MAILBOX]
+node scripts/adapters/exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --absent --execute
+```
+
 <details>
 <summary>PowerShell — for reference only</summary>
 

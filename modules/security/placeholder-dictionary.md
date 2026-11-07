@@ -59,6 +59,11 @@ Jamf Pro, or Okta device ID) · `[SERIAL_NUMBER]` (a hardware serial number) ·
 `[APP_NAME]` (an Okta or Google app display name) · `[LOCK_PIN]` (a remote-lock
 passcode — kept in the password manager, never in a ticket)
 
+Exchange Online quarantine (batch 9, read back by `scripts/adapters/exo-client.js`): `[MESSAGE_ID]`
+(a held message's Message-ID header, angle brackets included, quoted in a shell) ·
+`[MESSAGE_IDENTITY_GUID]` (a quarantine item's Identity, two GUIDs joined by a backslash, quoted in
+a shell). `[MAILBOX]` (a mailbox's address, in the mailbox runbooks).
+
 Google Workspace, Fleet, Jamf, Slack and Linear lane (G2, 2026-10-27): `[HOST_ID]` (a
 Fleet host ID) · `[FLEET_NAME]` (a Fleet "fleet", formerly a team) · `[EXECUTION_ID]` (a
 Fleet script execution ID) · `[CVE_ID]` (a CVE identifier) · `[REPORT_NAME]` (a Fleet

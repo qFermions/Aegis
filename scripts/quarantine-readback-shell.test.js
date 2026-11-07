@@ -29,3 +29,12 @@ test('the desk hands the connector the bound read-back\'s values without their q
   assert.ok(g.bound.length, 'a bound read-back');
   assert.ok(g.bound[0].argv.includes('[MESSAGE_ID]'), g.bound[0].argv.join(' '));
 });
+
+// Code review round 1 (batch 9), finding 14: CLAUDE.md says a token is added through the placeholder dictionary,
+// never defined in a runbook. Wrong implementation it catches: a read-back line with a token the dictionary lacks.
+test('every token in the Exchange read-back lines is in the placeholder dictionary', () => {
+  const dictionary = fs.readFileSync(path.join(__dirname, '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
+  const runbooks = ['email-quarantine', 'mailbox-permissions', 'shared-mailbox'].map((n) => fs.readFileSync(path.join(__dirname, '..', '.claude', 'commands', `${n}.md`), 'utf8')).join('\n');
+  const tokens = new Set(runbooks.split('\n').filter((l) => /exo-client\.js verify-/.test(l)).flatMap((l) => l.match(/\[[A-Z@._]+\]/g) || []).filter((tok) => tok !== '[CHANGE_ID]'));
+  for (const tok of tokens) assert.ok(dictionary.includes(`\`${tok}\``), `${tok} is in the dictionary`);
+});

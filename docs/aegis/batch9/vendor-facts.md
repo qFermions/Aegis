@@ -47,6 +47,7 @@ Facts relied on by `scripts/adapters/exo-client.js`, its `scope-manifest.json` e
 - X-23. UNCONFIRMED (no page opened): how PowerShell 7's ConvertTo-Json prints an empty array, a one-element array and an enum in these objects. The fixed script converts each field to text and wraps the rows in an array; the parser treats any other shape as INCONCLUSIVE. | (not opened) | 2026-11-06 | none | (none)
 
 - X-28. A quarantined message identified by Identity has RecipientAddress, QuarantineUser and ReleasedUser properties. UNCONFIRMED: whether a summary read (by -MessageId) carries ReleasedUser, and that ReleasedUser lists addresses; so a message with several recipients and no readable ReleasedUser is INCONCLUSIVE. | https://learn.microsoft.com/powershell/module/exchangepowershell/get-quarantinemessage | 2026-11-06 | vendor docs page | "When you identify the quarantine message by using this parameter, the RecipientAddress, QuarantineUser, and ReleasedUser properties are available."
+- X-29. Get-RecipientPermission returns at most 1000 results by default; unlimited returns all. | https://learn.microsoft.com/powershell/module/exchangepowershell/get-recipientpermission | 2026-11-06 | vendor docs page | "If you want to return all requests that match the query, use unlimited for the value of this parameter. The default value is 1000."
 
 ### Not opened
 

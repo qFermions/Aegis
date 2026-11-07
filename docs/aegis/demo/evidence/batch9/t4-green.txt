@@ -1,22 +1,22 @@
 $ node --test scripts/adapters/exo-client.test.js   (batch 9 task 4, after exo-client.js and its registration)
-✔ the seam refuses a cmdlet that is not one of the four reads, and never calls the transport (0.484291ms)
-✔ the seam refuses a parameter outside the cmdlet's fixed set, a missing one, and a non-string value (0.220875ms)
-✔ a value holding a semicolon, a pipe, a script block, a backtick, a $, a newline or a quote is refused before the transport is called (0.902292ms)
-✔ an unknown command, a write verb and a flag the command does not take are refused before the transport is called (0.579542ms)
-✔ each command sends exactly one fixed request: the cmdlet and its validated parameters (0.982792ms)
-✔ verify-mailbox-permission: Full Access present passes, missing fails, and --absent flips both (1.288792ms)
-✔ verify-mailbox-permission: an answer it cannot read is INCONCLUSIVE (exit 5), never a pass (0.757083ms)
-✔ verify-recipient-permission: Send As present passes, missing fails, --absent flips, unreadable is INCONCLUSIVE (0.530833ms)
-✔ verify-quarantine-released: RELEASED passes, another known status fails, and anything else is INCONCLUSIVE (0.559583ms)
-✔ a PowerShell exit that is not 0, a timeout or an oversized answer is a failed read (exit 2), never a verdict (0.193417ms)
-✔ a dry run prints the planned cmdlet, reads no credential, calls no transport; a verify dry run exits 4 with NOT VERIFIED (0.142416ms)
-✔ missing credentials exit 1 naming the variable, before the transport is called (0.107625ms)
-✔ --change: no change, a change for another read-back, or for the other form of this read-back is refused before the transport; an approved one is recorded under it (60.245333ms)
-✔ every transport call is one connector-call entry; a refused request is recorded with 0 attempts; a failing sink withholds the answer (0.238542ms)
-✔ instruction-like text in an answer is flagged and quoted, never followed; no credential value is printed (0.178416ms)
-✔ the default transport throws the network tripwire before spawning when AEGIS_NETWORK_TRIPWIRE=1 (0.216917ms)
-✔ the default transport: pwsh with no shell, a fixed encoded script, values and credentials only in the child environment, a timeout and an output cap (23.68025ms)
-✔ the fixed PowerShell script reads the request from the environment, splats it, and names only the four read cmdlets (0.1715ms)
+✔ the seam refuses a cmdlet that is not one of the four reads, and never calls the transport (0.576709ms)
+✔ the seam refuses a parameter outside the cmdlet's fixed set, a missing one, and a non-string value (0.139291ms)
+✔ a value holding a semicolon, a pipe, a script block, a backtick, a $, a newline or a quote is refused before the transport is called (0.825417ms)
+✔ an unknown command, a write verb and a flag the command does not take are refused before the transport is called (0.482875ms)
+✔ each command sends its fixed requests: the cmdlet and its validated parameters, nothing else (1.058208ms)
+✔ verify-mailbox-permission: the delegate's Full Access present passes, missing fails, and --absent flips both (1.143875ms)
+✔ verify-mailbox-permission: an answer it cannot read is INCONCLUSIVE (exit 5), never a pass (0.606167ms)
+✔ verify-recipient-permission: Send As present passes, missing fails, --absent flips, and both reads must agree (0.753791ms)
+✔ verify-quarantine-released: RELEASED passes, another known status fails, and anything else is INCONCLUSIVE (0.676459ms)
+✔ a PowerShell exit that is not 0, a timeout or an oversized answer is a failed read (exit 2), never a verdict (0.210041ms)
+✔ a dry run prints the planned cmdlet, reads no credential, calls no transport; a verify dry run exits 4 with NOT VERIFIED (0.22725ms)
+✔ missing credentials exit 1 naming the variable, before the transport is called (0.125417ms)
+✔ --change: no change, a change for another read-back, or for the other form of this read-back is refused before the transport; an approved one is recorded under it (55.774083ms)
+✔ every transport call is one connector-call entry; a refused request is recorded with 0 attempts; a failing sink withholds the answer (0.223833ms)
+✔ instruction-like text in an answer is flagged and quoted, never followed; no credential value is printed (0.163083ms)
+✔ the default transport throws the network tripwire before spawning when AEGIS_NETWORK_TRIPWIRE=1 (0.184917ms)
+✔ the default transport: pwsh with no shell, a fixed encoded script, values and credentials only in the child environment, a timeout and an output cap (24.741333ms)
+✔ the fixed PowerShell script reads the request from the environment, splats it, and names only the four read cmdlets (0.193917ms)
 ℹ tests 18
 ℹ suites 0
 ℹ pass 18
@@ -24,7 +24,7 @@ $ node --test scripts/adapters/exo-client.test.js   (batch 9 task 4, after exo-c
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 140.2275
+ℹ duration_ms 129.223625
 exit: 0
 
 $ node --test scripts/adapters/*.test.js scripts/audit/*.test.js scripts/env-example.test.js   (the declared suites, summary lines)
@@ -35,5 +35,5 @@ $ node --test scripts/adapters/*.test.js scripts/audit/*.test.js scripts/env-exa
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 16089.688625
+ℹ duration_ms 17824.694
 exit: 0

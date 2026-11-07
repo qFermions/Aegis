@@ -4,7 +4,7 @@ Aegis advises; humans execute (`PRODUCT_CONTRACT.md`). This page is for the owne
 give `scripts/adapters/exo-client.js` a read-only sign-in on a **test** tenant, what the connector
 reads, and what it never does. Do this on a test or trial tenant first, never on a customer tenant.
 Every fact below is from Microsoft Learn, opened on 2026-11-06, and is listed with its quote in
-[the batch 9 vendor facts](../batch9/vendor-facts.md) ("Exchange Online (task 4)", X-01 to X-28).
+[the batch 9 vendor facts](../batch9/vendor-facts.md) ("Exchange Online (task 4)", X-01 to X-29).
 The setup steps follow Microsoft's page
 [App-only authentication for unattended scripts](https://learn.microsoft.com/powershell/exchange/app-only-auth-powershell-v2).
 

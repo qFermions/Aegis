@@ -470,4 +470,8 @@ test('the fixed PowerShell script reads the request from the environment, splats
   const cmdlets = [...new Set(s.match(/\b(?:Get|Set|New|Remove|Add|Release|Enable|Disable)-[A-Z][A-Za-z]+/g))].sort();
   assert.deepEqual(cmdlets, ['Get-Mailbox', 'Get-MailboxPermission', 'Get-QuarantineMessage', 'Get-RecipientPermission']);
   for (const c of cmdlets) assert.match(s, new RegExp(`${c} @p`), `${c} runs with the splatted parameters`);
+  // the script's own allow-list check is case-sensitive like checkRequest's (code review, nit 2)
+  assert.match(s, /\$allowed\.Keys -ccontains \$cmdlet/);
+  assert.match(s, /-cnotcontains \$names/);
+  assert.match(s, /Get-RecipientPermission @p -ResultSize Unlimited/, 'no list cut at the default 1000');
 });

@@ -111,7 +111,9 @@ function checkRequest(request) {
 // line argument that carries code), and the request travels as JSON in the child's environment
 // variable AEGIS_EXO_REQUEST. The script parses that JSON as data (ConvertFrom-Json), checks the
 // cmdlet and parameter names against its own copy of the allow-list, and passes the values by
-// splatting (@p), which binds each value to its parameter without parsing it. The credentials are
+// splatting (@p), which binds each value to its parameter without parsing it. Both checks in the script
+// compare case-sensitively (-ccontains, -cnotcontains), as checkRequest does. Get-RecipientPermission
+// runs with the fixed -ResultSize Unlimited, so a long list is not cut at its default 1000 (X-29). The credentials are
 // in the child's environment too, so no secret is on the command line or in a process list.
 // Connect-ExchangeOnline -CommandName loads only the four read cmdlets into the session (X-07).
 const POWERSHELL_SCRIPT = String.raw`$ErrorActionPreference = 'Stop'
@@ -127,11 +129,11 @@ $allowed = @{
 }
 $req = ConvertFrom-Json -InputObject $env:AEGIS_EXO_REQUEST -AsHashtable
 $cmdlet = [string]$req['cmdlet']
-if (-not $allowed.ContainsKey($cmdlet)) { exit 3 }
+if (-not ($allowed.Keys -ccontains $cmdlet)) { exit 3 }
 $p = @{}
 foreach ($k in $req['parameters'].Keys) { $p[[string]$k] = [string]$req['parameters'][$k] }
 $names = (@($p.Keys) | Sort-Object) -join ','
-if ($allowed[$cmdlet] -notcontains $names) { exit 3 }
+if ($allowed[$cmdlet] -cnotcontains $names) { exit 3 }
 Import-Module ExchangeOnlineManagement
 $c = @{ AppId = $env:EXO_APP_ID; Organization = $env:EXO_ORGANIZATION; CommandName = @($allowed.Keys); ShowBanner = $false }
 if ($env:EXO_CERTIFICATE_THUMBPRINT) { $c['CertificateThumbprint'] = $env:EXO_CERTIFICATE_THUMBPRINT }
@@ -144,7 +146,7 @@ function Texts($v) { if ($null -eq $v) { return $null } ; return ,@($v | ForEach
 try {
   $rows = switch ($cmdlet) {
     'Get-MailboxPermission' { Get-MailboxPermission @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; User = "$($_.User)"; AccessRights = (Texts $_.AccessRights); Deny = $_.Deny; IsInherited = $_.IsInherited } } }
-    'Get-RecipientPermission' { Get-RecipientPermission @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; Trustee = "$($_.Trustee)"; AccessControlType = "$($_.AccessControlType)"; AccessRights = (Texts $_.AccessRights); IsInherited = $_.IsInherited } } }
+    'Get-RecipientPermission' { Get-RecipientPermission @p -ResultSize Unlimited | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; Trustee = "$($_.Trustee)"; AccessControlType = "$($_.AccessControlType)"; AccessRights = (Texts $_.AccessRights); IsInherited = $_.IsInherited } } }
     'Get-Mailbox' { Get-Mailbox @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; GrantSendOnBehalfTo = (Texts $_.GrantSendOnBehalfTo) } } }
     'Get-QuarantineMessage' { Get-QuarantineMessage @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; MessageId = "$($_.MessageId)"; RecipientAddress = (Texts $_.RecipientAddress); ReleasedUser = (Texts $_.ReleasedUser); ReleaseStatus = "$($_.ReleaseStatus)"; Type = "$($_.Type)" } } }
   }
@@ -417,7 +419,7 @@ function judge(command, a, answers) {
   throw new RefusedError('unknown read-back');
 }
 
-const SCOPE_NOTICE = 'Exchange Online does not show an app its granted permission or role, so Aegis could not check that this credential is read-only; grant only Exchange.ManageAsApp and the Global Reader role (docs/aegis/g3/scope-manifest.md, scope-manifest.json "exo")';
+const SCOPE_NOTICE = 'Exchange Online does not show an app its granted permission or role, so Aegis could not check that this credential is read-only; grant only Exchange.ManageAsApp and the Global Reader role (docs/aegis/owner/exchange-online-readonly.md, scripts/adapters/scope-manifest.json "exo")';
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 async function run(argv, env = process.env, deps = {}) {

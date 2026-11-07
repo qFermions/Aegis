@@ -52,3 +52,10 @@ Facts relied on by `scripts/adapters/exo-client.js`, its `scope-manifest.json` e
 ### Not opened
 
 - The "Find the permissions required to run any Exchange cmdlet" page: whether Global Reader holds each of the four cmdlets is not confirmed per cmdlet (Global Reader is confirmed as a supported role for the connection, X-06). The test-tenant run answers it.
+
+## Exchange admin center paths (tasks 5 and 6, main session)
+
+- X-30. EAC: Recipients, Mailboxes, select the mailbox, Mailbox Delegation; under Read and manage (Full Access) or Send as, Edit, Add members, then Save and Confirm; a removal selects the delegate, then Delete and Confirm. | https://learn.microsoft.com/exchange/recipients-in-exchange-online/manage-permissions-for-recipients | 2026-11-06 | vendor docs page (Microsoft Learn MCP fetch) | "To assign permissions to delegates, click **Edit** under the appropriate permission, and then click **Add members**."
+- X-31. Send on behalf is not available in the EAC for shared mailboxes. | https://learn.microsoft.com/exchange/recipients-in-exchange-online/manage-permissions-for-recipients | 2026-11-06 | vendor docs page | "Note that this permission isn't available in the EAC for shared mailboxes."
+- X-32. Microsoft's own check after a grant or removal: the delegate is or isn't listed under Mailbox delegation, or Get-MailboxPermission and Get-RecipientPermission -Trustee list it. | https://learn.microsoft.com/exchange/recipients-in-exchange-online/manage-permissions-for-recipients | 2026-11-06 | vendor docs page | "verify the delegate is or isn't listed in **Mailbox delegation** &gt; **Full Access**."
+

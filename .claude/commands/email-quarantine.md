@@ -51,6 +51,8 @@ Decision guide:
 | Malware | Cannot release from portal — never should be |
 
 ### 4. Release the message
+
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and its read-back below as `--read-back`: `exo:verify-quarantine-released` for [quarantine-release-all-portal] or its PowerShell twin [quarantine-release-all], and for [quarantine-release-one-portal] or its twin [quarantine-release-one]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. The read-back is the read-only Exchange connector (`scripts/adapters/exo-client.js`, batch 9), which reads `Get-QuarantineMessage`.
 > **PREVIEW ONLY [quarantine-release-dialog]:** Selecting the item and inspecting the release dialog is preparatory only. Do not submit a release until one of the recipient-scoped gates below matches exactly.
 Open the reviewed message and inspect the available release scopes without submitting.
 
@@ -67,8 +69,13 @@ Options presented:
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the recipient count can pass 10 and delivery cannot be recalled, so the higher class): delivery cannot be recalled reliably
 - **Required confirmation:** Render the displayed integer as `$recipientCount`, then type exactly `RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO ALL $recipientCount LISTED RECIPIENTS`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (Defender quarantine: no connector reads it)
+- **Read-back:** `exo-client.js verify-quarantine-released --identity [MESSAGE_IDENTITY_GUID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [quarantine-release-all-portal]:** Re-open the item and stop if the displayed recipient identities or `$recipientCount` drift. Only the exact match authorizes **Release to all recipients** for that list. A single-recipient release uses the separate gate below; neither phrase authorizes the other scope or the reporting option.
+
+```bash
+# HUMAN-RUN read-only read-back of [quarantine-release-all-portal] or [quarantine-release-all]: passes only when the held message's ReleaseStatus is Released and, for several recipients, every one is in ReleasedUser
+node scripts/adapters/exo-client.js verify-quarantine-released --identity [MESSAGE_IDENTITY_GUID] --change [CHANGE_ID] --execute
+```
 
 <!-- SAFETY GATE [quarantine-release-one-portal] -->
 - **Target:** [MESSAGE_IDENTITY_GUID] and [USER@DOMAIN.COM]
@@ -77,8 +84,15 @@ Options presented:
 - **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): delivery cannot be recalled reliably
 - **Required confirmation:** Type exactly `RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (Defender quarantine: no connector reads it)
+- **Read-back:** `exo-client.js verify-quarantine-released --message-id [MESSAGE_ID] --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [quarantine-release-one-portal]:** Only the exact match authorizes **Release to specific recipients** for the named recipient. It never authorizes Release to all.
+
+The read-back names the message by its Message-ID header (`[MESSAGE_ID]`, angle brackets included, from the item's details), with the one recipient, so a message held for several people is judged for that recipient only:
+
+```bash
+# HUMAN-RUN read-only read-back of [quarantine-release-one-portal] or [quarantine-release-one]: passes only when the message to [USER@DOMAIN.COM] shows Released
+node scripts/adapters/exo-client.js verify-quarantine-released --message-id [MESSAGE_ID] --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+```
 
 Allow 5–10 minutes for delivery to the recipient's inbox.
 
@@ -111,7 +125,7 @@ See `/email-whitelist` for a full comparison of all allow methods and their trad
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): irreversible; the message cannot be released afterward
 - **Required confirmation:** Type exactly `DELETE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (Defender quarantine: no connector reads it)
+- **Read-back:** none (Defender quarantine: the Exchange connector reads a held message, but has no read-back for one that was deleted)
 **PORTAL ACTION [quarantine-delete-portal]:** For a reviewed phish or malware item, only the exact match authorizes **Delete permanently**. Capture needed evidence first.
 
 ### 7. Set up quarantine notifications (so users get alerted automatically)
@@ -187,7 +201,7 @@ Write-Host "Recipient-set SHA256: $recipientSetHash"
 # Effect: delivers the reviewed quarantined message to every original recipient
 # Scope: exactly the displayed recipient count for one message identity
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, ">10 objects"; the recipient count can pass 10 and delivery cannot be recalled, so the higher class): delivery cannot be recalled reliably
-# Read-back: none, Defender quarantine: no connector reads it
+# Read-back: exo-client.js verify-quarantine-released --identity [MESSAGE_IDENTITY_GUID] --change [CHANGE_ID] --execute
 $requiredConfirmation = "RELEASE QUARANTINED MESSAGE $messageIdentity TO $($recipients.Count) RECIPIENTS SET SHA256 $recipientSetHash"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm after header and recipient review"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -221,7 +235,7 @@ Write-Host "Message: $messageIdentity; recipient: $recipient"
 # Effect: delivers the reviewed quarantined message to one recipient
 # Scope: one message identity and one verified original recipient
 # Reversibility: R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: "reversal needs data you'd have to reconstruct"): delivery cannot be recalled reliably
-# Read-back: none, Defender quarantine: no connector reads it
+# Read-back: exo-client.js verify-quarantine-released --message-id [MESSAGE_ID] --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
 $requiredConfirmation = "RELEASE QUARANTINED MESSAGE $messageIdentity TO $recipient"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm after header review"
 if ($confirmation -ceq $requiredConfirmation) {
@@ -251,7 +265,7 @@ Write-Host "Delete target: $($message.Identity); subject and sender reviewed in 
 # Effect: permanently deletes the quarantined message
 # Scope: one reviewed quarantine item
 # Reversibility: R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): irreversible; the message cannot be released afterward
-# Read-back: none, Defender quarantine: no connector reads it
+# Read-back: none, Defender quarantine: the Exchange connector reads a held message, but has no read-back for one that was deleted
 $requiredConfirmation = "DELETE QUARANTINED MESSAGE $messageIdentity"
 $confirmation = Read-Host "Type '$requiredConfirmation' to confirm"
 if ($confirmation -ceq $requiredConfirmation) {

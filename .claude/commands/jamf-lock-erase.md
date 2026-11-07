@@ -234,7 +234,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 # Reversibility: R3 — not reversible — the data is gone unless it lives elsewhere
 # Required confirmation: type exactly "WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
+# Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type ERASE_DEVICE --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="WIPE MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # shows the phrase

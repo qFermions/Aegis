@@ -74,7 +74,8 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // quarantine-release-all and quarantine-release-one name read-backs (97 to 105); task 7:
   // jamf-lock-erase-wipe-portal names jamf-client.js verify-command --type ERASE_DEVICE (105 to 106)
   assert.equal(gates, 348, 'every runbook gate');
-  assert.equal(naming, 106, 'the gates that name read-backs');
+  // code review round 1 of batch 9, finding 13: jamf-lock-erase-wipe-api names its portal twin's read-back (106 to 107)
+  assert.equal(naming, 107, 'the gates that name read-backs');
 });
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {

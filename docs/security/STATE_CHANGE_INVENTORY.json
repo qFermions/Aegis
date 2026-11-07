@@ -652,6 +652,18 @@
       ]
     },
     {
+      "id": "device-remote-lock-preview",
+      "file": ".claude/commands/device-wipe.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
       "id": "device-rename",
       "file": ".claude/commands/new-device-setup.md",
       "kind": "portal",
@@ -7235,6 +7247,18 @@
       ]
     },
     {
+      "id": "okta-user-lifecycle-unlock-preview",
+      "file": ".claude/commands/okta-user-lifecycle.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
       "id": "okta-user-lifecycle-unsuspend",
       "file": ".claude/commands/okta-user-lifecycle.md",
       "kind": "shell",
@@ -7266,6 +7290,19 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
+      ]
+    },
+    {
+      "id": "okta-verify-loop-admin-reauth",
+      "file": ".claude/commands/okta-mfa-reset.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
       ]
     },
     {

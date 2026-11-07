@@ -69,11 +69,12 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // okta-user-lifecycle-suspend and okta-user-lifecycle-unsuspend re-classed to R2, each portal
   // gate and its fenced twin (4 times 2)
   // batch 9, tasks 5 and 6: 348 gates with mailbox-full-access-grant-portal, mailbox-send-as-grant-portal,
-  // mailbox-send-as-remove-portal, shared-mailbox-full-access-portal and shared-mailbox-send-as-portal; 105
-  // name read-backs with those four grants, quarantine-release-all-portal, quarantine-release-one-portal
-  // and their twins quarantine-release-all and quarantine-release-one
+  // mailbox-send-as-remove-portal, shared-mailbox-full-access-portal and shared-mailbox-send-as-portal; those
+  // four grants, quarantine-release-all-portal, quarantine-release-one-portal and their twins
+  // quarantine-release-all and quarantine-release-one name read-backs (97 to 105); task 7:
+  // jamf-lock-erase-wipe-portal names jamf-client.js verify-command --type ERASE_DEVICE (105 to 106)
   assert.equal(gates, 348, 'every runbook gate');
-  assert.equal(naming, 105, 'the gates that name read-backs');
+  assert.equal(naming, 106, 'the gates that name read-backs');
 });
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {

@@ -137,6 +137,8 @@ Before the gate: the independent out-of-session review has the Phase A pre-state
 
 **Role needed:** Maintainer or Admin (global, or on `[FLEET_NAME]`), Fleet Premium (a company-owned Android wipe is also in Fleet Free).
 
+**Try first:** Phase B, Lock, while the device may still come back: Phase C's Unlock undoes it.
+
 <!-- SAFETY GATE [fleet-device-actions-wipe-portal] -->
 - **Target:** [HOST_ID]
 - **Effect:** wipe one host; every local file is erased, the host's other upcoming activities are cancelled with no record of each
@@ -172,6 +174,8 @@ Do not delete the host until it reads wiped: deleting removes Fleet's record of 
 
 **Role needed:** Technician, Maintainer or Admin (global, or on `[FLEET_NAME]`) for a saved script; Maintainer or Admin for an arbitrary script that is not saved, or a scheduled one.
 
+No lighter step: the script is the change the ticket asks for, and its class comes from what it does (step 1); while it is still Upcoming, Phase G cancels it.
+
 <!-- SAFETY GATE [fleet-device-actions-run-script-portal] -->
 - **Target:** [SCRIPT_NAME] on [HOST_ID]
 - **Effect:** run one saved script on one host; what changes on the host is whatever the script does
@@ -194,6 +198,8 @@ Pilot first: E1 on one host must pass `verify-script`. Then write in the ticket 
 **Role needed:** Technician, Maintainer or Admin on `[FLEET_NAME]` for a saved script (the role guide read gives no separate batch permission).
 
 **Counted change:** before the gate, open this gate's own change record for [fleet-device-actions-batch-script-portal], not the pilot's, with `--expected [HOST_COUNT]`, the host count in the ticket, then record its approval. The procedure saved for approval carries the count on one line, `Count: [HOST_COUNT]`, and `open` refuses an `--expected` that differs from it, so the approval covers the count. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N", one per distinct execution id, lists every host whose read-back failed, and reads done only when exactly [HOST_COUNT] runs passed and none failed; anything else reads partial. A run that failed while the host had not reported and passed later counts as passed. A read that got an answer but recorded no run id cannot be matched to a later pass, so it keeps the change partial: write the hosts not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that run again.
+
+**Try first:** E1 on one host, the pilot this section already requires, passing `verify-script` before any batch.
 
 <!-- SAFETY GATE [fleet-device-actions-batch-script-portal] -->
 - **Target:** [SCRIPT_NAME] on [HOST_COUNT] hosts checked in [FLEET_NAME]
@@ -222,6 +228,8 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 
 **Role needed:** Maintainer or Admin (global, or on `[FLEET_NAME]`).
 
+No lighter step: the device is leaving the fleet, so its management must end; a device that may come back is Phase B's lock instead.
+
 <!-- SAFETY GATE [fleet-device-actions-mdm-off-portal] -->
 - **Target:** [HOST_ID]
 - **Effect:** turn off MDM for one host (the button is Unenroll on an iPhone, iPad or personally owned Android); MDM management and its profiles are taken off the device, on a personally owned Android the work profile is wiped
@@ -246,6 +254,8 @@ A Windows host has no Turn off MDM action, and a company-owned Android uses Wipe
 ### F2: Delete the host record
 
 **Role needed:** Maintainer or Admin (global, or on `[FLEET_NAME]`).
+
+No lighter step: the record is deleted only for a device leaving the fleet, after F1; keeping the record needs no step at all.
 
 <!-- SAFETY GATE [fleet-device-actions-delete-portal] -->
 - **Target:** [HOST_ID] (serial [SERIAL_NUMBER])

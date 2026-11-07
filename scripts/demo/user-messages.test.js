@@ -245,3 +245,11 @@ test('code review 1, finding 12: the pointer is found under the when-done line, 
   assert.equal(a.fixCard(intro).pointer, null, 'a line above the parts is not the pointer');
   assert.ok(a.fixCard(intro).words > a.fixCard(cardWith()).words + 40);
 });
+
+// Code review round 1 (batch 9), finding 11: "Phrase: none" counted as a human confirmation. Wrong implementation
+// it catches: any non-empty Phrase line taken as a phrase.
+test('code review 1, finding 11: a Phrase line that says there is none is no confirmation', () => {
+  const c = { expected: { change_class: 'R3' } };
+  for (const v of ['none', 'n/a', 'N/A', '-', 'TBD', 'None (no gate)']) assert.equal(checks.checkHumanConfirmation(`Steps.\n\n\`\`\`aegis-desk\nGate: none\nPhrase: ${v}\n\`\`\`\n`, c).verdict, 'fail', v);
+  assert.equal(checks.checkHumanConfirmation('Steps.\n\n```aegis-desk\nGate: x-y\nPhrase: WIPE [DEVICE_NAME]\n```\n', c).verdict, 'pass');
+});

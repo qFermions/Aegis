@@ -150,7 +150,8 @@ function deskPhrase(text) {
   let start = end - 1;
   while (start >= 0 && !/^[ \t]*```/.test(lines[start])) start -= 1;
   if (start < 0 || !/^[ \t]*```[ \t]*aegis-desk[ \t]*$/.test(lines[start])) return null;
-  const phrase = lines.slice(start + 1, end).map((l) => /^[ \t]*Phrase:[ \t]*(\S.*)$/.exec(l)).find(Boolean);
+  // a Phrase line that says there is none names no confirmation (code review round 1 of batch 9, finding 11)
+  const phrase = lines.slice(start + 1, end).map((l) => /^[ \t]*Phrase:[ \t]*(\S.*)$/.exec(l)).find((m) => m && !/^(?:none\b|n\/?a\b|tbd\b|-+$|\(none)/i.test(m[1].trim()));
   return phrase ? phrase[0].trim() : null;
 }
 

@@ -189,13 +189,22 @@ const DEFAULT_FACTS = Object.freeze([
   { fact: 'the DT- and LT- device names', answer: /\b(?:DT|LT)-(?:First|\[)/, profile: /\b(?:DT|LT)-/ },
   { fact: 'the default organization\'s own sites, vendors and servers', answer: new RegExp(`${DEFAULT_ORG_TOKENS.source}|\\bAD Connect server\\b|\\bthird tower\\b`), profile: DEFAULT_ORG_TOKENS },
 ]);
+// A word at index is negated when a negation stands at most two words before it in its own clause; a clause
+// ends at . ; : ! ? , a line end, " - ", or "and", "then", "but", "so" ("Confirm it is not locked out and then
+// reset it" asks for a reset; code review round 1 of batch 9, finding 7).
+const NEGATION_BEFORE = /\b(?:don['\u2019]?t|do not|never|no|not|won['\u2019]?t|without)(?:\s+\S+){0,2}\s*$/i;
+function negatedAt(t, index) {
+  const before = t.slice(0, index);
+  const start = Math.max(...[...'.;:!?,\n'].map((c) => before.lastIndexOf(c)), before.lastIndexOf(' - '), ...[...before.matchAll(/\b(?:and|then|but|so)\b/gi)].map((m) => m.index + m[0].length - 1));
+  return NEGATION_BEFORE.test(before.slice(start + 1));
+}
+
 // A mention counts only when no negation opens its own clause ("No SMS fallback added" names the fact to say
 // it is not used; batch 8's T1, batch 9). A clause ends at . ; : ! ? , or a line end.
 function usesFact(text, re) {
   const t = String(text);
   for (const m of t.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`))) {
-    const start = Math.max(...[...'.;:!?,\n'].map((c) => t.lastIndexOf(c, m.index - 1))) + 1;
-    if (!NEGATION.test(t.slice(start, m.index))) return true;
+    if (!negatedAt(t, m.index)) return true;
   }
   return false;
 }
@@ -287,12 +296,10 @@ function answerSteps(raw) {
 // A change word asks for a change unless a negation opens its own clause ("Don't release anything yet",
 // "do not unlock the account yet"); a negation in another clause hides nothing ("Don't wait, reset the
 // password") (batch 9, task 9). Returns the first change word that counts, or null.
-const NEGATION = /\b(?:don['\u2019]?t|do not|never|no|not|won['\u2019]?t|without)\b/i;
 function changeIn(text) {
   const t = String(text);
   for (const m of t.matchAll(new RegExp(CHANGE_WORD.source, 'gi'))) {
-    const clause = t.slice(Math.max(...[...'.;:!?,'].map((c) => t.lastIndexOf(c, m.index - 1)), t.lastIndexOf(' - ', m.index - 1)) + 1, m.index);
-    if (!NEGATION.test(clause)) return m[0];
+    if (!negatedAt(t, m.index)) return m[0];
   }
   return null;
 }

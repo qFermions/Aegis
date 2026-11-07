@@ -221,3 +221,14 @@ test('code review 1, finding 6: an acknowledgement passes; a participle that nam
   for (const ok of ['Your ticket has been received and IT is looking at it.', 'It has been logged.', 'Your request has been escalated to the admin.', 'It has been passed to the admin.']) assert.deepEqual(a.userMessageProblems(ok), [], ok);
   for (const bad of ['Your password has been reset.', 'The message has been released.', 'Your access has been granted.']) assert.notDeepEqual(a.userMessageProblems(bad), [], bad);
 });
+
+// Code review round 1 (batch 9), finding 7: a negation anywhere earlier in the clause cancelled a later change
+// word. Wrong implementation it catches: a clause that runs past "and" or "then", or a negation many words back.
+test('code review 1, finding 7: a negation cancels only the change word it governs', () => {
+  assert.match(a.changeIn('Confirm the user is not locked out and then reset their password') || '', /reset/);
+  assert.match(a.changeIn('Do not wait and reset the MFA') || '', /reset/);
+  assert.equal(a.changeIn("Don't release anything yet."), null);
+  assert.equal(a.changeIn('Do not unlock the account yet; read the log first.'), null);
+  assert.ok(a.defaultFactsIn('Check no errors show on the AD Connect server.', '').includes('hybrid Active Directory synced by Entra Connect'), 'the negation governs "errors", not the server');
+  assert.deepEqual(a.defaultFactsIn('Do not use the SMS fallback; it is off.', ''), []);
+});

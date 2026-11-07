@@ -68,7 +68,33 @@ Source: operator-validated by the owner, 2026-11-06; not in Okta's published tro
 2. **User check:** ask the user to restart the Mac, then open Okta Verify and sign in once after the restart.
 3. **User check:** ask the user to read the macOS version (Apple menu, About This Mac) and the Okta Verify version the app shows, and write both in the ticket, so the loop can be matched to the update.
 
-> **PREVIEW ONLY [okta-verify-loop-admin-reauth]:** admin re-authentication in the Okta Admin Console (exact menu action to be confirmed by the owner). Planning only: UNCONFIRMED, this runbook names no menu path for it because the owner's fill-in line with the exact menu action was blank, so it does not authorize any change; it needs its own reviewed gate once the owner supplies the action.
+**Admin step, only when the three user checks did not stop the loop:** clear the user's Okta sessions. This is the same change as `/okta-user-lifecycle` Phase C (gate `okta-user-lifecycle-clear-sessions-portal`), with the same fields and phrase.
+
+Source: operator-validated by the owner on the real ticket, 2026-11-07, path confirmed against Okta's "How to clear user session" article.
+
+**Before the click:** write the current UTC time in the ticket as `[NOT_BEFORE]` (a later time misses the clear, an older one can match an earlier clear).
+
+<!-- SAFETY GATE [okta-mfa-reset-clear-sessions-portal] -->
+- **Target:** [UPN]
+- **Effect:** clear every active Okta session for one user; with the dialog option ticked, Okta also revokes tokens for logout-enabled apps and Okta API tokens
+- **Scope:** Okta identity-provider sessions (and optionally those tokens); sessions already created inside web or native apps are not cleared
+- **Reversibility:** R1: not reversible and none needed; the user authenticates again on the next request
+- **Required confirmation:** Type exactly `CLEAR OKTA SESSIONS FOR [UPN]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
+**PORTAL ACTION [okta-mfa-reset-clear-sessions-portal]:** Only after the exact match:
+1. Okta Admin Console → Directory → People (or the search box on the Dashboard) → `[UPN]` → **More Actions** → **Clear User Sessions**.
+2. In the **Clear sessions and revoke tokens** dialog, tick **Also include logout enabled apps and Okta API tokens** when the tokens must go too, then click **Clear and revoke**.
+3. Read back: Reports → System Log shows the session-end events for `[UPN]`.
+
+```bash
+# HUMAN-RUN read-only read-back, passes only when the System Log holds a user.session.clear event with outcome SUCCESS for the user at or after [NOT_BEFORE]
+node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute
+```
+
+**WAIT UNTIL** the user quits Okta Verify, opens it again and completes one full sign-in.
+
+**Gotcha:** **More Actions** does not show when an admin opens their own profile, and it is offered only for active users: a user in a password-reset state or recently reactivated does not get it.
 
 4. **Last resort:** Reset Authenticators, only when the steps above did not stop the loop: Phase B below resets only the ticked authenticator, Okta Verify here (gate `okta-mfa-reset-selected-portal`), and Phase C resets every authenticator (gate `okta-mfa-reset-all-portal`) only when every enrollment must go. Those gates are unchanged: follow them as written.
 

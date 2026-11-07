@@ -30,14 +30,19 @@ const PHASE_C = 'okta-user-lifecycle-clear-sessions-portal';
 const FIELDS = ['Target', 'Effect', 'Scope', 'Reversibility', 'Required confirmation', 'Failure behavior', 'Read-back'];
 const READ_BACK = 'node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute';
 
-// The section's lines: from its heading to the next heading of the same or a higher level.
+// The section's lines: from its heading to the next heading of the same or a higher level outside a code
+// fence (a "# HUMAN-RUN" comment in a bash fence is not a heading).
 function section() {
   const lines = TEXT.split('\n');
   const start = lines.findIndex((l) => /^#{2,3} /.test(l) && l.replace(/^#+ /, '').trim() === TITLE);
   if (start < 0) return null;
   const level = lines[start].match(/^#+/)[0].length;
   let end = lines.length;
-  for (let i = start + 1; i < lines.length; i += 1) if (/^#+ /.test(lines[i]) && lines[i].match(/^#+/)[0].length <= level) { end = i; break; }
+  let fenced = false;
+  for (let i = start + 1; i < lines.length; i += 1) {
+    if (/^\s*```/.test(lines[i])) fenced = !fenced;
+    else if (!fenced && /^#+ /.test(lines[i]) && lines[i].match(/^#+/)[0].length <= level) { end = i; break; }
+  }
   return lines.slice(start, end);
 }
 
@@ -114,7 +119,7 @@ test('the gate\'s click path is the owner\'s: Directory, People or the Dashboard
   assert.ok(click, 'a first numbered click step');
   assert.match(click, /Okta Admin Console → Directory → People/);
   assert.match(click, /Dashboard/, 'the owner\'s route, the Dashboard search box, is named too');
-  assert.match(click, /\[UPN\] → \*\*More Actions\*\* → \*\*Clear User Sessions\*\*/);
+  assert.match(click, /`?\[UPN\]`? → \*\*More Actions\*\* → \*\*Clear User Sessions\*\*/);
   assert.doesNotMatch(s.join('\n'), /\*\*re-?auth/i, 'no button named re-auth');
 });
 

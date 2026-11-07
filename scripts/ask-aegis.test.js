@@ -115,7 +115,10 @@ test('the session argv is backends.sutArgs plus the budget, and nothing else', a
   assert.ok(!call.args.some((a) => /dangerously|bypassPermissions|--permission-mode/.test(a)));
   assert.equal(fs.realpathSync(call.cwd), fs.realpathSync(REPO_ROOT));
   assert.ok(!call.env.includes('AEGIS_TEST_API_TOKEN'), 'a secret-named variable never reaches the session');
-  assert.ok(!call.env.includes('AEGIS_NETWORK_TRIPWIRE'), 'the test tripwire is not passed on');
+  // checked where it is decided, in the environment ask-aegis hands the child: under the tripwire battery
+  // (NODE_OPTIONS --require socket-tripwire.js) the fake child loads the tripwire and sets the variable itself,
+  // so the child's own environment cannot show whether it was passed on
+  assert.ok(!Object.prototype.hasOwnProperty.call(ask.sessionEnv({ ...process.env, AEGIS_NETWORK_TRIPWIRE: '1' }), 'AEGIS_NETWORK_TRIPWIRE'), 'the test tripwire is not passed on');
 });
 
 // Wrong implementations it catches: a ticket put first as an instruction, above the evidence header; a setup

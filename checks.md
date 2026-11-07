@@ -62,4 +62,23 @@ The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (
 
 ## Review rounds
 
-Pending: /code-review round 1 at xhigh on `c0f3757...d914023`.
+| round | range | findings | outcome |
+|---|---|---|---|
+| security 1 | `c0f3757...d914023` | 0 | `reviews/security-review-1.md` |
+| code 1 (xhigh) | `c0f3757...2eb7ee7` (HEAD moved during the review; each finding rechecked at `2eb7ee7`) | 14 | 10 fixed, 4 closed; `reviews/code-review-1.md` |
+
+Code review 1, by class:
+
+| # | finding | outcome |
+|---|---|---|
+| 2, 9, 10 | the runbook outside the loop section knew only the reset path: no checklist or Jira-note form for the session clear, `[NOT_BEFORE]` undefined in the Placeholders line, the Fast path skipped the loop section | fixed, `5d1bc9a`, red first (`cr1-runbook-red.txt` 10 of 11, `cr1-runbook-green.txt` 11 of 11) |
+| 8 | a second copy of Phase C's gate can drift past the seven field lines | fixed in part, `5d1bc9a`: a test holds the PORTAL ACTION's steps 2 and 3 equal to Phase C's (a one-word mutation fails it); the copy itself stays, because a pointer alone cannot carry the click path the instruction asks for in this step (`scripts/command-safety-gates.test.js:1504`) |
+| 13 | a redundant assertion in the loop test | fixed, `5d1bc9a` |
+| 12 | the simulator entry was a copy of Phase C's | fixed, `da0f231` (one shared entry; the test asserts it) |
+| 1 | README said naming a reset gate first fails "lightest step first"; for `okta-mfa-reset-selected-portal` it passes | README fixed, `8b74087` (checked against the real catalog); the desk check in `scripts/demo/step-ladder.js:25` is closed here as a decision for the owner: it is outside this change and changes what the desk checks |
+| 6 | T9m's `expected_path` still named the PREVIEW ONLY marker | fixed, `8b74087`, red first (`cr1-06-red.txt`, `cr1-06-green.txt`) |
+| 11 | claude-cap raised a smaller desk budget and missed the `=` form | fixed, `6df8106` (`claude-cap-selfcheck.txt`) |
+| 3, 4 | checks.md claimed progress.md and the head battery fixed; progress.md stale | fixed: progress.md rewritten in this commit; the battery rerun at the final head before the push |
+| 5 | T9m's RESOLVED proves both simulated gates, the reset included | closed: disclosed in `T9m/summary.md`, the Task 4 row and the explainer; the desk applying every gate in a block is a decision for the owner; the replay store it writes is in the run folder outside the repo |
+| 7 | the Gotcha leaves out L-13c (Classic Engine keeps the MFA cookie) | closed: new runbook copy beyond the task's two limits; a decision for the owner, with the fact recorded in L-13c and the explainer |
+| 14 | the admin step is unnumbered between steps 3 and 4 | closed: the instruction keeps the last resort exactly as it is, its "4." included; renumbering it would change it |

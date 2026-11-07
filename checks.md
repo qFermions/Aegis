@@ -72,4 +72,4 @@ The security-review fixes after `fe01bf4` (768bea9, 7c0728b, 905c268) were check
 | C4 | the lightest-step row counts admin steps only | a user check is not an admin change an answer could advise first |
 | C5 | the simulated Jamf erase stays Pending until a check-in | batch 8 made the same choice for the lock: the simulated operator sends the command; the device acting on it is not the operator's act |
 | C6 | Customer D's profile says its laptops are Macs with Okta Verify | the task describes T9m's customer as "Okta, Macs" |
-| C7 | the bracket rule keeps addresses at the placeholder domain (`domain.com`) | code review 2 wanted `[ADMIN@DOMAIN.COM]` kept; security review 3 wanted other bracketed addresses masked |
+| C7 | the bracket rule keeps addresses at the placeholder domain (`domain.com`) | code review 2 wanted a bracketed ADMIN token at the placeholder domain kept; security review 3 wanted other bracketed addresses masked |

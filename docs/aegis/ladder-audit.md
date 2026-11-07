@@ -30,9 +30,9 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Microsoft | conditional-access | yes | Create a new policy - step by step (126) | conditional-access-enable-portal | pass | ca-policy-create (line 128) comes first |
 | Microsoft | device-wipe | yes | Step-by-step fix (portal first) (22) | device-full-wipe-portal | fail | device-full-wipe-portal (line 24) has no lighter step before it in this section |
 | Microsoft | distribution-list | no | Step-by-step fix (portal first - EAC: admin.exchange.microsoft.com) (16) | distribution-external-senders-portal | pass | distribution-portal (line 18) comes first |
-| Microsoft | email-quarantine | no | 4. Release the message (53) | quarantine-release-all-portal | pass | quarantine-release-dialog (line 54) comes first |
-| Microsoft | email-quarantine | no | 6. Add sender to allow list (Tenant Allow/Block List - preferred) (92) | quarantine-delete-portal | pass | quarantine-allow-entry (line 93) comes first |
-| Microsoft | email-quarantine | no | 7. Set up quarantine notifications (so users get alerted automatically) (117) | quarantine-release-all | pass | quarantine-policy-change (line 118) comes first |
+| Microsoft | email-quarantine | no | 4. Release the message (53) | quarantine-release-all-portal | pass | quarantine-release-dialog (line 56) comes first |
+| Microsoft | email-quarantine | no | 6. Add sender to allow list (Tenant Allow/Block List - preferred) (106) | quarantine-delete-portal | pass | quarantine-allow-entry (line 107) comes first |
+| Microsoft | email-quarantine | no | 7. Set up quarantine notifications (so users get alerted automatically) (131) | quarantine-release-all | pass | quarantine-policy-change (line 132) comes first |
 | Microsoft | email-to-spam | no | Step 4 - OUTBOUND path: diagnose why YOUR mail lands in others' spam (90) | restricted-entity-unblock-portal | pass | email-spam-outbound-remediation (line 92) comes first |
 | Fleet | fleet-device-actions | yes | Phase D: Stolen with sensitive data, Wipe (R3, after independent review) (132) | fleet-device-actions-wipe-portal | fail | fleet-device-actions-wipe-portal (line 140) has no lighter step before it in this section |
 | Fleet | fleet-device-actions | yes | E1: One host (171) | fleet-device-actions-run-script-portal | fail | fleet-device-actions-run-script-portal (line 175) has no lighter step before it in this section |

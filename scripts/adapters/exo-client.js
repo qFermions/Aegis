@@ -146,7 +146,7 @@ try {
     'Get-MailboxPermission' { Get-MailboxPermission @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; User = "$($_.User)"; AccessRights = (Texts $_.AccessRights); Deny = $_.Deny; IsInherited = $_.IsInherited } } }
     'Get-RecipientPermission' { Get-RecipientPermission @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; Trustee = "$($_.Trustee)"; AccessControlType = "$($_.AccessControlType)"; AccessRights = (Texts $_.AccessRights); IsInherited = $_.IsInherited } } }
     'Get-Mailbox' { Get-Mailbox @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; GrantSendOnBehalfTo = (Texts $_.GrantSendOnBehalfTo) } } }
-    'Get-QuarantineMessage' { Get-QuarantineMessage @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; MessageId = "$($_.MessageId)"; RecipientAddress = (Texts $_.RecipientAddress); ReleaseStatus = "$($_.ReleaseStatus)"; Type = "$($_.Type)" } } }
+    'Get-QuarantineMessage' { Get-QuarantineMessage @p | ForEach-Object { [ordered]@{ Identity = "$($_.Identity)"; MessageId = "$($_.MessageId)"; RecipientAddress = (Texts $_.RecipientAddress); ReleasedUser = (Texts $_.ReleasedUser); ReleaseStatus = "$($_.ReleaseStatus)"; Type = "$($_.Type)" } } }
   }
   $out = [System.Collections.ArrayList]::new()
   foreach ($row in $rows) { if ($null -ne $row) { [void]$out.Add($row) } }
@@ -391,9 +391,19 @@ function judgeQuarantine(a, data) {
   }
   const status = typeof candidates[0].ReleaseStatus === 'string' ? candidates[0].ReleaseStatus.trim().toUpperCase() : '';
   if (!RELEASE_STATUSES.includes(status)) return unproven({ records: data.length, ReleaseStatus: null }, 'ReleaseStatus is missing or not a value this read knows, so this is not proof either way');
-  return status === 'RELEASED'
-    ? { verified: true, observed: { ReleaseStatus: status } }
-    : { verified: false, observed: { ReleaseStatus: status }, reason: `ReleaseStatus is ${status}, not RELEASED` };
+  if (status !== 'RELEASED') return { verified: false, observed: { ReleaseStatus: status }, reason: `ReleaseStatus is ${status}, not RELEASED` };
+  // a message to several recipients may be released to some of them only, and ReleaseStatus is the
+  // message's (code review of batch 9 task 4, finding 3): then the recipients the read asks about (the
+  // one given, or all of them) must be listed in ReleasedUser (vendor fact X-28)
+  const recipients = rightsOf(candidates[0].RecipientAddress) || [];
+  if (recipients.length <= 1) return { verified: true, observed: { ReleaseStatus: status, recipients: recipients.length } };
+  const released = rightsOf(candidates[0].ReleasedUser);
+  if (!released) return unproven({ ReleaseStatus: status, recipients: recipients.length, ReleasedUser: null }, `the message has ${recipients.length} recipients and the answer does not say which were released (no ReleasedUser), so this is not proof either way`);
+  const need = a.identity !== undefined ? recipients : [a.recipient.toLowerCase()];
+  const missing = need.filter((x) => !released.includes(x)).length;
+  return missing
+    ? { verified: false, observed: { ReleaseStatus: status, recipients: recipients.length, not_released: missing }, reason: `ReleaseStatus is RELEASED, but ${missing} of the recipients asked about ${missing === 1 ? 'is' : 'are'} not in ReleasedUser` }
+    : { verified: true, observed: { ReleaseStatus: status, recipients: recipients.length } };
 }
 
 const PERMISSIONS = {

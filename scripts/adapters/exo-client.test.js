@@ -262,13 +262,21 @@ test('verify-recipient-permission: Send As present passes, missing fails, --abse
 });
 
 // Catches: a pass on any ReleaseStatus but NOTRELEASED, a case-sensitive compare, a pass on the
-// first of several records, or an unknown status read as released.
+// first of several records, an unknown status read as released, or a pass for a recipient whose copy
+// was not released (the message-level status is RELEASED after a release to another recipient).
 test('verify-quarantine-released: RELEASED passes, another known status fails, and anything else is INCONCLUSIVE', async () => {
   let r = await cli(vqr('--identity', QID), { replies: [answer([quarantined()])] });
   assert.equal(r.code, 0, r.text);
   assert.equal(r.json.verified, true);
   r = await cli(vqr('--message-id', MSGID, '--recipient', DELEGATE), { replies: [answer([quarantined({ ReleaseStatus: 'Released' })])] });
   assert.equal(r.code, 0, r.text);
+  const both = { RecipientAddress: [DELEGATE, OTHER] };
+  r = await cli(vqr('--message-id', MSGID, '--recipient', DELEGATE), { replies: [answer([quarantined({ ...both, ReleasedUser: [DELEGATE.toUpperCase()] })])] });
+  assert.equal(r.code, 0, `released to the recipient asked about: ${r.text}`);
+  r = await cli(vqr('--message-id', MSGID, '--recipient', DELEGATE), { replies: [answer([quarantined({ ...both, ReleasedUser: [OTHER] })])] });
+  assert.equal(r.code, 2, `released to another recipient only: ${r.text}`);
+  r = await cli(vqr('--identity', QID), { replies: [answer([quarantined({ ...both, ReleasedUser: [DELEGATE] })])] });
+  assert.equal(r.code, 2, `--identity needs every recipient released: ${r.text}`);
   for (const status of ['NOTRELEASED', 'REQUESTED', 'Denied', 'PreparingToRelease', 'APPROVED', 'ERROR']) {
     r = await cli(vqr('--identity', QID), { replies: [answer([quarantined({ ReleaseStatus: status })])] });
     assert.equal(r.code, 2, `${status}: ${r.text}`);
@@ -283,6 +291,7 @@ test('verify-quarantine-released: RELEASED passes, another known status fails, a
     ['two records for the identity (a non-existent Identity returns all objects)', [quarantined(), quarantined()], ['--identity', QID]],
     ['only another message', [quarantined({ Identity: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\\bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' })], ['--identity', QID]],
     ['the message for another recipient', [quarantined({ RecipientAddress: [OTHER] })], ['--message-id', MSGID, '--recipient', DELEGATE]],
+    ['two recipients and no ReleasedUser', [quarantined({ RecipientAddress: [DELEGATE, OTHER] })], ['--message-id', MSGID, '--recipient', DELEGATE]],
   ]) {
     r = await cli(vqr(...flags), { replies: [answer(body)] });
     assert.equal(r.code, 5, `${why}: ${r.text}`);

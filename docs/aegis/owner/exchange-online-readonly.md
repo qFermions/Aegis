@@ -4,7 +4,7 @@ Aegis advises; humans execute (`PRODUCT_CONTRACT.md`). This page is for the owne
 give `scripts/adapters/exo-client.js` a read-only sign-in on a **test** tenant, what the connector
 reads, and what it never does. Do this on a test or trial tenant first, never on a customer tenant.
 Every fact below is from Microsoft Learn, opened on 2026-11-06, and is listed with its quote in
-[the batch 9 vendor facts](../batch9/vendor-facts.md) ("Exchange Online (task 4)", X-01 to X-27).
+[the batch 9 vendor facts](../batch9/vendor-facts.md) ("Exchange Online (task 4)", X-01 to X-28).
 The setup steps follow Microsoft's page
 [App-only authentication for unattended scripts](https://learn.microsoft.com/powershell/exchange/app-only-auth-powershell-v2).
 
@@ -18,10 +18,10 @@ X-01) and four read cmdlets, nothing else:
 | `mailbox-permissions --mailbox [SHARED_MAILBOX]` | `Get-MailboxPermission -Identity` | who has Full Access (User, AccessRights, Deny, IsInherited) |
 | `recipient-permissions --mailbox [SHARED_MAILBOX]` | `Get-RecipientPermission -Identity` | who has Send As (Trustee, AccessControlType, AccessRights) |
 | `send-on-behalf --mailbox [SHARED_MAILBOX]` | `Get-Mailbox -Identity` | the GrantSendOnBehalfTo field only |
-| `quarantine-message --identity <GUID1\GUID2>` or `--message-id <Message-ID> --recipient [UPN]` | `Get-QuarantineMessage` | Identity, MessageId, RecipientAddress, ReleaseStatus, Type (never the subject or body) |
+| `quarantine-message --identity <GUID1\GUID2>` or `--message-id <Message-ID> --recipient [UPN]` | `Get-QuarantineMessage` | Identity, MessageId, RecipientAddress, ReleasedUser, ReleaseStatus, Type (never the subject or body) |
 | `verify-mailbox-permission --mailbox ... --delegate [UPN] [--absent]` | `Get-MailboxPermission -Identity -User` (Exchange resolves the delegate in any form) | proves a person granted (or removed) Full Access |
 | `verify-recipient-permission --mailbox ... --delegate [UPN] [--absent]` | `Get-RecipientPermission -Identity -Trustee`, then `-Identity` alone (the filter can miss a principal with several Sids, X-13) | proves a person granted (or removed) Send As |
-| `verify-quarantine-released --identity ...` or `--message-id ... --recipient ...` | `Get-QuarantineMessage` | proves a person released the message (ReleaseStatus RELEASED) |
+| `verify-quarantine-released --identity ...` or `--message-id ... --recipient ...` | `Get-QuarantineMessage` | proves a person released the message (ReleaseStatus RELEASED; with several recipients, the one asked about, or all, listed in ReleasedUser) |
 
 Known limit: a permission read-back proves the grant to the delegate, not access the delegate has
 through a group. A PowerShell run that exits 0 but writes error text is a failed read (exit 2).

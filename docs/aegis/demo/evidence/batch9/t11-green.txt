@@ -1,0 +1,20 @@
+$ node --test scripts/ask-aegis.test.js scripts/aegis-chat.test.js   (the commands written)
+✔ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (34.729958ms)
+✔ with no --setup the argv is the isolation alone (1.111125ms)
+✔ bad arguments exit 1 with no session; a claude that cannot start is a plain message and exit 2 (1.037209ms)
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (40.535208ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (72.397959ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (71.789166ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.306083ms)
+✔ no ticket text: the usage and exit 1, with no session (25.334125ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (47.828833ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (340.103958ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 657.908833
+exit 0

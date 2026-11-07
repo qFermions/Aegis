@@ -416,7 +416,8 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // batch 9, task 5: the R1 mailbox-send-as-remove-portal's own verify-recipient-permission --absent read
   // (73 to 74); task 7: the R1 gws-password-reset-password-portal's verify-event read runs unbound (74 to 75)
   // code review round 1 of batch 9, finding 13: the R1 mailbox-permission-remove-portal's own --absent read (75 to 76)
-  assert.equal(unbound, 76, 'the 76 read-backs of R0 and R1 work or of no gate stay unbound');
+  // batch 9b: the R1 okta-mfa-reset-clear-sessions-portal's own verify-sessions-cleared read (76 to 77)
+  assert.equal(unbound, 77, 'the 77 read-backs of R0 and R1 work or of no gate stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // read-backs of R2 and R3 changes named in prose: the per-host read-back of a batch script run

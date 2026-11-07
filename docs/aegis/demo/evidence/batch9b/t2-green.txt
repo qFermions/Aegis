@@ -1,0 +1,18 @@
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.753292ms)
+✔ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.308625ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.070084ms)
+✔ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.413833ms)
+✔ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.136625ms)
+✔ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.077542ms)
+✔ the admin step says where it comes from and the two Okta limits on More Actions (0.3385ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.064792ms)
+✔ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (3.77025ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.835375
+exit 0

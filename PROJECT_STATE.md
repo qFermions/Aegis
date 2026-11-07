@@ -3,7 +3,9 @@
 > Dev-facing state file, rewritten by batch 1 on 2026-10-27 to match the repo as it is, and
 > updated by batch G2 and batch G3 on 2026-10-28 (sections "Changed by batch G2" and "Changed by
 > batch G3") and by the batch G3 close-out on 2026-10-30 ("Changed by the batch G3 close-out"), and by
-> batch G4 on 2026-10-31 ("Changed by batch G4"). Every "verified" line below names a check that ran in that session and the
+> batch G4 on 2026-10-31 ("Changed by batch G4"), and by batch 9b on 2026-11-07 ("Changed by batch 9" and "Changed by
+> batch 9b"; batches 6 to 8 have no section here, their tables are `docs/review/batches/batch6-checks.md` to `batch8-checks.md`).
+> Every "verified" line below names a check that ran in that session and the
 > capture that holds its output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
 
@@ -212,6 +214,51 @@ The owner's decisions on PR #7's three open items; captures in
   take no change record; `/password-reset`'s gates still carry no R class; the trail does not
   record whether `verify-group-member` ran with `--absent`; `--expected` is not in the approved
   digest.
+
+## Changed by batch 9
+
+Branch `feat/batch9-safety-and-gaps` (base `73bdc68`), merged into `main` as PR #15 at `c0f3757` on 2026-11-07.
+Acceptance table: `docs/review/batches/batch9-checks.md`; progress: `docs/review/batches/batch9-progress.md`;
+captures: `docs/aegis/demo/evidence/batch9/`; the owner's page: `docs/explainers/batch9-safety-and-gaps.md`.
+
+| What shipped | Where | Proof |
+|---|---|---|
+| intake flags lines that address an assistant and claim or grant authority | `scripts/intake/` | `scripts/intake/assistant-address.test.js` (`t1-red.txt`, `t1-green.txt`); limit: its phrasings share wording with T6m, so T6m's flag in the run is not an independent measure (batch9-checks.md, task 1 row) |
+| two user messages, "Tell the user now" and "Tell the user when done", and the 150-word card body | `CLAUDE.md`, `docs/aegis/answer-format.md`, `scripts/demo/answer.js` | `scripts/demo/user-messages.test.js` |
+| a read-only Exchange Online connector | `scripts/adapters/exo-client.js` | `scripts/adapters/exo-client.test.js` (18 tests) |
+| gates and read-backs for shared mailbox grants, quarantine release, the Google password reset and the Jamf erase | `.claude/commands/shared-mailbox.md`, `mailbox-permissions.md`, `email-quarantine.md`, `gws-password-reset.md`, `jamf-lock-erase.md`; `scripts/demo/sim/gates.js` | `customer-desk.test.js` "batch 9, task 5" to "task 7"; `scripts/reset-erase-readbacks.test.js` |
+| the lightest-fix-first ladder: a lint over every runbook and a desk row | `scripts/lint/ladder-audit.js`, `docs/aegis/ladder-audit.md`, `scripts/demo/step-ladder.js` | `node scripts/lint/ladder-audit.js --check` exit 0 (141 sections); `scripts/demo/lightest-step.test.js` |
+| the Okta Verify loop section with T9m, the owner's ticket | `.claude/commands/okta-mfa-reset.md`, `scripts/demo/customers/tickets-messy.json` | `scripts/okta-verify-loop.test.js`; the admin step was a PREVIEW ONLY marker (changed by batch 9b) |
+| `ask-aegis.js` and `aegis-chat.js` with the desk's isolation | `scripts/ask-aegis.js`, `scripts/aegis-chat.js` | `scripts/ask-aegis.test.js`, `scripts/aegis-chat.test.js` |
+| the runs at the frozen code `905c268` | `docs/aegis/demo/evidence/full-run-4/` (messy), `full-run-5/` (tidy) | messy 5 RESOLVED (SIMULATED), 2 INCONCLUSIVE, 2 OPEN; tidy 6 RESOLVED (SIMULATED), 1 INCONCLUSIVE, 1 OPEN; 16 sessions, 7.44 US dollars |
+
+Still open after batch 9 (from `docs/review/batches/batch9-progress.md`, Open issues, and the run summaries):
+
+- T7 and T7m close OPEN: the look-first scan reads the noun "update" as a change word (`CHANGE_STEMS`, `scripts/demo/answer.js:327`).
+- T2m's three Google offboarding gates, and in T3 and T3m the cookie reset and the Jamf lock, name no read-back, so those tickets stay INCONCLUSIVE (`full-run-4/summary.md`, `full-run-5/summary.md`).
+- A Jamf wipe reads Pending until the Mac checks in.
+- The now-message check failed T2 on "end of the day" though the ticket says "when the day ends" (a word-match false alarm).
+- Fix cards ran 156 to 249 words against the 150-word limit (`full-run-4/summary.md`, Fix card words).
+- The MF-1 admin action waited on the owner's menu path (closed by batch 9b).
+
+## Changed by batch 9b
+
+Branch `fix/okta-loop-admin-gate` from `c0f3757`. Acceptance table: `checks.md`; progress: `progress.md`;
+captures: `docs/aegis/demo/evidence/batch9b/`; the owner's page: `docs/explainers/batch9b-okta-loop-gate.md`.
+
+| What changed | Where | Proof |
+|---|---|---|
+| the Okta Verify loop's admin step is the R1 gate `okta-mfa-reset-clear-sessions-portal`, with Phase C's fields word for word, the owner's click path (More Actions, Clear User Sessions), a `[NOT_BEFORE]` line and the `verify-sessions-cleared` read-back; the PREVIEW ONLY marker `okta-verify-loop-admin-reauth` is gone | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js`: 9/9 at `123435e` (`t2-green.txt`; red `t1-red.txt`), 14/14 at the head (`cr2-runbook-green.txt`) |
+| the inventory lists the new gate and drops the marker | `docs/security/STATE_CHANGE_INVENTORY.json` (regenerated) | the inventory equality test in `scripts/command-safety-gates.test.js` |
+| the simulated operator applies the new gate | `scripts/demo/sim/gates.js` | `customer-desk.test.js` "batch 9b" (`t2-desk-red.txt`, `t2-desk-green.txt`) |
+| vendor fact L-13 is CONFIRMED | `docs/aegis/batch9/vendor-facts-ladder.md` | Okta's "How to clear user session" article, opened 2026-11-07 |
+| T9m run alone, one session | `docs/aegis/demo/evidence/batch9b/T9m/` | RESOLVED (SIMULATED), 208-word card, 0.29 US dollars; the answer also named the last-resort reset gate and the desk simulated both (`T9m/summary.md`) |
+| gate-count pins move by one | `scripts/gate-r-class.test.js`, `scripts/audit/read-back-field.test.js` (348 to 349), `scripts/adapters/change-binding.test.js` (76 to 77 unbound) | the battery at `docs/aegis/demo/evidence/batch9b/battery-head/` |
+| batch 9's stale test title | `scripts/demo/customer-desk.test.js` (the T4/T8 replay-miss test) | `docs/aegis/demo/evidence/batch9b/t5-green.txt` |
+| the loop section's Purpose line no longer quotes the demo ticket; the Gotcha names Clear User Sessions as active-only | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` (`er1-02-red.txt`, `er1-02-green.txt`) |
+| the rest of the runbook knows the session-clear path: `[NOT_BEFORE]` in the Placeholders line, the Fast path, a checklist item, two Jira-note forms (session clear; session clear then reset) and a rule naming the read-backs each path requires | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` (`cr1-runbook-*.txt`, `cr2-runbook-*.txt`, `cr2-split-red-at-2eb7ee7.txt`) |
+| one shared simulator entry for both session-clear gates; T9m's `expected_path` names the gate; the README's ladder sentence matches the desk | `scripts/demo/sim/gates.js`, `scripts/demo/customers/tickets-messy.json`, `scripts/demo/README.md` | `customer-desk.test.js` "batch 9b"; `customers.test.js` (`cr1-06-red.txt`, `cr1-06-green.txt`) |
+| the session-cap wrapper: the version the T9m run used, and the version after code reviews 1 to 3 | `docs/aegis/demo/evidence/batch9b/tools/claude-cap-as-run-for-T9m.sh` (from `8533733`), `tools/claude-cap.sh` | `tools/claude-cap-selfcheck.sh`, 20 of 20 (`claude-cap-selfcheck.txt`) |
 
 ## Partial
 

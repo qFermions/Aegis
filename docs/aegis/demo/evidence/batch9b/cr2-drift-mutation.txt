@@ -1,0 +1,5 @@
+$ sed 's/then click \*\*Clear and revoke\*\*\./then click **Clear**./' on the new gate's step 2, then node --test --test-name-pattern='dialog and read-back' scripts/okta-verify-loop.test.js
+✖ the PORTAL ACTION dialog and read-back steps are Phase C's word for word (1.398458ms)
+ℹ pass 0
+ℹ fail 1
+✖ failing tests:

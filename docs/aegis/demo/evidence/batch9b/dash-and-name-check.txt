@@ -1,0 +1,4 @@
+$ git diff c0f3757...HEAD | grep "^+" | grep -c <long dash U+2014>
+0
+$ git grep -l -i -e "$P1" -e "$P2" | wc -l   (P1: the local account name, P2: the owner's first name; both held in shell variables so neither is written in this file)
+0

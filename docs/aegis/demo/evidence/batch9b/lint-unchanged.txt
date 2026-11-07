@@ -1,0 +1,2 @@
+$ git diff --stat c0f3757 -- scripts/lint   (empty below means no lint file changed)
+(end)

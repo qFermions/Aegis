@@ -6984,6 +6984,26 @@
       ]
     },
     {
+      "id": "okta-mfa-reset-clear-sessions-portal",
+      "file": ".claude/commands/okta-mfa-reset.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:clear",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "okta-mfa-reset-factor",
       "file": ".claude/commands/okta-mfa-reset.md",
       "kind": "shell",
@@ -7290,19 +7310,6 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
-      ]
-    },
-    {
-      "id": "okta-verify-loop-admin-reauth",
-      "file": ".claude/commands/okta-mfa-reset.md",
-      "kind": "portal",
-      "mode": "preview",
-      "sinks": [],
-      "impactCategories": [
-        "credential-related",
-        "external-system mutation",
-        "identity-related",
-        "security-sensitive"
       ]
     },
     {

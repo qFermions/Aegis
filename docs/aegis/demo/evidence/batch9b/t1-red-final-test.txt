@@ -1,0 +1,138 @@
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.714458ms)
+✖ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.497375ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.091375ms)
+✖ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.079083ms)
+✖ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.0745ms)
+✖ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.061833ms)
+✖ the admin step says where it comes from and the two Okta limits on More Actions (0.056083ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.066417ms)
+✖ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (3.729708ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 3
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.303959
+
+✖ failing tests:
+
+test at scripts/okta-verify-loop.test.js:70:1
+✖ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.497375ms)
+  AssertionError [ERR_ASSERTION]: one admin gate in the section, found none
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:77:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:96:1
+✖ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.079083ms)
+  AssertionError [ERR_ASSERTION]: a SAFETY GATE in the section
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:101:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:110:1
+✖ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.0745ms)
+  AssertionError [ERR_ASSERTION]: a SAFETY GATE in the section
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:115:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:126:1
+✖ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.061833ms)
+  AssertionError [ERR_ASSERTION]: a SAFETY GATE in the section
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:131:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:140:1
+✖ the admin step says where it comes from and the two Okta limits on More Actions (0.056083ms)
+  AssertionError [ERR_ASSERTION]: the admin step's source line
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:145:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:165:1
+✖ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (3.729708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'okta-mfa-reset.md'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:169:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'okta-mfa-reset.md' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1

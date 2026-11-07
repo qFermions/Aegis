@@ -136,6 +136,9 @@ test('the messy set: T1m to T8m, each with its twin\'s customer, source, class, 
   const t9m = tickets.find((t) => t.id === 'T9m');
   assert.deepEqual([t9m.customer, t9m.source, t9m.twin], ['D', 'slack', null]);
   assert.match(t9m.expected_path, /user checks.*then the admin step/i);
+  // code review 1 of batch 9b, finding 6: the listing names the admin step's gate, not the removed PREVIEW ONLY marker
+  assert.match(t9m.expected_path, /okta-mfa-reset-clear-sessions-portal/);
+  assert.doesNotMatch(t9m.expected_path, /PREVIEW ONLY/);
   assert.ok(t9m.targets.okta['[OKTA_USER_ID]'], 'an Okta user to read');
   for (const t of tickets.filter((x) => x.twin !== null)) {
     const twin = tidy.find((x) => x.id === t.twin);

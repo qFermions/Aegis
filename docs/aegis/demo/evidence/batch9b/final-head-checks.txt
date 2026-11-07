@@ -1,0 +1,13 @@
+checks that read captures, at 7439ba2 (after the last capture commit)
+$ node --test scripts/demo/wiring.test.js scripts/account-name.test.js
+ℹ tests 10
+ℹ pass 10
+ℹ fail 0
+$ node scripts/pre-commit-check.js --all
+exit 0
+$ git grep -n "PREVIEW ONLY \[okta-verify-loop-admin-reauth\]" -- .claude/commands
+(end, exit 1)
+$ git diff c0f3757...HEAD | grep "^+" | grep -c <long dash U+2014>
+0
+$ git grep -l -i -e "$P1" -e "$P2" | wc -l   (P1: the local account name, P2: the owner's first name, held in shell variables)
+0

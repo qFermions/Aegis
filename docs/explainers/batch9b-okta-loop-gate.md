@@ -9,11 +9,10 @@ Your ticket (MF-1): after a macOS update, Okta Verify on a Mac kept sending the 
 ## What changed
 
 - You named the button: user profile, More Actions, **Clear User Sessions**. Okta's own article ("How to clear user session") shows the same path.
-- The placeholder is now a gated step in `/okta-mfa-reset`: the technician writes the time, types `CLEAR OKTA SESSIONS FOR [UPN]`, clicks the button, and then a read-only check confirms in Okta's log that the sessions were cleared after that time.
-- It is the same change, with the same wording and phrase, as the session clear already in `/okta-user-lifecycle`. It has its own name because the safety checks allow each gate name only once.
-- Two Okta limits are written next to it: the More Actions menu does not show on your own profile, and Clear User Sessions is offered only for active users.
-- The three user checks and the last-resort reset did not change.
-- The practice desk learned the new step: one line in its pretend operator (`scripts/demo/sim/gates.js`), copying the existing session clear. Without it the ticket would stop as "not simulated".
+- The placeholder is now a gated step in `/okta-mfa-reset`: the technician writes the time, types `CLEAR OKTA SESSIONS FOR [UPN]`, clicks the button, and a read-only check confirms in Okta's log that the sessions were cleared after that time. It is the same change, wording and phrase as the session clear in `/okta-user-lifecycle`, under its own name, because the safety checks allow each gate name only once.
+- Two Okta limits sit next to it: More Actions does not show on your own profile, and Clear User Sessions is offered only for active users. The three user checks and the last-resort reset did not change.
+- The rest of the runbook now knows this lighter path: the quick route at the top sends a loop ticket to it first, and the closing checklist and the ticket note have a version for "fixed by the session clear" and for "session clear, then reset".
+- The practice desk learned the new step: its pretend operator (`scripts/demo/sim/gates.js`) uses one shared entry for both session-clear steps. Without it the ticket would stop as "not simulated".
 
 ## What the practice run showed
 
@@ -24,6 +23,6 @@ One thing to know: the answer also listed the reset as an approved change, and t
 ## What is still yours to decide
 
 - Okta's article says that on the older Okta engine (Classic), clearing sessions keeps the MFA cookie that "Keep me signed in" sets. If your organization is on Classic, this step may not stop the loop. It is not in the runbook yet.
-- Whether the practice desk should treat a last-resort gate as conditional.
+- Whether the practice desk should treat a last-resort gate as conditional, and whether its "lightest step first" row should look past the reset's own section: today an answer that names the one-authenticator reset first still passes that row.
 
 Not checked: the step on a real Okta tenant; no real Okta account was used.

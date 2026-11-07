@@ -66,6 +66,7 @@ The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (
 |---|---|---|---|
 | security 1 | `c0f3757...d914023` | 0 | `reviews/security-review-1.md` |
 | code 1 (xhigh) | `c0f3757...2eb7ee7` (HEAD moved during the review; each finding rechecked at `2eb7ee7`) | 14 | 10 fixed, 4 closed; `reviews/code-review-1.md` |
+| code 2 (xhigh) | `2eb7ee7...29583d6` (the new diff only) | 15 | 13 fixed, 2 closed; `reviews/code-review-2.md` |
 
 Code review 1, by class:
 
@@ -78,7 +79,19 @@ Code review 1, by class:
 | 1 | README said naming a reset gate first fails "lightest step first"; for `okta-mfa-reset-selected-portal` it passes | README fixed, `8b74087` (checked against the real catalog); the desk check in `scripts/demo/step-ladder.js:25` is closed here as a decision for the owner: it is outside this change and changes what the desk checks |
 | 6 | T9m's `expected_path` still named the PREVIEW ONLY marker | fixed, `8b74087`, red first (`cr1-06-red.txt`, `cr1-06-green.txt`) |
 | 11 | claude-cap raised a smaller desk budget and missed the `=` form | fixed, `6df8106` (`claude-cap-selfcheck.txt`) |
-| 3, 4 | checks.md claimed progress.md and the head battery fixed; progress.md stale | fixed: progress.md rewritten in this commit; the battery rerun at the final head before the push |
+| 3, 4 | checks.md claimed progress.md and the head battery fixed; progress.md stale | fixed: progress.md rewritten in `29583d6`; the battery rerun at the final head (the Battery table) |
 | 5 | T9m's RESOLVED proves both simulated gates, the reset included | closed: disclosed in `T9m/summary.md`, the Task 4 row and the explainer; the desk applying every gate in a block is a decision for the owner; the replay store it writes is in the run folder outside the repo |
 | 7 | the Gotcha leaves out L-13c (Classic Engine keeps the MFA cookie) | closed: new runbook copy beyond the task's two limits; a decision for the owner, with the fact recorded in L-13c and the explainer |
 | 14 | the admin step is unnumbered between steps 3 and 4 | closed: the instruction keeps the last resort exactly as it is, its "4." included; renumbering it would change it |
+
+Code review 2, by class:
+
+| # | finding | outcome |
+|---|---|---|
+| 1, 5, 13, 14 | the closing rules for the light path: round 1's note rule let a skipped read-back count; no form for the session clear then the reset; the checklist could skip the compromise item; the Fast path named only Phase B | fixed, `1a69c5d`, red first (`cr2-runbook-red.txt` 3 of 14, `cr2-runbook-green.txt` 14 of 14) |
+| 8, 12, 15 | the round 1 red capture showed only the first failing assertion; the PORTAL ACTION helper scanned past its block; an unused variable | fixed, `1a69c5d`: one test per concern, each red on its own against the runbook before round 1 (`cr2-split-red-at-2eb7ee7.txt`, 4 of 14); the helper asserts its block and stops at its end; the mutation capture saved (`cr2-drift-mutation.txt`) |
+| 3, 9 | claude-cap let non-numeric values through and took a flag as the value; the self-check had no command to rerun | fixed, `d0eecec` (`tools/claude-cap-selfcheck.sh`, 14 cases, every budget at most 1.50) |
+| 2, 4, 10, 11 | checks.md rows behind the tree; the explainer and PROJECT_STATE.md stale | fixed in the record commit after `d0eecec` (this table, the Acceptance rows, the explainer at 28 lines, PROJECT_STATE.md's 9b rows) |
+| 6 | the desk's "lightest step first" row reads only the first gate's own section | closed: a re-report of round 1's finding 1, already closed as a decision for the owner |
+| 7 | round 1 fixed several findings in one commit | closed: the instruction says to group findings by class so one fix covers every instance; each commit names its class and findings |
+

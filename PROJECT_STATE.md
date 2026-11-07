@@ -248,7 +248,7 @@ captures: `docs/aegis/demo/evidence/batch9b/`; the owner's page: `docs/explainer
 
 | What changed | Where | Proof |
 |---|---|---|
-| the Okta Verify loop's admin step is the R1 gate `okta-mfa-reset-clear-sessions-portal`, with Phase C's fields word for word, the owner's click path (More Actions, Clear User Sessions), a `[NOT_BEFORE]` line and the `verify-sessions-cleared` read-back; the PREVIEW ONLY marker `okta-verify-loop-admin-reauth` is gone | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` 9/9 (`t2-green.txt`; red `t1-red.txt`) |
+| the Okta Verify loop's admin step is the R1 gate `okta-mfa-reset-clear-sessions-portal`, with Phase C's fields word for word, the owner's click path (More Actions, Clear User Sessions), a `[NOT_BEFORE]` line and the `verify-sessions-cleared` read-back; the PREVIEW ONLY marker `okta-verify-loop-admin-reauth` is gone | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js`: 9/9 at `123435e` (`t2-green.txt`; red `t1-red.txt`), 14/14 at the head (`cr2-runbook-green.txt`) |
 | the inventory lists the new gate and drops the marker | `docs/security/STATE_CHANGE_INVENTORY.json` (regenerated) | the inventory equality test in `scripts/command-safety-gates.test.js` |
 | the simulated operator applies the new gate | `scripts/demo/sim/gates.js` | `customer-desk.test.js` "batch 9b" (`t2-desk-red.txt`, `t2-desk-green.txt`) |
 | vendor fact L-13 is CONFIRMED | `docs/aegis/batch9/vendor-facts-ladder.md` | Okta's "How to clear user session" article, opened 2026-11-07 |
@@ -256,6 +256,9 @@ captures: `docs/aegis/demo/evidence/batch9b/`; the owner's page: `docs/explainer
 | gate-count pins move by one | `scripts/gate-r-class.test.js`, `scripts/audit/read-back-field.test.js` (348 to 349), `scripts/adapters/change-binding.test.js` (76 to 77 unbound) | the battery at `docs/aegis/demo/evidence/batch9b/battery-head/` |
 | batch 9's stale test title | `scripts/demo/customer-desk.test.js` (the T4/T8 replay-miss test) | `docs/aegis/demo/evidence/batch9b/t5-green.txt` |
 | the loop section's Purpose line no longer quotes the demo ticket; the Gotcha names Clear User Sessions as active-only | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` (`er1-02-red.txt`, `er1-02-green.txt`) |
+| the rest of the runbook knows the session-clear path: `[NOT_BEFORE]` in the Placeholders line, the Fast path, a checklist item, two Jira-note forms (session clear; session clear then reset) and a rule naming the read-backs each path requires | `.claude/commands/okta-mfa-reset.md` | `scripts/okta-verify-loop.test.js` (`cr1-runbook-*.txt`, `cr2-runbook-*.txt`, `cr2-split-red-at-2eb7ee7.txt`) |
+| one shared simulator entry for both session-clear gates; T9m's `expected_path` names the gate; the README's ladder sentence matches the desk | `scripts/demo/sim/gates.js`, `scripts/demo/customers/tickets-messy.json`, `scripts/demo/README.md` | `customer-desk.test.js` "batch 9b"; `customers.test.js` (`cr1-06-red.txt`, `cr1-06-green.txt`) |
+| the session-cap wrapper used for the T9m run | `docs/aegis/demo/evidence/batch9b/tools/claude-cap.sh` | `tools/claude-cap-selfcheck.sh` (`claude-cap-selfcheck.txt`) |
 
 ## Partial
 

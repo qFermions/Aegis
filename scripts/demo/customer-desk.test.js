@@ -1403,3 +1403,15 @@ test('an R1 read line\'s quoted placeholder is filled without its quote marks', 
   fs.writeFileSync(path.join(dir, 'quoted.md'), ['# fixture', '', '<!-- SAFETY GATE [fixture-quoted-portal] -->', '- **Target:** [ISSUE_ID]', '- **Reversibility:** R1 (fixture)', '- **Read-back:** none (R1: no change record)', '', '```bash', 'node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --execute', '```', ''].join('\n'));
   assert.deepEqual(catalog(dir).get('fixture-quoted-portal').reads[0].argv, ['verify-state', '--issue', '[ISSUE_ID]', '--state', '[STATE_NAME]']);
 });
+
+// Batch 9, task 9: batch 8's T2m answer added Slack ("whatever else"), and the desk had no Slack target, no
+// simulator entry and no Slack routes, so sign-off stopped at "no simulated value for [USER_ID]"
+// (full-run-2/causes.md). Wrong implementations it catches: a Slack gate in the simulator with no Slack user in
+// the tenant (the read-back would 404 and read INCONCLUSIVE), or a Slack target keyed so it takes Linear's id.
+test('batch 9, task 9: T2m with the Slack deactivation closes RESOLVED (SIMULATED) through the real Slack read-back', async (t) => {
+  const r = await runDesk(t, { only: ['T2m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'cut them off', answer: good('okta-user-lifecycle-deactivate-portal', 'slack-user-lifecycle-deactivate-portal') }] } });
+  const k = r.ticket('T2m');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  const reads = step(k, 8).reads.map((x) => `${x.kind} ${x.state}`);
+  assert.ok(reads.includes('slack:verify-deactivated PASS'), reads.join('; '));
+});

@@ -102,6 +102,8 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 
 **Purpose** — the remote wipe. Pick the smallest option that fixes the ticket: a corrupted or stuck profile needs **Clear User Profiles**; only a device that must start from zero needs **Factory Reset** (the powerwash). Capture the pre-state first: the Phase A read, and whether anything unsynced on the device still matters to its user.
 
+**User check:** ask the user to sign out of the Chromebook, restart it and sign in again; a profile that works after a restart needs no reset.
+
 <!-- SAFETY GATE [gws-chromeos-device-clear-profiles-portal] -->
 - **Target:** [DEVICE_ID]
 - **Effect:** reset one ChromeOS device by clearing every user profile on it; local data that was never synced with Chrome Sync is deleted while the device stays in your fleet
@@ -135,6 +137,8 @@ gam print cros query "status:disabled" fields deviceid,serialnumber,orgunitpath,
 ## Phase E — Retirement: deprovision (R3, after independent review)
 
 **Purpose** — end management when the device leaves the fleet or is replaced. Deprovisioning is the wrong tool for "the device is broken, fix it" — that is Phase D.
+
+No lighter step: the device is leaving the fleet, so its management must end; a lost or stolen device is Phase C's reversible disable instead, and a broken one is Phase D.
 
 <!-- SAFETY GATE [gws-chromeos-device-deprovision-portal] -->
 - **Target:** [DEVICE_ID]

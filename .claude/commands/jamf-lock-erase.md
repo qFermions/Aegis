@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[SERIAL_NUMBER]` (the Mac, as searched in Jamf Pro) · `[DEVICE_ID]` (the Jamf Pro management ID of the Mac — or the supervised iPhone/iPad record for Lost Mode) · `[LOCK_PIN]` (the six-digit lock PIN: generated in and kept by the password manager, never written in the ticket) · `[PHONE_NUMBER]` (the return number shown on the lock screen) · `[NOT_BEFORE]` (the time the wipe read-back starts from) · `[CHANGE_ID]` (the change record id, below) · `[@Aegion_JAMF_URL]` (the Jamf Pro server) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[SERIAL_NUMBER]` (the Mac, as searched in Jamf Pro) · `[DEVICE_ID]` (the Jamf Pro management ID of the Mac, or the supervised iPhone/iPad record for Lost Mode) · `[LOCK_PIN]` (the six-digit lock PIN: generated in and kept by the password manager, never written in the ticket) · `[PHONE_NUMBER]` (the return number shown on the lock screen) · `[NOT_BEFORE]` (the time the wipe read-back starts from) · `[CHANGE_ID]` (the change record id, below) · `[@Aegion_JAMF_URL]` (the Jamf Pro server) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 **Change record (R3 gates):** before a gate whose reversibility is R3 and that has a read-back named for it below (the wipe), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-command --not-before --type ERASE_DEVICE`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
@@ -58,6 +58,8 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 
 **Purpose** — stop anyone using the Mac while it may still come back; nothing is deleted.
 
+No lighter step: the Mac is out of the user's hands, so nothing can be asked of them, and Lock Computer is the lightest remote command Jamf Pro offers before Wipe Computer; it reads as heavy here only because the gate id carries the runbook's name, lock-erase.
+
 <!-- SAFETY GATE [jamf-lock-erase-lock-portal] -->
 - **Target:** [SERIAL_NUMBER]
 - **Effect:** lock one Mac; the user is logged out, the Mac restarts and stays locked until the six-digit [LOCK_PIN] is entered
@@ -80,6 +82,8 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 
 Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket, with the Mac's management ID from Phase A as `[DEVICE_ID]`.
 
+**Try first:** Phase B, Lock Computer, while the Mac may still come back: it deletes nothing and the PIN undoes it.
+
 <!-- SAFETY GATE [jamf-lock-erase-wipe-portal] -->
 - **Target:** [SERIAL_NUMBER]
 - **Effect:** wipe one Mac permanently and immediately (macOS EraseDevice); every local file, the MDM profile and the Jamf management framework are removed
@@ -101,13 +105,15 @@ node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] 
 
 It passes on an erase command whose status reads Acknowledged; a command still Pending is inconclusive (the Mac has not checked in), and none, or a failed one, fails. The command type value `ERASE_DEVICE` is the Jamf Pro API name for the macOS EraseDevice command as this adapter's tests use it; it is not confirmed on Jamf's public documentation pages this batch could read, so if the read finds nothing, read Management History in the GUI before concluding the wipe was not sent.
 
-**Verification checkpoint** — [ ] `verify-command` exit 0, or Management History shows the command completed · [ ] the record still exists and is marked in the ticket as wiped.
+**Verification checkpoint:** [ ] `verify-command` exit 0, or Management History shows the command completed · [ ] the record still exists and is marked in the ticket as wiped.
 
 ## Phase D — Sold or leaving the fleet: unmanage (R3, after independent review)
 
 **Purpose** — stop Jamf Pro managing the Mac without erasing it from here. Jamf's order: remove the management framework on the Mac first, then remove the MDM profile from Jamf Pro if it is non-removable, then (optionally) delete the record. Erasing the Mac for its next owner happens on the Mac, by the holder, afterwards.
 
 Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → General → read whether the MDM profile is removable (an ADE-enrolled Mac's is not).
+
+No lighter step: the Mac is leaving the fleet, so its management must end; a Mac that may come back is Phase B's lock instead.
 
 <details>
 <summary>Terminal on the Mac — remove the Jamf management framework (HUMAN-RUN)</summary>
@@ -162,6 +168,8 @@ sudo profiles show
 ## Phase E — Supervised iPhone or iPad: Lost Mode (R1)
 
 **Purpose** — lock a lost mobile device, show a return message and get its location.
+
+**User check:** ask the user to check the places they last had the device and to call it if it may be nearby; enable Lost Mode once it is truly missing.
 
 <!-- SAFETY GATE [jamf-lock-erase-lost-mode-portal] -->
 - **Target:** [DEVICE_ID]

@@ -94,6 +94,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 **Role needed:** Super Admin, or an admin role that can suspend users (the exact privilege name is not confirmed in the sources); a Super Admin when `[USER@DOMAIN.COM]` holds an admin role.
 
+No lighter step: the account is confirmed or strongly suspected compromised, so it must be contained now; suspension deletes nothing and Phase F undoes it, and a cookie reset alone is weaker (How the systems hang together).
+
 <!-- SAFETY GATE [gws-account-containment-suspend-portal] -->
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** suspend one compromised Google Workspace account; Google resets its sign-in cookies and OAuth tokens
@@ -120,6 +122,8 @@ node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --
 Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket: the change is opened and approved before the gate, and a bound earlier than the approval is refused before the read.
 
 **Role needed:** Super Admin, or an admin role that can reset user passwords (the exact privilege name is not confirmed in the sources); a Super Admin when `[USER@DOMAIN.COM]` holds an admin role.
+
+No lighter step: the attacker may know the current password, so it must never work again; a sign-out or a cookie reset leaves that password valid.
 
 <!-- SAFETY GATE [gws-account-containment-password-portal] -->
 - **Target:** [USER@DOMAIN.COM]

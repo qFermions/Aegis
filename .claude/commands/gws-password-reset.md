@@ -57,6 +57,8 @@ gam info user "[USER@DOMAIN.COM]"   # prints status, OU, suspension and 2SV enro
 
 Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
 
+**User check:** ask the user to sign in once more in a private browser window, typing the password by hand: a browser or password manager that still holds an old password is stale state, not a forgotten password.
+
 <!-- SAFETY GATE [gws-password-reset-password-portal] -->
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** reset the user's Google Workspace password to a temporary value; the user must change it at the next sign-in
@@ -83,11 +85,13 @@ node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASS
 
 **WAIT UNTIL** the user has signed in with the temporary password and set a new one. Done when: the user reaches Gmail on their own device.
 
-**Verification checkpoint** — [ ] `verify-event` exit 0, or the GUI entry for `[USER@DOMAIN.COM]` found · [ ] temporary password handed over out of band · [ ] the user confirms the new password works.
+**Verification checkpoint:** [ ] `verify-event` exit 0, or the GUI entry for `[USER@DOMAIN.COM]` found · [ ] temporary password handed over out of band · [ ] the user confirms the new password works.
 
 ## Phase C — Optional: reset the sign-in cookies (R1 gate)
 
 **Purpose** — end every existing session when the old password may still be live on a lost device or in a suspect's browser.
+
+**User check:** after Phase B, ask the user to sign out of Google on each of their devices and sign in again with the new password; reset the cookies only when a session must end at once, such as a lost device or a suspect browser.
 
 <!-- SAFETY GATE [gws-password-reset-cookies-portal] -->
 - **Target:** [USER@DOMAIN.COM]

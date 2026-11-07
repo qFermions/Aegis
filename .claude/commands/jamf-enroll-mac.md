@@ -111,6 +111,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 System Settings → General → Device Management → read whether an MDM profile is already present before renewing.
 
+No lighter step: re-running enrollment without erasing is itself the light path the gotcha above sends you to instead of an erase; it is R1 and reads as heavy here only because its Effect line says it resets the enrollment.
+
 <details>
 <summary>Terminal on the Mac — re-run enrollment (HUMAN-RUN)</summary>
 

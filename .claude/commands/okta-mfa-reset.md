@@ -76,6 +76,8 @@ Source: operator-validated by the owner, 2026-11-06; not in Okta's published tro
 
 **Purpose:** cancel the Okta Verify enrollment that is bound to the old phone so the user can enroll Okta Verify on the new one. Authenticators you do not tick stay enrolled.
 
+**User check:** ask whether the old phone still opens Okta Verify and whether another authenticator Phase A recorded still works: a user who can still sign in is not locked out, so the reset waits until the new phone is in hand.
+
 <!-- SAFETY GATE [okta-mfa-reset-selected-portal] -->
 - **Target:** [UPN]
 - **Effect:** reset the selected authenticator enrollments for one user; the user must set those authenticators up again at their next sign-in
@@ -105,6 +107,8 @@ If Phase A also listed `signed_nonce` (FastPass), also run the same read with `-
 ## Phase C: Reset ALL authenticators (separate gate)
 
 **Purpose:** only when every enrollment must go (every device lost, or a clean re-enrollment is required after triage). The account stays Active; the user re-enrolls everything.
+
+**Try first:** Phase B, which resets only the affected authenticator; reset all only when every enrollment must go.
 
 <!-- SAFETY GATE [okta-mfa-reset-all-portal] -->
 - **Target:** [UPN]

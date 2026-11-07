@@ -98,6 +98,8 @@ Before the gate: `verify-group-count` passes for the pilot group, Phase A step 5
 
 **Role needed:** a Jamf Pro account with the privileges for computer configuration profiles and for the computers in scope (English names not in this batch's sources).
 
+No lighter step: turning FileVault on adds a protection rather than undoing a fault; the pilot of at most 10 Macs is already the smaller step, and the widen gate comes only after its read-back.
+
 <!-- SAFETY GATE [jamf-filevault-pilot-profile-portal] -->
 - **Target:** [PROFILE_NAME] scoped to [SMART_GROUP]
 - **Effect:** create one FileVault configuration profile [PROFILE_NAME] that turns on FileVault with a personal recovery key escrowed to Jamf Pro; scope it to the pilot group [SMART_GROUP]
@@ -173,6 +175,8 @@ One Mac that needs the profile and is in neither group (Phase D's prerequisite, 
 Before the gate: the requester is verified **[org gap]**, Phase A read Personal Recovery Key Validation = Valid, and the person at the Mac is ready to type.
 
 **Role needed:** View Disk Encryption Recovery Key, the Jamf Pro privilege that shows a FileVault key, on the account that opens Show Key.
+
+**User check:** ask the user to check Caps Lock and the keyboard input source shown on the login window, then to try the password they used before their most recent password change.
 
 <!-- SAFETY GATE [jamf-filevault-show-key-portal] -->
 - **Target:** [SERIAL_NUMBER]

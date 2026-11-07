@@ -106,6 +106,8 @@ node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
 
 **Before the click:** take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket. The read-back counts only events at or after it, so a time written after the click misses the reset and an older time can match an earlier one.
 
+> **PREVIEW ONLY [okta-user-lifecycle-unlock-preview]:** Planning only; this runbook does not authorize it. When Phase A reads the status as **Locked out** and the user still knows the password, Okta's unlock is the lighter step: Directory, People, the **Locked Out** view, the user, **More Actions**, **Unlock Account** (Okta help, "Unlock an individual user account"). An unlock needs its own reviewed gate; the reset below is the last resort.
+
 <!-- SAFETY GATE [okta-user-lifecycle-reset-password-portal] -->
 - **Target:** [UPN]
 - **Effect:** reset one user's Okta password; the current password stops working immediately and the user sets a new one from the emailed link or the temporary password
@@ -202,6 +204,8 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 
 **Purpose:** the leaver action: cut the user off at the identity provider so every federated and provisioned app stops trusting them.
 
+**Try first:** Phase D, Suspend, when the user may come back or the ticket is containment only: it keeps app and group assignments and Phase E undoes it. Deactivate is for the leaver.
+
 <!-- SAFETY GATE [okta-user-lifecycle-deactivate-portal] -->
 - **Target:** [UPN] in Okta
 - **Effect:** deactivate the Okta user; Okta deprovisions every assigned app that has deprovisioning enabled
@@ -258,6 +262,8 @@ node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --statu
 ## Phase H: Delete (R3, permanent, after deactivation and independent review)
 
 **Purpose:** remove the record when retention allows. The user must already be Deactivated.
+
+**Try first:** keep the user Deactivated (Phase F): nothing is purged, and Phase G can bring the account back.
 
 <!-- SAFETY GATE [okta-user-lifecycle-delete-portal] -->
 - **Target:** [UPN]

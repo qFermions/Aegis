@@ -65,6 +65,8 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 
 **Read (R0):** Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **2-step verification** → **Get Backup Verification Codes** → read the existing codes; if the set is intact and not suspected stolen, copy one unused code and send it to the user by IM or text. Nothing changes. Requires the User management privilege; only a super admin can do this for another admin.
 
+**User check:** ask the user to sign in with a backup code they saved when they turned on 2-Step Verification, or with another second step they enrolled earlier: a saved backup code covers a lost phone, and nothing changes on the account. The Read (R0) above is the next lighter step; new codes come only when the set is used up or suspected stolen.
+
 <!-- SAFETY GATE [gws-2sv-reset-backup-codes-portal] -->
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** replace the user's backup verification codes with a new set; every code from the previous set stops working
@@ -90,6 +92,8 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 
 **Pre-state (R0, record it):** the key table from Phase A — name, platform, when it was added and last used. Remove a security key only when it is lost; a key that is merely left at home gets a backup code (Phase B) instead.
 
+**Try first:** when the key may only be left at home, not lost, Phase B's backup code gets the user in and nothing is removed.
+
 <!-- SAFETY GATE [gws-2sv-reset-key-remove-portal] -->
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** remove one lost security key or passkey from the user's account
@@ -111,6 +115,8 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 
 **Purpose** — let a verified user through a login or verify-it's-you challenge they cannot complete, without changing any setting permanently.
 
+**User check:** ask the user to try once more from the computer or phone they normally use for this account, on their usual network, before the challenge is turned off.
+
 <!-- SAFETY GATE [gws-2sv-reset-challenge-portal] -->
 - **Target:** [USER@DOMAIN.COM]
 - **Effect:** disable the login or verify-it's-you challenge for one user for 10 minutes; it comes back on by itself
@@ -130,6 +136,8 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 **Purpose** — only when Phases B–D cannot get a verified user in, and policy allows it. Google does not recommend this; the backup code is the documented answer.
 
 **Pre-state (R0, record it before the gate):** 2SV on, enforcement state, the enrolled methods and keys from Phase A, the justification, and the date the user will re-enroll. The option is disabled when 2SV is enforced across the organization or the account is suspended — in both cases this phase is not available and Phase B is the only path.
+
+**Try first:** Phases B to D above (a backup code, the removal of a lost key, the ten-minute challenge window); this phase runs only when all of them failed for a verified user.
 
 <!-- SAFETY GATE [gws-2sv-reset-turn-off-portal] -->
 - **Target:** [USER@DOMAIN.COM]

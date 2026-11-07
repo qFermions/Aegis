@@ -22,6 +22,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ### STEP 1 — ⚠️ Disable the account (on-prem first — source of authority)
 
+No lighter step: the person is leaving, so access must end now; a disable is already the reversible form (it deletes nothing), and Step 2's session revocation follows it.
+
 <!-- SAFETY GATE [offboard-ad-disable-portal] -->
 - **Target:** [first.last] mapped to [UPN]
 - **Effect:** disable the authoritative on-prem AD account
@@ -73,6 +75,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ### STEP 3 — Reset password to long random
 
+No lighter step: a leaver's password must stop working, and nobody is asked to sign in again afterwards, so a sign-out alone would leave the password valid.
+
 <!-- SAFETY GATE [offboard-password-reset-portal] -->
 - **Target:** [first.last] mapped to [UPN]
 - **Effect:** replace the authoritative password with an unshared random value
@@ -89,6 +93,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ### STEP 4 — Clear ALL MFA methods
 
 **Counted change:** open the change record for [offboard-clear-mfa-portal] with `--read-back msgraph:verify-method-absent` and `--expected $methodCount`, the number of method IDs in the reviewed set. The procedure saved for approval carries the count on one line, `Count: $methodCount`, and `open` refuses an `--expected` that differs from it, so the approval covers the count. `change-record.js status --change [CHANGE_ID]` then reports "verified k of N" over the bound `verify-method-absent` read-backs, one per method ID, lists any that failed, and reads done only when exactly `$methodCount` passed and none failed; anything else reads partial. The read-back records no run id, so a repeated read of the same method is not detected: read each method ID in the set once. A read that failed with an answer cannot be matched to a later pass of the same method, so it keeps the change partial: write the methods not yet proven in the ticket and open a new change for the objects left. A read that got no answer (a timeout) is uncounted: read that method again. An answer that proves nothing either way (another page or no method list) is uncounted too, and reading again returns the same answer: check that method in the Entra admin center, write it in the ticket, and open a new change for the methods left.
+
+No lighter step: a leaver's MFA methods must not stay usable; the account is already disabled, so no sign-out or re-registration would serve the ticket.
 
 <!-- SAFETY GATE [offboard-clear-mfa-portal] -->
 - **Target:** [UPN] and the exact sorted authentication-method ID set represented by `$methodSetHash`
@@ -176,6 +182,8 @@ node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --
 
 ### STEP 7 — Remove ALL licenses
 
+No lighter step: the mailbox and OneDrive are preserved in Steps 5 and 6 first; ending the licence is the point of this step, and keeping it is not a fix.
+
 <!-- SAFETY GATE [offboard-license-remove-portal] -->
 - **Target:** [UPN], the exact sorted direct-license SKU-ID set represented by `$licenseSetHash`, and checkpoint `$licenseCheckpointId`
 - **Effect:** remove every displayed license and start service-data retention timers
@@ -194,6 +202,8 @@ node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --
 ## Phase C — Strip the Access
 
 ### STEP 8 — Remove from groups, DLs, and shared-mailbox delegation
+
+No lighter step: a leaver's group, distribution list and delegation access has to end, and no smaller action ends it.
 
 <!-- SAFETY GATE [offboard-group-strip-portal] -->
 - **Target:** [UPN], the exact sorted immutable group-ID set represented by `$groupSetHash`, and checkpoint `$groupCheckpointId`
@@ -244,6 +254,8 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 
 ### STEP 9 — ⚠️ Wipe or Retire the computer
 
+No lighter step: the company data on a leaver's corporate computer must go; Retire (the preview below) is the choice for a personal device, not a lighter step for a corporate one.
+
 <!-- SAFETY GATE [offboard-device-wipe-portal] -->
 - **Target:** [DEVICE_NAME] and its displayed managed-device ID
 - **Effect:** factory-reset the verified corporate computer and erase its data
@@ -264,6 +276,8 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 **Why:** Wipe vs Retire is an ownership question, not a security preference — the inventory log from onboarding is what answers it.
 
 ### STEP 10 — Work phone: wipe, then separately remove deployment targeting
+
+No lighter step: the leaver's corporate phone must not keep company data; the separate targeting removal comes after the wipe.
 
 <!-- SAFETY GATE [offboard-work-phone-wipe-portal] -->
 - **Target:** [DEVICE_NAME] and its displayed managed-device ID rendered as `$deviceId`
@@ -289,6 +303,8 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 **Why:** The group membership is the app-deployment trigger from onboarding — leaving the dead device in it skews targeting and counts.
 
 ### STEP 11 — [@Aegion_VOIP]: reclaim the extension
+
+No lighter step: the leaver's extension is reclaimed so calls stop reaching them, and no smaller action does that.
 
 <!-- SAFETY GATE [offboard-voip-deactivate-portal] -->
 - **Target:** [UPN] as the exact displayed VoIP identity
@@ -342,6 +358,8 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 
 ### STEP 13 — Adobe: remove from product profile
 
+No lighter step: the leaver's Adobe product-profile access has to end, and removing them from the profile is the action that ends it.
+
 <!-- SAFETY GATE [offboard-adobe-portal] -->
 - **Target:** [UPN] and [PRODUCT_PROFILE]
 - **Effect:** remove the user from the Adobe product profile
@@ -357,6 +375,8 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 
 ### STEP 14 — Remote access: revoke VPN + legacy tools
 
+No lighter step: a leaver's VPN and legacy remote access must end; anything short of revoking it leaves a way in.
+
 <!-- SAFETY GATE [offboard-vpn-portal] -->
 - **Target:** [UPN], the exact sorted remote-access entry-ID set represented by `$remoteAccessSetHash`, and checkpoint `$remoteAccessCheckpointId`
 - **Effect:** revoke client VPN and documented legacy remote-access rights
@@ -371,6 +391,8 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 **Why:** Remote access is the path that works AFTER badge collection — it dies with the account or it doesn't die at all.
 
 ### STEP 15 — Physical/site: alarm code + badge
+
+No lighter step: a leaver's alarm code and badge must stop working, and there is no partial version of that.
 
 <!-- SAFETY GATE [offboard-physical-portal] -->
 - **Target:** [UPN], exact sorted site/owner/access-object tuples represented by `$siteAccessSetHash`, and request checkpoint `$siteAccessCheckpointId`
@@ -390,6 +412,8 @@ $groups | ForEach-Object { Write-Host "  preview group: $($_.Name)" }
 ## Phase D — Close It Out
 
 ### STEP 16 — Document + AD disposal
+
+No lighter step: this is the close-out after every other step, on an account that is already disabled; the move deletes nothing and is undone by moving the object back to its recorded OU.
 
 <!-- SAFETY GATE [offboard-disabled-ou-portal] -->
 - **Target:** [first.last]

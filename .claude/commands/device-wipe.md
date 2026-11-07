@@ -21,6 +21,8 @@ Generic approval never authorizes a device action. Use only the action-specific 
 
 ## Step-by-step fix (portal first)
 1. **Intune admin center** (intune.microsoft.com) → Devices → All devices → `[DEVICE_NAME]`.
+> **PREVIEW ONLY [device-remote-lock-preview]:** Planning only; this runbook does not authorize it. When the device is lost or misplaced and may still come back, Intune's **Secure**, then **Remote lock** on the device's overview pane locks it so the existing passcode or PIN is needed, without wiping data or removing enrollment. It applies to iOS/iPadOS, macOS and corporate-owned Android, not Windows, and protects nothing when no passcode is set. A lock needs its own reviewed gate; the wipe below is the last resort.
+
 <!-- SAFETY GATE [device-full-wipe-portal] -->
 - **Target:** [DEVICE_NAME] and its displayed managed-device ID
 - **Effect:** factory-reset the verified corporate device and erase its data

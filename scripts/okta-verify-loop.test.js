@@ -124,6 +124,34 @@ test('the gate\'s click path is the owner\'s: Directory, People or the Dashboard
   assert.doesNotMatch(s.join('\n'), /\*\*re-?auth/i, 'no button named re-auth');
 });
 
+test('the PORTAL ACTION dialog and read-back steps are Phase C\'s word for word', () => {
+  // code review 1 of batch 9b, finding 8: catches the two copies of the session clear drifting apart past the field lines
+  const s = section();
+  assert.ok(s, 'section present');
+  const [gate] = gatesIn(s);
+  const steps = (lines, id) => { const at = lines.findIndex((l) => l.includes(`**PORTAL ACTION [${id}]:**`)); return lines.slice(at + 1).filter((l) => /^\s*[23]\.\s/.test(l)).slice(0, 2); };
+  const phaseC = steps(LIFECYCLE.split('\n'), PHASE_C);
+  assert.equal(phaseC.length, 2, 'Phase C has steps 2 and 3');
+  assert.deepEqual(steps(s, gate.id), phaseC);
+});
+
+test('the rest of the runbook knows the light path: [NOT_BEFORE] defined, the Fast path, the checklist and the Jira note', () => {
+  // code review 1 of batch 9b, findings 2, 9 and 10: catches a tech who follows only the top of the runbook or its
+  // closing checklist being sent past the session clear to the reset, or writing [NOT_BEFORE] in a form the connector refuses
+  const lines = TEXT.split('\n');
+  const placeholders = lines.find((l) => l.startsWith('**Placeholders:**'));
+  assert.match(placeholders, /`\[NOT_BEFORE\]` \(the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`/);
+  const fast = lines.slice(lines.indexOf('## Fast path'), lines.findIndex((l, i) => i > lines.indexOf('## Fast path') && /^## /.test(l)));
+  const loop = fast.findIndex((l) => l.includes(TITLE));
+  const phaseB = fast.findIndex((l) => /^\d+\. Phase B:/.test(l));
+  assert.ok(loop > 0 && loop < phaseB, 'the Fast path names the loop section before Phase B');
+  const checklist = TEXT.split('## ✅ Verification checklist')[1].split('\n## ')[0];
+  assert.match(checklist, /verify-sessions-cleared/, 'a checklist item for the session-clear read-back');
+  const note = TEXT.split('## 📝 Jira-ready note')[1].split('\n## ')[0];
+  assert.match(note, /every read-back this ticket ran passed/);
+  assert.match(note, /verify-sessions-cleared passed/, 'a completed form for the session-clear path');
+});
+
 test('a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it', () => {
   // catches: a read-back with no time bound (it would pass on an older clear), or a time written after the click
   const s = section();
@@ -149,7 +177,6 @@ test('the admin step says where it comes from and the two Okta limits on More Ac
   assert.match(gotcha, /own profile/i);
   // evidence review 1, finding 2: Okta limits the Clear User Sessions action to active users, not More Actions
   assert.match(gotcha, /\*\*Clear User Sessions\*\* is offered only for active users/);
-  assert.match(body, /`okta-mfa-reset-selected-portal`/);
 });
 
 test('the reset step points to the existing reset gates, which are still in the runbook', () => {

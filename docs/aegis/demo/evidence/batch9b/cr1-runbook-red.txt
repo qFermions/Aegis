@@ -1,0 +1,43 @@
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.763417ms)
+✔ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.360209ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.076709ms)
+✔ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.481417ms)
+✔ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.198375ms)
+✔ the PORTAL ACTION dialog and read-back steps are Phase C's word for word (0.471042ms)
+✖ the rest of the runbook knows the light path: [NOT_BEFORE] defined, the Fast path, the checklist and the Jira note (0.349834ms)
+✔ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.100042ms)
+✔ the admin step says where it comes from and the two Okta limits on More Actions (0.106125ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.116542ms)
+✔ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (40.019542ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 10
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.045459
+
+✖ failing tests:
+
+test at scripts/okta-verify-loop.test.js:138:1
+✖ the rest of the runbook knows the light path: [NOT_BEFORE] defined, the Fast path, the checklist and the Jira note (0.349834ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /`\[NOT_BEFORE\]` \(the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`/. Input:
+  
+  "**Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`)."
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:143:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "**Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).",
+    expected: /`\[NOT_BEFORE\]` \(the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`/,
+    operator: 'match',
+    diff: 'simple'
+  }
+exit 1

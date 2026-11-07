@@ -139,9 +139,9 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Okta | okta-group-membership | no | Phase D3: Deactivate a group rule (215) | okta-group-membership-rule-deactivate-portal | fail | okta-group-membership-rule-deactivate-portal (line 217) has no lighter step before it in this section |
 | Okta | okta-group-membership | no | Phase E1: Add the listed people (243) | okta-group-membership-bulk-add-portal | fail | okta-group-membership-bulk-add-portal (line 247) has no lighter step before it in this section |
 | Okta | okta-group-membership | no | Phase E2: Remove the listed people (267) | okta-group-membership-bulk-remove-portal | fail | okta-group-membership-bulk-remove-portal (line 271) has no lighter step before it in this section |
-| Okta | okta-mfa-reset | yes | Phase B: Reset the affected authenticator (the new-phone fix) (101) | okta-mfa-reset-selected-portal | pass | a user check line (line 105) comes first |
-| Okta | okta-mfa-reset | yes | Okta API, the scale version (HUMAN-RUN, for reference) (162) | okta-mfa-reset-all | pass | okta-mfa-reset-factor (line 174) comes first |
-| Okta | okta-mfa-reset | yes | Phase C: Reset ALL authenticators (separate gate) (133) | okta-mfa-reset-all-portal | pass | a lighter step line (line 137) comes first |
+| Okta | okta-mfa-reset | yes | Phase B: Reset the affected authenticator (the new-phone fix) (102) | okta-mfa-reset-selected-portal | pass | a user check line (line 106) comes first |
+| Okta | okta-mfa-reset | yes | Okta API, the scale version (HUMAN-RUN, for reference) (163) | okta-mfa-reset-all | pass | okta-mfa-reset-factor (line 175) comes first |
+| Okta | okta-mfa-reset | yes | Phase C: Reset ALL authenticators (separate gate) (134) | okta-mfa-reset-all-portal | pass | a lighter step line (line 138) comes first |
 | Okta | okta-user-lifecycle | yes | Phase B: Reset the password (R2) (96) | okta-user-lifecycle-reset-password-portal | pass | okta-user-lifecycle-unlock-preview (line 109) comes first |
 | Okta | okta-user-lifecycle | yes | Phase F: Deactivate (R3) (203) | okta-user-lifecycle-deactivate-portal | pass | a lighter step line (line 207) comes first |
 | Okta | okta-user-lifecycle | yes | Okta API, the scale version (HUMAN-RUN, for reference) (283) | okta-user-lifecycle-reset-password | pass | okta-user-lifecycle-unlock-preview (line 109) comes first |

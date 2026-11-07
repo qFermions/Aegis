@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[UPN]` (the user's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[NOT_BEFORE]` (the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, written in the ticket just before a change) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 **Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-factor-reset --factor-type push`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-factor-reset --factor-type push`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
@@ -33,9 +33,10 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## Fast path
 
 1. Phase A: read status, recent sign-ins and enrolled authenticators (R0); rule out a compromise.
-2. Phase B: reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.
-3. Phase C: reset all authenticators only when every enrollment must go (separate gate).
-4. Verify in the System Log and by the completed sign-in.
+2. An Okta Verify sign-in loop after a macOS update: follow "Okta Verify sign-in loop after a macOS update" below first (the user checks, then the session clear gate); Phase B is its last resort.
+3. Phase B: reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.
+4. Phase C: reset all authenticators only when every enrollment must go (separate gate).
+5. Verify in the System Log and by the completed sign-in.
 
 ## Phase A: Read first (R0)
 
@@ -236,6 +237,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 ## ✅ Verification checklist
 
 - [ ] Okta Admin Console → Directory → People → `[UPN]` reads **Active**.
+- [ ] Okta Verify sign-in loop fixed by the session clear: the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click, and the user completed one full sign-in. With no reset done, the reset and re-enrollment items below do not apply.
 - [ ] The user enrolled Okta Verify on the new phone and completed one sign-in: the user confirms it, and Okta Admin Console → Reports → System Log shows that sign-in for `[UPN]`.
 - [ ] Reports → System Log shows the authenticator reset for `[UPN]` with the expected admin and time.
 - [ ] Right after the reset and before the re-enrollment, the connector read-back passed (exit 0, `"verified": true`) against the factor types Phase A recorded: `verify-factor-reset --factor-type push` (and `signed_nonce` when it was listed) for one authenticator, or `verify-factors-reset-all` for all.
@@ -244,9 +246,11 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 
 ## 📝 Jira-ready note
 
-Use the completed form only when every read-back above passed; otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
+Use a completed form only when every read-back this ticket ran passed; otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
 
 > [Only if all checks passed] Okta MFA reset for `[UPN]`: identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
+
+> [Okta Verify loop fixed by the session clear, only if its checks passed] Okta Verify sign-in loop for `[UPN]` after a macOS update: user checks [results]; macOS [version], Okta Verify [version]; sessions cleared after [NOT_BEFORE], confirmed by the exact phrase; connector read-back verify-sessions-cleared passed at [timestamp]; the user completed a sign-in at [timestamp]. No authenticator was reset. Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
 
 ## Aha moment
 

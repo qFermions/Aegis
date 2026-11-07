@@ -282,7 +282,10 @@ function userMessageProblems(message, ticket = '') {
       const d = DECIDED_ACTION.exec(clause);
       // an announced change that waits on a condition is a plan wherever the condition sits ("We'll reset it
       // once your manager approves"; code review round 2 of batch 9, finding 9)
-      if (d && !PLAN_CLAUSE.test(clause)) found.push(`announces a change that needs sign-off as decided ("${d[0].trim()}")`);
+      // the condition must govern the announcement: "We'll reset it once your manager approves" waits; "We will
+      // reset it and email you when it is done" does not (code review round 3 of batch 9, finding 5)
+      const waits = (x) => planned(x) || new RegExp(`^[^]*?${PLAN_CLAUSE.source}`, 'i').test(clause.slice(x.index)) && !/\b(?:and|so|then|but)\b/i.test(clause.slice(x.index + x[0].length).split(PLAN_CLAUSE)[0]);
+      if (d && !waits(d)) found.push(`announces a change that needs sign-off as decided ("${d[0].trim()}")`);
     }
   }
   const theirs = squashed(ticket);

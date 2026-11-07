@@ -4,7 +4,8 @@ require('../adapters/socket-tripwire.js');
 //
 // EXPECTED DECISION (written before answer.js)
 // - Task 1: an answer starts with "## Fix" holding, in order, What's wrong, Do this (3 to 5 numbered
-//   steps), Done when, Stop if and Tell the user (at most 3 sentences); the card is at most 150 words and
+//   steps), Done when, Stop if and Tell the user (at most 3 sentences; batch 9 split it into "Tell the user
+//   now" and "Tell the user when done", user-messages.test.js); the card is at most 150 words and
 //   holds no command and nothing that belongs only to the desk (a gate id the runbooks hold, a Gate line,
 //   an R class, a change record); the fenced aegis-desk block closes the answer. Three fixture answers
 //   (routine, multi-system, security) pass; the fixtures are about none of the demo's tickets.
@@ -36,7 +37,8 @@ const GOOD_PARTS = [
   '3. Add the user.',
   '**Done when:** the calendar opens.',
   '**Stop if:** the user is already a member.',
-  '**Tell the user:** It is done. Reopen Outlook.',
+  '**Tell the user now:** IT is adding you. Reopen Outlook when we message you.',
+  '**Tell the user when done:** You are in the group. Reopen Outlook.',
 ];
 
 test('task 1: each fixture answer opens with the card, has the five parts in order, at most 150 words, no command, no desk-only text, and the aegis-desk block last', () => {
@@ -45,7 +47,7 @@ test('task 1: each fixture answer opens with the card, has the five parts in ord
     const text = fixture(kind);
     const c = a.fixCard(text);
     assert.ok(c.present && c.first, `${kind}: the card comes first`);
-    assert.deepEqual(c.order, ['wrong', 'doThis', 'doneWhen', 'stopIf', 'tellUser'], `${kind}: the five parts in order`);
+    assert.deepEqual(c.order, ['wrong', 'doThis', 'doneWhen', 'stopIf', 'tellNow', 'tellDone'], `${kind}: the six parts in order (batch 9)`);
     assert.deepEqual(a.cardProblems(c), [], kind);
     assert.ok(c.words <= 150, `${kind}: ${c.words} words`);
     assert.equal(a.commandIn(c.text), null, `${kind}: no command in the card`);
@@ -88,13 +90,14 @@ test('task 1: each break of the format is caught', () => {
 test('task 8: the five answer checks, in page order, pass on a good answer and each fails on its own break', () => {
   const good = fixture('routine');
   const rows = a.answerChecks(good, { profile: 'Platform stack: Microsoft 365' });
-  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts']);
-  assert.deepEqual(rows.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass']);
+  // batch 9, task 2 added the sixth row, user-message-now (its own cases are in user-messages.test.js)
+  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts', 'user-message-now']);
+  assert.deepEqual(rows.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass']);
   for (const r of rows) assert.ok(r.plain && r.detail, r.check);
   const verdicts = (text, profile = '') => Object.fromEntries(a.answerChecks(text, { profile }).map((r) => [r.check, r.verdict]));
   assert.equal(verdicts(`Intro line.\n${good}`)['fix-card-first'], 'fail');
   assert.equal(verdicts('No card at all.\n```aegis-desk\nGate: none\n```')['fix-card-parts'], 'fail');
-  assert.equal(verdicts(good.replace('**Tell the user:**', `**Tell the user:** ${'many '.repeat(40)}.`))['fix-card-words'], 'fail');
+  assert.equal(verdicts(good.replace('**Tell the user now:**', `**Tell the user now:** ${'many '.repeat(40)}.`))['fix-card-words'], 'fail');
   assert.equal(verdicts(good.replace('## Details', '## Details\nRun `node scripts/audit/change-record.js open` first.'))['no-command'], 'fail');
   assert.equal(verdicts(good.replace('Gate: example-group-add-portal', 'Gate: example-group-add-portal\nnode scripts/audit/change-record.js open'))['no-command'], 'pass', 'a command inside the aegis-desk block is the desk\'s');
   const hybrid = good.replace('## Details', '## Details\nForce a sync with Entra Connect after the change.');
@@ -217,7 +220,25 @@ test('a change in any step form, in odd characters, in another card part or in a
   for (const hidden of ['(2) Reset MFA.', '2. Reset MFA.', '  2. Reset MFA.', '> 2. Reset MFA.', '- 2. Reset MFA.', '2.Reset MFA.', '２. Reset MFA.', '2. Re​set MFA.']) {
     assert.equal(a.onlyLooks(`${look}\n${hidden}`).looks, false, JSON.stringify(hidden));
   }
-  assert.equal(a.onlyLooks(`${plainCard}\n\n## Details\n1. Reset the MFA methods.`).looks, false, 'a numbered Details line');
-  assert.equal(a.onlyLooks(`${plainCard}\n\n## Details\n- Remove the old phone.`).looks, false, 'a bulleted Details line');
+  // batch 9, task 9 changed this on purpose: with a card, a Details line mentions a change, it does not ask
+  // for one (batch 8's T5 Details said "a release or an allow entry needs..."), so Details is not read; the
+  // card's own lines still are, and with no card every numbered line still is. INVESTIGATE approves and
+  // applies nothing, so a Details mention can only label a ticket, never change a tenant.
+  assert.equal(a.onlyLooks(`${plainCard}\n\n## Details\n1. Reset the MFA methods.`).looks, true, 'a numbered Details line is a mention');
+  assert.equal(a.onlyLooks(`${plainCard}\n\n## Details\n- Remove the old phone.`).looks, true, 'a bulleted Details line is a mention');
+  assert.equal(a.onlyLooks(`${look}\n\n## Details\n1. Reset the MFA methods.`).looks, false, 'with no card, every numbered line is still read');
   assert.equal(a.onlyLooks(plainCard.replace('the logs show it', 'you have reset the MFA methods')).looks, false, 'a change in Done when');
+});
+
+// Batch 9, beyond the task: batch 8's T1 failed "customer facts" on "No SMS fallback added (per customer
+// profile)", a sentence that says the opposite (full-run-2/causes.md). A wrong implementation it catches: a
+// fact check that matches a mention whether or not a negation opens its clause, and one that drops the
+// fact everywhere once any negation is on the line.
+test('a default fact a negation opens its clause with is not the answer using that fact', () => {
+  const t1 = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'aegis', 'demo', 'evidence', 'full-run-2', 'answers', 'T1-answer.txt'), 'utf8');
+  assert.deepEqual(a.defaultFactsIn(t1, 'MFA: Microsoft Authenticator only'), []);
+  assert.deepEqual(a.defaultFactsIn('No SMS fallback added.', ''), []);
+  assert.deepEqual(a.defaultFactsIn('Do not use the SMS fallback; it is off.', ''), []);
+  assert.deepEqual(a.defaultFactsIn('Not the phone: the SMS fallback still works.', ''), ['SMS as the MFA fallback'], 'the negation is in another clause');
+  assert.deepEqual(a.defaultFactsIn('The SMS fallback still works.', ''), ['SMS as the MFA fallback']);
 });

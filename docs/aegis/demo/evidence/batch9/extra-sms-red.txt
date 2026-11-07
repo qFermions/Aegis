@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 0
+✖ a default fact a negation opens its clause with is not the answer using that fact
+✖ failing tests:

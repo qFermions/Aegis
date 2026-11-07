@@ -1,0 +1,3 @@
+✔ batch 9, task 9: T2m with the Slack deactivation closes RESOLVED (SIMULATED) through the real Slack read-back
+ℹ pass 1
+ℹ fail 0

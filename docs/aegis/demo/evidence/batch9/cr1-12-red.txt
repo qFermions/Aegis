@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 0
+✖ code review 1, finding 12: the pointer is found under the when-done line, and only a short pointer line leaves the count
+✖ failing tests:

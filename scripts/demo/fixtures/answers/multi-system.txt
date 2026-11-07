@@ -7,7 +7,8 @@
 4. Send the start-day details to their manager, not to a personal address.
 **Done when:** the starter signs in on day one and sees mail, chat and the team's files.
 **Stop if:** the manager cannot confirm the start date and role in writing.
-**Tell the user:** Your accounts will be ready before Monday. Your manager has your sign-in details.
+**Tell the user now:** IT is setting up your accounts. Your manager will get your sign-in details.
+**Tell the user when done:** Your accounts are ready. Your manager has your sign-in details.
 
 This needs a longer plan across four systems: see Details.
 

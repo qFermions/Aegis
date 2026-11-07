@@ -1,0 +1,40 @@
+## Fix
+**What's wrong:** The internet is slow for many people at once. The cause isn't known yet: it could be the studio's internet line, one device using all the bandwidth, or a slow online service.
+**Do this:** (No runbook covers this studio's network equipment. These steps are reasoning, not a known fix.)
+1. Run a speed test on one office Mac and ask one remote person to run one too. If only the office is slow, the problem is the studio's line. If both are slow, it's probably a service.
+2. Check the Google Workspace and Slack status pages for an outage.
+3. In Jamf Pro → Computers → Management History, look for a macOS update or large install pushed today.
+4. On the office router's admin page, find which device is using the most bandwidth. Large Drive uploads are a common cause.
+5. If the line is slow with no heavy user, call the internet provider with the speed results.
+**Done when:** a speed test is close to the contracted speed.
+**Stop if:** only one person is slow. That's a device problem.
+**Tell the user now:** IT is looking into the slow internet. Please tell us whether you're in the office or at home, and whether you're on Wi-Fi or a cable.
+**Tell the user when done:** Internet speed is back to normal. Let us know if anything still feels slow.
+
+## Details
+
+**Verdict:** This is diagnosis only, and no change is advised yet. The ticket is one line, and the profile doesn't say what network equipment the office uses. The existing slow-internet tree (`modules/it_support/troubleshooting.md:142`) assumes Meraki, which Customer B doesn't use, so only its logic carries over: work out whether one person or everyone is affected, then check the internet line, the Wi-Fi and the device.
+
+**What to check first:** Find out whether the remote staff are slow too. That one answer separates a problem with the studio's line from a problem with a service.
+
+**Likely causes, most likely first:**
+- A large upload is filling the office line. Design files syncing to Drive are a common example.
+- A macOS update or large install pushed through Jamf to many Macs at once.
+- The internet provider is degraded.
+- A Google or Slack outage.
+- The office Wi-Fi is overloaded.
+
+**Risk:** All the steps only look at things. If the checks lead to a change, such as limiting bandwidth for one device, moving a Jamf update to a later time or changing router settings, that's a new step that needs the studio manager's approval. Schedule disruptive work outside 09:30–18:30.
+
+**Verification checklist:**
+- [ ] Office speed test is close to the contracted speed
+- [ ] A remote user's speed test is normal
+- [ ] No outage is showing for Google Workspace or Slack
+- [ ] No device is using most of the line
+
+**Ticket note:**
+> Reported: slow internet for everyone. No replay match. Diagnosis only, no changes made. Checked: speed tests in the office and remote [results], service status pages [result], Jamf deployments today [result], heaviest user on the router [result]. Next step: [ISP ticket / reschedule the update / none]. Status: [open/resolved].
+
+```aegis-desk
+Gate: none
+```

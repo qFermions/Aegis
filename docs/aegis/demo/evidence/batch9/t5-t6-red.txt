@@ -1,0 +1,8 @@
+ℹ fail 4
+ℹ pass 1
+✔ a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes
+✖ batch 9, task 5: T4 with both shared mailbox grants closes RESOLVED (SIMULATED) through the Exchange read-backs
+✖ batch 9, task 5: T8 with the mailbox-permissions Full Access grant closes RESOLVED (SIMULATED)
+✖ batch 9, task 5: a grant the simulator applies to the wrong list fails its read-back
+✖ batch 9, task 6: T5 with the quarantine release to one recipient closes RESOLVED (SIMULATED)
+✖ failing tests:

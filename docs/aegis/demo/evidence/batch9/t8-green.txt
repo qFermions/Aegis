@@ -1,0 +1,15 @@
+$ node --test scripts/okta-verify-loop.test.js
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.364208ms)
+✔ user checks come first, then the admin PREVIEW ONLY marker, then Reset Authenticators as the last resort (0.216625ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.070166ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.2765ms)
+✔ the admin marker invents no menu path and authorizes nothing (0.064042ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31.637834
+exit 0

@@ -1,0 +1,63 @@
+## Fix
+**What's wrong:** [FIRST_NAME] has no rights on the billing mailbox yet. The ask is to give them the same access a colleague already has.
+**Do this:**
+1. Get the managing partner's approval on the ticket.
+2. Go to Exchange admin center → Recipients → Mailboxes → billing mailbox → Mailbox delegation. Note which lists name the colleague; that is the access to copy.
+3. Under Read and manage (Full Access), choose Edit → Add members → [FIRST_NAME] → Save.
+4. If the colleague is listed under Send as, add [FIRST_NAME] there the same way.
+
+**Done when:** the billing inbox shows in [FIRST_NAME]'s Outlook and a test reply shows the billing address as the sender. Aegis then checks that both permissions are on.
+**Stop if:** the colleague is listed under Send on behalf instead of Send as. Aegis has no approved step for that yet.
+**Tell the user now:** IT is setting up your access to the billing inbox once the managing partner approves it. We will let you know when it is ready.
+**Tell the user when done:** The billing inbox is now in your Outlook, and replies you send from it come from the billing address. If you don't see it, close and reopen Outlook.
+
+See Details for approval, risk and rollback.
+
+## Details
+
+**Verdict:** This is a routine delegation for one person on one mailbox, covered by the `/mailbox-permissions` runbook. To answer client emails, [FIRST_NAME] needs **Full Access** (to read the inbox) and **Send As** (to reply as the billing address). Step 2 checks the colleague's access so you copy it exactly and give no more.
+
+**Approval and identity (from Customer E's profile)**
+- Only the managing partner can approve this. Get the approval in writing on the ticket before step 3.
+- If the requester is not the managing partner, confirm who they are first: call them back on the number in the firm's staff list.
+- Today is Friday. The firm's hours end at 17:30, so the approval has to land today or early Monday for the access to be ready Monday.
+
+**⚠️ Risk**
+- Full Access lets [FIRST_NAME] read everything in the billing inbox, including client financial mail. Anything they read while they have access cannot be taken back. That is why both grants count as R2.
+- Before you change anything, copy what step 2 shows into the ticket. That is your record of how the mailbox was set before the change.
+- Grant only what the colleague has. Don't add Send on behalf unless it is requested and a reviewed step for it exists.
+
+**Rollback:** Remove [FIRST_NAME] from Full Access, Send as, or both. Each removal is a single reversible change in the runbook.
+
+<details>
+<summary>PowerShell - for reference only (read-only)</summary>
+
+```powershell
+Connect-ExchangeOnline                                   # sign in to Exchange Online
+Get-MailboxPermission -Identity "[MAILBOX]" |
+  Where-Object {$_.User -notlike "NT AUTHORITY*"}        # list who has Full Access (skips system entries)
+Get-RecipientPermission -Identity "[MAILBOX]"            # list who has Send As
+```
+These commands only read. The runbook gives the grant steps in the portal only.
+</details>
+
+**✅ Verification checklist**
+- [ ] The managing partner's approval is on the ticket
+- [ ] The delegation as it stood before the change is copied into the ticket
+- [ ] [FIRST_NAME] has exactly the colleague's rights, no more
+- [ ] The billing inbox shows in Outlook (it can take a little while to appear, so restart Outlook)
+- [ ] A test reply shows the billing address in the From line
+
+**📝 Jira-ready note**
+> Request: Full Access and Send As on `[MAILBOX]` for `[UPN]`, copying the colleague's existing rights. Delegation before the change is recorded in the ticket. Approved by: managing partner ([JIRA-###]). Changes made by: [ADMIN_NAME]. Read-back: [result]. Test send: [result]. Time spent: [X] min.
+
+```aegis-desk
+Gate: mailbox-full-access-grant-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: mailbox-send-as-grant-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

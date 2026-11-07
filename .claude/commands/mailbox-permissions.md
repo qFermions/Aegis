@@ -15,14 +15,63 @@ disable-model-invocation: true
 
 ## Step-by-step (portal first — EAC)
 
-> **PREVIEW ONLY [mailbox-grant-portal]:** The state-changing path below is not authorized by this reference. Move the intended action to a separate reviewed runbook with resolved target, effect, scope, reversibility/checkpoint, and an action-specific exact confirmation.
-1. EAC → Recipients → Mailboxes → `[MAILBOX]` → **Delegation**.
-2. Grant what's needed:
-   - **Read and manage (Full Access)** → add `[UPN]` (auto-maps into their Outlook).
-   - **Send As** → add `[UPN]`.
-   - **Send on Behalf** → add `[UPN]`.
+1. EAC → Recipients → Mailboxes → `[MAILBOX]` → **Mailbox Delegation**: read the three lists (Send as, Send on behalf, Read and manage (Full Access)) before any change. This is the pre-state; copy it into the ticket. Aegis can read the same lists with the read-only Exchange connector (`exo-client.js mailbox-permissions` and `recipient-permissions`).
+2. Grant only what the person needs, with the gate for that permission below: Full Access to read the mailbox, Send As to send as it. Send on Behalf has no gate here yet:
+
+> **PREVIEW ONLY [mailbox-send-on-behalf-portal]:** Mailbox Delegation → **Send on behalf** → **Edit** → **Add members** is not authorized by this reference; no gate and no read-back cover it yet.
+
 3. **Calendar-only:** the owner shares the calendar in Outlook (Editor/Reviewer), or set folder-level permissions.
-4. **Audit:** review the Delegation list; remove anyone who shouldn't have access (offboarding, role change).
+4. **Audit:** review the Mailbox Delegation lists; remove anyone who shouldn't have access (offboarding, role change), with the removal gates below.
+
+Source for the Mailbox Delegation path, the Edit, Add members, Save and Confirm buttons, and the Delete button for a removal: Microsoft Learn, "Manage permissions for recipients in Exchange Online", https://learn.microsoft.com/exchange/recipients-in-exchange-online/manage-permissions-for-recipients (opened 2026-11-06; `docs/aegis/batch9/vendor-facts.md` X-30).
+
+**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and its read-back below as `--read-back`: `exo:verify-mailbox-permission` for [mailbox-full-access-grant-portal], `exo:verify-recipient-permission` for [mailbox-send-as-grant-portal]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+
+<!-- SAFETY GATE [mailbox-full-access-grant-portal] -->
+- **Target:** [UPN] on [MAILBOX]
+- **Effect:** grant Full Access (read and manage) on one mailbox to one delegate; auto-mapping opens the mailbox in the delegate's Outlook
+- **Scope:** one delegate and one mailbox; Send As and Send on Behalf are unchanged
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: it opens a whole mailbox to another person, and what they read while it was open cannot be taken back): undone by removing the grant with [mailbox-permission-remove-portal]
+- **Required confirmation:** Type exactly `GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute`
+**PORTAL ACTION [mailbox-full-access-grant-portal]:** Only after the exact match: EAC → Recipients → Mailboxes → `[MAILBOX]` → **Mailbox Delegation** → **Read and manage (Full Access)** → **Edit** → **Add members** → `[UPN]` → **Save** → **Confirm**. Undo: the removal gate [mailbox-permission-remove-portal].
+
+```bash
+# HUMAN-RUN read-only read-back of [mailbox-full-access-grant-portal]: passes only when [UPN] holds Full Access on [MAILBOX]
+node scripts/adapters/exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```
+
+<!-- SAFETY GATE [mailbox-send-as-grant-portal] -->
+- **Target:** [UPN] on [MAILBOX]
+- **Effect:** grant Send As on one mailbox to one delegate, so mail they send from it shows only the mailbox as the sender
+- **Scope:** one delegate and one mailbox; Full Access and Send on Behalf are unchanged
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: mail sent as the mailbox while the grant stood cannot be recalled): undone by removing the grant with [mailbox-send-as-remove-portal]
+- **Required confirmation:** Type exactly `GRANT SEND AS ON [MAILBOX] TO [UPN]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute`
+**PORTAL ACTION [mailbox-send-as-grant-portal]:** Only after the exact match: EAC → Recipients → Mailboxes → `[MAILBOX]` → **Mailbox Delegation** → **Send as** → **Edit** → **Add members** → `[UPN]` → **Save** → **Confirm**. Undo: the removal gate [mailbox-send-as-remove-portal].
+
+```bash
+# HUMAN-RUN read-only read-back of [mailbox-send-as-grant-portal]: passes only when [UPN] holds Send As on [MAILBOX]
+node scripts/adapters/exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```
+
+<!-- SAFETY GATE [mailbox-send-as-remove-portal] -->
+- **Target:** [UPN] on [MAILBOX]
+- **Effect:** remove Send As from one delegate while leaving Full Access and Send on Behalf unchanged
+- **Scope:** one user and one mailbox
+- **Reversibility:** R1 (CLAUDE.md, Risk-Classified Execution Policy, the single reversible write row: one object, undone by one command): reversible by granting Send As again with [mailbox-send-as-grant-portal]
+- **Required confirmation:** Type exactly `REMOVE SEND AS FOR [UPN] FROM [MAILBOX]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
+**PORTAL ACTION [mailbox-send-as-remove-portal]:** Only after the exact match: EAC → Recipients → Mailboxes → `[MAILBOX]` → **Mailbox Delegation** → **Send as** → select `[UPN]` → **Delete** → **Confirm**. Then run its own read:
+
+```bash
+# HUMAN-RUN read-only read of [mailbox-send-as-remove-portal]: passes only when no Send As entry names [UPN] on [MAILBOX]
+node scripts/adapters/exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --absent --execute
+```
+
 <!-- SAFETY GATE [mailbox-permission-remove-portal] -->
 - **Target:** [UPN] on [MAILBOX]
 - **Effect:** remove Full Access while leaving other delegation unchanged
@@ -33,6 +82,11 @@ disable-model-invocation: true
 - **Read-back:** none (R1: no change record)
 **PORTAL ACTION [mailbox-permission-remove-portal]:** Only after the exact match, remove `[UPN]` from **Full Access** on `[MAILBOX]` and re-read the Delegation list.
 
+```bash
+# HUMAN-RUN read-only read of [mailbox-permission-remove-portal]: passes only when no Full Access entry names [UPN] on [MAILBOX]
+node scripts/adapters/exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --absent --execute
+```
+
 <details>
 <summary>PowerShell — for reference only</summary>
 
@@ -41,10 +95,8 @@ Connect-ExchangeOnline
 # Audit current permissions (read-only)
 Get-MailboxPermission -Identity "[MAILBOX]" | Where-Object {$_.User -notlike "NT AUTHORITY*"}  # Full Access grants
 Get-RecipientPermission -Identity "[MAILBOX]"                                                   # Send As grants
-# PREVIEW ONLY [mailbox-full-access-grant] — non-executing permission-grant reference.
-# Add-MailboxPermission -Identity "[MAILBOX]" -User "[UPN]" -AccessRights FullAccess -AutoMapping $true
-# PREVIEW ONLY [mailbox-send-as-grant] — non-executing permission-grant reference.
-# Add-RecipientPermission -Identity "[MAILBOX]" -Trustee "[UPN]" -AccessRights SendAs -Confirm:$false
+# Grant Full Access or Send As: use the portal gates [mailbox-full-access-grant-portal] and
+# [mailbox-send-as-grant-portal] above; this block has no grant line.
 # ⚠️ Remove access
 # SAFETY GATE [mailbox-permission-remove]
 # Target: [UPN] on [MAILBOX]

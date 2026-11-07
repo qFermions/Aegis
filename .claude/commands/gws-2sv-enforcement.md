@@ -96,6 +96,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 **Role needed:** Super Admin.
 
+No lighter step: allowing enrollment forces nobody and changes no one's sign-in; it is R3 only because it is a security-control setting, and it is already the first, smallest step of the rollout.
+
 <!-- SAFETY GATE [gws-2sv-enforcement-allow-portal] -->
 - **Target:** [OU_PATH]
 - **Effect:** allow users in [OU_PATH] to turn on 2-Step Verification for their own accounts; enforcement stays off
@@ -136,6 +138,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 **Role needed:** Super Admin.
 
+No lighter step: this is Phase B's written rollback, and it runs only while nobody in the unit is enrolled, so it changes no one's second step.
+
 <!-- SAFETY GATE [gws-2sv-enforcement-allow-rollback-portal] -->
 - **Target:** [OU_PATH]
 - **Effect:** turn off 2-Step Verification enrollment for [OU_PATH] by restoring the unticked Phase A value; enforcement stays off
@@ -167,6 +171,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 **Role needed:** Super Admin.
 
+No lighter step: this sets up the dated exception the rollout needs without turning anything off for the unit; it is a policy setting for a group, not a fix for one person's sign-in.
+
 <!-- SAFETY GATE [gws-2sv-enforcement-exception-portal] -->
 - **Target:** [GROUP_EMAIL] (exception group)
 - **Effect:** turn off 2-Step Verification enforcement for the members of [GROUP_EMAIL]
@@ -197,6 +203,8 @@ node scripts/adapters/gws-client.js group-members --group [GROUP_EMAIL] --execut
 Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
 
 **Role needed:** Super Admin.
+
+No lighter step: a person who cannot enroll by the start date has no second step to fall back on; one dated membership of the exception group is the smallest exemption, and the unit's enforcement stays on.
 
 <!-- SAFETY GATE [gws-2sv-enforcement-exempt-portal] -->
 - **Target:** [USER@DOMAIN.COM] and [GROUP_EMAIL] (the 2-Step Verification exception group)
@@ -236,6 +244,8 @@ node scripts/adapters/gws-client.js user --user [USER@DOMAIN.COM] --execute
 Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
 
 **Role needed:** Super Admin.
+
+No lighter step: this puts a protection back on one person who has enrolled; nothing lighter restores it.
 
 <!-- SAFETY GATE [gws-2sv-enforcement-end-exemption-portal] -->
 - **Target:** [USER@DOMAIN.COM] and [GROUP_EMAIL] (the 2-Step Verification exception group)
@@ -278,6 +288,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 **Role needed:** Super Admin.
 
+No lighter step: this puts enforcement back on the exception group, the rollback of Phase C1; nothing lighter restores it.
+
 <!-- SAFETY GATE [gws-2sv-enforcement-group-reenforce-portal] -->
 - **Target:** [GROUP_EMAIL] (exception group)
 - **Effect:** enforce 2-Step Verification again for every member of [GROUP_EMAIL] by restoring the group's value from before Phase C1
@@ -308,6 +320,8 @@ node scripts/adapters/gws-client.js verify-2sv-enforced --user [USER@DOMAIN.COM]
 Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
 
 **Role needed:** Super Admin.
+
+No lighter step: enforcement is the goal of the rollout, not a fix for a symptom; Phases A to C are its lighter steps (read the gap, allow enrollment, dated exceptions), and Phase F is its written rollback.
 
 <!-- SAFETY GATE [gws-2sv-enforcement-enforce-portal] -->
 - **Target:** [OU_PATH] (from [START_DATE])
@@ -348,6 +362,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 **Role needed:** Super Admin.
 
+No lighter step: Phase D's enforcement with the Phase A methods kept is the lighter setting; this phase is optional and runs only for a unit whose users already hold a key.
+
 <!-- SAFETY GATE [gws-2sv-enforcement-keys-only-portal] -->
 - **Target:** [OU_PATH]
 - **Effect:** restrict the 2-Step Verification methods for [OU_PATH] to security keys only, with a policy suspension grace period
@@ -385,6 +401,8 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 
 **Role needed:** Super Admin.
 
+No lighter step: this restores the methods Phase A recorded, the written rollback of Phase E; nothing lighter undoes it.
+
 <!-- SAFETY GATE [gws-2sv-enforcement-methods-restore-portal] -->
 - **Target:** [OU_PATH]
 - **Effect:** restore the Phase A 2-Step Verification methods for [OU_PATH]; enforcement stays as it is
@@ -417,6 +435,8 @@ node scripts/adapters/gws-client.js activities --app login --user [USER@DOMAIN.C
 Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the change.
 
 **Role needed:** Super Admin.
+
+**Try first:** for one person, Phase C2 (a dated exception through the group), never this unit-wide switch.
 
 <!-- SAFETY GATE [gws-2sv-enforcement-off-portal] -->
 - **Target:** [OU_PATH]

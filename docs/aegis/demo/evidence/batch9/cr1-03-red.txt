@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 0
+✖ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session
+✖ failing tests:

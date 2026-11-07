@@ -84,6 +84,8 @@ const NOT_A_NAME = new Set([
   'Business Premium', 'Jamf Pro', 'Hybrid Active', 'Active Directory', 'High Confidence', 'Customer Desk',
   'Message ID', 'Content Type', 'Tue Nov', 'Pasting What', 'Fictional Read',
   'Okta Security',
+  // batch 9, task 10: T9m and its profile line (Okta's app and its admin action, read by a person)
+  'Okta Verify', 'Reset Authenticators',
 ]);
 const NAME_SHAPE = /\b([A-Z][a-z]+) ([A-Z][a-z]+)\b/g;
 

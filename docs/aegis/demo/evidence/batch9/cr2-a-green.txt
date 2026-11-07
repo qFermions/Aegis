@@ -1,0 +1,7 @@
+ℹ fail 0
+ℹ pass 235
+device-full-wipe {"check":"lightest-step-first","verdict":"fail","plain":"The first change is the lightest one the runbook offers","detail":"the first change is device-full-wipe, a heavy one, while its runbook section \"PowerShell - for reference 
+device-full-wipe-portal {"check":"lightest-step-first","verdict":"fail","plain":"The first change is the lightest one the runbook offers","detail":"the first change is device-full-wipe-portal, a heavy one, while its runbook section \"Step-by-step fix (po
+security-account-block {"check":"lightest-step-first","verdict":"pass","plain":"The first change is the lightest one the runbook offers","detail":"the first change, security-account-block, is not a reset, wipe, erase, delete, re-register or R3 change"}
+jamf-lock-erase-wipe-api {"check":"lightest-step-first","verdict":"fail","plain":"The first change is the lightest one the runbook offers","detail":"the first change is jamf-lock-erase-wipe-api, a heavy one, while its runbook section \"Jamf Pro API - the 
+gws-offboard-delete-portal {"check":"lightest-step-first","verdict":"pass","plain":"The first change is the lightest one the runbook offers","detail":"gws-offboard-delete-portal is heavy, and its runbook section lists no lighter admin step before it"}

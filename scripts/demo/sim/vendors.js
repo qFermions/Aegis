@@ -28,6 +28,9 @@ const CONNECTORS = Object.freeze({
   'google-workspace': { module: 'gws-client.js', credentials: () => ({ GWS_SA_PRIVATE_KEY: simKey() }) },
   linear: { module: 'linear-client.js', credentials: () => ({ LINEAR_API_KEY: FILLER }) },
   jamf: { module: 'jamf-client.js', credentials: () => ({ JAMF_CLIENT_SECRET: FILLER }) },
+  slack: { module: 'slack-client.js', credentials: () => ({ SLACK_TOKEN: FILLER }) },
+  // batch 9, tasks 5 and 6: the seam takes { cmdlet, parameters } and answers as pwsh would; no certificate is read
+  exo: { module: 'exo-client.js', credentials: () => ({ EXO_APP_ID: '00000000-0000-4000-8000-00000000e0e0', EXO_ORGANIZATION: 'simulated-desk.onmicrosoft.com', EXO_CERTIFICATE_PATH: 'simulated-certificate-never-read.pfx' }) },
 });
 
 const connectorModule = (name) => (CONNECTORS[name] ? require(path.join(ADAPTERS, CONNECTORS[name].module)) : null);
@@ -82,6 +85,16 @@ const ROUTES = {
     if (req.method === 'POST') return token();
     const m = /^\/admin\/directory\/v1\/users\/([^/]+)$/.exec(p);
     if (m) return state.gws.users[SEGMENT(m[1])] ? ok(state.gws.users[SEGMENT(m[1])]) : notFound();
+    // batch 9, task 7: the Reports API's admin events, by actor, application, event name and start time
+    const a = /^\/admin\/reports\/v1\/activity\/users\/([^/]+)\/applications\/([^/]+)$/.exec(p);
+    if (a) {
+      const q = new URLSearchParams(String(req.path).split('?')[1] || '');
+      const customerId = Object.values(state.gws.users).map((u) => u.customerId).find(Boolean) || state.gws.customerId;
+      const items = (state.gws.activities || [])
+        .filter((e) => e.actor === SEGMENT(a[1]) && e.app === SEGMENT(a[2]) && (!q.get('eventName') || e.name === q.get('eventName')) && (!q.get('startTime') || Date.parse(e.time) >= Date.parse(q.get('startTime'))))
+        .map((e, i) => ({ kind: 'admin#reports#activity', id: { time: e.time, uniqueQualifier: String(5500 + i), applicationName: e.app, customerId }, actor: { email: e.actor }, events: [{ type: 'USER_SETTINGS', name: e.name, parameters: [{ name: 'USER_EMAIL', value: e.target }] }] }));
+      return ok({ kind: 'admin#reports#activities', items });
+    }
     return notFound();
   },
   // Jamf Pro: the computers in the tenant's devices list, by serial, and the MDM commands sent to one.
@@ -102,17 +115,57 @@ const ROUTES = {
     }
     return notFound();
   },
+  // Slack Web API (batch 9, task 9): users.info and auth.test from the tenant's Slack users. A Web API
+  // answer is HTTP 200 with ok false for an unknown user, as Slack answers it.
+  slack(state, req, p) {
+    const s = state.slack;
+    if (!s) return notFound();
+    if (p === '/api/auth.test') return ok({ ok: true, team_id: s.team_id, user_id: 'U0DESKSIM', team: 'simulated' });
+    if (p === '/api/users.info') {
+      const id = new URLSearchParams(String(req.path).split('?')[1] || '').get('user');
+      return s.users[id] ? ok({ ok: true, user: s.users[id] }) : ok({ ok: false, error: 'user_not_found' });
+    }
+    return notFound();
+  },
   linear(state, req, p) {
     if (p !== '/graphql') return notFound();
     return ok({ data: { users: { nodes: state.linear.users, pageInfo: { hasNextPage: false, endCursor: null } }, organization: { urlKey: state.linear.urlKey } } });
   },
 };
 
+// Exchange Online (batch 9, tasks 5 and 6): exo-client.js's seam takes one validated { cmdlet, parameters }
+// and gets { exitCode, stdout, stderr }, stdout the JSON array its fixed script prints. The answers come
+// from the tenant's mailboxes (full_access, send_as) and quarantine (identity, message_id, recipient,
+// released, released_users). An unknown mailbox or message is an error, as Exchange answers it.
+const lower = (x) => String(x || '').toLowerCase();
+const psOk = (rows) => ({ exitCode: 0, stdout: JSON.stringify(rows), stderr: '' });
+const psError = (text) => ({ exitCode: 1, stdout: '', stderr: text });
+function exoAnswer(state, { cmdlet, parameters: p }) {
+  const box = (state.mailboxes || []).find((m) => lower(m.address) === lower(p.Identity));
+  if (cmdlet === 'Get-MailboxPermission') {
+    if (!box) return psError("The operation couldn't be performed because object couldn't be found (simulated tenant).");
+    const rows = (box.full_access || []).filter((u) => !p.User || lower(u) === lower(p.User)).map((u) => ({ Identity: box.address, User: u, AccessRights: ['FullAccess'], Deny: false, IsInherited: false }));
+    return psOk(rows);
+  }
+  if (cmdlet === 'Get-RecipientPermission') {
+    if (!box) return psError("The operation couldn't be performed because object couldn't be found (simulated tenant).");
+    const rows = (box.send_as || []).filter((u) => !p.Trustee || lower(u) === lower(p.Trustee)).map((u) => ({ Identity: box.address, Trustee: u, AccessControlType: 'Allow', AccessRights: ['SendAs'], IsInherited: false }));
+    return psOk(rows);
+  }
+  if (cmdlet === 'Get-Mailbox') return box ? psOk([{ Identity: box.address, GrantSendOnBehalfTo: box.send_on_behalf || [] }]) : psError("The operation couldn't be performed because object couldn't be found (simulated tenant).");
+  if (cmdlet === 'Get-QuarantineMessage') {
+    const held = (state.quarantine || []).filter((q) => q.identity && (p.Identity ? q.identity === p.Identity : lower(q.message_id) === lower(p.MessageId) && lower(q.recipient) === lower(p.RecipientAddress)));
+    return psOk(held.map((q) => ({ Identity: q.identity, MessageId: q.message_id, RecipientAddress: [q.recipient], ReleasedUser: q.released_users || [], ReleaseStatus: q.released ? 'RELEASED' : 'NOTRELEASED', Type: q.reason })));
+  }
+  return psError(`the simulated tenant has no answer for ${cmdlet}`);
+}
+
 // A transport for one connector over one simulated tenant file. The file is read per request, so a
 // read-back sees what the simulated operator left there.
 function transportFor(connector, tenantFile) {
   return async (request) => {
     const state = JSON.parse(fs.readFileSync(tenantFile, 'utf8'));
+    if (connector === 'exo') return exoAnswer(state, request);
     const route = ROUTES[connector];
     return route ? route(state, request, String(request.path).split('?')[0]) : notFound();
   };

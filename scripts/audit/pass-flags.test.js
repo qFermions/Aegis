@@ -37,6 +37,8 @@ const NOT_PASS_ANY = Object.freeze({
   user: OBJECT, group: OBJECT, team: OBJECT, repo: OBJECT, branch: OBJECT, number: OBJECT, id: OBJECT, serial: OBJECT, issue: OBJECT,
   channel: OBJECT, device: OBJECT, 'profile-id': OBJECT, 'profile-identifier': OBJECT, 'role-id': OBJECT,
   'management-id': OBJECT, 'execution-id': OBJECT, identifier: OBJECT, 'app-id': OBJECT, 'comment-id': OBJECT,
+  // batch 9, tasks 5 and 6: the Exchange read-backs name the mailbox, the delegate, and the held message
+  mailbox: OBJECT, delegate: OBJECT, identity: OBJECT, 'message-id': OBJECT, recipient: OBJECT,
   'issue-id': OBJECT, author: OBJECT, target: OBJECT, 'method-id': OBJECT,
   // batch G4, task A3: --not-before is a pass flag now (D10 on PR #9); the version bound stays here
   'from-version': TIME,
@@ -86,7 +88,7 @@ test('every flag a runbook passes to a read-back is classified: a pass flag, or 
 });
 
 test('each pass flag is a flag its connector takes, and every value rule is a closed set, a number or a digest', () => {
-  const FILES = { fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js', 'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js', linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js', okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js' };
+  const FILES = { fleet: 'scripts/adapters/fleet-client.js', github: 'scripts/adapters/github-client.js', 'google-workspace': 'scripts/adapters/gws-client.js', jamf: 'scripts/adapters/jamf-client.js', linear: 'scripts/adapters/linear-client.js', msgraph: 'scripts/adapters/msgraph-client.js', okta: 'scripts/adapters/okta-client.js', slack: 'scripts/adapters/slack-client.js', jira: 'scripts/jira-client.js', exo: 'scripts/adapters/exo-client.js' };
   for (const [kind, flags] of Object.entries(audit.PASS_FLAGS)) {
     const [connector, command] = kind.split(':');
     const src = fs.readFileSync(path.join(ROOT, FILES[connector]), 'utf8');
@@ -168,8 +170,9 @@ test('each runbook that binds a time-bounded read-back says to name its bound ba
   const timed = readBackLines().filter((r) => r.bound && r.flags.includes('not-before'));
   const files = [...new Set(timed.map((r) => r.file))].sort();
   // batch 8, task 3: okta-user-lifecycle.md joins (9 to 10 files), with
-  // okta-user-lifecycle-reset-password-portal R2 and its verify-password-reset run under a change
-  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'jamf-config-profiles.md', 'mfa-issue.md', 'offboard.md', 'okta-user-lifecycle.md', 'password-reset.md', 'security-alert-triage.md']);
+  // okta-user-lifecycle-reset-password-portal R2 and its verify-password-reset run under a change;
+  // batch 9, task 7: jamf-lock-erase.md joins (10 to 11), jamf-lock-erase-wipe-portal's verify-command
+  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'jamf-config-profiles.md', 'jamf-lock-erase.md', 'mfa-issue.md', 'offboard.md', 'okta-user-lifecycle.md', 'password-reset.md', 'security-alert-triage.md']);
   for (const file of files) {
     const paragraph = fs.readFileSync(path.join(DIR, file), 'utf8').split('\n').find((l) => l.startsWith('**Change record'));
     assert.ok(paragraph && paragraph.includes(TIME_SENTENCE), `${file}: the change-record paragraph names the time bound`);

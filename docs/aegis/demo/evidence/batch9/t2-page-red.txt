@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 13
+✖ batch 9, task 2: step 4 shows the now message; step 9 shows the when-done message only when the double-check passed
+✖ failing tests:

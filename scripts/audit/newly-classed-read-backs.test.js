@@ -40,7 +40,11 @@ const DIR = path.join(__dirname, '..', '..', '.claude', 'commands');
 const INTUNE_WIPE = 'Intune wipe: no verify-* command reads a wipe, verify-device-synced reads a sync time and Fleet verify-wipe reads a Fleet host, not the Intune device this gate wipes';
 const NO_LICENSE = 'the Graph connector has no license read: its user read selects no license field';
 const AD_SET = (what) => `on-premises AD ${what}: Graph verify-group-member --absent reads one Entra group per run, only after a sync, never one outside the sync scope and not by the AD IDs the frozen set holds, so one pass would not prove the set: left unbound in batch G4 D3`;
-const QUARANTINE = 'Defender quarantine: no connector reads it';
+// batch 9, task 6: the Exchange connector (exo-client.js) reads quarantine, so the two release gates and
+// their twins bind verify-quarantine-released and leave this list (31 to 27, RELEASED below); the delete
+// gates keep none, with the reason that is now true
+const QUARANTINE = 'Defender quarantine: the Exchange connector reads a held message, but has no read-back for one that was deleted';
+const RELEASED = Object.freeze(['quarantine-release-all-portal', 'quarantine-release-all', 'quarantine-release-one-portal', 'quarantine-release-one']);
 const OUTCOMES = Object.freeze({
   'conditional-access-enable-portal': 'the Graph connector reads no Conditional Access policy',
   'device-full-wipe-portal': INTUNE_WIPE,
@@ -49,12 +53,8 @@ const OUTCOMES = Object.freeze({
   'offboard-work-phone-wipe-portal': INTUNE_WIPE,
   'distribution-external-senders-portal': 'Exchange settings and permissions: no Exchange connector',
   'offboard-mailbox-delegation-strip-portal': 'Exchange settings and permissions: no Exchange connector',
-  'quarantine-release-all-portal': QUARANTINE,
-  'quarantine-release-all': QUARANTINE,
   'quarantine-delete-portal': QUARANTINE,
   'quarantine-permanent-delete': QUARANTINE,
-  'quarantine-release-one-portal': QUARANTINE,
-  'quarantine-release-one': QUARANTINE,
   'restricted-entity-unblock-portal': 'Defender restricted entities: no connector reads them',
   'restricted-entity-unblock': 'Defender restricted entities: no connector reads them',
   'license-remove-portal': NO_LICENSE,
@@ -80,8 +80,9 @@ for (const name of fs.readdirSync(DIR).filter((n) => n.endsWith('.md'))) {
   for (const g of changes.gateFields(fs.readFileSync(path.join(DIR, name), 'utf8'))) all.set(g.id, { ...g, file: name });
 }
 
-test('D3: the 31 gates are the H4 table\'s, each R2 or R3', () => {
-  assert.equal(Object.keys(OUTCOMES).length, 31);
+test('D3: the 31 gates are the H4 table\'s, each R2 or R3 (27 since batch 9 bound the four quarantine releases)', () => {
+  assert.equal(Object.keys(OUTCOMES).length, 27);
+  for (const id of RELEASED) assert.deepEqual(all.get(id).readBack.commands.map((c) => c.split(' ')[0]), ['exo-client.js'], `${id} binds the Exchange read-back`);
   for (const id of Object.keys(OUTCOMES)) {
     const g = all.get(id);
     assert.ok(g, `${id} is a runbook gate`);

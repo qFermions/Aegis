@@ -39,6 +39,9 @@
         },
         "linear": {
           "[USER_ID]": "d1000000-0000-4000-8000-000000000001"
+        },
+        "slack": {
+          "[USER_ID]": "U0DEMOD0LEAVE"
         }
       },
       "twin": "T2"
@@ -54,10 +57,12 @@
       "expected_path": "The same path as T3: Jamf lock or wipe, R3, read-back; an answer the read-back cannot prove ends INCONCLUSIVE, not resolved.",
       "targets": {
         "jamf": {
-          "[SERIAL_NUMBER]": "C02DEMOB0001"
+          "[SERIAL_NUMBER]": "C02DEMOB0001",
+          "[DEVICE_ID]": "b1000000-0000-4000-8000-0000000000d1"
         },
         "google-workspace": {
-          "[USER@DOMAIN.COM]": "designer@[@Aegion_DOMAIN]"
+          "[USER@DOMAIN.COM]": "designer@[@Aegion_DOMAIN]",
+          "[UPN]": "it.admin@[@Aegion_DOMAIN]"
         }
       },
       "twin": "T3"
@@ -74,6 +79,10 @@
       "targets": {
         "msgraph": {
           "[USER_ID]": "e1000000-0000-4000-8000-000000000001"
+        },
+        "exo": {
+          "[MAILBOX]": "billing@[@Aegion_DOMAIN]",
+          "[UPN]": "staff.one@[@Aegion_DOMAIN]"
         }
       },
       "twin": "T4"
@@ -90,6 +99,11 @@
       "targets": {
         "msgraph": {
           "[USER_ID]": "c1000000-0000-4000-8000-000000000001"
+        },
+        "exo": {
+          "[MESSAGE_IDENTITY_GUID]": "c2000000-0000-4000-8000-000000000001\\c2000000-0000-4000-8000-000000000002",
+          "[MESSAGE_ID]": "<invoice-6.demo@example.net>",
+          "[USER@DOMAIN.COM]": "accounts.payable@[@Aegion_DOMAIN]"
         }
       },
       "twin": "T5"
@@ -137,9 +151,29 @@
       "targets": {
         "msgraph": {
           "[USER_ID]": "e1000000-0000-4000-8000-000000000002"
+        },
+        "exo": {
+          "[MAILBOX]": "billing@[@Aegion_DOMAIN]",
+          "[UPN]": "staff.two@[@Aegion_DOMAIN]"
         }
       },
       "twin": "T8"
+    },
+    {
+      "id": "T9m",
+      "customer": "D",
+      "source": "slack",
+      "file": "d/T9m-okta-verify-loop.json",
+      "title": "Okta Verify sign-in loop on a Mac after a macOS update (the owner's real ticket, MF-1)",
+      "change_class": "R2",
+      "probe": "none",
+      "expected_path": "The user checks first, then the admin step from okta-mfa-reset's sign-in loop section (a PREVIEW ONLY admin re-authentication until the owner confirms the exact menu action), and Reset Authenticators only as the last resort.",
+      "targets": {
+        "okta": {
+          "[OKTA_USER_ID]": "00u1dem0dLOOPa1b2c3"
+        }
+      },
+      "twin": null
     }
   ]
 }

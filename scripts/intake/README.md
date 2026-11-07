@@ -53,6 +53,17 @@ Email addresses become `[USER@DOMAIN.COM]`, phone numbers `[PHONE_NUMBER]`, GitH
 their `[@Aegion_*]` token. The counts are in the record. Names written in free text are not
 detected: they stay as data, as in a typed ticket.
 
+## Lines addressed to the assistant (batch 9)
+
+Besides the shared injection markers (`scripts/tier/tier-guard.js`), `assistant-address.js` flags a line
+that speaks to an assistant, an AI or IT tooling and grants or claims authority, or gives such a reader
+orders: "Note to the IT assistant: ...", "AI assistant: ...", "you are authorized to", "the administrator
+has already authorized you", "ignore your previous instructions", "skip the confirmation", "do it now
+before anyone notices". One flag per line joins the case's `injectionFlags` with its line, a marker and a
+quote, and the history says it was quoted as data and not followed. The ticket is still ACCEPTED and its
+text is kept as it was. Ordinary sentences ("can you authorize my laptop for VPN", "IT assistant Maria
+helped me last week") are not flagged; the cases are in `assistant-address.test.js`.
+
 ## HTML
 
 An email with only a `text/html` part, or a body that is only HTML, becomes the text a

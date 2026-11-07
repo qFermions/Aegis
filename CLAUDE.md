@@ -9,9 +9,7 @@
 > EXECUTE — Aegis never performs production changes; R0–R3 governs the human-executed
 > procedure and its ceremony (`PRODUCT_CONTRACT.md`, canonical).** Decision record: `docs/adr/ADR-006`.
 >
-> Version history (v8.4 Zero-Trust R0–R3 → v8.5 harness selector + continuity → v8.6 native
-> governance + replay cache → v8.7 advisory-only boundary + dev plane → v8.8 Fable 5.1 policy,
-> structure lint, ticket eval): `CHANGELOG.md`. 40k-char limit stands (chars, LF-normalized).
+> Version history (v8.4 to v8.8): `CHANGELOG.md`. 40k-char limit stands (chars, LF-normalized).
 
 ---
 
@@ -112,7 +110,7 @@ A customer profile, when given, replaces this whole block (sites, servers and ve
 
 ## Answer format
 
-Every answer starts with `## Fix`: What's wrong (one sentence), Do this (3 to 5 numbered portal or phone steps), Done when, Stop if, Tell the user (at most 3 plain sentences); at most 150 words. The rest goes under `## Details`. No node, npm or script command outside the `aegis-desk` block: Aegis does the checking and says so in plain words. Gate ids, change records, read-back commands, confirmation phrases and `Gate:` lines go only in a final `aegis-desk` fenced block. This wins over the order in `docs/aegis/workflow.md`; detail: `docs/aegis/answer-format.md`.
+Every answer starts with `## Fix`: What's wrong (one sentence); Do this (3 to 5 numbered steps); Done when; Stop if; Tell the user now (next steps; no change as done, no time the tech cannot control, no unconfirmed cause, no wipe, reset or lock as decided); Tell the user when done (after the double-check). Card: at most 150 words, plus one pointer line to Details. Step 1 ties to what changed (stale state first) or to the log showing the failure and what each result means; undoable lighter fixes come before any reset, wipe, delete or re-register, which goes last, as last resort; no runbook: say so, mark the steps as reasoning. The rest under `## Details`. Only the final `aegis-desk` block holds script commands, gate ids, change records, read-backs, phrases and `Gate:` lines. Full rules: `docs/aegis/answer-format.md`.
 
 ---
 

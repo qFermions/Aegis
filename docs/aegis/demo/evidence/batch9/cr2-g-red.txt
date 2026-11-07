@@ -1,0 +1,5 @@
+ℹ fail 2
+ℹ pass 13
+✖ code review 2, finding 14: the chat protects its setup text as ask-aegis does
+✖ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged
+✖ failing tests:

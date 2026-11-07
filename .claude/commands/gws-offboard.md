@@ -47,6 +47,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Read first (R0):** Okta Admin Console → Directory → People → `[UPN]` → read **Status** and the **Applications** tab (which apps are assigned and which provision).
 
+No lighter step: the person is leaving, so access must end at the identity source; Okta's Suspend keeps every app assignment, and deactivation is what removes them and deprovisions the apps (`/okta-user-lifecycle`, What each action does).
+
 <!-- SAFETY GATE [gws-offboard-okta-deactivate-portal] -->
 - **Target:** [UPN] in Okta
 - **Effect:** deactivate the Okta user; Okta deprovisions every assigned app that has deprovisioning enabled
@@ -66,6 +68,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ## Phase B — Contain in Google (only if Okta did not suspend the account)
 
 **Purpose** — stop Google sign-in when provisioning left the account active.
+
+No lighter step: suspension is the lightest containment Google offers for a leaving user and deletes nothing; it reads as heavy here only because its Effect line names the sign-in cookie reset that comes with it.
 
 <!-- SAFETY GATE [gws-offboard-suspend-portal] -->
 - **Target:** [USER@DOMAIN.COM]
@@ -130,6 +134,8 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 ## Phase D — Delete, or keep suspended (R3, after independent review)
 
 **Purpose** — end the licence charge only when the data is safe and the retention decision is made.
+
+**Try first:** keep the account suspended, the other choice this phase's heading names: nothing is deleted while the retention decision is open.
 
 <!-- SAFETY GATE [gws-offboard-delete-portal] -->
 - **Target:** [USER@DOMAIN.COM]

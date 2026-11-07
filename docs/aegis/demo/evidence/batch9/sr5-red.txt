@@ -1,0 +1,3 @@
+ℹ fail 1
+ℹ pass 0
+✖ final security review: any written password stops the ask; a status word or a whole placeholder does not

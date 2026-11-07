@@ -58,9 +58,25 @@ node scripts/adapters/okta-client.js factors --user [OKTA_USER_ID] --execute
 
 **Verification checkpoint:** [ ] status Active · [ ] no compromise indicators · [ ] enrolled authenticators and their factor types recorded in the ticket.
 
+## Okta Verify sign-in loop after a macOS update
+
+Source: operator-validated by the owner, 2026-11-06; not in Okta's published troubleshooting pages
+
+**Purpose:** after a macOS update, Okta Verify on the Mac keeps sending the user back to sign in, and reinstalling Okta Verify (already done, per the ticket) did not stop it. What changed is the macOS update, so stale state on the Mac is the first suspect, before any reset. Run Phase A first: the compromise check still applies.
+
+1. **User check:** ask the user to quit Okta Verify completely (not only close its window), open it again, and sign in once.
+2. **User check:** ask the user to restart the Mac, then open Okta Verify and sign in once after the restart.
+3. **User check:** ask the user to read the macOS version (Apple menu, About This Mac) and the Okta Verify version the app shows, and write both in the ticket, so the loop can be matched to the update.
+
+> **PREVIEW ONLY [okta-verify-loop-admin-reauth]:** admin re-authentication in the Okta Admin Console (exact menu action to be confirmed by the owner). Planning only: UNCONFIRMED, this runbook names no menu path for it because the owner's fill-in line with the exact menu action was blank, so it does not authorize any change; it needs its own reviewed gate once the owner supplies the action.
+
+4. **Last resort:** Reset Authenticators, only when the steps above did not stop the loop: Phase B below resets only the ticked authenticator, Okta Verify here (gate `okta-mfa-reset-selected-portal`), and Phase C resets every authenticator (gate `okta-mfa-reset-all-portal`) only when every enrollment must go. Those gates are unchanged: follow them as written.
+
 ## Phase B: Reset the affected authenticator (the new-phone fix)
 
 **Purpose:** cancel the Okta Verify enrollment that is bound to the old phone so the user can enroll Okta Verify on the new one. Authenticators you do not tick stay enrolled.
+
+**User check:** ask whether the old phone still opens Okta Verify and whether another authenticator Phase A recorded still works: a user who can still sign in is not locked out, so the reset waits until the new phone is in hand.
 
 <!-- SAFETY GATE [okta-mfa-reset-selected-portal] -->
 - **Target:** [UPN]
@@ -91,6 +107,8 @@ If Phase A also listed `signed_nonce` (FastPass), also run the same read with `-
 ## Phase C: Reset ALL authenticators (separate gate)
 
 **Purpose:** only when every enrollment must go (every device lost, or a clean re-enrollment is required after triage). The account stays Active; the user re-enrolls everything.
+
+**Try first:** Phase B, which resets only the affected authenticator; reset all only when every enrollment must go.
 
 <!-- SAFETY GATE [okta-mfa-reset-all-portal] -->
 - **Target:** [UPN]

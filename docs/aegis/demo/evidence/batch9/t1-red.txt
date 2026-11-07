@@ -1,0 +1,8 @@
+ℹ todo 0
+ℹ duration_ms 33.489125
+
+✖ failing tests:
+
+test at scripts/intake/assistant-address.test.js:1:1
+✖ scripts/intake/assistant-address.test.js (29.581041ms)
+  'test failed'

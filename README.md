@@ -23,6 +23,31 @@
 
 ---
 
+## Try Aegis
+
+For a person who does not write code. You need a computer with Git and Node.js.
+
+1. Install Claude Code from [claude.ai/code](https://claude.ai/code), then type `claude` once in a terminal and sign in with your own account.
+2. Get a copy of this repository: the clone line under [Try it](#-try-it--5-minutes) below, then `cd Aegis`.
+3. Ask about one IT problem. Aegis prints a short Fix card and what to tell the user:
+
+   ```bash
+   node scripts/ask-aegis.js "A user cannot open Outlook after a password reset"
+   node scripts/ask-aegis.js "The front desk printer will not print" --setup "Google Workspace, Windows laptops, no Intune"
+   ```
+
+4. Or open a chat for follow-up questions:
+
+   ```bash
+   node scripts/aegis-chat.js --setup "Microsoft 365, Macs managed by Jamf"
+   ```
+
+`--setup` tells Aegis what your company runs, in plain words; leave it out to use the example company in `CLAUDE.md`.
+
+What Aegis will do: read the problem, read its own runbooks, and tell you the steps, how to check they worked, and when to stop.
+What it will not do: it reads only. It cannot run commands, and it never changes anything in your systems. A person does every change.
+Before your ticket reaches Aegis, email addresses and phone numbers in it become placeholders, and a password written after the word "password", or a token or key in a common format, stops the ask. Other secrets are not caught, so leave them out. Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit).
+
 ## The problem
 
 > [!IMPORTANT]
@@ -77,7 +102,7 @@ cd Aegis
 claude
 ```
 
-1. Paste a ticket in plain words: *"User can't sign in, says account is locked"* — watch it produce Verdict → checks → fix → verification → Jira-ready note.
+1. Paste a ticket in plain words: *"User can't sign in, says account is locked"*. Watch it produce a Fix card (what's wrong, the steps, done when, stop if, and the messages to send the user now and when done), then Details with the checks, the verification and a Jira-ready note.
 2. **`/new-user`** — the full onboarding runbook. It never asks you for a real name; placeholders are enforced.
 3. The replay fast path, with no model at all (sandbox the store with `AEGIS_REPLAY_DIR=/tmp/replay-demo` to keep your real cache clean and make the demo rerunnable):
    ```bash

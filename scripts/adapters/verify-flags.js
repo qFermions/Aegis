@@ -110,6 +110,13 @@ const VERIFY_FLAGS = Object.freeze({
     'verify-app-approved': { 'app-id': OBJECT },
     'verify-app-restricted': { 'app-id': OBJECT },
   }),
+  // batch 9, task 4: exo-client.js; the permission read-backs take --absent, the quarantine one an
+  // identity or a message id with its recipient, which name the message read
+  exo: Object.freeze({
+    'verify-mailbox-permission': { mailbox: OBJECT, delegate: OBJECT, absent: SWITCH },
+    'verify-recipient-permission': { mailbox: OBJECT, delegate: OBJECT, absent: SWITCH },
+    'verify-quarantine-released': { identity: OBJECT, 'message-id': OBJECT, recipient: OBJECT },
+  }),
   jira: Object.freeze({
     'verify-create': { issue: OBJECT, 'expect-sha256': DIGEST, 'not-before': TIME },
     'verify-comment': { issue: OBJECT, 'comment-id': OBJECT, 'expect-sha256': DIGEST, 'not-before': TIME },

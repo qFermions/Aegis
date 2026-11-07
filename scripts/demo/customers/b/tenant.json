@@ -3,6 +3,6 @@
   "users": [ { "role": "studio manager", "upn": "studio.manager@[@Aegion_DOMAIN]" }, { "role": "designer", "upn": "designer@[@Aegion_DOMAIN]" } ],
   "groups": [ { "name": "studio", "members": ["studio.manager@[@Aegion_DOMAIN]", "designer@[@Aegion_DOMAIN]"] } ],
   "devices": [ { "role": "designer's MacBook", "name": "LT-Studio,Designer", "serial": "C02DEMOB0001", "platform": "macOS", "managed_by": "Jamf Pro", "jamf_id": "101", "management_id": "b1000000-0000-4000-8000-0000000000d1", "last_contact": "2026-11-03T07:40:00Z", "lock_state": "unlocked", "wipe_state": "none" } ],
-  "gws": { "users": { "designer@[@Aegion_DOMAIN]": { "primaryEmail": "designer@[@Aegion_DOMAIN]", "suspended": false, "changePasswordAtNextLogin": false }, "studio.manager@[@Aegion_DOMAIN]": { "primaryEmail": "studio.manager@[@Aegion_DOMAIN]", "suspended": false, "changePasswordAtNextLogin": false } } },
+  "gws": { "customerId": "C0demob01", "users": { "designer@[@Aegion_DOMAIN]": { "primaryEmail": "designer@[@Aegion_DOMAIN]", "suspended": false, "changePasswordAtNextLogin": false }, "studio.manager@[@Aegion_DOMAIN]": { "primaryEmail": "studio.manager@[@Aegion_DOMAIN]", "suspended": false, "changePasswordAtNextLogin": false } } },
   "mailboxes": [ { "address": "studio.manager@[@Aegion_DOMAIN]", "type": "user" } ]
 }

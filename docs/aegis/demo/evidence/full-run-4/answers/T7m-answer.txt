@@ -1,0 +1,30 @@
+## Fix
+**What's wrong:** Calls freeze for everyone, so the office's shared internet line is a likelier cause than Wi-Fi.
+**Do this:** (No runbook covers this studio's network. These steps are reasoning, not a known fix.)
+1. Open Jamf Pro → Computers → Management History. Look for a large update sent to many Macs recently. If you find one, those downloads may be filling the line. If not, rule it out.
+2. Ask one remote person and one office person to join a test call. If only the office freezes, the office line is the problem. If both freeze, Zoom is.
+3. Check Zoom's status page for an outage.
+4. Ask the studio manager about big uploads or backups during work hours.
+5. If none of that fits, run a speed test on a Mac plugged in by cable and call [ISP_VENDOR].
+
+**Done when:** a test call from the office stays smooth for ten minutes.
+**Stop if:** only one Mac or one area freezes. Then it's a Wi-Fi or device problem.
+**Tell the user now:** IT is checking what's slowing the office connection. If a call freezes, please note the time.
+**Tell the user when done:** We found what was slowing the connection, and test calls are steady again.
+
+## Details
+- **Verdict:** Read and check only. No change is advised until the cause is found.
+- **Why not "the Wi-Fi":** "everyone" means a shared cause: the line, a bandwidth hog, or Zoom itself. Wi-Fi problems usually affect one area or one access point.
+- **Runbook fit:** Aegis's Wi-Fi and LAN/WAN runbooks are written for a Meraki network. Customer B's profile doesn't name their router, firewall or internet provider, so those runbooks don't apply here. Ask the studio manager who owns the router and the internet contract.
+- **"Again":** find the earlier ticket. If a cause was recorded there, check it first.
+- **Bandwidth hogs at a design studio:** large Google Drive syncs, cloud backups and macOS updates pushed through Jamf.
+- **⚠️ Risk:** don't restart the office router during business hours (Mon–Fri 09:30–18:30) without warning everyone. It drops every call and connection. If the manager approves a restart, do it outside those hours.
+- **Verification:**
+  - [ ] Test call steady from the office, on both Wi-Fi and cable
+  - [ ] Remote staff calls steady
+  - [ ] Cause recorded (update, upload, Zoom outage or provider)
+- **Jira-ready note:** Office-wide slow internet and Zoom freezing, recurring. Scope: [office only / office + remote]. Checked: Jamf deployments, test call, Zoom status, uploads and backups, cabled speed test. Cause: [found cause]. Action: [action / provider case [JIRA-###]]. Verified: test call steady for 10 min. Time: [X] min.
+
+```aegis-desk
+Gate: none
+```

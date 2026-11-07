@@ -1,0 +1,10 @@
+✔ a section whose heavy gate comes after a lighter gate passes
+✔ a section whose first heavy gate has nothing lighter before it fails, and the reason names the gate
+✔ a "No lighter step: <reason>" line passes the section, and an empty one does not
+✔ heavy means R3, or a reset, wipe, erase, delete or re-register in the id or the Effect line
+✔ a lighter PREVIEW ONLY marker or a user check counts; a heavy PREVIEW ONLY marker does not
+✔ a heading inside a code fence does not start a section
+✔ Microsoft and Google are separate vendors, by runbook name
+ℹ tests 7
+ℹ pass 7
+ℹ fail 0

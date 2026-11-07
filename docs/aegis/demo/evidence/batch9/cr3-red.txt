@@ -1,0 +1,10 @@
+ℹ fail 8
+ℹ pass 101
+✖ code review 3, finding 11: "in the Details section of this answer" is the pointer; a field or tab is not
+✖ code review 3, finding 12: a field line with a change verb is not an order to an assistant
+✖ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask
+✖ code review 3, finding 3: a clause ends at then, but, so, a dash or "and" plus a new subject; a list stays one clause
+✖ code review 3, finding 5: a decided change followed by "and ... when" is still decided; one that waits on its condition is a plan
+✖ code review 3, finding 8: a ticket routed or approved is an acknowledgement; irregular change participles are claims
+✖ code review 3, findings 2 and 7: an Aegis claim fails with any object but its own text, in the body and in user lines
+✖ code review 3: twins pair by the runbook's own read-back lines, each heavy gate inherits only its own twin's steps, and nothing after it counts

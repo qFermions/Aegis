@@ -1,0 +1,87 @@
+$ node --test scripts/reset-erase-readbacks.test.js
+✖ the Google password reset gate is R1 and its own section names exactly one CHANGE_PASSWORD audit read (0.65425ms)
+✖ the read line is the one /gws-account-containment uses, without --change (0.226667ms)
+✖ the Jamf wipe gate binds a verify-command read of the erase command, under its change record (0.155292ms)
+✖ both runbooks keep the Read-back contract change-record.js reads (0.490916ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54.570916
+
+✖ failing tests:
+
+test at scripts/reset-erase-readbacks.test.js:31:1
+✖ the Google password reset gate is R1 and its own section names exactly one CHANGE_PASSWORD audit read (0.65425ms)
+  AssertionError [ERR_ASSERTION]: exactly one read line in the gate section
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/reset-erase-readbacks.test.js:37:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/reset-erase-readbacks.test.js:47:1
+✖ the read line is the one /gws-account-containment uses, without --change (0.226667ms)
+  TypeError: Cannot read properties of undefined (reading 'command')
+      at TestContext.<anonymous> (<repo>/scripts/reset-erase-readbacks.test.js:52:72)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at scripts/reset-erase-readbacks.test.js:55:1
+✖ the Jamf wipe gate binds a verify-command read of the erase command, under its change record (0.155292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'no read-back is named for it in this runbook: its proof is the read its own step names'
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/reset-erase-readbacks.test.js:59:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'no read-back is named for it in this runbook: its proof is the read its own step names',
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/reset-erase-readbacks.test.js:69:1
+✖ both runbooks keep the Read-back contract change-record.js reads (0.490916ms)
+  AssertionError [ERR_ASSERTION]: jamf-lock-erase says where [CHANGE_ID] comes from
+      at TestContext.<anonymous> (<repo>/scripts/reset-erase-readbacks.test.js:75:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

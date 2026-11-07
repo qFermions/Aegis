@@ -1,0 +1,5 @@
+ℹ fail 2
+ℹ pass 102
+✖ failing tests:
+✖ task 11: --set messy picks the messy tickets, the tidy set stays the default, and an unknown set is an input error
+✖ the messy set: T1m to T8m, each with its twin's customer, source, class, probe and targets; T9m on its own

@@ -79,7 +79,9 @@ const CLASSED = Object.freeze({
 
 test('every SAFETY GATE in every runbook carries an R class on its Reversibility line', () => {
   const all = fs.readdirSync(DIR).filter((n) => n.endsWith('.md')).flatMap((n) => gatesOf(fs.readFileSync(path.join(DIR, n), 'utf8')));
-  assert.equal(all.length, 343, 'the SAFETY GATE count is unchanged');
+  // batch 9, task 5: 343 to 348, mailbox-full-access-grant-portal, mailbox-send-as-grant-portal,
+  // mailbox-send-as-remove-portal, shared-mailbox-full-access-portal and shared-mailbox-send-as-portal
+  assert.equal(all.length, 348, 'the SAFETY GATE count is unchanged');
   assert.deepEqual(unclassed(DIR), [], 'gates with no R class');
 });
 

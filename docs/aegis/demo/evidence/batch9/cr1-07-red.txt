@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 0
+✖ code review 1, finding 7: a negation cancels only the change word it governs
+✖ failing tests:

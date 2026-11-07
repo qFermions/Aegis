@@ -39,6 +39,7 @@ const { clarify } = require('../intake/clarify.js');
 const { catalog, closingGateLines, namedGates, contradictsItself, clarifies, says_none, RUNBOOKS } = require('./catalog.js');
 const { onlyLooks, answerChecks, fixCard, words, deskBlock } = require('./answer.js');
 const data = require('./customers.js');
+const { lightestStepFirst } = require('./step-ladder.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
 const vendors = require('./sim/vendors.js');
@@ -531,8 +532,9 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   let results = null;
   await timed('CHECKS', 'Aegis checks', REAL, async () => {
     results = checks.runChecks(c5, { answer, follow_up_answer: null });
-    // the five answer checks of batch 8, task 8: shown as rows, and none of them stops the ticket
-    const format = answerChecks(answer, { profile: data.profileText(customer) });
+    // the answer checks of batch 8, task 8 and batch 9: shown as rows, and none of them stops the ticket
+    // the ticket text, so a time the user set is not read as a promise in the now message (batch 9, task 2)
+    const format = [...answerChecks(answer, { profile: data.profileText(customer), ticket: text }), lightestStepFirst(answer, ctx.gates)];
     return {
       checks: results.map((r) => ({ check: r.check, verdict: r.verdict, applies: r.applies })),
       answer_checks: format,

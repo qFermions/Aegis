@@ -1,0 +1,1 @@
+battery at fe01bf4, node v24.21.0, no pwsh on this Mac: true

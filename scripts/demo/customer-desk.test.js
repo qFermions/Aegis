@@ -464,10 +464,11 @@ test('a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and s
   const unknown = await runDesk(t, { only: ['T1'], answers: { T1: good('made-up-gate-portal') } });
   assert.equal(unknown.ticket('T1').closing_state, 'OPEN');
   assert.match(unknown.ticket('T1').reason, /made-up-gate-portal.*no runbook/);
-  const preview = await runDesk(t, { only: ['T4'], answers: { T4: good('mailbox-grant-portal') } });
+  // batch 9, task 5: the grants are gates now; Send on Behalf is still a PREVIEW ONLY marker
+  const preview = await runDesk(t, { only: ['T4'], answers: { T4: good('mailbox-send-on-behalf-portal') } });
   const k = preview.ticket('T4');
   assert.equal(k.closing_state, 'OPEN');
-  assert.match(k.reason, /mailbox-grant-portal.*PREVIEW ONLY.*mailbox-permissions/);
+  assert.match(k.reason, /mailbox-send-on-behalf-portal.*PREVIEW ONLY.*mailbox-permissions/);
   // one known gate and one unknown: nothing is applied at all
   const mixed = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal', 'made-up-gate-portal') } });
   assert.equal(mixed.ticket('T1').closing_state, 'OPEN');
@@ -859,17 +860,24 @@ test('each customer has its own audit folder, replay store, simulated tenant and
 test('every gate the table maps is a real gate, and every one with a read-back resolves through its own connector', async (t) => {
   const { catalog } = require('./catalog.js');
   const gates = catalog();
-  const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3' };
-  const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'] };
+  // batch 9, task 9: Slack joined the simulator through T2 and T2m's departing engineer
+  // batch 9, tasks 5 and 6: Exchange holds T4's shared mailbox and T5's quarantine, so exo picks by gate
+  const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3', slack: 'T2', exo: 'T4' };
+  // batch 9, task 7: the Google reset's read names the admin as [UPN], which T3 (Customer B) carries
+  const ticketForGate = { 'quarantine-release-one-portal': 'T5', 'quarantine-release-all-portal': 'T5', 'gws-password-reset-password-portal': 'T3' };
+  const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'], 'mailbox-send-as-remove-portal': ['mailbox-send-as-grant-portal'] };
   for (const [id, entry] of Object.entries(SIM_GATES)) {
     const g = gates.get(id);
     assert.ok(g && g.kind === 'gate', `${id} is a SAFETY GATE in .claude/commands`);
     assert.equal(typeof entry.effect, 'string', `${id} effect`);
     if (!g.bound.length && !g.reads.length) continue;
-    const only = ticketFor[entry.platform];
+    const only = ticketForGate[id] || ticketFor[entry.platform];
     assert.ok(only, `${id}: a ticket for ${entry.platform}`);
     const r = await runDesk(t, { only: [only], answers: { [only]: good(...(after[id] || []), id) } });
-    assert.equal(r.ticket(only).closing_state, 'RESOLVED (SIMULATED)', `${id}: ${r.ticket(only).reason}`);
+    // batch 9, task 7: the wipe's ERASE_DEVICE command waits for the Mac's next check-in, as the lock's does,
+    // so its read-back runs and proves nothing yet
+    const expected = id === 'jamf-lock-erase-wipe-portal' ? 'INCONCLUSIVE' : 'RESOLVED (SIMULATED)';
+    assert.equal(r.ticket(only).closing_state, expected, `${id}: ${r.ticket(only).reason}`);
   }
 });
 
@@ -1084,7 +1092,8 @@ const CARD = [
   '3. Require the user to register again.',
   '**Done when:** the user signs in on the new phone. Aegis then checks the old method is gone.',
   '**Stop if:** the sign-in logs show someone else.',
-  '**Tell the user:** We will call you shortly. Have the new phone ready.',
+  '**Tell the user now:** We will call you shortly. Have the new phone ready.',
+  '**Tell the user when done:** You can sign in on the new phone.',
   '',
   '## Details',
 ].join('\n');
@@ -1226,17 +1235,22 @@ test('task 5: an R1 gate with no change record still gets the read its runbook s
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
 });
 
-test('task 8: step 5 shows the five answer checks as rows; a failed row is shown and does not stop the ticket', async (t) => {
+test('task 8: step 5 shows the answer checks as rows (six since batch 9); a failed row is shown and does not stop the ticket', async (t) => {
   const old = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') } });
   const k = old.ticket('T1');
   const rows = step(k, 5).answer_checks;
-  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts']);
+  // batch 9, task 8c added the seventh row, lightest-step-first (its own cases are in lightest-step.test.js)
+  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts', 'user-message-now', 'lightest-step-first']);
   assert.equal(rows[0].verdict, 'fail', 'an answer with no Fix card fails the first row');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', 'and the ticket still goes on');
   assert.deepEqual(step(k, 5).checks.map((r) => r.check), ['boundary', 'human-confirmation', 'read-back', 'privacy', 'observed-output', 'probe'], 'the existing checks are unchanged');
-  assert.match(step(k, 5).result, /answer format: \d of 5 pass/);
+  assert.match(step(k, 5).result, /answer format: \d of 7 pass/);
   const carded = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\n${good()}`, 'mfa-require-reregister-portal') } });
-  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass']);
+  // the seventh row reads the real runbook: mfa-issue's section lists [mfa-session-revoke-portal] before the
+  // re-register gate this answer names first, so it fails, is shown, and the ticket still resolves
+  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass', 'fail']);
+  assert.match(step(carded.ticket('T1'), 5).answer_checks[6].detail, /mfa-session-revoke-portal/);
+  assert.equal(carded.ticket('T1').closing_state, 'RESOLVED (SIMULATED)');
   const sms = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\nThe SMS fallback still works for this user.\n${good()}`, 'mfa-require-reregister-portal') } });
   assert.equal(step(sms.ticket('T1'), 5).answer_checks[4].verdict, 'fail', 'Customer A has no SMS fallback');
   const hybrid = await runDesk(t, { only: ['T5'], answers: { T5: withBlock(`${CARD}\nThe user is synced from hybrid AD.\n${good()}`, 'mfa-session-revoke-portal') } });
@@ -1249,9 +1263,10 @@ test('task 11: --set messy picks the messy tickets, the tidy set stays the defau
   const out = [];
   const io = { out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) };
   assert.equal(await desk.main(['--set', 'messy'], { PATH: '' }, io), 4);
-  for (const id of ['T1m', 'T2m', 'T3m', 'T4m', 'T5m', 'T6m', 'T7m', 'T8m']) assert.match(out.join(''), new RegExp(`\\b${id}\\b`));
+  for (const id of ['T1m', 'T2m', 'T3m', 'T4m', 'T5m', 'T6m', 'T7m', 'T8m', 'T9m']) assert.match(out.join(''), new RegExp(`\\b${id}\\b`));
   assert.match(out.join(''), /Ticket set: messy/);
-  assert.match(out.join(''), /up to 8 Aegis sessions/);
+  // batch 9, task 10: the messy set holds nine tickets with T9m
+  assert.match(out.join(''), /up to 9 Aegis sessions/);
   out.length = 0;
   assert.equal(await desk.main([], { PATH: '' }, io), 4);
   assert.match(out.join(''), /Ticket set: tidy/);
@@ -1396,4 +1411,61 @@ test('an R1 read line\'s quoted placeholder is filled without its quote marks', 
   const dir = tmp(t, 'aegis-desk-runbooks-');
   fs.writeFileSync(path.join(dir, 'quoted.md'), ['# fixture', '', '<!-- SAFETY GATE [fixture-quoted-portal] -->', '- **Target:** [ISSUE_ID]', '- **Reversibility:** R1 (fixture)', '- **Read-back:** none (R1: no change record)', '', '```bash', 'node scripts/adapters/linear-client.js verify-state --issue [ISSUE_ID] --state "[STATE_NAME]" --execute', '```', ''].join('\n'));
   assert.deepEqual(catalog(dir).get('fixture-quoted-portal').reads[0].argv, ['verify-state', '--issue', '[ISSUE_ID]', '--state', '[STATE_NAME]']);
+});
+
+// Batch 9, task 9: batch 8's T2m answer added Slack ("whatever else"), and the desk had no Slack target, no
+// simulator entry and no Slack routes, so sign-off stopped at "no simulated value for [USER_ID]"
+// (full-run-2/causes.md). Wrong implementations it catches: a Slack gate in the simulator with no Slack user in
+// the tenant (the read-back would 404 and read INCONCLUSIVE), or a Slack target keyed so it takes Linear's id.
+test('batch 9, task 9: T2m with the Slack deactivation closes RESOLVED (SIMULATED) through the real Slack read-back', async (t) => {
+  const r = await runDesk(t, { only: ['T2m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'cut them off', answer: good('okta-user-lifecycle-deactivate-portal', 'slack-user-lifecycle-deactivate-portal') }] } });
+  const k = r.ticket('T2m');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  const reads = step(k, 8).reads.map((x) => `${x.kind} ${x.state}`);
+  assert.ok(reads.includes('slack:verify-deactivated PASS'), reads.join('; '));
+});
+
+// Batch 9, tasks 5 and 6: the shared mailbox grants and the quarantine release are SAFETY GATEs whose read-back
+// is the Exchange connector (exo-client.js), answered from each customer's simulated mailboxes and quarantine.
+// Wrong implementations they catch: a simulator that answers exo from nothing (the read reads INCONCLUSIVE),
+// a grant that writes the wrong list (Send As read as Full Access), and a release whose read-back ignores the
+// recipient.
+test('batch 9, task 5: T4 with both shared mailbox grants closes RESOLVED (SIMULATED) through the Exchange read-backs', async (t) => {
+  const r = await runDesk(t, { only: ['T4'], answers: { T4: good('shared-mailbox-full-access-portal', 'shared-mailbox-send-as-portal') } });
+  const k = r.ticket('T4');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['exo:verify-mailbox-permission PASS', 'exo:verify-recipient-permission PASS']);
+});
+
+test('batch 9, task 5: T8 with the mailbox-permissions Full Access grant closes RESOLVED (SIMULATED)', async (t) => {
+  const r = await runDesk(t, { only: ['T8'], answers: { T8: good('mailbox-full-access-grant-portal') } });
+  assert.equal(r.ticket('T8').closing_state, 'RESOLVED (SIMULATED)', r.ticket('T8').reason);
+});
+
+test('batch 9, task 5: a grant the simulator applies to the wrong list fails its read-back', async (t) => {
+  const { SIM_GATES: real } = require('./sim/gates.js');
+  const simTable = { ...real, 'shared-mailbox-send-as-portal': { ...real['shared-mailbox-send-as-portal'], apply: real['shared-mailbox-full-access-portal'].apply } };
+  const r = await runDesk(t, { only: ['T4'], answers: { T4: good('shared-mailbox-send-as-portal') }, deps: { simTable } });
+  assert.equal(r.ticket('T4').closing_state, 'FAILED', r.ticket('T4').reason);
+});
+
+test('batch 9, task 6: T5 with the quarantine release to one recipient closes RESOLVED (SIMULATED)', async (t) => {
+  const r = await runDesk(t, { only: ['T5'], answers: { T5: good('quarantine-release-one-portal') } });
+  const k = r.ticket('T5');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['exo:verify-quarantine-released PASS']);
+});
+
+
+// Batch 9, task 7: the Google password reset is read back by its CHANGE_PASSWORD admin event, and the Jamf wipe
+// by its ERASE_DEVICE command, which stays Pending until the Mac checks in. Wrong implementations it catches:
+// a simulator that leaves no audit event (the reset reads INCONCLUSIVE), and one that marks the erase done the
+// moment it is sent (a stolen Mac's wipe would read as proved).
+test('batch 9, task 7: T3\'s password reset passes its audit read; the wipe\'s read runs and proves nothing until check-in', async (t) => {
+  const reset = (await runDesk(t, { only: ['T3'], answers: { T3: good('gws-password-reset-password-portal') } })).ticket('T3');
+  assert.equal(reset.closing_state, 'RESOLVED (SIMULATED)', reset.reason);
+  assert.deepEqual(step(reset, 8).reads.map((x) => `${x.kind} ${x.state}`), ['google-workspace:verify-event PASS']);
+  const wipe = (await runDesk(t, { only: ['T3'], answers: { T3: good('jamf-lock-erase-wipe-portal') } })).ticket('T3');
+  assert.equal(wipe.closing_state, 'INCONCLUSIVE', wipe.reason);
+  assert.deepEqual(step(wipe, 8).reads.map((x) => `${x.kind} ${x.state}`), ['jamf:verify-command INCONCLUSIVE']);
 });

@@ -82,7 +82,8 @@ function catalog(dir = RUNBOOKS) {
     };
     for (const g of gateFields(text)) {
       const seen = new Set();
-      const bound = lines.filter((l) => l.gates.includes(g.id) && !seen.has(l.command) && seen.add(l.command)).map((l) => ({ kind: l.kind, argv: l.argv, command: l.command }));
+      // a quoted value ("[MESSAGE_ID]", shell-safe for a person) reaches the connector without its quote marks
+      const bound = lines.filter((l) => l.gates.includes(g.id) && !seen.has(l.command) && seen.add(l.command)).map((l) => ({ kind: l.kind, argv: l.argv.map(unquote), command: l.command }));
       const reads = g.rClass === 'R1' && !bound.length ? sectionReads(all, g.line, fences()) : [];
       found.set(g.id, { kind: 'gate', command, file, rClass: g.rClass, none: g.readBack ? g.readBack.none : null, bound, reads, phrase: phraseOf(all, g.line) });
     }

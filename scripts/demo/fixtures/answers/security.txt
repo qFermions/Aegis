@@ -7,7 +7,8 @@
 4. Open Entra → Sign-in logs, filter on [UPN], and look for sign-ins from places they have not been.
 **Done when:** [FIRST_NAME] signs in with the new password and the sign-in logs show only them since the reset.
 **Stop if:** the logs show a sign-in from somewhere else; treat it as an incident and escalate now.
-**Tell the user:** Thanks for telling us fast. We will call you to set a new password. Do not reuse the old one anywhere.
+**Tell the user now:** Thanks for telling us fast. We will call you to set a new password. Do not reuse the old one anywhere.
+**Tell the user when done:** Sign in with your new password.
 
 
 This is a security incident: the full plan is in Details.

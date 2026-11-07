@@ -60,6 +60,12 @@ const CONNECTORS = {
     file: 'slack-client.js', env: { SLACK_TEAM_ID: 'T0OURS0001' },
     verify: ['verify-deactivated', '--user', 'U0TEST0001'], read: ['user', '--user', 'U0TEST0001'],
   },
+  // batch 9, task 4: the Exchange Online connector (PowerShell, not HTTP)
+  exo: {
+    file: 'exo-client.js', env: {},
+    verify: ['verify-mailbox-permission', '--mailbox', ['shared-box', 'example.org'].join('@'), '--delegate', ['delegate', 'example.org'].join('@')],
+    read: ['mailbox-permissions', '--mailbox', ['shared-box', 'example.org'].join('@')],
+  },
 };
 
 async function dry(file, argv, env) {
@@ -149,6 +155,9 @@ const LIVE = [
     replies: (pass) => [token({ scope: 'okta.users.read' }), ok({ id: '00u1abcd2EFGH3ijk4x7', status: pass ? 'SUSPENDED' : 'ACTIVE', profile: { login: at('user', 'example.com') } })] },
   { name: 'slack', file: 'slack-client.js', env: { SLACK_TOKEN: TOKEN, SLACK_TEAM_ID: 'T0OURS0001' }, argv: CONNECTORS.slack.verify,
     replies: (pass) => [ok({ ok: true, user: { id: 'U0TEST0001', team_id: 'T0OURS0001', deleted: pass } })] },
+  // batch 9, task 4: the transport answers { exitCode, stdout } as pwsh would
+  { name: 'exo', file: 'exo-client.js', env: { EXO_APP_ID: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', EXO_ORGANIZATION: 'example-test.onmicrosoft.com', EXO_CERTIFICATE_PATH: '/fixture/exo.pfx' }, argv: CONNECTORS.exo.verify,
+    replies: (pass) => [{ exitCode: 0, stderr: '', stdout: JSON.stringify([{ Identity: 'Shared Box', User: at('delegate', 'example.org'), AccessRights: [pass ? 'FullAccess' : 'ReadPermission'], Deny: false, IsInherited: false }]) }] },
 ];
 
 for (const c of LIVE) {

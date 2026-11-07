@@ -1102,6 +1102,15 @@ Microsoft does not document whether a password reset moves signInSessionsValidFr
 - M-02: whether Entra still needs the legacy SHA-1 `x5t` header. The connector sends `x5t#S256`
   only: record whether the first `--execute` gets a token.
 
+## Exchange Online (`exo`)
+
+**Test account, credential and commands:** [Exchange Online, read-only](exchange-online-readonly.md)
+(batch 9, task 4). An app registration with a certificate, the application permission
+Exchange.ManageAsApp (admin-consented) and the Global Reader role, nothing else. The connector runs
+PowerShell 7 with the ExchangeOnlineManagement module, so that page lists its commands itself;
+Exchange Online does not show an app its role, so `scopes.js` has no live check for it and every live
+result carries a `scope_notice`.
+
 ## Okta (`okta`)
 
 **Test account.** An Okta developer or preview org with two test users, one test group, one test app

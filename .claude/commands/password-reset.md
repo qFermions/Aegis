@@ -18,6 +18,10 @@ disable-model-invocation: true
 
 ## Step-by-step fix (portal/GUI first)
 
+**User check:** ask whether the user forgot the password or is only locked out after too many tries: a locked account with a known password needs an unlock (the `password-account-unlock` preview below), not a reset.
+
+**Try first:** if self-service password reset is enabled for the user and they registered for it, they reset the password themselves at https://aka.ms/sspr with no admin action; a synced user can do this only when password writeback is deployed. The reset below is the last resort.
+
 <!-- SAFETY GATE [password-reset-synced-portal] -->
 - **Target:** [first.last] mapped to [UPN]
 - **Effect:** replace the authoritative on-prem AD password and require a change at next sign-in

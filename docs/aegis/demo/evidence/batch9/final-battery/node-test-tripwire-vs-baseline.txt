@@ -1,0 +1,2 @@
+comm -3 of the failing test names, final-battery/node-test-tripwire.txt against baseline/failing-tests.txt (empty below means the same names):
+(end)

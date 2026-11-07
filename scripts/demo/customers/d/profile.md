@@ -1,7 +1,7 @@
 # Customer D profile (fictional)
 
 - Organization: a 30-person software startup, mostly remote.
-- Platform stack: Google Workspace, Okta for sign-in to every app, GitHub, Linear, Fleet for the laptops, Slack.
+- Platform stack: Google Workspace, Okta for sign-in to every app (Okta Verify on the laptops), GitHub, Linear, Fleet for the laptops (Macs), Slack.
 - Accounts: Okta is the source; it provisions the Google accounts.
 - How identity is verified: a video call with the person, and their manager confirms in the IT channel.
 - Who approves changes: the head of engineering; an offboarding also needs written confirmation from HR.

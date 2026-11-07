@@ -1,0 +1,7 @@
+✔ every gate the table maps is a real gate, and every one with a read-back resolves through its own connector
+✔ batch 9, task 5: T4 with both shared mailbox grants closes RESOLVED (SIMULATED) through the Exchange read-backs
+✔ batch 9, task 5: T8 with the mailbox-permissions Full Access grant closes RESOLVED (SIMULATED)
+✔ batch 9, task 5: a grant the simulator applies to the wrong list fails its read-back
+✔ batch 9, task 6: T5 with the quarantine release to one recipient closes RESOLVED (SIMULATED)
+ℹ pass 5
+ℹ fail 0

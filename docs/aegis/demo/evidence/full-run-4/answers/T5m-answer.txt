@@ -1,0 +1,48 @@
+## Fix
+**What's wrong:** Freight-vendor invoices have stopped arriving since last Tuesday. We don't know yet where they stop.
+**Do this:** (No runbook covers this exact case. These steps are reasoning built on the message trace and quarantine runbooks.)
+1. Exchange admin center → Mail flow → Message trace → sender: the vendor's domain, recipient: [USER@DOMAIN.COM], from last Tuesday. Delivered means look in the mailbox. Quarantined means go to step 3. No record means the mail never reached you.
+2. If Delivered: check the recipient's Junk folder and inbox rules.
+3. If Quarantined: Defender → Email & collaboration → Review → Quarantine. Read each item's reason and its SPF/DKIM/DMARC results.
+4. Release each invoice to that one recipient only if it is spam or bulk and authentication passes.
+**Done when:** the invoices are in the inbox. Aegis then checks each one shows Released.
+**Stop if:** an item is phish or malware, or a rule forwards mail outside.
+**Tell the user now:** IT is tracing the vendor's messages to find where they stopped. Please ask the vendor for the send dates and subject lines.
+**Tell the user when done:** The vendor's invoices are in your inbox now. Tell us if any are still missing.
+
+See Details for the risks and the ticket note.
+
+## Details
+
+**Verdict:** Your mail system is probably fine. One vendor's mail stopping while other mail flows normally usually means one of three things: Defender is holding it, Outlook is sorting it away, or it is never leaving the vendor. The message trace shows which one.
+
+**What each trace result means**
+- **Delivered:** the message reached the mailbox. Look in Junk. Then check inbox rules (Outlook on the web → Settings → Mail → Rules) for a rule that moves, deletes or forwards invoice mail. A rule nobody remembers creating that forwards invoices is a sign the account may be compromised. Stop and treat it as a security incident.
+- **Quarantined / FilteredAsSpam:** Defender is holding the mail. Open the trace's events tab to see which policy caught it.
+- **No record at all:** the messages never arrived. Ask the vendor for their bounce messages. The problem is on their side and no change is needed here.
+
+**Risk warning**
+- ⚠️ Fake invoices are a common way to steal money from a business. Before you release anything, read the authentication results. If a message fails SPF/DKIM/DMARC, or comes from a lookalike domain, do not release it.
+- You can't take a release back once the message is delivered. Release each message to its one recipient only, never to all recipients.
+- Leave "Report as no threats found" unchecked. Sending a report to Microsoft is a separate decision.
+- If this keeps happening, adding the vendor to the allow list is a separate mail-filtering change. It needs its own review, plus sign-off from the IT lead and the operations manager.
+
+**Approval:** the IT lead approves each release (Customer C profile).
+
+**Verification checklist**
+- [ ] Trace run for the vendor's domain, from last Tuesday to now
+- [ ] Reason and authentication reviewed for each held item
+- [ ] Each released item reads back as Released
+- [ ] Recipient confirms the invoices are in the inbox
+- [ ] Inbox rules checked; none forwards mail outside
+
+**Jira-ready note**
+> [JIRA-###]: Freight-vendor invoices not received since last Tuesday. Message trace for [SENDER] → [USER@DOMAIN.COM]: [Delivered / Quarantined / no record]. Quarantine reason: [spam/bulk/phish]; authentication: [pass/fail]. Released [N] items to [USER@DOMAIN.COM] with IT lead approval; each read back as Released. Inbox rules: [clean / finding]. Allow-list entry: not requested. Time spent: [X] min.
+
+```aegis-desk
+Gate: quarantine-release-one-portal
+Phrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]
+Change record: R2, read-back exo:verify-quarantine-released
+Read-back: exo-client.js verify-quarantine-released --message-id "[MESSAGE_ID]" --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+Note: one release per held invoice (the vendor reports 6); open a change record for each item before releasing it; approver: IT lead.
+```

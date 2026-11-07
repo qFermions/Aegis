@@ -15,14 +15,45 @@ disable-model-invocation: true
 
 ## Step-by-step fix (portal first — EAC: admin.exchange.microsoft.com)
 
-> **PREVIEW ONLY [shared-mailbox-create-grant]:** The state-changing path below is not authorized by this reference. Move the intended action to a separate reviewed runbook with resolved target, effect, scope, reversibility/checkpoint, and an action-specific exact confirmation.
+> **PREVIEW ONLY [shared-mailbox-create-grant]:** Creating a shared mailbox is not authorized by this reference. Move it to a separate reviewed runbook with resolved target, effect, scope, reversibility/checkpoint, and an action-specific exact confirmation. Granting access to an existing shared mailbox has its own gates below.
 
 **Create:** EAC → Recipients → **Mailboxes → Add a shared mailbox** → name + alias `[MAILBOX]@[@Aegion_DOMAIN]`.
 
-**Grant access:** open the shared mailbox → **Delegation**:
-- **Read and manage (Full Access)** → add `[UPN]`. Auto-mapping adds it to their Outlook automatically.
-- **Send As** → add `[UPN]` (sends *as* the mailbox).
-- **Send on Behalf** → add `[UPN]` (sends *on behalf of*).
+**Grant access:** first read the shared mailbox's **Mailbox Delegation** lists (EAC → Recipients → Mailboxes → `[MAILBOX]` → **Mailbox Delegation**) and copy them into the ticket: that is the pre-state. Then grant only what the person needs, with the gate for it: Full Access to read the mailbox, Send As to send as it. Send on Behalf is not available in the EAC for a shared mailbox, and removing a grant is in `/mailbox-permissions`.
+
+Source for the Mailbox Delegation path and its Edit, Add members, Save and Confirm buttons: Microsoft Learn, "Manage permissions for recipients in Exchange Online", https://learn.microsoft.com/exchange/recipients-in-exchange-online/manage-permissions-for-recipients (opened 2026-11-06; `docs/aegis/batch9/vendor-facts.md` X-30, X-31).
+
+**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and its read-back below as `--read-back`: `exo:verify-mailbox-permission` for [shared-mailbox-full-access-portal], `exo:verify-recipient-permission` for [shared-mailbox-send-as-portal]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+
+<!-- SAFETY GATE [shared-mailbox-full-access-portal] -->
+- **Target:** [UPN] on [MAILBOX]
+- **Effect:** grant Full Access (read and manage) on one shared mailbox to one delegate; auto-mapping opens it in the delegate's Outlook
+- **Scope:** one delegate and one shared mailbox; Send As is unchanged
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: it opens a whole mailbox to another person, and what they read while it was open cannot be taken back): undone by removing the grant with `/mailbox-permissions` [mailbox-permission-remove-portal]
+- **Required confirmation:** Type exactly `GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute`
+**PORTAL ACTION [shared-mailbox-full-access-portal]:** Only after the exact match: EAC → Recipients → Mailboxes → `[MAILBOX]` → **Mailbox Delegation** → **Read and manage (Full Access)** → **Edit** → **Add members** → `[UPN]` → **Save** → **Confirm**.
+
+```bash
+# HUMAN-RUN read-only read-back of [shared-mailbox-full-access-portal]: passes only when [UPN] holds Full Access on [MAILBOX]
+node scripts/adapters/exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```
+
+<!-- SAFETY GATE [shared-mailbox-send-as-portal] -->
+- **Target:** [UPN] on [MAILBOX]
+- **Effect:** grant Send As on one shared mailbox to one delegate, so mail they send from it shows only the mailbox as the sender
+- **Scope:** one delegate and one shared mailbox; Full Access is unchanged
+- **Reversibility:** R2 (CLAUDE.md, Risk-Classified Execution Policy, the multi-object or hard-to-reverse row: mail sent as the mailbox while the grant stood cannot be recalled): undone by removing the grant with `/mailbox-permissions` [mailbox-send-as-remove-portal]
+- **Required confirmation:** Type exactly `GRANT SEND AS ON [MAILBOX] TO [UPN]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** `exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute`
+**PORTAL ACTION [shared-mailbox-send-as-portal]:** Only after the exact match: EAC → Recipients → Mailboxes → `[MAILBOX]` → **Mailbox Delegation** → **Send as** → **Edit** → **Add members** → `[UPN]` → **Save** → **Confirm**.
+
+```bash
+# HUMAN-RUN read-only read-back of [shared-mailbox-send-as-portal]: passes only when [UPN] holds Send As on [MAILBOX]
+node scripts/adapters/exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```
 
 <!-- SAFETY GATE [shared-mailbox-convert-portal] -->
 - **Target:** [UPN]
@@ -41,10 +72,8 @@ disable-model-invocation: true
 Connect-ExchangeOnline                                            # connect to Exchange Online
 # PREVIEW ONLY [shared-mailbox-create] — non-executing mailbox-creation reference.
 # New-Mailbox -Shared -Name "[MAILBOX]" -PrimarySmtpAddress "[MAILBOX]@[@Aegion_DOMAIN]"
-# PREVIEW ONLY [shared-mailbox-full-access] — non-executing Full Access grant reference.
-# Add-MailboxPermission -Identity "[MAILBOX]" -User "[UPN]" -AccessRights FullAccess -AutoMapping $true
-# PREVIEW ONLY [shared-mailbox-send-as] — non-executing Send As grant reference.
-# Add-RecipientPermission -Identity "[MAILBOX]" -Trustee "[UPN]" -AccessRights SendAs -Confirm:$false
+# Grant Full Access or Send As: use the portal gates [shared-mailbox-full-access-portal] and
+# [shared-mailbox-send-as-portal] above; this block has no grant line.
 # PREVIEW ONLY [shared-mailbox-send-on-behalf] — non-executing Send on Behalf grant reference.
 # Set-Mailbox -Identity "[MAILBOX]" -GrantSendOnBehalfTo @{Add="[UPN]"}
 # PREVIEW ONLY [shared-mailbox-convert] — non-executing conversion reference; use the adjacent portal conversion gate.

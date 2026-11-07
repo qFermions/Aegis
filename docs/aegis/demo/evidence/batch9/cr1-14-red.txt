@@ -1,0 +1,4 @@
+ℹ fail 1
+ℹ pass 2
+✖ every token in the Exchange read-back lines is in the placeholder dictionary
+✖ failing tests:

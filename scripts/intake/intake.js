@@ -22,6 +22,7 @@ const path = require('node:path');
 const engine = require('../graph/engine.js');
 const sanitize = require('../graph/sanitize.js');
 const { PHONE_LITERAL, findEmails, replaceEmails } = require('../tier/tier-guard.js');
+const { assistantAddressFlags } = require('./assistant-address.js');
 const { createClient } = require('../adapters/readonly-contract.js');
 const { cliDeps } = require('../adapters/cli-support.js');
 const { operatorMessage } = require('../adapters/operator-message.js');
@@ -426,6 +427,22 @@ function tenantVerdict(source, evidence, value, compare) {
 
 // raw: the item as text (a JSON export or an .eml file). opts.binary: the text holds the
 // file's bytes one per character (latin1), as fromFile reads an .eml file.
+// Lines addressed to an assistant that grant or claim authority (batch 9, task 1) join the case's injection
+// flags, one per line not already flagged by the shared markers, with the same history entry the engine
+// writes: quoted as data, never followed, and the case stays ACCEPTED.
+function joinAssistantAddressFlags(state) {
+  const t = state.ticket;
+  const seen = new Set(t.injectionFlags.map((f) => f.line));
+  const extra = assistantAddressFlags(t.text).filter((f) => !seen.has(f.line));
+  if (!extra.length) return;
+  const hadNone = t.injectionFlags.length === 0;
+  t.injectionFlags = [...t.injectionFlags, ...extra].sort((a, b) => a.line - b.line);
+  const at = new Date().toISOString();
+  if (hadNone) state.history.push({ at, node: 'INTAKE', event: 'injection-flagged', detail: 'embedded directives quoted as data, not followed (SR-3)' });
+  state.history.push({ at, node: 'INTAKE', event: 'assistant-address-flagged', detail: `lines addressed to an assistant that claim authority, quoted as data, not followed (SR-3): ${extra.length}` });
+  state.updatedAt = at;
+}
+
 function fromText(source, raw, { env = process.env, now = Date.now, via, binary = false, rawBytes } = {}) {
   const src = SOURCES[source];
   if (!src) throw new Error(`unknown source ${String(source).slice(0, 40)}: linear, github, slack or email`);
@@ -491,6 +508,7 @@ function fromText(source, raw, { env = process.env, now = Date.now, via, binary 
     if (error instanceof engine.GraphError) return failed(STATES.MALFORMED, base, `The graph engine refused the case: ${error.message}`);
     throw error;
   }
+  joinAssistantAddressFlags(state);
   return {
     ...base,
     state: STATES.ACCEPTED,

@@ -186,7 +186,8 @@ const CARD_ANSWER = [
   '3. Require the user to register again.',
   '**Done when:** the user signs in on the new phone.',
   '**Stop if:** the sign-in logs show someone else.',
-  '**Tell the user:** We will call you shortly. Have the new phone ready.',
+  '**Tell the user now:** We will call you shortly. Have the new phone ready.',
+  '**Tell the user when done:** You can sign in on the new phone.',
   '',
   '## Details',
   'The gate is R3; run node scripts/adapters/msgraph-client.js verify-mfa-cleared after it.',
@@ -280,4 +281,20 @@ test('task 9: every plain step name and closing state has its own words', () => 
   // code review 1, finding 11: verify-state reads an issue's state; the account suspend is verify-suspended
   assert.equal(render.plainRead({ kind: 'linear:verify-suspended', argv: [] }), 'The Linear account is paused');
   assert.equal(render.plainRead({ kind: 'linear:verify-state', argv: [] }), 'The Linear issue is in the planned state');
+});
+
+// Batch 9, task 2: step 4 shows the message to send the user now; step 9 shows the message for when the
+// change is done only when the double-check passed, and says it is not sent otherwise. Wrong
+// implementations it catches: a page that shows the when-done message on a ticket nobody proved, and a
+// step 4 that drops the now message.
+test('batch 9, task 2: step 4 shows the now message; step 9 shows the when-done message only when the double-check passed', () => {
+  const run = plainRun();
+  const page = render.html(run);
+  assert.match(page, /Message to send the user now:<\/p>\s*<pre class="shown">We will call you shortly\. Have the new phone ready\.<\/pre>/);
+  assert.match(page, /Message to send the user when done:<\/p>\s*<pre class="shown">You can sign in on the new phone\.<\/pre>/);
+  const unproved = plainRun();
+  unproved.tickets[0].closing_state = 'INCONCLUSIVE';
+  const other = render.html(unproved);
+  assert.doesNotMatch(other, /Message to send the user when done:<\/p>/, 'step 9 does not show the message itself');
+  assert.match(other, /Message to send the user when done: not sent, because the change is not proved\./);
 });

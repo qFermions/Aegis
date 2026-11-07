@@ -157,7 +157,7 @@ const LIVE = [
     replies: (pass) => [ok({ ok: true, user: { id: 'U0TEST0001', team_id: 'T0OURS0001', deleted: pass } })] },
   // batch 9, task 4: the transport answers { exitCode, stdout } as pwsh would
   { name: 'exo', file: 'exo-client.js', env: { EXO_APP_ID: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', EXO_ORGANIZATION: 'example-test.onmicrosoft.com', EXO_CERTIFICATE_PATH: '/fixture/exo.pfx' }, argv: CONNECTORS.exo.verify,
-    replies: (pass) => [{ exitCode: 0, stderr: '', stdout: JSON.stringify([{ Identity: 'Shared Box', User: pass ? at('delegate', 'example.org') : at('someone-else', 'example.org'), AccessRights: ['FullAccess'], Deny: false, IsInherited: false }]) }] },
+    replies: (pass) => [{ exitCode: 0, stderr: '', stdout: JSON.stringify([{ Identity: 'Shared Box', User: at('delegate', 'example.org'), AccessRights: [pass ? 'FullAccess' : 'ReadPermission'], Deny: false, IsInherited: false }]) }] },
 ];
 
 for (const c of LIVE) {

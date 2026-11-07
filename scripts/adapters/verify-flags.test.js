@@ -38,7 +38,7 @@ const READERS = {
   slack: { table: () => require('./slack-client.js').COMMANDS, flags: (s) => Object.keys(s.flags || {}), keys: ['kind', 'team', 'flags', 'required', 'steps', 'pagination', 'verify'] },
   jira: { table: () => require('../jira-client.js').VERIFY_FLAGS, flags: (s) => s.filter((f) => f !== 'execute'), keys: null },
   // batch 9, task 4: the Exchange Online connector
-  exo: { table: () => require('./exo-client.js').COMMANDS, flags: (s) => [...(s.flags || []), ...(s.optional || []), ...(s.booleans || [])], keys: ['kind', 'flags', 'optional', 'booleans', 'request', 'expected'] },
+  exo: { table: () => require('./exo-client.js').COMMANDS, flags: (s) => [...(s.flags || []), ...(s.optional || []), ...(s.booleans || [])], keys: ['kind', 'flags', 'optional', 'booleans', 'requests', 'expected'] },
 };
 
 function taken() {

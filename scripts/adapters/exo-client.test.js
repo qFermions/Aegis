@@ -95,7 +95,8 @@ test('the seam refuses a parameter outside the cmdlet\'s fixed set, a missing on
   const bad = [
     { cmdlet: 'Get-Mailbox', parameters: { Identity: SHARED, Filter: 'x' } },
     { cmdlet: 'Get-MailboxPermission', parameters: {} },
-    { cmdlet: 'Get-MailboxPermission', parameters: { Identity: SHARED, User: DELEGATE } },
+    { cmdlet: 'Get-MailboxPermission', parameters: { Identity: SHARED, Trustee: DELEGATE } },
+    { cmdlet: 'Get-Mailbox', parameters: { Identity: SHARED, User: DELEGATE } },
     { cmdlet: 'Get-QuarantineMessage', parameters: { Identity: QID, MessageId: MSGID } },
     { cmdlet: 'Get-QuarantineMessage', parameters: { MessageId: MSGID } },
     { cmdlet: 'Get-MailboxPermission', parameters: { Identity: [SHARED] } },
@@ -157,50 +158,52 @@ test('an unknown command, a write verb and a flag the command does not take are 
   assert.deepEqual(Object.keys(exo.CMDLETS).sort(), ['Get-Mailbox', 'Get-MailboxPermission', 'Get-QuarantineMessage', 'Get-RecipientPermission']);
 });
 
-// Catches: a request built from the operator's text (another parameter name, a server-side filter
-// that can silently miss, as -Trustee does for a principal with several Sids).
-test('each command sends exactly one fixed request: the cmdlet and its validated parameters', async () => {
+// Catches: a request built from the operator's text (another parameter name), or a Send As read-back
+// that trusts the -Trustee filter alone (it can miss a principal with several Sids, X-13).
+test('each command sends its fixed requests: the cmdlet and its validated parameters, nothing else', async () => {
   const cases = [
-    [['mailbox-permissions', '--mailbox', SHARED], { cmdlet: 'Get-MailboxPermission', parameters: { Identity: SHARED } }],
-    [['recipient-permissions', '--mailbox', SHARED], { cmdlet: 'Get-RecipientPermission', parameters: { Identity: SHARED } }],
-    [['send-on-behalf', '--mailbox', SHARED], { cmdlet: 'Get-Mailbox', parameters: { Identity: SHARED } }],
-    [['quarantine-message', '--identity', QID], { cmdlet: 'Get-QuarantineMessage', parameters: { Identity: QID } }],
-    [['quarantine-message', '--message-id', MSGID, '--recipient', DELEGATE], { cmdlet: 'Get-QuarantineMessage', parameters: { MessageId: MSGID, RecipientAddress: DELEGATE } }],
-    [vmp().slice(0, -1), { cmdlet: 'Get-MailboxPermission', parameters: { Identity: SHARED } }],
-    [vrp().slice(0, -1), { cmdlet: 'Get-RecipientPermission', parameters: { Identity: SHARED } }],
-    [vqr('--identity', QID).slice(0, -1), { cmdlet: 'Get-QuarantineMessage', parameters: { Identity: QID } }],
+    [['mailbox-permissions', '--mailbox', SHARED], [{ cmdlet: 'Get-MailboxPermission', parameters: { Identity: SHARED } }]],
+    [['recipient-permissions', '--mailbox', SHARED], [{ cmdlet: 'Get-RecipientPermission', parameters: { Identity: SHARED } }]],
+    [['send-on-behalf', '--mailbox', SHARED], [{ cmdlet: 'Get-Mailbox', parameters: { Identity: SHARED } }]],
+    [['quarantine-message', '--identity', QID], [{ cmdlet: 'Get-QuarantineMessage', parameters: { Identity: QID } }]],
+    [['quarantine-message', '--message-id', MSGID, '--recipient', DELEGATE], [{ cmdlet: 'Get-QuarantineMessage', parameters: { MessageId: MSGID, RecipientAddress: DELEGATE } }]],
+    [vmp().slice(0, -1), [{ cmdlet: 'Get-MailboxPermission', parameters: { Identity: SHARED, User: DELEGATE } }]],
+    [vrp().slice(0, -1), [{ cmdlet: 'Get-RecipientPermission', parameters: { Identity: SHARED, Trustee: DELEGATE } }, { cmdlet: 'Get-RecipientPermission', parameters: { Identity: SHARED } }]],
+    [vqr('--identity', QID).slice(0, -1), [{ cmdlet: 'Get-QuarantineMessage', parameters: { Identity: QID } }]],
   ];
   for (const [argv, want] of cases) {
-    const r = await cli([...argv, '--execute'], { replies: [answer([])] });
-    assert.equal(r.calls.length, 1, argv.join(' '));
-    assert.deepEqual(r.calls[0], want, argv.join(' '));
+    const r = await cli([...argv, '--execute'], { replies: [answer([]), answer([])] });
+    assert.deepEqual(r.calls, want, argv.join(' '));
   }
 });
 
 // ── Read-backs ───────────────────────────────────────────────────────────────
 
-// Catches: a presence check that matches any Full Access entry (SELF), or an absent check that
-// passes on an empty or unreadable answer.
-test('verify-mailbox-permission: Full Access present passes, missing fails, and --absent flips both', async () => {
-  let r = await cli(vmp(), { replies: [answer([SELF, perm(DELEGATE.toUpperCase())])] });
+// Catches: a presence check that ignores the -User filter's answer form (a display name), a pass on
+// ReadPermission, or an absent check that ignores an inherited grant.
+test('verify-mailbox-permission: the delegate\'s Full Access present passes, missing fails, and --absent flips both', async () => {
+  let r = await cli(vmp(), { replies: [answer([perm(DELEGATE.toUpperCase())])] });
   assert.equal(r.code, 0, r.text);
   assert.equal(r.json.verified, true);
-  r = await cli(vmp(), { replies: [answer([SELF, perm(OTHER)])] });
+  // the -User filter resolved the delegate, so an entry shown by display name is the delegate's
+  r = await cli(vmp(), { replies: [answer([perm('Delegate Person')])] });
+  assert.equal(r.code, 0, r.text);
+  r = await cli(vmp(), { replies: [answer([])] });
   assert.equal(r.code, 2, r.text);
   assert.equal(r.json.verified, false);
   assert.equal(r.json.state, STATES.OK);
   assert.match(r.json.reason, /no Full Access/);
-  r = await cli(vmp('--absent'), { replies: [answer([SELF, perm(OTHER)])] });
+  r = await cli(vmp('--absent'), { replies: [answer([])] });
   assert.equal(r.code, 0, r.text);
-  r = await cli(vmp('--absent'), { replies: [answer([SELF, perm(DELEGATE, { IsInherited: true })])] });
+  r = await cli(vmp('--absent'), { replies: [answer([perm('Delegate Person', { IsInherited: true })])] });
   assert.equal(r.code, 2, `an inherited grant still gives access: ${r.text}`);
-  // ReadPermission alone is not Full Access
   r = await cli(vmp(), { replies: [answer([perm(DELEGATE, { AccessRights: ['ReadPermission'] })])] });
-  assert.equal(r.code, 2, r.text);
+  assert.equal(r.code, 2, `ReadPermission alone is not Full Access: ${r.text}`);
 });
 
-// Catches: a judge that reads a missing field as false (absent passes), or that ignores a Deny entry
-// or an answer spanning several mailboxes (a non-existent Identity can return all objects).
+// Catches: a judge that reads a missing field as false (absent passes), ignores a Deny entry, an
+// answer spanning several mailboxes (a non-existent Identity can return all objects), or an answer
+// the -User filter did not apply to (SELF or another address in it).
 test('verify-mailbox-permission: an answer it cannot read is INCONCLUSIVE (exit 5), never a pass', async () => {
   const cases = [
     ['not JSON', 'WARNING: something happened'],
@@ -209,8 +212,9 @@ test('verify-mailbox-permission: an answer it cannot read is INCONCLUSIVE (exit 
     ['Deny as a string', [perm(DELEGATE, { Deny: 'False' })]],
     ['AccessRights missing', [{ Identity: 'Shared Box', User: DELEGATE, Deny: false, IsInherited: false }]],
     ['a Deny entry for the delegate', [perm(DELEGATE, { Deny: true })]],
-    ['more than one mailbox', [perm(OTHER), perm(OTHER, { Identity: 'Another Box' })]],
-    ['a direct grant named by display name', [SELF, perm('Delegate Person')]],
+    ['more than one mailbox', [perm(DELEGATE), perm(DELEGATE, { Identity: 'Another Box' })]],
+    ['the filter did not apply: SELF listed', [SELF]],
+    ['the filter did not apply: another address listed', [perm(OTHER)]],
   ];
   for (const [why, body] of cases) {
     for (const absent of [false, true]) {
@@ -223,26 +227,35 @@ test('verify-mailbox-permission: an answer it cannot read is INCONCLUSIVE (exit 
   }
 });
 
-// Catches: Send As judged on AccessControlType missing, or on another trustee's entry.
-test('verify-recipient-permission: Send As present passes, missing fails, --absent flips, unreadable is INCONCLUSIVE', async () => {
+// Catches: Send As judged on the -Trustee answer alone (a Sid miss passes --absent), on another
+// trustee's entry, or with AccessControlType missing; or an inherited entry shown by a display name
+// skipped under --absent.
+test('verify-recipient-permission: Send As present passes, missing fails, --absent flips, and both reads must agree', async () => {
   const SELF_SENDAS = sendAs('NT AUTHORITY\\SELF');
-  let r = await cli(vrp(), { replies: [answer([SELF_SENDAS, sendAs(DELEGATE)])] });
+  const two = (filtered, listed) => [answer(filtered), answer(listed)];
+  let r = await cli(vrp(), { replies: two([sendAs('Delegate Person')], [SELF_SENDAS, sendAs(DELEGATE)]) });
   assert.equal(r.code, 0, r.text);
-  r = await cli(vrp(), { replies: [answer([SELF_SENDAS])] });
+  r = await cli(vrp(), { replies: two([], [SELF_SENDAS, sendAs(DELEGATE)]) });
+  assert.equal(r.code, 0, `the whole list finds a grant the filter missed: ${r.text}`);
+  r = await cli(vrp(), { replies: two([], [SELF_SENDAS]) });
   assert.equal(r.code, 2, r.text);
   assert.match(r.json.reason, /no Send As/);
-  r = await cli(vrp('--absent'), { replies: [answer([SELF_SENDAS, sendAs(OTHER)])] });
+  r = await cli(vrp('--absent'), { replies: two([], [SELF_SENDAS, sendAs(OTHER)]) });
   assert.equal(r.code, 0, r.text);
-  r = await cli(vrp('--absent'), { replies: [answer([sendAs(DELEGATE)])] });
+  r = await cli(vrp('--absent'), { replies: two([sendAs(DELEGATE)], [SELF_SENDAS]) });
   assert.equal(r.code, 2, r.text);
-  for (const [why, body] of [
-    ['not JSON', '<html>'],
-    ['AccessControlType missing', [sendAs(DELEGATE, { AccessControlType: undefined })]],
-    ['a Deny entry', [sendAs(DELEGATE, { AccessControlType: 'Deny' })]],
-    ['more than one recipient', [sendAs(OTHER), sendAs(OTHER, { Identity: 'Another Box' })]],
-    ['a trustee named by display name', [sendAs('Delegate Person')]],
+  r = await cli(vrp('--absent'), { replies: two([], [sendAs(DELEGATE)]) });
+  assert.equal(r.code, 2, `a Sid miss in the filter does not pass --absent: ${r.text}`);
+  for (const [why, replies] of [
+    ['not JSON', [answer('<html>')]],
+    ['AccessControlType missing', two([sendAs(DELEGATE, { AccessControlType: undefined })], [])],
+    ['a Deny entry', two([sendAs(DELEGATE, { AccessControlType: 'Deny' })], [])],
+    ['the filter did not apply', two([sendAs(OTHER)], [])],
+    ['more than one recipient in the list', two([], [sendAs(OTHER), sendAs(OTHER, { Identity: 'Another Box' })])],
+    ['a trustee named by display name in the list', two([], [sendAs('Delegate Person')])],
+    ['an inherited trustee named by display name in the list', two([], [sendAs('Delegate Person', { IsInherited: true })])],
   ]) {
-    r = await cli(vrp('--absent'), { replies: [answer(body)] });
+    r = await cli(vrp('--absent'), { replies });
     assert.equal(r.code, 5, `${why}: ${r.text}`);
     assert.equal(r.json.state, STATES.INCONCLUSIVE, why);
   }
@@ -278,9 +291,10 @@ test('verify-quarantine-released: RELEASED passes, another known status fails, a
   }
 });
 
-// Catches: a PowerShell failure (module missing, sign-in refused) read as an empty, passing list.
+// Catches: a PowerShell failure (module missing, sign-in refused, a non-terminating error with exit
+// code 0) read as an empty list, which passes --absent.
 test('a PowerShell exit that is not 0, a timeout or an oversized answer is a failed read (exit 2), never a verdict', async () => {
-  for (const reply of [{ exitCode: 1, stdout: '[]', stderr: 'Connect-ExchangeOnline failed' }, Object.assign(new Error('timeout'), { code: 'AEGIS_TIMEOUT' }), Object.assign(new Error('big'), { code: 'AEGIS_RESPONSE_TOO_LARGE' })]) {
+  for (const reply of [{ exitCode: 1, stdout: '[]', stderr: 'Connect-ExchangeOnline failed' }, { exitCode: 0, stdout: '[]', stderr: 'Connect-ExchangeOnline failed: a non-terminating error' }, Object.assign(new Error('timeout'), { code: 'AEGIS_TIMEOUT' }), Object.assign(new Error('big'), { code: 'AEGIS_RESPONSE_TOO_LARGE' })]) {
     const r = await cli(vmp('--absent'), { replies: [reply] });
     assert.equal(r.code, 2, r.text);
     assert.notEqual(r.json.state, STATES.OK);
@@ -298,7 +312,7 @@ test('a dry run prints the planned cmdlet, reads no credential, calls no transpo
   assert.equal(v.calls.length, 0);
   assert.match(v.stderr, /^NOT VERIFIED: a dry run reads nothing, so it proves nothing/m);
   assert.equal(v.json.cmdlet, 'Get-MailboxPermission');
-  assert.deepEqual(v.json.parameters, { Identity: SHARED });
+  assert.deepEqual(v.json.parameters, { Identity: SHARED, User: DELEGATE });
   assert.match(v.json.note, /dry run/);
   const read = await cli(['quarantine-message', '--identity', QID], { env: {} });
   assert.equal(read.code, 0, read.text);
@@ -339,7 +353,7 @@ test('--change: no change, a change for another read-back, or for the other form
   const plain = await cli(['mailbox-permissions', '--mailbox', SHARED, '--change', approved, '--execute'], { replies: [answer([SELF])], extra: { audit } });
   assert.equal(plain.code, 1, '--change on a plain read');
   assert.equal(plain.calls.length, 0);
-  const r = await cli([...vmp('--absent').slice(0, -1), '--change', approved, '--execute'], { replies: [answer([SELF, perm(OTHER)])], extra: { audit } });
+  const r = await cli([...vmp('--absent').slice(0, -1), '--change', approved, '--execute'], { replies: [answer([])], extra: { audit } });
   assert.equal(r.code, 0, r.text);
   assert.ok(Number.isInteger(r.json.audit_seq), 'a linkable verdict shows its seq');
   const verify = audit.log.entries().filter((e) => e.kind === 'verify').pop();

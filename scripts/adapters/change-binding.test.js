@@ -90,7 +90,7 @@ const CONNECTORS = [
     name: 'exo', file: './exo-client.js',
     env: { EXO_APP_ID: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', EXO_ORGANIZATION: 'example-test.onmicrosoft.com', EXO_CERTIFICATE_PATH: '/fixture/exo.pfx' },
     verify: ['verify-mailbox-permission', '--mailbox', at('shared-box', 'example.org'), '--delegate', at('delegate', 'example.org'), '--absent'], other: 'verify-recipient-permission', read: ['mailbox-permissions', '--mailbox', at('shared-box', 'example.org')],
-    replies: () => [{ exitCode: 0, stderr: '', stdout: JSON.stringify([{ Identity: 'Shared Box', User: 'NT AUTHORITY\\SELF', AccessRights: ['FullAccess'], Deny: false, IsInherited: false }]) }],
+    replies: () => [{ exitCode: 0, stderr: '', stdout: '[]' }],
     pwsh: true,
   },
   {

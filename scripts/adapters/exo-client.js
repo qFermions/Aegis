@@ -71,8 +71,10 @@ const BREAKOUT = /[;|{}`$\r\n\u0000'"‘’‚‛“”„]/;
 
 // The allow-list: each cmdlet with its fixed parameter sets. Nothing else is ever run.
 const CMDLETS = Object.freeze({
-  'Get-MailboxPermission': Object.freeze([Object.freeze({ Identity: MAILBOX })]),
-  'Get-RecipientPermission': Object.freeze([Object.freeze({ Identity: MAILBOX })]),
+  // the read-backs add the delegate as a server-side filter, which Exchange resolves in any form
+  // (address, alias, display name), so a grant listed under another form of the name is still found
+  'Get-MailboxPermission': Object.freeze([Object.freeze({ Identity: MAILBOX }), Object.freeze({ Identity: MAILBOX, User: EMAIL })]),
+  'Get-RecipientPermission': Object.freeze([Object.freeze({ Identity: MAILBOX }), Object.freeze({ Identity: MAILBOX, Trustee: EMAIL })]),
   'Get-Mailbox': Object.freeze([Object.freeze({ Identity: MAILBOX })]),
   'Get-QuarantineMessage': Object.freeze([Object.freeze({ Identity: QUARANTINE_ID }), Object.freeze({ MessageId: MESSAGE_ID, RecipientAddress: EMAIL })]),
 });
@@ -118,8 +120,8 @@ $WarningPreference = 'SilentlyContinue'
 $InformationPreference = 'SilentlyContinue'
 $VerbosePreference = 'SilentlyContinue'
 $allowed = @{
-  'Get-MailboxPermission' = @('Identity')
-  'Get-RecipientPermission' = @('Identity')
+  'Get-MailboxPermission' = @('Identity', 'Identity,User')
+  'Get-RecipientPermission' = @('Identity', 'Identity,Trustee')
   'Get-Mailbox' = @('Identity')
   'Get-QuarantineMessage' = @('Identity', 'MessageId,RecipientAddress')
 }
@@ -232,6 +234,9 @@ async function callExo(request, { transport, audit = null, now = Date.now } = {}
   if (!r) {
     if (!res || !Number.isInteger(res.exitCode) || typeof res.stdout !== 'string') r = result(STATES.INVALID_RESPONSE, { error: 'the transport returned no exit code or output' });
     else if (res.exitCode !== 0) r = result(STATES.NETWORK_ERROR, { error: `PowerShell exited with code ${res.exitCode} (its error text is withheld)` });
+    // a non-terminating error can leave exit code 0 and a short or empty list: error text means the
+    // answer is not trusted (code review of batch 9 task 4, finding 1)
+    else if (typeof res.stderr === 'string' && res.stderr.trim()) r = result(STATES.INVALID_RESPONSE, { error: 'PowerShell wrote error text although it exited 0, so its answer is not used (text withheld)' });
     else if (Buffer.byteLength(res.stdout, 'utf8') > MAX_RESPONSE_BYTES) r = result(STATES.INVALID_RESPONSE, { error: 'answer larger than the read limit' });
     else {
       try { r = result(STATES.OK, { data: JSON.parse(res.stdout) }); } catch { r = result(STATES.INVALID_RESPONSE, { error: 'the answer is not JSON (output withheld)', notJson: true }); }
@@ -253,13 +258,16 @@ const quarantineRequest = (a) => (a.identity !== undefined
 const target = (a) => (a.identity !== undefined ? { identity: a.identity } : { message_id: a['message-id'], recipient: a.recipient });
 
 const COMMANDS = Object.freeze({
-  'mailbox-permissions': { kind: 'read', flags: ['mailbox'], request: (a) => req('Get-MailboxPermission', { Identity: a.mailbox }) },
-  'recipient-permissions': { kind: 'read', flags: ['mailbox'], request: (a) => req('Get-RecipientPermission', { Identity: a.mailbox }) },
-  'send-on-behalf': { kind: 'read', flags: ['mailbox'], request: (a) => req('Get-Mailbox', { Identity: a.mailbox }) },
-  'quarantine-message': { kind: 'read', optional: QUARANTINE_FLAGS, request: quarantineRequest },
-  'verify-mailbox-permission': { kind: 'verify', flags: ['mailbox', 'delegate'], booleans: ['absent'], request: (a) => req('Get-MailboxPermission', { Identity: a.mailbox }), expected: (a) => ({ mailbox: a.mailbox, delegate: a.delegate, full_access: !a.absent }) },
-  'verify-recipient-permission': { kind: 'verify', flags: ['mailbox', 'delegate'], booleans: ['absent'], request: (a) => req('Get-RecipientPermission', { Identity: a.mailbox }), expected: (a) => ({ mailbox: a.mailbox, delegate: a.delegate, send_as: !a.absent }) },
-  'verify-quarantine-released': { kind: 'verify', optional: QUARANTINE_FLAGS, request: quarantineRequest, expected: (a) => ({ ...target(a), ReleaseStatus: 'RELEASED' }) },
+  'mailbox-permissions': { kind: 'read', flags: ['mailbox'], requests: (a) => [req('Get-MailboxPermission', { Identity: a.mailbox })] },
+  'recipient-permissions': { kind: 'read', flags: ['mailbox'], requests: (a) => [req('Get-RecipientPermission', { Identity: a.mailbox })] },
+  'send-on-behalf': { kind: 'read', flags: ['mailbox'], requests: (a) => [req('Get-Mailbox', { Identity: a.mailbox })] },
+  'quarantine-message': { kind: 'read', optional: QUARANTINE_FLAGS, requests: (a) => [quarantineRequest(a)] },
+  // Full Access: the delegate as -User, which Exchange resolves (no Sid caveat is documented for it)
+  'verify-mailbox-permission': { kind: 'verify', flags: ['mailbox', 'delegate'], booleans: ['absent'], requests: (a) => [req('Get-MailboxPermission', { Identity: a.mailbox, User: a.delegate })], expected: (a) => ({ mailbox: a.mailbox, delegate: a.delegate, full_access: !a.absent }) },
+  // Send As: -Trustee resolves the delegate but can miss a principal with several Sids (X-13), so the
+  // whole list is read too and both must agree
+  'verify-recipient-permission': { kind: 'verify', flags: ['mailbox', 'delegate'], booleans: ['absent'], requests: (a) => [req('Get-RecipientPermission', { Identity: a.mailbox, Trustee: a.delegate }), req('Get-RecipientPermission', { Identity: a.mailbox })], expected: (a) => ({ mailbox: a.mailbox, delegate: a.delegate, send_as: !a.absent }) },
+  'verify-quarantine-released': { kind: 'verify', optional: QUARANTINE_FLAGS, requests: (a) => [quarantineRequest(a)], expected: (a) => ({ ...target(a), ReleaseStatus: 'RELEASED' }) },
 });
 
 const USAGE = `Usage: node scripts/adapters/exo-client.js <command> [flags] [--execute]
@@ -316,30 +324,55 @@ function rightsOf(value) {
 const NOT_A_LIST = 'the answer is not a list of records, so this is not proof either way';
 const NOT_JSON = 'the answer is not JSON, so this is not proof either way';
 
-// One permission read-back (Full Access on Get-MailboxPermission, Send As on Get-RecipientPermission).
-// The whole mailbox's list is read and the delegate matched by address, not filtered on the server,
-// because a -Trustee filter can return nothing for a principal with several Sids (vendor fact X-13),
-// which would make an absent check pass. A direct grant to a principal shown by a name that is not an
-// address may be the delegate, so it makes the answer INCONCLUSIVE rather than a pass either way.
-function judgePermission(a, data, { right, who, deny, label }) {
-  if (!Array.isArray(data)) return unproven({ entries: null }, NOT_A_LIST);
+// The permission read-backs (Full Access on Get-MailboxPermission, Send As on Get-RecipientPermission).
+// entriesOf checks every entry's fields and that the answer covers one mailbox only: a non-existent
+// Identity can return every object (vendor facts X-10, X-14).
+function entriesOf(data, { right, who, deny }) {
+  if (!Array.isArray(data)) return { problem: NOT_A_LIST };
   for (const r of data) {
     if (!isObject(r) || typeof r.Identity !== 'string' || typeof r[who] !== 'string' || typeof r.IsInherited !== 'boolean' || rightsOf(r.AccessRights) === null || deny(r) === null) {
-      return unproven({ entries: data.length }, `a permission entry is missing Identity, ${who}, AccessRights, IsInherited or its allow or deny field, so this is not proof either way`);
+      return { problem: `a permission entry is missing Identity, ${who}, AccessRights, IsInherited or its allow or deny field, so this is not proof either way` };
     }
   }
-  // a non-existent Identity can return every object (vendor facts X-10, X-12), so one mailbox only
-  if (new Set(data.map((r) => r.Identity.toLowerCase())).size > 1) return unproven({ entries: data.length }, 'the answer covers more than one mailbox, so this is not proof either way');
-  const withRight = data.filter((r) => rightsOf(r.AccessRights).includes(right));
-  const mine = withRight.filter((r) => sameAddress(r[who], a.delegate));
-  const observed = { entries: data.length, [`${label.replace(/ /g, '_').toLowerCase()}_entries`]: withRight.length, delegate_entries: mine.length };
-  if (mine.some((r) => deny(r) === true)) return unproven(observed, `a Deny ${label} entry names the delegate, which this read-back does not judge; check it in the Exchange admin center`);
-  const granted = mine.length > 0;
-  const unnamed = withRight.filter((r) => deny(r) === false && !r.IsInherited && !EMAIL.test(r[who].trim()) && !SELF.test(r[who].trim()));
-  if (granted) return a.absent ? { verified: false, observed, reason: `the delegate still has ${label}` } : { verified: true, observed };
-  // not found by address: a direct grant shown by another name may still be the delegate's
-  if (unnamed.length) return unproven({ ...observed, unnamed_direct_entries: unnamed.length }, `${unnamed.length} direct ${label} entr${unnamed.length === 1 ? 'y names' : 'ies name'} a principal by a name that is not an address, which may be the delegate, so this is not proof either way`);
-  return a.absent ? { verified: true, observed } : { verified: false, observed, reason: `no ${label} entry names the delegate` };
+  if (new Set(data.map((r) => r.Identity.toLowerCase())).size > 1) return { problem: 'the answer covers more than one mailbox, so this is not proof either way' };
+  return { all: data, withRight: data.filter((r) => rightsOf(r.AccessRights).includes(right)) };
+}
+
+// The answer filtered on the delegate (-User or -Trustee): every entry is the delegate's, inherited or
+// direct, named by whatever form Exchange prints. An entry for SELF or for another address means the
+// filter did not apply, so nothing in it is judged.
+function filteredGrant(a, data, spec) {
+  const e = entriesOf(data, spec);
+  if (e.problem) return e;
+  const stray = e.all.filter((r) => SELF.test(r[spec.who].trim()) || (EMAIL.test(r[spec.who].trim()) && !sameAddress(r[spec.who], a.delegate)));
+  if (stray.length) return { problem: 'the answer filtered on the delegate names another principal, so the filter did not apply and this is not proof either way' };
+  if (e.withRight.some((r) => spec.deny(r) === true)) return { problem: `a Deny ${spec.label} entry names the delegate, which this read-back does not judge; check it in the Exchange admin center` };
+  return { granted: e.withRight.length > 0, count: e.withRight.length };
+}
+
+// The whole list (Send As only): the delegate matched by address, and any allowed entry, inherited or
+// direct, that names a principal by a name that is not an address may be the delegate's.
+function listedGrant(a, data, spec) {
+  const e = entriesOf(data, spec);
+  if (e.problem) return e;
+  const mine = e.withRight.filter((r) => sameAddress(r[spec.who], a.delegate));
+  if (mine.some((r) => spec.deny(r) === true)) return { problem: `a Deny ${spec.label} entry names the delegate, which this read-back does not judge; check it in the Exchange admin center` };
+  const unnamed = e.withRight.filter((r) => spec.deny(r) === false && !EMAIL.test(r[spec.who].trim()) && !SELF.test(r[spec.who].trim()));
+  return { granted: mine.length > 0, unnamed: unnamed.length, count: e.withRight.length };
+}
+
+// answers: the filtered answer, then (Send As) the whole list. Known limit: a grant to a group the
+// delegate belongs to is not read as the delegate's.
+function judgePermission(a, answers, spec) {
+  const filtered = filteredGrant(a, answers[0], spec);
+  if (filtered.problem) return unproven({ delegate_entries: null }, filtered.problem);
+  const listed = answers.length > 1 ? listedGrant(a, answers[1], spec) : null;
+  if (listed && listed.problem) return unproven({ delegate_entries: filtered.count }, listed.problem);
+  const observed = { delegate_entries: filtered.count, ...(listed ? { listed_entries: listed.count } : {}) };
+  const granted = filtered.granted || Boolean(listed && listed.granted);
+  if (granted) return a.absent ? { verified: false, observed, reason: `the delegate still has ${spec.label}` } : { verified: true, observed };
+  if (listed && listed.unnamed) return unproven({ ...observed, unnamed_entries: listed.unnamed }, `${listed.unnamed} ${spec.label} entr${listed.unnamed === 1 ? 'y names' : 'ies name'} a principal by a name that is not an address, which may be the delegate, so this is not proof either way`);
+  return a.absent ? { verified: true, observed } : { verified: false, observed, reason: `no ${spec.label} entry names the delegate` };
 }
 
 // ReleaseStatus values (vendor fact X-09), compared in upper case: the output prints RELEASED
@@ -367,9 +400,10 @@ const PERMISSIONS = {
   'verify-mailbox-permission': { right: 'fullaccess', who: 'User', label: 'Full Access', deny: (r) => (typeof r.Deny === 'boolean' ? r.Deny : null) },
   'verify-recipient-permission': { right: 'sendas', who: 'Trustee', label: 'Send As', deny: (r) => (r.AccessControlType === 'Allow' ? false : r.AccessControlType === 'Deny' ? true : null) },
 };
-function judge(command, a, data) {
-  if (PERMISSIONS[command]) return judgePermission(a, data, PERMISSIONS[command]);
-  if (command === 'verify-quarantine-released') return judgeQuarantine(a, data);
+// answers: the parsed answer of each of the command's requests, in order
+function judge(command, a, answers) {
+  if (PERMISSIONS[command]) return judgePermission(a, answers, PERMISSIONS[command]);
+  if (command === 'verify-quarantine-released') return judgeQuarantine(a, answers[0]);
   throw new RefusedError('unknown read-back');
 }
 
@@ -393,13 +427,15 @@ async function run(argv, env = process.env, deps = {}) {
     }
     const def = COMMANDS[command];
     const a = validate(command, def, args);
-    const request = checkRequest(def.request(a));
+    const requests = def.requests(a).map(checkRequest);
+    const request = requests[0];
     const cli = cliDeps(deps, env);
     const refusal = changeRefusal(PLATFORM, command, bound, cli.audit);
     if (refusal) throw new RefusedError(refusal);
 
     if (args.execute !== true) {
       const shown = { state: STATES.OK, ok: true, command, cmdlet: request.cmdlet, parameters: request.parameters };
+      if (requests.length > 1) shown.then = requests.slice(1);
       if (def.kind === 'verify') shown.expected = def.expected(a);
       shown.auth = 'with --execute: pwsh -EncodedCommand of a fixed script, Connect-ExchangeOnline app-only with the certificate (-AppId, -Organization, -CertificateFilePath or -CertificateThumbprint) and -CommandName limited to the four read cmdlets';
       shown.note = 'dry run: no credentials read, no PowerShell started';
@@ -414,10 +450,17 @@ async function run(argv, env = process.env, deps = {}) {
       res = record(cli.audit, request.cmdlet, problem, 0, now(), now) || { command, ...problem, attempts: 0 };
     } else {
       const transport = cli.transport || makePwshTransport(childProcess.spawn, { env, timeoutMs: deps.timeoutMs || DEFAULT_TIMEOUT_MS });
-      const r = await callExo(request, { transport, audit: cli.audit, now });
-      const flags = r.state === STATES.OK ? scanUntrusted(r.data) : [];
+      // each request in turn; the first that fails ends the read
+      let r;
+      const answers = [];
+      for (const each of requests) {
+        r = await callExo(each, { transport, audit: cli.audit, now });
+        if (r.state !== STATES.OK) break;
+        answers.push(r.data);
+      }
+      const flags = r.state === STATES.OK ? scanUntrusted(answers.length === 1 ? answers[0] : answers) : [];
       if (def.kind === 'verify' && (r.state === STATES.OK || r.notJson)) {
-        const judged = r.notJson ? unproven({ entries: null }, NOT_JSON) : judge(command, a, r.data);
+        const judged = r.notJson ? unproven({ entries: null }, NOT_JSON) : judge(command, a, answers);
         let verdict = { state: STATES.OK, ok: true, command, verified: judged.verified === true, expected: def.expected(a), observed: judged.observed, scope_notice: SCOPE_NOTICE, ...(flags.length ? { flags } : {}) };
         if (judged.inconclusive) verdict = inconclusive(verdict, judged.reason);
         else if (!verdict.verified) verdict.reason = judged.reason;

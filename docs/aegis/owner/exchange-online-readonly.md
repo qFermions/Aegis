@@ -19,9 +19,12 @@ X-01) and four read cmdlets, nothing else:
 | `recipient-permissions --mailbox [SHARED_MAILBOX]` | `Get-RecipientPermission -Identity` | who has Send As (Trustee, AccessControlType, AccessRights) |
 | `send-on-behalf --mailbox [SHARED_MAILBOX]` | `Get-Mailbox -Identity` | the GrantSendOnBehalfTo field only |
 | `quarantine-message --identity <GUID1\GUID2>` or `--message-id <Message-ID> --recipient [UPN]` | `Get-QuarantineMessage` | Identity, MessageId, RecipientAddress, ReleaseStatus, Type (never the subject or body) |
-| `verify-mailbox-permission --mailbox ... --delegate [UPN] [--absent]` | `Get-MailboxPermission -Identity` | proves a person granted (or removed) Full Access |
-| `verify-recipient-permission --mailbox ... --delegate [UPN] [--absent]` | `Get-RecipientPermission -Identity` | proves a person granted (or removed) Send As |
+| `verify-mailbox-permission --mailbox ... --delegate [UPN] [--absent]` | `Get-MailboxPermission -Identity -User` (Exchange resolves the delegate in any form) | proves a person granted (or removed) Full Access |
+| `verify-recipient-permission --mailbox ... --delegate [UPN] [--absent]` | `Get-RecipientPermission -Identity -Trustee`, then `-Identity` alone (the filter can miss a principal with several Sids, X-13) | proves a person granted (or removed) Send As |
 | `verify-quarantine-released --identity ...` or `--message-id ... --recipient ...` | `Get-QuarantineMessage` | proves a person released the message (ReleaseStatus RELEASED) |
+
+Known limit: a permission read-back proves the grant to the delegate, not access the delegate has
+through a group. A PowerShell run that exits 0 but writes error text is a failed read (exit 2).
 
 It never grants or removes a permission, never changes a mailbox, never releases or deletes a
 message and never changes a policy. Those are steps a person runs in the Exchange admin center or

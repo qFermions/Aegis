@@ -6,14 +6,14 @@ This Mac has no `pwsh`, so 41 tests in `scripts/command-safety-gates.test.js` fa
 
 ## Battery
 
-| check | command | base `c0f3757` (`baseline/`) | head `9523ad7` (`battery-head/`) |
-|---|---|---|---|
-| tests | `node --test` | 2189 tests, 2147 pass, 41 fail, 1 skipped | 2195 tests, 2153 pass, 41 fail, 1 skipped; names equal batch 9's (`battery-head/node-test-vs-batch9.txt`, comm empty, 41 names) |
-| under the tripwire | `NODE_OPTIONS="--require <repo>/scripts/adapters/socket-tripwire.js" node --test` | the same counts | the same counts and names (`battery-head/node-test-tripwire-vs-batch9.txt`) |
-| the four ticket evals, structure lint, scanner, release boundary, replay demo | `TMPDIR=/private/tmp bash docs/aegis/demo/evidence/batch9/tools/battery.sh <out-dir>` | every one exit 0 | every one exit 0 (`battery-head/*.txt`, last line) |
-| ladder lint | `node scripts/lint/ladder-audit.js --check` | exit 0, 141 sections | exit 0, 141 sections (`battery-head/ladder-audit-check.txt`) |
+| check | command | base `c0f3757` (`baseline/`) | `9523ad7`, the first push (`battery-head/`) | final `f7900b8` (`battery-final/`) |
+|---|---|---|---|---|
+| tests | `node --test` | 2189 tests, 2147 pass, 41 fail, 1 skipped | 2195 tests, 2153 pass, 41 fail, 1 skipped; names equal batch 9's (`battery-head/node-test-vs-batch9.txt`, comm empty, 41 names) | 2202 tests, 2160 pass, 41 fail, 1 skipped; names equal batch 9's (`battery-final/node-test-vs-batch9.txt`, comm empty, 41 names) |
+| under the tripwire | `NODE_OPTIONS="--require <repo>/scripts/adapters/socket-tripwire.js" node --test` | the same counts | the same counts and names (`battery-head/node-test-tripwire-vs-batch9.txt`) | the same counts and names (`battery-final/node-test-tripwire-vs-batch9.txt`) |
+| the four ticket evals, structure lint, scanner, release boundary, replay demo | `TMPDIR=/private/tmp bash docs/aegis/demo/evidence/batch9/tools/battery.sh <out-dir>` | every one exit 0 | every one exit 0 (`battery-head/*.txt`, last line) | every one exit 0 (`battery-final/*.txt`, last line) |
+| ladder lint | `node scripts/lint/ladder-audit.js --check` | exit 0, 141 sections | exit 0, 141 sections (`battery-head/ladder-audit-check.txt`) | exit 0, 141 sections (`battery-final/ladder-audit-check.txt`) |
 
-The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (a gate-count snapshot, the scanner reading a quoted click in L-13, two captures holding local paths, the vendor-facts page not regenerated). Each was fixed in its own commit (`c34fa95`, `fdaab9b`, `9523ad7`) and the battery rerun; that first run's captures were not kept.
+The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (a gate-count snapshot, the scanner reading a quoted click in L-13, two captures holding local paths, the vendor-facts page not regenerated). Each was fixed in its own commit (`c34fa95`, `fdaab9b`, `9523ad7`) and the battery rerun; that first run's captures were not kept. A battery at `29583d6` (2197 tests, 41 pwsh-only failures, names equal) ran into the scratchpad and was not kept either; `battery-final/` is the one saved after the three review rounds. After it, only this table, these captures and `final-head-checks.txt` were committed; the checks that read captures ran again at that commit (`final-head-checks.txt`).
 
 ## Acceptance
 
@@ -27,7 +27,7 @@ The first head battery, at `d500a87`, had 46 failures: 5 new, all this batch's (
 | Task 3: L-13 CONFIRMED with the article link, the date and the owner's words, no name | pass | `docs/aegis/batch9/vendor-facts-ladder.md` L-13, L-13a to L-13c; https://support.okta.com/help/s/article/how-to-clear-user-session opened in this session (served title "Clear a User Session from the Okta Admin Console", updated 2026-05-26) | the quote "Choose Clear User Sessions." was dropped: the scanner reads it as an unowned portal click (`fdaab9b`); the Dashboard route is marked as the owner's, not Okta's |
 | Task 3: PROJECT_STATE.md gains "Changed by batch 9" and "Changed by batch 9b", citing files | pass | `PROJECT_STATE.md` lines 218 to 257 | batches 6 to 8 have no section; the header points to their tables instead |
 | Task 3: `git grep -n "okta-verify-loop-admin-reauth"` shows no PREVIEW ONLY use | pass | `marker-grep.txt`: the remaining hits are batch 9's records, its run evidence, the new test that asserts the absence, and this batch's notes; the PREVIEW ONLY form has 0 hits in `.claude/commands/` (exit 1) | |
-| Task 3: the full battery passes | unresolved | passed at `9523ad7` and at `29583d6` (Battery table); not yet rerun at the final head | |
+| Task 3: the full battery passes | pass | at `f7900b8` (`battery-final/`) and at `9523ad7` (`battery-head/`): the Battery table | |
 | Task 4: prediction written before the run | pass | `progress.md`, committed in `d500a87`; the run was at `9523ad7` (runbook and desk unchanged after `d500a87`) | |
 | Task 4: T9m alone, one session, within 1.50 US dollars, saved with terminal output, the answer, desk.html and a one-row table; RESOLVED (SIMULATED) with no change to the desk made to force a pass | pass | `T9m/terminal.txt`, `T9m/answers/T9m-answer.txt`, `T9m/desk.html`, `T9m/summary.md`: RESOLVED (SIMULATED), 208 words, 0.29 US dollars, 1 session; the cap held at 1.50 by the wrapper as it was then, `tools/claude-cap-as-run-for-T9m.sh` (from `8533733`; its log line is the top of `terminal.txt`; `tools/claude-cap.sh` is the reviewed version) | limit: the answer named the last-resort reset gate too, and the desk simulated both (decision for the owner). The desk change in this batch is the simulator entry for the new gate (`021a6c8`, its own test), which every gate needs to be simulated; no check was changed |
 | Task 5: the stale title at `scripts/demo/customer-desk.test.js:808`, its own commit | pass | `6e37786`; `t5-green.txt` | no assertion changed |

@@ -71,6 +71,11 @@ const SIM_GATES = Object.freeze({
     platform: 'okta', effect: 'clears the Okta user\'s sessions',
     apply: (s, t, now) => { s.okta.logs.push({ eventType: 'user.session.clear', published: now, target: [{ id: t['[OKTA_USER_ID]'] }], outcome: { result: 'SUCCESS' } }); },
   },
+  // batch 9b: the Okta Verify loop's admin step in okta-mfa-reset, the same change as Phase C above
+  'okta-mfa-reset-clear-sessions-portal': {
+    platform: 'okta', effect: 'clears the Okta user\'s sessions',
+    apply: (s, t, now) => { s.okta.logs.push({ eventType: 'user.session.clear', published: now, target: [{ id: t['[OKTA_USER_ID]'] }], outcome: { result: 'SUCCESS' } }); },
+  },
   'okta-user-lifecycle-unsuspend-portal': {
     platform: 'okta', effect: 'unsuspends the Okta user',
     apply: (s, t) => { s.okta.users[t['[OKTA_USER_ID]']].status = 'ACTIVE'; },

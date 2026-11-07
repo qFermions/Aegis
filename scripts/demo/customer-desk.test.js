@@ -1294,6 +1294,24 @@ test('a messy ticket gets past sign-off: its approval reference is a key the aud
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
 });
 
+// Batch 9b: the Okta Verify loop's admin step is the gate okta-mfa-reset-clear-sessions-portal. With the
+// simulated operator's entry, T9m closes RESOLVED (SIMULATED) only when the real Okta client finds the
+// session clear at or after the approval time. Wrong implementations it catches: no simulator entry (OPEN,
+// not simulated); an entry that writes no log event or another event type (FAILED read-back); the catalog
+// not finding the section's one read (no read-back, so not proved).
+test('batch 9b: T9m with the loop section\'s session-clear gate closes RESOLVED (SIMULATED), read back by verify-sessions-cleared', async (t) => {
+  const { catalog } = require('./catalog.js');
+  assert.deepEqual(catalog().get('okta-mfa-reset-clear-sessions-portal').reads.map((r) => r.kind), ['okta:verify-sessions-cleared']);
+  const r = await runDesk(t, { only: ['T9m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'okta verify keeps looping', answer: good('okta-mfa-reset-clear-sessions-portal') }] } });
+  const k = r.ticket('T9m');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['okta:verify-sessions-cleared PASS']);
+  const { SIM_GATES: real } = require('./sim/gates.js');
+  const simTable = { ...real, 'okta-mfa-reset-clear-sessions-portal': { ...real['okta-mfa-reset-clear-sessions-portal'], apply: real['okta-user-lifecycle-reset-password-portal'].apply } };
+  const wrong = await runDesk(t, { only: ['T9m'], argv: ['--set', 'messy'], answers: {}, deps: { simTable }, sut: { answers: [{ match: 'okta verify keeps looping', answer: good('okta-mfa-reset-clear-sessions-portal') }] } });
+  assert.equal(wrong.ticket('T9m').closing_state, 'FAILED', 'a simulated change that is not a session clear fails its read-back');
+});
+
 // Code review 1, finding 3: the simulated lock wrote its command under commandType, but the Jamf client
 // matches on command, so a lock read-back found nothing and read as "not done". A pending lock must read
 // as not proved yet (exit 5), never as a failure (exit 2).

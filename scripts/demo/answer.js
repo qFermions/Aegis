@@ -277,8 +277,12 @@ function userMessageProblems(message, ticket = '') {
       const planned = (m) => PLAN_CLAUSE.test(clause.slice(0, m.index));
       // a ticket, request or case that has been assigned, approved, updated or moved is routing, not a change
       // (code review round 3 of batch 9, finding 8)
-      const routing = /\b(?:ticket|request|case|issue|query)\s+(?:has|have)\s+(?:now\s+|already\s+|just\s+)?been\b/i.test(clause);
-      for (const re of [...DONE_CLAIMS, ...(routing ? [] : [doneParticiple()])]) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
+      // only the routing span is skipped: a claim after it in the same clause still counts (final security review)
+      for (const re of DONE_CLAIMS) { const m = re.exec(clause); if (m && !planned(m)) found.push(`says a change is done ("${m[0].trim()}")`); }
+      for (const m of clause.matchAll(new RegExp(doneParticiple().source, 'gi'))) {
+        const routing = /\b(?:ticket|request|case|issue|query)\s*$/i.test(clause.slice(0, m.index));
+        if (!routing && !planned(m)) { found.push(`says a change is done ("${m[0].trim()}")`); break; }
+      }
       const d = DECIDED_ACTION.exec(clause);
       // an announced change that waits on a condition is a plan wherever the condition sits ("We'll reset it
       // once your manager approves"; code review round 2 of batch 9, finding 9)

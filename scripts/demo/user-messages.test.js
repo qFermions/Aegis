@@ -336,3 +336,10 @@ test('code review 3, finding 11: "in the Details section of this answer" is the 
   assert.match(a.fixCard(cardWith({ extra: ['', 'The full plan is in the Details section of this answer.'] })).pointer || '', /Details section/); // the section exclusion rejected a real pointer
   assert.equal(a.fixCard(cardWith({ now: 'We are on it. Please add your device name\nin the details field of your ticket.' })).pointer, null);
 });
+
+// Final security review (batch 9), below its bar: a routing mention skipped the whole clause, so a done claim after
+// it passed. Wrong implementation it catches: skipping the clause instead of the routing span.
+test('final security review: a done claim after a ticket routing mention in the same clause still fails', () => {
+  assert.notDeepEqual(a.userMessageProblems('Your ticket has been updated and your password has been reset.'), []);
+  assert.deepEqual(a.userMessageProblems('Your ticket has been assigned to a technician.'), []);
+});

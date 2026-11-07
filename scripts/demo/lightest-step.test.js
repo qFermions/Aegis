@@ -87,4 +87,6 @@ test('code review 1, finding 8: a Try first or Lighter step line counts as a lig
   const c = catalog(dir);
   assert.equal(lightestStepFirst(answer('ex-wipe-portal'), c).verdict, 'fail');
   assert.equal(lightestStepFirst(answer('ex-all-reset'), c).verdict, 'fail');
+  fs.writeFileSync(path.join(dir, 'example-lost.md'), ['# Lost', '## Lost', '**User check:** confirm the phone is gone.', '', portal('ex-lost-wipe', 'R3', 'erase the phone'), ''].join('\n'));
+  assert.equal(lightestStepFirst(answer('ex-lost-wipe'), catalog(dir)).verdict, 'pass', 'a User check is no admin step');
 });

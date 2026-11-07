@@ -167,7 +167,7 @@
       "title": "Okta Verify sign-in loop on a Mac after a macOS update (the owner's real ticket, MF-1)",
       "change_class": "R2",
       "probe": "none",
-      "expected_path": "The user checks first, then the admin step from okta-mfa-reset's sign-in loop section (a PREVIEW ONLY admin re-authentication until the owner confirms the exact menu action), and Reset Authenticators only as the last resort.",
+      "expected_path": "The user checks first, then the admin step from okta-mfa-reset's sign-in loop section (the session clear gate okta-mfa-reset-clear-sessions-portal, since batch 9b), and Reset Authenticators only as the last resort.",
       "targets": {
         "okta": {
           "[OKTA_USER_ID]": "00u1dem0dLOOPa1b2c3"

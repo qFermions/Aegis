@@ -1,0 +1,41 @@
+✔ five customers and eight tickets, each with the fields the desk reads (2.053208ms)
+✔ the charter's customer stacks and ticket routing hold (0.129666ms)
+✔ every domain in the data is an example.* domain; a real domain is caught (3.681333ms)
+✔ every person is a placeholder or a role; a name is caught (0.683792ms)
+✔ intake ACCEPTS every ticket under its own customer's tenant variables, and flags T6 (8.088042ms)
+✔ the targets and tenant files fill the customer domain and name no address outside it (0.144333ms)
+✖ the messy set: T1m to T8m, each with its twin's customer, source, class, probe and targets; T9m on its own (0.591834ms)
+✔ each messy body is the charter's text exactly, with only the headers its format needs (1.005209ms)
+✔ task 7: every customer has a profile with its stack, identity rule, approver and hours, and no name or real domain (0.939792ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63.148417
+
+✖ failing tests:
+
+test at scripts/demo/customers.test.js:132:1
+✖ the messy set: T1m to T8m, each with its twin's customer, source, class, probe and targets; T9m on its own (0.591834ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /okta-mfa-reset-clear-sessions-portal/. Input:
+  
+  "The user checks first, then the admin step from okta-mfa-reset's sign-in loop section (a PREVIEW ONLY admin re-authentication until the owner confirms the exact menu action), and Reset Authenticators only as the last resort."
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/customers.test.js:140:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "The user checks first, then the admin step from okta-mfa-reset's sign-in loop section (a PREVIEW ONLY admin re-authentication until the owner confirms the exact menu action), and Reset Authenticators only as the last resort.",
+    expected: /okta-mfa-reset-clear-sessions-portal/,
+    operator: 'match',
+    diff: 'simple'
+  }
+exit 1

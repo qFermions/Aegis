@@ -76,3 +76,15 @@ test('the desk shows it as its own row at step 5, and a failed row does not stop
   const close = desk.slice(desk.indexOf('// 5 CHECKS'), desk.indexOf('// 6 APPROVAL'));
   assert.doesNotMatch(close, /lightest[^\n]*close\(/, 'no close() is driven by the row');
 });
+
+// Code review round 1 (batch 9), finding 8: a "Try first:" or "Lighter step:" line names a lighter admin action
+// (often a gate in another phase), but the row counted only gates and markers. Wrong implementation it catches:
+// every ladder line read as a user step.
+test('code review 1, finding 8: a Try first or Lighter step line counts as a lighter admin step; a User check does not', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-wipe.md'), ['# Example', '## Wipe', '**Try first:** Phase B, lock the Mac.', '', portal('ex-wipe-portal', 'R3', 'erase the Mac'), '', '## Reset', '**Lighter step:** sign the user out.', '', portal('ex-all-reset', 'R3', 'reset every authenticator'), ''].join('\n'));
+  const c = catalog(dir);
+  assert.equal(lightestStepFirst(answer('ex-wipe-portal'), c).verdict, 'fail');
+  assert.equal(lightestStepFirst(answer('ex-all-reset'), c).verdict, 'fail');
+});

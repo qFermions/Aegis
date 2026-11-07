@@ -91,7 +91,9 @@ function sectionEvents(text, runbook = '') {
       return;
     }
     for (const m of l.matchAll(PREVIEW)) current.events.push({ kind: HEAVY.test(ownWords(m[1], runbook)) ? 'other' : 'lighter', id: m[1], line: i + 1, admin: true });
-    if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: 'a user check or lighter step line', line: i + 1, admin: false });
+    // a User check is the user's own step; Try first and Lighter step name a lighter admin action, often a gate in
+    // another phase (code review round 1 of batch 9, finding 8)
+    if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: /\*\*User check\b/i.test(l) ? 'a user check line' : 'a lighter step line', line: i + 1, admin: !/\*\*User check\b/i.test(l) });
     if (NO_LIGHTER.test(l)) current.escape = true;
   });
   sections.push(current);

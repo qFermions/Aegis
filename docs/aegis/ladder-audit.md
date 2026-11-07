@@ -34,9 +34,9 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Microsoft | email-quarantine | no | 6. Add sender to allow list (Tenant Allow/Block List - preferred) (106) | quarantine-delete-portal | pass | quarantine-allow-entry (line 107) comes first |
 | Microsoft | email-quarantine | no | 7. Set up quarantine notifications (so users get alerted automatically) (131) | quarantine-release-all | pass | quarantine-policy-change (line 132) comes first |
 | Microsoft | email-to-spam | no | Step 4 - OUTBOUND path: diagnose why YOUR mail lands in others' spam (90) | restricted-entity-unblock-portal | pass | email-spam-outbound-remediation (line 92) comes first |
-| Fleet | fleet-device-actions | yes | Phase D: Stolen with sensitive data, Wipe (R3, after independent review) (132) | fleet-device-actions-wipe-portal | pass | a user check or lighter step line (line 140) comes first |
+| Fleet | fleet-device-actions | yes | Phase D: Stolen with sensitive data, Wipe (R3, after independent review) (132) | fleet-device-actions-wipe-portal | pass | a lighter step line (line 140) comes first |
 | Fleet | fleet-device-actions | yes | E1: One host (173) | fleet-device-actions-run-script-portal | pass | the section says why no lighter step applies |
-| Fleet | fleet-device-actions | yes | E2: More than one host (R3) (194) | fleet-device-actions-batch-script-portal | pass | a user check or lighter step line (line 202) comes first |
+| Fleet | fleet-device-actions | yes | E2: More than one host (R3) (194) | fleet-device-actions-batch-script-portal | pass | a lighter step line (line 202) comes first |
 | Fleet | fleet-device-actions | yes | F1: Turn off MDM (225) | fleet-device-actions-mdm-off-portal | pass | the section says why no lighter step applies |
 | Fleet | fleet-device-actions | yes | F2: Delete the host record (254) | fleet-device-actions-delete-portal | pass | the section says why no lighter step applies |
 | Fleet | fleet-device-actions | yes | Phase G: Cancel a pending action (the rollback window) (276) | fleet-device-actions-run-script-cli | pass | fleet-device-actions-cancel-portal (line 289) comes first |
@@ -64,15 +64,15 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Google | gws-2sv-enforcement | yes | Phase D: Enforce (R3) (312) | gws-2sv-enforcement-enforce-portal | pass | the section says why no lighter step applies |
 | Google | gws-2sv-enforcement | yes | Phase E: Only security key (R3, optional) (355) | gws-2sv-enforcement-keys-only-portal | pass | the section says why no lighter step applies |
 | Google | gws-2sv-enforcement | yes | Phase E rollback: restore the Phase A methods (R3) (392) | gws-2sv-enforcement-methods-restore-portal | pass | the section says why no lighter step applies |
-| Google | gws-2sv-enforcement | yes | Phase F: Turn enforcement off (R3, rollback or a dated exception only) (427) | gws-2sv-enforcement-off-portal | pass | a user check or lighter step line (line 439) comes first |
-| Google | gws-2sv-reset | yes | Phase E - Last resort: turn 2SV off for one user (R3, security control) (134) | gws-2sv-reset-turn-off-portal | pass | a user check or lighter step line (line 140) comes first |
+| Google | gws-2sv-enforcement | yes | Phase F: Turn enforcement off (R3, rollback or a dated exception only) (427) | gws-2sv-enforcement-off-portal | pass | a lighter step line (line 439) comes first |
+| Google | gws-2sv-reset | yes | Phase E - Last resort: turn 2SV off for one user (R3, security control) (134) | gws-2sv-reset-turn-off-portal | pass | a lighter step line (line 140) comes first |
 | Google | gws-account-containment | yes | Phase B: Suspend the account (R2) (82) | gws-account-containment-suspend-portal | pass | the section says why no lighter step applies |
 | Google | gws-account-containment | yes | Phase C: Reset the password (R2) (118) | gws-account-containment-password-portal | pass | the section says why no lighter step applies |
 | Google | gws-admin-roles | no | Phase B1: Allow super admin account recovery for one unit (R3) (106) | gws-admin-roles-recovery-allow-portal | fail | gws-admin-roles-recovery-allow-portal (line 116) has no lighter step before it in this section |
 | Google | gws-admin-roles | no | Phase B2: Turn off super admin account recovery for one unit (R3) (137) | gws-admin-roles-recovery-off-portal | fail | gws-admin-roles-recovery-off-portal (line 147) has no lighter step before it in this section |
 | Google | gws-admin-roles | no | Phase C: Assign a role (R3) (168) | gws-admin-roles-assign-portal | fail | gws-admin-roles-assign-portal (line 182) has no lighter step before it in this section |
 | Google | gws-admin-roles | no | Phase D1: Remove Super Admin from one user (R3) (208) | gws-admin-roles-remove-super-admin-portal | fail | gws-admin-roles-remove-super-admin-portal (line 220) has no lighter step before it in this section |
-| Google | gws-chromeos-device | yes | Phase D - Broken profile or start-over: Reset (R3) (101) | gws-chromeos-device-clear-profiles-portal | pass | a user check or lighter step line (line 105) comes first |
+| Google | gws-chromeos-device | yes | Phase D - Broken profile or start-over: Reset (R3) (101) | gws-chromeos-device-clear-profiles-portal | pass | a user check line (line 105) comes first |
 | Google | gws-chromeos-device | yes | Phase E - Retirement: deprovision (R3, after independent review) (137) | gws-chromeos-device-deprovision-portal | pass | the section says why no lighter step applies |
 | Google | gws-drive-sharing | no | E1: Restrict to allowlisted domains (197) | gws-drive-sharing-restrict-portal | fail | gws-drive-sharing-restrict-portal (line 203) has no lighter step before it in this section |
 | Google | gws-drive-sharing | no | E2: Turn external sharing off (217) | gws-drive-sharing-turn-off-portal | fail | gws-drive-sharing-turn-off-portal (line 223) has no lighter step before it in this section |
@@ -80,10 +80,10 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Google | gws-license-assign | no | Phase 3 - Remove a licence (R3, SR-2) (83) | gws-license-assign-remove-portal | fail | gws-license-assign-remove-portal (line 89) has no lighter step before it in this section |
 | Google | gws-offboard | yes | Phase A - Start in Okta (the identity source) (44) | gws-offboard-okta-deactivate-portal | pass | the section says why no lighter step applies |
 | Google | gws-offboard | yes | Phase B - Contain in Google (only if Okta did not suspend the account) (68) | gws-offboard-suspend-portal | pass | the section says why no lighter step applies |
-| Google | gws-offboard | yes | Phase D - Delete, or keep suspended (R3, after independent review) (134) | gws-offboard-delete-portal | pass | a user check or lighter step line (line 138) comes first |
+| Google | gws-offboard | yes | Phase D - Delete, or keep suspended (R3, after independent review) (134) | gws-offboard-delete-portal | pass | a lighter step line (line 138) comes first |
 | Google | gws-offboard | yes | Phase E - Devices (154) | gws-offboard-okta-deactivate | pass | gws-offboard-devices-preview (line 156) comes first |
-| Google | gws-password-reset | yes | Phase B - Reset the password (R1 gate) (54) | gws-password-reset-password-portal | pass | a user check or lighter step line (line 60) comes first |
-| Google | gws-password-reset | yes | Phase C - Optional: reset the sign-in cookies (R1 gate) (90) | gws-password-reset-cookies-portal | pass | a user check or lighter step line (line 94) comes first |
+| Google | gws-password-reset | yes | Phase B - Reset the password (R1 gate) (54) | gws-password-reset-password-portal | pass | a user check line (line 60) comes first |
+| Google | gws-password-reset | yes | Phase C - Optional: reset the sign-in cookies (R1 gate) (90) | gws-password-reset-cookies-portal | pass | a user check line (line 94) comes first |
 | Google | gws-security-posture | no | E1: Turn off automatic forwarding for a unit (232) | gws-security-posture-forwarding-off-portal | fail | gws-security-posture-forwarding-off-portal (line 238) has no lighter step before it in this section |
 | Google | gws-security-posture | no | E2: Allow automatic forwarding for a unit (261) | gws-security-posture-forwarding-allow-portal | fail | gws-security-posture-forwarding-allow-portal (line 267) has no lighter step before it in this section |
 | Google | gws-security-posture | no | E3: Block a third-party app for a unit (289) | gws-security-posture-app-block-portal | fail | gws-security-posture-app-block-portal (line 295) has no lighter step before it in this section |
@@ -92,13 +92,13 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Jamf | jamf-config-profiles | no | Phase G: Take a group or All Computers out of scope (R2 for a group of 10 Macs or fewer, R3 above 10 or for All Computers) (308) | jamf-config-profiles-remove-all-computers-portal | pass | jamf-config-profiles-remove-pilot-portal (line 318) comes first |
 | Jamf | jamf-enroll-mac | yes | Phase D - The pane was skipped: re-run enrollment without erasing (108) | jamf-enroll-mac-renew | pass | the section says why no lighter step applies |
 | Jamf | jamf-filevault | yes | Phase B: Turn FileVault on with an escrowing profile (R3) (89) | jamf-filevault-pilot-profile-portal | pass | the section says why no lighter step applies |
-| Jamf | jamf-filevault | yes | Phase C: Forgotten password: show the key to unlock one Mac (R3 disclosure) (171) | jamf-filevault-show-key-portal | pass | a user check or lighter step line (line 179) comes first |
+| Jamf | jamf-filevault | yes | Phase C: Forgotten password: show the key to unlock one Mac (R3 disclosure) (171) | jamf-filevault-show-key-portal | pass | a user check line (line 179) comes first |
 | Jamf | jamf-inventory-groups | no | Phase C: Smart groups: count, find every use, then create or change criteria (R1, R2 or R3) (164) | jamf-inventory-groups-smart-criteria-portal | pass | jamf-inventory-groups-smart-create-portal (line 191) comes first |
 | Jamf | jamf-inventory-groups | no | Phase D: Change a static group's members (R2, R3 above 10 Macs) (246) | jamf-inventory-groups-static-members-portal | fail | jamf-inventory-groups-static-members-portal (line 256) has no lighter step before it in this section |
 | Jamf | jamf-inventory-groups | no | Phase E: Delete a smart group (R3, after independent review) (281) | jamf-inventory-groups-delete-portal | pass | jamf-inventory-groups-limitation-exclusion-preview (line 295) comes first |
-| Jamf | jamf-lock-erase | yes | Phase C - Stolen with sensitive data: Wipe Computer (R3, after independent review) (79) | jamf-lock-erase-wipe-portal | pass | a user check or lighter step line (line 85) comes first |
+| Jamf | jamf-lock-erase | yes | Phase C - Stolen with sensitive data: Wipe Computer (R3, after independent review) (79) | jamf-lock-erase-wipe-portal | pass | a lighter step line (line 85) comes first |
 | Jamf | jamf-lock-erase | yes | Phase D - Sold or leaving the fleet: unmanage (R3, after independent review) (110) | jamf-lock-erase-unmanage | pass | the section says why no lighter step applies |
-| Jamf | jamf-lock-erase | yes | Phase E - Supervised iPhone or iPad: Lost Mode (R1) (168) | jamf-lock-erase-wipe-api | pass | a user check or lighter step line (line 172) comes first |
+| Jamf | jamf-lock-erase | yes | Phase E - Supervised iPhone or iPad: Lost Mode (R1) (168) | jamf-lock-erase-wipe-api | pass | a user check line (line 172) comes first |
 | Jamf | jamf-patch-management | no | Phase D: Widen the patch policy to the rollout group (R3, after independent review) (151) | jamf-patch-management-widen-policy-portal | fail | jamf-patch-management-widen-policy-portal (line 160) has no lighter step before it in this section |
 | Jamf | jamf-patch-management | no | Phase E: macOS minor or major update with Managed Software Updates (R3) (175) | jamf-patch-management-pilot-plan-portal | fail | jamf-patch-management-pilot-plan-portal (line 188) has no lighter step before it in this section |
 | Jamf | jamf-patch-management | no | Phase F: App Installers for a Jamf App Catalog app (R2 pilot, R3 rollout after independent review) (235) | jamf-patch-management-app-installer-rollout-portal | pass | jamf-patch-management-app-installer-portal (line 244) comes first |
@@ -131,12 +131,12 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Okta | okta-group-membership | no | Phase D3: Deactivate a group rule (215) | okta-group-membership-rule-deactivate-portal | fail | okta-group-membership-rule-deactivate-portal (line 217) has no lighter step before it in this section |
 | Okta | okta-group-membership | no | Phase E1: Add the listed people (243) | okta-group-membership-bulk-add-portal | fail | okta-group-membership-bulk-add-portal (line 247) has no lighter step before it in this section |
 | Okta | okta-group-membership | no | Phase E2: Remove the listed people (267) | okta-group-membership-bulk-remove-portal | fail | okta-group-membership-bulk-remove-portal (line 271) has no lighter step before it in this section |
-| Okta | okta-mfa-reset | yes | Phase B: Reset the affected authenticator (the new-phone fix) (75) | okta-mfa-reset-selected-portal | pass | a user check or lighter step line (line 79) comes first |
-| Okta | okta-mfa-reset | yes | Phase C: Reset ALL authenticators (separate gate) (107) | okta-mfa-reset-all-portal | pass | a user check or lighter step line (line 111) comes first |
+| Okta | okta-mfa-reset | yes | Phase B: Reset the affected authenticator (the new-phone fix) (75) | okta-mfa-reset-selected-portal | pass | a user check line (line 79) comes first |
+| Okta | okta-mfa-reset | yes | Phase C: Reset ALL authenticators (separate gate) (107) | okta-mfa-reset-all-portal | pass | a lighter step line (line 111) comes first |
 | Okta | okta-user-lifecycle | yes | Phase B: Reset the password (R2) (96) | okta-user-lifecycle-reset-password-portal | pass | okta-user-lifecycle-unlock-preview (line 109) comes first |
-| Okta | okta-user-lifecycle | yes | Phase F: Deactivate (R3) (203) | okta-user-lifecycle-deactivate-portal | pass | a user check or lighter step line (line 207) comes first |
-| Okta | okta-user-lifecycle | yes | Phase H: Delete (R3, permanent, after deactivation and independent review) (262) | okta-user-lifecycle-delete-portal | pass | a user check or lighter step line (line 266) comes first |
-| Microsoft | password-reset | yes | Step-by-step fix (portal/GUI first) (19) | password-cloud-reset | pass | a user check or lighter step line (line 21) comes first |
+| Okta | okta-user-lifecycle | yes | Phase F: Deactivate (R3) (203) | okta-user-lifecycle-deactivate-portal | pass | a lighter step line (line 207) comes first |
+| Okta | okta-user-lifecycle | yes | Phase H: Delete (R3, permanent, after deactivation and independent review) (262) | okta-user-lifecycle-delete-portal | pass | a lighter step line (line 266) comes first |
+| Microsoft | password-reset | yes | Step-by-step fix (portal/GUI first) (19) | password-cloud-reset | pass | a user check line (line 21) comes first |
 | General | printer-issue | no | Step-by-step fix (18) | print-queue-delete-portal | pass | printer-network-add-initial (line 26) comes first |
 | Microsoft | security-alert-triage | no | Step-by-step (portal first) (18) | security-account-block | pass | security-account-block-portal (line 22) comes first |
 | Slack | slack-app-approval | no | Phase D: Require approval for every app (R3) (132) | slack-app-approval-require-portal | fail | slack-app-approval-require-portal (line 139) has no lighter step before it in this section |

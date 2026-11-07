@@ -133,7 +133,8 @@ function actionSteps(lines, id) {
   return lines.slice(at + 1, end < 0 ? lines.length : end).filter((l) => /^\s*[23]\.\s/.test(l));
 }
 const block = (heading) => { const parts = TEXT.split(heading); assert.equal(parts.length, 2, `one "${heading}"`); return parts[1].split('\n## ')[0]; };
-const fastPath = () => { const lines = TEXT.split('\n'); const at = lines.indexOf('## Fast path'); assert.ok(at >= 0, 'a Fast path'); return lines.slice(at, lines.findIndex((l, i) => i > at && /^## /.test(l))); };
+// the Fast path to the next heading, or to the end of the file when none follows (code review 3, a cleanup it noted)
+const fastPath = () => { const lines = TEXT.split('\n'); const at = lines.indexOf('## Fast path'); assert.ok(at >= 0, 'a Fast path'); const end = lines.findIndex((l, i) => i > at && /^## /.test(l)); return lines.slice(at, end < 0 ? lines.length : end); };
 
 test('the PORTAL ACTION dialog and read-back steps are Phase C\'s word for word', () => {
   // code review 1 of batch 9b, finding 8: catches the two copies of the session clear drifting apart past the field lines

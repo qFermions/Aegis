@@ -805,7 +805,9 @@ test('T8 hits the cache when T4 was verified in the same run: no second session,
   assert.deepEqual(members, ['e1000000-0000-4000-8000-000000000001', 'e1000000-0000-4000-8000-000000000002'], 'each ticket changed its own person');
 });
 
-test('with the real runbooks T4 cannot resolve, so T8 is a replay MISS and gets its own session (the gap for the owner)', async (t) => {
+// The answer names mailbox-grant-portal, an id no runbook holds, so T4 closes OPEN; since batch 9 the real
+// grant gates exist (the "batch 9, task 5" tests resolve T4 and T8 with them), so this is no longer a runbook gap.
+test('when T4 names a gate no runbook holds it stays OPEN, so T8 is a replay MISS and gets its own session', async (t) => {
   const answer = good('mailbox-grant-portal');
   const r = await runDesk(t, { only: ['T4', 'T8'], answers: { T4: answer, T8: answer } });
   assert.equal(r.ticket('T4').closing_state, 'OPEN');
@@ -1292,6 +1294,24 @@ test('a messy ticket gets past sign-off: its approval reference is a key the aud
   const r = await runDesk(t, { only: ['T2m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'cut them off', answer: good('okta-user-lifecycle-deactivate-portal') }] } });
   const k = r.ticket('T2m');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+});
+
+// Batch 9b: the Okta Verify loop's admin step is the gate okta-mfa-reset-clear-sessions-portal. With the
+// simulated operator's entry, T9m closes RESOLVED (SIMULATED) only when the real Okta client finds the
+// session clear at or after the approval time. Wrong implementations it catches: no simulator entry (OPEN,
+// not simulated); an entry that writes no log event or another event type (FAILED read-back); the catalog
+// not finding the section's one read (no read-back, so not proved).
+test('batch 9b: T9m with the loop section\'s session-clear gate closes RESOLVED (SIMULATED), read back by verify-sessions-cleared', async (t) => {
+  const { catalog } = require('./catalog.js');
+  assert.deepEqual(catalog().get('okta-mfa-reset-clear-sessions-portal').reads.map((r) => r.kind), ['okta:verify-sessions-cleared']);
+  const r = await runDesk(t, { only: ['T9m'], argv: ['--set', 'messy'], answers: {}, sut: { answers: [{ match: 'okta verify keeps looping', answer: good('okta-mfa-reset-clear-sessions-portal') }] } });
+  const k = r.ticket('T9m');
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
+  assert.deepEqual(step(k, 8).reads.map((x) => `${x.kind} ${x.state}`), ['okta:verify-sessions-cleared PASS']);
+  assert.equal(SIM_GATES['okta-mfa-reset-clear-sessions-portal'], SIM_GATES['okta-user-lifecycle-clear-sessions-portal'], 'one shared session-clear entry');
+  const simTable = { ...SIM_GATES, 'okta-mfa-reset-clear-sessions-portal': { ...SIM_GATES['okta-mfa-reset-clear-sessions-portal'], apply: SIM_GATES['okta-user-lifecycle-reset-password-portal'].apply } };
+  const wrong = await runDesk(t, { only: ['T9m'], argv: ['--set', 'messy'], answers: {}, deps: { simTable }, sut: { answers: [{ match: 'okta verify keeps looping', answer: good('okta-mfa-reset-clear-sessions-portal') }] } });
+  assert.equal(wrong.ticket('T9m').closing_state, 'FAILED', 'a simulated change that is not a session clear fails its read-back');
 });
 
 // Code review 1, finding 3: the simulated lock wrote its command under commandType, but the Jamf client

@@ -73,7 +73,8 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // four grants, quarantine-release-all-portal, quarantine-release-one-portal and their twins
   // quarantine-release-all and quarantine-release-one name read-backs (97 to 105); task 7:
   // jamf-lock-erase-wipe-portal names jamf-client.js verify-command --type ERASE_DEVICE (105 to 106)
-  assert.equal(gates, 348, 'every runbook gate');
+  // batch 9b: okta-mfa-reset-clear-sessions-portal, the Okta Verify loop's admin step (348 to 349; R1, it names no read-back)
+  assert.equal(gates, 349, 'every runbook gate');
   // code review round 1 of batch 9, finding 13: jamf-lock-erase-wipe-api names its portal twin's read-back (106 to 107)
   assert.equal(naming, 107, 'the gates that name read-backs');
 });

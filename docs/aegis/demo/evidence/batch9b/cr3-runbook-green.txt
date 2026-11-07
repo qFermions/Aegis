@@ -1,0 +1,25 @@
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.538958ms)
+✔ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.308917ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.071625ms)
+✔ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.770416ms)
+✔ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.241875ms)
+✔ the PORTAL ACTION dialog and read-back steps are Phase C's word for word (0.206542ms)
+✔ the Placeholders line defines [NOT_BEFORE] in the form the connector takes (0.08375ms)
+✔ the Fast path sends a loop ticket to its section first, with Phase B or Phase C as its last resort (0.16325ms)
+✔ the checklist has the session-clear item, which names how many reset items it waives and keeps the compromise item (0.134875ms)
+✔ a completed Jira form needs every read-back of the changes made, never only the ones that ran (0.116167ms)
+✔ the Jira note has a completed form for the loop fixed by the session clear alone (0.102417ms)
+✔ the reset form fits the session clear then the reset: its slot, the Mac, and the signed_nonce read (0.073125ms)
+✔ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.109334ms)
+✔ the admin step says where it comes from and the two Okta limits on More Actions (0.078042ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.074417ms)
+✔ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (4.634625ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.962542
+exit 0

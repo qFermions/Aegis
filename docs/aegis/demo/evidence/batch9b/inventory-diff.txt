@@ -1,0 +1,52 @@
+$ git diff c0f3757 -- docs/security/STATE_CHANGE_INVENTORY.json
+diff --git a/docs/security/STATE_CHANGE_INVENTORY.json b/docs/security/STATE_CHANGE_INVENTORY.json
+index f2a2d5c..7be3ecf 100644
+--- a/docs/security/STATE_CHANGE_INVENTORY.json
++++ b/docs/security/STATE_CHANGE_INVENTORY.json
+@@ -6983,6 +6983,26 @@
+         "security-sensitive"
+       ]
+     },
++    {
++      "id": "okta-mfa-reset-clear-sessions-portal",
++      "file": ".claude/commands/okta-mfa-reset.md",
++      "kind": "portal",
++      "mode": "gated",
++      "sinks": [
++        {
++          "sink": "portal:clear",
++          "count": 2
++        }
++      ],
++      "impactCategories": [
++        "credential-related",
++        "data-removal related",
++        "destructive",
++        "external-system mutation",
++        "identity-related",
++        "security-sensitive"
++      ]
++    },
+     {
+       "id": "okta-mfa-reset-factor",
+       "file": ".claude/commands/okta-mfa-reset.md",
+@@ -7292,19 +7312,6 @@
+         "permission-related"
+       ]
+     },
+-    {
+-      "id": "okta-verify-loop-admin-reauth",
+-      "file": ".claude/commands/okta-mfa-reset.md",
+-      "kind": "portal",
+-      "mode": "preview",
+-      "sinks": [],
+-      "impactCategories": [
+-        "credential-related",
+-        "external-system mutation",
+-        "identity-related",
+-        "security-sensitive"
+-      ]
+-    },
+     {
+       "id": "onedrive-client-reset",
+       "file": ".claude/commands/onedrive-issue.md",

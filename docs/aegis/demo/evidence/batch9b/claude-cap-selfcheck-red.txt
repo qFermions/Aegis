@@ -1,0 +1,17 @@
+$ bash tools/claude-cap-selfcheck.sh against the d0eecec wrapper (the code review 2 version)
+FAIL  -p x --max-budget-usd -1
+      -> -p x -1 --max-budget-usd 1.50 (wanted: -p x --max-budget-usd 1.50)
+FAIL  -p x --max-budget-usd -0.5
+      -> -p x -0.5 --max-budget-usd 1.50 (wanted: -p x --max-budget-usd 1.50)
+--
+FAIL  -p x --max-budget-usd .5
+      -> -p x --max-budget-usd 1.50 (wanted: -p x --max-budget-usd .5)
+--
+FAIL  -p x --max-budget-usd 1.
+      -> -p x --max-budget-usd 1.50 (wanted: -p x --max-budget-usd 1.)
+--
+FAIL  -p x --max-budget-usd 0
+      -> -p x --max-budget-usd 0 (wanted: -p x --max-budget-usd 1.50)
+FAIL  -p x --max-budget-usd 0.00
+      -> -p x --max-budget-usd 0.00 (wanted: -p x --max-budget-usd 1.50)
+ok cases: 14, exit 1

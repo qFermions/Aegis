@@ -1,0 +1,18 @@
+✔ five customers and eight tickets, each with the fields the desk reads (0.901459ms)
+✔ the charter's customer stacks and ticket routing hold (0.142625ms)
+✔ every domain in the data is an example.* domain; a real domain is caught (2.295583ms)
+✔ every person is a placeholder or a role; a name is caught (0.770958ms)
+✔ intake ACCEPTS every ticket under its own customer's tenant variables, and flags T6 (7.543708ms)
+✔ the targets and tenant files fill the customer domain and name no address outside it (0.139167ms)
+✔ the messy set: T1m to T8m, each with its twin's customer, source, class, probe and targets; T9m on its own (0.382584ms)
+✔ each messy body is the charter's text exactly, with only the headers its format needs (1.292833ms)
+✔ task 7: every customer has a profile with its stack, identity rule, approver and hours, and no name or real domain (0.315375ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53.793709
+exit 0

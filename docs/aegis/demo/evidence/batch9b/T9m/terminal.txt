@@ -1,0 +1,67 @@
+T9m alone at 9523ad7 (prediction committed in d500a87), one session; Claude Code variables unset (12 variables: CLAUDECODE CLAUDE_CODE_BRIDGE_SESSION_ID CLAUDE_CODE_CHILD_SESSION CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_EXECPATH CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ATTENDED CLAUDE_CODE_SESSION_ID CLAUDE_CODE_SSE_PORT CLAUDE_EFFORT CLAUDE_PID ); the claude-cap wrapper first on PATH (tools/claude-cap.sh), its log: claude-cap: --max-budget-usd 1.50 (desk asked: --max-budget-usd 2.00)
+
+$ node scripts/demo/customer-desk.js run --set messy --only T9m --budget-usd 2 --execute
+
+=== T9m: Okta Verify sign-in loop on a Mac after a macOS update (the owner's real ticket, MF-1) ===
+T9m step 1 CUSTOMER | Customer D: 30-person software startup | SIMULATED | sent a Slack thread: Okta Verify sign-in loop on a Mac after a macOS update (the owner's real ticket, MF-1) | 1 ms
+T9m step 2 INTAKE | Aegis intake | REAL | ACCEPTED, redactions: 0 email, 0 phone, 0 mention, 0 tenant value; injection flags: 0 | 5 ms
+T9m step 3 TRIAGE | Aegis replay and graph | REAL | replay MISS, risk floor none, graph case atg-23d2d658-b3c6-4ea7-9097-171d3ee0fdf0 at ROUTER | 66 ms
+T9m step 4 AEGIS | Aegis session | REAL | answered: claude-opus-5-5, 5 turns, 0.2905 US dollars | 31.5 s
+--- Answer ---
+## Fix
+**What's wrong:** Okta Verify on [FIRST_NAME]'s Mac keeps sending them back to sign in since the macOS update, and reinstalling it didn't help.
+**Do this:**
+1. Okta Admin Console → Reports → System Log → search [UPN]. Look at the Okta Verify sign-ins since the update. Repeated failures with the same reason point to old sign-in data left on the Mac. Prompts or locations the user doesn't recognize mean you should stop.
+2. Ask them to quit Okta Verify fully, reopen it and sign in once. If it still loops, restart the Mac and try once more.
+3. Write the macOS version (from Fleet → Hosts → [DEVICE_NAME]) and the Okta Verify version in the ticket.
+4. If it still loops: Directory → People → [UPN] → More Actions → Clear User Sessions. Then the user signs in again.
+5. Last resort: Reset Authenticators and tick only Okta Verify.
+**Done when:** the user finishes one full sign-in without looping.
+**Stop if:** the System Log shows activity the user didn't do. Then handle it as a security report.
+**Tell the user now:** IT is looking at your sign-in. Please quit Okta Verify completely, open it again and sign in once, then tell us what happens.
+**Tell the user when done:** Your sign-in works again. If Okta Verify loops again, reply to this ticket.
+
+This needs identity and approval checks before step 5: see Details.
+
+## Details
+- **Runbook:** `/okta-mfa-reset`, section "Okta Verify sign-in loop after a macOS update". The fix was confirmed by the owner, not taken from Okta's published pages.
+- **Why the steps are in this order:** the macOS update is the change, so leftover sign-in data on the Mac is the first suspect. They already reinstalled, so reinstalling again won't help. Clearing sessions is a light fix with nothing to undo: the user just signs in again. Resetting authenticators can't be undone, so it comes last.
+- **Before step 5 (customer D):**
+  - Confirm it's really them on a video call, and have their manager confirm in the IT channel.
+  - The head of engineering approves.
+  - The account must show **Active**.
+  - Tick only Okta Verify. Resetting all authenticators is a separate gate, and nothing here calls for it.
+- **Before step 4:** write the current UTC time in the ticket as the start time for the check.
+- **Gotcha:** More Actions only shows for active users, and not when an admin opens their own profile.
+- **⚠️ Risk:** a reset can't be undone. Until the user enrolls again, the identity check is the only safeguard on the account.
+- **Verification:**
+  - [ ] System Log shows the session clear for [UPN] after the start time
+  - [ ] The user completed a sign-in
+  - [ ] If step 5 ran: the reset was checked before re-enrollment, Okta Verify was enrolled again, and a sign-in worked
+- **Jira note:** Okta Verify sign-in loop on a Mac after a macOS update; reinstalling didn't fix it. System Log reviewed: [no compromise signs / triage [JIRA-###]]. Versions: macOS [X], Okta Verify [Y]. User checks: [result]. Sessions cleared at [timestamp]: [verified / pending]. Authenticator reset: [not needed / done after video ID check, manager confirmation and head of engineering approval]. Time spent: [X] min.
+
+```aegis-desk
+Gate: okta-mfa-reset-clear-sessions-portal
+Phrase: CLEAR OKTA SESSIONS FOR [UPN]
+Change record: none (R1)
+Read-back: node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute
+Gate: okta-mfa-reset-selected-portal
+Phrase: RESET SELECTED OKTA AUTHENTICATORS FOR [UPN]
+Change record: R2, read-back okta:verify-factor-reset --factor-type push
+Read-back: node scripts/adapters/okta-client.js verify-factor-reset --user [OKTA_USER_ID] --factor-type push --change [CHANGE_ID] --execute
+```
+--- End of answer ---
+T9m step 5 CHECKS | Aegis checks | REAL | boundary pass, human-confirmation pass, read-back pass, privacy pass, observed-output pass; answer format: 6 of 7 pass | 28 ms
+T9m step 6 APPROVAL | SIMULATED OPERATOR | REAL code, SIMULATED person | 2 gate(s) approved by the SIMULATED OPERATOR: okta-mfa-reset-clear-sessions-portal, okta-mfa-reset-selected-portal | 18 ms
+T9m step 7 SIMULATED OPERATOR | SIMULATED OPERATOR | SIMULATED | applied 2 gate(s) of 2 to the simulated tenant, one at a time | 1 ms
+T9m step 8 READ-BACK | Aegis connector | REAL connector, SIMULATED tenant | PASS: 2 of 2 read-back(s) passed | 82 ms
+T9m step 9 CLOSE | Aegis desk | REAL | RESOLVED (SIMULATED) | 1 ms
+
+=== Summary ===
+Tickets: RESOLVED (SIMULATED) 1, INCONCLUSIVE 0, INVESTIGATE 0, OPEN 0, CLARIFY 0, FAILED 0
+boundary failures 0, injection probes refused 0, cache hits 0
+model sessions 1, total cost 0.29 US dollars, total time 31.7 s
+Demo on tickets written by the builder, simulated tenants and a simulated operator. It shows the pipeline, not answer quality.
+Saved: <home>/aegis-demo-runs/20261107T090518Z-0e236721/run.json
+Open in a browser: <home>/aegis-demo-runs/20261107T090518Z-0e236721/desk.html
+exit 0

@@ -1,0 +1,114 @@
+✔ the section exists in /okta-mfa-reset with its source line, word for word (0.49175ms)
+✔ three user checks, then the admin gate, then Reset Authenticators as the last resort (0.31175ms)
+✔ the first user check is not a reinstall, since Okta Verify was already reinstalled (0.072541ms)
+✔ the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C's word for word (0.6365ms)
+✔ the gate's click path is the owner's: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions (0.136292ms)
+✔ the PORTAL ACTION dialog and read-back steps are Phase C's word for word (0.140375ms)
+✔ the Placeholders line defines [NOT_BEFORE] in the form the connector takes (0.053917ms)
+✖ the Fast path sends a loop ticket to its section first, with Phase B or Phase C as its last resort (0.327125ms)
+✖ the checklist has the session-clear item, which names how many reset items it waives and keeps the compromise item (0.129917ms)
+✖ a completed Jira form needs every read-back of the changes made, never only the ones that ran (0.200625ms)
+✔ the Jira note has a completed form for the loop fixed by the session clear alone (0.053292ms)
+✖ the reset form fits the session clear then the reset: its slot, the Mac, and the signed_nonce read (0.081291ms)
+✔ a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it (0.078916ms)
+✔ the admin step says where it comes from and the two Okta limits on More Actions (0.074792ms)
+✔ the reset step points to the existing reset gates, which are still in the runbook (0.062792ms)
+✔ the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands (19.732875ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 12
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 62.292708
+
+✖ failing tests:
+
+test at scripts/okta-verify-loop.test.js:155:1
+✖ the Fast path sends a loop ticket to its section first, with Phase B or Phase C as its last resort (0.327125ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^\d+\. Phase B \(a new phone, or the loop's last resort when the session clear did not stop it\):/. Input:
+  
+  '3. Phase B: reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.'
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:164:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '3. Phase B: reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.',
+    expected: /^\d+\. Phase B \(a new phone, or the loop's last resort when the session clear did not stop it\):/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:167:1
+✖ the checklist has the session-clear item, which names how many reset items it waives and keeps the compromise item (0.129917ms)
+  AssertionError [ERR_ASSERTION]: 4 items sit between it and the compromise item
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:177:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '- [ ] Okta Verify sign-in loop fixed by the session clear: the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click, and the user completed one full sign-in. With no reset done, the three reset and re-enrollment items below do not apply; the compromise item still applies.',
+    expected: /the four reset and re-enrollment items below do not apply/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:182:1
+✖ a completed Jira form needs every read-back of the changes made, never only the ones that ran (0.200625ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /read-back this ticket ran passed|both when both ran/. Input:
+  
+  '\n' +
+    '\n' +
+    "Use a completed form only when every read-back above that the path taken requires passed (the session clear's `verify-sessions-cleared`; the reset's `verify-factor-reset` or `verify-factors-reset-all`; both when both ran); otherwise write a partial-state note naming what is verified, what is pending, and the next owner.\n" +
+    '\n' +
+    '> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n' +
+    '\n' +
+    '> [Okta Verify loop fixed by the session clear, only if its checks passed] Okta Verify sign-in loop for `[UPN]` after a macOS update: user checks [results]; macOS [version], Okta Verify [version]; sessions cleared after [NOT_BEFORE], confirmed by the exact phrase; connector read-back verify-sessions-cleared passed at [timestamp]; the user completed a sign-in at [timestamp]. No authenticator was reset. Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n'
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:185:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "\n\nUse a completed form only when every read-back above that the path taken requires passed (the session clear's `verify-sessions-cleared`; the reset's `verify-factor-reset` or `verify-factors-reset-all`; both when both ran); otherwise write a partial-state note naming what is verified, what is pending, and the next owner.\n\n> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n\n> [Okta Verify loop fixed by the session clear, only if its checks passed] Okta Verify sign-in loop for `[UPN]` after a macOS update: user checks [results]; macOS [version], Okta Verify [version]; sessions cleared after [NOT_BEFORE], confirmed by the exact phrase; connector read-back verify-sessions-cleared passed at [timestamp]; the user completed a sign-in at [timestamp]. No authenticator was reset. Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.\n",
+    expected: /read-back this ticket ran passed|both when both ran/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/okta-verify-loop.test.js:199:1
+✖ the reset form fits the session clear then the reset: its slot, the Mac, and the signed_nonce read (0.081291ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\[on the new phone \/ on the Mac\]/. Input:
+  
+  '> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.'
+  
+      at TestContext.<anonymous> (<repo>/scripts/okta-verify-loop.test.js:206:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify on the new phone and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.',
+    expected: /\[on the new phone \/ on the Mac\]/,
+    operator: 'match',
+    diff: 'simple'
+  }
+exit 1

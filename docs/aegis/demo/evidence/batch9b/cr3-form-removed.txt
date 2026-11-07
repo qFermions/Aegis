@@ -1,0 +1,5 @@
+$ the session-clear-only Jira form removed from .claude/commands/okta-mfa-reset.md (python: drop the line that starts '> [Okta Verify loop fixed by the session clear'), then node --test scripts/okta-verify-loop.test.js
+✖ the Jira note has a completed form for the loop fixed by the session clear alone (0.254375ms)
+ℹ pass 15
+ℹ fail 1
+✖ failing tests:

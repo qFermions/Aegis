@@ -74,10 +74,15 @@ function sessionEnv(env) {
 
 const homeOf = (env) => env.HOME || env.USERPROFILE || os.homedir();
 
+// The default macOS and Windows file systems ignore case, so there a path spelled in another case is the
+// same folder (review round 1, finding 1). shortcut: a case-sensitive volume on those systems is folded
+// too, which can only refuse more, never less.
+const fold = (p) => (process.platform === 'darwin' || process.platform === 'win32' ? p.toLowerCase() : p);
+
 function insideRepo(dir) {
   let real = REPO_ROOT;
   try { real = fs.realpathSync(REPO_ROOT); } catch { /* the given form */ }
-  return [path.resolve(dir), paths.effectivePath(dir)].some((p) => paths.isInside(p, REPO_ROOT) || paths.isInside(p, real));
+  return [path.resolve(dir), paths.effectivePath(dir)].some((p) => paths.isInside(fold(p), fold(REPO_ROOT)) || paths.isInside(fold(p), fold(real)));
 }
 
 function parseArgs(argv) {
@@ -85,6 +90,7 @@ function parseArgs(argv) {
   const words = [];
   for (let i = 0; i < argv.length; i += 1) {
     const t = argv[i];
+    if (t === '--') { words.push(...argv.slice(i + 1)); break; }
     const value = () => {
       if (i + 1 >= argv.length) throw new InputError(`${t} needs a value`);
       i += 1;
@@ -97,7 +103,8 @@ function parseArgs(argv) {
       if (!/^\d+(?:\.\d+)?$/.test(v) || !(Number(v) > 0)) throw new InputError('--max-budget-usd needs a number of US dollars above 0, such as 2.50');
       args.maxUsd = Number(v).toFixed(2);
     } else if (t === '--help' || t === '-h') args.help = true;
-    else if (t.startsWith('-')) throw new InputError(`unknown option ${JSON.stringify(t).slice(0, 40)}`);
+    // a word such as -2147 in an unquoted ticket is ticket text (review round 1, nit 2)
+    else if (t.startsWith('--')) throw new InputError(`unknown option ${JSON.stringify(t).slice(0, 40)}`);
     else words.push(t);
   }
   // a ticket typed without quotes arrives as several words
@@ -138,21 +145,37 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   const prompt = buildPrompt(args.ticket, args.setup);
   if (backends.promptTooLong(prompt)) { io.err('ask-aegis: the ticket and setup text are too long for one session. Shorten them and ask again.\n'); return 1; }
 
+  // made before the session, so a folder that cannot be made costs nothing (review round 1, nit 1)
+  let made;
+  try { made = fs.mkdirSync(dir, { recursive: true }); } catch (e) {
+    io.err(`ask-aegis: cannot make the results folder (${e.code || 'error'}). Name another folder with --results-dir.\n`);
+    return 1;
+  }
+
   io.out('Asking Aegis. It reads only and changes nothing; this can take a few minutes.\n');
   const backend = deps.backend || { command: 'claude', prefixArgs: [] };
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, dir, args.maxUsd), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
+  // Every saved ask is denied to the session, so one ask never reads another's answer (review round 1,
+  // finding 2). A --results-dir elsewhere is empty when the session starts.
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, path.join(homeOf(env), ASKS_DIR), args.maxUsd), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
   const stream = backends.parseStream(run.stdout);
   const turn = backends.summarizeTurn(stream, run);
   if (turn.state !== 'OK') {
+    if (made !== undefined) try { fs.rmdirSync(dir); } catch { /* not empty or gone: left as it is */ }
     const hint = /ENOENT/.test(turn.reason || '') ? ' Is Claude Code installed? Type claude once to install it and sign in.' : '';
     io.err(`ask-aegis: the Aegis session did not finish (${turn.reason || turn.state}). Nothing was saved.${hint}\n`);
     return 2;
   }
 
-  fs.mkdirSync(dir, { recursive: true });
   const answerFile = path.join(dir, 'answer.md');
-  fs.writeFileSync(answerFile, turn.answer);
-  fs.writeFileSync(path.join(dir, 'result.json'), `${JSON.stringify(stream.result, null, 2)}\n`);
+  try {
+    fs.writeFileSync(answerFile, turn.answer);
+    fs.writeFileSync(path.join(dir, 'result.json'), `${JSON.stringify(stream.result, null, 2)}\n`);
+  } catch (e) {
+    // the session has been paid for, so its answer is printed whole rather than lost
+    io.err(`ask-aegis: the answer could not be saved (${e.code || 'error'}); here it is in full.\n`);
+    io.out(`${turn.answer}\n`);
+    return 2;
+  }
 
   const card = fixCard(turn.answer);
   if (card.present) {
@@ -173,4 +196,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, REPO_ROOT, DEFAULT_MAX_USD };
+module.exports = { main, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, homeOf, REPO_ROOT, ASKS_DIR, DEFAULT_MAX_USD };

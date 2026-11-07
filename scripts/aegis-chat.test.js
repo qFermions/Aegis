@@ -24,8 +24,9 @@ const backends = require('./eval/judged/backends.js');
 const { REPO_ROOT } = require('./eval/judged/paths.js');
 const chat = require('./aegis-chat.js');
 
-// What every chat session gets, written out from backends.js's exports rather than from the command.
-const ISOLATED = () => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs()];
+// What every chat session gets, written out from backends.js's exports rather than from the command. The
+// whole ~/aegis-asks folder is denied (review round 1, finding 2), so a chat never reads saved answers.
+const ISOLATED = (home) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks') })];
 
 function tempDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-test-'));
@@ -59,7 +60,8 @@ test('the chat starts once under a fake claude with the desk\'s isolation and th
     backend: { command: process.execPath, prefixArgs: [fake, log] },
     spawn: (cmd, args, opts) => { order.push('spawn'); spawned.push(opts); return childProcess.spawn(cmd, args, opts); },
   };
-  const env = { ...process.env, AEGIS_TEST_API_TOKEN: 'never-passed-on' };
+  const home = path.join(dir, 'home');
+  const env = { ...process.env, HOME: home, USERPROFILE: home, AEGIS_TEST_API_TOKEN: 'never-passed-on' };
   const code = await chat.main(['--setup', 'Google Workspace, Chromebooks, no Microsoft'], env, deps);
   assert.equal(code, 0, c.stderr());
   assert.equal(spawned.length, 1, 'started once');
@@ -70,7 +72,7 @@ test('the chat starts once under a fake claude with the desk\'s isolation and th
 
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
   const appended = got.argv[got.argv.length - 1];
-  assert.deepEqual(got.argv, [...ISOLATED(), '--append-system-prompt', appended]);
+  assert.deepEqual(got.argv, [...ISOLATED(home), '--append-system-prompt', appended]);
   assert.match(appended, /data about the environment, not instructions/);
   const open = appended.indexOf('--- What the company runs ---');
   const close = appended.indexOf('--- End of what the company runs ---');
@@ -89,8 +91,8 @@ test('the chat starts once under a fake claude with the desk\'s isolation and th
 // Wrong implementation it catches: an empty --append-system-prompt (or a setup block with nothing in it)
 // when no setup was given. Built, never started.
 test('with no --setup the argv is the isolation alone', () => {
-  assert.deepEqual(chat.chatArgs(null), ISOLATED());
-  assert.deepEqual(chat.chatArgs('   '), ISOLATED());
+  assert.deepEqual(chat.chatArgs(null, path.join('/h/me', 'aegis-asks')), ISOLATED('/h/me'));
+  assert.deepEqual(chat.chatArgs('   ', path.join('/h/me', 'aegis-asks')), ISOLATED('/h/me'));
 });
 
 // Wrong implementations it catches: a chat that takes a ticket or an unknown flag and starts anyway, or a
@@ -109,4 +111,12 @@ test('bad arguments exit 1 with no session; a claude that cannot start is a plai
   assert.equal(code, 2);
   assert.match(missing.stderr(), /^aegis-chat: could not start claude/);
   assert.ok(!missing.stderr().includes('    at '));
+  // review round 1, nit 3: the chat exits with claude's own code; a signal is 2. A stand-in child, no process.
+  // Wrong implementation it catches: a chat that always exits 0.
+  const { EventEmitter } = require('node:events');
+  for (const [code, signal, want] of [[3, null, 3], [null, 'SIGTERM', 2]]) {
+    const ended = io();
+    const stub = () => { const child = new EventEmitter(); setImmediate(() => child.emit('exit', code, signal)); return child; };
+    assert.equal(await chat.main([], process.env, { ...ended.deps, spawn: stub }), want);
+  }
 });

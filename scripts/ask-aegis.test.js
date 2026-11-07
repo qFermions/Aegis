@@ -87,6 +87,8 @@ function flagValues(args, flag) {
   return args.slice(at + 1, end < 0 ? undefined : end);
 }
 
+// Review round 1, finding 2: the deny list holds the whole ~/aegis-asks folder, so one ask never reads another's
+// answer. Wrong implementations it catches: a deny list with only this run's folder, or none.
 // Wrong implementations it catches: a command that builds its own flag list and drops one of the desk's
 // (say --strict-mcp-config, or the CLAUDE.md exclusions), adds a tool such as Bash or Edit, adds
 // --dangerously-skip-permissions, runs from another folder, or passes a secret-named variable on.
@@ -94,14 +96,14 @@ test('the session argv is backends.sutArgs plus the budget, and nothing else', a
   const s = setup(t, { answer: NEW_ANSWER });
   const code = await ask.main(['The printer at the front desk will not print', '--setup', 'Google Workspace, Windows laptops'], s.env, s.deps);
   assert.equal(code, 0, s.stderr());
-  const [saved] = asksIn(s.home);
+  assert.equal(asksIn(s.home).length, 1);
   const calls = s.calls();
   assert.equal(calls.length, 1, 'one session');
   const call = calls[0];
-  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: saved, maxTurns: 40, persist: false }), '--max-budget-usd', '3.00'];
+  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false }), '--max-budget-usd', '3.00'];
   assert.deepEqual(call.args, expected.filter((a) => a !== call.prompt));
   // the isolation backends.js builds sits in the argv whole
-  const iso = backends.isolationArgs({ runRoot: saved });
+  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks') });
   const at = call.args.indexOf('--setting-sources');
   assert.deepEqual(call.args.slice(at, at + iso.length), iso);
   for (const flag of ['--tools', '--allowedTools']) {
@@ -180,7 +182,11 @@ test('a results folder inside the repository is refused before any session, also
   const ignored = path.join(REPO_ROOT, '.aegis-state', `ask-test-${process.pid}`);
   const link = path.join(s.dir, 'link-to-repo');
   fs.symlinkSync(REPO_ROOT, link, 'dir');
-  for (const dir of [path.join(REPO_ROOT, 'docs', 'asks'), ignored, path.join(link, '.aegis-state', `ask-test-${process.pid}`)]) {
+  // review round 1, finding 1: on macOS and Windows a path in another case is the same folder. Wrong
+  // implementation it catches: a case-sensitive comparison there. On Linux the case variant is another folder.
+  const caseVariant = process.platform === 'darwin' || process.platform === 'win32' ? [path.join(REPO_ROOT.toLowerCase(), 'docs', 'asks'), path.join(REPO_ROOT.toUpperCase(), 'docs', 'asks')] : [];
+  const relative = path.relative(process.cwd(), path.join(REPO_ROOT, 'docs', 'asks'));
+  for (const dir of [path.join(REPO_ROOT, 'docs', 'asks'), ignored, path.join(link, '.aegis-state', `ask-test-${process.pid}`), `${REPO_ROOT}/docs/../asks`, relative, ...caseVariant]) {
     const before = s.stderr().length;
     assert.equal(await ask.main(['The printer will not print', '--results-dir', dir], s.env, s.deps), 1, dir);
     assert.match(s.stderr().slice(before), /inside the Aegis repository/);
@@ -208,6 +214,10 @@ test('no ticket text: the usage and exit 1, with no session', async (t) => {
   assert.equal(await ask.main(['--no-such-flag', 'x'], s.env, s.deps), 1);
   assert.equal(await ask.main(['x', '--max-budget-usd', 'lots'], s.env, s.deps), 1);
   assert.equal(await ask.main(['x', '--max-budget-usd', '0'], s.env, s.deps), 1);
+  // review round 1, nit 2: an unquoted ticket word such as -2147 is ticket text, and so is all after --.
+  // Wrong implementation it catches: one that refuses every word starting with "-".
+  assert.equal(ask.parseArgs(['Error', '-2147', 'on', 'login']).ticket, 'Error -2147 on login');
+  assert.equal(ask.parseArgs(['--', '--setup', 'is', 'text']).ticket, '--setup is text');
   assert.equal(s.calls().length, 0);
   const cli = childProcess.spawnSync(process.execPath, [SCRIPT], { encoding: 'utf8', env: s.env });
   assert.equal(cli.status, 1);
@@ -236,4 +246,12 @@ test('a session that fails or runs past its time: a plain message, exit 2, nothi
   assert.ok(Date.now() - started < 8000, 'stopped at the time limit');
   assert.match(slow.stderr(), /did not finish/);
   assert.deepEqual(asksIn(slow.home), []);
+
+  // review round 1, nit 1: a results folder that cannot be made is found before the session, not after it
+  // spent. Wrong implementation it catches: one that makes the folder only after the session.
+  const blocked = setup(t, { answer: NEW_ANSWER });
+  fs.writeFileSync(path.join(blocked.dir, 'a-file'), 'x');
+  assert.equal(await ask.main(['The printer will not print', '--results-dir', path.join(blocked.dir, 'a-file', 'sub')], blocked.env, blocked.deps), 1);
+  assert.match(blocked.stderr(), /cannot make the results folder/);
+  assert.equal(blocked.calls().length, 0);
 });

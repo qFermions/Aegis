@@ -66,7 +66,10 @@ function fieldOf(lines, from, name) {
 // Every section of one runbook with its ladder events in order: { title, line, escape, events: [{ kind:
 // 'heavy'|'lighter'|'other', id, line, admin }] }. admin is false for a user check or lighter step line (not
 // an admin change). The desk's "lightest step first" check reads this too (scripts/demo/step-ladder.js).
-function sectionEvents(text) {
+// runbook: the runbook's name; its own words in a gate id ("jamf-lock-erase-lock-portal") say nothing about
+// the gate, so they are taken out before the heavy words are matched.
+const ownWords = (id, runbook) => (runbook && id.startsWith(`${runbook}-`) ? id.slice(runbook.length + 1) : id);
+function sectionEvents(text, runbook = '') {
   const lines = String(text).split('\n');
   const rClass = new Map(gateFields(text).map((g) => [g.line, g.rClass]));
   const sections = [];
@@ -83,11 +86,11 @@ function sectionEvents(text) {
     if (mark) {
       const id = mark[1] || mark[2];
       const r = rClass.get(i + 1) || null;
-      const heavy = r === 'R3' || HEAVY.test(id) || HEAVY.test(fieldOf(lines, i + 1, 'Effect'));
+      const heavy = r === 'R3' || HEAVY.test(ownWords(id, runbook)) || HEAVY.test(fieldOf(lines, i + 1, 'Effect'));
       current.events.push({ kind: heavy ? 'heavy' : (['R0', 'R1', 'R2'].includes(r) ? 'lighter' : 'other'), id, line: i + 1, admin: true });
       return;
     }
-    for (const m of l.matchAll(PREVIEW)) current.events.push({ kind: HEAVY.test(m[1]) ? 'other' : 'lighter', id: m[1], line: i + 1, admin: true });
+    for (const m of l.matchAll(PREVIEW)) current.events.push({ kind: HEAVY.test(ownWords(m[1], runbook)) ? 'other' : 'lighter', id: m[1], line: i + 1, admin: true });
     if (LIGHTER_LINE.test(l)) current.events.push({ kind: 'lighter', id: 'a user check or lighter step line', line: i + 1, admin: false });
     if (NO_LIGHTER.test(l)) current.escape = true;
   });
@@ -98,7 +101,7 @@ function sectionEvents(text) {
 // Every audited section of one runbook: { runbook, vendor, section, line, heavy, verdict, reason }.
 function auditText(text, runbook) {
   const rows = [];
-  for (const s of sectionEvents(text)) {
+  for (const s of sectionEvents(text, runbook)) {
     const first = s.events.findIndex((e) => e.kind === 'heavy');
     if (first < 0) continue;
     const heavy = s.events[first];

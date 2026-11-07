@@ -21,7 +21,7 @@ function lightestStepFirst(answer, gates) {
   const entry = gates.get(first);
   if (!entry || entry.kind !== 'gate') return row(true, `the first change, ${first}, is not a SAFETY GATE the runbooks hold`);
   let sections;
-  try { sections = sectionEvents(fs.readFileSync(entry.file, 'utf8')); } catch { return row(true, `the runbook holding ${first} could not be read`); }
+  try { sections = sectionEvents(fs.readFileSync(entry.file, 'utf8'), entry.command); } catch { return row(true, `the runbook holding ${first} could not be read`); }
   const section = sections.find((s) => s.events.some((e) => e.id === first && e.kind === 'heavy'));
   if (!section) return row(true, `the first change, ${first}, is not a reset, wipe, erase, delete, re-register or R3 change`);
   const at = section.events.findIndex((e) => e.id === first);

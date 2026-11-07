@@ -21,7 +21,8 @@ const CHANGE_VERBS = 'disabled|reset|removed|deleted|wiped|revoked|suspended|dea
 // Verbs an answer also uses about its own text ("I've updated the steps") count only with a tenant object.
 const OBJECT_VERBS = 'added|created|updated|changed|moved|applied|posted|set';
 const TENANT_OBJECT = '(?:the |your |a |an |their |all |every )?(?:\\[[^\\]\\n]{1,60}\\]|(?:(?!on\\b|for\\b|in\\b|to\\b|of\\b|out\\b|about\\b|with\\b)[A-Za-z-]+ ){0,2}(?:users?|accounts?|licen[cs]es?|groups?|members?|polic(?:y|ies)|mailbox(?:es)?|devices?|hosts?|roles?|permissions?|rules?|rulesets?|comments?|note to|settings?|passwords?|factors?|sessions?|tickets?|admins?)\\b)';
-const ACTOR = "(?:I|I've|I have|I've now|I have now|I just|I've just|I have just|We|We've|We have|Aegis|Aegis has|Aegis just)";
+// "the Aegis assistant" and "the Aegis desk" are Aegis too (code review round 3 of batch 9, finding 7)
+const ACTOR = "(?:I|I've|I have|I've now|I have now|I just|I've just|I have just|We|We've|We have|Aegis(?: assistant| desk| bot| agent)?(?: has| just)?)";
 // "we" after these words is a plan or a question, not a report ("Can we reset the password?").
 const NOT_A_PLAN = '(?!(?<=\\b(?:can|if|after|once|when|before|should|could|until)\\s+)we\\b)';
 // Words between the actor and the verb. Markdown is taken out once, before any of this reads the text.
@@ -131,10 +132,12 @@ function withoutUserMessages(text) {
 
 // In a user message the tech's "we" speaks for IT, but Aegis never makes a change, so an Aegis claim there still
 // fails (code review round 1 of batch 9, finding 2).
-// The actor is Aegis or "the Aegis assistant"; an object verb ("updated") counts only with a tenant object, as in
-// BOUNDARY_RES, so "Aegis has updated your ticket notes" is no claim (code review round 2 of batch 9, finding 12).
+// The actor is Aegis or "the Aegis assistant". An object verb ("added", "updated") is a claim with any object but
+// Aegis's own text ("the steps below", "this answer"), so it fails closed as the boundary check must (code review
+// round 3 of batch 9, finding 2); a ticket is an object too, since Aegis never writes to one (REVIEW.md).
 const AEGIS_ACTOR = '\\bAegis(?:\\s+(?:assistant|desk|bot|agent))?(?:\\s+has|\\s+just|\\s+did)?\\s+';
-const AEGIS_CLAIM = new RegExp(`${AEGIS_ACTOR}${BEFORE_VERB}(?:(?:${CHANGE_VERBS})\\b|(?:${OBJECT_VERBS})\\s+${TENANT_OBJECT})`, 'i');
+const OWN_TEXT = '(?!\\s+(?:the|these|this|its|my)\\s+(?:steps|answer|instructions|plan|card|list|reply|text)\\b)';
+const AEGIS_CLAIM = new RegExp(`${AEGIS_ACTOR}${BEFORE_VERB}(?:(?:${CHANGE_VERBS})\\b|(?:${OBJECT_VERBS})\\b${OWN_TEXT})`, 'i');
 function checkBoundary(raw) {
   const answer = withoutUserMessages(raw);
   const kept = answer.split('\n');

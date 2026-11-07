@@ -1,15 +1,20 @@
 'use strict';
-// okta-verify-loop.test.js: the Okta Verify sign-in loop after a macOS update (batch 9, task 8).
+// okta-verify-loop.test.js: the Okta Verify sign-in loop after a macOS update (batch 9, task 8; batch 9b).
 //
-// EXPECTED DECISION (written before the runbook section)
-// - /okta-mfa-reset has a section "Okta Verify sign-in loop after a macOS update" with the source line
+// EXPECTED DECISION (batch 9b, written before the runbook edit; an owner-authorized change of requirement:
+// batch 9 pinned the admin step as the PREVIEW ONLY marker okta-verify-loop-admin-reauth because the owner's
+// fill-in line was blank; the owner has now named the button, "Clear User Sessions")
+// - /okta-mfa-reset keeps its section "Okta Verify sign-in loop after a macOS update" and its source line
 //   "Source: operator-validated by the owner, 2026-11-06; not in Okta's published troubleshooting pages".
-// - Its steps come in this order: two or three "**User check:**" steps (reinstalling Okta Verify is
-//   not the first one: the ticket says it was already reinstalled), then the admin step as the PREVIEW
-//   ONLY marker okta-verify-loop-admin-reauth reading "admin re-authentication in the Okta Admin
-//   Console (exact menu action to be confirmed by the owner)", then Reset Authenticators as the last
-//   resort, pointing to the existing reset gates, which stay in the runbook.
-// - The marker names no menu path (the owner's fill-in line was blank) and authorizes nothing.
+// - Its steps come in this order: three "**User check:**" steps (reinstalling Okta Verify is not the first
+//   one: the ticket says it was already reinstalled), then the admin step, then Reset Authenticators as the
+//   last resort, pointing to the existing reset gates, which stay in the runbook.
+// - The admin step is a SAFETY GATE: okta-user-lifecycle-clear-sessions-portal (Phase C of
+//   /okta-user-lifecycle), or a gate with its own id whose fields are Phase C's word for word. Before it, a
+//   line to write the current UTC time as [NOT_BEFORE]; its PORTAL ACTION clicks Directory, People (or the
+//   Dashboard search box), the user, More Actions, Clear User Sessions; after it, the verify-sessions-cleared
+//   read-back with --not-before [NOT_BEFORE].
+// - The PREVIEW ONLY marker okta-verify-loop-admin-reauth is gone from every runbook.
 // Run: node --test scripts/okta-verify-loop.test.js
 
 const assert = require('node:assert/strict');
@@ -17,10 +22,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
-const FILE = path.join(__dirname, '..', '.claude', 'commands', 'okta-mfa-reset.md');
-const TEXT = fs.readFileSync(FILE, 'utf8');
+const COMMANDS = path.join(__dirname, '..', '.claude', 'commands');
+const TEXT = fs.readFileSync(path.join(COMMANDS, 'okta-mfa-reset.md'), 'utf8');
+const LIFECYCLE = fs.readFileSync(path.join(COMMANDS, 'okta-user-lifecycle.md'), 'utf8');
 const TITLE = 'Okta Verify sign-in loop after a macOS update';
-const MARKER = '**PREVIEW ONLY [okta-verify-loop-admin-reauth]:** admin re-authentication in the Okta Admin Console (exact menu action to be confirmed by the owner)';
+const PHASE_C = 'okta-user-lifecycle-clear-sessions-portal';
+const FIELDS = ['Target', 'Effect', 'Scope', 'Reversibility', 'Required confirmation', 'Failure behavior', 'Read-back'];
+const READ_BACK = 'node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute';
 
 // The section's lines: from its heading to the next heading of the same or a higher level.
 function section() {
@@ -33,6 +41,20 @@ function section() {
   return lines.slice(start, end);
 }
 
+// A gate's field lines ("- **Name:** value") right after its marker line, as { name: value }.
+function fieldsAfter(lines, at) {
+  const out = {};
+  for (let i = at + 1; i < lines.length; i += 1) {
+    const m = /^- \*\*([A-Za-z -]+):\*\* (.*)$/.exec(lines[i]);
+    if (!m) break;
+    out[m[1]] = m[2];
+  }
+  return out;
+}
+
+const gatesIn = (lines) => lines.map((l, i) => ({ m: /^<!-- SAFETY GATE \[([a-z0-9-]+)\] -->$/.exec(l.trim()), i })).filter((x) => x.m).map((x) => ({ id: x.m[1], at: x.i }));
+const phaseCFields = () => { const lines = LIFECYCLE.split('\n'); const g = gatesIn(lines).find((x) => x.id === PHASE_C); return g ? fieldsAfter(lines, g.at) : null; };
+
 test('the section exists in /okta-mfa-reset with its source line, word for word', () => {
   // catches: the section put in another runbook, or a source line that claims Okta published the fix
   const s = section();
@@ -40,19 +62,21 @@ test('the section exists in /okta-mfa-reset with its source line, word for word'
   assert.ok(s.includes("Source: operator-validated by the owner, 2026-11-06; not in Okta's published troubleshooting pages"), 'the exact source line');
 });
 
-test('user checks come first, then the admin PREVIEW ONLY marker, then Reset Authenticators as the last resort', () => {
-  // catches: the reset (or the admin step) listed before the user checks, or a reset step with no user check at all
+test('three user checks, then the admin gate, then Reset Authenticators as the last resort', () => {
+  // catches: the reset (or the admin gate) listed before the user checks, a user check dropped, or the reset not last
   const s = section();
   assert.ok(s, 'section present');
   const checks = s.map((l, i) => (/^\s*(?:\d+[.)]\s+|[-*]\s+)?\*\*User check:\*\*\s*\S/.test(l) ? i : -1)).filter((i) => i >= 0);
-  const marker = s.findIndex((l) => l.includes(MARKER));
-  const reset = s.findIndex((l, i) => i > marker && /Reset Authenticators/.test(l));
-  assert.ok(checks.length >= 2 && checks.length <= 3, `two or three user checks, found ${checks.length}`);
-  assert.ok(marker > 0, 'the admin step is the exact PREVIEW ONLY marker');
-  assert.ok(checks.every((i) => i < marker), 'every user check comes before the admin step');
-  assert.ok(reset > marker, 'Reset Authenticators comes after the admin step');
-  assert.ok(!s.slice(0, marker).some((l) => /Reset Authenticators/.test(l)), 'no reset before the admin step');
+  const gates = gatesIn(s);
+  assert.equal(checks.length, 3, `three user checks, found ${checks.length}`);
+  assert.equal(gates.length, 1, `one admin gate in the section, found ${gates.map((g) => g.id).join(', ') || 'none'}`);
+  const gate = gates[0].at;
+  assert.ok(checks.every((i) => i < gate), 'every user check comes before the admin gate');
+  const reset = s.findIndex((l, i) => i > gate && /Reset Authenticators/.test(l));
+  assert.ok(reset > gate, 'Reset Authenticators comes after the admin gate');
+  assert.ok(!s.slice(0, gate).some((l) => /Reset Authenticators/.test(l)), 'no reset before the admin gate');
   assert.match(s[reset], /last resort/i, 'the reset is labeled the last resort');
+  assert.ok(!s.slice(reset + 1).some((l) => /^\s*(?:\d+[.)]\s+)?\*\*User check:\*\*/.test(l) || /SAFETY GATE \[/.test(l)), 'nothing after the last resort');
 });
 
 test('the first user check is not a reinstall, since Okta Verify was already reinstalled', () => {
@@ -64,6 +88,63 @@ test('the first user check is not a reinstall, since Okta Verify was already rei
   assert.doesNotMatch(first, /reinstall/i);
 });
 
+test('the admin gate is Phase C of /okta-user-lifecycle, or a gate of its own whose fields are Phase C\'s word for word', () => {
+  // catches: a gate with a weaker phrase, another R class, a changed effect or scope, or no Read-back field
+  const s = section();
+  assert.ok(s, 'section present');
+  const [gate] = gatesIn(s);
+  assert.ok(gate, 'a SAFETY GATE in the section');
+  const want = phaseCFields();
+  assert.ok(want, `${PHASE_C} is still a gate in /okta-user-lifecycle`);
+  for (const f of FIELDS) assert.ok(want[f], `Phase C has a ${f} field`);
+  if (gate.id !== PHASE_C) assert.deepEqual(fieldsAfter(s, gate.at), want, `${gate.id}: the same fields as ${PHASE_C}`);
+  assert.equal(want['Required confirmation'], 'Type exactly `CLEAR OKTA SESSIONS FOR [UPN]`.');
+  assert.match(want.Reversibility, /^R1:/);
+});
+
+test('the gate\'s click path is the owner\'s: Directory, People or the Dashboard search box, the user, More Actions, Clear User Sessions', () => {
+  // catches: the owner's "re-auth" word written as a button Okta does not have, or a path that skips More Actions
+  const s = section();
+  assert.ok(s, 'section present');
+  const [gate] = gatesIn(s);
+  assert.ok(gate, 'a SAFETY GATE in the section');
+  const action = s.findIndex((l, i) => i > gate.at && l.includes(`**PORTAL ACTION [${gate.id}]:**`));
+  assert.ok(action > gate.at, `a PORTAL ACTION for ${gate.id} right under the gate`);
+  const click = s.slice(action + 1).find((l) => /^\s*1\.\s/.test(l));
+  assert.ok(click, 'a first numbered click step');
+  assert.match(click, /Okta Admin Console → Directory → People/);
+  assert.match(click, /Dashboard/, 'the owner\'s route, the Dashboard search box, is named too');
+  assert.match(click, /\[UPN\] → \*\*More Actions\*\* → \*\*Clear User Sessions\*\*/);
+  assert.doesNotMatch(s.join('\n'), /\*\*re-?auth/i, 'no button named re-auth');
+});
+
+test('a [NOT_BEFORE] line comes before the gate and the verify-sessions-cleared read-back after it', () => {
+  // catches: a read-back with no time bound (it would pass on an older clear), or a time written after the click
+  const s = section();
+  assert.ok(s, 'section present');
+  const [gate] = gatesIn(s);
+  assert.ok(gate, 'a SAFETY GATE in the section');
+  const notBefore = s.findIndex((l) => /current UTC time/.test(l) && /`\[NOT_BEFORE\]`/.test(l));
+  assert.ok(notBefore >= 0 && notBefore < gate.at, 'the [NOT_BEFORE] line comes before the gate');
+  const read = s.findIndex((l) => l.trim() === READ_BACK);
+  assert.ok(read > gate.at, 'the verify-sessions-cleared read-back comes after the gate');
+  const reset = s.findIndex((l, i) => i > gate.at && /Reset Authenticators/.test(l));
+  assert.ok(read < reset, 'the read-back comes before the last resort');
+});
+
+test('the admin step says where it comes from and the two Okta limits on More Actions', () => {
+  // catches: a step that reads as Okta's published fix for the loop, or the limits left out
+  const s = section();
+  assert.ok(s, 'section present');
+  const body = s.join('\n');
+  assert.ok(s.includes('Source: operator-validated by the owner on the real ticket, 2026-11-07, path confirmed against Okta\'s "How to clear user session" article.'), 'the admin step\'s source line');
+  const gotcha = s.find((l) => /^\*\*Gotcha:\*\*/.test(l) && /More Actions/.test(l));
+  assert.ok(gotcha, 'a Gotcha about More Actions');
+  assert.match(gotcha, /own profile/i);
+  assert.match(gotcha, /active users/i);
+  assert.match(body, /`okta-mfa-reset-selected-portal`/);
+});
+
 test('the reset step points to the existing reset gates, which are still in the runbook', () => {
   // catches: a new or renamed reset gate invented for this section, or a pointer to a gate that does not exist
   const s = section();
@@ -72,17 +153,13 @@ test('the reset step points to the existing reset gates, which are still in the 
   for (const gate of ['okta-mfa-reset-selected-portal', 'okta-mfa-reset-all-portal']) {
     assert.match(body, new RegExp(`\`${gate}\``), `the section names ${gate}`);
     assert.ok(TEXT.includes(`<!-- SAFETY GATE [${gate}] -->`), `${gate} is still a gate`);
+    assert.doesNotMatch(body, new RegExp(`SAFETY GATE \\[${gate}\\]`), `${gate} is not repeated in the section`);
   }
-  assert.doesNotMatch(body, /SAFETY GATE \[/, 'the section adds no gate of its own');
 });
 
-test('the admin marker invents no menu path and authorizes nothing', () => {
-  // catches: a guessed console path (an arrow breadcrumb) written into the marker, or a marker that reads as authorized
-  const s = section();
-  assert.ok(s, 'section present');
-  const line = s.find((l) => l.includes(MARKER));
-  assert.ok(line, 'marker present');
-  assert.doesNotMatch(line, /→/);
-  assert.match(line, /Planning only/);
-  assert.match(line, /UNCONFIRMED/);
+test('the PREVIEW ONLY marker okta-verify-loop-admin-reauth appears nowhere in .claude/commands', () => {
+  // catches: the old marker left beside the new gate, here or in another runbook
+  const hits = fs.readdirSync(COMMANDS).filter((f) => f.endsWith('.md'))
+    .filter((f) => fs.readFileSync(path.join(COMMANDS, f), 'utf8').includes('PREVIEW ONLY [okta-verify-loop-admin-reauth]'));
+  assert.deepEqual(hits, []);
 });

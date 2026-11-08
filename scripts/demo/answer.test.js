@@ -318,3 +318,18 @@ test('batch 10, task 2, pair 4: a verb after a leading place phrase or "only" co
     assert.equal(a.onlyLooks(steps('Open the admin center.', s, 'Read the list.')).looks, true, s);
   }
 });
+
+// Evidence review 1 (batch 10): two steps whose verb the rule missed. "Open the user page and reset the password"
+// read as a look, since a verb after "and" was read only after a negation; and after "Ask the user to <verb>" the
+// whole rest of the step was the user's, so a sentence of the tech's own after it ("Reset the MFA in Okta.") read as
+// a look. A verb after "and" counts when an object follows it (the, a, their, it, a [PLACEHOLDER]), so a noun after
+// "and" ("the install and update history") still does not; after a relayed ask, only a sentence that opens with a
+// condition or "then" goes on relaying. Wrong implementations it catches: every word after "and" read as a verb (the
+// T7 noun case again); a relayed ask that swallows the rest of the step.
+test('evidence review 1 (batch 10): a verb after "and", and a sentence of the tech\'s own after a relayed ask, count', () => {
+  for (const s of ['Open the user page and reset the password.', 'Ask the user to sign out of the app. Reset the MFA in Okta.', 'Find the device and wipe it.']) assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, s);
+  for (const s of ['Read the sign-in log and note the time.', 'Check the install and update history for the Mac.', 'Ask the user to quit the app. Then restart the laptop and try again.', 'Ask the user to quit the app. If it still fails, restart the laptop.']) {
+    const r = a.onlyLooks(steps('Open the log.', s, 'Read it.'));
+    assert.equal(r.looks, true, `${s}: ${r.change}`);
+  }
+});

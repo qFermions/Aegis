@@ -388,14 +388,25 @@ function openingVerb(clause) {
   }
   return { change: null, relayed: false };
 }
+// A change verb joined by "and" with an object after it ("and reset the password", "and wipe it"); a change word
+// after "and" with no object is a noun ("the install and update history") (evidence review 1 of batch 10).
+const AND_VERB = new RegExp(`\\band\\s+(${CHANGE_WORD.source})\\s+(?=(?:the|a|an|their|his|her|its|this|that|these|those|it|them|every|all|each|any|only|\\[)(?![A-Za-z]))`, 'i');
+// A sentence that goes on with the user check a relayed ask began: it opens with a condition ("If it still fails,
+// restart the laptop") or with "then" or "and"; any other sentence is the tech's own (evidence review 1 of batch 10).
+const RELAY_GOES_ON = /^(?:if|when|once|after|unless|until|otherwise|then|and)\b/i;
 // The first change word a step asks for as its verb, or null.
 function stepChange(step) {
   const text = String(step).replace(/\*\*|__|`/g, '');
+  let relaying = false;
   for (const sentence of text.split(/(?<=[.!?;])\s+/)) {
+    if (relaying && RELAY_GOES_ON.test(sentence.replace(/^[\s>(["'“‘]+/, ''))) continue;
+    relaying = false;
     for (const clause of sentence.split(/\bthen\b/i)) {
       const v = openingVerb(clause);
       if (v.change) return v.change;
-      if (v.relayed) return null;
+      if (v.relayed) { relaying = true; break; }
+      const joined = AND_VERB.exec(clause);
+      if (joined) return joined[1];
     }
   }
   return null;

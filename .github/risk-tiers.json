@@ -20,6 +20,8 @@
     "scripts/audit/**",
     "scripts/intake/**",
     "scripts/demo/**",
+    "scripts/ask-aegis.js",
+    "scripts/aegis-chat.js",
     "modules/automation/scripts/deploy-check.js",
     "scripts/adapters/**",
     "scripts/gws-posture-audit.js",

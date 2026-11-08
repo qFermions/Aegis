@@ -117,6 +117,20 @@ test('C: scripts/demo/** (spawns the claude CLI, writes change records and a sim
   assert.deepEqual(run(cwd, ['main']), ['tier=C', 'scripts/demo/customer-desk.js', 'scripts/demo/sim/gates.js']);
 });
 
+// Batch 10, task 5: the two entry points that start the claude CLI the way the desk does (scripts/ask-aegis.js,
+// scripts/aegis-chat.js) are tier C like scripts/demo/**. Wrong configuration it catches: the two scripts left
+// under scripts/** B, or their tests (scripts/*.test.js, tier B by REVIEW.md) moved to C with them.
+test('C: scripts/ask-aegis.js and scripts/aegis-chat.js (they start the claude CLI) are tier C; their tests stay B', () => {
+  for (const entry of ['scripts/ask-aegis.js', 'scripts/aegis-chat.js']) {
+    const cwd = sandbox();
+    commit(cwd, [entry, entry.replace(/\.js$/, '.test.js')]);
+    assert.deepEqual(run(cwd, ['main']), ['tier=C', entry]);
+  }
+  const tests = sandbox();
+  commit(tests, ['scripts/ask-aegis.test.js', 'scripts/aegis-chat.test.js']);
+  assert.equal(run(tests, ['main'])[0], 'tier=B');
+});
+
 test('one C path wins over many B paths, and only the C path is listed', () => {
   const cwd = sandbox();
   const many = Array.from({ length: 12 }, (_, i) => `scripts/eval/case-${i}.js`);

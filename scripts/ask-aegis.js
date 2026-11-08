@@ -64,7 +64,8 @@ function setupBlock(setup, scope) {
 // "was" with a space, a colon, an equals sign, an arrow, a spaced dash or "'s" ("password -> x", "password's x");
 // a whole [PLACEHOLDER] and a status word ("is expired", "is not working") are not values (batch 10, task 6).
 const SECRET_WORD = String.raw`(?:pass(?:word|code|wd|phrase)|pw|pwd|pin|secret)`;
-const SEPARATOR = String.raw`(?:\s+(?:is|was)\b|\s*(?::|=|->|=>|→)|\s+-\s|['’]s\b)`;
+// "is" or "was" may touch the word ("passwordis x", which batch 9's rule blocked too: security review 1 of batch 10)
+const SEPARATOR = String.raw`(?:\s*(?:is|was)\b|\s*(?::|=|->|=>|→)|\s+-\s|['’]s\b)`;
 const NOT_PLACEHOLDER = String.raw`(?!\[[A-Z0-9_@.]+\](?:\W|$))`;
 const NOT_STATUS = String.raw`(?!(?:expired|expiring|locked|wrong|incorrect|invalid|reset|not|being|no|still|working|changed|required|blank|empty|missing|rejected|forgotten|too|the|my|now|correct|right|fine|ok|okay|valid)(?=\s|[.,;!?]+(?:\s|$)|$))`;
 // a value with a digit or a symbol in it, as a password has and an ordinary word does not
@@ -92,10 +93,12 @@ const PHONE = new RegExp(PHONE_LITERAL.source, 'g');
 const phoneOrCode = (m) => (/^\d{10}$/.test(m) ? m : '[PHONE_NUMBER]');
 function protect(text) {
   const t = String(text);
-  // read in compatibility form with the zero-width characters taken out, so a full-width colon ("Password：x") or
-  // a zero-width space ("pass​word: x") does not hide a password; the text kept is the original (batch 10, task 6)
+  // read as typed and in compatibility form with the zero-width characters taken out, so a full-width colon
+  // ("Password：x") or a zero-width space ("pass​word: x") does not hide a password (batch 10, task 6); both are
+  // read, since NFKC splits a few characters (an acute accent, an overline) into a space and a mark, which would
+  // otherwise hide a value the text as typed shows (security review 1 of batch 10); the text kept is the original
   const squeezed = t.normalize('NFKC').replace(/[​-‍⁠﻿]/g, '');
-  const blocked = [...new Set([...sanitize.scanText(t).blocks.map((b) => b.label), ...EXTRA_SECRETS.filter((x) => x.re.test(squeezed)).map((x) => x.label)])];
+  const blocked = [...new Set([...sanitize.scanText(t).blocks.map((b) => b.label), ...EXTRA_SECRETS.filter((x) => x.re.test(t) || x.re.test(squeezed)).map((x) => x.label)])];
   if (blocked.length) return { blocked };
   const mask = (piece) => replaceEmails(piece, () => '[USER@DOMAIN.COM]').replace(PHONE, phoneOrCode);
   // an address at the placeholder domain (an ADMIN or USER token at DOMAIN.COM, in brackets) is a placeholder too,

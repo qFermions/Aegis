@@ -1,0 +1,29 @@
+✔ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (22.334041ms)
+✔ with no --setup the argv is the isolation alone (0.700458ms)
+✔ bad arguments exit 1 with no session; a claude that cannot start is a plain message and exit 2 (1.598875ms)
+✔ while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits (0.268667ms)
+✔ code review 2, finding 14: the chat protects its setup text as ask-aegis does (0.761208ms)
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (28.651416ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (43.269458ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (43.577333ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.130708ms)
+✔ no ticket text: the usage and exit 1, with no session (22.405333ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (21.330959ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (332.877125ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (47.333708ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (0.624875ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.414125ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.320083ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.124291ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.13475ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.494ms)
+✔ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.133625ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 580.33125
+exit 0

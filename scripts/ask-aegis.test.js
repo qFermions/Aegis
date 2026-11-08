@@ -350,3 +350,13 @@ test('batch 10, task 6: no-space and punctuated password spellings stop the ask;
     'pw reset needed for [UPN]', "The user's password isn't syncing to the laptop.", 'PIN is required on the new phone.', 'The app client secret is expiring next week'];
   for (const t of ok) assert.equal(ask.protect(t).blocked, undefined, t);
 });
+
+// Security review round 1 (batch 10): the batch 10 rule let through forms batch 9's blocked: "is" touching the
+// word with a space after it (batch 9 allowed no space before "is"), and a value holding a character that NFKC
+// turns into a space and a combining mark (an acute accent, a diaeresis, an overline), since only the normalized
+// copy was read. Wrong implementations it catches: a separator that needs a space before "is"; a rule matched on
+// the normalized copy alone, where normalizing can remove a block it should only ever add.
+test('security review 1 (batch 10): every form batch 9 blocked still stops the ask', () => {
+  for (const bad of ['passwordis Hunter22!', 'pinis 4821', 'secretis abcd1234', 'Passcodeis 99887766', 'password: a´b´c´d', 'password: ab¨cd', 'password: x‾y‾z‾']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ['We have password issues with Teams', 'My boarding pass is attached to the expense report.', "Password reset link isn't arriving."]) assert.equal(ask.protect(ok).blocked, undefined, ok);
+});

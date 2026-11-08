@@ -1,0 +1,26 @@
+Mutation 1: an arrow needs a password-shaped value (round 1)
+applied: 1
+ℹ fail 3
+ℹ pass 14
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (0.388916ms)
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (1.952875ms)
+✖ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.220541ms)
+Mutation 2: any value after "'s" or a spaced dash
+applied: 1
+ℹ fail 2
+ℹ pass 15
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.925084ms)
+✖ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.339666ms)
+Mutation 3: no value after "'s" or a spaced dash counts
+applied: 1
+ℹ fail 3
+ℹ pass 14
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (0.386958ms)
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (1.979084ms)
+✖ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.285875ms)
+Mutation 4: only the format characters taken out (round 1)
+applied: 1
+ℹ fail 1
+ℹ pass 16
+✖ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.592ms)
+restored: True

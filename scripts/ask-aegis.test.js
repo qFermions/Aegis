@@ -371,3 +371,15 @@ test('security review 1 (batch 10): every form batch 9 blocked still stops the a
   for (const bad of ['passwordis Hunter22!', 'pinis 4821', 'secretis abcd1234', 'Passcodeis 99887766', 'password: a´b´c´d', 'password: ab¨cd', 'password: x‾y‾z‾']) assert.ok(ask.protect(bad).blocked, bad);
   for (const ok of ['We have password issues with Teams', 'My boarding pass is attached to the expense report.', "Password reset link isn't arriving."]) assert.equal(ask.protect(ok).blocked, undefined, ok);
 });
+
+// Code review round 2 (batch 10), class C2: round 1 moved the arrows, "'s" and " - " into the separators that need a
+// password-shaped value, so a letter-only password after them went through ("password -> Summertime"); two common
+// phrasings still stopped the ask ("password's 90-day expiry", "Password - MFA/Authenticator loop"); and invisible
+// characters outside Unicode Cf (a combining grapheme joiner, a variation selector, the Hangul filler) still split the
+// word. An arrow never opens an ordinary sentence, so any value after it counts; after "'s" or " - " a value counts
+// when it ends the clause or holds a password symbol. Wrong implementations it catches: shaped values only after an
+// arrow; any value after "'s"; a Cf-only character class.
+test('code review 2, class C2 (batch 10): letter-only passwords after an arrow, "\'s" or " - " stop the ask; ordinary phrasings pass', () => {
+  for (const bad of ['password -> Summertime', 'password → Summertime', 'new PIN → abcd', 'passphrase => correcthorse', "the password's Summertime", 'password - Summertime', "password's Hunter22! please change it", 'pass͏word: Hunter22!', 'pass️word: Hunter22!', 'passㅤword: Hunter22!']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ["The user's password's 90-day expiry hit today", 'Password - MFA/Authenticator loop on her phone', 'PIN was sent to the new phone', "The user's password's been reset twice", 'Password - Outlook keeps asking for it']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+});

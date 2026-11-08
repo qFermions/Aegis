@@ -28,6 +28,10 @@ console or a support case before production; until then the code takes the safer
 | W-03, W-05 | a way for a service account to read its delegation list; the error text when a scope is not delegated | the token response `scope` is the check | Google Workspace preflight |
 | W-04 | Google's tokeninfo for access tokens | not used | none |
 | W-06 | Google Workspace 429 and Retry-After | honoured when present | contract |
+| J-12 | that Jamf Pro records a lock sent with the Lock Computer button under commandType `DEVICE_LOCK` (batch 10) | `verify-command --type DEVICE_LOCK` finds no command of another type, so a wrong name reads as not done; `/jamf-lock-erase` says to read Management History in the GUI before concluding the lock was not sent | `jamf-client.js verify-command`; `/jamf-lock-erase` Phase B |
+| W-11 | the values of a data transfer's `applicationTransferStatus` and `overallTransferStatusCode`; "completed" is not confirmed as Google's word (batch 10) | only "completed" passes; any other status, or none, is INCONCLUSIVE, never a pass and never a failed object | `gws-client.js verify-transfer`; `/gws-offboard` Drive transfer gate and Calendar transfer gate |
+| W-13 | Google Drive and Docs' Data Transfer application ID, 55656082996 (Calendar's, 435070579839, is confirmed) (batch 10) | a transfer with no entry for the ID asked for is INCONCLUSIVE and the read prints the IDs it holds | `/gws-offboard` Drive transfer gate |
+| W-14 | the form of a data transfer's ID, and whether a transfer started in the Admin console's Drive or Calendar transfer tool is one transfers.get can read (batch 10) | an ID outside letters, digits, - and _ (1 to 128) is refused before a request; a transfer the API cannot find is not a pass | `gws-client.js verify-transfer`; `/gws-offboard` Phase C |
 | L-06 | that no Linear query returns a key's permissions | Linear is treated as not exposing scopes | Linear preflight |
 | A-06 | that no Atlassian call returns an API token's scopes | Jira is treated as not exposing scopes | Jira preflight |
 | A-08 | Atlassian's `X-ARequestId` header | read as a request id only when present and safe | operator message |

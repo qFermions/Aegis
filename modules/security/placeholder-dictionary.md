@@ -126,6 +126,10 @@ Added with the batch G3 close-out 3 (2026-10-31): `[METHOD_ID]` (one authenticat
 id, as `node scripts/adapters/msgraph-client.js auth-methods` prints it and the portal shows
 it; `verify-method-absent --method-id [METHOD_ID]` proves that method is gone).
 
+Added with batch 10 (2026-11-07): `[TRANSFER_ID]` (one Google Workspace data transfer's ID, as
+the Data Transfer API names it and `gam print datatransfers` lists it; `gws-client.js
+verify-transfer --transfer-id [TRANSFER_ID]` reads that one transfer, `/gws-offboard` Phase C).
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

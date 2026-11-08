@@ -133,7 +133,7 @@ The Admin console shows no transfer ID. Take `[TRANSFER_ID]` from `gam print dat
 node scripts/adapters/gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 55656082996 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 
-It passes only when that transfer was requested at or after `[NOT_BEFORE]`, moves `[USER@DOMAIN.COM]`'s data to `[MANAGER_UPN]` and its Drive and Docs entry reads completed. Google's reference lists no status values, so any other status is inconclusive: read again later. `55656082996` is the Drive and Docs application ID a search excerpt of Google's transfer parameters page gives, not confirmed on the page itself (vendor fact W-13): if the read says the transfer holds no entry for it, it prints the IDs the transfer holds; check the transfer in the Admin console before concluding anything.
+It passes only when that transfer was requested at or after `[NOT_BEFORE]`, moves `[USER@DOMAIN.COM]`'s data to `[MANAGER_UPN]` and its Drive and Docs entry reads completed. Google's reference lists no status values (vendor fact W-11), so any other status is inconclusive: read again later. `55656082996` is the Drive and Docs application ID a search excerpt of Google's transfer parameters page gives, not confirmed on the page itself (vendor fact W-13): if the read says the transfer holds no entry for it, it prints the IDs the transfer holds; check the transfer in the Admin console before concluding anything.
 
 <!-- SAFETY GATE [gws-offboard-calendar-transfer-portal] -->
 - **Target:** [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new organizer)
@@ -154,7 +154,7 @@ It passes only when that transfer was requested at or after `[NOT_BEFORE]`, move
 node scripts/adapters/gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 435070579839 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 
-It passes only when that transfer was requested at or after `[NOT_BEFORE]`, moves `[USER@DOMAIN.COM]`'s events to `[MANAGER_UPN]` and its Calendar entry (application ID `435070579839`, vendor fact W-13) reads completed; any other status is inconclusive.
+It passes only when that transfer was requested at or after `[NOT_BEFORE]`, moves `[USER@DOMAIN.COM]`'s events to `[MANAGER_UPN]` and its Calendar entry (application ID `435070579839`, vendor fact W-13) reads completed; any other status is inconclusive (vendor fact W-11).
 
 **Verification checkpoint:** [ ] both `verify-transfer` reads exit 0, or the confirmation emails are recorded where no transfer ID was listed · [ ] `[MANAGER_UPN]` opens a sample of the transferred files · [ ] the transferred event count is recorded.
 

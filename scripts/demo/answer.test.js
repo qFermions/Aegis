@@ -354,3 +354,20 @@ test('code review 1, class A (batch 10): a change behind a prefix, after a comma
   const relayedBullet = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Ask the user to quit the app', '   - if it still fails, restart the laptop', '2. Read the log.', '3. Read it again.', ...GOOD_PARTS.slice(5)]);
   assert.equal(a.onlyLooks(relayedBullet).looks, true, 'a bullet that goes on with the relayed user check');
 });
+
+// Code review round 2 (batch 10), class A2: edges of round 1's verb readers. Steps written "1.Verb" with no space
+// read as looks in a card; the new readers ran inside a negated clause ("Do not click Reset password"); a
+// [PLACEHOLDER] object never matched; portal menu names read as buttons ("Add filters", "Update rings", "Deleted
+// users"); and the shared reader removed only five invisible characters, so "Re<soft hyphen>set" hid the verb. Wrong
+// implementations it catches: each of those five readings.
+test('code review 2, class A2 (batch 10): no-space steps, negations, placeholder objects, menu names and invisible characters', () => {
+  const noSpace = card([GOOD_PARTS[0], GOOD_PARTS[1], '1.Open the log.', '2.Reset the password.', '3.Read it.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(noSpace).looks, false, 'a "2.Reset" step in a card');
+  for (const s of ['Open the device page, wipe [DEVICE_NAME] from the list.', "Find the user and reset [USER@DOMAIN.COM]'s password.", 'Re­set the password.', 'Wi⁡pe the Mac.']) {
+    assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, JSON.stringify(s));
+  }
+  for (const s of ['Do not click Reset password until the user confirms.', 'Never select Delete on the user page.', "Don't go to Intune → Devices → Wipe.", 'Click Add filters and choose User.', 'In Intune, select Update rings for Windows and read the ring.', 'Open Entra → Users → Deleted users, and look for the account.', 'Open Intune → Devices → Update rings, find the device ring.']) {
+    const r = a.onlyLooks(steps('Open the log.', s, 'Read it.'));
+    assert.equal(r.looks, true, `${s}: ${r.change}`);
+  }
+});

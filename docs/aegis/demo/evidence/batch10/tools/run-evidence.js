@@ -94,8 +94,8 @@ function stopped(t, answer) {
   if (values.some(says_none)) {
     const look = a.onlyLooks(answer);
     if (s === 'OPEN' && look.change) {
-      const k = look.steps.findIndex((x) => a.stepChange(x) === look.change);
-      return `answer step ${k + 1}: "${cell(look.steps[k] || '')}" (its verb "${look.change}" is a change word, so the answer does not only look); rule ${rule}`;
+      // the scanned text that held the change (a step with its bullets, or a card line), as onlyLooks reports it
+      return `answer line "${cell(look.where || '')}" (its verb "${look.change}" is a change word, so the answer does not only look); rule ${rule}`;
     }
     if (s === 'CLARIFY') {
       // the first line of the answer's own text (outside the closing block and any fence) that asks something

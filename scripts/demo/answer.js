@@ -37,7 +37,9 @@ const ANY_STEP = /^[ \t>]*(?:[-*+][ \t]+)?(?:\*\*)?\(?(\d+)[.)](?:\*\*)?[ \t]*(\
 const LIST_LINE = /^[ \t>]*(?:[-*+][ \t]+|\(?\d+[.)])/;
 // Characters that make a line look plain but read differently: full-width digits and no-break spaces fold
 // to plain ones (NFKC), and zero-width characters go.
-const plainText = (t) => String(t).normalize('NFKC').replace(/[\u200b-\u200d\u2060\ufeff]/g, '');
+// every invisible character goes (format characters and the other default-ignorable ones: a soft hyphen, U+2061,
+// a variation selector), so none can hide a word (code review round 2 of batch 10, class A2)
+const plainText = (t) => String(t).normalize('NFKC').replace(/[\p{Cf}\p{Default_Ignorable_Code_Point}]/gu, '');
 // "Details" with its capital, not followed by a field or tab name: "in the details field of your ticket" is a
 // message line (code review round 2 of batch 9, finding 13)
 // "the Details section of this answer" is a pointer; a details field, tab, box or pane is part of a message
@@ -373,18 +375,20 @@ const OPENING = /^[^A-Za-z0-9[]+/;
 const RELAY = /^(?:ask|tell)\s+(?:\S+\s+){0,3}?to\s+/i;
 const NEGATED_VERB = /^(?:don['’]?t|do not|never|no need to|avoid)\b/i;
 const NEXT_CLAUSE = /[,;:]\s*|\s(?:and|but)\s+/;
-// The verb that opens one clause: { change: the change word or null, relayed: true after "ask <someone> to" }.
+// The verb that opens one clause: { change: the change word or null, relayed: true after "ask <someone> to", rest }.
 function openingVerb(clause) {
   let t = clause;
   for (let i = 0; i < 6; i += 1) {
-    t = t.replace(OPENING, '').replace(/^(?:[-*+]|\(?\d+[.)])\s+/, '');
+    // a list marker with or without a space after it ("2.Reset": code review round 2 of batch 10, class A2)
+    t = t.replace(OPENING, '').replace(/^(?:[-*+]\s+|\(?\d+[.)]\s*)/, '');
     const hit = CHANGE_VERB.exec(t);
-    if (hit) return { change: hit[0], relayed: false };
+    if (hit) return { change: hit[0], relayed: false, rest: t };
     const relay = RELAY.exec(t);
-    if (relay) { const asked = CHANGE_VERB.exec(t.slice(relay[0].length)); return { change: asked ? asked[0] : null, relayed: true }; }
+    if (relay) { const asked = CHANGE_VERB.exec(t.slice(relay[0].length)); return { change: asked ? asked[0] : null, relayed: true, rest: '' }; }
     if (NEGATED_VERB.test(t)) {
       const next = NEXT_CLAUSE.exec(t);
-      if (!next) return { change: null, relayed: false };
+      // a negated clause holds nothing more to read: its button or path is the one not to use
+      if (!next) return { change: null, relayed: false, rest: '' };
       t = t.slice(next.index + next[0].length);
       continue;
     }
@@ -392,17 +396,23 @@ function openingVerb(clause) {
     if (!lead) break;
     t = t.slice(lead[0].length);
   }
-  return { change: null, relayed: false };
+  // rest: the clause from its verb on, past any lead or negated clause, where the other readers look
+  return { change: null, relayed: false, rest: t };
 }
 // A change verb joined by "and" or a comma with an object after it ("and reset the password", ", wipe it"); a
 // change word there with no object is a noun ("the install and update history") (evidence review 1 and code
 // review round 1 of batch 10).
-const JOINED_VERB = new RegExp(`(?:\\band|,)\\s+(${CHANGE_WORD.source})\\s+(?=(?:the|a|an|their|his|her|its|this|that|these|those|it|them|every|all|each|any|only|\\[)(?![A-Za-z]))`, 'i');
+const JOINED_VERB = new RegExp(`(?:\\band|,)\\s+(${CHANGE_WORD.source})\\s+(?=(?:the|a|an|their|his|her|its|this|that|these|those|it|them|every|all|each|any|only)(?![A-Za-z])|\\[)`, 'i');
+// A change word in its plain form, for a button or a path's last stop: "Deleted users" is a list, not a button; a plain
+// form with a plural noun after it is a menu ("Update rings", "Add filters") (code review round 2 of batch 10, class
+// A2). shortcut: so "Remove members" reads as a menu too; with Gate: none that can only turn an OPEN into an
+// INVESTIGATE.
+const CHANGE_PLAIN = `(?:${CHANGE_STEMS.join('|')}|turn (?:on|off))(?![A-Za-z-])(?!\\s+[a-z]+s\\b)`;
 // A button the step clicks, chooses or presses ("Click Wipe Computer", "choose Delete").
-const BUTTON_VERB = new RegExp(`\\b(?:click|choose|select|press|tap|pick|hit)\\s+(?:on\\s+)?(?:the\\s+)?["\\u201c]?(${CHANGE_WORD.source})`, 'i');
+const BUTTON_VERB = new RegExp(`\\b(?:click|choose|select|press|tap|pick|hit)\\s+(?:on\\s+)?(?:the\\s+)?["\\u201c]?(${CHANGE_PLAIN})`, 'i');
 // The last stop of a portal path when it ends the clause in a change: "→ Reset password," "→ Lock Computer."; a
 // menu the path only passes through ("→ Update rings and read the ring") is not one.
-const PATH_BUTTON = new RegExp(`^\\s*(${CHANGE_WORD.source})(?:\\s+[^\\s,.;:)]+){0,3}\\s*(?:[.,;:)]|$|\\s+(?:with|for|on)\\b)`, 'i');
+const PATH_BUTTON = new RegExp(`^\\s*(${CHANGE_PLAIN})(?:\\s+[^\\s,.;:)]+){0,3}\\s*(?:[.,;:)]|$|\\s+(?:with|for|on)\\b)`, 'i');
 const pathButton = (clause) => (clause.includes('→') ? (PATH_BUTTON.exec(clause.split('→').pop()) || [])[1] || null : null);
 // A sentence that goes on with the user check a relayed ask began: it opens with a condition ("If it still fails,
 // restart the laptop") or with "then" or "and"; any other sentence is the tech's own (evidence review 1 of batch 10).
@@ -419,7 +429,7 @@ function stepChange(step) {
       const v = openingVerb(clause);
       if (v.change) return v.change;
       if (v.relayed) { relaying = true; break; }
-      const inside = (JOINED_VERB.exec(clause) || BUTTON_VERB.exec(clause) || [])[1] || pathButton(clause);
+      const inside = (JOINED_VERB.exec(v.rest) || BUTTON_VERB.exec(v.rest) || [])[1] || pathButton(v.rest);
       if (inside) return inside;
     }
   }
@@ -465,9 +475,11 @@ function onlyLooks(raw) {
     asSteps.push(...steps, ...body.filter((l) => ANY_STEP.test(l)).map((l) => ANY_STEP.exec(l)[2]));
   }
   let change = null;
-  for (const x of asSteps) { change = stepChange(x); if (change) break; }
-  if (!change) for (const x of asMentions) { change = changeIn(x); if (change) break; }
-  return { steps, looks: steps.length > 0 && change === null, change };
+  let where = null;
+  for (const x of asSteps) { change = stepChange(x); if (change) { where = x; break; } }
+  if (!change) for (const x of asMentions) { change = changeIn(x); if (change) { where = x; break; } }
+  // where: the step (with its bullets) or card line that holds the change, for a reader to quote
+  return { steps, looks: steps.length > 0 && change === null, change, where };
 }
 
 module.exports = { defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

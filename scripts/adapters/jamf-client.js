@@ -571,8 +571,12 @@ async function verifyCheckedIn(client, a) {
 // (doubled: true), as the header says (code review round 1 of batch 10, finding 13).
 function commandFields(c) {
   const client = isObject(c.client) ? c.client : {};
-  const pick = (documented, filterName) => (documented !== undefined ? documented : filterName);
-  const differ = (documented, filterName) => documented !== undefined && filterName !== undefined && String(documented).toLowerCase() !== String(filterName).toLowerCase();
+  // null or an empty string is no value; one value in two spellings (NOT_NOW, NotNow) is one value (code review
+  // round 2 of batch 10, class D2)
+  const has = (x) => x !== undefined && x !== null && x !== '';
+  const pick = (documented, filterName) => (has(documented) ? documented : filterName);
+  const same = (x) => String(x).toLowerCase().replace(/[\s_-]/g, '');
+  const differ = (documented, filterName) => has(documented) && has(filterName) && same(documented) !== same(filterName);
   return {
     ...c,
     clientManagementId: pick(client.managementId, c.clientManagementId),
@@ -607,14 +611,12 @@ async function verifyCommand(client, a) {
       if (!isObject(record)) continue;
       observed.commandsRead += 1;
       const c = commandFields(record);
-      // a doubled record that, in either form, names this Mac and this type may be the one asked for: never proof
-      if (c.doubled) {
-        const macs = [isObject(record.client) ? record.client.managementId : undefined, record.clientManagementId].filter((x) => typeof x === 'string').map((x) => x.toLowerCase());
-        if (macs.includes(a.managementId.toLowerCase()) && [record.commandType, record.command].includes(a.type)) doubledFields += 1;
-        continue;
-      }
-      const sameMac = typeof c.clientManagementId === 'string' && c.clientManagementId.toLowerCase() === a.managementId.toLowerCase();
-      if (!sameMac || c.command !== a.type) continue;
+      // a doubled record may be the one asked for when either form names this Mac and this type; it is then
+      // judged by its time and profile like any other, and counted as never proof (code review round 2 of
+      // batch 10, class D2: it was counted before those checks)
+      const macs = c.doubled ? [isObject(record.client) ? record.client.managementId : undefined, record.clientManagementId] : [c.clientManagementId];
+      const sameMac = macs.some((x) => typeof x === 'string' && x.toLowerCase() === a.managementId.toLowerCase());
+      if (!sameMac || !(c.doubled ? [record.commandType, record.command] : [c.command]).includes(a.type)) continue;
       // A profile command for another profile is never proof, even when the server ignores the
       // profileIdentifier part of the filter. One that names no profile is not proof either, but it may
       // be the one asked for: Jamf's MdmCommand record, as its reference lists it (vendor fact J-08),
@@ -627,10 +629,11 @@ async function verifyCommand(client, a) {
       // an Acknowledged or Pending command whose dateSent cannot be read may be the one asked
       // for: it is counted, not skipped (code review round 2 of batch G4, finding 4)
       if (!Number.isFinite(sent)) {
-        if (answeredOrWaiting) undated += 1;
+        if (c.doubled) doubledFields += 1; else if (answeredOrWaiting) undated += 1;
         continue;
       }
       if (sent < notBefore) continue;
+      if (c.doubled) { doubledFields += 1; continue; }
       if (unnamed) { if (answeredOrWaiting) unnamedProfile += 1; continue; }
       const summary = { uuid: orNull(c.uuid), command: c.command, profileIdentifier: orNull(c.profileIdentifier), status: orNull(c.status), dateSent: c.dateSent, dateCompleted: orNull(c.dateCompleted) };
       if (typeof c.status === 'string' && /^acknowledged$/i.test(c.status)) {

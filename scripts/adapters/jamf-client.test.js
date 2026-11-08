@@ -425,6 +425,19 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
   }
   const agreeing = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandType: 'INSTALL_PROFILE', commandState: 'ACKNOWLEDGED', client: { managementId: MID } })] })] });
   assert.equal(agreeing.code, 0, 'both forms with the same values are one field');
+  // Code review round 2 (batch 10), class D2: a filter-named field set to null, or written in another spelling
+  // (NOT_NOW against NotNow), is no second value; and a doubled record sent before --not-before or for another
+  // profile cannot be the command asked for, so it does not make the read inconclusive. Wrong implementations it
+  // catches: null read as a value; a doubled record counted before the time and profile checks.
+  const nulls = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ client: { managementId: MID }, commandType: 'INSTALL_PROFILE', commandState: 'ACKNOWLEDGED', clientManagementId: null, command: null, status: null })] })] });
+  assert.equal(nulls.code, 0, 'a null filter-named field is no second value');
+  const spelled = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandState: 'NOT_NOW', status: 'NotNow' })] })] });
+  assert.equal(spelled.code, 5, 'NOT_NOW: not answered yet');
+  assert.equal(spelled.json.observed.doubledFieldCommands, undefined, 'one state in two spellings is not doubled');
+  for (const [label, over] of [['sent before --not-before', { commandState: 'ACKNOWLEDGED', status: 'Error', dateSent: '2026-10-27T08:59:59Z' }], ['for another profile', { commandState: 'ACKNOWLEDGED', status: 'Error', profileIdentifier: PIDS[8] }]]) {
+    const old = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command(over)] })] });
+    assert.equal(old.code, 2, `a doubled record ${label} is not the one asked for`);
+  }
   const shapeless = await cli(VC, { replies: [tokenReply(), ok({ nothing: true })] });
   assert.equal(shapeless.code, 5); // batch G4, task D1: an answer with no results list is INCONCLUSIVE
   assert.equal(shapeless.json.state, STATES.INCONCLUSIVE);

@@ -19,6 +19,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
 
+const { catalog } = require('./catalog.js');
 const desk = require('./customer-desk.js');
 const { SIM_GATES } = require('./sim/gates.js');
 
@@ -58,6 +59,10 @@ async function runDesk(t, id, gates, simTable) {
   return { code, ticket, readBack: ticket.steps.find((s) => s.n === 8), out: out.join('') };
 }
 
+// the runbooks as the desk and change-record.js read them, and one flag's value in a read's argv
+const gates = catalog();
+const flag = (argv, name) => { const i = argv.indexOf(name); return i < 0 ? undefined : argv[i + 1]; };
+
 // the gate's simulated effect replaced by one that leaves the gate's own change undone
 const without = (id, apply) => ({ ...SIM_GATES, [id]: { ...SIM_GATES[id], apply } });
 
@@ -90,4 +95,35 @@ test('task 3: the R1 cookie reset runs its own section\'s RESET_SIGNIN_COOKIES r
   const before = await runDesk(t, 'T3', ['gws-password-reset-cookies-portal'], without('gws-password-reset-cookies-portal', SIM_GATES['gws-password-reset-password-portal'].apply));
   assert.equal(before.ticket.closing_state, 'FAILED', before.ticket.reason);
   assert.deepEqual(before.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['google-workspace:verify-event FAIL']);
+});
+
+// ── Task 4: the Okta deactivate of /gws-offboard ───────────────────────────────────────────────
+
+// catches: a field naming another status (SUSPENDED would pass after a suspend), the fenced twin left with
+// none while its portal twin binds the read (change-binding.test.js holds that rule), or a read with no
+// --change under an R3 gate
+test('task 4: the Okta deactivate gate of /gws-offboard and its API twin bind verify-status --status DEPROVISIONED under a change record', () => {
+  for (const id of ['gws-offboard-okta-deactivate-portal', 'gws-offboard-okta-deactivate']) {
+    const g = gates.get(id);
+    assert.equal(g.rClass, 'R3', id);
+    assert.equal(g.none, null, id);
+    assert.equal(g.bound.length, 1, id);
+    const [b] = g.bound;
+    assert.equal(b.kind, 'okta:verify-status', id);
+    assert.equal(flag(b.argv, '--status'), 'DEPROVISIONED', id);
+    assert.equal(flag(b.argv, '--user'), '[OKTA_USER_ID]', id);
+    assert.match(b.command, /--change \[CHANGE_ID\] --execute$/, id);
+  }
+});
+
+// catches: a desk that cannot open the R3 change record for the read (the ticket stops OPEN), or a read
+// that passes on a status other than DEPROVISIONED
+test('task 4: the /gws-offboard Okta deactivate passes after the simulated deactivate and fails after a suspend instead', async (t) => {
+  const after = await runDesk(t, 'T2', ['gws-offboard-okta-deactivate-portal']);
+  assert.equal(after.ticket.closing_state, 'RESOLVED (SIMULATED)', after.ticket.reason);
+  assert.deepEqual(after.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['okta:verify-status PASS']);
+  assert.match(after.readBack.output, /change-record\.js status --change chg-[0-9a-f]{12}: done/);
+  const before = await runDesk(t, 'T2', ['gws-offboard-okta-deactivate-portal'], without('gws-offboard-okta-deactivate-portal', SIM_GATES['okta-user-lifecycle-suspend-portal'].apply));
+  assert.equal(before.ticket.closing_state, 'FAILED', before.ticket.reason);
+  assert.deepEqual(before.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['okta:verify-status FAIL']);
 });

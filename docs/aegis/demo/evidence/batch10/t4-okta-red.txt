@@ -1,0 +1,16 @@
+$ node --test --test-name-pattern "task 4" scripts/demo/batch10-readbacks.test.js
+✖ task 4: the Okta deactivate gate of /gws-offboard and its API twin bind verify-status --status DEPROVISIONED under a change record (0.632292ms)
+✖ task 4: the /gws-offboard Okta deactivate passes after the simulated deactivate and fails after a suspend instead (142.247666ms)
+ℹ tests 2
+ℹ pass 0
+ℹ fail 2
+✖ failing tests:
+✖ task 4: the Okta deactivate gate of /gws-offboard and its API twin bind verify-status --status DEPROVISIONED under a change record (0.632292ms)
+  AssertionError [ERR_ASSERTION]: gws-offboard-okta-deactivate-portal
+    actual: 'no read-back is named for it in this runbook: its proof is the read its own step names',
+    expected: null,
+✖ task 4: the /gws-offboard Okta deactivate passes after the simulated deactivate and fails after a suspend instead (142.247666ms)
+  AssertionError [ERR_ASSERTION]: at least one change cannot be proved by a read-back, so the ticket is not resolved
+    actual: 'INCONCLUSIVE',
+    expected: 'RESOLVED (SIMULATED)',
+exit 1

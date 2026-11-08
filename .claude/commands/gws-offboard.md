@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[USER@DOMAIN.COM]` (the departing user's Google address) · `[UPN]` (their Okta username) · `[USER_ID]` (their Okta user ID) · `[MANAGER_UPN]` (who receives the data) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[USER@DOMAIN.COM]` (the departing user's Google address) · `[UPN]` (their Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[MANAGER_UPN]` (who receives the data) · `[CHANGE_ID]` (the change record id, below) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`: `google-workspace:verify-suspended` for [gws-offboard-suspend-portal] or its GAM twin [gws-offboard-suspend]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`: `okta:verify-status --status DEPROVISIONED` for [gws-offboard-okta-deactivate-portal] or its API twin [gws-offboard-okta-deactivate], `google-workspace:verify-suspended` for [gws-offboard-suspend-portal] or its GAM twin [gws-offboard-suspend]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-status --status DEPROVISIONED`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
 ## ⚠️ Admin / safety gate
 
@@ -56,14 +56,21 @@ No lighter step: the person is leaving, so access must end at the identity sourc
 - **Reversibility:** R3 — Okta Activate brings the account back, but app assignments may have to be re-assigned and the Okta password is permanently deleted
 - **Required confirmation:** Type exactly `DEACTIVATE OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
+- **Read-back:** `okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-offboard-okta-deactivate-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Deactivate**.
 2. Confirm in the dialog, then read the status back as **Deactivated**.
 
+```bash
+# read-back: the Okta user record reads status DEPROVISIONED, Deactivated in the Admin Console (GET only); it proves the change only when Phase A read another status
+node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+```
+
+Deactivation runs in the background, so the status can still read the old value for a while: run the read again, never the deactivation.
+
 **WAIT UNTIL** the Google side shows the provisioning result: Admin console → Directory → Users → `[USER@DOMAIN.COM]` → status banner. With default integration settings the account is **Suspended**; with *Do not suspend user* it stays **Active** and Phase B is required.
 
-**Verification checkpoint** — [ ] Okta status reads Deactivated · [ ] the Google status is recorded in the ticket.
+**Verification checkpoint:** [ ] Okta status reads Deactivated and `verify-status --status DEPROVISIONED` passed · [ ] the Google status is recorded in the ticket.
 
 ## Phase B — Contain in Google (only if Okta did not suspend the account)
 
@@ -171,7 +178,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 # Reversibility: R3 — reactivation may need app assignments re-created — the Okta password is permanently deleted
 # Required confirmation: type exactly "DEACTIVATE OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
+# Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="DEACTIVATE OKTA USER [USER_ID]"
 # shows the phrase
@@ -284,7 +291,7 @@ gam print users deleted_only
 
 ## ✅ Verification checklist
 
-- [ ] Okta: Directory → People → `[UPN]` reads **Deactivated** (API read-back status `DEPROVISIONED`).
+- [ ] Okta: Directory → People → `[UPN]` reads **Deactivated**, and `okta-client.js verify-status --status DEPROVISIONED` passed.
 - [ ] Google: `gam info user "[USER@DOMAIN.COM]"` shows the account suspended — or, after Phase D, `gam print users deleted_only` lists it and the deletion appears in Admin log events.
 - [ ] Data: `gam print datatransfers` shows Drive and Calendar transfers completed; `[MANAGER_UPN]` opened a sample file; the pre-state file count is in the ticket.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the suspend / transfer / delete events with the expected admin and time.

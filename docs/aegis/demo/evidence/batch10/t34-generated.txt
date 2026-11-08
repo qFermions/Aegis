@@ -1,0 +1,10 @@
+$ AEGIS_PRINT_STATE_CHANGE_INVENTORY=1 node scripts/command-safety-gates.test.js > <scratch>/inventory.json; cmp <scratch>/inventory.json docs/security/STATE_CHANGE_INVENTORY.json
+cmp exit 0 (0: the regenerated inventory equals the committed one; the edits change Read-back fields and read lines, which the inventory does not list)
+$ node scripts/lint/ladder-audit.js
+ladder-audit: wrote docs/aegis/ladder-audit.md (141 sections audited)
+$ node scripts/lint/ladder-audit.js --check
+ladder-audit: 141 sections audited, the fixed scope passes
+exit 0
+$ node scripts/eval/vendor-facts-priority.js --check
+docs/aegis/owner/vendor-facts-priority.md is current.
+exit 0 (the page reads docs/aegis/g3/vendor-facts-to-check.md, not the fact lines, so it did not move)

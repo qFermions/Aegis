@@ -91,8 +91,9 @@ test('the owner\'s minimum is a pass flag wherever a command takes it: --not-bef
     }
   }
   // 28 before the A3 fix on branch fix/g4-a3-factor-type, plus okta verify-factor-reset --factor-type;
-  // batch 9, task 4: plus exo verify-mailbox-permission and verify-recipient-permission --absent
-  assert.equal(seen, 31, `minimum flags seen: ${seen}`);
+  // batch 9, task 4: plus exo verify-mailbox-permission and verify-recipient-permission --absent;
+  // batch 10, task 4: plus google-workspace verify-transfer --not-before
+  assert.equal(seen, 32, `minimum flags seen: ${seen}`);
   assert.equal(declared.VERIFY_FLAGS.msgraph['verify-sessions-revoked']['not-before'], declared.TIME);
   assert.equal(declared.VERIFY_FLAGS.jira['verify-create']['not-before'], declared.TIME);
 });

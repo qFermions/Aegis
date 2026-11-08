@@ -252,14 +252,14 @@
         "https://www.googleapis.com/auth/admin.directory.device.chromeos.readonly",
         "https://www.googleapis.com/auth/admin.reports.audit.readonly",
         "https://www.googleapis.com/auth/admin.reports.usage.readonly",
-        "https://www.googleapis.com/auth/admin.datatransfer.readonly (batch 10: requested only by verify-transfer, the Data Transfer read; delegate it only where /gws-offboard's transfer read-backs are run, and every other read works without it)"
+        "https://www.googleapis.com/auth/admin.datatransfer.readonly"
       ],
       "refused": [
         "any scope that does not end in .readonly, for example admin.directory.user, admin.directory.user.security, admin.directory.group, admin.datatransfer"
       ],
       "exposure": {
         "kind": "token",
-        "how": "Google returns the granted scopes in the token response's scope field; Aegis checks it before the first read and refuses the token if any granted scope is not a .readonly Admin SDK scope."
+        "how": "Google returns the granted scopes in the token response's scope field; Aegis checks it before the first read and refuses the token if any granted scope is not a .readonly Admin SDK scope. Only verify-transfer asks for admin.datatransfer.readonly (batch 10); every other read asks for the seven other scopes, so a credential delegated those alone still serves them."
       },
       "facts": [
         "W-01",

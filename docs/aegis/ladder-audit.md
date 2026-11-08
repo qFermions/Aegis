@@ -86,8 +86,8 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Google | gws-license-assign | no | Phase 3 - Remove a licence (R3, SR-2) (83) | gws-license-assign-remove-portal | fail | gws-license-assign-remove-portal (line 89) has no lighter step before it in this section |
 | Google | gws-offboard | yes | Phase A - Start in Okta (the identity source) (44) | gws-offboard-okta-deactivate-portal | pass | the section says why no lighter step applies |
 | Google | gws-offboard | yes | Phase B - Contain in Google (only if Okta did not suspend the account) (75) | gws-offboard-suspend-portal | pass | the section says why no lighter step applies |
-| Google | gws-offboard | yes | Phase D - Delete, or keep suspended (R3, after independent review) (159) | gws-offboard-delete-portal | pass | a lighter step line (line 163) comes first |
-| Google | gws-offboard | yes | GAM / Okta API - the scale version (HUMAN-RUN, for reference) (187) | gws-offboard-okta-deactivate | pass | the section says why no lighter step applies |
+| Google | gws-offboard | yes | Phase D - Delete, or keep suspended (R3, after independent review) (161) | gws-offboard-delete-portal | pass | a lighter step line (line 165) comes first |
+| Google | gws-offboard | yes | GAM / Okta API - the scale version (HUMAN-RUN, for reference) (189) | gws-offboard-okta-deactivate | pass | the section says why no lighter step applies |
 | Google | gws-password-reset | yes | Phase B - Reset the password (R1 gate) (54) | gws-password-reset-password-portal | pass | a user check line (line 60) comes first |
 | Google | gws-password-reset | yes | GAM - the scale version (HUMAN-RUN, for reference) (124) | gws-password-reset-password | pass | a user check line (line 60) comes first |
 | Google | gws-password-reset | yes | Phase C - Optional: reset the sign-in cookies (R1 gate) (90) | gws-password-reset-cookies-portal | pass | a user check line (line 94) comes first |

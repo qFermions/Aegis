@@ -146,6 +146,8 @@ test('task 4: the Drive and Calendar transfer gates bind verify-transfer for the
     assert.equal(flag(b.argv, '--transfer-id'), '[TRANSFER_ID]', id);
     assert.equal(flag(b.argv, '--old-owner'), '[USER@DOMAIN.COM]', id);
     assert.equal(flag(b.argv, '--new-owner'), '[MANAGER_UPN]', id);
+    // code review of batch 10, finding 2: a transfer requested before the approval never proves this change
+    assert.equal(flag(b.argv, '--not-before'), '[NOT_BEFORE]', id);
     assert.match(b.command, /--change \[CHANGE_ID\] --execute$/, id);
   }
   const twin = gates.get('gws-offboard-data-transfer');

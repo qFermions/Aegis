@@ -60,7 +60,7 @@ const VERIFY_FLAGS = Object.freeze({
     // gws-client.js APPS and EVENT_NAME
     'verify-event': { app: /^(?:admin|login|drive|token|saml|user_accounts)$/, event: /^[A-Za-z][A-Za-z0-9_]{0,99}$/, user: OBJECT, 'not-before': TIME, target: OBJECT },
     // batch 10, task 4: gws-client.js APPLICATION_ID names which application's transfer must read completed
-    'verify-transfer': { 'transfer-id': OBJECT, 'old-owner': OBJECT, 'new-owner': OBJECT, 'application-id': /^[0-9]{1,20}$/ },
+    'verify-transfer': { 'transfer-id': OBJECT, 'old-owner': OBJECT, 'new-owner': OBJECT, 'application-id': /^[0-9]{1,20}$/, 'not-before': TIME },
   }),
   jamf: Object.freeze({
     // jamf-client.js COMMAND_TYPE and COUNT

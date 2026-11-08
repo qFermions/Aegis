@@ -29,10 +29,11 @@
 //     verify-event              --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]
 //                               [--target [USER@DOMAIN.COM]]
 //     verify-transfer           --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM]
-//                               --new-owner [MANAGER_UPN] --application-id N
+//                               --new-owner [MANAGER_UPN] --application-id N --not-before [NOT_BEFORE]
 //   verify-transfer (batch 10, task 4) reads one data transfer (transfers.get), then the old and new
-//   owner (users.get), and passes only when the transfer is the one asked for, names the two owners'
-//   user IDs, and holds one entry for the application ID whose status reads completed (any case).
+//   owner (users.get), and passes only when the transfer is the one asked for, was requested at or
+//   after --not-before (its requestTime), names the two owners' user IDs, and holds one entry for the
+//   application ID whose status reads completed (any case).
 //   Google's reference lists no status values, so any other status is INCONCLUSIVE (exit 5), and so
 //   is a transfer with no entry for the application (the Drive application ID is not confirmed).
 //   It alone asks for admin.datatransfer.readonly, on top of the seven read-only scopes.
@@ -357,9 +358,9 @@ const COMMANDS = Object.freeze({
   },
   // batch 10, task 4: the transfer, then its old and new owner, whose user IDs it names (vendor fact W-12)
   'verify-transfer': {
-    kind: 'verify', required: ['transfer-id', 'old-owner', 'new-owner', 'application-id'], optional: [],
+    kind: 'verify', required: ['transfer-id', 'old-owner', 'new-owner', 'application-id', 'not-before'], optional: [],
     paths: (a) => [PATHS.transfer(a), PATHS.user({ user: a.oldOwner }), PATHS.user({ user: a.newOwner })],
-    expected: (a) => ({ transferId: a.transferId, oldOwner: a.oldOwner, newOwner: a.newOwner, applicationId: a.applicationId, applicationTransferStatus: 'completed' }),
+    expected: (a) => ({ transferId: a.transferId, oldOwner: a.oldOwner, newOwner: a.newOwner, applicationId: a.applicationId, applicationTransferStatus: 'completed', notBefore: a.notBefore }),
   },
 });
 
@@ -381,6 +382,7 @@ const USAGE = [
   '           verify-event --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]',
   '                        [--target [USER@DOMAIN.COM]]   (who or what the event acted on)',
   '           verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id N',
+  '                           --not-before [NOT_BEFORE]   (the transfer must be requested at or after it)',
   'Reads and read-backs are a dry run unless the bare --execute flag is given. No command writes to Google Workspace.',
   '',
 ].join('\n');
@@ -628,6 +630,11 @@ const JUDGES = Object.freeze({
     };
     if (typeof t.id !== 'string') return unproven(observed, 'the transfer read shows no id, so it cannot be told to be the transfer asked for: this is not proof either way');
     if (t.id !== a.transferId) return { verified: false, observed, reason: 'the transfer read is not the transfer asked for' };
+    // code review of batch 10, finding 2: a transfer requested before the approval is another change, even
+    // with the same owners and application; a request time that cannot be read proves nothing either way
+    const requested = typeof t.requestTime === 'string' ? Date.parse(t.requestTime) : NaN;
+    if (!Number.isFinite(requested)) return unproven(observed, 'the transfer shows no requestTime that is a time, so it cannot be told to be requested at or after --not-before: this is not proof either way');
+    if (requested < Date.parse(a.notBefore)) return { verified: false, observed, reason: `the transfer was requested at ${t.requestTime}, before ${a.notBefore}, so it is not this change` };
     for (const [record, wanted, role] of [[oldUser, a.oldOwner, 'old'], [newUser, a.newOwner, 'new']]) {
       if (!sameUser(record, wanted, ctx)) return { verified: false, observed, reason: `the user record read for the ${role} owner is not the user asked for` };
       if (typeof record.id !== 'string' || !record.id) return unproven(observed, `the ${role} owner's user record shows no id, so the transfer's owner cannot be compared with it: this is not proof either way`);

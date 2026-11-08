@@ -1023,7 +1023,7 @@ const DRIVE_APP = '55656082996';
 const TRANSFER_PATH = `/admin/datatransfer/v1/transfers/${TRANSFER_ID}`;
 const MANAGER_PATH = `/admin/directory/v1/users/${once(MANAGER)}`;
 const TRANSFER_SCOPES = [...EXPECTED_SCOPES, 'https://www.googleapis.com/auth/admin.datatransfer.readonly'];
-const VT = (app = CALENDAR_APP, more = []) => ['verify-transfer', '--transfer-id', TRANSFER_ID, '--old-owner', USER, '--new-owner', MANAGER, '--application-id', app, ...more];
+const VT = (app = CALENDAR_APP, more = []) => ['verify-transfer', '--transfer-id', TRANSFER_ID, '--old-owner', USER, '--new-owner', MANAGER, '--application-id', app, '--not-before', NOT_BEFORE, ...more];
 function dataTransfer(over = {}, apps = [{ applicationId: CALENDAR_APP, applicationTransferStatus: 'completed' }]) {
   return { kind: 'admin#datatransfer#DataTransfer', etag: '"e1"', id: TRANSFER_ID, oldOwnerUserId: USER_ID, newOwnerUserId: MANAGER_ID, applicationDataTransfers: apps, overallTransferStatusCode: 'completed', requestTime: AFTER, ...over };
 }
@@ -1075,7 +1075,10 @@ test('verify-transfer: bad or missing arguments are refused with exit 1 before a
     VT('-1'),
     swap(USER, 'all'),
     swap(MANAGER, `${MANAGER}/x`),
-    VT(CALENDAR_APP, ['--not-before', NOT_BEFORE]),
+    VT().filter((v, i, all) => v !== '--not-before' && all[i - 1] !== '--not-before'),
+    swap(NOT_BEFORE, 'yesterday'),
+    swap(NOT_BEFORE, '2026-02-30T10:00:00Z'),
+    VT(CALENDAR_APP, ['--target', USER]),
     ['transfer', '--transfer-id', TRANSFER_ID],
   ];
   for (const argv of bad) {
@@ -1119,14 +1122,14 @@ test('verify-transfer passes only on a completed entry for the application, on t
   assert.equal(yes.code, 0, yes.stdout);
   const v = firstJson(yes.stdout);
   assert.equal(v.verified, true);
-  assert.deepEqual(v.expected, { transferId: TRANSFER_ID, oldOwner: USER, newOwner: MANAGER, applicationId: CALENDAR_APP, applicationTransferStatus: 'completed' });
+  assert.deepEqual(v.expected, { transferId: TRANSFER_ID, oldOwner: USER, newOwner: MANAGER, applicationId: CALENDAR_APP, applicationTransferStatus: 'completed', notBefore: NOT_BEFORE });
   assert.equal(v.observed.application.applicationTransferStatus, 'completed');
   assert.equal(v.observed.oldOwnerUserId, USER_ID);
   assert.equal(v.observed.newOwnerUserId, MANAGER_ID);
   const both = [{ applicationId: DRIVE_APP, applicationTransferStatus: 'Completed' }, { applicationId: CALENDAR_APP, applicationTransferStatus: 'inProgress' }];
   assert.equal((await transferRun(dataTransfer({}, both), { app: DRIVE_APP })).code, 0, 'the Drive entry of a two-application transfer, completed in another case');
   assert.equal((await transferRun(dataTransfer({}, [{ applicationId: Number(CALENDAR_APP), applicationTransferStatus: 'completed' }]))).code, 0, 'an application ID sent as a number matches');
-  const byId = await cli(['verify-transfer', '--transfer-id', TRANSFER_ID, '--old-owner', USER_ID, '--new-owner', MANAGER_ID, '--application-id', CALENDAR_APP, '--execute'], { replies: [tokenReply(), ok(dataTransfer()), ok(userRecord()), ok(manager())] });
+  const byId = await cli(['verify-transfer', '--transfer-id', TRANSFER_ID, '--old-owner', USER_ID, '--new-owner', MANAGER_ID, '--application-id', CALENDAR_APP, '--not-before', NOT_BEFORE, '--execute'], { replies: [tokenReply(), ok(dataTransfer()), ok(userRecord()), ok(manager())] });
   assert.equal(byId.code, 0, 'the owners named by user ID');
   assert.deepEqual(byId.transport.calls.slice(1).map((c) => c.path), [TRANSFER_PATH, `/admin/directory/v1/users/${USER_ID}`, `/admin/directory/v1/users/${MANAGER_ID}`]);
 });
@@ -1140,6 +1143,8 @@ test('verify-transfer fails (exit 2) when the answer shows another transfer, ano
     ['to another user', dataTransfer({ newOwnerUserId: '100000000000000000009' }), {}],
     ['the old owner read is another user', dataTransfer(), { oldUser: userRecord({ primaryEmail: OTHER_USER, id: '100000000000000000009' }) }],
     ['the new owner read is another user', dataTransfer(), { newUser: manager({ primaryEmail: OTHER_USER }) }],
+    // code review of batch 10, finding 2: the same owners and application, requested before --not-before
+    ['a transfer requested before --not-before', dataTransfer({ requestTime: BEFORE }), {}],
   ];
   for (const [label, transfer, users] of cases) {
     const res = await transferRun(transfer, users);
@@ -1165,6 +1170,8 @@ test('verify-transfer is INCONCLUSIVE (exit 5) on any status but completed, no e
     ['no old owner field', dataTransfer({ oldOwnerUserId: undefined }), {}],
     ['no transfer id', dataTransfer({ id: undefined }), {}],
     ['the new owner record has no id', dataTransfer(), { newUser: manager({ id: undefined }) }],
+    ['no request time', dataTransfer({ requestTime: undefined }), {}],
+    ['a request time that is not a time', dataTransfer({ requestTime: 'last week' }), {}],
   ];
   for (const [label, transfer, users] of cases) {
     const res = await transferRun(transfer, users);

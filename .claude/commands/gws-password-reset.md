@@ -93,7 +93,7 @@ node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASS
 
 **User check:** after Phase B, ask the user to sign out of Google on each of their devices and sign in again with the new password; reset the cookies only when a session must end at once, such as a lost device or a suspect browser.
 
-Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the reset.
+Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the cookie reset.
 
 <!-- SAFETY GATE [gws-password-reset-cookies-portal] -->
 - **Target:** [USER@DOMAIN.COM]

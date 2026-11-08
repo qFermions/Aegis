@@ -424,6 +424,32 @@ test('verify-command reads further pages while a page is full, and stops after t
   assert.match(bounded.json.reason, /10 pages/);
 });
 
+// Batch 10, task 3: Jamf's GET /api/v2/mdm/commands reference (vendor fact J-08, J-11) names the
+// record fields client.managementId, commandType and commandState (PENDING, ACKNOWLEDGED, NOT_NOW,
+// ERROR, COMMAND_FORMAT_ERROR); clientManagementId, command and status are the filter's field names.
+// catches: a client that reads only the filter names, so every documented record is skipped and a
+// lock the Mac acknowledged reads as not done (exit 2); and one that reads NOT_NOW as a failure.
+const documented = (over = {}) => ({ uuid: 'cmd-doc', client: { managementId: MID, clientType: 'COMPUTER' }, commandType: 'DEVICE_LOCK', commandState: 'ACKNOWLEDGED', dateSent: '2026-10-27T09:30:00Z', dateCompleted: '2026-10-27T09:31:00Z', ...over });
+const VL = ['verify-command', '--management-id', MID, '--type', 'DEVICE_LOCK', '--not-before', NB, '--execute'];
+test('verify-command reads the record fields Jamf documents: client.managementId, commandType and commandState', async () => {
+  const yes = await cli(VL, { replies: [tokenReply(), ok({ totalCount: 1, results: [documented()] })] });
+  assert.equal(yes.code, 0, JSON.stringify(yes.json));
+  assert.equal(yes.json.verified, true);
+  assert.equal(yes.json.observed.match.uuid, 'cmd-doc');
+  assert.equal(yes.json.observed.match.command, 'DEVICE_LOCK');
+  assert.equal(yes.json.observed.match.status, 'ACKNOWLEDGED');
+  for (const state of ['PENDING', 'NOT_NOW']) {
+    const later = await cli(VL, { replies: [tokenReply(), ok({ totalCount: 1, results: [documented({ commandState: state })] })] });
+    assert.equal(later.code, 5, `${state}: the Mac has not done it yet, which proves nothing either way`);
+    assert.equal(later.json.state, STATES.INCONCLUSIVE, state);
+  }
+  for (const [label, over] of [['an ERROR state', { commandState: 'ERROR' }], ['another Mac', { client: { managementId: 'another-management-id' } }], ['another type', { commandType: 'ERASE_DEVICE' }]]) {
+    const no = await cli(VL, { replies: [tokenReply(), ok({ totalCount: 1, results: [documented(over)] })] });
+    assert.equal(no.code, 2, label);
+    assert.equal(no.json.verified, false, label);
+  }
+});
+
 // ── verify-profile ───────────────────────────────────────────────────────────
 const hardware = (records) => ok({ totalCount: records.length, results: records });
 const mac = (serial = SERIAL, id = '42') => ({ id, hardware: { serialNumber: serial } });

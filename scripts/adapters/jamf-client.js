@@ -74,8 +74,10 @@
 //     doubled or unexpected field is reported as not proven, never as proof.
 //   - The serial number filter field (hardware.serialNumber) is the one the G1 runbook
 //     uses; each Mac read-back first confirms the serial number on the record itself.
-//   - MDM command status values are not confirmed: only "Acknowledged" (any case)
-//     counts. The sort dateSent:desc uses the syntax the reference shows for asc. The
+//   - MDM command records: Jamf's reference names client.managementId, commandType and
+//     commandState (PENDING, ACKNOWLEDGED, NOT_NOW, ERROR, COMMAND_FORMAT_ERROR; vendor facts
+//     J-08 and J-11), read first; only ACKNOWLEDGED (any case) counts, and PENDING or NOT_NOW
+//     proves nothing either way. The sort dateSent:desc uses the syntax the reference shows for asc. The
 //     profileIdentifier filter and record field come from a search excerpt of the
 //     reference; a profile command counts only when the record itself carries the
 //     identifier asked for.
@@ -561,6 +563,22 @@ async function verifyCheckedIn(client, a) {
   return verdict(command, ok, expected, observed, `the last contact is not at or after ${a.notBefore}; ask the person to open the Mac and run a check-in, then read again`, flags);
 }
 
+// Jamf's MdmCommand record names its fields client.managementId, commandType and commandState
+// (vendor fact J-08, J-11; batch 10, task 3); clientManagementId, command and status are the
+// filter's names, which the adapter's first fixtures used. The documented field wins when present.
+function commandFields(c) {
+  const client = isObject(c.client) ? c.client : {};
+  return {
+    ...c,
+    clientManagementId: client.managementId !== undefined ? client.managementId : c.clientManagementId,
+    command: c.commandType !== undefined ? c.commandType : c.command,
+    status: c.commandState !== undefined ? c.commandState : c.status,
+  };
+}
+// a command the Mac has not answered yet: Pending, or NOT_NOW (the Mac answered that it cannot run it
+// yet and it is sent again), proves nothing either way
+const NOT_ANSWERED = /^(?:pending|not_?now)$/i;
+
 async function verifyCommand(client, a) {
   const command = 'verify-command';
   const expected = COMMANDS[command].expected(a);
@@ -577,9 +595,10 @@ async function verifyCommand(client, a) {
     const list = isObject(r.raw) && Array.isArray(r.raw.results) ? r.raw.results : null;
     if (!list) return unproven(command, expected, observed, 'the MDM command response holds no results list, so this is not proof either way', flags);
     observed.pagesRead = page + 1;
-    for (const c of list) {
-      if (!isObject(c)) continue;
+    for (const record of list) {
+      if (!isObject(record)) continue;
       observed.commandsRead += 1;
+      const c = commandFields(record);
       const sameMac = typeof c.clientManagementId === 'string' && c.clientManagementId.toLowerCase() === a.managementId.toLowerCase();
       if (!sameMac || c.command !== a.type) continue;
       // A profile command for another profile (or one that names none) is never proof,
@@ -589,7 +608,7 @@ async function verifyCommand(client, a) {
       // an Acknowledged or Pending command whose dateSent cannot be read may be the one asked
       // for: it is counted, not skipped (code review round 2 of batch G4, finding 4)
       if (!Number.isFinite(sent)) {
-        if (typeof c.status === 'string' && /^(?:acknowledged|pending)$/i.test(c.status)) undated += 1;
+        if (typeof c.status === 'string' && (/^acknowledged$/i.test(c.status) || NOT_ANSWERED.test(c.status))) undated += 1;
         continue;
       }
       if (sent < notBefore) continue;
@@ -598,7 +617,7 @@ async function verifyCommand(client, a) {
         observed.match = summary;
         return verdict(command, true, expected, observed, null, flags);
       }
-      if (typeof c.status === 'string' && /^pending$/i.test(c.status)) pending += 1;
+      if (typeof c.status === 'string' && NOT_ANSWERED.test(c.status)) pending += 1;
       if (observed.sameTypeSinceNotBefore.length < MAX_SUMMARIES) observed.sameTypeSinceNotBefore.push(summary);
     }
     if (list.length < PAGE_SIZE) {

@@ -1,0 +1,30 @@
+$ node --test --test-name-pattern "record fields Jamf documents" scripts/adapters/jamf-client.test.js
+✖ verify-command reads the record fields Jamf documents: client.managementId, commandType and commandState (2.614583ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.176041
+
+✖ failing tests:
+
+test at scripts/adapters/jamf-client.test.js:434:1
+✖ verify-command reads the record fields Jamf documents: client.managementId, commandType and commandState (2.614583ms)
+  AssertionError [ERR_ASSERTION]: {"state":"OK","ok":true,"command":"verify-command","verified":false,"expected":{"managementId":"0a1b2c3d-0000-4000-8000-00000000abcd","commandType":"DEVICE_LOCK","profileIdentifier":null,"status":"Acknowledged","notBefore":"2026-10-27T09:00:00Z"},"observed":{"managementId":"0a1b2c3d-0000-4000-8000-00000000abcd","commandType":"DEVICE_LOCK","profileIdentifier":null,"pagesRead":1,"commandsRead":1,"match":null,"sameTypeSinceNotBefore":[],"otherProfileCommands":0},"reason":"no DEVICE_LOCK command for this Mac sent at or after 2026-10-27T09:00:00Z reads Acknowledged","operator_message":"The read-back did not prove the change. The change is not proven, so it is not reported done. Read the reason in the result, check the change in the console, and run the read-back again after the person finishes.","admin_detail":"platform=jamf operation=verify-command state=OK status=- attempts=- request_id=- handoff=-"}
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/.claude/worktrees/agent-af8362b66c94a5dc9/scripts/adapters/jamf-client.test.js:436:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

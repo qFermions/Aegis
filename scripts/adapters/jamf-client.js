@@ -80,7 +80,8 @@
 //     proves nothing either way. The sort dateSent:desc uses the syntax the reference shows for asc. The
 //     profileIdentifier filter and record field come from a search excerpt of the
 //     reference; a profile command counts only when the record itself carries the
-//     identifier asked for.
+//     identifier asked for, and one whose record carries none (the documented record has no
+//     such field, J-08) is INCONCLUSIVE, never proof and never a failed object (batch 10).
 //   - Whether an inventory configurationProfiles[].id is the console profile ID is not
 //     confirmed. verify-profile needs one entry whose id and profileIdentifier both
 //     match, and --absent needs neither to be listed and every entry to carry both.
@@ -588,6 +589,7 @@ async function verifyCommand(client, a) {
   // a matching command still Pending (not yet acknowledged, not failed) may yet be acknowledged
   let pending = 0;
   let undated = 0;
+  let unnamedProfile = 0;
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const r = await read(client, 'mdmCommands', {}, { filter: commandFilter(a.managementId, a.type, a.profileIdentifier), page: String(page) });
     if (!r.ok) return failed(command, r);
@@ -601,17 +603,23 @@ async function verifyCommand(client, a) {
       const c = commandFields(record);
       const sameMac = typeof c.clientManagementId === 'string' && c.clientManagementId.toLowerCase() === a.managementId.toLowerCase();
       if (!sameMac || c.command !== a.type) continue;
-      // A profile command for another profile (or one that names none) is never proof,
-      // even when the server ignores the profileIdentifier part of the filter.
-      if (a.profileIdentifier && c.profileIdentifier !== a.profileIdentifier) { observed.otherProfileCommands += 1; continue; }
+      // A profile command for another profile is never proof, even when the server ignores the
+      // profileIdentifier part of the filter. One that names no profile is not proof either, but it may
+      // be the one asked for: Jamf's MdmCommand record, as its reference lists it (vendor fact J-08),
+      // carries no profileIdentifier, so such a command sent at or after --not-before is counted and
+      // read as INCONCLUSIVE, never as a failed object (batch 10).
+      const unnamed = Boolean(a.profileIdentifier) && (c.profileIdentifier === undefined || c.profileIdentifier === null || c.profileIdentifier === '');
+      if (a.profileIdentifier && !unnamed && c.profileIdentifier !== a.profileIdentifier) { observed.otherProfileCommands += 1; continue; }
       const sent = typeof c.dateSent === 'string' ? Date.parse(c.dateSent) : NaN;
+      const answeredOrWaiting = typeof c.status === 'string' && (/^acknowledged$/i.test(c.status) || NOT_ANSWERED.test(c.status));
       // an Acknowledged or Pending command whose dateSent cannot be read may be the one asked
       // for: it is counted, not skipped (code review round 2 of batch G4, finding 4)
       if (!Number.isFinite(sent)) {
-        if (typeof c.status === 'string' && (/^acknowledged$/i.test(c.status) || NOT_ANSWERED.test(c.status))) undated += 1;
+        if (answeredOrWaiting) undated += 1;
         continue;
       }
       if (sent < notBefore) continue;
+      if (unnamed) { if (answeredOrWaiting) unnamedProfile += 1; continue; }
       const summary = { uuid: orNull(c.uuid), command: c.command, profileIdentifier: orNull(c.profileIdentifier), status: orNull(c.status), dateSent: c.dateSent, dateCompleted: orNull(c.dateCompleted) };
       if (typeof c.status === 'string' && /^acknowledged$/i.test(c.status)) {
         observed.match = summary;
@@ -633,6 +641,10 @@ async function verifyCommand(client, a) {
       const undatedWhy = `${undated} Acknowledged or Pending command${undated === 1 ? '' : 's'} for this Mac ha${undated === 1 ? 's' : 've'} a dateSent that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the command asked for`;
       if (pending) return unproven(command, expected, observed, `${none}, and ${pending} still read${pending === 1 ? 's' : ''} Pending: the Mac has not answered yet${undated ? `; and ${undatedWhy}` : ''}, so this is not proof either way; read again after its next check-in`, flags);
       if (undated) return unproven(command, expected, observed, `${none}, and ${undatedWhy}: this is not proof either way`, flags);
+      if (unnamedProfile) {
+        observed.unnamedProfileCommands = unnamedProfile;
+        return unproven(command, expected, observed, `${none}, and ${unnamedProfile} ${a.type} command${unnamedProfile === 1 ? '' : 's'} for this Mac sent at or after ${a.notBefore} name no profileIdentifier (Jamf's command record does not carry one, vendor fact J-08), so one may be the profile asked for: this is not proof either way; read the computer's Management History in Jamf Pro`, flags);
+      }
       return verdict(command, false, expected, observed, none, flags);
     }
   }

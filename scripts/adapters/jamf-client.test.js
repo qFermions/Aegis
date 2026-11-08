@@ -374,7 +374,6 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
     ['another Mac', [command({ clientManagementId: 'another-management-id' })]],
     ['another command type', [command({ command: 'DEVICE_LOCK' })]],
     ['another profile, acknowledged', [command({ profileIdentifier: PIDS[8] })]],
-    ['a profile command that names no profile', [command({ profileIdentifier: undefined })]],
     ['no commands', []],
   ];
   for (const [label, results] of notProof) {
@@ -403,6 +402,19 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
   assert.equal(undated.json.verified, false, 'no send time');
   assert.equal(undated.json.observed.match, null, 'no send time');
   assert.equal(typeof undated.json.reason, 'string', 'no send time');
+  // batch 10: Jamf's MdmCommand record, as its reference lists it (vendor fact J-08), carries no profileIdentifier,
+  // so an acknowledged profile command of that type for this Mac that names no profile may be the one asked for:
+  // INCONCLUSIVE (exit 5), never proof; it was exit 2 ("not done") in the list above, a false failure against a
+  // record of the documented shape. Wrong implementation it catches: a record with no identifier read as another
+  // profile's. One that names another profile is still not proof and still exit 2 (the list above).
+  const unnamed = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ profileIdentifier: undefined })] })] });
+  assert.equal(unnamed.code, 5, 'a profile command that names no profile');
+  assert.equal(unnamed.json.state, STATES.INCONCLUSIVE, 'a profile command that names no profile');
+  assert.equal(unnamed.json.verified, false, 'a profile command that names no profile');
+  assert.equal(unnamed.json.observed.match, null, 'a profile command that names no profile');
+  assert.match(unnamed.json.reason, /names? no profileIdentifier/);
+  const unnamedOld = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ profileIdentifier: undefined, dateSent: '2026-10-27T08:59:59Z' })] })] });
+  assert.equal(unnamedOld.code, 2, 'one sent before --not-before is not the one asked for');
   const shapeless = await cli(VC, { replies: [tokenReply(), ok({ nothing: true })] });
   assert.equal(shapeless.code, 5); // batch G4, task D1: an answer with no results list is INCONCLUSIVE
   assert.equal(shapeless.json.state, STATES.INCONCLUSIVE);

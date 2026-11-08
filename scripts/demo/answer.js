@@ -355,15 +355,21 @@ function changeIn(text) {
 // verb, so it does not count; T7 and T7m of full runs 4 and 5 closed OPEN on one. After "Ask the user to
 // <verb>", the rest of the step is the user check the tech relays: the asked verb counts, the user's later
 // words ("if it still fails, restart the laptop") do not. A negated verb ("Don't wait for the user, reset the
-// password") hands the step to the clause after it, as batch 9's rule did. shortcut: a change written only
-// as the last button of a portal path ("→ Reset password") is not a verb; with Gate: none such an answer reads
-// as a look, and INVESTIGATE approves nothing, so the miss can only turn an OPEN into an INVESTIGATE.
+// password") hands the step to the clause after it, as batch 9's rule did. Code review round 1 of batch 10
+// (class A): a prefix before the verb (an emoji, a WARNING label, italics) is not the verb; a change verb after
+// "and" or a comma with an object after it counts; so does a button the step clicks ("Click Wipe Computer") and
+// the last button of a portal path that ends the clause ("→ Reset password, with ..."), since Aegis leads with
+// the portal; and a bullet under a step is read as a sentence of its own. shortcut: a word list and a few shapes,
+// so a change worded otherwise reads as a look; INVESTIGATE approves nothing, so such a miss can only turn an
+// OPEN into an INVESTIGATE.
 const CHANGE_VERB = new RegExp(`^${CHANGE_WORD.source}`, 'i');
 const LEADS = Object.freeze([
   /^(?:if|when|once|after|unless|until|before|otherwise|whether|in|on|under|from|for|with|within|inside|at)\b[^,:]*[,:]\s*/i,
-  /^[A-Za-z][A-Za-z' -]{0,40}:\s+/,
+  /^[A-Za-z][A-Za-z0-9' ()-]{0,40}:\s+/,
   /^(?:please|then|also|next|first|finally|now|only|just)\b[\s,]*/i,
 ]);
+// What opens a clause without being a word: punctuation, an emoji, a quote mark, a list marker.
+const OPENING = /^[^A-Za-z0-9[]+/;
 const RELAY = /^(?:ask|tell)\s+(?:\S+\s+){0,3}?to\s+/i;
 const NEGATED_VERB = /^(?:don['’]?t|do not|never|no need to|avoid)\b/i;
 const NEXT_CLAUSE = /[,;:]\s*|\s(?:and|but)\s+/;
@@ -371,7 +377,7 @@ const NEXT_CLAUSE = /[,;:]\s*|\s(?:and|but)\s+/;
 function openingVerb(clause) {
   let t = clause;
   for (let i = 0; i < 6; i += 1) {
-    t = t.replace(/^[\s>(["'“‘]+/, '').replace(/^(?:[-*+]|\(?\d+[.)])\s+/, '');
+    t = t.replace(OPENING, '').replace(/^(?:[-*+]|\(?\d+[.)])\s+/, '');
     const hit = CHANGE_VERB.exec(t);
     if (hit) return { change: hit[0], relayed: false };
     const relay = RELAY.exec(t);
@@ -388,9 +394,16 @@ function openingVerb(clause) {
   }
   return { change: null, relayed: false };
 }
-// A change verb joined by "and" with an object after it ("and reset the password", "and wipe it"); a change word
-// after "and" with no object is a noun ("the install and update history") (evidence review 1 of batch 10).
-const AND_VERB = new RegExp(`\\band\\s+(${CHANGE_WORD.source})\\s+(?=(?:the|a|an|their|his|her|its|this|that|these|those|it|them|every|all|each|any|only|\\[)(?![A-Za-z]))`, 'i');
+// A change verb joined by "and" or a comma with an object after it ("and reset the password", ", wipe it"); a
+// change word there with no object is a noun ("the install and update history") (evidence review 1 and code
+// review round 1 of batch 10).
+const JOINED_VERB = new RegExp(`(?:\\band|,)\\s+(${CHANGE_WORD.source})\\s+(?=(?:the|a|an|their|his|her|its|this|that|these|those|it|them|every|all|each|any|only|\\[)(?![A-Za-z]))`, 'i');
+// A button the step clicks, chooses or presses ("Click Wipe Computer", "choose Delete").
+const BUTTON_VERB = new RegExp(`\\b(?:click|choose|select|press|tap|pick|hit)\\s+(?:on\\s+)?(?:the\\s+)?["\\u201c]?(${CHANGE_WORD.source})`, 'i');
+// The last stop of a portal path when it ends the clause in a change: "→ Reset password," "→ Lock Computer."; a
+// menu the path only passes through ("→ Update rings and read the ring") is not one.
+const PATH_BUTTON = new RegExp(`^\\s*(${CHANGE_WORD.source})(?:\\s+[^\\s,.;:)]+){0,3}\\s*(?:[.,;:)]|$|\\s+(?:with|for|on)\\b)`, 'i');
+const pathButton = (clause) => (clause.includes('→') ? (PATH_BUTTON.exec(clause.split('→').pop()) || [])[1] || null : null);
 // A sentence that goes on with the user check a relayed ask began: it opens with a condition ("If it still fails,
 // restart the laptop") or with "then" or "and"; any other sentence is the tech's own (evidence review 1 of batch 10).
 const RELAY_GOES_ON = /^(?:if|when|once|after|unless|until|otherwise|then|and)\b/i;
@@ -398,15 +411,16 @@ const RELAY_GOES_ON = /^(?:if|when|once|after|unless|until|otherwise|then|and)\b
 function stepChange(step) {
   const text = String(step).replace(/\*\*|__|`/g, '');
   let relaying = false;
-  for (const sentence of text.split(/(?<=[.!?;])\s+/)) {
-    if (relaying && RELAY_GOES_ON.test(sentence.replace(/^[\s>(["'“‘]+/, ''))) continue;
+  // a sentence ends at its stop, or at a line break: a bullet under a step is a sentence of its own
+  for (const sentence of text.split(/(?<=[.!?;])\s+|\n+/)) {
+    if (relaying && RELAY_GOES_ON.test(sentence.replace(OPENING, ''))) continue;
     relaying = false;
     for (const clause of sentence.split(/\bthen\b/i)) {
       const v = openingVerb(clause);
       if (v.change) return v.change;
       if (v.relayed) { relaying = true; break; }
-      const joined = AND_VERB.exec(clause);
-      if (joined) return joined[1];
+      const inside = (JOINED_VERB.exec(clause) || BUTTON_VERB.exec(clause) || [])[1] || pathButton(clause);
+      if (inside) return inside;
     }
   }
   return null;
@@ -431,21 +445,24 @@ function onlyLooks(raw) {
   const steps = answerSteps(answer);
   const card = fixCard(answer);
   const body = deskBlock(answer).body.split(/\r?\n/);
-  const asSteps = [...steps];
+  const asSteps = [];
   const asMentions = [];
   if (card.present) {
     // a "Do this" line before the first numbered step (the label line's own text, or a bullet) is read as a
-    // step; a numbered line and the lines it runs on to are in steps already, with the step they belong to
+    // step; a numbered line starts a step, a wrapped line runs on in it, and a bullet under it starts a new
+    // sentence of that step, so its verb is read (code review round 1 of batch 10, class A)
     let numbered = false;
     for (const l of card.lines) {
       if (MENTION_PARTS.includes(l.part)) continue;
-      if (l.part === 'doneWhen') asMentions.push(l.text);
-      else if (l.part !== 'doThis') asSteps.push(l.text);
-      else if (STEP.test(l.text)) numbered = true;
-      else if (!numbered) asSteps.push(l.text);
+      if (l.part === 'doneWhen') { asMentions.push(l.text); continue; }
+      if (l.part !== 'doThis') { asSteps.push(l.text); continue; }
+      const step = STEP.exec(l.text);
+      if (step) { numbered = true; asSteps.push(step[2]); continue; }
+      if (!numbered) { asSteps.push(l.text); continue; }
+      if (l.text.trim()) asSteps[asSteps.length - 1] += LIST_LINE.test(plainText(l.text)) ? `\n${l.text.trim()}` : ` ${l.text.trim()}`;
     }
   } else {
-    asSteps.push(...body.filter((l) => ANY_STEP.test(l)).map((l) => ANY_STEP.exec(l)[2]));
+    asSteps.push(...steps, ...body.filter((l) => ANY_STEP.test(l)).map((l) => ANY_STEP.exec(l)[2]));
   }
   let change = null;
   for (const x of asSteps) { change = stepChange(x); if (change) break; }

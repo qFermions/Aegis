@@ -333,3 +333,24 @@ test('evidence review 1 (batch 10): a verb after "and", and a sentence of the te
     assert.equal(r.looks, true, `${s}: ${r.change}`);
   }
 });
+
+// Code review round 1 (batch 10), finding class A: shapes in which a step asks for a change that the verb rule read
+// as a look: an emoji or WARNING prefix (CLAUDE.md rule 5 asks for one before a destructive step), single-star
+// italics, a verb after a comma, a button the step clicks, a portal path that ends on a change button (Aegis leads
+// with the portal), a numbered label ("Step 4 (last resort):") and a change in a bullet under a step. Wrong
+// implementations it catches: the verb read only at the very start of a clause; a portal path's last button
+// ignored; a bullet joined onto its step mid-sentence. The look cases guard each new reading against a noun.
+test('code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen', () => {
+  for (const s of ['⚠️ WARNING: Erase the Mac.', '*Reset* the password.', 'Open the device record, wipe it.', 'Click **Wipe Computer** on the record.', 'Select the user and choose Delete.',
+    'Admin console → Directory → Users → [USER@DOMAIN.COM] → Reset password, with "Ask the user to change their password" ticked.', 'Step 4 (last resort): wipe the Mac.']) {
+    assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, s);
+  }
+  for (const s of ['Open Intune → Devices → Update rings and read the ring the device is in.', 'Read the sign-in log, note the time.', 'Click the user and read the Devices tab.', 'In Jamf Pro → Computers → Management History, look for a macOS update pushed today.']) {
+    const r = a.onlyLooks(steps('Open the log.', s, 'Read it.'));
+    assert.equal(r.looks, true, `${s}: ${r.change}`);
+  }
+  const bullet = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the Mac record in Jamf Pro', '   - Erase the Mac from its record', '2. Read the log.', '3. Read it again.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(bullet).looks, false, 'a change in a bullet under a step');
+  const relayedBullet = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Ask the user to quit the app', '   - if it still fails, restart the laptop', '2. Read the log.', '3. Read it again.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(relayedBullet).looks, true, 'a bullet that goes on with the relayed user check');
+});

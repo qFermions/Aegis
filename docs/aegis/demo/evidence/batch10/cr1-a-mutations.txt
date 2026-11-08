@@ -1,0 +1,36 @@
+Mutation 1: the opening strip takes only the old punctuation, not an emoji
+applied: 1
+ℹ fail 1
+ℹ pass 67
+✖ code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen (0.361958ms)
+Mutation 2: no verb after a comma
+applied: 1
+ℹ fail 1
+ℹ pass 67
+✖ code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen (0.375667ms)
+Mutation 3: no button verbs
+applied: 1
+ℹ fail 1
+ℹ pass 67
+✖ code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen (0.409541ms)
+Mutation 4: no portal path button
+applied: 1
+ℹ fail 1
+ℹ pass 67
+✖ code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen (0.536916ms)
+Mutation 5: a portal path's last stop counts whatever follows it
+applied: 1
+ℹ fail 1
+ℹ pass 67
+✖ code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen (0.513834ms)
+Mutation 6: bullets joined onto the step with a space
+applied: 1
+ℹ fail 1
+ℹ pass 67
+✖ code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen (0.598917ms)
+Mutation 7: a numbered label is not a label
+applied: 1
+ℹ fail 1
+ℹ pass 67
+✖ code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen (0.492583ms)
+restored: same

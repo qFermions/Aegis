@@ -569,13 +569,15 @@ async function verifyCheckedIn(client, a) {
 // filter's names, which the adapter's first fixtures used. The documented field wins when present.
 // A field in both forms with two different values is a doubled field: the record proves nothing either way
 // (doubled: true), as the header says (code review round 1 of batch 10, finding 13).
+const has = (x) => x !== undefined && x !== null && x !== '';
+// one value in two spellings (INSTALL_PROFILE, InstallProfile; NOT_NOW, NotNow) is one value (code review rounds 2
+// and 3 of batch 10, classes D2 and D3)
+const same = (x) => String(x).toLowerCase().replace(/[\s_-]/g, '');
 function commandFields(c) {
   const client = isObject(c.client) ? c.client : {};
   // null or an empty string is no value; one value in two spellings (NOT_NOW, NotNow) is one value (code review
   // round 2 of batch 10, class D2)
-  const has = (x) => x !== undefined && x !== null && x !== '';
   const pick = (documented, filterName) => (has(documented) ? documented : filterName);
-  const same = (x) => String(x).toLowerCase().replace(/[\s_-]/g, '');
   const differ = (documented, filterName) => has(documented) && has(filterName) && same(documented) !== same(filterName);
   return {
     ...c,
@@ -616,7 +618,7 @@ async function verifyCommand(client, a) {
       // batch 10, class D2: it was counted before those checks)
       const macs = c.doubled ? [isObject(record.client) ? record.client.managementId : undefined, record.clientManagementId] : [c.clientManagementId];
       const sameMac = macs.some((x) => typeof x === 'string' && x.toLowerCase() === a.managementId.toLowerCase());
-      if (!sameMac || !(c.doubled ? [record.commandType, record.command] : [c.command]).includes(a.type)) continue;
+      if (!sameMac || !(c.doubled ? [record.commandType, record.command] : [c.command]).some((x) => has(x) && same(x) === same(a.type))) continue;
       // A profile command for another profile is never proof, even when the server ignores the
       // profileIdentifier part of the filter. One that names no profile is not proof either, but it may
       // be the one asked for: Jamf's MdmCommand record, as its reference lists it (vendor fact J-08),

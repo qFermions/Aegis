@@ -434,6 +434,10 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
   const spelled = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandState: 'NOT_NOW', status: 'NotNow' })] })] });
   assert.equal(spelled.code, 5, 'NOT_NOW: not answered yet');
   assert.equal(spelled.json.observed.doubledFieldCommands, undefined, 'one state in two spellings is not doubled');
+  // Code review round 3 (batch 10), class D3: one type in two spellings is one value, so the type match must read it
+  // the same way. Wrong implementation it catches: an exact type match after a spelling-blind doubled check.
+  const twoSpellings = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandType: 'InstallProfile', command: 'INSTALL_PROFILE', commandState: 'ACKNOWLEDGED' })] })] });
+  assert.equal(twoSpellings.code, 0, 'InstallProfile and INSTALL_PROFILE are one type');
   for (const [label, over] of [['sent before --not-before', { commandState: 'ACKNOWLEDGED', status: 'Error', dateSent: '2026-10-27T08:59:59Z' }], ['for another profile', { commandState: 'ACKNOWLEDGED', status: 'Error', profileIdentifier: PIDS[8] }]]) {
     const old = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command(over)] })] });
     assert.equal(old.code, 2, `a doubled record ${label} is not the one asked for`);

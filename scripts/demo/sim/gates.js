@@ -37,7 +37,9 @@ const transferGate = (what, transferId, applicationId) => Object.freeze({
   apply: (s, t, now) => {
     const address = String(t['[USER@DOMAIN.COM]']);
     const source = s.gws.users[address];
-    const owner = s.gws.users[`${NEW_OWNER}@${address.split('@').pop()}`];
+    // the tenant's own reporting.user account, the one values() names for this customer, whatever the source's
+    // domain (code review round 2 of batch 10, class E2)
+    const owner = s.gws.users[Object.keys(s.gws.users).find((k) => k.startsWith(`${NEW_OWNER}@`))];
     if (!source || !owner) throw new Error('the simulated tenant holds no Google account for the source user or the new owner');
     s.gws.transfers = (s.gws.transfers || []).filter((x) => x.id !== transferId).concat([{
       kind: 'admin#datatransfer#DataTransfer', id: transferId, oldOwnerUserId: source.id, newOwnerUserId: owner.id,

@@ -203,3 +203,22 @@ test('code review 1, class D (batch 10): the simulated transfer names the ticket
   assert.equal(kept.length, 1, 'one record per transfer ID');
   assert.equal(kept[0].requestTime, '2026-11-07T11:00:00.000Z', 'the later transfer');
 });
+
+// Code review round 2 (batch 10), class E2: values() named the customer's reporting.user account, while apply() built
+// the owner from the source user's domain, so a source on another domain (an alias) gave the change record one owner
+// and the transfer another, or a throw. Wrong implementation it catches: the owner rebuilt from the source's domain.
+test('code review 2, class E2 (batch 10): the simulated transfer\'s new owner is the tenant\'s own reporting.user account, whatever the source\'s domain', (t) => {
+  const customers = require('./customers.js');
+  const { applySimulatedGates } = require('./sim/gates.js');
+  const d = customers.loadData().customers.find((c) => c.id === 'D');
+  const entry = SIM_GATES['gws-offboard-drive-transfer-portal'];
+  const dir = tmp(t, 'aegis-b10-owner-');
+  const tenantFile = path.join(dir, 'tenant.json');
+  const tenant = JSON.parse(customers.tenantText(d));
+  const ownerAddress = entry.values(d)['[MANAGER_UPN]'];
+  tenant.gws.users['leaver@example.net'] = { ...Object.values(tenant.gws.users)[0], id: 'sim-alias-user', primaryEmail: 'leaver@example.net' };
+  fs.writeFileSync(tenantFile, JSON.stringify(tenant));
+  applySimulatedGates({ changes: [{ entry, target: { '[USER@DOMAIN.COM]': 'leaver@example.net' } }], tenantFile, runDir: dir, now: '2026-11-07T12:00:00.000Z' });
+  const record = JSON.parse(fs.readFileSync(tenantFile, 'utf8')).gws.transfers.find((x) => x.id === entry.values(d)['[TRANSFER_ID]']);
+  assert.equal(record.newOwnerUserId, tenant.gws.users[ownerAddress].id, 'the owner the change record names');
+});

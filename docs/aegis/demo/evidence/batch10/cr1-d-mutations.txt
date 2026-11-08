@@ -1,0 +1,15 @@
+Mutation 1: a second transfer is pushed beside the first (the stale record kept)
+applied: 1
+ℹ fail 1
+ℹ pass 108
+✖ code review 1, class D (batch 10): the simulated transfer names the ticket's own customer and replaces an earlier one of its kind (1.157875ms)
+restored: True
+Mutation 2: the desk gives a gate its values without the customer
+applied: 1
+ℹ fail 4
+ℹ pass 105
+✖ an offboarding answer that names the Drive and calendar transfers reaches its read-back step; both read-backs pass (100.367708ms)
+✖ every gate the table maps is a real gate, and every one with a read-back resolves through its own connector (5487.31525ms)
+✖ task 4: gws-offboard-calendar-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (110.834583ms)
+✖ task 4: gws-offboard-drive-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (101.677416ms)
+restored: True

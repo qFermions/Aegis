@@ -178,3 +178,28 @@ for (const [id] of TRANSFER_GATES) {
     assert.deepEqual(wrong.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['google-workspace:verify-transfer FAIL']);
   });
 }
+
+// Code review round 1 (batch 10), finding class D: the simulated transfers. The new owner was always Customer D's
+// second account, read with an uncached loadData(), so another customer's change record named D's address before the
+// apply refused it; and a transfer gate applied twice to one tenant pushed a second record with the same ID, so a
+// later read got the first, older one and closed FAILED. Wrong implementations it catches: a new owner that ignores
+// the ticket's customer; a simulated transfer that keeps the stale record.
+test('code review 1, class D (batch 10): the simulated transfer names the ticket\'s own customer and replaces an earlier one of its kind', (t) => {
+  const customers = require('./customers.js');
+  const { applySimulatedGates } = require('./sim/gates.js');
+  const data = customers.loadData();
+  const [b, d] = ['B', 'D'].map((id) => data.customers.find((c) => c.id === id));
+  const entry = SIM_GATES['gws-offboard-drive-transfer-portal'];
+  assert.equal(entry.values(b)['[MANAGER_UPN]'], customers.fill('reporting.user@[@Aegion_DOMAIN]', b), 'customer B\'s own domain');
+  assert.notEqual(entry.values(b)['[MANAGER_UPN]'], entry.values(d)['[MANAGER_UPN]']);
+  const dir = tmp(t, 'aegis-b10-sim-');
+  const tenantFile = path.join(dir, 'tenant.json');
+  fs.writeFileSync(tenantFile, customers.tenantText(d));
+  const source = Object.keys(JSON.parse(fs.readFileSync(tenantFile, 'utf8')).gws.users).find((u) => u !== entry.values(d)['[MANAGER_UPN]']);
+  const once = (now) => applySimulatedGates({ changes: [{ entry, target: { '[USER@DOMAIN.COM]': source } }], tenantFile, runDir: dir, now });
+  once('2026-11-07T10:00:00.000Z');
+  once('2026-11-07T11:00:00.000Z');
+  const kept = JSON.parse(fs.readFileSync(tenantFile, 'utf8')).gws.transfers.filter((x) => x.id === entry.values(d)['[TRANSFER_ID]']);
+  assert.equal(kept.length, 1, 'one record per transfer ID');
+  assert.equal(kept[0].requestTime, '2026-11-07T11:00:00.000Z', 'the later transfer');
+});

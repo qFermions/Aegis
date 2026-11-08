@@ -572,7 +572,8 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   const valuesFor = (g) => {
     const entry = ctx.simTable[g.id];
     const target = entry ? data.targetsFor(ticket, entry.platform, customer) : null;
-    return { target, values: { ...(target || {}), ...(entry && entry.values ? entry.values() : {}) } };
+    // a gate's own values are this customer's (code review round 1 of batch 10, class D)
+    return { target, values: { ...(target || {}), ...(entry && entry.values ? entry.values(customer) : {}) } };
   };
   const approvals = [];
   let refused = null;

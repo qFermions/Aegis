@@ -13,7 +13,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { writeReplacing, loadData, fill } = require('../customers.js');
+const { writeReplacing, fill } = require('../customers.js');
 
 const AUTHENTICATOR_LIKE = /(?:microsoftAuthenticator|phone|softwareOath)AuthenticationMethod$/;
 
@@ -24,21 +24,25 @@ const grant = (s, t, list) => { const b = boxOf(s, t); b[list] = [...new Set([..
 // A data transfer the Admin console starts (batch 10, task 4), shaped as the Data Transfer API's DataTransfer
 // (vendor facts W-10, W-12): the source user's Google user ID, the new owner's, and one completed entry for
 // the application. A ticket names no manager, so the transfer's ID and the new owner come from the gate's
-// values (the desk fills the runbook's [TRANSFER_ID] and [MANAGER_UPN] with them). The new owner is Customer
-// D's second Google account (customers/d/tenant.json), the one simulated tenant with two Google accounts; on a
-// tenant without that account the gate cannot be acted out, and the ticket stops OPEN.
-const simNewOwner = () => fill('reporting.user@[@Aegion_DOMAIN]', loadData().customers.find((c) => c.id === 'D'));
+// values (the desk fills the runbook's [TRANSFER_ID] and [MANAGER_UPN] with them). The new owner is the
+// ticket's own customer's reporting.user account (customers/d/tenant.json holds one; Customer D is the one
+// simulated tenant with two Google accounts); on a tenant without that account the gate cannot be acted out,
+// and the ticket stops OPEN. A second transfer of one kind replaces the first, as one record per transfer ID
+// (code review round 1 of batch 10, class D: the owner was always Customer D's, and a second apply left the
+// stale record first in line for the read).
+const NEW_OWNER = 'reporting.user';
 const transferGate = (what, transferId, applicationId) => Object.freeze({
   platform: 'google-workspace', effect: `transfers the user's ${what} to their manager`,
-  values: () => ({ '[TRANSFER_ID]': transferId, '[MANAGER_UPN]': simNewOwner() }),
+  values: (customer) => ({ '[TRANSFER_ID]': transferId, ...(customer ? { '[MANAGER_UPN]': fill(`${NEW_OWNER}@[@Aegion_DOMAIN]`, customer) } : {}) }),
   apply: (s, t, now) => {
-    const source = s.gws.users[t['[USER@DOMAIN.COM]']];
-    const owner = s.gws.users[simNewOwner()];
+    const address = String(t['[USER@DOMAIN.COM]']);
+    const source = s.gws.users[address];
+    const owner = s.gws.users[`${NEW_OWNER}@${address.split('@').pop()}`];
     if (!source || !owner) throw new Error('the simulated tenant holds no Google account for the source user or the new owner');
-    (s.gws.transfers = s.gws.transfers || []).push({
+    s.gws.transfers = (s.gws.transfers || []).filter((x) => x.id !== transferId).concat([{
       kind: 'admin#datatransfer#DataTransfer', id: transferId, oldOwnerUserId: source.id, newOwnerUserId: owner.id,
       applicationDataTransfers: [{ applicationId, applicationTransferStatus: 'completed' }], overallTransferStatusCode: 'completed', requestTime: now,
-    });
+    }]);
   },
 });
 

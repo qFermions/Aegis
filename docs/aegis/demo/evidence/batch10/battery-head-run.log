@@ -1,0 +1,12 @@
+node-test exit 1
+node-test-tripwire exit 1
+ms-ticket-eval exit 0
+gws-ticket-eval exit 0
+g2-ticket-eval exit 0
+g3-ticket-eval exit 0
+command-structure-lint exit 0
+pre-commit-check-all exit 0
+release-boundary-check exit 0
+replay-demo exit 0
+ℹ tests 2233 ℹ pass 2191 ℹ fail 41 ℹ skipped 1  (node-test)
+ℹ tests 2233 ℹ pass 2191 ℹ fail 41 ℹ skipped 1  (node-test-tripwire)

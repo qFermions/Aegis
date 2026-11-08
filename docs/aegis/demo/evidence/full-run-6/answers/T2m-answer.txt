@@ -1,0 +1,63 @@
+## Fix
+**What's wrong:** [FIRST_NAME] leaves Friday and their access has to end in every app, but HR has not confirmed it in writing in the ticket yet.
+**Do this:**
+1. Put HR's written confirmation and the head of engineering's OK in the ticket. In Okta → People → [UPN] → Applications, check that the GitHub username is [GITHUB_USER].
+2. When their last day ends: Okta → Directory → People → [UPN] → More Actions → Deactivate.
+3. Check that Google Admin → Users shows Suspended, and that Linear and Slack show them suspended.
+4. GitHub → [@Aegion_GITHUB_ORG] → People → tick [GITHUB_USER] only → Remove from organization.
+5. Get the Mac back. Lock it in Fleet only if it isn't returned.
+**Done when:** Okta shows Deactivated and GitHub no longer lists them. Aegis then checks both.
+**Stop if:** HR hasn't confirmed in writing, or the GitHub username doesn't match Okta.
+**Tell the user now:** IT is preparing [FIRST_NAME]'s offboarding for Friday. We need HR's written confirmation in this ticket first. Please arrange the laptop return.
+**Tell the user when done:** [FIRST_NAME]'s access has ended everywhere. Their files are kept for now.
+
+This needs a longer plan across five systems: see Details.
+
+## Details
+
+**Verdict:** This is a planned offboarding across Okta, Google, GitHub, Linear, Slack and Fleet. The runbooks are `/gws-offboard` (Okta first, then Google), `/github-offboard-member`, `/linear-workspace-admin`, `/slack-user-lifecycle` and `/fleet-device-actions`. `/gws-offboard` was written for a shop that uses Jamf for Macs, so the device step goes to Fleet here.
+
+**What to check first (before Friday)**
+- **Approval is missing.** "yep confirmed w HR" is the requester saying so. It is not HR's written confirmation, which this customer requires for an offboarding. The head of engineering's approval is also needed.
+- **Which Friday?** Today is Saturday 2026-11-07. If "Friday" meant yesterday, the last day has already passed, and HR's written confirmation should give the exact date and time. This is not a security report, so it is worked during business hours.
+- **The GitHub username is a guess** ("i think"). Check it against the person's Okta record before using it.
+- **GitHub reads first** (`/github-offboard-member` Phase A): role, teams, repositories, forks. Save it all to `tasks/checkpoints/`. Stop if they are an owner and there are 2 owners or fewer, if they are the only admin of a repository, or if a fork holds work nobody else has.
+- **Google admin roles:** a super admin can sign in to Google directly and get around Okta. Check for one.
+- **Okta's Google settings:** check whether the Google integration has "Do not suspend user" turned on. That decides whether Google needs its own suspend.
+- **Linear:** reassign their open issues. Check whether SCIM is on (if it is, Okta owns the Linear account).
+
+**Why there's no lighter step:** Okta's Suspend keeps every app assignment. Deactivating is the action that removes access to the apps downstream. Removing someone from the GitHub organization is separate from Okta, so it is its own step.
+
+**Later steps (only if needed, not in this block)**
+- Step 3, only if Google still shows Active after the Okta step: gate `gws-offboard-suspend-portal` (R2).
+- Step 3, only if Linear still shows them active and SCIM is off: gate `linear-workspace-admin-suspend-portal`.
+- Step 3, only if Slack still shows them active: gate `slack-user-lifecycle-deactivate-portal`.
+- Step 5, only if the Mac isn't returned: gate `fleet-device-actions-lock-portal` (R2). As a last resort after that, after independent review: gate `fleet-device-actions-wipe-portal` (R3).
+- Files: once the head of engineering names who takes them, use gates `gws-offboard-drive-transfer-portal` and `gws-offboard-calendar-transfer-portal`. I'm not advising deleting the Google account. Keep it suspended until there is a decision on how long to keep it.
+
+**⚠️ Risk warning**
+- Deactivating in Okta and removing from GitHub are both R3. Plans that delete or remove across several systems need an independent review outside this session before the GitHub removal runs.
+- Okta's password can't be recovered after deactivation, and re-activating may mean assigning the apps again.
+- The way back from the GitHub removal is a new invitation, then restoring the teams and roles saved in `tasks/checkpoints/`.
+
+**Verification checklist**
+- [ ] HR's written confirmation and the head of engineering's approval are in the ticket.
+- [ ] Okta shows Deactivated, and Aegis's Okta check passes.
+- [ ] Google shows Suspended, and the status is recorded in the ticket.
+- [ ] GitHub People doesn't list them, and Aegis's GitHub check passes.
+- [ ] Linear and Slack show them suspended or deactivated.
+- [ ] The Mac is returned, or handled through the Fleet step.
+
+**Ticket note (partial, keep open)**
+> Offboarding for [FIRST_NAME], last day Friday. Waiting on HR's written confirmation and the date. GitHub username to be checked against Okta. Planned: Okta deactivation, Google suspension through Okta, GitHub removal, Linear and Slack checks, Mac return. Nothing changed yet. Next owner: [ADMIN_NAME].
+
+```aegis-desk
+Gate: gws-offboard-okta-deactivate-portal
+Phrase: DEACTIVATE OKTA USER [UPN]
+Change record: R3, read-back okta:verify-status --status DEPROVISIONED
+Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+Gate: github-offboard-member-remove-portal
+Phrase: REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]
+Change record: R3, read-back github:verify-offboarded
+Read-back: github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
+```

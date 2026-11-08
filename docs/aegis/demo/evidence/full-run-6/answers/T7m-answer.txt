@@ -1,0 +1,45 @@
+## Fix
+**What's wrong:** Everyone's connection is slow and Zoom freezes, but nobody has confirmed the cause yet. It could be the office Wi-Fi, the office internet line, or something using up the line.
+**Do this:** (No runbook covers this studio's network. These steps are my reasoning, not a known fix.)
+1. Ask one remote staff member whether Zoom freezes for them too. If it does, the problem is Zoom or a wider outage. If it doesn't, the problem is at the office.
+2. At the office, run a speed test on one Mac on Wi-Fi and one Mac plugged in by cable. If both are slow, it's the internet line. If only the Wi-Fi Mac is slow, it's the Wi-Fi.
+3. Ask whether anyone is uploading or syncing large files right now, such as to Google Drive or a backup.
+4. If the line itself is slow, check the internet provider's status page, then call the provider with the speed test results.
+**Done when:** Zoom calls stop freezing and office speed tests match the studio's plan.
+**Stop if:** only one person or one room is affected. That makes it a single-device or single-access-point problem.
+**Tell the user now:** IT is checking the office connection. For important calls, plug your Mac in with a cable if you can, and pause any large uploads.
+**Tell the user when done:** We found what was slowing the connection and sorted it out. Zoom calls should be smooth again, so let us know if they freeze.
+
+See Details for the ranked causes, risks and ticket note.
+
+## Details
+
+**Verdict:** This is about the office network, not about accounts or devices. Customer B's profile doesn't say what network equipment they have or who looks after it. Aegis's Wi-Fi and LAN/WAN runbooks are written for Meraki equipment and don't apply here. So Aegis advises no change. These are diagnostic steps only.
+
+**Ranked causes (not confirmed):**
+1. **Line full from large uploads.** A design studio moves large files, so a cloud sync or backup can use up the upload capacity, and Zoom needs upload. The ticket says "again", so it may keep happening. Write down when it happens: if it's the same time each day, a scheduled backup is the likely cause.
+2. **Provider problem or slow line.** Speed tests are slow on cable and on Wi-Fi.
+3. **Office Wi-Fi overloaded or interference.** Only the Wi-Fi speed test is slow.
+4. **Zoom-side problem.** Remote staff also freeze. Check Zoom's status page.
+
+**Ask the studio manager:** what router and Wi-Fi equipment the office has, who manages it, and what speed the studio pays for.
+
+**⚠️ Risk warning:** Restarting the router or the Wi-Fi equipment cuts everyone off. Don't do it during business hours (Mon–Fri, 09:30–18:30) without warning staff. Any change to the network equipment needs the studio manager's approval first.
+
+**Verification checklist:**
+- [ ] Remote staff checked (yes/no)
+- [ ] Office speed tests on Wi-Fi and on cable recorded
+- [ ] Large uploads ruled in or out
+- [ ] Provider status checked, and their case number logged if it's their fault
+- [ ] A Zoom test call runs without freezing
+
+**Jira-ready note:**
+> Studio-wide slowness and Zoom freezing (recurring). Scope: [office only / office + remote]. Speed test: Wi-Fi [X], cable [Y], plan [Z]. Likely cause: [uploads / provider / Wi-Fi / Zoom], [confirmed / unconfirmed]. Action: [what was done]. Provider case: [case #]. No configuration changes made by Aegis. Time spent: [X] min.
+
+```aegis-desk
+Replay: MISS
+Runbook: none applicable (wifi-issue and lan-wan are Meraki-scoped; Customer B network vendor/equipment unknown)
+Class: R0 (read-only diagnostics; no change advised)
+Approver for any later network change: studio manager (per customer profile)
+Gate: none
+```

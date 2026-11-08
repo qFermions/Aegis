@@ -1,0 +1,49 @@
+## Fix
+**What's wrong:** [FIRST_NAME]'s Authenticator was set up on the old phone, so the new phone can't approve the sign-in for Outlook or Teams.
+**Do this:**
+1. Go to Entra admin center → Users → [UPN] → Sign-in logs and open the latest Outlook or Teams sign-in. A failed MFA step means it's the old phone. Any other failure means it's a different problem.
+2. Go to Users → [UPN] → Authentication methods and find the old phone's Authenticator entry. Have the office manager confirm by phone that this is really [FIRST_NAME].
+3. If [FIRST_NAME] still has the old phone, they add the new phone at aka.ms/mfasetup and approve it with the old one. You don't need to change anything.
+4. If the old phone is gone, go to Users → [UPN] → Overview → Revoke sessions.
+5. Last resort: delete only the old Authenticator entry. [FIRST_NAME] then registers the new phone at aka.ms/mfasetup.
+**Done when:** [FIRST_NAME] signs in to Outlook with the new phone. Aegis then checks that the old sessions ended.
+**Stop if:** the logs show a Conditional Access block, or sign-ins you don't recognize.
+**Tell the user now:** IT is checking your sign-in setup. If you still have your old phone, please keep it nearby and don't reset it.
+**Tell the user when done:** Your new phone now approves sign-ins. Open Outlook and Teams and sign in.
+
+This needs approvals and a fallback step: see Details.
+
+## Details
+
+**Verdict:** This is the common "new phone, Authenticator didn't move" case. No replay match (MISS). The runbook is `/mfa-issue`, "New phone / re-register".
+
+**Before any change**
+- **Identity check:** the office hasn't set a rule yet ([org gap]). For now, the office manager confirms by phone that the request is really from [FIRST_NAME]. Don't skip this because patients start at 9. Urgency is the usual social-engineering lever on MFA resets.
+- **Approvals:** the office manager approves. Revoking sessions (step 4) and deleting the method (step 5) both **cannot be undone**, so the practice owner must also approve each one.
+- **Pre-state:** before step 4, save the user's recent sign-ins to `tasks/checkpoints/`. Before step 5, save the method list there too. Write the time of the click in the ticket.
+
+**Ladder**
+- Steps 1 to 3 are reads and a user check. Step 3 needs no admin change at all.
+- Step 4 (R2, revoke sessions) cuts off whatever the old phone is still signed in to. Microsoft says tokens can take a few minutes more to expire.
+- ⚠️ **Step 5, only if the old phone can't be used to add the new one (step 3 isn't possible): gate `mfa-method-delete-portal`, R3.** It deletes one method and can't be undone; the user registers again. Its alternative is `mfa-require-reregister-portal`: use one or the other on a ticket, never both. Step 5 has its own approval, phrase and read-back, and it isn't in the block below.
+- **Don't add a text-message fallback.** The customer uses Authenticator only, and `mfa-phone-add` is preview-only in the runbook.
+- **Conditional Access gotcha:** if a policy blocks registration after step 5, stop. Excluding the user from it is a separate R3 change (`mfa-ca-exclusion`, preview-only) that needs the `/conditional-access` runbook.
+- **Intune:** the new phone may also need enrolling in Company Portal before work apps get access. Treat that as a follow-up if Outlook still refuses after sign-in.
+
+**Verification checklist**
+- [ ] Requester confirmed by the office manager by phone
+- [ ] Sessions revoked, and the read-back passed under its change record
+- [ ] New Authenticator shows under Authentication methods
+- [ ] Sign-in logs show a successful MFA sign-in from the new phone
+- [ ] Old Authenticator entry still present (step 5 not needed) or deleted under its own gate
+- [ ] No Conditional Access exclusion left open
+
+**Jira-ready note**
+> [JIRA-###] - MFA new-phone re-registration for `[UPN]`. Identity confirmed by office manager by phone (interim rule, [org gap]). Approval: office manager + practice owner. Sessions: [revoked under mfa-session-revoke-portal, read-back passed / not revoked]. Old method: [kept, user added new phone from old one / deleted under mfa-method-delete-portal, read-back passed]. Re-registration: [verified in sign-in logs / not completed]. Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-session-revoke-portal
+Phrase: REVOKE ENTRA SESSIONS FOR [UPN]
+Change record: R2, read-back msgraph:verify-sessions-revoked --not-before
+Read-back: msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```

@@ -1,0 +1,50 @@
+## Fix
+**What's wrong:** Since the macOS update, Okta Verify keeps sending [FIRST_NAME] back to sign in, and reinstalling it didn't help.
+**Do this:**
+1. Okta Admin Console → Reports → System Log → [UPN]: sign-ins that succeed and then prompt again point to the Mac. Pushes the user doesn't recognize mean stop.
+2. The user fully quits Okta Verify, opens it again and signs in once.
+3. If it still loops: the user restarts the Mac and signs in once.
+4. If it still loops: People → [UPN] → More Actions → Clear User Sessions.
+5. Last resort: reset only the Okta Verify authenticator.
+**Done when:** the user gets through one full sign-in with no loop. Aegis then checks that the log shows the session clear.
+**Stop if:** the log shows sign-ins or pushes the user didn't make.
+**Tell the user now:** IT is looking into the sign-in loop. Please fully quit Okta Verify, open it again and sign in once. If it still loops, restart your Mac and try again.
+**Tell the user when done:** Your old sign-in sessions are cleared. Open Okta Verify and sign in once.
+
+Details: the security check, the approval, the last resort's condition, and the Jira note.
+
+## Details
+
+**Verdict:** The runbook `/okta-mfa-reset` covers this, in its section "Okta Verify sign-in loop after a macOS update". The macOS update is what changed, so leftover state on the Mac is the first suspect. Nothing points to a broken enrollment yet.
+
+**What to check first (R0, read only)**
+- Directory → People → [UPN]: the status must be **Active**. If it's Suspended or Deactivated, this is a different ticket (`/okta-user-lifecycle`), and the Clear User Sessions option won't appear anyway.
+- System Log: watch for a sign-in from a location the user doesn't know, a burst of failed pushes, or a push approved at an odd hour. Any of these makes this a security report. Customer D handles those at any hour, and it goes to `/security-alert-triage` before anything else is done.
+- Write the macOS version and the Okta Verify version in the ticket. Fleet's host details for [DEVICE_NAME] show the macOS version, so the user only needs to read the Okta Verify version from the app.
+
+**Step 4: Clear User Sessions (R1)**
+- Before you click, write the current UTC time in the ticket as `[NOT_BEFORE]`.
+- Customer D's head of engineering approves changes. Record their approval in the ticket first.
+- What it does: it ends every active Okta session for this one user. The user signs in again on their next request. It can't be undone, but nothing needs undoing.
+- In the dialog, tick "Also include logout enabled apps and Okta API tokens" only if those tokens must go too.
+- After the clear, the user quits Okta Verify, opens it again and completes one full sign-in.
+
+**Step 5: last resort**
+- Use gate `okta-mfa-reset-selected-portal` (Phase B, Okta Verify only), and only if step 4 didn't stop the loop.
+- A reset can't be undone. Before it, confirm the person's identity Customer D's way: a video call with the person, then their manager confirms in the IT channel.
+- Phase C, reset all (`okta-mfa-reset-all-portal`), is only for when every enrollment must go.
+
+**Verification checklist**
+- [ ] The status is Active and the log shows no signs of a compromise.
+- [ ] The macOS and Okta Verify versions are in the ticket.
+- [ ] Aegis's check found the session clear in the System Log, at or after `[NOT_BEFORE]`.
+- [ ] The user completed one full sign-in with no loop.
+
+**Jira-ready note**
+> Okta Verify sign-in loop for [UPN] after a macOS update; reinstalling didn't help. User checks: [results]. macOS [version], Okta Verify [version]. Sessions cleared after [NOT_BEFORE], approved by the head of engineering and confirmed with the exact phrase. Aegis's check of the session clear passed at [timestamp]. The user completed a sign-in at [timestamp]. No authenticator was reset. Compromise signs: [none found / triage [JIRA-###]]. Time spent: [X] min.
+
+```aegis-desk
+Gate: okta-mfa-reset-clear-sessions-portal
+Phrase: CLEAR OKTA SESSIONS FOR [UPN]
+Read-back: node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute
+```

@@ -1,0 +1,62 @@
+I've read the Jamf lock/erase runbook and the Google containment and password runbooks. Here is the ticket worked up.
+
+## Fix
+**What's wrong:** A work MacBook was stolen and Gmail may still be signed in on it.
+
+**Do this:**
+1. Call [FIRST_NAME] back on the staff-list number to confirm the request. Then open Admin console → Reporting → Audit and investigation → User log events → [USER@DOMAIN.COM]. If there's a sign-in from somewhere unknown since last night, the account is compromised. If not, it's only exposed.
+2. Admin console → Directory → Users → [USER@DOMAIN.COM] → Security → Sign-in cookies → Reset.
+3. Read the Mac's record in Jamf Pro (last check-in, FileVault, chip). Then go to Management → Lock Computer, using a six-digit PIN kept in the password manager.
+4. Last resort: wipe the Mac, but only with both managers' approval.
+
+**Done when:** Google asks the Mac to sign in again and Jamf shows the lock as completed. Aegis checks both.
+
+**Stop if:** The logs show a stranger signed in. Then this is an account compromise.
+
+**Tell the user now:** IT is securing your account and the laptop. Please change your Google password from another device. Send us the police report number.
+
+**Tell the user when done:** Your Google account is signed out on the stolen laptop and the laptop is locked.
+
+This needs a plan across three systems: see Details.
+
+## Details
+
+**Verdict:** This is a stolen device with an exposed session. There's no proof of compromise yet. A runbook covers each step (`/gws-password-reset` Phase C, `/jamf-lock-erase` Phases A–C).
+
+**Why this order**
+- **Sign out first.** Signing out of Google takes nothing away and is the fastest way to cut the thief off from mail. Google says browser sessions end at once, but Gmail can take up to an hour and desktop apps (Drive for desktop) aren't signed out.
+- **Lock next.** The lock deletes nothing, and the PIN undoes it if the Mac is found. It runs at the Mac's next check-in. A Mac that never comes back online never gets the lock, so until then FileVault and Activation Lock are what protect the data. Read FileVault status in Phase A and record it.
+- **Wipe last.** Step 4 is only for when the lock is not enough: the Mac won't come back, or there is sensitive data on it. It needs the studio manager and the person's own manager to approve it, plus an independent review before it runs. Gate `jamf-lock-erase-wipe-portal`. It stays out of the block below.
+
+**Conditional rungs (not run now)**
+- **If step 1 shows a stranger signed in:** stop and switch to `/gws-account-containment` Phase B. Suspending the account replaces the sign-out. Gate `gws-account-containment-suspend-portal`.
+- **Slack:** there's no per-user sign-out in the Slack admin pages, and Slack ignores Google's sign-out. The only way to end one person's Slack session is to deactivate them (R3, `/slack-user-lifecycle` Phase D). Only consider it if the Slack app was open on the Mac and someone actually accesses it. Ask [FIRST_NAME] whether it was open.
+
+**Authorization and process**
+- **Approval:** the studio manager approves the lock (R2: change record opened and approved first).
+- **Verify the requester:** the request came as a forwarded email marked "urgent". Do the callback before any change. The urgent tone doesn't skip it.
+- **Timing:** today is Saturday, outside the studio's hours (Mon–Fri 09:30–18:30). The studio manager's approval may take a while to arrive.
+- **The user's own password change:** it's their action, not an admin change. It closes passwords saved on the Mac.
+- **Police report:** record the report number and the serial in the ticket, not the person's details.
+
+**⚠️ Risk:** a lock without the PIN stored first can't be undone. Store [LOCK_PIN] in the password manager before sending the lock, and never put it in the ticket.
+
+**Verification checklist**
+- [ ] Callback done and noted
+- [ ] Log reading recorded (exposed or compromised)
+- [ ] Cookie reset event shows in Admin log events
+- [ ] Management History shows Lock Computer completed
+- [ ] PIN is in the password manager only
+- [ ] FileVault status recorded
+
+**Ticket note (Linear or Jira, partial state):** Mac [SERIAL_NUMBER] reported stolen [date], police report [ref]. Requester verified by callback. Sign-in cookies reset [time]. Lock queued [time], pending check-in. Wipe not approved or run. Next owner: studio manager.
+
+```aegis-desk
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event RESET_SIGNIN_COOKIES --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+Gate: jamf-lock-erase-lock-portal
+Phrase: LOCK MAC [SERIAL_NUMBER]
+Change record: R2, read-back jamf:verify-command --not-before --type DEVICE_LOCK
+Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```

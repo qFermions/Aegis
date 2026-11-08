@@ -1,0 +1,21 @@
+$ git diff --stat 192287a d6b5aef -- scripts .claude CLAUDE.md docs/aegis/answer-format.md modules
+(empty above: no code, runbook, rule or simulator file changed from the code head 192287a to the commit that saved the tidy run)
+
+$ git diff --stat 192287a 3227e8f (the commit the messy run's terminal names as frozen)
+ .../demo/evidence/batch10/battery-head-run.log     |   12 +
+ .../demo/evidence/batch10/battery-head/HEAD.txt    |    1 +
+ .../battery-head/command-structure-lint.txt        |    4 +
+ .../batch10/battery-head/g2-ticket-eval.txt        |   92 +
+ .../batch10/battery-head/g3-ticket-eval.txt        |   72 +
+ .../batch10/battery-head/gws-ticket-eval.txt       |   54 +
+ .../batch10/battery-head/ladder-audit-check.txt    |    2 +
+ .../batch10/battery-head/ms-ticket-eval.txt        |   41 +
+ .../battery-head/node-test-tripwire-vs-batch9.txt  |    2 +
+ .../batch10/battery-head/node-test-tripwire.txt    | 3184 ++++++++++++++++++++
+ .../batch10/battery-head/node-test-vs-batch9.txt   |    2 +
+ .../evidence/batch10/battery-head/node-test.txt    | 3184 ++++++++++++++++++++
+ .../batch10/battery-head/pre-commit-check-all.txt  |  730 +++++
+ .../battery-head/release-boundary-check.txt        |    2 +
+ .../evidence/batch10/battery-head/replay-demo.txt  |   40 +
+ progress.md                                        |   11 +-
+ 16 files changed, 7428 insertions(+), 5 deletions(-)

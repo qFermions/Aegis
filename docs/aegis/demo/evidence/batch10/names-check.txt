@@ -1,0 +1,9 @@
+Names check, 2026-11-08T02:45Z, at e4a66ef: every line this batch added (git diff 1a719ed HEAD, evidence captures included), searched case-insensitively for the owner's first and last name, the machine's account name, the GitHub handle, the email's local part, the commit author's display name and one possible employer name. The search patterns are kept out of this repository, since writing them here would publish them.
+$ git diff 1a719ed HEAD | grep '^+' | grep -v '^+++' | grep -ciE '<the patterns>'
+0
+(0: no added line holds any of them)
+
+Customers: the demo's customers are roles (Customer A to E) with example.* domains, written [@Aegion_DOMAIN] in every capture (run-evidence.js and capture.sh mask them).
+$ git diff 1a719ed HEAD | grep '^+' | grep -v '^+++' | grep -ciE '@[a-z0-9-]+\.example\.(com|org|net)'
+0
+(0: no added line holds a customer domain)

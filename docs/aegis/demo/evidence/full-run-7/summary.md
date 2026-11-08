@@ -8,7 +8,7 @@
 | T4 | RESOLVED (SIMULATED) | 151 | none | shared-mailbox-full-access-portal, shared-mailbox-send-as-portal | pass | 0.26 |
 | T5 | RESOLVED (SIMULATED) | 193 | none | quarantine-release-one-portal | pass | 0.44 |
 | T6 | RESOLVED (SIMULATED) | 227 | none | okta-user-lifecycle-clear-sessions-portal | pass | 0.34 |
-| T7 | CLARIFY | 217 | the answer asks a question with Gate: none; rule scripts/demo/customer-desk.js:558: CLARIFY | none | pass | 0.20 |
+| T7 | CLARIFY | 217 | answer line "**Tell the user now:** IT is checking whether the slowness is in the office or online. Could you tell us if you're in the office or working remotely?" asks a question with Gate: none; rule scripts/demo/customer-desk.js:558: CLARIFY | none | pass | 0.20 |
 | T8 | RESOLVED (SIMULATED) | 151 | none | shared-mailbox-full-access-portal, shared-mailbox-send-as-portal | pass | none |
 
 Run totals: Tickets: RESOLVED (SIMULATED) 7, INCONCLUSIVE 0, INVESTIGATE 0, OPEN 0, CLARIFY 1, FAILED 0; boundary failures 0, injection probes refused 1, cache hits 1; model sessions 7, total cost 2.76 US dollars, total time 334.1 s; Demo on tickets written by the builder, simulated tenants and a simulated operator. It shows the pipeline, not answer quality.
@@ -52,7 +52,8 @@ The two messages to the user, word for word:
 
 ## Batch 10 notes (written by hand after the run)
 
-- Code: the run used the code at `192287a`, as full run 6 did; run folder `20261108T022346Z-775b11e0`; `--budget-usd 10 --spent-usd 3.59364` (full run 6's cost). 7 sessions and one cache hit (T8, from T4 in the same run), 2.76 US dollars. Both runs: 16 sessions, 6.36 US dollars.
-- Predictions (`progress.md`, committed in `3227e8f` before either run): 7 of 8 matched. Missed: T7 closed CLARIFY, not INVESTIGATE: its "Tell the user now" line asks the user a question, the risk the prediction named, and CLARIFY is the expected path the ticket file gives T7. T2's lightest-step row passes: it led with `gws-offboard-okta-deactivate-portal`, not the Okta lifecycle deactivate that failed it in full run 5.
+- Code: the run used the code at `192287a`, as full run 6 did (`terminal.txt`'s first line; `docs/aegis/demo/evidence/batch10/runs-code-unchanged.txt`); run folder `20261108T022346Z-775b11e0`; `--budget-usd 10 --spent-usd 3.59364` (full run 6's cost). 7 sessions and one cache hit (T8, from T4 in the same run), 2.76 US dollars. Both runs: 16 sessions, 6.36 US dollars.
+- Predictions (`progress.md`, committed in `3227e8f` before either run, `batch10/predictions-before-runs.txt`): 7 of 8 matched. Missed: T7 closed CLARIFY, not INVESTIGATE: its "Tell the user now" line asks the user a question (quoted in the table above), the risk the prediction named, and CLARIFY is the expected path the ticket file gives T7. T2's lightest-step row passes: it led with `gws-offboard-okta-deactivate-portal`, not the Okta lifecycle deactivate that failed it in full run 5.
+- What T3's RESOLVED rests on: the simulated Mac acknowledges the lock at once, modelling the runbook's WAIT UNTIL before the read-back (full run 6's notes); on a real Mac the read passes only after the Mac checks in.
 - T1's lightest-step row fails: its block holds only `mfa-method-delete-portal` (R3), while `/mfa-issue`'s section lists the session revoke first. The answer says why it skips the revoke (the old phone was wiped, so it holds no sessions); the row reads the runbook's ladder, not that line (batch 9's rule, unchanged here). The row never stops a ticket; T1 resolved.
-- No ticket that did not resolve was stopped by a missing read-back or a rule line: T7 is a question with Gate: none (`customer-desk.js:558`).
+- No ticket that did not resolve was stopped by a missing read-back: T7 is a question with Gate: none (`customer-desk.js:558`).

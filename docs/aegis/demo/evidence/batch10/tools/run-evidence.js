@@ -97,7 +97,12 @@ function stopped(t, answer) {
       const k = look.steps.findIndex((x) => a.stepChange(x) === look.change);
       return `answer step ${k + 1}: "${cell(look.steps[k] || '')}" (its verb "${look.change}" is a change word, so the answer does not only look); rule ${rule}`;
     }
-    if (s === 'CLARIFY') return `the answer asks a question with Gate: none; rule ${deskLine(t)}: CLARIFY`;
+    if (s === 'CLARIFY') {
+      // the first line of the answer's own text (outside the closing block and any fence) that asks something
+      let fenced = false;
+      const asked = closingGateLines(answer).body.split(/\r?\n/).find((l) => { if (/^\s*```/.test(l)) { fenced = !fenced; return false; } return !fenced && /[A-Za-z0-9)\]]\?+(?=[\s*_)"'”’]|$)/.test(l); });
+      return `answer line "${cell(asked || '')}" asks a question with Gate: none; rule ${deskLine(t)}: CLARIFY`;
+    }
     return `answer line "Gate: none"; rule ${rule}`;
   }
   return `answer lines ${values.map((v) => `"Gate: ${v}"`).join(', ')}; rule ${rule}`;

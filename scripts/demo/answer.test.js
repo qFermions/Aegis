@@ -371,3 +371,15 @@ test('code review 2, class A2 (batch 10): no-space steps, negations, placeholder
     assert.equal(r.looks, true, `${s}: ${r.change}`);
   }
 });
+
+// Code review round 3 (batch 10), class A3: round 2's plural-noun rule dropped real buttons ("Revoke sessions",
+// "Remove members", "Remove access"); the readers saw only the text after a leading "In ...," so the path's last stop
+// was gone; a negated clause ended by a dash kept the change after it hidden; and a dropdown value ("Select
+// Disabled") stopped counting. Wrong implementations it catches: an any-plural menu rule; readers on the lead-stripped
+// rest; no dash in the clause break; plain stems only after "select".
+test('code review 3, class A3 (batch 10): real buttons, paths after a lead, a dash after a negation and dropdown values count', () => {
+  for (const s of ['In the Entra admin center, go to Users → [UPN] → Overview → Revoke sessions.', 'Click Remove members on the group.', 'Open the app → Remove access.', 'In Intune → Devices → [DEVICE_NAME] → Wipe, keep the enrollment state unchecked.', "Don't wait — click Reset password.", 'No need to wait - click Wipe.', 'Select Disabled under Account status.']) {
+    assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, s);
+  }
+  for (const s of ['Click Add filters and choose User.', 'Open Intune → Devices → Update rings, find the device ring.']) assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, true, s);
+});

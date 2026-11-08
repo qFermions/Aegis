@@ -374,10 +374,12 @@ const LEADS = Object.freeze([
 const OPENING = /^[^A-Za-z0-9[]+/;
 const RELAY = /^(?:ask|tell)\s+(?:\S+\s+){0,3}?to\s+/i;
 const NEGATED_VERB = /^(?:don['’]?t|do not|never|no need to|avoid)\b/i;
-const NEXT_CLAUSE = /[,;:]\s*|\s(?:and|but)\s+/;
+// a dash ends a negated clause too ("Don't wait \u2014 click Reset password": code review round 3 of batch 10, class A3)
+const NEXT_CLAUSE = /[,;:]\s*|\s(?:and|but)\s+|\s+[-\u2013\u2014]\s+/;
 // The verb that opens one clause: { change: the change word or null, relayed: true after "ask <someone> to", rest }.
 function openingVerb(clause) {
   let t = clause;
+  let negated = false;
   for (let i = 0; i < 6; i += 1) {
     // a list marker with or without a space after it ("2.Reset": code review round 2 of batch 10, class A2)
     t = t.replace(OPENING, '').replace(/^(?:[-*+]\s+|\(?\d+[.)]\s*)/, '');
@@ -388,8 +390,9 @@ function openingVerb(clause) {
     if (NEGATED_VERB.test(t)) {
       const next = NEXT_CLAUSE.exec(t);
       // a negated clause holds nothing more to read: its button or path is the one not to use
-      if (!next) return { change: null, relayed: false, rest: '' };
+      if (!next) return { change: null, relayed: false, rest: '', negated: true };
       t = t.slice(next.index + next[0].length);
+      negated = true;
       continue;
     }
     const lead = LEADS.map((re) => re.exec(t)).find(Boolean);
@@ -397,19 +400,20 @@ function openingVerb(clause) {
     t = t.slice(lead[0].length);
   }
   // rest: the clause from its verb on, past any lead or negated clause, where the other readers look
-  return { change: null, relayed: false, rest: t };
+  return { change: null, relayed: false, rest: t, negated };
 }
 // A change verb joined by "and" or a comma with an object after it ("and reset the password", ", wipe it"); a
 // change word there with no object is a noun ("the install and update history") (evidence review 1 and code
 // review round 1 of batch 10).
 const JOINED_VERB = new RegExp(`(?:\\band|,)\\s+(${CHANGE_WORD.source})\\s+(?=(?:the|a|an|their|his|her|its|this|that|these|those|it|them|every|all|each|any|only)(?![A-Za-z])|\\[)`, 'i');
-// A change word in its plain form, for a button or a path's last stop: "Deleted users" is a list, not a button; a plain
-// form with a plural noun after it is a menu ("Update rings", "Add filters") (code review round 2 of batch 10, class
-// A2). shortcut: so "Remove members" reads as a menu too; with Gate: none that can only turn an OPEN into an
-// INVESTIGATE.
-const CHANGE_PLAIN = `(?:${CHANGE_STEMS.join('|')}|turn (?:on|off))(?![A-Za-z-])(?!\\s+[a-z]+s\\b)`;
+// A change word in its plain form, for a path's last stop ("Deleted users" is a list, not a button), and in any form
+// after "click", "choose" or "select" (a dropdown value: "Select Disabled"); either one followed by a menu noun is a
+// menu, not a button ("Update rings", "Add filters") (code review rounds 2 and 3 of batch 10, classes A2 and A3: an
+// any-plural rule dropped "Revoke sessions" and "Remove members"). shortcut: a short list of menu nouns.
+const MENU_NOUN = '(?!\\s+(?:rings?|filters?|history|logs?|reports?|status|policies|policy|settings|options|columns?|views?)\\b)';
+const CHANGE_PLAIN = `(?:${CHANGE_STEMS.join('|')}|turn (?:on|off))(?![A-Za-z-])${MENU_NOUN}`;
 // A button the step clicks, chooses or presses ("Click Wipe Computer", "choose Delete").
-const BUTTON_VERB = new RegExp(`\\b(?:click|choose|select|press|tap|pick|hit)\\s+(?:on\\s+)?(?:the\\s+)?["\\u201c]?(${CHANGE_PLAIN})`, 'i');
+const BUTTON_VERB = new RegExp(`\\b(?:click|choose|select|press|tap|pick|hit)\\s+(?:on\\s+)?(?:the\\s+)?["\\u201c]?((?:${CHANGE_WORD.source})${MENU_NOUN})`, 'i');
 // The last stop of a portal path when it ends the clause in a change: "→ Reset password," "→ Lock Computer."; a
 // menu the path only passes through ("→ Update rings and read the ring") is not one.
 const PATH_BUTTON = new RegExp(`^\\s*(${CHANGE_PLAIN})(?:\\s+[^\\s,.;:)]+){0,3}\\s*(?:[.,;:)]|$|\\s+(?:with|for|on)\\b)`, 'i');
@@ -429,7 +433,9 @@ function stepChange(step) {
       const v = openingVerb(clause);
       if (v.change) return v.change;
       if (v.relayed) { relaying = true; break; }
-      const inside = (JOINED_VERB.exec(v.rest) || BUTTON_VERB.exec(v.rest) || [])[1] || pathButton(v.rest);
+      // the whole clause, unless a negation opened it: then only what follows the negated part (round 3, class A3)
+      const read = v.negated ? v.rest : clause;
+      const inside = (JOINED_VERB.exec(read) || BUTTON_VERB.exec(read) || [])[1] || pathButton(read);
       if (inside) return inside;
     }
   }

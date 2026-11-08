@@ -415,6 +415,16 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
   assert.match(unnamed.json.reason, /names? no profileIdentifier/);
   const unnamedOld = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ profileIdentifier: undefined, dateSent: '2026-10-27T08:59:59Z' })] })] });
   assert.equal(unnamedOld.code, 2, 'one sent before --not-before is not the one asked for');
+  // Code review round 1 (batch 10), finding 13: a record that carries a field in both forms (the documented name and
+  // the filter's) with two different values is not proof either way, as this adapter's header says of a doubled
+  // field. Wrong implementation it catches: one form picked quietly, so a conflicting record passes.
+  for (const [label, over] of [['two states', { commandState: 'ACKNOWLEDGED', status: 'Error' }], ['two Macs', { client: { managementId: MID }, clientManagementId: 'another-management-id' }], ['two types', { commandType: 'INSTALL_PROFILE', command: 'REMOVE_PROFILE' }]]) {
+    const doubled = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command(over)] })] });
+    assert.equal(doubled.code, 5, label);
+    assert.equal(doubled.json.verified, false, label);
+  }
+  const agreeing = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandType: 'INSTALL_PROFILE', commandState: 'ACKNOWLEDGED', client: { managementId: MID } })] })] });
+  assert.equal(agreeing.code, 0, 'both forms with the same values are one field');
   const shapeless = await cli(VC, { replies: [tokenReply(), ok({ nothing: true })] });
   assert.equal(shapeless.code, 5); // batch G4, task D1: an answer with no results list is INCONCLUSIVE
   assert.equal(shapeless.json.state, STATES.INCONCLUSIVE);

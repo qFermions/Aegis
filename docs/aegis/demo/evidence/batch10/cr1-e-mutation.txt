@@ -1,0 +1,6 @@
+Mutation: a doubled record is read with the documented form, as before
+1
+ℹ fail 1
+ℹ pass 22
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (1.393833ms)
+restored: same

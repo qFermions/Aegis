@@ -168,8 +168,11 @@ const SIM_GATES = Object.freeze({
   },
   'jamf-lock-erase-wipe-portal': {
     platform: 'jamf', effect: 'wipes the Mac at its next check-in',
-    // batch 9, task 7: the erase is sent now and runs at the Mac's next check-in, so, like the lock, its
-    // ERASE_DEVICE command stays Pending and the runbook's verify-command read proves nothing yet (exit 5)
+    // batch 9, task 7: the erase is sent now and runs at the Mac's next check-in, so its ERASE_DEVICE command
+    // stays Pending and the runbook's verify-command read proves nothing yet (exit 5). Batch 9 simulated the lock
+    // the same way; since batch 10 the simulated lock is acknowledged at once (above), so a ticket that only
+    // locks can resolve at the desk, and this wipe is the desk's case of a sent command not yet proved
+    // (customer-desk.test.js, "the simulated Jamf wipe leaves a pending erase command")
     apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.wipe_state = 'wipe sent'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'ERASE_DEVICE', status: 'Pending', dateSent: now }); } },
   },
 });

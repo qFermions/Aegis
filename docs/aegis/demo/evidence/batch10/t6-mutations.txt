@@ -1,0 +1,22 @@
+Mutation 1: no entry for "is" touching the value
+applied: 1
+ℹ fail 1
+ℹ pass 13
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (0.559584ms)
+Mutation 2: "pass" with any value
+applied: 1
+ℹ fail 1
+ℹ pass 13
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (2.79875ms)
+Mutation 3: matched on the text as typed (no compatibility form)
+applied: 1
+ℹ fail 1
+ℹ pass 13
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.694334ms)
+Mutation 4: "is" touching any letters
+applied: 1
+ℹ fail 2
+ℹ pass 12
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.527917ms)
+✖ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.482958ms)
+restored: True

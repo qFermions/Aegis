@@ -331,3 +331,22 @@ test('final security review: any written password stops the ask; a status word o
   for (const bad of ['the new passcode is 739204 and she still cannot sign in', 'password: sunshine', 'Temp password: Welcome', 'password is [x]Hunter22!', 'temp password: Reset@123', 'password is no-Hunter22', 'password: Valid!2024']) assert.ok(ask.protect(bad).blocked, bad);
   for (const ok of ['My password is expired and I cannot sign in to Outlook.', 'User says password is incorrect after the reset', 'Temp password: [TEMP_PASSWORD]', 'The app client secret is expiring next week', 'my password is not working']) assert.equal(ask.protect(ok).blocked, undefined, ok);
 });
+
+// Batch 10, task 6: batch 9's own finding, "password isHunter22!" (no space after "is"), went through, and so did
+// the short and punctuated spellings. EXPECTED DECISION (written before the code): a password written after
+// password, passcode, passwd, passphrase, pw, pwd, PIN or secret stops the ask whether "is" touches the value or a
+// colon, equals sign, arrow, "was" or "'s" stands between; after the common word "pass", only a value with a digit
+// or a symbol does. A ticket that only mentions a password, a PIN or a pass still goes through. Wrong
+// implementations it catches: "is" read only as a whole word (batch 9's rule), so "isHunter22!" passed; and a
+// rule that blocks "password issues" or "password-protected" because it reads any letters after the keyword.
+test('batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass', () => {
+  const bad = ['password isHunter22!', 'pw: Hunter22!', 'PW=Summer2026', 'passwd=Welcome1', 'pass is Hunter22!', 'pwd: sunshine',
+    'password -> Spring2026!', "password's Hunter22!", 'her password was Winter2025!', 'passcode is739204', 'Password：Hunter22',
+    'password isSunshine', 'passphrase: correct-horse-battery', 'the PIN → 4821', 'pass​word: Autumn2026'];
+  for (const t of bad) assert.ok(ask.protect(t).blocked, t);
+  const ok = ['I forgot my password', 'My password expired this morning and Outlook keeps asking for it.', "Password reset link isn't arriving.",
+    'We have password issues with Teams', 'The password is not working after the update.', 'Can you reset my password? It says password is incorrect.',
+    "The password-protected PDF won't open.", 'My boarding pass is attached to the expense report.', 'Password: [TEMP_PASSWORD] was given to the user by phone.',
+    'pw reset needed for [UPN]', "The user's password isn't syncing to the laptop.", 'PIN is required on the new phone.', 'The app client secret is expiring next week'];
+  for (const t of ok) assert.equal(ask.protect(t).blocked, undefined, t);
+});

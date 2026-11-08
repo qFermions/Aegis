@@ -1,0 +1,22 @@
+Mutation 1: split at every sentence end (round 1)
+applied: 1
+ℹ fail 1
+ℹ pass 13
+✖ code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details> (11.273083ms)
+Mutation 2: one undo word drops the whole clause (round 1)
+applied: 1
+ℹ fail 1
+ℹ pass 13
+✖ code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details> (13.246083ms)
+Mutation 3: a restore is an undo word (round 1)
+applied: 1
+ℹ fail 1
+ℹ pass 13
+✖ code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details> (13.208416ms)
+Mutation 4: no return to the interrupted section after </details>
+applied: 1
+ℹ fail 2
+ℹ pass 12
+✖ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (12.594416ms)
+✖ code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details> (11.387375ms)
+restored: True

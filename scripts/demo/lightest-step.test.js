@@ -198,3 +198,28 @@ test('code review 1, class B (batch 10): the ladder reader keeps reference block
   const tied = ['- Only if signing out did not stop the prompts: `ex-ref-revoke`.'];
   assert.equal(lightestStepFirst(withDetails(tied, 'ex-ref-signout', 'ex-ref-revoke'), fx).verdict, 'fail', 'the fallback is about this gate');
 });
+
+// Code review round 2 (batch 10), class B2: edges of round 1's reader. A later-step condition and its gate id written
+// in two sentences ("Last resort: erase the Mac. Gate [x].", or with "e.g." inside) no longer tied; a phase named
+// beside an undo note in one clause ("Phase B, which Phase D undoes") or a lighter step that is itself a restore was
+// dropped; and after </details> the phase the block interrupted did not go on. Wrong implementations it catches: a
+// split at every sentence end; a whole clause dropped for one undo word; a new section after </details>.
+test('code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details>', (t) => {
+  const c = catalog();
+  for (const line of ['- Last resort: erase the Mac. Gate `jamf-lock-erase-wipe-portal`.', '- If it still does not come back (e.g. after a week), use `jamf-lock-erase-wipe-portal`.']) {
+    assert.equal(lightestStepFirst(withDetails([line], 'okta-user-lifecycle-clear-sessions-portal', 'jamf-lock-erase-wipe-portal'), c).verdict, 'fail', line);
+  }
+  assert.equal(lightestStepFirst(withDetails(['- Run `okta-user-lifecycle-clear-sessions-portal` now. Otherwise the user keeps looping.'], 'okta-user-lifecycle-clear-sessions-portal', 'jamf-lock-erase-lock-portal'), c).verdict, 'pass', 'Otherwise opens another sentence');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-b2.md'), ['# Example',
+    '## Phase B: Sign out (R1)', portal('ex-b2-signout', 'R1', 'sign the user out'), '',
+    '## Phase C: Close the account (R3)', '**Try first:** Phase B, which Phase D undoes.', '', portal('ex-b2-close', 'R3', 'close the account'), '',
+    '## Phase D: Restore the account (R1)', portal('ex-b2-restore', 'R1', 'restore the account'), '',
+    '## Phase E: Purge the account (R3)', '**Try first:** Phase D, restore the account from the recycle bin.', '', portal('ex-b2-purge', 'R3', 'purge the account'), '',
+    '## Phase F: Wipe the device (R3)', '**Try first:** Phase B, sign the user out.', '', '<details>', '<summary>API, the scale version</summary>', '', '```bash', '# SAFETY GATE [ex-b2-wipe-api]', '# Target: [UPN]', '# Reversibility: R3: not reversible', '```', '', '</details>', '', portal('ex-b2-wipe-portal', 'R3', 'wipe the device'), ''].join('\n'));
+  const fx = catalog(dir);
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b2-signout', 'ex-b2-close'), fx).verdict, 'fail', 'Phase B is the rung below; only Phase D is the undo');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b2-restore', 'ex-b2-purge'), fx).verdict, 'fail', 'a restore can be the lighter step');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b2-signout', 'ex-b2-wipe-portal'), fx).verdict, 'fail', 'the phase goes on after </details>');
+});

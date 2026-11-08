@@ -1,0 +1,46 @@
+✔ fails: the first change is a heavy reset while the section lists a lighter admin step (2.086208ms)
+✔ passes: the section lists only a user check before the heavy gate (1.409416ms)
+✔ passes: the answer names the lighter gate first, then the heavy one (0.505584ms)
+✔ fails: the heavy gate first, the lighter gate of its own section second (0.4305ms)
+✔ passes: no change advised, or a first change that is not heavy, or a gate no runbook holds (0.419125ms)
+✔ the desk shows it as its own row at step 5, and a failed row does not stop the ticket (0.409458ms)
+✔ code review 1, finding 8: a Try first or Lighter step line counts as a lighter admin step; a User check does not (0.642041ms)
+✔ batch 10, task 1: batch 9b's T9m answer fails, its block holds the session clear and the last-resort reset (33.154167ms)
+✔ batch 10, task 1: the same T9m answer with only the session clear in the block passes (12.926958ms)
+✔ batch 10, task 1, pair 1: a rule turned off and the delete its runbook says to try it before, in one block, fails; the rule turned off alone passes (1.094792ms)
+✔ batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes (0.547083ms)
+✔ batch 10, task 1: gates of one checklist that no ladder line ties together pass, here and in the real offboarding runbook (24.938833ms)
+✔ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (13.121667ms)
+✖ code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details> (11.623416ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 149.000917
+
+✖ failing tests:
+
+test at scripts/demo/lightest-step.test.js:207:1
+✖ code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details> (11.623416ms)
+  AssertionError [ERR_ASSERTION]: - Last resort: erase the Mac. Gate `jamf-lock-erase-wipe-portal`.
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/lightest-step.test.js:210:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

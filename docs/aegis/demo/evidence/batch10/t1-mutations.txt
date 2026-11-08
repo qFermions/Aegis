@@ -1,0 +1,24 @@
+Mutation 1: pair any two gates of one runbook whose classes differ (no ladder line needed)
+1
+✖ passes: the answer names the lighter gate first, then the heavy one (1.129541ms)
+✖ batch 10, task 1: gates of one checklist that no ladder line ties together pass, here and in the real offboarding runbook (0.615083ms)
+ℹ pass 10
+ℹ fail 2
+✖ failing tests:
+✖ passes: the answer names the lighter gate first, then the heavy one (1.129541ms)
+✖ batch 10, task 1: gates of one checklist that no ladder line ties together pass, here and in the real offboarding runbook (0.615083ms)
+Mutation 2: case 3 without its guard (one gate in the block is enough)
+0
+✖ batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes (0.7885ms)
+ℹ pass 11
+ℹ fail 1
+✖ failing tests:
+✖ batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes (0.7885ms)
+Mutation 3: no fallback-line pairs from the runbook (only Try first lines)
+✖ batch 10, task 1: batch 9b's T9m answer fails, its block holds the session clear and the last-resort reset (13.173958ms)
+ℹ pass 11
+ℹ fail 1
+✖ failing tests:
+✖ batch 10, task 1: batch 9b's T9m answer fails, its block holds the session clear and the last-resort reset (13.173958ms)
+restored, git diff vs the green file:
+same

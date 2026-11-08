@@ -90,3 +90,82 @@ test('code review 1, finding 8: a Try first or Lighter step line counts as a lig
   fs.writeFileSync(path.join(dir, 'example-lost.md'), ['# Lost', '## Lost', '**User check:** confirm the phone is gone.', '', portal('ex-lost-wipe', 'R3', 'erase the phone'), ''].join('\n'));
   assert.equal(lightestStepFirst(answer('ex-lost-wipe'), catalog(dir)).verdict, 'pass', 'a User check is no admin step');
 });
+
+// ── Batch 10, task 1: one rung per action block ─────────────────────────────────────────────────────────
+// EXPECTED DECISION (written before the code)
+// - The aegis-desk block lists only the gates to run now. The row also fails when the block holds a gate of a
+//   higher reversibility class (R2 or R3) together with a lighter gate for the same symptom: the runbook names
+//   the lighter one as its rung below, on a "Try first:" or "Lighter step:" line in the heavier gate's section
+//   (by gate id or by the phase that holds it), or on a fallback line ("Last resort", "only when the steps
+//   above did not ...", "if it still ...") that names the heavier gate after the lighter gate in one section.
+// - It also fails when a gate in the block is named, outside the block, on a line that calls it a last resort
+//   or a step for when an earlier change did not work, and the block holds another gate: two rungs in one block.
+// - It passes when the block holds only the rung to run now, even after user checks ("if it still loops" after
+//   a user check is the order of the ticket, not a second rung), and when two gates of one block are steps of
+//   one checklist that no ladder line ties together (an offboarding).
+const REPO = path.join(__dirname, '..', '..');
+const T9M_9B = fs.readFileSync(path.join(REPO, 'docs', 'aegis', 'demo', 'evidence', 'batch9b', 'T9m', 'answers', 'T9m-answer.txt'), 'utf8');
+// the same answer with only the session clear in its block: the last four lines of the block taken out
+const T9M_ONE_RUNG = T9M_9B.replace(/\nGate: okta-mfa-reset-selected-portal\n[\s\S]*?(?=\n```)/, '');
+
+test('batch 10, task 1: batch 9b\'s T9m answer fails, its block holds the session clear and the last-resort reset', () => {
+  // catches: a row that reads only the first gate (batch 9b's row passed this answer)
+  const row = lightestStepFirst(T9M_9B, catalog());
+  assert.equal(row.verdict, 'fail', row.detail);
+  assert.match(row.detail, /okta-mfa-reset-selected-portal/);
+  assert.match(row.detail, /okta-mfa-reset-clear-sessions-portal/);
+});
+
+test('batch 10, task 1: the same T9m answer with only the session clear in the block passes', () => {
+  // catches: a row that fails every answer whose prose mentions a later, heavier step
+  assert.doesNotMatch(T9M_ONE_RUNG, /Gate: okta-mfa-reset-selected-portal/, 'the fixture took the reset out');
+  assert.match(T9M_ONE_RUNG, /Gate: okta-mfa-reset-clear-sessions-portal/);
+  assert.equal(lightestStepFirst(T9M_ONE_RUNG, catalog()).verdict, 'pass');
+});
+
+const LADDER_RUNBOOK = ['# Example lost laptop', '',
+  '## Phase B: Lock the laptop (R2)', '**User check:** ask whether the laptop is back.', '', portal('ex-laptop-lock', 'R2', 'lock one laptop until the PIN is typed'), '',
+  '## Phase C: Erase the laptop (R3)', '**Try first:** Phase B, lock the laptop and wait for it to come back.', '', portal('ex-laptop-erase', 'R3', 'erase one laptop'), '',
+  '## Phase D: Sign the user out', portal('ex-app-signout', 'R1', 'sign the user out of the app'), '',
+  '## Phase E: Revoke the app token', portal('ex-app-token-revoke', 'R1', 'revoke the app token'), '',
+  '## Phase F: Hand over the files', portal('ex-files-transfer', 'R2', 'move the files to the manager'), '',
+].join('\n');
+function ladderCatalog(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-laptop.md'), LADDER_RUNBOOK);
+  return catalog(dir);
+}
+const withDetails = (details, ...gates) => ['## Fix', "**What's wrong:** x.", '', '## Details', ...details, '', '```aegis-desk', ...gates.map((g) => `Gate: ${g}`), '```', ''].join('\n');
+
+test('batch 10, task 1, pair 1: a lock and the erase its runbook says to try it before, in one block, fails; the lock alone passes', (t) => {
+  // catches: a row that compares the two gates' R classes without asking whether the runbook ties them as rungs
+  const c = ladderCatalog(t);
+  const both = lightestStepFirst(withDetails([], 'ex-laptop-lock', 'ex-laptop-erase'), c);
+  assert.equal(both.verdict, 'fail', both.detail);
+  assert.match(both.detail, /ex-laptop-erase/);
+  const later = ['- Step 5, only if the laptop is not back in a day: erase it, gate `ex-laptop-erase`.'];
+  assert.equal(lightestStepFirst(withDetails(later, 'ex-laptop-lock'), c).verdict, 'pass', 'the erase named for later, outside the block');
+  // the order inside the block does not hide it
+  assert.equal(lightestStepFirst(withDetails([], 'ex-laptop-erase', 'ex-laptop-lock'), c).verdict, 'fail');
+});
+
+test('batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes', (t) => {
+  // catches: a row that only compares R classes, so two R1 rungs in one block pass
+  const c = ladderCatalog(t);
+  const details = ['- Step 4, only if signing out did not stop the prompts: revoke the app token, gate `ex-app-token-revoke`.'];
+  const both = lightestStepFirst(withDetails(details, 'ex-app-signout', 'ex-app-token-revoke'), c);
+  assert.equal(both.verdict, 'fail', both.detail);
+  assert.match(both.detail, /ex-app-token-revoke/);
+  assert.equal(lightestStepFirst(withDetails(details, 'ex-app-signout'), c).verdict, 'pass');
+  // "if it still fails" after a user check, with its one gate in the block, is the rung to run now
+  const afterCheck = ['- Step 3, if the user check in step 2 did not work: revoke the app token, gate `ex-app-token-revoke`.'];
+  assert.equal(lightestStepFirst(withDetails(afterCheck, 'ex-app-token-revoke'), c).verdict, 'pass');
+});
+
+test('batch 10, task 1: gates of one checklist that no ladder line ties together pass, here and in the real offboarding runbook', (t) => {
+  // catches: a row that fails every block holding an R1 and an R2 gate, such as an offboarding
+  assert.equal(lightestStepFirst(withDetails([], 'ex-app-signout', 'ex-files-transfer'), ladderCatalog(t)).verdict, 'pass');
+  const offboard = withDetails([], 'gws-offboard-okta-deactivate-portal', 'gws-offboard-suspend-portal', 'gws-offboard-drive-transfer-portal', 'gws-offboard-calendar-transfer-portal');
+  assert.equal(lightestStepFirst(offboard, catalog()).verdict, 'pass', lightestStepFirst(offboard, catalog()).detail);
+});

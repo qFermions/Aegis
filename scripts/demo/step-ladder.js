@@ -31,7 +31,33 @@ const TRY_LINE = /\*\*(?:Try first|Lighter step)\b[^*]*:\*\*/i;
 const ID_MENTION = /(?:\[|`)([a-z0-9]+(?:-[a-z0-9]+)+)(?:\]|`)/g;
 const ANY_ID = /(?<![A-Za-z0-9-])[a-z0-9]+(?:-[a-z0-9]+)+(?![A-Za-z0-9-])/g;
 const HEADING = /^#{1,6}\s+\S/;
-const MARK = /SAFETY GATE \[([a-z0-9][a-z0-9-]*)\]/;
+// a gate marker as the lint and the catalog read it: the whole line (code review round 1 of batch 10, class B)
+const MARK = /^<!-- SAFETY GATE \[([a-z0-9][a-z0-9-]*)\] -->$|^# SAFETY GATE \[([a-z0-9][a-z0-9-]*)\]$/;
+// a <details> block (the scripted twins, "the scale version") is a section of its own, as the ladder lint reads it
+const DETAILS = /^\s*(?:<\/?details>|<summary>)/;
+// the clauses of one line: at a sentence's end, a semicolon, or before ", otherwise"
+const CLAUSES = /(?<=[.;!?])\s+|,(?=\s*otherwise\b)/;
+// ids a line names in a clause that holds a fallback word, so "Run [a] now; otherwise ..." does not name [a]
+const fallbackIds = (line, ids) => line.split(CLAUSES).filter((c) => FALLBACK.test(c)).flatMap((c) => ids.filter((id) => c.includes(id)));
+// A phase a ladder line names: "Phase B", "Phase C2", "Phases B to D", "Phases B, C and D". A phase named only as
+// the undo or the way back ("Phase C's Unlock undoes it", "Phase G can bring the account back") is no rung.
+const UNDO = /\bundo(?:es|ne|ing)?\b|\bbrings?\s+(?:\S+\s+){0,3}back\b|\breverses?\b|\brestores?\b/i;
+function phaseRefs(line) {
+  const refs = [];
+  for (const clause of line.split(/[:;]|(?<=\.)\s+/)) {
+    if (UNDO.test(clause)) continue;
+    for (const m of clause.matchAll(/\bPhases?\s+([A-Z][0-9]?(?:\s*(?:,|and|or|to|through|-)\s*[A-Z][0-9]?)*)\b/g)) {
+      const tokens = m[1].match(/[A-Z][0-9]?|to|through|-/g);
+      tokens.forEach((tok, i) => {
+        if (!/^(?:to|through|-)$/.test(tok)) { refs.push(tok); return; }
+        const from = refs.length ? refs[refs.length - 1].charCodeAt(0) : null;
+        const to = tokens[i + 1] ? tokens[i + 1].charCodeAt(0) : null;
+        if (from !== null && to !== null) for (let ch = from + 1; ch < to; ch += 1) refs.push(String.fromCharCode(ch));
+      });
+    }
+  }
+  return refs;
+}
 
 // The rungs one runbook ties together, as "lighter stem>heavier stem" pairs, from its own ladder lines only:
 // a section's order alone does not make two gates rungs, since a checklist (an offboarding, "revoke the
@@ -40,16 +66,19 @@ const MARK = /SAFETY GATE \[([a-z0-9][a-z0-9-]*)\]/;
 function runbookPairs(text, gates) {
   const sections = [];
   let cur = { title: '', items: [] };
+  let parentTitle = '';
   let fenced = false;
   for (const l of String(text).split('\n')) {
     if (/^\s*```/.test(l)) { fenced = !fenced; continue; }
-    const mark = MARK.exec(l);
-    if (!fenced && !mark && HEADING.test(l)) { sections.push(cur); cur = { title: l.replace(/^#+\s+/, '').trim(), items: [] }; continue; }
-    if (mark) { cur.items.push({ kind: 'gate', id: mark[1] }); continue; }
+    const mark = MARK.exec(l.trim());
+    if (!fenced && !mark && HEADING.test(l)) { sections.push(cur); parentTitle = l.replace(/^#+\s+/, '').trim(); cur = { title: parentTitle, items: [] }; continue; }
+    // after </details>, the phase the block sat in goes on, under its own title
+    if (!fenced && DETAILS.test(l)) { sections.push(cur); cur = { title: /<\/details>/.test(l) ? parentTitle : '(a details block)', items: [] }; continue; }
+    if (mark) { cur.items.push({ kind: 'gate', id: mark[1] || mark[2] }); continue; }
     if (fenced) continue;
     const ids = [...l.matchAll(ID_MENTION)].map((m) => m[1]).filter((id) => gates.has(id));
-    if (TRY_LINE.test(l)) cur.items.push({ kind: 'try', ids, phases: [...l.matchAll(/\bPhase ([A-Z0-9])\b/g)].map((m) => m[1]) });
-    else if (FALLBACK.test(l) && ids.length) cur.items.push({ kind: 'fallback', ids });
+    if (TRY_LINE.test(l)) cur.items.push({ kind: 'try', ids, phases: phaseRefs(l) });
+    else if (FALLBACK.test(l) && ids.length) cur.items.push({ kind: 'fallback', ids: fallbackIds(l, ids) });
   }
   sections.push(cur);
   const phaseGates = (p) => sections.filter((s) => new RegExp(`^Phase ${p}\\b`).test(s.title)).flatMap((s) => s.items.filter((x) => x.kind === 'gate').map((x) => x.id));
@@ -93,7 +122,8 @@ function laterRung(answer, names) {
   const body = closingGateLines(answer).body.split(/\r?\n/);
   for (const g of names) {
     if (!names.some((o) => stem(o) !== stem(g))) continue;
-    const line = body.find((l) => FALLBACK.test(l) && [...l.matchAll(ANY_ID)].some((m) => stem(m[0]) === stem(g)));
+    // the fallback word and the gate's id must sit in one clause (code review round 1 of batch 10, class B)
+    const line = body.find((l) => l.split(CLAUSES).some((c) => FALLBACK.test(c) && [...c.matchAll(ANY_ID)].some((m) => stem(m[0]) === stem(g))));
     if (line) return { gate: g, line: line.trim() };
   }
   return null;

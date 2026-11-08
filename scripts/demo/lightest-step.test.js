@@ -169,3 +169,32 @@ test('batch 10, task 1: gates of one checklist that no ladder line ties together
   const offboard = withDetails([], 'gws-offboard-okta-deactivate-portal', 'gws-offboard-suspend-portal', 'gws-offboard-drive-transfer-portal', 'gws-offboard-calendar-transfer-portal');
   assert.equal(lightestStepFirst(offboard, catalog()).verdict, 'pass', lightestStepFirst(offboard, catalog()).detail);
 });
+
+// Code review round 1 (batch 10), finding class B: the runbook ladder reader. It read a <details> block of
+// scripted twins as gates of the phase above it; it took a phase a Try first line names only as the undo or the
+// way back ("Phase C's Unlock undoes it") as a lighter rung; it missed "Phases B to D"; and it called a gate a
+// later step when a fallback word anywhere on its line ("otherwise the user keeps looping") was not about it.
+// Wrong implementations it catches: each of those four readings. Real runbooks, so the cases are the ones the
+// review verified; the fixture covers the <details> boundary and the fallback tie on their own.
+test('code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out', (t) => {
+  const c = catalog();
+  const row = (...g) => lightestStepFirst(withDetails([], ...g), c);
+  assert.equal(row('fleet-device-actions-lock-portal', 'fleet-device-actions-wipe-portal').verdict, 'fail', 'Lock is the rung below Wipe');
+  assert.equal(row('fleet-device-actions-unlock-portal', 'fleet-device-actions-wipe-portal').verdict, 'pass', 'Unlock is named only as the undo');
+  assert.equal(row('okta-user-lifecycle-suspend-portal', 'okta-user-lifecycle-deactivate-portal').verdict, 'fail', 'Suspend is the rung below Deactivate');
+  assert.equal(row('okta-user-lifecycle-unsuspend-portal', 'okta-user-lifecycle-deactivate-portal').verdict, 'pass', 'Phase E is named only as the undo');
+  assert.equal(row('okta-user-lifecycle-activate-portal', 'okta-user-lifecycle-reset-password-portal').verdict, 'pass', 'the scripted twins under Phase H are no rung of it');
+  assert.equal(row('gws-2sv-reset-backup-codes-portal', 'gws-2sv-reset-turn-off-portal').verdict, 'fail', '"Phases B to D" names Phase B');
+  assert.equal(row('gws-2sv-reset-key-remove-portal', 'gws-2sv-reset-turn-off-portal').verdict, 'fail', '"Phases B to D" names Phase C, between them');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-ref.md'), ['# Example', '## Phase B: Sign out (R1)', portal('ex-ref-signout', 'R1', 'sign the user out'), '',
+    '## Phase C: Close the account (R3)', '**Try first:** Phase B, sign the user out.', '', '<details>', '<summary>API, the scale version</summary>', '', '```bash', '# SAFETY GATE [ex-ref-wipe-api]', '# Target: [UPN]', '# Effect: erase the account', '# Reversibility: R3: not reversible', '```', '', '</details>', '',
+    '## Phase D: Revoke a token (R1)', portal('ex-ref-revoke', 'R1', 'revoke the token'), ''].join('\n'));
+  const fx = catalog(dir);
+  assert.equal(lightestStepFirst(withDetails([], 'ex-ref-signout', 'ex-ref-wipe-api'), fx).verdict, 'pass', 'a gate in a <details> block is not a rung of the phase above it');
+  const unrelated = ['- Run `ex-ref-signout` now; otherwise the user keeps getting prompts.'];
+  assert.equal(lightestStepFirst(withDetails(unrelated, 'ex-ref-signout', 'ex-ref-revoke'), fx).verdict, 'pass', 'the fallback word is in another clause than the gate');
+  const tied = ['- Only if signing out did not stop the prompts: `ex-ref-revoke`.'];
+  assert.equal(lightestStepFirst(withDetails(tied, 'ex-ref-signout', 'ex-ref-revoke'), fx).verdict, 'fail', 'the fallback is about this gate');
+});

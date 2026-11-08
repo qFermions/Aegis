@@ -1,0 +1,23 @@
+647810b docs(evidence): batch 10 baseline at 1a719ed: 2202 tests, the 41 pwsh-only failure | staged files 15 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+c3bd9e6 feat(desk): one rung per action block (batch 10, task 1) | staged files 9 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+1d36e0d feat(desk): a change word counts only as the step's verb (batch 10, task 2) | staged files 7 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+3030d7b ci(risk tiers): scripts/ask-aegis.js and scripts/aegis-chat.js are tier C (batch 1 | staged files 5 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+4bd1cf8 fix(ask): the privacy rule stops no-space and punctuated password spellings (batch | staged files 5 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+f994739 docs(evidence): battery after tasks 1, 2, 5 and 6 (2216 tests, the same 41 pwsh-on | staged files 18 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+dc8bd47 fix(jamf): verify-command reads the MDM command fields Jamf documents | staged files 5 | scan exit 0 | no verdict line
+a722e0a feat(batch 10, task 3): the Jamf lock gate names its verify-command read-back | staged files 9 | scan exit 0 | no verdict line
+9894e82 feat(batch 10, task 3): the Google sign-in cookie reset reads its Admin audit even | staged files 8 | scan exit 0 | no verdict line
+eb62e33 feat(batch 10, task 4): the /gws-offboard Okta deactivate names verify-status DEPR | staged files 6 | scan exit 0 | no verdict line
+b4d45d2 feat(batch 10, task 4): a read-only Data Transfer read proves the Drive and Calend | staged files 17 | scan exit 0 | no verdict line
+712dc8f docs(batch 10): regenerated ladder audit after the read-back edits | staged files 2 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+88c9bc7 test(batch 10): the owner kit runs verify-transfer; the new desk test is registere | staged files 8 | scan exit 0 | no verdict line
+3a1285a docs(evidence): batch 10 tasks 3 and 4, the full node --test run and the proposed  | staged files 2 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+577290c fix(batch 10, task 4): verify-transfer is bounded by --not-before (fresh review, f | staged files 16 | scan exit 0 | no verdict line
+8faa07f docs(evidence): batch 10 tasks 3 and 4, full node --test at 3e091b7, as committed  | staged files 2 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+79a3592 test(desk): the pinned no-read-back cases follow tasks 3 and 4 (batch 10) | staged files 2 | scan exit 0 | no verdict line
+d65e880 docs(batch 10): [TRANSFER_ID] in the placeholder dictionary; the transfer route an | staged files 5 | scan exit 0 | no verdict line
+192287a fix(jamf): a profile command whose record names no profile is INCONCLUSIVE, not "n | staged files 4 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+3227e8f docs(batch 10): run predictions before either run; the battery at 192287a (2233 te | staged files 16 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+7e166c5 docs(evidence): full run 6, the messy set at 192287a: 8 RESOLVED (SIMULATED), 1 IN | staged files 21 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.
+d6b5aef docs(evidence): full run 7, the tidy set at 192287a: 7 RESOLVED (SIMULATED), 1 CLA | staged files 19 | scan exit 0 | no verdict line
+fa86560 docs(batch 10): PROJECT_STATE "Changed by batch 10" and Current work brought up to | staged files 3 | scan exit 0 | pre-commit-check: ✓ Clean — no issues found.

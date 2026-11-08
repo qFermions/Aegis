@@ -1,0 +1,53 @@
+Loaded the `/mfa-issue` runbook and the answer-format rules. There's no Temporary Access Pass runbook, so the lightest gated change is deleting the one old Authenticator method. Here's the work-up:
+
+## Fix
+**What's wrong:** [UPN]'s only sign-in approval was in Authenticator on the wiped phone, so every sign-in stops at the approval step.
+**Do this:**
+1. Open Entra admin center → Users → [UPN] → Authentication methods and see what's listed. Then open Sign-in logs for [UPN]. If the latest Outlook or Teams failure says the MFA step wasn't completed, this ticket applies. If it's a Conditional Access block, stop.
+2. Before you change anything, have the office manager confirm by phone that this is the requester. Then get approval from the office manager and the practice owner.
+3. If another method is listed, the user picks "Sign in another way" and adds the new phone at aka.ms/mfasetup. You don't need to change anything.
+4. If not, delete only the old Authenticator entry. This can't be undone.
+5. The user sets up Authenticator on the new phone at aka.ms/mfasetup.
+
+**Done when:** Outlook and Teams open after an approval on the new phone. Aegis then checks that the old entry is gone, the new one is listed and a sign-in succeeded.
+**Stop if:** the office manager can't confirm who the requester is, or the old phone was lost rather than wiped, or the logs show sign-ins nobody can explain.
+**Tell the user now:** IT is checking your account. Please install Microsoft Authenticator on your new phone and keep the phone with you. We will call you when it's time to set it up.
+**Tell the user when done:** Your new phone now approves your sign-ins. Outlook and Teams should work again. Reply here if anything still asks for the old phone.
+
+See Details for the alternatives, risks and ticket note.
+
+## Details
+
+**Verdict:** This is a new-phone re-registration (`/mfa-issue`). It's caused by an old setting left over from the wiped phone: the account still expects approvals from the Authenticator that was on it. Nothing is broken in the account itself. The customer profile allows only Authenticator (no text-message codes), so the user has nothing to fall back on.
+
+**Why there's no lighter fix:** You can undo a session sign-out or a re-sync, but neither fixes this. The only approval method is on a phone that has been wiped. The lightest real change is deleting that one method. The other option, Require re-register MFA, deletes every phone, Authenticator and software OATH method on the account, so it removes more.
+
+**Not advised now:**
+- **Revoke sessions** (`mfa-session-revoke-portal`, R2): the requester says the old phone was wiped, so it holds no sessions to cut off. If the phone turns out to be lost or stolen, stop and handle it as a security incident, and revoke sessions as part of that.
+- **Require re-register MFA** (`mfa-require-reregister-portal`): this is an alternative to step 4, not something to do after it. Use it only if the methods list shows several old phone or Authenticator entries. Never do both on one ticket.
+- **Conditional Access exclusion** (`mfa-ca-exclusion`, PREVIEW ONLY): this only applies if a policy blocks the user from registering at aka.ms/mfasetup after step 4. In that case, send it to `/conditional-access` as a separate time-limited R3 change.
+- **Admin-added phone fallback** (`mfa-phone-add`, PREVIEW ONLY): the customer profile rules out text-message codes, so don't use it.
+
+**Approval:** The delete can't be undone, so the profile requires both the office manager and the practice owner. The office manager confirming identity by phone fills in for the missing identity-check rule. Record that call in the ticket.
+
+**Before the delete:** Aegis saves the current methods list as the pre-state. The ticket names only the type of method deleted, not the phone details. The rollback is for the user to register again at aka.ms/mfasetup.
+
+**After registration:** In the Outlook and Teams apps, the user may need to sign out and back in to clear old prompts. If the work phone is managed by Intune, enrolling the new phone and retiring the old device record is a separate ticket (`/device-wipe` for the record).
+
+**Verification:**
+- [ ] Office manager confirmed identity, and both approvals are written in the ticket
+- [ ] Method list saved before the delete
+- [ ] Aegis check confirms the old Authenticator method is no longer listed
+- [ ] New Authenticator is listed, and a successful sign-in shows in the logs
+- [ ] User confirms Outlook and Teams work
+- [ ] No Conditional Access exclusion was left in place
+
+**Jira-ready note:**
+> Resolved [date/time]. MFA new-phone lockout for `[UPN]`. Identity confirmed by phone by the office manager. Approved by the office manager and practice owner. Old Microsoft Authenticator method deleted under `mfa-method-delete-portal`, and the read-back passed under its change. Sessions not revoked: the old phone was reported wiped. The user re-registered on the new phone at aka.ms/mfasetup, and the new method and a successful sign-in are verified. No Conditional Access exclusion. Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+```

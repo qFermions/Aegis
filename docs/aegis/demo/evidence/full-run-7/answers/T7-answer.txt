@@ -1,0 +1,32 @@
+## Fix
+**What's wrong:** Everyone reports slow internet, but we don't yet know if it's the office line or an online service. Remote staff are the test that tells them apart.
+
+**Do this:** (No runbook covers this studio's network equipment, so these steps are reasoning, not a known fix.)
+1. Ask one office person and one remote person whether it's slow for them. Office only points to the office line. Both points to an online service.
+2. If both are slow, check the Google Workspace Status Dashboard and the Slack status page for any reported problems.
+3. If it's office only, plug a Mac into the router by cable and run fast.com. Compare the result to the speed the studio pays for.
+4. If the cable speed is well below that, check the internet provider's status page and open a ticket with them.
+
+**Done when:** a speed test at the office shows close to the paid speed, and people say pages load normally.
+
+**Stop if:** only one Mac is slow. That's a device problem, not the network.
+
+**Tell the user now:** IT is checking whether the slowness is in the office or online. Could you tell us if you're in the office or working remotely?
+
+**Tell the user when done:** Speeds are back to normal. Let us know if anything feels slow again.
+
+See Details for scope and the ticket note.
+
+## Details
+- **Runbook:** T-05 (Slow Internet) in `modules/it_support/troubleshooting.md:142` only diagnoses. It doesn't advise changes (PREVIEW ONLY `troubleshoot-network-actions`). Its approach still applies here: isolate the site, then all users vs one, then the internet line, then Wi-Fi, then one device. But its menu paths are for Meraki, and this studio's profile doesn't name its router, firewall or Wi-Fi equipment. Those steps are adapted, not copied.
+- **Why remote staff matter:** this studio has remote staff. If they're slow too, the cause isn't the office line.
+- **Wi-Fi check (office only):** if cable is fast but Wi-Fi is slow, the problem is the Wi-Fi equipment. Ask the studio who supports it. If that's a change to a network device, it goes to the studio manager for approval.
+- **Change advised:** none. Every step above only reads or measures something.
+- **Jira-ready note:** "Studio-wide slow internet reported. Checking office vs remote, Google/Slack status, and a cabled speed test against the paid speed. No changes made. Next: contact the internet provider if the cabled speed is low."
+
+```aegis-desk
+Replay: MISS
+Runbook: T-05 (diagnostic only; PREVIEW ONLY troubleshoot-network-actions); Meraki paths not applicable to Customer B
+Risk class: R0 (reads and speed tests only)
+Gate: none
+```

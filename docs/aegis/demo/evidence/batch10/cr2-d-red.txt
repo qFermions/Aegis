@@ -1,0 +1,51 @@
+✔ the allow-list holds exactly the lane spec's Jamf Pro reads, each a GET, on JAMF_URL, with no tenant variable (1.535458ms)
+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (4.352708ms)
+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (23.174125ms)
+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (0.525125ms)
+✔ the CLI dry run prints the exact planned request, reads no credential and calls no transport (1.074125ms)
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (1.746333ms)
+✔ verify-command reads further pages while a page is full, and stops after ten pages without proof (13.759542ms)
+✔ verify-command reads the record fields Jamf documents: client.managementId, commandType and commandState (0.60625ms)
+✔ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not (0.707458ms)
+✔ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof (0.495916ms)
+✔ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier (0.592166ms)
+✔ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof (0.321625ms)
+✔ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed (0.732083ms)
+✔ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused (1.586208ms)
+✔ key-like fields are stripped from every response before it is printed, and the instruction scan runs on what is left (0.243583ms)
+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (0.745958ms)
+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (0.493666ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (0.149958ms)
+✔ Jamf Pro binds no tenant variable: one server per tenant, bound by JAMF_URL; any other host is refused (0.106166ms)
+✔ bad input, unknown or write-shaped commands and misplaced flags exit 1 before anything is read or sent (0.364917ms)
+✔ missing credentials exit 1 and name the variable, never a value; nothing is sent (0.06325ms)
+✔ a failed read exits 2 and withholds the body; a network tripwire is never swallowed (0.275291ms)
+✔ the adapter has no file, socket or console access of its own, and runs as a CLI (dry run and refusal only) (88.708416ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 22
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 184.046041
+
+✖ failing tests:
+
+test at scripts/adapters/jamf-client.test.js:364:1
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (1.746333ms)
+  AssertionError [ERR_ASSERTION]: a null filter-named field is no second value
+  
+  5 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/jamf-client.test.js:433:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

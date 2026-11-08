@@ -1,0 +1,114 @@
+✔ task 1: each fixture answer opens with the card, has the five parts in order, at most 150 words, no command, no desk-only text, and the aegis-desk block last (33.026708ms)
+✔ task 1: each break of the format is caught (12.722417ms)
+✔ task 8: the five answer checks, in page order, pass on a good answer and each fails on its own break (8.380625ms)
+✔ the INVESTIGATE step rule: steps that only look pass, a step that changes something does not (5.753334ms)
+✔ a blank line inside "Do this" keeps its steps; only the default block's tokens are its facts; a placeholder is one word (0.354333ms)
+✔ a wrapped or bulleted line inside a step keeps the later steps, so a change is still seen (0.172125ms)
+✔ an unindented wrapped line inside a step keeps the later steps (0.103875ms)
+✔ a change hidden before the first step, on the label line, or after a stray label still counts (0.246ms)
+✔ an indented numbered sub-item is part of its step, and a bold number starts a step (2.699042ms)
+✔ the default organization's tokens are read from the dictionary, without the connection tokens (2.200625ms)
+✔ an indented numbered change line is still scanned, with or without a card (0.371333ms)
+✔ a change in any step form, in odd characters, in another card part or in a Details list is still seen (0.419375ms)
+✔ a default fact a negation opens its clause with is not the answer using that fact (0.800333ms)
+✖ batch 10, task 2: the T7m and T7 answers of full runs 4 and 5 only look ("a macOS update", "a large update" are nouns) (0.953792ms)
+✔ batch 10, task 2: "Restart the Mac" and "Update the profile" as admin steps still count (0.170166ms)
+✖ batch 10, task 2, pair 1: "Read the install log" is a look; "Install the printer driver" is a change (0.163208ms)
+✖ batch 10, task 2, pair 2: a reset named as a noun is a look; the verb after "then", "please" or a leading condition is a change (0.120834ms)
+✖ batch 10, task 2, pair 3: words inside a user check the tech relays do not count; the asked verb itself and a second sentence of the tech's own do (0.134625ms)
+✔ batch 10, task 2: the batch 9 cases still hold (a negated verb hands over, "Done when" still counts) (0.159833ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 15
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.857667
+
+✖ failing tests:
+
+test at scripts/demo/answer.test.js:260:1
+✖ batch 10, task 2: the T7m and T7 answers of full runs 4 and 5 only look ("a macOS update", "a large update" are nouns) (0.953792ms)
+  AssertionError [ERR_ASSERTION]: full-run-4 T7m: change found: update
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/answer.test.js:264:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/answer.test.js:277:1
+✖ batch 10, task 2, pair 1: "Read the install log" is a look; "Install the printer driver" is a change (0.163208ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/answer.test.js:279:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/answer.test.js:283:1
+✖ batch 10, task 2, pair 2: a reset named as a noun is a look; the verb after "then", "please" or a leading condition is a change (0.120834ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/answer.test.js:285:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/answer.test.js:293:1
+✖ batch 10, task 2, pair 3: words inside a user check the tech relays do not count; the asked verb itself and a second sentence of the tech's own do (0.134625ms)
+  AssertionError [ERR_ASSERTION]: restart
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/answer.test.js:296:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

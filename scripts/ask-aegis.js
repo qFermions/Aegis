@@ -53,17 +53,42 @@ function setupBlock(setup, scope) {
 
 // The intake's own privacy rules for typed text (code review round 1 of batch 9, finding 3): a credential or a
 // tenant literal stops the ask, and is never echoed; email addresses and phone numbers become placeholders.
-// Beyond the graph sanitizer's patterns, a password written after the word password, passcode or secret, an AWS
-// access key and an Entra client secret stop it too, as the README says (round 2, finding 2). Only a known
+// Beyond the graph sanitizer's patterns, a password written after the word password, passcode, passwd,
+// passphrase, pw, pwd, PIN or secret (or after "pass", when the value has a digit or a symbol), an AWS access key
+// and an Entra client secret stop it too, as the README says (round 2, finding 2; batch 10, task 6). Only a known
 // placeholder, or an address at the placeholder domain, is kept in brackets; any other bracket is masked inside
 // (security review round 3). Every phone form the intake masks is masked, except ten bare digits, such as an error
 // code (round 2, finding 8). Returns { text } or { blocked: [labels] }. Names in free text are not detected, as in
 // the intake. shortcut: pattern lists, so a secret of another shape still goes through.
+// The words after which a written value is a password, plurals too ("passwords:", "PINs:"); what may stand between
+// the word and the value; a whole [PLACEHOLDER] and a status word ("is expired", "is not working") are not values
+// (batch 10, task 6; code review round 1 of batch 10, class C).
+const SECRET_WORD = String.raw`(?:pass(?:word|code|wd|phrase)|pw|pwd|pin|secret)s?`;
+// "is", a colon or an equals sign: batch 9's separators, any value after them is one ("is" may touch the word,
+// "passwordis x", as batch 9 read it: security review 1 of batch 10)
+const SEPARATOR = String.raw`(?:\s*is\b|\s*[:=])`;
+// "was", "'s", a spaced dash and an arrow also open ordinary sentences and menu paths ("PIN was sent", "the password's
+// been reset", "Password - Urgent", "Settings -> PIN -> Remove"), so only a value with a digit or a symbol after them
+// is one (code review rounds 1 to 3 of batch 10). shortcut: a letter-only password after them goes through, and a
+// digit word after them ("password's 90-day expiry") stops the ask; round 2's clause-end rule let a password with
+// digits in mid-sentence through, a security regression (round 3, class C3).
+const SHAPED_SEPARATOR = String.raw`(?:\s*was\b|['\u2019]s\b|\s+-\s|\s*(?:->|=>|\u2192))`;
+const NOT_PLACEHOLDER = String.raw`(?!\[[A-Z0-9_@.]+\](?:\W|$))`;
+const NOT_STATUS = String.raw`(?!(?:expired|expiring|locked|wrong|incorrect|invalid|reset|not|being|no|still|working|changed|required|blank|empty|missing|rejected|forgotten|too|the|my|now|correct|right|fine|ok|okay|valid|please|help|none|unknown)(?=\s|[.,;!?]+(?:\s|$)|$))`;
+// a value with a digit or a symbol in it, as a password has and an ordinary word does not
+const SHAPED = String.raw`(?=[^\s'’]*[0-9!@#$%^&*_+=~|\\/<>{}\[\]()])`;
 const EXTRA_SECRETS = [
-  // any value of four or more characters after the word, except a status word ("is expired", "is not working") or a
-  // whole [PLACEHOLDER] (code review round 3, finding 1; the final security review: digit-only passcodes and
-  // letter-only passwords are passwords too)
-  { label: 'A password written in the text', re: /\b(?:password|passcode|passwd|pin|secret)\s*(?:is\b|:|=)\s*(?!\[[A-Z0-9_@.]+\](?:\W|$))(?!(?:expired|expiring|locked|wrong|incorrect|invalid|reset|not|being|no|still|working|changed|required|blank|empty|missing|rejected|forgotten|too|the|my|now|correct|right|fine|ok|okay|valid)(?=\s|[.,;!?]+(?:\s|$)|$))\S{4,}/i },
+  // any value of four or more characters after the word, except a status word or a whole [PLACEHOLDER] (code review
+  // round 3, finding 1; the final security review: digit-only passcodes and letter-only passwords are passwords too)
+  { label: 'A password written in the text', re: new RegExp(String.raw`\b${SECRET_WORD}${SEPARATOR}\s*${NOT_PLACEHOLDER}${NOT_STATUS}\S{4,}`, 'i') },
+  { label: 'A password written in the text', re: new RegExp(String.raw`\b${SECRET_WORD}${SHAPED_SEPARATOR}\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
+  // "is" touching the value, batch 9's own finding "password isHunter22!": a value with a digit or a symbol, or one
+  // that starts with a capital letter and has a small letter or a digit after it; "password issues", "password
+  // isn't" and an all-capitals "PASSWORD ISSUES" are words (batch 10, task 6)
+  { label: 'A password written in the text', re: new RegExp(String.raw`\b(?:${SECRET_WORD}|pass)\s*is${SHAPED}${NOT_PLACEHOLDER}\S{3,}`, 'i') },
+  { label: 'A password written in the text', re: /\b(?:[Pp]ass(?:word|code|wd|phrase)|PASS(?:WORD|CODE|WD|PHRASE)|[Pp]wd?|PWD?|[Pp]in|PIN|[Ss]ecret|SECRET)\s*(?:is|IS|Is)(?=[A-Z]\S*[a-z0-9])\S{4,}/ },
+  // the common word "pass" ("my boarding pass is attached") counts only before a value with a digit or a symbol
+  { label: 'A password written in the text', re: new RegExp(String.raw`\bpass(?:${SEPARATOR}|${SHAPED_SEPARATOR})\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
   { label: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/ },
   { label: 'Entra client secret', re: /\b[A-Za-z0-9_.-]{0,3}8Q~[A-Za-z0-9_.~-]{20,}/ },
 ];
@@ -76,7 +101,15 @@ const PHONE = new RegExp(PHONE_LITERAL.source, 'g');
 const phoneOrCode = (m) => (/^\d{10}$/.test(m) ? m : '[PHONE_NUMBER]');
 function protect(text) {
   const t = String(text);
-  const blocked = [...new Set([...sanitize.scanText(t).blocks.map((b) => b.label), ...EXTRA_SECRETS.filter((x) => x.re.test(t)).map((x) => x.label)])];
+  // read as typed and in compatibility form with the zero-width characters taken out, so a full-width colon
+  // ("Password：x") or a zero-width space ("pass<zero-width space>word: x") does not hide a password (batch 10, task 6); both are
+  // read, since NFKC splits a few characters (an acute accent, an overline) into a space and a mark, which would
+  // otherwise hide a value the text as typed shows (security review 1 of batch 10); the text kept is the original
+  // every invisible character is taken out: the format characters (Unicode Cf: the zero-width spaces, a soft hyphen,
+  // U+2061, U+180E) and the other default-ignorable ones (a combining grapheme joiner, a variation selector, the
+  // Hangul filler), and the graph sanitizer reads the normalized copy too (code review rounds 1 and 2 of batch 10)
+  const squeezed = t.normalize('NFKC').replace(/[\p{Cf}\p{Default_Ignorable_Code_Point}]/gu, '');
+  const blocked = [...new Set([...sanitize.scanText(t).blocks, ...sanitize.scanText(squeezed).blocks].map((b) => b.label).concat(EXTRA_SECRETS.filter((x) => x.re.test(t) || x.re.test(squeezed)).map((x) => x.label)))];
   if (blocked.length) return { blocked };
   const mask = (piece) => replaceEmails(piece, () => '[USER@DOMAIN.COM]').replace(PHONE, phoneOrCode);
   // an address at the placeholder domain (an ADMIN or USER token at DOMAIN.COM, in brackets) is a placeholder too,

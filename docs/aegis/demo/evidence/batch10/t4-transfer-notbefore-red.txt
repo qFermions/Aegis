@@ -1,0 +1,25 @@
+$ node --test --test-name-pattern "verify-transfer|transfer gates" scripts/adapters/gws-client.test.js scripts/demo/batch10-readbacks.test.js
+✖ verify-transfer: one token exchange, then GET the transfer and both owners; the token asks for admin.datatransfer.readonly beside the read-only scopes, and a plain read does not (1.1495ms)
+✖ verify-transfer: bad or missing arguments are refused with exit 1 before anything is read or sent (3.706209ms)
+✔ verify-transfer: the Data Transfer API allow-list is one GET of one transfer; inserts, lists and application reads are refused (0.22825ms)
+✖ verify-transfer passes only on a completed entry for the application, on the transfer asked for, from the old owner to the new owner (0.340375ms)
+✖ verify-transfer fails (exit 2) when the answer shows another transfer, another old owner or another new owner (0.095208ms)
+✖ verify-transfer is INCONCLUSIVE (exit 5) on any status but completed, no entry or two for the application, or a field it reads missing (0.095875ms)
+✖ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.5805ms)
+ℹ tests 7
+ℹ pass 1
+ℹ fail 6
+✖ failing tests:
+✖ verify-transfer: one token exchange, then GET the transfer and both owners; the token asks for admin.datatransfer.readonly beside the read-only scopes, and a plain read does not (1.1495ms)
+  AssertionError [ERR_ASSERTION]: {
+✖ verify-transfer: bad or missing arguments are refused with exit 1 before anything is read or sent (3.706209ms)
+  AssertionError [ERR_ASSERTION]: ["verify-transfer","--transfer-id","AKrEtIjZ0fx9Transfer","--old-owner","user@example.com","--new-owner","manager@example.com","--application-id","435070579839"]: {
+✖ verify-transfer passes only on a completed entry for the application, on the transfer asked for, from the old owner to the new owner (0.340375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+✖ verify-transfer fails (exit 2) when the answer shows another transfer, another old owner or another new owner (0.095208ms)
+  AssertionError [ERR_ASSERTION]: another transfer than the one asked for: 
+✖ verify-transfer is INCONCLUSIVE (exit 5) on any status but completed, no entry or two for the application, or a field it reads missing (0.095875ms)
+  AssertionError [ERR_ASSERTION]: in progress: 
+✖ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.5805ms)
+  AssertionError [ERR_ASSERTION]: gws-offboard-drive-transfer-portal
+exit 1

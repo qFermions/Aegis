@@ -640,12 +640,22 @@ node scripts/adapters/gws-client.js verify-event --app admin --event SUSPEND_USE
 
 Good result: dry run exit 4; after the test suspension, exit 0 with the matched event's parameters printed. `--user` is the admin who acted, `--target` the test user. `SUSPEND_USER` is not confirmed in the lane's sources: if the read-back fails after a real suspension, read the event name in the admin audit log, run it again with that name and record both.
 
+```bash
+node scripts/adapters/gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [UPN] --new-owner [MANAGER_UPN] --application-id 435070579839 --not-before [NOT_BEFORE]
+node scripts/adapters/gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [UPN] --new-owner [MANAGER_UPN] --application-id 435070579839 --not-before [NOT_BEFORE] --execute
+```
+
+Good result: dry run exit 4; after a test Calendar transfer from the test user to a second test account, requested after `[NOT_BEFORE]`, exit 0 with the transfer's Calendar entry reading completed. It needs `admin.datatransfer.readonly` delegated beside the seven scopes (batch 10); `[TRANSFER_ID]` is the ID the transfer list shows (`gam print datatransfers`). A status other than completed is exit 5.
+
 ### Open questions this tenant answers
 
 - W-05: the error text when a requested scope is not delegated. Remove one scope from the delegation
   on the test domain, run the scope check, and record the state and message.
 - The `users --query` syntax and the `usage` parameter names (unconfirmed in the lane's sources):
   record whether each read above answered or was rejected.
+- W-11 and W-14 (batch 10): the status words a data transfer shows while it runs and when it ends, and
+  whether a transfer started in the Admin console's Drive or Calendar transfer tool is listed with an ID
+  the transfer read can use. Start one of each on the test domain and record what the read prints.
 
 ## Jamf Pro (`jamf`)
 

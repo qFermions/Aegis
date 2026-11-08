@@ -1,0 +1,64 @@
+## Fix
+**What's wrong:** The freight vendor's invoices aren't reaching the inbox, and we don't yet know where they stopped.
+**Do this:**
+1. Go to Exchange admin center → Mail flow → Message trace. Trace sender [SENDER] to [USER@DOMAIN.COM] since last Tuesday. "Quarantined" means go to step 2. "Delivered" means check the mailbox's inbox rules and Junk folder. If nothing shows, the problem is on the vendor's side.
+2. Go to Defender → Email & collaboration → Review → Quarantine. Open each invoice and read why it was held and whether the sender checks (SPF/DKIM/DMARC) passed.
+3. If an invoice was held as spam or bulk and its sender checks pass, release it to [USER@DOMAIN.COM] only.
+
+**Done when:** the invoices are in the inbox. Aegis then checks that each one shows Released.
+**Stop if:** you see phish, malware, failed sender checks or an inbox rule hiding invoices. Treat that as possible invoice fraud.
+**Tell the user now:** IT is tracing the vendor's messages. Please send us the vendor's sending address. Don't act on any new payment details until IT confirms them.
+**Tell the user when done:** The vendor's invoices are in your inbox. Please check that all six arrived.
+
+## Details
+
+**Verdict:** The email system is probably working. One vendor's mail stopping while other mail flows usually means the mail filter is holding it (quarantine or Junk), or an inbox rule is moving it. Message trace shows which one before we guess. Runbooks: `/email-to-spam` Step 1 (Message trace) and `/email-quarantine` Steps 2–4.
+
+**What each trace result means:**
+- **Quarantined:** the filter held it. Read the reason, then follow step 2.
+- **Delivered:** it reached the mailbox. Look for an inbox rule that moves, deletes or forwards mail with "invoice" in it. ⚠️ An unknown rule like that is a classic sign of a compromised mailbox. If you find one, stop and follow `/security-alert-triage`, not this fix.
+- **Failed:** read the bounce reason on the trace detail.
+- **Not found:** the mail never reached our servers. Ask the vendor for the bounce they got, using a phone number you already have on file, not a reply to their email.
+
+**Risk:**
+- Releasing mail can't be undone (R2 per recipient).
+- Release to all recipients is R3. It is not advised here.
+- Never release a message flagged as phish or high-confidence phish to speed up a payment. Urgency about late fees is a known pressure tactic in invoice fraud.
+- If the sender checks fail, or the bank details differ from earlier invoices, check with the vendor by phone before anyone pays.
+
+**Customer C context:**
+- The IT lead approves each release.
+- The customer has no process for verifying the requester's identity ([org gap]). The release is limited to the original recipient, which keeps that exposure narrow.
+- Not advised now: a sender allow entry so this doesn't happen again. The runbook marks it preview only (`[quarantine-allow-entry]`) and sends it to the `/email-whitelist` runbook as a separate decision. It changes mail filtering, so the operations manager must also approve it, under its own ticket.
+
+**Rungs:** none. Each held invoice gets its own run of the same release gate, with its own confirmation and read-back.
+
+<details>
+<summary>PowerShell - for reference only (read-only)</summary>
+
+```powershell
+Connect-ExchangeOnline -UserPrincipalName "[UPN]"   # sign in as an admin
+# List every message from the vendor to the inbox over the last 5 days, with its status
+Get-MessageTraceV2 -SenderAddress "[SENDER]" -RecipientAddress "[USER@DOMAIN.COM]" -StartDate (Get-Date).AddDays(-5) -EndDate (Get-Date)
+# List what the filter is holding for that inbox, with the reason it was held
+Get-QuarantineMessage -RecipientAddress "[USER@DOMAIN.COM]" | Select-Object Subject, SenderAddress, ReceivedTime, QuarantineTypes, Released
+```
+</details>
+
+**Verification:**
+- [ ] The trace shows the status of all 6 messages
+- [ ] Each hold reason and the sender checks were reviewed
+- [ ] The IT lead approved each release
+- [ ] Each released message reads back as Released
+- [ ] The user confirms all 6 invoices are in the inbox
+- [ ] No unknown inbox rule exists
+
+**Jira note:**
+> Vendor invoices not received since [DATE]. Message trace for [SENDER] to [USER@DOMAIN.COM]: [quarantined/delivered/failed/not found]. Hold reason: [reason]. Sender checks: [pass/fail]. Released [N] messages to the original recipient only, approved by the IT lead. Each read back as Released. Allow entry: [not requested / separate ticket [JIRA-###]]. Time spent: [X] min.
+
+```aegis-desk
+Gate: quarantine-release-one-portal
+Phrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]
+Change record: R2, read-back exo:verify-quarantine-released
+Read-back: exo-client.js verify-quarantine-released --message-id "[MESSAGE_ID]" --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+```

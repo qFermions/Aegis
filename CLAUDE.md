@@ -110,13 +110,13 @@ A customer profile, when given, replaces this whole block (sites, servers and ve
 
 ## Answer format
 
-Every answer starts with `## Fix`: What's wrong (one sentence); Do this (3 to 5 numbered steps); Done when; Stop if; Tell the user now (next steps; no change as done, no time the tech cannot control, no unconfirmed cause, no wipe, reset or lock as decided); Tell the user when done (after the double-check). Card: at most 150 words, plus one pointer line to Details. Step 1 ties to what changed (stale state first) or to the log showing the failure and what each result means; undoable lighter fixes come before any reset, wipe, delete or re-register, which goes last, as last resort; no runbook: say so, mark the steps as reasoning. The rest under `## Details`. Only the final `aegis-desk` block holds script commands, gate ids, change records, read-backs, phrases and `Gate:` lines. Full rules: `docs/aegis/answer-format.md`.
+Every answer starts with `## Fix`: What's wrong (one sentence); Do this (3 to 5 numbered steps); Done when; Stop if; Tell the user now (next steps; no change as done, no time the tech cannot control, no unconfirmed cause, no wipe, reset or lock as decided); Tell the user when done (after the double-check). Card: at most 150 words, plus one pointer line to Details. Step 1 ties to what changed (stale state first) or to the log showing the failure and what each result means; undoable lighter fixes come before any reset, wipe, delete or re-register, which goes last, as last resort; no runbook: say so, mark the steps as reasoning. The rest under `## Details`. Only the final `aegis-desk` block holds script commands, gate ids, change records, read-backs, phrases and `Gate:` lines, for the gates to run now; Details names a later step's gate id and condition (last resort, "if it still fails"). Full rules: `docs/aegis/answer-format.md`.
 
 ---
 
 ## Where the rest lives
 
-Moved out of this file in batch 1 so it stays under 20,000 bytes (a test checks it); open the file when the task needs it. Rule 11 covers these files too: never ask the operator for what they already say.
+Moved out of this file in batch 1; open each file when the task needs it. Rule 11 covers these files too: never ask the operator for what they already say.
 
 - `docs/aegis/workflow.md`: how a ticket is worked. Replay check first, then the memory check, then the response format; plan mode, verification, execution shapes, independent review; error recovery (one retry, then the BLOCKED report; SR-5); the rest of the PowerShell reference; build/upgrade mode.
 - `docs/aegis/operating-rules.md`: identity, teaching rules 13 to 17, training mode, tone.
@@ -127,7 +127,7 @@ Moved out of this file in batch 1 so it stays under 20,000 bytes (a test checks 
 
 ---
 
-## Script gates (the rest of the PowerShell reference is in `docs/aegis/workflow.md`)
+## Script gates
 
 ### Script Safety Auto-Scan
 

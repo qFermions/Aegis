@@ -4,7 +4,8 @@
 > updated by batch G2 and batch G3 on 2026-10-28 (sections "Changed by batch G2" and "Changed by
 > batch G3") and by the batch G3 close-out on 2026-10-30 ("Changed by the batch G3 close-out"), and by
 > batch G4 on 2026-10-31 ("Changed by batch G4"), and by batch 9b on 2026-11-07 ("Changed by batch 9" and "Changed by
-> batch 9b"; batches 6 to 8 have no section here, their tables are `docs/review/batches/batch6-checks.md` to `batch8-checks.md`).
+> batch 9b"; batches 6 to 8 have no section here, their tables are `docs/review/batches/batch6-checks.md` to `batch8-checks.md`),
+> and by batch 10 on 2026-11-07 ("Changed by batch 10").
 > Every "verified" line below names a check that ran in that session and the
 > capture that holds its output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
@@ -260,6 +261,33 @@ captures: `docs/aegis/demo/evidence/batch9b/`; the owner's page: `docs/explainer
 | one shared simulator entry for both session-clear gates; T9m's `expected_path` names the gate; the README's ladder sentence matches the desk | `scripts/demo/sim/gates.js`, `scripts/demo/customers/tickets-messy.json`, `scripts/demo/README.md` | `customer-desk.test.js` "batch 9b"; `customers.test.js` (`cr1-06-red.txt`, `cr1-06-green.txt`) |
 | the session-cap wrapper: the version the T9m run used, and the version after code reviews 1 to 3 | `docs/aegis/demo/evidence/batch9b/tools/claude-cap-as-run-for-T9m.sh` (from `8533733`), `tools/claude-cap.sh` | `tools/claude-cap-selfcheck.sh`, 20 of 20 (`claude-cap-selfcheck.txt`) |
 
+## Changed by batch 10
+
+Branch `feat/batch10-ladder-and-readbacks` from `1a719ed` (main after PR #16, merged 2026-11-07, `docs/aegis/demo/evidence/batch10/pr-list.txt`).
+Acceptance table: `checks.md`; progress: `progress.md`; captures: `docs/aegis/demo/evidence/batch10/`; runs: `full-run-6/` (messy) and
+`full-run-7/` (tidy); the owner's page: `docs/explainers/batch10-ladder-and-readbacks.md` and its quiz. Batch 9b's table and progress are
+archived in `docs/review/batches/batch9b-checks.md` and `batch9b-progress.md`.
+
+| What changed | Where | Proof |
+|---|---|---|
+| one rung per action block: the `aegis-desk` block lists only the gates to run now; a later rung (a last resort, an "if it still fails") is named in Details with its gate id and condition | `CLAUDE.md` (Answer format), `docs/aegis/answer-format.md` (sections 2 and 5) | every T9m, T3 and T3m block in `full-run-6/` and `full-run-7/` holds one rung |
+| the "lightest step first" row also fails a block holding an R2 or R3 gate with the lighter gate its runbook names as the rung below it (a Try first or Lighter step line, or a fallback line naming the heavier gate), and a block holding a gate the answer names as a later step beside another gate | `scripts/demo/step-ladder.js` | `scripts/demo/lightest-step.test.js` (`t1-red.txt`, `t1-green.txt`, three mutations in `t1-mutations.txt`); with it, batch 9b's T9m answer and full runs 4 and 5's T3 and T3m fail (`t1-saved-answers.txt`) |
+| a change word counts only as the step's verb (the first word of the step or of a sentence, or the word after please, then, an adverb, "ask someone to", a leading condition, place phrase or label); the rest of a relayed user check does not count; Done when keeps batch 9's reading | `scripts/demo/answer.js` (`stepChange`, `onlyLooks`) | `scripts/demo/answer.test.js` (`t2-red.txt`, `t2b-red.txt`, `t2-green.txt`, five mutations); of every saved answer only T7 and T7m change, OPEN to INVESTIGATE (`t2-saved-answers.txt`) |
+| read-backs: the Jamf lock (`verify-command --type DEVICE_LOCK`), the Google cookie reset (`verify-event --event RESET_SIGNIN_COOKIES`, its section's one read line, since an R1 field names no command), the offboarding Okta deactivate (`okta-client.js verify-status --status DEPROVISIONED`), the Drive and Calendar transfers (`gws-client.js verify-transfer`); simulator entries for each | `.claude/commands/jamf-lock-erase.md`, `gws-password-reset.md`, `gws-offboard.md`; `scripts/demo/sim/` | `t3-*` and `t4-*` red and green; `scripts/demo/batch10-readbacks.test.js`; the desk tests that pinned the old INCONCLUSIVE state (`79a3592`, `t34-desk-patch-green.txt`) |
+| a read-only Data Transfer read: one GET of one transfer and users.get of both owners, arguments refused before any request, `admin.datatransfer.readonly` asked for by this command only, INCONCLUSIVE on any status but completed and on an application ID the transfer does not hold | `scripts/adapters/gws-client.js`, `scope-manifest.json`, `verify-flags.js`, `docs/aegis/lanes/g2.md`, `docs/aegis/owner/test-tenant-runbook.md` | `scripts/adapters/gws-client.test.js` (`t4-transfer-*`, `t4-transfer-notbefore-*`) |
+| vendor facts W-07 to W-14, J-11 and J-12: the cookie event and the Jamf command fields CONFIRMED; the transfer status values, Drive's application ID, the transfer ID's form, console-started transfers and the Lock Computer button's command type UNCONFIRMED and on the to-check list | `docs/aegis/g3/vendor-facts.md`, `vendor-facts-to-check.md`, `docs/aegis/owner/vendor-facts-priority.md` (regenerated) | `node scripts/eval/vendor-facts-priority.js --check` exit 0 |
+| `[TRANSFER_ID]` | `modules/security/placeholder-dictionary.md` | `scripts/repository-structure.test.js` |
+| Jamf `verify-command` reads the fields Jamf documents (`commandType`, `commandState`, `client.managementId`), and a profile command whose record names no profile is INCONCLUSIVE, not "not done" | `scripts/adapters/jamf-client.js` | `t3-jamf-fields-*`, `jamf-profile-red.txt`, `jamf-profile-green.txt` |
+| `scripts/ask-aegis.js` and `scripts/aegis-chat.js` are tier C | `.github/risk-tiers.json`, `REVIEW.md` | `scripts/risk_tier.test.js` (`t5-red.txt`, `t5-green.txt`) |
+| the privacy rule stops "password isHunter22!", "pw:", "passwd=", "pass is x1" and other punctuated spellings, and lets ordinary password tickets through | `scripts/ask-aegis.js` (`protect`) | `scripts/ask-aegis.test.js` (`t6-red.txt`, `t6-green.txt`, four mutations) |
+| the runs at `192287a` | `docs/aegis/demo/evidence/full-run-6/`, `full-run-7/` | messy 8 RESOLVED (SIMULATED), 1 INVESTIGATE (T7m); tidy 7 RESOLVED (SIMULATED), 1 CLARIFY (T7); 16 sessions, 6.36 US dollars; predictions matched 9 of 9 and 7 of 8 |
+| batteries | `docs/aegis/demo/evidence/batch10/baseline/`, `battery-mid/`, `battery-head/` | 2202, 2216 and 2233 tests; each time the same 41 pwsh-only failing names as batch 9; every other check exit 0 |
+| reviews: security 1, evidence 1, code 1 to 3 at xhigh; their fixes (the verb rule's buttons, paths, negations and invisible characters; the ladder reader's details blocks, undo phases and phase ranges; the privacy rule's separators; Jamf doubled fields; the simulated transfers' owner) | the files above, `scripts/demo/customer-desk.js` | `checks.md`, Review rounds and Fixed beyond the task; `cr1-*`, `cr2-*`, `cr3-*`, `sr1-*`, `er1-*` captures; the battery at the final head (`battery-final/`) |
+
+Still open after batch 10: the transfer reads rest on UNCONFIRMED facts (W-11, W-13, W-14), so they may never pass on a real tenant
+until the owner checks them; the desk still applies every gate in a block (it trusts the block to hold one rung); the lightest-step row
+reads the runbook's ladder, not an answer's "no lighter fix" reason (full run 7's T1).
+
 ## Partial
 
 13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
@@ -297,8 +325,11 @@ eval half exists since batch G4, capability-map row 26, implemented but unverifi
 Batch 1's pull request (#4) and batch G2's (#5) were merged into `main` on 2026-10-28 (`f185071`,
 read from the GitHub pull request API); batch G3's (#6) was merged on 2026-10-30 (`01dcb37`); the
 batch G3 close-out's (#7) on 2026-10-30 (`f086c88`); the batch G3 close-out 2's (#8) and close-out
-3's (#9) on 2026-10-31 (`0a5feb7`, `1f6647c`). Batch G4's draft pull request is open against `main`
-(branch `feat/g4-eval-and-closeout`).
+3's (#9) on 2026-10-31 (`0a5feb7`, `1f6647c`); batch G4's (#10) on 2026-11-01 (`77b7114`); the Customer Desk
+pull requests #11 to #14 on 2026-11-06 and 2026-11-07 (`0250ad2`, `c71c09b`, `5a4c209`, `73bdc68`); batch 9's (#15)
+and batch 9b's (#16) on 2026-11-07 (`c0f3757`, `1a719ed`), read from the GitHub pull request API on 2026-11-08 UTC
+(`docs/aegis/demo/evidence/batch10/pr-list.txt`). Batch 10 is on branch `feat/batch10-ladder-and-readbacks`, its
+draft pull request against `main`.
 `node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
 (`docs/aegis/evidence/claim-list.txt`).
 

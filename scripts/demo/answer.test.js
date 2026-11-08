@@ -242,3 +242,144 @@ test('a default fact a negation opens its clause with is not the answer using th
   assert.deepEqual(a.defaultFactsIn('Not the phone: the SMS fallback still works.', ''), ['SMS as the MFA fallback'], 'the negation is in another clause');
   assert.deepEqual(a.defaultFactsIn('The SMS fallback still works.', ''), ['SMS as the MFA fallback']);
 });
+
+// ── Batch 10, task 2: a change word counts only as the step's verb ─────────────────────────────────────
+// EXPECTED DECISION (written before the code)
+// - In a step, a change word counts only as its verb: the first word of the step or of a sentence in it,
+//   or the word right after a leading "please", "then", "ask <someone> to", a leading condition ("If it
+//   still loops:", "If none of that fits,") or a short label ("Last resort:"), and the word after "then".
+// - Nouns ("a macOS update", "the install log") do not count, and neither do the words of a user check the
+//   tech only relays: after "Ask the user to <verb>", the rest of that step is the user's words.
+// - A negated verb ("Don't wait for the user, reset the password") hands the step to the clause after it.
+// - "Done when" is not a step: it keeps the batch 9 reading, so a change it names still counts (security
+//   review 5's case stays).
+const EVIDENCE = path.join(__dirname, '..', '..', 'docs', 'aegis', 'demo', 'evidence');
+const saved = (run, id) => fs.readFileSync(path.join(EVIDENCE, run, 'answers', `${id}-answer.txt`), 'utf8');
+const steps = (...s) => card([GOOD_PARTS[0], GOOD_PARTS[1], ...s.map((x, i) => `${i + 1}. ${x}`), ...GOOD_PARTS.slice(5)]);
+
+test('batch 10, task 2: the T7m and T7 answers of full runs 4 and 5 only look ("a macOS update", "a large update" are nouns)', () => {
+  // catches: the batch 9 rule, which counted "update" and "install" anywhere in a step (both closed OPEN)
+  for (const [run, id] of [['full-run-4', 'T7m'], ['full-run-5', 'T7']]) {
+    const r = a.onlyLooks(saved(run, id));
+    assert.equal(r.looks, true, `${run} ${id}: change found: ${r.change}`);
+  }
+});
+
+test('batch 10, task 2: "Restart the Mac" and "Update the profile" as admin steps still count', () => {
+  // catches: a rule that drops update and restart from the change words instead of reading the verb
+  for (const step of ['Restart the Mac.', 'Update the profile in Jamf Pro.']) {
+    const r = a.onlyLooks(steps('Open Jamf Pro and read the Mac\'s record.', step, 'Read the log again.'));
+    assert.equal(r.looks, false, step);
+    assert.match(r.change, /^(?:Restart|Update)$/);
+  }
+});
+
+test('batch 10, task 2, pair 1: "Read the install log" is a look; "Install the printer driver" is a change', () => {
+  // catches: a noun after a look verb still read as a change
+  assert.equal(a.onlyLooks(steps('Read the install log on the print server for errors.', 'Check the queue.', 'Look at the driver version.')).looks, true);
+  assert.equal(a.onlyLooks(steps('Read the install log on the print server for errors.', 'Install the printer driver from the vendor page.', 'Look at the queue.')).looks, false);
+});
+
+test('batch 10, task 2, pair 2: a reset named as a noun is a look; the verb after "then", "please" or a leading condition is a change', () => {
+  // catches: a rule that reads only the first word of the step and misses "then reset" or "If it fails: reset"
+  assert.equal(a.onlyLooks(steps('Open the audit log and find the last password reset for [UPN].', 'Note its time in the ticket.', 'Compare it with the failed sign-ins.')).looks, true);
+  for (const s of ['Open the user page, then reset the password.', 'Please reset the password from the user page.', 'If the sign-ins keep failing: reset the password.', 'If none of that helps, reset the password.', 'Last resort: reset the password.']) {
+    const r = a.onlyLooks(steps('Open the audit log.', s, 'Read the sign-ins.'));
+    assert.equal(r.looks, false, s);
+    assert.match(r.change, /^reset$/i, s);
+  }
+});
+
+test('batch 10, task 2, pair 3: words inside a user check the tech relays do not count; the asked verb itself and a second sentence of the tech\'s own do', () => {
+  // catches: the batch 9 rule, which read "restart" inside a relayed user check as the tech's change
+  const relayed = steps('Read the sync client\'s error in the device record.', 'Ask the user to quit the sync app and reopen it. If it still fails, restart the laptop and try once more.', 'Write the app version in the ticket.');
+  assert.equal(a.onlyLooks(relayed).looks, true, a.onlyLooks(relayed).change);
+  assert.equal(a.onlyLooks(steps('Read the error.', 'Ask the user to restart the laptop.', 'Read the error again.')).looks, false, 'the asked verb is the step\'s verb');
+  assert.equal(a.onlyLooks(steps('Open the device record. Remove the old certificate.', 'Read the error.', 'Read it again.')).looks, false, 'a second sentence of the tech\'s own');
+});
+
+test('batch 10, task 2: the batch 9 cases still hold (a negated verb hands over, "Done when" still counts)', () => {
+  // catches: a verb rule that stops at "Don't wait" or that skips the Done when line
+  assert.equal(a.onlyLooks(steps('Open the log.', "Don't wait for the user, reset the password.", 'Read it.')).looks, false);
+  assert.equal(a.onlyLooks(steps('Open the log.', 'Do not unlock the account yet; read the log first.', 'Read it.')).looks, true);
+  assert.equal(a.onlyLooks(card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the logs.', '2. Read the user page.', '3. Read the device list.', '**Done when:** you have reset the MFA methods.', ...GOOD_PARTS.slice(6)])).looks, false);
+});
+
+// Batch 10, task 2, found in the saved answers (t2-saved-answers.txt): full run 3's T4m says "Under Read and
+// manage (Full Access), add [UPN]." and full run 5's T4 "If [UPN] is already listed, only add the missing
+// right."; the first version of the verb rule read "Under" and "only" as the verbs. Wrong implementation it
+// catches: a rule that skips a leading place phrase or an adverb as if it were the step's verb.
+test('batch 10, task 2, pair 4: a verb after a leading place phrase or "only" counts; a look after one is still a look', () => {
+  for (const s of ['Under Read and manage (Full Access), add [UPN].', 'If [UPN] is already listed, only add the missing right.', 'In the user page, just reset the password.']) {
+    const r = a.onlyLooks(steps('Open the admin center.', s, 'Read the list.'));
+    assert.equal(r.looks, false, s);
+  }
+  for (const s of ['In Jamf Pro → Computers → Management History, look for a macOS update pushed today.', 'On the router\'s admin page, find the device using the most bandwidth.']) {
+    assert.equal(a.onlyLooks(steps('Open the admin center.', s, 'Read the list.')).looks, true, s);
+  }
+});
+
+// Evidence review 1 (batch 10): two steps whose verb the rule missed. "Open the user page and reset the password"
+// read as a look, since a verb after "and" was read only after a negation; and after "Ask the user to <verb>" the
+// whole rest of the step was the user's, so a sentence of the tech's own after it ("Reset the MFA in Okta.") read as
+// a look. A verb after "and" counts when an object follows it (the, a, their, it, a [PLACEHOLDER]), so a noun after
+// "and" ("the install and update history") still does not; after a relayed ask, only a sentence that opens with a
+// condition or "then" goes on relaying. Wrong implementations it catches: every word after "and" read as a verb (the
+// T7 noun case again); a relayed ask that swallows the rest of the step.
+test('evidence review 1 (batch 10): a verb after "and", and a sentence of the tech\'s own after a relayed ask, count', () => {
+  for (const s of ['Open the user page and reset the password.', 'Ask the user to sign out of the app. Reset the MFA in Okta.', 'Find the device and wipe it.']) assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, s);
+  for (const s of ['Read the sign-in log and note the time.', 'Check the install and update history for the Mac.', 'Ask the user to quit the app. Then restart the laptop and try again.', 'Ask the user to quit the app. If it still fails, restart the laptop.']) {
+    const r = a.onlyLooks(steps('Open the log.', s, 'Read it.'));
+    assert.equal(r.looks, true, `${s}: ${r.change}`);
+  }
+});
+
+// Code review round 1 (batch 10), finding class A: shapes in which a step asks for a change that the verb rule read
+// as a look: an emoji or WARNING prefix (CLAUDE.md rule 5 asks for one before a destructive step), single-star
+// italics, a verb after a comma, a button the step clicks, a portal path that ends on a change button (Aegis leads
+// with the portal), a numbered label ("Step 4 (last resort):") and a change in a bullet under a step. Wrong
+// implementations it catches: the verb read only at the very start of a clause; a portal path's last button
+// ignored; a bullet joined onto its step mid-sentence. The look cases guard each new reading against a noun.
+test('code review 1, class A (batch 10): a change behind a prefix, after a comma, on a button or in a sub-bullet is still seen', () => {
+  for (const s of ['⚠️ WARNING: Erase the Mac.', '*Reset* the password.', 'Open the device record, wipe it.', 'Click **Wipe Computer** on the record.', 'Select the user and choose Delete.',
+    'Admin console → Directory → Users → [USER@DOMAIN.COM] → Reset password, with "Ask the user to change their password" ticked.', 'Step 4 (last resort): wipe the Mac.']) {
+    assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, s);
+  }
+  for (const s of ['Open Intune → Devices → Update rings and read the ring the device is in.', 'Read the sign-in log, note the time.', 'Click the user and read the Devices tab.', 'In Jamf Pro → Computers → Management History, look for a macOS update pushed today.']) {
+    const r = a.onlyLooks(steps('Open the log.', s, 'Read it.'));
+    assert.equal(r.looks, true, `${s}: ${r.change}`);
+  }
+  const bullet = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Open the Mac record in Jamf Pro', '   - Erase the Mac from its record', '2. Read the log.', '3. Read it again.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(bullet).looks, false, 'a change in a bullet under a step');
+  const relayedBullet = card([GOOD_PARTS[0], GOOD_PARTS[1], '1. Ask the user to quit the app', '   - if it still fails, restart the laptop', '2. Read the log.', '3. Read it again.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(relayedBullet).looks, true, 'a bullet that goes on with the relayed user check');
+});
+
+// Code review round 2 (batch 10), class A2: edges of round 1's verb readers. Steps written "1.Verb" with no space
+// read as looks in a card; the new readers ran inside a negated clause ("Do not click Reset password"); a
+// [PLACEHOLDER] object never matched; portal menu names read as buttons ("Add filters", "Update rings", "Deleted
+// users"); and the shared reader removed only five invisible characters, so "Re<soft hyphen>set" hid the verb. Wrong
+// implementations it catches: each of those five readings.
+test('code review 2, class A2 (batch 10): no-space steps, negations, placeholder objects, menu names and invisible characters', () => {
+  const noSpace = card([GOOD_PARTS[0], GOOD_PARTS[1], '1.Open the log.', '2.Reset the password.', '3.Read it.', ...GOOD_PARTS.slice(5)]);
+  assert.equal(a.onlyLooks(noSpace).looks, false, 'a "2.Reset" step in a card');
+  for (const s of ['Open the device page, wipe [DEVICE_NAME] from the list.', "Find the user and reset [USER@DOMAIN.COM]'s password.", 'Re­set the password.', 'Wi⁡pe the Mac.']) {
+    assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, JSON.stringify(s));
+  }
+  for (const s of ['Do not click Reset password until the user confirms.', 'Never select Delete on the user page.', "Don't go to Intune → Devices → Wipe.", 'Click Add filters and choose User.', 'In Intune, select Update rings for Windows and read the ring.', 'Open Entra → Users → Deleted users, and look for the account.', 'Open Intune → Devices → Update rings, find the device ring.']) {
+    const r = a.onlyLooks(steps('Open the log.', s, 'Read it.'));
+    assert.equal(r.looks, true, `${s}: ${r.change}`);
+  }
+});
+
+// Code review round 3 (batch 10), class A3: round 2's plural-noun rule dropped real buttons ("Revoke sessions",
+// "Remove members", "Remove access"); the readers saw only the text after a leading "In ...," so the path's last stop
+// was gone; a negated clause ended by a dash kept the change after it hidden; and a dropdown value ("Select
+// Disabled") stopped counting. Wrong implementations it catches: an any-plural menu rule; readers on the lead-stripped
+// rest; no dash in the clause break; plain stems only after "select".
+test('code review 3, class A3 (batch 10): real buttons, paths after a lead, a dash after a negation and dropdown values count', () => {
+  for (const s of ['In the Entra admin center, go to Users → [UPN] → Overview → Revoke sessions.', 'Click Remove members on the group.', 'Open the app → Remove access.', 'In Intune → Devices → [DEVICE_NAME] → Wipe, keep the enrollment state unchecked.', "Don't wait \u2014 click Reset password.", 'No need to wait - click Wipe.', 'Select Disabled under Account status.']) {
+    assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, false, s);
+  }
+  for (const s of ['Click Add filters and choose User.', 'Open Intune → Devices → Update rings, find the device ring.']) assert.equal(a.onlyLooks(steps('Open the log.', s, 'Read it.')).looks, true, s);
+});

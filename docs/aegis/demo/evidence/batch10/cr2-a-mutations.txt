@@ -1,0 +1,26 @@
+Mutation 1: a list marker needs a space after it
+applied: 1
+ℹ fail 1
+ℹ pass 68
+✖ code review 2, class A2 (batch 10): no-space steps, negations, placeholder objects, menu names and invisible characters (0.361833ms)
+Mutation 2: the other readers read the whole clause, negation and all
+applied: 1
+ℹ fail 1
+ℹ pass 68
+✖ code review 2, class A2 (batch 10): no-space steps, negations, placeholder objects, menu names and invisible characters (0.430583ms)
+Mutation 3: a [PLACEHOLDER] object needs a letterless next character
+applied: 1
+ℹ fail 1
+ℹ pass 68
+✖ code review 2, class A2 (batch 10): no-space steps, negations, placeholder objects, menu names and invisible characters (0.353292ms)
+Mutation 4: buttons and path stops in any form of the change word
+applied: 1
+ℹ fail 1
+ℹ pass 68
+✖ code review 2, class A2 (batch 10): no-space steps, negations, placeholder objects, menu names and invisible characters (0.536125ms)
+Mutation 5: the shared reader takes out only five invisible characters
+applied: 1
+ℹ fail 1
+ℹ pass 68
+✖ code review 2, class A2 (batch 10): no-space steps, negations, placeholder objects, menu names and invisible characters (0.394708ms)
+restored: True

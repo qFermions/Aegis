@@ -13,13 +13,40 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { writeReplacing } = require('../customers.js');
+const { writeReplacing, fill } = require('../customers.js');
 
 const AUTHENTICATOR_LIKE = /(?:microsoftAuthenticator|phone|softwareOath)AuthenticationMethod$/;
 
 // A mailbox in the simulated tenant, by the runbook's [MAILBOX] placeholder, and one delegate added to one list.
 const boxOf = (s, t) => s.mailboxes.find((m) => m.address.toLowerCase() === String(t['[MAILBOX]']).toLowerCase());
 const grant = (s, t, list) => { const b = boxOf(s, t); b[list] = [...new Set([...(b[list] || []), t['[UPN]']])]; };
+
+// A data transfer the Admin console starts (batch 10, task 4), shaped as the Data Transfer API's DataTransfer
+// (vendor facts W-10, W-12): the source user's Google user ID, the new owner's, and one completed entry for
+// the application. A ticket names no manager, so the transfer's ID and the new owner come from the gate's
+// values (the desk fills the runbook's [TRANSFER_ID] and [MANAGER_UPN] with them). The new owner is the
+// ticket's own customer's reporting.user account (customers/d/tenant.json holds one; Customer D is the one
+// simulated tenant with two Google accounts); on a tenant without that account the gate cannot be acted out,
+// and the ticket stops OPEN. A second transfer of one kind replaces the first, as one record per transfer ID
+// (code review round 1 of batch 10, class D: the owner was always Customer D's, and a second apply left the
+// stale record first in line for the read).
+const NEW_OWNER = 'reporting.user';
+const transferGate = (what, transferId, applicationId) => Object.freeze({
+  platform: 'google-workspace', effect: `transfers the user's ${what} to their manager`,
+  values: (customer) => ({ '[TRANSFER_ID]': transferId, ...(customer ? { '[MANAGER_UPN]': fill(`${NEW_OWNER}@[@Aegion_DOMAIN]`, customer) } : {}) }),
+  apply: (s, t, now) => {
+    const address = String(t['[USER@DOMAIN.COM]']);
+    const source = s.gws.users[address];
+    // the [MANAGER_UPN] values() filled for this customer, which the desk hands the apply with the target, so the
+    // change record and the transfer name one owner (code review rounds 2 and 3 of batch 10, classes E2 and E3)
+    const owner = s.gws.users[t['[MANAGER_UPN]']];
+    if (!source || !owner) throw new Error('the simulated tenant holds no Google account for the source user or the new owner');
+    s.gws.transfers = (s.gws.transfers || []).filter((x) => x.id !== transferId).concat([{
+      kind: 'admin#datatransfer#DataTransfer', id: transferId, oldOwnerUserId: source.id, newOwnerUserId: owner.id,
+      applicationDataTransfers: [{ applicationId, applicationTransferStatus: 'completed' }], overallTransferStatusCode: 'completed', requestTime: now,
+    }]);
+  },
+});
 
 // One session clear, two gates: /okta-user-lifecycle Phase C and the Okta Verify loop's admin step in
 // /okta-mfa-reset (batch 9b; code review 1, finding 12: one entry, so the two cannot drift apart).
@@ -114,20 +141,20 @@ const SIM_GATES = Object.freeze({
   },
   'gws-password-reset-cookies-portal': {
     platform: 'google-workspace', effect: 'resets the user\'s Google sign-in cookies, so every device signs in again',
-    apply: (s, t, now) => { s.gws.users[t['[USER@DOMAIN.COM]']].signInCookiesResetAt = now; },
+    // batch 10, task 3: the Admin console records the reset as a RESET_SIGNIN_COOKIES admin event (vendor fact
+    // W-07), actor the admin ([UPN]) and target the account, which the runbook's verify-event read finds
+    apply: (s, t, now) => {
+      s.gws.users[t['[USER@DOMAIN.COM]']].signInCookiesResetAt = now;
+      (s.gws.activities = s.gws.activities || []).push({ app: 'admin', name: 'RESET_SIGNIN_COOKIES', time: now, actor: t['[UPN]'], target: t['[USER@DOMAIN.COM]'] });
+    },
   },
   'gws-offboard-suspend-portal': {
     platform: 'google-workspace', effect: 'suspends the Google Workspace user',
     apply: (s, t) => { const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.suspended = true; u.suspensionReason = 'ADMIN'; },
   },
-  'gws-offboard-drive-transfer-portal': {
-    platform: 'google-workspace', effect: 'transfers the user\'s Drive files to their manager',
-    apply: (s, t) => { (s.gws.transfers = s.gws.transfers || []).push({ user: t['[USER@DOMAIN.COM]'], what: 'drive' }); },
-  },
-  'gws-offboard-calendar-transfer-portal': {
-    platform: 'google-workspace', effect: 'transfers the user\'s calendars to their manager',
-    apply: (s, t) => { (s.gws.transfers = s.gws.transfers || []).push({ user: t['[USER@DOMAIN.COM]'], what: 'calendar' }); },
-  },
+  // batch 10, task 4: read back by gws-client.js verify-transfer, Drive and Docs (55656082996) and Calendar (435070579839)
+  'gws-offboard-drive-transfer-portal': transferGate('Drive files', 'simDriveTransfer01', '55656082996'),
+  'gws-offboard-calendar-transfer-portal': transferGate('calendars', 'simCalendarTransfer01', '435070579839'),
   'gws-offboard-okta-deactivate-portal': {
     platform: 'okta', effect: 'deactivates the Okta user that provisions the Google account',
     apply: (s, t) => { s.okta.users[t['[OKTA_USER_ID]']].status = 'DEPROVISIONED'; },
@@ -140,13 +167,18 @@ const SIM_GATES = Object.freeze({
   // Jamf Pro
   'jamf-lock-erase-lock-portal': {
     platform: 'jamf', effect: 'locks the Mac at its next check-in',
-    // the lock is sent now and done at the Mac's next check-in, so its command stays Pending
-    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.lock_state = 'locked'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'DEVICE_LOCK', status: 'Pending', dateSent: now }); } },
+    // batch 10, task 3: the lock gate binds verify-command --type DEVICE_LOCK. The simulated Mac checks in
+    // at once, as the runbook's WAIT UNTIL asks before the read-back, so the lock reads Acknowledged; the
+    // wipe below stays Pending, so the desk still shows a read that proves nothing yet
+    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.lock_state = 'locked'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'DEVICE_LOCK', status: 'Acknowledged', dateSent: now, dateCompleted: now }); } },
   },
   'jamf-lock-erase-wipe-portal': {
     platform: 'jamf', effect: 'wipes the Mac at its next check-in',
-    // batch 9, task 7: the erase is sent now and runs at the Mac's next check-in, so, like the lock, its
-    // ERASE_DEVICE command stays Pending and the runbook's verify-command read proves nothing yet (exit 5)
+    // batch 9, task 7: the erase is sent now and runs at the Mac's next check-in, so its ERASE_DEVICE command
+    // stays Pending and the runbook's verify-command read proves nothing yet (exit 5). Batch 9 simulated the lock
+    // the same way; since batch 10 the simulated lock is acknowledged at once (above), so a ticket that only
+    // locks can resolve at the desk, and this wipe is the desk's case of a sent command not yet proved
+    // (customer-desk.test.js, "the simulated Jamf wipe leaves a pending erase command")
     apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.wipe_state = 'wipe sent'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'ERASE_DEVICE', status: 'Pending', dateSent: now }); } },
   },
 });

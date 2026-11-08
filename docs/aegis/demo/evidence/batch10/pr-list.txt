@@ -1,0 +1,15 @@
+gh pr list --state all --limit 14 (read-only GitHub API), 2026-11-08T01:41Z: number, state, mergedAt, merge commit, head branch
+16 MERGED 2026-11-07T18:35:01Z 1a719ed fix/okta-loop-admin-gate
+15 MERGED 2026-11-07T08:26:33Z c0f3757 feat/batch9-safety-and-gaps
+14 MERGED 2026-11-07T03:48:38Z 73bdc68 feat/desk-instrument-fixes
+13 MERGED 2026-11-07T03:35:06Z 5a4c209 feat/desk-v2-plain-answers
+12 MERGED 2026-11-06T05:24:09Z c71c09b feat/desk-instrument-fixes
+11 MERGED 2026-11-06T05:24:26Z 0250ad2 feat/customer-desk-demo
+10 MERGED 2026-11-01T06:31:05Z 77b7114 feat/g4-eval-and-closeout
+9 MERGED 2026-10-31T22:07:30Z 1f6647c fix/g3-closeout-3
+8 MERGED 2026-10-31T06:24:22Z 0a5feb7 fix/g3-closeout-2
+7 MERGED 2026-10-30T21:34:40Z f086c88 fix/g3-closeout
+6 MERGED 2026-10-30T06:40:52Z 01dcb37 feat/g3-production-hardening
+5 MERGED 2026-10-28T06:49:16Z 7969e79 feat/g2-gws-fleet-jamf-slack-linear
+4 MERGED 2026-10-28T06:49:31Z f185071 chore/baseline-and-boundary
+3 MERGED 2026-10-27T06:16:04Z d5fc8c0 chore/review-layers

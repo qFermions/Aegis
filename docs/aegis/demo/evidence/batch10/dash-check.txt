@@ -1,0 +1,3 @@
+$ git diff 1a719ed -- . ':!docs/aegis/demo/evidence' | grep '^+' | grep -v '^+++' | grep -c (the long dash, U+2014)
+0
+(0: no added line outside the evidence captures holds a long dash; the captures write it as -)

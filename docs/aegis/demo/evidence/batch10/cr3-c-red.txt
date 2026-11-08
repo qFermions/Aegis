@@ -1,0 +1,48 @@
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (29.008916ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (43.894416ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (40.351458ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.108791ms)
+✔ no ticket text: the usage and exit 1, with no session (22.024625ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (19.677458ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (333.549875ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (44.588208ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (0.672458ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.457959ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.386875ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.159583ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.22325ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (2.062542ms)
+✔ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.513959ms)
+✔ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.268958ms)
+✔ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.141084ms)
+✖ code review 3, class C3 (batch 10): digits after "'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass (0.319375ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 574.734041
+
+✖ failing tests:
+
+test at scripts/ask-aegis.test.js:396:1
+✖ code review 3, class C3 (batch 10): digits after "'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass (0.319375ms)
+  AssertionError [ERR_ASSERTION]: the password's Hunter22 please change it
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:397:203)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

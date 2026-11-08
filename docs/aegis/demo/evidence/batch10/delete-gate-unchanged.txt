@@ -1,0 +1,23 @@
+The two delete gates of /gws-offboard (gws-offboard-delete-portal and its GAM twin gws-offboard-delete), from the marker to the Read-back field, at 1a719ed and at the head; diff below (empty: unchanged). Long dashes in the quoted runbook text are written -, as in every capture.
+$ diff <base block> <head block>
+diff exit 0
+
+The blocks at the head:
+<!-- (gate gws-offboard-delete-portal in the runbook) -->
+- **Target:** [USER@DOMAIN.COM]
+- **Effect:** delete the Google Workspace account; data that was not transferred is deleted with it
+- **Scope:** one account and its untransferred data; shared-drive files stay
+- **Reversibility:** R3 - a super admin can restore the account for 20 days (Directory → Users → More options → Recently deleted users → Recover); after 20 days the data is gone, and a user with data on a Vault hold cannot be deleted at all
+- **Required confirmation:** Type exactly `DELETE GOOGLE USER [USER@DOMAIN.COM]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (no verify-* command proves a deleted account: its proof is the read its step names)
+--
+# (gate gws-offboard-delete in the runbook)
+# Target: [USER@DOMAIN.COM]
+# Effect: delete the Google Workspace account - untransferred data is deleted with it
+# Scope: one account - shared-drive files stay
+# Reversibility: R3 - a super admin can restore it for 20 days, then the data is gone
+# Required confirmation: type exactly "DELETE GOOGLE USER [USER@DOMAIN.COM]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, no verify-* command proves a deleted account: its proof is the read its step names
+--

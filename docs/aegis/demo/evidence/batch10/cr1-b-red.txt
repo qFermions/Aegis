@@ -1,0 +1,45 @@
+✔ fails: the first change is a heavy reset while the section lists a lighter admin step (2.0225ms)
+✔ passes: the section lists only a user check before the heavy gate (1.702708ms)
+✔ passes: the answer names the lighter gate first, then the heavy one (0.492208ms)
+✔ fails: the heavy gate first, the lighter gate of its own section second (0.420709ms)
+✔ passes: no change advised, or a first change that is not heavy, or a gate no runbook holds (0.424459ms)
+✔ the desk shows it as its own row at step 5, and a failed row does not stop the ticket (0.427208ms)
+✔ code review 1, finding 8: a Try first or Lighter step line counts as a lighter admin step; a User check does not (0.553417ms)
+✔ batch 10, task 1: batch 9b's T9m answer fails, its block holds the session clear and the last-resort reset (28.9205ms)
+✔ batch 10, task 1: the same T9m answer with only the session clear in the block passes (11.756833ms)
+✔ batch 10, task 1, pair 1: a rule turned off and the delete its runbook says to try it before, in one block, fails; the rule turned off alone passes (0.775667ms)
+✔ batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes (0.532125ms)
+✔ batch 10, task 1: gates of one checklist that no ladder line ties together pass, here and in the real offboarding runbook (24.201458ms)
+✖ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (11.86975ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 12
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.084334
+
+✖ failing tests:
+
+test at scripts/demo/lightest-step.test.js:179:1
+✖ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (11.86975ms)
+  AssertionError [ERR_ASSERTION]: Unlock is named only as the undo
+  
+  'fail' !== 'pass'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/lightest-step.test.js:183:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

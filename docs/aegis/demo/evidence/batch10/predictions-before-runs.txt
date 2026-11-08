@@ -1,0 +1,10 @@
+$ git log -1 --format='%h committed %cI' 3227e8f
+3227e8f committed 2026-11-07T18:15:21-08:00
+
+The two run folders, named by their start time in UTC (scripts/demo/customer-desk.js): 20261108T021531Z-5b818ac6 (messy, 2026-11-08T02:15:31Z = 2026-11-07T18:15:31-08:00), 20261108T022346Z-775b11e0 (tidy, 2026-11-07T18:23:46-08:00); both after the commit above.
+
+$ git show 3227e8f:progress.md | grep '^- \*\*Run predictions' > a; grep '^- \*\*Run predictions' progress.md > b; cmp a b
+cmp exit 0 (0: the prediction line is word for word the one committed before the runs)
+
+The line as committed in 3227e8f:
+- **Run predictions (written before either run, against the code at 192287a):** messy (`full-run-6/`): T1m, T4m, T5m, T6m, T8m RESOLVED (SIMULATED) as in full-run-4; T2m RESOLVED (SIMULATED), was INCONCLUSIVE (the Okta deactivate and both transfers now have reads); T3m RESOLVED (SIMULATED), was INCONCLUSIVE, if its block drops the last-resort wipe; T7m INVESTIGATE, was OPEN; T9m RESOLVED (SIMULATED) with only `okta-mfa-reset-clear-sessions-portal` in its block (batch 9b listed the reset too). Tidy (`full-run-7/`): T1, T4, T5, T6 RESOLVED (SIMULATED); T2 RESOLVED (SIMULATED) with lightest-step-first failing again if it leads with `okta-user-lifecycle-deactivate-portal`; T3 as T3m; T7 INVESTIGATE, was OPEN; T8 RESOLVED (SIMULATED) from the replay cache, no session. 16 sessions, about 7.5 US dollars; every Fix card still over 150 words. What would make it wrong: a block that still holds the wipe (T3, T3m end INCONCLUSIVE on the wipe's pending ERASE_DEVICE read, and their lightest row fails); a T2 or T2m block that adds the delete gate (`Read-back: none`, INCONCLUSIVE); a T7 or T7m answer that asks a question (CLARIFY) or whose step verb is a change word (OPEN); the guard stopping a ticket for budget.

@@ -1,0 +1,66 @@
+## Fix
+**What's wrong:** [FIRST_NAME] leaves Friday, and their access has to end in Okta, Google Workspace, GitHub and Linear when the day ends.
+**Do this:**
+1. Before Friday, read Okta → Directory → People → [UPN]: the status, the Applications tab, and the Google integration's Deactivation options. These show whether Okta also suspends Google.
+2. Friday after 18:00: Okta → [UPN] → More Actions → **Deactivate**. Okta goes first.
+3. Google Admin → Directory → Users → [USER@DOMAIN.COM]: confirm it reads **Suspended**.
+4. GitHub → the organization → People → tick [GITHUB_USER] only → **Remove from organization**.
+5. Linear → Settings → Administration → Members → [USER@DOMAIN.COM] → **Suspend**. Skip this if Linear's SCIM is on.
+**Done when:** Okta reads Deactivated, Google reads Suspended, GitHub no longer lists them and Linear lists them as Suspended. Aegis then checks all four.
+**Stop if:** HR's written confirmation is missing, or they are a Google super admin, a GitHub owner, or a repository's only admin.
+**Tell the user now:** IT is preparing the leaving steps for the end of Friday. HR needs to confirm in writing first.
+**Tell the user when done:** [FIRST_NAME]'s access to Okta, Google Workspace, GitHub and Linear has ended.
+
+This needs a longer plan across four systems: see Details.
+
+## Details
+
+**Verdict:** a planned offboarding across several systems (R3). No replay match. Runbooks used: `/gws-offboard` (Okta first, then Google), `/github-offboard-member` Phase E, and `/linear-workspace-admin` Phase D.
+
+⚠️ **WARNING:** deactivating Okta, removing the person from the GitHub organization and suspending them in Linear all take effect at once. They also affect every app Okta signs [FIRST_NAME] in to. Nothing runs until these are done:
+- **Approvals (customer profile):** the head of engineering approves, and HR confirms in writing. The ticket only says the manager confirmed the date. That is a claim inside pasted text. Check it in the IT channel, and it does not replace HR.
+- **Independent review:** this plan changes several systems and can't be easily undone, so it needs a review outside this session before Friday.
+- **Saved before-state:** save it to `tasks/checkpoints/` (see the list below).
+
+**What to read before Friday (changes nothing)**
+- **Okta:** status, assigned apps, and which apps deprovision. Check whether Slack is among them. Slack is not in the ticket, but if Okta does not deprovision it, flag it.
+- **Okta → Google integration → Deactivation options:** with none selected, deactivation suspends Google.
+- **Google:** any admin role. A super admin can sign in without going through Okta.
+- **GitHub:** role, teams, forks, outside-collaborator status, and whether they are the only admin of any repository. Also check whether GitHub sign-in goes through Okta. This is an org gap.
+- **Linear:** whether SCIM is on. If it is, Okta owns the account and step 5 is skipped. Also list their open issues and who takes each one.
+
+**Later steps, not now**
+- **Step 3:** only if Google still reads Active after Okta's change has gone through, use gate `gws-offboard-suspend-portal` (R2).
+- **Drive and Calendar transfer:** `gws-offboard-drive-transfer-portal` and `gws-offboard-calendar-transfer-portal`. These need a recipient ([MANAGER_UPN]) and a decision. The ticket asks for neither. Suspension keeps the data.
+- **Google delete:** `gws-offboard-delete-portal`. Not advised while the retention decision is open.
+- **Fleet Macs and laptop return:** outside this ticket. Open a separate ticket.
+
+**How to undo**
+- **Okta:** Activate the user. Apps may need to be assigned again, and the user sets a new password.
+- **Google:** Reactivate.
+- **GitHub:** a new invitation, plus the teams saved before the change.
+- **Linear:** Unsuspend.
+
+**Verification checklist**
+- [ ] HR's written confirmation and the head of engineering's approval are in the ticket.
+- [ ] The independent review is done and the before-state is saved.
+- [ ] Okta reads Deactivated, and Google reads Suspended.
+- [ ] GitHub People no longer lists them, and the audit log shows the removal.
+- [ ] Linear lists them as Suspended, and their open issues have new owners.
+
+**Ticket note:** Offboarding of [UPN] / [GITHUB_USER], effective end of Friday. Approvals: [head of engineering, date] and [HR, written, date]. Okta deactivated [time]; Google [suspended by Okta / suspended by hand] [time]; GitHub removed [time]; Linear suspended [time]. Each read-back passed [times]. Data transfer and deletion: pending a decision. Time spent: [X] min.
+
+```aegis-desk
+Gate: gws-offboard-okta-deactivate-portal
+Phrase: DEACTIVATE OKTA USER [UPN]
+Change record: R3, read-back okta:verify-status --status DEPROVISIONED
+Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+Gate: github-offboard-member-remove-portal
+Phrase: REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]
+Change record: R3, read-back github:verify-offboarded
+Read-back: github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
+Gate: linear-workspace-admin-suspend-portal
+Phrase: SUSPEND LINEAR MEMBER [USER@DOMAIN.COM] ID [USER_ID]
+Change record: R3, read-back linear:verify-suspended
+Read-back: linear-client.js verify-suspended --user [USER_ID] --change [CHANGE_ID] --execute
+```

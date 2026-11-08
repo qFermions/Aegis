@@ -1,0 +1,55 @@
+## Fix
+**What's wrong:** A managed MacBook with client files was stolen, and its Google and Slack sessions may still be signed in.
+**Do this:**
+1. Call the studio manager back on the staff-list number. Then open Jamf Pro → Computers → Search inventory → [SERIAL_NUMBER] and read the last check-in, FileVault, bootstrap token and History. FileVault on means the files are encrypted. A check-in after the theft means someone has the Mac online.
+2. Admin console → Directory → Users → [USER@DOMAIN.COM] → Security → Sign-in cookies → Reset.
+3. Save a six-digit PIN in the password manager. Then Jamf Pro → [SERIAL_NUMBER] → Management → Lock Computer.
+4. Ask the designer to sign out of all other Slack sessions from another device.
+5. Last resort: Wipe Computer, if the client files must not survive. It needs both managers' approval.
+
+**Done when:** Jamf History shows the lock completed. Aegis checks the lock and the cookie reset.
+**Stop if:** FileVault is off or the Mac checked in after the theft. That makes it a data-exposure incident.
+**Tell the user now:** IT is checking the laptop's status and protecting your accounts. Please don't sign in on new devices until IT contacts you.
+**Tell the user when done:** Your accounts are signed out everywhere and the laptop can't be used.
+
+This needs a longer plan across three systems: see Details.
+
+## Details
+
+**Verdict:** IR-03 lost or stolen device. Runbooks: `/jamf-lock-erase` (Phases A and B, with C as the later rung) and `/gws-password-reset` (Phase C). The desk's replay lookup was a MISS. Today is Saturday, outside the studio's hours, so the call-back and approvals may take longer. I don't promise a time.
+
+**Why the steps are in this order**
+- **Look first:** the Jamf record decides everything else. A lock or wipe only runs when the Mac next checks in. Until then, FileVault and Activation Lock are what protect the client files.
+- **Lightest first:** the Google cookie reset (R1) deletes nothing. The lock (R2) is undone with the PIN. The wipe (R3) can't be undone, so it waits.
+- **Approval:** the studio manager approves the cookie reset and the lock, but only after the call-back confirms who they are. A ticket that says it's from the studio manager doesn't prove that.
+
+**Later rungs (not in the block below)**
+- Step 5, only if the client files must not survive (for example, FileVault is off, or the client contract requires it), and only after the designer's manager approves and an independent review: gate `jamf-lock-erase-wipe-portal`. On Apple silicon the wipe needs an escrowed bootstrap token.
+- If Phase A shows FileVault off, or the designer's Google password was saved on the Mac: a Google password reset under `/gws-password-reset` Phase B.
+
+**Slack:** no runbook covers signing out a single Slack member. Step 4 is reasoning, not a known fix. The only admin gate the runbooks have is a workspace-wide session reset (`slack-user-lifecycle-session-reset-portal`, R3, signs everyone out). Don't use it here. If the studio's Slack sign-in goes through Google, step 2 also ends that route.
+
+**Risk**
+- The wipe destroys everything on the Mac permanently. Before anyone approves it, confirm the client files also exist in Drive.
+- The PIN goes only in the password manager. Never put it in the ticket or in chat.
+- The police report number goes in the ticket, by reference.
+
+**Verification checklist**
+- [ ] Call-back done and studio manager's approval recorded
+- [ ] Phase A facts recorded: management ID, macOS version, chip, FileVault, bootstrap token, last check-in
+- [ ] Admin log event for the cookie reset on [USER@DOMAIN.COM] found
+- [ ] Lock read-back passed, or Jamf History shows the lock completed (if the Mac stays offline, it stays pending)
+- [ ] Client and insurer notification decision recorded
+
+**Jira-ready note (partial state until every read-back passes)**
+> Stolen MacBook [SERIAL_NUMBER], police report filed. Requester verified by call-back. Jamf pre-state: macOS [version], [chip], FileVault [on/off], bootstrap token [escrowed/not], last check-in [date]. Google sign-in cookies reset [timestamp]. Lock Computer sent [timestamp], status [pending/acknowledged], PIN in the password manager entry [name]. Wipe: [not needed / pending approval from both managers and review]. Next owner: [ADMIN_NAME].
+
+```aegis-desk
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event RESET_SIGNIN_COOKIES --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+Gate: jamf-lock-erase-lock-portal
+Phrase: LOCK MAC [SERIAL_NUMBER]
+Change record: R2, read-back jamf:verify-command --not-before --type DEVICE_LOCK
+Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```

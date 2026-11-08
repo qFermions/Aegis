@@ -1,0 +1,21 @@
+Mutation 1: no <details> boundary
+applied: 1
+ℹ fail 1
+ℹ pass 12
+✖ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (13.595375ms)
+Mutation 2: an undo phase is a rung too
+applied: 1
+ℹ fail 1
+ℹ pass 12
+✖ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (11.487792ms)
+Mutation 3: no phase ranges
+applied: 1
+ℹ fail 1
+ℹ pass 12
+✖ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (13.321083ms)
+Mutation 4: the fallback word anywhere on the answer line
+applied: 1
+ℹ fail 1
+ℹ pass 12
+✖ code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out (13.472708ms)
+restored: same

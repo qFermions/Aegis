@@ -1,0 +1,31 @@
+Mutation 1: stepChange reads every word (batch 9's rule)
+applied: 1
+ℹ fail 5
+ℹ pass 61
+✖ batch 10, task 2, pair 1: "Read the install log" is a look; "Install the printer driver" is a change (0.082667ms)
+✖ batch 10, task 2, pair 2: a reset named as a noun is a look; the verb after "then", "please" or a leading condition is a change (0.115542ms)
+✖ batch 10, task 2, pair 3: words inside a user check the tech relays do not count; the asked verb itself and a second sentence of the tech's own do (0.119541ms)
+✖ batch 10, task 2, pair 4: a verb after a leading place phrase or "only" counts; a look after one is still a look (0.145917ms)
+✖ batch 10, task 2: the T7m and T7 answers of full runs 4 and 5 only look ("a macOS update", "a large update" are nouns) (0.522792ms)
+Mutation 2: no stop after a relayed ask
+applied: 1
+ℹ fail 1
+ℹ pass 65
+✖ batch 10, task 2, pair 3: words inside a user check the tech relays do not count; the asked verb itself and a second sentence of the tech's own do (0.363583ms)
+Mutation 3: no short-label lead
+applied: 1
+ℹ fail 2
+ℹ pass 64
+✖ a change hidden before the first step, on the label line, or after a stray label still counts (0.667042ms)
+✖ batch 10, task 2, pair 2: a reset named as a noun is a look; the verb after "then", "please" or a leading condition is a change (0.211291ms)
+Mutation 4: no split at then
+applied: 1
+ℹ fail 1
+ℹ pass 65
+✖ batch 10, task 2, pair 2: a reset named as a noun is a look; the verb after "then", "please" or a leading condition is a change (0.364417ms)
+Mutation 5: the first word of the step only, no sentences
+applied: 1
+ℹ fail 1
+ℹ pass 65
+✖ batch 10, task 2, pair 3: words inside a user check the tech relays do not count; the asked verb itself and a second sentence of the tech's own do (0.394208ms)
+restored: same

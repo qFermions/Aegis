@@ -85,6 +85,12 @@ const ROUTES = {
     if (req.method === 'POST') return token();
     const m = /^\/admin\/directory\/v1\/users\/([^/]+)$/.exec(p);
     if (m) return state.gws.users[SEGMENT(m[1])] ? ok(state.gws.users[SEGMENT(m[1])]) : notFound();
+    // batch 10, task 4: the Data Transfer API's transfers.get, one transfer by its ID
+    const dt = /^\/admin\/datatransfer\/v1\/transfers\/([^/]+)$/.exec(p);
+    if (dt) {
+      const found = (state.gws.transfers || []).find((x) => x.id === SEGMENT(dt[1]));
+      return found ? ok(found) : notFound();
+    }
     // batch 9, task 7: the Reports API's admin events, by actor, application, event name and start time
     const a = /^\/admin\/reports\/v1\/activity\/users\/([^/]+)\/applications\/([^/]+)$/.exec(p);
     if (a) {
@@ -110,7 +116,8 @@ const ROUTES = {
     if (p === '/api/v2/mdm/commands') {
       const id = filterValue(req, 'clientManagementId');
       const d = jamfDevices.find((x) => x.management_id === id);
-      const sent = d ? (d.mdm_commands || []).map((c) => ({ clientManagementId: id, ...c })) : [];
+      // the record fields Jamf documents (vendor fact J-11): client.managementId, commandType, commandState
+      const sent = d ? (d.mdm_commands || []).map((c, i) => ({ uuid: `sim-command-${i + 1}`, client: { managementId: id, clientType: 'COMPUTER' }, commandType: c.command, commandState: String(c.status).toUpperCase(), dateSent: c.dateSent, ...(c.dateCompleted ? { dateCompleted: c.dateCompleted } : {}) })) : [];
       return ok({ totalCount: sent.length, results: sent });
     }
     return notFound();

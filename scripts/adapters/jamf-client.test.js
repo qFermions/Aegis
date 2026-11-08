@@ -374,7 +374,6 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
     ['another Mac', [command({ clientManagementId: 'another-management-id' })]],
     ['another command type', [command({ command: 'DEVICE_LOCK' })]],
     ['another profile, acknowledged', [command({ profileIdentifier: PIDS[8] })]],
-    ['a profile command that names no profile', [command({ profileIdentifier: undefined })]],
     ['no commands', []],
   ];
   for (const [label, results] of notProof) {
@@ -403,6 +402,46 @@ test('verify-command: an acknowledged command of that type for that Mac, sent at
   assert.equal(undated.json.verified, false, 'no send time');
   assert.equal(undated.json.observed.match, null, 'no send time');
   assert.equal(typeof undated.json.reason, 'string', 'no send time');
+  // batch 10: Jamf's MdmCommand record, as its reference lists it (vendor fact J-08), carries no profileIdentifier,
+  // so an acknowledged profile command of that type for this Mac that names no profile may be the one asked for:
+  // INCONCLUSIVE (exit 5), never proof; it was exit 2 ("not done") in the list above, a false failure against a
+  // record of the documented shape. Wrong implementation it catches: a record with no identifier read as another
+  // profile's. One that names another profile is still not proof and still exit 2 (the list above).
+  const unnamed = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ profileIdentifier: undefined })] })] });
+  assert.equal(unnamed.code, 5, 'a profile command that names no profile');
+  assert.equal(unnamed.json.state, STATES.INCONCLUSIVE, 'a profile command that names no profile');
+  assert.equal(unnamed.json.verified, false, 'a profile command that names no profile');
+  assert.equal(unnamed.json.observed.match, null, 'a profile command that names no profile');
+  assert.match(unnamed.json.reason, /names? no profileIdentifier/);
+  const unnamedOld = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ profileIdentifier: undefined, dateSent: '2026-10-27T08:59:59Z' })] })] });
+  assert.equal(unnamedOld.code, 2, 'one sent before --not-before is not the one asked for');
+  // Code review round 1 (batch 10), finding 13: a record that carries a field in both forms (the documented name and
+  // the filter's) with two different values is not proof either way, as this adapter's header says of a doubled
+  // field. Wrong implementation it catches: one form picked quietly, so a conflicting record passes.
+  for (const [label, over] of [['two states', { commandState: 'ACKNOWLEDGED', status: 'Error' }], ['two Macs', { client: { managementId: MID }, clientManagementId: 'another-management-id' }], ['two types', { commandType: 'INSTALL_PROFILE', command: 'REMOVE_PROFILE' }]]) {
+    const doubled = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command(over)] })] });
+    assert.equal(doubled.code, 5, label);
+    assert.equal(doubled.json.verified, false, label);
+  }
+  const agreeing = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandType: 'INSTALL_PROFILE', commandState: 'ACKNOWLEDGED', client: { managementId: MID } })] })] });
+  assert.equal(agreeing.code, 0, 'both forms with the same values are one field');
+  // Code review round 2 (batch 10), class D2: a filter-named field set to null, or written in another spelling
+  // (NOT_NOW against NotNow), is no second value; and a doubled record sent before --not-before or for another
+  // profile cannot be the command asked for, so it does not make the read inconclusive. Wrong implementations it
+  // catches: null read as a value; a doubled record counted before the time and profile checks.
+  const nulls = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ client: { managementId: MID }, commandType: 'INSTALL_PROFILE', commandState: 'ACKNOWLEDGED', clientManagementId: null, command: null, status: null })] })] });
+  assert.equal(nulls.code, 0, 'a null filter-named field is no second value');
+  const spelled = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandState: 'NOT_NOW', status: 'NotNow' })] })] });
+  assert.equal(spelled.code, 5, 'NOT_NOW: not answered yet');
+  assert.equal(spelled.json.observed.doubledFieldCommands, undefined, 'one state in two spellings is not doubled');
+  // Code review round 3 (batch 10), class D3: one type in two spellings is one value, so the type match must read it
+  // the same way. Wrong implementation it catches: an exact type match after a spelling-blind doubled check.
+  const twoSpellings = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command({ commandType: 'InstallProfile', command: 'INSTALL_PROFILE', commandState: 'ACKNOWLEDGED' })] })] });
+  assert.equal(twoSpellings.code, 0, 'InstallProfile and INSTALL_PROFILE are one type');
+  for (const [label, over] of [['sent before --not-before', { commandState: 'ACKNOWLEDGED', status: 'Error', dateSent: '2026-10-27T08:59:59Z' }], ['for another profile', { commandState: 'ACKNOWLEDGED', status: 'Error', profileIdentifier: PIDS[8] }]]) {
+    const old = await cli(VC, { replies: [tokenReply(), ok({ totalCount: 1, results: [command(over)] })] });
+    assert.equal(old.code, 2, `a doubled record ${label} is not the one asked for`);
+  }
   const shapeless = await cli(VC, { replies: [tokenReply(), ok({ nothing: true })] });
   assert.equal(shapeless.code, 5); // batch G4, task D1: an answer with no results list is INCONCLUSIVE
   assert.equal(shapeless.json.state, STATES.INCONCLUSIVE);
@@ -422,6 +461,32 @@ test('verify-command reads further pages while a page is full, and stops after t
   assert.equal(bounded.json.verified, false);
   assert.equal(bounded.transport.calls.length, 11, 'one token exchange and at most ten pages');
   assert.match(bounded.json.reason, /10 pages/);
+});
+
+// Batch 10, task 3: Jamf's GET /api/v2/mdm/commands reference (vendor fact J-08, J-11) names the
+// record fields client.managementId, commandType and commandState (PENDING, ACKNOWLEDGED, NOT_NOW,
+// ERROR, COMMAND_FORMAT_ERROR); clientManagementId, command and status are the filter's field names.
+// catches: a client that reads only the filter names, so every documented record is skipped and a
+// lock the Mac acknowledged reads as not done (exit 2); and one that reads NOT_NOW as a failure.
+const documented = (over = {}) => ({ uuid: 'cmd-doc', client: { managementId: MID, clientType: 'COMPUTER' }, commandType: 'DEVICE_LOCK', commandState: 'ACKNOWLEDGED', dateSent: '2026-10-27T09:30:00Z', dateCompleted: '2026-10-27T09:31:00Z', ...over });
+const VL = ['verify-command', '--management-id', MID, '--type', 'DEVICE_LOCK', '--not-before', NB, '--execute'];
+test('verify-command reads the record fields Jamf documents: client.managementId, commandType and commandState', async () => {
+  const yes = await cli(VL, { replies: [tokenReply(), ok({ totalCount: 1, results: [documented()] })] });
+  assert.equal(yes.code, 0, JSON.stringify(yes.json));
+  assert.equal(yes.json.verified, true);
+  assert.equal(yes.json.observed.match.uuid, 'cmd-doc');
+  assert.equal(yes.json.observed.match.command, 'DEVICE_LOCK');
+  assert.equal(yes.json.observed.match.status, 'ACKNOWLEDGED');
+  for (const state of ['PENDING', 'NOT_NOW']) {
+    const later = await cli(VL, { replies: [tokenReply(), ok({ totalCount: 1, results: [documented({ commandState: state })] })] });
+    assert.equal(later.code, 5, `${state}: the Mac has not done it yet, which proves nothing either way`);
+    assert.equal(later.json.state, STATES.INCONCLUSIVE, state);
+  }
+  for (const [label, over] of [['an ERROR state', { commandState: 'ERROR' }], ['another Mac', { client: { managementId: 'another-management-id' } }], ['another type', { commandType: 'ERASE_DEVICE' }]]) {
+    const no = await cli(VL, { replies: [tokenReply(), ok({ totalCount: 1, results: [documented(over)] })] });
+    assert.equal(no.code, 2, label);
+    assert.equal(no.json.verified, false, label);
+  }
 });
 
 // ── verify-profile ───────────────────────────────────────────────────────────

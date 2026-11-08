@@ -74,11 +74,14 @@
 //     doubled or unexpected field is reported as not proven, never as proof.
 //   - The serial number filter field (hardware.serialNumber) is the one the G1 runbook
 //     uses; each Mac read-back first confirms the serial number on the record itself.
-//   - MDM command status values are not confirmed: only "Acknowledged" (any case)
-//     counts. The sort dateSent:desc uses the syntax the reference shows for asc. The
+//   - MDM command records: Jamf's reference names client.managementId, commandType and
+//     commandState (PENDING, ACKNOWLEDGED, NOT_NOW, ERROR, COMMAND_FORMAT_ERROR; vendor facts
+//     J-08 and J-11), read first; only ACKNOWLEDGED (any case) counts, and PENDING or NOT_NOW
+//     proves nothing either way. The sort dateSent:desc uses the syntax the reference shows for asc. The
 //     profileIdentifier filter and record field come from a search excerpt of the
 //     reference; a profile command counts only when the record itself carries the
-//     identifier asked for.
+//     identifier asked for, and one whose record carries none (the documented record has no
+//     such field, J-08) is INCONCLUSIVE, never proof and never a failed object (batch 10).
 //   - Whether an inventory configurationProfiles[].id is the console profile ID is not
 //     confirmed. verify-profile needs one entry whose id and profileIdentifier both
 //     match, and --absent needs neither to be listed and every entry to carry both.
@@ -561,6 +564,33 @@ async function verifyCheckedIn(client, a) {
   return verdict(command, ok, expected, observed, `the last contact is not at or after ${a.notBefore}; ask the person to open the Mac and run a check-in, then read again`, flags);
 }
 
+// Jamf's MdmCommand record names its fields client.managementId, commandType and commandState
+// (vendor fact J-08, J-11; batch 10, task 3); clientManagementId, command and status are the
+// filter's names, which the adapter's first fixtures used. The documented field wins when present.
+// A field in both forms with two different values is a doubled field: the record proves nothing either way
+// (doubled: true), as the header says (code review round 1 of batch 10, finding 13).
+const has = (x) => x !== undefined && x !== null && x !== '';
+// one value in two spellings (INSTALL_PROFILE, InstallProfile; NOT_NOW, NotNow) is one value (code review rounds 2
+// and 3 of batch 10, classes D2 and D3)
+const same = (x) => String(x).toLowerCase().replace(/[\s_-]/g, '');
+function commandFields(c) {
+  const client = isObject(c.client) ? c.client : {};
+  // null or an empty string is no value; one value in two spellings (NOT_NOW, NotNow) is one value (code review
+  // round 2 of batch 10, class D2)
+  const pick = (documented, filterName) => (has(documented) ? documented : filterName);
+  const differ = (documented, filterName) => has(documented) && has(filterName) && same(documented) !== same(filterName);
+  return {
+    ...c,
+    clientManagementId: pick(client.managementId, c.clientManagementId),
+    command: pick(c.commandType, c.command),
+    status: pick(c.commandState, c.status),
+    doubled: differ(client.managementId, c.clientManagementId) || differ(c.commandType, c.command) || differ(c.commandState, c.status),
+  };
+}
+// a command the Mac has not answered yet: Pending, or NOT_NOW (the Mac answered that it cannot run it
+// yet and it is sent again), proves nothing either way
+const NOT_ANSWERED = /^(?:pending|not_?now)$/i;
+
 async function verifyCommand(client, a) {
   const command = 'verify-command';
   const expected = COMMANDS[command].expected(a);
@@ -570,6 +600,8 @@ async function verifyCommand(client, a) {
   // a matching command still Pending (not yet acknowledged, not failed) may yet be acknowledged
   let pending = 0;
   let undated = 0;
+  let unnamedProfile = 0;
+  let doubledFields = 0;
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const r = await read(client, 'mdmCommands', {}, { filter: commandFilter(a.managementId, a.type, a.profileIdentifier), page: String(page) });
     if (!r.ok) return failed(command, r);
@@ -577,28 +609,40 @@ async function verifyCommand(client, a) {
     const list = isObject(r.raw) && Array.isArray(r.raw.results) ? r.raw.results : null;
     if (!list) return unproven(command, expected, observed, 'the MDM command response holds no results list, so this is not proof either way', flags);
     observed.pagesRead = page + 1;
-    for (const c of list) {
-      if (!isObject(c)) continue;
+    for (const record of list) {
+      if (!isObject(record)) continue;
       observed.commandsRead += 1;
-      const sameMac = typeof c.clientManagementId === 'string' && c.clientManagementId.toLowerCase() === a.managementId.toLowerCase();
-      if (!sameMac || c.command !== a.type) continue;
-      // A profile command for another profile (or one that names none) is never proof,
-      // even when the server ignores the profileIdentifier part of the filter.
-      if (a.profileIdentifier && c.profileIdentifier !== a.profileIdentifier) { observed.otherProfileCommands += 1; continue; }
+      const c = commandFields(record);
+      // a doubled record may be the one asked for when either form names this Mac and this type; it is then
+      // judged by its time and profile like any other, and counted as never proof (code review round 2 of
+      // batch 10, class D2: it was counted before those checks)
+      const macs = c.doubled ? [isObject(record.client) ? record.client.managementId : undefined, record.clientManagementId] : [c.clientManagementId];
+      const sameMac = macs.some((x) => typeof x === 'string' && x.toLowerCase() === a.managementId.toLowerCase());
+      if (!sameMac || !(c.doubled ? [record.commandType, record.command] : [c.command]).some((x) => has(x) && same(x) === same(a.type))) continue;
+      // A profile command for another profile is never proof, even when the server ignores the
+      // profileIdentifier part of the filter. One that names no profile is not proof either, but it may
+      // be the one asked for: Jamf's MdmCommand record, as its reference lists it (vendor fact J-08),
+      // carries no profileIdentifier, so such a command sent at or after --not-before is counted and
+      // read as INCONCLUSIVE, never as a failed object (batch 10).
+      const unnamed = Boolean(a.profileIdentifier) && (c.profileIdentifier === undefined || c.profileIdentifier === null || c.profileIdentifier === '');
+      if (a.profileIdentifier && !unnamed && c.profileIdentifier !== a.profileIdentifier) { observed.otherProfileCommands += 1; continue; }
       const sent = typeof c.dateSent === 'string' ? Date.parse(c.dateSent) : NaN;
+      const answeredOrWaiting = typeof c.status === 'string' && (/^acknowledged$/i.test(c.status) || NOT_ANSWERED.test(c.status));
       // an Acknowledged or Pending command whose dateSent cannot be read may be the one asked
       // for: it is counted, not skipped (code review round 2 of batch G4, finding 4)
       if (!Number.isFinite(sent)) {
-        if (typeof c.status === 'string' && /^(?:acknowledged|pending)$/i.test(c.status)) undated += 1;
+        if (c.doubled) doubledFields += 1; else if (answeredOrWaiting) undated += 1;
         continue;
       }
       if (sent < notBefore) continue;
+      if (c.doubled) { doubledFields += 1; continue; }
+      if (unnamed) { if (answeredOrWaiting) unnamedProfile += 1; continue; }
       const summary = { uuid: orNull(c.uuid), command: c.command, profileIdentifier: orNull(c.profileIdentifier), status: orNull(c.status), dateSent: c.dateSent, dateCompleted: orNull(c.dateCompleted) };
       if (typeof c.status === 'string' && /^acknowledged$/i.test(c.status)) {
         observed.match = summary;
         return verdict(command, true, expected, observed, null, flags);
       }
-      if (typeof c.status === 'string' && /^pending$/i.test(c.status)) pending += 1;
+      if (typeof c.status === 'string' && NOT_ANSWERED.test(c.status)) pending += 1;
       if (observed.sameTypeSinceNotBefore.length < MAX_SUMMARIES) observed.sameTypeSinceNotBefore.push(summary);
     }
     if (list.length < PAGE_SIZE) {
@@ -614,6 +658,14 @@ async function verifyCommand(client, a) {
       const undatedWhy = `${undated} Acknowledged or Pending command${undated === 1 ? '' : 's'} for this Mac ha${undated === 1 ? 's' : 've'} a dateSent that is not a time, so ${undated === 1 ? 'it' : 'one'} may be the command asked for`;
       if (pending) return unproven(command, expected, observed, `${none}, and ${pending} still read${pending === 1 ? 's' : ''} Pending: the Mac has not answered yet${undated ? `; and ${undatedWhy}` : ''}, so this is not proof either way; read again after its next check-in`, flags);
       if (undated) return unproven(command, expected, observed, `${none}, and ${undatedWhy}: this is not proof either way`, flags);
+      if (doubledFields) {
+        observed.doubledFieldCommands = doubledFields;
+        return unproven(command, expected, observed, `${none}, and ${doubledFields} ${a.type} command record${doubledFields === 1 ? '' : 's'} for this Mac carr${doubledFields === 1 ? 'ies' : 'y'} a field in both forms (client.managementId and clientManagementId, commandType and command, or commandState and status) with two different values: this is not proof either way`, flags);
+      }
+      if (unnamedProfile) {
+        observed.unnamedProfileCommands = unnamedProfile;
+        return unproven(command, expected, observed, `${none}, and ${unnamedProfile} ${a.type} command${unnamedProfile === 1 ? '' : 's'} for this Mac sent at or after ${a.notBefore} name no profileIdentifier (Jamf's command record does not carry one, vendor fact J-08), so one may be the profile asked for: this is not proof either way; read the computer's Management History in Jamf Pro`, flags);
+      }
       return verdict(command, false, expected, observed, none, flags);
     }
   }

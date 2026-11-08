@@ -1,0 +1,35 @@
+Mutation 1: no entry for "is" touching the value
+applied: 1
+ℹ fail 1
+ℹ pass 14
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (0.305ms)
+Mutation 2: "pass" with any value
+applied: 1
+ℹ fail 2
+ℹ pass 13
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (2.024583ms)
+✖ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.219041ms)
+Mutation 3: matched on the text as typed only (no compatibility form)
+applied: 1
+ℹ fail 1
+ℹ pass 14
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.777042ms)
+Mutation 4: "is" touching any letters
+applied: 1
+ℹ fail 3
+ℹ pass 12
+✖ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.517958ms)
+✖ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.584292ms)
+✖ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.1695ms)
+restored: True
+Mutation 5: matched on the normalized copy only (the security review 1 regression)
+applied: 1
+ℹ fail 1
+ℹ pass 14
+✖ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.340167ms)
+Mutation 6: a space required before "is" (the security review 1 regression)
+applied: 1
+ℹ fail 1
+ℹ pass 14
+✖ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.302125ms)
+restored: True

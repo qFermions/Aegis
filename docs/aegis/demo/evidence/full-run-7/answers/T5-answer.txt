@@ -1,0 +1,64 @@
+## Fix
+**What's wrong:** Mail from one freight vendor has stopped reaching accounts payable, and we don't know the cause yet.
+
+**Do this:**
+1. Go to Exchange admin center → Mail flow → Message trace. Search sender [SENDER], recipient [USER@DOMAIN.COM], last 10 days. Quarantined: go to step 3. Delivered: go to step 2. Failed: read the event. No result: the mail never reached us.
+2. In that mailbox, check Junk, the inbox rules and blocked senders for anything that moves or deletes the vendor's mail.
+3. Go to Defender → Email & collaboration → Review → Quarantine. Open each held invoice and read the reason and the SPF, DKIM and DMARC results.
+4. If the reason is spam or bulk and all three checks pass, release each invoice to [USER@DOMAIN.COM] only.
+
+**Done when:** the invoices are in the inbox. Aegis then checks that each one shows as released.
+
+**Stop if:** the reason is phish or malware, or a rule forwards mail outside. Treat it as a security incident.
+
+**Tell the user now:** IT is tracing the vendor's messages. Please check your Junk folder in the meantime.
+
+**Tell the user when done:** The held invoices are in your inbox now. Tell us if another one goes missing.
+
+## Details
+
+**Verdict:** No runbook covers this exact problem from start to finish. The steps come from `/email-to-spam` (Message trace first) and `/email-quarantine` (review, then release to one recipient). Other vendors still get through, so the cause is specific to this sender. The likely causes are a spam or phish verdict, a mail flow rule, an inbox rule, or a block on the sender's side. Nothing is confirmed until the trace runs.
+
+**What each trace result means:**
+- **Quarantined:** Defender held the mail. Read the reason before releasing anything.
+- **Delivered, but the clerk can't see it:** something in the mailbox moved it: Junk, an inbox rule or a blocked sender.
+- **Failed or rejected:** read the event. A failing DMARC check or a mail flow rule name points to the cause. Fixing a failing check belongs to the vendor.
+- **No result:** the mail never reached the tenant. Ask the vendor for the bounce message they received.
+
+**Risk warning:**
+- ⚠️ This is invoice mail, which fraudsters target. If the trace shows a phish verdict or failing sender checks, do not release anything. If any invoice changes bank details, confirm with the vendor by phone at a number you already have, not one from the email.
+- Each release is R2: a delivered message can't be recalled. Each held invoice needs its own approval and its own release. The IT lead approves.
+- Changing a mail flow rule is not part of this rung. Under the customer profile it needs both the IT lead and the operations manager.
+- Step 4 is the change to run now. It covers only the invoices already held, so future invoices may still be held. Once the releases are confirmed, an allow entry with an expiry date is the later step: preview gate `quarantine-allow-entry`, routed to `/email-whitelist`. It is not in the block below.
+- The customer has no defined way to verify identity. The release goes only to the original recipient, so no identity change rests on the requester.
+
+<details>
+<summary>PowerShell - for reference only (read-only)</summary>
+
+```powershell
+Connect-ExchangeOnline -UserPrincipalName "[UPN]"   # sign in as an Exchange admin
+# Trace the vendor's mail to AP for the last 10 days (V2 replaces the retired Get-MessageTrace)
+Get-MessageTraceV2 -SenderAddress "[SENDER]" -RecipientAddress "[USER@DOMAIN.COM]" -StartDate (Get-Date).AddDays(-10) -EndDate (Get-Date)
+# List inbox rules in the AP mailbox: look for rules that move, delete or forward the vendor's mail
+Get-InboxRule -Mailbox "[USER@DOMAIN.COM]" | Select-Object Name, Enabled, From, MoveToFolder, DeleteMessage, ForwardTo, RedirectTo
+# List held messages for AP from this sender
+Get-QuarantineMessage -RecipientAddress "[USER@DOMAIN.COM]" -SenderAddress "[SENDER]"
+```
+</details>
+
+**Verification checklist:**
+- [ ] The trace result is recorded for each missing invoice
+- [ ] Inbox rules and Junk were checked, with nothing forwarding mail outside
+- [ ] The quarantine reason and the SPF, DKIM and DMARC results were reviewed for each item
+- [ ] Each release was confirmed by Aegis's check, and the clerk sees the invoices
+- [ ] An allow entry was handled as a separate step, or not requested
+
+**Jira-ready note:**
+> Vendor invoices missing for [SENDER] → [USER@DOMAIN.COM] since [DATE]. Trace result: [Quarantined / Delivered / Failed / none]. Cause: [verdict / rule / sender side]. Released [N] items, each to one recipient, approved by the IT lead. Allow entry: [not requested / separate ticket [JIRA-###]]. Time spent: [X] min.
+
+```aegis-desk
+Gate: quarantine-release-one-portal
+Phrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]
+Change record: R2, read-back exo:verify-quarantine-released
+Read-back: exo-client.js verify-quarantine-released --message-id "[MESSAGE_ID]" --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+```

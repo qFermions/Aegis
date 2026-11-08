@@ -1,0 +1,44 @@
+$ node --test --test-name-pattern verify-transfer scripts/adapters/gws-client.test.js
+✖ verify-transfer: one token exchange, then GET the transfer and both owners; the token asks for admin.datatransfer.readonly beside the read-only scopes, and a plain read does not (1.202ms)
+✔ verify-transfer: bad or missing arguments are refused with exit 1 before anything is read or sent (0.5815ms)
+✔ verify-transfer: the Data Transfer API allow-list is one GET of one transfer; inserts, lists and application reads are refused (0.384459ms)
+✖ verify-transfer passes only on a completed entry for the application, on the transfer asked for, from the old owner to the new owner (0.169959ms)
+✖ verify-transfer fails (exit 2) when the answer shows another transfer, another old owner or another new owner (0.101792ms)
+✖ verify-transfer is INCONCLUSIVE (exit 5) on any status but completed, no entry or two for the application, or a field it reads missing (0.105ms)
+ℹ tests 6
+ℹ pass 2
+ℹ fail 4
+✖ failing tests:
+✖ verify-transfer: one token exchange, then GET the transfer and both owners; the token asks for admin.datatransfer.readonly beside the read-only scopes, and a plain read does not (1.202ms)
+  AssertionError [ERR_ASSERTION]: {
+✖ verify-transfer passes only on a completed entry for the application, on the transfer asked for, from the old owner to the new owner (0.169959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+✖ verify-transfer fails (exit 2) when the answer shows another transfer, another old owner or another new owner (0.101792ms)
+  AssertionError [ERR_ASSERTION]: another transfer than the one asked for: 
+✖ verify-transfer is INCONCLUSIVE (exit 5) on any status but completed, no entry or two for the application, or a field it reads missing (0.105ms)
+  AssertionError [ERR_ASSERTION]: in progress: 
+exit 1
+
+# the desk tests, run at 131a243 (before the transfer read) in a separate checkout with this test file copied in:
+$ node --test --test-name-pattern transfer scripts/demo/batch10-readbacks.test.js
+✖ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.598875ms)
+✖ task 4: gws-offboard-drive-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (137.608917ms)
+✖ task 4: gws-offboard-calendar-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (110.608625ms)
+ℹ tests 3
+ℹ pass 0
+ℹ fail 3
+✖ failing tests:
+✖ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.598875ms)
+  AssertionError [ERR_ASSERTION]: gws-offboard-drive-transfer-portal
+    actual: 0,
+    expected: 1,
+✖ task 4: gws-offboard-drive-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (137.608917ms)
+  AssertionError [ERR_ASSERTION]: at least one change cannot be proved by a read-back, so the ticket is not resolved
+    actual: 'INCONCLUSIVE',
+    expected: 'RESOLVED (SIMULATED)',
+✖ task 4: gws-offboard-calendar-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (110.608625ms)
+  AssertionError [ERR_ASSERTION]: at least one change cannot be proved by a read-back, so the ticket is not resolved
+    actual: 'INCONCLUSIVE',
+    expected: 'RESOLVED (SIMULATED)',
+exit 1
+# note: the two refusal tests above pass before the code because an unknown command and an unlisted route are refused already; they hold the new validator and route to the same refusals.

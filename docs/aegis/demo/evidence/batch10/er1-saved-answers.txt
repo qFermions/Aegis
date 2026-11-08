@@ -1,0 +1,52 @@
+Every saved answer of full runs 1 to 7 and batch 9b: the look-first rule at 1a719ed (scripts/demo/answer.js as it was) and at the head after evidence review 1, and how a Gate: none answer closes at step 6 (CLARIFY, INVESTIGATE or OPEN; 'gates named' when the answer names a gate). Made by a scratch script that requires both versions of answer.js.
+full-run-2 T1-answer.txt: at 1a719ed looks=false (Revoke), now looks=false (delete); Gate: none answer closes gates named then, gates named now
+full-run-2 T2-answer.txt: at 1a719ed looks=false (Deactivate), now looks=false (Deactivated); Gate: none answer closes gates named then, gates named now
+full-run-2 T3-answer.txt: at 1a719ed looks=false (Reset), now looks=false (wipe); Gate: none answer closes gates named then, gates named now
+full-run-2 T4-answer.txt: at 1a719ed looks=false (add), now looks=false (add); Gate: none answer closes gates named then, gates named now
+full-run-2 T5-answer.txt: at 1a719ed looks=true (-), now looks=true (-); Gate: none answer closes INVESTIGATE then, INVESTIGATE now
+full-run-2 T6-answer.txt: at 1a719ed looks=false (Suspend), now looks=false (Reactivate); Gate: none answer closes gates named then, gates named now
+full-run-2 T7-answer.txt: at 1a719ed looks=true (-), now looks=true (-); Gate: none answer closes CLARIFY then, CLARIFY now
+full-run-2 T8-answer.txt: at 1a719ed looks=false (add), now looks=false (add); Gate: none answer closes gates named then, gates named now
+full-run-3 T1m-answer.txt: at 1a719ed looks=false (change), now looks=false (Delete); Gate: none answer closes gates named then, gates named now
+full-run-3 T2m-answer.txt: at 1a719ed looks=false (Deactivate), now looks=false (Deactivated); Gate: none answer closes gates named then, gates named now
+full-run-3 T3m-answer.txt: at 1a719ed looks=false (Reset), now looks=false (wipe); Gate: none answer closes gates named then, gates named now
+full-run-3 T4m-answer.txt: at 1a719ed looks=false (add), now looks=false (add); Gate: none answer closes gates named then, gates named now
+full-run-3 T5m-answer.txt: at 1a719ed looks=false (Release), now looks=false (Release); Gate: none answer closes gates named then, gates named now
+full-run-3 T6m-answer.txt: at 1a719ed looks=false (Reset), now looks=false (reset); Gate: none answer closes gates named then, gates named now
+full-run-3 T7m-answer.txt: at 1a719ed looks=true (-), now looks=true (-); Gate: none answer closes INVESTIGATE then, INVESTIGATE now
+full-run-3 T8m-answer.txt: at 1a719ed looks=false (add), now looks=false (add); Gate: none answer closes gates named then, gates named now
+full-run-4 T1m-answer.txt: at 1a719ed looks=false (approves), now looks=false (adds); Gate: none answer closes gates named then, gates named now
+full-run-4 T2m-answer.txt: at 1a719ed looks=false (Deactivate), now looks=false (move); Gate: none answer closes gates named then, gates named now
+full-run-4 T3m-answer.txt: at 1a719ed looks=false (Reset), now looks=false (Wipe); Gate: none answer closes gates named then, gates named now
+full-run-4 T4m-answer.txt: at 1a719ed looks=false (Edit), now looks=false (add); Gate: none answer closes gates named then, gates named now
+full-run-4 T5m-answer.txt: at 1a719ed looks=false (Release), now looks=false (Release); Gate: none answer closes gates named then, gates named now
+full-run-4 T6m-answer.txt: at 1a719ed looks=false (Reset), now looks=false (Reset); Gate: none answer closes gates named then, gates named now
+full-run-4 T7m-answer.txt: at 1a719ed looks=false (update), now looks=true (-); Gate: none answer closes OPEN then, INVESTIGATE now  <- changed
+full-run-4 T8m-answer.txt: at 1a719ed looks=false (Edit), now looks=false (grant); Gate: none answer closes gates named then, gates named now
+full-run-4 T9m-answer.txt: at 1a719ed looks=false (restart), now looks=false (reset); Gate: none answer closes gates named then, gates named now
+full-run-5 T1-answer.txt: at 1a719ed looks=false (approve), now looks=false (approve); Gate: none answer closes gates named then, gates named now
+full-run-5 T2-answer.txt: at 1a719ed looks=false (Deactivate), now looks=false (Suspend); Gate: none answer closes gates named then, gates named now
+full-run-5 T3-answer.txt: at 1a719ed looks=false (reset), now looks=false (lock); Gate: none answer closes gates named then, gates named now
+full-run-5 T4-answer.txt: at 1a719ed looks=false (add), now looks=false (add); Gate: none answer closes gates named then, gates named now
+full-run-5 T5-answer.txt: at 1a719ed looks=false (moves), now looks=false (released); Gate: none answer closes gates named then, gates named now
+full-run-5 T6-answer.txt: at 1a719ed looks=false (enabled), now looks=false (reset); Gate: none answer closes gates named then, gates named now
+full-run-5 T7-answer.txt: at 1a719ed looks=false (update), now looks=true (-); Gate: none answer closes OPEN then, INVESTIGATE now  <- changed
+full-run-5 T8-answer.txt: at 1a719ed looks=false (add), now looks=false (add); Gate: none answer closes gates named then, gates named now
+batch9b/T9m T9m-answer.txt: at 1a719ed looks=false (update), now looks=false (Reset); Gate: none answer closes gates named then, gates named now
+full-run-6 T1m-answer.txt: at 1a719ed looks=false (add), now looks=false (approve); Gate: none answer closes gates named then, gates named now
+full-run-6 T2m-answer.txt: at 1a719ed looks=false (Deactivate), now looks=false (Lock); Gate: none answer closes gates named then, gates named now
+full-run-6 T3m-answer.txt: at 1a719ed looks=false (Reset), now looks=false (wipe); Gate: none answer closes gates named then, gates named now
+full-run-6 T4m-answer.txt: at 1a719ed looks=false (Add), now looks=false (Add); Gate: none answer closes gates named then, gates named now
+full-run-6 T5m-answer.txt: at 1a719ed looks=false (release), now looks=false (release); Gate: none answer closes gates named then, gates named now
+full-run-6 T6m-answer.txt: at 1a719ed looks=false (approved), now looks=true (-); Gate: none answer closes gates named then, gates named now  <- changed
+full-run-6 T7m-answer.txt: at 1a719ed looks=true (-), now looks=true (-); Gate: none answer closes INVESTIGATE then, INVESTIGATE now
+full-run-6 T8m-answer.txt: at 1a719ed looks=false (Grant), now looks=false (Grant); Gate: none answer closes gates named then, gates named now
+full-run-6 T9m-answer.txt: at 1a719ed looks=false (restarts), now looks=false (reset); Gate: none answer closes gates named then, gates named now
+full-run-7 T1-answer.txt: at 1a719ed looks=false (change), now looks=false (adds); Gate: none answer closes gates named then, gates named now
+full-run-7 T2-answer.txt: at 1a719ed looks=false (suspends), now looks=false (Deactivated); Gate: none answer closes gates named then, gates named now
+full-run-7 T3-answer.txt: at 1a719ed looks=false (Reset), now looks=false (Wipe); Gate: none answer closes gates named then, gates named now
+full-run-7 T4-answer.txt: at 1a719ed looks=false (Edit), now looks=false (restart); Gate: none answer closes gates named then, gates named now
+full-run-7 T5-answer.txt: at 1a719ed looks=false (moves), now looks=false (release); Gate: none answer closes gates named then, gates named now
+full-run-7 T6-answer.txt: at 1a719ed looks=false (added), now looks=false (reset); Gate: none answer closes gates named then, gates named now
+full-run-7 T7-answer.txt: at 1a719ed looks=true (-), now looks=true (-); Gate: none answer closes CLARIFY then, CLARIFY now
+full-run-7 T8-answer.txt: at 1a719ed looks=false (Edit), now looks=false (restart); Gate: none answer closes gates named then, gates named now

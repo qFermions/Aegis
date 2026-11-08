@@ -1,0 +1,42 @@
+## Fix
+**What's wrong:** [UPN] needs the same billing mailbox access an existing colleague already has.
+**Do this:**
+1. Get the managing partner's approval, and confirm the request by calling the requester back on the staff-list number.
+2. Go to Exchange admin center → Recipients → Mailboxes → billing → Mailbox Delegation. Copy all three lists into the ticket and note which rights the colleague has.
+3. Add [UPN] to Read and manage (Full Access).
+4. Add [UPN] to Send as if the colleague has it.
+
+**Done when:** billing shows in [UPN]'s Outlook and a test reply shows billing as the sender. Aegis then checks both rights.
+**Stop if:** billing is not a shared mailbox, or the colleague has "Send on behalf" instead of "Send as".
+**Tell the user now:** IT is setting up your billing inbox access after the managing partner approves it. We'll tell you when it's ready.
+**Tell the user when done:** You now have the billing inbox in Outlook and can reply from it. If it doesn't show, restart Outlook.
+
+## Details
+- **Runbook:** `/shared-mailbox`, grant access. The replay lookup missed, so this follows the runbook, not a cached fix.
+- **What "same as the colleague" means:** to answer client email, they need **Full Access** (to read the mailbox) and **Send as** (so replies come from billing). Copy only the rights the step 2 lists show the colleague has. Don't add anything extra.
+- **Send on behalf:** this runbook only previews it and has no gate for it. If the colleague has that right, stop and escalate.
+- **Identity and approval:** someone other than [UPN] made this request. Under Customer E's profile, the call-back confirms the request and the managing partner approves the change. Record both in the ticket before step 3.
+- **Risk:** both grants are R2. What [UPN] reads, and any mail sent as billing, can't be taken back. That's why step 2 saves the "before" lists first.
+- **Rollback:** use `/mailbox-permissions` to remove Full Access (gate `mailbox-permission-remove-portal`) and Send as (gate `mailbox-send-as-remove-portal`).
+- **Outlook:** the mailbox can take a while to show up in Outlook after the grant. A restart usually brings it in. If not, re-add the mailbox to the profile.
+- **Timing:** the ticket asks for access by Monday. The grants can be done during business hours (Mon–Fri, 08:30–17:30) once the partner approves.
+
+**Verification checklist**
+- [ ] Before-state lists are saved in the ticket
+- [ ] Partner approval and call-back are recorded
+- [ ] [UPN] has Full Access (and Send as, only if the colleague has it), and nothing more
+- [ ] Billing appears in Outlook and a test reply shows billing as the sender
+
+**Jira-ready note**
+> Request: billing shared mailbox access for [UPN], matching an existing delegate. Approved by managing partner ([MANAGER_NAME]) on [date]; request confirmed by call-back to the staff-list number. Before-state saved. Granted: Full Access [verified / not verified]; Send As [verified / not verified / not requested]. Test reply From line: [result]. Time: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

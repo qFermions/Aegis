@@ -407,8 +407,11 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // mailbox-full-access-grant-portal, mailbox-send-as-grant-portal, shared-mailbox-full-access-portal and
   // shared-mailbox-send-as-portal, and the verify-quarantine-released lines of quarantine-release-all-portal
   // and quarantine-release-one-portal (93 to 99); batch 9, task 7: jamf-lock-erase-wipe-portal's
-  // verify-command line (99 to 100)
-  assert.equal(bound, 100, 'the 100 read-backs of R2 and R3 gates');
+  // verify-command line (99 to 100); batch 10, task 3: jamf-lock-erase-lock-portal's verify-command
+  // --type DEVICE_LOCK line (100 to 101); task 4: gws-offboard-okta-deactivate-portal's verify-status
+  // --status DEPROVISIONED line (101 to 102), and the verify-transfer lines of gws-offboard-drive-transfer-portal
+  // and gws-offboard-calendar-transfer-portal (102 to 104)
+  assert.equal(bound, 104, 'the 104 read-backs of R2 and R3 gates');
   // code review round 1 of the batch G3 close-out 3, finding 9: the Jamf pilot read under the
   // removal from All Computers is no longer a line there (76 to 75); round 3, finding 3: it is read
   // after the removals in an R0 section of its own (75 to 76); batch 8, task 3: the verify lines of
@@ -417,7 +420,8 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // (73 to 74); task 7: the R1 gws-password-reset-password-portal's verify-event read runs unbound (74 to 75)
   // code review round 1 of batch 9, finding 13: the R1 mailbox-permission-remove-portal's own --absent read (75 to 76)
   // batch 9b: the R1 okta-mfa-reset-clear-sessions-portal's own verify-sessions-cleared read (76 to 77)
-  assert.equal(unbound, 77, 'the 77 read-backs of R0 and R1 work or of no gate stay unbound');
+  // batch 10, task 3: the R1 gws-password-reset-cookies-portal's own verify-event RESET_SIGNIN_COOKIES read (77 to 78)
+  assert.equal(unbound, 78, 'the 78 read-backs of R0 and R1 work or of no gate stay unbound');
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   assert.match(dictionary, /`\[CHANGE_ID\]` \(the change id that\s+`node scripts\/audit\/change-record\.js open` prints/);
   // read-backs of R2 and R3 changes named in prose: the per-host read-back of a batch script run

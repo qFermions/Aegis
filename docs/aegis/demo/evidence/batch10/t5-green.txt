@@ -1,0 +1,38 @@
+✔ A: a docs-only change is tier A and lists no path (158.204542ms)
+✔ B: evaluation code is tier B and only the B paths are listed (157.938583ms)
+✔ C: a CI workflow change is tier C (150.196417ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (155.859083ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (151.671333ms)
+✔ C: scripts/audit/** (the hash-chained audit trail and change records) is tier C, not scripts/** B (146.138291ms)
+✔ C: scripts/intake/** (outside content into a graph case, with tenant binding) is tier C, not scripts/** B (153.007042ms)
+✔ C: the batch G3 connector scripts/adapters/github-client.js is tier C (152.086167ms)
+✔ C: the batch G3 connector scripts/adapters/okta-client.js is tier C (146.363584ms)
+✔ C: the batch G3 connector scripts/adapters/msgraph-client.js is tier C (147.99925ms)
+✔ C: scripts/demo/** (spawns the claude CLI, writes change records and a simulated tenant) is tier C, not scripts/** B (batch 7, task 6) (164.152292ms)
+✔ C: scripts/ask-aegis.js and scripts/aegis-chat.js (they start the claude CLI) are tier C; their tests stay B (412.386542ms)
+✔ one C path wins over many B paths, and only the C path is listed (138.28825ms)
+✔ ** matches nested paths at any depth (135.90325ms)
+✔ uncommitted and untracked changes count toward the tier (201.531583ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (245.870459ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (119.704542ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (1.095958ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (179.93425ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (268.072334ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (377.41375ms)
+✔ the CLI runs when invoked through a symlinked path (148.535625ms)
+✔ C: scripts/adapters/readonly-contract.js is tier C, not scripts/** B (148.005542ms)
+✔ C: scripts/adapters/fleet-client.js is tier C, not scripts/** B (148.839584ms)
+✔ C: scripts/adapters/jamf-client.js is tier C, not scripts/** B (150.590792ms)
+✔ C: scripts/adapters/slack-client.js is tier C, not scripts/** B (148.102708ms)
+✔ C: scripts/adapters/linear-client.js is tier C, not scripts/** B (147.065708ms)
+✔ C: scripts/adapters/gws-client.js is tier C, not scripts/** B (150.084584ms)
+✔ C: scripts/gws-posture-audit.js is tier C, not scripts/** B (160.981875ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5093.049666
+exit 0

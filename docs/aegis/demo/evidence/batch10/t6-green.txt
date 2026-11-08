@@ -1,0 +1,28 @@
+✔ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (25.045834ms)
+✔ with no --setup the argv is the isolation alone (0.9055ms)
+✔ bad arguments exit 1 with no session; a claude that cannot start is a plain message and exit 2 (1.881333ms)
+✔ while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits (0.368667ms)
+✔ code review 2, finding 14: the chat protects its setup text as ask-aegis does (1.132167ms)
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (31.985334ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (52.680583ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (52.202958ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.300583ms)
+✔ no ticket text: the usage and exit 1, with no session (27.663167ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (22.740375ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (332.04725ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (45.038208ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (0.558083ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.579375ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.345375ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.1055ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.1915ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.637208ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 610.580166
+exit 0

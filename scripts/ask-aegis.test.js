@@ -331,3 +331,69 @@ test('final security review: any written password stops the ask; a status word o
   for (const bad of ['the new passcode is 739204 and she still cannot sign in', 'password: sunshine', 'Temp password: Welcome', 'password is [x]Hunter22!', 'temp password: Reset@123', 'password is no-Hunter22', 'password: Valid!2024']) assert.ok(ask.protect(bad).blocked, bad);
   for (const ok of ['My password is expired and I cannot sign in to Outlook.', 'User says password is incorrect after the reset', 'Temp password: [TEMP_PASSWORD]', 'The app client secret is expiring next week', 'my password is not working']) assert.equal(ask.protect(ok).blocked, undefined, ok);
 });
+
+// Batch 10, task 6: batch 9's own finding, "password isHunter22!" (no space after "is"), went through, and so did
+// the short and punctuated spellings. EXPECTED DECISION (written before the code): a password written after
+// password, passcode, passwd, passphrase, pw, pwd, PIN or secret stops the ask whether "is" touches the value or a
+// colon, equals sign, arrow, "was" or "'s" stands between; after the common word "pass", only a value with a digit
+// or a symbol does. A ticket that only mentions a password, a PIN or a pass still goes through. Wrong
+// implementations it catches: "is" read only as a whole word (batch 9's rule), so "isHunter22!" passed; and a
+// rule that blocks "password issues" or "password-protected" because it reads any letters after the keyword.
+test('batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass', () => {
+  const bad = ['password isHunter22!', 'pw: Hunter22!', 'PW=Summer2026', 'passwd=Welcome1', 'pass is Hunter22!', 'pwd: sunshine',
+    'password -> Spring2026!', "password's Hunter22!", 'her password was Winter2025!', 'passcode is739204', 'Password：Hunter22',
+    'password isSunshine', 'passphrase: correct-horse-battery', 'the PIN → 4821', 'pass\u200bword: Autumn2026'];
+  for (const t of bad) assert.ok(ask.protect(t).blocked, t);
+  const ok = ['I forgot my password', 'My password expired this morning and Outlook keeps asking for it.', "Password reset link isn't arriving.",
+    'We have password issues with Teams', 'The password is not working after the update.', 'Can you reset my password? It says password is incorrect.',
+    "The password-protected PDF won't open.", 'My boarding pass is attached to the expense report.', 'Password: [TEMP_PASSWORD] was given to the user by phone.',
+    'pw reset needed for [UPN]', "The user's password isn't syncing to the laptop.", 'PIN is required on the new phone.', 'The app client secret is expiring next week'];
+  for (const t of ok) assert.equal(ask.protect(t).blocked, undefined, t);
+});
+
+// Security review round 1 (batch 10): the batch 10 rule let through forms batch 9's blocked: "is" touching the
+// word with a space after it (batch 9 allowed no space before "is"), and a value holding a character that NFKC
+// turns into a space and a combining mark (an acute accent, a diaeresis, an overline), since only the normalized
+// copy was read. Wrong implementations it catches: a separator that needs a space before "is"; a rule matched on
+// the normalized copy alone, where normalizing can remove a block it should only ever add.
+// Code review round 1 (batch 10), finding class C: the new separators ("was", "'s", a spaced dash, an arrow) took
+// any word as a value, so ordinary tickets stopped ("PIN was sent to the new phone"); other invisible characters
+// (a soft hyphen, U+2061, U+180E) still split the word; plurals ("passwords:", "PINs:") were no keyword; and the
+// graph sanitizer never read the normalized text, so a token with a zero-width space inside went through. Wrong
+// implementations it catches: a "was" separator that takes any value; an invisible-character list of five; a
+// keyword list without plurals; a sanitizer that reads only the text as typed.
+test('code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask', () => {
+  for (const ok of ['Her password was updated last week but Outlook keeps prompting', 'PIN was sent to the new phone', "The user's password's been reset twice", 'password was never set', 'Password - Outlook keeps asking for it']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+  for (const bad of ['pass\u00adword: Hunter22!', 'password\u2061: Hunter22!', 'pass\u180eword: Hunter22!', 'Temp passwords: Hunter22! and Spring2026!', 'PINs: 4821', `token ghp_${'A'.repeat(10)}\u200b${'B'.repeat(20)}`, 'her password was Winter2025!', "password's Hunter22!", 'password -> Spring2026!']) assert.ok(ask.protect(bad).blocked, bad);
+});
+
+test('security review 1 (batch 10): every form batch 9 blocked still stops the ask', () => {
+  for (const bad of ['passwordis Hunter22!', 'pinis 4821', 'secretis abcd1234', 'Passcodeis 99887766', 'password: a´b´c´d', 'password: ab¨cd', 'password: x‾y‾z‾']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ['We have password issues with Teams', 'My boarding pass is attached to the expense report.', "Password reset link isn't arriving."]) assert.equal(ask.protect(ok).blocked, undefined, ok);
+});
+
+// Code review round 2 (batch 10), class C2: round 1 moved the arrows, "'s" and " - " into the separators that need a
+// password-shaped value, so a letter-only password after them went through ("password -> Summertime"); two common
+// phrasings still stopped the ask ("password's 90-day expiry", "Password - MFA/Authenticator loop"); and invisible
+// characters outside Unicode Cf (a combining grapheme joiner, a variation selector, the Hangul filler) still split the
+// word. An arrow never opens an ordinary sentence, so any value after it counts; after "'s" or " - " a value counts
+// when it ends the clause or holds a password symbol. Wrong implementations it catches: shaped values only after an
+// arrow; any value after "'s"; a Cf-only character class.
+test('code review 2, class C2 (batch 10): letter-only passwords after an arrow, "\'s" or " - " stop the ask; ordinary phrasings pass', () => {
+  // code review round 3 reversed the letter-only cases after an arrow, "'s" or " - " and the "90-day" and
+  // "MFA/Authenticator" cases (its class C3 test below says why); the invisible characters stay
+  for (const bad of ["password's Hunter22! please change it", 'pass\u034fword: Hunter22!', 'pass\ufe0fword: Hunter22!', 'pass\u3164word: Hunter22!']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ['PIN was sent to the new phone', "The user's password's been reset twice", 'Password - Outlook keeps asking for it']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+});
+
+// Code review round 3 (batch 10), class C3: round 2's clause-end rule after "'s" and " - " let a password with digits
+// in mid-sentence through (a security regression: "the password's Hunter22 please change it") and refused ordinary
+// subject lines ("Password - Urgent"); and arrows taking any value refused menu paths ("Settings -> PIN -> Remove").
+// Decision: batch 9's "is", ":" and "=" take any value; "was", "'s", a spaced dash and an arrow need a digit or a
+// symbol, since they also open ordinary sentences and menu paths. A letter-only password after them goes through,
+// and a digit word after them ("password's 90-day expiry") stops the ask: both on the record in checks.md. Wrong
+// implementations it catches: a clause-end rule after "'s"; any value after an arrow.
+test('code review 3, class C3 (batch 10): digits after "\'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass', () => {
+  for (const bad of ["the password's Hunter22 please change it", 'Password - Summer2024 for the new laptop', "the PIN's 4821 now", "password's Hunter.22 for the VPN", 'password -> Spring2026!']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ['Settings \u2192 Accounts \u2192 Sign-in options \u2192 PIN \u2192 Change PIN does nothing', 'Go to Settings \u2192 Password \u2192 Change and it errors', 'PIN \u2192 Remove is greyed out', 'Password - Urgent', "the PIN's broken, she can't sign in", 'Password - Outlook, Teams and OneDrive keep prompting']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+});

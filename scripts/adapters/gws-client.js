@@ -3,10 +3,11 @@
 // Google Workspace section), built on the shared contract readonly-contract.js (README.md here).
 //
 // Aegis advises; humans execute (PRODUCT_CONTRACT.md). This file reads the Admin SDK
-// Directory and Reports APIs through nine GET reads and nothing else. It never creates,
-// changes, suspends, deletes or restores a user, never changes a group, a role, 2-Step
-// Verification, a device or Drive sharing, and never revokes a token: each of those is a
-// HUMAN-RUN step in a runbook, and a verify-* command below proves it afterwards.
+// Directory and Reports APIs through nine GET reads, and since batch 10 the Data Transfer API
+// through one (a GET of one transfer), and nothing else. It never creates, changes, suspends,
+// deletes or restores a user, never changes a group, a role, 2-Step Verification, a device or
+// Drive sharing, never starts or changes a data transfer, and never revokes a token: each of
+// those is a HUMAN-RUN step in a runbook, and a verify-* command below proves it afterwards.
 //
 // Usage: node scripts/adapters/gws-client.js <command> [flags] [--execute]
 //   Reads (a dry run that prints the planned request unless --execute is given):
@@ -27,6 +28,15 @@
 //     verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id N
 //     verify-event              --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]
 //                               [--target [USER@DOMAIN.COM]]
+//     verify-transfer           --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM]
+//                               --new-owner [MANAGER_UPN] --application-id N --not-before [NOT_BEFORE]
+//   verify-transfer (batch 10, task 4) reads one data transfer (transfers.get), then the old and new
+//   owner (users.get), and passes only when the transfer is the one asked for, was requested at or
+//   after --not-before (its requestTime), names the two owners' user IDs, and holds one entry for the
+//   application ID whose status reads completed (any case).
+//   Google's reference lists no status values, so any other status is INCONCLUSIVE (exit 5), and so
+//   is a transfer with no entry for the application (the Drive application ID is not confirmed).
+//   It alone asks for admin.datatransfer.readonly, on top of the seven read-only scopes.
 //   --user also takes a numeric user ID ([USER_ID]). For verify-event, --user is the actor;
 //   --target is who or what the event acted on: the matched event must carry a parameter
 //   whose value (or one of whose multiValue entries) equals it (an email address in any
@@ -49,7 +59,9 @@
 // POST https://oauth2.googleapis.com/token, form-encoded, with exactly grant_type
 // (urn:ietf:params:oauth:grant-type:jwt-bearer) and assertion (an RS256 JWT signed here
 // with node:crypto: iss, sub, scope, aud, iat, exp = iat + 3600). It is never retried.
-// Scopes are the seven read-only scopes in SCOPES. admin.directory.user.security is never
+// Scopes are the seven read-only scopes in SCOPES; verify-transfer asks for TRANSFER_SCOPES, the same
+// seven and admin.datatransfer.readonly, so a credential delegated the seven alone still serves every
+// other read. admin.directory.user.security is never
 // requested (it also grants writes), so OAuth grants and app passwords are read from the
 // Reports API token events instead of tokens.list and asps.list.
 //
@@ -109,21 +121,26 @@ const READ_ONLY_SCOPE_NAMES = Object.freeze([
   'admin.reports.usage.readonly',
 ]);
 const SCOPES = Object.freeze(READ_ONLY_SCOPE_NAMES.map((name) => `${SCOPE_PREFIX}${name}`));
+// batch 10, task 4: the Data Transfer API read scope (vendor fact W-09), asked for by verify-transfer only
+const TRANSFER_SCOPE_NAME = 'admin.datatransfer.readonly';
+const TRANSFER_SCOPES = Object.freeze([...SCOPES, `${SCOPE_PREFIX}${TRANSFER_SCOPE_NAME}`]);
+const scopesFor = (command) => (command === 'verify-transfer' ? TRANSFER_SCOPES : SCOPES);
 
-// Every scope this adapter asks for must be one of the seven read-only scopes above.
+// Every scope this adapter asks for must be one of the read-only scopes above.
 // Anything else (admin.directory.user.security first, which also grants writes) is refused.
 function checkScopes(scopes) {
   if (!Array.isArray(scopes) || !scopes.length) throw new Error('scopes: a non-empty list of read-only scopes is required');
   for (const scope of scopes) {
     if (typeof scope !== 'string' || !scope.startsWith(SCOPE_PREFIX)) throw new Error(`scope ${String(scope).slice(0, 80)} is refused: only read-only Admin SDK scopes are requested`);
     const name = scope.slice(SCOPE_PREFIX.length);
-    if (!READ_ONLY_SCOPE_NAMES.includes(name) || !name.endsWith('.readonly')) {
+    if (![...READ_ONLY_SCOPE_NAMES, TRANSFER_SCOPE_NAME].includes(name) || !name.endsWith('.readonly')) {
       throw new Error(`scope ${name.slice(0, 80)} is refused: it is not on the lane's read-only list`);
     }
   }
   return true;
 }
 checkScopes(SCOPES);
+checkScopes(TRANSFER_SCOPES);
 
 // ── Validators (the CLI checks input with these, and the contract re-checks the path) ─
 // An email path value goes out encoded once by the contract (@ as %40). '%' and '/' are
@@ -149,10 +166,15 @@ const USAGE_PARAMETER = '[a-z][a-z0-9_]{0,40}:[a-z][a-z0-9_]{0,80}';
 const USAGE_PARAMETERS = new RegExp(`^${USAGE_PARAMETER}(?:,${USAGE_PARAMETER}){0,19}$`);
 const OU_PATH = /^\/[^\u0000-\u001f\u007f-\u009f]{0,255}$/u;
 const TARGET = /^[^\u0000-\u001f\u007f-\u009f]{1,256}$/u;
+// A data transfer's ID: its form is not documented (vendor fact W-14), so only letters, digits, - and
+// _ pass, and a value can never add a path segment or carry an encoding
+const TRANSFER_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const APPLICATION_ID = /^[0-9]{1,20}$/; // a Data Transfer application ID, such as 435070579839 (W-13)
 
-// ── The allow-list: the lane's nine reads ────────────────────────────────────
+// ── The allow-list: the lane's nine reads and one Data Transfer read ─────────
 const DIRECTORY = '/admin/directory/v1';
 const REPORTS = '/admin/reports/v1';
+const DATA_TRANSFER = '/admin/datatransfer/v1';
 const ROUTES = Object.freeze({
   user: { method: 'GET', path: `${DIRECTORY}/users/:userKey`, params: { userKey: USER_KEY } },
   users: {
@@ -170,6 +192,8 @@ const ROUTES = Object.freeze({
     query: { startTime: ISO_UTC, endTime: ISO_UTC, eventName: EVENT_NAME, maxResults: ACTIVITIES_MAX },
   },
   usage: { method: 'GET', path: `${REPORTS}/usage/dates/:date`, params: { date: DATE }, query: { parameters: USAGE_PARAMETERS } },
+  // batch 10, task 4: transfers.get, one transfer by its ID (vendor fact W-09); no list, insert or application read
+  transfer: { method: 'GET', path: `${DATA_TRANSFER}/transfers/:dataTransferId`, params: { dataTransferId: TRANSFER_ID } },
 });
 
 // ── Tenant: the customer IDs a response names ────────────────────────────────
@@ -211,7 +235,7 @@ function pemFrom(value) {
 }
 
 // An RS256 JWT for Google's JWT bearer grant. Error messages name the variable only.
-function signAssertion(creds, nowMs, remember = () => {}) {
+function signAssertion(creds, nowMs, remember = () => {}, scopes = SCOPES) {
   if (!EMAIL.test(creds.GWS_SA_CLIENT_EMAIL)) throw new RefusedError('GWS_SA_CLIENT_EMAIL must be the service account\'s email address (value withheld)');
   if (!EMAIL.test(creds.GWS_ADMIN_SUBJECT)) throw new RefusedError('GWS_ADMIN_SUBJECT must be the email address of the admin the service account impersonates (value withheld)');
   if (!Number.isFinite(nowMs)) throw new RefusedError('the clock gave no time for the assertion');
@@ -229,7 +253,7 @@ function signAssertion(creds, nowMs, remember = () => {}) {
   const claims = {
     iss: creds.GWS_SA_CLIENT_EMAIL,
     sub: creds.GWS_ADMIN_SUBJECT,
-    scope: SCOPES.join(' '),
+    scope: scopes.join(' '),
     aud: TOKEN_AUDIENCE,
     iat,
     exp: iat + ASSERTION_LIFETIME_SECONDS,
@@ -243,7 +267,8 @@ function signAssertion(creds, nowMs, remember = () => {}) {
 
 // A spec per run, so the assertion uses the run's clock and the run can redact what it
 // signed; SPEC (exported) is the same spec on the system clock.
-function makeSpec({ now = Date.now, remember = () => {} } = {}) {
+function makeSpec({ now = Date.now, remember = () => {}, scopes = SCOPES } = {}) {
+  checkScopes(scopes);
   return defineAdapter({
     platform: 'google-workspace',
     host: { fixed: API_HOST },
@@ -254,7 +279,7 @@ function makeSpec({ now = Date.now, remember = () => {} } = {}) {
       host: { fixed: TOKEN_HOST },
       path: TOKEN_PATH,
       fields: ['grant_type', 'assertion'],
-      build: (creds) => ({ grant_type: JWT_BEARER, assertion: signAssertion(creds, now(), remember) }),
+      build: (creds) => ({ grant_type: JWT_BEARER, assertion: signAssertion(creds, now(), remember, scopes) }),
       parse: (json) => ({ token: json && json.access_token, expiresInSeconds: json ? Number(json.expires_in) : NaN }),
     },
     tenant: { env: 'GWS_CUSTOMER_ID', collect: collectTenant },
@@ -287,6 +312,7 @@ const PATHS = Object.freeze({
   chromeosDevices: () => `${DIRECTORY}/customer/my_customer/devices/chromeos`,
   activities: (a) => withQuery(`${REPORTS}/activity/users/${a.user}/applications/${a.app}`, [['startTime', a.start], ['endTime', a.end], ['eventName', a.event], ['maxResults', a.maxResults]]),
   usage: (a) => withQuery(`${REPORTS}/usage/dates/${a.date}`, [['parameters', a.parameters]]),
+  transfer: (a) => `${DATA_TRANSFER}/transfers/${a.transferId}`,
 });
 
 // ── Commands ─────────────────────────────────────────────────────────────────
@@ -330,9 +356,15 @@ const COMMANDS = Object.freeze({
     paths: (a) => [PATHS.activities({ user: a.user, app: a.app, start: a.notBefore, event: a.event })],
     expected: (a) => ({ app: a.app, event: a.event, user: a.user, notBefore: a.notBefore, ...(a.target === undefined ? {} : { target: a.target }) }),
   },
+  // batch 10, task 4: the transfer, then its old and new owner, whose user IDs it names (vendor fact W-12)
+  'verify-transfer': {
+    kind: 'verify', required: ['transfer-id', 'old-owner', 'new-owner', 'application-id', 'not-before'], optional: [],
+    paths: (a) => [PATHS.transfer(a), PATHS.user({ user: a.oldOwner }), PATHS.user({ user: a.newOwner })],
+    expected: (a) => ({ transferId: a.transferId, oldOwner: a.oldOwner, newOwner: a.newOwner, applicationId: a.applicationId, applicationTransferStatus: 'completed', notBefore: a.notBefore }),
+  },
 });
 
-const VALUE_FLAGS = ['user', 'query', 'max-results', 'page-token', 'role-id', 'group', 'app', 'start', 'end', 'event', 'date', 'parameters', 'ou', 'not-before', 'target'];
+const VALUE_FLAGS = ['user', 'query', 'max-results', 'page-token', 'role-id', 'group', 'app', 'start', 'end', 'event', 'date', 'parameters', 'ou', 'not-before', 'target', 'transfer-id', 'old-owner', 'new-owner', 'application-id'];
 
 const USAGE = [
   'Usage: node scripts/adapters/gws-client.js <command> [flags] [--execute]',
@@ -349,6 +381,8 @@ const USAGE = [
   '           verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id N',
   '           verify-event --app APP --event NAME --user [USER@DOMAIN.COM] --not-before [NOT_BEFORE]',
   '                        [--target [USER@DOMAIN.COM]]   (who or what the event acted on)',
+  '           verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id N',
+  '                           --not-before [NOT_BEFORE]   (the transfer must be requested at or after it)',
   'Reads and read-backs are a dry run unless the bare --execute flag is given. No command writes to Google Workspace.',
   '',
 ].join('\n');
@@ -426,6 +460,19 @@ function validate(command, def, args) {
   if (args.target !== undefined) {
     if (!TARGET.test(args.target)) throw new RefusedError('--target must be 1 to 256 printable characters: the account, file or domain the event acted on, such as [USER@DOMAIN.COM]');
     a.target = args.target;
+  }
+  if (args['transfer-id'] !== undefined) {
+    if (!TRANSFER_ID.test(args['transfer-id'])) throw new RefusedError('--transfer-id must be one data transfer ID: 1 to 128 letters, digits, - and _');
+    a.transferId = args['transfer-id'];
+  }
+  for (const [flag, key] of [['old-owner', 'oldOwner'], ['new-owner', 'newOwner']]) {
+    if (args[flag] === undefined) continue;
+    if (!USER_KEY.test(args[flag])) throw new RefusedError(`--${flag} must be one email address such as [USER@DOMAIN.COM] or a numeric user ID ([USER_ID])`);
+    a[key] = args[flag];
+  }
+  if (args['application-id'] !== undefined) {
+    if (!APPLICATION_ID.test(args['application-id'])) throw new RefusedError('--application-id must be a numeric Data Transfer application ID, such as 435070579839 (Calendar)');
+    a.applicationId = args['application-id'];
   }
   return a;
 }
@@ -565,6 +612,47 @@ const JUDGES = Object.freeze({
     }
     return { verified: false, observed, reason };
   },
+  // batch 10, task 4. The owners are the users.get records' id fields, compared exactly with the
+  // transfer's oldOwnerUserId and newOwnerUserId (vendor fact W-12), so no ID form is assumed. Only a
+  // completed status passes: Google lists no status values (W-11), so any other is INCONCLUSIVE, never
+  // a failed object; a transfer with no entry for the application ID is INCONCLUSIVE too (W-13).
+  'verify-transfer': (a, [transfer, oldUser, newUser], ctx) => {
+    const t = isObject(transfer) ? transfer : {};
+    const entries = Array.isArray(t.applicationDataTransfers) ? t.applicationDataTransfers.filter(isObject) : null;
+    const status = (e) => orNull(e.applicationTransferStatus);
+    const observed = {
+      transferId: orNull(t.id), oldOwnerUserId: orNull(t.oldOwnerUserId), newOwnerUserId: orNull(t.newOwnerUserId),
+      overallTransferStatusCode: orNull(t.overallTransferStatusCode), requestTime: orNull(t.requestTime),
+      oldOwner: { user: orNull(isObject(oldUser) ? oldUser.primaryEmail : undefined), id: orNull(isObject(oldUser) ? oldUser.id : undefined) },
+      newOwner: { user: orNull(isObject(newUser) ? newUser.primaryEmail : undefined), id: orNull(isObject(newUser) ? newUser.id : undefined) },
+      applications: entries ? entries.slice(0, MAX_LISTED).map((e) => ({ applicationId: e.applicationId === undefined || e.applicationId === null ? null : String(e.applicationId), applicationTransferStatus: status(e) })) : null,
+      application: null,
+    };
+    if (typeof t.id !== 'string') return unproven(observed, 'the transfer read shows no id, so it cannot be told to be the transfer asked for: this is not proof either way');
+    if (t.id !== a.transferId) return { verified: false, observed, reason: 'the transfer read is not the transfer asked for' };
+    // code review of batch 10, finding 2: a transfer requested before the approval is another change, even
+    // with the same owners and application; a request time that cannot be read proves nothing either way
+    const requested = typeof t.requestTime === 'string' ? Date.parse(t.requestTime) : NaN;
+    if (!Number.isFinite(requested)) return unproven(observed, 'the transfer shows no requestTime that is a time, so it cannot be told to be requested at or after --not-before: this is not proof either way');
+    if (requested < Date.parse(a.notBefore)) return { verified: false, observed, reason: `the transfer was requested at ${t.requestTime}, before ${a.notBefore}, so it is not this change` };
+    for (const [record, wanted, role] of [[oldUser, a.oldOwner, 'old'], [newUser, a.newOwner, 'new']]) {
+      if (!sameUser(record, wanted, ctx)) return { verified: false, observed, reason: `the user record read for the ${role} owner is not the user asked for` };
+      if (typeof record.id !== 'string' || !record.id) return unproven(observed, `the ${role} owner's user record shows no id, so the transfer's owner cannot be compared with it: this is not proof either way`);
+    }
+    if (typeof t.oldOwnerUserId !== 'string' || typeof t.newOwnerUserId !== 'string') return unproven(observed, 'the transfer does not show both oldOwnerUserId and newOwnerUserId, so this is not proof either way');
+    if (t.oldOwnerUserId !== oldUser.id) return { verified: false, observed, reason: 'the transfer moves another user\'s data than the old owner asked for' };
+    if (t.newOwnerUserId !== newUser.id) return { verified: false, observed, reason: 'the transfer moves the data to another user than the new owner asked for' };
+    if (!entries) return unproven(observed, 'the transfer shows no list of application transfers, so this is not proof either way');
+    const mine = entries.filter((e) => e.applicationId !== undefined && e.applicationId !== null && String(e.applicationId) === a.applicationId);
+    if (mine.length !== 1) {
+      const held = observed.applications.map((x) => x.applicationId).join(', ') || 'none';
+      return unproven(observed, `the transfer holds ${mine.length} entr${mine.length === 1 ? 'y' : 'ies'} for application ${a.applicationId} (it holds: ${held}); exactly one is proof, and an application ID that is not this application's would also find none, so this is not proof either way`);
+    }
+    observed.application = { applicationId: a.applicationId, applicationTransferStatus: status(mine[0]) };
+    if (typeof mine[0].applicationTransferStatus !== 'string') return unproven(observed, `the entry for application ${a.applicationId} shows no applicationTransferStatus, so this is not proof either way`);
+    if (/^completed$/i.test(mine[0].applicationTransferStatus)) return { verified: true, observed };
+    return unproven(observed, `the transfer of application ${a.applicationId} reads ${mine[0].applicationTransferStatus.slice(0, 40)}, not completed; Google's reference lists no status values, so this is not read as a failure: read again after the transfer finishes, or check the Admin console`);
+  },
 });
 
 // ── Reads ────────────────────────────────────────────────────────────────────
@@ -650,7 +738,7 @@ function dryRun(command, def, a, paths) {
   if (planned.length > 1) shown.then = planned.slice(1).map((p) => ({ method: p.method, host: p.host, path: p.path }));
   if (def.kind === 'verify') shown.expected = def.expected(a);
   shown.auth = `before the first read, one POST to ${TOKEN_HOST}${TOKEN_PATH} with grant_type and a signed assertion for the scopes below; the access token then goes only in the Authorization header`;
-  shown.scopes = [...SCOPES];
+  shown.scopes = [...scopesFor(command)];
   shown.note = 'dry run: no credentials read, no network';
   shown.next = 'Add --execute to perform this read.';
   return shown;
@@ -700,7 +788,7 @@ async function run(argv, env = process.env, deps = {}) {
         return value;
       },
     });
-    const client = createClient(makeSpec({ now, remember }), { env: envView, ...cli });
+    const client = createClient(makeSpec({ now, remember, scopes: scopesFor(command) }), { env: envView, ...cli });
     const read = await readAll(client, paths);
     let res;
     if (read.failed) res = { command, ...read.failed };
@@ -728,4 +816,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { SPEC, run, makeSpec, SCOPES, READ_ONLY_SCOPE_NAMES, checkScopes, collectTenant, COMMANDS };
+module.exports = { SPEC, run, makeSpec, SCOPES, TRANSFER_SCOPES, READ_ONLY_SCOPE_NAMES, checkScopes, collectTenant, COMMANDS };

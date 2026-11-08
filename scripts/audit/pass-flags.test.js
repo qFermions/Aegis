@@ -53,6 +53,10 @@ const NOT_PASS = Object.freeze({
   'google-workspace:verify-ou --ou': `${FREE}: an organizational unit`,
   'jamf:verify-policy --trigger': `${FREE}: a trigger`,
   'jamf:verify-policy --frequency': `${FREE}: a frequency`,
+  // batch 10, task 4: verify-transfer names the transfer and its two owners (its --application-id is a pass flag)
+  'google-workspace:verify-transfer --transfer-id': OBJECT,
+  'google-workspace:verify-transfer --old-owner': OBJECT,
+  'google-workspace:verify-transfer --new-owner': OBJECT,
 });
 
 // every read-back line in the runbooks, with its kind, flags and whether it is bound
@@ -171,8 +175,9 @@ test('each runbook that binds a time-bounded read-back says to name its bound ba
   const files = [...new Set(timed.map((r) => r.file))].sort();
   // batch 8, task 3: okta-user-lifecycle.md joins (9 to 10 files), with
   // okta-user-lifecycle-reset-password-portal R2 and its verify-password-reset run under a change;
-  // batch 9, task 7: jamf-lock-erase.md joins (10 to 11), jamf-lock-erase-wipe-portal's verify-command
-  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'jamf-config-profiles.md', 'jamf-lock-erase.md', 'mfa-issue.md', 'offboard.md', 'okta-user-lifecycle.md', 'password-reset.md', 'security-alert-triage.md']);
+  // batch 9, task 7: jamf-lock-erase.md joins (10 to 11), jamf-lock-erase-wipe-portal's verify-command;
+  // batch 10, task 4: gws-offboard.md joins (11 to 12), the transfer gates' verify-transfer --not-before
+  assert.deepEqual(files, ['fleet-device-actions.md', 'gws-account-containment.md', 'gws-admin-roles.md', 'gws-drive-sharing.md', 'gws-offboard.md', 'jamf-config-profiles.md', 'jamf-lock-erase.md', 'mfa-issue.md', 'offboard.md', 'okta-user-lifecycle.md', 'password-reset.md', 'security-alert-triage.md']);
   for (const file of files) {
     const paragraph = fs.readFileSync(path.join(DIR, file), 'utf8').split('\n').find((l) => l.startsWith('**Change record'));
     assert.ok(paragraph && paragraph.includes(TIME_SENTENCE), `${file}: the change-record paragraph names the time bound`);

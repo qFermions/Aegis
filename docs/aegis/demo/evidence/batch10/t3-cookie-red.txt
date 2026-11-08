@@ -1,0 +1,22 @@
+$ node --test scripts/reset-erase-readbacks.test.js scripts/demo/batch10-readbacks.test.js
+✔ task 3: the Jamf lock gate binds verify-command --type DEVICE_LOCK; it passes after the simulated lock and fails without it (484.886458ms)
+✖ task 3: the R1 cookie reset runs its own section's RESET_SIGNIN_COOKIES read; it passes after the simulated reset and fails without it (121.030458ms)
+✔ the Google password reset gate is R1 and its own section names exactly one CHANGE_PASSWORD audit read (0.62575ms)
+✔ the read line is the one /gws-account-containment uses, without --change (0.251667ms)
+✔ the Jamf wipe gate binds a verify-command read of the erase command, under its change record (0.077541ms)
+✖ the Google sign-in cookie reset gate is R1 and its own section names exactly one RESET_SIGNIN_COOKIES audit read (0.373708ms)
+✔ the Jamf lock gate and its API twin bind a verify-command read of DEVICE_LOCK, under its change record (0.081541ms)
+✔ both runbooks keep the Read-back contract change-record.js reads (0.697542ms)
+ℹ tests 8
+ℹ pass 6
+ℹ fail 2
+✖ failing tests:
+✖ task 3: the R1 cookie reset runs its own section's RESET_SIGNIN_COOKIES read; it passes after the simulated reset and fails without it (121.030458ms)
+  AssertionError [ERR_ASSERTION]: at least one change cannot be proved by a read-back, so the ticket is not resolved
+    actual: 'INCONCLUSIVE',
+    expected: 'RESOLVED (SIMULATED)',
+✖ the Google sign-in cookie reset gate is R1 and its own section names exactly one RESET_SIGNIN_COOKIES audit read (0.373708ms)
+  AssertionError [ERR_ASSERTION]: exactly one read line in the gate section
+    actual: 0,
+    expected: 1,
+exit 1

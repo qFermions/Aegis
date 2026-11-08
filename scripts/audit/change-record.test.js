@@ -1218,6 +1218,8 @@ const DIGEST_B = 'b'.repeat(64);
 const TIMED = {
   'fleet:verify-checked-in': '', 'fleet:verify-deleted': '',
   'google-workspace:verify-event': '--app admin --event CHANGE_PASSWORD',
+  // batch 10, task 4 (code review finding 2): the Data Transfer read is bounded by the transfer's requestTime
+  'google-workspace:verify-transfer': '--application-id 435070579839',
   'jamf:verify-command': '--type INSTALL_PROFILE', 'jamf:verify-checked-in': '',
   'linear:verify-comment': `--expect-sha256 ${DIGEST_A}`,
   'msgraph:verify-password-changed': '', 'msgraph:verify-signin': '', 'msgraph:verify-device-synced': '', 'msgraph:verify-sessions-revoked': '',

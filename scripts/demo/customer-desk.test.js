@@ -625,7 +625,9 @@ test('two gates with overlapping effects both apply: each is judged against the 
   const r = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-session-revoke-portal', 'security-session-revoke-portal') } });
   assert.equal(r.ticket('T1').closing_state, 'RESOLVED (SIMULATED)', r.ticket('T1').reason);
   const both = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'gws-offboard-okta-deactivate-portal') } });
-  assert.equal(both.ticket('T2').closing_state, 'INCONCLUSIVE', 'the second has no read-back, and nothing stopped it');
+  // batch 10, task 4: gws-offboard-okta-deactivate-portal binds verify-status --status DEPROVISIONED, so the
+  // second gate's read-back runs too, against the state the first left
+  assert.equal(both.ticket('T2').closing_state, 'RESOLVED (SIMULATED)', both.ticket('T2').reason);
   assert.match(step(both.ticket('T2'), 7).result, /applied 2 gate/);
 });
 
@@ -668,12 +670,15 @@ test('worstExit: a shown failure wins over an inconclusive read, in either order
 });
 
 test('T3: a gate whose runbook names no read-back is simulated, then INCONCLUSIVE with the runbook\'s reason, never resolved', async (t) => {
-  const r = await runDesk(t, { only: ['T3'], answers: { T3: good('jamf-lock-erase-lock-portal') } });
+  // batch 10, task 3 gave the lock gate a read-back; jamf-lock-erase-remove-mdm-portal still names none, so it is
+  // simulated here for this test only
+  const simTable = { ...SIM_GATES, 'jamf-lock-erase-remove-mdm-portal': { platform: 'jamf', effect: 'removes the MDM profile from the Mac', apply: (s, target) => { for (const d of s.devices) if (d.serial === target['[SERIAL_NUMBER]']) d.mdm_profile = 'removed'; } } };
+  const r = await runDesk(t, { only: ['T3'], answers: { T3: good('jamf-lock-erase-remove-mdm-portal') }, deps: { simTable } });
   const k = r.ticket('T3');
   assert.equal(k.closing_state, 'INCONCLUSIVE');
   assert.match(step(k, 6).output, /no change record/);
   assert.match(step(k, 7).output, /SIMULATED OPERATOR/);
-  assert.equal(tenantOf(r.results, 'B').devices[0].lock_state, 'locked', 'the simulated change happened');
+  assert.equal(tenantOf(r.results, 'B').devices[0].mdm_profile, 'removed', 'the simulated change happened');
   assert.match(step(k, 8).result, /INCONCLUSIVE/);
   assert.match(step(k, 8).output, /its proof is the read its own step names/);
 });
@@ -683,9 +688,10 @@ test('two gates: the ticket resolves only when both read-backs pass; one none-re
   const k = both.ticket('T2');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
   assert.match(step(k, 8).result, /4 of 4/);
-  // batch 8, task 3 gave gws-offboard-suspend-portal a read-back (verify-suspended), so the gate with no
-  // read-back in this case is now the Drive transfer
-  const mixed = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'gws-offboard-drive-transfer-portal') } });
+  // batch 8, task 3 gave gws-offboard-suspend-portal a read-back (verify-suspended), and batch 10, task 4 the Drive
+  // transfer (verify-transfer), so the gate with no read-back in this case is the delete, simulated here only
+  const simTable = { ...SIM_GATES, 'gws-offboard-delete-portal': { platform: 'google-workspace', effect: 'deletes the Google Workspace user', apply: (s, target) => { s.gws.users[target['[USER@DOMAIN.COM]']].deleted = true; } } };
+  const mixed = await runDesk(t, { only: ['T2'], answers: { T2: good('okta-user-lifecycle-deactivate-portal', 'gws-offboard-delete-portal') }, deps: { simTable } });
   assert.equal(mixed.ticket('T2').closing_state, 'INCONCLUSIVE');
 });
 
@@ -703,9 +709,11 @@ test('the gates T6 named in the first real run are simulated, applied one at a t
   assert.equal(tenantOf(r.results, 'D').okta.users['00u1dem0dREPORTa1b2c'].status, 'ACTIVE', 'suspended, then unsuspended');
 });
 
-test('an offboarding answer that names the Drive and calendar transfers reaches its read-back step; they are INCONCLUSIVE', async (t) => {
+// batch 10, task 4: both transfer gates bind gws-client.js verify-transfer, so the ticket resolves on two passed reads
+test('an offboarding answer that names the Drive and calendar transfers reaches its read-back step; both read-backs pass', async (t) => {
   const r = await runDesk(t, { only: ['T2'], answers: { T2: good('gws-offboard-drive-transfer-portal', 'gws-offboard-calendar-transfer-portal') } });
-  assert.equal(r.ticket('T2').closing_state, 'INCONCLUSIVE', r.ticket('T2').reason);
+  assert.equal(r.ticket('T2').closing_state, 'RESOLVED (SIMULATED)', r.ticket('T2').reason);
+  assert.match(step(r.ticket('T2'), 8).result, /PASS: 2 of 2/);
 });
 
 test('a cost is shown rounded in the step line and kept exact in the record', async (t) => {
@@ -866,7 +874,8 @@ test('every gate the table maps is a real gate, and every one with a read-back r
   // batch 9, tasks 5 and 6: Exchange holds T4's shared mailbox and T5's quarantine, so exo picks by gate
   const ticketFor = { msgraph: 'T1', okta: 'T2', github: 'T2', 'google-workspace': 'T2', linear: 'T2', jamf: 'T3', slack: 'T2', exo: 'T4' };
   // batch 9, task 7: the Google reset's read names the admin as [UPN], which T3 (Customer B) carries
-  const ticketForGate = { 'quarantine-release-one-portal': 'T5', 'quarantine-release-all-portal': 'T5', 'gws-password-reset-password-portal': 'T3' };
+  // batch 10, task 3: so does the cookie reset's
+  const ticketForGate = { 'quarantine-release-one-portal': 'T5', 'quarantine-release-all-portal': 'T5', 'gws-password-reset-password-portal': 'T3', 'gws-password-reset-cookies-portal': 'T3' };
   const after = { 'okta-user-lifecycle-unsuspend-portal': ['okta-user-lifecycle-suspend-portal'], 'mailbox-send-as-remove-portal': ['mailbox-send-as-grant-portal'] };
   for (const [id, entry] of Object.entries(SIM_GATES)) {
     const g = gates.get(id);
@@ -1153,15 +1162,16 @@ test('task 6: an answer that only looks, names no change and asks nothing closes
   assert.match(c.reason, /names no gate/);
 });
 
-test('task 6: T3\'s Google password gates and the Jamf lock gate are simulated; with no read-back named T3 still ends INCONCLUSIVE', async (t) => {
+// batch 10, task 3: the cookie reset's section names its read and the lock binds verify-command, so all three pass
+test('task 6: T3\'s Google password gates and the Jamf lock gate are simulated, and each read-back passes', async (t) => {
   const r = await runDesk(t, { only: ['T3'], answers: { T3: good('gws-password-reset-password-portal', 'gws-password-reset-cookies-portal', 'jamf-lock-erase-lock-portal') } });
   const k = r.ticket('T3');
-  assert.equal(k.closing_state, 'INCONCLUSIVE', k.reason);
+  assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', k.reason);
   assert.match(step(k, 7).result, /applied 3 gate\(s\) of 3/);
   const tenant = tenantOf(r.results, 'B');
   assert.equal(tenant.devices[0].lock_state, 'locked');
   assert.ok(Object.values(tenant.gws.users).some((u) => u.changePasswordAtNextLogin === true), 'the password reset happened in the simulated tenant');
-  assert.match(step(k, 8).output, /no read-back to run/);
+  assert.match(step(k, 8).result, /PASS: 3 of 3/);
 });
 
 test('task 6: the Jamf simulated vendor answers the real Jamf connector\'s reads from the simulated tenant', async (t) => {
@@ -1317,18 +1327,19 @@ test('batch 9b: T9m with the loop section\'s session-clear gate closes RESOLVED 
 // Code review 1, finding 3: the simulated lock wrote its command under commandType, but the Jamf client
 // matches on command, so a lock read-back found nothing and read as "not done". A pending lock must read
 // as not proved yet (exit 5), never as a failure (exit 2).
-test('the simulated Jamf lock leaves a pending lock command the real Jamf client finds, which proves nothing yet', async (t) => {
+// batch 10, task 3: the simulated lock is acknowledged (its gate binds the read now), so the pending case is the wipe's
+test('the simulated Jamf wipe leaves a pending erase command the real Jamf client finds, which proves nothing yet', async (t) => {
   const vendors = require('./sim/vendors.js');
   const { applySimulatedGates } = require('./sim/gates.js');
   const b = customersData.loadData().customers.find((c) => c.id === 'B');
   const dir = tmp(t);
   const tenantFile = path.join(dir, 'tenant.json');
   fs.writeFileSync(tenantFile, customersData.tenantText(b));
-  applySimulatedGates({ changes: [{ entry: SIM_GATES['jamf-lock-erase-lock-portal'], target: { '[SERIAL_NUMBER]': 'C02DEMOB0001' } }], tenantFile, runDir: dir, now: '2026-11-06T10:00:00.000Z' });
+  applySimulatedGates({ changes: [{ entry: SIM_GATES['jamf-lock-erase-wipe-portal'], target: { '[SERIAL_NUMBER]': 'C02DEMOB0001' } }], tenantFile, runDir: dir, now: '2026-11-06T10:00:00.000Z' });
   const out = [];
-  const code = await vendors.connectorModule('jamf').run(['verify-command', '--management-id', 'b1000000-0000-4000-8000-0000000000d1', '--type', 'DEVICE_LOCK', '--not-before', '2026-11-06T09:59:00Z', '--execute'], { ...customersData.tenantVars(b), ...vendors.simulatedCredentials('jamf') }, { transport: vendors.transportFor('jamf', tenantFile), sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) });
+  const code = await vendors.connectorModule('jamf').run(['verify-command', '--management-id', 'b1000000-0000-4000-8000-0000000000d1', '--type', 'ERASE_DEVICE', '--not-before', '2026-11-06T09:59:00Z', '--execute'], { ...customersData.tenantVars(b), ...vendors.simulatedCredentials('jamf') }, { transport: vendors.transportFor('jamf', tenantFile), sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) });
   assert.equal(code, 5, out.join(''));
-  assert.match(out.join(''), /DEVICE_LOCK/);
+  assert.match(out.join(''), /ERASE_DEVICE/);
 });
 
 // Code review 1, findings 4 and 9: an R1 gate's own read counts only when its section names exactly one,

@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[USER@DOMAIN.COM]` (the departing user's Google address) · `[UPN]` (their Okta username) · `[USER_ID]` (their Okta user ID) · `[MANAGER_UPN]` (who receives the data) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[USER@DOMAIN.COM]` (the departing user's Google address) · `[UPN]` (their Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[MANAGER_UPN]` (who receives the data) · `[TRANSFER_ID]` (one data transfer's ID, as the Data Transfer API names it, Phase C) · `[NOT_BEFORE]` (the time a transfer read-back starts from, Phase C) · `[CHANGE_ID]` (the change record id, below) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`: `google-workspace:verify-suspended` for [gws-offboard-suspend-portal] or its GAM twin [gws-offboard-suspend]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`: `okta:verify-status --status DEPROVISIONED` for [gws-offboard-okta-deactivate-portal] or its API twin [gws-offboard-okta-deactivate], `google-workspace:verify-suspended` for [gws-offboard-suspend-portal] or its GAM twin [gws-offboard-suspend], `google-workspace:verify-transfer --application-id 55656082996 --not-before` for [gws-offboard-drive-transfer-portal] and `google-workspace:verify-transfer --application-id 435070579839 --not-before` for [gws-offboard-calendar-transfer-portal]), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-status --status DEPROVISIONED`, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `google-workspace:verify-transfer --application-id 435070579839 --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 ## ⚠️ Admin / safety gate
 
@@ -56,14 +56,21 @@ No lighter step: the person is leaving, so access must end at the identity sourc
 - **Reversibility:** R3 — Okta Activate brings the account back, but app assignments may have to be re-assigned and the Okta password is permanently deleted
 - **Required confirmation:** Type exactly `DEACTIVATE OKTA USER [UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
+- **Read-back:** `okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-offboard-okta-deactivate-portal]:** Only after the exact match:
 1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Deactivate**.
 2. Confirm in the dialog, then read the status back as **Deactivated**.
 
+```bash
+# read-back: the Okta user record reads status DEPROVISIONED, Deactivated in the Admin Console (GET only); it proves the change only when Phase A read another status
+node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+```
+
+Deactivation runs in the background, so the status can still read the old value for a while: run the read again, never the deactivation.
+
 **WAIT UNTIL** the Google side shows the provisioning result: Admin console → Directory → Users → `[USER@DOMAIN.COM]` → status banner. With default integration settings the account is **Suspended**; with *Do not suspend user* it stays **Active** and Phase B is required.
 
-**Verification checkpoint** — [ ] Okta status reads Deactivated · [ ] the Google status is recorded in the ticket.
+**Verification checkpoint:** [ ] Okta status reads Deactivated and `verify-status --status DEPROVISIONED` passed · [ ] the Google status is recorded in the ticket.
 
 ## Phase B — Contain in Google (only if Okta did not suspend the account)
 
@@ -96,6 +103,8 @@ node scripts/adapters/gws-client.js verify-suspended --user [USER@DOMAIN.COM] --
 
 **Pre-state (R0, record it in the ticket):** the number of files `[USER@DOMAIN.COM]` owns, and whether any Vault hold applies (a user on a litigation hold cannot have data transferred or be deleted until a Vault admin lifts the hold).
 
+For each transfer gate below, take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for its change, and write it in the ticket: the read-back passes only on a transfer requested at or after it, so an earlier transfer of the same data never proves this one.
+
 ```bash
 # read-only: account status, organizational unit and admin flags before any change
 gam info user "[USER@DOMAIN.COM]"   # prints status, OU, licences and admin roles
@@ -110,12 +119,21 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 - **Reversibility:** R2 — not reversible from the Admin console — no undo is documented; the previous owner keeps edit access unless removed, so the recorded pre-state is the only record of what moved
 - **Required confirmation:** Type exactly `TRANSFER DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names)
+- **Read-back:** `gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 55656082996 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-offboard-drive-transfer-portal]:** Only after the pre-state is recorded and the exact match:
 1. Admin console → Apps → Google Workspace → Drive and Docs → **Transfer ownership**.
 2. Enter From user `[USER@DOMAIN.COM]` and To user `[MANAGER_UPN]`, then click **Transfer Files**.
 
 **WAIT UNTIL** the transfer completes. A transfer that runs longer than 36 hours stops unsuccessfully and has to be started again.
+
+The Admin console shows no transfer ID. Take `[TRANSFER_ID]` from `gam print datatransfers` (read-only: each transfer with its ID, owners and status), the transfer from `[USER@DOMAIN.COM]` to `[MANAGER_UPN]`; whether a transfer started in the Admin console appears in the Data Transfer API is not confirmed (vendor fact W-14), so if none is listed, this read cannot run and the gate's proof is the confirmation email Google sends and the sample file below. Its change record then stays open and not done (`change-record.js status` says so): write in the ticket that no transfer ID was listed and what was recorded instead, and never report the change as proved by a read.
+
+```bash
+# read-back: the data transfer from the user to the new owner reads completed for Drive and Docs (GET of the transfer and of both owners only)
+node scripts/adapters/gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 55656082996 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```
+
+It passes only when that transfer was requested at or after `[NOT_BEFORE]`, moves `[USER@DOMAIN.COM]`'s data to `[MANAGER_UPN]` and its Drive and Docs entry reads completed. Google's reference lists no status values (vendor fact W-11), so any other status is inconclusive: read again later. `55656082996` is the Drive and Docs application ID a search excerpt of Google's transfer parameters page gives, not confirmed on the page itself (vendor fact W-13): if the read says the transfer holds no entry for it, it prints the IDs the transfer holds; check the transfer in the Admin console before concluding anything.
 
 <!-- SAFETY GATE [gws-offboard-calendar-transfer-portal] -->
 - **Target:** [USER@DOMAIN.COM] (source) and [MANAGER_UPN] (new organizer)
@@ -124,12 +142,21 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 - **Reversibility:** R2 — not reversible from the Admin console; record the event count first
 - **Required confirmation:** Type exactly `TRANSFER CALENDAR EVENTS FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names)
+- **Read-back:** `gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 435070579839 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [gws-offboard-calendar-transfer-portal]:** Only after the exact match:
 1. Admin console → Apps → Google Workspace → Calendar → **Event and Secondary calendar management** → **Events transfer**.
 2. Enter `[USER@DOMAIN.COM]` and `[MANAGER_UPN]` and start the transfer. It starts about 10 minutes later and can run for about 15 minutes.
 
-**Verification checkpoint** — [ ] `[MANAGER_UPN]` opens a sample of the transferred files · [ ] the transferred event count is recorded.
+**WAIT UNTIL** the events transfer finishes, then take `[TRANSFER_ID]` as for the Drive transfer above: the Calendar transfer from `[USER@DOMAIN.COM]` to `[MANAGER_UPN]` in `gam print datatransfers`, with the same caveat (W-14).
+
+```bash
+# read-back: the data transfer from the user to the new organizer reads completed for Calendar (GET of the transfer and of both owners only)
+node scripts/adapters/gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 435070579839 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```
+
+It passes only when that transfer was requested at or after `[NOT_BEFORE]`, moves `[USER@DOMAIN.COM]`'s events to `[MANAGER_UPN]` and its Calendar entry (application ID `435070579839`, vendor fact W-13) reads completed; any other status is inconclusive (vendor fact W-11).
+
+**Verification checkpoint:** [ ] both `verify-transfer` reads exit 0, or the confirmation emails are recorded where no transfer ID was listed · [ ] `[MANAGER_UPN]` opens a sample of the transferred files · [ ] the transferred event count is recorded.
 
 ## Phase D — Delete, or keep suspended (R3, after independent review)
 
@@ -171,7 +198,7 @@ gam user "[USER@DOMAIN.COM]" print filecounts   # counts owned files by type
 # Reversibility: R3 — reactivation may need app assignments re-created — the Okta password is permanently deleted
 # Required confirmation: type exactly "DEACTIVATE OKTA USER [USER_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
+# Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="DEACTIVATE OKTA USER [USER_ID]"
 # shows the phrase
@@ -227,7 +254,7 @@ gam info user "[USER@DOMAIN.COM]"
 # Reversibility: R2 — not reversible from the Admin console — the recorded file count is the only pre-state
 # Required confirmation: type exactly "TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, no verify-* command reads Drive ownership or a data transfer: its proof is the read its step names
+# Read-back: none, a fenced Read-back field names one read and this one transfer moves two applications, so its proof is the read its step names
 # the exact phrase to type
 required_confirmation="TRANSFER DRIVE AND CALENDAR DATA FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]"
 # shows the phrase
@@ -284,9 +311,9 @@ gam print users deleted_only
 
 ## ✅ Verification checklist
 
-- [ ] Okta: Directory → People → `[UPN]` reads **Deactivated** (API read-back status `DEPROVISIONED`).
+- [ ] Okta: Directory → People → `[UPN]` reads **Deactivated**, and `okta-client.js verify-status --status DEPROVISIONED` passed.
 - [ ] Google: `gam info user "[USER@DOMAIN.COM]"` shows the account suspended — or, after Phase D, `gam print users deleted_only` lists it and the deletion appears in Admin log events.
-- [ ] Data: `gam print datatransfers` shows Drive and Calendar transfers completed; `[MANAGER_UPN]` opened a sample file; the pre-state file count is in the ticket.
+- [ ] Data: `gws-client.js verify-transfer` passed for the Drive and the Calendar transfer (or `gam print datatransfers` shows both completed); `[MANAGER_UPN]` opened a sample file; the pre-state file count is in the ticket.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the suspend / transfer / delete events with the expected admin and time.
 - [ ] Devices handed to `/jamf-lock-erase` and `/gws-chromeos-device`, each with its own read-back.
 
@@ -308,4 +335,4 @@ Being able to explain IdP → SP provisioning (who is authoritative, what deprov
 
 Start Phase A after confirming the Okta Google Workspace integration's deactivation options and the retention decision.
 
-**Sources (checked 2026-10-15):** help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-deactivate-user-account.htm · help.okta.com/oie/en-us/content/topics/provisioning/google/managing-g-suite-users.htm · help.okta.com/en-us/content/topics/provisioning/google/google-provisioning.htm · developer.okta.com/docs/api/openapi/okta-management/management/tags/userlifecycle.md · knowledge.workspace.google.com/admin/users/suspend-a-user-temporarily · knowledge.workspace.google.com/admin/users/delete-or-remove-a-user-from-your-organization · knowledge.workspace.google.com/admin/users/restore-a-recently-deleted-user · knowledge.workspace.google.com/admin/drive/transfer-drive-files-to-a-new-owner-as-an-admin · knowledge.workspace.google.com/admin/calendar/cancel-or-transfer-events-or-secondary-calendars-before-deleting-a-user · knowledge.workspace.google.com/vault/holds/get-started-with-holds-in-google-vault · GAM syntax: raw.githubusercontent.com/wiki/GAM-team/GAM (Users, Google-Data-Transfers, Users-Drive-Files-Display pages; GAM is an open-source tool, not a Google product).
+**Sources (checked 2026-10-15):** help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-deactivate-user-account.htm · help.okta.com/oie/en-us/content/topics/provisioning/google/managing-g-suite-users.htm · help.okta.com/en-us/content/topics/provisioning/google/google-provisioning.htm · developer.okta.com/docs/api/openapi/okta-management/management/tags/userlifecycle.md · knowledge.workspace.google.com/admin/users/suspend-a-user-temporarily · knowledge.workspace.google.com/admin/users/delete-or-remove-a-user-from-your-organization · knowledge.workspace.google.com/admin/users/restore-a-recently-deleted-user · knowledge.workspace.google.com/admin/drive/transfer-drive-files-to-a-new-owner-as-an-admin · knowledge.workspace.google.com/admin/calendar/cancel-or-transfer-events-or-secondary-calendars-before-deleting-a-user · knowledge.workspace.google.com/vault/holds/get-started-with-holds-in-google-vault · developers.google.com/workspace/admin/data-transfer/reference/rest/v1/transfers/get and /transfers (transfers.get, the DataTransfer fields; read 2026-11-07) · developers.google.com/workspace/admin/data-transfer/v1/transfer-data (owners by Directory user ID; Calendar application ID) · GAM syntax: raw.githubusercontent.com/wiki/GAM-team/GAM (Users, Google-Data-Transfers, Users-Drive-Files-Display pages; GAM is an open-source tool, not a Google product).

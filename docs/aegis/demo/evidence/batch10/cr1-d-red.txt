@@ -1,0 +1,45 @@
+✔ task 3: the Jamf lock gate binds verify-command --type DEVICE_LOCK; it passes after the simulated lock and fails without it (383.93975ms)
+✔ task 3: the R1 cookie reset runs its own section's RESET_SIGNIN_COOKIES read; it passes after the simulated reset and fails without it (377.320584ms)
+✔ task 4: the Okta deactivate gate of /gws-offboard and its API twin bind verify-status --status DEPROVISIONED under a change record (0.143458ms)
+✔ task 4: the /gws-offboard Okta deactivate passes after the simulated deactivate and fails after a suspend instead (344.926916ms)
+✔ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.113916ms)
+✔ task 4: gws-offboard-drive-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (507.175791ms)
+✔ task 4: gws-offboard-calendar-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (502.494208ms)
+✖ code review 1, class D (batch 10): the simulated transfer names the ticket's own customer and replaces an earlier one of its kind (0.578917ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2197.700291
+
+✖ failing tests:
+
+test at scripts/demo/batch10-readbacks.test.js:187:1
+✖ code review 1, class D (batch 10): the simulated transfer names the ticket's own customer and replaces an earlier one of its kind (0.578917ms)
+  AssertionError [ERR_ASSERTION]: customer B's own domain
+  + actual - expected
+  
+  + 'reporting.user@[@Aegion_DOMAIN]'
+  - 'reporting.user@[@Aegion_DOMAIN]'
+                      ^
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/batch10-readbacks.test.js:193:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'reporting.user@[@Aegion_DOMAIN]',
+    expected: 'reporting.user@[@Aegion_DOMAIN]',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1
+(note added after masking: the two addresses above were the fictional customers' filled-in ones, customer D's as actual and customer B's as expected; the scanner refuses a filled address in a tracked file, so both read [@Aegion_DOMAIN] here)

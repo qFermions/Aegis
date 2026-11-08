@@ -572,7 +572,8 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   const valuesFor = (g) => {
     const entry = ctx.simTable[g.id];
     const target = entry ? data.targetsFor(ticket, entry.platform, customer) : null;
-    return { target, values: { ...(target || {}), ...(entry && entry.values ? entry.values() : {}) } };
+    // a gate's own values are this customer's (code review round 1 of batch 10, class D)
+    return { target, values: { ...(target || {}), ...(entry && entry.values ? entry.values(customer) : {}) } };
   };
   const approvals = [];
   let refused = null;
@@ -602,7 +603,7 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   // changes; only a failed read-back may stop it after a gate was applied
   if (!blocked.length) {
     try {
-      applySimulatedGates({ changes: gates.map((g) => ({ entry: ctx.simTable[g.id], target: valuesFor(g).target })), tenantFile, runDir: ctx.runDir, origin, dryRun: true });
+      applySimulatedGates({ changes: gates.map((g) => ({ entry: ctx.simTable[g.id], target: valuesFor(g).values })), tenantFile, runDir: ctx.runDir, origin, dryRun: true });
     } catch (e) {
       blocked.push(`not simulated: ${names.join(', ')} could not be applied to the simulated tenant: ${ctx.clean(e)}`);
     }
@@ -631,7 +632,9 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     for (const [i, g] of gates.entries()) {
       let t0 = Date.now();
       try {
-        op.lines.push(...applySimulatedGates({ changes: [{ entry: ctx.simTable[g.id], target: valuesFor(g).target }], tenantFile, runDir: ctx.runDir, origin }));
+        // the target and the gate's own filled values, so a simulated change acts on what the change record names
+        // (code review round 3 of batch 10, class E3)
+        op.lines.push(...applySimulatedGates({ changes: [{ entry: ctx.simTable[g.id], target: valuesFor(g).values }], tenantFile, runDir: ctx.runDir, origin }));
         op.applied += 1;
       } catch (e) {
         blocked.push(`not simulated: ${g.id} could not be applied to the simulated tenant: ${ctx.clean(e)}`);

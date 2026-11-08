@@ -1,0 +1,6 @@
+$ node --test scripts/adapters/jamf-client.test.js scripts/adapters/inconclusive.test.js scripts/adapters/inconclusive-r3.test.js scripts/g2-boundary.test.js
+✔ verify-command reads the record fields Jamf documents: client.managementId, commandType and commandState (0.551542ms)
+ℹ tests 215
+ℹ pass 215
+ℹ fail 0
+exit 0

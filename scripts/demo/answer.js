@@ -37,7 +37,9 @@ const ANY_STEP = /^[ \t>]*(?:[-*+][ \t]+)?(?:\*\*)?\(?(\d+)[.)](?:\*\*)?[ \t]*(\
 const LIST_LINE = /^[ \t>]*(?:[-*+][ \t]+|\(?\d+[.)])/;
 // Characters that make a line look plain but read differently: full-width digits and no-break spaces fold
 // to plain ones (NFKC), and zero-width characters go.
-const plainText = (t) => String(t).normalize('NFKC').replace(/[\u200b-\u200d\u2060\ufeff]/g, '');
+// every invisible character goes (format characters and the other default-ignorable ones: a soft hyphen, U+2061,
+// a variation selector), so none can hide a word (code review round 2 of batch 10, class A2)
+const plainText = (t) => String(t).normalize('NFKC').replace(/[\p{Cf}\p{Default_Ignorable_Code_Point}]/gu, '');
 // "Details" with its capital, not followed by a field or tab name: "in the details field of your ticket" is a
 // message line (code review round 2 of batch 9, finding 13)
 // "the Details section of this answer" is a pointer; a details field, tab, box or pane is part of a message
@@ -347,13 +349,109 @@ function changeIn(text) {
   return null;
 }
 
-// The step half of the INVESTIGATE rule: at least one step, and no change word where a change could be
-// asked. With a Fix card: in every card line but those of the parts that only describe or speak
-// (MENTION_PARTS: the two messages to the user speak to the customer, "We'll update you within the hour"); a Details line mentions a change, it does
-// not ask for one, so Details is not read (batch 9, task 9). With no card (an answer in the older format): in
-// every numbered line, in any form. shortcut: an older-format answer's prose and bullets are not read, since a
-// look-first answer of that form says "don't release" or "don't delete it" in them (full run 1's T5); such an
-// answer can only gain a label, never a change, since INVESTIGATE approves and applies nothing.
+// In a step, a change word counts only as the step's verb (batch 10, task 2): the first word of the step or
+// of a sentence in it, or the word right after a leading "please" or "then", "ask <someone> to", a leading
+// condition ("If it still loops:", "If none of that fits,"), a leading place ("Under Full Access,"), an adverb
+// ("only", "also") or a short label ("Last resort:"), and the word
+// after "then" anywhere in a sentence. A noun ("look for a macOS update", "read the install log") is not the
+// verb, so it does not count; T7 and T7m of full runs 4 and 5 closed OPEN on one. After "Ask the user to
+// <verb>", the rest of the step is the user check the tech relays: the asked verb counts, the user's later
+// words ("if it still fails, restart the laptop") do not. A negated verb ("Don't wait for the user, reset the
+// password") hands the step to the clause after it, as batch 9's rule did. Code review round 1 of batch 10
+// (class A): a prefix before the verb (an emoji, a WARNING label, italics) is not the verb; a change verb after
+// "and" or a comma with an object after it counts; so does a button the step clicks ("Click Wipe Computer") and
+// the last button of a portal path that ends the clause ("→ Reset password, with ..."), since Aegis leads with
+// the portal; and a bullet under a step is read as a sentence of its own. shortcut: a word list and a few shapes,
+// so a change worded otherwise reads as a look; INVESTIGATE approves nothing, so such a miss can only turn an
+// OPEN into an INVESTIGATE.
+const CHANGE_VERB = new RegExp(`^${CHANGE_WORD.source}`, 'i');
+const LEADS = Object.freeze([
+  /^(?:if|when|once|after|unless|until|before|otherwise|whether|in|on|under|from|for|with|within|inside|at)\b[^,:]*[,:]\s*/i,
+  /^[A-Za-z][A-Za-z0-9' ()-]{0,40}:\s+/,
+  /^(?:please|then|also|next|first|finally|now|only|just)\b[\s,]*/i,
+]);
+// What opens a clause without being a word: punctuation, an emoji, a quote mark, a list marker.
+const OPENING = /^[^A-Za-z0-9[]+/;
+const RELAY = /^(?:ask|tell)\s+(?:\S+\s+){0,3}?to\s+/i;
+const NEGATED_VERB = /^(?:don['’]?t|do not|never|no need to|avoid)\b/i;
+// a dash ends a negated clause too ("Don't wait \u2014 click Reset password": code review round 3 of batch 10, class A3)
+const NEXT_CLAUSE = /[,;:]\s*|\s(?:and|but)\s+|\s+[-\u2013\u2014]\s+/;
+// The verb that opens one clause: { change: the change word or null, relayed: true after "ask <someone> to", rest }.
+function openingVerb(clause) {
+  let t = clause;
+  let negated = false;
+  for (let i = 0; i < 6; i += 1) {
+    // a list marker with or without a space after it ("2.Reset": code review round 2 of batch 10, class A2)
+    t = t.replace(OPENING, '').replace(/^(?:[-*+]\s+|\(?\d+[.)]\s*)/, '');
+    const hit = CHANGE_VERB.exec(t);
+    if (hit) return { change: hit[0], relayed: false, rest: t };
+    const relay = RELAY.exec(t);
+    if (relay) { const asked = CHANGE_VERB.exec(t.slice(relay[0].length)); return { change: asked ? asked[0] : null, relayed: true, rest: '' }; }
+    if (NEGATED_VERB.test(t)) {
+      const next = NEXT_CLAUSE.exec(t);
+      // a negated clause holds nothing more to read: its button or path is the one not to use
+      if (!next) return { change: null, relayed: false, rest: '', negated: true };
+      t = t.slice(next.index + next[0].length);
+      negated = true;
+      continue;
+    }
+    const lead = LEADS.map((re) => re.exec(t)).find(Boolean);
+    if (!lead) break;
+    t = t.slice(lead[0].length);
+  }
+  // rest: the clause from its verb on, past any lead or negated clause, where the other readers look
+  return { change: null, relayed: false, rest: t, negated };
+}
+// A change verb joined by "and" or a comma with an object after it ("and reset the password", ", wipe it"); a
+// change word there with no object is a noun ("the install and update history") (evidence review 1 and code
+// review round 1 of batch 10).
+const JOINED_VERB = new RegExp(`(?:\\band|,)\\s+(${CHANGE_WORD.source})\\s+(?=(?:the|a|an|their|his|her|its|this|that|these|those|it|them|every|all|each|any|only)(?![A-Za-z])|\\[)`, 'i');
+// A change word in its plain form, for a path's last stop ("Deleted users" is a list, not a button), and in any form
+// after "click", "choose" or "select" (a dropdown value: "Select Disabled"); either one followed by a menu noun is a
+// menu, not a button ("Update rings", "Add filters") (code review rounds 2 and 3 of batch 10, classes A2 and A3: an
+// any-plural rule dropped "Revoke sessions" and "Remove members"). shortcut: a short list of menu nouns.
+const MENU_NOUN = '(?!\\s+(?:rings?|filters?|history|logs?|reports?|status|policies|policy|settings|options|columns?|views?)\\b)';
+const CHANGE_PLAIN = `(?:${CHANGE_STEMS.join('|')}|turn (?:on|off))(?![A-Za-z-])${MENU_NOUN}`;
+// A button the step clicks, chooses or presses ("Click Wipe Computer", "choose Delete").
+const BUTTON_VERB = new RegExp(`\\b(?:click|choose|select|press|tap|pick|hit)\\s+(?:on\\s+)?(?:the\\s+)?["\\u201c]?((?:${CHANGE_WORD.source})${MENU_NOUN})`, 'i');
+// The last stop of a portal path when it ends the clause in a change: "→ Reset password," "→ Lock Computer."; a
+// menu the path only passes through ("→ Update rings and read the ring") is not one.
+const PATH_BUTTON = new RegExp(`^\\s*(${CHANGE_PLAIN})(?:\\s+[^\\s,.;:)]+){0,3}\\s*(?:[.,;:)]|$|\\s+(?:with|for|on)\\b)`, 'i');
+const pathButton = (clause) => (clause.includes('→') ? (PATH_BUTTON.exec(clause.split('→').pop()) || [])[1] || null : null);
+// A sentence that goes on with the user check a relayed ask began: it opens with a condition ("If it still fails,
+// restart the laptop") or with "then" or "and"; any other sentence is the tech's own (evidence review 1 of batch 10).
+const RELAY_GOES_ON = /^(?:if|when|once|after|unless|until|otherwise|then|and)\b/i;
+// The first change word a step asks for as its verb, or null.
+function stepChange(step) {
+  const text = String(step).replace(/\*\*|__|`/g, '');
+  let relaying = false;
+  // a sentence ends at its stop, or at a line break: a bullet under a step is a sentence of its own
+  for (const sentence of text.split(/(?<=[.!?;])\s+|\n+/)) {
+    if (relaying && RELAY_GOES_ON.test(sentence.replace(OPENING, ''))) continue;
+    relaying = false;
+    for (const clause of sentence.split(/\bthen\b/i)) {
+      const v = openingVerb(clause);
+      if (v.change) return v.change;
+      if (v.relayed) { relaying = true; break; }
+      // the whole clause, unless a negation opened it: then only what follows the negated part (round 3, class A3)
+      const read = v.negated ? v.rest : clause;
+      const inside = (JOINED_VERB.exec(read) || BUTTON_VERB.exec(read) || [])[1] || pathButton(read);
+      if (inside) return inside;
+    }
+  }
+  return null;
+}
+
+// The step half of the INVESTIGATE rule: at least one step, and no step whose verb is a change word. With a
+// Fix card: the steps, the "Do this" text before the first step, and any card line in no part (a step filed
+// after a stray label); "Done when" is not a step, so it keeps batch 9's reading (any change word a negation
+// does not open, security review 5), and the parts that only describe or speak are not read (MENTION_PARTS:
+// the two messages to the user speak to the customer, "We'll update you within the hour"); a Details line
+// mentions a change, it does not ask for one, so Details is not read (batch 9, task 9). With no card (an
+// answer in the older format): every numbered line, in any form. shortcut: an older-format answer's prose and
+// bullets are not read, since a look-first answer of that form says "don't release" or "don't delete it" in
+// them (full run 1's T5); such an answer can only gain a label, never a change, since INVESTIGATE approves
+// and applies nothing.
 // The card parts that describe or speak, and ask nothing of the tech: what is wrong ("the account is locked"),
 // the signal to stop at ("a rule is moving the invoices") and the two user messages. Batch 8's T5 card held
 // "moving" in its Stop if line (batch 9, task 9).
@@ -363,12 +461,31 @@ function onlyLooks(raw) {
   const steps = answerSteps(answer);
   const card = fixCard(answer);
   const body = deskBlock(answer).body.split(/\r?\n/);
-  const scan = card.present
-    ? [...steps, card.parts.doThis || '', ...card.lines.filter((l) => !MENTION_PARTS.includes(l.part)).map((l) => l.text)]
-    : [...steps, ...body.filter((l) => ANY_STEP.test(l))];
+  const asSteps = [];
+  const asMentions = [];
+  if (card.present) {
+    // a "Do this" line before the first numbered step (the label line's own text, or a bullet) is read as a
+    // step; a numbered line starts a step, a wrapped line runs on in it, and a bullet under it starts a new
+    // sentence of that step, so its verb is read (code review round 1 of batch 10, class A)
+    let numbered = false;
+    for (const l of card.lines) {
+      if (MENTION_PARTS.includes(l.part)) continue;
+      if (l.part === 'doneWhen') { asMentions.push(l.text); continue; }
+      if (l.part !== 'doThis') { asSteps.push(l.text); continue; }
+      const step = STEP.exec(l.text);
+      if (step) { numbered = true; asSteps.push(step[2]); continue; }
+      if (!numbered) { asSteps.push(l.text); continue; }
+      if (l.text.trim()) asSteps[asSteps.length - 1] += LIST_LINE.test(plainText(l.text)) ? `\n${l.text.trim()}` : ` ${l.text.trim()}`;
+    }
+  } else {
+    asSteps.push(...steps, ...body.filter((l) => ANY_STEP.test(l)).map((l) => ANY_STEP.exec(l)[2]));
+  }
   let change = null;
-  for (const x of scan) { change = changeIn(x); if (change) break; }
-  return { steps, looks: steps.length > 0 && change === null, change };
+  let where = null;
+  for (const x of asSteps) { change = stepChange(x); if (change) { where = x; break; } }
+  if (!change) for (const x of asMentions) { change = changeIn(x); if (change) { where = x; break; } }
+  // where: the step (with its bullets) or card line that holds the change, for a reader to quote
+  return { steps, looks: steps.length > 0 && change === null, change, where };
 }
 
-module.exports = { defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };
+module.exports = { defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

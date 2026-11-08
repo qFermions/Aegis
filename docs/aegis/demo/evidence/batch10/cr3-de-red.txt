@@ -1,0 +1,84 @@
+✔ the allow-list holds exactly the lane spec's Jamf Pro reads, each a GET, on JAMF_URL, with no tenant variable (1.499042ms)
+✔ every read command sends the exact method, host and path, with the access token only in the Authorization header (3.889625ms)
+✔ the token exchange is POST /api/oauth/token, form-encoded, exactly grant_type, client_id and client_secret, and is never retried (22.262791ms)
+✔ every write and secret read the lane spec names is refused through client.send before a credential is read or the transport is called (0.809708ms)
+✔ the CLI dry run prints the exact planned request, reads no credential and calls no transport (1.297334ms)
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (2.54925ms)
+✔ verify-command reads further pages while a page is full, and stops after ten pages without proof (13.951ms)
+✔ verify-command reads the record fields Jamf documents: client.managementId, commandType and commandState (0.512709ms)
+✔ verify-profile: the Mac, confirmed by serial number, lists the profile id; --absent proves it does not (0.610667ms)
+✔ verify-profile: another Mac, no Mac, two Macs or an unreadable list is never proof (0.676833ms)
+✔ profile read-backs name the profile: an id or an identifier alone is never proof, and --absent needs every entry to carry an identifier (0.785792ms)
+✔ verify-group-count: the member count equals --expect; a paged or unknown shape is not proof (0.388042ms)
+✔ verify-filevault: FileVault ENCRYPTED and personal key validation VALID is proof, and no key is ever printed (0.999792ms)
+✔ verify-policy: every property asked for matches on the policy asked for; the bare form, which proves only existence, is refused (2.348958ms)
+✔ key-like fields are stripped from every response before it is printed, and the instruction scan runs on what is left (0.310208ms)
+✔ secret values under keys that do not look like one are withheld: profile payloads, script parameters, run_command and secret-named extension attributes (1.0415ms)
+✔ no credential or token appears in stdout, stderr or a result, also when the transport error or the response echoes it (0.513375ms)
+✔ instruction text in a response field is flagged and quoted in the CLI output, and no further request follows (0.190292ms)
+✔ Jamf Pro binds no tenant variable: one server per tenant, bound by JAMF_URL; any other host is refused (0.199875ms)
+✔ bad input, unknown or write-shaped commands and misplaced flags exit 1 before anything is read or sent (0.383042ms)
+✔ missing credentials exit 1 and name the variable, never a value; nothing is sent (0.264209ms)
+✔ a failed read exits 2 and withholds the body; a network tripwire is never swallowed (0.395ms)
+✔ the adapter has no file, socket or console access of its own, and runs as a CLI (dry run and refusal only) (95.435292ms)
+✔ task 3: the Jamf lock gate binds verify-command --type DEVICE_LOCK; it passes after the simulated lock and fails without it (379.755667ms)
+✔ task 3: the R1 cookie reset runs its own section's RESET_SIGNIN_COOKIES read; it passes after the simulated reset and fails without it (339.046958ms)
+✔ task 4: the Okta deactivate gate of /gws-offboard and its API twin bind verify-status --status DEPROVISIONED under a change record (0.147083ms)
+✔ task 4: the /gws-offboard Okta deactivate passes after the simulated deactivate and fails after a suspend instead (338.985083ms)
+✔ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.121167ms)
+✔ task 4: gws-offboard-drive-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (498.015958ms)
+✔ task 4: gws-offboard-calendar-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (479.974041ms)
+✔ code review 1, class D (batch 10): the simulated transfer names the ticket's own customer and replaces an earlier one of its kind (0.78625ms)
+✖ code review 2, class E2 (batch 10): the simulated transfer's new owner is the tenant's own reporting.user account, whatever the source's domain (0.8505ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 30
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2119.036833
+
+✖ failing tests:
+
+test at scripts/adapters/jamf-client.test.js:364:1
+✖ verify-command: an acknowledged command of that type for that Mac, sent at or after --not-before, is proof; anything else is not (2.54925ms)
+  AssertionError [ERR_ASSERTION]: InstallProfile and INSTALL_PROFILE are one type
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/jamf-client.test.js:440:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/batch10-readbacks.test.js:211:1
+✖ code review 2, class E2 (batch 10): the simulated transfer's new owner is the tenant's own reporting.user account, whatever the source's domain (0.8505ms)
+  AssertionError [ERR_ASSERTION]: the owner the change record names
+  + actual - expected
+  
+  + 'sim-other-owner'
+  - '100000000000000000d02'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/batch10-readbacks.test.js:228:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'sim-other-owner',
+    expected: '100000000000000000d02',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

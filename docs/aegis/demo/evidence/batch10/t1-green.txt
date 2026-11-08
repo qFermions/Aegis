@@ -1,0 +1,21 @@
+✔ fails: the first change is a heavy reset while the section lists a lighter admin step (1.997166ms)
+✔ passes: the section lists only a user check before the heavy gate (1.325917ms)
+✔ passes: the answer names the lighter gate first, then the heavy one (0.435084ms)
+✔ fails: the heavy gate first, the lighter gate of its own section second (0.364834ms)
+✔ passes: no change advised, or a first change that is not heavy, or a gate no runbook holds (0.401583ms)
+✔ the desk shows it as its own row at step 5, and a failed row does not stop the ticket (0.135125ms)
+✔ code review 1, finding 8: a Try first or Lighter step line counts as a lighter admin step; a User check does not (0.5345ms)
+✔ batch 10, task 1: batch 9b's T9m answer fails, its block holds the session clear and the last-resort reset (12.957834ms)
+✔ batch 10, task 1: the same T9m answer with only the session clear in the block passes (10.727916ms)
+✔ batch 10, task 1, pair 1: a lock and the erase its runbook says to try it before, in one block, fails; the lock alone passes (0.653084ms)
+✔ batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes (0.455375ms)
+✔ batch 10, task 1: gates of one checklist that no ladder line ties together pass, here and in the real offboarding runbook (26.510458ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.395125
+exit 0

@@ -1,0 +1,52 @@
+✔ task 1: each fixture answer opens with the card, has the five parts in order, at most 150 words, no command, no desk-only text, and the aegis-desk block last (31.861583ms)
+✔ task 1: each break of the format is caught (12.039458ms)
+✔ task 8: the five answer checks, in page order, pass on a good answer and each fails on its own break (6.643125ms)
+✔ the INVESTIGATE step rule: steps that only look pass, a step that changes something does not (2.632125ms)
+✔ a blank line inside "Do this" keeps its steps; only the default block's tokens are its facts; a placeholder is one word (0.215667ms)
+✔ a wrapped or bulleted line inside a step keeps the later steps, so a change is still seen (0.113417ms)
+✔ an unindented wrapped line inside a step keeps the later steps (0.069667ms)
+✔ a change hidden before the first step, on the label line, or after a stray label still counts (0.771917ms)
+✔ an indented numbered sub-item is part of its step, and a bold number starts a step (0.116292ms)
+✔ the default organization's tokens are read from the dictionary, without the connection tokens (0.828958ms)
+✔ an indented numbered change line is still scanned, with or without a card (0.137125ms)
+✔ a change in any step form, in odd characters, in another card part or in a Details list is still seen (0.775792ms)
+✔ a default fact a negation opens its clause with is not the answer using that fact (0.625584ms)
+✔ batch 10, task 2: the T7m and T7 answers of full runs 4 and 5 only look ("a macOS update", "a large update" are nouns) (0.823041ms)
+✔ batch 10, task 2: "Restart the Mac" and "Update the profile" as admin steps still count (0.102625ms)
+✔ batch 10, task 2, pair 1: "Read the install log" is a look; "Install the printer driver" is a change (0.066ms)
+✔ batch 10, task 2, pair 2: a reset named as a noun is a look; the verb after "then", "please" or a leading condition is a change (0.151ms)
+✔ batch 10, task 2, pair 3: words inside a user check the tech relays do not count; the asked verb itself and a second sentence of the tech's own do (0.101209ms)
+✔ batch 10, task 2: the batch 9 cases still hold (a negated verb hands over, "Done when" still counts) (0.161833ms)
+✖ batch 10, task 2, pair 4: a verb after a leading place phrase or "only" counts; a look after one is still a look (0.334125ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 99.701458
+
+✖ failing tests:
+
+test at scripts/demo/answer.test.js:312:1
+✖ batch 10, task 2, pair 4: a verb after a leading place phrase or "only" counts; a look after one is still a look (0.334125ms)
+  AssertionError [ERR_ASSERTION]: Under Read and manage (Full Access), add [UPN].
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/answer.test.js:315:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

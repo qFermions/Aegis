@@ -1,0 +1,66 @@
+## Fix
+**What's wrong:** [UPN] can't open or send from [SHARED_MAILBOX] yet.
+**Do this:**
+1. Call the requester back on the number in the staff list. Record the managing partner's approval in the ticket.
+2. Exchange admin center → Recipients → Mailboxes → [SHARED_MAILBOX] → Mailbox Delegation. Copy the current lists into the ticket.
+3. Read and manage (Full Access) → Edit → Add members → [UPN] → Save → Confirm.
+4. Send as → Edit → Add members → [UPN] → Save → Confirm.
+5. Ask [FIRST_NAME] to restart Outlook and send a test from the mailbox.
+
+**Done when:** the mailbox shows in their Outlook and the test's sender is only [SHARED_MAILBOX]. Aegis then checks that both permissions are set.
+**Stop if:** [SHARED_MAILBOX] isn't a shared mailbox, or the partner says no.
+**Tell the user now:** IT is getting your request approved. We'll let you know when the mailbox is ready.
+**Tell the user when done:** You can open [SHARED_MAILBOX] in Outlook and send as it. If it's missing, restart Outlook.
+
+## Details
+
+**Verdict:** This is a routine delegation request. Runbook: `/shared-mailbox`, which has one gate for Full Access and one for Send As. The ticket asks for both, so both run now. Neither one is a fallback for the other.
+
+**Customer E context (from the profile):**
+- Accounts are cloud-only, so there's no directory sync to wait for.
+- Check identity by calling back on the number in the staff list, never a number given in the ticket.
+- The managing partner approves changes. Without that approval, stop.
+
+**Risk:** Both gates are R2.
+- Full Access opens a whole mailbox to another person. What they read while they had access can't be taken back.
+- Mail sent "as" the mailbox can't be recalled.
+- Step 2 records the before-state. Each grant needs an approved change record before its double-check runs.
+
+**Rollback:** Undo with `/mailbox-permissions`:
+- Full Access: gate `mailbox-permission-remove-portal`
+- Send As: gate `mailbox-send-as-remove-portal`
+
+**Notes:**
+- Auto-mapping can take a while to show the mailbox in Outlook. If it never shows after a restart, re-add the mailbox to the Outlook profile.
+- Send As is not Send on Behalf. With Send As, the sender line shows only the mailbox. Send on Behalf wasn't requested, and it has no gate here.
+
+<details>
+<summary>PowerShell - for reference only (read-only)</summary>
+
+```powershell
+Connect-ExchangeOnline                                          # sign in to Exchange Online
+Get-MailboxPermission -Identity "[SHARED_MAILBOX]"              # lists who has Full Access (pre-state / check)
+Get-RecipientPermission -Identity "[SHARED_MAILBOX]"            # lists who has Send As (pre-state / check)
+```
+</details>
+
+**Verification checklist:**
+- [ ] Callback done and the managing partner's approval recorded
+- [ ] Before-state lists copied into the ticket
+- [ ] Full Access read-back passes
+- [ ] Send As read-back passes
+- [ ] User test: the mailbox is visible, and the sender line shows only [SHARED_MAILBOX]
+
+**Jira-ready note:**
+> [JIRA-###] Resolved [date/time]. Identity verified by callback to the staff-list number. Approved by the managing partner. Pre-state of the [SHARED_MAILBOX] delegation lists recorded. Full Access granted to [UPN] and verified. Send As granted to [UPN] and verified. Auto-mapping and the test send confirmed by the user: [yes/no]. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

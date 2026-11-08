@@ -1,0 +1,45 @@
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (27.827417ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (44.319583ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (41.0855ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.155792ms)
+✔ no ticket text: the usage and exit 1, with no session (22.141084ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (20.864708ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (330.9065ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (37.868958ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (0.547166ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.342334ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.260125ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.10975ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.134292ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.409375ms)
+✖ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.277917ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 564.702166
+
+✖ failing tests:
+
+test at scripts/ask-aegis.test.js:359:1
+✖ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.277917ms)
+  AssertionError [ERR_ASSERTION]: passwordis Hunter22!
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:360:172)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

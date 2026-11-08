@@ -1,0 +1,24 @@
+$ node --test scripts/reset-erase-readbacks.test.js scripts/demo/batch10-readbacks.test.js
+✖ task 3: the Jamf lock gate binds verify-command --type DEVICE_LOCK; it passes after the simulated lock and fails without it (146.39625ms)
+✔ the Google password reset gate is R1 and its own section names exactly one CHANGE_PASSWORD audit read (0.587167ms)
+✔ the read line is the one /gws-account-containment uses, without --change (0.194625ms)
+✔ the Jamf wipe gate binds a verify-command read of the erase command, under its change record (0.060042ms)
+✖ the Jamf lock gate and its API twin bind a verify-command read of DEVICE_LOCK, under its change record (0.343542ms)
+✖ both runbooks keep the Read-back contract change-record.js reads (0.58975ms)
+ℹ tests 6
+ℹ pass 3
+ℹ fail 3
+✖ failing tests:
+✖ task 3: the Jamf lock gate binds verify-command --type DEVICE_LOCK; it passes after the simulated lock and fails without it (146.39625ms)
+  AssertionError [ERR_ASSERTION]: at least one change cannot be proved by a read-back, so the ticket is not resolved
+    actual: 'INCONCLUSIVE',
+    expected: 'RESOLVED (SIMULATED)',
+✖ the Jamf lock gate and its API twin bind a verify-command read of DEVICE_LOCK, under its change record (0.343542ms)
+  AssertionError [ERR_ASSERTION]: jamf-lock-erase-lock-portal
+    actual: 'no read-back is named for it in this runbook: its proof is the read its own step names',
+    expected: null,
+✖ both runbooks keep the Read-back contract change-record.js reads (0.58975ms)
+  AssertionError [ERR_ASSERTION]: jamf-lock-erase says where [CHANGE_ID] comes from
+    actual: false,
+    expected: true,
+exit 1

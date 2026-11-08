@@ -1,0 +1,31 @@
+✔ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (23.749959ms)
+✔ with no --setup the argv is the isolation alone (0.954167ms)
+✔ bad arguments exit 1 with no session; a claude that cannot start is a plain message and exit 2 (1.817ms)
+✔ while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits (0.325917ms)
+✔ code review 2, finding 14: the chat protects its setup text as ask-aegis does (0.455917ms)
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (28.362167ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (44.390583ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (44.185792ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.219166ms)
+✔ no ticket text: the usage and exit 1, with no session (24.166167ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (20.964958ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (331.879625ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (45.005417ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (0.634459ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.503291ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.390791ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.163042ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.22325ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (2.08075ms)
+✔ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.450834ms)
+✔ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.1985ms)
+✔ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.251ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 585.44925
+exit 0

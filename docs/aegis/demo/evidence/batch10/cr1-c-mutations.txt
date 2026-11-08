@@ -1,0 +1,21 @@
+Mutation 1: "was", "'s", dash and arrow take any value (no shape needed)
+applied: 1
+ℹ fail 1
+ℹ pass 15
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.599041ms)
+Mutation 2: only the five zero-width characters taken out
+applied: 1
+ℹ fail 1
+ℹ pass 15
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.384042ms)
+Mutation 3: no plurals
+applied: 1
+ℹ fail 1
+ℹ pass 15
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.588917ms)
+Mutation 4: the sanitizer reads the text as typed only
+applied: 1
+ℹ fail 1
+ℹ pass 15
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.59675ms)
+restored: True

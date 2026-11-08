@@ -90,3 +90,156 @@ test('code review 1, finding 8: a Try first or Lighter step line counts as a lig
   fs.writeFileSync(path.join(dir, 'example-lost.md'), ['# Lost', '## Lost', '**User check:** confirm the phone is gone.', '', portal('ex-lost-wipe', 'R3', 'erase the phone'), ''].join('\n'));
   assert.equal(lightestStepFirst(answer('ex-lost-wipe'), catalog(dir)).verdict, 'pass', 'a User check is no admin step');
 });
+
+// ── Batch 10, task 1: one rung per action block ─────────────────────────────────────────────────────────
+// EXPECTED DECISION (written before the code)
+// - The aegis-desk block lists only the gates to run now. The row also fails when the block holds a gate of a
+//   higher reversibility class (R2 or R3) together with a lighter gate for the same symptom: the runbook names
+//   the lighter one as its rung below, on a "Try first:" or "Lighter step:" line in the heavier gate's section
+//   (by gate id or by the phase that holds it), or on a fallback line ("Last resort", "only when the steps
+//   above did not ...", "if it still ...") that names the heavier gate after the lighter gate in one section.
+// - It also fails when a gate in the block is named, outside the block, on a line that calls it a last resort
+//   or a step for when an earlier change did not work, and the block holds another gate: two rungs in one block.
+// - It passes when the block holds only the rung to run now, even after user checks ("if it still loops" after
+//   a user check is the order of the ticket, not a second rung), and when two gates of one block are steps of
+//   one checklist that no ladder line ties together (an offboarding).
+const REPO = path.join(__dirname, '..', '..');
+const T9M_9B = fs.readFileSync(path.join(REPO, 'docs', 'aegis', 'demo', 'evidence', 'batch9b', 'T9m', 'answers', 'T9m-answer.txt'), 'utf8');
+// the same answer with only the session clear in its block: the last four lines of the block taken out
+const T9M_ONE_RUNG = T9M_9B.replace(/\nGate: okta-mfa-reset-selected-portal\n[\s\S]*?(?=\n```)/, '');
+
+test('batch 10, task 1: batch 9b\'s T9m answer fails, its block holds the session clear and the last-resort reset', () => {
+  // catches: a row that reads only the first gate (batch 9b's row passed this answer)
+  const row = lightestStepFirst(T9M_9B, catalog());
+  assert.equal(row.verdict, 'fail', row.detail);
+  assert.match(row.detail, /okta-mfa-reset-selected-portal/);
+  assert.match(row.detail, /okta-mfa-reset-clear-sessions-portal/);
+});
+
+test('batch 10, task 1: the same T9m answer with only the session clear in the block passes', () => {
+  // catches: a row that fails every answer whose prose mentions a later, heavier step
+  assert.doesNotMatch(T9M_ONE_RUNG, /Gate: okta-mfa-reset-selected-portal/, 'the fixture took the reset out');
+  assert.match(T9M_ONE_RUNG, /Gate: okta-mfa-reset-clear-sessions-portal/);
+  assert.equal(lightestStepFirst(T9M_ONE_RUNG, catalog()).verdict, 'pass');
+});
+
+const LADDER_RUNBOOK = ['# Example mail forwarding', '',
+  '## Phase B: Turn off the forwarding rule (R2)', '**User check:** ask whether the user set up the forwarding themselves.', '', portal('ex-rule-off', 'R2', 'turn off one inbox forwarding rule'), '',
+  '## Phase C: Delete every inbox rule (R3)', '**Try first:** Phase B, turn off the forwarding rule and watch for new forwarding.', '', portal('ex-rules-delete', 'R3', 'delete every inbox rule of one mailbox'), '',
+  '## Phase D: Sign the user out', portal('ex-app-signout', 'R1', 'sign the user out of the app'), '',
+  '## Phase E: Revoke the app token', portal('ex-app-token-revoke', 'R1', 'revoke the app token'), '',
+  '## Phase F: Hand over the files', portal('ex-files-transfer', 'R2', 'move the files to the manager'), '',
+].join('\n');
+function ladderCatalog(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-forwarding.md'), LADDER_RUNBOOK);
+  return catalog(dir);
+}
+const withDetails = (details, ...gates) => ['## Fix', "**What's wrong:** x.", '', '## Details', ...details, '', '```aegis-desk', ...gates.map((g) => `Gate: ${g}`), '```', ''].join('\n');
+
+test('batch 10, task 1, pair 1: a rule turned off and the delete its runbook says to try it before, in one block, fails; the rule turned off alone passes', (t) => {
+  // catches: a row that compares the two gates' R classes without asking whether the runbook ties them as rungs
+  const c = ladderCatalog(t);
+  const both = lightestStepFirst(withDetails([], 'ex-rule-off', 'ex-rules-delete'), c);
+  assert.equal(both.verdict, 'fail', both.detail);
+  assert.match(both.detail, /ex-rules-delete/);
+  const later = ['- Step 5, only if forwarding comes back within a day: delete every inbox rule, gate `ex-rules-delete`.'];
+  assert.equal(lightestStepFirst(withDetails(later, 'ex-rule-off'), c).verdict, 'pass', 'the delete named for later, outside the block');
+  // the order inside the block does not hide it
+  assert.equal(lightestStepFirst(withDetails([], 'ex-rules-delete', 'ex-rule-off'), c).verdict, 'fail');
+});
+
+test('batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes', (t) => {
+  // catches: a row that only compares R classes, so two R1 rungs in one block pass
+  const c = ladderCatalog(t);
+  const details = ['- Step 4, only if signing out did not stop the prompts: revoke the app token, gate `ex-app-token-revoke`.'];
+  const both = lightestStepFirst(withDetails(details, 'ex-app-signout', 'ex-app-token-revoke'), c);
+  assert.equal(both.verdict, 'fail', both.detail);
+  assert.match(both.detail, /ex-app-token-revoke/);
+  assert.equal(lightestStepFirst(withDetails(details, 'ex-app-signout'), c).verdict, 'pass');
+  // "if it still fails" after a user check, with its one gate in the block, is the rung to run now
+  const afterCheck = ['- Step 3, if the user check in step 2 did not work: revoke the app token, gate `ex-app-token-revoke`.'];
+  assert.equal(lightestStepFirst(withDetails(afterCheck, 'ex-app-token-revoke'), c).verdict, 'pass');
+});
+
+test('batch 10, task 1: gates of one checklist that no ladder line ties together pass, here and in the real offboarding runbook', (t) => {
+  // catches: a row that fails every block holding an R1 and an R2 gate, such as an offboarding
+  assert.equal(lightestStepFirst(withDetails([], 'ex-app-signout', 'ex-files-transfer'), ladderCatalog(t)).verdict, 'pass');
+  const offboard = withDetails([], 'gws-offboard-okta-deactivate-portal', 'gws-offboard-suspend-portal', 'gws-offboard-drive-transfer-portal', 'gws-offboard-calendar-transfer-portal');
+  assert.equal(lightestStepFirst(offboard, catalog()).verdict, 'pass', lightestStepFirst(offboard, catalog()).detail);
+});
+
+// Code review round 1 (batch 10), finding class B: the runbook ladder reader. It read a <details> block of
+// scripted twins as gates of the phase above it; it took a phase a Try first line names only as the undo or the
+// way back ("Phase C's Unlock undoes it") as a lighter rung; it missed "Phases B to D"; and it called a gate a
+// later step when a fallback word anywhere on its line ("otherwise the user keeps looping") was not about it.
+// Wrong implementations it catches: each of those four readings. Real runbooks, so the cases are the ones the
+// review verified; the fixture covers the <details> boundary and the fallback tie on their own.
+test('code review 1, class B (batch 10): the ladder reader keeps reference blocks, undo phases, phase ranges and unrelated fallback words out', (t) => {
+  const c = catalog();
+  const row = (...g) => lightestStepFirst(withDetails([], ...g), c);
+  assert.equal(row('fleet-device-actions-lock-portal', 'fleet-device-actions-wipe-portal').verdict, 'fail', 'Lock is the rung below Wipe');
+  assert.equal(row('fleet-device-actions-unlock-portal', 'fleet-device-actions-wipe-portal').verdict, 'pass', 'Unlock is named only as the undo');
+  assert.equal(row('okta-user-lifecycle-suspend-portal', 'okta-user-lifecycle-deactivate-portal').verdict, 'fail', 'Suspend is the rung below Deactivate');
+  assert.equal(row('okta-user-lifecycle-unsuspend-portal', 'okta-user-lifecycle-deactivate-portal').verdict, 'pass', 'Phase E is named only as the undo');
+  assert.equal(row('okta-user-lifecycle-activate-portal', 'okta-user-lifecycle-reset-password-portal').verdict, 'pass', 'the scripted twins under Phase H are no rung of it');
+  assert.equal(row('gws-2sv-reset-backup-codes-portal', 'gws-2sv-reset-turn-off-portal').verdict, 'fail', '"Phases B to D" names Phase B');
+  assert.equal(row('gws-2sv-reset-key-remove-portal', 'gws-2sv-reset-turn-off-portal').verdict, 'fail', '"Phases B to D" names Phase C, between them');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-ref.md'), ['# Example', '## Phase B: Sign out (R1)', portal('ex-ref-signout', 'R1', 'sign the user out'), '',
+    '## Phase C: Close the account (R3)', '**Try first:** Phase B, sign the user out.', '', '<details>', '<summary>API, the scale version</summary>', '', '```bash', '# SAFETY GATE [ex-ref-wipe-api]', '# Target: [UPN]', '# Effect: erase the account', '# Reversibility: R3: not reversible', '```', '', '</details>', '',
+    '## Phase D: Revoke a token (R1)', portal('ex-ref-revoke', 'R1', 'revoke the token'), ''].join('\n'));
+  const fx = catalog(dir);
+  assert.equal(lightestStepFirst(withDetails([], 'ex-ref-signout', 'ex-ref-wipe-api'), fx).verdict, 'pass', 'a gate in a <details> block is not a rung of the phase above it');
+  const unrelated = ['- Run `ex-ref-signout` now; otherwise the user keeps getting prompts.'];
+  assert.equal(lightestStepFirst(withDetails(unrelated, 'ex-ref-signout', 'ex-ref-revoke'), fx).verdict, 'pass', 'the fallback word is in another clause than the gate');
+  const tied = ['- Only if signing out did not stop the prompts: `ex-ref-revoke`.'];
+  assert.equal(lightestStepFirst(withDetails(tied, 'ex-ref-signout', 'ex-ref-revoke'), fx).verdict, 'fail', 'the fallback is about this gate');
+});
+
+// Code review round 2 (batch 10), class B2: edges of round 1's reader. A later-step condition and its gate id written
+// in two sentences ("Last resort: erase the Mac. Gate [x].", or with "e.g." inside) no longer tied; a phase named
+// beside an undo note in one clause ("Phase B, which Phase D undoes") or a lighter step that is itself a restore was
+// dropped; and after </details> the phase the block interrupted did not go on. Wrong implementations it catches: a
+// split at every sentence end; a whole clause dropped for one undo word; a new section after </details>.
+test('code review 2, class B2 (batch 10): two-sentence later steps tie, an undo note drops only its own phase, a phase goes on after </details>', (t) => {
+  const c = catalog();
+  for (const line of ['- Last resort: erase the Mac. Gate `jamf-lock-erase-wipe-portal`.', '- If it still does not come back (e.g. after a week), use `jamf-lock-erase-wipe-portal`.']) {
+    assert.equal(lightestStepFirst(withDetails([line], 'okta-user-lifecycle-clear-sessions-portal', 'jamf-lock-erase-wipe-portal'), c).verdict, 'fail', line);
+  }
+  assert.equal(lightestStepFirst(withDetails(['- Run `okta-user-lifecycle-clear-sessions-portal` now. Otherwise the user keeps looping.'], 'okta-user-lifecycle-clear-sessions-portal', 'jamf-lock-erase-lock-portal'), c).verdict, 'pass', 'Otherwise opens another sentence');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-b2.md'), ['# Example',
+    '## Phase B: Sign out (R1)', portal('ex-b2-signout', 'R1', 'sign the user out'), '',
+    '## Phase C: Close the account (R3)', '**Try first:** Phase B, which Phase D undoes.', '', portal('ex-b2-close', 'R3', 'close the account'), '',
+    '## Phase D: Restore the account (R1)', portal('ex-b2-restore', 'R1', 'restore the account'), '',
+    '## Phase E: Purge the account (R3)', '**Try first:** Phase D, restore the account from the recycle bin.', '', portal('ex-b2-purge', 'R3', 'purge the account'), '',
+    '## Phase F: Wipe the device (R3)', '**Try first:** Phase B, sign the user out.', '', '<details>', '<summary>API, the scale version</summary>', '', '```bash', '# SAFETY GATE [ex-b2-wipe-api]', '# Target: [UPN]', '# Reversibility: R3: not reversible', '```', '', '</details>', '', portal('ex-b2-wipe-portal', 'R3', 'wipe the device'), ''].join('\n'));
+  const fx = catalog(dir);
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b2-signout', 'ex-b2-close'), fx).verdict, 'fail', 'Phase B is the rung below; only Phase D is the undo');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b2-restore', 'ex-b2-purge'), fx).verdict, 'fail', 'a restore can be the lighter step');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b2-signout', 'ex-b2-wipe-portal'), fx).verdict, 'fail', 'the phase goes on after </details>');
+});
+
+// Code review round 3 (batch 10), class B3: "Run [a] now. If it still loops, ... [b]." was one clause naming both gates;
+// "Phase B, undone by Phase D" kept the undo phase and dropped the rung; "Phase D reverses this" was a rung again; and
+// an unclosed <details> lost the phase before it. Wrong implementations it catches: no split before a condition
+// sentence; undo words read only after a phase; no "reverses"; a parent section never pushed at the next heading.
+test('code review 3, class B3 (batch 10): a condition sentence splits, passive and active undo words, reverses, an unclosed details block', (t) => {
+  const c = catalog();
+  assert.equal(lightestStepFirst(withDetails(['- Run `okta-user-lifecycle-clear-sessions-portal` now. If it still loops after a day, lock the Mac with `jamf-lock-erase-lock-portal`.'], 'okta-user-lifecycle-clear-sessions-portal', 'gws-offboard-drive-transfer-portal'), c).verdict, 'pass');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-b3.md'), ['# Example',
+    '## Phase B: Sign out (R1)', portal('ex-b3-signout', 'R1', 'sign the user out'), '', '<details>', '<summary>API</summary>', '',
+    '## Phase C: Close the account (R3)', '**Try first:** Phase B, undone by Phase D.', '', portal('ex-b3-close', 'R3', 'close the account'), '',
+    '## Phase D: Restore the account (R1)', portal('ex-b3-restore', 'R1', 'restore the account'), '',
+    '## Phase E: Purge the account (R3)', '**Try first:** Phase B. Phase D reverses this.', '', portal('ex-b3-purge', 'R3', 'purge the account'), ''].join('\n'));
+  const fx = catalog(dir);
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b3-signout', 'ex-b3-close'), fx).verdict, 'fail', 'Phase B is the rung, kept though an unclosed details block follows it');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b3-restore', 'ex-b3-close'), fx).verdict, 'pass', '"undone by Phase D": D is the undo');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b3-restore', 'ex-b3-purge'), fx).verdict, 'pass', '"Phase D reverses this": D is the undo');
+});

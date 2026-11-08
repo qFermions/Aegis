@@ -1,0 +1,34 @@
+✔ task 3: the Jamf lock gate binds verify-command --type DEVICE_LOCK; it passes after the simulated lock and fails without it (392.099292ms)
+✔ task 3: the R1 cookie reset runs its own section's RESET_SIGNIN_COOKIES read; it passes after the simulated reset and fails without it (333.565834ms)
+✔ task 4: the Okta deactivate gate of /gws-offboard and its API twin bind verify-status --status DEPROVISIONED under a change record (0.146375ms)
+✔ task 4: the /gws-offboard Okta deactivate passes after the simulated deactivate and fails after a suspend instead (341.047667ms)
+✔ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.121375ms)
+✔ task 4: gws-offboard-drive-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (524.248125ms)
+✔ task 4: gws-offboard-calendar-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (510.696791ms)
+✔ code review 1, class D (batch 10): the simulated transfer names the ticket's own customer and replaces an earlier one of its kind (0.803875ms)
+✖ code review 2, class E2 (batch 10): the simulated transfer's new owner is the tenant's own reporting.user account, whatever the source's domain (0.393083ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2180.923334
+
+✖ failing tests:
+
+test at scripts/demo/batch10-readbacks.test.js:210:1
+✖ code review 2, class E2 (batch 10): the simulated transfer's new owner is the tenant's own reporting.user account, whatever the source's domain (0.393083ms)
+  Error: the simulated tenant holds no Google account for the source user or the new owner
+      at Object.apply (<repo>/scripts/demo/sim/gates.js:41:34)
+      at applySimulatedGates (<repo>/scripts/demo/sim/gates.js:208:11)
+      at TestContext.<anonymous> (<repo>/scripts/demo/batch10-readbacks.test.js:221:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+exit 1

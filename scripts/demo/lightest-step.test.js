@@ -223,3 +223,23 @@ test('code review 2, class B2 (batch 10): two-sentence later steps tie, an undo 
   assert.equal(lightestStepFirst(withDetails([], 'ex-b2-restore', 'ex-b2-purge'), fx).verdict, 'fail', 'a restore can be the lighter step');
   assert.equal(lightestStepFirst(withDetails([], 'ex-b2-signout', 'ex-b2-wipe-portal'), fx).verdict, 'fail', 'the phase goes on after </details>');
 });
+
+// Code review round 3 (batch 10), class B3: "Run [a] now. If it still loops, ... [b]." was one clause naming both gates;
+// "Phase B, undone by Phase D" kept the undo phase and dropped the rung; "Phase D reverses this" was a rung again; and
+// an unclosed <details> lost the phase before it. Wrong implementations it catches: no split before a condition
+// sentence; undo words read only after a phase; no "reverses"; a parent section never pushed at the next heading.
+test('code review 3, class B3 (batch 10): a condition sentence splits, passive and active undo words, reverses, an unclosed details block', (t) => {
+  const c = catalog();
+  assert.equal(lightestStepFirst(withDetails(['- Run `okta-user-lifecycle-clear-sessions-portal` now. If it still loops after a day, lock the Mac with `jamf-lock-erase-lock-portal`.'], 'okta-user-lifecycle-clear-sessions-portal', 'gws-offboard-drive-transfer-portal'), c).verdict, 'pass');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'example-b3.md'), ['# Example',
+    '## Phase B: Sign out (R1)', portal('ex-b3-signout', 'R1', 'sign the user out'), '', '<details>', '<summary>API</summary>', '',
+    '## Phase C: Close the account (R3)', '**Try first:** Phase B, undone by Phase D.', '', portal('ex-b3-close', 'R3', 'close the account'), '',
+    '## Phase D: Restore the account (R1)', portal('ex-b3-restore', 'R1', 'restore the account'), '',
+    '## Phase E: Purge the account (R3)', '**Try first:** Phase B. Phase D reverses this.', '', portal('ex-b3-purge', 'R3', 'purge the account'), ''].join('\n'));
+  const fx = catalog(dir);
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b3-signout', 'ex-b3-close'), fx).verdict, 'fail', 'Phase B is the rung, kept though an unclosed details block follows it');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b3-restore', 'ex-b3-close'), fx).verdict, 'pass', '"undone by Phase D": D is the undo');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-b3-restore', 'ex-b3-purge'), fx).verdict, 'pass', '"Phase D reverses this": D is the undo');
+});

@@ -38,7 +38,9 @@ const DETAILS = /^\s*(?:<\/?details>|<summary>)/;
 // the clauses of one line: at a semicolon, or before an "otherwise" that opens what follows (", otherwise", ".
 // Otherwise"); a sentence end alone does not split, so "Last resort: erase the Mac. Gate [x]." and "e.g." stay one
 // clause (code review round 2 of batch 10, class B2)
-const CLAUSES = /;\s*|,(?=\s*otherwise\b)|(?<=[.!?])\s+(?=otherwise\b)/i;
+// and at a sentence end before a sentence that opens with a condition ("Run [a] now. If it still loops, ... [b].":
+// code review round 3 of batch 10, class B3)
+const CLAUSES = /;\s*|,(?=\s*otherwise\b)|(?<=[.!?])\s+(?=(?:otherwise|if|when|unless|only|last resort)\b)/i;
 // ids a line names in a clause that holds a fallback word, so "Run [a] now; otherwise ..." does not name [a]
 const fallbackIds = (line, ids) => line.split(CLAUSES).filter((c) => FALLBACK.test(c)).flatMap((c) => ids.filter((id) => c.includes(id)));
 // A phase a ladder line names: "Phase B", "Phase C2", "Phases B to D", "Phases B, C and D". A phase named only as
@@ -46,7 +48,10 @@ const fallbackIds = (line, ids) => line.split(CLAUSES).filter((c) => FALLBACK.te
 // words must follow that phase's own name, before the next phase or the clause's end, so "Phase B, which Phase D
 // undoes" keeps Phase B (code review round 2 of batch 10, class B2). A restore can be a lighter step, so it is no
 // undo word.
-const UNDO = /\bundo(?:es|ne|ing)?\b|\bbrings?\s+(?:\S+\s+){0,3}back\b/i;
+// active undo words follow the undoing phase ("Phase D undoes it", "Phase D reverses this"); passive ones come before it
+// ("undone by Phase D", "undo with Phase C") (code review round 3 of batch 10, class B3)
+const UNDO = /\bundoes\b|\bundo it\b|\bcan undo\b|\breverses\b|\bbrings?\s+(?:\S+\s+){0,3}back\b/i;
+const UNDONE_BY = /\b(?:undone|reversed|undo(?:ne)?)\s+(?:by|with)\s*$/i;
 const PHASE_REF = /\bPhases?\s+([A-Z][0-9]?(?:\s*(?:,|and|or|to|through|-)\s*[A-Z][0-9]?)*)\b/g;
 function phaseRefs(line) {
   const refs = [];
@@ -54,7 +59,8 @@ function phaseRefs(line) {
     const found = [...clause.matchAll(PHASE_REF)];
     for (const [k, m] of found.entries()) {
       const after = clause.slice(m.index + m[0].length, k + 1 < found.length ? found[k + 1].index : clause.length);
-      if (UNDO.test(after)) continue;
+      const before = clause.slice(k ? found[k - 1].index + found[k - 1][0].length : 0, m.index);
+      if (UNDO.test(after) || UNDONE_BY.test(before)) continue;
       const tokens = m[1].match(/[A-Z][0-9]?|to|through|-/g);
       tokens.forEach((tok, i) => {
         if (!/^(?:to|through|-)$/.test(tok)) { refs.push(tok); return; }
@@ -79,7 +85,8 @@ function runbookPairs(text, gates) {
   for (const l of String(text).split('\n')) {
     if (/^\s*```/.test(l)) { fenced = !fenced; continue; }
     const mark = MARK.exec(l.trim());
-    if (!fenced && !mark && HEADING.test(l)) { sections.push(cur); cur = { title: l.replace(/^#+\s+/, '').trim(), items: [] }; continue; }
+    // a heading ends an unclosed <details> block too, and the section it interrupted (round 3, class B3)
+    if (!fenced && !mark && HEADING.test(l)) { sections.push(cur); if (parent) { sections.push(parent); parent = null; } cur = { title: l.replace(/^#+\s+/, '').trim(), items: [] }; continue; }
     // a <details> block is a section of its own, and after </details> the section it interrupted goes on, as the
     // ladder lint reads it (code review round 2 of batch 10, class B2)
     if (!fenced && DETAILS.test(l)) {

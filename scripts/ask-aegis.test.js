@@ -380,6 +380,20 @@ test('security review 1 (batch 10): every form batch 9 blocked still stops the a
 // when it ends the clause or holds a password symbol. Wrong implementations it catches: shaped values only after an
 // arrow; any value after "'s"; a Cf-only character class.
 test('code review 2, class C2 (batch 10): letter-only passwords after an arrow, "\'s" or " - " stop the ask; ordinary phrasings pass', () => {
-  for (const bad of ['password -> Summertime', 'password → Summertime', 'new PIN → abcd', 'passphrase => correcthorse', "the password's Summertime", 'password - Summertime', "password's Hunter22! please change it", 'pass͏word: Hunter22!', 'pass️word: Hunter22!', 'passㅤword: Hunter22!']) assert.ok(ask.protect(bad).blocked, bad);
-  for (const ok of ["The user's password's 90-day expiry hit today", 'Password - MFA/Authenticator loop on her phone', 'PIN was sent to the new phone', "The user's password's been reset twice", 'Password - Outlook keeps asking for it']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+  // code review round 3 reversed the letter-only cases after an arrow, "'s" or " - " and the "90-day" and
+  // "MFA/Authenticator" cases (its class C3 test below says why); the invisible characters stay
+  for (const bad of ["password's Hunter22! please change it", 'pass\u034fword: Hunter22!', 'pass\ufe0fword: Hunter22!', 'pass\u3164word: Hunter22!']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ['PIN was sent to the new phone', "The user's password's been reset twice", 'Password - Outlook keeps asking for it']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+});
+
+// Code review round 3 (batch 10), class C3: round 2's clause-end rule after "'s" and " - " let a password with digits
+// in mid-sentence through (a security regression: "the password's Hunter22 please change it") and refused ordinary
+// subject lines ("Password - Urgent"); and arrows taking any value refused menu paths ("Settings -> PIN -> Remove").
+// Decision: batch 9's "is", ":" and "=" take any value; "was", "'s", a spaced dash and an arrow need a digit or a
+// symbol, since they also open ordinary sentences and menu paths. A letter-only password after them goes through,
+// and a digit word after them ("password's 90-day expiry") stops the ask: both on the record in checks.md. Wrong
+// implementations it catches: a clause-end rule after "'s"; any value after an arrow.
+test('code review 3, class C3 (batch 10): digits after "\'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass', () => {
+  for (const bad of ["the password's Hunter22 please change it", 'Password - Summer2024 for the new laptop', "the PIN's 4821 now", "password's Hunter.22 for the VPN", 'password -> Spring2026!']) assert.ok(ask.protect(bad).blocked, bad);
+  for (const ok of ['Settings \u2192 Accounts \u2192 Sign-in options \u2192 PIN \u2192 Change PIN does nothing', 'Go to Settings \u2192 Password \u2192 Change and it errors', 'PIN \u2192 Remove is greyed out', 'Password - Urgent', "the PIN's broken, she can't sign in", 'Password - Outlook, Teams and OneDrive keep prompting']) assert.equal(ask.protect(ok).blocked, undefined, ok);
 });

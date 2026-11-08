@@ -64,18 +64,15 @@ function setupBlock(setup, scope) {
 // the word and the value; a whole [PLACEHOLDER] and a status word ("is expired", "is not working") are not values
 // (batch 10, task 6; code review round 1 of batch 10, class C).
 const SECRET_WORD = String.raw`(?:pass(?:word|code|wd|phrase)|pw|pwd|pin|secret)s?`;
-// "is", a colon, an equals sign or an arrow: any value after them is one ("is" may touch the word, "passwordis x",
-// as batch 9 read it: security review 1 of batch 10; an arrow never opens an ordinary sentence: code review round 2
-// of batch 10, class C2)
-const SEPARATOR = String.raw`(?:\s*is\b|\s*[:=]|\s*(?:->|=>|→))`;
-// "was" also opens ordinary sentences ("PIN was sent", "her password was updated"), so only a password-shaped value
-// after it is one (code review round 1 of batch 10, class C)
-const SHAPED_SEPARATOR = String.raw`\s*was\b`;
-// "'s" and a spaced dash too ("the password's been reset", "Password - Outlook keeps asking"): a value after them is
-// one when it ends the clause or holds a password symbol, so "the password's Summertime" and "password's Hunter22!
-// please change it" stop the ask and "password's 90-day expiry" does not (code review round 2 of batch 10, class C2)
-const TAIL_SEPARATOR = String.raw`(?:['’]s\b|\s+-\s)`;
-const TAIL_VALUE = String.raw`(?:(?=\S*[!@#$%^&*=+~|<>{}\[\]()])\S{4,}|\S{4,}(?=\s*(?:$|[,;)])))`;
+// "is", a colon or an equals sign: batch 9's separators, any value after them is one ("is" may touch the word,
+// "passwordis x", as batch 9 read it: security review 1 of batch 10)
+const SEPARATOR = String.raw`(?:\s*is\b|\s*[:=])`;
+// "was", "'s", a spaced dash and an arrow also open ordinary sentences and menu paths ("PIN was sent", "the password's
+// been reset", "Password - Urgent", "Settings -> PIN -> Remove"), so only a value with a digit or a symbol after them
+// is one (code review rounds 1 to 3 of batch 10). shortcut: a letter-only password after them goes through, and a
+// digit word after them ("password's 90-day expiry") stops the ask; round 2's clause-end rule let a password with
+// digits in mid-sentence through, a security regression (round 3, class C3).
+const SHAPED_SEPARATOR = String.raw`(?:\s*was\b|['\u2019]s\b|\s+-\s|\s*(?:->|=>|\u2192))`;
 const NOT_PLACEHOLDER = String.raw`(?!\[[A-Z0-9_@.]+\](?:\W|$))`;
 const NOT_STATUS = String.raw`(?!(?:expired|expiring|locked|wrong|incorrect|invalid|reset|not|being|no|still|working|changed|required|blank|empty|missing|rejected|forgotten|too|the|my|now|correct|right|fine|ok|okay|valid|please|help|none|unknown)(?=\s|[.,;!?]+(?:\s|$)|$))`;
 // a value with a digit or a symbol in it, as a password has and an ordinary word does not
@@ -85,14 +82,13 @@ const EXTRA_SECRETS = [
   // round 3, finding 1; the final security review: digit-only passcodes and letter-only passwords are passwords too)
   { label: 'A password written in the text', re: new RegExp(String.raw`\b${SECRET_WORD}${SEPARATOR}\s*${NOT_PLACEHOLDER}${NOT_STATUS}\S{4,}`, 'i') },
   { label: 'A password written in the text', re: new RegExp(String.raw`\b${SECRET_WORD}${SHAPED_SEPARATOR}\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
-  { label: 'A password written in the text', re: new RegExp(String.raw`\b${SECRET_WORD}${TAIL_SEPARATOR}\s*${NOT_PLACEHOLDER}${NOT_STATUS}${TAIL_VALUE}`, 'i') },
   // "is" touching the value, batch 9's own finding "password isHunter22!": a value with a digit or a symbol, or one
   // that starts with a capital letter and has a small letter or a digit after it; "password issues", "password
   // isn't" and an all-capitals "PASSWORD ISSUES" are words (batch 10, task 6)
   { label: 'A password written in the text', re: new RegExp(String.raw`\b(?:${SECRET_WORD}|pass)\s*is${SHAPED}${NOT_PLACEHOLDER}\S{3,}`, 'i') },
   { label: 'A password written in the text', re: /\b(?:[Pp]ass(?:word|code|wd|phrase)|PASS(?:WORD|CODE|WD|PHRASE)|[Pp]wd?|PWD?|[Pp]in|PIN|[Ss]ecret|SECRET)\s*(?:is|IS|Is)(?=[A-Z]\S*[a-z0-9])\S{4,}/ },
   // the common word "pass" ("my boarding pass is attached") counts only before a value with a digit or a symbol
-  { label: 'A password written in the text', re: new RegExp(String.raw`\bpass(?:${SEPARATOR}|${SHAPED_SEPARATOR}|${TAIL_SEPARATOR})\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
+  { label: 'A password written in the text', re: new RegExp(String.raw`\bpass(?:${SEPARATOR}|${SHAPED_SEPARATOR})\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
   { label: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/ },
   { label: 'Entra client secret', re: /\b[A-Za-z0-9_.-]{0,3}8Q~[A-Za-z0-9_.~-]{20,}/ },
 ];

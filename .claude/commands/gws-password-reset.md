@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[USER@DOMAIN.COM]` (the user's Google address) · `[UPN]` (your own administrator address: the actor that Admin log events records, as in `/gws-account-containment`) · `[NOT_BEFORE]` (the time the Phase B read-back starts from) · `[TEMP_PASSWORD]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[USER@DOMAIN.COM]` (the user's Google address) · `[UPN]` (your own administrator address: the actor that Admin log events records, as in `/gws-account-containment`) · `[NOT_BEFORE]` (the time a read-back starts from, written in the ticket just before the change it proves) · `[TEMP_PASSWORD]` · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 ## ⚠️ Admin / safety gate
 
@@ -81,7 +81,7 @@ Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just befo
 node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
 ```
 
-`--target` makes the read prove this account's reset: a password change you made on another account does not pass. GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the password change for `[USER@DOMAIN.COM]` with your address as the actor. The event name and its parameter names are not confirmed in this lane's sources: if `verify-event` finds nothing, read the entry in the GUI before concluding the reset did not happen.
+`--target` makes the read prove this account's reset: a password change you made on another account does not pass. GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the password change for `[USER@DOMAIN.COM]` with your address as the actor. Google's Admin audit reference names the event CHANGE_PASSWORD with the account in its USER_EMAIL parameter (vendor fact W-08); if `verify-event` finds nothing, read the entry in the GUI before concluding the reset did not happen.
 
 **WAIT UNTIL** the user has signed in with the temporary password and set a new one. Done when: the user reaches Gmail on their own device.
 
@@ -92,6 +92,8 @@ node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASS
 **Purpose** — end every existing session when the old password may still be live on a lost device or in a suspect's browser.
 
 **User check:** after Phase B, ask the user to sign out of Google on each of their devices and sign in again with the new password; reset the cookies only when a session must end at once, such as a lost device or a suspect browser.
+
+Write the current time (UTC, ISO 8601) in the ticket as `[NOT_BEFORE]` just before the reset.
 
 <!-- SAFETY GATE [gws-password-reset-cookies-portal] -->
 - **Target:** [USER@DOMAIN.COM]
@@ -105,9 +107,18 @@ node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASS
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **Sign-in cookies** → **Reset**.
 2. Click **Done**.
 
+**Read-back (R1, no change record):** the Admin log event Google records for a cookie reset, run without `--change` because an R1 change takes no change record.
+
+```bash
+# read-only read-back: a sign-in cookie reset event with you as the actor after NOT_BEFORE whose parameters name the account
+node scripts/adapters/gws-client.js verify-event --app admin --event RESET_SIGNIN_COOKIES --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+```
+
+Google's Admin audit reference names this event RESET_SIGNIN_COOKIES (Reset Cookies and Forced Relogin), with the account in its USER_EMAIL parameter (vendor fact W-07); `--target` makes the read prove this account's reset, not a reset you made on another account. GUI read-back: Admin console → Reporting → Audit and investigation → Admin log events shows the cookie reset for `[USER@DOMAIN.COM]` with your address as the actor.
+
 **Gotcha** — not needed after a suspension: suspending a user already resets their sign-in cookies.
 
-**Verification checkpoint** — [ ] the user is prompted to sign in again on their devices (allow up to an hour for Gmail).
+**Verification checkpoint:** [ ] `verify-event` exit 0, or the GUI entry for `[USER@DOMAIN.COM]` found · [ ] the user is prompted to sign in again on their devices (allow up to an hour for Gmail).
 
 <details>
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>

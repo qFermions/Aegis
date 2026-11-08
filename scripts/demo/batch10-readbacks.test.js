@@ -75,3 +75,19 @@ test('task 3: the Jamf lock gate binds verify-command --type DEVICE_LOCK; it pas
   assert.equal(before.ticket.closing_state, 'FAILED', before.ticket.reason);
   assert.deepEqual(before.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['jamf:verify-command FAIL']);
 });
+
+// ── Task 3: the Google sign-in cookie reset ────────────────────────────────────────────────────
+
+// catches: an R1 gate whose section read the desk does not run (INCONCLUSIVE), a read that passes on any
+// admin event (the password reset's CHANGE_PASSWORD would pass it), or a simulation that records no event
+test('task 3: the R1 cookie reset runs its own section\'s RESET_SIGNIN_COOKIES read; it passes after the simulated reset and fails without it', async (t) => {
+  const after = await runDesk(t, 'T3', ['gws-password-reset-cookies-portal']);
+  assert.equal(after.ticket.closing_state, 'RESOLVED (SIMULATED)', after.ticket.reason);
+  assert.deepEqual(after.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['google-workspace:verify-event PASS']);
+  assert.match(after.readBack.output, /no change record \(R1\)/);
+  assert.match(after.readBack.output, /RESET_SIGNIN_COOKIES/);
+  // the account changes, but the Admin log records only a password change: the read shows no cookie reset
+  const before = await runDesk(t, 'T3', ['gws-password-reset-cookies-portal'], without('gws-password-reset-cookies-portal', SIM_GATES['gws-password-reset-password-portal'].apply));
+  assert.equal(before.ticket.closing_state, 'FAILED', before.ticket.reason);
+  assert.deepEqual(before.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['google-workspace:verify-event FAIL']);
+});

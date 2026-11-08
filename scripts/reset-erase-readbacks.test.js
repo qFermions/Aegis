@@ -67,6 +67,27 @@ test('the Jamf wipe gate binds a verify-command read of the erase command, under
   assert.match(b.command, /--change \[CHANGE_ID\] --execute$/);
 });
 
+// Batch 10, task 3: the R1 sign-in cookie reset takes no change record, so its field stays none and its own
+// section names one read: the Admin audit event Google documents for a cookie reset, RESET_SIGNIN_COOKIES
+// (vendor fact W-07), with the account as its USER_EMAIL parameter.
+test('the Google sign-in cookie reset gate is R1 and its own section names exactly one RESET_SIGNIN_COOKIES audit read', () => {
+  // catches: the read written with --change or named in the R1 field, a read without --target (a reset of
+  // another account would pass), another event name, or the read placed outside the gate's section
+  const g = gates.get('gws-password-reset-cookies-portal');
+  assert.equal(g.rClass, 'R1');
+  assert.deepEqual(g.bound, []);
+  assert.equal(g.none, 'R1: no change record');
+  assert.equal(g.reads.length, 1, 'exactly one read line in the gate section');
+  const [r] = g.reads;
+  assert.equal(r.kind, 'google-workspace:verify-event');
+  assert.equal(flag(r.argv, '--app'), 'admin');
+  assert.equal(flag(r.argv, '--event'), 'RESET_SIGNIN_COOKIES');
+  assert.equal(flag(r.argv, '--user'), '[UPN]');
+  assert.equal(flag(r.argv, '--target'), '[USER@DOMAIN.COM]');
+  assert.equal(flag(r.argv, '--not-before'), '[NOT_BEFORE]');
+  assert.doesNotMatch(r.command, /--change/);
+});
+
 // Batch 10, task 3: the Jamf lock gate (R2) names a verify-command read of the lock command under its
 // change record, and its API twin names the same line, as the wipe's twin does.
 test('the Jamf lock gate and its API twin bind a verify-command read of DEVICE_LOCK, under its change record', () => {

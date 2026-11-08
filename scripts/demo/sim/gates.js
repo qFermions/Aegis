@@ -114,7 +114,12 @@ const SIM_GATES = Object.freeze({
   },
   'gws-password-reset-cookies-portal': {
     platform: 'google-workspace', effect: 'resets the user\'s Google sign-in cookies, so every device signs in again',
-    apply: (s, t, now) => { s.gws.users[t['[USER@DOMAIN.COM]']].signInCookiesResetAt = now; },
+    // batch 10, task 3: the Admin console records the reset as a RESET_SIGNIN_COOKIES admin event (vendor fact
+    // W-07), actor the admin ([UPN]) and target the account, which the runbook's verify-event read finds
+    apply: (s, t, now) => {
+      s.gws.users[t['[USER@DOMAIN.COM]']].signInCookiesResetAt = now;
+      (s.gws.activities = s.gws.activities || []).push({ app: 'admin', name: 'RESET_SIGNIN_COOKIES', time: now, actor: t['[UPN]'], target: t['[USER@DOMAIN.COM]'] });
+    },
   },
   'gws-offboard-suspend-portal': {
     platform: 'google-workspace', effect: 'suspends the Google Workspace user',

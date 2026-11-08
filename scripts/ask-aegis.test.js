@@ -342,7 +342,7 @@ test('final security review: any written password stops the ask; a status word o
 test('batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass', () => {
   const bad = ['password isHunter22!', 'pw: Hunter22!', 'PW=Summer2026', 'passwd=Welcome1', 'pass is Hunter22!', 'pwd: sunshine',
     'password -> Spring2026!', "password's Hunter22!", 'her password was Winter2025!', 'passcode is739204', 'Password：Hunter22',
-    'password isSunshine', 'passphrase: correct-horse-battery', 'the PIN → 4821', 'pass​word: Autumn2026'];
+    'password isSunshine', 'passphrase: correct-horse-battery', 'the PIN → 4821', 'pass\u200bword: Autumn2026'];
   for (const t of bad) assert.ok(ask.protect(t).blocked, t);
   const ok = ['I forgot my password', 'My password expired this morning and Outlook keeps asking for it.', "Password reset link isn't arriving.",
     'We have password issues with Teams', 'The password is not working after the update.', 'Can you reset my password? It says password is incorrect.',
@@ -356,6 +356,17 @@ test('batch 10, task 6: no-space and punctuated password spellings stop the ask;
 // turns into a space and a combining mark (an acute accent, a diaeresis, an overline), since only the normalized
 // copy was read. Wrong implementations it catches: a separator that needs a space before "is"; a rule matched on
 // the normalized copy alone, where normalizing can remove a block it should only ever add.
+// Code review round 1 (batch 10), finding class C: the new separators ("was", "'s", a spaced dash, an arrow) took
+// any word as a value, so ordinary tickets stopped ("PIN was sent to the new phone"); other invisible characters
+// (a soft hyphen, U+2061, U+180E) still split the word; plurals ("passwords:", "PINs:") were no keyword; and the
+// graph sanitizer never read the normalized text, so a token with a zero-width space inside went through. Wrong
+// implementations it catches: a "was" separator that takes any value; an invisible-character list of five; a
+// keyword list without plurals; a sanitizer that reads only the text as typed.
+test('code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask', () => {
+  for (const ok of ['Her password was updated last week but Outlook keeps prompting', 'PIN was sent to the new phone', "The user's password's been reset twice", 'password was never set', 'Password - Outlook keeps asking for it']) assert.equal(ask.protect(ok).blocked, undefined, ok);
+  for (const bad of ['pass\u00adword: Hunter22!', 'password\u2061: Hunter22!', 'pass\u180eword: Hunter22!', 'Temp passwords: Hunter22! and Spring2026!', 'PINs: 4821', `token ghp_${'A'.repeat(10)}\u200b${'B'.repeat(20)}`, 'her password was Winter2025!', "password's Hunter22!", 'password -> Spring2026!']) assert.ok(ask.protect(bad).blocked, bad);
+});
+
 test('security review 1 (batch 10): every form batch 9 blocked still stops the ask', () => {
   for (const bad of ['passwordis Hunter22!', 'pinis 4821', 'secretis abcd1234', 'Passcodeis 99887766', 'password: a´b´c´d', 'password: ab¨cd', 'password: x‾y‾z‾']) assert.ok(ask.protect(bad).blocked, bad);
   for (const ok of ['We have password issues with Teams', 'My boarding pass is attached to the expense report.', "Password reset link isn't arriving."]) assert.equal(ask.protect(ok).blocked, undefined, ok);

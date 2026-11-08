@@ -60,27 +60,32 @@ function setupBlock(setup, scope) {
 // (security review round 3). Every phone form the intake masks is masked, except ten bare digits, such as an error
 // code (round 2, finding 8). Returns { text } or { blocked: [labels] }. Names in free text are not detected, as in
 // the intake. shortcut: pattern lists, so a secret of another shape still goes through.
-// The words after which a written value is a password; what may stand between the word and the value: "is" or
-// "was" with a space, a colon, an equals sign, an arrow, a spaced dash or "'s" ("password -> x", "password's x");
-// a whole [PLACEHOLDER] and a status word ("is expired", "is not working") are not values (batch 10, task 6).
-const SECRET_WORD = String.raw`(?:pass(?:word|code|wd|phrase)|pw|pwd|pin|secret)`;
-// "is" or "was" may touch the word ("passwordis x", which batch 9's rule blocked too: security review 1 of batch 10)
-const SEPARATOR = String.raw`(?:\s*(?:is|was)\b|\s*(?::|=|->|=>|→)|\s+-\s|['’]s\b)`;
+// The words after which a written value is a password, plurals too ("passwords:", "PINs:"); what may stand between
+// the word and the value; a whole [PLACEHOLDER] and a status word ("is expired", "is not working") are not values
+// (batch 10, task 6; code review round 1 of batch 10, class C).
+const SECRET_WORD = String.raw`(?:pass(?:word|code|wd|phrase)|pw|pwd|pin|secret)s?`;
+// "is", a colon or an equals sign: batch 9's separators, any value after them is one ("is" may touch the word,
+// "passwordis x", as batch 9 read it: security review 1 of batch 10)
+const SEPARATOR = String.raw`(?:\s*is\b|\s*[:=])`;
+// "was", "'s", a spaced dash or an arrow: batch 10's, which also open ordinary sentences ("PIN was sent", "the
+// password's been reset", "Password - Outlook keeps asking"), so only a password-shaped value after them is one
+const SHAPED_SEPARATOR = String.raw`(?:\s*was\b|['’]s\b|\s+-\s|\s*(?:->|=>|→))`;
 const NOT_PLACEHOLDER = String.raw`(?!\[[A-Z0-9_@.]+\](?:\W|$))`;
-const NOT_STATUS = String.raw`(?!(?:expired|expiring|locked|wrong|incorrect|invalid|reset|not|being|no|still|working|changed|required|blank|empty|missing|rejected|forgotten|too|the|my|now|correct|right|fine|ok|okay|valid)(?=\s|[.,;!?]+(?:\s|$)|$))`;
+const NOT_STATUS = String.raw`(?!(?:expired|expiring|locked|wrong|incorrect|invalid|reset|not|being|no|still|working|changed|required|blank|empty|missing|rejected|forgotten|too|the|my|now|correct|right|fine|ok|okay|valid|please|help|none|unknown)(?=\s|[.,;!?]+(?:\s|$)|$))`;
 // a value with a digit or a symbol in it, as a password has and an ordinary word does not
 const SHAPED = String.raw`(?=[^\s'’]*[0-9!@#$%^&*_+=~|\\/<>{}\[\]()])`;
 const EXTRA_SECRETS = [
   // any value of four or more characters after the word, except a status word or a whole [PLACEHOLDER] (code review
   // round 3, finding 1; the final security review: digit-only passcodes and letter-only passwords are passwords too)
   { label: 'A password written in the text', re: new RegExp(String.raw`\b${SECRET_WORD}${SEPARATOR}\s*${NOT_PLACEHOLDER}${NOT_STATUS}\S{4,}`, 'i') },
+  { label: 'A password written in the text', re: new RegExp(String.raw`\b${SECRET_WORD}${SHAPED_SEPARATOR}\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
   // "is" touching the value, batch 9's own finding "password isHunter22!": a value with a digit or a symbol, or one
   // that starts with a capital letter and has a small letter or a digit after it; "password issues", "password
   // isn't" and an all-capitals "PASSWORD ISSUES" are words (batch 10, task 6)
   { label: 'A password written in the text', re: new RegExp(String.raw`\b(?:${SECRET_WORD}|pass)\s*is${SHAPED}${NOT_PLACEHOLDER}\S{3,}`, 'i') },
   { label: 'A password written in the text', re: /\b(?:[Pp]ass(?:word|code|wd|phrase)|PASS(?:WORD|CODE|WD|PHRASE)|[Pp]wd?|PWD?|[Pp]in|PIN|[Ss]ecret|SECRET)\s*(?:is|IS|Is)(?=[A-Z]\S*[a-z0-9])\S{4,}/ },
   // the common word "pass" ("my boarding pass is attached") counts only before a value with a digit or a symbol
-  { label: 'A password written in the text', re: new RegExp(String.raw`\bpass${SEPARATOR}\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
+  { label: 'A password written in the text', re: new RegExp(String.raw`\bpass(?:${SEPARATOR}|${SHAPED_SEPARATOR})\s*${SHAPED}${NOT_PLACEHOLDER}\S{4,}`, 'i') },
   { label: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/ },
   { label: 'Entra client secret', re: /\b[A-Za-z0-9_.-]{0,3}8Q~[A-Za-z0-9_.~-]{20,}/ },
 ];
@@ -94,11 +99,13 @@ const phoneOrCode = (m) => (/^\d{10}$/.test(m) ? m : '[PHONE_NUMBER]');
 function protect(text) {
   const t = String(text);
   // read as typed and in compatibility form with the zero-width characters taken out, so a full-width colon
-  // ("Password：x") or a zero-width space ("pass​word: x") does not hide a password (batch 10, task 6); both are
+  // ("Password：x") or a zero-width space ("pass<zero-width space>word: x") does not hide a password (batch 10, task 6); both are
   // read, since NFKC splits a few characters (an acute accent, an overline) into a space and a mark, which would
   // otherwise hide a value the text as typed shows (security review 1 of batch 10); the text kept is the original
-  const squeezed = t.normalize('NFKC').replace(/[​-‍⁠﻿]/g, '');
-  const blocked = [...new Set([...sanitize.scanText(t).blocks.map((b) => b.label), ...EXTRA_SECRETS.filter((x) => x.re.test(t) || x.re.test(squeezed)).map((x) => x.label)])];
+  // every format character (Unicode Cf: the zero-width spaces, a soft hyphen, U+2061, U+180E) is taken out, and the
+  // graph sanitizer reads the normalized copy too (code review round 1 of batch 10, class C)
+  const squeezed = t.normalize('NFKC').replace(/\p{Cf}/gu, '');
+  const blocked = [...new Set([...sanitize.scanText(t).blocks, ...sanitize.scanText(squeezed).blocks].map((b) => b.label).concat(EXTRA_SECRETS.filter((x) => x.re.test(t) || x.re.test(squeezed)).map((x) => x.label)))];
   if (blocked.length) return { blocked };
   const mask = (piece) => replaceEmails(piece, () => '[USER@DOMAIN.COM]').replace(PHONE, phoneOrCode);
   // an address at the placeholder domain (an ADMIN or USER token at DOMAIN.COM, in brackets) is a placeholder too,

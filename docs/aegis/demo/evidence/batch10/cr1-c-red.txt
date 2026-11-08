@@ -1,0 +1,53 @@
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (28.236458ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (43.361417ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (43.488875ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.211708ms)
+✔ no ticket text: the usage and exit 1, with no session (23.761875ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (20.664625ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (331.511167ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (35.724083ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (0.514041ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.344834ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.277709ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.104542ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.167375ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.693042ms)
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.578584ms)
+✔ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.145ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 15
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 570.004875
+
+✖ failing tests:
+
+test at scripts/ask-aegis.test.js:365:1
+✖ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.578584ms)
+  AssertionError [ERR_ASSERTION]: Her password was updated last week but Outlook keeps prompting
+  + actual - expected
+  
+  + [
+  +   'A password written in the text'
+  + ]
+  - undefined
+  
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:366:238)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'A password written in the text' ],
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

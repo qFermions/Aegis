@@ -1,0 +1,21 @@
+$ node --test scripts/adapters/gws-client.test.js scripts/demo/batch10-readbacks.test.js scripts/adapters/verify-flags.test.js scripts/g2-boundary.test.js scripts/adapters/change-binding.test.js scripts/audit/read-back-field.test.js scripts/audit/pass-flags.test.js scripts/adapters/scope-preflight.test.js
+✔ verify-transfer: one token exchange, then GET the transfer and both owners; the token asks for admin.datatransfer.readonly beside the read-only scopes, and a plain read does not (1.504875ms)
+✔ verify-transfer: bad or missing arguments are refused with exit 1 before anything is read or sent (0.399375ms)
+✔ verify-transfer: the Data Transfer API allow-list is one GET of one transfer; inserts, lists and application reads are refused (0.190458ms)
+✔ verify-transfer passes only on a completed entry for the application, on the transfer asked for, from the old owner to the new owner (2.799458ms)
+✔ verify-transfer fails (exit 2) when the answer shows another transfer, another old owner or another new owner (3.183917ms)
+✔ verify-transfer is INCONCLUSIVE (exit 5) on any status but completed, no entry or two for the application, or a field it reads missing (9.041542ms)
+✔ task 4: the Okta deactivate gate of /gws-offboard and its API twin bind verify-status --status DEPROVISIONED under a change record (0.168542ms)
+✔ task 4: the /gws-offboard Okta deactivate passes after the simulated deactivate and fails after a suspend instead (468.265ms)
+✔ task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none (0.165292ms)
+✔ task 4: gws-offboard-drive-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (710.969209ms)
+✔ task 4: gws-offboard-calendar-transfer-portal passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user (649.81625ms)
+ℹ tests 169
+ℹ pass 169
+ℹ fail 0
+exit 0
+$ node scripts/lint/command-structure.js
+command-structure lint — 108 commands (B:23 E:6 D:3 C:11 A:63 ALIAS:2)
+
+clean — structural GUI-first contract holds for every operational/troubleshooting command
+exit 0

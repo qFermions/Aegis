@@ -251,10 +251,11 @@
         "https://www.googleapis.com/auth/admin.directory.device.mobile.readonly",
         "https://www.googleapis.com/auth/admin.directory.device.chromeos.readonly",
         "https://www.googleapis.com/auth/admin.reports.audit.readonly",
-        "https://www.googleapis.com/auth/admin.reports.usage.readonly"
+        "https://www.googleapis.com/auth/admin.reports.usage.readonly",
+        "https://www.googleapis.com/auth/admin.datatransfer.readonly (batch 10: requested only by verify-transfer, the Data Transfer read; delegate it only where /gws-offboard's transfer read-backs are run, and every other read works without it)"
       ],
       "refused": [
-        "any scope that does not end in .readonly, for example admin.directory.user, admin.directory.user.security, admin.directory.group"
+        "any scope that does not end in .readonly, for example admin.directory.user, admin.directory.user.security, admin.directory.group, admin.datatransfer"
       ],
       "exposure": {
         "kind": "token",
@@ -264,11 +265,14 @@
         "W-01",
         "W-02",
         "W-03",
-        "W-05"
+        "W-05",
+        "W-09",
+        "W-12"
       ],
       "unconfirmed": [
         "W-03: no API lets a service account read its own domain-wide delegation list",
-        "W-05: the error text when a requested scope is not delegated"
+        "W-05: the error text when a requested scope is not delegated",
+        "W-14: whether a transfer started in the Admin console's Drive or Calendar transfer tool is a Data Transfer API transfer that transfers.get can read"
       ],
       "sources": [
         {
@@ -279,6 +283,11 @@
         {
           "url": "https://developers.google.com/workspace/cloud-search/docs/guides/delegation",
           "read_on": "2026-10-28",
+          "how": "vendor docs page"
+        },
+        {
+          "url": "https://developers.google.com/workspace/admin/data-transfer/reference/rest/v1/transfers/get",
+          "read_on": "2026-11-07",
           "how": "vendor docs page"
         }
       ]

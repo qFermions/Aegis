@@ -127,3 +127,52 @@ test('task 4: the /gws-offboard Okta deactivate passes after the simulated deact
   assert.equal(before.ticket.closing_state, 'FAILED', before.ticket.reason);
   assert.deepEqual(before.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['okta:verify-status FAIL']);
 });
+
+// ── Task 4: the Drive and Calendar transfers of /gws-offboard ──────────────────────────────────
+
+const TRANSFER_GATES = [['gws-offboard-drive-transfer-portal', '55656082996'], ['gws-offboard-calendar-transfer-portal', '435070579839']];
+
+// catches: a field naming no application (one Calendar transfer would pass the Drive gate), the two gates
+// naming the same application, a read with no --change under an R2 gate, or the GAM twin given one of the
+// two reads (its one fenced field cannot name both applications it moves)
+test('task 4: the Drive and Calendar transfer gates bind verify-transfer for their own application under a change record; the GAM twin names none', () => {
+  for (const [id, app] of TRANSFER_GATES) {
+    const g = gates.get(id);
+    assert.equal(g.rClass, 'R2', id);
+    assert.equal(g.bound.length, 1, id);
+    const [b] = g.bound;
+    assert.equal(b.kind, 'google-workspace:verify-transfer', id);
+    assert.equal(flag(b.argv, '--application-id'), app, id);
+    assert.equal(flag(b.argv, '--transfer-id'), '[TRANSFER_ID]', id);
+    assert.equal(flag(b.argv, '--old-owner'), '[USER@DOMAIN.COM]', id);
+    assert.equal(flag(b.argv, '--new-owner'), '[MANAGER_UPN]', id);
+    assert.match(b.command, /--change \[CHANGE_ID\] --execute$/, id);
+  }
+  const twin = gates.get('gws-offboard-data-transfer');
+  assert.deepEqual(twin.bound, [], 'the GAM twin binds no read');
+  assert.match(twin.none, /one transfer moves two applications/);
+  assert.deepEqual(gates.get('gws-offboard-delete-portal').bound, [], 'the delete gate is unchanged');
+});
+
+// catches: a read that passes on a transfer that is not there, a simulation whose transfer names other owners
+// than the read checks, or a read that takes a transfer to another user for proof
+for (const [id] of TRANSFER_GATES) {
+  test(`task 4: ${id} passes after the simulated transfer, proves nothing with no transfer, and fails on a transfer to another user`, async (t) => {
+    const after = await runDesk(t, 'T2', [id]);
+    assert.equal(after.ticket.closing_state, 'RESOLVED (SIMULATED)', after.ticket.reason);
+    assert.deepEqual(after.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['google-workspace:verify-transfer PASS']);
+    assert.match(after.readBack.output, /change-record\.js status --change chg-[0-9a-f]{12}: done/);
+    // the account changes, but no transfer exists: transfers.get answers 404, a read that proves nothing
+    const none = await runDesk(t, 'T2', [id], without(id, (s, target) => { s.gws.users[target['[USER@DOMAIN.COM]']].orgUnitPath = '/Leavers'; }));
+    assert.equal(none.ticket.closing_state, 'INCONCLUSIVE', none.ticket.reason);
+    assert.notEqual(none.readBack.reads[0].state, 'PASS');
+    // the transfer exists, but to the departing user's own account: the read shows another new owner
+    const wrong = await runDesk(t, 'T2', [id], without(id, (s, target, now) => {
+      SIM_GATES[id].apply(s, target, now);
+      const last = s.gws.transfers[s.gws.transfers.length - 1];
+      last.newOwnerUserId = last.oldOwnerUserId;
+    }));
+    assert.equal(wrong.ticket.closing_state, 'FAILED', wrong.ticket.reason);
+    assert.deepEqual(wrong.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['google-workspace:verify-transfer FAIL']);
+  });
+}

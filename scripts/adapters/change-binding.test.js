@@ -409,8 +409,9 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // and quarantine-release-one-portal (93 to 99); batch 9, task 7: jamf-lock-erase-wipe-portal's
   // verify-command line (99 to 100); batch 10, task 3: jamf-lock-erase-lock-portal's verify-command
   // --type DEVICE_LOCK line (100 to 101); task 4: gws-offboard-okta-deactivate-portal's verify-status
-  // --status DEPROVISIONED line (101 to 102)
-  assert.equal(bound, 102, 'the 102 read-backs of R2 and R3 gates');
+  // --status DEPROVISIONED line (101 to 102), and the verify-transfer lines of gws-offboard-drive-transfer-portal
+  // and gws-offboard-calendar-transfer-portal (102 to 104)
+  assert.equal(bound, 104, 'the 104 read-backs of R2 and R3 gates');
   // code review round 1 of the batch G3 close-out 3, finding 9: the Jamf pilot read under the
   // removal from All Computers is no longer a line there (76 to 75); round 3, finding 3: it is read
   // after the removals in an R0 section of its own (75 to 76); batch 8, task 3: the verify lines of

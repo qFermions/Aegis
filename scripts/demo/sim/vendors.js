@@ -85,6 +85,12 @@ const ROUTES = {
     if (req.method === 'POST') return token();
     const m = /^\/admin\/directory\/v1\/users\/([^/]+)$/.exec(p);
     if (m) return state.gws.users[SEGMENT(m[1])] ? ok(state.gws.users[SEGMENT(m[1])]) : notFound();
+    // batch 10, task 4: the Data Transfer API's transfers.get, one transfer by its ID
+    const dt = /^\/admin\/datatransfer\/v1\/transfers\/([^/]+)$/.exec(p);
+    if (dt) {
+      const found = (state.gws.transfers || []).find((x) => x.id === SEGMENT(dt[1]));
+      return found ? ok(found) : notFound();
+    }
     // batch 9, task 7: the Reports API's admin events, by actor, application, event name and start time
     const a = /^\/admin\/reports\/v1\/activity\/users\/([^/]+)\/applications\/([^/]+)$/.exec(p);
     if (a) {

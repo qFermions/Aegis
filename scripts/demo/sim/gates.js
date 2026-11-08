@@ -13,13 +13,34 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { writeReplacing } = require('../customers.js');
+const { writeReplacing, loadData, fill } = require('../customers.js');
 
 const AUTHENTICATOR_LIKE = /(?:microsoftAuthenticator|phone|softwareOath)AuthenticationMethod$/;
 
 // A mailbox in the simulated tenant, by the runbook's [MAILBOX] placeholder, and one delegate added to one list.
 const boxOf = (s, t) => s.mailboxes.find((m) => m.address.toLowerCase() === String(t['[MAILBOX]']).toLowerCase());
 const grant = (s, t, list) => { const b = boxOf(s, t); b[list] = [...new Set([...(b[list] || []), t['[UPN]']])]; };
+
+// A data transfer the Admin console starts (batch 10, task 4), shaped as the Data Transfer API's DataTransfer
+// (vendor facts W-10, W-12): the source user's Google user ID, the new owner's, and one completed entry for
+// the application. A ticket names no manager, so the transfer's ID and the new owner come from the gate's
+// values (the desk fills the runbook's [TRANSFER_ID] and [MANAGER_UPN] with them). The new owner is Customer
+// D's second Google account (customers/d/tenant.json), the one simulated tenant with two Google accounts; on a
+// tenant without that account the gate cannot be acted out, and the ticket stops OPEN.
+const simNewOwner = () => fill('reporting.user@[@Aegion_DOMAIN]', loadData().customers.find((c) => c.id === 'D'));
+const transferGate = (what, transferId, applicationId) => Object.freeze({
+  platform: 'google-workspace', effect: `transfers the user's ${what} to their manager`,
+  values: () => ({ '[TRANSFER_ID]': transferId, '[MANAGER_UPN]': simNewOwner() }),
+  apply: (s, t, now) => {
+    const source = s.gws.users[t['[USER@DOMAIN.COM]']];
+    const owner = s.gws.users[simNewOwner()];
+    if (!source || !owner) throw new Error('the simulated tenant holds no Google account for the source user or the new owner');
+    (s.gws.transfers = s.gws.transfers || []).push({
+      kind: 'admin#datatransfer#DataTransfer', id: transferId, oldOwnerUserId: source.id, newOwnerUserId: owner.id,
+      applicationDataTransfers: [{ applicationId, applicationTransferStatus: 'completed' }], overallTransferStatusCode: 'completed', requestTime: now,
+    });
+  },
+});
 
 // One session clear, two gates: /okta-user-lifecycle Phase C and the Okta Verify loop's admin step in
 // /okta-mfa-reset (batch 9b; code review 1, finding 12: one entry, so the two cannot drift apart).
@@ -125,14 +146,9 @@ const SIM_GATES = Object.freeze({
     platform: 'google-workspace', effect: 'suspends the Google Workspace user',
     apply: (s, t) => { const u = s.gws.users[t['[USER@DOMAIN.COM]']]; u.suspended = true; u.suspensionReason = 'ADMIN'; },
   },
-  'gws-offboard-drive-transfer-portal': {
-    platform: 'google-workspace', effect: 'transfers the user\'s Drive files to their manager',
-    apply: (s, t) => { (s.gws.transfers = s.gws.transfers || []).push({ user: t['[USER@DOMAIN.COM]'], what: 'drive' }); },
-  },
-  'gws-offboard-calendar-transfer-portal': {
-    platform: 'google-workspace', effect: 'transfers the user\'s calendars to their manager',
-    apply: (s, t) => { (s.gws.transfers = s.gws.transfers || []).push({ user: t['[USER@DOMAIN.COM]'], what: 'calendar' }); },
-  },
+  // batch 10, task 4: read back by gws-client.js verify-transfer, Drive and Docs (55656082996) and Calendar (435070579839)
+  'gws-offboard-drive-transfer-portal': transferGate('Drive files', 'simDriveTransfer01', '55656082996'),
+  'gws-offboard-calendar-transfer-portal': transferGate('calendars', 'simCalendarTransfer01', '435070579839'),
   'gws-offboard-okta-deactivate-portal': {
     platform: 'okta', effect: 'deactivates the Okta user that provisions the Google account',
     apply: (s, t) => { s.okta.users[t['[OKTA_USER_ID]']].status = 'DEPROVISIONED'; },

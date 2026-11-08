@@ -108,7 +108,9 @@ const ADAPTERS = {
       ['verify-suspended', '--user', 'person@example.org'], ['verify-2sv-enforced', '--user', 'person@example.org'],
       ['verify-ou', '--user', 'person@example.org', '--ou', '/Staff'], ['verify-admin-role-removed', '--user', 'person@example.org', '--role-id', '42'],
       ['verify-event', '--app', 'admin', '--event', 'CHANGE_PASSWORD', '--user', 'person@example.org', '--not-before', NOT_BEFORE],
-      ['verify-2sv-not-enforced', '--user', 'person@example.org']],
+      ['verify-2sv-not-enforced', '--user', 'person@example.org'],
+      // batch 10, task 4: the Data Transfer read, a GET of one transfer and of its two owners
+      ['verify-transfer', '--transfer-id', 'T0fixtureTransfer', '--old-owner', 'person@example.org', '--new-owner', 'manager@example.org', '--application-id', '435070579839']],
   },
 };
 

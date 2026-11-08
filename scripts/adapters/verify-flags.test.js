@@ -58,8 +58,8 @@ test('every verify-* command of the nine connectors declares every flag it takes
   const t = taken();
   assert.deepEqual(Object.keys(declared.VERIFY_FLAGS).sort(), Object.keys(READERS).sort(), 'one block per connector');
   const commands = Object.values(t).reduce((n, c) => n + Object.keys(c).length, 0);
-  // 59 before batch 9; task 4 adds exo's three read-backs
-  assert.equal(commands, 62, `verify-* commands read: ${commands}`);
+  // 59 before batch 9; task 4 adds exo's three read-backs; batch 10, task 4 adds google-workspace verify-transfer
+  assert.equal(commands, 63, `verify-* commands read: ${commands}`);
   assert.deepEqual(declared.undeclared(declared.VERIFY_FLAGS, t), []);
 });
 

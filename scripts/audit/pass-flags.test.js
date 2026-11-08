@@ -53,6 +53,10 @@ const NOT_PASS = Object.freeze({
   'google-workspace:verify-ou --ou': `${FREE}: an organizational unit`,
   'jamf:verify-policy --trigger': `${FREE}: a trigger`,
   'jamf:verify-policy --frequency': `${FREE}: a frequency`,
+  // batch 10, task 4: verify-transfer names the transfer and its two owners (its --application-id is a pass flag)
+  'google-workspace:verify-transfer --transfer-id': OBJECT,
+  'google-workspace:verify-transfer --old-owner': OBJECT,
+  'google-workspace:verify-transfer --new-owner': OBJECT,
 });
 
 // every read-back line in the runbooks, with its kind, flags and whether it is bound

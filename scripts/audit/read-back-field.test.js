@@ -78,8 +78,9 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // code review round 1 of batch 9, finding 13: jamf-lock-erase-wipe-api names its portal twin's read-back (106 to 107)
   // batch 10, task 3: jamf-lock-erase-lock-portal and its API twin jamf-lock-erase-lock-api name verify-command
   // --type DEVICE_LOCK (107 to 109); task 4: gws-offboard-okta-deactivate-portal and its API twin
-  // gws-offboard-okta-deactivate name okta-client.js verify-status --status DEPROVISIONED (109 to 111)
-  assert.equal(naming, 111, 'the gates that name read-backs');
+  // gws-offboard-okta-deactivate name okta-client.js verify-status --status DEPROVISIONED (109 to 111), and
+  // gws-offboard-drive-transfer-portal and gws-offboard-calendar-transfer-portal name gws-client.js verify-transfer (111 to 113)
+  assert.equal(naming, 113, 'the gates that name read-backs');
 });
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {

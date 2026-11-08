@@ -47,7 +47,8 @@ const COMMON = {
 const CONNECTORS = {
   'fleet-client.js': { env: { FLEET_URL: 'fleet.example.invalid' } },
   'github-client.js': { env: { GITHUB_ORG: 'example-org' } },
-  'gws-client.js': { env: {} },
+  // batch 10, task 4: verify-transfer names a data transfer and its new owner
+  'gws-client.js': { env: {}, values: { '[TRANSFER_ID]': 'T0testTransfer01', '[MANAGER_UPN]': at('manager', 'example.com') } },
   'jamf-client.js': { env: { JAMF_URL: 'jamf.example.invalid' } },
   'linear-client.js': { env: {} },
   'msgraph-client.js': { env: { MS_TENANT_ID: '11111111-2222-4333-8444-555555555555' }, values: { '[USER_ID]': GUID(4), '[DEVICE_ID]': GUID(5) } },

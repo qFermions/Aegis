@@ -17,7 +17,7 @@ test at scripts/adapters/jamf-client.test.js:434:1
   
   2 !== 0
   
-      at TestContext.<anonymous> (/Users/thordsoul/Code/Aegis/.claude/worktrees/agent-af8362b66c94a5dc9/scripts/adapters/jamf-client.test.js:436:10)
+      at TestContext.<anonymous> (<repo>/scripts/adapters/jamf-client.test.js:436:10)
       at async Test.run (node:internal/test_runner/test:1409:7)
       at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
     generatedMessage: false,

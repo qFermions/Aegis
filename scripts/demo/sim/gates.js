@@ -37,9 +37,9 @@ const transferGate = (what, transferId, applicationId) => Object.freeze({
   apply: (s, t, now) => {
     const address = String(t['[USER@DOMAIN.COM]']);
     const source = s.gws.users[address];
-    // the tenant's own reporting.user account, the one values() names for this customer, whatever the source's
-    // domain (code review round 2 of batch 10, class E2)
-    const owner = s.gws.users[Object.keys(s.gws.users).find((k) => k.startsWith(`${NEW_OWNER}@`))];
+    // the [MANAGER_UPN] values() filled for this customer, which the desk hands the apply with the target, so the
+    // change record and the transfer name one owner (code review rounds 2 and 3 of batch 10, classes E2 and E3)
+    const owner = s.gws.users[t['[MANAGER_UPN]']];
     if (!source || !owner) throw new Error('the simulated tenant holds no Google account for the source user or the new owner');
     s.gws.transfers = (s.gws.transfers || []).filter((x) => x.id !== transferId).concat([{
       kind: 'admin#datatransfer#DataTransfer', id: transferId, oldOwnerUserId: source.id, newOwnerUserId: owner.id,

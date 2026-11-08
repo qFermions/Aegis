@@ -196,7 +196,8 @@ test('code review 1, class D (batch 10): the simulated transfer names the ticket
   const tenantFile = path.join(dir, 'tenant.json');
   fs.writeFileSync(tenantFile, customers.tenantText(d));
   const source = Object.keys(JSON.parse(fs.readFileSync(tenantFile, 'utf8')).gws.users).find((u) => u !== entry.values(d)['[MANAGER_UPN]']);
-  const once = (now) => applySimulatedGates({ changes: [{ entry, target: { '[USER@DOMAIN.COM]': source } }], tenantFile, runDir: dir, now });
+  // the desk hands a gate its filled values, [MANAGER_UPN] with them (code review round 3 of batch 10, class E3)
+  const once = (now) => applySimulatedGates({ changes: [{ entry, target: { '[USER@DOMAIN.COM]': source, ...entry.values(d) } }], tenantFile, runDir: dir, now });
   once('2026-11-07T10:00:00.000Z');
   once('2026-11-07T11:00:00.000Z');
   const kept = JSON.parse(fs.readFileSync(tenantFile, 'utf8')).gws.transfers.filter((x) => x.id === entry.values(d)['[TRANSFER_ID]']);
@@ -217,8 +218,12 @@ test('code review 2, class E2 (batch 10): the simulated transfer\'s new owner is
   const tenant = JSON.parse(customers.tenantText(d));
   const ownerAddress = entry.values(d)['[MANAGER_UPN]'];
   tenant.gws.users['leaver@example.net'] = { ...Object.values(tenant.gws.users)[0], id: 'sim-alias-user', primaryEmail: 'leaver@example.net' };
+  // code review round 3 (batch 10), class E3: a second reporting.user account, first in key order, is not the one the
+  // change record names; the apply takes the [MANAGER_UPN] the desk hands it. Wrong implementation it catches: the
+  // owner found by its local part alone.
+  tenant.gws.users = { 'reporting.user@example.net': { ...Object.values(tenant.gws.users)[0], id: 'sim-other-owner', primaryEmail: 'reporting.user@example.net' }, ...tenant.gws.users };
   fs.writeFileSync(tenantFile, JSON.stringify(tenant));
-  applySimulatedGates({ changes: [{ entry, target: { '[USER@DOMAIN.COM]': 'leaver@example.net' } }], tenantFile, runDir: dir, now: '2026-11-07T12:00:00.000Z' });
+  applySimulatedGates({ changes: [{ entry, target: { '[USER@DOMAIN.COM]': 'leaver@example.net', ...entry.values(d) } }], tenantFile, runDir: dir, now: '2026-11-07T12:00:00.000Z' });
   const record = JSON.parse(fs.readFileSync(tenantFile, 'utf8')).gws.transfers.find((x) => x.id === entry.values(d)['[TRANSFER_ID]']);
   assert.equal(record.newOwnerUserId, tenant.gws.users[ownerAddress].id, 'the owner the change record names');
 });

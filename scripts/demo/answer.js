@@ -347,13 +347,70 @@ function changeIn(text) {
   return null;
 }
 
-// The step half of the INVESTIGATE rule: at least one step, and no change word where a change could be
-// asked. With a Fix card: in every card line but those of the parts that only describe or speak
-// (MENTION_PARTS: the two messages to the user speak to the customer, "We'll update you within the hour"); a Details line mentions a change, it does
-// not ask for one, so Details is not read (batch 9, task 9). With no card (an answer in the older format): in
-// every numbered line, in any form. shortcut: an older-format answer's prose and bullets are not read, since a
-// look-first answer of that form says "don't release" or "don't delete it" in them (full run 1's T5); such an
-// answer can only gain a label, never a change, since INVESTIGATE approves and applies nothing.
+// In a step, a change word counts only as the step's verb (batch 10, task 2): the first word of the step or
+// of a sentence in it, or the word right after a leading "please" or "then", "ask <someone> to", a leading
+// condition ("If it still loops:", "If none of that fits,"), a leading place ("Under Full Access,"), an adverb
+// ("only", "also") or a short label ("Last resort:"), and the word
+// after "then" anywhere in a sentence. A noun ("look for a macOS update", "read the install log") is not the
+// verb, so it does not count; T7 and T7m of full runs 4 and 5 closed OPEN on one. After "Ask the user to
+// <verb>", the rest of the step is the user check the tech relays: the asked verb counts, the user's later
+// words ("if it still fails, restart the laptop") do not. A negated verb ("Don't wait for the user, reset the
+// password") hands the step to the clause after it, as batch 9's rule did. shortcut: a change written only
+// as the last button of a portal path ("→ Reset password") is not a verb; with Gate: none such an answer reads
+// as a look, and INVESTIGATE approves nothing, so the miss can only turn an OPEN into an INVESTIGATE.
+const CHANGE_VERB = new RegExp(`^${CHANGE_WORD.source}`, 'i');
+const LEADS = Object.freeze([
+  /^(?:if|when|once|after|unless|until|before|otherwise|whether|in|on|under|from|for|with|within|inside|at)\b[^,:]*[,:]\s*/i,
+  /^[A-Za-z][A-Za-z' -]{0,40}:\s+/,
+  /^(?:please|then|also|next|first|finally|now|only|just)\b[\s,]*/i,
+]);
+const RELAY = /^(?:ask|tell)\s+(?:\S+\s+){0,3}?to\s+/i;
+const NEGATED_VERB = /^(?:don['’]?t|do not|never|no need to|avoid)\b/i;
+const NEXT_CLAUSE = /[,;:]\s*|\s(?:and|but)\s+/;
+// The verb that opens one clause: { change: the change word or null, relayed: true after "ask <someone> to" }.
+function openingVerb(clause) {
+  let t = clause;
+  for (let i = 0; i < 6; i += 1) {
+    t = t.replace(/^[\s>(["'“‘]+/, '').replace(/^(?:[-*+]|\(?\d+[.)])\s+/, '');
+    const hit = CHANGE_VERB.exec(t);
+    if (hit) return { change: hit[0], relayed: false };
+    const relay = RELAY.exec(t);
+    if (relay) { const asked = CHANGE_VERB.exec(t.slice(relay[0].length)); return { change: asked ? asked[0] : null, relayed: true }; }
+    if (NEGATED_VERB.test(t)) {
+      const next = NEXT_CLAUSE.exec(t);
+      if (!next) return { change: null, relayed: false };
+      t = t.slice(next.index + next[0].length);
+      continue;
+    }
+    const lead = LEADS.map((re) => re.exec(t)).find(Boolean);
+    if (!lead) break;
+    t = t.slice(lead[0].length);
+  }
+  return { change: null, relayed: false };
+}
+// The first change word a step asks for as its verb, or null.
+function stepChange(step) {
+  const text = String(step).replace(/\*\*|__|`/g, '');
+  for (const sentence of text.split(/(?<=[.!?;])\s+/)) {
+    for (const clause of sentence.split(/\bthen\b/i)) {
+      const v = openingVerb(clause);
+      if (v.change) return v.change;
+      if (v.relayed) return null;
+    }
+  }
+  return null;
+}
+
+// The step half of the INVESTIGATE rule: at least one step, and no step whose verb is a change word. With a
+// Fix card: the steps, the "Do this" text before the first step, and any card line in no part (a step filed
+// after a stray label); "Done when" is not a step, so it keeps batch 9's reading (any change word a negation
+// does not open, security review 5), and the parts that only describe or speak are not read (MENTION_PARTS:
+// the two messages to the user speak to the customer, "We'll update you within the hour"); a Details line
+// mentions a change, it does not ask for one, so Details is not read (batch 9, task 9). With no card (an
+// answer in the older format): every numbered line, in any form. shortcut: an older-format answer's prose and
+// bullets are not read, since a look-first answer of that form says "don't release" or "don't delete it" in
+// them (full run 1's T5); such an answer can only gain a label, never a change, since INVESTIGATE approves
+// and applies nothing.
 // The card parts that describe or speak, and ask nothing of the tech: what is wrong ("the account is locked"),
 // the signal to stop at ("a rule is moving the invoices") and the two user messages. Batch 8's T5 card held
 // "moving" in its Stop if line (batch 9, task 9).
@@ -363,12 +420,26 @@ function onlyLooks(raw) {
   const steps = answerSteps(answer);
   const card = fixCard(answer);
   const body = deskBlock(answer).body.split(/\r?\n/);
-  const scan = card.present
-    ? [...steps, card.parts.doThis || '', ...card.lines.filter((l) => !MENTION_PARTS.includes(l.part)).map((l) => l.text)]
-    : [...steps, ...body.filter((l) => ANY_STEP.test(l))];
+  const asSteps = [...steps];
+  const asMentions = [];
+  if (card.present) {
+    // a "Do this" line before the first numbered step (the label line's own text, or a bullet) is read as a
+    // step; a numbered line and the lines it runs on to are in steps already, with the step they belong to
+    let numbered = false;
+    for (const l of card.lines) {
+      if (MENTION_PARTS.includes(l.part)) continue;
+      if (l.part === 'doneWhen') asMentions.push(l.text);
+      else if (l.part !== 'doThis') asSteps.push(l.text);
+      else if (STEP.test(l.text)) numbered = true;
+      else if (!numbered) asSteps.push(l.text);
+    }
+  } else {
+    asSteps.push(...body.filter((l) => ANY_STEP.test(l)).map((l) => ANY_STEP.exec(l)[2]));
+  }
   let change = null;
-  for (const x of scan) { change = changeIn(x); if (change) break; }
+  for (const x of asSteps) { change = stepChange(x); if (change) break; }
+  if (!change) for (const x of asMentions) { change = changeIn(x); if (change) break; }
   return { steps, looks: steps.length > 0 && change === null, change };
 }
 
-module.exports = { defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };
+module.exports = { defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

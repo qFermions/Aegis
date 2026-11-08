@@ -123,9 +123,9 @@ test('batch 10, task 1: the same T9m answer with only the session clear in the b
   assert.equal(lightestStepFirst(T9M_ONE_RUNG, catalog()).verdict, 'pass');
 });
 
-const LADDER_RUNBOOK = ['# Example lost laptop', '',
-  '## Phase B: Lock the laptop (R2)', '**User check:** ask whether the laptop is back.', '', portal('ex-laptop-lock', 'R2', 'lock one laptop until the PIN is typed'), '',
-  '## Phase C: Erase the laptop (R3)', '**Try first:** Phase B, lock the laptop and wait for it to come back.', '', portal('ex-laptop-erase', 'R3', 'erase one laptop'), '',
+const LADDER_RUNBOOK = ['# Example mail forwarding', '',
+  '## Phase B: Turn off the forwarding rule (R2)', '**User check:** ask whether the user set up the forwarding themselves.', '', portal('ex-rule-off', 'R2', 'turn off one inbox forwarding rule'), '',
+  '## Phase C: Delete every inbox rule (R3)', '**Try first:** Phase B, turn off the forwarding rule and watch for new forwarding.', '', portal('ex-rules-delete', 'R3', 'delete every inbox rule of one mailbox'), '',
   '## Phase D: Sign the user out', portal('ex-app-signout', 'R1', 'sign the user out of the app'), '',
   '## Phase E: Revoke the app token', portal('ex-app-token-revoke', 'R1', 'revoke the app token'), '',
   '## Phase F: Hand over the files', portal('ex-files-transfer', 'R2', 'move the files to the manager'), '',
@@ -133,21 +133,21 @@ const LADDER_RUNBOOK = ['# Example lost laptop', '',
 function ladderCatalog(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-ladder-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  fs.writeFileSync(path.join(dir, 'example-laptop.md'), LADDER_RUNBOOK);
+  fs.writeFileSync(path.join(dir, 'example-forwarding.md'), LADDER_RUNBOOK);
   return catalog(dir);
 }
 const withDetails = (details, ...gates) => ['## Fix', "**What's wrong:** x.", '', '## Details', ...details, '', '```aegis-desk', ...gates.map((g) => `Gate: ${g}`), '```', ''].join('\n');
 
-test('batch 10, task 1, pair 1: a lock and the erase its runbook says to try it before, in one block, fails; the lock alone passes', (t) => {
+test('batch 10, task 1, pair 1: a rule turned off and the delete its runbook says to try it before, in one block, fails; the rule turned off alone passes', (t) => {
   // catches: a row that compares the two gates' R classes without asking whether the runbook ties them as rungs
   const c = ladderCatalog(t);
-  const both = lightestStepFirst(withDetails([], 'ex-laptop-lock', 'ex-laptop-erase'), c);
+  const both = lightestStepFirst(withDetails([], 'ex-rule-off', 'ex-rules-delete'), c);
   assert.equal(both.verdict, 'fail', both.detail);
-  assert.match(both.detail, /ex-laptop-erase/);
-  const later = ['- Step 5, only if the laptop is not back in a day: erase it, gate `ex-laptop-erase`.'];
-  assert.equal(lightestStepFirst(withDetails(later, 'ex-laptop-lock'), c).verdict, 'pass', 'the erase named for later, outside the block');
+  assert.match(both.detail, /ex-rules-delete/);
+  const later = ['- Step 5, only if forwarding comes back within a day: delete every inbox rule, gate `ex-rules-delete`.'];
+  assert.equal(lightestStepFirst(withDetails(later, 'ex-rule-off'), c).verdict, 'pass', 'the delete named for later, outside the block');
   // the order inside the block does not hide it
-  assert.equal(lightestStepFirst(withDetails([], 'ex-laptop-erase', 'ex-laptop-lock'), c).verdict, 'fail');
+  assert.equal(lightestStepFirst(withDetails([], 'ex-rules-delete', 'ex-rule-off'), c).verdict, 'fail');
 });
 
 test('batch 10, task 1, pair 2: two gates of one class, the second named as the step for when the first did not work, fail together; the first alone passes', (t) => {

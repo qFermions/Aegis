@@ -1,0 +1,6 @@
+Mutation: the runbook's Try first lines pair nothing (only fallback lines do)
+1
+ℹ fail 1
+ℹ pass 11
+✖ batch 10, task 1, pair 1: a rule turned off and the delete its runbook says to try it before, in one block, fails; the rule turned off alone passes (0.879167ms)
+restored: same

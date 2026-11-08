@@ -282,6 +282,7 @@ archived in `docs/review/batches/batch9b-checks.md` and `batch9b-progress.md`.
 | the privacy rule stops "password isHunter22!", "pw:", "passwd=", "pass is x1" and other punctuated spellings, and lets ordinary password tickets through | `scripts/ask-aegis.js` (`protect`) | `scripts/ask-aegis.test.js` (`t6-red.txt`, `t6-green.txt`, four mutations) |
 | the runs at `192287a` | `docs/aegis/demo/evidence/full-run-6/`, `full-run-7/` | messy 8 RESOLVED (SIMULATED), 1 INVESTIGATE (T7m); tidy 7 RESOLVED (SIMULATED), 1 CLARIFY (T7); 16 sessions, 6.36 US dollars; predictions matched 9 of 9 and 7 of 8 |
 | batteries | `docs/aegis/demo/evidence/batch10/baseline/`, `battery-mid/`, `battery-head/` | 2202, 2216 and 2233 tests; each time the same 41 pwsh-only failing names as batch 9; every other check exit 0 |
+| reviews: security 1, evidence 1, code 1 to 3 at xhigh; their fixes (the verb rule's buttons, paths, negations and invisible characters; the ladder reader's details blocks, undo phases and phase ranges; the privacy rule's separators; Jamf doubled fields; the simulated transfers' owner) | the files above, `scripts/demo/customer-desk.js` | `checks.md`, Review rounds and Fixed beyond the task; `cr1-*`, `cr2-*`, `cr3-*`, `sr1-*`, `er1-*` captures; the battery at the final head (`battery-final/`) |
 
 Still open after batch 10: the transfer reads rest on UNCONFIRMED facts (W-11, W-13, W-14), so they may never pass on a real tenant
 until the owner checks them; the desk still applies every gate in a block (it trusts the block to hold one rung); the lightest-step row

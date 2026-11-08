@@ -407,8 +407,9 @@ test('runbooks: every read-back of an R2 or R3 gate passes --change [CHANGE_ID],
   // mailbox-full-access-grant-portal, mailbox-send-as-grant-portal, shared-mailbox-full-access-portal and
   // shared-mailbox-send-as-portal, and the verify-quarantine-released lines of quarantine-release-all-portal
   // and quarantine-release-one-portal (93 to 99); batch 9, task 7: jamf-lock-erase-wipe-portal's
-  // verify-command line (99 to 100)
-  assert.equal(bound, 100, 'the 100 read-backs of R2 and R3 gates');
+  // verify-command line (99 to 100); batch 10, task 3: jamf-lock-erase-lock-portal's verify-command
+  // --type DEVICE_LOCK line (100 to 101)
+  assert.equal(bound, 101, 'the 101 read-backs of R2 and R3 gates');
   // code review round 1 of the batch G3 close-out 3, finding 9: the Jamf pilot read under the
   // removal from All Computers is no longer a line there (76 to 75); round 3, finding 3: it is read
   // after the removals in an R0 section of its own (75 to 76); batch 8, task 3: the verify lines of

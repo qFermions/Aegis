@@ -9,9 +9,9 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[SERIAL_NUMBER]` (the Mac, as searched in Jamf Pro) · `[DEVICE_ID]` (the Jamf Pro management ID of the Mac, or the supervised iPhone/iPad record for Lost Mode) · `[LOCK_PIN]` (the six-digit lock PIN: generated in and kept by the password manager, never written in the ticket) · `[PHONE_NUMBER]` (the return number shown on the lock screen) · `[NOT_BEFORE]` (the time the wipe read-back starts from) · `[CHANGE_ID]` (the change record id, below) · `[@Aegion_JAMF_URL]` (the Jamf Pro server) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[SERIAL_NUMBER]` (the Mac, as searched in Jamf Pro) · `[DEVICE_ID]` (the Jamf Pro management ID of the Mac, or the supervised iPhone/iPad record for Lost Mode) · `[LOCK_PIN]` (the six-digit lock PIN: generated in and kept by the password manager, never written in the ticket) · `[PHONE_NUMBER]` (the return number shown on the lock screen) · `[NOT_BEFORE]` (the time the lock or wipe read-back starts from) · `[CHANGE_ID]` (the change record id, below) · `[@Aegion_JAMF_URL]` (the Jamf Pro server) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
-**Change record (R3 gates):** before a gate whose reversibility is R3 and that has a read-back named for it below (the wipe), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-command --not-before --type ERASE_DEVICE`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
+**Change record (R2 and R3 gates):** before a gate whose reversibility is R2 or R3 and that has a read-back named for it below (the lock and the wipe), open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `jamf:verify-command --not-before --type DEVICE_LOCK` for the lock or `jamf:verify-command --not-before --type ERASE_DEVICE` for the wipe), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names. A read-back whose line has `--not-before` is named with it and no value, such as `msgraph:verify-sessions-revoked --not-before`, and is run with `--not-before` at or after the approval's time, which `approve` prints: a read bounded earlier never proves the change (batch G4).
 
 ## ⚠️ Admin / safety gate
 
@@ -60,6 +60,8 @@ If `[@Aegion]` also runs Fleet, its Hosts page offers the same idea (Actions, th
 
 No lighter step: the Mac is out of the user's hands, so nothing can be asked of them, and Lock Computer deletes nothing and is the lightest step in this runbook that stops use of a Mac already out of the user's hands; it reads as heavy here only because the gate id carries the runbook's name, lock-erase.
 
+Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints for this gate's change, and write it in the ticket, with the Mac's management ID from Phase A as `[DEVICE_ID]`.
+
 <!-- SAFETY GATE [jamf-lock-erase-lock-portal] -->
 - **Target:** [SERIAL_NUMBER]
 - **Effect:** lock one Mac; the user is logged out, the Mac restarts and stays locked until the six-digit [LOCK_PIN] is entered
@@ -67,14 +69,21 @@ No lighter step: the Mac is out of the user's hands, so nothing can be asked of 
 - **Reversibility:** R2 — one Mac, but unlocking needs [LOCK_PIN], data that must be captured before the command is sent (it is the pre-state): reversible by typing [LOCK_PIN] on the Mac; the PIN lives in the password manager, never in the ticket; on Apple silicon with macOS 11.4 or earlier the passcode is not set and the Mac boots to Recovery's Activation screen instead
 - **Required confirmation:** Type exactly `LOCK MAC [SERIAL_NUMBER]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
-- **Read-back:** none (no read-back is named for it in this runbook: its proof is the read its own step names)
+- **Read-back:** `jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [jamf-lock-erase-lock-portal]:** Only after `[LOCK_PIN]` is stored in the password manager and the exact match:
 1. Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → Management → **Lock Computer**.
 2. Enter the six-digit `[LOCK_PIN]` and an optional message with `[PHONE_NUMBER]`, then click **Lock Computer**.
 
 **WAIT UNTIL** Jamf Pro → Computers → `[SERIAL_NUMBER]` → History → Management History shows the command completed (it runs at the next check-in; until then it sits under Pending Commands, where it can still be cancelled).
 
-**Verification checkpoint** — [ ] the command reads completed · [ ] `[LOCK_PIN]` is in the password manager and nowhere else.
+```bash
+# read-back: the Mac acknowledged a lock command sent at or after NOT_BEFORE, read from Jamf Pro's MDM command history (GET only)
+node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```
+
+It passes on a lock command whose state reads Acknowledged; a command still Pending, or Not Now, is inconclusive (the Mac has not answered yet), and none, or a failed one, fails. `DEVICE_LOCK` is the Jamf Pro API's lock command type (vendor facts J-11, J-12); that a lock sent with the Lock Computer button is recorded under that type is not confirmed on Jamf's pages, so if the read finds nothing, read Management History in the GUI before concluding the lock was not sent.
+
+**Verification checkpoint:** [ ] `verify-command` exit 0, or Management History shows the command completed · [ ] `[LOCK_PIN]` is in the password manager and nowhere else.
 
 ## Phase C — Stolen with sensitive data: Wipe Computer (R3, after independent review)
 
@@ -103,7 +112,7 @@ Take as `[NOT_BEFORE]` the `approved_at` that `change-record.js approve` prints 
 node scripts/adapters/jamf-client.js verify-command --management-id [DEVICE_ID] --type ERASE_DEVICE --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 ```
 
-It passes on an erase command whose status reads Acknowledged; a command still Pending is inconclusive (the Mac has not checked in), and none, or a failed one, fails. The command type value `ERASE_DEVICE` is the Jamf Pro API name for the macOS EraseDevice command as this adapter's tests use it; it is not confirmed on Jamf's public documentation pages this batch could read, so if the read finds nothing, read Management History in the GUI before concluding the wipe was not sent.
+It passes on an erase command whose state reads Acknowledged; a command still Pending, or Not Now, is inconclusive (the Mac has not checked in), and none, or a failed one, fails. `ERASE_DEVICE` is a command type Jamf's API reference lists (vendor fact J-11); that a wipe sent with the Wipe Computer button is recorded under it is not confirmed on Jamf's pages, so if the read finds nothing, read Management History in the GUI before concluding the wipe was not sent.
 
 **Verification checkpoint:** [ ] `verify-command` exit 0, or Management History shows the command completed · [ ] the record still exists and is marked in the ticket as wiped.
 
@@ -206,7 +215,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 # Reversibility: R2 — reversible only by typing [LOCK_PIN] on the Mac — the PIN is pre-state: store it in the password manager first
 # Required confirmation: type exactly "LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
-# Read-back: none, no read-back is named for it in this runbook: its proof is the read its own step names
+# Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
 # the exact phrase to type
 required_confirmation="LOCK MAC [SERIAL_NUMBER] MANAGEMENT ID [DEVICE_ID]"
 # shows the phrase
@@ -265,7 +274,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 ## ✅ Verification checklist
 
 - [ ] Jamf Pro → Computers → `[SERIAL_NUMBER]` → History → Management History shows the Lock Computer / Wipe Computer / Remove MDM Profile command completed, with the admin and time.
-- [ ] After a lock: `[LOCK_PIN]` is in the password manager; the Mac shows the lock screen with the message.
+- [ ] After a lock: `verify-command --type DEVICE_LOCK` passed; `[LOCK_PIN]` is in the password manager; the Mac shows the lock screen with the message.
 - [ ] After a wipe: the record still exists in Jamf Pro and is marked wiped in the ticket; the API read-back lists ERASE_DEVICE as completed.
 - [ ] After an unmanage: `profiles show` on the Mac no longer lists the MDM profile, the jamf binary is gone, and the record's fate (kept or deleted) is recorded.
 - [ ] After Lost Mode: the device shows the message and Jamf Pro → Devices → `[DEVICE_ID]` → Inventory → Security shows coordinates.

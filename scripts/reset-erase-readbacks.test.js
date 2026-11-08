@@ -67,11 +67,31 @@ test('the Jamf wipe gate binds a verify-command read of the erase command, under
   assert.match(b.command, /--change \[CHANGE_ID\] --execute$/);
 });
 
+// Batch 10, task 3: the Jamf lock gate (R2) names a verify-command read of the lock command under its
+// change record, and its API twin names the same line, as the wipe's twin does.
+test('the Jamf lock gate and its API twin bind a verify-command read of DEVICE_LOCK, under its change record', () => {
+  // catches: a lock field naming ERASE_DEVICE, a read without --not-before or --management-id, or an API
+  // twin left with none while its portal twin binds the read
+  for (const id of ['jamf-lock-erase-lock-portal', 'jamf-lock-erase-lock-api']) {
+    const g = gates.get(id);
+    assert.equal(g.rClass, 'R2', id);
+    assert.equal(g.none, null, id);
+    assert.equal(g.bound.length, 1, id);
+    const [b] = g.bound;
+    assert.equal(b.kind, 'jamf:verify-command', id);
+    assert.equal(flag(b.argv, '--type'), 'DEVICE_LOCK', id);
+    assert.equal(flag(b.argv, '--management-id'), '[DEVICE_ID]', id);
+    assert.equal(flag(b.argv, '--not-before'), '[NOT_BEFORE]', id);
+    assert.match(b.command, /--change \[CHANGE_ID\] --execute$/, id);
+  }
+});
+
 test('both runbooks keep the Read-back contract change-record.js reads', () => {
   // catches: an R1 field naming a command, a bound line no gate names, or a missing change-record paragraph
   for (const name of ['gws-password-reset', 'jamf-lock-erase']) {
     assert.deepEqual(readBackProblems(fs.readFileSync(path.join(DIR, `${name}.md`), 'utf8')), [], name);
   }
   const page = fs.readFileSync(path.join(DIR, 'jamf-lock-erase.md'), 'utf8');
-  assert.ok(/\*\*Change record \(R3 gates\):\*\* before a gate[^\n]*`node scripts\/audit\/change-record\.js open`[^\n]*`\[CHANGE_ID\]`/.test(page), 'jamf-lock-erase says where [CHANGE_ID] comes from');
+  // batch 10, task 3: the lock is R2 and binds a read-back, so the paragraph covers R2 and R3 gates (was R3)
+  assert.ok(/\*\*Change record \(R2 and R3 gates\):\*\* before a gate[^\n]*`node scripts\/audit\/change-record\.js open`[^\n]*`\[CHANGE_ID\]`/.test(page), 'jamf-lock-erase says where [CHANGE_ID] comes from');
 });

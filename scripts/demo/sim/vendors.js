@@ -110,7 +110,8 @@ const ROUTES = {
     if (p === '/api/v2/mdm/commands') {
       const id = filterValue(req, 'clientManagementId');
       const d = jamfDevices.find((x) => x.management_id === id);
-      const sent = d ? (d.mdm_commands || []).map((c) => ({ clientManagementId: id, ...c })) : [];
+      // the record fields Jamf documents (vendor fact J-11): client.managementId, commandType, commandState
+      const sent = d ? (d.mdm_commands || []).map((c, i) => ({ uuid: `sim-command-${i + 1}`, client: { managementId: id, clientType: 'COMPUTER' }, commandType: c.command, commandState: String(c.status).toUpperCase(), dateSent: c.dateSent, ...(c.dateCompleted ? { dateCompleted: c.dateCompleted } : {}) })) : [];
       return ok({ totalCount: sent.length, results: sent });
     }
     return notFound();

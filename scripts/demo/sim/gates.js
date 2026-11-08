@@ -140,8 +140,10 @@ const SIM_GATES = Object.freeze({
   // Jamf Pro
   'jamf-lock-erase-lock-portal': {
     platform: 'jamf', effect: 'locks the Mac at its next check-in',
-    // the lock is sent now and done at the Mac's next check-in, so its command stays Pending
-    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.lock_state = 'locked'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'DEVICE_LOCK', status: 'Pending', dateSent: now }); } },
+    // batch 10, task 3: the lock gate binds verify-command --type DEVICE_LOCK. The simulated Mac checks in
+    // at once, as the runbook's WAIT UNTIL asks before the read-back, so the lock reads Acknowledged; the
+    // wipe below stays Pending, so the desk still shows a read that proves nothing yet
+    apply: (s, t, now) => { for (const d of s.devices) if (d.serial === t['[SERIAL_NUMBER]']) { d.lock_state = 'locked'; (d.mdm_commands = d.mdm_commands || []).push({ command: 'DEVICE_LOCK', status: 'Acknowledged', dateSent: now, dateCompleted: now }); } },
   },
   'jamf-lock-erase-wipe-portal': {
     platform: 'jamf', effect: 'wipes the Mac at its next check-in',

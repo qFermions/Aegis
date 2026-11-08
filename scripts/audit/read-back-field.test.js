@@ -76,7 +76,9 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // batch 9b: okta-mfa-reset-clear-sessions-portal, the Okta Verify loop's admin step (348 to 349; R1, it names no read-back)
   assert.equal(gates, 349, 'every runbook gate');
   // code review round 1 of batch 9, finding 13: jamf-lock-erase-wipe-api names its portal twin's read-back (106 to 107)
-  assert.equal(naming, 107, 'the gates that name read-backs');
+  // batch 10, task 3: jamf-lock-erase-lock-portal and its API twin jamf-lock-erase-lock-api name verify-command
+  // --type DEVICE_LOCK (107 to 109)
+  assert.equal(naming, 109, 'the gates that name read-backs');
 });
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {

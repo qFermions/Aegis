@@ -20,6 +20,8 @@ Full new-user onboarding is owned by **/new-user** — the canonical 26-step dee
 
 This alias exists so `/onboard` can never serve a stale generic copy again (2026-06-09 drift lesson). When invoked, deliver the `/new-user` runbook.
 
+The `/new-user` plan shows, for every step that changes something, its risk class and its double-check, or "no gate here" with a proof a person can see with their own eyes (answer-format section 2, "Every change carries its class and its double-check"). An onboarding answer delivered through this alias does the same.
+
 After a run is **verified** (directory read-back confirmed), offer to persist it:
 `record` + `verify --evidence` per `scripts/replay/README.md` — the next exact
 repeat then replays instantly.

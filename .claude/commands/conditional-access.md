@@ -128,6 +128,8 @@ Step 2 — Create the CA policy:
 
 > **PREVIEW ONLY [ca-policy-create]:** Policy creation, location creation, exclusions, and account changes are not authorized by this reference. Use a separate reviewed change with exported pre-state, Report-only evidence, break-glass verification, rollback, and an exact target-bound confirmation.
 
+**Every change carries its class and its double-check (answer-format section 2).** A new policy is a plan of two changes, and the plan written under Details shows each with its risk class and its double-check. Creating the policy in Report-only (steps 1 to 8): no gate here, a separate reviewed change; R3, a Conditional Access change; the proof a person can see is the policy in the Policies list with its state reading Report-only. Turning it On (the gate below): R3; its Read-back field says none, because no connector reads a Conditional Access policy, so the proof a person can see is the policy's state reading On, and a test sign-in whose entry in the sign-in logs shows the policy as Applied.
+
 `Entra admin center (entra.microsoft.com) → Entra ID → Conditional Access → Policies → + New policy`
 
 1. **Name:** use a descriptive name (`Require MFA — all users`, `Block legacy auth`, etc.) — this is what shows in sign-in logs

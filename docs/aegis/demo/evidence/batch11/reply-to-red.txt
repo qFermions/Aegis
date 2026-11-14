@@ -1,0 +1,189 @@
+$ node --test scripts/ask-aegis.test.js scripts/aegis-chat.test.js   (red: the new tests of --reply-to asker against the unchanged ask-aegis.js and aegis-chat.js at 6d836cc)
+✔ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (23.11575ms)
+✔ with no --setup the argv is the isolation alone (0.913458ms)
+✔ bad arguments exit 1 with no session; a claude that cannot start is a plain message and exit 2 (1.947458ms)
+✔ while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits (0.353083ms)
+✔ code review 2, finding 14: the chat protects its setup text as ask-aegis does (0.531833ms)
+✖ batch 11, task 6: chatArgs with the voice is one appended prompt; without it the arguments are today's (1.255708ms)
+✖ batch 11, task 6: --reply-to asker starts the chat with the voice; another value is refused before claude starts (0.553625ms)
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (29.40225ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (43.701875ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (46.625166ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.332542ms)
+✔ no ticket text: the usage and exit 1, with no session (23.400958ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (21.306583ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (335.410541ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (48.375083ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (0.577125ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.415ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.349833ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.140375ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.205167ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (2.1145ms)
+✔ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.275291ms)
+✔ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.193708ms)
+✔ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.135791ms)
+✔ code review 3, class C3 (batch 10): digits after "'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass (0.388958ms)
+✖ batch 11, task 6: --reply-to takes asker and nothing else; without it the prompt is byte for byte today's (0.496792ms)
+✖ batch 11, task 6: with the flag, stdout is only the reply; the tech answer and the reply are saved side by side (0.548375ms)
+✖ batch 11, task 6: a reply that fails its check is printed with the reasons and exit 3; no reply at all is exit 3 with the answer saved (0.511041ms)
+✖ batch 11, tasks 4 and 6: an ask-first answer is the one question: it is the reply with the flag, and is shown as a question without it (0.461042ms)
+✔ batch 11, task 6: without the flag the output is exactly today's, whole (24.896583ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 24
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 623.9355
+
+✖ failing tests:
+
+test at scripts/aegis-chat.test.js:163:1
+✖ batch 11, task 6: chatArgs with the voice is one appended prompt; without it the arguments are today's (1.255708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      '--tools',
+      'Read',
+      'Grep',
+      'Glob',
+  ...
+      '--strict-mcp-config',
+  -   '--settings',
+  -   '{"claudeMdExcludes":["<home>/CLAUDE.md","<home>/CLAUDE.local.md","<home>/.claude/CLAUDE.md","<home>/.claude/rules/**","<home>/Code/CLAUDE.md","<home>/Code/CLAUDE.local.md","<home>/Code/.claude/CLAUDE.md","<home>/Code/.claude/rules/**","<users>/CLAUDE.md","<users>/CLAUDE.local.md","<users>/.claude/CLAUDE.md","<users>/.claude/rules/**","/CLAUDE.md","/CLAUDE.local.md","/.claude/CLAUDE.md","/.claude/rules/**","<tmp>'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/aegis-chat.test.js:172:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [
+      '--tools',             'Read',
+      'Grep',                'Glob',
+      'Agent',               '--allowedTools',
+      'Read',                'Grep',
+      'Glob',                'Agent',
+      '--disallowedTools',   'Bash',
+      'WebFetch',            'WebSearch',
+      '--setting-sources',   'project',
+      '--strict-mcp-config'
+    ],
+    expected: [ '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', '--setting-sources', 'project', '--strict-mcp-config', '--settings', '{"claudeMdExcludes":["<home>/CLAUDE.md","<home>/CLAUDE.local.md","<home>/.claude/CLAUDE.md","<home>/.claude/rules/**","<home>/Code/CLAUDE.md","<home>/Code/CLAUDE.local.md","<home>/Code/.claude/CLAUDE.md","<home>/Code/.claude/rules/**","<users>/CLAUDE.md","<users>/CLAUDE.local.md","<users>/.claude/CLAUDE.md","<users>/.claude/rules/**","/CLAUDE.md","/CLAUDE.local.md","/.claude/CLAUDE.md","/.claude/rules/**","<tmp>' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/aegis-chat.test.js:182:1
+✖ batch 11, task 6: --reply-to asker starts the chat with the voice; another value is refused before claude starts (0.553625ms)
+  AssertionError [ERR_ASSERTION]: aegis-chat: unexpected "--reply-to"
+  Usage: node scripts/aegis-chat.js [--setup "what the company runs"]
+  Type your questions inside the chat.
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/aegis-chat.test.js:191:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ask-aegis.test.js:421:1
+✖ batch 11, task 6: --reply-to takes asker and nothing else; without it the prompt is byte for byte today's (0.496792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:422:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ask-aegis.test.js:437:1
+✖ batch 11, task 6: with the flag, stdout is only the reply; the tech answer and the reply are saved side by side (0.548375ms)
+  AssertionError [ERR_ASSERTION]: ask-aegis: unknown option "--reply-to"
+  Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR] [--max-budget-usd N]
+  Aegis reads the ticket and answers with steps for a person to do. It reads only and changes nothing.
+  The whole answer is saved in your home folder under aegis-asks.
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:440:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ask-aegis.test.js:451:1
+✖ batch 11, task 6: a reply that fails its check is printed with the reasons and exit 3; no reply at all is exit 3 with the answer saved (0.511041ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 3
+  
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:454:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/ask-aegis.test.js:467:1
+✖ batch 11, tasks 4 and 6: an ask-first answer is the one question: it is the reply with the flag, and is shown as a question without it (0.461042ms)
+  AssertionError [ERR_ASSERTION]: ask-aegis: unknown option "--reply-to"
+  Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR] [--max-budget-usd N]
+  Aegis reads the ticket and answers with steps for a person to do. It reads only and changes nothing.
+  The whole answer is saved in your home folder under aegis-asks.
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:470:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

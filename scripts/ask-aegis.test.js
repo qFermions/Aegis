@@ -397,3 +397,96 @@ test('code review 3, class C3 (batch 10): digits after "\'s" or " - " stop the a
   for (const bad of ["the password's Hunter22 please change it", 'Password - Summer2024 for the new laptop', "the PIN's 4821 now", "password's Hunter.22 for the VPN", 'password -> Spring2026!']) assert.ok(ask.protect(bad).blocked, bad);
   for (const ok of ['Settings \u2192 Accounts \u2192 Sign-in options \u2192 PIN \u2192 Change PIN does nothing', 'Go to Settings \u2192 Password \u2192 Change and it errors', 'PIN \u2192 Remove is greyed out', 'Password - Urgent', "the PIN's broken, she can't sign in", 'Password - Outlook, Teams and OneDrive keep prompting']) assert.equal(ask.protect(ok).blocked, undefined, ok);
 });
+
+// ── Batch 11, task 6: the reply to the person who asked (--reply-to asker) ──────────────────────
+// EXPECTED DECISION (written before the flag)
+// - `--reply-to asker` asks the session for the reply too (one line more in the prompt), prints only that reply on
+//   stdout, and saves the whole tech answer (answer.md) and the reply (reply.md) in the ask's folder; everything
+//   else it says (progress, where the files are, the cost, the check's reasons) goes to stderr.
+// - The reply is checked (form and done claims): a reply that fails is still printed, with its reasons, exit 3; an
+//   answer with no reply is exit 3 with the answer saved.
+// - Without the flag the prompt and the output are exactly today's.
+// Wrong implementations these catch: a flag that changes the prompt for every ask (the two pinned hashes); a
+// command that prints the Fix card with the reply (stdout is compared whole); one that prints a failing reply as
+// if it were ready (exit 3 and the reason); one that accepts any --reply-to value.
+const crypto = require('node:crypto');
+
+const REPLY = [
+  'No, the printer itself is fine: the page you sent shows the job is stuck in the queue on your laptop.',
+  "I haven't confirmed yet why it stuck. There is nothing you need to do for now, and a technician will clear the queue next and tell you when to try again.",
+].join('\n\n');
+const withReply = (reply) => NEW_ANSWER.replace('```aegis-desk', `\`\`\`asker-reply\n${reply}\n\`\`\`\n\n\`\`\`aegis-desk`);
+const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
+
+test('batch 11, task 6: --reply-to takes asker and nothing else; without it the prompt is byte for byte today\'s', () => {
+  assert.equal(ask.parseArgs(['the printer']).replyTo, null);
+  assert.equal(ask.parseArgs(['the printer', '--reply-to', 'asker']).replyTo, 'asker');
+  assert.equal(ask.parseArgs(['--reply-to', 'asker', 'the', 'printer']).ticket, 'the printer');
+  assert.throws(() => ask.parseArgs(['the printer', '--reply-to', 'tech']), /--reply-to takes asker/);
+  assert.throws(() => ask.parseArgs(['the printer', '--reply-to']), /needs a value/);
+  // the two prompts of the unchanged code (computed at 6d836cc, before the flag existed)
+  assert.equal(sha(ask.buildPrompt('The printer will not print', null)), 'd1fa4886b7df724ee42993a83e14375c613ef4ac4191683baa6c927279f19c6a');
+  assert.equal(sha(ask.buildPrompt('The printer will not print', 'Google Workspace, Chromebooks')), 'afe14cc7fc19f7a153df66f2307feee35ccd1b26150fb85ce78bd232f254b187');
+  const asked = ask.buildPrompt('The printer will not print', null, 'asker');
+  assert.match(asked, /asker-reply/);
+  assert.match(asked, /section 8/);
+  assert.ok(asked.endsWith('The printer will not print'), 'the ticket is still the pasted evidence that closes the prompt');
+  assert.ok(asked.indexOf('asker-reply') < asked.indexOf(backends.EVIDENCE_HEADER), 'the request sits above the evidence, not in it');
+});
+
+test('batch 11, task 6: with the flag, stdout is only the reply; the tech answer and the reply are saved side by side', async (t) => {
+  const s = setup(t, { answer: withReply(REPLY), cost: 0.31 });
+  const code = await ask.main(['The printer at the front desk will not print', '--reply-to', 'asker'], s.env, s.deps);
+  assert.equal(code, 0, s.stderr());
+  assert.equal(s.stdout(), `${REPLY}\n`, 'only the reply');
+  const [dir] = asksIn(s.home);
+  assert.equal(fs.readFileSync(path.join(dir, 'answer.md'), 'utf8'), withReply(REPLY), 'the whole tech answer');
+  assert.equal(fs.readFileSync(path.join(dir, 'reply.md'), 'utf8'), `${REPLY}\n`);
+  assert.ok(fs.existsSync(path.join(dir, 'result.json')));
+  assert.ok(s.stderr().includes(path.join(dir, 'answer.md')) && s.stderr().includes(path.join(dir, 'reply.md')), 'stderr says where both are');
+  assert.match(s.stderr(), /0\.31 US dollars/);
+  assert.match(s.calls()[0].prompt, /asker-reply/, 'the session was asked for the reply');
+});
+
+test('batch 11, task 6: a reply that fails its check is printed with the reasons and exit 3; no reply at all is exit 3 with the answer saved', async (t) => {
+  const bad = REPLY.replace('a technician will clear the queue next and tell you when to try again.', 'we have reset the printer for you.');
+  const s = setup(t, { answer: withReply(bad) });
+  assert.equal(await ask.main(['The printer will not print', '--reply-to', 'asker'], s.env, s.deps), 3);
+  assert.equal(s.stdout(), `${bad}\n`, 'still printed, so the paid session is not lost');
+  assert.match(s.stderr(), /did not pass/);
+  assert.match(s.stderr(), /says a change is done/);
+
+  const none = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print', '--reply-to', 'asker'], none.env, none.deps), 3);
+  assert.equal(none.stdout(), '');
+  assert.match(none.stderr(), /no reply to the asker/);
+  assert.equal(fs.readFileSync(path.join(asksIn(none.home)[0], 'answer.md'), 'utf8'), NEW_ANSWER);
+  assert.ok(!fs.existsSync(path.join(asksIn(none.home)[0], 'reply.md')));
+});
+
+test('batch 11, tasks 4 and 6: an ask-first answer is the one question: it is the reply with the flag, and is shown as a question without it', async (t) => {
+  const question = 'What exactly happens when you try to print, who is affected, and since when?';
+  const s = setup(t, { answer: question });
+  assert.equal(await ask.main(['The printer is broken.', '--reply-to', 'asker'], s.env, s.deps), 0, s.stderr());
+  assert.equal(s.stdout(), `${question}\n`);
+  const plain = setup(t, { answer: question });
+  assert.equal(await ask.main(['The printer is broken.'], plain.env, plain.deps), 0, plain.stderr());
+  assert.match(plain.stdout(), /Aegis asks one thing first:\n\nWhat exactly happens when you try to print, who is affected, and since when\?\n/);
+  assert.doesNotMatch(plain.stdout(), /has no Fix card/);
+});
+
+test('batch 11, task 6: without the flag the output is exactly today\'s, whole', async (t) => {
+  const s = setup(t, { answer: NEW_ANSWER, cost: 0.42 });
+  assert.equal(await ask.main(['The printer at the front desk will not print'], s.env, s.deps), 0, s.stderr());
+  const [dir] = asksIn(s.home);
+  const card = NEW_ANSWER.slice(NEW_ANSWER.indexOf('**What'), NEW_ANSWER.indexOf('\n\n## Details'));
+  const expected = [
+    'Asking Aegis. It reads only and changes nothing; this can take a few minutes.\n',
+    `\n## Fix\n${card}\n`,
+    '\nWhat to tell the user:\n**Tell the user now:** We are looking at the printer queue.\n**Tell the user when done:** Your printer works again; try one page.\n',
+    `\nFull answer saved: ${path.join(dir, 'answer.md')}\nCost: 0.42 US dollars\n`,
+  ].join('');
+  assert.equal(s.stdout(), expected);
+  assert.equal(s.stderr(), '');
+  assert.deepEqual(fs.readdirSync(dir).sort(), ['answer.md', 'result.json'], 'no reply file without the flag');
+});

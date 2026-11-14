@@ -82,7 +82,9 @@ test('every SAFETY GATE in every runbook carries an R class on its Reversibility
   // batch 9, task 5: 343 to 348, mailbox-full-access-grant-portal, mailbox-send-as-grant-portal,
   // mailbox-send-as-remove-portal, shared-mailbox-full-access-portal and shared-mailbox-send-as-portal
   // batch 9b: 348 to 349, okta-mfa-reset-clear-sessions-portal (R1), the Okta Verify loop's admin step
-  assert.equal(all.length, 349, 'the SAFETY GATE count is unchanged');
+  // batch 11 (Google, Okta and Jamf lane): 349 to 350, okta-mfa-reset-tac-portal (R1), the Temporary Access Code
+  // a lost-phone ticket issues before any reset (answer-format section 2, "A new way in before the old way out")
+  assert.equal(all.length, 350, 'the SAFETY GATE count is unchanged');
   assert.deepEqual(unclassed(DIR), [], 'gates with no R class');
 });
 

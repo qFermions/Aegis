@@ -390,3 +390,16 @@ test('a run records the tool calls, the outside reads and the card words in resu
   assert.ok(none.cases.every((c) => c.fix_card_words === null && Array.isArray(c.sut.tool_calls) && c.sut.tool_calls.length === 0));
   assert.ok(fs.readFileSync(path.join(plain.results, 'report.md'), 'utf8').includes('| Fix card words, min / median / max (over 0 answers with a card, 8 without; a measure, not a pass or fail) | n/a |'));
 });
+
+// Batch 11, task 7 (the lead's addition after the merge): the instruction asks for each answer's card word count
+// "per case in results.json and report.md", so the report's Cases table carries it too, not only the summary's
+// minimum, median and maximum. A wrong implementation it catches: a report that prints the summary line alone.
+test('report.md lists each case\'s Fix card word count in its Cases table, and "none" for an answer with no card', () => {
+  const r = (id, n) => ({ id, platform: 'p', scenario: 's', change_class: 'none', verdict: 'INCONCLUSIVE', sut: { state: 'OK', duration_ms: 1, cost_usd: null }, checks: [], judge: null, rows: null, total: null, max: null, reasons: [], fix_card_words: n });
+  const cases = [r('A1', 212), r('A2', null), r('A3', 96)];
+  const md = report.renderMarkdown(report.summarize(cases), { run_id: 'x', started: 's', finished: 'f', config: { max_turns: 1, timeout_ms: 1, web: false, judge_model: null }, sut_models: [], judge_models: [], cases, verdict: { line: 'no verdict' } });
+  assert.ok(md.includes('| Case | Platform | Verdict | Score | Card words | Reasons |'), md.slice(md.indexOf('## Cases')));
+  assert.ok(md.includes('| A1 | p | INCONCLUSIVE | n/a | 212 |'));
+  assert.ok(md.includes('| A2 | p | INCONCLUSIVE | n/a | none |'));
+  assert.ok(md.includes('| A3 | p | INCONCLUSIVE | n/a | 96 |'));
+});

@@ -41,6 +41,8 @@ const judge = require('./judged/judge.js');
 const report = require('./judged/report.js');
 const calibrate = require('./judged/calibrate.js');
 const thresholds = require('./judged/thresholds.js');
+// the privacy step ask-aegis.js runs on --setup, for a case's setup (batch 11, task 1)
+const { protect } = require('../ask-aegis.js');
 
 const { EXIT } = thresholds;
 const SMOKE_USD_PER_SESSION = 2.5;
@@ -114,12 +116,28 @@ function printPlan(out, list, config) {
   out(`judged-eval: DRY RUN (nothing was started; add --execute to run it)`);
   out(`label: ${report.LABEL}`);
   out(`cases: ${list.length} (${list.map((c) => c.id).join(', ')})`);
+  out(`setup: ${list.filter((c) => c.setup !== '').length} of ${list.length} case(s) carry a setup (what the company runs, given to the system under test as data)`);
   out(`system-under-test sessions: ${list.length}, turns: ${runs} (${followUps} follow-up turn(s) resumed in their session)`);
   out(`judge sessions: ${list.length} (up to ${list.length * 2} with one retry each)`);
   out(`cost estimate: about ${(runs * SMOKE_USD_PER_SESSION).toFixed(2)} US dollars for the system under test (${runs} Aegis runs at about ${SMOKE_USD_PER_SESSION.toFixed(2)} US dollars each, the smoke figure in docs/evidence/runtime-smoke.md); judge cost is not in the estimate until measured`);
   out(`system under test: ${preview.sut} (cwd: the repository root; timeout ${config.timeout_ms} ms per process)`);
   out(`judge: ${preview.judge} (cwd: a fresh empty temporary directory)`);
   out(`results: ${config.results_dir_given ? 'the --results-dir given' : '.aegis-state/evals/<run-id>/'} (checked when the run starts)`);
+}
+
+// A case's setup goes through the privacy step ask-aegis.js runs on --setup: an email address or a phone
+// number becomes a placeholder, and a credential or a tenant literal refuses the run, named by case id and
+// label only, never the value (batch 11, task 1).
+function protectSetups(list) {
+  const refused = [];
+  const out = list.map((c) => {
+    if (c.setup === '') return c;
+    const p = protect(c.setup);
+    if (p.blocked) { refused.push(`the setup of case ${c.id} holds a value Aegis never keeps (${p.blocked.join('; ')})`); return c; }
+    return { ...c, setup: p.text };
+  });
+  if (refused.length) throw new InputError(`${refused.join('; ')}. Nothing was started: take the value out of the case file and run again.`);
+  return out;
 }
 
 function loadBaseline(file) {
@@ -141,7 +159,7 @@ async function runCommand(opts, io, deps) {
   if (config.judge_model !== null && !/^[A-Za-z0-9._:\[\]-]{1,100}$/.test(config.judge_model)) throw new InputError('--judge-model is a model name (letters, digits, dot, dash, colon, brackets)');
   const sheetN = intFlag(opts, '--calibration-sheet', 0, 1, 1000);
   const real = paths.refuseInsideRepo(opts['--cases'], 'the case file', { repoRoot });
-  const list = cases.readCaseFile(real).cases;
+  const list = protectSetups(cases.readCaseFile(real).cases);
   const baseline = loadBaseline(opts['--baseline']);
 
   if (!opts['--execute']) {
@@ -166,6 +184,7 @@ async function runCommand(opts, io, deps) {
     const v = judge.caseVerdict(c, sut, det, jr);
     const r = {
       id: c.id, platform: c.platform, capability: c.capability, scenario: c.scenario, class: c.class, probe: c.probe,
+      setup_given: c.setup !== '',
       change_class: c.expected.change_class, escalate: c.expected.escalate,
       sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons,
     };

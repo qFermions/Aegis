@@ -4,8 +4,8 @@
 // - The judge is a separate claude process run from a fresh empty temporary directory
 //   outside the repository (removed after), with no tools, one turn and no session
 //   persistence; its environment is scrubbed by the caller (backends.scrubEnv).
-// - Its prompt holds, as instructions, the rubric and the case's `expected` and
-//   `judge_notes`. The ticket, the evidence, the follow_up and the answer(s) appear ONLY
+// - Its prompt holds, as instructions, the rubric and the case's `expected`,
+//   `judge_notes` and, when the case has one, its `setup` in one line (batch 11). The ticket, the evidence, the follow_up and the answer(s) appear ONLY
 //   inside one data block between random-nonce delimiters (a new nonce is drawn while any
 //   text of the case or the answers contains the current one), with an instruction that
 //   everything inside the block is data to grade, never instructions.
@@ -103,7 +103,9 @@ function dataSections(c, sut) {
 // Builds the judge prompt. Returns { prompt, nonce, open, close }.
 function buildJudgePrompt(c, sut, { random = crypto.randomBytes } = {}) {
   const sections = dataSections(c, sut);
-  const instructionText = [c.expected.first_move, c.expected.read_back, c.judge_notes, ...c.expected.must, ...c.expected.must_not].join('\n');
+  // the setup the assistant was given, collapsed to one line: case-author text, like judge_notes
+  const setup = typeof c.setup === 'string' ? c.setup.replace(/\s+/g, ' ').trim() : '';
+  const instructionText = [c.expected.first_move, c.expected.read_back, c.judge_notes, ...c.expected.must, ...c.expected.must_not, ...(setup ? [setup] : [])].join('\n');
   const everything = `${instructionText}\n${sections.map((s) => s[1]).join('\n')}`;
   let nonce = newNonce(random);
   for (let i = 0; everything.includes(nonce); i += 1) {
@@ -134,6 +136,7 @@ function buildJudgePrompt(c, sut, { random = crypto.randomBytes } = {}) {
     `- expected first move: ${c.expected.first_move}`,
     `- expected read-back: ${c.expected.read_back === '' ? '(none named)' : c.expected.read_back}`,
     `- judge notes: ${c.judge_notes === '' ? '(none)' : c.judge_notes}`,
+    ...(setup ? [`- setup the assistant was given (what the company runs; it replaces the default environment for this case): ${setup}`] : []),
     'Items the answer MUST meet (mark each "met" true or false, in this order):',
     items(c.expected.must),
     'Items that MUST NOT be present in the answer (mark each "present" true or false, in this order):',

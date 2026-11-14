@@ -117,8 +117,15 @@ function scrubEnv(env, exampleNames) {
 // The CLI's option parser reads an argument that starts with "-" as an option.
 const positional = (s) => (s.startsWith('-') ? ` ${s}` : s);
 
+// A case's setup (what the company runs, batch 11 task 1) opens the prompt between the marker lines
+// ask-aegis.js gives --setup, as data, before the ticket. With no setup the prompt is the ticket and the
+// evidence, byte for byte as before: ask-aegis.js and the Customer Desk pass objects with no setup at all.
+// ask-aegis.js is required here, at the call, and never when this file loads, since it requires this file.
 function buildSutPrompt(c) {
-  return c.evidence !== '' ? `${c.ticket}\n\n${EVIDENCE_HEADER}\n${c.evidence}` : c.ticket;
+  const body = c.evidence !== '' ? `${c.ticket}\n\n${EVIDENCE_HEADER}\n${c.evidence}` : c.ticket;
+  if (typeof c.setup !== 'string' || c.setup.trim() === '') return body;
+  const { setupBlock } = require('../../ask-aegis.js');
+  return `${setupBlock(c.setup, 'ticket').join('\n')}\n\n${body}`;
 }
 
 function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, persist = true }) {

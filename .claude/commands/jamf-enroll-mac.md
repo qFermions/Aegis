@@ -39,6 +39,16 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 4. Phase D — Only if the pane was skipped: re-run enrollment without erasing (gated Terminal step).
 5. Phase E — First check-in and inventory (gated Terminal step), then the final read-backs.
 
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line):
+
+| Phase | Change | Class | Double-check |
+|---|---|---|---|
+| A | assign the Mac to the Jamf Pro device management service in Apple Business, gate jamf-enroll-mac-assign-portal | R1 | no change record; the Apple Business inventory row names the Jamf Pro service |
+| B | put the Mac in the PreStage scope, gate jamf-enroll-mac-prestage-portal | R1 | no change record; the PreStage's Scope tab lists the serial number as in scope |
+| C | Setup Assistant on the Mac | no gate: done at the Mac by the person holding it | Jamf Pro returns an inventory record for the serial number, and the Mac shows the MDM profile under Device Management |
+| D, only if the pane was skipped | re-run enrollment without erasing, gate jamf-enroll-mac-renew | R1 | no change record; the enrollment prompt appears on the Mac and the inventory record exists |
+| E | first check-in and inventory update, gate jamf-enroll-mac-checkin | R1 | no change record; the inventory record shows a current last check-in and inventory update |
+
 ## Phase A — Apple Business: make sure the Mac is owned and assigned
 
 **Purpose** — assignment is what makes Setup Assistant show the enrollment pane.
@@ -104,6 +114,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 **Verification checkpoint** — [ ] the inventory record exists · [ ] the Mac shows the MDM profile.
 
 **Gotcha** — a Mac set up before the assignment, or offline during Setup Assistant, shows no pane and creates no record. Do not erase it; use Phase D.
+
+**When the Mac cannot reach enrollment, or Jamf Pro or Apple Business will not open** (answer-format section 2, "How wide before why"): fix the scope before the cause. This Mac only, or every Mac being set up today; this site's network, or any network; Jamf only, or Apple's services too. Then read the vendors' own status pages: Jamf's (status.jamf.com) and Apple's System Status page (apple.com/support/systemstatus). With no incident on either, the network and name-resolution path come before the device record: put the Mac on another network (Ethernet, or a phone hotspot) and check that a browser on the same network opens `[@Aegion_JAMF_URL]`, before anything is assigned or scoped again. A second assignment or a second scope edit does not fix a network that blocks Apple or Jamf.
 
 ## Phase D — The pane was skipped: re-run enrollment without erasing
 
@@ -211,6 +223,7 @@ curl -sS -H "Authorization: Bearer ${JAMF_TOKEN}" "https://[@Aegion_JAMF_URL]/ap
 - [ ] Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]` → General reads enrolled through Automated Device Enrollment, supervised and MDM capable; the API read-back returns the same record.
 - [ ] System Settings → General → Device Management on the Mac shows the MDM profile.
 - [ ] Jamf Pro → Computers → `[SERIAL_NUMBER]` → History → Management History shows no failed commands, and `jamf help` answers in Terminal.
+- [ ] If enrollment could not be reached: the scope (this Mac or all, this network or any, Jamf or Apple too) and the two status page readings are in the ticket, and another network was tried before any second assignment or scope edit.
 
 ## 📝 Jira-ready note
 
@@ -231,3 +244,5 @@ Being able to explain the Apple ownership → device management service → PreS
 Start Phase A: confirm `[SERIAL_NUMBER]` is in Apple Business inventory, then run the assign gate.
 
 **Sources (checked 2026-10-15):** support.apple.com/guide/business/assign-reassign-or-unassign-devices-axmf500c0851/web (Assign Device Management, why assignment matters, default assignment) · support.apple.com/guide/deployment/about-device-supervision-dep1d89f0bff/web (profiles renew -type enrollment, Not now, 10-per-24-hours limit) · support.apple.com/guide/mac-help/configuration-profiles-standardize-settings-mh35561/mac (System Settings → General → Device Management) · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Automated_Device_Enrollment_Integration · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Uploading_the_Server_Token_File_to_Configure_Automated_Device_Enrollment · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Computer_PreStage_Enrollments · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Configuring_a_Computer_PreStage_Enrollment · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Computer_Inventory_Information · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Components_Installed_on_Managed_Computers · learn.jamf.com Jamf 100 Course, "Jamf Binary and Commands" (map rwZ~TKTGRZdL7OMZbgJ7sg, topic P3svwDRwlP6cy_8ihgR41g) · learn.jamf.com Jamf School documentation, "Re-enrolling a Computer Using Automated Device Enrollment" (sudo by macOS version) · learn.jamf.com technical article "Re-enrolling a Computer with a Removable MDM Profile" · developer.jamf.com/jamf-pro/reference/get_v1-computers-inventory · developer.jamf.com/jamf-pro/docs/jamf-pro-api-overview · developer.jamf.com/jamf-pro/docs/client-credentials — the learn.jamf.com topics were read through the site's content API because the page URLs return only an app shell.
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** status.jamf.com (Jamf's status page) · apple.com/support/systemstatus (Apple's System Status page; its list of services loads in the browser and was not read).

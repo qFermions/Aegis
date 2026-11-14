@@ -21,6 +21,8 @@ Fleet reports what a host last told it, so most "Fleet says this host is wrong" 
 
 ## What to check first
 
+**When Fleet itself is reported down, or many hosts read offline at once** (answer-format section 2, "How wide before why"), fix the scope before any single host: one host or many (check 4 below, run first); one site or every site; Fleet only, or other internet services too. Then read where the Fleet server's health is published: **[org gap: who hosts `[@Aegion_FLEET_URL]` (the org or Fleet) and where its status is posted]**; no Fleet status page was confirmed for this runbook. With no incident on the server, the network and name-resolution path come before any host record: from an affected site, does `[@Aegion_FLEET_URL]` resolve and answer over HTTPS, and do other sites open (`/lan-wan`, `/vpn-check`). Only then is it one laptop's agent.
+
 1. **Fleet (R0):** Fleet → Hosts → search `[SERIAL_NUMBER]` (a name, hostname, UUID, serial or private IP works; prefer the serial, because when hostnames collide Fleet's lookup returns the first match) → count the records that come back → open each → Host details → read status, last seen, platform and OS version, fleet, disk encryption and MDM status.
 2. **Activity (R0):** Fleet → Hosts → `[HOST_ID]` → Host details → Activity → read Past and Upcoming: a queued lock, wipe or script explains a "strange" host.
 3. **The adapter (R0):** `host --identifier [SERIAL_NUMBER]`, then `host --id [HOST_ID]` for `status`, `seen_time`, `detail_updated_at`, `disk_encryption_enabled`, `mdm.os_settings.disk_encryption.status`, `mdm.enrollment_status`, `mdm.connected_to_fleet` and `issues.failing_policies_count` (commands in the collapsed block below).
@@ -118,6 +120,7 @@ node scripts/adapters/fleet-client.js hosts --status mia --page 0 --per-page 50 
 - [ ] Branch B: the adapter's `host --id [HOST_ID]` shows `disk_encryption_enabled` true and `mdm.os_settings.disk_encryption.status` verified, or the ticket holds the escalation with status, OS version and time.
 - [ ] Branch C: Host details reads MDM On (manual) or On (automatic), and `host-mdm --id [HOST_ID]` returns the enrollment, or the ticket names the other MDM; when profiles or commands were stuck, `verify-checked-in` passes.
 - [ ] Refetch (if sent): `detail_updated_at` is later than `[NOT_BEFORE]`.
+- [ ] When many hosts were offline or Fleet was unreachable: the scope and the Fleet server's health reading are in the ticket, and the network path was checked before any single host.
 
 ## 📝 Linear-ready note
 

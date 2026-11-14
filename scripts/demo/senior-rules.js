@@ -85,14 +85,24 @@ function bareTicket(ticket) {
 }
 
 const NUMBERED = /^[ \t>]*(?:[-*+][ \t]+)?(?:\*\*)?\(?\d+[.)]/;
+const BULLET = /^[ \t>]*[-*+•][ \t]+\S/;
+// A sentence that advises: a change verb by the desk's own reader, or a way into an admin console (code review 1,
+// finding 1: "In the admin center, require ..." holds no verb the reader knows, but it walks into a console).
+const ADMIN_PLACE = /\badmin (?:cent(?:er|re)|console|portal)\b|\bportal\b|→|->/i;
+const advises = (sentence) => Boolean(stepChange(sentence)) || ADMIN_PLACE.test(sentence) || FAMILIES.some((f) => f.path.test(sentence));
+// The sentences of a text that are not questions.
+const statements = (text) => String(text).split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s && !s.endsWith('?'));
 const ASK_FIRST_MAX_WORDS = 60;
 // An answer that asks and holds no Fix card and no gate: a question of its own (not the ticket's question repeated,
 // not a quoted or fenced line: the desk's own question reader).
 const asksWithNoCard = (answer, ticket) => !fixCard(answer).present && namedGates(answer).length === 0 && asks(answer, ticket);
-// An ask-first answer, which the desk closes CLARIFY: it asks, with no card, no gate and no numbered step. Advice
-// with steps and a stray question ("1. Reset it. Did that help?") is not one: it stays OPEN, as batch 8 decided.
+// An ask-first answer, which the desk closes CLARIFY: it asks, with no card, no gate, no numbered or bulleted step and
+// no sentence that advises. Advice with a stray question ("1. Reset it. Did that help?", the same as bullets or as
+// prose) is not one: it stays OPEN, as batch 8 decided.
 function isAskFirst(answer, ticket = '') {
-  return asksWithNoCard(answer, ticket) && !deskBlock(answer).body.split(/\r?\n/).some((l) => NUMBERED.test(l));
+  if (!asksWithNoCard(answer, ticket)) return false;
+  const body = deskBlock(answer).body;
+  return !body.split(/\r?\n/).some((l) => NUMBERED.test(l) || BULLET.test(l)) && !statements(body).some(advises);
 }
 // What is wrong with the form of an ask-first answer: it is one question and nothing else. The aegis-desk block the
 // desk asks every session for is not part of the question, so it is not read here.

@@ -126,3 +126,17 @@ test('task 4: a ticket that does not say what the thing is also gets the one que
   const asked = askFirst(QUESTION, { ticket: 'It stopped working again this morning. Can you fix it?' });
   assert.equal(asked.verdict, 'pass', asked.detail);
 });
+
+// Code review round 1, finding 1: isAskFirst read only numbered steps as advice, so advice written as bullets or prose
+// that ended in a question was taken for a lone question and closed CLARIFY. Wrong implementation it catches: one that
+// looks only for numbered lines. A short lead-in that names no change still leaves a question ask-first.
+test('code review 1: advice as bullets or prose with a question is not an ask-first answer; a lone question with a plain lead-in is', () => {
+  const { isAskFirst } = require('./senior-rules.js');
+  const ticket = 'Wi-Fi is slow on the third floor since Monday.';
+  for (const advice of ['In the admin center, require re-registering MFA for the user, HUMAN-RUN. Did that help?', '- Restart the router.\n- Reconnect the laptop.\n\nDid that help?', '* Open the Google Admin console and check the user. Did that help?', 'Restart the router and reconnect the laptop. Did that help?']) {
+    assert.equal(isAskFirst(advice, ticket), false, advice);
+  }
+  for (const question of ['What exactly happens when you try to print, who is affected, and since when?', 'I need one detail first. What exactly happens, for whom, and since when?']) {
+    assert.equal(isAskFirst(question, 'The printer is broken.'), true, question);
+  }
+});

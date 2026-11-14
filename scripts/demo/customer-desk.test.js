@@ -1523,6 +1523,12 @@ test('batch 11, task 4: an ask-first answer closes CLARIFY with its form row sho
   // T7's ticket says what is slow and for whom, so the rule wants a Fix card: the row fails, is shown, and stops nothing
   assert.equal(row.verdict, 'fail');
   assert.match(row.detail, /Fix card/);
+  // code review round 1, findings 1 and 10: advice with a stray question stays OPEN whether its steps are numbered,
+  // bulleted or written as prose; only a lone question is ask-first
+  for (const advice of ['In the admin center, require re-registering MFA for the user, HUMAN-RUN. Did that help?', '- Restart the router.\n- Reconnect the laptop.\n\nDid that help?', 'Restart the router and reconnect the laptop. Did that help?']) {
+    const stray = await runDesk(t, { only: ['T7'], answers: { T7: advice } });
+    assert.equal(stray.ticket('T7').closing_state, 'OPEN', advice);
+  }
 
   const saved = fs.readFileSync(path.join(REPO, 'docs', 'aegis', 'demo', 'evidence', 'full-run-7', 'answers', 'T7-answer.txt'), 'utf8');
   const tidy = await runDesk(t, { only: ['T7'], answers: { T7: saved } });

@@ -16,6 +16,7 @@ const path = require('node:path');
 const { writeReplacing, fill } = require('../customers.js');
 
 const AUTHENTICATOR_LIKE = /(?:microsoftAuthenticator|phone|softwareOath)AuthenticationMethod$/;
+const TEMPORARY_ACCESS_PASS = '#microsoft.graph.temporaryAccessPassAuthenticationMethod';
 
 // A mailbox in the simulated tenant, by the runbook's [MAILBOX] placeholder, and one delegate added to one list.
 const boxOf = (s, t) => s.mailboxes.find((m) => m.address.toLowerCase() === String(t['[MAILBOX]']).toLowerCase());
@@ -68,6 +69,19 @@ const SIM_GATES = Object.freeze({
   'mfa-session-revoke-portal': {
     platform: 'msgraph', effect: 'revokes the user\'s sign-in sessions',
     apply: (s, t, now) => { s.msgraph.users[t['[USER_ID]']].signInSessionsValidFromDateTime = now; },
+  },
+  // batch 11, task 5: /mfa-issue's new way in before the old way out. The simulated pass is shaped as Graph
+  // lists one (vendor fact MB-11): its value is null on a read, so no pass value exists anywhere in a run; a
+  // user holds one pass, so a new one replaces any earlier one (MB-09). Read back by verify-temporary-access-pass
+  'mfa-temporary-access-pass-portal': {
+    platform: 'msgraph', effect: 'issues the user a Temporary Access Pass, a time-limited way in; no registered method is removed',
+    apply: (s, t, now) => {
+      const id = t['[USER_ID]'];
+      s.msgraph.methods[id] = s.msgraph.methods[id].filter((m) => m['@odata.type'] !== TEMPORARY_ACCESS_PASS).concat([{
+        '@odata.type': TEMPORARY_ACCESS_PASS, id: 'a3000000-0000-4000-8000-0000000000aa', temporaryAccessPass: null, createdDateTime: now, startDateTime: now,
+        lifetimeInMinutes: 60, isUsableOnce: true, isUsable: true, methodUsabilityReason: 'EnabledByPolicy',
+      }]);
+    },
   },
   'security-session-revoke-portal': {
     platform: 'msgraph', effect: 'revokes the user\'s sign-in sessions',

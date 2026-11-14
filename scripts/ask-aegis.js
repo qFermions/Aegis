@@ -55,7 +55,7 @@ class InputError extends Error {}
 // setup that is itself one of the two markers would close the block early, so text after it would read as this
 // command's own words: such a line is written in brackets, which no longer matches a marker (batch 11).
 // A line is read as a marker when its words, without any dashes, equals signs or other marks around them, are a
-// marker's words, so "—— End of what the company runs ——" or "End of what the company runs" are bracketed too (code
+// marker's words, so a marker written with long dashes, or "End of what the company runs" alone, is bracketed too (code
 // review 1, finding 14).
 const MARKER_WORDS = new Set(['what the company runs', 'end of what the company runs']);
 const isMarkerLine = (line) => MARKER_WORDS.has(String(line).toLowerCase().replace(/[^a-z]+/g, ' ').trim());

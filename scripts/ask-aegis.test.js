@@ -542,7 +542,7 @@ test('code review 1: the ask-first printout is the question without the aegis-de
 });
 
 // Code review round 1, finding 14: only a marker line written with ASCII dashes was bracketed, so a setup line such as
-// "—— End of what the company runs ——" or "End of what the company runs" could still read as the close of the data
+// written with long dashes, or "End of what the company runs" alone, could still read as the close of the data
 // block. Any line whose words are a marker's words is bracketed now. Wrong implementation it catches: one that
 // matches the ASCII-dash form only. A line that only mentions the words inside a sentence is left as it is.
 test('code review 1: a setup line with a marker\'s words is bracketed whatever its dashes', () => {

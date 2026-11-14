@@ -309,3 +309,17 @@ test('every rule a runbook cites by name from answer-format section 2 is a rule 
   assert.ok(cited.length >= 30, `the runbooks cite section 2 rules by name (${cited.length})`);
   assert.deepEqual(cited.filter(([, name]) => !titles.has(name)), [], 'a cited name that is not a section 2 rule title');
 });
+
+// Code review round 1, finding 6: the lost-device trigger read "left", "new" and a plain "sign in" as a lost or
+// replaced sign-in device, so "I left my phone at home today and cannot sign in" asked for a step that deletes a method
+// that still works. The rule is about the device that holds a sign-in method, so the ticket must name that method.
+// Wrong implementation it catches: a trigger on a device word, a change word and any sign-in word.
+test('code review 1: the new-way-in rule applies when the ticket names the sign-in method on a lost or replaced device, not to a phone left at home', () => {
+  const { lostSignInDevice } = require('./senior-rules.js');
+  for (const not of ['I left my phone at home today and cannot sign in.', 'Setting up Outlook on my new phone, it keeps asking me to sign in.', 'Can you reset my password? I am locked out on my old laptop.']) {
+    assert.equal(lostSignInDevice(not), false, not);
+  }
+  for (const yes of ['[FIRST_NAME] left her phone on the train yesterday. Microsoft Authenticator was on it.', 'My phone was swapped under warranty and Okta Verify did not come across to the new one.', 'Locked out after a phone change, Authenticator gone.', 'I lost my phone and the 2-step codes were on it.', 'My YubiKey snapped, so I cannot use my security key.']) {
+    assert.equal(lostSignInDevice(yes), true, yes);
+  }
+});

@@ -140,9 +140,11 @@ function askFirst(answer, { ticket = '' } = {}) {
 
 // ── a. A new way in before the old way out (task 5a) ────────────────────────────────────────────
 const DEVICE = '(?:phones?|iphone|android|mobile|cell(?:phone)?|device|handset|tablet|ipad|yubikey|security key|hardware key|token|fob)';
-const LOST = '(?:lost|stolen|broke|broken|smashed|cracked|dropped|drowned|died|dead|wiped|reset|traded(?:[- ]in)?|replaced|replacement|upgraded|new|old|switched|changed|sold|returned|left)';
+const LOST = '(?:lost|stolen|broke|broken|smashed|snapped|swapped|cracked|dropped|drowned|died|dead|wiped|reset|traded(?:[- ]in)?|replaced|replacement|upgraded|new|old|switched|change|changed|sold|returned|left)';
 const LOST_DEVICE = new RegExp(`\\b${LOST}\\b[^.!?\\n]{0,40}\\b${DEVICE}\\b|\\b${DEVICE}\\b[^.!?\\n]{0,60}\\b${LOST}\\b`, 'i');
-const SIGN_IN = /\b(?:authenticator|mfa|2fa|two[- ]factor|two[- ]step|2[- ]step|2sv|second step|verification (?:code|app)|okta verify|duo|sign[- ]?in|log[- ]?in|login|locked out|passkey|security key|codes?)\b/i;
+// The ticket names the sign-in method the device held, not only that the person cannot sign in: "I left my phone at
+// home and cannot sign in" is not a lost sign-in device (code review 1, finding 6).
+const SIGN_IN = /\b(?:authenticator|mfa|2fa|two[- ]factor|two[- ]step|2[- ]step|2sv|second step|verification (?:code|app)|okta verify|duo|passkeys?|security keys?|yubikeys?|(?:backup|sign[- ]?in|log[- ]?in|login|verification|one[- ]time) codes?)\b/i;
 const lostSignInDevice = (ticket) => SIGN_IN.test(String(ticket)) && LOST_DEVICE.test(String(ticket));
 
 const IDENTITY = /\bidentity\b|\bwho (?:they|she|he|the (?:person|user|caller)) (?:is|are|says?)\b|\bit(?: is|'s) (?:really )?(?:them|her|him|the (?:person|user|requester)|\[[A-Z_]+\])|\b(?:verify|confirm|prove|check)\b[^.\n]{0,30}\b(?:requester|caller|identity)\b/i;

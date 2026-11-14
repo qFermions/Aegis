@@ -11,6 +11,13 @@ disable-model-invocation: true
 
 ## Decision tree
 
+### How wide first (before either branch)
+Answer-format section 2, "How wide before why": the first step fixes the scope and reads the vendor's status together.
+- **Who:** one person or everyone on the VPN? One site or every site? From one home network or from any?
+- **What:** nothing reachable through the tunnel, or one named service only? A cloud service that is also down without the VPN is not a VPN ticket.
+- **Vendor status:** https://status.meraki.net for the Meraki cloud, and the provider's own status page or outage line for `[@Aegion_ISP]` at each end (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-33).
+- **No vendor incident:** the network and name-resolution path come before any account-level cause. Uplinks, tunnel state and routes first, then `nslookup` across the tunnel on the name that fails ("reaches it by IP but not by name" is DNS); the user's account, group and MFA last.
+
 ### Site-to-site (Meraki MX ↔ MX)
 **Tunnel DOWN:**
 1. **Both MX uplinks up?** Security & SD-WAN → Appliance status at `[SITE_A]` and `[SITE_B]`.

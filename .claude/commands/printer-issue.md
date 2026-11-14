@@ -10,7 +10,8 @@ disable-model-invocation: true
 **Verdict:** Most printer problems fall into four buckets: the Print Spooler service is stuck, the printer has a stale/wrong IP, a driver mismatch on one user's machine, or the printer is on the wrong VLAN and can't get a DHCP lease. Identify which bucket first, then follow the matching fix below.
 
 ## What to check first
-- Can anyone print, or is it just one user? One user = driver/queue issue on their machine. No one = printer, network, or spooler issue
+- **How wide first** (answer-format section 2, "How wide before why"): can anyone print, or is it just one user? One printer or every printer at the site? Printing only, or is the network down for other things too? One user = driver/queue issue on their machine. No one = printer, network, or spooler issue. A printer on the local network has no vendor status page to read; when printing goes through a cloud print service, read that service's own status page first.
+- With no vendor incident, the network and name-resolution path come before any per-user cause: the ping below, and whether the printer's name still resolves to [PRINTER_IP], before drivers or one user's queue.
 - Is the printer powered on and showing a ready light?
 - Can you ping [PRINTER_IP] from your machine? If no ping = network/IP issue. If ping works = software issue
 - Check the printer's own display panel for paper jams, low toner alerts, or error codes

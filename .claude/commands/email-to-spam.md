@@ -74,10 +74,14 @@ The message was delivered but Outlook/OWA moved it. Possible causes:
 3. Report false positive to Microsoft via Submissions: `Defender portal → Email & collaboration → Submissions → + Submit to Microsoft for analysis`
 
 **C. Authentication failure (SPF/DKIM/DMARC fail)**
-EOP increases spam score for unauthenticated mail. Check:
-- `Authentication-Results: spf=fail` → the sender's IP is not in their SPF record — contact sender to fix their SPF
-- `dkim=fail` → DKIM signature invalid or missing — contact sender
-- `dmarc=fail` → sender's DMARC policy `p=quarantine` or `p=reject` is being enforced
+EOP increases spam score for unauthenticated mail. Read the `Authentication-Results` header of one affected message (Microsoft stamps the SPF, DKIM and DMARC results there) and say what the sender must fix on their side. The fix is in the sender's DNS, not in this tenant:
+- `spf=fail` or `spf=softfail` → the server that sent the message is not in the sender domain's SPF record. The sender adds that server, or the service that sends for them, to their SPF TXT record.
+- `dkim=none` or `dkim=fail` → the message was not signed, or its signature did not verify. The sender turns on DKIM signing at the service that sends their mail and publishes its key in their DNS.
+- `dmarc=fail` → neither SPF nor DKIM passed for the domain in the From address. The sender gets one of the two to pass for that domain; a `permerror` means their DMARC record itself is malformed, and only the domain's owner can correct it.
+
+Give the tech the sentence for the sender: which check failed, for which domain, the header line as evidence, and that the fix is a DNS record on their side.
+
+Allowing a whole domain is never the first fix (answer-format section 2, the mail rule). While the sender fixes their records, the order is: release the one held message under its own gate in `/email-quarantine`; then, only when business mail cannot wait, an allow entry for the one sender address with an expiry, through `/email-whitelist`. Microsoft's own advice is a scoped allow entry "rather than allowing the entire sending domain", and an allowed domain in an anti-spam policy skips the sender-authentication checks themselves. Vendor facts: `docs/aegis/batch11/vendor-facts-microsoft.md` MB-41, MB-43 to MB-46.
 
 If you control the sending domain (e.g., a sub-domain you manage), see Step 5 (outbound auth).
 

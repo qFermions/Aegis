@@ -37,6 +37,8 @@ disable-model-invocation: true
 - **Read-back:** none (R1: no change record)
 **PORTAL ACTION [sharepoint-access-revoke-portal]:** Only after the exact match, remove `[UPN]` from `[SITE_NAME] Members`. **Stop sharing** and deleting an Entra guest have different scope and require their own action-specific confirmation.
 
+**Who else, and what left (answer-format section 2; a read, R0, no gate):** when the ticket is that someone had access to `[SITE_NAME]` they should not have had, closing the path is not the last step. Right after the removal, a person with the Audit Logs or View-Only Audit Logs role searches the audit log (Microsoft Purview portal, Audit) on the site's address, for the whole time the path was open; without an E5 licence the log goes back 180 days. Read two things there. Who else used the same path: every name on the sharing and group activities (Shared file, folder, or site; Created sharing invitation; Created an anonymous link; Used an anonymous link; Added user or group to SharePoint group). What left: Accessed file and Downloaded file by the person who should not have been there, and anything they shared onward. Until that read is done the answer does not say how serious it is, neither "nothing was taken" nor "a breach". Vendor facts: `docs/aegis/batch11/vendor-facts-microsoft.md` MB-20 to MB-22.
+
 <details>
 <summary>PowerShell — for reference only (PnP / SPO module)</summary>
 
@@ -74,6 +76,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 - [ ] External: guest accepted invite and appears in Entra → External Identities
 - [ ] "Access denied after granting" → confirm external sharing enabled at tenant **and** site; allow propagation (a few min)
 - [ ] Access removed cleanly when revoking
+- [ ] Access that should not have existed: the audit log was read for who else used the path and for what was downloaded or shared onward, before anyone said how serious it is
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. SharePoint action for `[UPN]` on `[SITE_NAME]`: [access removal verified under this command's exact gate / grant verified under a separate reviewed workflow / no change performed]. Scope: [site/library/folder/group]. External guest state: [separately invited and verified / unchanged / not applicable]. Read-back/user confirmation: [verified result]. Time spent: [X] min.

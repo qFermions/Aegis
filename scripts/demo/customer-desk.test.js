@@ -1260,12 +1260,15 @@ test('task 8: step 5 shows the answer checks as rows (six since batch 9); a fail
   assert.deepEqual(step(k, 5).checks.map((r) => r.check), ['boundary', 'human-confirmation', 'read-back', 'privacy', 'observed-output', 'probe'], 'the existing checks are unchanged');
   assert.match(step(k, 5).result, /answer format: \d of 10 pass/);
   const carded = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\n${good()}`, 'mfa-require-reregister-portal') } });
-  // the seventh row reads the real runbook: mfa-issue's section lists [mfa-session-revoke-portal] before the
-  // re-register gate this answer names first, so it fails, is shown, and the ticket still resolves
-  // batch 11's rows: this answer stays inside Customer A's setup and is not a lone question (pass, pass); its steps
-  // clear the old methods with no new way in first, so new-way-in-first fails, is shown, and the ticket still resolves
+  // the seventh row reads the real runbook. Until batch 11 mfa-issue's one section listed [mfa-session-revoke-portal]
+  // before the re-register gate; since batch 11 (a new way in before the old way out) that gate has its own section,
+  // which opens with a Try first line naming the pass and the one-method delete, so the row still fails and names
+  // that lighter step line. The answer names the re-register gate first, so the row fails, is shown, and the ticket
+  // still resolves. Batch 11's rows: this answer stays inside Customer A's setup and is not a lone question (pass,
+  // pass); its steps clear the old methods with no new way in first, so new-way-in-first fails, is shown, and the
+  // ticket still resolves
   assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass', 'fail', 'pass', 'pass', 'fail']);
-  assert.match(step(carded.ticket('T1'), 5).answer_checks[6].detail, /mfa-session-revoke-portal/);
+  assert.match(step(carded.ticket('T1'), 5).answer_checks[6].detail, /mfa-require-reregister-portal, a heavy one, while its runbook section "Require re-register MFA: not the lost-or-replaced-device path" lists a lighter step line first/);
   assert.equal(carded.ticket('T1').closing_state, 'RESOLVED (SIMULATED)');
   const sms = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\nThe SMS fallback still works for this user.\n${good()}`, 'mfa-require-reregister-portal') } });
   assert.equal(step(sms.ticket('T1'), 5).answer_checks[4].verdict, 'fail', 'Customer A has no SMS fallback');

@@ -64,7 +64,9 @@ const ADAPTERS = {
       ['verify-mfa-method', '--user', U, '--method', 'fido2'], ['verify-mfa-cleared', '--user', U], ['verify-signin', '--user', U, '--not-before', NOT_BEFORE],
       ['verify-device-synced', '--device', U, '--not-before', NOT_BEFORE], ['verify-group-member', '--group', U, '--user', U],
       // batch G3 close-out 3, owner decision H3
-      ['verify-sessions-revoked', '--user', U, '--not-before', NOT_BEFORE], ['verify-method-absent', '--user', U, '--method-id', '3179e48a-750b-4051-897c-87b9720928f7']],
+      ['verify-sessions-revoked', '--user', U, '--not-before', NOT_BEFORE], ['verify-method-absent', '--user', U, '--method-id', '3179e48a-750b-4051-897c-87b9720928f7'],
+      // batch 11, task 5: the read-back of /mfa-issue's Temporary Access Pass gate
+      ['verify-temporary-access-pass', '--user', U, '--not-before', NOT_BEFORE]],
   },
   okta: {
     file: 'okta-client.js',

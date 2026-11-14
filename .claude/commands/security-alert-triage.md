@@ -19,6 +19,8 @@ disable-model-invocation: true
 
 **1. Assess** — open the alert: who, what, when, from where (IP/country/device), success or blocked.
 
+The severity written at this step is the alert's own, and it is provisional. How serious the incident is gets said only after the audit-log read in step 3 (answer-format section 2, "Who else, and what left"): not in the first note, and not in the message to the user.
+
 > **PREVIEW ONLY [security-account-block-portal]:** First resolve `OnPremisesSyncEnabled` and the source-of-authority identity. A synchronized identity requires the authoritative AD disable and a separately confirmed cloud gap block; a cloud-only identity uses the cloud-only gate below. This portal checklist cannot block either identity type.
 
 <!-- SAFETY GATE [security-session-revoke-portal] -->
@@ -43,6 +45,7 @@ disable-model-invocation: true
 - Entra → **Sign-in logs** for `[UPN]` (other successful risky logins?).
 - Defender → **Explorer / Threat hunting** for the phish — who else received it? clicked?
 - Message trace (EAC) for spread.
+- **Who else, and what left** (answer-format section 2; a read, R0, no gate): once step 2 has closed the path, the next step is the audit log. A person with the Audit Logs or View-Only Audit Logs role searches it in the Microsoft Purview portal for `[UPN]`, over the whole time the account was in other hands (without an E5 licence it goes back 180 days). What left: Accessed mailbox items and Sent message using Send As permissions for mail; Accessed file, Downloaded file and the sharing activities (a new sharing invitation, an anonymous link) for SharePoint and OneDrive. Who else: the same source address, app or inbox rule on other accounts, in the sign-in logs above and in the same audit search without the user filter. Vendor facts: `docs/aegis/batch11/vendor-facts-microsoft.md` MB-20 to MB-23.
 
 **4. Remediate:**
 > **PREVIEW ONLY [security-message-policy-remediation]:** Purge, sender blocking, and Conditional Access changes are separate effects requiring separate reviewed commands and gates.
@@ -184,6 +187,7 @@ node scripts/adapters/msgraph-client.js verify-account-enabled --user [USER_ID] 
 - [ ] Account contained at the resolved source of authority; Entra refresh-token/browser-cookie revocation requested and checked after propagation; password/MFA remediated through their separate gates if compromised
 - [ ] No malicious inbox rules / forwarding / OAuth grants remain
 - [ ] Scope confirmed (other affected users handled)
+- [ ] Audit log read for who else used the same path and for what was opened, downloaded, sent or shared onward; the severity in the report was written after that read, not before
 - [ ] Phish purge, sender block, and CA remediation each [separately approved/verified under their own workflow / documented as not required]
 - [ ] Incident documented (timeline + root cause)
 

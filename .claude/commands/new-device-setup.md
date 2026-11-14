@@ -18,6 +18,8 @@ disable-model-invocation: true
 
 ## Step-by-step fix
 
+**Every change carries its class and its double-check (answer-format section 2).** A device build is a plan of several changes, and none of them has a gate here: each is a PREVIEW ONLY marker. So the plan written under Details says "no gate here, a separate reviewed change" for each changing step, and shows its risk class and a proof a person can see with their own eyes: the join and the enrollment (the device listed in Entra and in Intune with the right primary user), the rename (the new name on the device and in Intune after the restart), each software install (the app opens), the printer (a test page prints), the updates (Windows Update shows none pending). Each is one device and one action to undo, R1, unless the step reaches past this device (a group or policy assignment is R2, or R3 when it is a security control). No read-back command covers these steps; the proofs are the ones named.
+
 **0. Decide the assignment model (branch point)**
 
 | | **A — Dedicated (one user)** | **B — Shared (2+ named users)** |

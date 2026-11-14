@@ -12,6 +12,7 @@ disable-model-invocation: true
 > **Migration context:** [@Aegion] is mid-migration from the [@Aegion_WAN] point-to-point fiber link (main ↔ [@Aegion_SITE_2]) to Meraki MX-to-MX site-to-site VPN. [@Aegion_REMOTE_ACCESS] is still on the old [@Aegion_WAN] link and has not yet been migrated — treat any [@Aegion_REMOTE_ACCESS] VPN issue as a [@Aegion_WAN] issue until migration completes.
 
 ## What to check first
+- **How wide first** (answer-format section 2, "How wide before why"): the first step fixes the scope and reads the vendor's status together. One tunnel or all? One site or every site? Everything across the tunnel, or one named service only (a cloud service that is also down without the tunnel is not a VPN ticket)? Then https://status.meraki.net for the Meraki cloud, and the provider's own status page or outage line for `[@Aegion_ISP]` at each end (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-33). With no vendor incident, the network and name-resolution path (uplinks, routes, DNS across the tunnel) come before any account-level cause.
 - Is one tunnel down or all tunnels down? One = peer-specific issue. All = local MX uplink or ISP issue at your site
 - Check the MX uplink first: `Security & SD-WAN → Appliance status` — if the WAN is down, the VPN follows
 - Is this a newly configured tunnel or a previously working one? New = config error. Working → broken = upstream change

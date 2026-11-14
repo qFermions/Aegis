@@ -15,6 +15,9 @@ disable-model-invocation: true
 - **One client** → client-side (below).
 - **Everyone on one AP / one area** → AP-side.
 - **Site-wide / all SSIDs** → controller/WAN-side (likely a `/lan-wan` problem, not Wi-Fi).
+- **Which service** (answer-format section 2, "How wide before why"): connected to Wi-Fi but one service will not load, or nothing loads? Does the same device work on a cable or a phone hotspot? One cloud service down on Wi-Fi and on a cable alike is not Wi-Fi: read that vendor's own status page first; with no incident there, name resolution comes next.
+- **Vendor status, read together with the scope:** https://status.meraki.net for the Meraki cloud, and for a site-wide loss the provider's own status page or outage line for `[@Aegion_ISP]` (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-33).
+- **No vendor incident:** the network path and name resolution come before any account-level cause. Association, address (DHCP) and gateway first, then `nslookup` on the name that fails; only then the user's account or certificate for 802.1X.
 
 ### 2. "Can't connect" (won't associate)
 

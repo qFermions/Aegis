@@ -23,6 +23,8 @@ disable-model-invocation: true
 
 ## Step-by-step fix
 
+**Every change carries its class and its double-check (answer-format section 2).** Steps 2 to 7 each change something in `[@Aegion_VOIP]`, and none has a gate: each is a PREVIEW ONLY marker. So the plan written under Details says "no gate here, a separate reviewed change" for each, with its risk class and a proof a person can see with their own eyes. Each is one object that one action undoes, R1 (the user and extension, the direct number, the voicemail box, the forwarding rule, the phone), except the call group in step 6: a new member changes how a shared line rings for everyone in it, R2. The proofs are the test calls in step 8: the extension rings, the direct number reaches it, voicemail answers, the forward lands, the group rings the new phone. No connector reads the VoIP platform, so there is no read-back command to name.
+
 ### 1. Log in to the [@Aegion_VOIP] admin portal
 
 1. Navigate to the [@Aegion_VOIP] admin portal and sign in with your admin credentials.

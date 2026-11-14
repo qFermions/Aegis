@@ -977,7 +977,8 @@ read needs Entra ID P1 or P2. Check Microsoft's price page first; a sign-up is t
 these application permissions, admin-consented, and nothing else: User.Read.All
 (signInSessionsValidFromDateTime on $select for verify-sessions-revoked, vendor facts M-09, M-27);
 UserAuthenticationMethod.Read.All (authentication methods; auth-methods, verify-mfa-method,
-verify-mfa-cleared and verify-method-absent, vendor fact M-14); AuditLog.Read.All (sign-in logs;
+verify-mfa-cleared, verify-method-absent and verify-temporary-access-pass, vendor fact M-14; the
+pass read needs no further permission, batch 11 vendor fact MB-12); AuditLog.Read.All (sign-in logs;
 Entra ID P1 or P2); GroupMember.ReadBasic.All; Directory.Read.All (only for another user's
 memberOf); DeviceManagementManagedDevices.Read.All. Refused: any application permission that is not
 .Read. or .ReadBasic. (vendor fact M-21). Graph does not show an app its permissions, so confirm
@@ -1104,6 +1105,13 @@ node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --
 ```
 
 Good result: dry run exit 4; exit 0 after deleting that one method from the test user, exit 2 before.
+
+```bash
+node scripts/adapters/msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE]
+node scripts/adapters/msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```
+
+Good result: dry run exit 4; exit 2 before a Temporary Access Pass is issued to the test user; exit 0 after one is issued at or after `[NOT_BEFORE]`, with `isUsable` and `methodUsabilityReason` shown and no pass value. Exit 5 with "not a time" means the list read gives a pass no `createdDateTime`: write that down, it answers vendor fact MB-12a (`docs/aegis/batch11/vendor-facts-microsoft.md`).
 
 ### Open questions this tenant answers
 

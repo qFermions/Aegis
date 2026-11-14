@@ -22,6 +22,8 @@ disable-model-invocation: true
 4. **Firewall:** Security & SD-WAN → **Site-to-site VPN firewall** → allow the intended inter-site traffic (default allow; tighten per policy).
 5. **Migration cutover:** stand up the S2S tunnel alongside `[@Aegion_WAN]`, verify traffic crosses, then decommission the old P2P link. Migrate `[@Aegion_REMOTE_ACCESS]` last. Coordinate with `[@Aegion_NETPARTNER]`.
 
+**Every change carries its class and its double-check (answer-format section 2).** This is a migration, so the plan written under Details lists each change with its risk class and its double-check. No step here has a gate (the PREVIEW ONLY marker above), so each one says "no gate here, a separate reviewed change" and names a proof a person can see with their own eyes. Steps 1 to 4 change a whole site's routing or firewall: R3 each, a security control whose change reaches every device at the site. Their proof is the Site-to-site VPN page showing the peer reachable both ways, and a test from a client that crosses by IP and by name. Step 5, the cutover and giving up `[@Aegion_WAN]`, is R3 and the hardest to walk back: its proof is the same test with the old link out of the path, before the old link is given up. One site at a time, with the rollback written first. No connector reads the Meraki configuration, so there is no read-back command to name.
+
 <details>
 <summary>Verification commands — for reference (run from a client)</summary>
 

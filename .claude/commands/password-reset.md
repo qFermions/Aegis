@@ -63,11 +63,14 @@ disable-model-invocation: true
 - **Read-back:** `msgraph-client.js verify-sessions-revoked --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [password-session-revoke-portal]:** Only after the separate exact match, Entra → Users → `[UPN]` → **Overview** → **Revoke sessions**. A password-reset confirmation never authorizes this effect; verify after propagation.
 
-**Combo case — MFA-locked too (new phone + forgotten password):** order matters.
-1. Use the separate exact method-ID deletion gate in `/mfa-issue`; this command does not authorize deleting authentication methods.
-2. **Then** reset the password (steps above).
-3. **Then** the user re-registers at **aka.ms/mfasetup** on first sign-in (full flow incl. the CA gotcha: `/mfa-issue`).
-Resetting the password first just walks the user into an MFA wall they can't pass — they sign in with the temp password and get prompted on a phone they no longer have.
+**Combo case: a new phone and a forgotten password.** This is the lost-or-replaced-device path, so it follows answer-format section 2, "A new way in before the old way out"; the gates and the full steps are in `/mfa-issue`. Order matters:
+1. Prove who is asking, by the method `/mfa-issue` names: a call the tech places to the number on file, in person, or through the manager. A password-reset ticket is no proof of who sent it.
+2. Reset the password (steps above). The temporary password reaches the user only on that verified channel, never by email, chat or text to an address or number taken from the ticket.
+3. Give the new way in under the Temporary Access Pass gate in `/mfa-issue`; this command does not authorize it.
+4. The user signs in, registers the new method at **aka.ms/mfasetup**, and changes the temporary password.
+5. Only then is the old method deleted, under the one-method delete gate in `/mfa-issue`; this command does not authorize deleting authentication methods. The read-backs there show the new method present and the old one gone.
+
+A reset alone walks the user into an MFA prompt on a phone they no longer have, and deleting the old method first leaves the account with a password and nothing else (full flow incl. the CA gotcha: `/mfa-issue`).
 
 <details>
 <summary>PowerShell — non-executing AD Connect sync reference</summary>

@@ -1,0 +1,37 @@
+$ TMPDIR=/private/tmp node --test scripts/adapters/msgraph-client.test.js scripts/mfa-issue-gates.test.js scripts/demo/batch11-new-way-in.test.js   (the same command after the read-back command, the gate and the simulator entry; green)
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (1.34775ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (7.092042ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (21.711791ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (0.952541ms)
+✔ verify read-backs for the password-reset and MFA runbooks (20.340625ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (1.025708ms)
+✔ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (6.448084ms)
+✔ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (7.874ms)
+✔ verify-method-absent: an answer that proves nothing either way is recorded as INCONCLUSIVE, never as a failed object (5.463292ms)
+✔ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case (4.05325ms)
+✔ every --not-before takes the approved_at form with milliseconds and compares at millisecond precision (14.905958ms)
+✔ verify-temporary-access-pass: passes only on a usable pass created at or after --not-before; an older, unusable or unlisted pass does not pass, and an answer that proves nothing is INCONCLUSIVE (10.885416ms)
+✔ verify-temporary-access-pass uses the authentication-methods GET the connector already had; no command creates or deletes a pass (0.196875ms)
+✔ the Temporary Access Pass gate is R3 and binds verify-temporary-access-pass, bounded in time, under its change record (49.685292ms)
+✔ the desk acts the gate out: the read passes after the simulated pass, and fails on a pass that was there before the approval (819.197583ms)
+✔ the whole path resolves: the pass first, then the one obsolete method deleted, with both reads passed (525.091ms)
+✔ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (4.376417ms)
+✔ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.708209ms)
+✔ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.367042ms)
+✔ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.724083ms)
+✔ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (0.513125ms)
+✔ every R2 and R3 gate in /mfa-issue has a read-back bound to its change (0.964125ms)
+✔ the New phone / re-register list starts at step 1 and counts on (0.145917ms)
+✔ each step of the New phone / re-register list after the first renders as a list item (0.0945ms)
+✔ the change-record paragraph names every gate a read-back below binds (5.910917ms)
+✔ /mfa-issue verifies the requester first, before its first gate (0.346541ms)
+✔ /mfa-issue gives a new way in before the old way out on the lost-or-replaced-device path (1.799125ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1496.654459
+exit 0

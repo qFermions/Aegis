@@ -15,6 +15,9 @@ disable-model-invocation: true
 - **One user** → cable/NIC/DHCP (client-side).
 - **A group / one switch or area** → switch/VLAN.
 - **Whole site, no internet** → WAN/MX uplink/ISP.
+- **Which service** (answer-format section 2, "How wide before why"): one named service only, or everything on the internet too? One cloud service down for everyone while public websites open is not the LAN: read that vendor's own status page first (Microsoft 365 admin center → Health → Service health, or https://status.cloud.microsoft when the admin center does not load), and with no incident there, name resolution comes next.
+- **Vendor status, read together with the scope:** the provider's own status page or outage line for `[@Aegion_ISP]`, and https://status.meraki.net for the Meraki cloud (it lists the dashboard, the API and the device families by region). Vendor facts: `docs/aegis/batch11/vendor-facts-microsoft.md` MB-30, MB-31, MB-33.
+- **No vendor incident:** the network path and name resolution come before any account-level cause. Link, address and gateway first (sections 2 to 4), then `nslookup` on the name that fails: an address that pings while its name does not resolve is DNS.
 
 ### 2. Single user down
 1. **Physical** — cable seated? link light? try another port/cable.

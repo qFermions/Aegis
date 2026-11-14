@@ -13,6 +13,7 @@ disable-model-invocation: true
 
 ## What to check first
 
+- **How wide first** (answer-format section 2, "How wide before why"): when phones are reported down, the first step fixes the scope and reads the vendor's status together. One phone or every phone at the site? One site or all? Calls only, or the internet at that site too? Then the provider's own status page for `[@Aegion_VOIP]` and for `[@Aegion_ISP]` (both are org values, so no address is written here). With no vendor incident, the network and name-resolution path come before any extension or account cause: link and voice VLAN, then whether the phone resolves and reaches the provider's registration address, and only then the extension's own settings.
 - Is this one phone or all phones at a site? → All phones = network/trunk issue. One phone = device or extension config issue.
 - Is the phone showing "No Service," "Unregistered," or ringing with no audio?
 - Did this start after a network change, Meraki config update, or ISP event?

@@ -1,0 +1,34 @@
+$ node docs/aegis/demo/evidence/batch11/tools/saved-answer-rows.js   (the batch 11 rows on the answers batch 10's runs saved; no model, no cost; "-": the rule does not cover the ticket)
+| run | ticket | assumed setup | ask first | new way in first | who else, what left | how wide before why | class and double-check |
+|---|---|---|---|---|---|---|---|
+| full-run-6 | T1m | pass | pass | fail | - | - | fail |
+| full-run-6 | T2m | pass | pass | - | - | - | fail |
+| full-run-6 | T3m | pass | pass | - | - | - | fail |
+| full-run-6 | T4m | pass | pass | - | - | - | fail |
+| full-run-6 | T5m | pass | pass | - | - | - | - |
+| full-run-6 | T6m | pass | pass | - | - | - | - |
+| full-run-6 | T7m | pass | pass | - | - | - | - |
+| full-run-6 | T8m | pass | pass | - | - | - | - |
+| full-run-6 | T9m | pass | pass | - | - | - | - |
+| full-run-7 | T1 | pass | pass | fail | - | - | fail |
+| full-run-7 | T2 | pass | pass | - | - | - | fail |
+| full-run-7 | T3 | pass | pass | - | - | - | fail |
+| full-run-7 | T4 | pass | pass | - | - | - | fail |
+| full-run-7 | T5 | pass | pass | - | - | - | - |
+| full-run-7 | T6 | pass | pass | - | - | - | - |
+| full-run-7 | T7 | pass | pass | - | - | - | - |
+| full-run-7 | T8 | pass | pass | - | - | - | fail |
+
+What each failing row said:
+
+- full-run-6 T1m, new-way-in-first: no step proves the identity of the person by a method it names; no step gives a time-limited way in (a temporary pass, backup codes); the old method is removed before the new way in exists; "Done when" does not say the new method is present and the old one is gone
+- full-run-6 T1m, change-class-and-check: 1 of 3 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-6 T2m, change-class-and-check: 0 of 3 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-6 T3m, change-class-and-check: 0 of 3 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-6 T4m, change-class-and-check: 0 of 2 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-7 T1, new-way-in-first: no step gives a time-limited way in (a temporary pass, backup codes); the old method is removed before the new way in exists
+- full-run-7 T1, change-class-and-check: 0 of 2 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-7 T2, change-class-and-check: 0 of 3 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-7 T3, change-class-and-check: 0 of 3 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-7 T4, change-class-and-check: 0 of 2 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details
+- full-run-7 T8, change-class-and-check: 0 of 2 changes show a class (R1 to R3) with a double-check, or "no gate" with a proof, on a line in Details

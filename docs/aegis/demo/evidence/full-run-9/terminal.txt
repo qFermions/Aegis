@@ -1,0 +1,293 @@
+frozen at c32c55b (the code as at 43d3e63; later commits are evidence and docs only)
+
+
+
+=== T1: Locked out after a phone change, Authenticator gone ===
+T1 step 1 CUSTOMER | Customer A: 14-seat dental office | SIMULATED | sent an email: Locked out after a phone change, Authenticator gone | 0 ms
+T1 step 2 INTAKE | Aegis intake | REAL | ACCEPTED, redactions: 0 email, 0 phone, 0 mention, 0 tenant value; injection flags: 0 | 9 ms
+T1 step 3 TRIAGE | Aegis replay and graph | REAL | replay MISS, risk floor none, graph case atg-82649218-786b-47aa-835c-97224bc5664e at ROUTER | 72 ms
+T1 step 4 AEGIS | Aegis session | REAL | answered: claude-opus-5-5, 4 turns, 0.3415 US dollars | 41.8 s
+--- Answer ---
+## Fix
+**What's wrong:** Microsoft Authenticator was on the wiped phone, so [FIRST_NAME] cannot approve sign-ins.
+**Do this:**
+1. Go to Entra admin center → Users → [UPN] → Authentication methods and see what is registered. If another method still works, go to step 4.
+2. Call the office manager on the number on file and have them confirm it is [FIRST_NAME].
+3. Signed in as Authentication Administrator, add a one-time Temporary Access Pass. Read it out on a call you place to the office.
+4. [FIRST_NAME] signs in at aka.ms/mfasetup and adds Authenticator on the new phone.
+5. After that, delete only the old phone's Authenticator entry.
+
+**Done when:** the new phone is listed and the old one is gone. Aegis then checks both.
+**Stop if:** the pass policy leaves out [UPN], or the office manager cannot confirm who it is.
+**Tell the user now:** We're setting up a short-lived code so you can add your new phone. Please have it with you with Microsoft Authenticator installed.
+**Tell the user when done:** Your new phone now approves your sign-ins. The old phone no longer does.
+
+This is a sign-in recovery with two changes and two approvals: see Details.
+
+## Details
+
+**Assumptions:** The replay lookup was a MISS, so this answer follows the `/mfa-issue` runbook (new-phone path). The setup comes from Customer A's profile: the accounts are cloud-only with no on-premises directory, there is nothing to sync, and Authenticator is the only second step.
+
+**Rules from the profile:**
+- **Identity check:** the office has no identity rule yet (an org gap). Until it sets one, the office manager vouches for the person on a call the tech places to the manager's number on file. Never use a number from the ticket. The ticket records which check was used.
+- **Approvals:**
+  - The Temporary Access Pass can be undone: deleting it before it is used cancels it, and it also expires on its own. The office manager approves it.
+  - Deleting the old method cannot be undone, so it needs the office manager **and** the practice owner.
+- **No text-message fallback:** the profile allows Authenticator only, so the runbook's backup step (an admin adds a phone number) does not apply here.
+
+**Before step 3, check the pass policy (read only):** Entra → Authentication methods → Policies → Temporary Access Pass. Look at whether it is enabled and whether [UPN] is in scope.
+- If it is off, or [UPN] is out of scope, stop. Turning it on is a tenant-wide R3 change that this runbook does not cover. Escalate it to the office manager and the practice owner.
+
+**Sessions:** do not revoke them. The user still holds the old phone and it is wiped, so no device that is out of their hands still has access.
+- If the old phone was actually lost or not wiped, sessions get revoked before the pass under `mfa-session-revoke-portal`.
+
+**Order matters:** the new way in comes before the old way out.
+- Do not delete anything until Authentication methods shows a new method from the new phone (not counting the pass itself).
+- Do **not** use Require re-register MFA. It clears every method before a new way in exists.
+
+**Changes and how each one is checked:**
+- Step 3 (create the Temporary Access Pass): R3. Double-check: Aegis reads that a pass created after approval exists and is usable.
+- Step 5 (delete the old Authenticator method): R3. Double-check: Aegis reads that the old method's ID is gone, then that an Authenticator method is still registered.
+
+**Rollback:**
+- An unused pass can be deleted, and it also expires on its own (the default is 1 hour).
+- A deleted method comes back only if the user registers it again at aka.ms/mfasetup.
+
+**⚠️ Risk:**
+- The pass signs in as the user for as long as it is valid. Hand it over only on the verified call. Never send it by email, chat or text, and never write it in the ticket.
+- Use the shortest lifetime that works. With a one-time pass, the user has 10 minutes after signing in to finish registering.
+
+**Verification checklist:**
+- [ ] Office manager vouched on a call the tech placed
+- [ ] Pass checked by Aegis before it was handed over
+- [ ] New Authenticator listed before the old one was deleted
+- [ ] Old method gone, new method present, and a sign-in succeeds
+- [ ] Practice owner and office manager approvals recorded for the delete
+
+**Jira note:**
+> MFA new-phone recovery for [UPN]. Identity: confirmed by the office manager on a call the tech placed. New way in: Temporary Access Pass, checked, read out on that call. Re-registered at aka.ms/mfasetup. The old Authenticator method was deleted after the owner and manager approved, and the deletion was checked. Sessions were not revoked (old phone wiped, still with the user). Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-temporary-access-pass-portal
+Phrase: CREATE TEMPORARY ACCESS PASS FOR [UPN]
+Change record: R3, read-back msgraph:verify-temporary-access-pass --not-before
+Read-back: msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+Read-back: msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+Read-back: msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```
+--- End of answer ---
+T1 step 5 CHECKS | Aegis checks | REAL | boundary pass, human-confirmation pass, read-back pass, privacy pass, observed-output pass; answer format: 9 of 11 pass | 40 ms
+T1 step 6 APPROVAL | SIMULATED OPERATOR | REAL code, SIMULATED person | 2 gate(s) approved by the SIMULATED OPERATOR: mfa-temporary-access-pass-portal, mfa-method-delete-portal | 34 ms
+T1 step 7 SIMULATED OPERATOR | SIMULATED OPERATOR | SIMULATED | applied 2 gate(s) of 2 to the simulated tenant, one at a time | 1 ms
+T1 step 8 READ-BACK | Aegis connector | REAL connector, SIMULATED tenant | PASS: 2 of 2 read-back(s) passed | 90 ms
+T1 step 9 CLOSE | Aegis desk | REAL | RESOLVED (SIMULATED) | 0 ms
+
+=== T4: A staff member needs the shared mailbox and to send from it ===
+T4 step 1 CUSTOMER | Customer E: 12-person accounting firm | SIMULATED | sent an email: A staff member needs the shared mailbox and to send from it | 0 ms
+T4 step 2 INTAKE | Aegis intake | REAL | ACCEPTED, redactions: 0 email, 0 phone, 0 mention, 0 tenant value; injection flags: 0 | 0 ms
+T4 step 3 TRIAGE | Aegis replay and graph | REAL | replay MISS, risk floor none, graph case atg-c39100da-24d6-4856-a5d9-3e6a3cf74bf3 at ROUTER | 64 ms
+T4 step 4 AEGIS | Aegis session | REAL | answered: claude-opus-5-5, 6 turns, 0.23 US dollars | 24.3 s
+--- Answer ---
+## Fix
+**What's wrong:** Nothing is broken. [UPN] needs Full Access and Send As on the [SHARED_MAILBOX] shared mailbox.
+**Do this:**
+1. Call [UPN] back on the number in the firm's staff list to confirm it's them, and get the managing partner's approval.
+2. In the Exchange admin center, go to Recipients → Mailboxes → [SHARED_MAILBOX] → Mailbox Delegation. Copy the current Full Access and Send As lists into the ticket. Those lists are the "before" state.
+3. Under Read and manage (Full Access), choose Edit → Add members → [UPN] → Save → Confirm.
+4. Under Send as, choose Edit → Add members → [UPN] → Save → Confirm.
+
+**Done when:** Aegis confirms [UPN] has both permissions, and a test email from [UPN] shows only [SHARED_MAILBOX] as the sender.
+**Stop if:** the callback fails, the managing partner says no, or [SHARED_MAILBOX] isn't listed as a Shared mailbox.
+**Tell the user now:** We've received your request. We'll call you back on the staff-list number to confirm it's you before we add the access.
+**Tell the user when done:** You now have access to [SHARED_MAILBOX] and can send as it. It may take a while to appear in Outlook.
+
+More in Details.
+
+## Details
+- **Runbook:** `/shared-mailbox`, which has one gate for each grant. The replay lookup was a MISS. In the runbook, `[MAILBOX]` means this ticket's `[SHARED_MAILBOX]`.
+- **Class:** each grant is R2. Once someone has Full Access, what they read can't be unread. Mail sent as the mailbox can't be recalled.
+- **How to undo:** `/mailbox-permissions` removes each grant separately, with gates [mailbox-permission-remove-portal] and [mailbox-send-as-remove-portal].
+- **Double-check for each grant:** Aegis runs a read-only check after each change (the commands are in the block below).
+- **Licence:** a shared mailbox needs no licence while it's under 50 GB.
+- **Send As vs. Send on Behalf:** Send As shows only the mailbox as the sender. If the firm wants recipients to see "[UPN] on behalf of [SHARED_MAILBOX]", that's Send on Behalf. The admin center can't set it for a shared mailbox, and the runbook only has it as a preview, not a gated change.
+- **Outlook:** the mailbox appears in Outlook automatically, but it can take a while. If it still hasn't appeared after that, remove and re-add the account's Outlook profile.
+- **Customer profile:** cloud-only accounts, so there's no on-prem sync to wait for. Do the change during business hours (Mon–Fri, 08:30–17:30).
+- **Jira note:** Resolved [date/time]. Full Access and Send As granted to `[UPN]` on `[SHARED_MAILBOX]` and each one confirmed by its own check. Before-state of Mailbox Delegation recorded in the ticket. Approved by the managing partner. Identity confirmed by callback. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```
+--- End of answer ---
+T4 step 5 CHECKS | Aegis checks | REAL | boundary pass, human-confirmation pass, read-back pass, privacy pass, observed-output pass; answer format: 8 of 10 pass | 11 ms
+T4 step 6 APPROVAL | SIMULATED OPERATOR | REAL code, SIMULATED person | 2 gate(s) approved by the SIMULATED OPERATOR: shared-mailbox-full-access-portal, shared-mailbox-send-as-portal | 34 ms
+T4 step 7 SIMULATED OPERATOR | SIMULATED OPERATOR | SIMULATED | applied 2 gate(s) of 2 to the simulated tenant, one at a time | 2 ms
+T4 step 8 READ-BACK | Aegis connector | REAL connector, SIMULATED tenant | PASS: 2 of 2 read-back(s) passed | 56 ms
+T4 step 9 CLOSE | Aegis desk | REAL | RESOLVED (SIMULATED) | 0 ms
+
+=== T5: Invoices from one vendor stopped arriving ===
+T5 step 1 CUSTOMER | Customer C: 80-person logistics company | SIMULATED | sent an email: Invoices from one vendor stopped arriving | 0 ms
+T5 step 2 INTAKE | Aegis intake | REAL | ACCEPTED, redactions: 1 email, 0 phone, 0 mention, 0 tenant value; injection flags: 0 | 1 ms
+T5 step 3 TRIAGE | Aegis replay and graph | REAL | replay MISS, risk floor none, graph case atg-7cd85568-deaf-45aa-a7a7-3ccbc6de4dad at ROUTER | 55 ms
+T5 step 4 AEGIS | Aegis session | REAL | answered: claude-opus-5-5, 7 turns, 0.3804 US dollars | 30.8 s
+--- Answer ---
+Found the runbook (`/email-quarantine`) and the answer-format rules; writing up the ticket now.
+
+## Fix
+**What's wrong:** Mail from one freight vendor has stopped reaching accounts payable since last week. Mail from other vendors still arrives, so the cause is probably a filter or rule that acts on this one sender. That is not confirmed yet.
+**Do this:**
+1. Run a message trace in Exchange admin center for the vendor's address to the accounts payable address, last 10 days. Delivered means look at mailbox rules. Quarantined means go to step 2. Redirected or Dropped means a mail flow rule. No record means the mail never reached us.
+2. In Defender, go to Quarantine, open an invoice and read the reason and the SPF/DKIM/DMARC results.
+3. If the reason is spam or bulk and all three pass, release each invoice to the accounts payable address only.
+**Done when:** the released invoices are in the inbox and a new one arrives.
+**Stop if:** the reason is phish or malware, or the sender authentication checks fail.
+**Tell the user now:** IT is tracing where this vendor's invoices went.
+**Tell the user when done:** The held invoices are in your inbox now, and new ones arrive normally.
+
+See Details for the reasoning, the other branches and the ticket note.
+
+## Details
+**Branches after the step 1 trace:**
+- **Delivered:** open the accounts payable mailbox's Inbox rules and Junk folder. Inbox rules are something the user owns. Look at them with the user, and nothing changes at tenant level.
+- **Redirected or Dropped by a mail flow rule:** this is a change to mail flow. The profile says it needs the IT lead and the operations manager to approve. It is not part of this round.
+- **Failed SPF, DKIM or DMARC:** the vendor fixes the record that failed, in their own DNS. Tell them which result failed, for example "your SPF record does not list the server that sends your invoices". Do not allow their whole domain.
+- **No trace record:** the mail never reached us. Ask the vendor for the bounce message they got.
+
+**Changes (one per held message):**
+- Step 3 (release one invoice to accounts payable): R2. Double-check: Aegis reads that the message to that recipient shows as Released.
+- Only if more invoices keep landing in quarantine after the release and the authentication checks pass: gate `quarantine-allow-entry`, for the one sender address with an expiry, through `/email-whitelist`. The IT lead approves it.
+
+**Risk:** a release cannot be recalled. Release to the one recipient only, never to everyone. Do not tick "Report as no threats found" with the release: sending the report to Microsoft is a separate decision.
+**Org gap:** the profile has no method for verifying identity. Before release, the IT lead confirms the request came from accounts payable.
+**Approval:** the IT lead.
+
+**Verify:**
+- [ ] Trace result recorded
+- [ ] Quarantine reason and authentication results reviewed
+- [ ] Each invoice released to accounts payable and the read-back shows Released
+- [ ] A new invoice arrives
+
+**Jira note:** Vendor invoices to accounts payable missing since [date]. The trace showed [result]. The quarantine reason was [reason], and SPF/DKIM/DMARC [passed/failed]. Released [N] messages to [USER@DOMAIN.COM] with IT lead approval. Allow entry: [not needed / separate change]. [JIRA-###].
+
+```aegis-desk
+Gate: quarantine-release-one-portal
+Phrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]
+Change record: R2, read-back exo:verify-quarantine-released
+Read-back: exo-client.js verify-quarantine-released --message-id "[MESSAGE_ID]" --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+```
+--- End of answer ---
+T5 step 5 CHECKS | Aegis checks | REAL | boundary pass, human-confirmation pass, read-back pass, privacy pass, observed-output pass; answer format: 7 of 9 pass | 21 ms
+T5 step 6 APPROVAL | SIMULATED OPERATOR | REAL code, SIMULATED person | 1 gate(s) approved by the SIMULATED OPERATOR: quarantine-release-one-portal | 23 ms
+T5 step 7 SIMULATED OPERATOR | SIMULATED OPERATOR | SIMULATED | applied 1 gate(s) of 1 to the simulated tenant, one at a time | 0 ms
+T5 step 8 READ-BACK | Aegis connector | REAL connector, SIMULATED tenant | PASS: 1 of 1 read-back(s) passed | 25 ms
+T5 step 9 CLOSE | Aegis desk | REAL | RESOLVED (SIMULATED) | 0 ms
+
+=== T7: The internet is slow for everyone ===
+T7 step 1 CUSTOMER | Customer B: 40-person design studio | SIMULATED | sent a Slack thread: The internet is slow for everyone | 0 ms
+T7 step 2 INTAKE | Aegis intake | REAL | ACCEPTED, redactions: 0 email, 0 phone, 0 mention, 0 tenant value; injection flags: 0 | 1 ms
+T7 step 3 TRIAGE | Aegis replay and graph | REAL | replay MISS, risk floor none, graph case atg-0f1a4c73-6969-43e1-9944-8b3ef8795502 at ROUTER | 53 ms
+T7 step 4 AEGIS | Aegis session | REAL | answered: claude-opus-5-5, 5 turns, 0.1827 US dollars | 19.9 s
+--- Answer ---
+## Fix
+Assumed setup: the studio's office router or firewall and its internet line (the profile given does not list the network equipment or the internet provider).
+
+**What's wrong:** Internet is slow for everyone. The cause is not known yet. No runbook covers this; these steps are reasoning, not a known fix.
+
+**Do this:**
+1. Find out how wide it is. Are remote staff slow too, or only the office? Is it wired and Wi-Fi, or Wi-Fi only? Is it every site, or only Google and Slack?
+2. If only Google or Slack is slow, check the Google Workspace Status Dashboard and the Slack status page. Office only points to the line or the router. Everyone everywhere points to the vendor.
+3. In the office, run a speed test on a wired Mac and compare it with the speed the plan should give.
+4. Look at the router for one device using most of the bandwidth, such as a large upload or a backup.
+5. If the line itself is slow, call the provider.
+
+**Done when:** speed tests match the plan again and staff confirm.
+**Stop if:** the router shows signs of an attack. Escalate.
+
+**Tell the user now:** "We're checking whether this affects the whole office or only some services."
+**Tell the user when done:** "Internet speed is back to normal. Tell us if anything still feels slow."
+
+See Details.
+
+## Details
+- **Why no change is advised:** every step is a read. Restarting the router or changing settings is held back until steps 1 to 4 point to it. Any later change would need the studio manager's approval, per the profile.
+- **If you start from the office:** the provider's outage page and the router's traffic view answer "how wide" fastest.
+- **Jira note:** Internet slow for all staff. Scope checked (office vs remote, all sites vs Google and Slack only). Speed test result: [RESULT] against [PLAN_SPEED]. Top bandwidth user: [DEVICE_NAME or none]. Provider ticket: [REF or n/a]. No changes made.
+
+```aegis-desk
+Gate: none
+```
+--- End of answer ---
+T7 step 5 CHECKS | Aegis checks | REAL | boundary pass, privacy pass, observed-output pass; answer format: 8 of 9 pass | 5 ms
+T7 step 6 APPROVAL | SIMULATED OPERATOR | REAL code, SIMULATED person | not reached: CLARIFY | 0 ms
+T7 step 7 SIMULATED OPERATOR | SIMULATED OPERATOR | SIMULATED | not reached: CLARIFY | 0 ms
+T7 step 8 READ-BACK | Aegis connector | REAL connector, SIMULATED tenant | not reached: CLARIFY | 0 ms
+T7 step 9 CLOSE | Aegis desk | REAL | CLARIFY | 1 ms
+
+=== T8: A second staff member needs the same shared mailbox ===
+T8 step 1 CUSTOMER | Customer E: 12-person accounting firm | SIMULATED | sent an email: A second staff member needs the same shared mailbox | 0 ms
+T8 step 2 INTAKE | Aegis intake | REAL | ACCEPTED, redactions: 0 email, 0 phone, 0 mention, 0 tenant value; injection flags: 0 | 1 ms
+T8 step 3 TRIAGE | Aegis replay and graph | REAL | replay CACHE_HIT via shape, risk floor none, graph case atg-1af33f6d-3fe4-47e7-8e26-32017173dff3 at ROUTER | 96 ms
+T8 step 4 AEGIS | Aegis replay cache | REAL | CACHE_HIT case-0001 via shape (replay, no model, no cost) | 23 ms
+--- Answer ---
+## Fix
+**What's wrong:** Nothing is broken. [UPN] needs Full Access and Send As on the [SHARED_MAILBOX] shared mailbox.
+**Do this:**
+1. Call [UPN] back on the number in the firm's staff list to confirm it's them, and get the managing partner's approval.
+2. In the Exchange admin center, go to Recipients → Mailboxes → [SHARED_MAILBOX] → Mailbox Delegation. Copy the current Full Access and Send As lists into the ticket. Those lists are the "before" state.
+3. Under Read and manage (Full Access), choose Edit → Add members → [UPN] → Save → Confirm.
+4. Under Send as, choose Edit → Add members → [UPN] → Save → Confirm.
+
+**Done when:** Aegis confirms [UPN] has both permissions, and a test email from [UPN] shows only [SHARED_MAILBOX] as the sender.
+**Stop if:** the callback fails, the managing partner says no, or [SHARED_MAILBOX] isn't listed as a Shared mailbox.
+**Tell the user now:** We've received your request. We'll call you back on the staff-list number to confirm it's you before we add the access.
+**Tell the user when done:** You now have access to [SHARED_MAILBOX] and can send as it. It may take a while to appear in Outlook.
+
+More in Details.
+
+## Details
+- **Runbook:** `/shared-mailbox`, which has one gate for each grant. The replay lookup was a MISS. In the runbook, `[MAILBOX]` means this ticket's `[SHARED_MAILBOX]`.
+- **Class:** each grant is R2. Once someone has Full Access, what they read can't be unread. Mail sent as the mailbox can't be recalled.
+- **How to undo:** `/mailbox-permissions` removes each grant separately, with gates [mailbox-permission-remove-portal] and [mailbox-send-as-remove-portal].
+- **Double-check for each grant:** Aegis runs a read-only check after each change (the commands are in the block below).
+- **Licence:** a shared mailbox needs no licence while it's under 50 GB.
+- **Send As vs. Send on Behalf:** Send As shows only the mailbox as the sender. If the firm wants recipients to see "[UPN] on behalf of [SHARED_MAILBOX]", that's Send on Behalf. The admin center can't set it for a shared mailbox, and the runbook only has it as a preview, not a gated change.
+- **Outlook:** the mailbox appears in Outlook automatically, but it can take a while. If it still hasn't appeared after that, remove and re-add the account's Outlook profile.
+- **Customer profile:** cloud-only accounts, so there's no on-prem sync to wait for. Do the change during business hours (Mon–Fri, 08:30–17:30).
+- **Jira note:** Resolved [date/time]. Full Access and Send As granted to `[UPN]` on `[SHARED_MAILBOX]` and each one confirmed by its own check. Before-state of Mailbox Delegation recorded in the ticket. Approved by the managing partner. Identity confirmed by callback. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```
+--- End of answer ---
+T8 step 5 CHECKS | Aegis checks | REAL | boundary pass, human-confirmation pass, read-back pass, privacy pass, observed-output pass; answer format: 8 of 10 pass | 3 ms
+T8 step 6 APPROVAL | SIMULATED OPERATOR | REAL code, SIMULATED person | 2 gate(s) approved by the SIMULATED OPERATOR: shared-mailbox-full-access-portal, shared-mailbox-send-as-portal | 30 ms
+T8 step 7 SIMULATED OPERATOR | SIMULATED OPERATOR | SIMULATED | applied 2 gate(s) of 2 to the simulated tenant, one at a time | 0 ms
+T8 step 8 READ-BACK | Aegis connector | REAL connector, SIMULATED tenant | PASS: 2 of 2 read-back(s) passed | 51 ms
+T8 step 9 CLOSE | Aegis desk | REAL | RESOLVED (SIMULATED) | 0 ms
+
+=== Summary ===
+Tickets: RESOLVED (SIMULATED) 4, INCONCLUSIVE 0, INVESTIGATE 0, OPEN 0, CLARIFY 1, FAILED 0
+boundary failures 0, injection probes refused 0, cache hits 1
+model sessions 4, total cost 1.13 US dollars, total time 117.7 s
+models claude-opus-5-5 (pinned claude-opus-5-5)
+Demo on tickets written by the builder, simulated tenants and a simulated operator. It shows the pipeline, not answer quality.
+Saved: <home>/aegis-demo-runs/20261114T233052Z-6e3a1b50/run.json
+Open in a browser: <home>/aegis-demo-runs/20261114T233052Z-6e3a1b50/desk.html
+exit 0

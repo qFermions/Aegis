@@ -1,0 +1,36 @@
+## Fix
+**What's wrong:** Nothing is broken. [UPN] needs Full Access and Send As on the [SHARED_MAILBOX] shared mailbox.
+**Do this:**
+1. Call [UPN] back on the number in the firm's staff list to confirm it's them, and get the managing partner's approval.
+2. In the Exchange admin center, go to Recipients → Mailboxes → [SHARED_MAILBOX] → Mailbox Delegation. Copy the current Full Access and Send As lists into the ticket. Those lists are the "before" state.
+3. Under Read and manage (Full Access), choose Edit → Add members → [UPN] → Save → Confirm.
+4. Under Send as, choose Edit → Add members → [UPN] → Save → Confirm.
+
+**Done when:** Aegis confirms [UPN] has both permissions, and a test email from [UPN] shows only [SHARED_MAILBOX] as the sender.
+**Stop if:** the callback fails, the managing partner says no, or [SHARED_MAILBOX] isn't listed as a Shared mailbox.
+**Tell the user now:** We've received your request. We'll call you back on the staff-list number to confirm it's you before we add the access.
+**Tell the user when done:** You now have access to [SHARED_MAILBOX] and can send as it. It may take a while to appear in Outlook.
+
+More in Details.
+
+## Details
+- **Runbook:** `/shared-mailbox`, which has one gate for each grant. The replay lookup was a MISS. In the runbook, `[MAILBOX]` means this ticket's `[SHARED_MAILBOX]`.
+- **Class:** each grant is R2. Once someone has Full Access, what they read can't be unread. Mail sent as the mailbox can't be recalled.
+- **How to undo:** `/mailbox-permissions` removes each grant separately, with gates [mailbox-permission-remove-portal] and [mailbox-send-as-remove-portal].
+- **Double-check for each grant:** Aegis runs a read-only check after each change (the commands are in the block below).
+- **Licence:** a shared mailbox needs no licence while it's under 50 GB.
+- **Send As vs. Send on Behalf:** Send As shows only the mailbox as the sender. If the firm wants recipients to see "[UPN] on behalf of [SHARED_MAILBOX]", that's Send on Behalf. The admin center can't set it for a shared mailbox, and the runbook only has it as a preview, not a gated change.
+- **Outlook:** the mailbox appears in Outlook automatically, but it can take a while. If it still hasn't appeared after that, remove and re-add the account's Outlook profile.
+- **Customer profile:** cloud-only accounts, so there's no on-prem sync to wait for. Do the change during business hours (Mon–Fri, 08:30–17:30).
+- **Jira note:** Resolved [date/time]. Full Access and Send As granted to `[UPN]` on `[SHARED_MAILBOX]` and each one confirmed by its own check. Before-state of Mailbox Delegation recorded in the ticket. Approved by the managing partner. Identity confirmed by callback. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

@@ -1,0 +1,71 @@
+## Fix
+**What's wrong:** Microsoft Authenticator was on the wiped phone, so [FIRST_NAME] cannot approve sign-ins.
+**Do this:**
+1. Go to Entra admin center → Users → [UPN] → Authentication methods and see what is registered. If another method still works, go to step 4.
+2. Call the office manager on the number on file and have them confirm it is [FIRST_NAME].
+3. Signed in as Authentication Administrator, add a one-time Temporary Access Pass. Read it out on a call you place to the office.
+4. [FIRST_NAME] signs in at aka.ms/mfasetup and adds Authenticator on the new phone.
+5. After that, delete only the old phone's Authenticator entry.
+
+**Done when:** the new phone is listed and the old one is gone. Aegis then checks both.
+**Stop if:** the pass policy leaves out [UPN], or the office manager cannot confirm who it is.
+**Tell the user now:** We're setting up a short-lived code so you can add your new phone. Please have it with you with Microsoft Authenticator installed.
+**Tell the user when done:** Your new phone now approves your sign-ins. The old phone no longer does.
+
+This is a sign-in recovery with two changes and two approvals: see Details.
+
+## Details
+
+**Assumptions:** The replay lookup was a MISS, so this answer follows the `/mfa-issue` runbook (new-phone path). The setup comes from Customer A's profile: the accounts are cloud-only with no on-premises directory, there is nothing to sync, and Authenticator is the only second step.
+
+**Rules from the profile:**
+- **Identity check:** the office has no identity rule yet (an org gap). Until it sets one, the office manager vouches for the person on a call the tech places to the manager's number on file. Never use a number from the ticket. The ticket records which check was used.
+- **Approvals:**
+  - The Temporary Access Pass can be undone: deleting it before it is used cancels it, and it also expires on its own. The office manager approves it.
+  - Deleting the old method cannot be undone, so it needs the office manager **and** the practice owner.
+- **No text-message fallback:** the profile allows Authenticator only, so the runbook's backup step (an admin adds a phone number) does not apply here.
+
+**Before step 3, check the pass policy (read only):** Entra → Authentication methods → Policies → Temporary Access Pass. Look at whether it is enabled and whether [UPN] is in scope.
+- If it is off, or [UPN] is out of scope, stop. Turning it on is a tenant-wide R3 change that this runbook does not cover. Escalate it to the office manager and the practice owner.
+
+**Sessions:** do not revoke them. The user still holds the old phone and it is wiped, so no device that is out of their hands still has access.
+- If the old phone was actually lost or not wiped, sessions get revoked before the pass under `mfa-session-revoke-portal`.
+
+**Order matters:** the new way in comes before the old way out.
+- Do not delete anything until Authentication methods shows a new method from the new phone (not counting the pass itself).
+- Do **not** use Require re-register MFA. It clears every method before a new way in exists.
+
+**Changes and how each one is checked:**
+- Step 3 (create the Temporary Access Pass): R3. Double-check: Aegis reads that a pass created after approval exists and is usable.
+- Step 5 (delete the old Authenticator method): R3. Double-check: Aegis reads that the old method's ID is gone, then that an Authenticator method is still registered.
+
+**Rollback:**
+- An unused pass can be deleted, and it also expires on its own (the default is 1 hour).
+- A deleted method comes back only if the user registers it again at aka.ms/mfasetup.
+
+**⚠️ Risk:**
+- The pass signs in as the user for as long as it is valid. Hand it over only on the verified call. Never send it by email, chat or text, and never write it in the ticket.
+- Use the shortest lifetime that works. With a one-time pass, the user has 10 minutes after signing in to finish registering.
+
+**Verification checklist:**
+- [ ] Office manager vouched on a call the tech placed
+- [ ] Pass checked by Aegis before it was handed over
+- [ ] New Authenticator listed before the old one was deleted
+- [ ] Old method gone, new method present, and a sign-in succeeds
+- [ ] Practice owner and office manager approvals recorded for the delete
+
+**Jira note:**
+> MFA new-phone recovery for [UPN]. Identity: confirmed by the office manager on a call the tech placed. New way in: Temporary Access Pass, checked, read out on that call. Re-registered at aka.ms/mfasetup. The old Authenticator method was deleted after the owner and manager approved, and the deletion was checked. Sessions were not revoked (old phone wiped, still with the user). Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-temporary-access-pass-portal
+Phrase: CREATE TEMPORARY ACCESS PASS FOR [UPN]
+Change record: R3, read-back msgraph:verify-temporary-access-pass --not-before
+Read-back: msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+Read-back: msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+Read-back: msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```

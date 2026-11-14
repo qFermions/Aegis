@@ -46,6 +46,19 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 5. Phase E: investigate the scope (R0); **WAIT UNTIL** the case owner agrees the account is clean.
 6. Phase F: reactivate (R1 gate) and hand the new password over out of band; prove the real user's sign-in with `verify-event`.
 
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line):
+
+| Phase | Change | Class | Double-check |
+|---|---|---|---|
+| B | suspend the account, gate gws-account-containment-suspend-portal | R2 | the suspended read-back passes |
+| C | set a new password, gate gws-account-containment-password-portal | R2 | the password-change event read-back passes for this account after `[NOT_BEFORE]` |
+| D1 | revoke app passwords, gate gws-account-containment-app-passwords-portal | R1 | no change record; the App passwords panel on the user's Security page is empty |
+| D2 | revoke an OAuth grant, gate gws-account-containment-oauth-portal | R1 | no change record; the user's connected applications no longer list the app |
+| D3 | 2-Step Verification, admin roles, Okta, devices | set in the runbook each is handed to | that runbook's own read-back |
+| F | reactivate the account, gate gws-account-containment-reactivate-portal | R1 | no change record; the status reads Active and the real user's sign-in event is read |
+
+**No severity before Phase E** (answer-format section 2, "Who else, and what left"): Phases B to D close the path. Until Phase E has read who else was reached and what was sent, shared or downloaded, the answer and the ticket note say "contained, scope not yet reviewed", not how serious the compromise was.
+
 ## Phase A: Read the account and the signs of compromise (R0)
 
 **Purpose**: record the pre-state and how far the attacker got before anything changes.
@@ -220,11 +233,12 @@ node scripts/adapters/gws-client.js activities --app token --user [USER@DOMAIN.C
 
 1. Work the logs with `/gws-audit-log`: sign-ins (Phase 3 there), admin changes if the account is an admin (Phase 1), and Drive sharing changes made by the account since the first suspicious event (Phase 2).
 2. Admin console → Reporting → Email Log Search → sender `[USER@DOMAIN.COM]`, since the first suspicious event → read what the account sent; internal phishing from it means other accounts may be compromised, and each one gets its own run of this runbook.
-3. Write the timeline in the ticket; a full incident write-up is `/incident-report`.
+3. What left: the account's Drive log events since the first suspicious event (`/gws-audit-log` Phase 2), read for View, Download and sharing events, and the OAuth grants Phase A recorded, whose scopes say what an app could read while it was connected. Google records most downloads, not all, so say what the log shows and what it cannot show.
+4. Write the timeline in the ticket; a full incident write-up is `/incident-report`. Only now does the ticket say how serious it was.
 
 **WAIT UNTIL** the case owner **[org gap: who owns security incidents]** agrees in the ticket that the account is clean to return.
 
-**Verification checkpoint**: [ ] timeline in the ticket · [ ] other affected accounts listed, or none · [ ] the owner's sign-off recorded.
+**Verification checkpoint**: [ ] timeline in the ticket · [ ] other affected accounts listed, or none · [ ] what was sent, shared or downloaded listed, or none found with the log's limits named · [ ] the owner's sign-off recorded.
 
 ## Phase F: Return the account (R1)
 

@@ -215,3 +215,25 @@ test('a custom --results-dir is denied to every system-under-test turn, the foll
     assert.ok(settings.permissions.deny.includes(rule), `${call.resume ? 'the follow-up' : 'a first'} turn denies the results folder: ${rule}`);
   }
 });
+
+// Code review round 1, finding 11: the tests above keep batch G4's eight cases as their fixture, so batch 11's sixteen
+// cases, both setup cases among them, never ran through the runner end to end. This one runs the whole DEV file. Wrong
+// implementations it catches: a runner that drops a case's setup on the way to the session, or that cannot run one of
+// the new cases (each must answer, be judged and reach results.json).
+test('code review 1: the whole DEV file runs through the runner; the two setup cases reach the session with their setup', async (t) => {
+  const s = setup(t);
+  fs.writeFileSync(s.copy, fs.readFileSync(DEV, 'utf8'));
+  const all = cases.parseCases(fs.readFileSync(DEV, 'utf8')).cases;
+  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  assert.equal(code, 3, s.err.join('\n'));
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  assert.deepEqual(json.cases.map((c) => c.id), all.map((c) => c.id));
+  assert.ok(json.cases.every((c) => c.sut.state === 'OK' && c.judge && c.judge.state === 'OK'), json.cases.filter((c) => c.sut.state !== 'OK').map((c) => c.id).join(', '));
+  const withSetup = all.filter((c) => c.setup !== '');
+  assert.deepEqual(json.cases.filter((c) => c.setup_given).map((c) => c.id), withSetup.map((c) => c.id));
+  const sut = s.calls().filter((c) => c.role === 'sut' && !c.resume);
+  for (const c of withSetup) {
+    const call = sut.find((x) => x.prompt.includes(c.ticket.slice(0, 40)));
+    assert.ok(call && call.prompt.includes('--- What the company runs ---') && call.prompt.includes(c.setup.slice(0, 30)), `${c.id} reached the session with its setup`);
+  }
+});

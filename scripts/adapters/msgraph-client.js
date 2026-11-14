@@ -65,10 +65,10 @@ const SIGNIN_FILTER = /^userId eq '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const METHODS = ['microsoftAuthenticator', 'phone', 'fido2', 'softwareOath', 'windowsHelloForBusiness', 'email', 'temporaryAccessPass'];
 // "Require re-register MFA" deletes these (vendor fact B-18)
 const CLEARED_BY_REREGISTER = ['microsoftAuthenticator', 'phone', 'softwareOath'];
-// A Temporary Access Pass in the methods read, and the two methodUsabilityReason values that mean nobody
-// can sign in with it (vendor fact MB-11; OneTimeUsed and NotYetValid are a pass that was issued)
+// A Temporary Access Pass in the methods read, and the methodUsabilityReason values Microsoft documents
+// for it (vendor fact MB-11)
 const TEMPORARY_ACCESS_PASS = '#microsoft.graph.temporaryAccessPassAuthenticationMethod';
-const UNUSABLE_PASS = ['DisabledByPolicy', 'Expired'];
+const USABILITY_REASONS = ['EnabledByPolicy', 'DisabledByPolicy', 'Expired', 'NotYetValid', 'OneTimeUsed'];
 
 const USER_SELECT = 'id,userPrincipalName,accountEnabled,userType,onPremisesSyncEnabled,lastPasswordChangeDateTime,createdDateTime';
 const DEVICE_SELECT = 'id,deviceName,lastSyncDateTime,complianceState,operatingSystem,managementState';
@@ -292,10 +292,16 @@ function judge(command, a, data) {
         if (undated) return unproven({ listed: true, createdDateTime: null }, 'a Temporary Access Pass is listed with a createdDateTime that is not a time, so this is not proof it was issued since');
         return { verified: false, observed: { listed: true, createdDateTime: passes[0].createdDateTime }, reason: `the listed pass was created ${passes[0].createdDateTime}, before ${a['not-before']}: it is not this change's` };
       }
-      const why = typeof since.methodUsabilityReason === 'string' ? since.methodUsabilityReason : null;
+      // the reason is printed only when it is one of the values Microsoft documents, so nothing else an
+      // answer puts in that field reaches the output (fresh review of batch 11, finding 4)
+      const why = USABILITY_REASONS.includes(since.methodUsabilityReason) ? since.methodUsabilityReason : null;
       const observed = { createdDateTime: since.createdDateTime, isUsable: typeof since.isUsable === 'boolean' ? since.isUsable : null, methodUsabilityReason: why };
-      // issued, but no way in: the user is outside the Temporary Access Pass policy, or the pass ran out
-      if (since.isUsable === false && UNUSABLE_PASS.includes(why)) return { verified: false, observed, reason: `the pass is listed but cannot be used: ${why}` };
+      // "the user can use it" is isUsable true and nothing else. A pass the answer shows as not usable is
+      // no way in, whatever the reason: outside the policy, run out, not yet valid, or already used once
+      // (before the handover, a used pass means someone else signed in with it). An answer that does not
+      // say (vendor fact MB-12a is unconfirmed) proves nothing either way (fresh review, finding 1).
+      if (since.isUsable === false) return { verified: false, observed, reason: `the pass is listed but cannot be used: ${why === null ? 'no documented reason given' : why}` };
+      if (since.isUsable !== true) return unproven(observed, 'the answer does not show isUsable as true or false for the pass, so this is not proof the user can use it');
       return { verified: true, observed };
     }
     default:

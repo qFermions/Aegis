@@ -364,10 +364,15 @@ test('every --not-before takes the approved_at form with milliseconds and compar
 // - a pass created before --not-before is another ticket's, not this change: not verified (exit 2).
 //   Wrong implementation this catches: "a temporaryAccessPass method is listed", which is all
 //   verify-mfa-method --method temporaryAccessPass asks, and which an old expired pass also meets.
-// - a pass the user cannot use (DisabledByPolicy: not in the Temporary Access Pass policy; Expired) is
-//   no way in: not verified. Wrong implementation this catches: one that reads only createdDateTime.
-// - a pass already used once (OneTimeUsed) or not yet valid (NotYetValid) was issued by this change:
-//   verified, with the state shown.
+// - "the user can use it" is isUsable true and nothing else (fresh review of batch 11, finding 1). A pass
+//   shown as not usable is no way in, whatever the reason: DisabledByPolicy (not in the Temporary Access
+//   Pass policy), Expired, NotYetValid, OneTimeUsed (before the handover, a used pass means someone else
+//   signed in with it), an undocumented reason or none: not verified. Wrong implementations this catches:
+//   one that reads only createdDateTime, and one that judges on the reason and never on isUsable.
+// - a pass whose isUsable is missing or not a boolean proves nothing either way (vendor fact MB-12a is
+//   unconfirmed): INCONCLUSIVE. Wrong implementation this catches: "not false" read as usable.
+// - methodUsabilityReason is printed only when it is one of the five documented values (finding 4).
+//   Wrong implementation this catches: one that echoes the field as it came.
 // - no list, another page with no pass on this one, or a createdDateTime that is not a time proves
 //   nothing either way: INCONCLUSIVE (exit 5), never a pass and never a failed object.
 // - the pass value never appears in the output, even when an answer holds one. Wrong implementation
@@ -402,15 +407,31 @@ test('verify-temporary-access-pass: passes only on a usable pass created at or a
   assert.equal(none.code, 2, none.text);
   assert.match(none.json.reason, /no Temporary Access Pass is listed/);
 
-  for (const why of ['DisabledByPolicy', 'Expired']) {
+  // not usable is not verified, whatever the reason
+  for (const why of ['DisabledByPolicy', 'Expired', 'OneTimeUsed', 'NotYetValid']) {
     const unusable = await v([ok({ value: [pass({ isUsable: false, methodUsabilityReason: why })] })]);
     assert.equal(unusable.code, 2, `${why}: ${unusable.text}`);
+    assert.equal(unusable.json.state, 'OK', why);
     assert.match(unusable.json.reason, new RegExp(`cannot be used: ${why}`));
+    assert.equal(unusable.json.observed.methodUsabilityReason, why);
   }
-  for (const why of ['OneTimeUsed', 'NotYetValid']) {
-    const issued = await v([ok({ value: [pass({ isUsable: false, methodUsabilityReason: why })] })]);
-    assert.equal(issued.code, 0, `${why}: ${issued.text}`);
-    assert.equal(issued.json.observed.methodUsabilityReason, why);
+  // a reason Microsoft does not document is never echoed: a secret placed in that field stays out
+  for (const why of [SECRET, 'expired', 'Revoked', undefined, 17]) {
+    const odd = await v([ok({ value: [pass({ isUsable: false, methodUsabilityReason: why })] })]);
+    assert.equal(odd.code, 2, `${String(why)}: ${odd.text}`);
+    assert.match(odd.json.reason, /cannot be used: no documented reason given/);
+    assert.equal(odd.json.observed.methodUsabilityReason, null);
+    assert.ok(!odd.text.includes(SECRET), 'an undocumented reason is not printed');
+  }
+  const oddUsable = await v([ok({ value: [pass({ methodUsabilityReason: SECRET })] })]);
+  assert.equal(oddUsable.code, 0, oddUsable.text);
+  assert.ok(!oddUsable.text.includes(SECRET));
+  // isUsable missing or not a boolean proves nothing either way, even beside a reason that says Expired
+  for (const [isUsable, why] of [[undefined, 'EnabledByPolicy'], [undefined, 'Expired'], [null, 'EnabledByPolicy'], ['true', 'EnabledByPolicy'], [1, 'EnabledByPolicy']]) {
+    const unsaid = await v([ok({ value: [pass({ isUsable, methodUsabilityReason: why })] })]);
+    assert.equal(unsaid.code, 5, `isUsable ${JSON.stringify(isUsable)} ${why}: ${unsaid.text}`);
+    assert.equal(unsaid.json.state, 'INCONCLUSIVE');
+    assert.match(unsaid.json.reason, /does not show isUsable as true or false/);
   }
 
   const inconclusive = [
@@ -442,14 +463,14 @@ test('verify-temporary-access-pass: passes only on a usable pass created at or a
 });
 
 // The connector still only reads: the new read-back adds no route and no write (batch 11, task 5).
-// Wrong implementation this catches: a "helper" that creates or deletes the pass through Graph.
-test('verify-temporary-access-pass uses the authentication-methods GET the connector already had; no command creates or deletes a pass', async () => {
+// Wrong implementation this catches: a "helper" command or route that creates or deletes the pass through
+// Graph (fresh review, finding 8: the command table and the routes are read, not three invented names).
+test('verify-temporary-access-pass uses the authentication-methods GET the connector already had; no command or route creates or deletes a pass', () => {
   assert.deepEqual(ms.COMMANDS['verify-temporary-access-pass'].steps({ user: 'u' }).map((s) => s.route), ['authMethods']);
   assert.ok(Object.values(ms.ROUTES).every((r) => r.method === 'GET'));
-  assert.ok(!Object.keys(ms.ROUTES).some((name) => /temporaryAccessPass/i.test(name)), 'no route of its own');
-  for (const write of ['create-temporary-access-pass', 'delete-temporary-access-pass', 'issue-pass']) {
-    const r = await cli([write, '--user', 'aaaaaaaa-0000-4000-8000-000000000001', '--execute'], { replies: [token()] });
-    assert.equal(r.code, 1, write);
-    assert.equal(r.transport.calls.length, 0, write);
-  }
+  assert.ok(!Object.entries(ms.ROUTES).some(([name, r]) => /temporaryAccessPass/i.test(name) || /temporaryAccessPass/i.test(r.path)), 'no route of its own');
+  // the one command that names a pass is the read-back, and every command is a read or a verify
+  assert.deepEqual(Object.keys(ms.COMMANDS).filter((name) => /pass(?!word)/i.test(name)), ['verify-temporary-access-pass']);
+  assert.equal(ms.COMMANDS['verify-temporary-access-pass'].kind, 'verify');
+  assert.ok(Object.values(ms.COMMANDS).every((c) => c.kind === 'read' || c.kind === 'verify'));
 });

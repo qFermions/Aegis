@@ -977,7 +977,8 @@ read needs Entra ID P1 or P2. Check Microsoft's price page first; a sign-up is t
 these application permissions, admin-consented, and nothing else: User.Read.All
 (signInSessionsValidFromDateTime on $select for verify-sessions-revoked, vendor facts M-09, M-27);
 UserAuthenticationMethod.Read.All (authentication methods; auth-methods, verify-mfa-method,
-verify-mfa-cleared and verify-method-absent, vendor fact M-14); AuditLog.Read.All (sign-in logs;
+verify-mfa-cleared, verify-method-absent and verify-temporary-access-pass, vendor fact M-14; the
+pass read needs no further permission, batch 11 vendor fact MB-12); AuditLog.Read.All (sign-in logs;
 Entra ID P1 or P2); GroupMember.ReadBasic.All; Directory.Read.All (only for another user's
 memberOf); DeviceManagementManagedDevices.Read.All. Refused: any application permission that is not
 .Read. or .ReadBasic. (vendor fact M-21). Graph does not show an app its permissions, so confirm

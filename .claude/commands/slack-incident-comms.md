@@ -88,6 +88,8 @@ Still seeing a problem? Reply to this message or tell IT in [ISSUE_ID].
 2. Slack → `#[CHANNEL_NAME]` → channel name in the header → read the channel details: the channel is not archived, and Settings → Organizations lists no other organization. If another organization is listed, this is a Slack Connect channel: do not post internal details there.
 3. Confirm the person posting can post there; in an announcement channel only some people can (labels unconfirmed).
 
+**The two facts every "it is down" update needs first** (answer-format section 2, "How wide before why"): the scope and the vendor's own word. Scope: one person or everyone, one site or every site, this service only or other internet services too. The vendor's word: the service's own status page, read now and quoted with its time (Google Workspace Status Dashboard at google.com/appsstatus/dashboard, status.okta.com, slack-status.com, githubstatus.com, status.jamf.com, linearstatus.com). With no vendor incident, the working cause to name is the network and name-resolution path, not anyone's account, and the draft says "we are checking our network" before it says anything about accounts. A draft that names a cause before the scope and the status page reading are in `[ISSUE_ID]` is not ready to post. When Slack itself is the service that is down, the update goes out on the fallback route: **[org gap: where IT posts when Slack is down]**.
+
 <details>
 <summary>Read-only adapter reads (HUMAN-RUN)</summary>
 
@@ -102,7 +104,7 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 
 **Stop if:** the channel is archived, shared with another organization (`is_ext_shared` true) or about to be (`is_pending_ext_shared` true: anything posted now could reach the partner once the share completes), or a fact in the draft is not in the ticket.
 
-**Verification checkpoint:** [ ] the facts are confirmed in `[ISSUE_ID]` · [ ] the channel is not archived, not externally shared and has no share pending · [ ] the person posting can post there.
+**Verification checkpoint:** [ ] the facts are confirmed in `[ISSUE_ID]` · [ ] the scope and the vendor status page reading, with its time, are in `[ISSUE_ID]` · [ ] the channel is not archived, not externally shared and has no share pending · [ ] the person posting can post there.
 
 ## Phase B: Post the status update (R1)
 
@@ -196,6 +198,7 @@ node scripts/adapters/slack-client.js verify-posted --channel [CHANNEL_ID] --exp
 - [ ] Interim updates went out at each promised time, each with its own `verify-posted` result.
 - [ ] The resolved follow-up was posted only after the fix was verified, and `verify-posted` passed.
 - [ ] No posted message was edited; corrections were new posts.
+- [ ] The update states the scope and what the vendor's status page said at a stated time, and names no cause that the ticket does not confirm.
 
 ## 📝 Linear-ready note
 
@@ -227,3 +230,5 @@ Drafting, digesting and verifying a message that a person posts is separation of
 Fill Draft 1 from `[ISSUE_ID]`, run Phase A on `#[CHANNEL_NAME]`, then hand the saved file, its digest and the confirmation phrase to whoever posts.
 
 **Sources (checked 2026-10-27):** slack.com/help/articles/202395258-Edit-or-delete-messages (deleting a message, the 15-second unsend on desktop; search excerpt) · slack.com/help/articles/205239997 (pins, any member can pin and unpin; search excerpt) · slack.com/help/articles/360026489273-Remove-organizations-from-a-Slack-Connect-channel (channel name, Settings, Organizations; search excerpt) · slack.com/blog/transformation/managing-slack-at-scale-announcement-channels-and-new-admin-apis (posting permissions on paid plans, 2019; search excerpt) · docs.slack.dev/reference/objects/conversation-object (is_archived, is_ext_shared; search excerpt) · github.com/slackapi/python-slack-sdk at commit 449cf2f, slack_sdk/web/client.py (conversations.history and the write methods the adapter refuses; vendor repo) · github.com/slackapi/slack-api-specs, web-api/slack_web_openapi_v2_without_examples.json (conversations.history fields; vendor repo, last updated 2021).
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** the vendors' own status pages, each opened: google.com/appsstatus/dashboard · status.okta.com · slack-status.com · githubstatus.com · status.jamf.com · linearstatus.com.

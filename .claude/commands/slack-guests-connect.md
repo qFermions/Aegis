@@ -190,6 +190,8 @@ node scripts/adapters/slack-client.js channel --channel [CHANNEL_ID] --execute
 
 **Verification checkpoint:** [ ] the review is recorded in the ticket · [ ] the organization is gone from Organizations or from Slack Connect connections · [ ] each recorded channel was read back.
 
+**When the partner, or a guest, should never have had the access: who else, and what left (R0).** After the connection or the channel access is closed and read back, the next step is a read, before anyone says how serious it was (answer-format section 2, "Who else, and what left"). Who else: the step 1 record of every channel and DM shared with `[EXTERNAL_DOMAIN]`, each channel's member list read for other outside people and guests, and the Phase A guest list read for anyone invited the same way. What left: everything posted in a shared channel while it was shared was readable on the partner's side, and the gate's Scope line says what the partner keeps (a post-and-invite organization keeps an archived copy); the channel's history and files for the shared period are what a channel member reads to list it. An export of messages is its own R3 change in `/slack-retention-export`, not part of this read. Until the list is in the ticket, the answer says "access ended, what was shared not yet reviewed" and names no severity.
+
 ## Phase E: Archive a finished channel, unarchive it, add its members back (R2 archive, R1 unarchive, R1 to R3 re-add)
 
 **Purpose:** close a channel to new messages and keep its history, with a way back.
@@ -283,6 +285,7 @@ The writes behind these gates (`conversations.archive`, `conversations.unarchive
 - [ ] Invitation declined: nothing pending for `[EXTERNAL_DOMAIN]`.
 - [ ] Removal or disconnect: the independent review is in the ticket, the organization is gone from Organizations or Slack Connect connections, and every recorded channel was read back.
 - [ ] Archive: `verify-archived` exit 0 and Directories lists `#[CHANNEL_NAME]` as archived; after an unarchive, `is_archived` false; after the re-add, members match the recorded list (with the review in the ticket above 10).
+- [ ] If the access should never have existed: the other outside people on the same channels and what was posted while the channel was shared are listed in the ticket before any severity is stated.
 
 ## 📝 Linear-ready note
 

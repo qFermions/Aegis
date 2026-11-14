@@ -1,0 +1,134 @@
+Final checks of batch 11, tasks 1, 3 and 7, at commit c004523 (Node v24.21.0).
+
+$ node --test "scripts/eval/judged/*.test.js"
+ℹ tests 109
+ℹ pass 109
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+exit code: 0
+
+$ node --test scripts/eval/judged/
+# the directory form named in the brief: Node 24 reads the folder as one test file and fails it, at the unchanged commit 3ca7a12 too; the glob form above runs the folder
+ℹ tests 1
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+exit code: 1
+
+$ TMPDIR=<the real form of the temporary folder> node --test
+# the whole suite with the temporary folder named by its real path, as a terminal outside this agent shell has it
+ℹ tests 2277
+ℹ pass 2235
+ℹ fail 41
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+failing names: 41 (PowerShell-only 41, other 0)
+the failing names:
+  install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed
+  device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed
+  install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed
+  quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed
+  quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed
+  quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed
+  install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed
+  restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed
+  install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed
+  mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed
+  mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+  password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed
+  password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+  print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed
+  security-account-block: actual source gate is AST-dominated, explicit, and fail-closed
+  security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed
+  security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed
+  security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+  sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+  install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed
+  automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed
+  automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+  automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed
+  rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed
+  rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed
+  rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed
+  safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed
+  safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+  safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed
+  PowerShell AST analyzer rejects bypass-shaped control flow
+  printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail
+  group rollback distinguishes verified recovery, unresolved recovery, and successful forward state
+  actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID
+
+$ node --test
+# the same suite in this agent shell as it is, where TMPDIR goes through the /var link: 20 more tests fail, in scripts/security-audit.test.js (11), scripts/init-memory.test.js (8) and scripts/gws-posture-audit.test.js (1), whose code refuses or resolves a link in the path of its temporary folder
+ℹ tests 2277
+ℹ pass 2215
+ℹ fail 61
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+failing names: 61 (PowerShell-only 41, other 20)
+$ node --test   (at the unchanged commit 3ca7a12, same shell, before any edit)
+# the baseline: the same 61 names fail before this work
+ℹ tests 2246
+ℹ pass 2184
+ℹ fail 61
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+failing names: 61 (PowerShell-only 41, other 20)
+failing in the final run and not in the baseline: 0
+failing in the baseline and not in the final run: 0
+the 20 names that are not PowerShell-only, in both runs of this shell:
+  the default run prints the preview, writes nothing and exits 0
+  default mode previews every target and performs no filesystem write
+  missing, generic, wrong-case, and whitespace-modified confirmations cause zero writes
+  the exact initial-create phrase installs the target set once
+  existing and partial memory remain read-only until a force plan is exactly authorized
+  force replacement requires its own exact plan and creates a verified checkpoint
+  an injected install failure rolls back installed targets and reports partial state
+  a concurrent create is preserved and causes rollback instead of clobber
+  force execution detects drift after backup and never installs over the changed target
+  default execution computes a target-bound preview and writes nothing
+  a target created after temp preparation wins the race and is never clobbered
+  write, fsync, and close failures clean ignored invocation-owned temps with exact partial state
+  install failure removes only the identity-bound invocation temp
+  post-install read-back failure rolls back the identity-bound target
+  rollback unlink failure preserves the installed report and reports unresolved state
+  temp cleanup failure preserves the invocation temp and reports its exact unresolved state
+  a filesystem without a stable nonzero inode fails closed and preserves the unresolved temp
+  a concurrently replaced temp is preserved when its filesystem identity changes
+  a concurrently replaced target is preserved even when its content matches the report
+  Git ignore drift before or after installation fails closed without a trackable report
+
+$ node scripts/pre-commit-check.js --all
+warnings in the whole repository: 271 (the scan prints them and lets a commit proceed)
+files of this work named by the scan: 0
+exit code: 0
+
+$ node scripts/eval/judged-eval.js run --cases <tmp>/aegis-t137-cases-XXXXXX/dev-cases.jsonl
+# lines longer than 240 characters are cut here
+judged-eval: DRY RUN (nothing was started; add --execute to run it)
+label: simulated: model-judged on a case file, no real tenant
+cases: 8 (DEV01, DEV02, DEV03, DEV04, DEV05, DEV06, DEV07, DEV08)
+setup: 0 of 8 case(s) carry a setup (what the company runs, given to the system under test as data)
+system-under-test sessions: 8, turns: 9 (1 follow-up turn(s) resumed in their session)
+judge sessions: 8 (up to 16 with one retry each)
+cost estimate: about 22.50 US dollars for the system under test (9 Aegis runs at about 2.50 US dollars each, the smoke figure in docs/evidence/runtime-smoke.md); judge cost is not in the estimate until measured
+system under test: claude -p <ticket> --output-format stream-json --verbose --max-turns 24 --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent --disallowedTools Bash WebFetch WebSearch --setting-sources project --strict-mcp-con [cut]
+judge: claude -p <judge prompt> --output-format stream-json --verbose --max-turns 1 --tools "" --no-session-persistence --setting-sources project --strict-mcp-config --settings {"claudeMdExcludes":["<home>/CLAUDE.md","<home>/CLAUDE.local.md [cut]
+case folder: denied to the system under test, as given and as resolved (2 read rule(s), the last in the --settings above; the results folder is added when the run starts)
+results: .aegis-state/evals/<run-id>/ (checked when the run starts)
+exit code: 4

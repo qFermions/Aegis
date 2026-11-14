@@ -36,6 +36,11 @@ const FAMILIES = Object.freeze([
 const OTHER_SYSTEMS = /\b(?:Slack|GitHub|Linear|Fleet|Zoom|Jira|Meraki|Salesforce|Dropbox|1Password|Duo|Kandji|Zendesk|Notion|Asana|Workday|QuickBooks|Xero|HubSpot|Adobe|AWS|Citrix|Cisco|RingCentral|Webex)\b/i;
 const namesSystem = (ticket) => FAMILIES.some((f) => f.names(String(ticket))) || OTHER_SYSTEMS.test(String(ticket));
 const NO_PROFILE = /\bno (?:company |customer )?(?:profile|setup)(?: was)? given\b/i;
+// What a setup says the company runs: its text with each negated clause taken out ("No Microsoft 365 and no Active
+// Directory", "not Microsoft", "without Intune"), so a system named only to say it is absent is not listed (code
+// review 1, finding 4). A clause runs to the next "and", "but", "or" or punctuation.
+const NEGATED = /\b(?:no|not|without|never|nor)\b[^.,;:!?\n]*?(?=\s(?:and|but|or)\b|[.,;:!?\n]|$)/gi;
+const affirmed = (setup) => String(setup).replace(NEGATED, ' ');
 const NOT_LISTED = /\b(?:does not|doesn't|did not) (?:list|name|include|have)\b|\bnot (?:listed|in the setup|in the profile)\b|\blacks\b|\bmissing\b/i;
 
 // The row "the answer says which setup it assumed". setup: the profile or setup text given with the ticket, or
@@ -54,7 +59,7 @@ function assumedSetup(answer, { setup = null, ticket = '' } = {}) {
     return row('assumed-setup', plain, true, `"${line}"`);
   }
   if (line && NO_PROFILE.test(line)) return row('assumed-setup', plain, false, 'the Assumed setup line says no company profile was given, but a setup was given with this ticket');
-  const listed = (f) => f.names(setup);
+  const listed = (f) => f.names(affirmed(setup));
   // the system the ticket is about, when the setup that was given does not list it
   const lacking = FAMILIES.filter((f) => f.names(String(ticket)) && !listed(f));
   const unsaid = lacking.filter((f) => !(line && f.names(line) && NOT_LISTED.test(line)));

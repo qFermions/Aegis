@@ -139,3 +139,23 @@ test('task 2: the line is not counted in the card\'s words, and the card still r
   assert.deepEqual(answerChecks(lined, { profile, ticket: '' }).map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass']);
   assert.deepEqual(answerChecks(body, { profile, ticket: '' }).map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass']);
 });
+
+// Code review round 1, finding 4: a setup that says what the company does NOT run ("No Microsoft 365 and no Active
+// Directory") was read as listing it, because the row searched the setup for the name. Wrong implementation it
+// catches: a plain name search of the setup. A setup that does list the system still passes the same answer.
+test('code review 1: a system the setup says the company does not run is not listed by it', () => {
+  const ticket = 'A new starter cannot sign in on her first day.';
+  const setup = 'Google Workspace Business Standard for mail, calendar and files. Chromebooks, managed in the Google Admin console. No Microsoft 365 and no Active Directory.';
+  const walked = assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup, ticket });
+  assert.equal(walked.verdict, 'fail', walked.detail);
+  assert.match(walked.detail, /Microsoft admin path/);
+  assert.equal(assumedSetup(answer({ steps: GOOGLE_STEPS }), { setup, ticket }).verdict, 'pass');
+  for (const not of ['Okta for sign-in; not Microsoft.', 'Okta, without Microsoft 365.', 'Okta and Slack, never Microsoft 365.']) {
+    assert.equal(assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup: not, ticket }).verdict, 'fail', not);
+  }
+  // a Microsoft ticket under that setup: the line must say Microsoft is missing
+  const msTicket = assumedSetup(answer({ steps: GOOGLE_STEPS }), { setup, ticket: 'Outlook will not open for the new starter.' });
+  assert.equal(msTicket.verdict, 'fail');
+  assert.match(msTicket.detail, /Microsoft, which the setup given does not list/);
+  assert.equal(assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup: 'Microsoft 365, but no Intune.', ticket }).verdict, 'pass', 'a negation of another product leaves Microsoft listed');
+});

@@ -10,9 +10,10 @@ disable-model-invocation: true
 **Verdict:** Most Outlook problems are caused by a corrupt profile, a stuck add-in, or a broken cache file. Start with safe mode to isolate, then repair or rebuild as needed. EAC is only needed for server-side checks (message trace, mailbox status).
 
 ## What to check first
+- **How wide first** (answer-format section 2, "How wide before why"): when mail or Outlook is reported down or unreachable, the first step fixes the scope and reads Microsoft's status together. One person or everyone? One site or all? Outlook only, or other internet services too (does Outlook on the web open; does a public website open on the same machine)? Then Microsoft 365 admin center → Health → Service health for Exchange Online, and its **Issue history** tab for an incident that has just closed; when the admin center itself does not load, https://status.cloud.microsoft (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-30 to MB-32).
+- With no Microsoft incident, the network and name-resolution path come before any account-level cause: the same mailbox on another network (a phone hotspot), then `nslookup` on the server address the error names from the affected machine. Works elsewhere, or the name does not resolve: it is `/lan-wan` or DNS, not the profile or the account. Only after that go on to the profile, the licence and the sign-in logs.
 - Is Outlook running already? Check Task Manager → `OUTLOOK.EXE`. Kill stale processes before launching.
 - Is it the new Outlook (web-based toggle, no safe mode) or classic Outlook (.exe)? Steps differ — confirm which build the user has.
-- Is the issue account-wide or just one user? If multiple users, check M365 Service Health: admin.microsoft.com → Health → Service health.
 
 ## Step-by-step fix
 

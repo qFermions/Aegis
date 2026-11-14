@@ -10,6 +10,7 @@ disable-model-invocation: true
 **Verdict:** AD Connect is the source of authority for synced users — if a user isn't appearing in M365 or attributes are wrong, check the Entra admin center sync status first, then look at the Synchronization Service Manager on the AD Connect server for the specific error before touching anything.
 
 ## What to check first
+- **How wide first** (answer-format section 2, "How wide before why"): when sync is reported down, the first step fixes the scope and reads Microsoft's status together. One object or every change since a certain time? One domain or all? Then Microsoft 365 admin center → Health → Service health for a directory or identity incident; when the admin center itself does not load, https://status.cloud.microsoft (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-30, MB-31). With no Microsoft incident, the sync server's network and name-resolution path come before any account-level cause: the server is up, it resolves and reaches the Microsoft sign-in endpoints, and only then the sync account and its password.
 - When did the last sync run? `Entra admin center → Entra ID → Entra Connect → Connect sync` — check "Last sync" timestamp. If it's more than 40 minutes ago, sync may be stuck
 - Is this a new user who never appeared, or an existing user who disappeared / has wrong attributes? New = check OU scoping. Disappeared = check for errors or accidental move in AD
 - Is the AD Connect server online? It needs network access to both on-prem AD and the Microsoft 365 endpoints

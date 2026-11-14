@@ -7,6 +7,7 @@ description: Check overall Meraki network health across all sites — dashboard 
 **Verdict:** Start at Organization Overview for a fleet-wide snapshot, then drill per-site into MX uplinks, AP status, and switch ports. Most issues surface in the event log or as a red/amber uplink on the dashboard.
 
 ## What to check first
+- **How wide first** (answer-format section 2, "How wide before why"): when a site or the network is reported down, the first step fixes the scope and reads the vendor's status together. One device or everyone? One site or all? Local resources only, or the internet and cloud services too? Then https://status.meraki.net for the Meraki cloud, and the provider's own status page or outage line for `[@Aegion_ISP]` (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-33). With no vendor incident, the network and name-resolution path (uplink, addressing, DNS) come before any account-level cause.
 - Organization → Summary report: any red/amber alerts at a glance across all sites
 - Organization → Overview → Network health: devices alerting, offline APs, offline MXes
 - Note which sites are affected before drilling deeper — site-wide vs single-device determines your next move

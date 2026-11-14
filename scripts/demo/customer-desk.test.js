@@ -1251,16 +1251,20 @@ test('task 8: step 5 shows the answer checks as rows (six since batch 9); a fail
   const old = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') } });
   const k = old.ticket('T1');
   const rows = step(k, 5).answer_checks;
-  // batch 9, task 8c added the seventh row, lightest-step-first (its own cases are in lightest-step.test.js)
-  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts', 'user-message-now', 'lightest-step-first']);
+  // batch 9, task 8c added the seventh row, lightest-step-first (its own cases are in lightest-step.test.js); batch 11 added
+  // assumed-setup and ask-first on every answer, and a thinking-rule row when its rule applies to the ticket (T1 is
+  // about a replaced phone, so new-way-in-first; their own cases are in assumed-setup, ask-first and thinking-rules tests)
+  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts', 'user-message-now', 'lightest-step-first', 'assumed-setup', 'ask-first', 'new-way-in-first']);
   assert.equal(rows[0].verdict, 'fail', 'an answer with no Fix card fails the first row');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', 'and the ticket still goes on');
   assert.deepEqual(step(k, 5).checks.map((r) => r.check), ['boundary', 'human-confirmation', 'read-back', 'privacy', 'observed-output', 'probe'], 'the existing checks are unchanged');
-  assert.match(step(k, 5).result, /answer format: \d of 7 pass/);
+  assert.match(step(k, 5).result, /answer format: \d of 10 pass/);
   const carded = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\n${good()}`, 'mfa-require-reregister-portal') } });
   // the seventh row reads the real runbook: mfa-issue's section lists [mfa-session-revoke-portal] before the
   // re-register gate this answer names first, so it fails, is shown, and the ticket still resolves
-  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass', 'fail']);
+  // batch 11's rows: this answer stays inside Customer A's setup and is not a lone question (pass, pass); its steps
+  // clear the old methods with no new way in first, so new-way-in-first fails, is shown, and the ticket still resolves
+  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass', 'fail', 'pass', 'pass', 'fail']);
   assert.match(step(carded.ticket('T1'), 5).answer_checks[6].detail, /mfa-session-revoke-portal/);
   assert.equal(carded.ticket('T1').closing_state, 'RESOLVED (SIMULATED)');
   const sms = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\nThe SMS fallback still works for this user.\n${good()}`, 'mfa-require-reregister-portal') } });
@@ -1499,4 +1503,28 @@ test('batch 9, task 7: T3\'s password reset passes its audit read; the wipe\'s r
   const wipe = (await runDesk(t, { only: ['T3'], answers: { T3: good('jamf-lock-erase-wipe-portal') } })).ticket('T3');
   assert.equal(wipe.closing_state, 'INCONCLUSIVE', wipe.reason);
   assert.deepEqual(step(wipe, 8).reads.map((x) => `${x.kind} ${x.state}`), ['jamf:verify-command INCONCLUSIVE']);
+});
+
+// Batch 11, task 4: an ask-first answer is one question with no Fix card and no Gate line, and the desk reads it as
+// CLARIFY; an answer with a Fix card that asks and says Gate: none still closes CLARIFY (the saved tidy T7 answer of
+// full run 7). Wrong implementations it catches: a desk that needs "Gate: none" to read a question (the lone
+// question would stop OPEN), and one that reads any no-card answer with a question as CLARIFY (the advice with a
+// stray question above must stay OPEN).
+test('batch 11, task 4: an ask-first answer closes CLARIFY with its form row shown; the saved tidy T7 answer still closes CLARIFY', async (t) => {
+  const asked = await runDesk(t, { only: ['T7'], answers: { T7: 'What exactly is slow, for whom, and since when?' } });
+  const k = asked.ticket('T7');
+  assert.equal(k.closing_state, 'CLARIFY', k.reason);
+  assert.equal(asked.code, 0);
+  assert.match(step(k, 7).result, /not reached/);
+  const row = step(k, 5).answer_checks.find((r) => r.check === 'ask-first');
+  // T7's ticket says what is slow and for whom, so the rule wants a Fix card: the row fails, is shown, and stops nothing
+  assert.equal(row.verdict, 'fail');
+  assert.match(row.detail, /Fix card/);
+
+  const saved = fs.readFileSync(path.join(REPO, 'docs', 'aegis', 'demo', 'evidence', 'full-run-7', 'answers', 'T7-answer.txt'), 'utf8');
+  const tidy = await runDesk(t, { only: ['T7'], answers: { T7: saved } });
+  const s = tidy.ticket('T7');
+  assert.equal(s.closing_state, 'CLARIFY', s.reason);
+  assert.equal(step(s, 5).answer_checks.find((r) => r.check === 'ask-first').verdict, 'pass', 'a Fix card on a ticket with a symptom');
+  assert.deepEqual(step(s, 5).answer_checks.map((r) => r.check).slice(7), ['assumed-setup', 'ask-first'], 'no thinking rule applies to a slow-internet ticket');
 });

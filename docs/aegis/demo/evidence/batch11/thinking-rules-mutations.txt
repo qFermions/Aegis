@@ -1,0 +1,42 @@
+Each mutation below was applied to the named file, the named tests were run, and the file was restored (scratch tool mutate.js; commit base 6d836cc plus the working copy). "caught by" lists the failing test names; a name appears twice because node prints it in the run and again in its summary.
+
+MUTATION t5a the order of the steps is not read
+  file: scripts/demo/senior-rules.js
+  change: newWayInFirst no longer checks that the old method is removed last
+  $ node --test scripts/demo/thinking-rules.test.js
+  ℹ tests 9 ℹ pass 8 ℹ fail 1
+  caught by: ✖ task 5a (Google): a new way in before the old way out passes; the old way out first, with a code by email, fails | ✖ task 5a (Google): a new way in before the old way out passes; the old way out first, with a code by email, fails
+  file restored: true
+
+MUTATION t5a the channel is not read
+  file: scripts/demo/senior-rules.js
+  change: newWayInFirst no longer checks the channel the code travels on
+  $ node --test scripts/demo/thinking-rules.test.js
+  ℹ tests 9 ℹ pass 7 ℹ fail 2
+  caught by: ✖ task 5a (Google): a new way in before the old way out passes; the old way out first, with a code by email, fails | ✖ task 5a (Okta): the same order passes; a code sent by chat with no verified channel fails, and so does a missing role or a thin "Done when" | ✖ task 5a (Google): a new way in before the old way out passes; the old way out first, with a code by email, fails | ✖ task 5a (Okta): the same order passes; a code sent by chat with no verified channel fails, and so does a missing role or a thin "Done when"
+  file restored: true
+
+MUTATION t5b any mention of an audit log passes
+  file: scripts/demo/senior-rules.js
+  change: whoElseWhatLeft accepts a log read that asks neither who else nor what left
+  $ node --test scripts/demo/thinking-rules.test.js
+  ℹ tests 9 ℹ pass 8 ℹ fail 1
+  caught by: ✖ task 5b (Microsoft): the same rule on a SharePoint site; a log read for the one person only fails | ✖ task 5b (Microsoft): the same rule on a SharePoint site; a log read for the one person only fails
+  file restored: true
+
+MUTATION t5c the status page may be in any step
+  file: scripts/demo/senior-rules.js
+  change: howWideBeforeWhy looks for the status page in any step, not in step 1
+  $ node --test scripts/demo/thinking-rules.test.js
+  ℹ tests 9 ℹ pass 8 ℹ fail 1
+  caught by: ✖ task 5c (Microsoft): a status page with no scope in step 1 fails, and so does an account cause before the network | ✖ task 5c (Microsoft): a status page with no scope in step 1 fails, and so does an account cause before the network
+  file restored: true
+
+MUTATION t5d a class alone counts
+  file: scripts/demo/senior-rules.js
+  change: changeClassAndCheck counts a line with a class and no double-check
+  $ node --test scripts/demo/thinking-rules.test.js
+  ℹ tests 9 ℹ pass 7 ℹ fail 2
+  caught by: ✖ task 5d (Microsoft): a plan with several changes lists each with its class and double-check, or no gate and a proof | ✖ task 5d (Google): one change short of its double-check fails; a single change does not need the list | ✖ task 5d (Microsoft): a plan with several changes lists each with its class and double-check, or no gate and a proof | ✖ task 5d (Google): one change short of its double-check fails; a single change does not need the list
+  file restored: true
+

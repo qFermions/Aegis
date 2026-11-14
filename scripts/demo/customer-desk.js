@@ -40,6 +40,7 @@ const { catalog, closingGateLines, namedGates, contradictsItself, clarifies, say
 const { onlyLooks, answerChecks, fixCard, words, deskBlock } = require('./answer.js');
 const data = require('./customers.js');
 const { lightestStepFirst } = require('./step-ladder.js');
+const { seniorRows, isAskFirst } = require('./senior-rules.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
 const vendors = require('./sim/vendors.js');
@@ -534,7 +535,9 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     results = checks.runChecks(c5, { answer, follow_up_answer: null });
     // the answer checks of batch 8, task 8 and batch 9: shown as rows, and none of them stops the ticket
     // the ticket text, so a time the user set is not read as a promise in the now message (batch 9, task 2)
-    const format = [...answerChecks(answer, { profile: data.profileText(customer), ticket: text }), lightestStepFirst(answer, ctx.gates)];
+    // batch 11: the assumed setup and ask-first rows on every answer, and each thinking rule that applies to the ticket
+    const profile = data.profileText(customer);
+    const format = [...answerChecks(answer, { profile, ticket: text }), lightestStepFirst(answer, ctx.gates), ...seniorRows(answer, { setup: profile, ticket: text })];
     return {
       checks: results.map((r) => ({ check: r.check, verdict: r.verdict, applies: r.applies })),
       answer_checks: format,
@@ -555,7 +558,9 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   if (contradictsItself(answer)) return close('OPEN', 'a Gate line in the answer says none and also names a gate, which contradicts itself, so nothing is approved');
   const names = namedGates(answer);
   if (!names.length) {
-    if (clarifies(answer, text)) return close('CLARIFY', null);
+    // an ask-first answer (batch 11, task 4) is one question with no Fix card and no Gate line: it asks, so it
+    // closes CLARIFY like an answer that asks and says Gate: none; its form is the "ask first" row's to check
+    if (clarifies(answer, text) || isAskFirst(answer, text)) return close('CLARIFY', null);
     // INVESTIGATE (batch 8, task 6): Gate: none, no question, and every step only looks
     const look = onlyLooks(answer);
     if (closingGateLines(answer).values.some(says_none) && look.looks) {

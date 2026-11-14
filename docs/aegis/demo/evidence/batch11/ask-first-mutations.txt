@@ -1,0 +1,34 @@
+Each mutation below was applied to the named file, the named tests were run, and the file was restored (scratch tool mutate.js; commit base 6d836cc plus the working copy). "caught by" lists the failing test names; a name appears twice because node prints it in the run and again in its summary.
+
+MUTATION t4-a not working reads as a symptom
+  file: scripts/demo/senior-rules.js
+  change: bareTicket takes "not working" for a symptom
+  $ node --test scripts/demo/ask-first.test.js
+  ℹ tests 4 ℹ pass 2 ℹ fail 2
+  caught by: ✖ task 4: ten tickets with nothing to go on read as bare, and ten that name a symptom, an error, a who or a since-when do not | ✖ task 4: a bare ticket must get the one question: the question passes the row and a Fix card fails it | ✖ task 4: ten tickets with nothing to go on read as bare, and ten that name a symptom, an error, a who or a since-when do not | ✖ task 4: a bare ticket must get the one question: the question passes the row and a Fix card fails it
+  file restored: true
+
+MUTATION t4-b the form check counts words in the aegis-desk block and ignores the question count
+  file: scripts/demo/senior-rules.js
+  change: askFirstProblems no longer needs exactly one question mark
+  $ node --test scripts/demo/ask-first.test.js
+  ℹ tests 4 ℹ pass 3 ℹ fail 1
+  caught by: ✖ task 4: the form of an ask-first answer: one question mark, no "## Fix", no numbered steps, at most 60 words | ✖ task 4: the form of an ask-first answer: one question mark, no "## Fix", no numbered steps, at most 60 words
+  file restored: true
+
+MUTATION t4-c the desk needs Gate: none to read a question
+  file: scripts/demo/customer-desk.js
+  change: the desk no longer reads an ask-first answer as CLARIFY
+  $ node --test scripts/demo/customer-desk.test.js
+  ℹ tests 102 ℹ pass 101 ℹ fail 1
+  caught by: ✖ batch 11, task 4: an ask-first answer closes CLARIFY with its form row shown; the saved tidy T7 answer still closes CLARIFY | ✖ batch 11, task 4: an ask-first answer closes CLARIFY with its form row shown; the saved tidy T7 answer still closes CLARIFY
+  file restored: true
+
+MUTATION t4-d any no-card answer with a question is ask-first
+  file: scripts/demo/senior-rules.js
+  change: isAskFirst takes advice with numbered steps and a stray question for an ask-first answer
+  $ node --test scripts/demo/customer-desk.test.js
+  ℹ tests 102 ℹ pass 101 ℹ fail 1
+  caught by: ✖ CLARIFY needs both Gate: none and a question: advice with a stray question and no Gate line is OPEN | ✖ CLARIFY needs both Gate: none and a question: advice with a stray question and no Gate line is OPEN
+  file restored: true
+

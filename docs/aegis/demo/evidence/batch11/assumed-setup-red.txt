@@ -1,0 +1,142 @@
+$ node --test scripts/demo/assumed-setup.test.js   (red: the tests against a stub of senior-rules.js that passes every row, and the unchanged answer.js, at 6d836cc)
+✖ task 2: three answers that must carry the line: no setup given and a ticket that names no system (0.564833ms)
+✖ task 2: the line counts only directly under the heading, with the systems and the words that no profile was given (0.080709ms)
+✖ task 2: three answers that must not carry the line: a setup was given (0.072209ms)
+✖ task 2: with a Google or Okta setup given, a Microsoft admin path in the answer fails the row (0.059334ms)
+✖ task 2: a setup that lacks the system the ticket is about: the line names the missing system (0.066583ms)
+✔ task 2: no setup given and a ticket that names its system: the line is not required (0.049125ms)
+✖ task 2: the line is not counted in the card's words, and the card still reads its six parts (1.000208ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 1
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37.028166
+
+✖ failing tests:
+
+test at scripts/demo/assumed-setup.test.js:50:1
+✖ task 2: three answers that must carry the line: no setup given and a ticket that names no system (0.564833ms)
+  AssertionError [ERR_ASSERTION]: A new starter cannot sign in on her first day.
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/assumed-setup.test.js:60:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/assumed-setup.test.js:65:1
+✖ task 2: the line counts only directly under the heading, with the systems and the words that no profile was given (0.080709ms)
+  AssertionError [ERR_ASSERTION]: a line under Details is not the line
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/assumed-setup.test.js:68:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/assumed-setup.test.js:77:1
+✖ task 2: three answers that must not carry the line: a setup was given (0.072209ms)
+  AssertionError [ERR_ASSERTION]: Google Workspace for mail and files, Okta for sign-in, Jamf Pro for the Macs.
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/assumed-setup.test.js:88:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/assumed-setup.test.js:93:1
+✖ task 2: with a Google or Okta setup given, a Microsoft admin path in the answer fails the row (0.059334ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/assumed-setup.test.js:96:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/assumed-setup.test.js:108:1
+✖ task 2: a setup that lacks the system the ticket is about: the line names the missing system (0.066583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/assumed-setup.test.js:115:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/assumed-setup.test.js:126:1
+✖ task 2: the line is not counted in the card's words, and the card still reads its six parts (1.000208ms)
+  AssertionError [ERR_ASSERTION]: the same count with and without the line
+  
+  95 !== 81
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/assumed-setup.test.js:131:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 95,
+    expected: 81,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

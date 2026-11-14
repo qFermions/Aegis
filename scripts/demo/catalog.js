@@ -146,8 +146,13 @@ function namedGates(answer) {
 const QUESTION = /[A-Za-z0-9)\]]\?+(?=[\s*_)"'\u201d\u2019]|$)/g;
 const squash = (t) => String(t).toLowerCase().replace(/[^a-z0-9?]+/g, ' ').trim();
 function clarifies(answer, ticket = '') {
-  const { values, body } = closingGateLines(answer);
-  if (!values.some(says_none)) return false;
+  return closingGateLines(answer).values.some(says_none) && asks(answer, ticket);
+}
+
+// True when the answer's own text asks a question, read as the comment above says. An ask-first answer (batch 11,
+// task 4) is one question with no Gate line at all, so the desk reads the question apart from the Gate lines.
+function asks(answer, ticket = '') {
+  const { body } = closingGateLines(answer);
   const theirs = squash(ticket);
   let fenced = false;
   return body.split(/\r?\n/).some((l) => {
@@ -163,4 +168,4 @@ function clarifies(answer, ticket = '') {
   });
 }
 
-module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, contradictsItself, clarifies, says_none };
+module.exports = { REPO_ROOT, RUNBOOKS, catalog, closingGateLines, namedGates, contradictsItself, clarifies, asks, says_none };

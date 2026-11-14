@@ -45,6 +45,9 @@ const plainText = (t) => String(t).normalize('NFKC').replace(/[\p{Cf}\p{Default_
 // "the Details section of this answer" is a pointer; a details field, tab, box or pane is part of a message
 // (code review round 3 of batch 9, finding 11)
 const POINTER_LINE = /\b(?:see|in|under)\s+(?:the\s+)?Details\b(?!\s+(?:field|tab|box|pane)\b)/i;
+// The line that says which setup the answer assumed (batch 11, task 2): "Assumed setup: <systems> (<why>)", bold or
+// not. It counts only as the first line under the heading; fixCard leaves it out of the card's word count.
+const ASSUMED_LINE = /^[\s>*_-]*(?:\*\*)?Assumed setup(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(.*)$/i;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 
@@ -73,7 +76,7 @@ function deskBlock(answer) {
 function fixCard(answer) {
   const lines = deskBlock(answer).body.split(/\r?\n/);
   const at = lines.findIndex((l) => CARD_HEADING.test(l));
-  if (at < 0) return { present: false, first: false, text: '', parts: {}, order: [], steps: [], words: 0, lines: [], pointer: null };
+  if (at < 0) return { present: false, first: false, text: '', parts: {}, order: [], steps: [], words: 0, lines: [], pointer: null, assumed: null };
   const firstLine = lines.findIndex((l) => l.trim() !== '');
   let end = lines.length;
   for (let i = at + 1; i < lines.length; i += 1) if (NEXT_SECTION.test(lines[i])) { end = i; break; }
@@ -85,7 +88,13 @@ function fixCard(answer) {
   const tagged = [];
   let pointer = null;
   let current = null;
-  for (const line of own) {
+  // the assumed setup line, only as the first line with text under the heading (batch 11, task 2)
+  const top = own.findIndex((l) => l.trim() !== '');
+  const assumedAt = top >= 0 && ASSUMED_LINE.test(own[top]) ? top : -1;
+  const assumed = assumedAt < 0 ? null : `Assumed setup: ${ASSUMED_LINE.exec(own[assumedAt])[1].replace(/\*\*/g, '').trim()}`;
+  for (const [index, line] of own.entries()) {
+    // it belongs to no part and is no step: it says what the answer assumed, it asks nothing of the tech
+    if (index === assumedAt) { tagged.push({ text: line, part: 'assumed' }); continue; }
     const found = LABELS.find((p) => p.re.test(line));
     if (found) {
       current = found.key;
@@ -126,7 +135,7 @@ function fixCard(answer) {
     if (current) parts[current] = `${parts[current] ? `${parts[current]} ` : ''}${line.trim()}`;
   }
   const text = own.join('\n').trim();
-  return { present: true, first: at === firstLine, text, parts, order, steps, words: words(text) - (pointer ? words(pointer) : 0), lines: tagged, pointer };
+  return { present: true, first: at === firstLine, text, parts, order, steps, words: words(text) - (pointer ? words(pointer) : 0) - (assumedAt < 0 ? 0 : words(own[assumedAt])), lines: tagged, pointer, assumed };
 }
 
 // What is wrong with a card's shape, one plain clause each; empty when it has the five parts in order
@@ -469,7 +478,8 @@ function onlyLooks(raw) {
     // sentence of that step, so its verb is read (code review round 1 of batch 10, class A)
     let numbered = false;
     for (const l of card.lines) {
-      if (MENTION_PARTS.includes(l.part)) continue;
+      // the assumed setup line names systems, it asks for nothing (batch 11, task 2)
+      if (MENTION_PARTS.includes(l.part) || l.part === 'assumed') continue;
       if (l.part === 'doneWhen') { asMentions.push(l.text); continue; }
       if (l.part !== 'doThis') { asSteps.push(l.text); continue; }
       const step = STEP.exec(l.text);

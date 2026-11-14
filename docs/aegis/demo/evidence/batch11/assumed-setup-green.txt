@@ -1,0 +1,16 @@
+$ node --test scripts/demo/assumed-setup.test.js   (green: the tests against senior-rules.js and answer.js as committed with this file)
+✔ task 2: three answers that must carry the line: no setup given and a ticket that names no system (2.69425ms)
+✔ task 2: the line counts only directly under the heading, with the systems and the words that no profile was given (0.293375ms)
+✔ task 2: three answers that must not carry the line: a setup was given (0.897125ms)
+✔ task 2: with a Google or Okta setup given, a Microsoft admin path in the answer fails the row (0.249125ms)
+✔ task 2: a setup that lacks the system the ticket is about: the line names the missing system (0.37475ms)
+✔ task 2: no setup given and a ticket that names its system: the line is not required (0.069333ms)
+✔ task 2: the line is not counted in the card's words, and the card still reads its six parts (13.86825ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 84.284875

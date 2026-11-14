@@ -195,6 +195,9 @@ async function runCommand(opts, io, deps) {
   }
   for (const [flag, value] of [['--model', config.model], ['--judge-model', config.judge_model]]) {
     if (!backends.isModelName(value)) throw new InputError(`${flag} is a model name (letters, digits, dot, dash, colon, brackets)`);
+    // each case is checked against the model its session reports, which is the full id, so an alias such as "opus"
+    // would make every case off-model (code review 1, finding 3)
+    if (!/\d/.test(value)) throw new InputError(`${flag} takes a full model id, such as claude-opus-5-5: each case is checked against the model its session reports`);
   }
   const sheetN = intFlag(opts, '--calibration-sheet', 0, 1, 1000);
   const real = paths.refuseInsideRepo(opts['--cases'], 'the case file', { repoRoot });

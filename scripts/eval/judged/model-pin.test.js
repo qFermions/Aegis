@@ -148,11 +148,11 @@ test('judged-eval: the dry run shows both models; a bad --model is refused; a ru
 test('judged-eval: a session that reports another model than the one asked for makes its case INCONCLUSIVE, and the report counts it', async (t) => {
   // the fake reports the model in its own settings, whatever --model it was given: a CLI that ran another model
   const s = setup(t, { sut: { model: 'claude-fable-5-2' } });
-  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--model', 'claude-sonnet-5-5', '--judge-model', 'judge-x'], s.io, s.deps);
+  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--model', 'claude-sonnet-5-5', '--judge-model', 'judge-x-1'], s.io, s.deps);
   assert.equal(code, 3, `${s.out.join('\n')}\n${s.err.join('\n')}`);
   const calls = s.calls();
   assert.deepEqual(calls.filter((c) => c.role === 'sut').map((c) => modelOf(c.args)), ['claude-sonnet-5-5', 'claude-sonnet-5-5']);
-  assert.deepEqual(calls.filter((c) => c.role === 'judge').map((c) => modelOf(c.args)), ['judge-x', 'judge-x']);
+  assert.deepEqual(calls.filter((c) => c.role === 'judge').map((c) => modelOf(c.args)), ['judge-x-1', 'judge-x-1']);
   const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
   for (const c of json.cases) {
     assert.equal(c.verdict, 'INCONCLUSIVE', c.id);
@@ -160,4 +160,18 @@ test('judged-eval: a session that reports another model than the one asked for m
   }
   assert.deepEqual(json.summary.off_model, { count: 2, ids: ['DEV01', 'DEV02'] });
   assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /\| Cases that ran on another model than the pinned one \(each is INCONCLUSIVE\) \| 2 \(DEV01, DEV02\) \|/);
+});
+
+// Code review round 1, finding 3: the runner compares the pin with the model each session reports, which is the full
+// id ("claude-opus-5-5"), so an alias such as "opus" made every case off-model. The runner now asks for a full id
+// (it holds a digit) before anything starts; the desk, ask-aegis and the chat compare nothing and still take an alias.
+// Wrong implementation it catches: one that takes "opus" and then marks every case INCONCLUSIVE.
+test('code review 1: the judged runner refuses a model alias before anything starts, and says to give the full id', async (t) => {
+  for (const [flag, alias] of [['--model', 'opus'], ['--judge-model', 'sonnet']]) {
+    const s = setup(t);
+    assert.equal(await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, flag, alias], s.io, s.deps), 1, `${flag} ${alias}`);
+    assert.match(s.err.join('\n'), new RegExp(`${flag} takes a full model id, such as claude-opus-5-5`));
+    assert.equal(s.calls().length, 0);
+  }
+  assert.ok(backends.sutArgs({ prompt: 'P', model: 'opus' }).includes('opus'), 'the shared argument builder still takes an alias');
 });

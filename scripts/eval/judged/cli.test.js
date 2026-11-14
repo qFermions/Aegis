@@ -101,7 +101,7 @@ test('the real CLI refuses the DEV file in the repository and a symlink into it 
 
 test('the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3)', async (t) => {
   const s = setup(t);
-  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--calibration-sheet', '3', '--judge-model', 'judge-x'], s.io, s.deps);
+  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--calibration-sheet', '3', '--judge-model', 'judge-x-1'], s.io, s.deps);
   assert.equal(code, 3, `${s.out.join('\n')}\n${s.err.join('\n')}`);
   const lines = s.out.filter((l) => /^DEV\d\d /.test(l));
   assert.deepEqual(lines.map((l) => l.split(' ')[0]), DEV_CASES.map((c) => c.id));
@@ -114,8 +114,8 @@ test('the DEV set runs through the runner with the fake backends and produces th
   assert.equal(json.cases.length, 8);
   assert.equal(json.summary.measures.pass_rate.denominator, 8, 'all 8 judged');
   // the fake reports the --model it was given, as the real CLI does (batch 11 resumed)
-  assert.deepEqual(json.judge_models, ['judge-x']);
-  assert.equal(json.config.judge_model, 'judge-x');
+  assert.deepEqual(json.judge_models, ['judge-x-1']);
+  assert.equal(json.config.judge_model, 'judge-x-1');
   assert.ok(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8').includes(json.label));
   const sheet = calibrate.parseCsv(fs.readFileSync(path.join(s.results, 'calibration-sheet.csv'), 'utf8'));
   assert.equal(sheet.length, 4);

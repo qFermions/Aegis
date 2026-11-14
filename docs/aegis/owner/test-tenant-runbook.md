@@ -1105,6 +1105,13 @@ node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --
 
 Good result: dry run exit 4; exit 0 after deleting that one method from the test user, exit 2 before.
 
+```bash
+node scripts/adapters/msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE]
+node scripts/adapters/msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```
+
+Good result: dry run exit 4; exit 2 before a Temporary Access Pass is issued to the test user; exit 0 after one is issued at or after `[NOT_BEFORE]`, with `isUsable` and `methodUsabilityReason` shown and no pass value. Exit 5 with "not a time" means the list read gives a pass no `createdDateTime`: write that down, it answers vendor fact MB-12a (`docs/aegis/batch11/vendor-facts-microsoft.md`).
+
 ### Open questions this tenant answers
 
 Microsoft does not document whether a password reset moves signInSessionsValidFromDateTime, so on a ticket that also reset the password, verify-sessions-revoked may pass without a revocation. On the test tenant: reset a test user's password without revoking sessions, then run verify-sessions-revoked with --not-before set to just before the reset, and record whether it passes.

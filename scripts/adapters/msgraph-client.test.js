@@ -353,3 +353,103 @@ test('every --not-before takes the approved_at form with milliseconds and compar
     assert.equal(r.transport.calls.length, 0, t);
   }
 });
+
+// Batch 11, task 5 (answer-format section 2, "A new way in before the old way out"): /mfa-issue's
+// lost-or-replaced-device path issues a Temporary Access Pass under its own gate, and
+// verify-temporary-access-pass is that gate's read-back. It reads the user's authentication methods
+// (the read the connector already has: UserAuthenticationMethod.Read.All, vendor facts MB-11 and MB-12)
+// and passes only when a pass is listed that was created at or after --not-before and that the user
+// can use. A user holds one pass at a time (MB-09), and Graph returns the pass value as null on a GET.
+// EXPECTED DECISION (written before the code)
+// - a pass created before --not-before is another ticket's, not this change: not verified (exit 2).
+//   Wrong implementation this catches: "a temporaryAccessPass method is listed", which is all
+//   verify-mfa-method --method temporaryAccessPass asks, and which an old expired pass also meets.
+// - a pass the user cannot use (DisabledByPolicy: not in the Temporary Access Pass policy; Expired) is
+//   no way in: not verified. Wrong implementation this catches: one that reads only createdDateTime.
+// - a pass already used once (OneTimeUsed) or not yet valid (NotYetValid) was issued by this change:
+//   verified, with the state shown.
+// - no list, another page with no pass on this one, or a createdDateTime that is not a time proves
+//   nothing either way: INCONCLUSIVE (exit 5), never a pass and never a failed object.
+// - the pass value never appears in the output, even when an answer holds one. Wrong implementation
+//   this catches: one that prints the listed method as it came.
+test('verify-temporary-access-pass: passes only on a usable pass created at or after --not-before; an older, unusable or unlisted pass does not pass, and an answer that proves nothing is INCONCLUSIVE', async () => {
+  const U = 'aaaaaaaa-0000-4000-8000-000000000001';
+  const T = '2026-10-28T09:00:00Z';
+  const argv = ['verify-temporary-access-pass', '--user', U, '--not-before', T];
+  const v = (replies) => cli([...argv, '--execute'], { replies: [token(), ...replies] });
+  const password = { id: '28c10230-6103-485e-b985-444c60001490', '@odata.type': '#microsoft.graph.passwordAuthenticationMethod' };
+  const SECRET = ['Pass', 'Value', String(19 * 53)].join('-');
+  const pass = (over = {}) => ({ '@odata.type': '#microsoft.graph.temporaryAccessPassAuthenticationMethod', id: '00aa00aa-bb11-4c22-8d33-44ee44ee44ee', temporaryAccessPass: null,
+    createdDateTime: '2026-10-28T09:04:00Z', startDateTime: '2026-10-28T09:04:00Z', lifetimeInMinutes: 60, isUsableOnce: true, isUsable: true, methodUsabilityReason: 'EnabledByPolicy', ...over });
+
+  const good = await v([ok({ value: [password, pass({ temporaryAccessPass: SECRET })] })]);
+  assert.equal(good.code, 0, good.text);
+  assert.equal(good.json.verified, true);
+  assert.deepEqual(good.json.observed, { createdDateTime: '2026-10-28T09:04:00Z', isUsable: true, methodUsabilityReason: 'EnabledByPolicy' });
+  assert.ok(!good.text.includes(SECRET), 'the pass value is never printed');
+  const call = good.transport.calls[1];
+  assert.equal(call.method, 'GET');
+  assert.match(call.path || call.url || '', new RegExp(`/v1\\.0/users/${U}/authentication/methods$`));
+
+  const stale = await v([ok({ value: [password, pass({ createdDateTime: '2026-10-21T15:00:00Z', isUsable: false, methodUsabilityReason: 'Expired' })] })]);
+  assert.equal(stale.code, 2, stale.text);
+  assert.equal(stale.json.state, 'OK');
+  assert.match(stale.json.reason, /created 2026-10-21T15:00:00Z, before 2026-10-28T09:00:00Z/);
+  const staleUsable = await v([ok({ value: [pass({ createdDateTime: '2026-10-28T08:59:59Z' })] })]);
+  assert.equal(staleUsable.code, 2, 'a pass from before the approval is not this change, usable or not');
+
+  const none = await v([ok({ value: [password] })]);
+  assert.equal(none.code, 2, none.text);
+  assert.match(none.json.reason, /no Temporary Access Pass is listed/);
+
+  for (const why of ['DisabledByPolicy', 'Expired']) {
+    const unusable = await v([ok({ value: [pass({ isUsable: false, methodUsabilityReason: why })] })]);
+    assert.equal(unusable.code, 2, `${why}: ${unusable.text}`);
+    assert.match(unusable.json.reason, new RegExp(`cannot be used: ${why}`));
+  }
+  for (const why of ['OneTimeUsed', 'NotYetValid']) {
+    const issued = await v([ok({ value: [pass({ isUsable: false, methodUsabilityReason: why })] })]);
+    assert.equal(issued.code, 0, `${why}: ${issued.text}`);
+    assert.equal(issued.json.observed.methodUsabilityReason, why);
+  }
+
+  const inconclusive = [
+    [{}, /no value list/],
+    [{ value: [password], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/users/x/authentication/methods?$skiptoken=y' }, /another page/],
+    [{ value: [pass({ createdDateTime: 'this morning' })] }, /not a time/],
+    [{ value: [pass({ createdDateTime: undefined })] }, /not a time/],
+  ];
+  for (const [body, reason] of inconclusive) {
+    const r = await v([ok(body)]);
+    assert.equal(r.code, 5, r.text);
+    assert.equal(r.json.state, 'INCONCLUSIVE', r.text);
+    assert.notEqual(r.json.verified, true);
+    assert.match(r.json.reason, reason);
+  }
+
+  const denied = await v([{ status: 403, body: { error: { code: 'Authorization_RequestDenied' } } }]);
+  assert.equal(denied.code, 2);
+  assert.equal(denied.json.state, 'HTTP_ERROR');
+  assert.notEqual(denied.json.verified, true, 'a refused read never proves a pass');
+
+  const dry = await cli(argv);
+  assert.equal(dry.code, 4, dry.text);
+  assert.equal(dry.transport.calls.length, 0);
+  assert.deepEqual(dry.json.expected, { user: U, temporary_access_pass: `created at or after ${T} and usable` });
+  const unbounded = await cli(['verify-temporary-access-pass', '--user', U, '--execute'], { replies: [token(), ok({ value: [pass()] })] });
+  assert.equal(unbounded.code, 1, 'the time bound is required: without it an old pass would pass');
+  assert.equal(unbounded.transport.calls.length, 0);
+});
+
+// The connector still only reads: the new read-back adds no route and no write (batch 11, task 5).
+// Wrong implementation this catches: a "helper" that creates or deletes the pass through Graph.
+test('verify-temporary-access-pass uses the authentication-methods GET the connector already had; no command creates or deletes a pass', async () => {
+  assert.deepEqual(ms.COMMANDS['verify-temporary-access-pass'].steps({ user: 'u' }).map((s) => s.route), ['authMethods']);
+  assert.ok(Object.values(ms.ROUTES).every((r) => r.method === 'GET'));
+  assert.ok(!Object.keys(ms.ROUTES).some((name) => /temporaryAccessPass/i.test(name)), 'no route of its own');
+  for (const write of ['create-temporary-access-pass', 'delete-temporary-access-pass', 'issue-pass']) {
+    const r = await cli([write, '--user', 'aaaaaaaa-0000-4000-8000-000000000001', '--execute'], { replies: [token()] });
+    assert.equal(r.code, 1, write);
+    assert.equal(r.transport.calls.length, 0, write);
+  }
+});

@@ -90,6 +90,8 @@ const VERIFY_FLAGS = Object.freeze({
     'verify-group-member': { group: OBJECT, user: OBJECT, absent: SWITCH },
     'verify-sessions-revoked': { user: OBJECT, 'not-before': TIME },
     'verify-method-absent': { user: OBJECT, 'method-id': OBJECT },
+    // batch 11: an old pass stays listed, so the bound says which pass proves this change
+    'verify-temporary-access-pass': { user: OBJECT, 'not-before': TIME },
   }),
   okta: Object.freeze({
     // okta-client.js STATUSES

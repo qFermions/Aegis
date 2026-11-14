@@ -1223,6 +1223,8 @@ const TIMED = {
   'jamf:verify-command': '--type INSTALL_PROFILE', 'jamf:verify-checked-in': '',
   'linear:verify-comment': `--expect-sha256 ${DIGEST_A}`,
   'msgraph:verify-password-changed': '', 'msgraph:verify-signin': '', 'msgraph:verify-device-synced': '', 'msgraph:verify-sessions-revoked': '',
+  // batch 11, task 5: the Temporary Access Pass read-back of /mfa-issue is bounded in time
+  'msgraph:verify-temporary-access-pass': '',
   'okta:verify-sessions-cleared': '', 'okta:verify-password-reset': '',
   'slack:verify-posted': `--expect-sha256 ${DIGEST_A}`,
   'jira:verify-create': `--expect-sha256 ${DIGEST_A}`, 'jira:verify-comment': `--expect-sha256 ${DIGEST_A}`,

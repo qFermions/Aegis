@@ -419,7 +419,7 @@
       ],
       "least_privilege": [
         "User.Read.All (users; signInSessionsValidFromDateTime on $select for verify-sessions-revoked, vendor facts M-09, M-27)",
-        "UserAuthenticationMethod.Read.All (authentication methods; auth-methods, verify-mfa-method, verify-mfa-cleared and verify-method-absent, vendor fact M-14)",
+        "UserAuthenticationMethod.Read.All (authentication methods; auth-methods, verify-mfa-method, verify-mfa-cleared, verify-method-absent and verify-temporary-access-pass, vendor fact M-14; the pass read needs no further permission, batch 11 vendor fact MB-12)",
         "AuditLog.Read.All (sign-in logs; Entra ID P1 or P2)",
         "GroupMember.ReadBasic.All",
         "Directory.Read.All (only for another user's memberOf)",

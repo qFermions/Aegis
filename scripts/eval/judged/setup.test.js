@@ -169,7 +169,9 @@ function setupRun(t, setups) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-judged-setup-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const file = path.join(dir, 'cases.jsonl');
-  const rows = fs.readFileSync(DEV, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  // the eight cases of batch G4 (DEV01 to DEV08), the DEV file's first eight lines: batch 11 grew the set to 24,
+  // two of them with a setup of their own, and the counts below are written against these eight with none
+  const rows = fs.readFileSync(DEV, 'utf8').split('\n').filter(Boolean).slice(0, 8).map((l) => JSON.parse(l));
   for (const row of rows) if (Object.prototype.hasOwnProperty.call(setups, row.id)) row.setup = setups[row.id];
   fs.writeFileSync(file, `${rows.map((r) => JSON.stringify(r)).join('\n')}\n`);
   const cfg = path.join(dir, 'fake.json');

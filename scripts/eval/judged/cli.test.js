@@ -29,13 +29,16 @@ const { REPO_ROOT } = require('./paths.js');
 const CLI = path.join(__dirname, '..', 'judged-eval.js');
 const DEV = path.join(__dirname, 'dev-cases.jsonl');
 const FAKE = path.join(__dirname, 'fixtures', 'fake-claude.js');
-const DEV_CASES = cases.readCaseFile(DEV).cases;
+// Batch 11 grew the DEV set to 24 cases. This file's counts were written against the eight cases of batch G4
+// (DEV01 to DEV08), so it keeps those eight, the file's first eight lines, as its fixture.
+const G4_TEXT = `${fs.readFileSync(DEV, 'utf8').split('\n').slice(0, 8).join('\n')}\n`;
+const DEV_CASES = cases.parseCases(G4_TEXT).cases;
 
 function setup(t, fakeConfig = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-judged-cli-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const copy = path.join(dir, 'dev-cases.jsonl');
-  fs.copyFileSync(DEV, copy);
+  fs.writeFileSync(copy, G4_TEXT);
   const cfg = path.join(dir, 'fake.json');
   const log = path.join(dir, 'calls.jsonl');
   fs.writeFileSync(cfg, JSON.stringify({ log, ...fakeConfig }));

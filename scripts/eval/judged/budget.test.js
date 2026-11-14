@@ -25,6 +25,8 @@ const cli = require('../judged-eval.js');
 
 const DEV = path.join(__dirname, 'dev-cases.jsonl');
 const FAKE = path.join(__dirname, 'fixtures', 'fake-claude.js');
+// the eight cases of batch G4 (DEV01 to DEV08), the DEV file's first eight lines: the counts below are written against them
+const G4_TEXT = `${fs.readFileSync(DEV, 'utf8').split('\n').slice(0, 8).join('\n')}\n`;
 
 function setup(t, fakeConfig) {
   const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'aegis-judged-budget-'));
@@ -32,7 +34,7 @@ function setup(t, fakeConfig) {
   const caseDir = path.join(dir, 'cases');
   fs.mkdirSync(caseDir);
   const copy = path.join(caseDir, 'dev-cases.jsonl');
-  fs.copyFileSync(DEV, copy);
+  fs.writeFileSync(copy, G4_TEXT);
   const cfg = path.join(dir, 'fake.json');
   const log = path.join(dir, 'calls.jsonl');
   fs.writeFileSync(cfg, JSON.stringify({ log, ...fakeConfig }));

@@ -103,10 +103,27 @@ test('invalid JSON is refused with its line number and never echoes the line tex
   assert.deepEqual(refusal('\n\n'), ['the case file holds no cases']);
 });
 
-test('the DEV set: 8 placeholder-only cases DEV01..DEV08 with the required coverage', () => {
+// Batch 11, task 8 added DEV09 to DEV24, written next to its rules: two cases for each of the four new thinking
+// rules and the two content rules, on two platforms each, two ask-first tickets and two with a setup. The test
+// below pinned eight cases before; it pins the 24 and that coverage now.
+test('the DEV set: 24 placeholder-only cases DEV01..DEV24 with the required coverage', () => {
   const { cases: dev } = cases.readCaseFile(DEV);
-  assert.deepEqual(dev.map((c) => c.id), ['DEV01', 'DEV02', 'DEV03', 'DEV04', 'DEV05', 'DEV06', 'DEV07', 'DEV08']);
+  assert.deepEqual(dev.map((c) => c.id), Array.from({ length: 24 }, (_, i) => `DEV${String(i + 1).padStart(2, '0')}`));
   assert.ok(dev.every((c) => c.id.includes('DEV')));
+  // the first eight are batch G4's and carry no setup; batch 11's sixteen follow
+  assert.ok(dev.slice(0, 8).every((c) => c.setup === ''));
+  const added = dev.slice(8);
+  const scenario = (re) => added.filter((c) => re.test(c.scenario));
+  for (const [rule, re] of [['a new way in before the old way out', /lost-phone|replaced-phone/], ['who else, and what left', /open-to-anyone|wrong-group/], ['how wide before why', /will-not-load|cannot-reach/], ['every change carries its class', /new-starter-plan|rename-and-grants/], ['sender authentication', /spf-dkim|unauthenticated-sender/], ['offboarding', /leaver/]]) {
+    const pair = scenario(re);
+    assert.equal(pair.length, 2, `two cases for ${rule}`);
+    assert.equal(new Set(pair.map((c) => c.platform)).size, 2, `${rule}: on two platforms`);
+  }
+  assert.equal(scenario(/^ask-first-/).length, 2, 'two ask-first tickets');
+  assert.ok(scenario(/^ask-first-/).every((c) => c.class === 'CLARIFY' && c.expected.change_class === 'none'));
+  const withSetup = added.filter((c) => c.setup !== '');
+  assert.equal(withSetup.length, 2, 'two cases carry a setup');
+  assert.ok(withSetup.every((c) => !/Microsoft 365 Business Premium/.test(c.setup) && /No Microsoft 365/.test(c.setup)), 'each for a platform that is not the default environment');
   assert.ok(new Set(dev.map((c) => c.platform)).size >= 5, 'several platforms');
   assert.ok(dev.some((c) => c.class === 'CLARIFY'));
   assert.ok(dev.some((c) => c.probe === 'injection'));

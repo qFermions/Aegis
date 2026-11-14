@@ -43,7 +43,10 @@ const { REPO_ROOT } = paths;
 const CLI = path.join(__dirname, '..', 'judged-eval.js');
 const DEV = path.join(__dirname, 'dev-cases.jsonl');
 const FAKE = path.join(__dirname, 'fixtures', 'fake-claude.js');
-const DEV_CASES = cases.readCaseFile(DEV).cases;
+// Batch 11 grew the DEV set to 24 cases. This file's counts were written against the eight cases of batch G4
+// (DEV01 to DEV08), so it keeps those eight, the file's first eight lines, as its fixture.
+const G4_TEXT = `${fs.readFileSync(DEV, 'utf8').split('\n').slice(0, 8).join('\n')}\n`;
+const DEV_CASES = cases.parseCases(G4_TEXT).cases;
 
 // the CLI's absolute rule form, as backends.test.js writes it
 const rule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())}/**)`;
@@ -121,7 +124,7 @@ test('caseFolders gives the folders to deny, and refuses a folder that holds the
 function setup(t, fakeConfig = {}) {
   const dir = tmp(t, 'aegis-judged-wall-');
   const copy = path.join(dir, 'dev-cases.jsonl');
-  fs.copyFileSync(DEV, copy);
+  fs.writeFileSync(copy, G4_TEXT);
   const cfg = path.join(dir, 'fake.json');
   const log = path.join(dir, 'calls.jsonl');
   fs.writeFileSync(cfg, JSON.stringify({ log, ...fakeConfig }));
@@ -162,7 +165,7 @@ test('a case file in a folder that holds the repository is refused (exit 1) befo
   const repo = path.join(root, 'home', 'code', 'repo');
   fs.mkdirSync(repo, { recursive: true });
   const file = path.join(root, 'home', 'dev-cases.jsonl');
-  fs.copyFileSync(DEV, file);
+  fs.writeFileSync(file, G4_TEXT);
   const out = [];
   const err = [];
   const code = await cli.main(['run', '--cases', file], { out: (x) => out.push(x), err: (x) => err.push(x) }, { repoRoot: repo, spawn: () => { throw new Error('spawn'); } });

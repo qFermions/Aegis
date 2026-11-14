@@ -338,3 +338,17 @@ test('code review 1: "nobody at <a place> can get into" is a service down, and "
   assert.equal(howWideBeforeWhy(plain, { ticket: 'Nobody at the second office has a printer yet.' }).applies, false);
   assert.equal(whoElseWhatLeft(plain, { ticket: 'The team should never have to wait this long for a laptop.' }).applies, false);
 });
+
+// Code review round 1, finding 15: the account-cause reader counted the scope step itself ("... whether anyone else's
+// account is affected") as an account-level cause before the network. Step 1 is the scope step the rule asks for, so a
+// cause is read from step 2 on. Wrong implementation it catches: one that reads every step, step 1 included.
+test('code review 1: the word "account" in the scope step is not an account-level cause', () => {
+  const ticket = 'Slack will not load for the support team this morning.';
+  const card = (steps) => ['## Fix', "**What's wrong:** Slack does not load.", '**Do this:**', ...steps.map((s, i) => `${i + 1}. ${s}`), '**Done when:** Slack loads.', ''].join('\n');
+  const scope = 'Fix the scope: one person or everyone, one site or all sites, and other services too; read the Slack status page and whether anyone else\'s account is affected.';
+  const good = howWideBeforeWhy(card([scope, 'Check DNS: run nslookup on the Slack address.', 'Then check the user\'s account.']), { ticket });
+  assert.equal(good.verdict, 'pass', good.detail);
+  const bad = howWideBeforeWhy(card([scope, 'Reset the user\'s password.', 'Check DNS with nslookup.']), { ticket });
+  assert.equal(bad.verdict, 'fail');
+  assert.match(bad.detail, /account-level cause comes before the network/);
+});

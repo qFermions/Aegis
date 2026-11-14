@@ -159,7 +159,7 @@ const UNVERIFIED_SEND = /\b(?:by|via|over|in an?|through) (?:text|sms|chat|email
 const NEW_PRESENT = /\bnew\b[^.\n]{0,80}\b(?:listed|present|registered|shows?|appears?|enrolled|set up|there)\b/i;
 const OLD_GONE = /\b(?:old|lost|previous|former|stolen|replaced|traded[- ]in)\b[^.\n]{0,80}\b(?:gone|removed|no longer|not listed|absent|deleted)\b/i;
 
-const firstStep = (steps, test) => steps.findIndex((s) => test(s));
+const firstStep = (steps, test) => steps.findIndex((s, i) => test(s, i));
 function newWayInFirst(answer, { ticket = '' } = {}) {
   const plain = 'A lost or replaced sign-in device gets a new way in before the old one is removed';
   if (!lostSignInDevice(ticket)) return row('new-way-in-first', plain, true, 'the ticket is not about a lost or replaced sign-in device', false);
@@ -241,7 +241,9 @@ function howWideBeforeWhy(answer, { ticket = '' } = {}) {
   if (dims < 2) out.push('step 1 does not fix the scope (one person or everyone, one site or all, this service or others too)');
   if (!STATUS_PAGE.test(steps[0])) out.push("step 1 does not open the vendor's status page");
   const network = firstStep(steps, (s) => NETWORK_PATH.test(s));
-  const account = firstStep(steps, (s) => ACCOUNT_CAUSE.test(s));
+  // step 1 is the scope step the rule asks for ("... whether anyone else's account is affected"), not a cause, so a
+  // cause is read from step 2 on (code review 1, finding 15)
+  const account = firstStep(steps, (s, i) => i > 0 && ACCOUNT_CAUSE.test(s));
   if (account >= 0 && (network < 0 || account < network)) out.push('an account-level cause comes before the network and name-resolution path');
   return row('how-wide-before-why', plain, out.length === 0, out.length ? out.join('; ') : 'step 1 fixes the scope with the status page, and the network path comes before any account cause');
 }

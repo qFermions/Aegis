@@ -20,6 +20,7 @@ disable-model-invocation: true
 - **Is there a sign-in failure you're troubleshooting?** Check `Entra ID → Monitoring & health → Sign-in logs → [UPN]` first — the failure reason will say which CA policy blocked it.
 - **Are you creating a new policy or modifying an existing one?** Existing = check current scope and exclusions before touching it.
 - **Is a break-glass account confirmed?** Never make an org-wide CA change without one. See break-glass section below.
+- **Was a gap open that should not have been** (an exclusion never taken back, a policy left Off or in Report-only)? Once it is closed under its own reviewed change, the next step is a read, R0 (answer-format section 2, "Who else, and what left"): `Entra ID → Monitoring & health → Sign-in logs` for the time the gap was open shows who else signed in through it, and the audit log in the Microsoft Purview portal shows what those sessions opened, downloaded or shared onward. Until that read is done, nobody says how serious the gap was (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-20 to MB-25).
 - **What license tier?** CA requires Entra ID P1 (included in M365 Business Premium). Named Locations and compliant device conditions require P1. Continuous Access Evaluation requires P2.
 
 ## Conditional Access concepts (plain English)

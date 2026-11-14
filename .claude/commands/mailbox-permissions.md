@@ -87,6 +87,8 @@ node scripts/adapters/exo-client.js verify-recipient-permission --mailbox [MAILB
 node scripts/adapters/exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --absent --execute
 ```
 
+**Who else, and what left (answer-format section 2; a read, R0, no gate):** when the delegate should never have had the access, the removal above closes the path and the next step is the audit log. A person with the Audit Logs or View-Only Audit Logs role searches it (Microsoft Purview portal, Audit) on `[MAILBOX]` for the whole time the grant stood; for a shared mailbox the address goes in the Keywords field, and without an E5 licence the log goes back 180 days. Read two things there. Who else: who added the grant, and whether the same hand gave it to anyone else (Added delegate mailbox permissions); the Delegation list read back above shows who holds it now. What left: Accessed mailbox items by `[UPN]`, and Sent message using Send As permissions for anything sent as the mailbox. Until that read is done the answer does not say how serious it is. Vendor facts: `docs/aegis/batch11/vendor-facts-microsoft.md` MB-20, MB-21, MB-23, MB-23a.
+
 <details>
 <summary>PowerShell — for reference only</summary>
 
@@ -125,6 +127,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 - [ ] Send As / on-behalf produces the correct From line on a test send
 - [ ] Full Access mailbox auto-maps (or re-add profile if delayed)
 - [ ] Audit list reflects only authorized delegates
+- [ ] Access that should not have existed: the audit log was read for who else got the grant and for what the delegate opened or sent, before anyone said how serious it is
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. Mailbox-permission state for `[UPN]` on `[MAILBOX]`: [read-only audit / removal verified under this command's exact gate / grant verified under a separate authorized workflow]. Permission: [Full Access / Send As / Send on Behalf]. Read-back/test-send state: [verified result / not performed]. Authorization reference: [MANAGER_NAME / JIRA-###]. Time spent: [X] min.

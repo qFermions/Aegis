@@ -65,6 +65,8 @@ node scripts/adapters/exo-client.js verify-recipient-permission --mailbox [MAILB
 - **Read-back:** none (R1: no change record)
 **PORTAL ACTION [shared-mailbox-convert-portal]:** Only after the exact match, EAC → Mailboxes → `[UPN]` → **Others → Convert to shared mailbox**. License removal is a separate destructive action and is not authorized by this phrase.
 
+**Who else, and what left (answer-format section 2; a read, R0, no gate):** when a ticket says someone had the shared mailbox who should not have, the grant is removed under `/mailbox-permissions`, and the next step is its audit-log read: who else was given the mailbox by the same hand, and what that person opened or sent as the mailbox while the grant stood. For a shared mailbox the address goes in the Keywords field of the search. Until that read is done the answer does not say how serious it is.
+
 <details>
 <summary>PowerShell — for reference only</summary>
 
@@ -84,6 +86,8 @@ Connect-ExchangeOnline                                            # connect to E
 ## ⚠️ Risk warning
 - Shared mailbox >50 GB or with In-Place Archive **needs a license** — don't strip the license if it's large/archived.
 - Auto-mapping change can take time to appear in Outlook; a full re-add to profile may be needed.
+- Licence rules for a shared mailbox, as Microsoft states them (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-50, MB-51): no licence while it is under 50 GB; an Exchange Online Plan 2 licence when it holds more than 50 GB, uses in-place archiving or is on litigation hold. The account behind it stays: deleting it takes the mailbox with it (MB-52).
+- A converted mailbox still opens with the person's old sign-in until that password is reset or sign-in is blocked (MB-53). For a leaver, `/offboard` contains the identity before it converts, and says where the mail goes and for how long.
 
 ## ✅ Verification checklist
 - [ ] Mailbox shows under Recipients → Shared

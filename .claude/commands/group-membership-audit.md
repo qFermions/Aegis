@@ -22,6 +22,7 @@ disable-model-invocation: true
 4. **Dynamic groups:** Membership type Dynamic → review/adjust the **membership rule**; you can't add/remove members manually.
 5. **Synced groups:** if "On-premises sync" = Yes, edit membership in **ADUC**, not Entra (cloud edits get overwritten at sync).
 6. **Remediate stale access:** remove users who no longer need it (confirm with owner/manager).
+7. **Who else, and what left** (answer-format section 2; reads only, R0, no gate): when the audit finds a member who should never have been in `[GROUP]`, the removal in step 6 closes the path and the next step is the log. First Entra ID → Monitoring & health → Audit logs for the group: the "Added member to group" entry says who added them and when, and the same search shows who else was added the same way. Then the audit log in the Microsoft Purview portal, for the time the membership stood: what it opened for that person (Accessed file, Downloaded file and the sharing activities on the group's sites; Accessed mailbox items on a mailbox the group reaches). Until those reads are done the audit does not say how serious the finding is. Vendor facts: `docs/aegis/batch11/vendor-facts-microsoft.md` MB-20 to MB-25.
 
 <details>
 <summary>PowerShell — for reference only</summary>
@@ -44,6 +45,7 @@ Get-MgUserTransitiveMemberOf -UserId "[UPN]" | Select AdditionalProperties   # e
 - [ ] Member list / user's group list exported for the record
 - [ ] Nested + dynamic memberships accounted for (effective access mapped)
 - [ ] Stale access removed (owner/manager confirmed)
+- [ ] A member who should never have been there: the logs were read for who added them, who else was added the same way, and what the membership let them open or download, before anyone said how serious it is
 - [ ] Synced groups edited on-prem; change visible in Entra after sync
 
 ## 📝 Jira-ready note

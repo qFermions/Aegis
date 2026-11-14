@@ -38,7 +38,7 @@ Use this for: trusted vendors, known-good newsletters, partner orgs with occasio
 ### Method 2 — Anti-spam policy: allowed senders / domains
 
 > **PREVIEW ONLY [email-whitelist-method-2]:** The state-changing path below is not authorized by this reference. Move the intended action to a separate reviewed runbook with resolved target, effect, scope, reversibility/checkpoint, and an action-specific exact confirmation.
-**Safety: Low.** Microsoft ranks this method last. Senders on these lists "bypass all spam, spoof, phishing protection (except high confidence phishing), and sender authentication (SPF, DKIM, DMARC)", and Microsoft calls the method "best used for temporary testing only" (MB-41). So it is never the answer to mail that fails those checks. Applies to all users covered by the policy (often org-wide).
+**Safety: Low.** Microsoft ranks this method last. Senders on these lists "bypass all spam, spoof, phishing protection (except high confidence phishing), and sender authentication (SPF, DKIM, DMARC)", and Microsoft calls the method "best used for temporary testing only" (MB-41, MB-41a). So it is never the answer to mail that fails those checks. Applies to all users covered by the policy (often org-wide).
 
 `Defender portal → Email & collaboration → Policies & rules → Threat policies → Anti-spam → [policy name] → Edit → Allowed and blocked senders and domains → Allowed senders / Allowed domains → + Add`
 

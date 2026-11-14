@@ -105,15 +105,32 @@ test('the desk acts the gate out: the read passes after the simulated pass, and 
   assert.deepEqual(stale.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['msgraph:verify-temporary-access-pass FAIL']);
 });
 
-// catches: a pass gate and a delete gate that cannot run in one ticket (the second would stop OPEN), a simulated
-// pass that the delete takes away with the old method, or a pass value written into the run's files
-test('the whole path resolves: the pass first, then the one obsolete method deleted, with both reads passed', async (t) => {
+// catches: a pass gate and a delete gate that cannot run in one ticket (the second would stop OPEN), or a
+// simulated pass that the delete takes away with the old method.
+// What the desk does NOT act out (fresh review of batch 11, finding 2): the user's own registration between the two
+// gates is a person's step, and the desk runs only the two gates' bound read-backs. So RESOLVED (SIMULATED) here
+// proves the two admin changes and nothing about a new method. The runbook's own unbound read for that,
+// verify-mfa-method, is run below on the same simulated tenant and does not pass: with only the pass listed, a
+// real ticket is not done. Wrong reading this catches: taking the desk's resolved state for "the new method is there".
+test('the desk acts both gates in one ticket, the pass and then the one-method delete, each read passed; it does not act out the user registering, and verify-mfa-method shows that', async (t) => {
   const run = await runDesk(t, [GATE, 'mfa-method-delete-portal']);
   assert.equal(run.ticket.closing_state, 'RESOLVED (SIMULATED)', run.ticket.reason);
   assert.deepEqual(run.readBack.reads.map((r) => `${r.kind} ${r.state}`), ['msgraph:verify-temporary-access-pass PASS', 'msgraph:verify-method-absent PASS']);
   const types = methodsOf(run.tenant).map((m) => m['@odata.type']);
-  assert.ok(types.includes(PASS_TYPE), 'the new way in is still listed after the old method went');
+  assert.ok(types.includes(PASS_TYPE), 'the pass is still listed: the delete took the one old method only');
   assert.ok(!methodsOf(run.tenant).some((m) => m.id === 'a2000000-0000-4000-8000-000000000001'), 'the old Authenticator method is gone');
+  {
+    const customers = require('./customers.js');
+    const vendors = require('./sim/vendors.js');
+    const a = customers.loadData().customers.find((c) => c.id === 'A');
+    const out = [];
+    const code = await vendors.connectorModule('msgraph').run(
+      ['verify-mfa-method', '--user', 'a1000000-0000-4000-8000-000000000001', '--method', 'microsoftAuthenticator', '--execute'],
+      { ...customers.tenantVars(a), ...vendors.simulatedCredentials('msgraph'), AEGIS_AUDIT_DIR: path.join(run.results, 'customers', 'a', 'audit') },
+      { transport: vendors.transportFor('msgraph', path.join(run.results, 'customers', 'a', 'tenant.json')), sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) },
+    );
+    assert.equal(code, 2, `no Authenticator is registered in the simulated tenant, so the runbook's read does not pass: ${out.join('')}`);
+  }
   // a second apply replaces the pass: Entra keeps one per user
   const { applySimulatedGates } = require('./sim/gates.js');
   const tenantFile = path.join(run.results, 'customers', 'a', 'tenant.json');

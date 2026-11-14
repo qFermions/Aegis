@@ -41,7 +41,7 @@ This is the lost-or-replaced-device path, and it follows answer-format section 2
 
 ### A new way in: the Temporary Access Pass (still step 1)
 
-**User check:** ask whether another registered method still works; the Authentication methods list shows what else is registered (a second phone number, a security key, Windows Hello). If one does, the user signs in with it and adds the new phone at aka.ms/mfasetup with no pass and no admin change; go on to step 3.
+**User check:** ask whether another registered method still works; the Authentication methods list shows what else is registered (a second phone number, a security key, Windows Hello). If one does, the user signs in with it and adds the new phone at aka.ms/mfasetup with no pass and no admin change; go on to the read at the end of step 2, then step 3.
 
 Read first, changing nothing: Entra admin center → Entra ID → Authentication methods → Policies → **Temporary Access Pass** shows whether the method is enabled and whether `[UPN]` is in its scope. Microsoft: "only users included in the policy can sign in with it" (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-05). If it is off, or the user is outside its scope, stop here: changing that policy is a tenant-wide R3 change this runbook does not authorize. Escalate it, or use the fallback in step 5.
 
@@ -57,7 +57,7 @@ Read first, changing nothing: Entra admin center → Entra ID → Authentication
 
 **Handover:** give the pass to the user on a channel the tech has verified: a call the tech places to the number on file, in person, or through the manager who confirmed them. Never by email, chat or text, and never to a number or address taken from the ticket. Tell the user it works for a short time and that they need the new phone in hand first: with a one-time pass the registration must finish within 10 minutes of signing in (MB-08).
 
-2. Tell the user to go to **aka.ms/mfasetup** and register the new device. They sign in with the pass and add the new method there; the pass can also set up Microsoft Authenticator from inside the app (MB-14). Before anything is removed, read the Authentication methods list again: it shows a method that is not in the saved checkpoint, and that entry is the new way in.
+2. Tell the user to go to **aka.ms/mfasetup** and register the new device. They sign in with the pass and add the new method there; the pass can also set up Microsoft Authenticator from inside the app (MB-14). Before anything is removed, read the Authentication methods list again: it must show a method, other than the Temporary Access Pass itself, that is not in the saved checkpoint. That entry is the new way in; the pass alone is not, and with only the pass listed the old method stays.
 
 3. Only then, the old way out: delete the one obsolete method under its gate below. Every other method stays.
 
@@ -73,11 +73,11 @@ Read first, changing nothing: Entra admin center → Entra ID → Authentication
 - **Read-back:** `msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute`
 **PORTAL ACTION [mfa-method-delete-portal]:** Record the method type and displayed ID. Only after the separate exact match, with its change record approved, the method list from `node scripts/adapters/msgraph-client.js auth-methods --user [USER_ID] --execute` saved to `tasks/checkpoints/` and the rollback path written in the ticket (the user registers that method again at aka.ms/mfasetup), Entra → Users → `[UPN]` → **Authentication methods** → select that one obsolete method → **Delete**. Then run its read-back below, `verify-method-absent` with the displayed ID as `[METHOD_ID]` and `--change [CHANGE_ID]`: it passes only when that method id is no longer listed.
 
-4. Prove both halves, in this order: `verify-method-absent` shows the old method gone, then `verify-mfa-method` shows a method of the new kind still registered; with the old one gone, the one it finds is the new one. A pass that is still valid after the registration (a multi-use pass) is deleted under the same delete gate or left to run out, and the ticket says which.
+4. Prove both halves, in this order: `verify-method-absent` shows the old method gone, then `verify-mfa-method` shows a method of the new kind still registered; with the old one gone, the one it finds is the new one, as long as the checkpoint held no second method of that kind (if it did, compare the method ids with the checkpoint instead). A pass that is still valid after the registration (a multi-use pass) is deleted under the same delete gate or left to run out, and the ticket says which.
 
 ### Require re-register MFA: not the lost-or-replaced-device path
 
-Require re-register MFA is not the lost-or-replaced-device path: it takes the old way out before a new way in exists. It clears every phone, Authenticator and software OATH method at once, and until the user registers again only the password stands between the account and anyone who knows it. It is the right tool when the registered methods themselves cannot be trusted: a confirmed account compromise in which an attacker may have added a method (`/security-alert-triage`), or methods the user does not recognize as theirs. Even then the user comes back in with a pass under the gate above, issued after the clear.
+Require re-register MFA is not the lost-or-replaced-device path: it takes the old way out before a new way in exists. It clears every phone, Authenticator and software OATH method at once, and until the user registers again only the password stands between the account and anyone who knows it. It is the right tool when the registered methods themselves cannot be trusted: a confirmed account compromise in which an attacker may have added a method (`/security-alert-triage`), or methods the user does not recognize as theirs. Even then the user comes back in with a pass under the gate above, issued after the clear; that pass is left to run out, because the one-method delete is not used on a ticket that used this gate.
 
 **Try first:** for a lost or replaced phone, the pass and then the one-method delete above ([mfa-temporary-access-pass-portal], then [mfa-method-delete-portal]). This gate is for the case where every registered method must go at once, which no smaller action does.
 
@@ -165,7 +165,7 @@ node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-bef
 ## ✅ Verification checklist
 - [ ] Lost or replaced phone: identity proved by a named method before any gate, and the pass handed over on a verified channel (the ticket says which)
 - [ ] Temporary Access Pass path: `verify-temporary-access-pass` passed under its change before the handover
-- [ ] Lost or replaced phone: the old method was deleted only after the new one showed in Authentication methods
+- [ ] Lost or replaced phone: the old method was deleted only after a new method, other than the Temporary Access Pass, showed in Authentication methods
 - [ ] User completed registration at aka.ms/mfasetup (new method shows in Authentication methods)
 - [ ] Require re-register MFA path: `verify-mfa-cleared` passed under its change right after the gate, before the new registration
 - [ ] Session revocation: `verify-sessions-revoked` passed under its change (Microsoft notes tokens may take a few minutes more to be revoked)

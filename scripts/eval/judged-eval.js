@@ -11,7 +11,7 @@
 //
 // Usage:
 //   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-//        [--web] [--max-turns N] [--timeout-ms N] [--judge-model <model>]
+//        [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
 //        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
 //        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
 //        [--budget-usd N]
@@ -57,7 +57,7 @@ const SMOKE_USD_PER_SESSION = 2.5;
 
 const USAGE = `Usage:
   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-       [--web] [--max-turns N] [--timeout-ms N] [--judge-model <model>]
+       [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
        [--budget-usd N]
@@ -67,12 +67,14 @@ const USAGE = `Usage:
 The case file must be outside the repository, in a folder of its own (copy
 scripts/eval/judged/dev-cases.jsonl into a new temporary folder first): that folder is denied to
 the system under test. Without --execute, run is a dry run that starts no process.
+--model and --judge-model name the two sessions' models, claude-opus-5-5 unless given; a case whose
+session reports another model is INCONCLUSIVE.
 Exit codes: 0 PASS, 2 FAIL, 3 no threshold given, 4 dry run, 1 input error or refused path.
 `;
 
 const SPECS = {
   run: {
-    values: ['--cases', '--max-turns', '--timeout-ms', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds', '--budget-usd'],
+    values: ['--cases', '--max-turns', '--timeout-ms', '--model', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds', '--budget-usd'],
     flags: ['--execute', '--web'],
   },
   calibrate: {
@@ -114,7 +116,7 @@ function intFlag(opts, name, def, lo, hi) {
 }
 
 function commandPreview(config) {
-  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs }).join(' ');
+  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model }).join(' ');
   const jud = backends.judgeArgs({ prompt: '<judge prompt>', model: config.judge_model }).map((a) => (a === '' ? '""' : a)).join(' ');
   return { sut: `claude ${sut}`, judge: `claude ${jud}` };
 }
@@ -149,7 +151,7 @@ function notRunRecord(c, reason) {
     id: c.id, platform: c.platform, capability: c.capability, scenario: c.scenario, class: c.class, probe: c.probe,
     setup_given: c.setup !== '', fix_card_words: null,
     change_class: c.expected.change_class, escalate: c.expected.escalate,
-    sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason],
+    sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason], off_model: false,
   };
 }
 
@@ -181,7 +183,9 @@ async function runCommand(opts, io, deps) {
     max_turns: intFlag(opts, '--max-turns', backends.DEFAULT_MAX_TURNS, 1, 200),
     timeout_ms: intFlag(opts, '--timeout-ms', backends.DEFAULT_TIMEOUT_MS, 1, 3600000),
     web: Boolean(opts['--web']),
-    judge_model: opts['--judge-model'] || null,
+    // both pinned (batch 11 resumed): a session never takes the settings file's default model
+    model: opts['--model'] === undefined ? backends.PINNED_MODEL : opts['--model'],
+    judge_model: opts['--judge-model'] === undefined ? backends.PINNED_MODEL : opts['--judge-model'],
     results_dir_given: Boolean(opts['--results-dir']),
     budget_usd: null,
   };
@@ -189,7 +193,9 @@ async function runCommand(opts, io, deps) {
     if (!/^\d+(?:\.\d+)?$/.test(opts['--budget-usd']) || !(Number(opts['--budget-usd']) > 0)) throw new InputError('--budget-usd takes a limit in US dollars above zero, such as 9.50');
     config.budget_usd = Number(opts['--budget-usd']);
   }
-  if (config.judge_model !== null && !/^[A-Za-z0-9._:\[\]-]{1,100}$/.test(config.judge_model)) throw new InputError('--judge-model is a model name (letters, digits, dot, dash, colon, brackets)');
+  for (const [flag, value] of [['--model', config.model], ['--judge-model', config.judge_model]]) {
+    if (!backends.isModelName(value)) throw new InputError(`${flag} is a model name (letters, digits, dot, dash, colon, brackets)`);
+  }
   const sheetN = intFlag(opts, '--calibration-sheet', 0, 1, 1000);
   const real = paths.refuseInsideRepo(opts['--cases'], 'the case file', { repoRoot });
   // the folders the case file is read from, denied to every system-under-test turn; refused when one holds the repository
@@ -224,17 +230,17 @@ async function runCommand(opts, io, deps) {
       io.out(report.terminalLine(r));
       continue;
     }
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs });
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model });
     // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
     const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
     const det = sut.state === 'OK' ? checks.runChecks(c, sut) : [];
     const jr = sut.state === 'OK' ? await judge.judgeCase(c, sut, { ...backend, repoRoot, judgeModel: config.judge_model, random: deps.random }) : null;
-    const v = judge.caseVerdict(c, sut, det, jr);
+    const v = judge.caseVerdict(c, sut, det, jr, { sut: config.model, judge: config.judge_model });
     const r = {
       id: c.id, platform: c.platform, capability: c.capability, scenario: c.scenario, class: c.class, probe: c.probe,
       setup_given: c.setup !== '', fix_card_words: card && card.present ? card.words : null,
       change_class: c.expected.change_class, escalate: c.expected.escalate,
-      sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons,
+      sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons, off_model: Boolean(v.off_model),
     };
     results.push(r);
     io.out(report.terminalLine(r));
@@ -247,7 +253,7 @@ async function runCommand(opts, io, deps) {
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];
   const payload = {
     run_id: runId, started, finished: new Date().toISOString(),
-    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, judge_model: config.judge_model, budget_usd: config.budget_usd },
+    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, model: config.model, judge_model: config.judge_model, budget_usd: config.budget_usd },
     spent_usd: spent,
     sut_models: uniq(results.map((r) => r.sut && r.sut.model)),
     judge_models: uniq(results.map((r) => r.judge && r.judge.model)),

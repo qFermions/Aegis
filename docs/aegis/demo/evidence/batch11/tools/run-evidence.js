@@ -123,6 +123,8 @@ const lines = [`# ${title}: one row per ticket`, '',
   'What each failing batch 11 row said:', '',
   ...run.tickets.flatMap((t) => { const s5 = step(t, 5); return ((s5 && s5.answer_checks) || []).filter((c) => ['assumed-setup', 'ask-first', 'new-way-in-first', 'who-else-what-left', 'how-wide-before-why', 'change-class-and-check'].includes(c.check) && c.verdict === 'fail').map((c) => `- ${t.id}, ${c.check}: ${cell(c.detail)}`); }), '',
   `Run totals: ${render.summaryLines(run.summary).join('; ')}`, ...(run.not_run || []).map((n) => `Did not run: ${n.id}, because ${n.reason}.`), '',
+  // batch 11 resumed: the model each session reported against the run's pin; a ticket on another model does not count
+  `Model per ticket, as each session's init event reported it (pinned ${run.model || 'not recorded'}): ${run.tickets.map((t) => `${t.id} ${(step(t, 4) || {}).model || 'no session'}`).join(', ')}. Tickets on another model than the pin: ${run.tickets.filter((t) => (step(t, 4) || {}).model && (step(t, 4) || {}).model !== run.model).map((t) => t.id).join(', ') || 'none'}.`, '',
   'Reasons, as the desk wrote them:', '', ...run.tickets.map((t) => `- ${t.id}: ${(t.reason || 'none').replace(/\s+/g, ' ')}`), '',
   'The two messages to the user, word for word:', '', '| ticket | Tell the user now | user message now check | Tell the user when done |', '|---|---|---|---|',
   ...run.tickets.map((t) => { const c = answers.has(t.id) ? a.fixCard(answers.get(t.id)) : { parts: {} }; return `| ${t.id} | ${cell(c.parts.tellNow)} | ${row5(t, 'user-message-now')} | ${cell(c.parts.tellDone)} |`; }), ''];

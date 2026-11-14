@@ -24,7 +24,9 @@ for (const a of list) {
   const result = read('result.json');
   const cost = result ? JSON.parse(result).total_cost_usd : null;
   if (typeof cost === 'number') total += cost;
-  const model = result ? Object.keys(JSON.parse(result).modelUsage || {}).join(', ') : '';
+  // the model the session ran on: its init event (ask-aegis saves init.json since batch 11 resumed), else the result's usage
+  const init = read('init.json');
+  const model = init ? JSON.parse(init).model || '' : (result ? Object.keys(JSON.parse(result).modelUsage || {}).join(', ') : '');
   let reply = read('reply.md');
   if (reply === null && answer !== null) { const r = askerReply(answer, a.ticket); reply = r.present ? r.text : null; }
   lines.push(`## ${a.id} (${a.platform})`, '', `Ticket as typed: "${a.ticket}"${a.setup ? `\n\nSetup given: "${a.setup}"` : ''}`, '');

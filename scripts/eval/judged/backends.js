@@ -92,6 +92,19 @@ function readDenyRules(runRoot = null, caseDirs = []) {
 function isolationArgs({ judge = false, runRoot = null, caseDirs = [] } = {}) {
   return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) } })];
 }
+// The model every session names (batch 11 resumed): the one the commander's correctness run was measured on. With no
+// --model the CLI takes the settings file's default model, which can change from one day to the next, so a run
+// measured "on Aegis" could run on another model; every caller passes this one unless it is given another. A name is
+// letters, digits, dot, dash, colon and brackets, at most 100 characters, and starts with a letter or a digit, so it
+// never reads as an option.
+const PINNED_MODEL = 'claude-opus-5-5';
+const isModelName = (m) => typeof m === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:[\]-]{0,99}$/.test(m);
+function modelArgs(model) {
+  const m = model === null || model === undefined ? PINNED_MODEL : model;
+  if (!isModelName(m)) throw new Error(`--model takes a model name (letters, digits, dot, dash, colon, brackets), not ${JSON.stringify(String(m)).slice(0, 40)}`);
+  return ['--model', m];
+}
+
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
 const DEFAULT_GRACE_MS = 5000;
@@ -137,7 +150,8 @@ function buildSutPrompt(c) {
   return `${setupBlock(c.setup, 'ticket').join('\n')}\n\n${body}`;
 }
 
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true }) {
+// model: the session's model, PINNED_MODEL when none is given; it comes last, after --tools, so aegis-chat keeps it.
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true, model = null }) {
   if (resume && !persist) throw new Error('a session with no persistence cannot resume');
   const tools = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
@@ -145,14 +159,12 @@ function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = n
   if (resume) args.push('--resume', resume);
   if (!persist) args.push('--no-session-persistence');
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs }));
+    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs }), ...modelArgs(model));
   return args;
 }
 
 function judgeArgs({ prompt, model = null }) {
-  const args = ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...isolationArgs({ judge: true })];
-  if (model) args.push('--model', model);
-  return args;
+  return ['-p', positional(prompt), '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...isolationArgs({ judge: true }), ...modelArgs(model)];
 }
 
 // The reading record (batch 11, task 7). One tool call from an assistant event's tool_use part: the tool
@@ -315,13 +327,14 @@ function promptTooLong(prompt) {
 }
 
 // Runs one case through the system under test. opts: { command, prefixArgs, spawn, env,
-// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot, caseDirs }. env is already scrubbed; runRoot, the run's
+// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot, caseDirs, model }. env is already scrubbed; model names the model of
+// both turns (PINNED_MODEL when none is given); runRoot, the run's
 // results folder, is denied to both turns (batch 8, task 10b), and so are caseDirs, the folders the case file
 // is read from (batch 11, task 7).
 async function runSut(c, opts) {
   const repoRoot = opts.repoRoot || REPO_ROOT;
   const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: repoRoot, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
-  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [] };
+  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model };
   const turns = [];
   const prompt = buildSutPrompt(c);
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
@@ -359,7 +372,7 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
   envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, outsideReads,
   runChild, runTurn, runSut, promptTooLong,
 };

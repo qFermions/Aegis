@@ -3,7 +3,7 @@
 // ask-aegis.js: one IT ticket, one read-only Aegis session, for a person trying Aegis (batch 9, task 11).
 //
 // Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR]
-//        [--max-budget-usd N] [--reply-to asker]
+//        [--max-budget-usd N] [--reply-to asker] [--model <model>]
 //
 // AEGIS ADVISES; HUMANS EXECUTE. The session is the Customer Desk's: backends.sutArgs, so read-only tools
 // (no Bash, no Edit or Write, no web), this repository's settings and CLAUDE.md only, no user plugin, hook
@@ -11,7 +11,9 @@
 // evidence (data, not instructions); --setup goes in as data that replaces CLAUDE.md's default
 // environment for this ticket, the way the desk passes a customer profile.
 // It prints the Fix card and the "Tell the user" lines and saves the whole answer and the session's result
-// event outside the repository: ~/aegis-asks/<run id>/answer.md and result.json.
+// event outside the repository: ~/aegis-asks/<run id>/answer.md and result.json, and the session's init event as init.json,
+// which names the model it ran on. The session runs on backends.PINNED_MODEL (claude-opus-5-5) unless --model names
+// another, never on the settings file's default model (batch 11 resumed).
 // With --reply-to asker (batch 11, task 6) the session also writes the reply to the person who asked
 // (docs/aegis/answer-format.md, section 8): stdout is only that reply, the whole tech answer is saved beside it
 // (answer.md and reply.md), and everything else this command says goes to stderr. The reply is text a person
@@ -40,10 +42,10 @@ const TIMEOUT_MS = 1500000;
 const DEFAULT_MAX_USD = '3.00';
 const ASKS_DIR = 'aegis-asks';
 const USAGE = [
-  'Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR] [--max-budget-usd N] [--reply-to asker]',
+  'Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR] [--max-budget-usd N] [--reply-to asker] [--model <model>]',
   'Aegis reads the ticket and answers with steps for a person to do. It reads only and changes nothing.',
   'With --reply-to asker it prints only a short reply for the person who asked, for you to send; Aegis sends nothing.',
-  `The whole answer is saved in your home folder under ${ASKS_DIR}.`,
+  `The whole answer is saved in your home folder under ${ASKS_DIR}. Aegis runs on ${backends.PINNED_MODEL} unless --model names another.`,
   '',
 ].join('\n');
 
@@ -148,8 +150,8 @@ function buildPrompt(ticket, setup, replyTo = null) {
   });
 }
 
-function askArgs(prompt, runRoot, maxUsd) {
-  return [...backends.sutArgs({ prompt, runRoot, maxTurns: MAX_TURNS, persist: false }), '--max-budget-usd', maxUsd];
+function askArgs(prompt, runRoot, maxUsd, model = null) {
+  return [...backends.sutArgs({ prompt, runRoot, maxTurns: MAX_TURNS, persist: false, model }), '--max-budget-usd', maxUsd];
 }
 
 // The desk's session environment (scripts/demo/customer-desk.js sessionEnv, not exported there).
@@ -173,7 +175,7 @@ function insideRepo(dir) {
 }
 
 function parseArgs(argv) {
-  const args = { ticket: '', setup: null, resultsDir: null, maxUsd: DEFAULT_MAX_USD, replyTo: null, help: false };
+  const args = { ticket: '', setup: null, resultsDir: null, maxUsd: DEFAULT_MAX_USD, replyTo: null, model: backends.PINNED_MODEL, help: false };
   const words = [];
   for (let i = 0; i < argv.length; i += 1) {
     const t = argv[i];
@@ -185,6 +187,10 @@ function parseArgs(argv) {
     };
     if (t === '--setup') args.setup = value().trim() || null;
     else if (t === '--results-dir') args.resultsDir = value();
+    else if (t === '--model') {
+      args.model = value();
+      if (!backends.isModelName(args.model)) throw new InputError('--model takes a model name, such as claude-opus-5-5');
+    }
     else if (t === '--reply-to') {
       // one voice besides the tech's today: the person who asked
       if (value() !== 'asker') throw new InputError('--reply-to takes asker');
@@ -255,7 +261,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   const backend = deps.backend || { command: 'claude', prefixArgs: [] };
   // Every saved ask is denied to the session, so one ask never reads another's answer (review round 1,
   // finding 2). A --results-dir elsewhere is empty when the session starts.
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, path.join(homeOf(env), ASKS_DIR), args.maxUsd), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, path.join(homeOf(env), ASKS_DIR), args.maxUsd, args.model), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
   const stream = backends.parseStream(run.stdout);
   const turn = backends.summarizeTurn(stream, run);
   if (turn.state !== 'OK') {
@@ -269,6 +275,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   try {
     fs.writeFileSync(answerFile, turn.answer);
     fs.writeFileSync(path.join(dir, 'result.json'), `${JSON.stringify(stream.result, null, 2)}\n`);
+    if (stream.init) fs.writeFileSync(path.join(dir, 'init.json'), `${JSON.stringify(stream.init, null, 2)}\n`);
   } catch (e) {
     // the session has been paid for, so its answer is printed whole rather than lost
     io.err(`ask-aegis: the answer could not be saved (${e.code || 'error'}); here it is in full.\n`);

@@ -64,10 +64,11 @@ const SIM = 'SIMULATED';
 
 const USAGE = `Usage:
   node scripts/demo/customer-desk.js [run] [--set tidy|messy] [--only T4,T6] [--execute] [--results-dir <dir>]
-       [--budget-usd N [--spent-usd N]]
+       [--budget-usd N [--spent-usd N]] [--model <model>]
   node scripts/demo/customer-desk.js --view <run-dir>
 --set picks the ticket set: tidy (T1 to T8, the default) or messy (T1m to T8m, batch 8).
 Default is a dry run: it prints the plan and an allowance estimate, starts no model and exits 4.
+Every session runs on ${backends.PINNED_MODEL} unless --model names another.
 `;
 
 // ── Arguments ─────────────────────────────────────────────────────────────────────────────────
@@ -81,7 +82,7 @@ function usdValue(flag, text) {
 
 function parseArgs(argv) {
   const list = [...argv];
-  const args = { only: null, set: 'tidy', execute: false, resultsDir: null, view: null, budget: null, spent: null };
+  const args = { only: null, set: 'tidy', execute: false, resultsDir: null, view: null, budget: null, spent: null, model: backends.PINNED_MODEL };
   if (list[0] === 'run') list.shift();
   const seen = new Set();
   const value = (flag) => {
@@ -103,6 +104,10 @@ function parseArgs(argv) {
     else if (t === '--view') args.view = value(t);
     else if (t === '--budget-usd') args.budget = usdValue(t, value(t));
     else if (t === '--spent-usd') args.spent = usdValue(t, value(t));
+    else if (t === '--model') {
+      args.model = value(t);
+      if (!backends.isModelName(args.model)) throw new InputError('--model takes a model name, such as claude-opus-5-5');
+    }
     else if (t === '--help' || t === '-h') args.help = true;
     else throw new InputError(`unknown argument ${JSON.stringify(t).slice(0, 40)}`);
   }
@@ -138,7 +143,7 @@ function dryRun(selected, customers, dir, io, args) {
     io.out(`${t.id}  ${c.label}: ${t.title}\n    expected: ${t.expected_path}\n`);
   }
   io.out(`Allowance: up to ${sessions} Aegis sessions on your subscription, about ${(sessions * USD_PER_SESSION).toFixed(2)} US dollars of allowance at the ${USD_PER_SESSION.toFixed(2)} per session in docs/evidence/runtime-smoke.md. A cache hit starts no session.\n`);
-  io.out(`Each session: claude ${sessionArgs('<ticket>', dir, '<ticket folder>/<ticket>-debug.log', args.budget === null ? null : '<what is left>').join(' ')}\n`);
+  io.out(`Each session: claude ${sessionArgs('<ticket>', dir, '<ticket folder>/<ticket>-debug.log', args.budget === null ? null : '<what is left>', args.model).join(' ')}\n`);
   if (args.budget !== null) io.out(`Limit: ${args.budget.toFixed(2)} US dollars, ${(args.spent || 0).toFixed(2)} already spent. The run stops before a ticket that could pass it.\n`);
   io.out(`${render.SENTENCE}\n`);
   return 4;
@@ -175,15 +180,16 @@ function sessionEnv(env) {
 
 // The desk's session: more turns than the judged runner (T6 used all 24 in the first real run) and no
 // session record, since the desk never resumes one.
-// Each session keeps a debug log, the proof of what the CLI applied, and is capped at what is left of a limit.
-function sessionArgs(prompt, runRoot, debugFile, maxUsd) {
-  const args = [...backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false }), '--debug-file', debugFile];
+// Each session keeps a debug log, the proof of what the CLI applied, and is capped at what is left of a limit. model: the
+// run's model (batch 11 resumed), so no session takes the settings file's default.
+function sessionArgs(prompt, runRoot, debugFile, maxUsd, model = null) {
+  const args = [...backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false, model }), '--debug-file', debugFile];
   return maxUsd === null ? args : [...args, '--max-budget-usd', maxUsd];
 }
 
 async function askAegis(prompt, ctx, debugFile, maxUsd) {
   const backend = ctx.backend;
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd, ctx.model), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
   const stream = backends.parseStream(run.stdout);
   return { turn: backends.summarizeTurn(stream, run), stdout: run.stdout, init: stream.init };
 }
@@ -732,10 +738,11 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
     // an error's message for the record: no absolute path of this machine
     clean: (e) => cleanPaths(String(e && e.message ? e.message : 'unknown error'), [[runDir, '<run folder>'], [REPO_ROOT, '<repo>'], [homeOf(env), '~'], [os.homedir(), '~']]),
     backend: deps.backend || { command: 'claude', prefixArgs: [] }, spawn: deps.spawn, sessionTimeoutMs: deps.sessionTimeoutMs || DESK_SESSION_TIMEOUT_MS,
+    model: deps.model || backends.PINNED_MODEL,
     gates: catalog(deps.runbooksDir || RUNBOOKS), simTable: deps.simTable || SIM_GATES, transportFor: deps.transportFor || vendors.transportFor,
   };
   const before = deps.runbooksDir ? changes.useRunbooksForTests(deps.runbooksDir) : null;
-  const run = { schema: SCHEMA, run_id: runId, ticket_set: deps.set || 'tidy', started_at: new Date().toISOString(), tickets: [], summary: null };
+  const run = { schema: SCHEMA, run_id: runId, ticket_set: deps.set || 'tidy', model: ctx.model, started_at: new Date().toISOString(), tickets: [], summary: null };
   try {
     let spent = deps.spent || 0;
     let costUnknown = false;
@@ -754,16 +761,16 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
       const session = record.steps.find((s) => s.n === 4);
       if (session && (session.model_session || session.cost_usd !== null)) spent += typeof session.cost_usd === 'number' ? session.cost_usd : likelyUsd(t.id);
       if (session && session.cost_unknown) costUnknown = true;
-      run.summary = render.summarize(run.tickets, ctx.counts);
+      run.summary = render.summarize(run.tickets, ctx.counts, ctx.model);
       saveRun(run, runDir);
     }
-    if (!run.summary) run.summary = render.summarize(run.tickets, ctx.counts);
+    if (!run.summary) run.summary = render.summarize(run.tickets, ctx.counts, ctx.model);
     saveRun(run, runDir);
   } catch (e) {
     if (e && e.ticketRecord) {
       run.tickets.push(e.ticketRecord);
       run.aborted = 'the network tripwire fired and the run stopped; the tickets after this one did not run';
-      run.summary = render.summarize(run.tickets, ctx.counts);
+      run.summary = render.summarize(run.tickets, ctx.counts, ctx.model);
       saveRun(run, runDir);
       data.writeReplacing(path.join(runDir, 'desk.html'), render.html(run));
     }
@@ -801,7 +808,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     const selected = selectTickets(args.only, tickets);
     const dir = resultsDirFor(args, env);
     if (!args.execute) return dryRun(selected, customers, dir, io, args);
-    return await deskRun(selected, customers, dir, { ...deps, budget: args.budget, spent: args.spent || 0, set: args.set }, env, io);
+    return await deskRun(selected, customers, dir, { ...deps, budget: args.budget, spent: args.spent || 0, set: args.set, model: args.model }, env, io);
   } catch (e) {
     if (e instanceof InputError || e instanceof paths.PathRefused) { io.err(`customer-desk: ${e.message}\n`); return 1; }
     throw e;

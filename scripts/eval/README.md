@@ -149,7 +149,11 @@ node scripts/eval/judged-eval.js calibrate --sheet <filled sheet.csv> --run <res
 - Without `--execute` a run is a dry run: it prints the cases, the sessions and a cost
   estimate (about 2.50 US dollars per Aegis session, the figure in
   `docs/evidence/runtime-smoke.md`), starts no process and exits 4.
-- Options (to run a subset, put only those cases in the file): `--judge-model <model>`; `--max-turns N` (default 24); `--timeout-ms N` (default 600000 per process);
+- Models: `--model <model>` (the system under test) and `--judge-model <model>` (the judge), both
+  `claude-opus-5-5` unless given, so no session takes the default model in the settings file. Each case keeps
+  the model its sessions reported; a case whose session reports another model, or none, is INCONCLUSIVE, and
+  report.md counts those cases (batch 11, resumed).
+- Options (to run a subset, put only those cases in the file): `--max-turns N` (default 24); `--timeout-ms N` (default 600000 per process);
   `--web` (adds WebFetch and WebSearch to the system under test); `--baseline
   <results.json>` (lists the cases that passed there and do not now); `--calibration-sheet N`;
   `--pass-threshold 0..1`; `--agreement-threshold -1..1` (Cohen's kappa); `--thresholds

@@ -7,7 +7,8 @@
 // system under test's wall-clock duration (nearest-rank p50 and p95) over the cases that
 // ran; cost is summed over the cases that reported one, and says how many did.
 // outside_reads counts the cases whose session read a path outside the repository; fix_card_words
-// is the minimum, median and maximum of the answers' Fix card word counts (batch 11, task 7).
+// is the minimum, median and maximum of the answers' Fix card word counts (batch 11, task 7). off_model counts the
+// cases a session of which ran on another model than the run pinned, or did not say (batch 11 resumed).
 // terminalLines() gives the only per-case text the terminal shows: ids, verdicts, scores.
 
 const fs = require('node:fs');
@@ -89,8 +90,10 @@ function summarize(results, { baseline = null } = {}) {
   // card word counts of the answered cases, a measure and never a pass or fail
   const outside = results.filter((r) => r.sut && Array.isArray(r.sut.outside_reads) && r.sut.outside_reads.length > 0).map((r) => r.id);
   const cardWords = answered.map((r) => r.fix_card_words).filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+  const offModel = results.filter((r) => r.off_model).map((r) => r.id);
   return {
     outside_reads: { count: outside.length, ids: outside },
+    off_model: { count: offModel.length, ids: offModel },
     label: LABEL,
     cases: results.length,
     judged: j.length,
@@ -138,7 +141,7 @@ function renderMarkdown(summary, meta) {
     '',
     `> ${LABEL}`,
     '',
-    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (flag ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'}; timeout ${meta.config.timeout_ms} ms per process.`,
+    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}${meta.config.model ? ` (pinned ${meta.config.model})` : ''}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (pinned ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'}; timeout ${meta.config.timeout_ms} ms per process.`,
     '',
     `Cases ${summary.cases}: ${summary.passed} PASS, ${summary.failed} FAIL, ${summary.inconclusive} INCONCLUSIVE (an inconclusive case never counts as a pass).`,
     '',
@@ -157,6 +160,7 @@ function renderMarkdown(summary, meta) {
     `| Cost (system under test, US dollars) | ${m.cost_usd.total === null ? 'not reported' : `total ${m.cost_usd.total.toFixed(4)}, per case ${m.cost_usd.per_case.toFixed(4)}`} (reported by ${m.cost_usd.reported} of ${m.cost_usd.of} cases) |`,
     `| Cost (judge, US dollars) | ${m.cost_usd.judge_total === null ? 'not reported' : m.cost_usd.judge_total.toFixed(4)} (reported by ${m.cost_usd.judge_reported} cases) |`,
     `| Cases that read a path outside the repository (each is INCONCLUSIVE) | ${summary.outside_reads.count}${summary.outside_reads.ids.length ? ` (${summary.outside_reads.ids.join(', ')})` : ''} |`,
+    ...(summary.off_model ? [`| Cases that ran on another model than the pinned one (each is INCONCLUSIVE) | ${summary.off_model.count}${summary.off_model.ids.length ? ` (${summary.off_model.ids.join(', ')})` : ''} |`] : []),
     `| Fix card words, min / median / max (over ${m.fix_card_words.over} answers with a card, ${m.fix_card_words.no_card} without; a measure, not a pass or fail) | ${m.fix_card_words.over ? `${m.fix_card_words.min} / ${m.fix_card_words.median} / ${m.fix_card_words.max}` : 'n/a'} |`,
     '',
     '## Per platform',

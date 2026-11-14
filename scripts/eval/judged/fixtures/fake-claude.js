@@ -16,7 +16,8 @@
 //   met / present  the judge booleans for every must / must_not item (default true / false)
 //   invalid_first  judge: answer with invalid JSON on the first call only
 //   fence        judge: wrap the JSON in a ```json fence
-//   model, cost  what the init and result events report
+//   model, cost  what the init and result events report; with no model, the init event reports the --model it was
+//                given, as the real CLI does, else fake-sut-model or fake-judge-model
 //   tool_calls   SUT: [{ "name", "input", "parent": bool, "error": bool, "match": <substring of the prompt> }];
 //                each becomes a tool_use event and its tool_result before the answer, on every turn. parent
 //                marks a call made inside a subagent, error a refused or failed call, and a call with match
@@ -55,7 +56,7 @@ if (config.log) {
 }
 
 const sessionId = resume || crypto.randomUUID();
-const model = settings.model || (role === 'judge' ? 'fake-judge-model' : 'fake-sut-model');
+const model = settings.model || valueAfter('--model') || (role === 'judge' ? 'fake-judge-model' : 'fake-sut-model');
 const emit = (ev) => process.stdout.write(`${JSON.stringify(ev)}\n`);
 
 function sutAnswer() {

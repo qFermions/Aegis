@@ -1531,3 +1531,32 @@ test('batch 11, task 4: an ask-first answer closes CLARIFY with its form row sho
   assert.equal(step(s, 5).answer_checks.find((r) => r.check === 'ask-first').verdict, 'pass', 'a Fix card on a ticket with a symptom');
   assert.deepEqual(step(s, 5).answer_checks.map((r) => r.check).slice(7), ['assumed-setup', 'ask-first'], 'no thinking rule applies to a slow-internet ticket');
 });
+
+// Batch 11 resumed, task 8: the desk names its model. EXPECTED DECISION: every session the desk starts gets --model
+// claude-opus-5-5, or the value of --model; run.json keeps the model asked for, and its summary lists the models the
+// sessions reported, on a line of its own with the pin beside it; a value that is not a model name is refused before
+// any folder or session. Wrong implementations it catches: a desk that pins its first session only, a summary that
+// shows the flag instead of what the sessions reported, and a --model flag parsed and not passed on.
+test('batch 11 resumed: every desk session runs on claude-opus-5-5 or the --model given, and the summary lists the models the sessions reported', async (t) => {
+  const r = await runDesk(t, { only: ['T1', 'T7'], answers: { T1: good('mfa-require-reregister-portal'), T7: 'Which site?\nGate: none' } });
+  const sut = r.calls().filter((c) => c.role === 'sut');
+  assert.equal(sut.length, 2);
+  for (const c of sut) assert.equal(c.args[c.args.indexOf('--model') + 1], 'claude-opus-5-5');
+  assert.equal(r.run.model, 'claude-opus-5-5');
+  assert.deepEqual(r.run.summary.models, ['claude-opus-5-5']);
+  assert.match(r.out, /^models claude-opus-5-5 \(pinned claude-opus-5-5\)$/m);
+
+  const other = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, argv: ['--model', 'claude-sonnet-5-5'], sut: { model: 'claude-fable-5-2' } });
+  const [c] = other.calls().filter((x) => x.role === 'sut');
+  assert.equal(c.args[c.args.indexOf('--model') + 1], 'claude-sonnet-5-5');
+  assert.equal(other.run.model, 'claude-sonnet-5-5');
+  assert.deepEqual(other.run.summary.models, ['claude-fable-5-2'], 'what the session reported, not the flag');
+  assert.match(other.out, /^models claude-fable-5-2 \(pinned claude-sonnet-5-5\)$/m);
+
+  const said = [];
+  let started = 0;
+  const bad = await desk.main(['run', '--model', 'two words', '--execute', '--results-dir', path.join(tmp(t), 'never')], { PATH: process.env.PATH }, { out: (s) => said.push(String(s)), err: (s) => said.push(String(s)), spawn: () => { started += 1; throw new Error('no session'); } });
+  assert.equal(bad, 1);
+  assert.equal(started, 0);
+  assert.match(said.join(''), /--model/);
+});

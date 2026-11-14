@@ -263,14 +263,31 @@ async function judgeCase(c, sut, opts) {
 // read a path outside the repository (sut.outside_reads, batch 11 task 7) is INCONCLUSIVE whatever its
 // grade, since the answer may rest on material that is not Aegis's; its reasons name the paths (the first
 // MAX_OUTSIDE_SHOWN, then a count) and its score is kept for the record.
+// pins ({ sut, judge }, batch 11 resumed): the models the run pinned. A case whose system under test (any turn) or judge
+// reports another model, or none, is INCONCLUSIVE whatever its grade, with off_model true: it was not measured on the
+// model the run says. Without pins the verdict is decided as before.
 const MAX_OUTSIDE_SHOWN = 5;
-function caseVerdict(c, sut, checks, judge) {
+function caseVerdict(c, sut, checks, judge, pins = null) {
   const out = gradedVerdict(c, sut, checks, judge);
+  const offModel = modelReasons(sut, judge, pins);
   const outside = sut && Array.isArray(sut.outside_reads) ? sut.outside_reads : [];
-  if (outside.length === 0) return out;
   const named = outside.slice(0, MAX_OUTSIDE_SHOWN).map((p) => `read outside the repository: ${p}`);
   if (outside.length > MAX_OUTSIDE_SHOWN) named.push(`read outside the repository: ${outside.length - MAX_OUTSIDE_SHOWN} more path(s)`);
-  return { ...out, verdict: 'INCONCLUSIVE', reasons: [...named, ...out.reasons] };
+  if (offModel.length === 0 && named.length === 0) return out;
+  return { ...out, verdict: 'INCONCLUSIVE', reasons: [...offModel, ...named, ...out.reasons], ...(offModel.length ? { off_model: true } : {}) };
+}
+
+// Only a session that ran is asked for its model: one that did not run is already INCONCLUSIVE for that.
+function modelReasons(sut, judge, pins) {
+  if (!pins) return [];
+  const why = [];
+  const sutModels = sut && Array.isArray(sut.turns) && sut.turns.length ? sut.turns.map((t) => t.model) : [sut && sut.model];
+  for (const [who, rec, models, pin] of [['system under test', sut, sutModels, pins.sut], ['judge', judge, [judge && judge.model], pins.judge]]) {
+    if (!rec || rec.state !== 'OK' || !pin) continue;
+    if (models.some((m) => typeof m !== 'string' || m === '')) why.push(`${who} did not report its model; the pin is ${pin}`);
+    for (const m of new Set(models.filter((x) => typeof x === 'string' && x !== '' && x !== pin))) why.push(`${who} ran on ${m}, not the pinned ${pin}`);
+  }
+  return why;
 }
 
 function gradedVerdict(c, sut, checks, judge) {

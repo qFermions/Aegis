@@ -113,7 +113,8 @@ test('the DEV set runs through the runner with the fake backends and produces th
   assert.equal(json.label, 'simulated: model-judged on a case file, no real tenant');
   assert.equal(json.cases.length, 8);
   assert.equal(json.summary.measures.pass_rate.denominator, 8, 'all 8 judged');
-  assert.deepEqual(json.judge_models, ['fake-judge-model']);
+  // the fake reports the --model it was given, as the real CLI does (batch 11 resumed)
+  assert.deepEqual(json.judge_models, ['judge-x']);
   assert.equal(json.config.judge_model, 'judge-x');
   assert.ok(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8').includes(json.label));
   const sheet = calibrate.parseCsv(fs.readFileSync(path.join(s.results, 'calibration-sheet.csv'), 'utf8'));

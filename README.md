@@ -57,7 +57,7 @@ A ticket with nothing to go on ("The printer is broken.") gets one question back
 
 What Aegis will do: read the problem, read its own runbooks, and tell you the steps, how to check they worked, and when to stop.
 What it will not do: it reads only. It cannot run commands, and it never changes anything in your systems. A person does every change.
-Before your ticket reaches Aegis, email addresses and phone numbers in it become placeholders, and a password written after the word "password", or a token or key in a common format, stops the ask. Other secrets are not caught, so leave them out. Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit).
+Before your ticket reaches Aegis, email addresses and phone numbers in it become placeholders, and a password written after the word "password", or a token or key in a common format, stops the ask. Other secrets are not caught, so leave them out. Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit). Both commands run Aegis on `claude-opus-5-5`, whatever your default model is; `--model` names another, and each ask saves the model it ran on in `init.json`.
 
 ## The problem
 

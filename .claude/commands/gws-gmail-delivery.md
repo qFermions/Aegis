@@ -137,12 +137,12 @@ Three different tickets hide under "mail problems", and a fourth, "mail is down"
 **Purpose:** when mail from one outside sender is rejected or lands in Spam and its headers show a failed sender-authentication check, say what the sender must fix on their side. Allowing a whole domain is never the first fix (answer-format section 2, the mail rule). Nothing in this phase changes a setting.
 
 1. Admin console → Reporting → Email Log Search → sender = the outside address, recipient `[USER@DOMAIN.COM]` and the date → read whether the message was rejected, marked as spam or delivered.
-2. From the recipient's copy in the Spam folder: Gmail → More → Show original → read the SPF, DKIM and DMARC lines: which one failed, and for which domain (the From domain, the envelope sender's domain, or the domain in the DKIM signature).
+2. From the recipient's copy in the Spam folder: Gmail → More → Show original → read the SPF, DKIM and DMARC lines: which one failed, and for which domain (the From domain, the envelope sender's domain, or the domain in the DKIM signature). A rejected message leaves no copy: read the rejection reason in the step 1 result and ask the sender for the full bounce text.
 3. Write the note the user sends to the sender's IT contact. It names the failed check and what the sender fixes at their own DNS host and mail system:
    - SPF fails: the server that sent the message is not in the SPF record of the sender's domain. The sender puts that sending service in their SPF record.
    - DKIM fails or is missing: the sender turns on DKIM signing for that sending service and publishes its key in their DNS.
    - DMARC fails: neither SPF nor DKIM passed for a domain that matches the From address. The sender gets one of the two to pass for the From domain.
-4. Lighter steps on our side that open nothing to anyone else: the user marks the message as Not spam and saves the sender's address in their own contacts.
+4. Lighter steps on our side that open nothing to anyone else: the user marks the message as Not spam and saves the sender's address in their own contacts. No gate: the user's own action in their own mailbox. Proof a person can see: the sender's next message lands in the user's inbox.
 
 Google's own advice for this case is the same: "Tell your trusted customers, suppliers, and others to authenticate their sent email."
 

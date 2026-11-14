@@ -47,7 +47,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 | B | put the Mac in the PreStage scope, gate jamf-enroll-mac-prestage-portal | R1 | no change record; the PreStage's Scope tab lists the serial number as in scope |
 | C | Setup Assistant on the Mac | no gate: done at the Mac by the person holding it | Jamf Pro returns an inventory record for the serial number, and the Mac shows the MDM profile under Device Management |
 | D, only if the pane was skipped | re-run enrollment without erasing, gate jamf-enroll-mac-renew | R1 | no change record; the enrollment prompt appears on the Mac and the inventory record exists |
-| E | first check-in and inventory update, gate jamf-enroll-mac-checkin | R1 | no change record; the inventory record shows a current last check-in and inventory update |
+| E | first check-in and inventory update, gate jamf-enroll-mac-checkin | R1 | no change record; on the Mac the jamf binary answers `jamf help`, and the Jamf Pro record's General section shows a current last contact |
 
 ## Phase A — Apple Business: make sure the Mac is owned and assigned
 

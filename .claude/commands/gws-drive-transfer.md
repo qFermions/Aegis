@@ -44,8 +44,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 | Phase | Change | Class | Double-check |
 |---|---|---|---|
-| 2 | transfer Drive ownership, gate gws-drive-transfer-drive-portal | R2 | no connector read is named for this gate: Google's confirmation email arrives, the Phase 1 owned-file counts have moved, and the new owner opens a sample file |
-| 3 | transfer future calendar events, gate gws-drive-transfer-calendar-portal | R2 | no connector read is named for this gate: the new secondary calendar shows for the new owner, with the event count recorded in Phase 1 |
+| 2 | transfer Drive ownership, gate gws-drive-transfer-drive-portal | R2 | no connector read is named for this gate: Google's confirmation email arrives, a transfer folder shows in the new owner's My Drive, and the new owner's file count rose by about the Phase 1 count |
+| 3 | transfer future calendar events, gate gws-drive-transfer-calendar-portal | R2 | no connector read is named for this gate: the new secondary calendar is in the new owner's list, and a sample future event shows the new organizer |
 
 When the transfer is part of an offboarding, the questions of where the leaver's mail goes, what keeping the account costs and the restore window are answered in `/gws-offboard` (its section "Mail, cost and the restore window") before the account is closed: a Drive transfer moves no mail.
 

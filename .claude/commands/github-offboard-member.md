@@ -192,7 +192,7 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 <!-- SAFETY GATE [github-offboard-member-remove-portal] -->
 - **Target:** [GITHUB_USER] in [@Aegion_GITHUB_ORG]
 - **Effect:** remove one member from [@Aegion_GITHUB_ORG]
-- **Scope:** one person; every team, every repository they reached through the organization, and their member role go at once; what happens to their forks is [unconfirmed: check in the GitHub UI]
+- **Scope:** one person; every team, every repository they reached through the organization, and their member role go at once; they lose access to private forks of the organization's private repositories
 - **Reversibility:** R3 (account removal): no one-click undo; the way back is a new invitation and the teams and roles saved in tasks/checkpoints/, planned in [github-offboard-member-reinstate-preview]
 - **Required confirmation:** Type exactly `REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
@@ -243,7 +243,7 @@ node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --
 
 **When the person should not have had the access they had: who else, and what left (R0).** After a removal is read back, the next step is a read, before anyone says how serious it was (answer-format section 2, "Who else, and what left"). Who else: the Phase A lists of members, outside collaborators and pending invitations, read against the list of people who should be there. What the person did: github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → Settings → Logs → Audit log → search with the `actor:` qualifier and the person's login. The audit log is open to owners only and lists the last 180 days. What left: the Phase A record of the person's forks and of the repositories they could read; a clone on their own machine stays with them, and whether a clone or a download is recorded depends on the plan [unconfirmed: check the vendor page]. Until those reads are in the ticket, the answer says "access removed, use not yet reviewed" and names no severity.
 
-> **PREVIEW ONLY [github-offboard-member-reinstate-preview]:** Planning only; nothing here authorizes an invitation or an access change. The way back from Phases C to F is a new organization invitation (or a new collaborator invitation per repository through `/github-repo-access`), followed by the teams and roles saved in `tasks/checkpoints/`. The invitation path was not in the pages read, and whether GitHub can reinstate a former member's earlier access is [unconfirmed: check in the GitHub UI]. A reinstatement is its own ticket with the owner's approval.
+> **PREVIEW ONLY [github-offboard-member-reinstate-preview]:** Planning only; nothing here authorizes an invitation or an access change. The way back from Phases C to F is a new organization invitation (or a new collaborator invitation per repository through `/github-repo-access`), followed by the teams and roles saved in `tasks/checkpoints/`. The invitation path was not in the pages read. GitHub saves a removed member's access privileges and settings for three months, and a reinstatement inside that time can restore them once the person accepts the new invitation. A reinstatement is its own ticket with the owner's approval.
 
 ## ⚠️ Risk warning
 

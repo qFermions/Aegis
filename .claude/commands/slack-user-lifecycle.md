@@ -68,7 +68,7 @@ A leaver's plan answers three questions in the ticket before Phase D (answer-for
 | D | deactivate the account, gate slack-user-lifecycle-deactivate-portal | R3 | the deactivated read-back passes, and the members list shows the account deactivated |
 | E | reactivate the account, gate slack-user-lifecycle-reactivate-portal | R1 | no change record; the reactivated read passes and the person can sign in |
 | F | member to single-channel or multi-channel guest, gates slack-user-lifecycle-to-single-guest-portal and slack-user-lifecycle-to-multi-guest-portal | R2 each | the guest read-back passes for the chosen type |
-| F | guest to member, gate slack-user-lifecycle-to-member-portal | R2 | no connector read proves a member: the members list shows the account type |
+| F | guest to member, gate slack-user-lifecycle-to-member-portal | R2 | no verify read proves a member: the connector's `user` read shows deleted false and both guest fields false, and the members list shows the account type |
 | G | reset every member's sessions, gate slack-user-lifecycle-session-reset-portal | R3 | no connector read covers sessions: the access logs show sign-ins after the reset time |
 
 ## Phase A: Read the member and capture the pre-state (R0)

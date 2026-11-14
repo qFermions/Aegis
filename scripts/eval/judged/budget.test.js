@@ -106,3 +106,24 @@ test('--budget-usd takes a positive amount; without the flag the results carry n
   assert.equal(await cli.main(['run', '--cases', dry.copy, '--budget-usd', '9'], dry.io, dry.deps), 4);
   assert.ok(dry.out.some((l) => /limit: 9\.00 US dollars/.test(l)), dry.out.join('\n'));
 });
+
+// Code review round 1, finding 2: a case whose session stopped with no cost reported (a timeout, an output-cap kill, a
+// follow-up that failed) added nothing to what the run had spent, so the guard kept starting cases past the limit. As
+// the desk does, a cost that is unknown stops the run under a limit: what it spent cannot be counted. Wrong
+// implementation it catches: one that adds 0 for an unknown cost (the second case would start).
+test('code review 1: a session that stops with no cost reported stops the run under a limit; the rest are not run', async (t) => {
+  const s = setup(t, { sut: { mode: 'slow', sleep_ms: 20000, cost: 1.0 }, judge: { cost: 0.25 } });
+  const code = await cli.main(['run', '--cases', s.copy, '--results-dir', s.results, '--execute', '--budget-usd', '9.00', '--timeout-ms', '300'], s.io, s.deps);
+  assert.equal(code, 3);
+  const run = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  assert.deepEqual(run.cases.filter((c) => c.sut.state !== 'NOT_RUN').map((c) => [c.id, c.sut.state]), [['DEV01', 'TIMEOUT']]);
+  for (const c of run.cases.filter((x) => x.sut.state === 'NOT_RUN')) {
+    assert.equal(c.verdict, 'INCONCLUSIVE');
+    assert.match(c.reasons[0], /stopped with no cost reported, so what the run spent is unknown/);
+  }
+  assert.equal(s.calls().filter((c) => c.role === 'sut').length, 1, 'one session started');
+  // without a limit nothing changes: every case runs
+  const free = setup(t, { sut: { mode: 'slow', sleep_ms: 20000 } });
+  await cli.main(['run', '--cases', free.copy, '--results-dir', free.results, '--execute', '--timeout-ms', '300'], free.io, free.deps);
+  assert.equal(free.calls().filter((c) => c.role === 'sut').length, 8);
+});

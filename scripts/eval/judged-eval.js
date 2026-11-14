@@ -222,9 +222,13 @@ async function runCommand(opts, io, deps) {
   let spent = 0;
   let dearest = 0;
   let notRun = 0;
+  // a session that stopped with no cost reported: what the run spent is unknown, so no limit can be held after it
+  let costUnknown = false;
   for (const c of list) {
-    if (config.budget_usd !== null && spent + (dearest > 0 ? dearest : FIRST_CASE_GUESS_USD) > config.budget_usd + 1e-9) {
-      const r = notRunRecord(c, `not run: the run's limit of ${config.budget_usd.toFixed(2)} US dollars would be passed (${spent.toFixed(2)} spent, one more case taken to cost ${(dearest > 0 ? dearest : FIRST_CASE_GUESS_USD).toFixed(2)})`);
+    if (config.budget_usd !== null && (costUnknown || spent + (dearest > 0 ? dearest : FIRST_CASE_GUESS_USD) > config.budget_usd + 1e-9)) {
+      const r = notRunRecord(c, costUnknown
+        ? `not run: a session before this case stopped with no cost reported, so what the run spent is unknown and its limit of ${config.budget_usd.toFixed(2)} US dollars cannot be held`
+        : `not run: the run's limit of ${config.budget_usd.toFixed(2)} US dollars would be passed (${spent.toFixed(2)} spent, one more case taken to cost ${(dearest > 0 ? dearest : FIRST_CASE_GUESS_USD).toFixed(2)})`);
       results.push(r);
       notRun += 1;
       io.out(report.terminalLine(r));
@@ -244,11 +248,17 @@ async function runCommand(opts, io, deps) {
     };
     results.push(r);
     io.out(report.terminalLine(r));
-    const caseCost = (typeof sut.cost_usd === 'number' ? sut.cost_usd : 0) + (jr && typeof jr.cost_usd === 'number' ? jr.cost_usd : 0);
+    // each turn's known cost counts, and a session that ran and reported none makes the run's spending unknown
+    // (code review 1, finding 2): a timeout, an output-cap kill, or a session that started (it reported its model)
+    const turns = Array.isArray(sut.turns) && sut.turns.length ? sut.turns : [sut];
+    const ranUnpriced = (x) => x && typeof x.cost_usd !== 'number' && (x.state === 'TIMEOUT' || Boolean(x.model) || Boolean(x.session_id) || /larger than the cap/.test(x.reason || ''));
+    if (turns.some(ranUnpriced) || ranUnpriced(jr)) costUnknown = true;
+    const caseCost = turns.reduce((a, x) => a + (typeof x.cost_usd === 'number' ? x.cost_usd : 0), 0) + (jr && typeof jr.cost_usd === 'number' ? jr.cost_usd : 0);
     spent += caseCost;
     dearest = Math.max(dearest, caseCost);
   }
-  if (notRun) io.out(`${notRun} case(s) did not run: the run's limit of ${config.budget_usd.toFixed(2)} US dollars would have been passed; each is INCONCLUSIVE in the results`);
+  const limitText = config.budget_usd === null ? '' : `the run's limit of ${config.budget_usd.toFixed(2)} US dollars`;
+  if (notRun) io.out(`${notRun} case(s) did not run: ${costUnknown ? `a session stopped with no cost reported, so ${limitText} cannot be held` : `${limitText} would have been passed`}; each is INCONCLUSIVE in the results`);
   const summary = report.summarize(results, { baseline });
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];
   const payload = {

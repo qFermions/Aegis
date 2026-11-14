@@ -154,6 +154,23 @@ If the person also holds that app individually or through another group, this re
 
 **Verification checkpoint:** [ ] checkpoint file saved · [ ] `verify-group-member --absent` passed against a Phase A "member" · [ ] each lost app read back absent · [ ] Deactivate User results recorded.
 
+### When the person should never have been in the group: who else, and what left (R0)
+
+**Purpose:** when the removal closed access a person should not have had, the next step is a read, before anyone says how serious it is (answer-format section 2, "Who else, and what left"). Nothing here changes anything.
+
+- **Who else came in the same way:** read the Phase A `group-members` and `group-rules` output again against the list of people who should be in `[GROUP_NAME]`. A rule with too wide a condition, or a batch add, puts others in beside the one the ticket names; a rule is Phase D, more than 10 people is Phase E.
+- **Whether the access was used:** for each app the group grants, Okta Admin Console → Reports → System Log → search `eventType eq "user.authentication.sso"` with the app as the target → read each sign-on by the person since they joined the group. Okta keeps System Log events for 90 days; say so in the ticket when the membership is older.
+- **What left:** Okta records that a person opened an app, not what they did inside it. Whether anything was downloaded or shared onward is read in each app's own audit log, by the app's owner (for Google Workspace: `/gws-audit-log`, Drive log events).
+
+```bash
+# HUMAN-RUN read-only. The sign-on events to one app the group grants since NOT_BEFORE, here the time the person joined the group; one page, each event names the person in its targets
+node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event user.authentication.sso --target [APP_ID] --execute
+```
+
+Until these reads are in the ticket, the answer and the ticket note say "membership removed, use not yet reviewed". They do not say it was harmless, and they do not say it was a breach.
+
+**Verification checkpoint:** [ ] the member list and the rules read against the expected list · [ ] each granted app's sign-on events recorded, or the 90-day limit noted · [ ] each app owner asked for the app's own audit log.
+
 ## Phase D: Group rules (R3)
 
 **Purpose:** change what fills a group. One rule can move many people, and their apps, in a single save.
@@ -305,6 +322,7 @@ node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event group.use
 - [ ] A rule: the `group-rules` read shows the intended status, the member count matches the prediction, and one person who should move read back.
 - [ ] More than 10 people: every listed person read back, and the System Log event count equals `[N]`.
 - [ ] Every read-back exited 0 with `"verified": true`; any that did not is named in the ticket as pending.
+- [ ] If the person should never have been in the group: the member list, the rules and each granted app's sign-on events were read after the removal, each app owner was asked for the app's own audit log, and the ticket states no severity before those reads.
 
 ## 📝 Jira-ready note
 
@@ -325,3 +343,5 @@ Group-based access with rule-driven membership is the core of role-based access 
 Run Phase A and record the membership, the member count, the rules naming the group and the apps it grants before choosing a phase.
 
 **Sources (checked 2026-10-28, `docs/aegis/g3/vendor-facts.md` B-14, B-15, B-16, O-15, O-22, O-26):** help.okta.com/en-us/content/topics/users-groups-profiles/usgp-assign-group-people.htm · help.okta.com/en-us/content/topics/users-groups-profiles/usgp-create-group-rules.htm · developer.okta.com/docs/okta-event-types.csv · raw.githubusercontent.com/okta/okta-management-openapi-spec/master/dist/current/management-minimal.yaml · the read-only connector `scripts/adapters/okta-client.js` (its read-back rules).
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** help.okta.com/en-us/content/topics/reports/syslog-filters.htm (the Application Access query `eventType eq "user.authentication.sso"`; events kept 90 days).

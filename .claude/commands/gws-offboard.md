@@ -32,6 +32,24 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **What Okta provisioning does to the Google account:** with no deactivation option selected on the Google Workspace integration, Okta deprovisioning **suspends** the Google account. The options *Do not suspend user*, *Remove all G Suite licenses* and *Remove all G Suite Roles* change that. Which ones `[@Aegion]` uses is an **[org gap]** — read it before Phase A, because it decides whether Phase B is still needed.
 - **Suspend vs delete:** suspension keeps mail, Drive and Calendar data and is still billed at the full rate; deletion removes every item that was not transferred and can be undone by a super admin for 20 days only.
 
+## Mail, cost and the restore window: decide before Phase D
+
+An offboarding plan answers three questions in the ticket before anything is deleted (answer-format section 2, the offboarding rule). The facts below are Google's; the choices are the org's: **[org gap: who receives a leaver's mail and for how long, and the retention policy]**.
+
+**Where the person's mail goes, and for how long.** A suspended or archived account receives nothing new: Google blocks new email and calendar invitations to it. Mail already in the mailbox stays while the account is suspended or archived and is deleted with the account, so Google's delete page gives two options for Gmail before a deletion: move the messages to another account, or redirect incoming messages to another address. A redirect is a Gmail routing change (Admin console, Apps, Google Workspace, Gmail, Routing, Email forwarding using recipient address map, with the redirect choice that leaves the original recipient out); Google sets no end date on it, so the ticket names the person who receives the mail and the date the redirect is taken down. No gate in this runbook covers the redirect: raise it as its own gated change. Proof a person can see once it is made: a test message to `[USER@DOMAIN.COM]` arrives in the receiving person's inbox. Twenty days after a deletion Google removes the address; before then it can be given to another managed user.
+
+**What keeping the account costs, against the alternatives.**
+
+| Choice | Data | New mail to the address | Cost | Way back |
+|---|---|---|---|---|
+| Keep it suspended (Phase B) | kept | blocked | billed at the same rate as an active account | reactivate at any time |
+| Archived User licence | kept; Vault retention rules and holds still apply | blocked | the active licence is free to reassign within 24 hours; the Archived User licence is its own paid licence (read the price on the Billing page, it is not quoted here); Business Starter, Standard and Plus, Enterprise Standard and Plus | unarchive, which needs a free licence of the matching edition |
+| Transfer the data, then delete (Phases C and D) | Drive files and future calendar events move in Phase C; everything not moved is deleted | the address is removed after 20 days unless redirected or reassigned first | Flexible plan: the charge is prorated; Annual/Fixed-Term plan: the licence count does not go down | restore for up to 20 days, then nothing |
+
+Archiving is a licence change this runbook does not gate: no gate, raise it as its own change (on Enterprise editions the user's More options menu carries the archive choice; on Business editions it sits inside the delete dialog, so read the dialog twice). Proof a person can see: the user's row shows the Archived User licence; Google says the active licence is free to reassign within 24 hours.
+
+**The restore window.** A deleted account can be restored for up to 20 days; write the date it ends in the ticket. After it, the data is gone.
+
 ## Fast path
 
 1. Read the Okta user and the Google account (R0).
@@ -40,6 +58,19 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 4. Phase C — capture the Drive pre-state, then transfer Drive and Calendar to `[MANAGER_UPN]` (R2 gates). **WAIT UNTIL** both transfers finish.
 5. Phase D — delete only after the independent review and the retention decision (R3 gate), or leave the account suspended.
 6. Phase E — devices: lock or wipe the Mac and handle the Chromebook in their own runbooks (`/jamf-lock-erase`, `/gws-chromeos-device`).
+
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line):
+
+| Step | Change | Class | Double-check |
+|---|---|---|---|
+| Phase A | deactivate the Okta user, gate gws-offboard-okta-deactivate-portal | R3 | the Okta status read-back passes with status DEPROVISIONED |
+| Phase B, only if Okta did not suspend | suspend the Google account, gate gws-offboard-suspend-portal | R2 | the suspended read-back passes |
+| Phase C | transfer Drive ownership, gate gws-offboard-drive-transfer-portal | R2 | the transfer read-back passes for Drive and Docs; where no transfer ID is listed, Google's confirmation email and a sample file the new owner opens |
+| Phase C | transfer future calendar events, gate gws-offboard-calendar-transfer-portal | R2 | the transfer read-back passes for Calendar, or the confirmation email |
+| Mail redirect, if the plan has one | no gate in this runbook: its own gated change | set by that change | a test message to the leaver's address arrives in the receiving person's inbox |
+| Archived User licence, if chosen | no gate in this runbook: its own gated change | set by that change | the user's row shows the Archived User licence |
+| Phase D | delete the Google account, gate gws-offboard-delete-portal | R3 | no connector read proves a deletion: the account is listed under Recently deleted users and Admin log events shows the deletion |
+| Phase E | device lock, wipe or deprovision | set in `/jamf-lock-erase` and `/gws-chromeos-device` | each of those runbooks' own read-back |
 
 ## Phase A — Start in Okta (the identity source)
 
@@ -161,6 +192,8 @@ It passes only when that transfer was requested at or after `[NOT_BEFORE]`, move
 ## Phase D — Delete, or keep suspended (R3, after independent review)
 
 **Purpose** — end the licence charge only when the data is safe and the retention decision is made.
+
+**Decide first:** the section "Mail, cost and the restore window" above. The ticket names where the mail goes and until when, which of the three choices was taken (suspended, archived, deleted) with what it costs, and, for a deletion, the date the 20-day restore window ends.
 
 **Try first:** keep the account suspended, the other choice this phase's heading names: nothing is deleted while the retention decision is open.
 
@@ -316,12 +349,13 @@ gam print users deleted_only
 - [ ] Data: `gws-client.js verify-transfer` passed for the Drive and the Calendar transfer (or `gam print datatransfers` shows both completed); `[MANAGER_UPN]` opened a sample file; the pre-state file count is in the ticket.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the suspend / transfer / delete events with the expected admin and time.
 - [ ] Devices handed to `/jamf-lock-erase` and `/gws-chromeos-device`, each with its own read-back.
+- [ ] The ticket says where the leaver's mail goes and until what date, which choice was taken (kept suspended and still billed, Archived User licence, or transferred and deleted), and for a deletion the date the 20-day restore window ends.
 
 ## 📝 Jira-ready note
 
 Use the completed form only when every read-back above passed; otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
 
-> [Only if all checks passed] Offboarded `[USER@DOMAIN.COM]` (Okta `[UPN]`). Okta deactivated [timestamp] (status DEPROVISIONED); Google account [suspended by Okta provisioning / suspended manually] [timestamp]. Pre-state: [N] owned files recorded. Drive and Calendar transferred to `[MANAGER_UPN]`, transfer IDs [IDs], completion verified. Account [kept suspended per retention policy / deleted after independent review — 20-day restore window ends [date]]. Admin log events confirm each change. Devices: [Mac via Jamf runbook / Chromebook via ChromeOS runbook — status]. Time spent: [X] min.
+> [Only if all checks passed] Offboarded `[USER@DOMAIN.COM]` (Okta `[UPN]`). Okta deactivated [timestamp] (status DEPROVISIONED); Google account [suspended by Okta provisioning / suspended manually] [timestamp]. Pre-state: [N] owned files recorded. Drive and Calendar transferred to `[MANAGER_UPN]`, transfer IDs [IDs], completion verified. Mail: [redirected to [MANAGER_UPN] until [date] under its own change / not redirected, new mail is blocked]. Account [kept suspended per retention policy, still billed as an active account / moved to an Archived User licence under its own change / deleted after independent review, 20-day restore window ends [date]]. Admin log events confirm each change. Devices: [Mac via Jamf runbook / Chromebook via ChromeOS runbook — status]. Time spent: [X] min.
 
 ## Aha moment
 
@@ -336,3 +370,5 @@ Being able to explain IdP → SP provisioning (who is authoritative, what deprov
 Start Phase A after confirming the Okta Google Workspace integration's deactivation options and the retention decision.
 
 **Sources (checked 2026-10-15):** help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-deactivate-user-account.htm · help.okta.com/oie/en-us/content/topics/provisioning/google/managing-g-suite-users.htm · help.okta.com/en-us/content/topics/provisioning/google/google-provisioning.htm · developer.okta.com/docs/api/openapi/okta-management/management/tags/userlifecycle.md · knowledge.workspace.google.com/admin/users/suspend-a-user-temporarily · knowledge.workspace.google.com/admin/users/delete-or-remove-a-user-from-your-organization · knowledge.workspace.google.com/admin/users/restore-a-recently-deleted-user · knowledge.workspace.google.com/admin/drive/transfer-drive-files-to-a-new-owner-as-an-admin · knowledge.workspace.google.com/admin/calendar/cancel-or-transfer-events-or-secondary-calendars-before-deleting-a-user · knowledge.workspace.google.com/vault/holds/get-started-with-holds-in-google-vault · developers.google.com/workspace/admin/data-transfer/reference/rest/v1/transfers/get and /transfers (transfers.get, the DataTransfer fields; read 2026-11-07) · developers.google.com/workspace/admin/data-transfer/v1/transfer-data (owners by Directory user ID; Calendar application ID) · GAM syntax: raw.githubusercontent.com/wiki/GAM-team/GAM (Users, Google-Data-Transfers, Users-Drive-Files-Display pages; GAM is an open-source tool, not a Google product).
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** knowledge.workspace.google.com/admin/users/delete-or-remove-a-user-from-your-organization (20 days, the two Gmail options, the address after 20 days, billing by plan, the Archived User licence instead) · knowledge.workspace.google.com/admin/users/suspend-a-user-temporarily (still charged; new email and invitations blocked) · knowledge.workspace.google.com/admin/users/archive-former-employee-accounts (editions, the freed licence, blocked mail, unarchive) · knowledge.workspace.google.com/admin/gmail/advanced/redirect-or-forward-gmail-messages-to-another-user (the recipient address map and its redirect choice).

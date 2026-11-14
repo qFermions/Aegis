@@ -14,9 +14,13 @@
 //        [--web] [--max-turns N] [--timeout-ms N] [--judge-model <model>]
 //        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
 //        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
+//        [--budget-usd N]
 //   node scripts/eval/judged-eval.js calibrate --sheet <filled.csv> --run <results.json>
 //        [--agreement-threshold -1..1] [--thresholds <file.json>]
 //   node scripts/eval/judged-eval.js --help
+// --budget-usd N is a limit for the whole run, system under test and judge together (batch 11): before each
+// case the run stops if what it has spent plus one more case (the dearest so far, or 1.00 before any cost is
+// known) would pass it, and the cases that did not run are INCONCLUSIVE in the results, never a pass.
 //
 // The case file must live outside the repository (a path inside it, or one whose real
 // path is inside it, is refused), in a folder of its own: that folder is denied to the
@@ -56,6 +60,7 @@ const USAGE = `Usage:
        [--web] [--max-turns N] [--timeout-ms N] [--judge-model <model>]
        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
+       [--budget-usd N]
   node scripts/eval/judged-eval.js calibrate --sheet <filled.csv> --run <results.json>
        [--agreement-threshold -1..1] [--thresholds <file.json>]
 
@@ -67,7 +72,7 @@ Exit codes: 0 PASS, 2 FAIL, 3 no threshold given, 4 dry run, 1 input error or re
 
 const SPECS = {
   run: {
-    values: ['--cases', '--max-turns', '--timeout-ms', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds'],
+    values: ['--cases', '--max-turns', '--timeout-ms', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds', '--budget-usd'],
     flags: ['--execute', '--web'],
   },
   calibrate: {
@@ -129,6 +134,23 @@ function printPlan(out, list, config) {
   out(`judge: ${preview.judge} (cwd: a fresh empty temporary directory)`);
   out(`case folder: denied to the system under test, as given and as resolved (${backends.readDenyRules(null, config.case_dirs).length - backends.readDenyRules().length} read rule(s), the last in the --settings above; the results folder is added when the run starts)`);
   out(`results: ${config.results_dir_given ? 'the --results-dir given' : '.aegis-state/evals/<run-id>/'} (checked when the run starts)`);
+  if (config.budget_usd !== null) out(`limit: ${config.budget_usd.toFixed(2)} US dollars for the whole run; it stops before a case that could pass it`);
+}
+
+// What one more case is taken to cost before the run's limit is checked: the dearest case so far in this run, or
+// this much before any case has reported a cost. shortcut: one fixed first guess, so a first case dearer than it can
+// pass a very tight limit by that case's own cost; upgrade to a per-session cap if a run ever does.
+const FIRST_CASE_GUESS_USD = 1;
+
+// The record of a case the run did not start because its limit would be passed: INCONCLUSIVE, never a pass.
+function notRunRecord(c, reason) {
+  const sut = { state: 'NOT_RUN', reason, answer: null, follow_up_answer: null, num_turns: null, duration_ms: 0, cost_usd: null, model: null, session_id: null, turns: [], tool_calls: [], outside_reads: [] };
+  return {
+    id: c.id, platform: c.platform, capability: c.capability, scenario: c.scenario, class: c.class, probe: c.probe,
+    setup_given: c.setup !== '', fix_card_words: null,
+    change_class: c.expected.change_class, escalate: c.expected.escalate,
+    sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason],
+  };
 }
 
 // A case's setup goes through the privacy step ask-aegis.js runs on --setup: an email address or a phone
@@ -161,7 +183,12 @@ async function runCommand(opts, io, deps) {
     web: Boolean(opts['--web']),
     judge_model: opts['--judge-model'] || null,
     results_dir_given: Boolean(opts['--results-dir']),
+    budget_usd: null,
   };
+  if (opts['--budget-usd'] !== undefined) {
+    if (!/^\d+(?:\.\d+)?$/.test(opts['--budget-usd']) || !(Number(opts['--budget-usd']) > 0)) throw new InputError('--budget-usd takes a limit in US dollars above zero, such as 9.50');
+    config.budget_usd = Number(opts['--budget-usd']);
+  }
   if (config.judge_model !== null && !/^[A-Za-z0-9._:\[\]-]{1,100}$/.test(config.judge_model)) throw new InputError('--judge-model is a model name (letters, digits, dot, dash, colon, brackets)');
   const sheetN = intFlag(opts, '--calibration-sheet', 0, 1, 1000);
   const real = paths.refuseInsideRepo(opts['--cases'], 'the case file', { repoRoot });
@@ -185,7 +212,18 @@ async function runCommand(opts, io, deps) {
   const started = new Date().toISOString();
   io.out(`judged-eval: run ${runId}, ${list.length} case(s); ${report.LABEL}`);
   const results = [];
+  // what the run has spent (both backends) and its dearest case, for the --budget-usd guard
+  let spent = 0;
+  let dearest = 0;
+  let notRun = 0;
   for (const c of list) {
+    if (config.budget_usd !== null && spent + (dearest > 0 ? dearest : FIRST_CASE_GUESS_USD) > config.budget_usd + 1e-9) {
+      const r = notRunRecord(c, `not run: the run's limit of ${config.budget_usd.toFixed(2)} US dollars would be passed (${spent.toFixed(2)} spent, one more case taken to cost ${(dearest > 0 ? dearest : FIRST_CASE_GUESS_USD).toFixed(2)})`);
+      results.push(r);
+      notRun += 1;
+      io.out(report.terminalLine(r));
+      continue;
+    }
     const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs });
     // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
     const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
@@ -200,12 +238,17 @@ async function runCommand(opts, io, deps) {
     };
     results.push(r);
     io.out(report.terminalLine(r));
+    const caseCost = (typeof sut.cost_usd === 'number' ? sut.cost_usd : 0) + (jr && typeof jr.cost_usd === 'number' ? jr.cost_usd : 0);
+    spent += caseCost;
+    dearest = Math.max(dearest, caseCost);
   }
+  if (notRun) io.out(`${notRun} case(s) did not run: the run's limit of ${config.budget_usd.toFixed(2)} US dollars would have been passed; each is INCONCLUSIVE in the results`);
   const summary = report.summarize(results, { baseline });
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];
   const payload = {
     run_id: runId, started, finished: new Date().toISOString(),
-    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, judge_model: config.judge_model },
+    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, judge_model: config.judge_model, budget_usd: config.budget_usd },
+    spent_usd: spent,
     sut_models: uniq(results.map((r) => r.sut && r.sut.model)),
     judge_models: uniq(results.map((r) => r.judge && r.judge.model)),
     summary, cases: results,

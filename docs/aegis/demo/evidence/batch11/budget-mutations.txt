@@ -1,0 +1,25 @@
+Each mutation was applied to scripts/eval/judged-eval.js, budget.test.js was run, and the file was restored (scratch tool mutate.js).
+
+MUTATION budget-a the guard forgets the judge
+  file: scripts/eval/judged-eval.js
+  change: the run counts only the system under test's cost
+  $ node --test scripts/eval/judged/budget.test.js
+  ℹ tests 3 ℹ pass 1 ℹ fail 2
+  caught by: ✖ --budget-usd stops before the case that could pass the limit, and records the rest as not run | ✖ before any case has reported a cost, one more case is taken to cost 1.00 US dollar; a larger limit runs them all | ✖ --budget-usd stops before the case that could pass the limit, and records the rest as not run | ✖ before any case has reported a cost, one more case is taken to cost 1.00 US dollar; a larger limit runs them all
+  file restored: true
+
+MUTATION budget-b the cases that did not run are dropped
+  file: scripts/eval/judged-eval.js
+  change: a case that did not run is left out of the results
+  $ node --test scripts/eval/judged/budget.test.js
+  ℹ tests 3 ℹ pass 2 ℹ fail 1
+  caught by: ✖ --budget-usd stops before the case that could pass the limit, and records the rest as not run | ✖ --budget-usd stops before the case that could pass the limit, and records the rest as not run
+  file restored: true
+
+MUTATION budget-c the guard takes one more case to cost nothing
+  file: scripts/eval/judged-eval.js
+  change: the run stops only after the limit is already passed
+  $ node --test scripts/eval/judged/budget.test.js
+  ℹ tests 3 ℹ pass 1 ℹ fail 2
+  caught by: ✖ --budget-usd stops before the case that could pass the limit, and records the rest as not run | ✖ before any case has reported a cost, one more case is taken to cost 1.00 US dollar; a larger limit runs them all | ✖ --budget-usd stops before the case that could pass the limit, and records the rest as not run | ✖ before any case has reported a cost, one more case is taken to cost 1.00 US dollar; a larger limit runs them all
+  file restored: true

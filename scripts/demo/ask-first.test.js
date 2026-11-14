@@ -115,3 +115,14 @@ test('task 4: the form of an ask-first answer: one question mark, no "## Fix", n
   // a question the answer only quotes from the ticket is not the answer's question
   assert.equal(isAskFirst('> Can someone fix the printer?\n\nNoted.'), false);
 });
+
+// A ticket that does not say what the thing is has even less to go on, whatever else it says: the judged
+// runner's own DEV06 case ("It stopped working again this morning. Can you fix it?", class CLARIFY) gives a
+// since-when and still cannot be answered. A wrong implementation it catches: a reader for which any since-when
+// or "stopped working" makes a ticket answerable.
+test('task 4: a ticket that does not say what the thing is also gets the one question; one that quotes an error or names a system does not', () => {
+  for (const t of ['It stopped working again this morning. Can you fix it?', 'This is broken for me', 'Something went wrong yesterday, please help', 'Everything is slow today']) assert.equal(bareTicket(t), true, t);
+  for (const t of ['It says "disk full" when I save.', 'It keeps asking for my password in Outlook.', 'This printer prints blank pages since this morning.', 'It shows error 0x80070005 on my laptop.']) assert.equal(bareTicket(t), false, t);
+  const asked = askFirst(QUESTION, { ticket: 'It stopped working again this morning. Can you fix it?' });
+  assert.equal(asked.verdict, 'pass', asked.detail);
+});

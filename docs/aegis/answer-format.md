@@ -125,11 +125,11 @@ Read-back: <the runbook's read-back command for that gate, as the runbook writes
 
 ## 7. Ask first: a ticket with nothing to go on
 
-A ticket that names a thing and gives no symptom, no error text, no who and no since-when ("The printer is broken.", "Teams not working") gets one question and nothing else: no Fix card, no steps, no Details. "Broken", "not working" and "a problem" say that something is wrong, not what happens, so they are not a symptom.
+A ticket that names a thing and gives no symptom, no error text, no who and no since-when ("The printer is broken.", "Teams not working") gets one question and nothing else: no Fix card, no steps, no Details. "Broken", "not working" and "a problem" say that something is wrong, not what happens, so they are not a symptom. A ticket that does not say what the thing is ("It stopped working again this morning.") gets the one question too, whatever else it says: there is nothing to assume a scenario about.
 
 - The answer is the one question, in at most 60 words, with one question mark. The one question may ask what happens, for whom and since when together.
 - Where the desk asks for the closing `aegis-desk` block, the block holds only `Gate: none`; it is not part of the question.
-- Every other ticket keeps CLAUDE.md's Rule 8: assume the most common scenario, give the Fix card, then ask if adjustments are needed. A ticket that gives any one of the four (a symptom, an error text, a who, a since-when) is such a ticket.
+- Every other ticket keeps CLAUDE.md's Rule 8: assume the most common scenario, give the Fix card, then ask if adjustments are needed. A ticket that names its thing and gives any one of the four (a symptom, an error text, a who, a since-when) is such a ticket.
 - The desk reads an ask-first answer as its CLARIFY state, and its "ask first" row checks the form: one question mark, no `## Fix`, no numbered steps, at most 60 words.
 
 > Example: "The scanner is broken." The whole answer: "What exactly happens when you use the scanner, who is affected, and since when?"

@@ -66,16 +66,21 @@ function assumedSetup(answer, { setup = null, ticket = '' } = {}) {
 }
 
 // ── Ask first (task 4) ──────────────────────────────────────────────────────────────────────────
-// A ticket has nothing to go on when it gives no symptom, no error text, no who and no since-when. "Broken", "not
-// working", "a problem" and "acting up" say that something is wrong, not what happens, so they are no symptom.
+// A ticket has nothing to go on when it gives no symptom, no error text, no who and no since-when, or when it
+// does not say what the thing is. "Broken", "not working", "a problem" and "acting up" say that something is
+// wrong, not what happens, so they are no symptom.
 const SINCE_WHEN = /\b(?:since|after|before|when|whenever|every time|each time|yesterday|today|tonight|this (?:morning|afternoon|evening|week|month)|last (?:night|week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|ago|\d{1,2}(?::\d{2})?\s?(?:am|pm)|(?:mon|tues|wednes|thurs|fri|satur|sun)day|for (?:an?|\d+|two|three|several|a few|some) (?:minute|hour|day|week|month)s?|all (?:day|morning|week)|every (?:\w+ )?(?:minute|hour|day|morning|week)s?)\b/i;
 const WHO = /\b(?:I|I'm|I've|me|my|mine|we|we're|our|us|he|she|they|his|her|their|everyone|everybody|nobody|no one|anyone|someone|somebody|all (?:staff|users|of us)|the (?:whole|entire) (?:team|office|floor|company|site|department)|(?:two|three|four|five|\d+|several|some|a few|many|most|both) (?:\w+ )?(?:users|people|staff|of us|colleagues|employees)|team|department|staff|users?|colleagues?|manager|boss|director|reception|front desk|callers?|customers?|clients?)\b|\[[A-Z][A-Z0-9_@.]*\]/i;
 const ERROR_TEXT = /(?:^|\s)["'“‘][^"”\n]{4,}?["'”’](?=\s|[.,;:!?]|$)|\b(?:error|code|message|says|shows|showing|displays|warning|popup|pop-up|prompts?)\b|\b0x[0-9a-f]{3,}\b|\b[A-Z]{2,}\d{3,}\b|\b\d{3,}\b/i;
 const SYMPTOM = /\b(?:can(?:'t|not| not)|could(?:n't| not)|won't|will not|unable|fail(?:s|ed|ing)?|keeps?|stuck|slow|blank|frozen|freez\w+|crash\w*|hang(?:s|ing)?|loop\w*|denied|locked(?: out)?|blocked|bounc\w+|missing|gone|disappear\w*|vanish\w*|drops?|dropping|disconnect\w*|offline|down|unreachable|timeout|times? out|timed out|no (?:sound|audio|video|signal|dial tone|internet|connection|access|power)|black screen|blue screen|not (?:loading|syncing|printing|sending|receiving|connecting|charging|ringing|turning on|opening|starting|showing|responding|updating)|doesn't (?:print|send|sync|load|open|start|connect|charge|ring|turn on|show|respond|update)|asks? for|asking for|spinning|garbled|jam\w*|beep\w*|overheat\w*|the wrong \w+|wrong (?:folder|password|printer|time|date|address|number|person|account|name)|expired|rejected|quarantin\w+|shuts? down|restart\w*|reboot\w*|busy tone|echo|lag\w*|delay\w*|duplicate\w*|stopped \w+ing)\b/i;
 const BARE_MAX_WORDS = 25;
+// A ticket that does not say what the thing is ("It stopped working again this morning."): its subject is a bare
+// pronoun, and it names no system and quotes no error. It has nothing to go on whatever else it says.
+const NO_THING = /^[\s"'(]*(?:it|this|that|these|those|something|everything|nothing|stuff)(?:'s)?\s+(?!(?:printer|laptop|phone|computer|pc|mac|app|site|page|system|email|mailbox|account|file|folder|link|screen|monitor|keyboard|mouse|scanner|router|wifi|wi-fi|network|vpn|server|drive|tablet|headset|camera|meeting|calendar)\b)/i;
 function bareTicket(ticket) {
   const t = String(ticket || '').replace(/[‘’]/g, "'");
   if (words(t) > BARE_MAX_WORDS) return false;
+  if (NO_THING.test(t) && !namesSystem(t) && !ERROR_TEXT.test(t)) return true;
   return !SINCE_WHEN.test(t) && !WHO.test(t) && !ERROR_TEXT.test(t) && !SYMPTOM.test(t);
 }
 
@@ -114,7 +119,7 @@ function askFirst(answer, { ticket = '' } = {}) {
     const problems = askFirstProblems(answer);
     return row('ask-first', plain, problems.length === 0, problems.length ? problems.join('; ') : `one question and nothing else, ${words(deskBlock(answer).body)} words`);
   }
-  if (bare) return row('ask-first', plain, false, 'the ticket gives nothing to go on (no symptom, no error text, no who, no since-when), so the answer is one question and nothing else');
+  if (bare) return row('ask-first', plain, false, 'the ticket gives nothing to go on (no symptom, no error text, no who and no since-when, or no word for what the thing is), so the answer is one question and nothing else');
   return row('ask-first', plain, true, 'the ticket gives something to go on, and the answer is not a lone question');
 }
 

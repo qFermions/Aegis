@@ -95,3 +95,41 @@ test at scripts/demo/ask-first.test.js:95:1
     operator: 'strictEqual',
     diff: 'simple'
   }
+
+$ node --test scripts/demo/ask-first.test.js   (red, second part: the no-thing tickets, before bareTicket reads them, at d440d08)
+✔ task 4: ten tickets with nothing to go on read as bare, and ten that name a symptom, an error, a who or a since-when do not (2.764292ms)
+✔ task 4: a bare ticket must get the one question: the question passes the row and a Fix card fails it (1.272458ms)
+✔ task 4: a ticket that names a symptom must get a Fix card: the card passes the row and a lone question fails it (0.232459ms)
+✔ task 4: the form of an ask-first answer: one question mark, no "## Fix", no numbered steps, at most 60 words (0.16375ms)
+✖ task 4: a ticket that does not say what the thing is also gets the one question; one that quotes an error or names a system does not (0.496291ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.508083
+
+✖ failing tests:
+
+test at scripts/demo/ask-first.test.js:123:1
+✖ task 4: a ticket that does not say what the thing is also gets the one question; one that quotes an error or names a system does not (0.496291ms)
+  AssertionError [ERR_ASSERTION]: It stopped working again this morning. Can you fix it?
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/ask-first.test.js:124:186)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

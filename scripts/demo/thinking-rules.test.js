@@ -287,3 +287,25 @@ test('task 5d (Google): one change short of its double-check fails; a single cha
   const single = answer({ wrong: 'the user is not in the group.', steps: ['Open the group.', 'Read its members.', 'Add [UPN] to the staff group.'], gates: ['example-group-add-portal'] });
   assert.equal(changeClassAndCheck(single, {}).applies, false);
 });
+
+// Every runbook line that cites a section 2 rule by name names a rule section 2 holds (fresh-context review of the
+// Microsoft lane, finding 3: about 35 runbook lines cite "answer-format section 2" for these rules). Wrong
+// implementations it catches: a runbook that cites a rule under a name section 2 does not use (a typo, or a rule
+// renamed in one place only), and a matcher that accepts part of a title (the near-miss below must not match).
+test('every rule a runbook cites by name from answer-format section 2 is a rule title there', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..', '..');
+  const doc = fs.readFileSync(path.join(root, 'docs', 'aegis', 'answer-format.md'), 'utf8');
+  const section2 = doc.slice(doc.indexOf('## 2.'), doc.indexOf('\n## 3.'));
+  const titles = new Set([...section2.matchAll(/^\*\*([^*]+?)\.\*\*/gm)].map((m) => m[1]));
+  assert.ok(titles.has('Who else, and what left'), 'the reader finds the titles');
+  assert.ok(!titles.has('Who else and what left'), 'a near-miss is not a title');
+  const dir = path.join(root, '.claude', 'commands');
+  const cited = [];
+  for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.md'))) {
+    for (const m of fs.readFileSync(path.join(dir, f), 'utf8').matchAll(/answer-format section 2, "([^"]+)"/g)) cited.push([f, m[1]]);
+  }
+  assert.ok(cited.length >= 30, `the runbooks cite section 2 rules by name (${cited.length})`);
+  assert.deepEqual(cited.filter(([, name]) => !titles.has(name)), [], 'a cited name that is not a section 2 rule title');
+});

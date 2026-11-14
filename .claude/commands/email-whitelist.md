@@ -13,6 +13,7 @@ disable-model-invocation: true
 > **PREVIEW ONLY [email-whitelist-routing]:** The decision guide routes a proposed release, external submission, or allow entry to its own reviewed command. It cannot release a message, submit evidence, or create an allow.
 - Is this a one-time false positive, or a recurring pattern? One-time → release from quarantine + report FP. Recurring → add an allow.
 - Is this a specific sender or an entire domain? Sender-level is always safer than domain-level.
+- **Did the mail fail SPF, DKIM or DMARC?** Read the `Authentication-Results` header first. If it did, the first fix is the sender's: say which record they must fix on their side (`/email-to-spam` Step 3 C has the wording). An allow comes second, for the one sender address with an expiry, and never as a whole domain (answer-format section 2, the mail rule; `docs/aegis/batch11/vendor-facts-microsoft.md` MB-41, MB-45, MB-46).
 - Is the sender external or internal? Internal mail issues usually mean a connector or relay problem — not a whitelist job.
 - Check the message trace first to confirm the exact block reason: `Exchange admin center (admin.exchange.microsoft.com) → Mail flow → Message trace → search by [SENDER] / [USER@DOMAIN.COM]`.
 
@@ -25,9 +26,9 @@ disable-model-invocation: true
 
 `Defender portal (security.microsoft.com) → Email & collaboration → Policies & rules → Threat policies → Tenant Allow/Block Lists → Senders tab → + Add`
 
-- **Entry:** `[SENDER]` for a single address, or `*@[DOMAIN]` for a whole domain (use sparingly)
+- **Entry:** `[SENDER]` for a single address. `*@[DOMAIN]` for a whole domain is never the first fix, and never the fix for mail that fails SPF, DKIM or DMARC
 - **Action:** Allow
-- **Expiry:** 30–90 days recommended — set a review date, don't leave it permanent
+- **Expiry:** keep one. By default the entry is removed 45 days after it was last used; a fixed date can be at most 30 days ahead (MB-48). Set a review date
 - **Note:** document the ticket number `[JIRA-###]` and reason
 
 Use this for: trusted vendors, known-good newsletters, partner orgs with occasional false positives.
@@ -37,7 +38,7 @@ Use this for: trusted vendors, known-good newsletters, partner orgs with occasio
 ### Method 2 — Anti-spam policy: allowed senders / domains
 
 > **PREVIEW ONLY [email-whitelist-method-2]:** The state-changing path below is not authorized by this reference. Move the intended action to a separate reviewed runbook with resolved target, effect, scope, reversibility/checkpoint, and an action-specific exact confirmation.
-**Safety: Medium.** Bypasses spam filtering for the listed sender/domain, but authentication checks (SPF/DKIM/DMARC) still apply. Applies to all users covered by the policy (often org-wide).
+**Safety: Low.** Microsoft ranks this method last. Senders on these lists "bypass all spam, spoof, phishing protection (except high confidence phishing), and sender authentication (SPF, DKIM, DMARC)", and Microsoft calls the method "best used for temporary testing only" (MB-41). So it is never the answer to mail that fails those checks. Applies to all users covered by the policy (often org-wide).
 
 `Defender portal → Email & collaboration → Policies & rules → Threat policies → Anti-spam → [policy name] → Edit → Allowed and blocked senders and domains → Allowed senders / Allowed domains → + Add`
 
@@ -100,8 +101,8 @@ Use for: your own on-prem mail relay, a known MFP/scanner IP, or a trusted third
 | Scenario | Recommended method |
 |----------|-------------------|
 | Occasional false positive from one sender | Method 1 — TABL, 30-day expiry |
-| High-volume trusted vendor (whole domain) | Method 2 — Anti-spam allowed domain (review quarterly) |
-| Sender auth keeps failing, business-critical | Method 3 — Transport rule SCL -1, narrowly scoped |
+| High-volume trusted vendor (whole domain) | Method 2: Anti-spam allowed domain (review quarterly). Only for mail that passes SPF, DKIM and DMARC; Microsoft ranks this method last |
+| Sender auth keeps failing, business-critical | First the sender fixes SPF, DKIM or DMARC on their side (`/email-to-spam` Step 3 C). Meanwhile Method 1 for the one address, with an expiry. Method 3, narrowly scoped, only when that cannot work; never a whole domain |
 | Single user, already delivered to Junk | Method 4 — Per-user Safe Senders |
 | On-prem relay or MFP scanner | Method 5 — Connection filter IP |
 

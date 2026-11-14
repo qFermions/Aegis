@@ -529,3 +529,14 @@ test('batch 11 resumed: the session runs on claude-opus-5-5 unless --model names
   assert.match(bad.stderr(), /--model/);
   assert.equal(bad.calls().length, 0);
 });
+
+// Code review round 1, finding 13: an ask-first answer closes with the aegis-desk block the format asks for, and the
+// plain printout showed that block as part of the one question. Wrong implementation it catches: printing the whole
+// answer instead of the answer without its desk block.
+test('code review 1: the ask-first printout is the question without the aegis-desk block', async (t) => {
+  const question = 'What exactly happens when you try to print, who is affected, and since when?';
+  const s = setup(t, { answer: `${question}\n\n\`\`\`aegis-desk\nGate: none\n\`\`\`` });
+  assert.equal(await ask.main(['The printer is broken.'], s.env, s.deps), 0, s.stderr());
+  assert.match(s.stdout(), /Aegis asks one thing first:\n\nWhat exactly happens when you try to print, who is affected, and since when\?\n/);
+  assert.doesNotMatch(s.stdout(), /aegis-desk|Gate: none/);
+});

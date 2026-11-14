@@ -29,7 +29,7 @@ const backends = require('./eval/judged/backends.js');
 const paths = require('./eval/judged/paths.js');
 const sanitize = require('./graph/sanitize.js');
 const { PHONE_LITERAL, replaceEmails, isCanonicalPlaceholder } = require('./tier/tier-guard.js');
-const { fixCard, PARTS } = require('./demo/answer.js');
+const { fixCard, PARTS, deskBlock } = require('./demo/answer.js');
 const { askerReply, replyProblems, isAskFirst } = require('./demo/senior-rules.js');
 const { catalog } = require('./demo/catalog.js');
 
@@ -294,7 +294,8 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     if (tell.length) io.out(`\nWhat to tell the user:\n${tell.join('\n')}\n`);
   } else if (isAskFirst(turn.answer, ticket.text)) {
     // a ticket with nothing to go on gets one question and nothing else (answer-format section 7)
-    io.out(`\nAegis asks one thing first:\n\n${turn.answer.trim()}\n`);
+    // the aegis-desk block the format closes it with is the desk's, not part of the question (code review 1, finding 13)
+    io.out(`\nAegis asks one thing first:\n\n${deskBlock(turn.answer).body.trim()}\n`);
   } else {
     io.out(`\nThe answer has no Fix card, so here it is in full:\n\n${turn.answer}\n`);
   }

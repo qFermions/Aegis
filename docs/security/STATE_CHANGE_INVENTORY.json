@@ -747,7 +747,9 @@
       "mode": "preview",
       "sinks": [],
       "impactCategories": [
-        "external-system mutation"
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
       ]
     },
     {
@@ -901,6 +903,8 @@
       "sinks": [],
       "impactCategories": [
         "credential-related",
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "identity-related",
         "security-sensitive"
@@ -961,6 +965,7 @@
       "mode": "preview",
       "sinks": [],
       "impactCategories": [
+        "credential-related",
         "external-system mutation",
         "identity-related",
         "security-sensitive"
@@ -1655,6 +1660,8 @@
       "mode": "preview",
       "sinks": [],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "identity-related",
         "permission-related"
@@ -5751,6 +5758,8 @@
       "sinks": [],
       "impactCategories": [
         "credential-related",
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "identity-related",
         "permission-related",
@@ -5798,6 +5807,22 @@
       "sinks": [],
       "impactCategories": [
         "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "mfa-temporary-access-pass-portal",
+      "file": ".claude/commands/mfa-issue.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "identity-related",
         "permission-related",
@@ -7040,6 +7065,27 @@
       ]
     },
     {
+      "id": "okta-mfa-reset-tac-portal",
+      "file": ".claude/commands/okta-mfa-reset.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:create",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "okta-user-lifecycle-activate",
       "file": ".claude/commands/okta-user-lifecycle.md",
       "kind": "shell",
@@ -7733,6 +7779,8 @@
       "sinks": [],
       "impactCategories": [
         "credential-related",
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "identity-related",
         "permission-related",
@@ -8291,6 +8339,8 @@
       "mode": "preview",
       "sinks": [],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "security-sensitive"
       ]
@@ -9151,6 +9201,8 @@
         "data-removal related",
         "destructive",
         "external-system mutation",
+        "identity-related",
+        "permission-related",
         "security-sensitive"
       ]
     },
@@ -9256,8 +9308,11 @@
       "mode": "gated",
       "sinks": [],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
-        "identity-related"
+        "identity-related",
+        "permission-related"
       ]
     },
     {

@@ -1,0 +1,40 @@
+## Fix
+**What's wrong:** Since the macOS update, Okta Verify on [FIRST_NAME]'s Mac keeps sending them back to sign in, and a reinstall did not fix it. The likely cause is a stale session left over from the update.
+**Do this:**
+1. Open Okta Admin Console → Reports → System Log and search for [UPN]. Repeated unfinished Okta Verify checks from the Mac point to a stale session. Sign-ins or pushes the user did not make mean you should stop.
+2. Ask [FIRST_NAME] to quit Okta Verify fully, not just close its window, then reopen it and sign in once.
+3. If it still loops, have them restart the Mac and sign in once. Write down the macOS version (shown in Fleet → Hosts → [DEVICE_NAME]) and the Okta Verify version.
+4. If it still loops, go to Directory → People → [UPN] → More Actions → Clear User Sessions.
+5. Last resort: reset Okta Verify for [UPN] and have them set it up again.
+
+**Done when:** [FIRST_NAME] finishes one full sign-in on the Mac. Aegis then checks that the System Log shows the sessions were cleared.
+**Stop if:** the log shows activity [FIRST_NAME] did not make. Then this is a security report, handled at any hour.
+**Tell the user now:** IT is looking into the sign-in loop. Please quit Okta Verify completely, open it again and try to sign in once, then tell us what happens.
+**Tell the user when done:** You can sign in normally again. If the loop comes back, reply on this ticket.
+
+See Details for the order of steps, the reset's conditions and the ticket note.
+
+## Details
+- **Assumed setup:** Customer D's profile: Okta with Okta Verify, and Fleet managing the Macs. Okta sign-in is a separate system from Google 2-Step Verification, so don't change anything in Google for this ticket.
+- **Runbook:** `/okta-mfa-reset`, section "Okta Verify sign-in loop after a macOS update". The fix comes from the owner's own tickets, not from Okta's published pages.
+- **Why this order:** the macOS update is what changed, so a stale session is checked first. The reinstall was already done, so it isn't repeated. Steps 2 and 3 are things the user does and change nothing in Okta.
+- **Step 4 (clear Okta sessions): R1.** It can't be undone, but it doesn't need to be: the user just signs in again. Before clicking, write the current UTC time in the ticket. Double-check: Aegis reads the System Log for a successful session clear for [UPN] after that time.
+  - **Gotcha:** **Clear User Sessions** shows only for active users, and More Actions doesn't appear on your own admin profile.
+- **Step 5, only if step 4 did not stop the loop:** gate `okta-mfa-reset-selected-portal` (R2, can't be undone).
+  - First confirm identity the way the profile says: a video call with [FIRST_NAME], and their manager confirms in the IT channel.
+  - The head of engineering approves the reset.
+  - Aegis checks the old Okta Verify setup is gone before [FIRST_NAME] sets it up again, then checks the new one is listed.
+  - Reset all authenticators (`okta-mfa-reset-all-portal`) is not for this ticket.
+- **Verification:**
+  - [ ] Account shows Active.
+  - [ ] No signs of compromise in the System Log.
+  - [ ] Session clear confirmed after the recorded time.
+  - [ ] [FIRST_NAME] confirms one full sign-in on the Mac.
+- **Jira note:** Okta Verify sign-in loop for [UPN] after a macOS update. User checks: [results]. macOS [version], Okta Verify [version]. Sessions cleared after [NOT_BEFORE] with the exact confirmation phrase; read-back passed at [timestamp]. User signed in at [timestamp]. No authenticator was reset. Compromise signs: [none found / [JIRA-###] linked]. Time spent: [X] min.
+
+```aegis-desk
+Gate: okta-mfa-reset-clear-sessions-portal
+Phrase: CLEAR OKTA SESSIONS FOR [UPN]
+Change record: none (R1: no change record)
+Read-back: node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute
+```

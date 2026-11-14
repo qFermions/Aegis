@@ -1,0 +1,67 @@
+## Fix
+**What's wrong:** [FIRST_NAME] has no access to the billing shared mailbox yet and needs the same rights a colleague already has, so she can read it and reply from it.
+**Do this:**
+1. Get the managing partner's approval on the ticket. The billing mailbox holds client financial mail.
+2. Exchange admin center → Recipients → Mailboxes → [MAILBOX] → Mailbox Delegation: copy all three lists into the ticket and note which rights the colleague holds.
+3. Read and manage (Full Access) → Edit → Add members → [UPN] → Save → Confirm.
+4. If the colleague holds Send as: Send as → Edit → Add members → [UPN] → Save → Confirm.
+**Done when:** the billing mailbox shows in [FIRST_NAME]'s Outlook and a test reply shows the billing address as the sender. Aegis then checks that both rights list [UPN].
+**Stop if:** "billing" turns out to be a person's own mailbox or a group rather than a shared mailbox, or the colleague holds Send on behalf.
+**Tell the user now:** IT is setting up your access to the billing inbox. The managing partner needs to approve it first, and we'll let you know when it's ready.
+**Tell the user when done:** You now have the billing inbox in Outlook and can reply from it. If you can't see it yet, close Outlook and open it again.
+
+See Details for the risk, the undo and the ticket note.
+
+## Details
+**Runbook:** `/shared-mailbox`, with the grant and removal gates. Replay result: MISS.
+
+**Changes:**
+- Step 3 (give Full Access on the billing mailbox): R2. Double-check: Aegis reads the mailbox's Full Access list and confirms [UPN] is on it.
+- Step 4 (give Send as on the billing mailbox): R2. Double-check: Aegis reads the Send as list and confirms [UPN] is on it.
+
+**Why these rights:**
+- "Same as [the colleague]" means copying the colleague's rights, not adding more. The colleague's rights are read in step 2.
+- Replying to clients from the mailbox needs Full Access (to read) plus Send as (so mail shows only the billing address as the sender).
+- If the colleague holds Send on behalf instead, stop. That right has no gate yet and can only be previewed (`[mailbox-send-on-behalf-portal]`), so take it back to the managing partner.
+
+**Before you start:**
+- The Delegation lists you copy in step 2 are the state to restore. Exchange does not keep the old state for you.
+
+**⚠️ Risk:**
+- Full Access shows [FIRST_NAME] everything in the billing mailbox, including old client mail.
+- Anything she reads or sends as the mailbox while she has access cannot be taken back.
+- The managing partner's approval is the authorization. An urgent "she starts Monday" does not replace it.
+
+**Undo:**
+- Remove Full Access with `/mailbox-permissions` gate `mailbox-permission-remove-portal`.
+- Remove Send as with gate `mailbox-send-as-remove-portal`.
+
+**Check that it works:**
+- [ ] The Delegation lists show [UPN] with only the colleague's rights, no more.
+- [ ] The mailbox shows up in her Outlook automatically. It can take a while; re-adding the Outlook profile fixes a long delay.
+- [ ] A test reply shows the billing address as the sender.
+
+<details>
+<summary>PowerShell - for reference only (read-only)</summary>
+
+```powershell
+Connect-ExchangeOnline                                   # sign in to Exchange Online
+Get-MailboxPermission -Identity "[MAILBOX]" |            # list who has Full Access on the billing mailbox
+  Where-Object {$_.User -notlike "NT AUTHORITY*"}        # hide the built-in system entries
+Get-RecipientPermission -Identity "[MAILBOX]"            # list who has Send As on the billing mailbox
+```
+</details>
+
+**Jira-ready note:**
+> [JIRA-###] Billing mailbox access for [UPN], copying the colleague's rights. Approved by: managing partner [date]. Pre-state: the Delegation lists are copied into the ticket. Full Access: [verified / not done]. Send As: [verified / not needed]. Test reply from the billing address: [pass / fail]. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

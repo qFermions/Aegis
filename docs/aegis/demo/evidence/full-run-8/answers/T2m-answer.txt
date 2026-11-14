@@ -1,0 +1,80 @@
+## Fix
+**What's wrong:** [FIRST_NAME] leaves on Friday. Their Okta sign-in, GitHub membership and Google files need to be shut off and handed over.
+**Do this:**
+1. Okta Admin Console → Directory → People → [UPN]: note the Applications tab. GitHub → your org → People: check that [GITHUB_USER] really is [FIRST_NAME] ("i think"), and note their teams, repos and forks.
+2. At the end of their last day: Okta → [UPN] → More Actions → **Deactivate**. Okta then suspends their Google account.
+3. Google Admin console → Apps → Drive and Docs → **Transfer ownership**, then Calendar → **Events transfer**, both to their manager.
+4. GitHub → your org → People → tick [GITHUB_USER] → **Remove from organization**.
+5. Check that Linear and Slack show them as suspended, and get the Mac back (Fleet).
+**Done when:** Okta shows Deactivated, Google shows Suspended and GitHub no longer lists them. Aegis then checks each one.
+**Stop if:** HR's written confirmation or the head of engineering's approval is missing, or [GITHUB_USER] turns out to be someone else.
+**Tell the user now:** Thanks. IT will plan [FIRST_NAME]'s access removal for the end of their last day. Please ask HR to send their written confirmation to IT, and tell us who should receive their files and email.
+**Tell the user when done:** [FIRST_NAME]'s access to company apps has ended. Their files and calendar now belong to their manager.
+
+This plan covers five systems: see Details.
+
+## Details
+
+**Before step 2**
+- **Approvals:** "confirmed w HR" in a comment is not HR's written confirmation, which your profile requires. Get that, plus the head of engineering's approval, into the ticket.
+- **Which Friday:** today is Saturday 14 Nov.
+  - If they meant yesterday, the person has already left. Do this first thing Monday, or now if anything looks wrong.
+  - If they mean 20 Nov, do it at the end of that day.
+- **Independent review:** this plan has destructive steps across several systems, so it needs an independent review before step 2.
+- **GitHub stops:**
+  - They are an org owner and there are 2 owners or fewer.
+  - They are the only admin of a repository.
+  - A fork holds work nobody else has.
+  - Clear these first.
+
+**Mail, cost and restore window** (I've assumed the most common setup; change it if needed)
+- **Mail:** I've assumed their manager gets their mail for 30 days. The redirect is its own change and must be in place before step 2, because a suspended account stops receiving mail.
+- **Cost:**
+  - A suspended Google account is still billed at the full rate.
+  - Linear drops a suspended member from the next billing cycle.
+  - GitHub's paid seat count does not drop by itself; lowering it is a separate billing step.
+- **Restore window:**
+  - Google: nothing is deleted now. Keep the account suspended until there is a retention decision; a deletion can only be undone for 20 days.
+  - GitHub: saves their access settings for 3 months after removal.
+  - Okta: can be reactivated, but the password is lost and apps may need reassigning.
+
+**Changes**
+- Step 2 (deactivate in Okta): R3. Double-check: Aegis reads the Okta status as deprovisioned.
+- Step 3 (transfer Drive files): R2. Double-check: Aegis reads the Drive transfer as completed, and the manager opens a sample file.
+- Step 3 (transfer calendar events): R2. Double-check: Aegis reads the Calendar transfer as completed.
+- Step 4 (remove from GitHub org): R3. Double-check: Aegis reads that they are not a member, have no pending invitation and are not an outside collaborator.
+- Mail redirect: no gate in these runbooks. Proof: a test message to [USER@DOMAIN.COM] arrives in the manager's inbox.
+- Step 5 (Mac returned): no gate. Proof: the Mac is in hand and its serial number matches its Fleet record.
+
+**Later steps, only if needed**
+- **Google:** only if Okta left the account Active, suspend it with gate `gws-offboard-suspend-portal`.
+- **Linear:** only if it still shows them active after step 2, suspend them with gate `linear-workspace-admin-suspend-portal`.
+- **Slack:** only if it still shows them active after step 2, deactivate them with gate `slack-user-lifecycle-deactivate-portal`.
+- **Mac:** only if it is not returned, lock it with gate `fleet-device-actions-lock-portal`.
+- **Google deletion:** not advised now. It comes only after the retention decision and the review, with gate `gws-offboard-delete-portal`.
+
+**Risks**
+- Do Okta first. Suspending in Google alone leaves every other app open.
+- A Google super admin can sign in without going through Okta, so check their Google admin roles in step 1.
+- Removing them from GitHub ends org access only. Their personal account and any copies of code on their own machine stay with them.
+
+**Jira note:** use the completed form only once every check has passed. Otherwise, note what is verified, what is pending and who owns it next.
+
+```aegis-desk
+Gate: gws-offboard-okta-deactivate-portal
+Phrase: DEACTIVATE OKTA USER [UPN]
+Change record: R3, read-back okta:verify-status --status DEPROVISIONED
+Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+Gate: gws-offboard-drive-transfer-portal
+Phrase: TRANSFER DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]
+Change record: R2, read-back google-workspace:verify-transfer --application-id 55656082996 --not-before
+Read-back: gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 55656082996 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: gws-offboard-calendar-transfer-portal
+Phrase: TRANSFER CALENDAR EVENTS FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]
+Change record: R2, read-back google-workspace:verify-transfer --application-id 435070579839 --not-before
+Read-back: gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 435070579839 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: github-offboard-member-remove-portal
+Phrase: REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]
+Change record: R3, read-back github:verify-offboarded
+Read-back: github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
+```

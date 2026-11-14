@@ -1,0 +1,47 @@
+## Fix
+Assumed setup: Jamf Pro and the office internet line (the setup given does not list the office network equipment or internet provider).
+
+**What's wrong:** Video calls freeze for the whole office. Nobody knows yet whether the cause is the Wi-Fi, the internet line, or something using up the bandwidth.
+
+**Do this:**
+1. Work out how wide it is. Is it everyone in the office, or remote staff too? Is it only Zoom, or are other sites slow as well? Check Zoom's status page and the internet provider's status page.
+2. On one office Mac next to the Wi-Fi point, run a speed test over Wi-Fi, then again over a cable. If the cable is fast and Wi-Fi is slow, it's the Wi-Fi. If both are slow, it's the line.
+3. Compare the result to the speed the studio pays for.
+4. In Jamf Pro → Computers → [DEVICE_NAME] → History → Policy Logs, look for large updates or installs that ran while it was slow. Also ask whether big Drive syncs were running.
+5. On the office router's admin page, see which device is using the most traffic.
+
+**Done when:** a Zoom test call on office Wi-Fi runs without freezing.
+**Stop if:** remote staff are slow too, or a status page lists an outage.
+
+**Tell the user now:** IT is checking whether this is the Wi-Fi or the internet line. When a call freezes, please note the time and where you were sitting.
+**Tell the user when done:** We found what was slowing calls and dealt with it. Please tell us if a call freezes again.
+
+Full notes: see Details.
+
+## Details
+**Verdict:** No runbook covers this setup. The studio's network runbook is written for equipment that isn't in Customer B's setup, so these steps are reasoning, not a known fix. The rule followed is to find out how wide the problem is before looking for why.
+
+**Why these steps:**
+- **"Is it the Wi-Fi?"** Step 2 answers this directly. Comparing Wi-Fi with a cable on the same Mac separates the Wi-Fi from the internet line.
+- **"Again" means it keeps coming back.** Write down when each slowdown happens. If it lines up with Jamf update policies or large Drive uploads (likely in a design studio), the bandwidth is being used up, not broken. If it happens at random times, look at the Wi-Fi or the internet provider.
+- **No admin path is given for network equipment.** The setup doesn't name the router, Wi-Fi gear or internet provider. Get those from the studio manager and add them to the customer profile.
+
+**Changes advised:** none. Every step only reads. Any fix that follows has to be approved by the studio manager first, for example limiting update downloads to after 18:30, changing Wi-Fi channels, or upgrading the internet line.
+
+**Verification checklist:**
+- [ ] Scope recorded: office only or remote too, Zoom only or everything
+- [ ] Zoom and internet provider status pages checked
+- [ ] Wi-Fi and cable speed results recorded, compared with the plan speed
+- [ ] Jamf policy logs checked against the times it was slow
+- [ ] Router's top traffic users recorded
+- [ ] Zoom test call on office Wi-Fi runs clean
+
+**Jira-ready note:**
+> Reported: internet slow for office staff, Zoom freezing, happened before. Scope: [office/remote]. Status pages: [clear/incident]. Speed test Wi-Fi [X] / cable [Y] against plan [Z]. Jamf policy activity at those times: [yes/no]. Top traffic user: [DEVICE_NAME/none]. Likely area: [Wi-Fi/line/bandwidth use]. Next: [action, approved by studio manager]. Time spent: [X] min.
+
+```aegis-desk
+Replay: MISS
+Runbook: none for this setup (lan-wan assumes network equipment not in Customer B's setup); steps are reasoning
+Changes advised: none (all read-only diagnostics)
+Gate: none
+```

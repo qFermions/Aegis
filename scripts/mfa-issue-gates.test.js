@@ -47,11 +47,12 @@ function gates(text) {
   return found;
 }
 
-const CLASSES = { 'mfa-session-revoke-portal': 'R2', 'mfa-method-delete-portal': 'R3', 'mfa-require-reregister-portal': 'R3', 'mfa-session-revoke': 'R2' };
+// batch 11, task 5: the Temporary Access Pass gate joins them, an MFA change like the two R3 gates
+const CLASSES = { 'mfa-session-revoke-portal': 'R2', 'mfa-temporary-access-pass-portal': 'R3', 'mfa-method-delete-portal': 'R3', 'mfa-require-reregister-portal': 'R3', 'mfa-session-revoke': 'R2' };
 
 test('every /mfa-issue gate carries one R class from CLAUDE.md\'s risk table and cites the row', () => {
   const found = gates(PAGE);
-  assert.deepEqual(found.map((g) => g.id).sort(), Object.keys(CLASSES).sort(), 'the four gates of /mfa-issue');
+  assert.deepEqual(found.map((g) => g.id).sort(), Object.keys(CLASSES).sort(), 'the gates of /mfa-issue');
   const claude = read('CLAUDE.md');
   assert.match(claude, /\| \*\*R3 [^|]*\| [^|]*CA\/MFA\/licensing changes \|/, 'the R3 row the gates cite');
   for (const g of found) {
@@ -230,4 +231,92 @@ test('/mfa-issue verifies the requester first, before its first gate', () => {
   assert.doesNotMatch(step, /—/, 'no long dash in the new step');
   const firstGate = lines.findIndex((l) => /^<!-- SAFETY GATE \[|^# SAFETY GATE \[/.test(l));
   assert.ok(firstGate > heading + 1, `the step (line ${heading + 2}) comes before the first gate (line ${firstGate + 1})`);
+});
+
+// Batch 11, task 5: the lost-or-replaced-device path follows docs/aegis/answer-format.md section 2, "A new
+// way in before the old way out".
+// EXPECTED DECISION (written before the runbook change)
+// - The order on the page is: who is asking (a named method), a Temporary Access Pass under its own gate
+//   [mfa-temporary-access-pass-portal], the handover on a named verified channel, the user's registration
+//   (step 2), and only then the one-method delete [mfa-method-delete-portal].
+// - The pass gate is R3 (an MFA change: the row "CA/MFA/licensing changes"), names the role that may issue it
+//   (at least Authentication Administrator, vendor fact MB-02), captures the method list first, writes the
+//   rollback path, and binds verify-temporary-access-pass --not-before under its change record.
+// - Require re-register MFA keeps its gate, and the page says it is not the lost-or-replaced-device path and
+//   when it is the right tool.
+// Wrong implementations this catches: the delete or the re-register clear written before the pass; a
+// handover "by text or chat" with no verified channel; the pass gate with no read-back or no time bound; the
+// re-register gate offered as one of two equal choices for a lost phone.
+test('/mfa-issue gives a new way in before the old way out on the lost-or-replaced-device path', () => {
+  const lines = PAGE.split('\n');
+  const at = (re) => lines.findIndex((l) => re.test(l));
+  const from = lines.indexOf('**New phone / re-register:**');
+  const who = at(/^\*\*Who is asking:\*\*/);
+  const pass = at(/^<!-- SAFETY GATE \[mfa-temporary-access-pass-portal\] -->$/);
+  const handover = at(/^\*\*Handover:\*\*/);
+  const register = at(/^2\. Tell the user to go to \*\*aka\.ms\/mfasetup\*\* and register the new device\./);
+  const del = at(/^<!-- SAFETY GATE \[mfa-method-delete-portal\] -->$/);
+  const clear = at(/^<!-- SAFETY GATE \[mfa-require-reregister-portal\] -->$/);
+  for (const [name, i] of Object.entries({ from, who, pass, handover, register, del, clear })) assert.ok(i > 0, `${name} is on the page`);
+  assert.deepEqual([from, who, pass, handover, register, del, clear], [from, who, pass, handover, register, del, clear].slice().sort((a, b) => a - b), 'who is asking, the pass, the handover, the registration, then the delete; the re-register clear last');
+  assert.match(lines[from + 2], /answer-format section 2, "A new way in before the old way out"/);
+
+  // who is asking: a method the step names, and the org gap stays open
+  assert.match(lines[who], /a call to the number already on file/);
+  assert.match(lines[who], /photo ID/);
+  assert.match(lines[who], /manager/);
+  assert.match(lines[who], /never a number given in the ticket/);
+  assert.match(lines[who], /\*\*\[org gap: confirm the identity-verification rule\]\*\*/);
+
+  // the pass gate
+  const g = gates(PAGE).find((x) => x.id === 'mfa-temporary-access-pass-portal');
+  assert.ok(g && g.portal, 'a portal gate [mfa-temporary-access-pass-portal]');
+  assert.equal(g.fields.Target, '[UPN]');
+  assert.match(g.fields.Effect, /^create one Temporary Access Pass\b/);
+  assert.match(g.fields.Scope, /^one user and one pass\b/);
+  assert.match(g.fields.Scope, /no registered method is removed/);
+  assert.match(g.fields.Reversibility, /^R3 /);
+  assert.match(g.fields.Reversibility, /reversible by deleting the pass/);
+  assert.equal(g.fields['Required confirmation'], 'Type exactly `CREATE TEMPORARY ACCESS PASS FOR [UPN]`.');
+  assert.equal(g.fields['Failure behavior'], gates(PAGE).find((x) => x.id === 'mfa-method-delete-portal').fields['Failure behavior']);
+  const action = lines.find((l) => l.startsWith('**PORTAL ACTION [mfa-temporary-access-pass-portal]:**'));
+  assert.ok(action, 'its PORTAL ACTION');
+  assert.match(action, /^\*\*PORTAL ACTION \[mfa-temporary-access-pass-portal\]:\*\* Only after the exact match, signed in as at least Authentication Administrator/);
+  assert.match(action, /Privileged Authentication Administrator when `\[UPN\]` holds an admin role/);
+  assert.match(action, /the method list from `node scripts\/adapters\/msgraph-client\.js auth-methods --user \[USER_ID\] --execute` saved to `tasks\/checkpoints\/`/);
+  assert.match(action, /rollback path written in the ticket/);
+  assert.match(action, /\*\*Authentication methods\*\* → \*\*Add authentication method\*\* → \*\*Temporary Access Pass\*\*/);
+  assert.match(action, /never write it in the ticket/);
+
+  // the read-back: bound to the change, bounded in time, named in the change-record paragraph
+  const i = lines.indexOf('node scripts/adapters/msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute');
+  assert.ok(i > 0, 'the verify-temporary-access-pass line');
+  assert.match(lines[i - 1], /^# HUMAN-RUN read-only read-back of \[mfa-temporary-access-pass-portal\]/);
+  assert.match(lines[i - 1], /before the handover/);
+  const para = lines.find((l) => l.startsWith('**Change record (R2 and R3 gates):**'));
+  assert.ok(para.includes('`msgraph:verify-temporary-access-pass --not-before` for [mfa-temporary-access-pass-portal]'), 'the paragraph names the read-back with its time bound, bare');
+
+  // the handover: a channel the tech has verified, named; never a plain "send it by text or chat"
+  assert.match(lines[handover], /a call the tech places to the number on file, in person, or through the manager/);
+  assert.match(lines[handover], /Never by email, chat or text/);
+
+  // the old way out comes last, and the read-backs show the new method present and the old one gone
+  assert.match(lines[at(/^3\. /)], /^3\. Only then, the old way out: /);
+  const proof = lines[at(/^4\. /)];
+  assert.match(proof, /`verify-method-absent` shows the old method gone/);
+  assert.match(proof, /`verify-mfa-method` shows/);
+
+  // Require re-register MFA: still a gate, not this path, and the page says when it is the right tool
+  const not = at(/^Require re-register MFA is not the lost-or-replaced-device path: it takes the old way out before a new way in exists\./);
+  assert.ok(not > del && not < clear, 'said after the delete gate and before the re-register gate');
+  assert.match(lines[not], /It is the right tool when/);
+  assert.match(PAGE, /^- \[ \] Lost or replaced phone: identity proved by a named method before any gate, and the pass handed over on a verified channel \(the ticket says which\)$/m);
+  assert.match(PAGE, /^- \[ \] Temporary Access Pass path: `verify-temporary-access-pass` passed under its change before the handover$/m);
+
+  // the vendor facts the gate rests on were read on Microsoft Learn
+  const facts = read('docs', 'aegis', 'batch11', 'vendor-facts-microsoft.md').split('\n');
+  const mb02 = facts.find((l) => l.startsWith('- MB-02.'));
+  assert.ok(mb02 && /CONFIRMED/.test(mb02) && mb02.includes('"Authentication Administrators') && mb02.includes('https://learn.microsoft.com/en-us/entra/identity/authentication/howto-authentication-temporary-access-pass'), String(mb02));
+  const manifest = JSON.parse(read('scripts', 'adapters', 'scope-manifest.json')).connectors.msgraph;
+  assert.ok(manifest.least_privilege.some((p) => /^UserAuthenticationMethod\.Read\.All\b.*verify-temporary-access-pass/.test(p)), 'UserAuthenticationMethod.Read.All names verify-temporary-access-pass');
 });

@@ -18,6 +18,7 @@ Generic approval never authorizes a device action. Use only the action-specific 
 ## What to check first
 - Intune admin center → Devices → All devices → `[DEVICE_NAME]` → **Managed by** + **Ownership** (Corporate vs Personal).
 - Is the user still active? (If offboarding, follow `/offboard` order.)
+- Does the lost or replaced device hold the user's sign-in method (Microsoft Authenticator, or the number that gets the codes)? A wipe erases the device; it gives the user no way back in, and the method stays registered in Entra until it is deleted there. Run the lost-or-replaced-device path of `/mfa-issue` beside the wipe: who is asking, a Temporary Access Pass, the new method registered, and only then the old method deleted (answer-format section 2, "A new way in before the old way out"). The wipe waits for none of it, and none of it waits for the wipe.
 
 ## Step-by-step fix (portal first)
 1. **Intune admin center** (intune.microsoft.com) → Devices → All devices → `[DEVICE_NAME]`.

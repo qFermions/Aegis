@@ -74,13 +74,15 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // quarantine-release-all and quarantine-release-one name read-backs (97 to 105); task 7:
   // jamf-lock-erase-wipe-portal names jamf-client.js verify-command --type ERASE_DEVICE (105 to 106)
   // batch 9b: okta-mfa-reset-clear-sessions-portal, the Okta Verify loop's admin step (348 to 349; R1, it names no read-back)
-  assert.equal(gates, 349, 'every runbook gate');
+  // batch 11, task 5: mfa-temporary-access-pass-portal, the new way in of /mfa-issue (349 to 350; R3, it names a read-back)
+  assert.equal(gates, 350, 'every runbook gate');
   // code review round 1 of batch 9, finding 13: jamf-lock-erase-wipe-api names its portal twin's read-back (106 to 107)
   // batch 10, task 3: jamf-lock-erase-lock-portal and its API twin jamf-lock-erase-lock-api name verify-command
   // --type DEVICE_LOCK (107 to 109); task 4: gws-offboard-okta-deactivate-portal and its API twin
   // gws-offboard-okta-deactivate name okta-client.js verify-status --status DEPROVISIONED (109 to 111), and
   // gws-offboard-drive-transfer-portal and gws-offboard-calendar-transfer-portal name gws-client.js verify-transfer (111 to 113)
-  assert.equal(naming, 113, 'the gates that name read-backs');
+  // batch 11, task 5: mfa-temporary-access-pass-portal names msgraph-client.js verify-temporary-access-pass (113 to 114)
+  assert.equal(naming, 114, 'the gates that name read-backs');
 });
 
 test('D2: an R2 or R3 gate with no Read-back field fails, naming the gate and its class, in either form', () => {

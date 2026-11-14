@@ -137,11 +137,10 @@ shows case ids, verdicts and scores, never case text or answers.
 **Commands.** The case file and the results stay outside the repository, and the case file sits in a
 folder of its own: that folder is denied to the system under test (batch 11), so a folder that holds
 other things you want Aegis to read, or the repository itself (your home folder), is the wrong place and
-the second is refused. To try the DEV set, first copy `scripts/eval/judged/dev-cases.jsonl` into a new
-folder outside the repository, for example `/tmp/aegis-cases/`.
+the second is refused. To try the DEV set, first make a new folder outside the repository, for
+example `/tmp/aegis-cases/`, and copy `scripts/eval/judged/dev-cases.jsonl` into it.
 
 ```bash
-mkdir -p /tmp/aegis-cases && cp scripts/eval/judged/dev-cases.jsonl /tmp/aegis-cases/
 node scripts/eval/judged-eval.js run --cases /tmp/aegis-cases/dev-cases.jsonl
 node scripts/eval/judged-eval.js run --cases /tmp/aegis-cases/dev-cases.jsonl --results-dir /tmp/aegis-eval-results --execute --budget-usd 12
 node scripts/eval/judged-eval.js calibrate --sheet <filled sheet.csv> --run <results.json>

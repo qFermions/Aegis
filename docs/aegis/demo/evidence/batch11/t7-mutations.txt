@@ -1,0 +1,180 @@
+node --test scripts/eval/judged/exam-wall.test.js   (run once per mutation below; each mutation is one exact replacement, restored after its run)
+
+MUTATION 1: the case folder is denied in its given form only
+  file: scripts/eval/judged/backends.js
+  from: "    for (const form of [dir, effectivePath(dir)]) {\n      const rule = absoluteReadRule(path.join(form, '**'));"
+  to:   "    for (const form of [dir]) {\n      const rule = absoluteReadRule(path.join(form, '**'));"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ the case folder joins the deny list in its given and resolved forms, after the pinned rules
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the case folder joins the deny list in its given and resolved forms"
+
+MUTATION 2: the follow-up turn does not get the case folder rule
+  file: scripts/eval/judged/backends.js
+  from: "resume: turns[0].session_id, ...wall })"
+  to:   "resume: turns[0].session_id, runRoot: opts.runRoot })"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ every system-under-test turn of a run denies the case folder, the follow-up included
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "every system-under-test turn of a run denies the case folder"
+
+MUTATION 3: the refusal compares only the folder as typed, so a link to the home folder gets through
+  file: scripts/eval/judged/paths.js
+  from: "    for (const form of [dir, effectivePath(dir)]) {\n      if ([roots.given, roots.real]"
+  to:   "    for (const form of [dir]) {\n      if ([roots.given, roots.real]"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ caseFolders gives the folders to deny, and refuses a folder that holds the repository
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "caseFolders gives the folders to deny, and refuses a folder that holds the repository"
+
+MUTATION 4: a folder that holds the repository is not refused at all
+  file: scripts/eval/judged/paths.js
+  from: "      if ([roots.given, roots.real].some((root) => isInside(foldCase(root), foldCase(form)))) {"
+  to:   "      if (false) {"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 8
+  ℹ fail 2
+  ✖ caseFolders gives the folders to deny, and refuses a folder that holds the repository
+  ✖ a case file in a folder that holds the repository is refused (exit 1) before anything is read or started
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "a case file in a folder that holds the repository is refused (exit 1)"
+
+MUTATION 5: the calls made inside a subagent are not recorded
+  file: scripts/eval/judged/backends.js
+  from: "if (p && p.type === 'tool_use') out.toolCalls.push("
+  to:   "if (p && p.type === 'tool_use' && !ev.parent_tool_use_id) out.toolCalls.push("
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 8
+  ℹ fail 2
+  ✖ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern
+  ✖ a run records the tool calls, the outside reads and the card words in results.json and report.md
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the stream gives one record per tool call"
+
+MUTATION 6: the Agent label carries the prompt
+  file: scripts/eval/judged/backends.js
+  from: "${str(input.description) || '(no description)'}`;"
+  to:   "${str(input.description) || '(no description)'} ${str(input.prompt) || ''}`;"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 8
+  ℹ fail 2
+  ✖ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern
+  ✖ a run records the tool calls, the outside reads and the card words in results.json and report.md
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the stream gives one record per tool call"
+
+MUTATION 7: nothing is cut
+  file: scripts/eval/judged/backends.js
+  from: "const cutText = (s) => (s.length > MAX_CALL_TEXT ? `${s.slice(0, MAX_CALL_TEXT)} [cut]` : s);"
+  to:   "const cutText = (s) => s;"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 8
+  ℹ fail 2
+  ✖ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern
+  ✖ outsideReads names each path read outside the repository, in its given or its real form
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the stream gives one record per tool call"
+
+MUTATION 8: a refused read counts as a read outside the repository
+  file: scripts/eval/judged/backends.js
+  from: "typeof call.path !== 'string' || call.error) continue;"
+  to:   "typeof call.path !== 'string') continue;"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ outsideReads names each path read outside the repository, in its given or its real form
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "outsideReads names each path read outside the repository"
+
+MUTATION 9: only the path as typed is compared, so a link inside the repository that leads out is missed
+  file: scripts/eval/judged/backends.js
+  from: "    if (inside(given) && inside(effectivePath(given))) continue;"
+  to:   "    if (inside(given)) continue;"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ outsideReads names each path read outside the repository, in its given or its real form
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "outsideReads names each path read outside the repository"
+
+MUTATION 10: only Read is checked, not the path of a Grep or a Glob
+  file: scripts/eval/judged/backends.js
+  from: "    if (!['Read', 'Grep', 'Glob'].includes(call.tool) ||"
+  to:   "    if (!['Read'].includes(call.tool) ||"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ outsideReads names each path read outside the repository, in its given or its real form
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "outsideReads names each path read outside the repository"
+
+MUTATION 11: a read outside the repository adds a reason and leaves the verdict
+  file: scripts/eval/judged/judge.js
+  from: "  return { ...out, verdict: 'INCONCLUSIVE', reasons: [...named, ...out.reasons] };"
+  to:   "  return { ...out, reasons: [...named, ...out.reasons] };"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 8
+  ℹ fail 2
+  ✖ caseVerdict: reads inside the repository leave the verdict; a read outside makes it INCONCLUSIVE and names the path
+  ✖ a run records the tool calls, the outside reads and the card words in results.json and report.md
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "caseVerdict: reads inside the repository leave the verdict"
+
+MUTATION 12: the word count is of the whole answer, not the Fix card
+  file: scripts/eval/judged-eval.js
+  from: "fix_card_words: card && card.present ? card.words : null,"
+  to:   "fix_card_words: typeof sut.answer === 'string' ? sut.answer.split(/\\s+/).length : null,"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ a run records the tool calls, the outside reads and the card words in results.json and report.md
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "a run records the tool calls, the outside reads and the card words"
+
+MUTATION 13: the mean in place of the median
+  file: scripts/eval/judged/report.js
+  from: "  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;"
+  to:   "  return sorted.reduce((a, b) => a + b, 0) / sorted.length + mid * 0;"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ the Fix card word count: per case by the desk's counter, null with no card, and min, median and max in the summary
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the Fix card word count"
+
+MUTATION 14: the dry run's preview is built without the case folder
+  file: scripts/eval/judged-eval.js
+  from: "maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs }).join(' ');"
+  to:   "maxTurns: config.max_turns, web: config.web }).join(' ');"
+  exit code: 1
+  ℹ tests 10
+  ℹ pass 9
+  ℹ fail 1
+  ✖ the dry run still exits 4 and its command preview lists the case folder rule, through main and the real CLI
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the dry run still exits 4 and its command preview lists the case folder rule"
+
+AFTER RESTORE (every file back to its text before the mutations)
+  exit code: 0
+  ℹ tests 10
+  ℹ pass 10
+  ℹ fail 0

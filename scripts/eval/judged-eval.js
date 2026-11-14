@@ -19,9 +19,11 @@
 //   node scripts/eval/judged-eval.js --help
 //
 // The case file must live outside the repository (a path inside it, or one whose real
-// path is inside it, is refused). To run the DEV set, copy it out first:
-//   cp scripts/eval/judged/dev-cases.jsonl /tmp/dev-cases.jsonl
-//   node scripts/eval/judged-eval.js run --cases /tmp/dev-cases.jsonl
+// path is inside it, is refused), in a folder of its own: that folder is denied to the
+// system under test, so a folder that holds the repository (the home folder) is refused
+// too (batch 11, task 7). To run the DEV set, copy it out first:
+//   mkdir -p /tmp/aegis-cases && cp scripts/eval/judged/dev-cases.jsonl /tmp/aegis-cases/
+//   node scripts/eval/judged-eval.js run --cases /tmp/aegis-cases/dev-cases.jsonl
 // Without --execute the run is a DRY RUN: it prints the plan and a cost estimate and
 // starts no process at all.
 //
@@ -43,6 +45,8 @@ const calibrate = require('./judged/calibrate.js');
 const thresholds = require('./judged/thresholds.js');
 // the privacy step ask-aegis.js runs on --setup, for a case's setup (batch 11, task 1)
 const { protect } = require('../ask-aegis.js');
+// the desk's own counter of a Fix card's words, read only (batch 11, task 7)
+const { fixCard } = require('../demo/answer.js');
 
 const { EXIT } = thresholds;
 const SMOKE_USD_PER_SESSION = 2.5;
@@ -55,8 +59,9 @@ const USAGE = `Usage:
   node scripts/eval/judged-eval.js calibrate --sheet <filled.csv> --run <results.json>
        [--agreement-threshold -1..1] [--thresholds <file.json>]
 
-The case file must be outside the repository (copy scripts/eval/judged/dev-cases.jsonl to a
-temporary file first). Without --execute, run is a dry run that starts no process.
+The case file must be outside the repository, in a folder of its own (copy
+scripts/eval/judged/dev-cases.jsonl into a new temporary folder first): that folder is denied to
+the system under test. Without --execute, run is a dry run that starts no process.
 Exit codes: 0 PASS, 2 FAIL, 3 no threshold given, 4 dry run, 1 input error or refused path.
 `;
 
@@ -104,7 +109,7 @@ function intFlag(opts, name, def, lo, hi) {
 }
 
 function commandPreview(config) {
-  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web }).join(' ');
+  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs }).join(' ');
   const jud = backends.judgeArgs({ prompt: '<judge prompt>', model: config.judge_model }).map((a) => (a === '' ? '""' : a)).join(' ');
   return { sut: `claude ${sut}`, judge: `claude ${jud}` };
 }
@@ -122,6 +127,7 @@ function printPlan(out, list, config) {
   out(`cost estimate: about ${(runs * SMOKE_USD_PER_SESSION).toFixed(2)} US dollars for the system under test (${runs} Aegis runs at about ${SMOKE_USD_PER_SESSION.toFixed(2)} US dollars each, the smoke figure in docs/evidence/runtime-smoke.md); judge cost is not in the estimate until measured`);
   out(`system under test: ${preview.sut} (cwd: the repository root; timeout ${config.timeout_ms} ms per process)`);
   out(`judge: ${preview.judge} (cwd: a fresh empty temporary directory)`);
+  out(`case folder: denied to the system under test, as given and as resolved (${backends.readDenyRules(null, config.case_dirs).length - backends.readDenyRules().length} read rule(s), the last in the --settings above; the results folder is added when the run starts)`);
   out(`results: ${config.results_dir_given ? 'the --results-dir given' : '.aegis-state/evals/<run-id>/'} (checked when the run starts)`);
 }
 
@@ -159,6 +165,8 @@ async function runCommand(opts, io, deps) {
   if (config.judge_model !== null && !/^[A-Za-z0-9._:\[\]-]{1,100}$/.test(config.judge_model)) throw new InputError('--judge-model is a model name (letters, digits, dot, dash, colon, brackets)');
   const sheetN = intFlag(opts, '--calibration-sheet', 0, 1, 1000);
   const real = paths.refuseInsideRepo(opts['--cases'], 'the case file', { repoRoot });
+  // the folders the case file is read from, denied to every system-under-test turn; refused when one holds the repository
+  config.case_dirs = paths.caseFolders(opts['--cases'], real, { repoRoot });
   const list = protectSetups(cases.readCaseFile(real).cases);
   const baseline = loadBaseline(opts['--baseline']);
 
@@ -178,13 +186,15 @@ async function runCommand(opts, io, deps) {
   io.out(`judged-eval: run ${runId}, ${list.length} case(s); ${report.LABEL}`);
   const results = [];
   for (const c of list) {
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir });
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs });
+    // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
+    const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
     const det = sut.state === 'OK' ? checks.runChecks(c, sut) : [];
     const jr = sut.state === 'OK' ? await judge.judgeCase(c, sut, { ...backend, repoRoot, judgeModel: config.judge_model, random: deps.random }) : null;
     const v = judge.caseVerdict(c, sut, det, jr);
     const r = {
       id: c.id, platform: c.platform, capability: c.capability, scenario: c.scenario, class: c.class, probe: c.probe,
-      setup_given: c.setup !== '',
+      setup_given: c.setup !== '', fix_card_words: card && card.present ? card.words : null,
       change_class: c.expected.change_class, escalate: c.expected.escalate,
       sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons,
     };

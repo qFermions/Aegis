@@ -259,8 +259,21 @@ async function judgeCase(c, sut, opts) {
   return record;
 }
 
-// The verdict of one case from its SUT record, deterministic checks and judge record.
+// The verdict of one case from its SUT record, deterministic checks and judge record. A case whose session
+// read a path outside the repository (sut.outside_reads, batch 11 task 7) is INCONCLUSIVE whatever its
+// grade, since the answer may rest on material that is not Aegis's; its reasons name the paths (the first
+// MAX_OUTSIDE_SHOWN, then a count) and its score is kept for the record.
+const MAX_OUTSIDE_SHOWN = 5;
 function caseVerdict(c, sut, checks, judge) {
+  const out = gradedVerdict(c, sut, checks, judge);
+  const outside = sut && Array.isArray(sut.outside_reads) ? sut.outside_reads : [];
+  if (outside.length === 0) return out;
+  const named = outside.slice(0, MAX_OUTSIDE_SHOWN).map((p) => `read outside the repository: ${p}`);
+  if (outside.length > MAX_OUTSIDE_SHOWN) named.push(`read outside the repository: ${outside.length - MAX_OUTSIDE_SHOWN} more path(s)`);
+  return { ...out, verdict: 'INCONCLUSIVE', reasons: [...named, ...out.reasons] };
+}
+
+function gradedVerdict(c, sut, checks, judge) {
   const out = { verdict: 'INCONCLUSIVE', rows: null, total: null, max: null, reasons: [] };
   if (!sut || sut.state !== 'OK') { out.reasons.push(`system under test ${sut ? sut.state : 'not run'}`); return out; }
   if (!judge || judge.state !== 'OK') { out.reasons.push(`judge ${judge ? judge.state : 'not run'}`); return out; }

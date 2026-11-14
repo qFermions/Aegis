@@ -24,7 +24,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { REPO_ROOT, effectivePath } = require('./paths.js');
+const { REPO_ROOT, effectivePath, isInside, repoRoots, foldCase } = require('./paths.js');
 const { systemTempDir } = require('../../temp-dir.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
@@ -68,7 +68,9 @@ const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.
 const absoluteReadRule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
 
-function readDenyRules(runRoot = null) {
+// caseDirs: the folders a judged run's case file is read from (paths.caseFolders), denied like the results
+// folder, so a session cannot read the expected decisions it is graded against (batch 11, task 7).
+function readDenyRules(runRoot = null, caseDirs = []) {
   const rules = READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p)));
   // both forms of a folder behind a link, since the CLI may match either; effectivePath resolves the nearest
   // folder that exists, so a dry run lists what the real run will
@@ -77,11 +79,18 @@ function readDenyRules(runRoot = null) {
     const real = effectivePath(root);
     if (real !== root) rules.push(absoluteReadRule(path.join(real, '**')));
   }
+  // the case folders come as given and as resolved, and the two often resolve to one folder: each rule once
+  for (const dir of caseDirs.map((d) => path.resolve(d))) {
+    for (const form of [dir, effectivePath(dir)]) {
+      const rule = absoluteReadRule(path.join(form, '**'));
+      if (!rules.includes(rule)) rules.push(rule);
+    }
+  }
   return rules;
 }
 
-function isolationArgs({ judge = false, runRoot = null } = {}) {
-  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot) } })];
+function isolationArgs({ judge = false, runRoot = null, caseDirs = [] } = {}) {
+  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) } })];
 }
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
@@ -128,7 +137,7 @@ function buildSutPrompt(c) {
   return `${setupBlock(c.setup, 'ticket').join('\n')}\n\n${body}`;
 }
 
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, persist = true }) {
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true }) {
   if (resume && !persist) throw new Error('a session with no persistence cannot resume');
   const tools = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
@@ -136,7 +145,7 @@ function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = n
   if (resume) args.push('--resume', resume);
   if (!persist) args.push('--no-session-persistence');
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot }));
+    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs }));
   return args;
 }
 
@@ -146,9 +155,62 @@ function judgeArgs({ prompt, model = null }) {
   return args;
 }
 
-// Parses a stream-json event stream.
+// The reading record (batch 11, task 7). One tool call from an assistant event's tool_use part: the tool
+// name and, for Read, the file path; for Grep and Glob, the pattern and the path; for Agent, a label made
+// of its subagent type and description. Nothing else of the input is kept: never an Agent prompt, a web
+// prompt or a result. subagent: the call was made inside a subagent (the event has a parent id).
+const str = (v) => (typeof v === 'string' && v !== '' ? v : null);
+function toolCall(part, inSubagent) {
+  const input = part.input && typeof part.input === 'object' ? part.input : {};
+  const call = { id: str(part.id), tool: str(part.name) || 'unknown', subagent: inSubagent, error: false };
+  if (call.tool === 'Read') {
+    if (str(input.file_path)) call.path = input.file_path;
+  } else if (call.tool === 'Grep' || call.tool === 'Glob') {
+    if (str(input.pattern)) call.pattern = input.pattern;
+    if (str(input.path)) call.path = input.path;
+  } else if (call.tool === 'Agent' || call.tool === 'Task') {
+    call.label = `${str(input.subagent_type) || 'agent'}: ${str(input.description) || '(no description)'}`;
+  }
+  return call;
+}
+
+// What results.json keeps of one call: a tool name of at most 60 characters, and a path, pattern or label
+// cut at MAX_CALL_TEXT characters.
+const MAX_CALL_TEXT = 300;
+const cutText = (s) => (s.length > MAX_CALL_TEXT ? `${s.slice(0, MAX_CALL_TEXT)} [cut]` : s);
+function toolCallRecord(call) {
+  const rec = { tool: call.tool.slice(0, 60) };
+  for (const key of ['pattern', 'path', 'label']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
+  rec.subagent = Boolean(call.subagent);
+  rec.error = Boolean(call.error);
+  return rec;
+}
+
+// The paths a session read outside the repository: a Read's file path, or the path argument of a Grep or a
+// Glob, when its given form or its real form (links followed) is outside the repository; a relative path
+// resolves against the repository root. A call the stream reports as refused or failed read nothing and is
+// left out. Each path once, cut like the record.
+// shortcut: a Grep or Glob with no path argument searches the repository and is not counted, even when its
+// pattern names an outside folder; upgrade when a real session shows such a call returning outside files.
+function outsideReads(calls, repoRoot = REPO_ROOT) {
+  const roots = repoRoots(repoRoot);
+  const inside = (p) => isInside(foldCase(p), foldCase(roots.given)) || isInside(foldCase(p), foldCase(roots.real));
+  const found = [];
+  for (const call of calls) {
+    if (!['Read', 'Grep', 'Glob'].includes(call.tool) || typeof call.path !== 'string' || call.error) continue;
+    const given = path.resolve(roots.given, call.path);
+    if (inside(given) && inside(effectivePath(given))) continue;
+    const shown = cutText(call.path);
+    if (!found.includes(shown)) found.push(shown);
+  }
+  return found;
+}
+
+// Parses a stream-json event stream. toolCalls: every tool call in it, in order (see toolCall); a call whose
+// tool_result part says is_error has error true.
 function parseStream(text) {
-  const out = { init: null, result: null, lastAssistantText: null, events: 0, invalidLines: 0 };
+  const out = { init: null, result: null, lastAssistantText: null, events: 0, invalidLines: 0, toolCalls: [] };
+  const failed = new Set();
   for (const line of String(text).split('\n')) {
     if (line.trim() === '') continue;
     let ev;
@@ -160,8 +222,12 @@ function parseStream(text) {
     else if (ev.type === 'assistant' && ev.message && Array.isArray(ev.message.content)) {
       const text = ev.message.content.filter((p) => p && p.type === 'text' && typeof p.text === 'string').map((p) => p.text).join('\n');
       if (text.trim() !== '') out.lastAssistantText = text;
+      for (const p of ev.message.content) if (p && p.type === 'tool_use') out.toolCalls.push(toolCall(p, Boolean(ev.parent_tool_use_id)));
+    } else if (ev.type === 'user' && ev.message && Array.isArray(ev.message.content)) {
+      for (const p of ev.message.content) if (p && p.type === 'tool_result' && p.is_error === true && typeof p.tool_use_id === 'string') failed.add(p.tool_use_id);
     }
   }
+  for (const call of out.toolCalls) if (call.id !== null && failed.has(call.id)) call.error = true;
   return out;
 }
 
@@ -237,9 +303,11 @@ function runChild({ command, prefixArgs = [], args, cwd, env, timeoutMs = DEFAUL
   });
 }
 
+// One turn's record, with the tool calls its stream shows (the judge's turn has none: it has no tools).
 async function runTurn(args, opts) {
   const run = await runChild({ ...opts, args });
-  return summarizeTurn(parseStream(run.stdout), run);
+  const stream = parseStream(run.stdout);
+  return { ...summarizeTurn(stream, run), tool_calls: stream.toolCalls };
 }
 
 function promptTooLong(prompt) {
@@ -247,28 +315,32 @@ function promptTooLong(prompt) {
 }
 
 // Runs one case through the system under test. opts: { command, prefixArgs, spawn, env,
-// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot }. env is already scrubbed; runRoot, the run's
-// results folder, is denied to both turns (batch 8, task 10b).
+// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot, caseDirs }. env is already scrubbed; runRoot, the run's
+// results folder, is denied to both turns (batch 8, task 10b), and so are caseDirs, the folders the case file
+// is read from (batch 11, task 7).
 async function runSut(c, opts) {
-  const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: opts.repoRoot || REPO_ROOT, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
+  const repoRoot = opts.repoRoot || REPO_ROOT;
+  const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: repoRoot, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
+  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [] };
   const turns = [];
   const prompt = buildSutPrompt(c);
-  if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c);
-  turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, runRoot: opts.runRoot }), base));
+  if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
+  turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, ...wall }), base));
   if (c.follow_up !== '' && turns[0].state === 'OK') {
     if (!turns[0].session_id) {
       turns.push({ state: 'ERROR', reason: 'no session id to resume for the follow-up', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null });
     } else {
-      turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, runRoot: opts.runRoot }), base));
+      turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, ...wall }), base));
     }
   }
-  return sutRecord(turns, c);
+  return sutRecord(turns, c, repoRoot);
 }
 
-function sutRecord(turns, c) {
+function sutRecord(turns, c, repoRoot = REPO_ROOT) {
   const failed = turns.find((t) => t.state !== 'OK');
   const expectedTurns = c.follow_up !== '' ? 2 : 1;
   const sum = (key) => turns.reduce((a, t) => (a === null || t[key] === null ? null : a + t[key]), 0);
+  const calls = turns.map((t) => t.tool_calls || []);
   return {
     state: failed ? failed.state : (turns.length === expectedTurns ? 'OK' : 'ERROR'),
     reason: failed ? failed.reason : null,
@@ -280,11 +352,14 @@ function sutRecord(turns, c) {
     model: turns[0] ? turns[0].model : null,
     session_id: turns[0] ? turns[0].session_id : null,
     turns: turns.map((t) => ({ state: t.state, reason: t.reason, num_turns: t.num_turns, duration_ms: t.duration_ms, cost_usd: t.cost_usd, model: t.model, session_id: t.session_id })),
+    // the reading record: every tool call of every turn, and the paths read outside the repository
+    tool_calls: calls.flatMap((list, i) => list.map((call) => ({ turn: i + 1, ...toolCallRecord(call) }))),
+    outside_reads: outsideReads(calls.flat(), repoRoot),
   };
 }
 
 module.exports = {
   SUT_TOOLS, WEB_TOOLS, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
-  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn,
+  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, outsideReads,
   runChild, runTurn, runSut, promptTooLong,
 };

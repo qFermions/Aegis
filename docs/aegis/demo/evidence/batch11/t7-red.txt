@@ -1,0 +1,211 @@
+node --test scripts/eval/judged/exam-wall.test.js
+# RED: the new tests against the unchanged code (commit de08efa), with the unchanged fake CLI fixture.
+✖ the case folder joins the deny list in its given and resolved forms, after the pinned rules (1.886666ms)
+✖ caseFolders gives the folders to deny, and refuses a folder that holds the repository (0.866125ms)
+✖ the dry run still exits 4 and its command preview lists the case folder rule, through main and the real CLI (2.661084ms)
+✖ every system-under-test turn of a run denies the case folder, the follow-up included (456.512583ms)
+✖ a case file in a folder that holds the repository is refused (exit 1) before anything is read or started (1.435875ms)
+✖ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern (0.196167ms)
+✖ outsideReads names each path read outside the repository, in its given or its real form (0.702958ms)
+✖ caseVerdict: reads inside the repository leave the verdict; a read outside makes it INCONCLUSIVE and names the path (0.226375ms)
+✖ the Fix card word count: per case by the desk's counter, null with no card, and min, median and max in the summary (0.179709ms)
+✖ a run records the tool calls, the outside reads and the card words in results.json and report.md (421.74ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 0
+ℹ fail 10
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 928.769125
+
+✖ failing tests:
+
+test at scripts/eval/judged/exam-wall.test.js:65:1
+✖ the case folder joins the deny list in its given and resolved forms, after the pinned rules (1.886666ms)
+  AssertionError [ERR_ASSERTION]: one form when the folder has no link in it
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      'Read(/<repo>/progress.md)',
+      'Read(/<repo>/checks.md)',
+      'Read(/<repo>/docs/review/**)',
+      'Read(/<repo>/docs/aegis/demo/**)',
+  ...
+      'Read(/<home>/aegis-demo-runs/**)',
+  -   'Read(/<tmp>/aegis-wall-g4GzZv/**)'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:68:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'Read(/<repo>/progress.md)', 'Read(/<repo>/checks.md)', 'Read(/<repo>/docs/review/**)', 'Read(/<repo>/docs/aegis/demo/**)', 'Read(/<repo>/docs/explainers/**)', 'Read(/<repo>/scripts/demo/customers/**)', 'Read(/<repo>/scripts/eval/judged/dev-cases.jsonl)', 'Read(/<repo>/scripts/demo/**)', 'Read(/<repo>/scripts/eval/**)', 'Read(/<repo>/docs/evidence/**)', 'Read(/<repo>/docs/aegis/**/evidence/**)', 'Read(/<repo>/.aegis-state/**)', 'Read(/<repo>/docs/aegis/**/baseline/**)', 'Read(/<repo>/docs/baseline/**)', 'Read(/<home>/aegis-demo-runs/**)' ],
+    expected: [ 'Read(/<repo>/progress.md)', 'Read(/<repo>/checks.md)', 'Read(/<repo>/docs/review/**)', 'Read(/<repo>/docs/aegis/demo/**)', 'Read(/<repo>/docs/explainers/**)', 'Read(/<repo>/scripts/demo/customers/**)', 'Read(/<repo>/scripts/eval/judged/dev-cases.jsonl)', 'Read(/<repo>/scripts/demo/**)', 'Read(/<repo>/scripts/eval/**)', 'Read(/<repo>/docs/evidence/**)', 'Read(/<repo>/docs/aegis/**/evidence/**)', 'Read(/<repo>/.aegis-state/**)', 'Read(/<repo>/docs/aegis/**/baseline/**)', 'Read(/<repo>/docs/baseline/**)', 'Read(/<home>/aegis-demo-runs/**)', 'Read(/<tmp>/aegis-wall-g4GzZv/**)' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/exam-wall.test.js:89:1
+✖ caseFolders gives the folders to deny, and refuses a folder that holds the repository (0.866125ms)
+  TypeError: paths.caseFolders is not a function
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:97:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at scripts/eval/judged/exam-wall.test.js:137:1
+✖ the dry run still exits 4 and its command preview lists the case folder rule, through main and the real CLI (2.661084ms)
+  AssertionError [ERR_ASSERTION]: the resolved form of the case folder is in the preview
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:141:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/exam-wall.test.js:151:1
+✖ every system-under-test turn of a run denies the case folder, the follow-up included (456.512583ms)
+  AssertionError [ERR_ASSERTION]: a first turn denies the case folder
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:157:34)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/exam-wall.test.js:160:1
+✖ a case file in a folder that holds the repository is refused (exit 1) before anything is read or started (1.435875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  4 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:169:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/exam-wall.test.js:186:1
+✖ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern (0.196167ms)
+  TypeError: Cannot read properties of undefined (reading 'map')
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:207:36)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/eval/judged/exam-wall.test.js:230:1
+✖ outsideReads names each path read outside the repository, in its given or its real form (0.702958ms)
+  TypeError: backends.outsideReads is not a function
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:250:29)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/eval/judged/exam-wall.test.js:278:1
+✖ caseVerdict: reads inside the repository leave the verdict; a read outside makes it INCONCLUSIVE and names the path (0.226375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'PASS'
+  - 'INCONCLUSIVE'
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:286:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'PASS',
+    expected: 'INCONCLUSIVE',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/exam-wall.test.js:317:1
+✖ the Fix card word count: per case by the desk's counter, null with no card, and min, median and max in the summary (0.179709ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   max: 120,
+  -   median: 60,
+  -   min: 40,
+  -   no_card: 1,
+  -   over: 3
+  - }
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:320:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { min: 40, median: 60, max: 120, over: 3, no_card: 1 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/exam-wall.test.js:331:1
+✖ a run records the tool calls, the outside reads and the card words in results.json and report.md (421.74ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   count: 0,
+  -   ids: []
+  - }
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:345:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { count: 0, ids: [] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit code: 1

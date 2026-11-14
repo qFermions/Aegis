@@ -323,3 +323,18 @@ test('code review 1: the new-way-in rule applies when the ticket names the sign-
     assert.equal(lostSignInDevice(yes), true, yes);
   }
 });
+
+// Code review round 1, finding 7: the triggers of two rules missed the builder's own tickets for them: "Nobody at the
+// second office can get into Outlook" (the words apart) and "Sales should never have had that site". Wrong
+// implementation it catches: a trigger that needs "nobody can" side by side, or has no "should never have".
+test('code review 1: "nobody at <a place> can get into" is a service down, and "should never have" is access someone should not have had', () => {
+  const ticket14 = 'Nobody at the second office can get into Outlook or Teams since about 10 this morning. Head office seems fine.';
+  const ticket12 = 'Someone in sales told me she can open the HR SharePoint site and read the disciplinary files. Sales should never have had that site.';
+  const plain = '## Fix\n**What\'s wrong:** x\n**Do this:**\n1. Ask what happens.\n**Done when:** y\n';
+  assert.equal(howWideBeforeWhy(plain, { ticket: ticket14 }).applies, true, 'how wide before why applies');
+  assert.equal(whoElseWhatLeft(plain, { ticket: 'Sales should never have had that site.' }).applies, true, 'who else applies');
+  assert.equal(whoElseWhatLeft(plain, { ticket: ticket12 }).applies, true);
+  // and still not to a ticket that says neither
+  assert.equal(howWideBeforeWhy(plain, { ticket: 'Nobody at the second office has a printer yet.' }).applies, false);
+  assert.equal(whoElseWhatLeft(plain, { ticket: 'The team should never have to wait this long for a laptop.' }).applies, false);
+});

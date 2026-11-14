@@ -16,6 +16,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 ⚠️ **This is a destructive multi-system plan — route it through independent plan review before executing.** Every disable/wipe/removal step below hits the destructive-action gate: confirm before running.
 ⚠️ **Involuntary termination?** Complete Steps 1–4 BEFORE the user is notified. Speed matters.
 
+**Every change carries its class and its double-check (answer-format section 2).** In the plan written under Details, every step that changes something shows two things beside it: its risk class (R1, R2 or R3, the class its gate's Reversibility line opens with) and its double-check. The double-check is the gate's Read-back command where the gate names one (Phase A's four). Where the gate's Read-back field says none, the plan says "no read-back command" for that step and names the proof a person can see with their own eyes: that step's ✅ Verify line. A step that has only a PREVIEW ONLY marker (the Zoom ownership transfer, the Jira closure note, the disposal reminder) has no gate: the plan says "no gate here, a separate reviewed change" and still names what a person would see when it is done. No changing step is listed without both.
+
 ---
 
 ## Phase A — Contain the Identity
@@ -124,9 +126,19 @@ node scripts/adapters/msgraph-client.js verify-password-changed --user [USER_ID]
 node scripts/adapters/msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
 ```
 
+**If the leaver's access was still live after the leave time** (a sign-in, a session or a mail client that still worked after the leave time written in the ticket): they had access they should not have had, so answer-format section 2, "Who else, and what left", applies. Once Phase A has closed the path, the next step is a read, R0, no gate: the audit log in the Microsoft Purview portal for `[UPN]` from the leave time on, for what was opened, downloaded, sent or shared onward. The closing note does not say how serious it was, or that nothing left, before that read (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-20 to MB-23).
+
 ---
 
 ## Phase B — Preserve the Data (before touching licenses)
+
+**The mail decision comes before Step 5 (answer-format section 2, the offboarding rule).** The plan says four things in plain words, and the manager or HR signs them off:
+- **Where the person's mail goes.** One of three. The mailbox becomes a shared mailbox the manager opens (Step 5): the old mail stays readable and new mail keeps arriving. Or new mail is forwarded to a named person (Microsoft 365 admin center, Users, Active users, the user, the Mail tab, Manage email forwarding): it carries only new mail, and it is a separate change this plan does not authorize. Or the mailbox goes with the account, and mail to the address stops arriving.
+- **For how long.** The organization's period for keeping a leaver's mail reachable **[org gap: confirm the leaver-mail retention period]**. The date it ends is written in the plan and in Step 16's disposal review. Microsoft names no period.
+- **What keeping the account costs against the alternatives.** A kept, licensed account uses one paid licence every month. A shared mailbox uses none while it is under 50 GB; it needs an Exchange Online Plan 2 licence when it holds more than 50 GB, uses in-place archiving or is on litigation hold. A forward set on the person's own mailbox lasts only as long as that mailbox, so it keeps the licence in use. A shared mailbox and a forward both need the account to stay. Deletion costs nothing and ends the address.
+- **The restore window before deletion.** Removing the licence starts 30 days in which the mail is still held; after that it is deleted for good. A deleted account can be restored for about 30 days; a synced account is deleted and restored in the local Active Directory. Holds come off before a licence does. The plan names the date the window closes, and nobody is told the mail is gone, or safe, before that date is known.
+
+Vendor facts for all four: `docs/aegis/batch11/vendor-facts-microsoft.md` MB-50 to MB-58.
 
 ### STEP 5 — Convert mailbox to shared + delegate
 
@@ -437,6 +449,7 @@ No lighter step: this is the close-out after every other step, on an account tha
 ## ✅ Completion checklist
 
 - [ ] AD disabled (authoritative) + Entra sign-in blocked · Entra refresh-token/browser-cookie revocation requested and checked after propagation · password randomized · MFA methods cleared
+- [ ] Mail decision written and signed off before Step 5: where the mail goes, until what date, what it costs against the alternatives, and the date the restore window closes
 - [ ] Mailbox → shared + manager delegated · OneDrive transferred (30-day window flagged) · all licenses removed (after conversion)
 - [ ] Groups/DLs/shared-mailbox delegation stripped
 - [ ] Computer wiped/retired (ownership confirmed) · work phone wiped + removed from `[WORK_PHONE_DEVICE_GROUP]`

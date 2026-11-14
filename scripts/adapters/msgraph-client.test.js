@@ -439,6 +439,10 @@ test('verify-temporary-access-pass: passes only on a usable pass created at or a
     [{ value: [password], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/users/x/authentication/methods?$skiptoken=y' }, /another page/],
     [{ value: [pass({ createdDateTime: 'this morning' })] }, /not a time/],
     [{ value: [pass({ createdDateTime: undefined })] }, /not a time/],
+    // code review 1, finding 9: only an older pass on this page, and another page behind it, proves nothing either
+    // way, as an empty page with another behind it does. Wrong implementation it catches: "not this change's" as a
+    // definite failure while the list is not read to its end.
+    [{ value: [pass({ createdDateTime: '2026-10-27T08:00:00Z' })], '@odata.nextLink': 'https://graph.microsoft.com/v1.0/users/x/authentication/methods?$skiptoken=y' }, /another page/],
   ];
   for (const [body, reason] of inconclusive) {
     const r = await v([ok(body)]);

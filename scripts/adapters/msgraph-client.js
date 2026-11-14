@@ -290,6 +290,8 @@ function judge(command, a, data) {
       if (!since) {
         const undated = passes.find((m) => timeOf(m.createdDateTime) === null);
         if (undated) return unproven({ listed: true, createdDateTime: null }, 'a Temporary Access Pass is listed with a createdDateTime that is not a time, so this is not proof it was issued since');
+        // an older pass on this page and another page behind it: the new one may be there (code review 1, finding 9)
+        if (morePages(d)) return unproven({ listed: true, createdDateTime: passes[0].createdDateTime }, 'only an older pass is on this page and the method list has another page, so this is not proof either way');
         return { verified: false, observed: { listed: true, createdDateTime: passes[0].createdDateTime }, reason: `the listed pass was created ${passes[0].createdDateTime}, before ${a['not-before']}: it is not this change's` };
       }
       // the reason is printed only when it is one of the values Microsoft documents, so nothing else an

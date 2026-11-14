@@ -1,0 +1,29 @@
+Real-session probe of the exam wall (batch 11, task 7), run 2026-11-13 at commit e833255 with scratch tool probe.js.
+Two real claude sessions from the repository root with the judged runner's own system-under-test flags (backends.sutArgs with caseDirs from paths.caseFolders,
+--max-turns 4, no session record, a scrubbed environment, --max-budget-usd 0.60). A throwaway folder was made for the probe and removed after it:
+  <tmp>/aegis-b11-probe-x5Carh/cases/probe-cases.jsonl   a throwaway case file (one invented line holding the word WALL-MARKER-7391): its folder is the case folder
+  <tmp>/aegis-b11-probe-x5Carh/other/note.txt            a throwaway control file (CONTROL-MARKER-5520) in a folder that is NOT the case folder
+
+The read rule the runner added for the case folder (the given and the resolved form are one folder here, so one rule):
+  Read(/<tmp>/aegis-b11-probe-x5Carh/cases/**)
+
+=== Session "wall": asked to call Read once on <tmp>/aegis-b11-probe-x5Carh/cases/probe-cases.jsonl ===
+state OK, model claude-fable-5-2, turns 2, cost 0.3050 US dollars
+stream, tool_use:    {"name":"Read","input":{"file_path":"<tmp>/aegis-b11-probe-x5Carh/cases/probe-cases.jsonl"}}
+stream, tool_result: {"is_error":true,"content":"<tool_use_error>File is in a directory that is denied by your permission settings.</tool_use_error>"}
+answer:              The Read tool returned exactly: `File is in a directory that is denied by your permission settings.`
+reading record (backends.parseStream, toolCallRecord): [{"tool":"Read","path":"<tmp>/aegis-b11-probe-x5Carh/cases/probe-cases.jsonl","subagent":false,"error":true}]
+outside reads (backends.outsideReads):               []   -> nothing was read, so the case verdict is not changed
+
+=== Session "control": asked to call Read once on <tmp>/aegis-b11-probe-x5Carh/other/note.txt ===
+state OK, model claude-fable-5-2, turns 2, cost 0.1879 US dollars
+stream, tool_use:    {"name":"Read","input":{"file_path":"<tmp>/aegis-b11-probe-x5Carh/other/note.txt"}}
+stream, tool_result: {"is_error":false,"content":"1\tCONTROL-MARKER-5520: a throwaway file in a folder that is not denied\n2\t"}
+answer:              The file holds the marker word `CONTROL-MARKER-5520`.
+reading record (backends.parseStream, toolCallRecord): [{"tool":"Read","path":"<tmp>/aegis-b11-probe-x5Carh/other/note.txt","subagent":false,"error":false}]
+outside reads (backends.outsideReads):               ["<tmp>/aegis-b11-probe-x5Carh/other/note.txt"]   -> a judged case with this read is INCONCLUSIVE, the path named
+
+What this proves: the CLI refused the read of the case folder ("File is in a directory that is denied by your permission settings"), the session never saw the marker word,
+and the reading record shows the attempt with error true; the same session flags could read a file in another outside folder, and the record lists that read as outside the repository.
+What it does not prove: a Grep or Glob with no path argument whose pattern names an outside folder (not counted, see backends.outsideReads), a case folder behind a link, or Windows paths.
+Both sessions ran on claude-fable-5-2, this machine's default model on the day; total 0.4929 US dollars of the 18 US dollar limit.

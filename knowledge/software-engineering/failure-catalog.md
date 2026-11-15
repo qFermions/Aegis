@@ -115,7 +115,7 @@ Each entry: the symptom as it shows, the likely causes ranked (most likely first
 - Rollback: revert.
 
 **E3. A job that passed yesterday fails today with no code change.**
-- Causes: 1. the runner image moved under a `-latest` label (EV-15); 2. a dependency range picked up a new release; 3. an action reference by tag moved; 4. a restored cache is stale.
+- Causes: 1. the runner image moved under a `-latest` label (GitHub calls these "the latest stable images", EV-15; that a label moves to a newer image over time is [unconfirmed: check the vendor page]); 2. a dependency range picked up a new release; 3. an action reference by tag moved; 4. a restored cache is stale.
 - Split: compare the "Runner Image" and tool versions in the set-up step of the last green and the first red run; compare resolved dependency versions; check whether the action reference is a full commit SHA (EV-16).
 - Fix: pin the image label and the versions that worked, pin actions to a full commit SHA, then upgrade on purpose in its own pull request.
 - Rollback: revert the pin.
@@ -143,6 +143,12 @@ Each entry: the symptom as it shows, the likely causes ranked (most likely first
 - Split: read the cache key the step printed and the lockfile hash.
 - Fix: put the lockfile hash in the key; a cache cannot be changed once created (EV-13), so a new key is the fix. Deleting the entry is the second choice (`/ci-failure`, Phase B).
 - Rollback: revert the key change.
+
+**E8. A workflow should have started after a bot or another workflow pushed, and nothing ran.**
+- Causes: 1. the push or the event was made with the run's own `GITHUB_TOKEN`, and events it triggers do not start new workflow runs (EV-18); 2. the workflow's trigger filters (branches, paths) exclude it; 3. the workflow is disabled.
+- Split: read who or what made the push (the commit's author and the run that pushed it), and the trigger block of the workflow that did not run.
+- Fix: trigger the next workflow on purpose (`workflow_dispatch` or `repository_dispatch`, exceptions the same page names, EV-18), or have a person or a dedicated app make the push; never put a person's long-lived token in the workflow to get around it.
+- Rollback: revert the workflow change.
 
 ## F. Resources, containers and Docker
 

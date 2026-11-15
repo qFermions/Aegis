@@ -46,7 +46,7 @@ Node.js v22.11.0
 
 - The first line of the message names the error and its message; frames follow, innermost first (the opposite order to Python).
 - Frames under `node_modules` are the library; the first frame of ours is `recordEvent` in `src/audit.js` line 42. Lines starting `at async` are the awaited callers.
-- `code: '42P01'` is the stable identifier to search; messages may change between versions, codes are what to match on (EV-50).
+- `code: '42P01'` is the identifier to search and to match on in code: Node.js says its own error messages may change in any version and to identify an error by `error.code` (EV-50), and the same holds for a library's codes.
 - An uncaught exception prints the stack to stderr and exits with code 1 (EV-49); an unhandled promise rejection does the same by default (EV-48).
 - Next test: does the `audit_events` table exist in the database this process connects to (a migration not run on this environment is the first hypothesis, a wrong database name the second)?
 
@@ -65,7 +65,7 @@ ScriptStackTrace      : at Sync-Groups, /scripts/sync-groups.ps1: line 23
                         at <ScriptBlock>, /scripts/sync-groups.ps1: line 61
 ```
 
-- `Get-Error` prints this detailed view of the last error (EV-58); in a `catch` block the same object is `$_`, an ErrorRecord, with `ScriptStackTrace` (EV-57). `$Error[0]` is the most recent error.
+- `Get-Error` prints this detailed view of the last error (EV-58); in a `catch` block the same object is `$_`, an ErrorRecord, with `ScriptStackTrace` (EV-57). `$Error[0]` is the most recent error (EV-61).
 - `CategoryInfo` gives the kind of failure (`ObjectNotFound`), the target and the exception type. `FullyQualifiedErrorId` is the stable id to search.
 - `ScriptStackTrace` reads innermost first: line 23 inside `Sync-Groups`, called from line 61.
 - Here `-Identity` was given a UPN; the next test is whether the value is a UPN or a sAMAccountName (a filter on `UserPrincipalName` finds UPNs).

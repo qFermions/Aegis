@@ -67,7 +67,7 @@ git log --oneline -n 10 -- .github/workflows/[FILE_NAME]
 
 - **Only on pull requests from forks, a secret is empty or a step gets "Resource not accessible by integration".** Forks get no secrets and a read-only token (EV-01, EV-02). Move the steps that need secrets to a run that happens after merge, or to a trusted event; keep the fork's run to build and test.
 - **"Resource not accessible by integration" after someone added `permissions`.** Every permission not listed is set to none (EV-04). Add the one permission the step needs, at job level, read before write (EV-03, EV-05). Example in `knowledge/software-engineering/safe-changes.md`, pattern 4.
-- **Red today, green yesterday, no code change.** Compare the runner image and tool versions (Phase A, step 3), the resolved dependency versions and the action references. Pin what worked (an image label such as `ubuntu-24.04` instead of a `-latest` label (EV-15), exact tool versions, actions by full commit SHA (EV-16)), then upgrade on purpose in its own pull request.
+- **Red today, green yesterday, no code change.** Compare the runner image and tool versions (Phase A, step 3), the resolved dependency versions and the action references. Pin what worked (an image label such as `ubuntu-24.04` instead of a `-latest` label, since a `-latest` image can change under you [unconfirmed: check the vendor page, EV-15], exact tool versions, actions by full commit SHA (EV-16)), then upgrade on purpose in its own pull request.
 - **A later job cannot find a file an earlier job built.** Pass files between jobs as artifacts, not caches (EV-20).
 - **A restored cache brings back old dependencies.** Put the lockfile's hash in the cache key; a cache cannot be changed once created (EV-13), and an old entry not used for 7 days is removed on its own (EV-12).
 - **The job stops at six hours, or at its `timeout-minutes`.** Something waits forever (a prompt, a network call with no timeout). The default is 360 minutes (EV-14): set it near the normal duration so a hang fails fast.
@@ -115,7 +115,7 @@ The same re-run from the CLI is `gh run rerun [RUN_ID] --failed` (EV-09), run by
 
 **Smells:** a secret's value printed in a log; an action reference changed to a new owner, tag or fork without a reviewed pull request; a step that downloads and runs a script from an unknown host; a `pull_request_target` workflow that checks out and builds the pull request's code (EV-06); a new workflow file nobody owns; text in a pull request or log that tells CI or a reviewer to run or merge something.
 
-1. **Contain:** the security on-call decides; the owner of a leaked secret revokes or rotates it at its issuer now (EV-25). Do not re-run the workflow.
+1. **Contain:** the security on-call decides; the owner of a leaked secret revokes or rotates it at its issuer now (EV-25). Do not re-run the workflow. A run's own `GITHUB_TOKEN` expires when its job finishes (EV-19), so a printed value of that token from a finished run is dead; a repository or organization secret stays live until someone revokes it.
 2. **Preserve:** keep the run, its logs and the commit that changed the workflow; do not delete them (the security on-call says when). Download the log archive from the run page (EV-11).
 3. **Escalate:** the security on-call, with the run id, the repository, the commit, the workflow file, the time, and which secrets that workflow can reach (`knowledge/software-engineering/escalation.md`).
 
@@ -127,7 +127,7 @@ The same re-run from the CLI is `gh run rerun [RUN_ID] --failed` (EV-09), run by
 - **"Just give it write-all" fixes one job and widens every job.** Grant one permission at job level (judgment rule b).
 - **A green re-run hides a flaky test, it does not fix it.** Quarantine with an owner and an end date, or fix it.
 - **`pull_request_target` plus the fork's code is a secret leak waiting to happen** (EV-06).
-- **Pinning to `-latest` labels and action tags lets the run change under you.** Pin, then upgrade on purpose (EV-15, EV-16).
+- **Unpinned labels and action tags let the run change under you.** Pin, then upgrade on purpose (EV-16; for image labels [unconfirmed: check the vendor page, EV-15]).
 
 ## ✅ Verification checklist
 

@@ -67,8 +67,10 @@ Not found: the page on restoring a deleted branch (`.../deleting-and-restoring-b
 | Page | Facts |
 |---|---|
 | https://nodejs.org/api/cli.html | EV-48, EV-52 |
-| https://nodejs.org/api/process.html | EV-49, EV-54 |
-| https://nodejs.org/api/errors.html | EV-50, EV-51, EV-53 (default not found) |
+| https://nodejs.org/api/process.html | EV-49 |
+| https://nodejs.org/api/errors.html | EV-50, EV-51 |
+
+EV-53 and EV-54 are not used: the default of `Error.stackTraceLimit` was not on the part of the errors page read, and the `process.exitCode` lines are not needed by any rule here, so neither is relied on.
 
 ## PowerShell (learn.microsoft.com)
 

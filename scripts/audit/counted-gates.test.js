@@ -47,6 +47,8 @@ const NOT_COUNTED = Object.freeze({
   'offboard-physical-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
   'quarantine-release-all-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
   'print-queue-delete-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  // batch 12, infrastructure and cloud lane
+  'linux-server-triage-vacuum-journal': `[N] is a setting, the age in days of the journal files removed, not a number of objects; ${NO_VERIFY}`,
 });
 
 // gate id -> { file, confirmation } for every gate whose required confirmation names a count

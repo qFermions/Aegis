@@ -85,7 +85,8 @@ test('every SAFETY GATE in every runbook carries an R class on its Reversibility
   // batch 11 (Google, Okta and Jamf lane): 349 to 350, okta-mfa-reset-tac-portal (R1), the Temporary Access Code
   // a lost-phone ticket issues before any reset (answer-format section 2, "A new way in before the old way out");
   // batch 11, task 5 (Microsoft lane): 350 to 351, mfa-temporary-access-pass-portal (R3), the new way in of /mfa-issue
-  assert.equal(all.length, 351, 'the SAFETY GATE count is unchanged');
+  // batch 12, infrastructure and cloud lane: 351 to 371, the 20 gates of the seven runbooks of knowledge/infrastructure/
+  assert.equal(all.length, 371, 'the SAFETY GATE count is unchanged');
   assert.deepEqual(unclassed(DIR), [], 'gates with no R class');
 });
 

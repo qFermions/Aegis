@@ -380,6 +380,48 @@
       ]
     },
     {
+      "id": "backup-restore-test-gcp-disk-from-snapshot",
+      "file": ".claude/commands/backup-restore-test.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gcloud-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "backup-restore-test-replace-live-portal",
+      "file": ".claude/commands/backup-restore-test.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "backup-restore-test-restore-new-portal",
+      "file": ".claude/commands/backup-restore-test.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "ca-break-glass",
       "file": ".claude/commands/conditional-access.md",
       "kind": "portal",
@@ -497,6 +539,180 @@
       "sinks": [],
       "impactCategories": [
         "external-system mutation"
+      ]
+    },
+    {
+      "id": "cloud-access-denied-aws-policy-portal",
+      "file": ".claude/commands/cloud-access-denied.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "cloud-access-denied-azure-assign-portal",
+      "file": ".claude/commands/cloud-access-denied.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "cloud-access-denied-gcp-binding",
+      "file": ".claude/commands/cloud-access-denied.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gcloud-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "cloud-cost-spike-delete-disk-portal",
+      "file": ".claude/commands/cloud-cost-spike.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "cloud-cost-spike-release-preview",
+      "file": ".claude/commands/cloud-cost-spike.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "gcloud-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "cloud-cost-spike-snapshot-portal",
+      "file": ".claude/commands/cloud-cost-spike.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "cloud-cost-spike-stop-instance",
+      "file": ".claude/commands/cloud-cost-spike.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "cloud-network-block-aws-sg-ingress",
+      "file": ".claude/commands/cloud-network-block.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "reversible state change",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "cloud-network-block-azure-nsg-portal",
+      "file": ".claude/commands/cloud-network-block.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "cloud-network-block-gcp-firewall",
+      "file": ".claude/commands/cloud-network-block.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gcloud-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
       ]
     },
     {
@@ -5111,6 +5327,54 @@
       ]
     },
     {
+      "id": "k8s-pod-failure-apply-manifest",
+      "file": ".claude/commands/k8s-pod-failure.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "k8s-pod-failure-capacity-preview",
+      "file": ".claude/commands/k8s-pod-failure.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "k8s-pod-failure-rollout-undo",
+      "file": ".claude/commands/k8s-pod-failure.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
       "id": "license-audit-documentation-portal",
       "file": ".claude/commands/license-audit.md",
       "kind": "portal",
@@ -5492,6 +5756,58 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
+      ]
+    },
+    {
+      "id": "linux-server-triage-remove-files",
+      "file": ".claude/commands/linux-server-triage.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "linux-server-triage-restart-unit",
+      "file": ".claude/commands/linux-server-triage.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "linux-server-triage-vacuum-journal",
+      "file": ".claude/commands/linux-server-triage.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
       ]
     },
     {
@@ -10347,6 +10663,98 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
+      ]
+    },
+    {
+      "id": "terraform-plan-review-apply-in-place",
+      "file": ".claude/commands/terraform-plan-review.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "terraform-plan-review-apply-replace",
+      "file": ".claude/commands/terraform-plan-review.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "terraform-plan-review-force-unlock",
+      "file": ".claude/commands/terraform-plan-review.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "terraform-plan-review-refresh-only",
+      "file": ".claude/commands/terraform-plan-review.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "terraform-plan-review-state-surgery",
+      "file": ".claude/commands/terraform-plan-review.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
       ]
     },
     {

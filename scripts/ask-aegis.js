@@ -357,4 +357,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, protect, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, homeOf, printReply, REPO_ROOT, ASKS_DIR, DEFAULT_MAX_USD, REPLY_REQUEST };
+module.exports = { main, protect, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, homeOf, insideRepo, printReply, REPO_ROOT, ASKS_DIR, DEFAULT_MAX_USD, REPLY_REQUEST };

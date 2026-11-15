@@ -137,6 +137,25 @@ balancer; examples use the documentation ranges 192.0.2.0/24, 198.51.100.0/24, 2
 2001:db8::/32) · `[SUBNET]` (a network in CIDR form, such as a VPN's protected subnet) · `[INTERFACE]`
 (a network interface name on a host, such as a WireGuard or tunnel interface). None is env-backed.
 
+Infrastructure and cloud lane (batch 12, 2026-11-14, `knowledge/infrastructure/` and its
+runbooks): `[ACCOUNT_ID]` (an AWS account ID) · `[SUBSCRIPTION_ID]` (an Azure subscription
+ID) · `[PROJECT_ID]` (a Google Cloud project ID) · `[RESOURCE_GROUP]` (an Azure resource
+group) · `[REGION]` (a cloud region name) · `[RESOURCE_ID]` (one cloud resource's ID or full
+resource ID: an instance, a disk, an address, a snapshot) · `[PRINCIPAL]` (one IAM principal:
+an AWS role or user ARN, an Azure object ID of a user, group, service principal or managed
+identity, or a Google Cloud member string such as `serviceAccount:` plus its address) ·
+`[SECURITY_GROUP_ID]` (an AWS security group ID) · `[FIREWALL_RULE]` (an Azure NSG rule or a
+Google Cloud VPC firewall rule name) · `[SOURCE_CIDR]` (the narrowest source address range a
+rule allows) · `[PORT]` (one destination port or port range) · `[CLUSTER_NAME]` (a Kubernetes
+cluster) · `[NAMESPACE]` (a Kubernetes namespace) · `[WORKLOAD_NAME]` (a Kubernetes
+Deployment or StatefulSet name) · `[POD_NAME]` (one pod) · `[NODE_NAME]` (one Kubernetes
+node) · `[RESOURCE_ADDRESS]` (a Terraform resource address such as `module.db.aws_db_instance.main`)
+· `[TF_WORKSPACE]` (a Terraform working directory, workspace or HCP Terraform workspace) ·
+`[LOCK_ID]` (the lock ID a Terraform state lock error prints) · `[HOST_NAME]` (one Linux
+server) · `[UNIT_NAME]` (one systemd unit) · `[SNAPSHOT_ID]` (one backup recovery point or
+snapshot) · `[RESTORE_TARGET]` (the new, alternate-location name a restore writes to, never the
+live resource).
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

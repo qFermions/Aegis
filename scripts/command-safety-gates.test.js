@@ -46,6 +46,9 @@ const MIXED_STATE_COMMANDS = [
   'okta-group-membership',
   // batch 12: networking lane (knowledge/networking/)
   'dns-troubleshoot', 'tls-certificate', 'vpn-tunnel-down', 'zero-trust-block', 'mtu-path-issue',
+  // batch 12: infrastructure and cloud lane
+  'terraform-plan-review', 'k8s-pod-failure', 'cloud-access-denied', 'cloud-network-block', 'linux-server-triage',
+  'cloud-cost-spike', 'backup-restore-test',
 ];
 
 const REFERENCE_BOUNDARIES = [

@@ -70,7 +70,9 @@ const VARIANTS = {
     'gws-security-posture',
     // G3: GitHub and Okta (batch G3, tasks 5a and 5b)
     'github-repo-access', 'github-branch-protection', 'github-org-security', 'github-offboard-member',
-    'github-security-alerts', 'okta-group-membership'],
+    'github-security-alerts', 'okta-group-membership',
+    // batch 12: infrastructure and cloud lane (knowledge/infrastructure/)
+    'terraform-plan-review', 'backup-restore-test'],
   B: ['troubleshoot', 'mfa-issue', 'printer-issue', 'wifi-issue', 'lan-wan', 'vpn-check', 'ad-connect', 'teams-issue',
     'outlook-issue', 'onedrive-issue', 'email-to-spam', 'intune-compliance', 'meraki-health', 'meraki-vpn-status',
     'sip-trunk-status', 'security-alert-triage',
@@ -79,7 +81,9 @@ const VARIANTS = {
     // G2
     'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation',
     // batch 12: networking lane (knowledge/networking/)
-    'dns-troubleshoot', 'tls-certificate', 'vpn-tunnel-down', 'zero-trust-block', 'mtu-path-issue'],
+    'dns-troubleshoot', 'tls-certificate', 'vpn-tunnel-down', 'zero-trust-block', 'mtu-path-issue',
+    // batch 12: infrastructure and cloud lane (knowledge/infrastructure/)
+    'k8s-pod-failure', 'cloud-access-denied', 'cloud-network-block', 'linux-server-triage', 'cloud-cost-spike'],
   C: ['write-sop', 'runbook', 'incident-report', 'board-report', 'vendor-email', 'escalation-note', 'ticket-response',
     'draft-email', 'daily-start', 'daily-wrap', 'vent'],
   D: ['cloud-lab', 'devops-drill', 'ai-engineer-drill'],

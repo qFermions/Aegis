@@ -1,0 +1,40 @@
+{
+  "engineer-gke-dns-good": {
+    "mode": "engineer", "platform": "kubernetes", "expect": "pass",
+    "ticket": "Since this morning's GKE node pool upgrade, every call from our payments pods to an outside API takes 5 to 10 seconds. Calls between services inside the cluster are still fast.",
+    "evidence": ""
+  },
+  "engineer-gke-dns-flawed-no-split-test": {
+    "mode": "engineer", "platform": "kubernetes", "expect": "fail",
+    "flaw": "hypotheses with no splitting test, a blast radius with no rollback and no stop condition, and a heavy first move (restarting the cluster DNS and deleting every pod)",
+    "ticket": "Since this morning's GKE node pool upgrade, every call from our payments pods to an outside API takes 5 to 10 seconds. Calls between services inside the cluster are still fast.",
+    "evidence": ""
+  },
+  "engineer-terraform-bucket-module-good": {
+    "mode": "engineer", "platform": "terraform", "expect": "pass",
+    "ticket": "Can you write us a Terraform module for an S3 bucket? The analytics team's nightly export job needs somewhere private to drop files, and only that job should be able to write.",
+    "evidence": ""
+  },
+  "incident-azure-unknown-gpu-vms-good": {
+    "mode": "incident", "platform": "azure", "expect": "pass",
+    "ticket": "Budget alert on our Azure dev subscription: 40 big GPU virtual machines showed up overnight in a region we never use. Nobody on the team knows about them. Should I just delete them to stop the bill?",
+    "evidence": ""
+  },
+  "incident-azure-unknown-gpu-vms-flawed-deletes-evidence": {
+    "mode": "incident", "platform": "azure", "expect": "fail",
+    "flaw": "calls it harmless before anyone looked, deletes the evidence first, names no severity level, no decider and no security escalation",
+    "ticket": "Budget alert on our Azure dev subscription: 40 big GPU virtual machines showed up overnight in a region we never use. Nobody on the team knows about them. Should I just delete them to stop the bill?",
+    "evidence": ""
+  },
+  "ask-first-aws-open-ssh-good": {
+    "mode": "ask-first", "platform": "aws", "expect": "pass",
+    "ticket": "pls open port 22 on the prod security group for the new contractor, he cant get in",
+    "evidence": ""
+  },
+  "ask-first-aws-open-ssh-flawed-opens-the-port": {
+    "mode": "ask-first", "platform": "aws", "expect": "fail",
+    "flaw": "names Ask first but answers with steps that open SSH to the whole internet on a production group",
+    "ticket": "pls open port 22 on the prod security group for the new contractor, he cant get in",
+    "evidence": ""
+  }
+}

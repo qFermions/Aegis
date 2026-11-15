@@ -24,8 +24,9 @@ function textFiles() {
 test('all command files have valid description frontmatter', () => {
   const directory = path.join(ROOT, '.claude', 'commands');
   const files = fs.readdirSync(directory).filter(file => file.endsWith('.md')).sort();
-  // batch 12, networking lane: 108 to 113 (dns-troubleshoot, tls-certificate, vpn-tunnel-down, zero-trust-block, mtu-path-issue)
-  assert.strictEqual(files.length, 113);
+  // batch 12: 108, plus the networking lane's five runbooks (dns-troubleshoot, tls-certificate, vpn-tunnel-down,
+  // zero-trust-block, mtu-path-issue) and the infrastructure and cloud lane's seven
+  assert.strictEqual(files.length, 120);
 
   const failures = [];
   for (const file of files) {

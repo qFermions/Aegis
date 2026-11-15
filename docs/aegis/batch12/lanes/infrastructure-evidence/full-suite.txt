@@ -1,0 +1,9 @@
+# TMPDIR=<tmp> node --test (full suite) at aa29ca5
+exit 1
+ℹ tests 2468
+ℹ pass 2426
+ℹ fail 41
+ℹ skipped 1
+failing names: 41
+new versus the baseline list: 0
+baseline names now passing: 0

@@ -1,0 +1,6 @@
+# Batch 12 lane note: networking
+
+## Hypothesis and what "verified" means (written 2026-11-14 before the first lane edit; not rewritten afterward)
+
+- **Hypothesis:** a knowledge module under `knowledge/networking/` (a layered method with "how wide before why" as step one, decision trees, a failure catalog, evidence reading for dig, curl, openssl, traceroute, mtr, ping and tcpdump text, safe change patterns, escalation, sources) plus five runbooks (`/dns-troubleshoot`, `/tls-certificate`, `/vpn-tunnel-down`, `/zero-trust-block`, `/mtu-path-issue`) whose every change sits under a PREVIEW ONLY marker passes the gate scanner, the structure lint, the ladder audit and the case schema; the work most likely to fail first is the portal grammar reading a knowledge-file list line that carries "Meraki" or "Settings", an arrow and an action word as an unowned mutation.
+- **Verified means:** `node --test scripts/command-safety-gates.test.js scripts/markdown-links.test.js scripts/repository-structure.test.js scripts/eval/judged/cases.test.js` with 0 failures; `node scripts/lint/command-structure.js` exit 0; `node scripts/lint/ladder-audit.js --check` exit 0; `readCaseFile` loads the lane's cases; the full `node --test` run fails on exactly the 41 baseline names and no new one; `node scripts/pre-commit-check.js` on the staged set reports no BLOCK.

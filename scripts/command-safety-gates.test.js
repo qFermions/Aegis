@@ -68,6 +68,23 @@ const REFERENCE_BOUNDARIES = [
 const DIRECT_R1_INVENTORY = [
 ];
 
+// Setup lines a visitor runs on their own computer, from README.md's "Try it" guide: the official
+// Claude Code installer and the clone of this public repository. They touch no customer system, so
+// they carry no SAFETY GATE. Each is allowed in README.md only and matched by its exact statement;
+// the visitor-setup test fails if a line changes, moves to another file or a new unowned one appears.
+const VISITOR_SETUP_INVENTORY = [
+  {
+    file: 'README.md', command: 'indirect-exec', count: 1,
+    statement: 'curl -fsSL https://claude.ai/install.sh | bash',
+    reason: "the official Claude Code installer, run by a visitor on their own Mac before trying Aegis",
+  },
+  {
+    file: 'README.md', command: 'git-write', count: 1,
+    statement: 'git clone https://github.com/qFermions/Aegis.git',
+    reason: "downloads this public repository into a new folder on the visitor's own computer",
+  },
+];
+
 function normalizeFile(file) {
   return file.split(path.sep).join('/');
 }
@@ -431,6 +448,10 @@ function nearestMarker(hit) {
 
 function directR1Owners(hit) {
   return DIRECT_R1_INVENTORY.filter((entry) => entry.file === hit.file && entry.command === hit.command);
+}
+
+function visitorSetupOwners(hit) {
+  return VISITOR_SETUP_INVENTORY.filter((entry) => entry.file === hit.file && entry.command === hit.command && entry.statement === hit.statement);
 }
 
 function classifyImpact(command, text) {
@@ -885,6 +906,7 @@ function currentStateChangeInventory() {
       limitation: 'Novel syntax and prose still require semantic review and grammar extension.',
     },
     directR1: DIRECT_R1_INVENTORY,
+    visitorSetup: VISITOR_SETUP_INVENTORY,
     examples: discoveredStateChangeExamples(),
     clientBoundaries: [...CLIENT_BOUNDARIES].sort((left, right) => left.id.localeCompare(right.id)),
   };
@@ -1483,7 +1505,7 @@ test('every executable mutation has exactly one same-fence owner', () => {
   for (const hit of executableHits) {
     const marker = nearestMarker(hit);
     const gateOwners = marker && marker.mode === 'gated' ? [marker] : [];
-    const owners = [...gateOwners, ...directR1Owners(hit)];
+    const owners = [...gateOwners, ...directR1Owners(hit), ...visitorSetupOwners(hit)];
     if (owners.length !== 1) failures.push(`${hit.file}:${hit.line}: ${hit.command} has ${owners.length} owners (${hit.statement})`);
     if (classifyImpact(hit.command, hit.statement).length === 0) failures.push(`${hit.file}:${hit.line}: mutation is unclassified`);
   }
@@ -1871,7 +1893,7 @@ test('manual PREVIEW ONLY regions cannot masquerade as gated portal actions', ()
 
 test('direct R1 inventory is exact and remains operator-only', () => {
   const actual = [];
-  for (const hit of executableHits.filter((item) => !nearestMarker(item))) {
+  for (const hit of executableHits.filter((item) => !nearestMarker(item) && visitorSetupOwners(item).length === 0)) {
     const existing = actual.find((entry) => entry.file === hit.file && entry.command === hit.command);
     if (existing) existing.count += 1;
     else actual.push({ file: hit.file, command: hit.command, count: 1 });
@@ -1886,6 +1908,19 @@ test('direct R1 inventory is exact and remains operator-only', () => {
     assert.match(source, /Risk level:[^\n]*R1/i);
     assert.match(source, /Invocation:[^\n]*operator-only/i);
   }
+});
+
+test('visitor setup lines are exact, README-only, unmarked and counted', () => {
+  for (const entry of VISITOR_SETUP_INVENTORY) {
+    assert.equal(entry.file, 'README.md', `${entry.statement}: visitor setup lines live in README.md only`);
+    assert.ok(typeof entry.reason === 'string' && entry.reason.length > 20, `${entry.statement}: missing reason`);
+    const matches = executableHits.filter((hit) => visitorSetupOwners(hit).includes(entry));
+    assert.equal(matches.length, entry.count, `${entry.file}: expected ${entry.count} line(s) "${entry.statement}", found ${matches.length}`);
+    for (const hit of matches) assert.equal(nearestMarker(hit), undefined, `${hit.file}:${hit.line}: a visitor setup line sits under a marker`);
+  }
+  // a near miss (another URL, another flag) is not covered: it stays unowned and fails the owner test
+  assert.equal(visitorSetupOwners({ file: 'README.md', command: 'git-write', statement: 'git clone https://example.com/other.git' }).length, 0);
+  assert.equal(visitorSetupOwners({ file: 'docs/examples.md', command: 'git-write', statement: 'git clone https://github.com/qFermions/Aegis.git' }).length, 0);
 });
 
 test('mixed-state commands and aliases remain operator-only with an execution boundary', () => {

@@ -2,73 +2,210 @@
 
 # 🛡️ Aegis
 
-### An adaptive, human-operated IT support harness — Microsoft 365 / Entra / Intune and Google Workspace / Okta / Jamf, through the same handlers
+### An AI IT teammate. It reads the ticket, works out the fix, and writes the reply. A person makes every change.
 
-**Describe an IT problem in plain English. Aegis decides how deeply to think — verified replay, lightweight Tier 1/2 handlers, or Fable-powered Tier-3 analysis with bounded agent graphs — and produces the safest technically useful procedure for a HUMAN administrator to execute, under R0–R3 risk classification with controlled memory. Aegis recommends; humans execute.**
+[![Release Gate](https://github.com/qFermions/Aegis/actions/workflows/release-gate.yml/badge.svg)](https://github.com/qFermions/Aegis/actions/workflows/release-gate.yml)
+[![Advice only](https://img.shields.io/badge/Aegis-advises_·_people_change_things-2EA44F?style=flat-square)](#-safe-by-design)
+[![Platforms](https://img.shields.io/badge/Microsoft_365_·_Google_·_Okta_·_Jamf_·_Fleet_·_Slack_·_GitHub-runbooks-0078D4?style=flat-square)](#-for-engineers)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-*Scope note: 102 runbooks: 58 for Microsoft (hybrid AD, Entra ID, M365, Exchange Online, Intune, Teams, OneDrive, SharePoint) plus Meraki/VoIP, 19 for Google Workspace, Okta, Jamf Pro, macOS and Zoom Rooms, and 25 for the G2 lane (Fleet, Linear, Slack, and more Jamf Pro and Google Workspace), each G2 platform with a read-only adapter. All three lanes have a sanitized ticket corpus run by the same deterministic evaluator, and the same structure lint and safety-gate suite. What is still pending for the Google lane: the operator's lab evidence and a fresh-context rubric run of the rendered answers (`docs/evidence/claim-ledger.md`).*
+**[🚀 Try it in 10 minutes](#-try-it-in-10-minutes)** · [🧭 How it works](#-how-it-works) · [🔐 Safe by design](#-safe-by-design) · [🧯 Troubleshooting](#-troubleshooting) · [🧪 For engineers](#-for-engineers)
 
 <br>
 
-[![Release Gate](https://github.com/qFermions/Aegis/actions/workflows/release-gate.yml/badge.svg)](https://github.com/qFermions/Aegis/actions/workflows/release-gate.yml)
-[![Architecture](https://img.shields.io/badge/Authorization-R0--R3_blast--radius-0078D4?style=flat-square)](#-the-safety-model)
-[![Probes](https://img.shields.io/badge/Security-T1--T10_probe_suite-2EA44F?style=flat-square)](#-the-safety-model)
-[![Commands](https://img.shields.io/badge/Runbooks-102_slash_commands-8A2BE2?style=flat-square)](#-whats-inside)
-[![Tests](https://img.shields.io/badge/Suites-graph_33_·_memory_14_·_replay_15_·_ticket_eval_28+38+63_·_lint_102-informational?style=flat-square)](#-run-the-evidence)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+<img src="docs/assets/aegis-demo.svg" width="880" alt="A terminal: someone asks Aegis about a ticket where nobody at a second office can open Outlook or Teams. Aegis answers with a short, plain reply for the person who asked, saves the full answer for the IT tech, and says it sent nothing.">
 
-[🧭 How it works](#-how-it-works) · [🚀 Try it](#-try-it--5-minutes) · [🔐 Safety model](#-the-safety-model) · [🧪 Evidence](#-run-the-evidence) · [📦 What's inside](#-whats-inside) · [🧩 Adapt it](#-adapting-it-to-your-environment)
+<sub>Real output, word for word, from <a href="docs/aegis/demo/evidence/batch11/asker-replies.md">the saved test runs</a>.</sub>
 
 </div>
 
 ---
 
-## Try Aegis
+## What Aegis does
 
-For a person who does not write code. You need a computer with Git and Node.js.
+You paste an IT ticket in plain words. Aegis gives you two things back:
 
-1. Install Claude Code from [claude.ai/code](https://claude.ai/code), then type `claude` once in a terminal and sign in with your own account.
-2. Get a copy of this repository: the clone line under [Try it](#-try-it--5-minutes) below, then `cd Aegis`.
-3. Ask about one IT problem. Aegis prints a short Fix card and what to tell the user:
+- 🧰 **A Fix card for the IT tech:** what is wrong, 3 to 5 steps with the admin-portal path, how to tell it worked, and when to stop.
+- 💬 **A reply for the person who asked:** a few short paragraphs in plain words, answer first, ready for you to send.
 
-   ```bash
-   node scripts/ask-aegis.js "A user cannot open Outlook after a password reset"
-   node scripts/ask-aegis.js "The front desk printer will not print" --setup "Google Workspace, Windows laptops, no Intune"
-   ```
+When a ticket says too little ("Calendar is broken"), Aegis asks one question first instead of guessing.
 
-4. Or open a chat for follow-up questions:
+> [!NOTE]
+> **Aegis is early.** Its answers are being scored on IT tickets it has never seen. Until that score passes, use Aegis as a second opinion and check every step before you do it.
 
-   ```bash
-   node scripts/aegis-chat.js --setup "Microsoft 365, Macs managed by Jamf"
-   ```
+## 🚀 Try it in 10 minutes
 
-`--setup` tells Aegis what your company runs, in plain words; leave it out to use the example company in `CLAUDE.md`. When you leave it out and your ticket names no system, the Fix card opens with one line, `Assumed setup: ...`, that says which systems the answer took for granted.
+### What you need
 
-5. Or ask for the short reply to send the person who asked for help:
+| | |
+|---|---|
+| 💻 A computer | macOS 13 or newer, or Windows 10 (1809) or newer |
+| 🔑 A paid Claude plan | Pro, Max, Team or Enterprise, or a Claude Console account. The free plan does not include Claude Code. |
+| 🟢 Node.js | Version 24 or newer (the version Aegis is tested on) |
+| 🌿 Git | To download Aegis and get updates |
 
-   ```bash
-   node scripts/ask-aegis.js "A supplier says their email to me bounced. Is my mailbox broken?" --reply-to asker
-   node scripts/aegis-chat.js --reply-to asker
-   ```
+Each ticket you ask about uses your own Claude plan's allowance. In testing, one ask used about 0.20 to 0.70 US dollars' worth, and Aegis stops any single ask at about 3 dollars' worth.
 
-   With `--reply-to asker` Aegis prints only that reply: at most three short paragraphs, in plain words, with no admin steps. The full answer for the tech is saved beside it (`answer.md` and `reply.md`). Aegis sends nothing: the reply is text for you to read and send. If the reply does not pass Aegis's own form check, it is still printed, with the reasons, and the command exits 3.
+### Steps
 
-A ticket with nothing to go on ("The printer is broken.") gets one question back, not a list of steps: answer it and ask again.
+<details open>
+<summary><b>🍎 On a Mac</b></summary>
 
-What Aegis will do: read the problem, read its own runbooks, and tell you the steps, how to check they worked, and when to stop.
-What it will not do: it reads only. It cannot run commands, and it never changes anything in your systems. A person does every change.
-Before your ticket reaches Aegis, email addresses and phone numbers in it become placeholders, and a password written after the word "password", or a token or key in a common format, stops the ask. Other secrets are not caught, so leave them out. Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit). Both commands run Aegis on `claude-opus-5-5`, whatever your default model is; `--model` names another, and each ask saves the model it ran on in `init.json`.
+Open the **Terminal** app (press <kbd>Cmd</kbd> + <kbd>Space</kbd>, type `Terminal`, press <kbd>Enter</kbd>). Paste each line, then press <kbd>Enter</kbd>.
 
-## The problem
+**1. Install Claude Code**, the engine Aegis runs on:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+Close Terminal and open it again, then check it worked. It should print a version number:
+
+```bash
+claude --version
+```
+
+**2. Sign in once.** This opens your browser. When it says you're signed in, type `/exit` to leave.
+
+```bash
+claude
+```
+
+**3. Install Node.js.** Download the **LTS** installer from [nodejs.org](https://nodejs.org) and run it. Close and reopen Terminal, then check it shows `v24` or higher:
+
+```bash
+node --version
+```
+
+**4. Download Aegis.** If your Mac asks to install "command line developer tools", click **Install**, wait, then run this again.
+
+```bash
+git clone https://github.com/qFermions/Aegis.git
+cd Aegis
+```
+
+</details>
+
+<details>
+<summary><b>🪟 On Windows</b></summary>
+
+Open **PowerShell** from the Start menu. Open it normally, **not** as Administrator. Paste each line, then press <kbd>Enter</kbd>.
+
+**1. Install Claude Code**, the engine Aegis runs on. Use this installer, not npm: Aegis starts Claude Code directly, and the npm version cannot be started that way on Windows.
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+**2. Install Node.js and Git:**
+
+```powershell
+winget install OpenJS.NodeJS.LTS
+winget install Git.Git
+```
+
+Close PowerShell and open it again, then check all three. Each should print a version number:
+
+```powershell
+claude --version
+node --version
+git --version
+```
+
+**3. Sign in once.** This opens your browser. When it says you're signed in, type `/exit` to leave.
+
+```powershell
+claude
+```
+
+**4. Download Aegis:**
+
+```powershell
+git clone https://github.com/qFermions/Aegis.git
+cd Aegis
+```
+
+</details>
+
+### Ask your first ticket
+
+Same on Mac and Windows. Put the ticket inside the quotes, and tell Aegis what your company runs after `--setup`:
+
+```bash
+node scripts/ask-aegis.js "Outlook keeps asking for my password since I changed it yesterday" --setup "Microsoft 365, Windows laptops managed with Intune"
+```
+
+After 30 to 60 seconds you get the **Fix card** for the tech. The whole answer is saved in a folder called `aegis-asks` in your home folder.
+
+**Want the reply for the person who asked?** Add `--reply-to asker`. Aegis prints only that reply and saves the full tech answer next to it. Aegis sends nothing; you read it and send it yourself.
+
+```bash
+node scripts/ask-aegis.js "Nobody at the second office can open Outlook or Teams since 10 am. Head office is fine." --reply-to asker
+```
+
+**Want to go back and forth?** Open a chat. Type `/exit` when you're done.
+
+```bash
+node scripts/aegis-chat.js --setup "Google Workspace, Okta, Macs managed with Jamf"
+```
 
 > [!IMPORTANT]
-> **Advisory-only by contract** (`PRODUCT_CONTRACT.md`): Aegis never performs production changes — no tenant writes, no account/license/device mutations, no schedulers, no autonomous operations. Every command it emits is marked HUMAN-RUN; R0–R3 approval authorizes the human procedure, never model execution.
+> **Use these two commands, not plain `claude`.** `ask-aegis.js` and `aegis-chat.js` run Aegis sealed: it can only read, it has no shell, it cannot edit files, and your own plugins stay out. Typing just `claude` inside the Aegis folder opens the full Claude Code builder, which can edit files and run commands. That is for working on Aegis, not for asking it about tickets.
 
-An IT administrator's day is tickets: *"[FIRST_NAME] keeps getting asked for her Outlook password after I reset it."* Solving them with an LLM usually means one of two bad deals — a chat assistant with no memory, no gates, and no way to prove anything happened; or an agent framework the admin has to program and babysit. Aegis is the third option: **the operator types the problem; the harness owns everything underneath it.**
+**Coming back another day?** Open the terminal, go into the folder with `cd Aegis`, and get the latest version with `git pull`.
+
+### Before you paste a real ticket
+
+- 🔒 Your ticket goes to Claude under your own account. Check that your company allows AI on ticket data.
+- ✂️ Leave out names, server names and anything secret. Aegis turns email addresses and phone numbers into placeholders, and it refuses a ticket that holds a password. Other secrets are not caught.
+- 🧠 Check every step before you do it. Aegis gives advice; you make the changes.
+
+## 🧯 Troubleshooting
+
+| What you see | What to do |
+|---|---|
+| `claude: command not found`, or "not recognized" | Close the terminal and open it again. Still missing? Follow Claude Code's [Fix your PATH](https://code.claude.com/docs/en/troubleshoot-install.md#command-not-found-claude-after-installation) guide. |
+| `The token '&&' is not a valid statement separator` | You're in PowerShell, so use the Windows steps. |
+| `node: command not found` | Install Node.js (step 3 on Mac, step 2 on Windows), then reopen the terminal. |
+| `the Aegis session did not finish ... Is Claude Code installed?` | Run `claude` once and sign in, then ask again. On Windows, reinstall Claude Code with the PowerShell installer, not npm. |
+| `the text holds a value Aegis never keeps` | Your ticket has a password, token or key in it. Take it out and ask again. |
+| Aegis asks one question instead of giving steps | The ticket didn't say enough. Add what happens, who it affects and since when, then ask again. |
+| With `--reply-to asker`, it ends with "did not pass its check" | The reply is still printed. Read the reasons and fix the reply before you send it. |
 
 ## 🧭 How it works
 
-You type the ticket in ordinary English. The orchestrator inside Aegis routes it through the cheapest shape that can solve it correctly:
+<div align="center">
+<img src="docs/assets/aegis-flow.svg" width="880" alt="Five steps: a ticket in plain words; Aegis reads its runbooks and read-only checks; two answers, a Fix card for the tech and a reply for the person who asked; a person makes the change; Aegis checks it really worked.">
+</div>
+
+1. **It reads before it guesses.** Aegis works from 108 written runbooks for Microsoft 365, Entra, Intune, Exchange, Google Workspace, Okta, Jamf, macOS, Fleet, Slack, Linear, GitHub and more. Where a read-only check could show the failing event (a sign-in log, an audit log, a device's status), the first step tells you what to look for.
+2. **It thinks like a senior tech.** It asks what changed recently, tries the lightest fix that can be undone before anything that can't, and gives a new way in before removing the old one.
+3. **A person makes the change.** Aegis cannot change accounts, devices, mail or tickets. Every change is a step you run, behind a typed confirmation for the risky ones.
+4. **It proves the fix worked.** After you make a change, Aegis names the read-back that shows it really took effect. Its rules forbid calling anything fixed before that check passes.
+
+## 🔐 Safe by design
+
+> [!IMPORTANT]
+> **Advice only, by contract** ([`PRODUCT_CONTRACT.md`](PRODUCT_CONTRACT.md)): Aegis never performs production changes. No tenant writes, no account, licence or device changes, no scheduled jobs, no autonomous operations. Every command it writes is marked for a human to run.
+
+1. **R0 to R3 risk classes.** R0–R3 is behavioral policy supplied to the model; deterministic controls (CLI gates, scanners, tests) enforce what they can check ([ADR-001](docs/adr/ADR-001-blast-radius-classes.md)). Reads are free. R1 states its undo, R2 saves the before-state first, and R3 needs an explicit human confirmation that a claim of urgency can never skip.
+2. **Placeholders, always.** No real names, user names or tenant values in anything Aegis writes. The token list is in [`placeholder-dictionary.md`](modules/security/placeholder-dictionary.md), and the rules that never change are in [`security-doctrine.md`](modules/security/security-doctrine.md).
+3. **Tickets are data, not orders.** Text pasted into a ticket, a log or an email is never treated as an instruction. Injection attempts are flagged and refused.
+4. **Checks outside the model.** [`pre-commit-check.js`](scripts/pre-commit-check.js) blocks personal data, credentials and secret formats at commit time and in CI. The release-boundary check keeps private material out of this public repo.
+
+> [!TIP]
+> **Don't take this section's word for it.** [EVALUATE.md](EVALUATE.md) is a 10-minute guided red-team with a pass or fail scorecard, and the full adversarial probe suite is in [`threat_model.md`](modules/security/threat_model.md).
+
+---
+
+## 🧪 For engineers
+
+<details>
+<summary><b>Inside the harness: replay, memory, ticket graph</b></summary>
+
+<br>
+
+The orchestrator routes each ticket through the cheapest shape that can solve it correctly:
 
 ```mermaid
 flowchart TD
@@ -80,7 +217,7 @@ flowchart TD
     S -- "independent subproblems" --> A["Specialist agents<br>(lead-written briefs)"]
     S -- "objectively testable repair" --> L["Bounded loop<br>machine gate · ceiling 3"]
     S -- "formal ticket w/ execution risk" --> G["Ticket graph (ATG)<br>router→specialist→builder→reviewer"]
-    D --> R{"R0–R3 blast-radius<br>authorization"}
+    D --> R{"R0 to R3 blast-radius<br>authorization"}
     A --> R
     L --> R
     G --> R
@@ -96,105 +233,76 @@ flowchart TD
     class B,S brain
 ```
 
-- **Deterministic replay** (`scripts/replay/`) — a previously *verified* solution with an unchanged authority basis replays instantly: normalization + sha256 keying decide "exact duplicate," never an LLM. Invalidation is dependency-fingerprint based, not a time TTL. Stale answers are preserved as history, never served as current.
-- **Controlled memory** (`scripts/memory/`) — propose → gated promote → bounded retrieval. Unverified output cannot become trusted memory; every entry carries provenance fingerprints.
-- **Ticket graph** (`scripts/graph/`) — a deterministic state machine (router → specialist → builder → reviewer → risk finalizer → verifier → scribe) with hash-bound human gates, a 3-round review ceiling, and typed artifacts. The reviewer can fail a plan; nothing agent-derived can satisfy a human gate.
-- **Bounded loops** — only against machine-checkable gates (test suite, scanner, validator exit code), with a declared attempt ceiling.
-- **Independent review** — multi-system or irreversible plans require a maker ≠ checker review in a fresh context before execution; the graph records `independentReviewRequired` and nothing in-session can satisfy it.
-- **Every answer lands twice** — exact admin-portal click path first, line-by-line-commented PowerShell second, then a verification checklist and a paste-ready Jira note.
+- **Deterministic replay** (`scripts/replay/`): a previously verified solution with an unchanged authority basis replays instantly. Normalization and sha256 keying decide "exact duplicate", never a model. Invalidation follows dependency fingerprints, not a timer, and stale answers are kept as history, never served as current.
+- **Controlled memory** (`scripts/memory/`): propose, then gated promote, then bounded retrieval. Unverified output cannot become trusted memory, and every entry carries provenance fingerprints.
+- **Ticket graph** (`scripts/graph/`): a deterministic state machine (router, specialist, builder, reviewer, risk finalizer, verifier, scribe) with hash-bound human gates, a 3-round review ceiling and typed artifacts. Nothing agent-derived can satisfy a human gate.
+- **Bounded loops**: only against machine-checkable gates (a test suite, a scanner, a validator's exit code), with a declared attempt ceiling.
+- **Independent review**: multi-system or irreversible plans need a maker-is-not-checker review in a fresh context before execution.
 
-## 🚀 Try it — 5 minutes
+</details>
 
-**Prerequisites:** [Claude Code](https://claude.ai/code) with your own Anthropic account · Git · Node.js.
+<details>
+<summary><b>Run the evidence</b></summary>
 
-```bash
-# PREVIEW ONLY [readme-repo-clone]: git clone https://github.com/qFermions/Aegis
-cd Aegis
-claude
-```
+<br>
 
-1. Paste a ticket in plain words: *"User can't sign in, says account is locked"*. Watch it produce a Fix card (what's wrong, the steps, done when, stop if, and the messages to send the user now and when done), then Details with the checks, the verification and a Jira-ready note.
-2. **`/new-user`** — the full onboarding runbook. It never asks you for a real name; placeholders are enforced.
-3. The replay fast path, with no model at all (sandbox the store with `AEGIS_REPLAY_DIR=/tmp/replay-demo` to keep your real cache clean and make the demo rerunnable):
-   ```bash
-   node scripts/replay/replay-cli.js record --ticket "Onboard a new hire: [FIRST_NAME] [LAST_NAME], starts [START_DATE], standard staff profile at [@Aegion]." --solution-file scripts/replay/fixtures/onboard-demo.md --deps modules/security/security-doctrine.md
-   node scripts/replay/replay-cli.js verify case-0001 --evidence "demo fixture — synthetic verification"
-   node scripts/replay/replay-cli.js lookup --ticket "ONBOARD a new hire [FIRST_NAME] [LAST_NAME] starts [START_DATE] standard staff profile at [@Aegion]"   # → CACHE_HIT
-   ```
-
-## 🔐 The safety model
-
-An LLM with admin-portal knowledge is a loaded tool. Safety is layered and testable:
-
-1. **R0–R3 blast-radius authorization** — R0–R3 is behavioral policy supplied to the model; deterministic controls (CLI gates, scanners, tests) enforce what they can check ([ADR-001](docs/adr/ADR-001-blast-radius-classes.md)) — reads are free; every write climbs a ceremony ladder. R1 states its undo inline, R2 captures pre-state *first* (Entra/Intune don't keep your before-state), R3 requires an explicit human gate that urgency claims can never bypass, plus independent review for multi-system plans.
-2. **Placeholders, always** — no real names, UPNs, tenant identifiers anywhere; the canonical token dictionary is [`modules/security/placeholder-dictionary.md`](modules/security/placeholder-dictionary.md), and the immutable rules (SR-1…SR-8) live in [`modules/security/security-doctrine.md`](modules/security/security-doctrine.md).
-3. **Content ≠ instructions** — pasted emails, tickets, and logs are data; injection attempts are flagged, not followed.
-4. **Deterministic gates outside the model** — `scripts/pre-commit-check.js` blocks PII/credentials/secret formats at commit and in CI (keyless, pattern-only by design); `scripts/harness/release-boundary-check.js` makes it structurally hard for private or unrelated material to ride into a release.
-
-> [!TIP]
-> **Don't take this section's word for it.** [EVALUATE.md](EVALUATE.md) is a 10-minute guided red-team with a pass/fail scorecard, and the full T1–T10 adversarial probe suite (expected behavior specified per probe) is in [`modules/security/threat_model.md`](modules/security/threat_model.md). Run them against the agent and score it yourself.
-
-## 🧪 Run the evidence
-
-Every load-bearing claim above maps to a runnable check, and [`docs/evidence/claim-ledger.md`](docs/evidence/claim-ledger.md) says which claims are **proven by a script**, which are **model-behavior contracts** evaluated by rubric, and which were weakened because the evidence was thinner than the prose. [EVALUATE.md](EVALUATE.md) is the guided version.
+Every load-bearing claim maps to a runnable check. [`claim-ledger.md`](docs/evidence/claim-ledger.md) says which claims a script proves, which are model-behavior contracts scored by rubric, and which were weakened because the evidence was thinner than the prose.
 
 ```bash
-node --test                                    # the whole battery (graph, memory, replay, tier, lint, eval, scanner, structure …)
-node scripts/eval/ms-ticket-eval.js            # 28 sanitized Microsoft tickets: risk floor, routed-runbook structure, replay MISS, 6 dangerous pairs
-node scripts/eval/gws-ticket-eval.js           # 38 sanitized Google Workspace / Okta / Jamf / macOS tickets, 9 dangerous pairs — same evaluator
-node scripts/eval/g2-ticket-eval.js            # 63 sanitized Fleet, Linear, Slack, Jamf Pro and Google Workspace tickets, 12 dangerous pairs, same evaluator
-node scripts/lint/command-structure.js         # 102 commands: exact portal breadcrumbs, GUI before PowerShell/CLI, CLI collapsed + commented + HUMAN-RUN, one checklist + one Jira note, fresh Entra / Admin console / Okta / Jamf paths
-node scripts/replay/replay-demo.js             # replay lifecycle in a sandbox: MISS → verify → HIT → class-bound identity-variant HIT → guest/raw-literal/two-user MISS → STALE
-node scripts/replay/replay.test.js             # 15 — verified-only, fingerprint invalidation, PII boundary, object-class binding, zero-model path proven under a runtime tripwire
-node scripts/graph/graph.test.js               # 33 — graph engine: gates, hash-bound approval, review ceiling
-node scripts/memory/memory.test.js             # 14 — controlled memory: gated promotion, provenance, staleness
-node scripts/pre-commit-check.js --all         # full-tree PII/credential/secret scan (the CI release gate)
-node scripts/harness/release-boundary-check.js # public/private boundary holds
+node --test                                    # the whole battery
+node scripts/eval/ms-ticket-eval.js            # 28 sanitized Microsoft tickets
+node scripts/eval/gws-ticket-eval.js           # 38 sanitized Google Workspace, Okta, Jamf and macOS tickets
+node scripts/eval/g2-ticket-eval.js            # 65 sanitized Fleet, Linear, Slack, Jamf Pro and Google Workspace tickets
+node scripts/eval/g3-ticket-eval.js            # 44 sanitized tickets for the G3 connectors
+node scripts/lint/command-structure.js         # every runbook: portal paths, GUI before CLI, one checklist, one Jira note
+node scripts/lint/ladder-audit.js --check      # lightest fix first, in every runbook
+node scripts/replay/replay-demo.js             # replay lifecycle in a sandbox: MISS, verify, HIT, STALE
+node scripts/pre-commit-check.js --all         # full-tree personal data, credential and secret scan
+node scripts/harness/release-boundary-check.js # the public/private boundary holds
 ```
 
-What a script cannot prove — that the model leads with the most useful action, sizes depth to the ticket, and carries a failed attempt forward after "still doesn't work" — is scored by the rubric in [`scripts/eval/README.md`](scripts/eval/README.md); [`docs/evidence/ticket-eval-samples.md`](docs/evidence/ticket-eval-samples.md) holds captured, dated handler answers on a subset of the corpus.
+What a script cannot prove (that the answer leads with the most useful action, fits its depth to the ticket, and carries a failed attempt forward after "still doesn't work") is scored by a model judge: [`scripts/eval/README.md`](scripts/eval/README.md). Captured answers are in [`ticket-eval-samples.md`](docs/evidence/ticket-eval-samples.md).
 
-## 📦 What's inside
+</details>
+
+<details>
+<summary><b>What's inside</b></summary>
+
+<br>
 
 ```
-CLAUDE.md                    # The harness contract — mission, environment, rules, orchestration
-modules/security/            # Native governance: security-doctrine (SR-1…SR-8), placeholder
-                             # dictionary, threat model (T1–T10), IR playbooks + scripts
-.claude/commands/            # 102 runbook slash commands: onboarding/offboarding, MFA, Intune,
-                             # Meraki, VoIP, Exchange, Jira, troubleshooting trees, and the
-                             # Google Workspace / Okta / Jamf / macOS lane (gws-*, okta-*, jamf-*, mac-*)
+CLAUDE.md                    # The harness contract: mission, environment, rules, orchestration
+PRODUCT_CONTRACT.md          # Advice only: what Aegis may never do
+modules/security/            # Security doctrine, placeholder dictionary, threat model, IR playbooks
+.claude/commands/            # 108 runbooks: Microsoft 365, Entra, Intune, Exchange, Meraki, VoIP,
+                             # Google Workspace, Okta, Jamf, macOS, Fleet, Slack, Linear, GitHub
 scripts/
-├── replay/                  # Deterministic replay cache engine + suite + demo + synthetic fixtures
-├── memory/                  # Controlled operational memory engine + suite
-├── graph/                   # Ticket-graph execution engine + adversarial suite
-├── tier/                    # T1/T2 lane: deterministic escalation floor (tier guard) + suite
-├── lint/                    # GUI-first structure lint for every command + suite
-├── eval/                    # Microsoft and Google ticket corpora + one shared deterministic evaluator + judging rubric
-├── harness/                 # Continuity checker + release-boundary guard
-├── dev/                     # Multi-session task claims (atomic, scope-overlap refusal)
-├── jira-client.js           # JSM client: GET-only; writes print as HUMAN-RUN procedures, verify-* read-backs
-└── pre-commit-check.js      # The commit/CI safety scanner
-docs/                        # Architecture, ADRs, security model, worked ticket examples,
-                             # evidence/ (claim ledger, captured handler samples)
-modules/{it_support,systems,automation}/   # Procedure depth: diagnostics, AD Connect, PS safety
+├── ask-aegis.js             # Ask one ticket (sealed, read-only)
+├── aegis-chat.js            # Chat about tickets (sealed, read-only)
+├── adapters/                # Read-only connectors: every command is a read or a verify-* read-back
+├── replay/                  # Deterministic replay cache engine
+├── memory/                  # Controlled operational memory engine
+├── graph/                   # Ticket-graph execution engine
+├── eval/                    # Ticket corpora, the shared evaluator, the model-judged runner
+├── lint/                    # Runbook structure and lightest-fix-first lints
+├── demo/                    # The Customer Desk: simulated tenants for end-to-end runs
+└── pre-commit-check.js      # The commit and CI safety scanner
+docs/                        # Architecture, ADRs, answer format, evidence
 ```
 
-### The ideas that make it work
+Built from real support workflows at a multi-site nonprofit (hybrid AD, Microsoft 365, Entra, Intune, Exchange Online, Meraki, VoIP), then placeholder-sanitized. Worked ticket arcs: [`ticket-examples.md`](docs/ticket-examples.md).
 
-- **The harness is files.** Identity, rules, gates, and orchestration doctrine are version-controlled Markdown + zero-dependency Node. No infrastructure, no fine-tuning, no framework.
-- **Cost follows complexity.** A verified duplicate costs zero reasoning; a simple ticket stays direct; agents/loops/graphs fire only when the problem genuinely needs them.
-- **Only verified results become memory.** Drafts, guesses, and failed attempts cannot enter the replay cache or the trusted memory store — enforced by tests, not intentions.
-- **Built from real support workflows** at a multi-site nonprofit (hybrid AD · M365 · Entra · Intune · Exchange Online · Meraki · VoIP), then placeholder-sanitized. Worked ticket arcs: [docs/ticket-examples.md](docs/ticket-examples.md).
+</details>
 
-## 🔓 Public/private boundary
+<details>
+<summary><b>Adapting it to your environment</b></summary>
 
-This public repo contains the **real product**: the same harness contract, engines, gates, and test suites the private deployment runs. What stays private is *data*, not behavior: real tickets, tenant values (env-var only), the operator's replay/memory stores (git-ignored), and org-specific operational state. The boundary is enforced mechanically — release-gate CI, the boundary guard, and replay suite test R8.
+<br>
 
-## 🧩 Adapting it to your environment
-
-1. Keep committed files placeholder-only — don't replace `[@Aegion_*]` tokens with real values in tracked files.
-2. Real values live in env vars (see `.env.example`) or git-ignored local files.
-3. Install the pre-commit scanner before you start editing:
+1. The quickest way: pass `--setup "what your company runs"` to `ask-aegis.js` or `aegis-chat.js`. It replaces the example company in `CLAUDE.md` for that ask.
+2. Keep committed files placeholder-only. Don't replace `[@Aegion_*]` tokens with real values in tracked files.
+3. Real values live in environment variables (see `.env.example`) or git-ignored local files.
+4. Install the pre-commit scanner before you start editing:
 
 ```bash
 # PREVIEW ONLY [readme-hook-install]: install a reviewed hook without overwriting an existing hook
@@ -202,16 +310,17 @@ This public repo contains the **real product**: the same harness contract, engin
 # chmod +x .git/hooks/pre-commit            # on Windows, git runs the hook via sh
 ```
 
-Those hook-write lines are reference-only. Inspect `.git/hooks/pre-commit` first and follow the no-clobber, separately authorized procedure in [`modules/automation/pre_commit_hooks.md`](modules/automation/pre_commit_hooks.md); do not paste the preview over an existing hook.
-4. Rewrite the **Environment Snapshot** section of `CLAUDE.md` for your stack — keep the placeholder discipline and the gates exactly as they are.
+Those hook-write lines are reference-only. Inspect `.git/hooks/pre-commit` first and follow the no-clobber, separately authorized procedure in [`pre_commit_hooks.md`](modules/automation/pre_commit_hooks.md); do not paste the preview over an existing hook.
+
+</details>
 
 ## 📄 License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
 
 <div align="center">
 <br>
 
-Built with [Claude Code](https://claude.ai/code). This public repo is a curated release; active development happens in a private tree and lands here as deliberate, scanned releases (see CHANGELOG).
+Built with [Claude Code](https://claude.ai/code). Every change lands through a reviewed pull request with CI.
 
 </div>

@@ -156,3 +156,21 @@ test('code review 2: the ask-first form fails bullets and advice the way isAskFi
   assert.equal(isAskFirst(lead, ticket), true);
   assert.equal(askFirst(lead, { ticket }).verdict, 'pass');
 });
+
+// Code review round 3, findings 6, 7 and 8 (one class: how the ask-first reader finds advice). Round 2 joined all lines
+// into one text, so an advice line with no full stop merged into the question, and a blockquote's ">" read as a portal
+// path; it also dropped the bare word "portal", so "In the portal, require ..." read as a question again. Lines are read
+// one by one now, quote and list marks set aside, and a statement that opens with an instruction is advice. Wrong
+// implementations they catch: a reader of the whole text as one line, one that keeps the ">" of a quote, and one that
+// knows only change verbs.
+test('code review 3: advice on its own line, an instruction about the portal, and a quoted ticket line read as they are', () => {
+  const { isAskFirst, askFirst } = require('./senior-rules.js');
+  const ticket = 'The printer is broken.';
+  for (const advice of ['Restart the printer and check the cable\nWhat exactly happens, and since when?', 'In the portal, require a password change at next sign-in. What happened first, and since when?', 'Open the portal and look at the print queue. What happens?']) {
+    assert.equal(isAskFirst(advice, ticket), false, advice);
+  }
+  const quoted = 'You wrote:\n> The printer is broken.\nWhat exactly happens, for whom, and since when?';
+  assert.equal(isAskFirst(quoted, ticket), true);
+  assert.equal(askFirst(quoted, { ticket }).verdict, 'pass');
+  assert.equal(isAskFirst('I need one detail before we look in the portal. What exactly happens, for whom, and since when?', ticket), true);
+});

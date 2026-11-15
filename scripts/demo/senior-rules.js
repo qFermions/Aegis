@@ -103,9 +103,15 @@ const BULLET = /^[ \t>]*[-*+•][ \t]+\S/;
 // A sentence that advises: a change verb by the desk's own reader, or a way into an admin console, read with the same
 // PORTAL_PATH the reply check uses (code review 1, finding 1: "In the admin center, require ..." holds no verb the
 // reader knows, but it walks into a console; code review 2, finding 15: the shared readers, and no bare "portal").
-const advises = (sentence) => Boolean(stepChange(sentence)) || PORTAL_PATH.test(sentence) || FAMILIES.some((f) => f.path.test(sentence));
-// The sentences of a text that are not questions, by the desk's own sentence reader.
-const statements = (text) => sentences(text).filter((s) => !s.trim().endsWith('?'));
+// A statement that opens with an instruction is advice too, whatever its verb (code review 3, finding 8: "In the portal,
+// require ..." and "Open the portal and look ...").
+const INSTRUCTION = /^(?:please[,\s]+)?(?:(?:in|on|from) the (?:admin )?(?:portal|console|admin cent(?:er|re))\b|open|go to|check|look|click|select|choose|sign in|log in|restart|reboot|reset|run|try|install|uninstall|require|enable|disable|assign|grant|block|unblock|remove|delete|add|set|turn|configure|clear|update|reconnect|unplug|plug|navigate|change|create)\b/i;
+const advises = (sentence) => Boolean(stepChange(sentence)) || INSTRUCTION.test(sentence.trim()) || PORTAL_PATH.test(sentence) || FAMILIES.some((f) => f.path.test(sentence));
+// The sentences of a text that are not questions: read line by line, with a blockquote's ">" and a list mark set aside,
+// so a line with no full stop never merges into the question after it (code review 3, findings 6 and 7).
+const statements = (text) => String(text).split(/\r?\n/)
+  .map((l) => l.replace(/^[ \t]*(?:>[ \t]?)+/, '').replace(/^[ \t]*(?:[-*+•]|\(?\d+[.)])[ \t]+/, ''))
+  .flatMap((l) => sentences(l)).filter((s) => !s.trim().endsWith('?'));
 const ASK_FIRST_MAX_WORDS = 60;
 // An answer that asks and holds no Fix card and no gate: a question of its own (not the ticket's question repeated,
 // not a quoted or fenced line: the desk's own question reader).

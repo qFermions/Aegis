@@ -86,6 +86,8 @@ function assumedSetup(answer, { setup = null, ticket = '' } = {}) {
   const given = typeof setup === 'string' && setup.trim() !== '';
   if (!given) {
     if (namesSystem(ticket)) return row('assumed-setup', plain, true, 'no setup was given, and the ticket names its system');
+    // an ask-first answer is one question and nothing else (section 7): it assumes no setup, so it carries no line
+    if (isAskFirst(answer, ticket)) return row('assumed-setup', plain, true, 'an ask-first answer assumes no setup', false);
     if (!line) return row('assumed-setup', plain, false, 'no setup was given and the ticket names no system, so the line after the mode line (on a card, the first under "## Fix") must be "Assumed setup: <systems> (no company profile given). Tell me what your company runs for a better answer."');
     const systems = line.replace(/^Assumed setup:/i, '').replace(/\(.*$/, '').trim();
     if (!/[A-Za-z]{2,}/.test(systems)) return row('assumed-setup', plain, false, 'the Assumed setup line names no system');

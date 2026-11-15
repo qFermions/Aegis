@@ -215,3 +215,13 @@ test('task 4 (batch 12): the line invites the setup and sits after the mode line
   const incident = ['Mode: Incident answer', '## Incident answer', '**Severity:** SEV-3.', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
   assert.equal(assumedSetup(incident, { setup: null, ticket: 'Someone says they got a weird email and clicked it.' }).verdict, 'fail', 'no line at all');
 });
+
+// Fix beyond the task (batch 12): the batch 11 row failed an ask-first answer to a bare ticket for having no line, while
+// the ask-first row requires that answer to be one question and nothing else, so no answer could pass both. Wrong
+// implementation: a row that holds every answer with no setup to the line.
+test('an ask-first answer to a bare ticket is not held to the Assumed setup line', () => {
+  const ask = ['Mode: Ask first', 'What exactly happens when you print, who is affected, and since when?', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  assert.equal(assumedSetup(ask, { setup: null, ticket: 'The printer is broken.' }).applies, false, 'an ask-first answer assumes nothing');
+  const bare = ask.replace('Mode: Ask first\n', '');
+  assert.equal(assumedSetup(bare, { setup: null, ticket: 'Teams not working' }).applies, false, 'with or without the mode line');
+});

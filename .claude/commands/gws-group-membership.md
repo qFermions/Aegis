@@ -16,6 +16,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Add** is R1: one user, one group, undone by the remove procedure — and the undo is named inside the add gate.
 - **Remove** is SR-2 group removal (the member's group mail and group-granted access stop): R2 — capture the member list first, remove under its own phrase, then read back. "They moved teams" still ends access the moment it runs, so read what the group is used for before you confirm.
 - One gate per membership: a user in five groups needs five confirmations, not one.
+- **Least privilege** (answer-format section 2, rule b): an add is a member, not a manager or an owner, unless the person will run the group; it goes to the group that matches the job, not a copy of a colleague's groups. The group's owner (or the owner of what the group opens) approves, named in the ticket. Temporary access gets an end date in the ticket, and Phase C removes the member on that date.
 
 ## Inputs needed
 

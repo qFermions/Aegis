@@ -237,3 +237,30 @@ test('code review 1: the whole DEV file runs through the runner; the two setup c
     assert.ok(call && call.prompt.includes('--- What the company runs ---') && call.prompt.includes(c.setup.slice(0, 30)), `${c.id} reached the session with its setup`);
   }
 });
+
+// Batch 12, tasks 2, 3, 6 and 13: each case records its lane, the mode its answer named against the one the case
+// expects, its tool calls by tool, the batch 12 rows, and the three new checks, which fail the case like any check.
+// Wrong implementations: a runner that records the expected mode as the named one; one that leaves the new checks out
+// of the verdict (the unbacked "I checked" below must fail the case); lanes taken from the platform.
+test('batch 12: a case records its lane, its mode against the expected one, its tool calls and the new checks', async (t) => {
+  const answer = ['Mode: Engineer answer', '## Engineer answer', '**Evidence read:** no evidence given; this is reasoning.', '**Hypotheses:**', '1. The record is stale. Test: read its TTL.', '2. The resolver caches it. Test: ask another resolver.', '**Recommendation:** lower the TTL before the change; the administrator applies it.', '**Blast radius:** one record; rollback is the old value; stop if the lookup fails.', '**Verify:** a lookup returns the new value.', '**Ask next:** which resolver do your users use?', '', "I checked Microsoft's documentation for this.", '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  const s = setup(t, { sut: { answer, tool_calls: [{ name: 'Read', input: { file_path: 'CLAUDE.md' } }] } });
+  const one = JSON.parse(G4_TEXT.split('\n')[0]);
+  one.expected.mode = 'engineer';
+  one.capability = 'networking';
+  fs.writeFileSync(s.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  const r = json.cases[0];
+  assert.equal(r.lane, 'networking');
+  assert.deepEqual(r.mode, { named: 'engineer', shown: 'engineer', expected: 'engineer', match: true });
+  assert.deepEqual(r.tool_call_counts, { Read: 1 });
+  const names = r.checks.map((c) => c.check);
+  for (const n of ['fix-card-fits', 'claims-match-calls', 'fetched-citations']) assert.ok(names.includes(n), n);
+  assert.equal(r.checks.find((c) => c.check === 'claims-match-calls').verdict, 'fail');
+  assert.equal(r.verdict, 'FAIL');
+  assert.ok(r.reasons.includes('check claims-match-calls fail'));
+  assert.ok(r.expert_rows.some((x) => x.check === 'answer-mode' && x.verdict === 'pass'));
+  assert.deepEqual([json.summary.measures.mode_match.numerator, json.summary.measures.mode_match.denominator], [1, 1]);
+  assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /## Per lane/);
+});

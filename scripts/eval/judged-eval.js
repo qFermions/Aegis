@@ -51,6 +51,25 @@ const thresholds = require('./judged/thresholds.js');
 const { protect } = require('../ask-aegis.js');
 // the desk's own counter of a Fix card's words, read only (batch 11, task 7)
 const { fixCard } = require('../demo/answer.js');
+// batch 12: the answer mode, the judgment rule rows and the checks of tasks 1, 3 and 6
+const expert = require('../demo/expert-rules.js');
+// The lane a case belongs to, from its capability (batch 12, task 13); the platform says where, the lane says what kind.
+const LANES = Object.freeze({ security: 'security', networking: 'networking', infrastructure: 'infrastructure', 'software-engineering': 'software-engineering', 'it-support': 'helpdesk' });
+const laneOf = (c) => LANES[c.capability] || 'other';
+// What one case's answer shows of batch 12: its mode (named on the first line, shown by its shape, against the case's
+// expected mode), its judgment rule rows, and its tool calls counted by tool.
+function batch12Record(c, sut) {
+  const answered = typeof sut.answer === 'string';
+  const mode = answered ? expert.answerMode(sut.answer, c.ticket) : { named: null, shown: null };
+  const counts = {};
+  for (const call of Array.isArray(sut.tool_calls) ? sut.tool_calls : []) counts[call.tool] = (counts[call.tool] || 0) + 1;
+  return {
+    lane: laneOf(c),
+    mode: { named: mode.named, shown: mode.shown, expected: c.expected.mode || '', match: c.expected.mode ? mode.named === c.expected.mode : null },
+    expert_rows: answered ? expert.expertRows(sut.answer, { ticket: c.ticket, evidence: c.evidence }).map((x) => ({ check: x.check, verdict: x.verdict, detail: x.detail })) : [],
+    tool_call_counts: counts,
+  };
+}
 
 const { EXIT } = thresholds;
 const SMOKE_USD_PER_SESSION = 2.5;
@@ -152,6 +171,7 @@ function notRunRecord(c, reason) {
     setup_given: c.setup !== '', fix_card_words: null,
     change_class: c.expected.change_class, escalate: c.expected.escalate,
     sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason], off_model: false,
+    ...batch12Record(c, sut),
   };
 }
 
@@ -249,7 +269,8 @@ async function runCommand(opts, io, deps) {
     const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model });
     // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
     const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
-    const det = sut.state === 'OK' ? checks.runChecks(c, sut) : [];
+    // the batch 12 checks (fix-card-fits, claims-match-calls, fetched-citations) count like any check: one that fails fails the case
+    const det = sut.state === 'OK' ? [...checks.runChecks(c, sut), ...expert.judgedChecks(c, sut)] : [];
     const jr = sut.state === 'OK' ? await judge.judgeCase(c, sut, { ...backend, repoRoot, judgeModel: config.judge_model, random: deps.random }) : null;
     const v = judge.caseVerdict(c, sut, det, jr, { sut: config.model, judge: config.judge_model });
     const r = {
@@ -257,6 +278,7 @@ async function runCommand(opts, io, deps) {
       setup_given: c.setup !== '', fix_card_words: card && card.present ? card.words : null,
       change_class: c.expected.change_class, escalate: c.expected.escalate,
       sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons, off_model: Boolean(v.off_model),
+      ...batch12Record(c, sut),
     };
     results.push(r);
     io.out(report.terminalLine(r));

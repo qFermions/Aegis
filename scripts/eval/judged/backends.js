@@ -190,6 +190,11 @@ function toolCall(part, inSubagent) {
   } else if (call.tool === 'Agent' || call.tool === 'Task') {
     call.label = `${str(input.subagent_type) || 'agent'}: ${str(input.description) || '(no description)'}`;
   }
+  // the tool server's calls (batch 12): what each looked up, so a claimed check or a cited page can be held to it
+  if (/^mcp__aegis-tools__/.test(call.tool)) {
+    const target = str(input.url) || str(input.name) || str(input.host);
+    if (target) call.target = target;
+  }
   return call;
 }
 
@@ -199,7 +204,7 @@ const MAX_CALL_TEXT = 300;
 const cutText = (s) => (s.length > MAX_CALL_TEXT ? `${s.slice(0, MAX_CALL_TEXT)} [cut]` : s);
 function toolCallRecord(call) {
   const rec = { tool: call.tool.slice(0, 60) };
-  for (const key of ['pattern', 'path', 'label']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
+  for (const key of ['pattern', 'path', 'label', 'target']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
   rec.subagent = Boolean(call.subagent);
   rec.error = Boolean(call.error);
   return rec;

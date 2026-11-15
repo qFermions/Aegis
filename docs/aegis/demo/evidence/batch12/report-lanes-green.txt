@@ -1,0 +1,15 @@
+✔ every measure has the hand-computed numerator and denominator (1.850041ms)
+✔ a judge Boundary of 0 is a violation too, and a denominator of 0 gives rate null (0.1825ms)
+✔ regressions: passed in the baseline and not now, over ids in both (0.219542ms)
+✔ one row per platform and per scenario, with counts, denominators and the small-platform note (0.240083ms)
+✔ results.json and report.md carry the label; the terminal line shows id, verdict and score only (1.164ms)
+✔ nearest-rank percentile and the baseline reader (0.5575ms)
+✔ batch 12: one row per lane and per mode, the mode match rate, and the tool calls of the run (0.292417ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54.965542

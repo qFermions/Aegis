@@ -28,9 +28,9 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Vendor | Runbook | In scope | Section (line) | First heavy gate | Verdict | Reason |
 |---|---|---|---|---|---|---|
 | Microsoft | backup-restore-test | no | Phase D: Put the data back (R3, last) (107) | backup-restore-test-replace-live-portal | pass | a lighter step line (line 109) comes first |
-| Microsoft | cloud-access-denied | no | Azure: assign a role at the narrowest scope to a group (112) | cloud-access-denied-azure-assign-portal | pass | a lighter step line (line 114) comes first |
-| Microsoft | cloud-access-denied | no | AWS: add one scoped inline policy to the role (131) | cloud-access-denied-aws-policy-portal | pass | a lighter step line (line 133) comes first |
-| Microsoft | cloud-access-denied | no | Add one conditional binding (HUMAN-RUN, the project owner) (166) | cloud-access-denied-gcp-binding | pass | a lighter step line (line 168) comes first |
+| Microsoft | cloud-access-denied | no | Azure: assign a role at the narrowest scope to a group (144) | cloud-access-denied-azure-assign-portal | pass | a lighter step line (line 146) comes first |
+| Microsoft | cloud-access-denied | no | AWS: add one scoped inline policy to the role (163) | cloud-access-denied-aws-policy-portal | pass | a lighter step line (line 165) comes first |
+| Microsoft | cloud-access-denied | no | Add one conditional binding (HUMAN-RUN, the project owner) (198) | cloud-access-denied-gcp-binding | pass | a lighter step line (line 200) comes first |
 | Microsoft | cloud-cost-spike | no | Last: delete the disk (R3) (138) | cloud-cost-spike-delete-disk-portal | pass | a lighter step line (line 140) comes first |
 | Microsoft | cloud-network-block | no | Add one inbound rule (HUMAN-RUN, the network owner) (115) | cloud-network-block-aws-sg-ingress | pass | a lighter step line (line 117) comes first |
 | Microsoft | cloud-network-block | no | Azure: one inbound rule on the NSG (147) | cloud-network-block-azure-nsg-portal | pass | a lighter step line (line 149) comes first |

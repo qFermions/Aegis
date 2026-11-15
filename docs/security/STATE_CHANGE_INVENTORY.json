@@ -563,6 +563,26 @@
       ]
     },
     {
+      "id": "cloud-access-denied-aws-decode",
+      "file": ".claude/commands/cloud-access-denied.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "aws-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
       "id": "cloud-access-denied-aws-policy-portal",
       "file": ".claude/commands/cloud-access-denied.md",
       "kind": "portal",
@@ -638,6 +658,10 @@
       "mode": "preview",
       "sinks": [
         {
+          "sink": "aws-write",
+          "count": 2
+        },
+        {
           "sink": "gcloud-write",
           "count": 1
         },
@@ -671,6 +695,10 @@
       "mode": "gated",
       "sinks": [
         {
+          "sink": "aws-write",
+          "count": 1
+        },
+        {
           "sink": "redirect-write",
           "count": 1
         }
@@ -687,6 +715,10 @@
       "mode": "gated",
       "sinks": [
         {
+          "sink": "aws-write",
+          "count": 1
+        },
+        {
           "sink": "redirect-write",
           "count": 1
         }
@@ -694,6 +726,7 @@
       "impactCategories": [
         "external-system mutation",
         "identity-related",
+        "permission-related",
         "reversible state change",
         "security-sensitive"
       ]
@@ -4011,6 +4044,10 @@
       "mode": "preview",
       "sinks": [
         {
+          "sink": "kubectl-write",
+          "count": 1
+        },
+        {
           "sink": "redirect-write",
           "count": 1
         }
@@ -4026,6 +4063,10 @@
       "kind": "shell",
       "mode": "preview",
       "sinks": [
+        {
+          "sink": "aws-write",
+          "count": 1
+        },
         {
           "sink": "redirect-write",
           "count": 1
@@ -4046,6 +4087,10 @@
       "sinks": [
         {
           "sink": "redirect-write",
+          "count": 1
+        },
+        {
+          "sink": "terraform-write",
           "count": 1
         }
       ],
@@ -5442,6 +5487,10 @@
       "mode": "gated",
       "sinks": [
         {
+          "sink": "kubectl-write",
+          "count": 1
+        },
+        {
           "sink": "redirect-write",
           "count": 1
         }
@@ -5458,13 +5507,34 @@
       "mode": "preview",
       "sinks": [
         {
+          "sink": "kubectl-write",
+          "count": 4
+        },
+        {
           "sink": "redirect-write",
           "count": 1
         }
       ],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "reversible state change"
+      ]
+    },
+    {
+      "id": "k8s-pod-failure-exec-preview",
+      "file": ".claude/commands/k8s-pod-failure.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "kubectl-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
       ]
     },
     {
@@ -5473,6 +5543,10 @@
       "kind": "shell",
       "mode": "gated",
       "sinks": [
+        {
+          "sink": "kubectl-write",
+          "count": 1
+        },
         {
           "sink": "redirect-write",
           "count": 1
@@ -10787,6 +10861,10 @@
         {
           "sink": "redirect-write",
           "count": 1
+        },
+        {
+          "sink": "terraform-write",
+          "count": 1
         }
       ],
       "impactCategories": [
@@ -10807,6 +10885,10 @@
         {
           "sink": "redirect-write",
           "count": 1
+        },
+        {
+          "sink": "terraform-write",
+          "count": 1
         }
       ],
       "impactCategories": [
@@ -10823,9 +10905,15 @@
         {
           "sink": "file-write",
           "count": 1
+        },
+        {
+          "sink": "terraform-write",
+          "count": 1
         }
       ],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "reversible state change"
       ]
@@ -10843,6 +10931,10 @@
         {
           "sink": "redirect-write",
           "count": 1
+        },
+        {
+          "sink": "terraform-write",
+          "count": 1
         }
       ],
       "impactCategories": [
@@ -10859,9 +10951,15 @@
         {
           "sink": "redirect-write",
           "count": 1
+        },
+        {
+          "sink": "terraform-write",
+          "count": 2
         }
       ],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "reversible state change"
       ]

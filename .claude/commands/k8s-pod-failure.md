@@ -96,8 +96,8 @@ kubectl rollout history deployment/[WORKLOAD_NAME] -n [NAMESPACE]
 # HUMAN-RUN read-only
 # the endpoints behind the Services, empty means no pod matches the selector
 kubectl get endpointslices -n [NAMESPACE]
-# the resolver settings the pod really uses, search list and ndots
-kubectl exec -n [NAMESPACE] [POD_NAME] -- cat /etc/resolv.conf
+# the pod's DNS policy and any DNS settings it overrides, without entering the container
+kubectl get pod [POD_NAME] -n [NAMESPACE] -o jsonpath='{.spec.dnsPolicy} {.spec.dnsConfig}'
 # the cluster DNS pods are running
 kubectl get pods -n kube-system -l k8s-app=kube-dns
 # the ingress rules, hosts and the class that serves them
@@ -107,6 +107,13 @@ kubectl describe certificate -n [NAMESPACE]
 kubectl get challenges -n [NAMESPACE]
 ```
 </details>
+
+`kubectl exec` runs a command inside the live container, so it is a change the workload owner agrees to first; the pod spec read above shows the DNS policy without it.
+
+```bash
+# PREVIEW ONLY [k8s-pod-failure-exec-preview]: planning text, not authorized here. Running a command in a live container needs the workload owner's agreement and its own reviewed step.
+# kubectl exec -n [NAMESPACE] [POD_NAME] -- cat /etc/resolv.conf
+```
 
 ## Phase D: Roll back to the last good revision (R1)
 

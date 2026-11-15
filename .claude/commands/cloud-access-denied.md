@@ -35,6 +35,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ## Phase A: IAM block or network block? (R0)
 
+Where each cloud records the denial, to read it at its exact time: AWS console → CloudTrail → Event history (error code AccessDenied); portal.azure.com → Monitor → Activity log (status Failed); Google Cloud console → Logging → Logs Explorer (the audit log entry with the permission named).
+
 | What the caller sees | It is | Next |
 |---|---|---|
 | HTTP 403, `AccessDenied`, `AuthorizationFailed`, `PERMISSION_DENIED`, `is not authorized to perform` | IAM: the request arrived and a policy said no | Phase B, C or D |
@@ -56,12 +58,42 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 # HUMAN-RUN read-only, with a read role in [ACCOUNT_ID]
 # who the CLI is signed in as, the account and the role session
 aws sts get-caller-identity
-# decode the encoded message from the error, paste the message between the quotes
-aws sts decode-authorization-message --encoded-message 'paste the encoded message here' --query DecodedMessage --output text
 # the managed policies on the role that was denied
 aws iam list-attached-role-policies --role-name [ROLE_NAME]
 # the role, including its permissions boundary if it has one
 aws iam get-role --role-name [ROLE_NAME]
+```
+</details>
+
+The decoded text can hold details the denied caller was not meant to see, which is why AWS encodes it (IV-02): decode it as an administrator, keep the file out of chats, and paste only the deny or allow verdict, the action and the resource into the ticket.
+
+<details>
+<summary>Decode the encoded message (HUMAN-RUN, an administrator with sts:DecodeAuthorizationMessage)</summary>
+
+```bash
+# HUMAN-RUN: the administrator runs this in their own terminal, Aegis never does
+# SAFETY GATE [cloud-access-denied-aws-decode]
+# Target: the encoded message from the error for role [ROLE_NAME] in [ACCOUNT_ID]
+# Effect: write the decoded authorization message to one local file, nothing in AWS changes
+# Scope: one message, read by one administrator, the file stays out of tickets and chats
+# Reversibility: R1: delete the local file after the verdict, action and resource are in the ticket
+# Required confirmation: type exactly "WRITE DECODED MESSAGE FOR [ROLE_NAME] IN [ACCOUNT_ID]"
+# Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
+# Read-back: none, R1: no change record
+# the exact phrase to type
+required_confirmation="WRITE DECODED MESSAGE FOR [ROLE_NAME] IN [ACCOUNT_ID]"
+# shows the phrase
+printf '%s\n' "Type the phrase exactly to decode: $required_confirmation" >&2
+# reads one line exactly as typed and runs the change only on an exact, case-sensitive match
+if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
+  # decodes the message, paste it between the quotes, and writes it to one local file
+  aws sts decode-authorization-message --encoded-message 'paste the encoded message here' --query DecodedMessage --output text > ./decoded-message.json
+else
+  # explains the stop
+  echo "Stopped: the phrase did not match. Nothing was decoded." >&2
+  # stops with a failure status
+  exit 1
+fi
 ```
 </details>
 

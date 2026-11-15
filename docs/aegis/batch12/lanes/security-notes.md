@@ -1,0 +1,6 @@
+# Security lane notes (batch 12)
+
+## Hypothesis and what "verified" means (written 2026-11-14, before the first edit)
+
+- **Hypothesis:** the security lane fits as one knowledge module (`knowledge/security/`) plus seven runbooks that mostly order and route to the gated runbooks Aegis already has (Entra, Okta, Google, Jamf, Fleet, GitHub, Slack), adding new gates only where no runbook covers the action: cloud keys and tokens (AWS, Google Cloud, Azure, GitHub, Slack), Exchange forwarding and inbox rules, Defender device isolation, Entra and Okta app containment, and the purge and block of a phishing message. The two tests that pin the runbook gate count (`scripts/gate-r-class.test.js`, `scripts/audit/read-back-field.test.js`) will need their numbers raised by exactly the new gates.
+- **Verified means:** `node --test scripts/command-safety-gates.test.js scripts/markdown-links.test.js scripts/repository-structure.test.js scripts/eval/judged/cases.test.js` fails only the 41 known pwsh names; `node scripts/lint/command-structure.js` is clean; `node scripts/lint/ladder-audit.js --check` exits 0; every dev case parses with `readCaseFile`; a full `node --test` run fails no test name that the base commit `08963bf` did not already fail in this worktree; `node scripts/pre-commit-check.js` passes on each staged set.

@@ -41,6 +41,8 @@ const { onlyLooks, answerChecks, fixCard, words, deskBlock } = require('./answer
 const data = require('./customers.js');
 const { lightestStepFirst } = require('./step-ladder.js');
 const { seniorRows, isAskFirst } = require('./senior-rules.js');
+// batch 12: the answer mode and the judgment rule rows (docs/aegis/answer-format.md, sections 2 and 9)
+const expert = require('./expert-rules.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
 const vendors = require('./sim/vendors.js');
@@ -535,6 +537,8 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   fs.writeFileSync(answerFile, answer);
   rec.answer = answer;
   rec.answer_stats = answerStats(answer);
+  // the mode the answer named on its first line (batch 12, task 2), null when it names none
+  rec.answer_mode = expert.answerMode(answer, text).named;
 
   // 5 CHECKS
   const c5 = { expected: { change_class: ticket.change_class }, probe: ticket.probe, evidence: text };
@@ -546,11 +550,14 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     // batch 11: the assumed setup and ask-first rows on every answer, and each thinking rule that applies to the ticket
     const profile = data.profileText(customer);
     const format = [...answerChecks(answer, { profile, ticket: text }), lightestStepFirst(answer, ctx.gates), ...seniorRows(answer, { setup: profile, ticket: text })];
+    // batch 12: the mode row and each judgment rule that applies, shown after the earlier rows; none stops the ticket
+    const expertChecks = expert.expertRows(answer, { ticket: text });
     return {
       checks: results.map((r) => ({ check: r.check, verdict: r.verdict, applies: r.applies })),
       answer_checks: format,
-      result: `${results.filter((r) => r.applies).map((r) => `${r.check} ${r.verdict}`).join(', ')}; answer format: ${format.filter((r) => r.verdict === 'pass').length} of ${format.length} pass`,
-      output: [...results.map((r) => `${r.check}: ${r.applies ? r.verdict : 'does not apply'}${r.span ? ` (matched: ${r.span})` : ''}`), ...format.map((r) => `${r.check}: ${r.verdict} (${r.detail})`)].join('\n'),
+      expert_checks: expertChecks,
+      result: `${results.filter((r) => r.applies).map((r) => `${r.check} ${r.verdict}`).join(', ')}; answer format: ${format.filter((r) => r.verdict === 'pass').length} of ${format.length} pass; batch 12 rows: ${expertChecks.filter((r) => r.verdict === 'pass').length} of ${expertChecks.length} pass`,
+      output: [...results.map((r) => `${r.check}: ${r.applies ? r.verdict : 'does not apply'}${r.span ? ` (matched: ${r.span})` : ''}`), ...format.map((r) => `${r.check}: ${r.verdict} (${r.detail})`), ...expertChecks.map((r) => `${r.check}: ${r.verdict} (${r.detail})`)].join('\n'),
     };
   });
   const boundary = results.find((r) => r.check === 'boundary');

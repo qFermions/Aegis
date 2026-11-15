@@ -29,7 +29,7 @@ const backends = require('./eval/judged/backends.js');
 const paths = require('./eval/judged/paths.js');
 const sanitize = require('./graph/sanitize.js');
 const { PHONE_LITERAL, replaceEmails, isCanonicalPlaceholder } = require('./tier/tier-guard.js');
-const { fixCard, PARTS, deskBlock } = require('./demo/answer.js');
+const { fixCard, PARTS, deskBlock, MODE_LINE } = require('./demo/answer.js');
 const { askerReply, replyProblems, isAskFirst } = require('./demo/senior-rules.js');
 const { catalog } = require('./demo/catalog.js');
 
@@ -302,7 +302,8 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   }
 
   const cost = `Cost: ${turn.cost_usd === null ? 'not reported' : `${turn.cost_usd.toFixed(2)} US dollars`}\n`;
-  if (args.replyTo) return printReply({ answer: turn.answer, ticket: ticket.text, setup: setupText.text || '', dir, answerFile, cost }, io);
+  // the session's own tool calls are its reading record: a reply that says Aegis checked something must match one (batch 12)
+  if (args.replyTo) return printReply({ answer: turn.answer, ticket: ticket.text, setup: setupText.text || '', dir, answerFile, cost, toolCalls: stream.toolCalls }, io);
 
   const card = fixCard(turn.answer);
   if (card.present) {
@@ -313,6 +314,11 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     // a ticket with nothing to go on gets one question and nothing else (answer-format section 7)
     // the aegis-desk block the format closes it with is the desk's, not part of the question (code review 1, finding 13)
     io.out(`\nAegis asks one thing first:\n\n${deskBlock(turn.answer).body.trim()}\n`);
+  } else if (/^\s*(?:\*\*)?Mode(?:\*\*)?\s*:\s*(?:\*\*)?\s*(?:Engineer answer|Incident answer)\b/i.test(turn.answer)) {
+    // an Engineer or Incident answer (batch 12, task 2): printed under its mode, without the mode line and the desk's block
+    const mode = /Engineer answer/i.test(turn.answer.split(/\r?\n/).find((l) => l.trim() !== '')) ? 'an Engineer answer' : 'an Incident answer';
+    const body = deskBlock(turn.answer).body.split(/\r?\n/).filter((l, i, all) => !(MODE_LINE.test(l) && all.slice(0, i).every((x) => x.trim() === ''))).join('\n').trim();
+    io.out(`\nAegis answered as ${mode}:\n\n${body}\n`);
   } else {
     io.out(`\nThe answer has no Fix card, so here it is in full:\n\n${turn.answer}\n`);
   }
@@ -322,7 +328,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
 
 // --reply-to asker: stdout gets the reply and nothing else. The reply is checked before it is called ready: one
 // that fails is still printed (the session is paid for), with the reasons on stderr and exit 3.
-function printReply({ answer, ticket, setup, dir, answerFile, cost }, io) {
+function printReply({ answer, ticket, setup, dir, answerFile, cost, toolCalls = [] }, io) {
   const reply = askerReply(answer, ticket);
   if (!reply.present) {
     io.err(`ask-aegis: the answer holds no reply to the asker (no asker-reply block). The full tech answer is saved: ${answerFile}\n${cost}`);
@@ -334,7 +340,7 @@ function printReply({ answer, ticket, setup, dir, answerFile, cost }, io) {
   io.out(`${reply.text}\n`);
   let ids = null;
   try { ids = catalog(); } catch { /* without the runbooks' ids the check still reads Gate lines and risk classes */ }
-  const problems = replyProblems(reply.text, { ticket, setup, ids });
+  const problems = replyProblems(reply.text, { ticket, setup, ids, toolCalls });
   io.err(`\n${saved}Full tech answer saved: ${answerFile}\n${cost}`);
   if (problems.length) {
     io.err(`ask-aegis: this reply did not pass its check, so read it before you send it: ${problems.join('; ')}.\n`);

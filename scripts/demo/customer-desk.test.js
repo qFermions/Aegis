@@ -1580,3 +1580,21 @@ test('code review 3: the desk reads a session of unknown cost through backends.r
   assert.equal(backends.ranUnpriced({ state: 'OK', cost_usd: 0.4, model: 'claude-opus-5-5' }), false);
   assert.equal(backends.ranUnpriced({ state: 'ERROR', reason: 'spawn failed (ENOENT)', cost_usd: null, model: null, session_id: null }), false, 'a session that never started spent nothing');
 });
+
+// Batch 12, task 2: the desk records the mode each answer named and shows the batch 12 rows (the mode row and each
+// judgment rule that applies) beside the earlier rows, stopping nothing. Wrong implementations: a desk that records
+// the mode from the shape and not the first line (the unnamed answer would record ask-first); one that drops the batch
+// 12 rows from the page; one that lets a failing batch 12 row change the closing state.
+test('batch 12, task 2: the desk records the named mode and shows the batch 12 rows, which stop nothing', async (t) => {
+  const named = await runDesk(t, { only: ['T7'], answers: { T7: 'Mode: Ask first\nWhat exactly is slow, for whom, and since when?' } });
+  const k = named.ticket('T7');
+  assert.equal(k.answer_mode, 'ask-first');
+  const row = step(k, 5).expert_checks.find((r) => r.check === 'answer-mode');
+  assert.equal(row.verdict, 'pass', row.detail);
+  assert.match(step(k, 5).output, /answer-mode: pass/);
+  const unnamed = await runDesk(t, { only: ['T7'], answers: { T7: 'What exactly is slow, for whom, and since when?' } });
+  const u = unnamed.ticket('T7');
+  assert.equal(u.answer_mode, null);
+  assert.equal(step(u, 5).expert_checks.find((r) => r.check === 'answer-mode').verdict, 'fail');
+  assert.equal(u.closing_state, k.closing_state, 'a failing batch 12 row stops nothing');
+});

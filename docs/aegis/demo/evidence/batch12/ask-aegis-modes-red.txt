@@ -1,0 +1,34 @@
+✖ batch 12, tasks 2 and 3: a claimed check needs its call; an Engineer answer prints under its mode (60.907834ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.047167
+
+✖ failing tests:
+
+test at scripts/ask-aegis.test.js:596:1
+✖ batch 12, tasks 2 and 3: a claimed check needs its call; an Engineer answer prints under its mode (60.907834ms)
+  AssertionError [ERR_ASSERTION]: Asking Aegis. It reads only and changes nothing; this can take a few minutes.
+  
+  Reply saved: /var/folders/7k/7l8yml8s0vb6d0g58ttx0kzh0000gn/T/aegis-ask-test-Kj97R8/home/aegis-asks/20261115T054018Z-7c3fe189/reply.md
+  Full tech answer saved: /var/folders/7k/7l8yml8s0vb6d0g58ttx0kzh0000gn/T/aegis-ask-test-Kj97R8/home/aegis-asks/20261115T054018Z-7c3fe189/answer.md
+  Cost: 0.01 US dollars
+  ask-aegis: this reply did not pass its check, so read it before you send it: it says Aegis checked something with no matching call in the session's reading record ("I checked Google's help pages, and they describe the same delay for new accounts").
+  
+  
+  3 !== 0
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/ask-aegis.test.js:599:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

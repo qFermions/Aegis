@@ -586,3 +586,23 @@ test('code review 3: zero-width, accented and capital look-alike markers, and ma
     assert.equal(block.filter((l) => l.trim() === '--- End of what the company runs ---').length, 1, JSON.stringify(sep));
   }
 });
+
+// Batch 12, task 3: a reply that says Aegis checked something passes only when the session's reading record holds a
+// matching call; the reading record is the session's own tool calls. Task 2: an Engineer or Incident answer is printed
+// under its mode's name, without the aegis-desk block. Wrong implementations: printReply that ignores the stream's tool
+// calls (the backed reply would fail); one that accepts any claim (the unbacked reply would pass); a printer that still
+// calls a named Engineer answer one with "no Fix card".
+test('batch 12, tasks 2 and 3: a claimed check needs its call; an Engineer answer prints under its mode', async (t) => {
+  const claimed = "No, this is a known delay on Google's side, not your mailbox.\n\nI checked Google's help pages, and they describe the same delay for new accounts.\n\nYou can carry on as normal; a technician will look at it next if new mail is still slow.";
+  const backed = setup(t, { answer: withReply(claimed), tool_calls: [{ name: 'mcp__aegis-tools__docs_fetch', input: { url: 'https://support.google.com/a/answer/1' } }] });
+  assert.equal(await ask.main(['New mail takes an hour to arrive in my new account', '--reply-to', 'asker'], backed.env, backed.deps), 0, backed.stderr());
+  const unbacked = setup(t, { answer: withReply(claimed) });
+  assert.equal(await ask.main(['New mail takes an hour to arrive in my new account', '--reply-to', 'asker'], unbacked.env, unbacked.deps), 3);
+  assert.match(unbacked.stderr(), /no matching call in the session's reading record/);
+
+  const engineer = ['Mode: Engineer answer', '## Engineer answer', '**Evidence read:** the dig output you pasted shows NXDOMAIN.', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  const s = setup(t, { answer: engineer });
+  assert.equal(await ask.main(['dig says NXDOMAIN for our new subdomain'], s.env, s.deps), 0, s.stderr());
+  assert.match(s.stdout(), /Aegis answered as an Engineer answer:\n\n## Engineer answer/);
+  assert.doesNotMatch(s.stdout(), /has no Fix card|aegis-desk/);
+});

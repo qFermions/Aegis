@@ -242,6 +242,7 @@ const SCOPE = Object.freeze([
 ]);
 const STATUS_PAGE = /\bstatus (?:page|dashboard|site)\b|\bservice health\b|\bhealth dashboard\b|\bstatus\.[a-z0-9-]+\.[a-z]+\b|\b[a-z]+status\.com\b|\bincident page\b/i;
 const NETWORK_PATH = /\bnetwork\b|\bdns\b|\bname resolution\b|\bresolv(?:e|es|ing) the (?:name|host|address)\b|\blook(?:s|ing)? up [^.\n]{0,40}by name\b|\bnslookup\b|\bwi-?fi\b|\bfirewall\b|\bisp\b|\brouter\b|\bvpn\b|\bconnectivity\b|\bping\b|\btraceroute\b|\bcabl(?:e|es|ing)\b/i;
+const SCOPE_ACCOUNT = /\b(?:anyone else's|someone else's|everyone's|everybody's|other (?:people's|users'|staff's|colleagues')|whose) accounts?\b|\bother (?:user )?accounts?\b|\baccounts? (?:of )?(?:anyone|everyone|others) else\b/gi;
 const ACCOUNT_CAUSE = /\blicen[cs]es?\b|\bpasswords?\b|\baccount(?:'s)?\b|\bsuspended\b|\bsign-in logs?\b|\bconditional access\b|\bpermissions?\b|\bmfa\b|\b2-step\b|\bgroup membership\b/i;
 
 function howWideBeforeWhy(answer, { ticket = '' } = {}) {
@@ -255,9 +256,10 @@ function howWideBeforeWhy(answer, { ticket = '' } = {}) {
   if (dims < 2) out.push('step 1 does not fix the scope (one person or everyone, one site or all, this service or others too)');
   if (!STATUS_PAGE.test(steps[0])) out.push("step 1 does not open the vendor's status page");
   const network = firstStep(steps, (s) => NETWORK_PATH.test(s));
-  // step 1 is the scope step the rule asks for ("... whether anyone else's account is affected"), not a cause, so a
-  // cause is read from step 2 on (code review 1, finding 15)
-  const account = firstStep(steps, (s, i) => i > 0 && ACCOUNT_CAUSE.test(s));
+  // the scope wording about other people's accounts ("... whether anyone else's account is affected") is the scope the
+  // rule asks for, not a cause, so it is set aside before the account test; any step, step 1 too, can still hold an
+  // account cause (code review 1, finding 15; code review 2, finding 5)
+  const account = firstStep(steps, (s) => ACCOUNT_CAUSE.test(s.replace(SCOPE_ACCOUNT, ' ')));
   if (account >= 0 && (network < 0 || account < network)) out.push('an account-level cause comes before the network and name-resolution path');
   return row('how-wide-before-why', plain, out.length === 0, out.length ? out.join('; ') : 'step 1 fixes the scope with the status page, and the network path comes before any account cause');
 }

@@ -352,3 +352,16 @@ test('code review 1: the word "account" in the scope step is not an account-leve
   assert.equal(bad.verdict, 'fail');
   assert.match(bad.detail, /account-level cause comes before the network/);
 });
+
+// Code review round 2, finding 5: round 1 skipped step 1 in the account-cause scan, so a real account fix in step 1
+// ("Reset the user's password, then fix the scope ...") went uncaught. Only the scope wording about other people's
+// accounts is set aside now. Wrong implementation it catches: one that skips step 1 whole.
+test('code review 2: an account fix in step 1 still comes before the network; the scope wording alone does not', () => {
+  const ticket = 'Slack will not load for the support team this morning.';
+  const card = (steps) => ['## Fix', "**What's wrong:** Slack does not load.", '**Do this:**', ...steps.map((s, i) => `${i + 1}. ${s}`), '**Done when:** Slack loads.', ''].join('\n');
+  const bad = howWideBeforeWhy(card(["Reset the user's password, then fix the scope: one person or everyone, one site or all sites, and other services too; read the Slack status page.", 'Check DNS with nslookup.']), { ticket });
+  assert.equal(bad.verdict, 'fail');
+  assert.match(bad.detail, /account-level cause comes before the network/);
+  const scope = "Fix the scope: one person or everyone, one site or all sites, and other services too; read the Slack status page and whether anyone else's account is affected.";
+  assert.equal(howWideBeforeWhy(card([scope, 'Check DNS with nslookup.']), { ticket }).verdict, 'pass');
+});

@@ -254,8 +254,7 @@ async function runCommand(opts, io, deps) {
     // each turn's known cost counts, and a session that ran and reported none makes the run's spending unknown
     // (code review 1, finding 2): a timeout, an output-cap kill, or a session that started (it reported its model)
     const turns = Array.isArray(sut.turns) && sut.turns.length ? sut.turns : [sut];
-    const ranUnpriced = (x) => x && typeof x.cost_usd !== 'number' && (x.state === 'TIMEOUT' || Boolean(x.model) || Boolean(x.session_id) || /larger than the cap/.test(x.reason || ''));
-    if (turns.some(ranUnpriced) || ranUnpriced(jr)) costUnknown = true;
+    if (turns.some(backends.ranUnpriced) || backends.ranUnpriced(jr)) costUnknown = true;
     const caseCost = turns.reduce((a, x) => a + (typeof x.cost_usd === 'number' ? x.cost_usd : 0), 0) + (jr && typeof jr.cost_usd === 'number' ? jr.cost_usd : 0);
     spent += caseCost;
     dearest = Math.max(dearest, caseCost);

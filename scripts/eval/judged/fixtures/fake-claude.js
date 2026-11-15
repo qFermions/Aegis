@@ -15,6 +15,7 @@
 //   score        the judge score for every row that is not null (default 2)
 //   met / present  the judge booleans for every must / must_not item (default true / false)
 //   invalid_first  judge: answer with invalid JSON on the first call only
+//   slow_first   judge: behave as mode slow on the first call only (a first attempt that times out, then a retry)
 //   fence        judge: wrap the JSON in a ```json fence
 //   model, cost  what the init and result events report; with no model, the init event reports the --model it was
 //                given, as the real CLI does, else fake-sut-model or fake-judge-model
@@ -102,5 +103,6 @@ function answer() {
 }
 
 if (settings.mode === 'ignore-term') process.on('SIGTERM', () => { /* ignored on purpose: the runner must SIGKILL */ });
-if (settings.mode === 'slow' || settings.mode === 'ignore-term') setTimeout(answer, settings.sleep_ms || 60000);
+const slowNow = settings.mode === 'slow' || settings.mode === 'ignore-term' || (settings.slow_first && role === 'judge' && previousJudgeCalls === 0);
+if (slowNow) setTimeout(answer, settings.sleep_ms || 60000);
 else answer();

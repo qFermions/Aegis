@@ -240,6 +240,8 @@ async function judgeCase(c, sut, opts) {
     const turn = await judgeOnce(prompt, opts);
     if (turn.model) record.model = turn.model;
     if (turn.cost_usd !== null && turn.cost_usd !== undefined) record.cost_usd = (record.cost_usd || 0) + turn.cost_usd;
+    // an attempt that ran and reported no cost makes the record's cost a lower bound only (code review 2, finding 10)
+    if (backends.ranUnpriced(turn)) record.cost_unknown = true;
     if (turn.state !== 'OK') {
       record.state = turn.state;
       record.reason = turn.reason;

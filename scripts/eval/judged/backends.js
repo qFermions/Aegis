@@ -105,6 +105,13 @@ function modelArgs(model) {
   return ['--model', m];
 }
 
+// The reason a child killed at the output cap gets, shared so a reader of it never matches on its wording.
+const OUTPUT_CAP_REASON = 'output larger than the cap';
+// A turn or judge record that ran and reported no cost: a timeout, an output-cap kill, a session that reported its model
+// or id, or a judge record that holds such an attempt. What it spent is unknown (code review 1, finding 2; code review
+// 2, finding 10).
+const ranUnpriced = (x) => Boolean(x) && typeof x === 'object' && (x.cost_unknown === true || (typeof x.cost_usd !== 'number' && (x.state === 'TIMEOUT' || Boolean(x.model) || Boolean(x.session_id) || x.reason === OUTPUT_CAP_REASON)));
+
 const DEFAULT_MAX_TURNS = 24;
 const DEFAULT_TIMEOUT_MS = 600000;
 const DEFAULT_GRACE_MS = 5000;
@@ -294,7 +301,7 @@ function runChild({ command, prefixArgs = [], args, cwd, env, timeoutMs = DEFAUL
     const timer = setTimeout(() => stop('TIMEOUT', `no exit within ${timeoutMs} ms`), timeoutMs);
     child.stdout.on('data', (d) => {
       bytes += d.length;
-      if (bytes > MAX_OUTPUT_BYTES) { stop('ERROR', 'output larger than the cap'); return; }
+      if (bytes > MAX_OUTPUT_BYTES) { stop('ERROR', OUTPUT_CAP_REASON); return; }
       chunks.push(d);
     });
     child.stderr.on('data', () => { /* drained, never shown: it may echo the prompt */ });
@@ -372,7 +379,7 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, OUTPUT_CAP_REASON, ranUnpriced, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
   envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, outsideReads,
   runChild, runTurn, runSut, promptTooLong,
 };

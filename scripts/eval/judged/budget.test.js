@@ -127,3 +127,19 @@ test('code review 1: a session that stops with no cost reported stops the run un
   await cli.main(['run', '--cases', free.copy, '--results-dir', free.results, '--execute', '--timeout-ms', '300'], free.io, free.deps);
   assert.equal(free.calls().filter((c) => c.role === 'sut').length, 8);
 });
+
+// Code review round 2, finding 10: the judge record adds up the cost of the attempts that reported one, so a first
+// attempt that timed out with no cost, and a second that reported one, hid the unknown spend from the guard. A judge
+// attempt that ran with no cost reported now makes the run's spending unknown too. Wrong implementation it catches:
+// one that reads only the judge record's summed cost.
+test('code review 2: a judge attempt that timed out with no cost stops the run under a limit, even when the retry reports a cost', async (t) => {
+  const s = setup(t, { sut: { cost: 0.1 }, judge: { cost: 0.05, slow_first: true, sleep_ms: 20000 } });
+  const code = await cli.main(['run', '--cases', s.copy, '--results-dir', s.results, '--execute', '--budget-usd', '9.00', '--timeout-ms', '1500'], s.io, s.deps);
+  assert.equal(code, 3);
+  const run = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  const first = run.cases[0];
+  assert.equal(first.judge.attempts, 2, 'the judge was retried');
+  assert.equal(first.judge.cost_unknown, true);
+  assert.equal(run.cases.filter((c) => c.sut.state !== 'NOT_RUN').length, 1, 'no case started after the unknown spend');
+  assert.match(run.cases[1].reasons[0], /stopped with no cost reported/);
+});

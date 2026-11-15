@@ -23,6 +23,8 @@ A room shows **offline** when it stops sending heartbeats to Zoom's cloud — al
 4. **Port 9090 (R0):** if both sit on the same network, check whether a firewall rule or the room computer's antivirus blocks port 9090.
 5. **Site-wide?** If every room at `[@Aegion_SITE_2]` is offline, this is a site network problem — treat it as a LAN/WAN ticket, not a room ticket.
 
+**Ask first** (answer-format section 2, rule d): opening port 9090 on a firewall or adding an antivirus exclusion is a security setting change. With no blocked connection shown (the firewall's or the antivirus's own log entry for the room computer), ask the one question that would show it first: "Does the firewall or the antivirus on the room computer log a blocked connection from the controller when it tries to connect?"
+
 ## Step-by-step fix
 
 ### Phase 1 — Confirm the scope in the portal

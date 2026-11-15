@@ -17,6 +17,8 @@ Answer-format section 2, "How wide before why": the first step fixes the scope a
 - **What:** nothing reachable through the tunnel, or one named service only? A cloud service that is also down without the VPN is not a VPN ticket.
 - **Vendor status:** https://status.meraki.net for the Meraki cloud, and the provider's own status page or outage line for `[@Aegion_ISP]` at each end (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-33).
 - **No vendor incident:** the network and name-resolution path come before any account-level cause. Uplinks, tunnel state and routes first, then `nslookup` across the tunnel on the name that fails ("reaches it by IP but not by name" is DNS); the user's account, group and MFA last.
+- **Ask first** (answer-format section 2, rule d): a request to change the client VPN's routing mode, widen its allowed networks or open the inter-site firewall, with no failing address or error in the ticket, gets one question first: "Which address or service fails over the VPN, from where, and what does the error say?"
+- **A smell of compromise** (rule a): client VPN sign-ins the person did not make, from a place or at a time they were not working, or a burst of failed sign-ins on one account. Name the escalation to the security lead or the security on-call (they need the account, the source addresses and times, and the client VPN event log entries); nobody calls it harmless before they have looked.
 
 ### Site-to-site (Meraki MX ↔ MX)
 **Tunnel DOWN:**

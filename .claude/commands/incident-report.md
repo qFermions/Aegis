@@ -16,6 +16,7 @@ Write an IT incident report for [@Aegion]. Tell me what happened and I'll write 
 3. How many users or sites were affected?
 4. What caused it? (if known)
 5. What steps did you take to fix it?
+6. Was it a security incident (a compromise, malware, a lost device with data, an exposed secret)? Then the report names who it was escalated to (the security lead, the security on-call or the incident response team), when, and what they were given, and its severity and root cause are the ones that team confirmed (answer-format section 2, rule a).
 
 ---
 

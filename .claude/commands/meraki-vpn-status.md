@@ -16,6 +16,7 @@ disable-model-invocation: true
 - Is one tunnel down or all tunnels down? One = peer-specific issue. All = local MX uplink or ISP issue at your site
 - Check the MX uplink first: `Security & SD-WAN → Appliance status` — if the WAN is down, the VPN follows
 - Is this a newly configured tunnel or a previously working one? New = config error. Working → broken = upstream change
+- **Ask first** (answer-format section 2, rule d): a request to advertise another subnet, add a peer subnet or open the VPN firewall so that "site B can reach it", with no failing address and test in the ticket, gets one question first: "Which host at which site cannot reach which address, and what does a ping or a connection test from it show?" Each of those changes widens what crosses the tunnel.
 
 ## Step-by-step fix
 

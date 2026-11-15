@@ -282,6 +282,9 @@ function summarizeTurn(stream, run) {
     exit_code: run.code,
     signal: run.signal,
     invalid_lines: stream.invalidLines,
+    // what the session could use, as its init event listed it (batch 12): null when there was no init event
+    tools_available: init && Array.isArray(init.tools) ? init.tools.filter((x) => typeof x === 'string').map((x) => x.slice(0, 80)) : null,
+    mcp_servers: init && Array.isArray(init.mcp_servers) ? init.mcp_servers.filter((x) => x && typeof x === 'object').map((x) => ({ name: String(x.name).slice(0, 60), status: String(x.status).slice(0, 30) })) : null,
   };
   if (run.state !== 'OK') { turn.state = run.state; turn.reason = run.reason; return turn; }
   if (!r) { turn.state = 'ERROR'; turn.reason = 'no result event in the stream'; return turn; }
@@ -388,6 +391,9 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
     model: turns[0] ? turns[0].model : null,
     session_id: turns[0] ? turns[0].session_id : null,
     turns: turns.map((t) => ({ state: t.state, reason: t.reason, num_turns: t.num_turns, duration_ms: t.duration_ms, cost_usd: t.cost_usd, model: t.model, session_id: t.session_id })),
+    // the tools the first turn's session listed and the MCP servers it connected (batch 12, task 5)
+    tools_available: turns[0] && turns[0].tools_available !== undefined ? turns[0].tools_available : null,
+    mcp_servers: turns[0] && turns[0].mcp_servers !== undefined ? turns[0].mcp_servers : null,
     // the reading record: every tool call of every turn, and the paths read outside the repository
     tool_calls: calls.flatMap((list, i) => list.map((call) => ({ turn: i + 1, ...toolCallRecord(call) }))),
     outside_reads: outsideReads(calls.flat(), repoRoot),

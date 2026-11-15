@@ -160,7 +160,7 @@ function renderMarkdown(summary, meta) {
     '',
     `> ${LABEL}`,
     '',
-    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}${meta.config.model ? ` (pinned ${meta.config.model})` : ''}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (pinned ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'}; timeout ${meta.config.timeout_ms} ms per process.`,
+    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}${meta.config.model ? ` (pinned ${meta.config.model})` : ''}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (pinned ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'};${meta.config.tools === undefined ? '' : ` tool server ${meta.config.tools ? 'on' : 'off'};`} timeout ${meta.config.timeout_ms} ms per process.`,
     '',
     `Cases ${summary.cases}: ${summary.passed} PASS, ${summary.failed} FAIL, ${summary.inconclusive} INCONCLUSIVE (an inconclusive case never counts as a pass).`,
     '',

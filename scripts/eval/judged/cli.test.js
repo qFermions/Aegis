@@ -265,3 +265,34 @@ test('batch 12: a case records its lane, its mode against the expected one, its 
   assert.deepEqual([json.summary.measures.mode_match.numerator, json.summary.measures.mode_match.denominator], [1, 1]);
   assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /## Per lane/);
 });
+
+// Batch 12, task 5: the judged runner loads the tool server by default, --no-tools turns it off, each case gets its own
+// audit file in the results folder, and the run records which tools each session had. Wrong implementations: a flag
+// that only changes the preview (the session's own arguments must lose the server too); a record of the tools asked
+// for instead of the ones the session's init event listed; one audit file shared across cases.
+test('batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had', async (t) => {
+  const listed = ['Read', 'Grep', 'Glob', 'Agent', 'mcp__aegis-tools__docs_fetch', 'mcp__aegis-tools__net_dns', 'mcp__aegis-tools__net_http', 'mcp__aegis-tools__net_tls'];
+  const on = setup(t, { sut: { init_tools: listed } });
+  fs.writeFileSync(on.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', on.copy, '--execute', '--results-dir', on.results], on.io, on.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(on.results, 'results.json'), 'utf8'));
+  assert.equal(json.config.tools, true);
+  assert.deepEqual(json.cases[0].sut.tools_available, listed);
+  assert.deepEqual(json.cases[0].sut.mcp_servers, [{ name: 'aegis-tools', status: 'connected' }]);
+  const sutCall = on.calls().find((c) => c.role === 'sut');
+  const cfg = JSON.parse(sutCall.args[sutCall.args.indexOf('--mcp-config') + 1]);
+  const audit = cfg.mcpServers['aegis-tools'].args[cfg.mcpServers['aegis-tools'].args.indexOf('--audit') + 1];
+  assert.equal(audit, path.join(on.results, `${JSON.parse(G4_TEXT.split('\n')[0]).id}-tool-audit.jsonl`));
+  assert.match(fs.readFileSync(path.join(on.results, 'report.md'), 'utf8'), /tool server on/);
+
+  const off = setup(t, { sut: { init_tools: ['Read', 'Grep', 'Glob', 'Agent'] } });
+  fs.writeFileSync(off.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', off.copy, '--execute', '--results-dir', off.results, '--no-tools'], off.io, off.deps);
+  const offJson = JSON.parse(fs.readFileSync(path.join(off.results, 'results.json'), 'utf8'));
+  assert.equal(offJson.config.tools, false);
+  assert.ok(off.calls().filter((c) => c.role === 'sut').every((c) => !c.args.includes('--mcp-config') && !c.args.some((a) => /mcp__aegis-tools__/.test(a))));
+  assert.match(fs.readFileSync(path.join(off.results, 'report.md'), 'utf8'), /tool server off/);
+  const dry = setup(t);
+  await cli.main(['run', '--cases', dry.copy, '--no-tools'], dry.io, dry.deps);
+  assert.doesNotMatch(dry.out.join('\n'), /mcp__aegis-tools__|--mcp-config/);
+});

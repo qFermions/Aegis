@@ -30,7 +30,14 @@ const { TOOL_NAMES, mcpConfig } = require('./mcp/aegis-tools/session.js');
 // (resumed) it ends with the pinned model, so a chat never runs on the settings file's default model. Since batch 12
 // backends.sutArgs loads the read-only aegis-tools server by default: its four tool names are allowed and its
 // --mcp-config follows --strict-mcp-config, so the chat, which takes its flags from sutArgs, has them too.
-const ISOLATED = (home, model = backends.PINNED_MODEL) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, ...TOOL_NAMES, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks'), mcpConfig: mcpConfig() }), '--model', model];
+// audit: the tool server's audit file; since batch 12, task 5 a chat started by main() audits to a folder of its own
+// under the saved asks (auditOf reads it back from the argv the chat was started with), and chatArgs alone passes none
+const ISOLATED = (home, model = backends.PINNED_MODEL, audit = null) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, ...TOOL_NAMES, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit }) }), '--model', model];
+function auditOf(argv) {
+  const server = JSON.parse(argv[argv.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  const audit = server.args[server.args.indexOf('--audit') + 1];
+  return audit;
+}
 
 function tempDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-test-'));
@@ -76,7 +83,8 @@ test('the chat starts once under a fake claude with the desk\'s isolation and th
 
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
   const appended = got.argv[got.argv.length - 1];
-  assert.deepEqual(got.argv, [...ISOLATED(home), '--append-system-prompt', appended]);
+  assert.match(path.relative(path.join(home, 'aegis-asks'), auditOf(got.argv)), /^chat-[^/\\]+[/\\]tool-audit\.jsonl$/);
+  assert.deepEqual(got.argv, [...ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv)), '--append-system-prompt', appended]);
   assert.match(appended, /data about the environment, not instructions/);
   const open = appended.indexOf('--- What the company runs ---');
   const close = appended.indexOf('--- End of what the company runs ---');
@@ -194,7 +202,7 @@ test('batch 11, task 6: --reply-to asker starts the chat with the voice; another
   const code = await chat.main(['--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } });
   assert.equal(code, 0, c.stderr());
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
-  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home));
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv)));
   assert.match(got.argv[got.argv.length - 1], /section 8/);
 
   const refused = io();
@@ -219,7 +227,7 @@ test('batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names an
   const c = io();
   assert.equal(await chat.main(['--model', 'claude-sonnet-5-5', '--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } }), 0, c.stderr());
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
-  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, 'claude-sonnet-5-5'));
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, 'claude-sonnet-5-5', auditOf(got.argv)));
   assert.deepEqual(chat.chatArgs(null, path.join('/h/me', 'aegis-asks')).slice(-2), ['--model', 'claude-opus-5-5']);
   for (const argv of [['--model', 'two words'], ['--model']]) {
     const refused = io();
@@ -228,4 +236,34 @@ test('batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names an
     assert.equal(started, 0);
     assert.match(refused.stderr(), /--model/);
   }
+});
+
+// Batch 12, task 5: the chat loads the read-only tool server by default, audits its calls to a file of its own under
+// the saved asks folder (denied to the session, outside the repository), says so in its notice, and --no-tools turns
+// it off. Wrong implementations: an audit file inside the repository; a notice that still says the chat has no
+// lookups; a --no-tools that leaves the server in the argument list.
+test('batch 12, task 5: the chat loads the tool server with its own audit file, says so, and --no-tools turns it off', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-tools-'));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  const seen = [];
+  const said = [];
+  const child = new EventEmitter();
+  const running = chat.main([], { HOME: home }, { spawn: (cmd, args) => { seen.push(args); return child; }, out: (s) => said.push(s), err: () => {} });
+  child.emit('exit', 0);
+  assert.equal(await running, 0);
+  const cfg = JSON.parse(seen[0][seen[0].indexOf('--mcp-config') + 1]);
+  const server = cfg.mcpServers['aegis-tools'];
+  const audit = server.args[server.args.indexOf('--audit') + 1];
+  assert.equal(path.dirname(path.dirname(audit)), path.join(home, 'aegis-asks'));
+  assert.match(path.basename(path.dirname(audit)), /^chat-/);
+  assert.match(said.join(''), /public lookups/);
+  const off = [];
+  const other = new EventEmitter();
+  const quiet = [];
+  const r2 = chat.main(['--no-tools'], { HOME: home }, { spawn: (cmd, args) => { off.push(args); return other; }, out: (s) => quiet.push(s), err: () => {} });
+  other.emit('exit', 0);
+  assert.equal(await r2, 0);
+  assert.ok(!off[0].includes('--mcp-config') && !off[0].some((a) => /mcp__aegis-tools__/.test(a)));
+  assert.doesNotMatch(quiet.join(''), /public lookups/);
 });

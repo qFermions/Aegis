@@ -101,11 +101,13 @@ test('the session argv is backends.sutArgs plus the budget, and nothing else', a
   const calls = s.calls();
   assert.equal(calls.length, 1, 'one session');
   const call = calls[0];
-  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false }), '--max-budget-usd', '3.00'];
+  // since batch 12, task 5 the tool server audits to tool-audit.jsonl beside the saved answer
+  const audit = path.join(asksIn(s.home)[0], 'tool-audit.jsonl');
+  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false, auditFile: audit }), '--max-budget-usd', '3.00'];
   assert.deepEqual(call.args, expected.filter((a) => a !== call.prompt));
   // the isolation backends.js builds sits in the argv whole; since batch 12 it carries the read-only aegis-tools
   // server (sutArgs loads it by default), whose four tool names are allowed and never listed in --tools
-  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks'), mcpConfig: mcpConfig() });
+  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit }) });
   const at = call.args.indexOf('--setting-sources');
   assert.deepEqual(call.args.slice(at, at + iso.length), iso);
   for (const flag of ['--tools', '--allowedTools']) {
@@ -607,4 +609,22 @@ test('batch 12, tasks 2 and 3: a claimed check needs its call; an Engineer answe
   assert.equal(await ask.main(['dig says NXDOMAIN for our new subdomain'], s.env, s.deps), 0, s.stderr());
   assert.match(s.stdout(), /Aegis answered as an Engineer answer:\n\n## Engineer answer/);
   assert.doesNotMatch(s.stdout(), /has no Fix card|aegis-desk/);
+});
+
+// Batch 12, task 5: ask-aegis loads the read-only tool server by default with its audit file beside the saved answer,
+// and --no-tools turns it off. Wrong implementations: an audit file inside the repository or shared between asks; a
+// --no-tools that only changes the usage text.
+test('batch 12, task 5: the tool server is on with an audit file beside the answer; --no-tools turns it off', async (t) => {
+  assert.equal(ask.parseArgs(['the printer']).tools, true);
+  assert.equal(ask.parseArgs(['the printer', '--no-tools']).tools, false);
+  const on = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print'], on.env, on.deps), 0, on.stderr());
+  const args = on.calls()[0].args;
+  const cfg = JSON.parse(args[args.indexOf('--mcp-config') + 1]);
+  const server = cfg.mcpServers['aegis-tools'];
+  assert.equal(server.args[server.args.indexOf('--audit') + 1], path.join(asksIn(on.home)[0], 'tool-audit.jsonl'));
+  const off = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print', '--no-tools'], off.env, off.deps), 0, off.stderr());
+  assert.ok(!off.calls()[0].args.includes('--mcp-config'));
+  assert.ok(!off.calls()[0].args.some((a) => /mcp__aegis-tools__/.test(a)));
 });

@@ -1598,3 +1598,23 @@ test('batch 12, task 2: the desk records the named mode and shows the batch 12 r
   assert.equal(step(u, 5).expert_checks.find((r) => r.check === 'answer-mode').verdict, 'fail');
   assert.equal(u.closing_state, k.closing_state, 'a failing batch 12 row stops nothing');
 });
+
+// Batch 12, task 5: the desk's sessions load the read-only tool server by default, each ticket audits its tool calls
+// to a file beside its debug log, --no-tools turns the server off, and the record keeps the tools the session listed.
+// Wrong implementations: a desk that ignores --no-tools; one audit file for the whole run; a record of the tools asked
+// for instead of the ones the session listed.
+test('batch 12, task 5: the desk loads the tool server with an audit file per ticket, and --no-tools turns it off', async (t) => {
+  const listed = ['Read', 'Grep', 'Glob', 'Agent', 'mcp__aegis-tools__net_dns'];
+  const on = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, sut: { init_tools: listed } });
+  const [call] = on.calls();
+  const cfg = JSON.parse(call.args[call.args.indexOf('--mcp-config') + 1]);
+  const server = cfg.mcpServers['aegis-tools'];
+  assert.equal(server.args[server.args.indexOf('--audit') + 1], path.join(on.results, 'customers', 'B', 'tickets', 'T7-tool-audit.jsonl'));
+  assert.deepEqual(on.ticket('T7').tools_available, listed);
+  const off = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, argv: ['--no-tools'] });
+  assert.ok(!off.calls()[0].args.includes('--mcp-config'));
+  assert.ok(!off.calls()[0].args.some((a) => /mcp__aegis-tools__/.test(a)));
+  const out = [];
+  await desk.main(['--only', 'T7', '--no-tools'], {}, { out: (s) => out.push(s), err: () => {} });
+  assert.doesNotMatch(out.join(''), /--mcp-config/);
+});

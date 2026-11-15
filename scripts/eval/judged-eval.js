@@ -11,7 +11,7 @@
 //
 // Usage:
 //   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-//        [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
+//        [--web] [--no-tools] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
 //        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
 //        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
 //        [--budget-usd N]
@@ -76,7 +76,7 @@ const SMOKE_USD_PER_SESSION = 2.5;
 
 const USAGE = `Usage:
   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-       [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
+       [--web] [--no-tools] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
        [--budget-usd N]
@@ -94,7 +94,7 @@ Exit codes: 0 PASS, 2 FAIL, 3 no threshold given, 4 dry run, 1 input error or re
 const SPECS = {
   run: {
     values: ['--cases', '--max-turns', '--timeout-ms', '--model', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds', '--budget-usd'],
-    flags: ['--execute', '--web'],
+    flags: ['--execute', '--web', '--no-tools'],
   },
   calibrate: {
     values: ['--sheet', '--run', '--agreement-threshold', '--thresholds'],
@@ -135,7 +135,7 @@ function intFlag(opts, name, def, lo, hi) {
 }
 
 function commandPreview(config) {
-  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model }).join(' ');
+  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: '<results>/<case>-tool-audit.jsonl' }).join(' ');
   const jud = backends.judgeArgs({ prompt: '<judge prompt>', model: config.judge_model }).map((a) => (a === '' ? '""' : a)).join(' ');
   return { sut: `claude ${sut}`, judge: `claude ${jud}` };
 }
@@ -203,6 +203,8 @@ async function runCommand(opts, io, deps) {
     max_turns: intFlag(opts, '--max-turns', backends.DEFAULT_MAX_TURNS, 1, 200),
     timeout_ms: intFlag(opts, '--timeout-ms', backends.DEFAULT_TIMEOUT_MS, 1, 3600000),
     web: Boolean(opts['--web']),
+    // the read-only tool server (batch 12, task 5): on unless --no-tools
+    tools: !opts['--no-tools'],
     // both pinned (batch 11 resumed): a session never takes the settings file's default model
     model: opts['--model'] === undefined ? backends.PINNED_MODEL : opts['--model'],
     judge_model: opts['--judge-model'] === undefined ? backends.PINNED_MODEL : opts['--judge-model'],
@@ -266,7 +268,8 @@ async function runCommand(opts, io, deps) {
       io.out(report.terminalLine(r));
       continue;
     }
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model });
+    // each case's tool calls are audited to a file of its own in the results folder (batch 12, task 5)
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: path.join(dir, `${c.id}-tool-audit.jsonl`) });
     // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
     const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
     // the batch 12 checks (fix-card-fits, claims-match-calls, fetched-citations) count like any check: one that fails fails the case
@@ -298,7 +301,7 @@ async function runCommand(opts, io, deps) {
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];
   const payload = {
     run_id: runId, started, finished: new Date().toISOString(),
-    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, model: config.model, judge_model: config.judge_model, budget_usd: config.budget_usd },
+    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, tools: config.tools, model: config.model, judge_model: config.judge_model, budget_usd: config.budget_usd },
     spent_usd: spent,
     sut_models: uniq(results.map((r) => r.sut && r.sut.model)),
     judge_models: uniq(results.map((r) => r.judge && r.judge.model)),

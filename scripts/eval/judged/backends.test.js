@@ -338,3 +338,17 @@ test('parseStream takes the result text, else the last assistant text, and count
   const turn = backends.summarizeTurn(s, { state: 'OK', reason: null, code: 0, signal: null, duration_ms: 3 });
   assert.deepEqual([turn.state, turn.answer, turn.model, turn.session_id, turn.num_turns, turn.invalid_lines, turn.cost_usd], ['OK', 'partial', 'm1', 's1', 2, 1, null]);
 });
+
+// Batch 12, task 5: a turn records the tools its session's init event listed and the MCP servers it connected, so a
+// run shows which tools were available. Wrong implementation: a record of the tools asked for in the arguments.
+test('batch 12: summarizeTurn records the tools and MCP servers the init event listed', () => {
+  const stream = backends.parseStream([
+    JSON.stringify({ type: 'system', subtype: 'init', session_id: 's', model: 'm', tools: ['Read', 'mcp__aegis-tools__net_dns'], mcp_servers: [{ name: 'aegis-tools', status: 'connected' }] }),
+    JSON.stringify({ type: 'result', subtype: 'success', result: 'ok', num_turns: 1, total_cost_usd: 0.1 }),
+  ].join('\n'));
+  const turn = backends.summarizeTurn(stream, { state: 'OK', code: 0, signal: null, duration_ms: 1 });
+  assert.deepEqual(turn.tools_available, ['Read', 'mcp__aegis-tools__net_dns']);
+  assert.deepEqual(turn.mcp_servers, [{ name: 'aegis-tools', status: 'connected' }]);
+  const none = backends.summarizeTurn(backends.parseStream(JSON.stringify({ type: 'result', subtype: 'success', result: 'ok' })), { state: 'OK', code: 0, signal: null, duration_ms: 1 });
+  assert.equal(none.tools_available, null, 'no init event: unknown, not empty');
+});

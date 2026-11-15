@@ -429,3 +429,19 @@ test('code review 3: "should never have been in the Finance group" and "a member
     assert.equal(whoElseWhatLeft(plain, { ticket: not }).applies, false, not);
   }
 });
+
+// Code review round 3, finding 10: "reset" and "new" in the loss words were read anywhere near the device, so a password
+// reset or a new password near the word phone read as a lost device; and only some places after "left" were excluded.
+// "new" and "reset" are read next to the device now ("a new phone", "the phone was reset"), and a phone left at a house,
+// flat or desk, or "back at home", is not lost. Wrong implementations it catches: loss words read anywhere in a window,
+// and a "left" exclusion that needs the place word right after the device (the earlier test's "text the code" case was
+// false only because it named no method).
+test('code review 3: a password reset or new password near "phone" is not a lost device; a phone left back at home is not lost', () => {
+  const { lostSignInDevice } = require('./senior-rules.js');
+  for (const not of ['After my password reset my phone keeps asking for the Authenticator code.', 'I set a new password and now my phone will not take the MFA code.', 'I left my phone back at home and cannot approve the sign-in prompts.', 'I left my phone at my house and cannot approve the sign-in prompts.', 'I left my phone in the car and cannot approve the sign-in prompts.']) {
+    assert.equal(lostSignInDevice(not), false, not);
+  }
+  for (const yes of ['Got a new phone, the SMS codes still go to the old one.', 'My phone was reset to factory settings and the Authenticator app is gone.', '[FIRST_NAME] left her phone on the train yesterday. Microsoft Authenticator was on it.']) {
+    assert.equal(lostSignInDevice(yes), true, yes);
+  }
+});

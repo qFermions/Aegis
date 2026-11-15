@@ -173,10 +173,13 @@ function askFirst(answer, { ticket = '' } = {}) {
 
 // ── a. A new way in before the old way out (task 5a) ────────────────────────────────────────────
 const DEVICE = '(?:phones?|iphone|android|mobile|cell(?:phone)?|device|handset|tablet|ipad|yubikey|security key|hardware key|token|fob)';
-const LOST = '(?:lost|stolen|broke|broken|smashed|snapped|swapped|cracked|dropped|drowned|died|dead|wiped|reset|traded(?:[- ]in)?|replaced|replacement|upgraded|new|old|switched|sold|returned)';
-// "change" and "left" are read only next to the device (code review 2, finding 7): "a phone change" or "changed my
-// phone", and a phone left somewhere it is lost (on the train), not one left at home, at work or in the car.
-const NEAR = `\\b${DEVICE}\\s+change\\b|\\bchanged (?:my |her |his |their |the )?${DEVICE}\\b|\\bleft (?:\\w+ ){0,2}${DEVICE}\\b(?! (?:at|in|on) (?:home|work|the office|the car|my car|my desk|the desk)\\b)|\\b${DEVICE} (?:was |got )?left (?:on|in|at) (?:the|a) (?:train|bus|taxi|cab|plane|tube|restaurant|bar|cafe|airport|station)\\b`;
+const LOST = '(?:lost|stolen|broke|broken|smashed|snapped|swapped|cracked|dropped|drowned|died|dead|wiped|traded(?:[- ]in)?|replaced|replacement|upgraded|switched|sold|returned)';
+// "change", "left", "new", "old" and "reset" are read only next to the device (code review 2, finding 7; code review 3,
+// finding 10): "a phone change", "changed my phone", "a new phone", "the old phone", "the phone was reset", "a factory
+// reset"; and a phone left somewhere it is lost (on the train), not one left at home, at a house or flat, at work or in
+// the car. "After my password reset my phone ..." and "a new password ... my phone" are not a lost device.
+const LEFT_SAFE = '(?:back )?(?:at|in|on) (?:home|work|the office|the car|my car|my desk|the desk|my house|the house|my place|my flat|my apartment)';
+const NEAR = `\\b${DEVICE}\\s+change\\b|\\bchanged (?:my |her |his |their |the )?${DEVICE}\\b|\\b(?:new|old|replacement) (?:\\w+ )?${DEVICE}\\b|\\b${DEVICE} (?:was|got|has been|had been) (?:factory[- ])?reset\\b|\\bfactory[- ]reset\\b|\\bleft (?:\\w+ ){0,2}${DEVICE}\\b(?! ${LEFT_SAFE}\\b)|\\b${DEVICE} (?:was |got )?left (?:on|in|at) (?:the|a) (?:train|bus|taxi|cab|plane|tube|restaurant|bar|cafe|airport|station)\\b`;
 const LOST_DEVICE = new RegExp(`\\b${LOST}\\b[^.!?\\n]{0,40}\\b${DEVICE}\\b|\\b${DEVICE}\\b[^.!?\\n]{0,60}\\b${LOST}\\b|${NEAR}`, 'i');
 // The ticket names the sign-in method the device held, not only that the person cannot sign in: "I left my phone at
 // home and cannot sign in" is not a lost sign-in device (code review 1, finding 6). Text and SMS codes, sign-in prompts and

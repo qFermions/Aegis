@@ -15,6 +15,7 @@ disable-model-invocation: true
 - **Synced or cloud-only?** Entra → Users → `[UPN]` → "On-premises sync enabled" = Yes → synced.
 - **Locked vs. forgotten?** ADUC → Account tab → "Unlock account" if locked.
 - Any Conditional Access policy that could block re-login (see `/conditional-access`).
+- **A smell of compromise** (answer-format section 2, rule a): sign-ins or MFA prompts `[FIRST_NAME]` did not make, a reset nobody asked for, or a password typed into a phishing page make this an incident, not a routine reset. Name the escalation to the security lead or the security on-call (they need what was seen, when, `[UPN]`, and the sign-in log entries), contain it with them through `/security-alert-triage`, and do not call it harmless before they have looked.
 
 ## Step-by-step fix (portal/GUI first)
 
@@ -167,6 +168,7 @@ node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-bef
 - [ ] Entra session revocation completed and sign-in logs were checked after propagation; no claim is made about app-issued sessions
 - [ ] MFA working, or re-registered via `/mfa-issue`
 - [ ] Account not locked
+- [ ] Any smell of compromise was handed to the security lead or on-call with what was seen, when, the account and the sign-in log entries (rule a)
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. Reset password for `[UPN]` ([synced via on-prem AD / verified cloud-only]). Temp password issued with force-change at next logon. Entra refresh-token/browser-cookie revocation [requested and checked after propagation / not requested]; current access tokens and app-issued sessions may persist until their own expiry. User confirmed sign-in + password change. Time spent: [X] min.

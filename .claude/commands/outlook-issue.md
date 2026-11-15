@@ -14,6 +14,7 @@ disable-model-invocation: true
 - With no Microsoft incident, the network and name-resolution path come before any account-level cause: the same mailbox on another network (a phone hotspot), then `nslookup` on the server address the error names from the affected machine. Works elsewhere, or the name does not resolve: it is `/lan-wan` or DNS, not the profile or the account. Only after that go on to the profile, the licence and the sign-in logs.
 - Is Outlook running already? Check Task Manager → `OUTLOOK.EXE`. Kill stale processes before launching.
 - Is it the new Outlook (web-based toggle, no safe mode) or classic Outlook (.exe)? Steps differ — confirm which build the user has.
+- **A smell of compromise** (answer-format section 2, rule a): mail vanishing into a rule nobody set, a forward to an outside address, replies to mail the user never sent, or Sent Items holding messages they did not write. That is not a profile fault: name the escalation to the security lead or the security on-call (they need `[UPN]`, what was seen, when, the rule or forward, and one message with its headers), contain it with them through `/security-alert-triage`, and do not delete the rule before they have captured it.
 
 ## Step-by-step fix
 

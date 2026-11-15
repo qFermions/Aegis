@@ -14,6 +14,7 @@ disable-model-invocation: true
 ## What to check first
 - **Source:** Defender (defender.microsoft.com → Incidents & alerts), entra.microsoft.com → ID Protection → **Risky users / Risky sign-ins**, or a quarantine/phish report.
 - **Severity + scope:** one user or many? Any successful risky sign-in / inbox rule / mass send?
+- **Who owns it** (answer-format section 2, rule a; the Incident answer of section 9): the tech does not work a suspected compromise alone. Name the escalation at the start, to the security lead, the security on-call or the incident response team, and hand them what was seen, when it was first seen, which account or device, and the evidence (the alert, the sign-in log entries, the message with its headers, the rules found). Containment below follows their call, and nobody calls the alert harmless before they have looked.
 
 ## Step-by-step (portal first)
 
@@ -190,6 +191,7 @@ node scripts/adapters/msgraph-client.js verify-account-enabled --user [USER_ID] 
 - [ ] Audit log read for who else used the same path and for what was opened, downloaded, sent or shared onward; the severity in the report was written after that read, not before
 - [ ] Phish purge, sender block, and CA remediation each [separately approved/verified under their own workflow / documented as not required]
 - [ ] Incident documented (timeline + root cause)
+- [ ] The security lead, security on-call or incident response team was named at the start and given what was seen, when, the account or device, and the evidence (rule a)
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. Security alert: [type] on `[UPN]`. Severity [low/med/high]. Containment verified: [source-authoritative block / Entra revocation checked after propagation / password or MFA action under its separate gate / not required]. Removed [N] verified malicious rules/forwarding; scope [N users]. Phish purge: [verified under its separate workflow / not required]. Sender block: [verified under its separate workflow / not required]. CA remediation: [verified under its separate workflow / not required]. Root cause: [cause]. Incident report: [attached / not required]. Time spent: [X] min.

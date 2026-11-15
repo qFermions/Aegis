@@ -27,16 +27,16 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 
 | Vendor | Runbook | In scope | Section (line) | First heavy gate | Verdict | Reason |
 |---|---|---|---|---|---|---|
-| Microsoft | conditional-access | yes | Create a new policy - step by step (127) | conditional-access-enable-portal | pass | ca-policy-create (line 129) comes first |
-| Microsoft | device-wipe | yes | PowerShell - for reference only (46) | device-full-wipe | pass | device-remote-lock-preview (line 25) comes first |
-| Microsoft | device-wipe | yes | Step-by-step fix (portal first) (23) | device-full-wipe-portal | pass | device-remote-lock-preview (line 25) comes first |
+| Microsoft | conditional-access | yes | Create a new policy - step by step (129) | conditional-access-enable-portal | pass | ca-policy-create (line 131) comes first |
+| Microsoft | device-wipe | yes | PowerShell - for reference only (47) | device-full-wipe | pass | device-remote-lock-preview (line 26) comes first |
+| Microsoft | device-wipe | yes | Step-by-step fix (portal first) (24) | device-full-wipe-portal | pass | device-remote-lock-preview (line 26) comes first |
 | Microsoft | distribution-list | no | Step-by-step fix (portal first - EAC: admin.exchange.microsoft.com) (16) | distribution-external-senders-portal | pass | distribution-portal (line 18) comes first |
-| Microsoft | email-quarantine | no | 4. Release the message (54) | quarantine-release-all-portal | pass | quarantine-release-dialog (line 57) comes first |
-| Microsoft | email-quarantine | no | 6. Add sender to allow list (Tenant Allow/Block List - preferred) (107) | quarantine-delete-portal | pass | quarantine-allow-entry (line 108) comes first |
-| Microsoft | email-quarantine | no | PowerShell - release to every original recipient (186) | quarantine-release-all | pass | quarantine-release-dialog (line 57) comes first |
-| Microsoft | email-quarantine | no | PowerShell - permanently delete one reviewed quarantine item (256) | quarantine-permanent-delete | fail | quarantine-permanent-delete (line 264) has no lighter step before it in this section |
-| Microsoft | email-to-spam | no | PowerShell - separately gated restricted-sender unblock (215) | restricted-entity-unblock | pass | email-spam-outbound-remediation (line 96) comes first |
-| Microsoft | email-to-spam | no | Step 4 - OUTBOUND path: diagnose why YOUR mail lands in others' spam (94) | restricted-entity-unblock-portal | pass | email-spam-outbound-remediation (line 96) comes first |
+| Microsoft | email-quarantine | no | 4. Release the message (56) | quarantine-release-all-portal | pass | quarantine-release-dialog (line 59) comes first |
+| Microsoft | email-quarantine | no | 6. Add sender to allow list (Tenant Allow/Block List - preferred) (109) | quarantine-delete-portal | pass | quarantine-allow-entry (line 110) comes first |
+| Microsoft | email-quarantine | no | PowerShell - release to every original recipient (188) | quarantine-release-all | pass | quarantine-release-dialog (line 59) comes first |
+| Microsoft | email-quarantine | no | PowerShell - permanently delete one reviewed quarantine item (258) | quarantine-permanent-delete | fail | quarantine-permanent-delete (line 266) has no lighter step before it in this section |
+| Microsoft | email-to-spam | no | PowerShell - separately gated restricted-sender unblock (217) | restricted-entity-unblock | pass | email-spam-outbound-remediation (line 98) comes first |
+| Microsoft | email-to-spam | no | Step 4 - OUTBOUND path: diagnose why YOUR mail lands in others' spam (96) | restricted-entity-unblock-portal | pass | email-spam-outbound-remediation (line 98) comes first |
 | Fleet | fleet-device-actions | yes | Phase D: Stolen with sensitive data, Wipe (R3, after independent review) (132) | fleet-device-actions-wipe-portal | pass | a lighter step line (line 140) comes first |
 | Fleet | fleet-device-actions | yes | E1: One host (173) | fleet-device-actions-run-script-portal | pass | the section says why no lighter step applies |
 | Fleet | fleet-device-actions | yes | E2: More than one host (R3) (194) | fleet-device-actions-batch-script-portal | pass | a lighter step line (line 202) comes first |
@@ -118,8 +118,8 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Linear | linear-workspace-admin | no | Phase C: More than 10 issues at once (R3, after independent review) (139) | linear-workspace-admin-bulk-move-portal | fail | linear-workspace-admin-bulk-move-portal (line 152) has no lighter step before it in this section |
 | Linear | linear-workspace-admin | no | Phase D: Suspend or unsuspend a member (R3 / R2) (198) | linear-workspace-admin-suspend-portal | fail | linear-workspace-admin-suspend-portal (line 207) has no lighter step before it in this section |
 | Linear | linear-workspace-admin | no | Phase E: Export workspace data (R3) (250) | linear-workspace-admin-export-portal | fail | linear-workspace-admin-export-portal (line 257) has no lighter step before it in this section |
-| Microsoft | mfa-issue | yes | A new way in: the Temporary Access Pass (still step 1) (42) | mfa-temporary-access-pass-portal | pass | a user check line (line 44) comes first |
-| Microsoft | mfa-issue | yes | Require re-register MFA: not the lost-or-replaced-device path (78) | mfa-require-reregister-portal | pass | a lighter step line (line 82) comes first |
+| Microsoft | mfa-issue | yes | A new way in: the Temporary Access Pass (still step 1) (44) | mfa-temporary-access-pass-portal | pass | a user check line (line 46) comes first |
+| Microsoft | mfa-issue | yes | Require re-register MFA: not the lost-or-replaced-device path (80) | mfa-require-reregister-portal | pass | a lighter step line (line 84) comes first |
 | Microsoft | offboard | yes | STEP 1 - ⚠️ Disable the account (on-prem first - source of authority) (25) | offboard-ad-disable-portal | pass | the section says why no lighter step applies |
 | Microsoft | offboard | yes | STEP 3 - Reset password to long random (78) | offboard-password-reset-portal | pass | the section says why no lighter step applies |
 | Microsoft | offboard | yes | STEP 4 - Clear ALL MFA methods (95) | offboard-clear-mfa-portal | pass | the section says why no lighter step applies |
@@ -149,8 +149,8 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Okta | okta-user-lifecycle | yes | Phase H: Delete (R3, permanent, after deactivation and independent review) (288) | okta-user-lifecycle-delete-portal | pass | a lighter step line (line 292) comes first |
 | General | printer-issue | no | PowerShell - for reference only (54) | print-queue-delete | pass | printer-network-add-initial (line 27) comes first |
 | General | printer-issue | no | Step-by-step fix (19) | print-queue-delete-portal | pass | printer-network-add-initial (line 27) comes first |
-| Microsoft | security-alert-triage | no | PowerShell - block one verified cloud-only account (58) | security-account-block | fail | security-account-block (line 67) has no lighter step before it in this section |
-| Microsoft | security-alert-triage | no | PowerShell - contain one verified synchronized identity (86) | security-synced-ad-disable | fail | security-synced-ad-disable (line 100) has no lighter step before it in this section |
+| Microsoft | security-alert-triage | no | PowerShell - block one verified cloud-only account (59) | security-account-block | fail | security-account-block (line 68) has no lighter step before it in this section |
+| Microsoft | security-alert-triage | no | PowerShell - contain one verified synchronized identity (87) | security-synced-ad-disable | fail | security-synced-ad-disable (line 101) has no lighter step before it in this section |
 | Slack | slack-app-approval | no | Phase D: Require approval for every app (R3) (134) | slack-app-approval-require-portal | fail | slack-app-approval-require-portal (line 141) has no lighter step before it in this section |
 | Slack | slack-guests-connect | no | Phase C: A partner's Slack Connect invitation (R2 approve, R1 decline) (101) | slack-guests-connect-approve-invitation-portal | fail | slack-guests-connect-approve-invitation-portal (line 113) has no lighter step before it in this section |
 | Slack | slack-guests-connect | no | Phase D: End a partner connection (R3, after independent review) (147) | slack-guests-connect-remove-org-portal | fail | slack-guests-connect-remove-org-portal (line 156) has no lighter step before it in this section |

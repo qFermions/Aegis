@@ -19,6 +19,8 @@ disable-model-invocation: true
 ## What to check first
 - **Is there a sign-in failure you're troubleshooting?** Check `Entra ID → Monitoring & health → Sign-in logs → [UPN]` first — the failure reason will say which CA policy blocked it.
 - **Are you creating a new policy or modifying an existing one?** Existing = check current scope and exclusions before touching it.
+- **Ask first** (answer-format section 2, rule d): a request to exclude a user from a policy, or to turn a policy off, with no sign-in failure reason in the ticket gets one question first: "What failure reason and policy name does the sign-in log show for the blocked sign-in?" An exclusion or a policy change is only for a cause that log shows, and it is time-boxed when it is made.
+- **A smell of compromise** (rule a): a block that stopped a sign-in the person did not make (an unknown location, device or app), or a request to lift a block that comes with urgency and no evidence. Name the escalation to the security lead or the security on-call (they need the user, the blocked sign-ins, when and from where, and the sign-in log entries); the block stays until they have looked.
 - **Is a break-glass account confirmed?** Never make an org-wide CA change without one. See break-glass section below.
 - **Was a gap open that should not have been** (an exclusion never taken back, a policy left Off or in Report-only)? Once it is closed under its own reviewed change, the next step is a read, R0 (answer-format section 2, "Who else, and what left"): `Entra ID → Monitoring & health → Sign-in logs` for the time the gap was open shows who else signed in through it, and the audit log in the Microsoft Purview portal shows what those sessions opened, downloaded or shared onward. Until that read is done, nobody says how serious the gap was (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-20 to MB-25).
 - **What license tier?** CA requires Entra ID P1 (included in M365 Business Premium). Named Locations and compliant device conditions require P1. Continuous Access Evaluation requires P2.
@@ -260,6 +262,7 @@ Get-MgIdentityConditionalAccessNamedLocation |
 - [ ] Policy enabled (set to On) and confirmed active in sign-in logs
 - [ ] No admin lockout after enabling — at least two admins can still sign in
 - [ ] Break-glass sign-in alert confirmed active in Entra Monitoring
+- [ ] Any exclusion or policy change was made for a cause the sign-in log showed, not on request alone; a blocked sign-in the person did not make went to the security lead or on-call (rules d and a)
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. Conditional Access policy "[POLICY_NAME]": definition [created/modified under its separate reviewed workflow / unchanged]; Report-only evidence [reviewed for X hours / not available]; break-glass exclusion [verified / not verified]; enablement [verified under the exact enable-policy gate / left Report-only / not performed]. Record only the states actually read back. Time spent: [X] min.

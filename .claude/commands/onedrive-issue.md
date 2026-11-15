@@ -16,6 +16,8 @@ disable-model-invocation: true
   - Blue cloud = personal OneDrive. White cloud = work OneDrive. Grey = paused/signed out. Red X = sync error. Yellow warning triangle = needs attention.
 - Click the icon → open the OneDrive pane → read the error message at the top. It usually tells you exactly what's wrong.
 - Is this one file/folder or the entire OneDrive? Entire sync stopped → account/auth issue. One item stuck → file conflict or path issue.
+- **A smell of compromise** (answer-format section 2, rule a): thousands of files changing at once, files renamed with a strange extension, or a ransom note in a folder point to ransomware, not a sync fault. Name the escalation to the security lead or the security on-call (they need the account, the device, when the changes started, and one affected file name); no reset and no restore before they have looked, and recovery goes through `/onedrive-restore` with them.
+- **Ask first** (rule d): a request to raise someone's storage quota, with no reading of what is using the space, gets one question first: "What does the storage page show as used, and which folders hold most of it?" A raised limit is for a need that reading shows.
 
 ## Step-by-step fix
 

@@ -74,7 +74,7 @@ Every tree starts with step 0 of `method.md` (how wide, vendor status, what chan
 
 1. One person or many? One place or many? Since a change (new access points, a firmware upgrade, a new SSID, an event with many guests)?
 2. One client everywhere: the client (driver, OS update, power saving, an old profile). `/wifi-issue`.
-3. Many clients in one area: read the access point's channel, utilization, client count and interference in the dashboard. High utilization with many clients: density; narrower channels (20 MHz), more 5 or 6 GHz, a higher minimum bitrate. High utilization with few clients: interference or co-channel overlap.
+3. Many clients in one area: read the access point's channel, utilization, client count and interference in the dashboard. Neighbouring access points on the same channel share its airtime: in 2.4 GHz only channels 1, 6 and 11 do not overlap in most regions, and 5 GHz offers many more non-overlapping 20 MHz channels. High utilization with many clients: density; narrower channels (20 MHz), more 5 or 6 GHz, a higher minimum bitrate. High utilization with few clients: interference or co-channel overlap.
 4. Roaming complaints (calls drop when walking): read the client's roaming events and signal at the moment it moved; sticky clients and too-strong transmit power are common causes.
 5. Radio profile changes reach every access point that uses the profile: a site change for the network owner (`safe-changes.md`, Wi-Fi radio profile).
 

@@ -25,6 +25,7 @@
 | Clamp TCP MSS, or set a tunnel MTU | Every TCP flow through that interface | Network owner | R2 for one tunnel; R3 for a site edge | Current MTU and MSS settings | Remove the clamp, restore the MTU | Small flows that worked before now fail |
 | Change a Wi-Fi radio profile (channel width, bitrate, band steering, power) | Every access point using the profile, every client near them | Network owner, outside busy hours | R3 | Screenshot or export of the profile | Restore the previous values | Client counts or connection success drop after the change |
 | Add a zero-trust exception (allow, do-not-inspect, split-tunnel exclude) | The people and destinations the exception names; less visibility | Zero-trust policy owner, approved by the security owner | R2 when narrow and time-limited; R3 when broad | The policy list and order | Remove the exception | It matches more users or destinations than planned |
+| Change traffic shaping or QoS rules | Every flow at the site that matches | Network owner, outside busy hours | R3 | Export of the shaping rules and their order | Restore the export | The prioritised traffic or anything else gets worse |
 | Change a DHCP scope, lease time or relay | Every client on that VLAN | Network owner | R2 | Scope settings and the current lease count | Restore the settings | Clients lose addresses or get unexpected ones |
 
 ## DNS: a record change, step by step

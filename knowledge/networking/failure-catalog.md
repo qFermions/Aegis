@@ -66,6 +66,13 @@ Each row: the symptom as people report it, the likely causes ranked (most common
 | One laptop drops everywhere | Client driver, power saving, an old saved profile, a recent OS update. | Another device in the same spot works | `/wifi-issue` on that client (R1). | Reinstall the previous driver. |
 | Calls drop when walking | Sticky clients and roaming thresholds; transmit power too high; a gap in coverage. | The client's roaming events and signal at the drop | Adjust power and minimum bitrate for the area (R3 for a profile). | Restore the profile. |
 
+## Uplink saturation and traffic shaping
+
+| Symptom | Likely causes, ranked | Smallest splitting test | Fix (R) | Rollback |
+|---|---|---|---|---|
+| Calls choppy and video freezing at busy hours, fine early morning | 1. The uplink is full (backups, updates, large uploads) and voice has no priority. 2. Loss or jitter on the ISP path. 3. Wi-Fi in one area (tree G). | The uplink's use over the day against the bad times; an `mtr` to the voice provider at a bad time, read per section 4 of `reading-evidence.md` | A traffic shaping rule that gives voice and video priority and caps bulk traffic, on the site's firewall (on Meraki MX, the SD-WAN and traffic shaping page [unconfirmed: check the vendor page]) (R3: every flow at the site) | Restore the exported shaping rules |
+| One application slow for everyone, others fine | 1. A shaping or bandwidth limit rule matches it. 2. The application's own service. | Read the shaping rules for a rule that names that application or category; check its status page | Narrow or remove that limit (R3) | Restore the export |
+
 ## DHCP
 
 | Symptom | Likely causes, ranked | Smallest splitting test | Fix (R) | Rollback |

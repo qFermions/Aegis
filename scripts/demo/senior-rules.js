@@ -12,7 +12,8 @@
 // shortcut: every reading here is a word list or a shape, so a ticket or an answer worded otherwise reads as "does
 // not apply" or passes; upgrade to a model-judged row when the owner's unseen cases show a miss the lists cannot hold.
 
-const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn } = require('./answer.js');
+const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn, MODE_LINE } = require('./answer.js');
+const { claimsWithoutCalls } = require('./reading-claims.js');
 const { namedGates, asks } = require('./catalog.js');
 const checks = require('../eval/judged/checks.js');
 
@@ -140,7 +141,8 @@ function isAskFirst(answer, ticket = '') {
 // What is wrong with the form of an ask-first answer: it is one question and nothing else. The aegis-desk block the
 // desk asks every session for is not part of the question, so it is not read here.
 function askFirstProblems(answer) {
-  const body = deskBlock(answer).body;
+  // the mode line ("Mode: Ask first", batch 12) names the answer; it is not part of the question or its words
+  const body = deskBlock(answer).body.split(/\r?\n/).filter((l, i, all) => !(MODE_LINE.test(l) && all.slice(0, i).every((x) => x.trim() === ''))).join('\n');
   const lines = body.split(/\r?\n/);
   const out = [];
   const marks = (body.match(/\?/g) || []).length;
@@ -345,7 +347,12 @@ const ADMIN_ACTION = /\b(?:please|you (?:can|should|could|need to|must|will need
 
 // What is wrong with a reply, one plain clause each; empty when it has the form and makes no done claim. ticket and
 // setup: where a time may come from; ids: the runbooks' gate ids (a Set or Map), when the caller has them.
-function replyProblems(reply, { ticket = '', setup = '', ids = null } = {}) {
+// A stock line about what Aegis has or has not read (batch 12, task 3): each reply is written for its asker, and when
+// nothing was checked beyond the ticket the reply says nothing about checking.
+const STOCK_READ_LINE = /\b(?:I(?:'ve| have)? only (?:read|seen|looked at|gone on)|all I(?:'ve| have)? (?:read|seen|got) (?:is|was)|I(?:'ve| have)(?: not|n't) (?:checked|looked at) anything|nothing (?:on|in|about) [^.!?\n]{0,40} has been checked|based (?:only )?on what you (?:wrote|said|sent)|going (?:only )?(?:on|by) what you (?:wrote|said|sent))\b/i;
+// toolCalls: the session's reading record (backends.parseStream or the judged runner's records); a claim of a check
+// with no matching call fails (batch 12, task 3). With none given, every such claim fails: the safe side.
+function replyProblems(reply, { ticket = '', setup = '', ids = null, toolCalls = [] } = {}) {
   const text = String(reply || '').trim();
   if (!text) return ['the reply is empty'];
   const out = [];
@@ -369,11 +376,15 @@ function replyProblems(reply, { ticket = '', setup = '', ids = null } = {}) {
   // a check is named only when the sentence is about what the asker sent (the judged runner's observed-output rule)
   const observed = checks.checkObservedOutput(text.replace(/[‘’]/g, "'"), { evidence: String(ticket || '') });
   if (observed.verdict === 'fail') out.push(`it names a check Aegis did not run in this session ("${observed.span}")`);
+  const stock = STOCK_READ_LINE.exec(text.replace(/[‘’]/g, "'"));
+  if (stock) out.push(`it carries a stock line about what Aegis read ("${stock[0]}"), not an answer written for this asker`);
+  const unbacked = claimsWithoutCalls(text, toolCalls);
+  if (unbacked.length) out.push(`it says Aegis checked something with no matching call in the session's reading record ("${unbacked[0].sentence.slice(0, 80)}")`);
   return [...new Set(out)];
 }
 
 module.exports = {
   FAMILIES, namesSystem, assumedSetup, bareTicket, isAskFirst, askFirstProblems, askFirst,
   lostSignInDevice, newWayInFirst, whoElseWhatLeft, howWideBeforeWhy, changeClassAndCheck, seniorRows,
-  askerReply, replyProblems, REPLY_MAX_WORDS, REPLY_MAX_PARAGRAPHS, ASK_FIRST_MAX_WORDS,
+  askerReply, replyProblems, REPLY_MAX_WORDS, REPLY_MAX_PARAGRAPHS, ASK_FIRST_MAX_WORDS, ERROR_TEXT, STOCK_READ_LINE,
 };

@@ -1,0 +1,10 @@
+rule a passes any escalation with no need: ℹ fail 1
+rule b never asks for an end date: ℹ fail 1
+rule c ignores the cleanup order: ℹ fail 1
+rule d applies even with evidence: ℹ fail 1
+mode row reads only the first line: ℹ fail 1
+budgets count code blocks: ℹ fail 1
+fix-card-fits never fails: ℹ fail 1
+claims: a failed call still counts: ℹ fail 1
+claims: a claim of no known kind passes: ℹ fail 1
+citations: no date needed: ℹ fail 1

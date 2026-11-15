@@ -365,3 +365,17 @@ test('code review 2: an account fix in step 1 still comes before the network; th
   const scope = "Fix the scope: one person or everyone, one site or all sites, and other services too; read the Slack status page and whether anyone else's account is affected.";
   assert.equal(howWideBeforeWhy(card([scope, 'Check DNS with nslookup.']), { ticket }).verdict, 'pass');
 });
+
+// Code review round 2, findings 6 and 7 (one class: when a ticket is about a lost or replaced sign-in device). Wrong
+// implementations they catch: a method list without text or SMS codes, sign-in prompts or push approvals (a stolen
+// phone that held the SMS fallback would skip the rule); "left" read as lost when the phone is at home; and "change"
+// read anywhere, so a password change near the word phone triggers the rule.
+test('code review 2: SMS codes and sign-in prompts are a sign-in method; a phone at home or a password change is not a lost device', () => {
+  const { lostSignInDevice } = require('./senior-rules.js');
+  for (const yes of ['I lost my phone and the text codes do not arrive any more.', 'Got a new phone, the SMS codes still go to the old one.', 'My phone was stolen and I cannot approve the sign-in prompts.', 'Locked out after a phone change, Authenticator gone.']) {
+    assert.equal(lostSignInDevice(yes), true, yes);
+  }
+  for (const not of ['I left my phone at home today and cannot get my Authenticator code.', 'Since the password change my phone keeps asking for the Authenticator code.', 'I left my phone in the car, can you text the code to my desk phone?']) {
+    assert.equal(lostSignInDevice(not), false, not);
+  }
+});

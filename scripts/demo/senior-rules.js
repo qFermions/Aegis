@@ -154,11 +154,15 @@ function askFirst(answer, { ticket = '' } = {}) {
 
 // ── a. A new way in before the old way out (task 5a) ────────────────────────────────────────────
 const DEVICE = '(?:phones?|iphone|android|mobile|cell(?:phone)?|device|handset|tablet|ipad|yubikey|security key|hardware key|token|fob)';
-const LOST = '(?:lost|stolen|broke|broken|smashed|snapped|swapped|cracked|dropped|drowned|died|dead|wiped|reset|traded(?:[- ]in)?|replaced|replacement|upgraded|new|old|switched|change|changed|sold|returned|left)';
-const LOST_DEVICE = new RegExp(`\\b${LOST}\\b[^.!?\\n]{0,40}\\b${DEVICE}\\b|\\b${DEVICE}\\b[^.!?\\n]{0,60}\\b${LOST}\\b`, 'i');
+const LOST = '(?:lost|stolen|broke|broken|smashed|snapped|swapped|cracked|dropped|drowned|died|dead|wiped|reset|traded(?:[- ]in)?|replaced|replacement|upgraded|new|old|switched|sold|returned)';
+// "change" and "left" are read only next to the device (code review 2, finding 7): "a phone change" or "changed my
+// phone", and a phone left somewhere it is lost (on the train), not one left at home, at work or in the car.
+const NEAR = `\\b${DEVICE}\\s+change\\b|\\bchanged (?:my |her |his |their |the )?${DEVICE}\\b|\\bleft (?:\\w+ ){0,2}${DEVICE}\\b(?! (?:at|in|on) (?:home|work|the office|the car|my car|my desk|the desk)\\b)|\\b${DEVICE} (?:was |got )?left (?:on|in|at) (?:the|a) (?:train|bus|taxi|cab|plane|tube|restaurant|bar|cafe|airport|station)\\b`;
+const LOST_DEVICE = new RegExp(`\\b${LOST}\\b[^.!?\\n]{0,40}\\b${DEVICE}\\b|\\b${DEVICE}\\b[^.!?\\n]{0,60}\\b${LOST}\\b|${NEAR}`, 'i');
 // The ticket names the sign-in method the device held, not only that the person cannot sign in: "I left my phone at
-// home and cannot sign in" is not a lost sign-in device (code review 1, finding 6).
-const SIGN_IN = /\b(?:authenticator|mfa|2fa|two[- ]factor|two[- ]step|2[- ]step|2sv|second step|verification (?:code|app)|okta verify|duo|passkeys?|security keys?|yubikeys?|(?:backup|sign[- ]?in|log[- ]?in|login|verification|one[- ]time) codes?)\b/i;
+// home and cannot sign in" is not a lost sign-in device (code review 1, finding 6). Text and SMS codes, sign-in prompts and
+// push approvals are methods too (code review 2, finding 6): the default environment's MFA falls back to SMS.
+const SIGN_IN = /\b(?:authenticator|mfa|2fa|two[- ]factor|two[- ]step|2[- ]step|2sv|second step|verification (?:code|app)|okta verify|duo|passkeys?|security keys?|yubikeys?|(?:backup|sign[- ]?in|log[- ]?in|login|verification|one[- ]time|text|sms|txt)(?: message)? codes?|codes? by (?:text|sms)|sign[- ]?in (?:prompts?|requests?|approvals?|notifications?)|approve (?:the |my |any )?(?:sign[- ]?ins?|log[- ]?ins?|prompts?|requests?)|push (?:notifications?|prompts?|approvals?))\b/i;
 const lostSignInDevice = (ticket) => SIGN_IN.test(String(ticket)) && LOST_DEVICE.test(String(ticket));
 
 const IDENTITY = /\bidentity\b|\bwho (?:they|she|he|the (?:person|user|caller)) (?:is|are|says?)\b|\bit(?: is|'s) (?:really )?(?:them|her|him|the (?:person|user|requester)|\[[A-Z_]+\])|\b(?:verify|confirm|prove|check)\b[^.\n]{0,30}\b(?:requester|caller|identity)\b/i;

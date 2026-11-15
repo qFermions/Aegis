@@ -9150,6 +9150,37 @@
       ]
     },
     {
+      "id": "script-patterns-bash-skeleton",
+      "file": "knowledge/software-engineering/script-patterns.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "script-patterns-powershell-skeleton",
+      "file": "knowledge/software-engineering/script-patterns.md",
+      "kind": "powershell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "Move-Item",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
       "id": "security-account-block",
       "file": ".claude/commands/security-alert-triage.md",
       "kind": "powershell",
@@ -10274,6 +10305,22 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
+      ]
+    },
+    {
+      "id": "software-engineering-history-rewrite-preview",
+      "file": "knowledge/software-engineering/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "git-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
       ]
     },
     {

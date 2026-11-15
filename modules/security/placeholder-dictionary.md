@@ -130,6 +130,12 @@ Added with batch 10 (2026-11-07): `[TRANSFER_ID]` (one Google Workspace data tra
 the Data Transfer API names it and `gam print datatransfers` lists it; `gws-client.js
 verify-transfer --transfer-id [TRANSFER_ID]` reads that one transfer, `/gws-offboard` Phase C).
 
+Software engineering lane (batch 12, 2026-11-14, `knowledge/software-engineering/`): `[COMMIT_SHA]` (one git
+commit id, full or abbreviated, as `git log` or `git reflog` prints it) · `[PR_NUMBER]` (one pull request
+number in `[REPO_NAME]`) · `[RUN_ID]` (one GitHub Actions workflow run id, as the run's page address shows
+it) · `[PACKAGE_NAME]` (one npm or PyPI package name) · `[PACKAGE_VERSION]` (one exact version of that
+package, such as 4.2.1). `[FILE_NAME]` also covers a script file or a CI workflow file in this lane.
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

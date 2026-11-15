@@ -10,6 +10,22 @@
     "limitation": "Novel syntax and prose still require semantic review and grammar extension."
   },
   "directR1": [],
+  "visitorSetup": [
+    {
+      "file": "README.md",
+      "command": "indirect-exec",
+      "count": 1,
+      "statement": "curl -fsSL https://claude.ai/install.sh | bash",
+      "reason": "the official Claude Code installer, run by a visitor on their own Mac before trying Aegis"
+    },
+    {
+      "file": "README.md",
+      "command": "git-write",
+      "count": 1,
+      "statement": "git clone https://github.com/qFermions/Aegis.git",
+      "reason": "downloads this public repository into a new folder on the visitor's own computer"
+    }
+  ],
   "examples": [
     {
       "id": "ad-connect-delta",
@@ -8509,22 +8525,6 @@
         },
         {
           "sink": "redirect-write",
-          "count": 1
-        }
-      ],
-      "impactCategories": [
-        "external-system mutation",
-        "reversible state change"
-      ]
-    },
-    {
-      "id": "readme-repo-clone",
-      "file": "README.md",
-      "kind": "shell",
-      "mode": "preview",
-      "sinks": [
-        {
-          "sink": "git-write",
           "count": 1
         }
       ],

@@ -19,6 +19,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **One post, one confirmation.** The status update, each interim update and the resolved follow-up get their own draft file, digest and typed confirmation; a phrase never carries into a later post.
 - Posting is R1: one message, and the way back is a correction, posted as a new message through the same gate. Taking a post down is a message deletion, which this lane floors at T3, so it stays a planning-only preview here [slack-incident-comms-delete-post-preview]. An announcement reaches everyone at once: read the draft twice.
 - Slack labels here come from Slack's search-indexed help pages and a 2019 Slack blog, not the live pages (the hosts could not be opened on 2026-10-27): confirm each label on screen.
+- **A security incident has its own owner** (answer-format section 2, rule a): when the outage is, or may be, a compromise (an account taken over, ransomware, a leaked key), the security lead or the security on-call decides what is posted, where and when, and gets what was seen, when, and which systems first. The draft says what users should do and not do, names no cause and no severity before that team has looked, and never goes to a channel shared with another organization or one a compromised account can read.
 
 ## Inputs needed
 

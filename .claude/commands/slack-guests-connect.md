@@ -20,6 +20,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Slack's facts and menu labels below come from Slack's search-indexed help and developer pages, read 2026-10-27 (the pages themselves could not be opened); method names and fields come from Slack's own SDK source and its 2021 API spec. Confirm each label on screen; if the screen does not match, stop and record what you see.
 - Not done until the read-back passes: `node scripts/adapters/slack-client.js` sends GET reads only and refuses every write method before it reads a credential, so it proves a human's change and cannot make one.
 - Out of this runbook: deactivating a guest and converting a member into a guest are in the Slack user lifecycle runbook (slack-user-lifecycle); deleting a channel or messages is in the Slack retention and export runbook (slack-retention-export).
+- **Least privilege** (answer-format section 2, rule b): a single-channel guest before a multi-channel guest, and a guest before a member, for anyone outside the organization; the owner of the channel the guest joins approves, named in the ticket; every guest gets a time limit (Phase B), set to the end of the work. A Slack Connect invitation is approved only for the partner and the channel the ticket names.
+- **A smell of compromise** (rule a): a Slack Connect invitation from an organization nobody expected or whose name copies a known partner, or a guest asking for files or credentials outside the work. Name the escalation to the security lead or the security on-call (they need the organization or guest, the channel, when, and the messages as evidence) and decline nothing in a hurry that they would want to read first.
 
 ## Inputs needed
 

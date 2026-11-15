@@ -22,6 +22,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Suspend is R3 and immediate:** access is revoked and sessions end at once (schema). With SCIM on, the identity provider owns the account: suspend there.
 - **Export is R3:** the data leaves Linear and a downloaded file cannot be recalled.
 - **SAML, SCIM and sign-in methods** are read here; changing them is planning only (Phase F).
+- **A compromised account** (answer-format section 2, rule a): Phase D's suspend for an account that may be in other hands goes with an escalation to the security lead or the security on-call (they need the member, what was seen and when, and the audit log entries), and an export or a bulk delete asked for in a message or by an account whose owner did not ask waits for them.
 - Not done until each read-back passes and the Linear-ready note is posted and verified.
 
 ## Inputs needed

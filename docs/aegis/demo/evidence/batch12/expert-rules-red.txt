@@ -1,0 +1,250 @@
+✖ each judgment rule: two fixture pairs on two platforms, the pass answer passes and the fail answer fails (0.824833ms)
+✖ rule e in the judged runner: fix-card-fits fails a card over 150 words and passes one within (0.228167ms)
+✖ rule a applies on a smell and only on a smell (0.114625ms)
+✖ rule a needs who and what they need, not the word security alone (0.0725ms)
+✖ rule b applies to new access only, and asks for an end date only when the access is temporary (0.099458ms)
+✖ rule c: not an account recovery, and a secret needs a revoke before any cleanup (0.094292ms)
+✖ rule d: evidence given means the answer may proceed; advice before the question fails (0.08875ms)
+✖ the mode row: first line names the mode, and the answer holds that mode's parts within its budget (0.200041ms)
+✖ claims of a check match the reading record, or are about what the asker sent (0.310833ms)
+✖ a fetched page is cited with its date, and only a page the record holds is called fetched (0.106542ms)
+✖ the asker reply: no stock opening, claims need calls, and a reply to a reporter for someone else passes (21.561709ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 0
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 66.742959
+
+✖ failing tests:
+
+test at scripts/demo/expert-rules.test.js:40:1
+✖ each judgment rule: two fixture pairs on two platforms, the pass answer passes and the fail answer fails (0.824833ms)
+  AssertionError [ERR_ASSERTION]: a-okta-fail: expected fail, got pass ()
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:45:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:59:1
+✖ rule e in the judged runner: fix-card-fits fails a card over 150 words and passes one within (0.228167ms)
+  AssertionError [ERR_ASSERTION]: e-microsoft-fail: 
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:62:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:70:1
+✖ rule a applies on a smell and only on a smell (0.114625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:72:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:82:1
+✖ rule a needs who and what they need, not the word security alone (0.0725ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:85:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:94:1
+✖ rule b applies to new access only, and asks for an end date only when the access is temporary (0.099458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:95:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:103:1
+✖ rule c: not an account recovery, and a secret needs a revoke before any cleanup (0.094292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:104:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:111:1
+✖ rule d: evidence given means the answer may proceed; advice before the question fails (0.08875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:113:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:120:1
+✖ the mode row: first line names the mode, and the answer holds that mode's parts within its budget (0.200041ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 'engineer'
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:126:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'engineer',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:143:1
+✖ claims of a check match the reading record, or are about what the asker sent (0.310833ms)
+  AssertionError [ERR_ASSERTION]: the docs call failed
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:148:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:156:1
+✖ a fetched page is cited with its date, and only a page the record holds is called fetched (0.106542ms)
+  AssertionError [ERR_ASSERTION]: no date
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:159:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/expert-rules.test.js:166:1
+✖ the asker reply: no stock opening, claims need calls, and a reply to a reporter for someone else passes (21.561709ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(replyProblems(stock, { ticket: 'A new starter cannot sign in.' }).some((p) => /stock/.test(p)))
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:169:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

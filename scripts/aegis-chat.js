@@ -2,12 +2,14 @@
 'use strict';
 // aegis-chat.js: an interactive Claude Code session inside Aegis, for follow-up questions (batch 9, task 11).
 //
-// Usage: node scripts/aegis-chat.js [--setup "what the company runs"] [--reply-to asker] [--model <model>]
+// Usage: node scripts/aegis-chat.js [--setup "what the company runs"] [--reply-to asker] [--model <model>] [--no-tools]
 //
 // AEGIS ADVISES; HUMANS EXECUTE. The session has the Customer Desk's tool flags and isolation, taken from
 // backends.sutArgs without its print-mode flags (-p, stream-json, --max-turns, --no-session-persistence):
-// read-only tools, no Bash, no Edit or Write, no web, this repository's settings and CLAUDE.md only, no
-// user plugin, hook or MCP server, a scrubbed environment. --setup goes in as an appended system prompt
+// read-only tools, no Bash, no Edit or Write, no open web, this repository's settings and CLAUDE.md only, no
+// user plugin, hook or MCP server but Aegis's own read-only tool server (batch 12, task 5: public lookups of vendor
+// documentation on a fixed list and of DNS, web and certificate records; --no-tools leaves it out, and its calls are
+// audited under ~/aegis-asks/chat-<run id>/), a scrubbed environment. --setup goes in as an appended system prompt
 // marked as data about the environment. --reply-to asker (batch 11, task 6) adds, to the same appended prompt, the
 // voice of the reply to the person who asked (docs/aegis/answer-format.md, section 8), so it holds across turns;
 // the replies are text a person sends, and the chat sends nothing. The terminal is handed to claude; the exit code
@@ -19,9 +21,13 @@ const backends = require('./eval/judged/backends.js');
 const path = require('node:path');
 
 const { REPO_ROOT, ASKS_DIR, homeOf, sessionEnv, setupBlock, protect } = require('./ask-aegis.js');
+const fs = require('node:fs');
+const paths = require('./eval/judged/paths.js');
 
 const NOTICE = 'This Aegis chat reads only: Aegis can read its runbooks and answer your questions, and it cannot run commands, change files or change anything in your systems; a person does every change.';
-const USAGE = 'Usage: node scripts/aegis-chat.js [--setup "what the company runs"] [--reply-to asker] [--model <model>]\nType your questions inside the chat.\n';
+// With the read-only tool server on (batch 12, task 5), the chat can also make public lookups; the notice says so.
+const NOTICE_TOOLS = 'This Aegis chat reads only: Aegis can read its runbooks and make public lookups (vendor documentation on a fixed list, and public DNS, web and certificate records), and it cannot run commands, change files or change anything in your systems; a person does every change.';
+const USAGE = 'Usage: node scripts/aegis-chat.js [--setup "what the company runs"] [--reply-to asker] [--model <model>] [--no-tools]\nType your questions inside the chat.\n';
 // The asker's voice for a whole chat: this command's own instruction, in the appended system prompt.
 const ASKER_VOICE = [
   'Every answer in this chat is the reply to the person who asked, as docs/aegis/answer-format.md section 8 sets it out: work the ticket as Aegis works any ticket, then show only that reply.',
@@ -32,8 +38,9 @@ const ASKER_VOICE = [
 // asksRoot, the saved asks (~/aegis-asks), is denied like a desk run's folder (review round 1, finding 2)
 // replyTo: null, or 'asker' for the asker's voice on every turn; one appended prompt holds the setup and the voice
 // model: the chat's model, backends.PINNED_MODEL when none is given (it is the last of sutArgs, after --tools)
-function chatArgs(setup, asksRoot, replyTo = null, model = null) {
-  const desk = backends.sutArgs({ prompt: '', persist: false, runRoot: asksRoot, model });
+// tools and auditFile: the read-only tool server (batch 12, task 5), on by default
+function chatArgs(setup, asksRoot, replyTo = null, model = null, { tools = true, auditFile = null } = {}) {
+  const desk = backends.sutArgs({ prompt: '', persist: false, runRoot: asksRoot, model, tools, auditFile });
   const args = desk.slice(desk.indexOf('--tools'));
   const appended = [...(setup && setup.trim() ? setupBlock(setup, 'session') : []), ...(replyTo === 'asker' ? [ASKER_VOICE] : [])];
   return appended.length ? [...args, '--append-system-prompt', appended.join('\n')] : args;
@@ -44,8 +51,10 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
   let setup = null;
   let replyTo = null;
   let model = backends.PINNED_MODEL;
+  let tools = true;
   for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i] === '--model' && i + 1 < argv.length && backends.isModelName(argv[i + 1])) { model = argv[i + 1]; i += 1; } else if (argv[i] === '--setup' && i + 1 < argv.length) { setup = argv[i + 1]; i += 1; } else if (argv[i] === '--reply-to' && argv[i + 1] === 'asker') { replyTo = 'asker'; i += 1; } else if (argv[i] === '--help' || argv[i] === '-h') { io.out(USAGE); return Promise.resolve(0); } else {
+    if (argv[i] === '--no-tools') tools = false;
+    else if (argv[i] === '--model' && i + 1 < argv.length && backends.isModelName(argv[i + 1])) { model = argv[i + 1]; i += 1; } else if (argv[i] === '--setup' && i + 1 < argv.length) { setup = argv[i + 1]; i += 1; } else if (argv[i] === '--reply-to' && argv[i + 1] === 'asker') { replyTo = 'asker'; i += 1; } else if (argv[i] === '--help' || argv[i] === '-h') { io.out(USAGE); return Promise.resolve(0); } else {
       const why = argv[i] === '--setup' ? '--setup needs a value' : (argv[i] === '--reply-to' ? '--reply-to takes asker' : (argv[i] === '--model' ? '--model takes a model name, such as claude-opus-5-5' : `unexpected ${JSON.stringify(argv[i]).slice(0, 40)}`));
       io.err(`aegis-chat: ${why}\n${USAGE}`);
       return Promise.resolve(1);
@@ -57,7 +66,13 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
     if (safe.blocked) { io.err(`aegis-chat: the setup text holds a value Aegis never keeps (${safe.blocked.join('; ')}). Nothing was sent. Take it out and start again.\n`); return Promise.resolve(1); }
     setup = safe.text;
   }
-  io.out(`${NOTICE}\n`);
+  // the chat's tool calls are audited to a folder of its own under the saved asks, which the session may not read
+  let auditFile = null;
+  if (tools) {
+    const chatDir = path.join(homeOf(env), ASKS_DIR, `chat-${paths.newRunId()}`);
+    try { fs.mkdirSync(chatDir, { recursive: true, mode: 0o700 }); auditFile = path.join(chatDir, 'tool-audit.jsonl'); } catch { /* the server then audits to its stderr */ }
+  }
+  io.out(`${tools ? NOTICE_TOOLS : NOTICE}\n`);
   const backend = deps.backend || { command: 'claude', prefixArgs: [] };
   const spawn = deps.spawn || childProcess.spawn;
   return new Promise((resolve) => {
@@ -70,7 +85,7 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
     const failed = (e) => { io.err(`aegis-chat: could not start claude (${e.code || 'error'}). Is Claude Code installed? Type claude once to install it and sign in.\n`); finish(2); };
     let child;
     try {
-      child = spawn(backend.command, [...(backend.prefixArgs || []), ...chatArgs(setup, path.join(homeOf(env), ASKS_DIR), replyTo, model)], { cwd: REPO_ROOT, env: sessionEnv(env), stdio: 'inherit', shell: false });
+      child = spawn(backend.command, [...(backend.prefixArgs || []), ...chatArgs(setup, path.join(homeOf(env), ASKS_DIR), replyTo, model, { tools, auditFile })], { cwd: REPO_ROOT, env: sessionEnv(env), stdio: 'inherit', shell: false });
     } catch (e) { failed(e); return; }
     child.on('error', failed);
     child.on('exit', (code) => finish(code === null ? 2 : code));
@@ -81,4 +96,4 @@ if (require.main === module) {
   main().then((code) => { process.exitCode = code; });
 }
 
-module.exports = { main, chatArgs, NOTICE, ASKER_VOICE };
+module.exports = { main, chatArgs, NOTICE, NOTICE_TOOLS, ASKER_VOICE };

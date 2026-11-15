@@ -24,6 +24,27 @@
       "count": 1,
       "statement": "git clone https://github.com/qFermions/Aegis.git",
       "reason": "downloads this public repository into a new folder on the visitor's own computer"
+    },
+    {
+      "file": "README.md",
+      "command": "indirect-exec",
+      "count": 1,
+      "statement": "irm https://claude.ai/install.ps1 | iex",
+      "reason": "the official Claude Code installer for Windows, run by a visitor in PowerShell on their own computer before trying Aegis"
+    },
+    {
+      "file": "README.md",
+      "command": "package-write",
+      "count": 1,
+      "statement": "winget install OpenJS.NodeJS.LTS",
+      "reason": "installs Node.js, which Aegis runs on, on the visitor's own Windows computer"
+    },
+    {
+      "file": "README.md",
+      "command": "package-write",
+      "count": 1,
+      "statement": "winget install Git.Git",
+      "reason": "installs Git, to download Aegis, on the visitor's own Windows computer"
     }
   ],
   "examples": [

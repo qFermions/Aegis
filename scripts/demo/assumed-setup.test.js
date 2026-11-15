@@ -45,7 +45,8 @@ const answer = ({ first = [], steps, details = 'Nothing else changes.' }) => [
 const MICROSOFT_STEPS = ['Open Entra admin center → Users → [UPN] and read the sign-in status.', 'Read the latest entry under Sign-in logs.', 'Ask [FIRST_NAME] to sign in again.'];
 const GOOGLE_STEPS = ['Open the Google Admin console → Directory → Users → [UPN] and read the account status.', 'Read the latest login event under Reporting.', 'Ask [FIRST_NAME] to sign in again.'];
 const OKTA_STEPS = ['Open the Okta Admin Console → Directory → People → [UPN] and read the status.', 'Read the latest event in the System Log.', 'Ask [FIRST_NAME] to sign in again.'];
-const NO_PROFILE = '(no company profile given).';
+// batch 12, task 4: the line also invites the setup, so the default is never silent
+const NO_PROFILE = '(no company profile given). Tell me what your company runs for a better answer.';
 
 test('task 2: three answers that must carry the line: no setup given and a ticket that names no system', () => {
   const cases = [
@@ -196,4 +197,31 @@ test('code review 3: a negation stops at a comma unless its list goes on; "is no
   for (const setup of ['Google Workspace only; we don’t use Microsoft 365.', 'Google Workspace. No Microsoft 365, Intune or Entra.']) {
     assert.equal(assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup, ticket }).verdict, 'fail', setup);
   }
+});
+
+// Batch 12, task 4: no silent Microsoft default. The line invites the setup; the line of an Engineer or Incident answer
+// is the one right after the mode line; and an ask-first answer to a bare ticket is not held to the line, since it is
+// one question and nothing else (it assumes no setup; the batch 11 row failed it, which contradicted the ask-first row).
+// Wrong implementations: a row that still accepts the batch 11 line without the invite; one that only reads under
+// "## Fix" (the Engineer answer's line would be missed); one that holds an ask-first answer to a line it cannot carry.
+test('task 4 (batch 12): the line invites the setup and sits after the mode line outside a card', () => {
+  const ticket = 'A new starter cannot sign in on her first day.';
+  const old = answer({ first: ['Assumed setup: Microsoft 365 with hybrid Active Directory (no company profile given).'], steps: MICROSOFT_STEPS });
+  const r = assumedSetup(old, { setup: null, ticket });
+  assert.equal(r.verdict, 'fail', 'the batch 11 line without the invite');
+  assert.match(r.detail, /Tell me what your company runs/);
+  const engineer = ['Mode: Engineer answer', `Assumed setup: a public website behind a CDN ${NO_PROFILE}`, '## Engineer answer', '**Evidence read:** none.', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  assert.equal(assumedSetup(engineer, { setup: null, ticket: 'Our website is slow from Europe since this morning.' }).verdict, 'pass');
+  const incident = ['Mode: Incident answer', '## Incident answer', '**Severity:** SEV-3.', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  assert.equal(assumedSetup(incident, { setup: null, ticket: 'Someone says they got a weird email and clicked it.' }).verdict, 'fail', 'no line at all');
+});
+
+// Fix beyond the task (batch 12): the batch 11 row failed an ask-first answer to a bare ticket for having no line, while
+// the ask-first row requires that answer to be one question and nothing else, so no answer could pass both. Wrong
+// implementation: a row that holds every answer with no setup to the line.
+test('an ask-first answer to a bare ticket is not held to the Assumed setup line', () => {
+  const ask = ['Mode: Ask first', 'What exactly happens when you print, who is affected, and since when?', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  assert.equal(assumedSetup(ask, { setup: null, ticket: 'The printer is broken.' }).applies, false, 'an ask-first answer assumes nothing');
+  const bare = ask.replace('Mode: Ask first\n', '');
+  assert.equal(assumedSetup(bare, { setup: null, ticket: 'The scanner is broken.' }).applies, false, 'with or without the mode line');
 });

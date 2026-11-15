@@ -111,7 +111,7 @@ function stepPlain(step, t) {
       if (f.answered === false) return 'Aegis did not finish an answer.';
       return `Aegis wrote its answer${typeof step.cost_usd === 'number' ? ` for ${usd(step.cost_usd)}` : ''}.`;
     case 5: {
-      const rows = [...(step.checks || []).filter((c) => c.applies), ...(step.answer_checks || [])];
+      const rows = [...(step.checks || []).filter((c) => c.applies), ...(step.answer_checks || []), ...(step.expert_checks || [])];
       return rows.length ? `The answer passed ${rows.filter((c) => c.verdict === 'pass').length} of ${plural(rows.length, 'check')}.` : 'Aegis checked the answer.';
     }
     case 6:
@@ -147,7 +147,7 @@ function stepExtra(step, t) {
     return `${shown}${now}\n<details><summary>The whole answer</summary><pre class="shown">${esc(body)}</pre></details>`;
   }
   if (step.n === 5) {
-    const rows = [...(step.checks || []).filter((c) => c.applies).map((c) => `${esc(PLAIN_CHECKS[c.check] || c.check)}: ${mark(c.verdict)}`), ...(step.answer_checks || []).map((c) => `${esc(c.plain)}: ${mark(c.verdict)}`)];
+    const rows = [...(step.checks || []).filter((c) => c.applies).map((c) => `${esc(PLAIN_CHECKS[c.check] || c.check)}: ${mark(c.verdict)}`), ...[...(step.answer_checks || []), ...(step.expert_checks || [])].map((c) => `${esc(c.plain)}: ${mark(c.verdict)}`)];
     return listHtml(rows);
   }
   if (step.n === 6 && step.signed_off) {

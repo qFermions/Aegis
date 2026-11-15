@@ -151,15 +151,17 @@ test('judged-eval: a session that reports another model than the one asked for m
   const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--model', 'claude-sonnet-5-5', '--judge-model', 'judge-x-1'], s.io, s.deps);
   assert.equal(code, 3, `${s.out.join('\n')}\n${s.err.join('\n')}`);
   const calls = s.calls();
-  assert.deepEqual(calls.filter((c) => c.role === 'sut').map((c) => modelOf(c.args)), ['claude-sonnet-5-5', 'claude-sonnet-5-5']);
-  assert.deepEqual(calls.filter((c) => c.role === 'judge').map((c) => modelOf(c.args)), ['judge-x-1', 'judge-x-1']);
+  // code review 2, finding 12: the run stops after the first case on another model, so DEV02 never starts
+  assert.deepEqual(calls.filter((c) => c.role === 'sut').map((c) => modelOf(c.args)), ['claude-sonnet-5-5']);
+  assert.deepEqual(calls.filter((c) => c.role === 'judge').map((c) => modelOf(c.args)), ['judge-x-1']);
   const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
-  for (const c of json.cases) {
-    assert.equal(c.verdict, 'INCONCLUSIVE', c.id);
-    assert.match(c.reasons[0], /system under test ran on claude-fable-5-2, not the pinned claude-sonnet-5-5/);
-  }
-  assert.deepEqual(json.summary.off_model, { count: 2, ids: ['DEV01', 'DEV02'] });
-  assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /\| Cases that ran on another model than the pinned one \(each is INCONCLUSIVE\) \| 2 \(DEV01, DEV02\) \|/);
+  assert.equal(json.cases[0].verdict, 'INCONCLUSIVE');
+  assert.match(json.cases[0].reasons[0], /system under test ran on claude-fable-5-2, not the pinned claude-sonnet-5-5/);
+  assert.equal(json.cases[1].sut.state, 'NOT_RUN');
+  assert.equal(json.cases[1].verdict, 'INCONCLUSIVE');
+  assert.match(json.cases[1].reasons[0], /not run: DEV01 ran on another model than the pinned one, so no later case would count/);
+  assert.deepEqual(json.summary.off_model, { count: 1, ids: ['DEV01'] });
+  assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /\| Cases that ran on another model than the pinned one \(each is INCONCLUSIVE\) \| 1 \(DEV01\) \|/);
 });
 
 // Code review round 1, finding 3: the runner compares the pin with the model each session reports, which is the full
@@ -174,4 +176,19 @@ test('code review 1: the judged runner refuses a model alias before anything sta
     assert.equal(s.calls().length, 0);
   }
   assert.ok(backends.sutArgs({ prompt: 'P', model: 'opus' }).includes('opus'), 'the shared argument builder still takes an alias');
+});
+
+// Code review round 2, finding 12: the digit test lets an alias with a digit through ("opus[1m]"), and each session
+// reports the full id, so a whole paid run could end off-model. The run now stops after the first case on another
+// model: the rest are not run, INCONCLUSIVE with the reason. Wrong implementation it catches: one that runs every case
+// and only marks them afterwards.
+test('code review 2: a run stops after its first case on another model; an alias with a digit costs one case, not the run', async (t) => {
+  const s = setup(t, { sut: { model: 'claude-opus-5-5' } });
+  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--model', 'opus[1m]'], s.io, s.deps);
+  assert.equal(code, 3, s.err.join('\n'));
+  assert.equal(s.calls().filter((c) => c.role === 'sut').length, 1, 'one session, not one per case');
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  assert.match(json.cases[0].reasons[0], /ran on claude-opus-5-5, not the pinned opus\[1m\]/);
+  assert.deepEqual(json.cases.slice(1).map((c) => c.sut.state), ['NOT_RUN']);
+  assert.ok(s.out.some((l) => /did not run: DEV01 ran on another model than the pinned one/.test(l)), s.out.join('\n'));
 });

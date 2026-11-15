@@ -227,7 +227,16 @@ async function runCommand(opts, io, deps) {
   let notRun = 0;
   // a session that stopped with no cost reported: what the run spent is unknown, so no limit can be held after it
   let costUnknown = false;
+  // the first case on another model than the pin: no later case would count, so none starts (code review 2, finding 12)
+  let offModel = null;
   for (const c of list) {
+    if (offModel) {
+      const r = notRunRecord(c, `not run: ${offModel} ran on another model than the pinned one, so no later case would count`);
+      results.push(r);
+      notRun += 1;
+      io.out(report.terminalLine(r));
+      continue;
+    }
     if (config.budget_usd !== null && (costUnknown || spent + (dearest > 0 ? dearest : FIRST_CASE_GUESS_USD) > config.budget_usd + 1e-9)) {
       const r = notRunRecord(c, costUnknown
         ? `not run: a session before this case stopped with no cost reported, so what the run spent is unknown and its limit of ${config.budget_usd.toFixed(2)} US dollars cannot be held`
@@ -251,6 +260,7 @@ async function runCommand(opts, io, deps) {
     };
     results.push(r);
     io.out(report.terminalLine(r));
+    if (r.off_model) offModel = c.id;
     // each turn's known cost counts, and a session that ran and reported none makes the run's spending unknown
     // (code review 1, finding 2): a timeout, an output-cap kill, or a session that started (it reported its model)
     const turns = Array.isArray(sut.turns) && sut.turns.length ? sut.turns : [sut];
@@ -260,7 +270,8 @@ async function runCommand(opts, io, deps) {
     dearest = Math.max(dearest, caseCost);
   }
   const limitText = config.budget_usd === null ? '' : `the run's limit of ${config.budget_usd.toFixed(2)} US dollars`;
-  if (notRun) io.out(`${notRun} case(s) did not run: ${costUnknown ? `a session stopped with no cost reported, so ${limitText} cannot be held` : `${limitText} would have been passed`}; each is INCONCLUSIVE in the results`);
+  const notRunWhy = offModel ? `${offModel} ran on another model than the pinned one, so no later case would count` : (costUnknown ? `a session stopped with no cost reported, so ${limitText} cannot be held` : `${limitText} would have been passed`);
+  if (notRun) io.out(`${notRun} case(s) did not run: ${notRunWhy}; each is INCONCLUSIVE in the results`);
   const summary = report.summarize(results, { baseline });
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];
   const payload = {

@@ -271,7 +271,9 @@ const SCOPE = Object.freeze([
 ]);
 const STATUS_PAGE = /\bstatus (?:page|dashboard|site)\b|\bservice health\b|\bhealth dashboard\b|\bstatus\.[a-z0-9-]+\.[a-z]+\b|\b[a-z]+status\.com\b|\bincident page\b/i;
 const NETWORK_PATH = /\bnetwork\b|\bdns\b|\bname resolution\b|\bresolv(?:e|es|ing) the (?:name|host|address)\b|\blook(?:s|ing)? up [^.\n]{0,40}by name\b|\bnslookup\b|\bwi-?fi\b|\bfirewall\b|\bisp\b|\brouter\b|\bvpn\b|\bconnectivity\b|\bping\b|\btraceroute\b|\bcabl(?:e|es|ing)\b/i;
-const SCOPE_ACCOUNT = /\b(?:anyone else's|someone else's|everyone's|everybody's|other (?:people's|users'|staff's|colleagues')|whose) accounts?\b|\bother (?:user )?accounts?\b|\baccounts? (?:of )?(?:anyone|everyone|others) else\b/gi;
+// and the "this one or all" scope forms (code review 3, finding 11): "just your account or everyone", "one account or
+// all", "their accounts or everyone's"; an account named with no "or everyone / all / others" after it is a cause
+const SCOPE_ACCOUNT = /\b(?:anyone else's|someone else's|everyone's|everybody's|other (?:people's|users'|staff's|colleagues')|whose) accounts?\b|\bother (?:user )?accounts?\b|\baccounts? (?:of )?(?:anyone|everyone|others) else\b|\b(?:(?:just|only) )?(?:your|their|his|her|my|one|this|a single) accounts? or (?:everyone(?:'s)?|everybody(?:'s)?|all|others?|other people(?:'s)?|the whole \w+)\b/gi;
 const ACCOUNT_CAUSE = /\blicen[cs]es?\b|\bpasswords?\b|\baccount(?:'s)?\b|\bsuspended\b|\bsign-in logs?\b|\bconditional access\b|\bpermissions?\b|\bmfa\b|\b2-step\b|\bgroup membership\b/i;
 
 function howWideBeforeWhy(answer, { ticket = '' } = {}) {

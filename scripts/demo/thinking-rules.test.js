@@ -445,3 +445,17 @@ test('code review 3: a password reset or new password near "phone" is not a lost
     assert.equal(lostSignInDevice(yes), true, yes);
   }
 });
+
+// Code review round 3, finding 11: the scope wording set aside before the account test missed "just your account or
+// everyone", "one account or all" and "their accounts or everyone's". Wrong implementation it catches: a list of a few
+// phrasings about other people's accounts only. An account step with no scope wording still counts.
+test('code review 3: "is it just your account or everyone" is scope; "check your account" in step 1 is still an account cause', () => {
+  const ticket = 'Slack will not load for the support team this morning.';
+  const card = (steps) => ['## Fix', "**What's wrong:** Slack does not load.", '**Do this:**', ...steps.map((s, i) => `${i + 1}. ${s}`), '**Done when:** Slack loads.', ''].join('\n');
+  for (const scope of ['Fix the scope: is it just your account or everyone, one site or all sites; read the Slack status page.', 'Fix the scope: one account or all, one site or all sites, and other services too; read the Slack status page.']) {
+    const r = howWideBeforeWhy(card([scope, 'Check DNS with nslookup.']), { ticket });
+    assert.equal(r.verdict, 'pass', `${scope}: ${r.detail}`);
+  }
+  const bad = howWideBeforeWhy(card(['Check your account first, then fix the scope: one person or everyone, one site or all sites; read the Slack status page.', 'Check DNS with nslookup.']), { ticket });
+  assert.equal(bad.verdict, 'fail');
+});

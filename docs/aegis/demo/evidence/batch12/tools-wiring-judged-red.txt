@@ -1,0 +1,63 @@
+✔ the tool server is on by default for the system under test, never for the judge, and off leaves the old argv (batch 12) (73.150875ms)
+✖ batch 12: summarizeTurn records the tools and MCP servers the init event listed (0.558875ms)
+✔ batch 12: a case records its lane, its mode against the expected one, its tool calls and the new checks (72.625792ms)
+✖ batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had (46.75375ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 162.611708
+
+✖ failing tests:
+
+test at scripts/eval/judged/backends.test.js:344:1
+✖ batch 12: summarizeTurn records the tools and MCP servers the init event listed (0.558875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - [
+  -   'Read',
+  -   'mcp__aegis-tools__net_dns'
+  - ]
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/eval/judged/backends.test.js:350:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at node:internal/test_runner/test:1305:31
+      at node:internal/process/task_queues:151:7
+      at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+      at AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: [ 'Read', 'mcp__aegis-tools__net_dns' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/cli.test.js:273:1
+✖ batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had (46.75375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - true
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/eval/judged/cli.test.js:279:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

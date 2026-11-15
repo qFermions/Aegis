@@ -85,6 +85,23 @@ const VISITOR_SETUP_INVENTORY = [
     statement: 'git clone https://github.com/qFermions/Aegis.git',
     reason: "downloads this public repository into a new folder on the visitor's own computer",
   },
+  // batch 12, task 12: the PowerShell fences are scanned for indirect execution and package installs now, which finds
+  // the Windows half of the same guide
+  {
+    file: 'README.md', command: 'indirect-exec', count: 1,
+    statement: 'irm https://claude.ai/install.ps1 | iex',
+    reason: "the official Claude Code installer for Windows, run by a visitor in PowerShell on their own computer before trying Aegis",
+  },
+  {
+    file: 'README.md', command: 'package-write', count: 1,
+    statement: 'winget install OpenJS.NodeJS.LTS',
+    reason: "installs Node.js, which Aegis runs on, on the visitor's own Windows computer",
+  },
+  {
+    file: 'README.md', command: 'package-write', count: 1,
+    statement: 'winget install Git.Git',
+    reason: "installs Git, to download Aegis, on the visitor's own Windows computer",
+  },
 ];
 
 function normalizeFile(file) {
@@ -357,6 +374,81 @@ const G1_CLI_SINKS = [
   ['fleetctl-write', 'fleetctl', fleetctlWrites],
 ];
 
+// ── Batch 12, task 12: the expert lanes' CLIs (terraform, kubectl, helm, aws, az) and a forced git push ─────────
+// Each invocation is decided on its own, as for the G1 tools: an explicit read stays live, and anything else is a write
+// (fail-closed). See the expected decisions above the batch 12 tests at the end of this file.
+const TERRAFORM_READ = new Set(['plan', 'show', 'validate', 'fmt', 'version', 'providers', 'output', 'graph', 'init', 'get', 'test', 'metadata', 'console']);
+function terraformWrites(args) {
+  const tokens = cliTokens(args);
+  const positional = tokens.filter((t) => !t.startsWith('-'));
+  const [sub, next] = positional;
+  if (!sub) return !tokens.every((t) => /^-(?:-?help|-?version|chdir=\S+)$/.test(t));
+  if (sub === 'state') return !['list', 'show', 'pull'].includes(next || '');
+  if (sub === 'workspace') return !['list', 'show'].includes(next || '');
+  if (sub === 'init') return tokens.some((t) => /^-(?:migrate-state|force-copy)\b/.test(t));
+  return !TERRAFORM_READ.has(sub);
+}
+const KUBECTL_READ = new Set(['get', 'describe', 'logs', 'top', 'events', 'explain', 'api-resources', 'api-versions', 'version', 'cluster-info', 'diff', 'auth', 'wait', 'port-forward', 'proxy', 'completion', 'kustomize', 'plugin', 'config']);
+const KUBECTL_WRITE = new Set(['apply', 'delete', 'scale', 'rollout', 'patch', 'edit', 'drain', 'cordon', 'uncordon', 'taint', 'label', 'annotate', 'create', 'replace', 'set', 'expose', 'autoscale', 'run', 'exec', 'cp', 'debug', 'attach', 'certificate']);
+function kubectlWrites(args) {
+  const tokens = cliTokens(args).map((t) => t.toLowerCase());
+  const at = tokens.findIndex((t) => KUBECTL_READ.has(t) || KUBECTL_WRITE.has(t));
+  if (at < 0) return true;
+  if (tokens[at] === 'rollout') return !['status', 'history'].includes(tokens[at + 1] || '');
+  // config only reads with view, get-contexts, current-context or get-clusters
+  if (tokens[at] === 'config') return !['view', 'get-contexts', 'current-context', 'get-clusters'].includes(tokens[at + 1] || '');
+  return KUBECTL_WRITE.has(tokens[at]);
+}
+const HELM_READ = new Set(['list', 'ls', 'status', 'get', 'history', 'show', 'inspect', 'template', 'search', 'version', 'lint', 'env', 'verify']);
+function helmWrites(args) {
+  const positional = cliTokens(args).filter((t) => !t.startsWith('-')).map((t) => t.toLowerCase());
+  return !HELM_READ.has(positional[0] || '');
+}
+// aws: the service and the operation, past the global options and their values
+const AWS_FLAGS_WITHOUT_VALUE = new Set(['--dry-run', '--no-dry-run', '--debug', '--no-cli-pager', '--no-paginate', '--no-verify-ssl', '--no-sign-request', '--recursive', '--force', '--quiet', '--human-readable', '--summarize', '--cli-auto-prompt', '--no-cli-auto-prompt']);
+const AWS_READ_OP = /^(?:describe|list|get|head|lookup|search|filter|scan|query|batch-get|wait|tail|select)(?:-|$)/;
+function awsWrites(args) {
+  const tokens = cliTokens(args);
+  const positional = [];
+  for (let i = 0; i < tokens.length; i += 1) {
+    const t = tokens[i];
+    if (t.startsWith('--')) { if (!t.includes('=') && !AWS_FLAGS_WITHOUT_VALUE.has(t)) i += 1; continue; }
+    if (t.startsWith('-')) continue;
+    positional.push(t.toLowerCase());
+  }
+  const [service, op] = positional;
+  if (!service || !op) return !tokens.every((t) => /^--?(?:version|help)$/.test(t)) && !(service === 'help');
+  if (service === 's3') return op !== 'ls' && op !== 'presign';
+  if (service === 'configure') return !['list', 'get', 'list-profiles'].includes(op);
+  return !AWS_READ_OP.test(op);
+}
+// az: the command words before the first option; the last one is the command
+const AZ_READ = /^(?:show|list|exists|wait|query|version|help|get|show-.+|list-.+|get-.+|check-.+)$/;
+function azWrites(args) {
+  const tokens = cliTokens(args);
+  const words = [];
+  for (const t of tokens) { if (t.startsWith('-')) break; words.push(t.toLowerCase()); }
+  if (!words.length) return !tokens.every((t) => /^--?(?:version|help)$/.test(t));
+  return !AZ_READ.test(words[words.length - 1]);
+}
+const B12_CLI_SINKS = [
+  ['terraform-write', 'terraform', terraformWrites],
+  ['kubectl-write', 'kubectl', kubectlWrites],
+  ['helm-write', 'helm', helmWrites],
+  ['aws-write', 'aws', awsWrites],
+  ['az-write', 'az', azWrites],
+];
+const B12_REMOTE_SINKS = new Set(['terraform-write', 'kubectl-write', 'helm-write', 'aws-write', 'az-write', 'git-force-push']);
+// a forced push rewrites a remote branch: --force, -f (alone or in a cluster), --force-with-lease, --force-if-includes or a + refspec
+const FORCE_PUSH = String.raw`git\s+(?:(?:-[A-Za-z]\s+\S+|--[\w-]+(?:=\S+)?)\s+)*push\b[^;|&\n]*?(?:\s--force(?:-with-lease|-if-includes)?\b|\s-[A-Za-z]*f[A-Za-z]*(?=\s|$)|\s\+[\w./:-]+)`;
+function b12CliHits(statement) {
+  const hits = [];
+  for (const [label, name, isWrite] of B12_CLI_SINKS) {
+    if (cliInvocations(statement, name).some((args) => isWrite(args))) hits.push(label);
+  }
+  return hits;
+}
+
 function g1CliHits(statement) {
   const hits = [];
   for (const [label, name, isWrite] of G1_CLI_SINKS) {
@@ -410,8 +502,16 @@ function commandsIn(statement, language) {
       if (pattern.test(statement)) hits.push(label);
     }
     hits.push(...g1CliHits(statement));
+    hits.push(...b12CliHits(statement));
+    if (new RegExp(`${boundary}${FORCE_PUSH}`, 'i').test(statement)) hits.push('git-force-push');
   }
-  return hits;
+  if (POWER_SHELL_LANGUAGES.has(language)) {
+    // batch 12, task 12: indirect execution and package installs in PowerShell, and a forced git push
+    if (/(?:^|[;{}(|])\s*&?\s*(?:iex|Invoke-Expression)\b/i.test(statement)) hits.push('indirect-exec');
+    if (/(?:^|[;{}(|])\s*&?\s*winget(?:\.exe)?\s+(?:install|upgrade|uninstall|remove|import|configure|add)\b/i.test(statement)) hits.push('package-write');
+    if (new RegExp(`(?:^|[;{}(|])\\s*&?\\s*${FORCE_PUSH}`, 'i').test(statement)) hits.push('git-force-push');
+  }
+  return [...new Set(hits)];
 }
 
 function mutationHits(document) {
@@ -477,6 +577,11 @@ function classifyImpact(command, text) {
   // G1 sinks: remote admin APIs vs on-device macOS administration, plus the
   // destructive and security vocabulary those ecosystems use.
   if (G1_REMOTE_SINKS.has(command)) categories.add('external-system mutation');
+  // batch 12: the cloud, cluster and infrastructure-as-code CLIs change remote systems; a forced push rewrites history
+  if (B12_REMOTE_SINKS.has(command)) categories.add('external-system mutation');
+  if (command === 'git-force-push') { categories.add('destructive'); categories.add('data-removal related'); }
+  if (B12_REMOTE_SINKS.has(command) && /\b(?:destroy|delete|drain|uninstall|terminate|rm|rb|state rm|force)\b/.test(value)) { categories.add('destructive'); categories.add('data-removal related'); }
+  if (B12_REMOTE_SINKS.has(command) && /\b(?:iam|role|policy|binding|access-key|secret|rbac|assignment)\b/.test(value)) { categories.add('permission-related'); categories.add('security-sensitive'); }
   if (G1_DEVICE_SINKS.has(command)) categories.add('device configuration change');
   if (G1_REMOTE_SINKS.has(command) || G1_DEVICE_SINKS.has(command)) {
     if (/erase|powerwash|deprovision|wipe|unmanage|removeframework|undelete/.test(value)) {
@@ -2802,4 +2907,162 @@ test('G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 ru
   assert.doesNotThrow(() => assertEffectCorrespondence('shorten message retention for the workspace', 'SET SLACK RETENTION TO [DAYS] DAYS', 'g2-shorten', '.claude/commands/slack-fixture.md'));
   assert.doesNotThrow(() => assertEffectCorrespondence('post one incident update to one channel', 'POST INCIDENT UPDATE TO [CHANNEL_NAME]', 'g2-post', '.claude/commands/slack-fixture.md'));
   assert.throws(() => assertEffectCorrespondence('disconnect one external organization', 'ARCHIVE [EXTERNAL_DOMAIN]', 'g2-mismatch', '.claude/commands/slack-fixture.md'));
+});
+
+// ── Batch 12, task 12: the expert lanes' sinks ────────────────────────────────────────────────
+// EXPECTED DECISIONS (written before the detector): in a shell fence (bash, sh, shell, zsh, console or untagged),
+// terraform apply, destroy, import, taint, untaint, force-unlock and every state write; kubectl apply, delete, scale,
+// rollout (but its read-only status and history), patch, edit, drain, cordon, uncordon, taint, label, annotate, create,
+// replace, set, expose, autoscale, run, exec and cp, and any verb it does not list as a read (fail-closed, as gcloud);
+// helm install, upgrade, uninstall, rollback and delete; an aws operation that is not a read (describe-, list-, get-,
+// head-, lookup-, search-, filter-, scan, query, wait, s3 ls, sts get-caller-identity); an az command whose last word is
+// not a read (show, list, get-*, show-*, list-*, exists, wait, query, version); and a git push with --force, -f,
+// --force-with-lease or a + refspec are sinks. In a PowerShell fence, Invoke-Expression and iex (irm or iwr piped to it
+// included) are indirect-exec, and winget install, upgrade, uninstall or import is package-write. Every hit in the repo
+// after this change is behind a gate, under PREVIEW ONLY, or in VISITOR_SETUP_INVENTORY (the existing owner tests).
+// Wrong implementations these catch: a detector keyed on the first word only (kubectl -n prod delete), one that reads
+// every kubectl or aws line as a write (the read-only table), one that misses a wrapper (sudo, env) in front of the tool,
+// one that misses iex at the end of a pipe, one that reads a plain git push as a force push.
+const B12_SHELL_MUTATIONS = [
+  ['terraform apply', 'terraform-write'],
+  ['terraform apply -auto-approve tfplan', 'terraform-write'],
+  ['terraform -chdir=infra/prod destroy', 'terraform-write'],
+  ['terraform import aws_s3_bucket.logs example-logs', 'terraform-write'],
+  ['terraform state rm module.db.aws_db_instance.main', 'terraform-write'],
+  ['terraform state mv aws_instance.a aws_instance.b', 'terraform-write'],
+  ['terraform force-unlock 1a2b3c', 'terraform-write'],
+  ['terraform taint aws_instance.web', 'terraform-write'],
+  ['sudo terraform apply', 'terraform-write'],
+  ['kubectl apply -f deploy.yaml', 'kubectl-write'],
+  ['kubectl -n prod delete pod web-0', 'kubectl-write'],
+  ['kubectl --context prod scale deploy/web --replicas=0', 'kubectl-write'],
+  ['kubectl rollout restart deploy/web', 'kubectl-write'],
+  ['kubectl rollout undo deploy/web', 'kubectl-write'],
+  ['kubectl patch deploy web -p \'{"spec":{}}\'', 'kubectl-write'],
+  ['kubectl edit cm app-config', 'kubectl-write'],
+  ['kubectl drain node-1 --ignore-daemonsets', 'kubectl-write'],
+  ['kubectl cordon node-1', 'kubectl-write'],
+  ['kubectl label node node-1 role=web', 'kubectl-write'],
+  ['kubectl exec -it web-0 -- sh', 'kubectl-write'],
+  ['kubectl create secret generic db --from-literal=x=y', 'kubectl-write'],
+  ['env KUBECONFIG=/tmp/fixture kubectl delete ns staging', 'kubectl-write'],
+  ['helm install web ./chart', 'helm-write'],
+  ['helm upgrade --install web ./chart -n prod', 'helm-write'],
+  ['helm uninstall web', 'helm-write'],
+  ['helm rollback web 3', 'helm-write'],
+  ['aws iam attach-user-policy --user-name [USER_NAME] --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess', 'aws-write'],
+  ['aws iam update-access-key --access-key-id [ACCESS_KEY_ID] --status Inactive --user-name [USER_NAME]', 'aws-write'],
+  ['aws ec2 terminate-instances --instance-ids i-0abc', 'aws-write'],
+  ['aws --region us-east-1 ec2 stop-instances --instance-ids i-0abc', 'aws-write'],
+  ['aws s3 rm s3://example-bucket/key', 'aws-write'],
+  ['aws s3 sync ./site s3://example-bucket', 'aws-write'],
+  ['aws s3api put-bucket-policy --bucket example-bucket --policy file://p.json', 'aws-write'],
+  ['aws configure set region us-east-1', 'aws-write'],
+  ['az role assignment create --assignee [UPN] --role Reader --scope /subscriptions/x', 'az-write'],
+  ['az network nsg rule delete -g rg --nsg-name nsg -n rule1', 'az-write'],
+  ['az vm deallocate -g rg -n vm1', 'az-write'],
+  ['az keyvault secret set --vault-name kv --name x --value y', 'az-write'],
+  ['gcloud projects add-iam-policy-binding fixture-project --member=user:[USER@DOMAIN.COM] --role=roles/viewer', 'gcloud-write'],
+  ['gcloud compute firewall-rules create allow-web --allow tcp:443', 'gcloud-write'],
+  ['git push --force origin main', 'git-force-push'],
+  ['git push -f origin feature', 'git-force-push'],
+  ['git push --force-with-lease origin feature', 'git-force-push'],
+  ['git push origin +main', 'git-force-push'],
+];
+const B12_SHELL_READ_ONLY = [
+  'terraform plan -out tfplan',
+  'terraform show -json tfplan',
+  'terraform state list',
+  'terraform state show aws_instance.web',
+  'terraform validate',
+  'terraform fmt -check',
+  'kubectl get pods -n prod',
+  'kubectl -n prod describe pod web-0',
+  'kubectl logs web-0 --previous',
+  'kubectl top pods',
+  'kubectl get events --sort-by=.lastTimestamp',
+  'kubectl rollout status deploy/web',
+  'kubectl rollout history deploy/web',
+  'kubectl auth can-i delete pods',
+  'kubectl diff -f deploy.yaml',
+  'helm list -A',
+  'helm status web',
+  'helm history web',
+  'helm template web ./chart',
+  'aws sts get-caller-identity',
+  'aws --profile audit --region us-east-1 ec2 describe-instances',
+  'aws iam list-access-keys --user-name [USER_NAME]',
+  'aws iam get-access-key-last-used --access-key-id [ACCESS_KEY_ID]',
+  'aws ec2 describe-security-groups --group-ids sg-0abc',
+  'aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=[ACCESS_KEY_ID]',
+  'aws s3 ls s3://example-bucket',
+  'aws logs filter-log-events --log-group-name app',
+  'az vm list -g rg',
+  'az role assignment list --assignee [UPN]',
+  'az network nsg rule show -g rg --nsg-name nsg -n rule1',
+  'az account show',
+  'gcloud compute instances list',
+  'git push origin feature',
+  'git log --oneline -5',
+  'git reflog',
+];
+const B12_POWERSHELL_MUTATIONS = [
+  ['irm https://example.com/install.ps1 | iex', 'indirect-exec'],
+  ['iwr -useb https://example.com/install.ps1 | iex', 'indirect-exec'],
+  ['Invoke-RestMethod https://example.com/x.ps1 | Invoke-Expression', 'indirect-exec'],
+  ['Invoke-Expression $script', 'indirect-exec'],
+  ['iex (New-Object Net.WebClient).DownloadString("https://example.com/x.ps1")', 'indirect-exec'],
+  ['winget install Fixture.Tool', 'package-write'],
+  ['winget upgrade --all', 'package-write'],
+  ['winget uninstall Fixture.Tool', 'package-write'],
+  ['git push --force origin main', 'git-force-push'],
+];
+const B12_POWERSHELL_READ_ONLY = [
+  'winget list',
+  'winget search Fixture',
+  'Get-Process | Where-Object { $_.Name -eq "x" }',
+  '$index = 1',
+  'Invoke-RestMethod -Uri https://example.com/api -Method Get',
+];
+
+test('batch 12, task 12: the lanes\' shell and PowerShell sinks are detected, and their reads stay live', () => {
+  const missed = [];
+  for (const [line, label] of B12_SHELL_MUTATIONS) {
+    for (const language of ['bash', 'zsh', 'sh', 'shell', 'console', '']) {
+      const hits = commandsIn(line, language);
+      if (!hits.includes(label)) missed.push(`${language || '(untagged)'}: ${line} → [${hits.join(', ')}]`);
+    }
+  }
+  for (const [line, label] of B12_POWERSHELL_MUTATIONS) {
+    for (const language of ['powershell', 'pwsh', 'ps1']) {
+      const hits = commandsIn(line, language);
+      if (!hits.includes(label)) missed.push(`${language}: ${line} → [${hits.join(', ')}]`);
+    }
+  }
+  assert.deepEqual(missed, []);
+  const flagged = [];
+  for (const line of B12_SHELL_READ_ONLY) {
+    const hits = commandsIn(line, 'bash').filter((h) => h !== 'git-write' || !/^git push origin feature$/.test(line));
+    if (hits.length) flagged.push(`bash: ${line} → [${hits.join(', ')}]`);
+  }
+  for (const line of B12_POWERSHELL_READ_ONLY) {
+    const hits = commandsIn(line, 'powershell');
+    if (hits.length) flagged.push(`powershell: ${line} → [${hits.join(', ')}]`);
+  }
+  assert.deepEqual(flagged, []);
+  // a plain push is a git-write as before, never a force push
+  assert.ok(commandsIn('git push origin feature', 'bash').includes('git-write'));
+  assert.ok(!commandsIn('git push origin feature', 'bash').includes('git-force-push'));
+  for (const label of ['terraform-write', 'kubectl-write', 'helm-write', 'aws-write', 'az-write', 'git-force-push']) {
+    assert.ok(classifyImpact(label, 'fixture').includes('external-system mutation'), `${label} is classified`);
+  }
+});
+
+test('batch 12, task 12: the README\'s Windows setup lines are owned by the visitor inventory, exactly', () => {
+  for (const statement of ['irm https://claude.ai/install.ps1 | iex', 'winget install OpenJS.NodeJS.LTS', 'winget install Git.Git']) {
+    const owned = VISITOR_SETUP_INVENTORY.filter((e) => e.file === 'README.md' && e.statement === statement);
+    assert.equal(owned.length, 1, statement);
+  }
+  assert.equal(visitorSetupOwners({ file: 'README.md', command: 'package-write', statement: 'winget install Some.Other' }).length, 0);
+  assert.equal(visitorSetupOwners({ file: 'docs/examples.md', command: 'indirect-exec', statement: 'irm https://claude.ai/install.ps1 | iex' }).length, 0);
 });

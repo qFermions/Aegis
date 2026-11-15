@@ -434,14 +434,28 @@ function azWrites(args) {
   if (!words.length) return !tokens.every((t) => /^--?(?:version|help)$/.test(t));
   return !AZ_READ.test(words[words.length - 1]);
 }
+// systemd (found by the infrastructure lane builder): a unit change, a journal cleanup, a SysV service change
+const SYSTEMCTL_READ = /^(?:status|show|cat|help|is-active|is-enabled|is-failed|is-system-running|list-.+|get-default|show-environment)$/;
+function systemctlWrites(args) {
+  const verb = cliTokens(args).find((t) => !t.startsWith('-'));
+  return !SYSTEMCTL_READ.test((verb || '').toLowerCase());
+}
+const journalctlWrites = (args) => /(?:^|\s)--(?:vacuum-(?:time|size|files)|rotate|flush|relinquish-var|smart-relinquish-var|setup-keys|update-catalog)\b/.test(` ${args}`);
+function serviceWrites(args) {
+  const tokens = cliTokens(args).filter((t) => !t.startsWith('-'));
+  return tokens.length >= 2 && !/^(?:status|--status-all)$/i.test(tokens[1]);
+}
 const B12_CLI_SINKS = [
+  ['service-write', 'systemctl', systemctlWrites],
+  ['service-write', 'journalctl', journalctlWrites],
+  ['service-write', 'service', serviceWrites],
   ['terraform-write', 'terraform', terraformWrites],
   ['kubectl-write', 'kubectl', kubectlWrites],
   ['helm-write', 'helm', helmWrites],
   ['aws-write', 'aws', awsWrites],
   ['az-write', 'az', azWrites],
 ];
-const B12_REMOTE_SINKS = new Set(['terraform-write', 'kubectl-write', 'helm-write', 'aws-write', 'az-write', 'git-force-push']);
+const B12_REMOTE_SINKS = new Set(['service-write', 'terraform-write', 'kubectl-write', 'helm-write', 'aws-write', 'az-write', 'git-force-push']);
 // a forced push rewrites a remote branch: --force, -f (alone or in a cluster), --force-with-lease, --force-if-includes or a + refspec
 const FORCE_PUSH = String.raw`git\s+(?:(?:-[A-Za-z]\s+\S+|--[\w-]+(?:=\S+)?)\s+)*push\b[^;|&\n]*?(?:\s--force(?:-with-lease|-if-includes)?\b|\s-[A-Za-z]*f[A-Za-z]*(?=\s|$)|\s\+[\w./:-]+)`;
 function b12CliHits(statement) {
@@ -3068,4 +3082,20 @@ test('batch 12, task 12: the README\'s Windows setup lines are owned by the visi
   }
   assert.equal(visitorSetupOwners({ file: 'README.md', command: 'package-write', statement: 'winget install Some.Other' }).length, 0);
   assert.equal(visitorSetupOwners({ file: 'docs/examples.md', command: 'indirect-exec', statement: 'irm https://claude.ai/install.ps1 | iex' }).length, 0);
+});
+
+// Found by the infrastructure lane builder (batch 12): a systemd unit change and a journal cleanup were not sinks, so
+// /linux-server-triage's two gates were seen only through their before-state copies. systemctl is fail-closed with a
+// read list (status, show, cat, is-*, list-*), journalctl's --vacuum, --rotate, --flush and --relinquish-var are
+// writes, and so is `service <unit> start|stop|restart|reload`. Wrong implementations: systemctl keyed on any verb
+// (status would be flagged); a journalctl rule that flags every read (-u, -f, --since).
+test('batch 12: systemd unit changes and journal cleanups are sinks; their reads stay live', () => {
+  const missed = [];
+  for (const line of ['sudo systemctl restart [UNIT_NAME]', 'systemctl stop nginx', 'systemctl enable --now app.service', 'systemctl daemon-reload', 'sudo journalctl --vacuum-time=7d', 'journalctl --rotate', 'sudo service nginx restart']) {
+    for (const language of ['bash', 'sh', 'console', '']) if (!commandsIn(line, language).includes('service-write')) missed.push(`${language || '(untagged)'}: ${line}`);
+  }
+  assert.deepEqual(missed, []);
+  const flagged = ['systemctl status nginx', 'systemctl show -p ActiveState app', 'systemctl is-active app', 'systemctl list-units --failed', 'systemctl cat app.service', 'journalctl -u app --since "1 hour ago"', 'journalctl -xe', 'journalctl --disk-usage', 'service nginx status'].filter((line) => commandsIn(line, 'bash').length);
+  assert.deepEqual(flagged, []);
+  assert.ok(classifyImpact('service-write', 'systemctl restart app').includes('external-system mutation'));
 });

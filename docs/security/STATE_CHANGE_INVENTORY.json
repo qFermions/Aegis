@@ -4148,6 +4148,10 @@
         {
           "sink": "redirect-write",
           "count": 1
+        },
+        {
+          "sink": "service-write",
+          "count": 1
         }
       ],
       "impactCategories": [
@@ -6010,6 +6014,10 @@
         {
           "sink": "redirect-write",
           "count": 1
+        },
+        {
+          "sink": "service-write",
+          "count": 1
         }
       ],
       "impactCategories": [
@@ -6025,6 +6033,10 @@
       "sinks": [
         {
           "sink": "redirect-write",
+          "count": 1
+        },
+        {
+          "sink": "service-write",
           "count": 1
         }
       ],

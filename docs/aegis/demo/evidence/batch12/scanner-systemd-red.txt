@@ -1,0 +1,61 @@
+✖ batch 12: systemd unit changes and journal cleanups are sinks; their reads stay live (5.212125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 953.657667
+
+✖ failing tests:
+
+test at scripts/command-safety-gates.test.js:3078:1
+✖ batch 12: systemd unit changes and journal cleanups are sinks; their reads stay live (5.212125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'bash: sudo systemctl restart [UNIT_NAME]',
+  +   'sh: sudo systemctl restart [UNIT_NAME]',
+  +   'console: sudo systemctl restart [UNIT_NAME]',
+  +   '(untagged): sudo systemctl restart [UNIT_NAME]',
+  +   'bash: systemctl stop nginx',
+  +   'sh: systemctl stop nginx',
+  +   'console: systemctl stop nginx',
+  +   '(untagged): systemctl stop nginx',
+  +   'bash: systemctl enable --now app.service',
+  +   'sh: systemctl enable --now app.service',
+  +   'console: systemctl enable --now app.service',
+  +   '(untagged): systemctl enable --now app.service',
+  +   'bash: systemctl daemon-reload',
+  +   'sh: systemctl daemon-reload',
+  +   'console: systemctl daemon-reload',
+  +   '(untagged): systemctl daemon-reload',
+  +   'bash: sudo journalctl --vacuum-time=7d',
+  +   'sh: sudo journalctl --vacuum-time=7d',
+  +   'console: sudo journalctl --vacuum-time=7d',
+  +   '(untagged): sudo journalctl --vacuum-time=7d',
+  +   'bash: journalctl --rotate',
+  +   'sh: journalctl --rotate',
+  +   'console: journalctl --rotate',
+  +   '(untagged): journalctl --rotate',
+  +   'bash: sudo service nginx restart',
+  +   'sh: sudo service nginx restart',
+  +   'console: sudo service nginx restart',
+  +   '(untagged): sudo service nginx restart'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:3083:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'bash: sudo systemctl restart [UNIT_NAME]', 'sh: sudo systemctl restart [UNIT_NAME]', 'console: sudo systemctl restart [UNIT_NAME]', '(untagged): sudo systemctl restart [UNIT_NAME]', 'bash: systemctl stop nginx', 'sh: systemctl stop nginx', 'console: systemctl stop nginx', '(untagged): systemctl stop nginx', 'bash: systemctl enable --now app.service', 'sh: systemctl enable --now app.service', 'console: systemctl enable --now app.service', '(untagged): systemctl enable --now app.service', 'bash: systemctl daemon-reload', 'sh: systemctl daemon-reload', 'console: systemctl daemon-reload', '(untagged): systemctl daemon-reload', 'bash: sudo journalctl --vacuum-time=7d', 'sh: sudo journalctl --vacuum-time=7d', 'console: sudo journalctl --vacuum-time=7d', '(untagged): sudo journalctl --vacuum-time=7d', 'bash: journalctl --rotate', 'sh: journalctl --rotate', 'console: journalctl --rotate', '(untagged): journalctl --rotate', 'bash: sudo service nginx restart', 'sh: sudo service nginx restart', 'console: sudo service nginx restart', '(untagged): sudo service nginx restart' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

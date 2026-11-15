@@ -1566,3 +1566,17 @@ test('batch 11 resumed: every desk session runs on claude-opus-5-5 or the --mode
   assert.equal(started, 0);
   assert.match(said.join(''), /--model/);
 });
+
+// Code review round 3, finding 14: the desk matched the output-cap reason on its wording (/larger than the cap/) while
+// the judged runner reads it through backends.ranUnpriced, so rewording backends.OUTPUT_CAP_REASON would silently break
+// the desk's budget stop. Wrong implementation it catches: a desk that reads the reason's text.
+test('code review 3: the desk reads a session of unknown cost through backends.ranUnpriced, not the cap reason\'s wording', () => {
+  const source = fs.readFileSync(path.join(REPO, 'scripts', 'demo', 'customer-desk.js'), 'utf8');
+  assert.doesNotMatch(source, /larger than the cap/);
+  assert.match(source, /backends\.ranUnpriced\(turn\)/);
+  const backends = require('../eval/judged/backends.js');
+  assert.equal(backends.ranUnpriced({ state: 'ERROR', reason: backends.OUTPUT_CAP_REASON, cost_usd: null }), true);
+  assert.equal(backends.ranUnpriced({ state: 'TIMEOUT', cost_usd: null }), true);
+  assert.equal(backends.ranUnpriced({ state: 'OK', cost_usd: 0.4, model: 'claude-opus-5-5' }), false);
+  assert.equal(backends.ranUnpriced({ state: 'ERROR', reason: 'spawn failed (ENOENT)', cost_usd: null, model: null, session_id: null }), false, 'a session that never started spent nothing');
+});

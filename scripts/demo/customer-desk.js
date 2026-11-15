@@ -511,8 +511,10 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const prompt = backends.buildSutPrompt(kase);
       if (backends.promptTooLong(prompt)) { sessionReason = 'session did not finish: the prompt is too long for one argument'; return { result: sessionReason, model_session: false }; }
       const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd);
-      // killed at the timeout or the output cap, with no cost reported: what it spent is unknown
-      const costUnknown = (turn.state === 'TIMEOUT' || /larger than the cap/.test(turn.reason || '')) && typeof turn.cost_usd !== 'number';
+      // a session that ran and reported no cost (killed at the timeout or the output cap, or started with no result): what
+      // it spent is unknown; read through the judged runner's shared reader, never the cap reason's wording (code
+      // review 3, finding 14)
+      const costUnknown = backends.ranUnpriced(turn);
       Object.assign(known, { exit_code: turn.exit_code, cost_usd: turn.cost_usd, model_session: turn.exit_code !== null || Boolean(init), turns: turn.num_turns, model: turn.model, cost_unknown: costUnknown });
       fs.writeFileSync(path.join(tickets, `${ticket.id}-stream.jsonl`), stdout);
       if (init) fs.writeFileSync(path.join(tickets, `${ticket.id}-init.json`), `${JSON.stringify(init, null, 2)}\n`);

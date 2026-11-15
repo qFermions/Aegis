@@ -1611,11 +1611,17 @@
       "mode": "preview",
       "sinks": [
         {
+          "sink": "git-force-push",
+          "count": 1
+        },
+        {
           "sink": "git-write",
           "count": 1
         }
       ],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "reversible state change"
       ]
@@ -10513,11 +10519,17 @@
       "mode": "preview",
       "sinks": [
         {
+          "sink": "git-force-push",
+          "count": 1
+        },
+        {
           "sink": "git-write",
           "count": 1
         }
       ],
       "impactCategories": [
+        "data-removal related",
+        "destructive",
         "external-system mutation",
         "reversible state change"
       ]

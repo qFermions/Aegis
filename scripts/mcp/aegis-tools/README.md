@@ -27,8 +27,9 @@ writes is its audit log.
   script, style, nav, head and footer, decodes entities, keeps the title) and returns at most 40000 characters, saying
   so when it cut. A page cannot write the server's markers: inside the page they become `[marker removed]`. Each URL is
   fetched once per session and then served from the cache.
-- `net_http` sends HEAD, then a GET that stops reading after 4 KB, with four request headers only (Host, User-Agent,
-  Accept, Accept-Encoding: identity). It returns these response headers and no others: server, content-type,
+- `net_http` sends HEAD, then a GET that stops reading after 4 KB, with these request headers only: Host, User-Agent,
+  Accept, Accept-Encoding: identity, and the `Connection: close` Node adds itself. It returns these response headers
+  and no others: server, content-type,
   content-length, location, strict-transport-security, cache-control, date, via, age, x-cache, cf-ray, x-amz-cf-pop,
   alt-svc, www-authenticate. A URL with user info (`user:pass@`) is refused.
 - `net_tls` connects with certificate checking off only so a chain that does not verify can still be read and reported;

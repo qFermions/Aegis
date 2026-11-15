@@ -82,7 +82,7 @@ async function pin(host, ctx) {
 
 // One HEAD or GET to the pinned address, with the name only in Host and SNI, so nothing on the connect path
 // resolves the name again. Reads at most cap body bytes, then destroys the answer. No cookie, no credential, no
-// body is ever sent: the headers are the four below and nothing else.
+// body is ever sent: the headers are the four below plus the Connection: close Node adds for agent false.
 function exchange(ctx, target, pinned, method, cap, accept = '*/*') {
   return new Promise((resolve, reject) => {
     if (ctx.signal.aborted) { reject(ctx.signal.reason); return; }

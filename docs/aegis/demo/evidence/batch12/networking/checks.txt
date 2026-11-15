@@ -1,0 +1,75 @@
+networking lane checks at 5a38e2b (branch worktree-agent-a3284fca2a8f695cb), node v24.21.0, no pwsh on this Mac
+
+$ TMPDIR=<tmp> node --test scripts/command-safety-gates.test.js scripts/markdown-links.test.js scripts/repository-structure.test.js scripts/eval/judged/cases.test.js
+ℹ tests 511
+ℹ pass 470
+ℹ fail 41
+ℹ skipped 0
+exit 1 (every failing name is one of the 41 pwsh-only names of the batch baseline, listed below)
+✖ PowerShell AST analyzer rejects bypass-shaped control flow
+✖ actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID
+✖ automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed
+✖ automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed
+✖ automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+✖ device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed
+✖ group rollback distinguishes verified recovery, unresolved recovery, and successful forward state
+✖ install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed
+✖ install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed
+✖ install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed
+✖ install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed
+✖ install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed
+✖ mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed
+✖ mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+✖ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed
+✖ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+✖ print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed
+✖ printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail
+✖ quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed
+✖ quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed
+✖ quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed
+✖ restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed
+✖ rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed
+✖ rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed
+✖ rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed
+✖ safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed
+✖ safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+✖ safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed
+✖ security-account-block: actual source gate is AST-dominated, explicit, and fail-closed
+✖ security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+✖ security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed
+✖ security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed
+✖ sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+
+the lane's markers in the widened scanner (batch 12 task 12, merged from feat/batch12-expert-lanes at 03ed4a6):
+✔ dns-troubleshoot-cache-flush: preview region contains no executable mutation
+✔ mtu-path-issue-mss-clamp: preview region contains no executable mutation
+✔ vpn-tunnel-down-wireguard-peer: preview region contains no executable mutation
+✔ net-safe-wireguard-peer-change: preview region contains no executable mutation
+✔ net-safe-mss-clamp-linux: preview region contains no executable mutation
+✔ net-safe-dns-cache-flush-windows: preview region contains no executable mutation
+
+$ node scripts/lint/command-structure.js
+command-structure lint - 113 commands (B:28 E:6 D:3 C:11 A:63 ALIAS:2)
+
+clean - structural GUI-first contract holds for every operational/troubleshooting command
+exit 0
+
+$ node scripts/lint/ladder-audit.js --check
+ladder-audit: 142 sections audited, the fixed scope passes
+exit 0
+
+$ node scripts/eval/vendor-facts-priority.js --check
+docs/aegis/owner/vendor-facts-priority.md is current.
+exit 0
+
+$ node -e "require('./scripts/eval/judged/cases.js').readCaseFile('docs/aegis/batch12/lanes/networking-dev-cases.jsonl')" (count printed)
+15 cases parse: NET01 network engineer, NET02 cloudflare engineer, NET03 network engineer, NET04 linux engineer, NET05 aws engineer, NET06 meraki engineer, NET07 linux engineer, NET08 zscaler ask-first, NET09 microsoft fix-card, NET10 cloudflare incident, NET11 network engineer, NET12 meraki engineer, NET13 network engineer, NET14 meraki fix-card, NET15 aws engineer
+exit 0

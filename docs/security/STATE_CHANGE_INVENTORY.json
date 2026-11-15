@@ -859,6 +859,46 @@
       ]
     },
     {
+      "id": "dns-troubleshoot-cache-flush",
+      "file": ".claude/commands/dns-troubleshoot.md",
+      "kind": "powershell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "Clear-DnsClientCache",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "dns-troubleshoot-delegation-change",
+      "file": ".claude/commands/dns-troubleshoot.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "dns-troubleshoot-record-change",
+      "file": ".claude/commands/dns-troubleshoot.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
       "id": "email-allow-domain",
       "file": ".claude/commands/email-whitelist.md",
       "kind": "powershell",
@@ -5867,6 +5907,115 @@
       ]
     },
     {
+      "id": "mtu-path-issue-appliance-mss",
+      "file": ".claude/commands/mtu-path-issue.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "mtu-path-issue-icmp-allow",
+      "file": ".claude/commands/mtu-path-issue.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "mtu-path-issue-mss-clamp",
+      "file": ".claude/commands/mtu-path-issue.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "net-safe-dns-cache-flush-windows",
+      "file": "knowledge/networking/safe-changes.md",
+      "kind": "powershell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "Clear-DnsClientCache",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "net-safe-dns-record-change",
+      "file": "knowledge/networking/safe-changes.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "net-safe-firewall-rule-change",
+      "file": "knowledge/networking/safe-changes.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "net-safe-mss-clamp-linux",
+      "file": "knowledge/networking/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "net-safe-wireguard-peer-change",
+      "file": "knowledge/networking/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
       "id": "network-auto-vpn",
       "file": "modules/systems/network_ops.md",
       "kind": "portal",
@@ -10499,6 +10648,17 @@
       ]
     },
     {
+      "id": "tls-certificate-bind-change",
+      "file": ".claude/commands/tls-certificate.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
       "id": "troubleshoot-compliance-sync",
       "file": "modules/it_support/troubleshooting.md",
       "kind": "portal",
@@ -10812,6 +10972,44 @@
         "external-system mutation",
         "identity-related",
         "security-sensitive"
+      ]
+    },
+    {
+      "id": "vpn-tunnel-down-proposal-change",
+      "file": ".claude/commands/vpn-tunnel-down.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "vpn-tunnel-down-reinitiate",
+      "file": ".claude/commands/vpn-tunnel-down.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "vpn-tunnel-down-wireguard-peer",
+      "file": ".claude/commands/vpn-tunnel-down.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
       ]
     },
     {
@@ -11256,6 +11454,20 @@
       "impactCategories": [
         "external-system mutation",
         "identity-related"
+      ]
+    },
+    {
+      "id": "zero-trust-block-exception",
+      "file": ".claude/commands/zero-trust-block.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
       ]
     },
     {

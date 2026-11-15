@@ -1,0 +1,12 @@
+kubectl keyed on the first word only: ℹ fail 1
+every kubectl line is a write: ℹ fail 1
+rollout status is a write: ℹ fail 1
+aws reads everything: ℹ fail 1
+aws global option values not skipped: ℹ fail 1
+az takes the first word: ℹ fail 1
+terraform state writes missed: ℹ fail 1
+iex at the end of a pipe missed: ℹ fail 1
+winget not a PowerShell sink: ℹ fail 1
+a plain push read as forced: ℹ fail 1
+helm reads everything: ℹ fail 1
+README Windows lines left out of the inventory: ℹ fail 1

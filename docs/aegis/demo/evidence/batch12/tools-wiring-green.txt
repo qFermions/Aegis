@@ -1,0 +1,13 @@
+✔ batch 12, task 5: the chat loads the tool server with its own audit file, says so, and --no-tools turns it off (2.845375ms)
+✔ batch 12, task 5: the tool server is on with an audit file beside the answer; --no-tools turns it off (65.835125ms)
+✔ batch 12, task 5: the desk loads the tool server with an audit file per ticket, and --no-tools turns it off (259.098125ms)
+✔ scripts/eval/judged/backends.test.js (41.67125ms)
+✔ batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had (137.733625ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 324.507209

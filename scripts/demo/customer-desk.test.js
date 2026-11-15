@@ -1580,3 +1580,41 @@ test('code review 3: the desk reads a session of unknown cost through backends.r
   assert.equal(backends.ranUnpriced({ state: 'OK', cost_usd: 0.4, model: 'claude-opus-5-5' }), false);
   assert.equal(backends.ranUnpriced({ state: 'ERROR', reason: 'spawn failed (ENOENT)', cost_usd: null, model: null, session_id: null }), false, 'a session that never started spent nothing');
 });
+
+// Batch 12, task 2: the desk records the mode each answer named and shows the batch 12 rows (the mode row and each
+// judgment rule that applies) beside the earlier rows, stopping nothing. Wrong implementations: a desk that records
+// the mode from the shape and not the first line (the unnamed answer would record ask-first); one that drops the batch
+// 12 rows from the page; one that lets a failing batch 12 row change the closing state.
+test('batch 12, task 2: the desk records the named mode and shows the batch 12 rows, which stop nothing', async (t) => {
+  const named = await runDesk(t, { only: ['T7'], answers: { T7: 'Mode: Ask first\nWhat exactly is slow, for whom, and since when?' } });
+  const k = named.ticket('T7');
+  assert.equal(k.answer_mode, 'ask-first');
+  const row = step(k, 5).expert_checks.find((r) => r.check === 'answer-mode');
+  assert.equal(row.verdict, 'pass', row.detail);
+  assert.match(step(k, 5).output, /answer-mode: pass/);
+  const unnamed = await runDesk(t, { only: ['T7'], answers: { T7: 'What exactly is slow, for whom, and since when?' } });
+  const u = unnamed.ticket('T7');
+  assert.equal(u.answer_mode, null);
+  assert.equal(step(u, 5).expert_checks.find((r) => r.check === 'answer-mode').verdict, 'fail');
+  assert.equal(u.closing_state, k.closing_state, 'a failing batch 12 row stops nothing');
+});
+
+// Batch 12, task 5: the desk's sessions load the read-only tool server by default, each ticket audits its tool calls
+// to a file beside its debug log, --no-tools turns the server off, and the record keeps the tools the session listed.
+// Wrong implementations: a desk that ignores --no-tools; one audit file for the whole run; a record of the tools asked
+// for instead of the ones the session listed.
+test('batch 12, task 5: the desk loads the tool server with an audit file per ticket, and --no-tools turns it off', async (t) => {
+  const listed = ['Read', 'Grep', 'Glob', 'Agent', 'mcp__aegis-tools__net_dns'];
+  const on = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, sut: { init_tools: listed } });
+  const [call] = on.calls();
+  const cfg = JSON.parse(call.args[call.args.indexOf('--mcp-config') + 1]);
+  const server = cfg.mcpServers['aegis-tools'];
+  assert.equal(server.args[server.args.indexOf('--audit') + 1], path.join(on.results, 'customers', 'B', 'tickets', 'T7-tool-audit.jsonl'));
+  assert.deepEqual(on.ticket('T7').tools_available, listed);
+  const off = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, argv: ['--no-tools'] });
+  assert.ok(!off.calls()[0].args.includes('--mcp-config'));
+  assert.ok(!off.calls()[0].args.some((a) => /mcp__aegis-tools__/.test(a)));
+  const out = [];
+  await desk.main(['--only', 'T7', '--no-tools'], {}, { out: (s) => out.push(s), err: () => {} });
+  assert.doesNotMatch(out.join(''), /--mcp-config/);
+});

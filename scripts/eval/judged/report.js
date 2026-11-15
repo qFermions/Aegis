@@ -75,6 +75,15 @@ function regressions(results, baseline) {
   return { ...ratio(lost.length, both.length), ids: lost };
 }
 
+// Per lane and per mode (batch 12): tool calls, the Fix card words and the reads outside the repository of the group.
+function laneExtra(list) {
+  const calls = list.reduce((a, r) => a + Object.values(r.tool_call_counts || {}).reduce((x, n) => x + n, 0), 0);
+  const server = list.reduce((a, r) => a + Object.entries(r.tool_call_counts || {}).filter(([t]) => t.startsWith('mcp__aegis-tools__')).reduce((x, [, n]) => x + n, 0), 0);
+  const words = list.map((r) => r.fix_card_words).filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+  const outside = list.filter((r) => r.sut && Array.isArray(r.sut.outside_reads) && r.sut.outside_reads.length > 0).length;
+  return { tool_calls: calls, server_calls: server, card_words_median: median(words), cards: words.length, outside_reads: outside };
+}
+
 function summarize(results, { baseline = null } = {}) {
   const j = results.filter(judged);
   const changes = j.filter((r) => CHANGE.includes(r.change_class));
@@ -91,6 +100,11 @@ function summarize(results, { baseline = null } = {}) {
   const outside = results.filter((r) => r.sut && Array.isArray(r.sut.outside_reads) && r.sut.outside_reads.length > 0).map((r) => r.id);
   const cardWords = answered.map((r) => r.fix_card_words).filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
   const offModel = results.filter((r) => r.off_model).map((r) => r.id);
+  // batch 12, task 13: the mode each answer named against the one its case expects, and the run's tool calls
+  const expectsMode = results.filter((r) => r.mode && typeof r.mode.expected === 'string' && r.mode.expected !== '' && ran(r));
+  const byTool = {};
+  for (const r of results) for (const [tool, n] of Object.entries(r.tool_call_counts || {})) byTool[tool] = (byTool[tool] || 0) + n;
+  const serverCases = results.filter((r) => Object.keys(r.tool_call_counts || {}).some((t) => t.startsWith('mcp__aegis-tools__'))).length;
   return {
     outside_reads: { count: outside.length, ids: outside },
     off_model: { count: offModel.length, ids: offModel },
@@ -117,6 +131,9 @@ function summarize(results, { baseline = null } = {}) {
         judge_total: judgeCosted.length ? judgeCosted.reduce((a, r) => a + r.judge.cost_usd, 0) : null,
         judge_reported: judgeCosted.length,
       },
+      mode_match: ratio(expectsMode.filter((r) => r.mode.match === true).length, expectsMode.length),
+      tool_calls: { by_tool: byTool, server_cases: serverCases, total: Object.values(byTool).reduce((a, n) => a + n, 0) },
+      cards_over_cap: cardWords.filter((n) => n > 150).length,
       fix_card_words: {
         min: cardWords.length ? cardWords[0] : null,
         median: median(cardWords),
@@ -127,6 +144,8 @@ function summarize(results, { baseline = null } = {}) {
     },
     platforms: groupBy(results, 'platform').map(([value, list]) => countRow({ key: 'platform', value }, list, { note: list.length < 10 ? SMALL_PLATFORM_NOTE : null })),
     scenarios: groupBy(results, 'scenario').map(([value, list]) => countRow({ key: 'scenario', value }, list)),
+    lanes: groupBy(results.map((r) => ({ ...r, lane_key: r.lane || 'other' })), 'lane_key').map(([value, list]) => countRow({ key: 'lane', value }, list, laneExtra(list))),
+    modes: groupBy(results.map((r) => ({ ...r, mode_key: (r.mode && r.mode.named) || 'none named' })), 'mode_key').map(([value, list]) => countRow({ key: 'mode', value }, list, laneExtra(list))),
   };
 }
 
@@ -141,7 +160,7 @@ function renderMarkdown(summary, meta) {
     '',
     `> ${LABEL}`,
     '',
-    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}${meta.config.model ? ` (pinned ${meta.config.model})` : ''}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (pinned ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'}; timeout ${meta.config.timeout_ms} ms per process.`,
+    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}${meta.config.model ? ` (pinned ${meta.config.model})` : ''}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (pinned ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'};${meta.config.tools === undefined ? '' : ` tool server ${meta.config.tools ? 'on' : 'off'};`} timeout ${meta.config.timeout_ms} ms per process.`,
     '',
     `Cases ${summary.cases}: ${summary.passed} PASS, ${summary.failed} FAIL, ${summary.inconclusive} INCONCLUSIVE (an inconclusive case never counts as a pass).`,
     '',
@@ -161,6 +180,9 @@ function renderMarkdown(summary, meta) {
     `| Cost (judge, US dollars) | ${m.cost_usd.judge_total === null ? 'not reported' : m.cost_usd.judge_total.toFixed(4)} (reported by ${m.cost_usd.judge_reported} cases) |`,
     `| Cases that read a path outside the repository (each is INCONCLUSIVE) | ${summary.outside_reads.count}${summary.outside_reads.ids.length ? ` (${summary.outside_reads.ids.join(', ')})` : ''} |`,
     ...(summary.off_model ? [`| Cases that ran on another model than the pinned one (each is INCONCLUSIVE) | ${summary.off_model.count}${summary.off_model.ids.length ? ` (${summary.off_model.ids.join(', ')})` : ''} |`] : []),
+    ...(m.mode_match ? [`| Mode named matches the expected mode | ${frac(m.mode_match)} |`] : []),
+    `| Cards over 150 words (since batch 12 the fix-card-fits check fails each such case) | ${m.cards_over_cap ?? 'n/a'} |`,
+    ...(m.tool_calls ? [`| Tool calls (all tools; ${m.tool_calls.server_cases} case(s) called the tool server) | ${m.tool_calls.total}: ${Object.entries(m.tool_calls.by_tool).map(([t, n]) => `${cell(t)} ${n}`).join(', ') || 'none'} |`] : []),
     `| Fix card words, min / median / max (over ${m.fix_card_words.over} answers with a card, ${m.fix_card_words.no_card} without; a measure, not a pass or fail) | ${m.fix_card_words.over ? `${m.fix_card_words.min} / ${m.fix_card_words.median} / ${m.fix_card_words.max}` : 'n/a'} |`,
     '',
     '## Per platform',
@@ -169,6 +191,20 @@ function renderMarkdown(summary, meta) {
     '|---|---|---|---|---|---|---|---|',
     ...summary.platforms.map((p) => `| ${cell(p.platform)} | ${p.cases} | ${p.judged} | ${p.passed} | ${p.failed} | ${p.inconclusive} | ${frac(p.pass)} | ${p.note || ''} |`),
     '',
+    ...(summary.lanes ? [
+      '## Per lane',
+      '',
+      '| Lane | Cases | Judged | Pass | Fail | Inconclusive | Pass rate | Tool calls (tool server) | Fix card words, median (cards) | Read outside the repository |',
+      '|---|---|---|---|---|---|---|---|---|---|',
+      ...summary.lanes.map((l) => `| ${cell(l.lane)} | ${l.cases} | ${l.judged} | ${l.passed} | ${l.failed} | ${l.inconclusive} | ${frac(l.pass)} | ${l.tool_calls} (${l.server_calls}) | ${l.card_words_median ?? 'n/a'} (${l.cards}) | ${l.outside_reads} |`),
+      '',
+      '## Per mode (the mode each answer named on its first line)',
+      '',
+      '| Mode | Cases | Judged | Pass | Fail | Inconclusive | Pass rate | Tool calls (tool server) | Fix card words, median (cards) | Read outside the repository |',
+      '|---|---|---|---|---|---|---|---|---|---|',
+      ...summary.modes.map((l) => `| ${cell(l.mode)} | ${l.cases} | ${l.judged} | ${l.passed} | ${l.failed} | ${l.inconclusive} | ${frac(l.pass)} | ${l.tool_calls} (${l.server_calls}) | ${l.card_words_median ?? 'n/a'} (${l.cards}) | ${l.outside_reads} |`),
+      '',
+    ] : []),
     '## Per scenario',
     '',
     '| Scenario | Cases | Judged | Pass | Fail | Inconclusive | Pass rate |',

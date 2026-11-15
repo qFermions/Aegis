@@ -1,0 +1,20 @@
+$ node --test scripts/start-aegis.test.js   (green: the implementation; exit 0)
+✔ first run asks the one question once, saves the answer and starts the chat with exactly --setup <answer> (4.60625ms)
+✔ an email address and a phone number in the answer become placeholders before they are saved or passed on (1.156792ms)
+✔ a password in the answer is refused and nothing is saved; it asks again, and after 3 refusals starts with no setup (1.111834ms)
+✔ the saved file is outside the repository, mode 0600 in a 0700 folder; a home folder inside the repository saves nothing (0.940666ms)
+✔ a later run shows the saved answer in one line; Enter keeps it, c or change asks again, clear removes the file (1.795542ms)
+✔ with no terminal it asks nothing and starts with the saved answer, or with none (0.667583ms)
+✔ a saved file it cannot read starts with no setup and says so; a home folder it cannot write still starts (1.056334ms)
+✔ Ctrl-C at the question exits cleanly: nothing saved and no chat (0.213708ms)
+✔ the chat's exit code is the launcher's; Ctrl-C is ignored only while the chat runs; a chat that cannot start is exit 2 (0.728208ms)
+✔ parseSaved reads the saved file as one line, or null when it holds nothing (0.059791ms)
+✔ a saved answer that holds a password is not used, and a saved address is masked (1.114583ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.44525

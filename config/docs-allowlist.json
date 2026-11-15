@@ -1,0 +1,31 @@
+{
+  "about": "Hosts the aegis-tools docs_fetch tool may read (scripts/mcp/aegis-tools/README.md). Exact host match, case-insensitive, no wildcard: a subdomain is not covered unless it is listed. Vendor documentation and public standards only.",
+  "hosts": [
+    "learn.microsoft.com",
+    "support.microsoft.com",
+    "support.google.com",
+    "knowledge.workspace.google.com",
+    "developers.google.com",
+    "cloud.google.com",
+    "help.okta.com",
+    "developer.okta.com",
+    "learn.jamf.com",
+    "support.apple.com",
+    "developer.apple.com",
+    "docs.aws.amazon.com",
+    "developers.cloudflare.com",
+    "fleetdm.com",
+    "docs.github.com",
+    "slack.com",
+    "api.slack.com",
+    "linear.app",
+    "kubernetes.io",
+    "developer.hashicorp.com",
+    "documentation.meraki.com",
+    "nvd.nist.gov",
+    "www.cisa.gov",
+    "attack.mitre.org",
+    "datatracker.ietf.org",
+    "www.rfc-editor.org"
+  ]
+}

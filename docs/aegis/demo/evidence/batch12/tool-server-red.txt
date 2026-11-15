@@ -1,0 +1,772 @@
+# red run before any implementation: node --test scripts/mcp/aegis-tools/*.test.js (node v24.21.0, base f1b00b8 plus the two new test files only)
+# 38 tests, 38 fail: 37 on Cannot find module (./server.js or ./guard.js), the stdio test on the missing server file
+✖ every private and special address is refused, every public one passes (0.279791ms)
+✖ a name is refused before any query when it is single-label, IP-looking or under a private suffix (0.10125ms)
+✖ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (0.579083ms)
+✖ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (0.15425ms)
+✖ net_http refuses http://169.254.169.254/ before any query or request (0.123708ms)
+✖ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.060041ms)
+✖ net_http refuses http://localhost before any query or request (0.065375ms)
+✖ net_http refuses http://10.0.0.1 before any query or request (0.059584ms)
+✖ net_http refuses http://[::1]/ before any query or request (0.045333ms)
+✖ net_http refuses http://2130706433/ before any query or request (0.04525ms)
+✖ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.056667ms)
+✖ net_http refuses http://0x7f.1/ before any query or request (0.086708ms)
+✖ net_http refuses http://127.1/ before any query or request (0.046417ms)
+✖ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.041625ms)
+✖ net_http refuses http://168.63.129.16/ before any query or request (0.033084ms)
+✖ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.03025ms)
+✖ a name whose resolution returns a private address is refused, with nothing sent (0.055042ms)
+✖ a name returning one public and one private address is refused (0.053042ms)
+✖ a redirect from a public URL to a private one is refused, with no request sent to the private hop (0.076416ms)
+✖ a docs redirect to an off-list host is refused, before that host is resolved (0.064417ms)
+✖ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.062583ms)
+✖ port 22 and 8080 are refused (0.051208ms)
+✖ ftp: and file: are refused (0.040792ms)
+✖ user info is refused (0.048ms)
+✖ GET reads at most 4 KB and then stops reading (0.073625ms)
+✖ the call cap holds: after 30 calls every call returns call_cap_reached (0.04575ms)
+✖ a TLS check on a fake expired certificate reports expired true and the verification error (0.057584ms)
+✖ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.055833ms)
+✖ an unknown method returns -32601 (0.036292ms)
+✖ malformed JSON returns -32700 (0.034875ms)
+✖ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.051458ms)
+✖ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.061833ms)
+✖ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (0.070125ms)
+✖ docs_fetch caps bytes and text, says when it cut, and caches by URL (0.058833ms)
+✖ a server that never answers ends in timeout (0.04325ms)
+✖ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (0.06125ms)
+✖ the audit file is created with mode 0600 and only appended (0.432ms)
+✖ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (21.216667ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 0
+ℹ fail 38
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 58.840292
+
+✖ failing tests:
+
+test at scripts/mcp/aegis-tools/guard.test.js:40:1
+✖ every private and special address is refused, every public one passes (0.279791ms)
+  Error: Cannot find module './guard.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at guard (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js:17:21)
+      at TestContext.<anonymous> (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js:41:30) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/guard.test.js:52:1
+✖ a name is refused before any query when it is single-label, IP-looking or under a private suffix (0.10125ms)
+  Error: Cannot find module './guard.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at guard (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js:17:21)
+      at TestContext.<anonymous> (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js:53:25) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/guard.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:159:1
+✖ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (0.579083ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:185:1
+✖ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (0.15425ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://169.254.169.254/ before any query or request (0.123708ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.060041ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://localhost before any query or request (0.065375ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://10.0.0.1 before any query or request (0.059584ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://[::1]/ before any query or request (0.045333ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://2130706433/ before any query or request (0.04525ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.056667ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://0x7f.1/ before any query or request (0.086708ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://127.1/ before any query or request (0.046417ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.041625ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://168.63.129.16/ before any query or request (0.033084ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:216:3
+✖ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.03025ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:228:1
+✖ a name whose resolution returns a private address is refused, with nothing sent (0.055042ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:243:1
+✖ a name returning one public and one private address is refused (0.053042ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:254:1
+✖ a redirect from a public URL to a private one is refused, with no request sent to the private hop (0.076416ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:275:1
+✖ a docs redirect to an off-list host is refused, before that host is resolved (0.064417ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:299:1
+✖ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.062583ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:321:1
+✖ port 22 and 8080 are refused (0.051208ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:334:1
+✖ ftp: and file: are refused (0.040792ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:345:1
+✖ user info is refused (0.048ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:358:1
+✖ GET reads at most 4 KB and then stops reading (0.073625ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:375:1
+✖ the call cap holds: after 30 calls every call returns call_cap_reached (0.04575ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:393:1
+✖ a TLS check on a fake expired certificate reports expired true and the verification error (0.057584ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:412:1
+✖ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.055833ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:435:1
+✖ an unknown method returns -32601 (0.036292ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:442:1
+✖ malformed JSON returns -32700 (0.034875ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:450:1
+✖ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.051458ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:467:1
+✖ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.061833ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:488:1
+✖ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (0.070125ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:518:1
+✖ docs_fetch caps bytes and text, says when it cut, and caches by URL (0.058833ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:541:1
+✖ a server that never answers ends in timeout (0.04325ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:553:1
+✖ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (0.06125ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at make (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:117:13) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:569:1
+✖ the audit file is created with mode 0600 and only appended (0.432ms)
+  Error: Cannot find module './server.js'
+  Require stack:
+  - <home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js
+      at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+      at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+      at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+      at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+      at Module._load (node:internal/modules/cjs/loader:1341:5)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+      at Module.require (node:internal/modules/cjs/loader:1674:12)
+      at require (node:internal/modules/helpers:157:16)
+      at server (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:33:22)
+      at TestContext.<anonymous> (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:573:25) {
+    code: 'MODULE_NOT_FOUND',
+    requireStack: [ '<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js' ]
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:588:1
+✖ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (21.216667ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/.claude/worktrees/agent-a23d7e64a6bedab00/scripts/mcp/aegis-tools/server.test.js:605:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

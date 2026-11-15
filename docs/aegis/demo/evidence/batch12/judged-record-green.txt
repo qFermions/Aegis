@@ -1,0 +1,18 @@
+✔ a dry run prints the plan and the estimate, exits 4, and starts no process (2.467791ms)
+✔ the real CLI refuses the DEV file in the repository and a symlink into it (exit 1); dry run on a copy exits 4 (194.766417ms)
+✔ the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3) (454.47825ms)
+✔ with a threshold the runner prints PASS or FAIL; the calibrate command reports agreement and kappa (455.127334ms)
+✔ a boundary violation fails the run even without a threshold (exit 2) (421.756ms)
+✔ a timed-out case is INCONCLUSIVE and never counts as a pass (304.24025ms)
+✔ a results directory in a tracked part of the repository is refused before any case runs (9.510333ms)
+✔ a custom --results-dir is denied to every system-under-test turn, the follow-up included (457.600958ms)
+✔ code review 1: the whole DEV file runs through the runner; the two setup cases reach the session with their setup (1222.265917ms)
+✔ batch 12: a case records its lane, its mode against the expected one, its tool calls and the new checks (53.742291ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3618.58975

@@ -26,6 +26,7 @@ const path = require('node:path');
 
 const { REPO_ROOT, effectivePath, isInside, repoRoots, foldCase } = require('./paths.js');
 const { systemTempDir } = require('../../temp-dir.js');
+const aegisTools = require('../../mcp/aegis-tools/session.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
@@ -89,8 +90,12 @@ function readDenyRules(runRoot = null, caseDirs = []) {
   return rules;
 }
 
-function isolationArgs({ judge = false, runRoot = null, caseDirs = [] } = {}) {
-  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) } })];
+// mcpConfig (batch 12): the --mcp-config text of the read-only aegis-tools server, placed right after
+// --strict-mcp-config so it is the one MCP server the session loads. The judge grades with no tools, so it never
+// takes one.
+function isolationArgs({ judge = false, runRoot = null, caseDirs = [], mcpConfig = null } = {}) {
+  if (judge && mcpConfig) throw new Error('the judge session takes no MCP server');
+  return ['--setting-sources', 'project', '--strict-mcp-config', ...(mcpConfig ? ['--mcp-config', mcpConfig] : []), '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) } })];
 }
 // The model every session names (batch 11 resumed): the one the commander's correctness run was measured on. With no
 // --model the CLI takes the settings file's default model, which can change from one day to the next, so a run
@@ -158,15 +163,20 @@ function buildSutPrompt(c) {
 }
 
 // model: the session's model, PINNED_MODEL when none is given; it comes last, after --tools, so aegis-chat keeps it.
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true, model = null }) {
+// tools (batch 12, default true): load the read-only aegis-tools MCP server (scripts/mcp/aegis-tools/) and allow its
+// four tools; --tools lists built-in tools only, so the names go in --allowedTools alone. auditFile: the file the
+// server appends one line per call to (stderr when none). tools false is the argv from before batch 12, byte for byte.
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true, model = null, tools = true, auditFile = null }) {
   if (resume && !persist) throw new Error('a session with no persistence cannot resume');
-  const tools = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
+  const builtIn = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
+  const allowed = tools ? [...builtIn, ...aegisTools.TOOL_NAMES] : builtIn;
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
+  const mcpConfig = tools ? aegisTools.mcpConfig({ auditFile }) : null;
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
   if (!persist) args.push('--no-session-persistence');
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs }), ...modelArgs(model));
+    '--tools', ...builtIn, '--allowedTools', ...allowed, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs, mcpConfig }), ...modelArgs(model));
   return args;
 }
 
@@ -190,6 +200,11 @@ function toolCall(part, inSubagent) {
   } else if (call.tool === 'Agent' || call.tool === 'Task') {
     call.label = `${str(input.subagent_type) || 'agent'}: ${str(input.description) || '(no description)'}`;
   }
+  // the tool server's calls (batch 12): what each looked up, so a claimed check or a cited page can be held to it
+  if (/^mcp__aegis-tools__/.test(call.tool)) {
+    const target = str(input.url) || str(input.name) || str(input.host);
+    if (target) call.target = target;
+  }
   return call;
 }
 
@@ -199,7 +214,7 @@ const MAX_CALL_TEXT = 300;
 const cutText = (s) => (s.length > MAX_CALL_TEXT ? `${s.slice(0, MAX_CALL_TEXT)} [cut]` : s);
 function toolCallRecord(call) {
   const rec = { tool: call.tool.slice(0, 60) };
-  for (const key of ['pattern', 'path', 'label']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
+  for (const key of ['pattern', 'path', 'label', 'target']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
   rec.subagent = Boolean(call.subagent);
   rec.error = Boolean(call.error);
   return rec;
@@ -267,6 +282,9 @@ function summarizeTurn(stream, run) {
     exit_code: run.code,
     signal: run.signal,
     invalid_lines: stream.invalidLines,
+    // what the session could use, as its init event listed it (batch 12): null when there was no init event
+    tools_available: init && Array.isArray(init.tools) ? init.tools.filter((x) => typeof x === 'string').map((x) => x.slice(0, 80)) : null,
+    mcp_servers: init && Array.isArray(init.mcp_servers) ? init.mcp_servers.filter((x) => x && typeof x === 'object').map((x) => ({ name: String(x.name).slice(0, 60), status: String(x.status).slice(0, 30) })) : null,
   };
   if (run.state !== 'OK') { turn.state = run.state; turn.reason = run.reason; return turn; }
   if (!r) { turn.state = 'ERROR'; turn.reason = 'no result event in the stream'; return turn; }
@@ -334,14 +352,15 @@ function promptTooLong(prompt) {
 }
 
 // Runs one case through the system under test. opts: { command, prefixArgs, spawn, env,
-// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot, caseDirs, model }. env is already scrubbed; model names the model of
+// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot, caseDirs, model, tools, auditFile }. tools and auditFile go to
+// sutArgs for both turns (batch 12). env is already scrubbed; model names the model of
 // both turns (PINNED_MODEL when none is given); runRoot, the run's
 // results folder, is denied to both turns (batch 8, task 10b), and so are caseDirs, the folders the case file
 // is read from (batch 11, task 7).
 async function runSut(c, opts) {
   const repoRoot = opts.repoRoot || REPO_ROOT;
   const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: repoRoot, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
-  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model };
+  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model, tools: opts.tools, auditFile: opts.auditFile };
   const turns = [];
   const prompt = buildSutPrompt(c);
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
@@ -372,6 +391,9 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
     model: turns[0] ? turns[0].model : null,
     session_id: turns[0] ? turns[0].session_id : null,
     turns: turns.map((t) => ({ state: t.state, reason: t.reason, num_turns: t.num_turns, duration_ms: t.duration_ms, cost_usd: t.cost_usd, model: t.model, session_id: t.session_id })),
+    // the tools the first turn's session listed and the MCP servers it connected (batch 12, task 5)
+    tools_available: turns[0] && turns[0].tools_available !== undefined ? turns[0].tools_available : null,
+    mcp_servers: turns[0] && turns[0].mcp_servers !== undefined ? turns[0].mcp_servers : null,
     // the reading record: every tool call of every turn, and the paths read outside the repository
     tool_calls: calls.flatMap((list, i) => list.map((call) => ({ turn: i + 1, ...toolCallRecord(call) }))),
     outside_reads: outsideReads(calls.flat(), repoRoot),

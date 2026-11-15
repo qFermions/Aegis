@@ -67,6 +67,10 @@ process), every tool, refused and cached calls included; after that every call r
 not cover `docs.microsoft.com`. To add a host, add its exact name, vendor documentation or a public standard only, in
 a reviewed change. The server reads the file once at start and refuses to start when it is malformed.
 
+The list is the 26 hosts the batch 12 charter named, plus `docs.cloud.google.com`: Google Cloud's documentation on
+`cloud.google.com` now redirects there permanently (seen on 2026-11-14), and a redirect off the list is refused.
+`server.test.js` pins the list, so a host added or dropped without a reviewed reason fails a test.
+
 ## The audit file
 
 Every call, refused ones included, appends one JSON line: `time`, `tool`, `input` (url, or name and type, or host and

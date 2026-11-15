@@ -130,6 +130,13 @@ Added with batch 10 (2026-11-07): `[TRANSFER_ID]` (one Google Workspace data tra
 the Data Transfer API names it and `gam print datatransfers` lists it; `gws-client.js
 verify-transfer --transfer-id [TRANSFER_ID]` reads that one transfer, `/gws-offboard` Phase C).
 
+Networking lane (batch 12, `knowledge/networking/` and its runbooks): `[HOSTNAME]` (a fully qualified
+host name a ticket names: a site, a service, a VPN endpoint; written as the name the client uses) ·
+`[IP_ADDRESS]` (one IPv4 or IPv6 address: a resolver, a peer's public address, a node behind a load
+balancer; examples use the documentation ranges 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24 and
+2001:db8::/32) · `[SUBNET]` (a network in CIDR form, such as a VPN's protected subnet) · `[INTERFACE]`
+(a network interface name on a host, such as a WireGuard or tunnel interface). None is env-backed.
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

@@ -77,7 +77,9 @@ const VARIANTS = {
     // G1
     'gws-gmail-delivery', 'mac-troubleshoot', 'zoom-room-issue',
     // G2
-    'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation'],
+    'fleet-host-health', 'fleet-policy-failures', 'fleet-vulnerable-software', 'fleet-osquery-investigation',
+    // batch 12: networking lane (knowledge/networking/)
+    'dns-troubleshoot', 'tls-certificate', 'vpn-tunnel-down', 'zero-trust-block', 'mtu-path-issue'],
   C: ['write-sop', 'runbook', 'incident-report', 'board-report', 'vendor-email', 'escalation-note', 'ticket-response',
     'draft-email', 'daily-start', 'daily-wrap', 'vent'],
   D: ['cloud-lab', 'devops-drill', 'ai-engineer-drill'],

@@ -379,3 +379,15 @@ test('code review 2: SMS codes and sign-in prompts are a sign-in method; a phone
     assert.equal(lostSignInDevice(not), false, not);
   }
 });
+
+// Code review round 2, finding 9: round 1 let up to 40 characters sit between "nobody" and "can", so one-person and
+// non-outage tickets read as a service down. Only a place may sit between them now ("nobody at the second office can").
+// Wrong implementation it catches: a gap of any words.
+test('code review 2: "nobody <at a place> can get into" is an outage; "nobody else is affected but I can\'t" is not', () => {
+  const plain = '## Fix\n**What\'s wrong:** x\n**Do this:**\n1. Ask what happens.\n**Done when:** y\n';
+  assert.equal(howWideBeforeWhy(plain, { ticket: 'Nobody at the second office can get into Outlook or Teams since about 10 this morning.' }).applies, true);
+  assert.equal(howWideBeforeWhy(plain, { ticket: 'Nobody in accounts can log in to the finance system.' }).applies, true);
+  for (const not of ["Nobody else is affected but I can't log in to the VPN.", 'Nobody told me I can log in with my new password, it fails.', "No one has reset my MFA yet and I can't sign in."]) {
+    assert.equal(howWideBeforeWhy(plain, { ticket: not }).applies, false, not);
+  }
+});

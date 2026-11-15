@@ -131,24 +131,36 @@ cd ~/Aegis
 
 ### Ask your first ticket
 
-Same on Mac and Windows. Put the ticket inside the quotes, and tell Aegis what your company runs after `--setup`:
+Same on Mac and Windows. Every Aegis command runs from inside the Aegis folder, so go there first:
 
 ```bash
-node scripts/ask-aegis.js "Outlook keeps asking for my password since I changed it yesterday" --setup "Microsoft 365, Windows laptops managed with Intune"
+cd ~/Aegis
+```
+
+**5. Ask about a ticket.** Put the ticket inside the quotes:
+
+```bash
+node scripts/ask-aegis.js "Outlook keeps asking for my password"
 ```
 
 After 30 to 60 seconds you get the **Fix card** for the tech. The whole answer is saved in a folder called `aegis-asks` in your home folder.
 
-**Want the reply for the person who asked?** Add `--reply-to asker`. Aegis prints only that reply and saves the full tech answer next to it. Aegis sends nothing; you read it and send it yourself.
+**6. Tell Aegis what your company runs.** Add `--setup` and your systems in plain words. Without it, Aegis assumes the example company described in `CLAUDE.md`.
 
 ```bash
-node scripts/ask-aegis.js "Nobody at the second office can open Outlook or Teams since 10 am. Head office is fine." --reply-to asker
+node scripts/ask-aegis.js "Outlook keeps asking for my password" --setup "Microsoft 365"
 ```
 
-**Want to go back and forth?** Open a chat. Type `/exit` when you're done.
+**7. Get the reply for the person who asked.** Add `--reply-to asker`. Aegis prints only that reply and saves the full tech answer next to it. Aegis sends nothing; you read it and send it yourself.
 
 ```bash
-node scripts/aegis-chat.js --setup "Google Workspace, Okta, Macs managed with Jamf"
+node scripts/ask-aegis.js "Nobody at our second office can open Teams" --reply-to asker
+```
+
+**8. Or go back and forth in a chat.** Type `/exit` when you're done.
+
+```bash
+node scripts/aegis-chat.js --setup "Google Workspace, Okta, Macs with Jamf"
 ```
 
 > [!IMPORTANT]
@@ -257,16 +269,16 @@ flowchart TD
 Every load-bearing claim maps to a runnable check. [`claim-ledger.md`](docs/evidence/claim-ledger.md) says which claims a script proves, which are model-behavior contracts scored by rubric, and which were weakened because the evidence was thinner than the prose.
 
 ```bash
-node --test                                    # the whole battery
-node scripts/eval/ms-ticket-eval.js            # 28 sanitized Microsoft tickets
-node scripts/eval/gws-ticket-eval.js           # 38 sanitized Google Workspace, Okta, Jamf and macOS tickets
-node scripts/eval/g2-ticket-eval.js            # 65 sanitized Fleet, Linear, Slack, Jamf Pro and Google Workspace tickets
-node scripts/eval/g3-ticket-eval.js            # 44 sanitized tickets for the G3 connectors
-node scripts/lint/command-structure.js         # every runbook: portal paths, GUI before CLI, one checklist, one Jira note
-node scripts/lint/ladder-audit.js --check      # lightest fix first, in every runbook
-node scripts/replay/replay-demo.js             # replay lifecycle in a sandbox: MISS, verify, HIT, STALE
-node scripts/pre-commit-check.js --all         # full-tree personal data, credential and secret scan
-node scripts/harness/release-boundary-check.js # the public/private boundary holds
+node --test                                      # the whole battery
+node scripts/eval/ms-ticket-eval.js              # 28 Microsoft tickets
+node scripts/eval/gws-ticket-eval.js             # 38 Google, Okta, Jamf, macOS tickets
+node scripts/eval/g2-ticket-eval.js              # 65 Fleet, Linear, Slack, Jamf, Google
+node scripts/eval/g3-ticket-eval.js              # 44 tickets for the G3 connectors
+node scripts/lint/command-structure.js           # every runbook's structure
+node scripts/lint/ladder-audit.js --check        # lightest fix first, everywhere
+node scripts/replay/replay-demo.js               # replay: MISS, verify, HIT, STALE
+node scripts/pre-commit-check.js --all           # personal data and secret scan
+node scripts/harness/release-boundary-check.js   # public/private boundary holds
 ```
 
 What a script cannot prove (that the answer leads with the most useful action, fits its depth to the ticket, and carries a failed attempt forward after "still doesn't work") is scored by a model judge: [`scripts/eval/README.md`](scripts/eval/README.md). Captured answers are in [`ticket-eval-samples.md`](docs/evidence/ticket-eval-samples.md).
@@ -279,23 +291,24 @@ What a script cannot prove (that the answer leads with the most useful action, f
 <br>
 
 ```
-CLAUDE.md                    # The harness contract: mission, environment, rules, orchestration
-PRODUCT_CONTRACT.md          # Advice only: what Aegis may never do
-modules/security/            # Security doctrine, placeholder dictionary, threat model, IR playbooks
-.claude/commands/            # 108 runbooks: Microsoft 365, Entra, Intune, Exchange, Meraki, VoIP,
-                             # Google Workspace, Okta, Jamf, macOS, Fleet, Slack, Linear, GitHub
+CLAUDE.md                  # the harness contract: rules and orchestration
+PRODUCT_CONTRACT.md        # advice only: what Aegis may never do
+modules/security/          # security doctrine, placeholders, threat model
+.claude/commands/          # 108 runbooks: Microsoft 365, Entra, Intune, Exchange,
+                           # Google Workspace, Okta, Jamf, macOS, Fleet, Slack,
+                           # Linear, GitHub, Meraki, VoIP
 scripts/
-├── ask-aegis.js             # Ask one ticket (sealed, read-only)
-├── aegis-chat.js            # Chat about tickets (sealed, read-only)
-├── adapters/                # Read-only connectors: every command is a read or a verify-* read-back
-├── replay/                  # Deterministic replay cache engine
-├── memory/                  # Controlled operational memory engine
-├── graph/                   # Ticket-graph execution engine
-├── eval/                    # Ticket corpora, the shared evaluator, the model-judged runner
-├── lint/                    # Runbook structure and lightest-fix-first lints
-├── demo/                    # The Customer Desk: simulated tenants for end-to-end runs
-└── pre-commit-check.js      # The commit and CI safety scanner
-docs/                        # Architecture, ADRs, answer format, evidence
+├── ask-aegis.js           # ask one ticket (sealed, read-only)
+├── aegis-chat.js          # chat about tickets (sealed, read-only)
+├── adapters/              # read-only connectors and verify-* read-backs
+├── replay/                # deterministic replay cache
+├── memory/                # controlled operational memory
+├── graph/                 # ticket-graph execution engine
+├── eval/                  # ticket corpora, evaluator, model-judged runner
+├── lint/                  # runbook structure and lightest-fix-first lints
+├── demo/                  # the Customer Desk: simulated tenants
+└── pre-commit-check.js    # the commit and CI safety scanner
+docs/                      # architecture, ADRs, answer format, evidence
 ```
 
 Built from real support workflows at a multi-site nonprofit (hybrid AD, Microsoft 365, Entra, Intune, Exchange Online, Meraki, VoIP), then placeholder-sanitized. Worked ticket arcs: [`ticket-examples.md`](docs/ticket-examples.md).

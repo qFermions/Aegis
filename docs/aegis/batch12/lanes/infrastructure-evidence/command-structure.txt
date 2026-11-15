@@ -1,0 +1,5 @@
+# node scripts/lint/command-structure.js at aa29ca5
+command-structure lint - 115 commands (B:28 E:6 D:3 A:65 C:11 ALIAS:2)
+
+clean - structural GUI-first contract holds for every operational/troubleshooting command
+exit 0

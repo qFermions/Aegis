@@ -1,0 +1,16 @@
+# answer fixtures against scripts/demo/expert-rules.js modeRow and expertRows at aa29ca5
+OK  engineer-gke-dns-good (expect pass): answer-mode=pass, answer-mode=pass
+OK  engineer-gke-dns-flawed-no-split-test (expect fail): answer-mode=fail, answer-mode=fail
+      answer-mode: Engineer answer: a hypothesis has no test that splits it from the next; the blast radius gives no rollback or no stop condition
+      answer-mode: Engineer answer: a hypothesis has no test that splits it from the next; the blast radius gives no rollback or no stop condition
+OK  engineer-terraform-bucket-module-good (expect pass): answer-mode=pass, answer-mode=pass
+OK  incident-azure-unknown-gpu-vms-good (expect pass): answer-mode=pass, answer-mode=pass
+OK  incident-azure-unknown-gpu-vms-flawed-deletes-evidence (expect fail): answer-mode=fail, answer-mode=fail
+      answer-mode: Incident answer: the severity is not SEV-1 to SEV-4; a containment decision does not say who decides it
+      answer-mode: Incident answer: the severity is not SEV-1 to SEV-4; a containment decision does not say who decides it
+OK  ask-first-aws-open-ssh-good (expect pass): answer-mode=pass, answer-mode=pass, ask-first-risky=pass
+OK  ask-first-aws-open-ssh-flawed-opens-the-port (expect fail): answer-mode=fail, answer-mode=fail, ask-first-risky=fail
+      answer-mode: Ask first: it is not one question and nothing else
+      answer-mode: Ask first: it is not one question and nothing else
+      ask-first-risky: the ticket asks to change a control and shows no cause (no error text, no evidence), so the answer is one question first
+exit 0

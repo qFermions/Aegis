@@ -135,3 +135,22 @@ test('the DEV set: 24 placeholder-only cases DEV01..DEV24 with the required cove
   const dictionary = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
   for (const token of new Set(text.match(/\[[A-Z@][A-Za-z0-9_@#-]*\]/g) || [])) assert.ok(dictionary.includes(`\`${token}\``), `${token} is a dictionary placeholder`);
 });
+
+// Batch 12, tasks 2 and 7 to 10: the four expert lanes bring their own platforms and capabilities, and a case may say
+// which answer mode it expects (docs/aegis/answer-format.md, section 9). Wrong implementations this catches: an enum
+// that forgot a lane's capability or a cloud platform; an expected.mode accepted with any value; a mode required on
+// every case, which would refuse the 24 cases written before batch 12; a parsed case that drops the mode it was given.
+test('batch 12: the lane platforms and capabilities parse, and expected.mode is optional and checked', () => {
+  for (const platform of ['aws', 'azure', 'gcp', 'kubernetes', 'terraform', 'linux', 'cloudflare', 'meraki', 'zscaler', 'python', 'node', 'powershell', 'bash', 'docker']) {
+    assert.equal(cases.parseCases(line(good({ platform }))).cases[0].platform, platform);
+  }
+  for (const capability of ['networking', 'infrastructure', 'software-engineering']) {
+    assert.equal(cases.parseCases(line(good({ capability }))).cases[0].capability, capability);
+  }
+  for (const mode of ['fix-card', 'engineer', 'incident', 'ask-first']) {
+    assert.equal(cases.parseCases(line(good({}, { mode }))).cases[0].expected.mode, mode);
+  }
+  assert.equal(cases.parseCases(line(good())).cases[0].expected.mode, '', 'no mode given: an empty string');
+  assert.deepEqual(refusal(line(good({}, { mode: 'essay' }))), ['line 1: field expected.mode is not one of: fix-card, engineer, incident, ask-first']);
+  assert.deepEqual(refusal(line(good({}, { mode: 3 }))), ['line 1: field expected.mode must be a string']);
+});

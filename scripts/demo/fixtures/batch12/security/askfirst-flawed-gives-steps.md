@@ -1,5 +1,6 @@
 Mode: Ask first
 ## Fix
+Assumed setup: Microsoft 365 with hybrid Active Directory and Entra ID (no company profile given). Tell me what your company runs for a better answer.
 **What's wrong:** the compliant-device check blocks the sales team on personal laptops.
 **Do this:**
 1. Open the Conditional Access policy that requires a compliant device.

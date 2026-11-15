@@ -1,4 +1,5 @@
 Mode: Engineer answer
+Assumed setup: a Cisco Meraki MX appliance as the VPN at the network edge (no company profile given). Tell me what your company runs for a better answer.
 ## Engineer answer
 **Evidence read:** your scanner line: [CVE_ID] on the VPN appliance, base 9.8, vector AV:N/AC:L/PR:N/UI:N. That vector means anyone who can reach the login page can use it without a password. No evidence was given on whether it is on the CISA KEV catalog or whether the appliance runs the affected version; this is reasoning until those are read.
 **Hypotheses:**

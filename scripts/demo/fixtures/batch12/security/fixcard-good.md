@@ -1,5 +1,6 @@
 Mode: Fix card
 ## Fix
+Assumed setup: Microsoft 365 with hybrid Active Directory and Entra ID (no company profile given). Tell me what your company runs for a better answer.
 **What's wrong:** Sign-ins [FIRST_NAME] did not make locked her account; someone may have her password.
 **Do this:**
 1. Read last night's failed sign-ins for [UPN] in the Entra sign-in logs: addresses she never uses mean someone else.

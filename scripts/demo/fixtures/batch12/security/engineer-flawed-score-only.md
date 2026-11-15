@@ -1,4 +1,5 @@
 Mode: Engineer answer
+Assumed setup: a Cisco Meraki MX appliance as the VPN at the network edge (no company profile given). Tell me what your company runs for a better answer.
 ## Engineer answer
 **Evidence read:** your scanner line: [CVE_ID] on the VPN appliance, base 9.8.
 **Hypotheses:**

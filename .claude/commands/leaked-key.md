@@ -11,7 +11,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 **Answer mode:** `Mode: Incident answer`. An exposure with no sign of use is SEV-4 (SEV-3 when the place it was exposed is public or shared outside the organisation); any unexplained use makes it SEV-2, and SEV-1 when data or money is leaving.
 
-**Placeholders:** `[CREDENTIAL_ID]` (the key or token's ID, never its value) · `[CLOUD_PRINCIPAL]` (the IAM user or role, the Azure app registration, the Google Cloud service account) · `[CLOUD_ACCOUNT]` (the AWS account, Azure subscription or Google Cloud project) · `[GITHUB_USER]`, `[@Aegion_GITHUB_ORG]`, `[REPO_NAME]` · `[APP_NAME]`, `[APP_ID]` (a Slack app) · `[FILE_NAME]` · `[JIRA-###]` or `[ISSUE_ID]` · `[ADMIN_NAME]`.
+**Placeholders:** `[CREDENTIAL_ID]` (the key or token's ID, never its value) · `[CLOUD_PRINCIPAL]` (the IAM user or role, the Azure app registration, the Google Cloud service account) · `[CLOUD_ACCOUNT_ID]` (the AWS account, Azure subscription or Google Cloud project) · `[GITHUB_USER]`, `[@Aegion_GITHUB_ORG]`, `[REPO_NAME]` · `[APP_NAME]`, `[APP_ID]` (a Slack app) · `[FILE_NAME]` · `[JIRA-###]` or `[ISSUE_ID]` · `[ADMIN_NAME]`.
 
 **Knowledge:** `knowledge/security/decision-trees.md` tree 6, `reading-evidence.md` (CloudTrail, GuardDuty, the Azure activity log, Google Cloud audit logs), `escalation.md`.
 
@@ -54,14 +54,14 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ### B1: AWS access key: deactivate (R1)
 
-**Role needed:** an IAM administrator in `[CLOUD_ACCOUNT]`, with the key's owner told.
+**Role needed:** an IAM administrator in `[CLOUD_ACCOUNT_ID]`, with the key's owner told.
 
 <!-- SAFETY GATE [leaked-key-aws-key-deactivate-portal] -->
-- **Target:** [CREDENTIAL_ID] of IAM user [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT]
+- **Target:** [CREDENTIAL_ID] of IAM user [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT_ID]
 - **Effect:** deactivate one AWS access key, [CREDENTIAL_ID], of [CLOUD_PRINCIPAL]
 - **Scope:** one access key; the user's other key, console password and roles are not touched; every system that signs with this key fails
 - **Reversibility:** R1: undo is activating the same key again in the same place (SV-02), only if the review shows no unknown use
-- **Required confirmation:** Type exactly `DEACTIVATE AWS ACCESS KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT]`.
+- **Required confirmation:** Type exactly `DEACTIVATE AWS ACCESS KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 - **Read-back:** none (R1: no change record)
 **PORTAL ACTION [leaked-key-aws-key-deactivate-portal]:** Only after the escalation and the exact match:
@@ -77,11 +77,11 @@ For an ASIA key, or a role whose session was exposed. It denies every current us
 **Role needed:** an IAM administrator with permission to put a role policy, with the security lead's decision.
 
 <!-- SAFETY GATE [leaked-key-aws-role-sessions-revoke-portal] -->
-- **Target:** role [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT]
+- **Target:** role [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT_ID]
 - **Effect:** revoke every active session of the role [CLOUD_PRINCIPAL] issued before now
 - **Scope:** every current user of the role is denied until they assume it again; new sessions work; a service-linked role cannot be revoked (SV-76)
 - **Reversibility:** R2 (one object, no undo command: the deny policy stays on the role and only blocks sessions issued before its time stamp)
-- **Required confirmation:** Type exactly `REVOKE ALL ACTIVE SESSIONS OF ROLE [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT]`.
+- **Required confirmation:** Type exactly `REVOKE ALL ACTIVE SESSIONS OF ROLE [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 - **Read-back:** none (no connector reads AWS: the proof is the role's permissions tab showing the AWSRevokeOlderSessions policy)
 **PORTAL ACTION [leaked-key-aws-role-sessions-revoke-portal]:** Only after the security lead's decision is in the ticket and the exact match:
@@ -100,21 +100,21 @@ The Google Cloud console cannot disable a key (SV-45); the CLI can, and the key 
 ```bash
 # HUMAN-RUN: a Google Cloud IAM administrator runs this in their own terminal, Aegis never does
 # SAFETY GATE [leaked-key-gcp-key-disable]
-# Target: [CREDENTIAL_ID] of service account [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT]
+# Target: [CREDENTIAL_ID] of service account [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT_ID]
 # Effect: disable one service account key, [CREDENTIAL_ID], of [CLOUD_PRINCIPAL]
 # Scope: one key, the service account and its other keys keep working
 # Reversibility: R1: undo is enabling the same key again with the same tool
-# Required confirmation: type exactly "DISABLE SERVICE ACCOUNT KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT]"
+# Required confirmation: type exactly "DISABLE SERVICE ACCOUNT KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT_ID]"
 # Failure behavior: Empty, declined, "yes", or any other response means stop, and no change is made.
 # Read-back: none, R1: no change record
 # the exact phrase to type
-required_confirmation="DISABLE SERVICE ACCOUNT KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT]"
+required_confirmation="DISABLE SERVICE ACCOUNT KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT_ID]"
 # shows the phrase
 printf '%s\n' "Type exactly: $required_confirmation"
 # reads one line exactly as typed and runs the change only on an exact, case-sensitive match
 if IFS= read -r confirmation && [ "$confirmation" = "$required_confirmation" ]; then
   # disables the one key, SV-45
-  gcloud iam service-accounts keys disable "[CREDENTIAL_ID]" --iam-account="[CLOUD_PRINCIPAL]@[CLOUD_ACCOUNT].iam.gserviceaccount.com" --project="[CLOUD_ACCOUNT]"
+  gcloud iam service-accounts keys disable "[CREDENTIAL_ID]" --iam-account="[CLOUD_PRINCIPAL]@[CLOUD_ACCOUNT_ID].iam.gserviceaccount.com" --project="[CLOUD_ACCOUNT_ID]"
 else
   # explains the stop
   echo "Confirmation did not match. No change was made." >&2
@@ -122,7 +122,7 @@ else
   exit 1
 fi
 # read-back: the key should now be listed as disabled
-gcloud iam service-accounts keys list --iam-account="[CLOUD_PRINCIPAL]@[CLOUD_ACCOUNT].iam.gserviceaccount.com" --project="[CLOUD_ACCOUNT]"
+gcloud iam service-accounts keys list --iam-account="[CLOUD_PRINCIPAL]@[CLOUD_ACCOUNT_ID].iam.gserviceaccount.com" --project="[CLOUD_ACCOUNT_ID]"
 ```
 </details>
 
@@ -219,7 +219,7 @@ aws iam list-access-keys --user-name "[CLOUD_PRINCIPAL]"
 # HUMAN-RUN read-only: management events signed with the key in this Region over the last 90 days, SV-05
 aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue="[CREDENTIAL_ID]" --max-results 50
 # HUMAN-RUN read-only: the service account's keys and their state
-gcloud iam service-accounts keys list --iam-account="[CLOUD_PRINCIPAL]@[CLOUD_ACCOUNT].iam.gserviceaccount.com" --project="[CLOUD_ACCOUNT]"
+gcloud iam service-accounts keys list --iam-account="[CLOUD_PRINCIPAL]@[CLOUD_ACCOUNT_ID].iam.gserviceaccount.com" --project="[CLOUD_ACCOUNT_ID]"
 ```
 </details>
 
@@ -248,11 +248,11 @@ For a chat message, a ticket or a document: delete or redact it after Phases B a
 **Role needed:** an IAM administrator, with the security lead's sign-off on the review.
 
 <!-- SAFETY GATE [leaked-key-aws-key-delete-portal] -->
-- **Target:** [CREDENTIAL_ID] of IAM user [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT]
+- **Target:** [CREDENTIAL_ID] of IAM user [CLOUD_PRINCIPAL] in [CLOUD_ACCOUNT_ID]
 - **Effect:** delete one deactivated AWS access key, [CREDENTIAL_ID], of [CLOUD_PRINCIPAL]
 - **Scope:** one inactive key; nothing that still works uses it
 - **Reversibility:** R3 (CLAUDE.md, Risk-Classified Execution Policy, the R3 row, "delete"): cannot be recovered (SV-02); the rollback path is a new key issued to the owner
-- **Required confirmation:** Type exactly `DELETE AWS ACCESS KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT]`.
+- **Required confirmation:** Type exactly `DELETE AWS ACCESS KEY [CREDENTIAL_ID] OF [CLOUD_PRINCIPAL] IN [CLOUD_ACCOUNT_ID]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 - **Read-back:** none (no connector reads AWS: the proof is the Access keys section without [CREDENTIAL_ID])
 **PORTAL ACTION [leaked-key-aws-key-delete-portal]:** Only after the review sign-off and the exact match:

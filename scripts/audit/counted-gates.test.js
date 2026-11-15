@@ -47,6 +47,8 @@ const NOT_COUNTED = Object.freeze({
   'offboard-physical-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
   'quarantine-release-all-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
   'print-queue-delete-portal': `R3 since the batch G3 close-out 3; ${NO_VERIFY}`,
+  // batch 12 (security lane): one Defender remediation over many copies, proved by its Action center entry
+  'phishing-bec-purge-portal': `one remediation over [MESSAGE_COUNT] copies, proved by the Action center's counts; ${NO_VERIFY}`,
 });
 
 // gate id -> { file, confirmation } for every gate whose required confirmation names a count

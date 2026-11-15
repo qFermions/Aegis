@@ -188,7 +188,7 @@ Operation name   Create or Update role assignment
 Status           Succeeded
 Time             2026-11-13 03:20 (UTC)
 Event initiated by  [CLOUD_PRINCIPAL]
-Resource         /subscriptions/[CLOUD_ACCOUNT]/resourceGroups/(a group)
+Resource         /subscriptions/[CLOUD_ACCOUNT_ID]/resourceGroups/(a group)
 ```
 
 You could be wrong if: the role assignment came from the team's own pipeline under that identity. Ask its owner.

@@ -1,5 +1,6 @@
 Mode: Fix card
 ## Fix
+Assumed setup: Microsoft 365 with hybrid Active Directory and Entra ID (no company profile given). Tell me what your company runs for a better answer.
 **What's wrong:** [FIRST_NAME]'s account is locked after too many wrong passwords.
 **Do this:**
 1. Open Active Directory Users and Computers and find [FIRST_NAME]'s account.

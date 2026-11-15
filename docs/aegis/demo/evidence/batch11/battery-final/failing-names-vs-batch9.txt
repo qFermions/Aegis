@@ -1,0 +1,4 @@
+$ bash docs/aegis/demo/evidence/batch9b/tools/failing-names.sh <node-test.txt> | comm -3 - <batch 9 failing-tests.txt, normalized the same way>   (empty below means the same 41 names)
+node-test:
+node-test-tripwire:
+batch 9 names: 41; failing here: 41

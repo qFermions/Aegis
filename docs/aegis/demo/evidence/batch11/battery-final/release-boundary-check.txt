@@ -1,0 +1,3 @@
+RELEASE BOUNDARY: BLOCK
+  ✗ B6 UNCLASSIFIED: top-level ".codex" is neither tracked, ignored, nor allowlisted - classify it before any sync
+exit 1

@@ -1,0 +1,23 @@
+# whole suite at 4672ce8 (the aegis-tools lane), node v24.21.0, compared with docs/aegis/demo/evidence/batch12/baseline/failing-names.txt
+# failing names are taken from the '✖ failing tests:' section, timing cut, sorted unique
+
+## TMPDIR=/private/tmp node --test
+ℹ tests 2401
+ℹ pass 2359
+ℹ fail 41
+ℹ skipped 1
+diff of failing names against the baseline: empty (the same 41 names)
+
+## TMPDIR=/private/tmp NODE_OPTIONS="--require <repo>/scripts/adapters/socket-tripwire.js" node --test
+ℹ tests 2401
+ℹ pass 2359
+ℹ fail 41
+ℹ skipped 1
+diff of failing names against the baseline: empty (the same 41 names)
+
+## note
+2401 tests = the baseline's 2360 + 41 new (guard 2, server 36, session 2, backends 1).
+A first run with this sandbox's default TMPDIR (under /var, a symbolic link on macOS) had 61 failures: the 41 baseline
+names plus 20 more: 8 in init-memory.test.js, 11 in security-audit.test.js, 1 in gws-posture-audit.test.js. 18 of
+them refuse '/var' as an unsafe link component and 2 compare a /var/folders path with its /private/var/folders form.
+That is why the battery runs with TMPDIR=/private/tmp; with it the 20 pass. None of these files is touched here.

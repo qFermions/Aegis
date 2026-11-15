@@ -77,11 +77,12 @@ claude
 node --version
 ```
 
-**4. Download Aegis.** If your Mac asks to install "command line developer tools", click **Install**, wait, then run this again.
+**4. Download Aegis** into your home folder. If your Mac asks to install "command line developer tools", click **Install**, wait, then run these again.
 
 ```bash
+cd ~
 git clone https://github.com/qFermions/Aegis.git
-cd Aegis
+cd ~/Aegis
 ```
 
 </details>
@@ -118,11 +119,12 @@ git --version
 claude
 ```
 
-**4. Download Aegis:**
+**4. Download Aegis** into your home folder:
 
 ```powershell
+cd ~
 git clone https://github.com/qFermions/Aegis.git
-cd Aegis
+cd ~/Aegis
 ```
 
 </details>
@@ -152,7 +154,12 @@ node scripts/aegis-chat.js --setup "Google Workspace, Okta, Macs managed with Ja
 > [!IMPORTANT]
 > **Use these two commands, not plain `claude`.** `ask-aegis.js` and `aegis-chat.js` run Aegis sealed: it can only read, it has no shell, it cannot edit files, and your own plugins stay out. Typing just `claude` inside the Aegis folder opens the full Claude Code builder, which can edit files and run commands. That is for working on Aegis, not for asking it about tickets.
 
-**Coming back another day?** Open the terminal, go into the folder with `cd Aegis`, and get the latest version with `git pull`.
+**Coming back another day?** Open the terminal and go into the folder first, then get the latest version. Every `node scripts/...` command only works from inside this folder.
+
+```bash
+cd ~/Aegis
+git pull
+```
 
 ### Before you paste a real ticket
 
@@ -167,6 +174,7 @@ node scripts/aegis-chat.js --setup "Google Workspace, Okta, Macs managed with Ja
 | `claude: command not found`, or "not recognized" | Close the terminal and open it again. Still missing? Follow Claude Code's [Fix your PATH](https://code.claude.com/docs/en/troubleshoot-install.md#command-not-found-claude-after-installation) guide. |
 | `The token '&&' is not a valid statement separator` | You're in PowerShell, so use the Windows steps. |
 | `node: command not found` | Install Node.js (step 3 on Mac, step 2 on Windows), then reopen the terminal. |
+| `cd: no such file or directory: Aegis`, or `Cannot find module ... ask-aegis.js` | You're not in the Aegis folder. Type `cd ~/Aegis`. If you downloaded it somewhere else, `cd` into that folder instead. |
 | `the Aegis session did not finish ... Is Claude Code installed?` | Run `claude` once and sign in, then ask again. On Windows, reinstall Claude Code with the PowerShell installer, not npm. |
 | `the text holds a value Aegis never keeps` | Your ticket has a password, token or key in it. Take it out and ask again. |
 | Aegis asks one question instead of giving steps | The ticket didn't say enough. Add what happens, who it affects and since when, then ask again. |

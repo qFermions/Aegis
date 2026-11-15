@@ -1,0 +1,6 @@
+$ TMPDIR=<tmp> node --test scripts/demo/batch11-new-way-in.test.js scripts/demo/customer-desk.test.js   (CI fix, green)
+ℹ fail 0
+ℹ pass 107
+ℹ tests 107
+exit 0
+

@@ -49,6 +49,7 @@ const good = (...gates) => [
   ...gates.map((g) => `Gate: ${g}`),
 ].join('\n');
 
+const CUSTOMER_DIR = 'A';
 async function runDesk(t, gates, simTable) {
   const results = path.join(tmp(t, 'aegis-b11-run-'), 'run');
   const home = tmp(t, 'aegis-b11-fake-');
@@ -60,7 +61,10 @@ async function runDesk(t, gates, simTable) {
   });
   const run = JSON.parse(fs.readFileSync(path.join(results, 'run.json'), 'utf8'));
   const ticket = run.tickets.find((x) => x.id === 'T1');
-  const tenant = JSON.parse(fs.readFileSync(path.join(results, 'customers', 'a', 'tenant.json'), 'utf8'));
+  // The desk names the folder by the customer's id. A path spelled in another case reads on macOS and Windows and fails on
+  // Linux (CI run 43659614675 of PR #18), so the name used must be one the folder listing holds.
+  assert.ok(fs.readdirSync(path.join(results, 'customers')).includes(CUSTOMER_DIR), `the desk wrote customers/${fs.readdirSync(path.join(results, 'customers')).join(', ')}`);
+  const tenant = JSON.parse(fs.readFileSync(path.join(results, 'customers', CUSTOMER_DIR, 'tenant.json'), 'utf8'));
   return { code, ticket, readBack: ticket.steps.find((s) => s.n === 8), out: out.join(''), tenant, results };
 }
 
@@ -126,14 +130,14 @@ test('the desk acts both gates in one ticket, the pass and then the one-method d
     const out = [];
     const code = await vendors.connectorModule('msgraph').run(
       ['verify-mfa-method', '--user', 'a1000000-0000-4000-8000-000000000001', '--method', 'microsoftAuthenticator', '--execute'],
-      { ...customers.tenantVars(a), ...vendors.simulatedCredentials('msgraph'), AEGIS_AUDIT_DIR: path.join(run.results, 'customers', 'a', 'audit') },
-      { transport: vendors.transportFor('msgraph', path.join(run.results, 'customers', 'a', 'tenant.json')), sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) },
+      { ...customers.tenantVars(a), ...vendors.simulatedCredentials('msgraph'), AEGIS_AUDIT_DIR: path.join(run.results, 'customers', CUSTOMER_DIR, 'audit') },
+      { transport: vendors.transportFor('msgraph', path.join(run.results, 'customers', CUSTOMER_DIR, 'tenant.json')), sleep: async () => {}, out: (s) => out.push(String(s)), err: (s) => out.push(String(s)) },
     );
     assert.equal(code, 2, `no Authenticator is registered in the simulated tenant, so the runbook's read does not pass: ${out.join('')}`);
   }
   // a second apply replaces the pass: Entra keeps one per user
   const { applySimulatedGates } = require('./sim/gates.js');
-  const tenantFile = path.join(run.results, 'customers', 'a', 'tenant.json');
+  const tenantFile = path.join(run.results, 'customers', CUSTOMER_DIR, 'tenant.json');
   applySimulatedGates({ changes: [{ entry: SIM_GATES[GATE], target: { '[USER_ID]': 'a1000000-0000-4000-8000-000000000001' } }], tenantFile, runDir: run.results, now: '2026-11-13T12:00:00.000Z' });
   const again = methodsOf(JSON.parse(fs.readFileSync(tenantFile, 'utf8'))).filter((m) => m['@odata.type'] === PASS_TYPE);
   assert.equal(again.length, 1);
